@@ -45,9 +45,9 @@
 | P-06 | 产品继承与独立仓库 | BMW 不含 Dev/WVL；BMWDev 继承 BMW 的 Video 基础，并添加 Web Runtime/WVL；独立 Profile/Partition/Preset。 | **直接单测**：`packages/platform/test/product-boundaries.test.ts` — `BMW repository builds one app with an inherited Video foundation`、`shared implementations never import apps or Dev capabilities` |
 | P-07 | 标准 Chromium 身份 | 页面 User-Agent 去除 Electron/BMW 产品标记，保留标准 Chrome 身份；不伪造浏览器外的额外能力。 | **直接单测**：`packages/platform/test/browser-user-agent.test.ts` — `page user agent exposes Chromium without Electron or BMW shell tokens`；`page user agent strips every BMW product brand and preserves standard Chrome` |
 | P-08 | 首次启动 | 新 Profile 必须创建第一个真实 Project；Home URL 可空并使用 `about:blank`，随后选择侧栏或浮层布局。 | **直接单测**：`packages/platform/test/project-store.test.ts` — `requires the first real Project name without leaving a default BMW Browser project`；`new projects accept an empty home URL and use a blank-page preference`。布局选择由 `packages/platform/test/layout-store.test.ts` — `layout setup is required once and defaults to the sidebar` 保障 |
-| P-09 | 从 BMW 显式导入 | BMWDev 可预览并按选择导入项目文档、标签页元数据、Artifact、特定 Origin Cookie；BMWDev 可把旧源码导入 OPFS。权限、飞书凭据、DSH Session、定时任务、非终态 WVL 不导入。 | **直接单测**：`packages/platform/test/product-profile-importer.test.ts` — `profile import preview exposes selectable data, not secrets or DSH execution state`；`explicit import copies selected platform data and moves source only into OPFS`；`cookie import restores only explicitly selected origins and enables target re-encryption` |
+| P-09 | 显式导入适配契约 | 公共 ProfileImporter 供 BMWDev 继承使用。BMW 自身是导入来源，不显示 Import from BMW，不自动合并旧 BMWVideo Profile。公共导入过滤规则使用临时目标夹具测试，不能称 BMW 导入 UI 已启用。 | **适配契约测试**：`packages/platform/test/product-profile-importer.test.ts` — `profile import preview exposes selectable data, not secrets or DSH execution state`、`cookie import restores only explicitly selected origins and enables target re-encryption`；BMW 无导入 UI能力 |
 
-DSH 新协议的直接契约测试在 `packages/harness-dsh/test/dsh-transport.test.ts`，覆盖鉴权 URL 边界、命名参数、请求关联、WebSocket cookie/取消/错误帧、单一工具注册。`npm run test:dsh-e2e` 使用临时 DSH Home 和临时 Workspace 验证本仓库产品启动、会话复用/改名/搜索/历史/空会话 Fork 拒绝/取消/归档；不访问真实用户 Profile，不调用付费模型。真实模型输出及 WVL 卡片完整 UI 交互仍需人工验证，不能由上述兼容性检查推定覆盖。
+DSH 新协议的直接契约测试在 `packages/harness-dsh/test/dsh-transport.test.ts`，覆盖鉴权 URL 边界、命名参数、请求关联、WebSocket cookie/取消/错误帧、单一工具注册。`npm run test:dsh-e2e` 使用临时 DSH Home 和临时 Workspace 验证本仓库产品启动、会话复用/改名/搜索/历史/空会话 Fork 拒绝/取消/归档；不访问真实用户 Profile，不调用付费模型。真实模型输出和完整浏览器 UI 交互仍需人工验证，不能由上述兼容性检查推定覆盖。
 
 ### 3.0 Browser Session 生命周期、串行化与图像结果
 
@@ -91,8 +91,8 @@ Bridge 的浏览器调用按 FIFO 串行（比仅按 Project 更严格，因为�
 | B-03 | 页面 Popup 归属 | 页面发起的新窗口不会启动外部浏览器，而是转成当前 Project 的 BMW 前台 Tab。第三方（包括 Google）仍可基于嵌入式浏览器环境实施自己的登录风控。 | **无直接单测**：当前需人工验证 Popup、OAuth 回跳与真实账号风控 |
 | B-04 | `navigate`、`back`、`forward`、`reload` | 在 Project-owned Tab 内导航、前进、后退和刷新。 | **契约/间接**：`packages/browser-capability/test/browser-schema.test.ts`；当前无逐项导航单测 |
 | B-05 | `observe` | 读取视口、整页、后台或观察模式下的页面结构和可见文本，并限制返回字符数。 | **契约/间接**：Action Schema 有测试；当前无真实页面语义观察单测 |
-| B-06 | `click`、`type`、`hover`、`key`、`wait` | 通过选择器/可见文本交互，输入字段、悬停、发键盘事件和执行有界等待。 | **契约/间接**：`packages/browser-capability/test/browser-schema.test.ts` — `rejects unsupported and malformed requests`；WVL Store 也会拒绝不支持的录制步骤。当前无 Electron 页面交互单测 |
-| B-07 | `page.diagnostics` | 收集目标页面 Console 与网络失败诊断，供研究和 WVL 复用。 | **契约/间接**：WVL 的 `console.noErrors`/`network.noFailures` 流程由 `packages/feature-wvl/test/web-validation-store.test.ts` 间接覆盖；当前无独立页面诊断单测 |
+| B-06 | `click`、`type`、`hover`、`key`、`wait` | 通过选择器/可见文本交互，输入字段、悬停、发键盘事件和执行有界等待。 | **契约/间接**：`packages/browser-capability/test/browser-schema.test.ts` — `rejects unsupported and malformed requests`。当前无 Electron 页面交互单测 |
+| B-07 | `page.diagnostics` | 收集目标页面 Console 与网络失败诊断，并返回截图 image/Artifact；作为公共能力可被 BMWDev 继承。 | **契约/间接**：Browser Schema/Catalog 覆盖 Action 声明；本仓无独立真实页面 Console/Network 诊断测试，不引用 BMWDev 的 WVL 测试作为本产品直接覆盖 |
 | B-08 | `page.viewport.set` | 设置宽、高、缩放与移动视口，支持响应式观察和验证。 | **契约/间接**：Action Schema 有测试；当前无 Electron 视口效果单测 |
 | B-09 | `project.context` | 向 Agent 提供当前 Project 元数据及 AGENTS/Memory/Tasks 上下文。 | **契约/间接**：`packages/platform/test/project-store.test.ts` 保障文档边界；无 Browser Action 返回值专门测试 |
 | B-10 | `project.memory.append`、`project.tasks.append` | 仅向 Project Memory/Tasks 追加带来源时间的信息，不允许任意文件写入。 | **直接单测**：`packages/platform/test/project-store.test.ts` — `agent append is limited to memory documents and records provenance time` |
@@ -106,7 +106,7 @@ Bridge 的浏览器调用按 FIFO 串行（比仅按 Project 更严格，因为�
 | M-03 | `media.download` | 使用 BMW 浏览器 Session 下载 HTTP(S) 媒体到当前 Project Artifact；限制大小、清理文件名、推断扩展名并拒绝 DASH 初始化碎片。 | **直接单测**：`packages/browser-capability/test/media-artifact.test.ts` — `media download writes a bounded Project artifact through the browser fetch adapter`；`media download rejects non-web URLs and responses beyond its byte limit`；`artifact filenames remove path syntax and infer media extensions`；`media download rejects and removes DASH initialization fragments` |
 | M-04 | `media.video.capture` | 对页面中的 `HTMLVideoElement` 使用 `captureStream()` + `MediaRecorder` 保存完整、可播放的 WebM；默认从头录制，时长上限 30 分钟，数据上限 512 MB，按序写入分段并校验 WebM。 | **直接单测 + Electron E2E**：`packages/media-native/test/media-controller.test.ts` — `browser-native video capture filenames remain Project-local WebM artifacts`、`video chunk decoding ignores commas inside codec parameters`；人工/本地 E2E 命令 `npm run test:media-e2e` |
 | M-05 | `media.record.start`、`media.record.stop` | 录制当前 Tab 的画面/音频为 Project-owned WebM；媒体处理优先走 WebGPU Canvas 管线，不可用时回退 CPU/原始流。 | **契约/间接**：`packages/media-native/test/media-controller.test.ts` 覆盖 Artifact 命名边界；当前无完整 start/stop 单元测试，可用 `npm run test:media-e2e` 做本地 Electron 验证 |
-| M-06 | BMW 媒体查看器 | 截图、录屏、报告与 WVL 证据在 BMW 自有窗口/Tab 查看，不启动外部浏览器。 | **无直接单测**：需人工验证窗口与媒体播放 |
+| M-06 | BMW 媒体查看器 | 截图、录屏与下载媒体在 BMW 自有窗口/Tab 查看，不启动外部浏览器。 | **无直接单测**：需人工验证窗口与媒体播放 |
 
 ## 5. Projects、Sessions、设置与桌面体验
 

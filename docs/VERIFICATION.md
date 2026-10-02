@@ -15,4 +15,6 @@
 
 现有依赖 audit 报告两个 high 项（Electron 与 extract-zip），这不被测试通过消除，详见 PROJECT_STATUS。真实模型视觉、完整视频制作、完整 WVL UI/商业 WebContainer以及所有 IPC 攻击面不在本次通过范围。
 
-Git/迁移最终路径与基础哈希检查在迁移结束时再确认；不是从旧单仓测试结果推断。
+最终目录 `/Users/changliangxu/Documents/ChatGPT/BMW` 已重新执行 build/check/tests/边界/DSH/桌面/媒体检查，均通过；独立 Git 根、单 App、交接文件、无遗留 SDK/跟踪 JS、仅本仓依赖链接已逐项确认。BMWDev 的 upstream:check 检查 53 份基础文件，无差异；不是从旧单仓测试结果推断。
+
+观测到的非致命日志：启动阶段 Session 列表轮询曾在 DSH 未就绪时收到 ECONNREFUSED/401（个别运行还有未初始化 Harness 的 TypeError），最终鉴权并恢复成功；禁用 connector Action 的报错是显式拒绝测试。Electron console-message API 有弃用提示，关窗时可出现页面 theme target-closed 日志。这些不等于启动期日志/UI已完全打磨，保留为后续就绪状态门控与退出收尾技术债。

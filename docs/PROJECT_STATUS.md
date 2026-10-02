@@ -37,6 +37,8 @@
 4. 拆仓后公共基础通过显式基准更新，无自动源码同步；不同产品不得共享真实 Chromium/DSH Profile。
 5. 再处理固定 DSH Runtime 打包、自有协议、签名/升级与 CI 临时 Profile UI 测试。独立远控/移动控制另做，不接聊天软件。
 
+桌面冒烟还观测到启动前 Session 列表请求的临时 ECONNREFUSED/401/未就绪错误、弃用 console-message API 与退出时页面 theme target-closed 日志，最终均恢复并通过；后续应补统一启动就绪门控和退出收尾，不能把冒烟通过表述为无所有界面/日志问题。
+
 ## 维护与可追溯
 
 功能和测试保障以 FUNCTIONAL_SPEC.md 为准。每个 repo 有自己的 agent.md、AGENTS.md、handoff.md、package-lock.json、唯一启动入口与 Git history。原仓库保持可恢复的迁移前快照，不作为第三个活跃产品继续开发。
