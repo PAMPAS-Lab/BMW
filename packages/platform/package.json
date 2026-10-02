@@ -1,0 +1,15 @@
+{
+  "name": "@bmw-agent/platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@bmw-agent/browser-capability": "*",
+    "@bmw-agent/harness-dsh": "*",
+    "@bmw-agent/media-native": "*"
+  },
+  "exports": {
+    ".": "./src/product-definition.js",
+    "./application": "./src/main.js"
+  }
+}

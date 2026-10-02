@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BMW</title>
+    <link rel="stylesheet" href="./shell.css" />
+  </head>
+  <body>
+    <header class="chrome">
+      <div class="brand" title="Browser is the boundary · Media is native · Web is the runtime">
+        <span class="mark">B</span><span id="product-brand">BMW</span>
+      </div>
+      <button id="project-switcher" class="project-switcher" title="Switch BMW Project" aria-haspopup="menu">BMW Browser ▾</button>
+      <nav class="controls">
+        <button id="back" aria-label="Back">←</button>
+        <button id="forward" aria-label="Forward">→</button>
+        <button id="reload" aria-label="Reload">↻</button>
+      </nav>
+      <form id="address-form" class="address-form">
+        <input id="address" autocomplete="off" spellcheck="false" placeholder="Search or enter address" />
+      </form>
+      <button id="new-tab" class="quiet">＋ Tab</button>
+      <button id="record" class="quiet">● Record</button>
+      <button id="keep-login" class="quiet" title="Keep this site signed in using OS-protected encrypted cookies">Keep login</button>
+      <button id="layout-button" class="quiet" title="Choose DSH and browser layout">Layout</button>
+      <button id="session-button" class="quiet" title="Manage this project's DSH sessions">Sessions</button>
+      <button id="scheduled-task-button" class="quiet" title="Manage this project's scheduled Agent tasks">Scheduled</button>
+      <button id="settings-button" class="quiet" title="Open BMW global settings">Settings</button>
+      <button id="agent-toggle" class="agent-toggle">Agent</button>
+    </header>
+    <section id="tab-strip" class="tab-strip"></section>
+    <div id="permission-banner" class="permission-banner hidden">
+      <div><strong>Enable BMW Agent</strong><span>One approval lets DSH browse in this product's own profile.</span></div>
+      <button id="enable-agent">Enable once</button>
+    </div>
+    <div id="session-overlay" class="session-overlay hidden" role="dialog" aria-modal="true" aria-label="BMW Session Center">
+      <section class="session-window">
+        <header class="session-header">
+          <div><span class="session-eyebrow">BMW Project Agent</span><strong id="session-title">Sessions</strong><span>Every session stays inside the active Project workspace and browser state.</span></div>
+          <button id="session-close" aria-label="Close Session Center">×</button>
+        </header>
+        <div class="session-toolbar">
+          <input id="session-search" type="search" placeholder="Search titles and session content" aria-label="Search sessions" />
+          <button id="session-refresh">Refresh</button>
+          <button id="session-new" class="primary">＋ New session</button>
+        </div>
+        <div id="session-list" class="session-list"><div class="session-empty">Loading project sessions…</div></div>
+        <footer class="session-footer"><span id="session-message">The selected session receives BMW input for this Project.</span><small>Rename · Fork · Archive · Reorder</small></footer>
+      </section>
+    </div>
+    <div id="recording-indicator" class="recording-indicator hidden">● Recording this BMW tab</div>
+    <button id="status" class="status" type="button">Starting DSH… · Sidebar (click to float)</button>
+    <div id="project-overlay" class="project-overlay hidden" role="dialog" aria-modal="true" aria-label="BMW Project Manager">
+      <section class="project-manager">
+        <header class="project-manager-header">
+          <div><strong id="project-manager-title">BMW Projects</strong><span id="project-manager-subtitle">Workspace, browser state, instructions and durable memory</span></div>
+          <div class="project-manager-header-actions"><button id="project-import" class="hidden">Import from BMW</button><button id="project-close" aria-label="Close project manager">×</button></div>
+        </header>
+        <div class="project-manager-body">
+          <aside class="project-sidebar">
+            <button id="project-new" class="project-new">＋ New Project</button>
+            <div id="project-list" class="project-list"></div>
+          </aside>
+          <main class="project-editor">
+            <div class="project-fields">
+              <label>Name<input id="project-name" maxlength="80" /></label>
+              <label>Home URL (optional)<input id="project-home" type="url" placeholder="Blank page" /></label>
+            </div>
+            <div id="project-doc-tabs" class="project-doc-tabs">
+              <button data-kind="instructions" class="active">AGENTS.md</button>
+              <button data-kind="memory">MEMORY.md</button>
+              <button data-kind="tasks">TASKS.md</button>
+              <button data-kind="decisions">Decisions</button>
+              <button data-kind="entities">Entities</button>
+              <button data-kind="preferences">Preferences</button>
+              <button data-kind="history">History</button>
+            </div>
+            <textarea id="project-document" spellcheck="false" aria-label="Project document"></textarea>
+            <div id="project-message" class="project-message"></div>
+            <footer class="project-actions">
+              <button id="project-archive" class="danger">Archive</button>
+              <span></span>
+              <button id="project-save" class="primary">Save</button>
+            </footer>
+          </main>
+        </div>
+      </section>
+    </div>
+    <div id="scheduled-task-overlay" class="scheduled-task-overlay hidden" role="dialog" aria-modal="true" aria-label="BMW Scheduled Tasks">
+      <section class="scheduled-task-window">
+        <header class="scheduled-task-header">
+          <div><span class="scheduled-task-eyebrow">BMW Project automation</span><strong id="scheduled-task-title">Scheduled tasks</strong><span>DSH executes each task with BMW's single browser tool in its saved Project and Session.</span></div>
+          <button id="scheduled-task-close" aria-label="Close scheduled tasks">×</button>
+        </header>
+        <section class="scheduled-task-guide">
+          <strong>Create tasks in natural language</strong>
+          <span>Tell DSH: “Every day at 6:00 AM Asia/Shanghai, capture @arena’s latest X post and download the images in that post.”</span>
+          <small>BMW must be running at the scheduled time. On macOS its window may be hidden or minimized; quitting BMW stops scheduling. Missed occurrences queue once after restart.</small>
+        </section>
+        <div id="scheduled-task-list" class="scheduled-task-list"><div class="scheduled-task-empty">No scheduled tasks in this Project.</div></div>
+        <footer class="scheduled-task-footer"><span id="scheduled-task-message">Schedules use their saved IANA time zone.</span><button id="scheduled-task-refresh">Refresh</button></footer>
+      </section>
+    </div>
+    <div id="import-overlay" class="import-overlay hidden" role="dialog" aria-modal="true" aria-label="Import from BMW Base">
+      <section class="import-window">
+        <header><div><strong>Import from BMW Base</strong><span>Nothing is copied until you explicitly select it.</span></div><button id="import-close" aria-label="Close import">×</button></header>
+        <div class="import-body">
+          <label>BMW Base Project<select id="import-project"></select></label>
+          <div class="import-options">
+            <label><input id="import-documents" type="checkbox" checked /> Project documents and Memory</label>
+            <label><input id="import-home" type="checkbox" checked /> Home URL</label>
+            <label><input id="import-tabs" type="checkbox" /> Tab URL metadata</label>
+            <label id="import-source-row"><input id="import-source" type="checkbox" /> Local web source into BMWDev OPFS</label>
+            <label id="import-evidence-row"><input id="import-evidence" type="checkbox" /> WVL reports as read-only Legacy Evidence</label>
+          </div>
+          <section><strong>Selected artifacts</strong><div id="import-artifacts" class="import-check-list"></div></section>
+          <section><strong>Login origins</strong><p>Cookies are re-encrypted for this product. Permissions and connector credentials are never imported.</p><div id="import-origins" class="import-check-list"></div></section>
+          <p class="import-boundary">Never imported: Agent Control approval, site permissions, external credentials/bindings, pending relays, DSH Session IDs, and non-terminal WVL runs.</p>
+          <p id="import-message"></p>
+        </div>
+        <footer><button id="import-confirm" class="primary">Import selected data</button></footer>
+      </section>
+    </div>
+    <div id="layout-overlay" class="layout-overlay hidden" role="dialog" aria-modal="true" aria-label="BMW layout setup">
+      <section class="layout-setup">
+        <header class="layout-setup-header">
+          <div><span class="layout-eyebrow">BMW workspace</span><strong>How should DSH work with your browser?</strong><span>Choose once now. You can reopen Layout from the toolbar at any time.</span></div>
+          <button id="layout-close" aria-label="Close layout settings">×</button>
+        </header>
+        <div class="layout-mode-grid">
+          <button class="layout-mode-card active" data-layout-mode="sidebar">
+            <span class="layout-preview sidebar-preview"><i></i><b></b></span>
+            <strong>Side by side</strong>
+            <small>The browser and DSH share one BMW window.</small>
+          </button>
+          <button class="layout-mode-card" data-layout-mode="overlay">
+            <span class="layout-preview overlay-preview"><i></i><b></b></span>
+            <strong>Floating DSH</strong>
+            <small>A resizable BMW-owned DSH window floats above the browser.</small>
+          </button>
+        </div>
+        <div class="layout-options">
+          <label class="layout-range">Sidebar width <output id="layout-width-output">460 px</output><input id="layout-width" type="range" min="360" max="900" step="10" value="460" /></label>
+          <fieldset id="layout-opacity"><legend>Floating window appearance</legend><button data-opacity="1" class="active">Opaque</button><button data-opacity="0.88">Translucent</button></fieldset>
+          <label class="layout-check"><input id="layout-fullscreen" type="checkbox" /> Open floating DSH full screen</label>
+        </div>
+        <p id="layout-hint" class="layout-hint">Drag the divider indirectly with the width control. The browser keeps the remaining space.</p>
+        <footer class="layout-actions"><span id="layout-message"></span><button id="layout-apply" class="primary">Use this layout</button></footer>
+      </section>
+    </div>
+    <div id="settings-overlay" class="settings-overlay hidden" role="dialog" aria-modal="true" aria-label="BMW global settings">
+      <section class="settings-window">
+        <header class="settings-header">
+          <div><span class="settings-eyebrow">BMW global</span><strong>Browser settings</strong><span>These choices apply across every BMW project.</span></div>
+          <button id="settings-close" aria-label="Close global settings">×</button>
+        </header>
+        <div class="settings-body">
+          <section class="settings-section">
+            <div class="settings-section-title"><strong>Appearance</strong><span>One preference for BMW Shell, DSH, and compatible websites.</span></div>
+            <label>Theme
+              <select id="settings-theme">
+                <option value="dark">Dark (default)</option>
+                <option value="light">Light</option>
+                <option value="system">Follow system</option>
+              </select>
+            </label>
+            <p class="settings-note">BMW publishes this color scheme to every embedded view and emulates it in each browser tab. In dark mode Chromium can automatically darken fixed-light pages; images and video retain their original colors.</p>
+          </section>
+          <section class="settings-section">
+            <div class="settings-section-title"><strong>Network proxy</strong><span>Applied to BMW's persistent browser profile.</span></div>
+            <label>Proxy mode
+              <select id="settings-proxy-mode">
+                <option value="system">Use system proxy (default)</option>
+                <option value="direct">Direct connection</option>
+                <option value="manual">Manual proxy</option>
+              </select>
+            </label>
+            <div id="settings-proxy-manual" class="settings-subgrid hidden">
+              <label>Proxy server or rules
+                <input id="settings-proxy-rules" autocomplete="off" placeholder="http://127.0.0.1:7890 or http=…;https=…" />
+              </label>
+              <label>Bypass list
+                <input id="settings-proxy-bypass" autocomplete="off" placeholder="&lt;local&gt;,localhost,*.example.com" />
+              </label>
+            </div>
+            <p class="settings-note">Changing proxy mode takes effect immediately for browser traffic and closes existing network connections so they reconnect through the new route. Proxy authentication is handled by the site/browser challenge.</p>
+          </section>
+          <section class="settings-section">
+            <div class="settings-section-title"><strong>Search and new tabs</strong><span>Used by the address bar and toolbar-created tabs.</span></div>
+            <div class="settings-grid">
+              <label>Default search engine
+                <select id="settings-search-engine">
+                  <option value="google">Google</option>
+                  <option value="bing">Bing</option>
+                  <option value="duckduckgo">DuckDuckGo</option>
+                  <option value="baidu">Baidu</option>
+                  <option value="custom">Custom URL template</option>
+                </select>
+              </label>
+              <label>New tab page
+                <select id="settings-new-tab">
+                  <option value="search">Search engine home</option>
+                  <option value="blank">Blank page</option>
+                </select>
+              </label>
+            </div>
+            <label id="settings-custom-search-row" class="hidden">Custom search URL
+              <input id="settings-custom-search" autocomplete="off" placeholder="https://example.com/search?q={query}" />
+            </label>
+            <p class="settings-note">Project Home URL remains project-specific. A new project can still start on a blank page.</p>
+          </section>
+          <section class="settings-section">
+            <div class="settings-section-title"><strong>DSH runtime</strong><span>BMW owns navigation; DSH remains independently upgradeable.</span></div>
+            <label class="settings-check"><input id="settings-dsh-sidebar" type="checkbox" /> Show the legacy DSH Sidebar</label>
+            <p class="settings-note">Off by default because BMW Projects and Session Center cover workspace and session navigation. Enable it only as an upstream compatibility or diagnostics fallback.</p>
+            <div class="settings-dsh-policy">
+              <span><b>Agent preset</b> BMW browser-only (managed)</span>
+              <span><b>Permissions</b> Browser is the capability boundary (managed)</span>
+              <span><b>Models & providers</b> DSH-native and upgrade-safe</span>
+            </div>
+            <button id="settings-dsh-advanced">Open DSH models, input behavior, permissions & plugins</button>
+            <div class="settings-lifecycle">
+              <div><strong>Restart this product</strong><span>Reopen the same Profile, Projects, tabs, saved login continuity, DSH Sessions, and layout.</span></div>
+              <button id="settings-restart">Restart BMW…</button>
+            </div>
+          </section>
+          <section id="settings-web-runtime" class="settings-section hidden">
+            <div class="settings-section-title"><strong>BMWDev Web Runtime</strong><span>Static OPFS always works; WebContainers are optional.</span></div>
+            <label>WebContainer ESM module URL
+              <input id="settings-webcontainer-module" autocomplete="off" placeholder="https://…/webcontainer-api.js" />
+            </label>
+            <label>Commercial API key
+              <input id="settings-webcontainer-key" type="password" autocomplete="new-password" placeholder="Leave blank to keep the encrypted key" />
+            </label>
+            <p id="settings-web-runtime-status" class="settings-note">Checking browser runtime capabilities…</p>
+            <p class="settings-note">The key is encrypted with the operating-system keychain. DSH and ordinary browser tabs cannot read it. A Project package script still runs only after its Experiment Plan is approved.</p>
+          </section>
+        </div>
+        <footer class="settings-actions"><span id="settings-message"></span><button id="settings-save" class="primary">Save global settings</button></footer>
+      </section>
+    </div>
+    <script type="module" src="./shell.js"></script>
+  </body>
+</html>

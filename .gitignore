@@ -1,0 +1,23 @@
+node_modules/
+dist/
+out/
+coverage/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example
+*.enc
+.bmw-runtime/
+*.tsbuildinfo
+
+# TypeScript is authored in-place. These are disposable tsc runtime outputs.
+/apps/**/*.js
+/apps/**/*.cjs
+/apps/**/*.mjs
+/packages/**/*.js
+/packages/**/*.cjs
+/packages/**/*.mjs
+/scripts/**/*.js
+/scripts/**/*.cjs
+/scripts/**/*.mjs

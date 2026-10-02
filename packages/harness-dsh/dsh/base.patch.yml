@@ -1,0 +1,8 @@
+- id: agent-preset-registry
+  config:
+    default: bmw
+
+- id: session-query-sqlite
+  config:
+    path: !!js process.env.DSH_HOME + '/session-search.sqlite'
+    openAt: first-search

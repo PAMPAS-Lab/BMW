@@ -1,0 +1,12 @@
+{
+  "name": "@bmw-agent/browser-capability",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/browser-schema.js",
+    "./bridge": "./src/bridge-server.js",
+    "./kernel": "./src/browser-kernel.js",
+    "./registry": "./src/browser-capability-registry.js"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@bmw-agent/product-bmw",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": "./index.js",
+  "dependencies": {
+    "@bmw-agent/platform": "*",
+    "@bmw-agent/harness-dsh": "*",
+    "@bmw-agent/feature-video": "*"
+  }
+}
