@@ -1,7 +1,12 @@
+import { VideoOptionsForm } from '../../../media-native/src/video-options-form.js'
+import { normalizeVideoPreferences, saveVideoTemplate } from '../../../media-native/src/video-options.js'
+import type { VideoPreferences } from '../../../media-native/src/video-options.js'
+import { parseAgentContextState } from '../../../agent-contract/index.js'
+import type { AgentContextState } from '../../../agent-contract/index.js'
 const api = window.bmw
 const productBrand = document.querySelector('#product-brand')
 const address = document.querySelector('#address')
-const tabStrip = document.querySelector('#tab-strip')
+const tabStrip = document.querySelector('#tabs-list')
 const permissionBanner = document.querySelector('#permission-banner')
 const recordingIndicator = document.querySelector('#recording-indicator')
 const status = document.querySelector('#status')
@@ -22,12 +27,6 @@ const projectName = document.querySelector('#project-name')
 const projectHome = document.querySelector('#project-home')
 const projectDocument = document.querySelector('#project-document')
 const projectMessage = document.querySelector('#project-message')
-const projectImport = document.querySelector('#project-import')
-const importOverlay = document.querySelector('#import-overlay')
-const importProject = document.querySelector('#import-project')
-const importArtifacts = document.querySelector('#import-artifacts')
-const importOrigins = document.querySelector('#import-origins')
-const importMessage = document.querySelector('#import-message')
 const settingsButton = document.querySelector('#settings-button')
 const settingsOverlay = document.querySelector('#settings-overlay')
 const settingsProxyMode = document.querySelector('#settings-proxy-mode')
@@ -40,13 +39,15 @@ const settingsCustomSearch = document.querySelector('#settings-custom-search')
 const settingsNewTab = document.querySelector('#settings-new-tab')
 const settingsMessage = document.querySelector('#settings-message')
 const settingsTheme = document.querySelector('#settings-theme')
-const settingsDshSidebar = document.querySelector('#settings-dsh-sidebar')
+let videoPreferencesDraft:VideoPreferences=normalizeVideoPreferences(),videoPreferencesExpected:VideoPreferences=normalizeVideoPreferences(),videoPreferencesDirty=false
+const videoOptionsForm=new VideoOptionsForm(document.querySelector('#settings-video-options') as HTMLElement,'settings-video',()=>{videoPreferencesDirty=true})
+const videoTemplateSelect=document.querySelector('#settings-video-template') as HTMLSelectElement
+const videoTemplateName=document.querySelector('#settings-video-template-name') as HTMLInputElement
+const videoTemplateNote=document.querySelector('#settings-video-template-note') as HTMLElement
+function renderVideoTemplates():void{const selected=videoTemplateSelect.value;videoTemplateSelect.replaceChildren(new Option('选择模板…',''),...videoPreferencesDraft.templates.map(item=>new Option(item.name,item.name)));videoTemplateSelect.value=selected}
+const settingsEdgeNarration = document.querySelector('#settings-edge-narration') as HTMLInputElement
+const settingsAgentSidebar = document.querySelector('#settings-agent-sidebar')
 const settingsRestart = document.querySelector('#settings-restart')
-const settingsWebRuntime = document.querySelector('#settings-web-runtime')
-const settingsWebContainerModule = document.querySelector('#settings-webcontainer-module')
-const settingsWebContainerKey = document.querySelector('#settings-webcontainer-key')
-const settingsWebRuntimeStatus = document.querySelector('#settings-web-runtime-status')
-const sessionButton = document.querySelector('#session-button')
 const sessionOverlay = document.querySelector('#session-overlay')
 const sessionTitle = document.querySelector('#session-title')
 const sessionSearch = document.querySelector('#session-search')
@@ -58,45 +59,112 @@ const scheduledTaskTitle = document.querySelector('#scheduled-task-title')
 const scheduledTaskList = document.querySelector('#scheduled-task-list')
 const scheduledTaskMessage = document.querySelector('#scheduled-task-message')
 
+type ToolbarPopup = 'more' | 'site' | null
+const moreButton = (document.querySelector('#more-button') as HTMLButtonElement)
+const siteSettingsButton = (document.querySelector('#site-settings-button') as HTMLButtonElement)
+let toolbarPopup: ToolbarPopup = null
+let popupUpdates: Promise<void> = Promise.resolve()
+let returnToSettings = false
+function setToolbarPopup(next: ToolbarPopup): Promise<void> {
+  toolbarPopup = next
+  document.querySelector('#more-menu')!.classList.toggle('hidden', next !== 'more')
+  document.querySelector('#site-settings-menu')!.classList.toggle('hidden', next !== 'site')
+  document.querySelector('#toolbar-dismiss')!.classList.toggle('hidden', next === null)
+  document.body.classList.toggle('toolbar-popup-open', next !== null)
+  moreButton.setAttribute('aria-expanded', String(next === 'more'))
+  siteSettingsButton.setAttribute('aria-expanded', String(next === 'site'))
+  if (next === 'site') {
+    const bounds = siteSettingsButton.getBoundingClientRect()
+    const popup = (document.querySelector('#site-settings-menu') as HTMLElement)
+    popup.style.left = Math.max(8, Math.min(bounds.left, window.innerWidth - 328)) + 'px'
+  }
+  popupUpdates = popupUpdates.catch(() => {}).then(async () => {
+    await api.toolbarPanel(next !== null)
+  })
+  return popupUpdates
+}
+function chooseSettingsCategory(category: string): void {
+  ;(document.querySelectorAll('[data-settings-section]') as HTMLElement[]).forEach(section => {
+    section.classList.toggle('hidden', section.dataset.settingsSection !== category)
+  })
+  ;(document.querySelectorAll('[data-settings-category]') as HTMLButtonElement[]).forEach(button => {
+    const active = button.dataset.settingsCategory === category
+    button.classList.toggle('active', active)
+    button.setAttribute('aria-pressed', String(active))
+  })
+}
+async function restoreSettingsAfterLayout(): Promise<void> {
+  if (!returnToSettings) return
+  returnToSettings = false
+  await api.globalSettingsPanel(true)
+  settingsOverlay.classList.remove('hidden')
+}
+
 let browserState: Record<string, any> = { tabs: [], activeTabId: null, agentControlGranted: false }
 let recording = false
 let agentVisible = true
 let layoutState: Record<string, any> = { configured: false, mode: 'sidebar', sidebarWidth: 460, opacity: 1, overlayFullscreen: false, setupVisible: false }
-let dshStatusState: Record<string, any> = { state: 'starting' }
+let agentStatusState: Record<string, any> = { state: 'starting' }
 let editingLayoutMode = 'sidebar'
 let editingOpacity = 1
 let projectsState: Record<string, any> = { activeProjectId: null, projects: [] }
 let editingProjectId = null
+let projectListSignature = ''
+let projectDocumentRequest = 0
+let projectDocumentLoading = false
+let projectDocumentLoaded = false
+let projectSavePending = false
 let documentKind = 'instructions'
 let creatingProject = false
 let initialProjectSetup = false
-let globalSettings: Record<string, any> = { proxyMode: 'system', proxyRules: '', proxyBypassRules: '<local>', searchEngine: 'google', customSearchUrl: '', newTabPage: 'search', theme: 'dark', dshSidebarVisible: false }
-let dshSessions: Record<string, any> = { selectedSessionId: null, items: [] }
+let globalSettings: Record<string, any> = { proxyMode: 'system', proxyRules: '', proxyBypassRules: '<local>', searchEngine: 'google', customSearchUrl: '', newTabPage: 'search', theme: 'dark', agentSidebarVisible: false }
+let agentSessions: Record<string, any> = { selectedSessionId: null, items: [] }
 let sessionSearchTimer
-let productInfo = { id: 'bmw', name: 'BMW', canImportFromBase: false }
-let importPreview: Record<string, any> = { projects: [], cookieOrigins: [] }
-let webRuntimeSettings: Record<string, any> = { enabled: false, moduleUrl: '', apiKeyConfigured: false, capabilities: null }
+let productInfo = { id: 'bmw', name: 'BMW', agent: {id:'',label:'Agent',baseline:''} }
 let scheduledTaskState: Record<string, any> = { tasks: [], runs: [] }
+
+
+let contextState:AgentContextState={state:'starting'}
+function renderContext():void{
+ const context=contextState.context,project=activeProject()
+ const name=project?.name||'No project'
+ const linked=Boolean(context&&project&&context.projectId===project.id)
+ document.querySelector('#context-project').textContent='Project: '+name
+ const workspace=document.querySelector('#context-workspace')
+ workspace.textContent='↔ Workspace: '+(linked?context.workspaceTitle:project?.agentBindings?.[productInfo.agent.id]?.workspaceId?name:'Connecting…')
+ workspace.title=linked?context.directory:'Each BMW Project has one Agent Workspace'
+ const selected=document.querySelector('#context-session')
+ selected.textContent='Conversation: '+(contextState.state==='empty'?'None selected':linked?context.sessionTitle:'Connecting…')+' ▾'
+ selected.title=linked?`Selected conversation · ${context.sessionCount} sessions in this Workspace`:'Choose a conversation in this Project'
+ document.querySelector('#context-pages').textContent=`${browserState.tabs.length} pages · shared across conversations`
+ const message=document.querySelector('#context-message')
+ message.textContent=contextState.message||''
+ message.classList.toggle('hidden',!contextState.message)
+ document.querySelector('#context-strip').classList.toggle('context-error',contextState.state==='error')
+ document.querySelector('#session-workspace').textContent=`Project: ${name} ↔ Workspace: ${linked?context.workspaceTitle:name} · ${agentSessions.items.length} sessions · shared Project pages`
+}
+function receiveAgentContext(value:unknown):void{
+ try{const next=parseAgentContextState(value);contextState={...next,context:next.context||contextState.context};renderContext();if(!sessionOverlay.classList.contains('hidden'))void refreshAgentSessions()}
+ catch(error:unknown){contextState={...contextState,state:'error',message:error instanceof Error?error.message:String(error)};renderContext()}
+}
 
 function activeTab() {
   return browserState.tabs.find((tab) => tab.id === browserState.activeTabId)
 }
 
-function renderDshStatus() {
+function renderAgentStatus() {
   const labels = {
-    starting: 'Starting DSH…',
-    ready: 'DSH ready',
-    stopped: 'DSH stopped',
-    error: `DSH error: ${dshStatusState.message || 'Unknown error'}`
+    starting: 'Starting Agent…',
+    ready: 'Agent ready',
+    stopped: 'Agent stopped',
+    error: `Agent error: ${agentStatusState.message || 'Unknown error'}`
   }
-  const base = labels[dshStatusState.state] || `DSH ${dshStatusState.state}`
-  const floating = layoutState.mode === 'overlay'
-  const layoutLabel = floating ? 'Floating' : 'Sidebar'
-  const actionLabel = floating ? 'click to dock' : 'click to float'
-  status.textContent = `${base} · ${layoutLabel} (${actionLabel})`
-  status.title = floating ? 'DSH is floating above the browser. Click to dock it in the sidebar.' : 'DSH is docked in the sidebar. Click to float it above the browser.'
-  status.setAttribute('aria-label', status.title)
-  status.classList.toggle('actionable', layoutState.configured === true && agentVisible)
+  const base = labels[agentStatusState.state] || `Agent ${agentStatusState.state}`
+  status.textContent = base.replace('Agent', 'Assistant')
+  status.title = agentStatusState.message || 'Assistant runtime status'
+  agentToggle.setAttribute('aria-pressed', String(agentVisible))
+  agentToggle.title = agentVisible ? 'Hide assistant panel. Running tasks continue.' : 'Show assistant panel. Browser permission is unchanged.'
+
 }
 
 function renderLayoutEditor() {
@@ -109,8 +177,8 @@ function renderLayoutEditor() {
   layoutFullscreen.disabled = editingLayoutMode !== 'overlay'
   layoutFullscreen.checked = editingLayoutMode === 'overlay' && layoutState.overlayFullscreen === true
   layoutHint.textContent = editingLayoutMode === 'overlay'
-    ? 'Move and resize the BMW-owned DSH window with its native title bar and edges. Escape exits full screen.'
-    : 'Choose the DSH panel width; the browser automatically receives the remaining space.'
+    ? 'Move and resize the BMW-owned Agent window with its native title bar and edges. Escape exits full screen.'
+    : 'Choose the Agent panel width; the browser automatically receives the remaining space.'
   document.querySelector('#layout-close').disabled = layoutState.configured !== true
 }
 
@@ -135,6 +203,7 @@ async function closeLayoutEditor() {
   if (!layoutState.configured) return
   layoutOverlay.classList.add('hidden')
   layoutState = { ...layoutState, ...(await api.layoutPanel(false)), setupVisible: false }
+  await restoreSettingsAfterLayout()
 }
 
 function scheduledTaskTime(value) {
@@ -149,7 +218,7 @@ function renderScheduledTasks() {
   if (!scheduledTaskState.tasks?.length) {
     const empty = document.createElement('div')
     empty.className = 'scheduled-task-empty'
-    empty.textContent = 'No scheduled tasks. Describe one directly to DSH in natural language.'
+    empty.textContent = 'No scheduled tasks. Describe one directly to Agent in natural language.'
     scheduledTaskList.replaceChildren(empty)
     return
   }
@@ -203,7 +272,7 @@ function renderScheduledTasks() {
     runNow.addEventListener('click', async () => {
       try {
         await api.runScheduledTask(task.id)
-        scheduledTaskMessage.textContent = `Queued “${task.name}”. DSH will run it in the background.`
+        scheduledTaskMessage.textContent = `Queued “${task.name}”. Agent will run it in the background.`
         await refreshScheduledTasks()
       } catch (error) { scheduledTaskMessage.textContent = error.message }
     })
@@ -247,6 +316,7 @@ async function closeScheduledTasks() {
 }
 
 function renderGlobalSettings() {
+  if(!videoPreferencesDirty){videoPreferencesDraft=normalizeVideoPreferences(globalSettings.videoPreferences??{});videoPreferencesExpected=structuredClone(videoPreferencesDraft);videoOptionsForm.fill(videoPreferencesDraft.defaults);renderVideoTemplates()}
   settingsTheme.value = globalSettings.theme || 'dark'
   settingsProxyMode.value = globalSettings.proxyMode
   settingsProxyRules.value = globalSettings.proxyRules || ''
@@ -254,15 +324,11 @@ function renderGlobalSettings() {
   settingsSearchEngine.value = globalSettings.searchEngine
   settingsCustomSearch.value = globalSettings.customSearchUrl || ''
   settingsNewTab.value = globalSettings.newTabPage
-  settingsDshSidebar.checked = globalSettings.dshSidebarVisible === true
+  settingsAgentSidebar.checked = globalSettings.agentSidebarVisible === true
+  settingsEdgeNarration.checked = globalSettings.edgeNarrationEnabled === true
   settingsProxyManual.classList.toggle('hidden', settingsProxyMode.value !== 'manual')
   settingsCustomSearchRow.classList.toggle('hidden', settingsSearchEngine.value !== 'custom')
-  settingsWebRuntime.classList.toggle('hidden', productInfo.id !== 'bmw-dev')
-  settingsWebContainerModule.value = webRuntimeSettings.moduleUrl || globalSettings.webContainerModuleUrl || ''
-  const capabilities = webRuntimeSettings.capabilities
-  settingsWebRuntimeStatus.textContent = capabilities
-    ? `Static OPFS: ready · Cross-origin isolated: ${capabilities.crossOriginIsolated ? 'yes' : 'no'} · WebContainers: ${capabilities.webcontainer ? 'ready' : 'not configured'} · API key: ${webRuntimeSettings.apiKeyConfigured ? 'encrypted' : 'not set'}`
-    : 'Static OPFS is the automatic fallback. Configure WebContainers only when needed.'
+
 }
 
 function sessionTime(value) {
@@ -275,19 +341,20 @@ function setSessionMessage(message, error = false) {
   sessionMessage.style.color = error ? '#ff8793' : ''
 }
 
-function renderDshSessions() {
+function renderAgentSessions() {
+  renderContext()
   const project = activeProject()
-  sessionTitle.textContent = `${project?.name || 'Project'} · Sessions`
-  if (!dshSessions.items?.length) {
+  sessionTitle.textContent = `${project?.name || 'Project'} · Conversations`
+  if (!agentSessions.items?.length) {
     const empty = document.createElement('div')
     empty.className = 'session-empty'
     empty.textContent = sessionSearch.value.trim() ? 'No matching sessions in this Project.' : 'No visible session yet. Create one to start.'
     sessionList.replaceChildren(empty)
     return
   }
-  sessionList.replaceChildren(...dshSessions.items.map((item, index) => {
+  sessionList.replaceChildren(...agentSessions.items.map((item, index) => {
     const row = document.createElement('article')
-    row.className = `session-row${item.sessionId === dshSessions.selectedSessionId ? ' selected' : ''}`
+    row.className = `session-row${item.sessionId === agentSessions.selectedSessionId ? ' selected' : ''}`
     const main = document.createElement('div')
     main.className = 'session-row-main'
     main.tabIndex = 0
@@ -299,17 +366,17 @@ function renderDshSessions() {
     title.textContent = item.title
     const badge = document.createElement('span')
     badge.className = `session-badge${item.running ? ' running' : ''}`
-    badge.textContent = item.running ? 'Running' : item.sessionId === dshSessions.selectedSessionId ? 'Current' : item.blank ? 'New' : 'Idle'
+    badge.textContent = item.running ? 'Running' : item.sessionId === agentSessions.selectedSessionId ? 'Current' : item.blank ? 'New' : 'Idle'
     titleRow.append(title, badge)
     const meta = document.createElement('small')
     meta.textContent = [item.snippet, sessionTime(item.updatedAt), item.parentSessionId ? 'Fork' : '', item.agentPreset || 'bmw'].filter(Boolean).join(' · ')
     main.append(titleRow, meta)
     const select = async () => {
-      if (item.sessionId === dshSessions.selectedSessionId) return
+      if (item.sessionId === agentSessions.selectedSessionId) return
       try {
-        setSessionMessage('Switching DSH session…')
-        dshSessions = await api.selectDshSession(item.sessionId)
-        renderDshSessions()
+        setSessionMessage('Switching Agent session…')
+        agentSessions = await api.selectAgentSession(item.sessionId)
+        renderAgentSessions()
         setSessionMessage('Selected session receives BMW input for this Project.')
       } catch (error) { setSessionMessage(error.message, true) }
     }
@@ -325,23 +392,23 @@ function renderDshSessions() {
       return button
     }
     const move = async (direction) => {
-      try { dshSessions = await api.moveDshSession(item.sessionId, direction); renderDshSessions() } catch (error) { setSessionMessage(error.message, true) }
+      try { agentSessions = await api.moveAgentSession(item.sessionId, direction); renderAgentSessions() } catch (error) { setSessionMessage(error.message, true) }
     }
     const up = action('↑', () => move('up'))
     up.disabled = index === 0
     const down = action('↓', () => move('down'))
-    down.disabled = index === dshSessions.items.length - 1
+    down.disabled = index === agentSessions.items.length - 1
     const rename = action('Rename', async () => {
       const next = window.prompt('Session name', item.title)
       if (next === null || !next.trim()) return
-      try { dshSessions = await api.renameDshSession(item.sessionId, next); renderDshSessions() } catch (error) { setSessionMessage(error.message, true) }
+      try { agentSessions = await api.renameAgentSession(item.sessionId, next); renderAgentSessions() } catch (error) { setSessionMessage(error.message, true) }
     })
     const fork = action('Fork', async () => {
-      try { setSessionMessage('Forking session…'); dshSessions = await api.forkDshSession(item.sessionId); renderDshSessions(); setSessionMessage('Fork created and selected.') } catch (error) { setSessionMessage(error.message, true) }
+      try { setSessionMessage('Forking session…'); agentSessions = await api.forkAgentSession(item.sessionId); renderAgentSessions(); setSessionMessage('Fork created and selected.') } catch (error) { setSessionMessage(error.message, true) }
     })
     const archive = action('Archive', async () => {
-      if (!window.confirm(`Archive “${item.title}”? Its DSH log is retained.`)) return
-      try { dshSessions = await api.archiveDshSession(item.sessionId); renderDshSessions(); setSessionMessage('Session archived; its log remains on disk.') } catch (error) { setSessionMessage(error.message, true) }
+      if (!window.confirm(`Archive “${item.title}”? Its Agent log is retained.`)) return
+      try { agentSessions = await api.archiveAgentSession(item.sessionId); renderAgentSessions(); setSessionMessage('Session archived; its log remains on disk.') } catch (error) { setSessionMessage(error.message, true) }
     }, 'danger')
     actions.append(up, down, rename, fork, archive)
     row.append(main, actions)
@@ -349,19 +416,19 @@ function renderDshSessions() {
   }))
 }
 
-async function refreshDshSessions() {
+async function refreshAgentSessions() {
   try {
-    dshSessions = await api.listDshSessions(sessionSearch.value)
-    renderDshSessions()
+    agentSessions = await api.listAgentSessions(sessionSearch.value)
+    renderAgentSessions()
     setSessionMessage('The selected session receives BMW input for this Project.')
   } catch (error) { setSessionMessage(error.message, true) }
 }
 
 async function openSessionCenter() {
   try {
-    dshSessions = await api.sessionPanel(true)
+    agentSessions = await api.sessionPanel(true)
     sessionOverlay.classList.remove('hidden')
-    renderDshSessions()
+    renderAgentSessions()
     sessionSearch.focus()
   } catch (error) { status.textContent = error.message }
 }
@@ -373,6 +440,7 @@ async function closeSessionCenter() {
 
 async function openGlobalSettings() {
   try {
+    videoPreferencesDirty=false
     globalSettings = await api.globalSettingsPanel(true)
     settingsMessage.textContent = ''
     settingsMessage.classList.remove('error')
@@ -385,6 +453,7 @@ async function openGlobalSettings() {
 
 async function closeGlobalSettings() {
   settingsOverlay.classList.add('hidden')
+  videoPreferencesDirty=false
   await api.globalSettingsPanel(false)
 }
 
@@ -393,9 +462,14 @@ function render() {
   if (document.activeElement !== address) address.value = active?.url || ''
   permissionBanner.classList.toggle('hidden', browserState.agentControlGranted)
   const continuity = browserState.sessionContinuity
+  document.querySelector('#site-settings-origin').textContent = continuity?.origin || 'No HTTP(S) website selected'
+  document.querySelector('#site-settings-note').textContent = !continuity?.origin ? 'Open a website to configure saved login.' : !continuity.available ? 'OS-protected encryption is unavailable.' : continuity.enabled ? 'Saved login is enabled for this website.' : 'Saved login is off. Enabling it requires confirmation.'
+  siteSettingsButton.classList.toggle('enabled', continuity?.enabled === true)
+  siteSettingsButton.title = 'Site settings: ' + (continuity?.origin || 'current page')
+  keepLoginButton.setAttribute('aria-pressed', String(continuity?.enabled === true))
   keepLoginButton.disabled = !continuity?.available || !continuity?.origin
   keepLoginButton.classList.toggle('enabled', continuity?.enabled === true)
-  keepLoginButton.textContent = continuity?.enabled ? '✓ Keep login' : 'Keep login'
+  keepLoginButton.textContent = continuity?.enabled ? '✓ Keep signed in' : 'Keep signed in'
   keepLoginButton.title = continuity?.enabled
     ? `Encrypted session continuity and background keepalive are enabled for ${continuity.origin}`
     : 'Keep this site signed in using OS-protected encrypted cookies'
@@ -429,97 +503,85 @@ function setProjectMessage(message, error = false) {
 }
 
 async function loadProjectDocument() {
-  if (creatingProject || !editingProjectId) {
-    projectDocument.value = ''
-    return
-  }
+  const request = ++projectDocumentRequest
+  const projectId = editingProjectId
+  const kind = documentKind
+  projectDocument.value = ''
+  projectDocumentLoaded = false
+  projectDocumentLoading = !creatingProject && Boolean(projectId)
+  renderProjectEditor({ preserveDraft: true })
+  if (!projectDocumentLoading) return
+  const current = () => request === projectDocumentRequest && projectId === editingProjectId && kind === documentKind && !creatingProject && !projectOverlay.classList.contains('hidden')
   try {
-    const result = await api.readProjectDocument(editingProjectId, documentKind)
-    projectDocument.value = result.content
+    const result = await api.readProjectDocument(projectId, kind)
+    if (current()) { projectDocument.value = result.content; projectDocumentLoaded = true }
   } catch (error) {
-    setProjectMessage(error.message, true)
+    if (current()) setProjectMessage(error.message, true)
+  } finally {
+    if (current()) {
+      projectDocumentLoading = false
+      renderProjectEditor({ preserveDraft: true })
+    }
   }
 }
 
-function renderProjects() {
+function renderProjects({ preserveDraft = false } = {}) {
   const active = activeProject()
   projectSwitcher.textContent = `${active?.name || 'Projects'} ▾`
-  projectList.replaceChildren(...projectsState.projects.map((project) => {
-    const button = document.createElement('button')
-    button.className = `${project.id === editingProjectId ? 'active' : ''} ${project.id === projectsState.activeProjectId ? 'current' : ''}`
-    const title = document.createElement('strong')
-    title.textContent = project.name
-    const url = document.createElement('small')
-    url.textContent = project.homeUrl || 'Blank page'
-    button.append(title, url)
-    button.addEventListener('click', async () => {
-      creatingProject = false
-      editingProjectId = project.id
-      renderProjectEditor()
-      await loadProjectDocument()
-    })
-    return button
-  }))
-  renderProjectEditor()
+  // Tab-state broadcasts must not replace a button between native mouse down/up.
+  const signature = JSON.stringify(projectsState.projects.map(project => [project.id, project.name, project.homeUrl]))
+  if (signature !== projectListSignature) {
+    projectListSignature = signature
+    projectList.replaceChildren(...projectsState.projects.map((project) => {
+      const button = document.createElement('button')
+      button.dataset.projectId = project.id
+      const title = document.createElement('strong')
+      title.textContent = project.name
+      const url = document.createElement('small')
+      url.textContent = project.homeUrl || 'Blank page'
+      button.append(title, url)
+      button.addEventListener('click', async () => {
+        if (projectSavePending || (!creatingProject && editingProjectId === project.id)) return
+        creatingProject = false
+        editingProjectId = project.id
+        setProjectMessage('')
+        renderProjects()
+        await loadProjectDocument()
+      })
+      return button
+    }))
+  }
+  ;(projectList.querySelectorAll('button') as HTMLButtonElement[]).forEach(button => {
+    const selected = !creatingProject && button.dataset.projectId === editingProjectId
+    button.classList.toggle('active', selected)
+    button.classList.toggle('current', button.dataset.projectId === projectsState.activeProjectId)
+    button.setAttribute('aria-pressed', String(selected))
+    button.disabled = projectSavePending
+  })
+  renderProjectEditor({ preserveDraft })
+  renderContext()
 }
 
-function renderProjectEditor() {
+function renderProjectEditor({ preserveDraft = false } = {}) {
   const project = editingProject()
-  projectName.value = creatingProject ? '' : project?.name || ''
-  projectHome.value = creatingProject ? '' : project?.homeUrl || ''
-  projectDocument.disabled = creatingProject
+  if (!preserveDraft) {
+    projectName.value = creatingProject ? '' : project?.name || ''
+    projectHome.value = creatingProject ? '' : project?.homeUrl || ''
+  }
+  const binding=document.querySelector('#project-binding')
+  binding.textContent=creatingProject?'Each Project links one Workspace; its sessions share pages and media.':`Project: ${project?.name||''} ↔ Workspace: ${project?.agentBindings?.[productInfo.agent.id]?.workspaceId?project.name:'Connecting…'}. ${project?.id===projectsState.activeProjectId&&contextState.context?.projectId===project.id?'Selected session: '+contextState.context.sessionTitle:'Select this Project to see its conversations.'} Sessions share this Project’s pages and media.`
+  projectDocument.disabled = creatingProject || projectDocumentLoading || projectSavePending
+  projectName.disabled = projectSavePending
+  projectHome.disabled = projectSavePending
+  document.querySelector('#project-new').disabled = projectSavePending
+  document.querySelector('#project-close').disabled = projectSavePending
   document.querySelectorAll('#project-doc-tabs button').forEach((button) => {
-    button.disabled = creatingProject
+    button.disabled = creatingProject || projectSavePending
     button.classList.toggle('active', button.dataset.kind === documentKind)
   })
   document.querySelector('#project-save').textContent = creatingProject ? 'Create project' : 'Save'
-  document.querySelector('#project-archive').disabled = creatingProject || !project || projectsState.projects.length === 1
-}
-
-function checkboxList(container, items, emptyLabel, labelFor) {
-  if (!items.length) {
-    const empty = document.createElement('small')
-    empty.textContent = emptyLabel
-    container.replaceChildren(empty)
-    return
-  }
-  container.replaceChildren(...items.map((item) => {
-    const label = document.createElement('label')
-    const input = document.createElement('input')
-    input.type = 'checkbox'
-    input.value = typeof item === 'string' ? item : item.id
-    const text = document.createElement('span')
-    text.textContent = labelFor(item)
-    label.append(input, text)
-    return label
-  }))
-}
-
-function renderImportProject() {
-  const selected = importPreview.projects.find((project) => project.id === importProject.value) || importPreview.projects[0]
-  checkboxList(importArtifacts, selected?.artifacts || [], 'No project artifacts available.', (item) => `${item.id} · ${Math.ceil(item.bytes / 1024)} KB`)
-  document.querySelector('#import-source-row').classList.toggle('hidden', productInfo.id !== 'bmw-dev' || !selected?.canImportSource)
-  document.querySelector('#import-evidence-row').classList.toggle('hidden', productInfo.id !== 'bmw-dev' || !selected?.hasLegacyEvidence)
-}
-
-async function openImportWizard() {
-  try {
-    importPreview = await api.productImportPreview()
-    if (!importPreview.available) {
-      setProjectMessage(importPreview.reason || 'No BMW Projects are available to import.', true)
-      return
-    }
-    importProject.replaceChildren(...importPreview.projects.map((project) => {
-      const option = document.createElement('option')
-      option.value = project.id
-      option.textContent = project.name
-      return option
-    }))
-    checkboxList(importOrigins, importPreview.cookieOrigins || [], 'No kept-login origins available.', (origin) => origin)
-    importMessage.textContent = ''
-    renderImportProject()
-    importOverlay.classList.remove('hidden')
-  } catch (error) { setProjectMessage(error.message, true) }
+  document.querySelector('#project-save').disabled = projectDocumentLoading || projectSavePending || (!creatingProject && !projectDocumentLoaded)
+  document.querySelector('#project-archive').disabled = creatingProject || projectSavePending || !project || projectsState.projects.length === 1
 }
 
 async function openProjectManager({ create = false, initial = false } = {}) {
@@ -531,7 +593,7 @@ async function openProjectManager({ create = false, initial = false } = {}) {
   projectOverlay.classList.toggle('initial-setup', initialProjectSetup)
   document.querySelector('#project-manager-title').textContent = initialProjectSetup ? 'Set up your first BMW Project' : 'BMW Projects'
   document.querySelector('#project-manager-subtitle').textContent = initialProjectSetup
-    ? 'Name the work this browser and its DSH session will belong to'
+    ? 'Name the work this browser and its Agent session will belong to'
     : 'Workspace, browser state, instructions and durable memory'
   projectOverlay.classList.remove('hidden')
   await api.projectPanel(true)
@@ -539,7 +601,7 @@ async function openProjectManager({ create = false, initial = false } = {}) {
   await loadProjectDocument()
   if (create) {
     setProjectMessage(initialProjectSetup
-      ? 'Your first Project becomes the browser and DSH default. Home URL is optional and defaults to a blank page.'
+      ? 'Your first Project becomes the browser and Agent default. Home URL is optional and defaults to a blank page.'
       : 'Create a product-owned project with isolated browser state and memory. Home URL is optional.')
     projectName.focus()
   }
@@ -547,7 +609,10 @@ async function openProjectManager({ create = false, initial = false } = {}) {
 
 async function closeProjectManager() {
   if (initialProjectSetup) return
+  if (projectSavePending) return
   projectOverlay.classList.add('hidden')
+  projectDocumentRequest++
+  projectDocumentLoading = false
   await api.projectPanel(false)
 }
 
@@ -564,18 +629,7 @@ agentToggle.addEventListener('click', async () => {
   agentVisible = !agentVisible
   await api.toggleAgent(agentVisible)
   agentToggle.classList.toggle('off', !agentVisible)
-})
-status.addEventListener('click', async () => {
-  if (!layoutState.configured || !agentVisible) return
-  try {
-    layoutState = { ...layoutState, ...(await api.configureLayout({
-      mode: layoutState.mode === 'overlay' ? 'sidebar' : 'overlay',
-      overlayFullscreen: false
-    })) }
-    renderDshStatus()
-  } catch (error) {
-    status.textContent = error.message
-  }
+  renderAgentStatus()
 })
 recordButton.addEventListener('click', async () => {
   const action = recording ? 'media.record.stop' : 'media.record.start'
@@ -600,15 +654,52 @@ projectSwitcher.addEventListener('click', async () => {
     status.textContent = error.message
   }
 })
-layoutButton.addEventListener('click', openLayoutEditor)
-sessionButton.addEventListener('click', openSessionCenter)
-scheduledTaskButton.addEventListener('click', openScheduledTasks)
-settingsButton.addEventListener('click', openGlobalSettings)
+layoutButton.addEventListener('click', async () => {
+  returnToSettings = true
+  settingsOverlay.classList.add('hidden')
+  await api.globalSettingsPanel(false)
+  await openLayoutEditor()
+  if (layoutOverlay.classList.contains('hidden')) await restoreSettingsAfterLayout()
+})
+document.querySelector('#video-studio-button')!.addEventListener('click',async()=>{
+  try {await setToolbarPopup(null);await api.openProductPanel('video-studio')}catch(error:unknown){status.textContent=String(error)}
+})
+moreButton.addEventListener('click', async () => {
+  try { await setToolbarPopup(toolbarPopup === 'more' ? null : 'more'); if (toolbarPopup === 'more') scheduledTaskButton.focus() }
+  catch (error: unknown) { status.textContent = String(error); void setToolbarPopup(null) }
+})
+siteSettingsButton.addEventListener('click', async () => {
+  try { await setToolbarPopup(toolbarPopup === 'site' ? null : 'site'); if (toolbarPopup === 'site') keepLoginButton.focus() }
+  catch (error: unknown) { status.textContent = String(error); void setToolbarPopup(null) }
+})
+document.querySelector('#toolbar-dismiss').addEventListener('click', () => void setToolbarPopup(null))
+document.querySelector('.chrome').addEventListener('pointerdown', (event: PointerEvent) => {
+  if (toolbarPopup && event.target instanceof Element && !event.target.closest('#more-button, #site-settings-button')) void setToolbarPopup(null)
+})
+let toolbarViewportWidth = window.innerWidth
+window.addEventListener('resize', () => {
+  if (toolbarViewportWidth !== window.innerWidth && toolbarPopup) void setToolbarPopup(null)
+  toolbarViewportWidth = window.innerWidth
+})
+document.addEventListener('keydown', (event: KeyboardEvent) => {
+  if (event.key === 'Escape' && toolbarPopup) {
+    const previous = toolbarPopup
+    void setToolbarPopup(null).then(() => (previous === 'more' ? moreButton : siteSettingsButton).focus())
+    event.preventDefault()
+  }
+  if (toolbarPopup === 'more' && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+    ;(document.activeElement === scheduledTaskButton ? settingsButton : scheduledTaskButton).focus()
+    event.preventDefault()
+  }
+})
+;(document.querySelectorAll('[data-settings-category]') as HTMLButtonElement[]).forEach(button => button.addEventListener('click', () => chooseSettingsCategory(button.dataset.settingsCategory!)))
+scheduledTaskButton.addEventListener('click', async () => { await setToolbarPopup(null); await openScheduledTasks() })
+settingsButton.addEventListener('click', async () => { await setToolbarPopup(null); await openGlobalSettings(); chooseSettingsCategory('browser') })
 document.querySelector('#settings-close').addEventListener('click', closeGlobalSettings)
-document.querySelector('#settings-dsh-advanced').addEventListener('click', async () => {
+document.querySelector('#settings-agent-advanced').addEventListener('click', async () => {
   try {
     settingsOverlay.classList.add('hidden')
-    await api.openDshAdvancedSettings()
+    await api.openAgentAdvancedSettings()
   } catch (error) {
     settingsOverlay.classList.remove('hidden')
     settingsMessage.textContent = error.message
@@ -630,6 +721,9 @@ settingsRestart.addEventListener('click', async () => {
     settingsRestart.disabled = false
   }
 })
+videoTemplateSelect.addEventListener('change',()=>{const preset=videoPreferencesDraft.templates.find(item=>item.name===videoTemplateSelect.value);if(preset){videoOptionsForm.fill(preset.options);videoTemplateName.value=preset.name;videoPreferencesDirty=true;videoTemplateNote.textContent='已载入模板。保存设置后，这些参数成为新视频的默认值。'}})
+document.querySelector('#settings-video-template-save')!.addEventListener('click',()=>{try{videoPreferencesDraft=saveVideoTemplate(videoPreferencesDraft,videoTemplateName.value,videoOptionsForm.read());videoPreferencesDirty=true;renderVideoTemplates();videoTemplateSelect.value=videoTemplateName.value.trim();videoTemplateNote.textContent='模板已加入待保存设置，请点击底部保存。'}catch(error){videoTemplateNote.textContent=error instanceof Error?error.message:String(error)}})
+document.querySelector('#settings-video-template-delete')!.addEventListener('click',()=>{const index=videoPreferencesDraft.templates.findIndex(item=>item.name===videoTemplateSelect.value);if(index<0){videoTemplateNote.textContent='请先选择要删除的模板。';return}videoPreferencesDraft.templates.splice(index,1);videoPreferencesDirty=true;videoTemplateSelect.value='';renderVideoTemplates();videoTemplateNote.textContent='模板已从待保存设置移除，请点击底部保存。'})
 settingsProxyMode.addEventListener('change', () => settingsProxyManual.classList.toggle('hidden', settingsProxyMode.value !== 'manual'))
 settingsSearchEngine.addEventListener('change', () => settingsCustomSearchRow.classList.toggle('hidden', settingsSearchEngine.value !== 'custom'))
 document.querySelector('#settings-save').addEventListener('click', async () => {
@@ -644,17 +738,14 @@ document.querySelector('#settings-save').addEventListener('click', async () => {
       searchEngine: settingsSearchEngine.value,
       customSearchUrl: settingsCustomSearch.value,
       newTabPage: settingsNewTab.value,
-      dshSidebarVisible: settingsDshSidebar.checked
+      agentSidebarVisible: settingsAgentSidebar.checked,
+      edgeNarrationEnabled: settingsEdgeNarration.checked,
+      ...(videoPreferencesDirty?{videoPreferences:{...videoPreferencesDraft,defaults:videoOptionsForm.read()},videoPreferencesExpected}:{})
     })
-    if (productInfo.id === 'bmw-dev') {
-      webRuntimeSettings = await api.updateWebRuntimeSettings({
-        moduleUrl: settingsWebContainerModule.value,
-        apiKey: settingsWebContainerKey.value
-      })
-      settingsWebContainerKey.value = ''
-    }
+
+    videoPreferencesDirty=false
     renderGlobalSettings()
-    settingsMessage.textContent = 'Saved. BMW Shell, DSH, compatible pages, searches and network connections use these settings.'
+    settingsMessage.textContent = 'Saved. BMW Shell, Agent, compatible pages, searches and network connections use these settings.'
   } catch (error) {
     settingsMessage.textContent = error.message
     settingsMessage.classList.add('error')
@@ -663,19 +754,19 @@ document.querySelector('#settings-save').addEventListener('click', async () => {
 document.querySelector('#session-close').addEventListener('click', closeSessionCenter)
 document.querySelector('#scheduled-task-close').addEventListener('click', closeScheduledTasks)
 document.querySelector('#scheduled-task-refresh').addEventListener('click', refreshScheduledTasks)
-document.querySelector('#session-refresh').addEventListener('click', refreshDshSessions)
+document.querySelector('#session-refresh').addEventListener('click', refreshAgentSessions)
 document.querySelector('#session-new').addEventListener('click', async () => {
   try {
     setSessionMessage('Creating a BMW browser-only session…')
-    dshSessions = await api.createDshSession()
+    agentSessions = await api.createAgentSession()
     sessionSearch.value = ''
-    renderDshSessions()
+    renderAgentSessions()
     setSessionMessage('New session created and selected.')
   } catch (error) { setSessionMessage(error.message, true) }
 })
 sessionSearch.addEventListener('input', () => {
   clearTimeout(sessionSearchTimer)
-  sessionSearchTimer = setTimeout(refreshDshSessions, 250)
+  sessionSearchTimer = setTimeout(refreshAgentSessions, 250)
 })
 document.querySelector('#layout-close').addEventListener('click', closeLayoutEditor)
 document.querySelectorAll('[data-layout-mode]').forEach((button) => {
@@ -701,61 +792,40 @@ document.querySelector('#layout-apply').addEventListener('click', async () => {
       overlayFullscreen: editingLayoutMode === 'overlay' && layoutFullscreen.checked
     })
     layoutOverlay.classList.add('hidden')
+    await restoreSettingsAfterLayout()
   } catch (error) {
     layoutMessage.textContent = error.message
   }
 })
 document.querySelector('#project-close').addEventListener('click', closeProjectManager)
-projectImport.addEventListener('click', openImportWizard)
-importProject.addEventListener('change', renderImportProject)
-document.querySelector('#import-close').addEventListener('click', () => importOverlay.classList.add('hidden'))
-document.querySelector('#import-confirm').addEventListener('click', async () => {
-  importMessage.textContent = 'Importing selected data…'
-  try {
-    const result = await api.productImportProject({
-      projectId: importProject.value,
-      includeDocuments: document.querySelector('#import-documents').checked,
-      includeHomeUrl: document.querySelector('#import-home').checked,
-      includeTabs: document.querySelector('#import-tabs').checked,
-      includeSource: document.querySelector('#import-source').checked,
-      includeLegacyEvidence: document.querySelector('#import-evidence').checked,
-      artifactIds: [...importArtifacts.querySelectorAll('input:checked')].map((input) => input.value),
-      cookieOrigins: [...importOrigins.querySelectorAll('input:checked')].map((input) => input.value)
-    })
-    projectsState = result.state
-    editingProjectId = result.project.id
-    creatingProject = false
-    initialProjectSetup = false
-    importOverlay.classList.add('hidden')
-    projectOverlay.classList.add('hidden')
-    await api.projectPanel(false)
-    renderProjects()
-    if (!layoutState.configured) await openLayoutEditor()
-  } catch (error) {
-    importMessage.textContent = error.message
-    importMessage.classList.add('error')
-  }
-})
 document.querySelector('#project-new').addEventListener('click', () => {
   creatingProject = true
   editingProjectId = null
   setProjectMessage('Create a product-owned project with isolated browser state and memory. Home URL is optional.')
-  renderProjectEditor()
+  renderProjects()
+  void loadProjectDocument()
   projectName.focus()
 })
 document.querySelectorAll('#project-doc-tabs button').forEach((button) => {
   button.addEventListener('click', async () => {
     documentKind = button.dataset.kind
-    renderProjectEditor()
+    renderProjectEditor({ preserveDraft: true })
     await loadProjectDocument()
   })
 })
 document.querySelector('#project-save').addEventListener('click', async () => {
+  if (projectDocumentLoading || projectSavePending || (!creatingProject && !projectDocumentLoaded)) return
+  const projectId = editingProjectId
+  const kind = documentKind
+  const content = projectDocument.value
+  const input = { name: projectName.value, homeUrl: projectHome.value }
+  projectSavePending = true
+  renderProjects({ preserveDraft: true })
   setProjectMessage('Saving…')
   try {
     if (creatingProject) {
       const wasInitialSetup = initialProjectSetup
-      projectsState = await api.createProject({ name: projectName.value, homeUrl: projectHome.value })
+      projectsState = await api.createProject(input)
       creatingProject = false
       initialProjectSetup = false
       editingProjectId = projectsState.activeProjectId
@@ -763,24 +833,29 @@ document.querySelector('#project-save').addEventListener('click', async () => {
       await loadProjectDocument()
       if (wasInitialSetup) {
         projectOverlay.classList.remove('initial-setup')
+        projectSavePending = false
         await closeProjectManager()
         if (!layoutState.configured) await openLayoutEditor()
         return
       }
-      setProjectMessage('Project created and connected to DSH.')
+      setProjectMessage('Project created and connected to Agent.')
       return
     }
-    projectsState = await api.updateProject(editingProjectId, { name: projectName.value, homeUrl: projectHome.value })
-    await api.writeProjectDocument(editingProjectId, documentKind, projectDocument.value)
+    projectsState = await api.updateProject(projectId, input)
+    await api.writeProjectDocument(projectId, kind, content)
     renderProjects()
     setProjectMessage('Saved. AGENTS.md and MEMORY.md apply to the next fresh project session.')
   } catch (error) {
     setProjectMessage(error.message, true)
   }
+  finally {
+    projectSavePending = false
+    renderProjects({ preserveDraft: true })
+  }
 })
 document.querySelector('#project-archive').addEventListener('click', async () => {
   const project = editingProject()
-  if (!project || !window.confirm(`Archive “${project.name}”? Files and DSH session logs are retained.`)) return
+  if (!project || !window.confirm(`Archive “${project.name}”? Files and Agent session logs are retained.`)) return
   try {
     projectsState = await api.archiveProject(project.id)
     editingProjectId = projectsState.activeProjectId
@@ -792,31 +867,40 @@ document.querySelector('#project-archive').addEventListener('click', async () =>
   }
 })
 
-api.onBrowserState((value) => { browserState = value; render() })
-api.onDshStatus((value) => {
-  dshStatusState = value
-  renderDshStatus()
+document.querySelector('#context-session').addEventListener('click',openSessionCenter)
+api.onAgentContext(receiveAgentContext)
+api.agentContext().then(receiveAgentContext).catch(()=>{})
+api.onBrowserState((value) => { browserState = value; render();renderContext() })
+api.onAgentStatus((value) => {
+  agentStatusState = value
+  renderAgentStatus()
 })
-api.onDshLog((entry) => {
+api.onAgentLog((entry) => {
   if (entry.stream === 'stderr' && /error/i.test(entry.text)) status.textContent = entry.text.trim().slice(0, 180)
 })
 api.onMediaStatus((value) => {
-  recording = value.active === true
-  recordingIndicator.classList.toggle('hidden', !recording)
-  recordButton.textContent = recording ? '■ Stop' : '● Record'
+  const processing = value.kind === 'processing' && value.active === true
+  if (value.kind !== 'processing') recording = value.active === true
+  recordingIndicator.classList.toggle('hidden', !recording && !processing)
+  recordingIndicator.textContent = processing ? `● Processing media ${Math.round((Number(value.progress) || 0) * 100)}%` : '● Recording this BMW tab'
+  recordButton.disabled = processing
+  recordButton.textContent = processing ? 'Processing…' : recording ? '■ Stop' : '● Record'
 })
 api.onLayout((value) => {
   layoutState = { ...layoutState, ...value }
+  receiveWorkspace({mode:value.workspaceMode})
   agentVisible = value.agentVisible
   agentToggle.classList.toggle('off', !agentVisible)
-  renderDshStatus()
+  renderAgentStatus()
   if (value.setupVisible && layoutOverlay.classList.contains('hidden')) showLayoutEditor(value)
 })
 api.onProjectState((value) => {
   const activeChanged = projectsState.activeProjectId !== value.activeProjectId
   projectsState = value
-  if (!editingProjectId) editingProjectId = value.activeProjectId
-  renderProjects()
+  const selectedRemoved = !creatingProject && !value.projects.some(project => project.id === editingProjectId)
+  if (selectedRemoved) editingProjectId = value.activeProjectId
+  renderProjects({ preserveDraft: !selectedRemoved })
+  if (selectedRemoved && !projectOverlay.classList.contains('hidden')) void loadProjectDocument()
   if (activeChanged && !scheduledTaskOverlay.classList.contains('hidden')) void refreshScheduledTasks()
 })
 api.onProjectManagerOpen((value) => {
@@ -825,10 +909,10 @@ api.onProjectManagerOpen((value) => {
 api.productInfo().then((product) => {
   productInfo = product
   productBrand.textContent = product.name
+  document.querySelector('#settings-agent-driver').textContent = product.agent.label+' runtime · '+product.agent.baseline
+  document.querySelector('#settings-agent-advanced').textContent = 'Open '+product.agent.label+' models, input behavior, permissions & plugins'
   settingsRestart.textContent = `Restart ${product.name}…`
   document.title = product.name
-  projectImport.classList.toggle('hidden', !product.canImportFromBase)
-  if (product.id === 'bmw-dev') api.webRuntimeSettings().then((value) => { webRuntimeSettings = value; renderGlobalSettings() }).catch(() => {})
   renderGlobalSettings()
 }).catch(() => {})
 api.browser({ action: 'status' }).then((value) => { browserState = value; render() })
@@ -836,7 +920,7 @@ Promise.all([api.projectState(), api.layoutSettings()]).then(async ([projectValu
   projectsState = projectValue
   editingProjectId = projectValue.activeProjectId
   layoutState = { ...layoutState, ...layoutValue }
-  renderDshStatus()
+  renderAgentStatus()
   renderProjects()
   if (projectValue.initialSetupPending) {
     await openProjectManager({ create: true, initial: true })
@@ -854,3 +938,12 @@ api.onScheduledTaskOpen(() => {
   scheduledTaskOverlay.classList.remove('hidden')
   void refreshScheduledTasks()
 })
+
+function receiveWorkspace(value:unknown):void {
+ const state=value as {mode?:unknown};const studio=state?.mode==='studio'
+ document.body.classList.toggle('video-workspace',studio)
+ document.querySelector('#browser-workspace').setAttribute('aria-pressed',String(!studio))
+ document.querySelector('#studio-workspace').setAttribute('aria-pressed',String(studio))
+}
+for(const [id,mode] of [['browser-workspace','browser'],['studio-workspace','studio']] as const)document.querySelector('#'+id).addEventListener('click',()=>{void api.setWorkspaceMode(mode).catch(error=>status.textContent=String(error))})
+api.onWorkspace(receiveWorkspace)

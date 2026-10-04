@@ -1,0 +1,13 @@
+const {contextBridge,ipcRenderer}=require('electron')
+contextBridge.exposeInMainWorld('bmwStudio',{
+  selection:(value:unknown)=>ipcRenderer.invoke('video-studio-selection',value),
+  leave:()=>ipcRenderer.invoke('video-studio-leave'),
+  state:()=>ipcRenderer.invoke('video-studio-state'),
+  command:(projectId:string,request:unknown)=>ipcRenderer.invoke('video-studio-command',projectId,request),
+  read:(projectId:string,artifactId:string,offset:number,length:number)=>ipcRenderer.invoke('video-studio-read',projectId,artifactId,offset,length),
+  importAsset:(projectId:string)=>ipcRenderer.invoke('video-studio-import',projectId),
+  cancel:()=>ipcRenderer.invoke('video-studio-cancel'),
+  assistant:(request?:unknown)=>ipcRenderer.invoke('video-studio-assistant',request),
+  onChange:(listener:(value:unknown)=>void)=>ipcRenderer.on('video-studio-change',(_event:unknown,value:unknown)=>listener(value)),
+  onProgress:(listener:(value:unknown)=>void)=>ipcRenderer.on('video-studio-progress',(_event:unknown,value:unknown)=>listener(value))
+})

@@ -7,6 +7,10 @@
     ".": "./src/browser-schema.js",
     "./bridge": "./src/bridge-server.js",
     "./kernel": "./src/browser-kernel.js",
-    "./registry": "./src/browser-capability-registry.js"
+    "./registry": "./src/browser-capability-registry.js",
+    "./host": "./src/browser-host.js"
+  },
+  "dependencies": {
+    "@bmw-agent/media-native": "*"
   }
 }

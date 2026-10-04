@@ -1,4 +1,6 @@
 import crypto from 'node:crypto'
+import { readRendererPhase } from './renderer-read.js'
+import { readScreenshotPhase } from './screenshot-read.js'
 import { SessionOperations } from './session-operations.js'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -47,7 +49,8 @@ function projectStartUrl(project) {
 export class BrowserKernel {
   [key: string]: any
 
-  constructor({ window, session, permissionStore, sessionContinuity, projectStore, settingsStore, capabilityRegistry, allowedActions, artifactsDirectory, pageTheme = 'dark', onState }) {
+  constructor({ window, session, permissionStore, sessionContinuity, projectStore, settingsStore, capabilityRegistry, allowedActions, artifactsDirectory, pageTheme = 'dark', onState, getCurrentSessionId = () => null }) {
+    this.getCurrentSessionId = getCurrentSessionId
     this.window = window
     this.session = session
     this.permissionStore = permissionStore
@@ -63,7 +66,6 @@ export class BrowserKernel {
     this.activeTabId = null
     this.browserBounds = { x: 0, y: 64, width: 900, height: 700 }
     this.recordingController = null
-    this.validationManager = null
     this.scheduledTaskManager = null
     this.tabStateTimer = null
     this.diagnostics = new Map()
@@ -73,30 +75,53 @@ export class BrowserKernel {
     this.recordingController = controller
   }
 
-  setValidationManager(manager) {
-    this.validationManager = manager
-  }
-
   setScheduledTaskManager(manager) {
     this.scheduledTaskManager = manager
   }
 
   async initialize() {
     const project = this.projectStore?.active()
+    if (project) return this.restoreProjectTabs(project)
+    return this.openTab({ url: this.settingsStore?.newTabUrl(), foreground: true, source: 'user' })
+  }
+
+  private restoringTabState = false
+
+  private async restoreProjectTabs(project: { id: string; homeUrl?: string; tabState?: { urls?: string[]; activeUrl?: string | null } }) {
+    // Snapshot before loading: browser events must not persist a partially restored set.
+    const urls = [...new Set(project.tabState?.urls || [])]
+    const activeUrl = projectStartUrl(project)
+    if (!urls.length || !urls.includes(activeUrl)) urls.push(activeUrl)
+    const failures: string[] = []
+    clearTimeout(this.tabStateTimer)
+    this.restoringTabState = true
     try {
-      return await this.openTab({ url: project ? projectStartUrl(project) : this.settingsStore?.newTabUrl(), foreground: true, source: 'user' })
-    } catch (error) {
-      const tab = this.tabs.get(this.activeTabId)
-      if (!tab) throw error
-      console.warn(`[BMW] Restored page failed to load without blocking startup: ${error.message}`)
-      return { ...this.serializeTab(tab), loadError: error.message }
+      for (const url of urls) {
+        try {
+          await this.openTab({ url, foreground: false, source: 'user', reuse: false })
+        } catch (error) {
+          // Retain the requested URL even when an offline page cannot load.
+          const tab = [...this.tabs.values()].filter(value => value.projectId === project.id).at(-1)
+          if (!tab) throw error
+          tab.url = url
+          const message = error instanceof Error ? error.message : String(error)
+          failures.push(message)
+          console.warn(`[BMW] Restored page failed to load without blocking Project activation: ${message}`)
+        }
+      }
+      const owned = [...this.tabs.values()].filter(tab => tab.projectId === project.id)
+      const active = owned.find(tab => tab.url === activeUrl) || owned.at(-1)
+      this.showTab(active.id)
+      return { ...this.serializeTab(active), ...(failures.length ? { loadError: failures.join('; ') } : {}) }
+    } finally {
+      this.restoringTabState = false
+      this.emitState()
     }
   }
 
   setBounds(bounds) {
     this.browserBounds = bounds
-    const active = this.tabs.get(this.activeTabId)
-    if (active) active.view.setBounds(bounds)
+    for (const tab of this.tabs.values()) tab.view.setBounds(bounds)
   }
 
   #wireTab(tab) {
@@ -104,7 +129,7 @@ export class BrowserKernel {
     this.diagnostics.set(tab.id, { console: [], network: [], media: [], loadFailures: [] })
     const emit = () => {
       tab.title = wc.getTitle() || 'New tab'
-      tab.url = wc.getURL()
+      tab.url = wc.getURL() || tab.url
       tab.loading = wc.isLoading()
       this.emitState()
     }
@@ -114,18 +139,11 @@ export class BrowserKernel {
     wc.on('did-navigate', emit)
     wc.on('did-navigate-in-page', emit)
     wc.on('did-navigate', () => { void this.#applyPageTheme(tab) })
-    wc.on('did-finish-load', () => {
-      if (this.validationManager?.recording?.tabId === tab.id) void this.enableInteractionRecording(tab)
-    })
     wc.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
       this.#addDiagnostic(tab.id, 'loadFailures', { errorCode, errorDescription, url: validatedURL, isMainFrame, at: Date.now() })
     })
     wc.on('console-message', (details) => {
       const message = String(details?.message || '')
-      if (message.startsWith('__BMW_TEST_RECORD__')) {
-        try { this.validationManager?.recordInteraction(tab.id, JSON.parse(message.slice('__BMW_TEST_RECORD__'.length))) } catch {}
-        return
-      }
       this.#addDiagnostic(tab.id, 'console', {
         level: details?.level || 'info',
         message: message.slice(0, 2000),
@@ -154,18 +172,6 @@ export class BrowserKernel {
         return { ...this.serializeTab(reusable.tab), reused: true, reuseReason: reusable.reason }
       }
     }
-    if (source === 'test' && reuse !== false) {
-      const reusable = [...this.tabs.values()]
-        .filter((tab) => tab.projectId === projectId && tab.source === 'test')
-        .sort((left, right) => Number(right.lastUsedAt) - Number(left.lastUsedAt))[0]
-      if (reusable) {
-        reusable.lastUsedAt = Date.now()
-        if (reusable.url !== targetUrl) await reusable.view.webContents.loadURL(targetUrl)
-        if (foreground) this.showTab(reusable.id)
-        else this.emitState()
-        return { ...this.serializeTab(reusable), reused: true, reuseReason: reusable.url === targetUrl ? 'test-target' : 'test-worker' }
-      }
-    }
     const id = crypto.randomUUID()
     const view = new WebContentsView({
       webPreferences: {
@@ -176,12 +182,13 @@ export class BrowserKernel {
         webSecurity: true
       }
     })
+    view.setBounds(this.browserBounds)
     const tab = {
       id,
       view,
       projectId,
       title: 'New tab',
-      url: '',
+      url: targetUrl,
       loading: true,
       source,
       createdAt: Date.now(),
@@ -261,6 +268,7 @@ export class BrowserKernel {
     if (previous && previous.id !== tab.id) this.window.contentView.removeChildView(previous.view)
     if (!this.window.contentView.children.includes(tab.view)) this.window.contentView.addChildView(tab.view)
     tab.view.setBounds(this.browserBounds)
+    tab.view.setVisible(true)
     this.activeTabId = tab.id
     tab.lastUsedAt = Date.now()
     this.emitState()
@@ -319,8 +327,7 @@ export class BrowserKernel {
         .map((tab) => this.serializeTab(tab)),
       agentControlGranted: this.permissionStore.hasAgentControl(),
       sessionContinuity: this.sessionContinuity?.status(active?.url) || null,
-      activeProject: activeProject ? { id: activeProject.id, name: activeProject.name } : null,
-      connectors: {}
+      activeProject: activeProject ? { id: activeProject.id, name: activeProject.name } : null
     }
   }
 
@@ -349,7 +356,7 @@ export class BrowserKernel {
   }
 
   scheduleTabStateSave() {
-    if (!this.projectStore) return
+    if (!this.projectStore || this.restoringTabState) return
     clearTimeout(this.tabStateTimer)
     this.tabStateTimer = setTimeout(() => {
       const project = this.projectStore.active()
@@ -373,27 +380,21 @@ export class BrowserKernel {
     if (previous) this.saveTabState(previous.projectId)
     if (previous) this.window.contentView.removeChildView(previous.view)
     this.activeTabId = null
-    const existing = [...this.tabs.values()].filter((tab) => tab.projectId === project.id).at(-1)
+    const owned = [...this.tabs.values()].filter((tab) => tab.projectId === project.id)
+    const existing = owned.find(tab=>tab.url===project.tabState?.activeUrl) || owned.at(-1)
     if (existing) return this.showTab(existing.id)
-    try {
-      return await this.openTab({ url: projectStartUrl(project), foreground: true, source: 'user' })
-    } catch (error) {
-      const tab = this.tabs.get(this.activeTabId)
-      if (!tab) throw error
-      console.warn(`[BMW] Project page failed to load without blocking Project activation: ${error.message}`)
-      return { ...this.serializeTab(tab), loadError: error.message }
-    }
+    return this.restoreProjectTabs(project)
   }
 
   private readonly operations = new SessionOperations()
+  get busy():boolean { return this.operations.busy }
 
-  async execute(rawRequest, { actor = 'agent' } = {}) {
-    // Feature-owned test steps may call back into the kernel during their parent action.
-    if (actor === 'test') return this.executeAction(rawRequest, { actor })
-    return this.operations.run(() => {}, () => this.executeAction(rawRequest, { actor }))
+  async execute(rawRequest, { actor = 'agent', signal, sessionOwner }: { actor?: string; signal?: AbortSignal; sessionOwner?:import('./browser-host.js').BrowserSessionOwner } = {}) {
+    const owner=sessionOwner?{projectId:sessionOwner.projectId,sessionId:sessionOwner.sessionId}:undefined
+    return this.operations.run(() => { signal?.throwIfAborted() }, () => this.executeAction(rawRequest, { actor, signal, sessionOwner:owner }))
   }
 
-  private async executeAction(rawRequest, { actor = 'agent' } = {}) {
+  private async executeAction(rawRequest, { actor = 'agent', signal, sessionOwner }: { actor?: string; signal?: AbortSignal; sessionOwner?:import('./browser-host.js').BrowserSessionOwner } = {}) {
     const request = assertBrowserRequest(rawRequest, this.allowedActions)
     if (!this.permissionStore.hasAgentControl() && request.action !== 'status') {
       const error = new Error('BMW agent control has not been granted. Ask the user to click “Enable agent control” once in the product toolbar.')
@@ -403,7 +404,7 @@ export class BrowserKernel {
 
     if (request.action === 'status') return this.state()
     if (request.action === 'tabs.list') return this.state()
-    const contributed = await this.capabilityRegistry?.execute(request.action, { browserKernel: this, actor }, request)
+    const contributed = await this.capabilityRegistry?.execute(request.action, { browserKernel: this, actor, signal, sessionOwner }, request)
     if (contributed?.handled) return contributed.value
     if (request.action === 'project.context') {
       const project = this.projectStore.active()
@@ -426,7 +427,7 @@ export class BrowserKernel {
       const project = this.projectStore.active()
       if (request.action === 'schedule.list') return this.scheduledTaskManager.list(project.id)
       if (request.action === 'schedule.create') {
-        return this.scheduledTaskManager.create(project, {
+        return this.scheduledTaskManager.create({id:project.id,sessionId:this.getCurrentSessionId()}, {
           name: request.scheduleName,
           prompt: request.schedulePrompt,
           time: request.scheduleTime,
@@ -459,6 +460,11 @@ export class BrowserKernel {
     if (request.action === 'tabs.show') return this.showTab(targetTabId(request))
     if (request.action === 'tabs.close') return this.closeTab(targetTabId(request))
 
+    if (['media.inspect', 'media.frames.sample', 'media.convert','media.image.inspect','media.image.annotate','media.image.draw'].includes(request.action)) {
+      if (!this.projectStore.active()?.directory) throw new Error('Media processing requires an active BMW Project.')
+      return this.recordingController.processArtifact(request, signal)
+    }
+
     const tab = this.requireTab(targetTabId(request))
     tab.lastUsedAt = Date.now()
     const wc = tab.view.webContents
@@ -485,23 +491,23 @@ export class BrowserKernel {
     }
     if (request.action === 'key') return this.key(tab, request)
     if (request.action === 'hover') return this.hover(tab, request)
-    if (request.action === 'observe') return this.observe(tab, request)
-    if (request.action === 'page.diagnostics') return this.pageDiagnostics(tab, request)
-    if (request.action === 'page.media.list') return this.listMedia(tab, request)
+    if (request.action === 'observe') return this.observe(tab, request, signal)
+    if (request.action === 'page.diagnostics') return this.pageDiagnostics(tab, request, signal)
+    if (request.action === 'page.media.list') return this.listMedia(tab, request, signal)
     if (request.action === 'page.viewport.set') return this.setViewport(tab, request)
     if (request.action === 'click') return this.click(tab, request)
     if (request.action === 'type') return this.type(tab, request)
-    if (request.action === 'media.screenshot') return this.screenshot(tab, request)
-    if (request.action === 'media.download') return this.downloadMedia(tab, request)
+    if (request.action === 'media.screenshot') return this.screenshot(tab, request, signal)
+    if (request.action === 'media.download') return this.downloadMedia(tab, request, signal)
     if (request.action === 'media.video.capture') return this.recordingController.captureVideo(tab, request)
     if (request.action === 'media.record.start') return this.recordingController.start(tab, request)
     if (request.action === 'media.record.stop') return this.recordingController.stop()
     throw new Error(`Unimplemented browser action: ${request.action}`)
   }
 
-  async observe(tab, request) {
+  async observe(tab, request, signal?:AbortSignal) {
     const maxCharacters = Math.min(Math.max(Number(request.maxCharacters) || 12_000, 1_000), 50_000)
-    const result = await tab.view.webContents.executeJavaScript(`(() => {
+    const result = await readRendererPhase<{title:string;url:string;text:string;interactive:unknown[];semantic:unknown[]}>(tab.view.webContents, 'observe', 'dom', () => tab.view.webContents.executeJavaScript(`(() => {
       const isVisible = (element) => {
         const style = getComputedStyle(element)
         const rect = element.getBoundingClientRect()
@@ -565,7 +571,7 @@ export class BrowserKernel {
         interactive,
         semantic
       }
-    })()`, true)
+    })()`, true), signal)
     return { tab: this.serializeTab(tab), ...result }
   }
 
@@ -626,20 +632,16 @@ export class BrowserKernel {
     return structuredClone(this.diagnostics.get(tabId) || { console: [], network: [], media: [], loadFailures: [] })
   }
 
-  async listMedia(tab, request) {
+  async listMedia(tab, request, signal?:AbortSignal) {
     const selector = typeof request.selector === 'string' && request.selector.trim() ? request.selector.trim() : null
     const index = Math.min(Math.max(Math.floor(Number(request.index) || 0), 0), 10_000)
     const maxItems = Math.min(Math.max(Math.floor(Number(request.maxItems) || 80), 1), 240)
-    const result = await tab.view.webContents.executeJavaScript(`(async () => {
+    const result = await readRendererPhase<{ok:boolean;reason?:string;items:Record<string,unknown>[];matches:number;selectedIndex:number;text:string}>(tab.view.webContents, 'page.media.list', 'dom', () => tab.view.webContents.executeJavaScript(`(async () => {
       const selector = ${JSON.stringify(selector)}
       const index = ${index}
       const roots = selector ? [...document.querySelectorAll(selector)] : [document]
       const root = roots[index]
       if (!root) return { ok: false, reason: 'element-not-found', matches: roots.length }
-      if (root instanceof Element) {
-        root.scrollIntoView({ block: 'center', inline: 'nearest' })
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
-      }
       const absolute = (value) => {
         if (!value || /^blob:|^data:/i.test(value)) return value || ''
         try { return new URL(value, location.href).toString() } catch { return value }
@@ -695,7 +697,7 @@ export class BrowserKernel {
         text: (root.innerText || '').trim().split(' ').filter(Boolean).join(' ').slice(0, 5000),
         items: [...images, ...videos, ...sources, ...performanceMedia]
       }
-    })()`, true)
+    })()`, true), signal)
     if (!result.ok) throw new Error(result.reason)
     const observed = this.diagnosticsFor(tab.id).media.map((item) => ({ kind: 'network', ...item }))
     const unique = new Map()
@@ -715,7 +717,7 @@ export class BrowserKernel {
     }
   }
 
-  async downloadMedia(tab, request) {
+  async downloadMedia(tab, request, signal?:AbortSignal) {
     if (typeof request.url !== 'string' || !request.url.trim()) throw new Error('media.download requires a media URL.')
     const project = this.projectStore?.active()
     if (!project?.directory) throw new Error('media.download requires an active BMW Project.')
@@ -724,14 +726,15 @@ export class BrowserKernel {
       projectDirectory: project.directory,
       url: request.url,
       filename: typeof request.filename === 'string' ? request.filename : undefined,
+      signal,
       referrer: tab.url
     })
     return { ...artifact, tab: this.serializeTab(tab) }
   }
 
-  async pageDiagnostics(tab, request: Readonly<Record<string, unknown>> & { maxCharacters?: number } = {}) {
-    const observation = await this.observe(tab, { maxCharacters: request.maxCharacters || 6000 })
-    const performance = await tab.view.webContents.executeJavaScript(`(() => {
+  async pageDiagnostics(tab, request: Readonly<Record<string, unknown>> & { maxCharacters?: number } = {}, signal?:AbortSignal) {
+    const observation = await this.observe(tab, { maxCharacters: request.maxCharacters || 6000 }, signal)
+    const performance = await readRendererPhase(tab.view.webContents, 'page.diagnostics', 'performance', () => tab.view.webContents.executeJavaScript(`(() => {
       const navigation = performance.getEntriesByType('navigation')[0]
       return {
         domContentLoadedMs: navigation ? Math.round(navigation.domContentLoadedEventEnd) : null,
@@ -739,17 +742,20 @@ export class BrowserKernel {
         resourceCount: performance.getEntriesByType('resource').length,
         longTaskCount: performance.getEntriesByType('longtask').length
       }
-    })()`, true)
+    })()`, true), signal)
     let accessibility = []
     try {
       if (!tab.view.webContents.debugger.isAttached()) tab.view.webContents.debugger.attach('1.3')
-      const tree = await tab.view.webContents.debugger.sendCommand('Accessibility.getFullAXTree', { depth: 5 })
+      const tree = await readRendererPhase<{nodes?:{ignored?:boolean;role?:{value?:string};name?:{value?:string};description?:{value?:string};properties?:{name:string;value?:{value?:boolean}}[]}[]}>(tab.view.webContents,'page.diagnostics','accessibility',()=>tab.view.webContents.debugger.sendCommand('Accessibility.getFullAXTree',{depth:5}),signal)
       accessibility = (tree.nodes || []).filter((node) => !node.ignored).slice(0, 240).map((node) => ({
         role: node.role?.value || '', name: node.name?.value || '', description: node.description?.value || '',
         disabled: node.properties?.find((property) => property.name === 'disabled')?.value?.value === true
       }))
-    } catch {}
-    return { ...observation, diagnostics: this.diagnosticsFor(tab.id), performance, accessibility }
+    } catch (error:unknown) {
+      if(signal?.aborted || (error instanceof Error && 'code' in error && String(error.code).startsWith('BMW_BROWSER_')))throw error
+    }
+    const screenshot=await this.screenshot(tab,{},signal)
+    return { ...observation, screenshot, diagnostics: this.diagnosticsFor(tab.id), performance, accessibility }
   }
 
   async assertPage(tab, request) {
@@ -798,7 +804,9 @@ export class BrowserKernel {
     if (!tab.view.webContents.debugger.isAttached()) tab.view.webContents.debugger.attach('1.3')
     await tab.view.webContents.debugger.sendCommand('Emulation.setDeviceMetricsOverride', {
       width, height, deviceScaleFactor, mobile: request.mobile === true,
-      screenWidth: width, screenHeight: height
+      // Emulate page layout for capture without resizing the native render view
+      // beyond the workspace into Assistant or Shell surfaces.
+      screenWidth: width, screenHeight: height, dontSetVisibleSize: true
     })
     return { width, height, deviceScaleFactor, mobile: request.mobile === true }
   }
@@ -831,79 +839,20 @@ export class BrowserKernel {
     return result
   }
 
-  async enableInteractionRecording(tab) {
-    await tab.view.webContents.executeJavaScript(`(() => {
-      if (window.__bmwTestRecorder) return true
-      const selectorFor = (element) => {
-        if (element.id) return '#' + CSS.escape(element.id)
-        const testId = element.getAttribute('data-testid')
-        if (testId) return '[data-testid="' + CSS.escape(testId) + '"]'
-        const aria = element.getAttribute('aria-label')
-        if (aria) return element.tagName.toLowerCase() + '[aria-label="' + CSS.escape(aria) + '"]'
-        const parts = []
-        let node = element
-        while (node && node !== document.body && parts.length < 4) {
-          let part = node.tagName.toLowerCase()
-          const siblings = [...node.parentElement.children].filter((item) => item.tagName === node.tagName)
-          if (siblings.length > 1) part += ':nth-of-type(' + (siblings.indexOf(node) + 1) + ')'
-          parts.unshift(part)
-          node = node.parentElement
-        }
-        return parts.join(' > ')
-      }
-      const emit = (step) => console.log('__BMW_TEST_RECORD__' + JSON.stringify(step))
-      const click = (event) => {
-        const target = event.target.closest('a,button,input,[role="button"],[role="link"],summary,label')
-        if (target) emit({ action: 'click', selector: selectorFor(target) })
-      }
-      const input = (event) => {
-        const target = event.target
-        if (!target.matches('input,textarea,select,[contenteditable="true"]')) return
-        const secret = target.type === 'password'
-        emit({ action: 'type', selector: selectorFor(target), value: secret ? '' : (target.value || target.textContent || ''), redacted: secret })
-      }
-      document.addEventListener('click', click, true)
-      document.addEventListener('change', input, true)
-      window.__bmwTestRecorder = { click, input }
-      return true
-    })()`, true)
-    return { active: true, tabId: tab.id }
-  }
-
-  async disableInteractionRecording(tabId) {
-    const tab = this.tabs.get(tabId)
-    if (!tab) return { active: false }
-    await tab.view.webContents.executeJavaScript(`(() => {
-      const recorder = window.__bmwTestRecorder
-      if (!recorder) return false
-      document.removeEventListener('click', recorder.click, true)
-      document.removeEventListener('change', recorder.input, true)
-      delete window.__bmwTestRecorder
-      return true
-    })()`, true).catch(() => false)
-    return { active: false, tabId }
-  }
-
-  async failureEvidence(tabId) {
-    const tab = this.requireTab(tabId)
-    const diagnostics = await this.pageDiagnostics(tab, { maxCharacters: 8000 })
-    const screenshot = await this.screenshot(tab, { mode: 'viewport' })
-    return { tab: this.serializeTab(tab), diagnostics, screenshot }
-  }
-
-  async screenshot(tab, request) {
+  async screenshot(tab, request, signal?: AbortSignal) {
+    signal?.throwIfAborted()
     const artifactsDirectory = this.projectStore ? path.join(this.projectStore.active().directory, 'artifacts') : this.artifactsDirectory
     fs.mkdirSync(artifactsDirectory, { recursive: true })
     let image
     if (typeof request.selector === 'string' && request.selector.trim()) {
       const selector = request.selector.trim()
       const index = Math.min(Math.max(Math.floor(Number(request.index) || 0), 0), 10_000)
-      const clip = await tab.view.webContents.executeJavaScript(`(async () => {
+      const clip = await readScreenshotPhase<{ ok: boolean; matches: number; x: number; y: number; width: number; height: number }>(tab.view.webContents, 'selector-layout', () => tab.view.webContents.executeJavaScript(`(() => {
         const matches = [...document.querySelectorAll(${JSON.stringify(selector)})]
         const element = matches[${index}]
         if (!element) return { ok: false, matches: matches.length }
-        element.scrollIntoView({ block: 'center', inline: 'nearest' })
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+        // Read document coordinates without scrolling. CDP captures beyond the viewport.
+        // Detached background views may never get rAF; this read forces layout directly.
         const rect = element.getBoundingClientRect()
         return {
           ok: rect.width > 0 && rect.height > 0,
@@ -913,25 +862,34 @@ export class BrowserKernel {
           width: Math.max(1, rect.width),
           height: Math.max(1, rect.height)
         }
-      })()`, true)
+      })()`, true), signal)
       if (!clip.ok) throw new Error(`Screenshot selector did not resolve to a visible element (${clip.matches || 0} matches).`)
       const wc = tab.view.webContents
       if (!wc.debugger.isAttached()) wc.debugger.attach('1.3')
-      const captured = await wc.debugger.sendCommand('Page.captureScreenshot', {
+      const captured = await readScreenshotPhase<{ data: string }>(wc, 'capture-png', () => wc.debugger.sendCommand('Page.captureScreenshot', {
         format: 'png',
         captureBeyondViewport: true,
         fromSurface: true,
         clip: { x: clip.x, y: clip.y, width: clip.width, height: clip.height, scale: 1 }
-      })
+      }), signal)
       image = nativeImage.createFromBuffer(Buffer.from(captured.data, 'base64'))
     } else if (request.mode === 'fullpage') {
       const wc = tab.view.webContents
       if (!wc.debugger.isAttached()) wc.debugger.attach('1.3')
-      const captured = await wc.debugger.sendCommand('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, fromSurface: true })
+      const captured = await readScreenshotPhase<{ data: string }>(wc, 'capture-png', () => wc.debugger.sendCommand('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, fromSurface: true }), signal)
       image = nativeImage.createFromBuffer(Buffer.from(captured.data, 'base64'))
     } else {
-      image = await tab.view.webContents.capturePage()
+      // Studio can hide the native View; capture the browser viewport without
+      // depending on a visible compositor surface or changing page scroll.
+      const wc = tab.view.webContents
+      const clip = await readScreenshotPhase<{x:number;y:number;width:number;height:number}>(wc, 'viewport-layout', () => wc.executeJavaScript('({x:Math.max(0,scrollX),y:Math.max(0,scrollY),width:innerWidth,height:innerHeight})'), signal)
+      if(![clip.x,clip.y,clip.width,clip.height].every(Number.isFinite)||clip.width<=0||clip.height<=0||clip.width>16384||clip.height>16384)throw new Error('Invalid screenshot viewport')
+      if (!wc.debugger.isAttached()) wc.debugger.attach('1.3')
+      const captured = await readScreenshotPhase<{data:string}>(wc, 'capture-viewport', () => wc.debugger.sendCommand('Page.captureScreenshot', {format:'png',captureBeyondViewport:true,fromSurface:true,clip:{...clip,scale:1}}), signal)
+      image = nativeImage.createFromBuffer(Buffer.from(captured.data, 'base64'))
     }
+    signal?.throwIfAborted()
+    if (image.isEmpty()) throw new Error('BMW_BROWSER_EMPTY_IMAGE: media.screenshot returned an empty PNG')
     const requestedName = typeof request.filename === 'string' ? safeFilename(request.filename) : ''
     const filename = `${Date.now()}-${requestedName || safeFilename(tab.title || 'page')}${(requestedName || '').toLowerCase().endsWith('.png') ? '' : '.png'}`
     const filePath = path.join(artifactsDirectory, filename)

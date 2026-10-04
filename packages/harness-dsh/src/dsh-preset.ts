@@ -55,25 +55,6 @@ export function installManagedDshPreset({ sourceDirectory, dshHome = resolveDshH
   return destination
 }
 
-export function installManagedDshClientPlugin({ sourceDirectory, dshHome = resolveDshHome(), pluginId = 'bmw-wvl-client' }) {
-  const destination = path.join(dshHome, 'profiles', 'web', pluginId)
-  const marker = path.join(destination, MANAGED_MARKER)
-  if (fs.existsSync(destination) && !fs.existsSync(marker)) {
-    throw new Error(`Refusing to overwrite unmanaged DSH client plugin: ${destination}`)
-  }
-  fs.mkdirSync(destination, { recursive: true, mode: 0o700 })
-  fs.cpSync(sourceDirectory, destination, {
-    recursive: true,
-    force: true,
-    mode: fs.constants.COPYFILE_FICLONE
-  })
-  const manifest = JSON.parse(fs.readFileSync(path.join(sourceDirectory, 'package.json'), 'utf8'))
-  writeAtomically(path.join(destination, 'profile.patch.yml'),
-    `- insert:\n    - id: bmw-wvl-client\n      name: ${JSON.stringify(path.join(destination, 'index.js'))}\n      inject:\n        - clientModules\n`)
-  writeAtomically(marker, `Managed by BMW. Version ${manifest.version || 'unknown'}. Safe to replace on product updates.\n`)
-  return destination
-}
-
 function ensureProductWorkspace(productHome, workspacePath, workspaceTitle) {
   fs.mkdirSync(workspacePath, { recursive: true, mode: 0o700 })
   const storageDirectory = path.join(productHome, 'storages')
@@ -119,7 +100,7 @@ function ensureProductSettings(productHome, presetId) {
   writeAtomically(settingsPath, content)
 }
 
-export function prepareProductDshHome({ productHome, sourceHome = resolveDshHome(), presetId = 'bmw', presetSourceDirectory, clientPluginSourceDirectory, clientPluginId, workspacePath, workspaceTitle = 'BMW Project' }) {
+export function prepareProductDshHome({ productHome, sourceHome = resolveDshHome(), presetId = 'bmw', presetSourceDirectory, workspacePath, workspaceTitle = 'BMW Project' }) {
   fs.mkdirSync(productHome, { recursive: true, mode: 0o700 })
   const sourceCredentials = path.join(sourceHome, '.credentials.yaml')
   const productCredentials = path.join(productHome, '.credentials.yaml')
@@ -128,9 +109,6 @@ export function prepareProductDshHome({ productHome, sourceHome = resolveDshHome
   }
   ensureProductSettings(productHome, presetId)
   installManagedDshPreset({ sourceDirectory: presetSourceDirectory, dshHome: productHome, presetId })
-  if (clientPluginSourceDirectory) {
-    installManagedDshClientPlugin({ sourceDirectory: clientPluginSourceDirectory, dshHome: productHome, pluginId: clientPluginId })
-  }
   ensureProductWorkspace(productHome, workspacePath, workspaceTitle)
   return productHome
 }

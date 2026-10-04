@@ -3,5 +3,27 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": "./src/media-controller.js"
+  "exports": {
+    ".": "./src/media-controller.js",
+    "./port": "./src/media-port.js",
+    "./contract": "./src/media-contract.js",
+    "./composition": "./src/composition-contract.js",
+    "./narration": "./src/narration-contract.js",
+    "./video-options": "./src/video-options.js",
+    "./video-options-form": "./src/video-options-form.js",
+    "./artifact-io": "./src/artifact-job-io.js",
+    "./rendering/audio": "./src/media/composition-audio.js",
+    "./rendering/paint": "./src/media/composition-paint.js",
+    "./rendering/frames": "./src/media/linear-frames.js",
+    "./image": "./src/image-contract.js",
+    "./rendering/image": "./src/media/image-decoder.js",
+    "./captions": "./src/caption-export.js",
+    "./text-export": "./src/text-export.js",
+    "./visuals": "./src/visual-segments.js",
+    "./drawing": "./src/image-drawing-contract.js",
+    "./cover": "./src/media/processing.cover-contract.js"
+  },
+  "dependencies": {
+    "mediabunny": "1.61.0"
+  }
 }

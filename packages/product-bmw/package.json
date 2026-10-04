@@ -6,7 +6,6 @@
   "exports": "./index.js",
   "dependencies": {
     "@bmw-agent/platform": "*",
-    "@bmw-agent/harness-dsh": "*",
     "@bmw-agent/feature-video": "*"
   }
 }

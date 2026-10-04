@@ -63,13 +63,13 @@ test('DSH command discovery normalizes the official array response and sends aut
     assert.equal((options.headers as Record<string, string>).cookie, 'auth=private')
     const request = JSON.parse(String(options.body)) as { rpcId: string; payload: unknown }
     assert.deepEqual(request.payload, { args: { agentId: 'session' } })
-    return Response.json({ rpcId: request.rpcId, result: { ok: true, value: [{ name: 'wvl' }] } })
+    return Response.json({ rpcId: request.rpcId, result: { ok: true, value: [{ name: 'sessions' }] } })
   })
   const runtime = new DshRuntime({})
   runtime.url = 'http://127.0.0.1:9000'
   runtime.child = {}
   runtime.authCookie = 'auth=private'
-  assert.deepEqual(await runtime.call('commands/list', { args: { agentId: 'session' } }), { items: [{ name: 'wvl' }] })
+  assert.deepEqual(await runtime.call('commands/list', { args: { agentId: 'session' } }), { items: [{ name: 'sessions' }] })
 })
 
 

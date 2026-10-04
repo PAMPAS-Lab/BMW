@@ -110,24 +110,12 @@ test('tab state keeps only bounded HTTP(S) URLs', (t) => {
   })
 })
 
-test('connector bindings are isolated per project', (t) => {
-  const { store } = createStore(t)
-  const first = store.active()
-  const second = store.create({ name: 'Connected project' })
-
-  store.updateConnector(first.id, 'feishu', { chatId: 'oc_first', chatName: 'First' })
-  store.updateConnector(second.id, 'feishu', { chatId: 'oc_second', chatName: 'Second' })
-
-  assert.equal(store.connector(first.id, 'feishu').chatId, 'oc_first')
-  assert.equal(store.connector(second.id, 'feishu').chatId, 'oc_second')
-})
-
-
-test('new projects have no chat bindings and legacy bindings remain inert data', (t) => {
-  const { root, store } = createStore(t)
-  assert.deepEqual(store.active().connectors, {})
-  store.updateConnector(store.active().id, 'feishu', { chatId: 'legacy-chat', pendingRelays: [{ messageId: 'legacy-message' }] })
-  const restored = new ProjectStore({ filePath: path.join(root, 'projects.json'), projectsDirectory: path.join(root, 'projects'), legacyWorkspacePath: path.join(root, 'legacy-workspace') })
-  assert.equal(restored.connector(restored.active().id, 'feishu').chatId, 'legacy-chat')
-  assert.deepEqual(restored.create({ name: 'Independent control' }).connectors, {})
+test('Agent bindings are isolated per Project and driver',t=>{
+ const {store}=createStore(t),first=store.active(),second=store.create({name:'Second Project'})
+ store.setAgentBinding(first.id,'fixture',{workspaceId:'first',sessionId:'s1'})
+ store.setAgentBinding(second.id,'fixture',{workspaceId:'second',sessionId:'s2'})
+ assert.deepEqual(store.agentBinding(first.id,'fixture'),{workspaceId:'first',sessionId:'s1'})
+ assert.deepEqual(store.agentBinding(second.id,'fixture'),{workspaceId:'second',sessionId:'s2'})
+ assert.deepEqual(store.agentBinding(first.id,'other'),{workspaceId:null,sessionId:null})
+ assert.equal('connectors' in second,false)
 })

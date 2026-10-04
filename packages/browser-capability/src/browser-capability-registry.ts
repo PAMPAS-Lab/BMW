@@ -1,3 +1,5 @@
+import {assertBrowserActionContext} from './browser-host.js'
+import type {BrowserActionContext} from './browser-host.js'
 import { BROWSER_CORE_ACTION_DEFINITIONS } from './browser-schema.js'
 import type { BrowserActionDefinition, BrowserInputSchema, BrowserRequest, JsonSchema } from './browser-schema.js'
 
@@ -15,7 +17,7 @@ interface ProductLike {
 
 interface RegisteredBrowserAction extends BrowserActionDefinition {
   readonly owner: string
-  readonly execute?: (context: Record<string, any>, input: BrowserRequest) => unknown | Promise<unknown>
+  readonly execute?: (context: BrowserActionContext, input: BrowserRequest) => unknown | Promise<unknown>
 }
 
 /** Build the single browser Tool catalog from the selected product features. */
@@ -60,10 +62,10 @@ export class BrowserCapabilityRegistry {
     return this.actions.get(action) || null
   }
 
-  async execute(action: string, context: Record<string, any>, input: BrowserRequest): Promise<{ handled: boolean; value: unknown }> {
+  async execute(action: string, context: unknown, input: BrowserRequest): Promise<{ handled: boolean; value: unknown }> {
     const definition = this.actions.get(action)
     if (!definition?.execute) return { handled: false, value: undefined }
-    return { handled: true, value: await definition.execute(context, input) }
+    return { handled: true, value: await definition.execute(assertBrowserActionContext(context), input) }
   }
 
   snapshot(): Readonly<{ productId: string; actions: readonly string[]; owners: Record<string, string> }> {
@@ -93,7 +95,7 @@ export class BrowserCapabilityRegistry {
 
   toolDefinition(): { name: 'browser'; description: string; inputSchema: BrowserInputSchema } {
     const fragments = (this.product.features || []).map((feature) => feature.browserDescription).filter(Boolean)
-    const base = `The only ${this.product.name} model capability. Search, inspect, navigate, interact with, capture, record, and analyze tabs owned by the active Project, usually in the background. No Shell, unrestricted filesystem, or external browser tool is available.`
+    const base = `The only ${this.product.name} model capability. Search, inspect, navigate, interact with, capture, record, and analyze tabs owned by the active Project, usually in the background. Use media.inspect, media.frames.sample, and media.convert for Project-owned video/audio artifacts; sampled PNGs are returned as images and conversion preserves all supported tracks or fails. Use media.image.inspect to measure Project images, media.image.annotate for screenshot markup, and media.image.draw for diagrams and drawings. These bounded Canvas actions save a new Project PNG and return it as an image; shapes use actual image pixels and preserve the original. No Shell, unrestricted filesystem, or external browser tool is available.`
     return {
       name: 'browser',
       description: [base, ...fragments].join(' '),

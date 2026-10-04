@@ -1,3 +1,4 @@
+import {readStateFile,stateRecord} from './state-load.js'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -36,17 +37,24 @@ function writeAtomically(filePath, content) {
   fs.renameSync(temporary, filePath)
 }
 
-function ensureConnectors(project) {
-  let changed = false
-  if (!project.connectors || typeof project.connectors !== 'object') {
-    project.connectors = {}
-    changed = true
+function ensureProjectMetadata(project, migrateProjectMetadata) {
+  const before = JSON.stringify(project)
+  const migrated = migrateProjectMetadata(project)
+  for(const key of Object.keys(project))if(!Object.hasOwn(migrated,key))delete project[key]
+  Object.assign(project, migrated)
+  // Retired connection settings have no consumer or authority in BMW.
+  delete project.connectors
+  project.agentBindings ||= {}
+  if (typeof project.agentBindings !== 'object' || Array.isArray(project.agentBindings)) throw new Error('Invalid Agent bindings.')
+  for (const [driverId, raw] of Object.entries(project.agentBindings)) {
+    if (!/^[a-z0-9-]{1,64}$/.test(driverId) || !raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Invalid Agent binding.')
+    const binding = raw as Record<string, unknown>
+    for (const key of ['workspaceId', 'sessionId']) {
+      if (binding[key] !== null && (typeof binding[key] !== 'string' || !binding[key] || String(binding[key]).length > 4096)) throw new Error('Invalid Agent binding identifier.')
+    }
+    project.agentBindings[driverId] = {workspaceId: binding.workspaceId, sessionId: binding.sessionId}
   }
-  if (!Object.hasOwn(project, 'dshSessionId')) {
-    project.dshSessionId = null
-    changed = true
-  }
-  return changed
+  return before !== JSON.stringify(project)
 }
 
 function documentTemplate(kind, projectName) {
@@ -80,7 +88,8 @@ Durable, verified facts that should survive across sessions. Keep entries concis
 export class ProjectStore {
   [key: string]: any
 
-  constructor({ filePath, projectsDirectory, legacyWorkspacePath, onState }) {
+  constructor({ filePath, projectsDirectory, legacyWorkspacePath, onState, migrateProjectMetadata = (project: Record<string, unknown>) => project }) {
+    this.migrateProjectMetadata = migrateProjectMetadata
     this.filePath = filePath
     this.projectsDirectory = projectsDirectory
     this.legacyWorkspacePath = legacyWorkspacePath
@@ -91,14 +100,22 @@ export class ProjectStore {
   }
 
   load() {
-    try {
-      const parsed = JSON.parse(fs.readFileSync(this.filePath, 'utf8'))
-      if (parsed?.version === 1 && Array.isArray(parsed.projects)) {
-        this.state = { ...parsed, initialSetupPending: parsed.initialSetupPending === true }
+    const parsed = readStateFile(this.filePath, raw => {
+      const value = stateRecord(raw)
+      if (value.version !== 1 || (!Array.isArray(value.projects)||!value.projects.length)) throw new Error('Unsupported or malformed Project state.')
+      const ids = new Set<string>()
+      for (const rawProject of value.projects) {
+        const project = stateRecord(rawProject)
+        if (typeof project.id !== 'string' || !project.id || ids.has(project.id) || typeof project.directory !== 'string' || !path.isAbsolute(project.directory)) throw new Error('Invalid Project identity or directory.')
+        cleanName(project.name); cleanHomeUrl(project.homeUrl)
+        // Validate every migration before any Project documents or state are written.
+        ensureProjectMetadata(structuredClone(project), this.migrateProjectMetadata)
+        ids.add(project.id)
       }
-    } catch (error) {
-      if (error.code !== 'ENOENT') console.error('Failed to load BMW projects', error)
-    }
+      if (value.activeProjectId !== null && typeof value.activeProjectId !== 'string') throw new Error('Invalid active Project identity.')
+      return { ...value, initialSetupPending: value.initialSetupPending === true }
+    })
+    if (parsed) this.state = parsed
   }
 
   save() {
@@ -110,7 +127,7 @@ export class ProjectStore {
     if (this.state.projects.length) {
       let changed = false
       for (const project of this.state.projects) {
-        changed = ensureConnectors(project) || changed
+        changed = ensureProjectMetadata(project, this.migrateProjectMetadata) || changed
         this.ensureProjectFiles(project)
       }
       if (!this.get(this.state.activeProjectId, { includeArchived: false })) {
@@ -139,9 +156,7 @@ export class ProjectStore {
       name: cleanName(name),
       directory,
       homeUrl: cleanHomeUrl(homeUrl),
-      dshWorkspaceId: null,
-      dshSessionId: null,
-      connectors: {},
+      agentBindings: {},
       tabState: { urls: [], activeUrl: null },
       createdAt: now,
       updatedAt: now,
@@ -242,39 +257,23 @@ export class ProjectStore {
     return { ...project }
   }
 
-  setDshWorkspaceId(id, workspaceId) {
+  agentBinding(id: string, driverId: string): { workspaceId: string | null; sessionId: string | null } {
     const project = this.get(id)
-    if (!project) throw new Error(`Unknown project: ${id}`)
-    if (project.dshWorkspaceId === workspaceId) return
-    project.dshWorkspaceId = workspaceId
-    project.updatedAt = new Date().toISOString()
-    this.save()
+    if (!project) throw new Error('Unknown project: ' + id)
+    return structuredClone(project.agentBindings[driverId] || {workspaceId: null, sessionId: null})
   }
 
-  setDshSessionId(id, sessionId) {
+  setAgentBinding(id: string, driverId: string, input: {workspaceId?: string | null; sessionId?: string | null}): void {
     const project = this.get(id)
-    if (!project) throw new Error(`Unknown project: ${id}`)
-    if (project.dshSessionId === sessionId) return
-    project.dshSessionId = sessionId
+    if (!project) throw new Error('Unknown project: ' + id)
+    const binding = {...this.agentBinding(id, driverId), ...input}
+    // Validate the candidate without mutating the stored Project on failure.
+    const candidate = {...project, agentBindings: {...project.agentBindings, [driverId]: binding}}
+    ensureProjectMetadata(candidate, value => value)
+    if (JSON.stringify(project.agentBindings[driverId]) === JSON.stringify(binding)) return
+    project.agentBindings = candidate.agentBindings
     project.updatedAt = new Date().toISOString()
     this.save()
-  }
-
-  connector(id, name) {
-    const project = this.get(id, { includeArchived: false })
-    if (!project) throw new Error(`Unknown or archived project: ${id}`)
-    ensureConnectors(project)
-    return structuredClone(project.connectors[name] || {})
-  }
-
-  updateConnector(id, name, value) {
-    const project = this.get(id, { includeArchived: false })
-    if (!project) throw new Error(`Unknown or archived project: ${id}`)
-    ensureConnectors(project)
-    project.connectors[name] = { ...(project.connectors[name] || {}), ...value }
-    project.updatedAt = new Date().toISOString()
-    this.save()
-    return this.connector(id, name)
   }
 
   archive(id) {

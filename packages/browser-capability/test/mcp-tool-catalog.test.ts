@@ -33,6 +33,11 @@ test('BMW MCP discovers exactly browser from the authenticated product catalog',
   assert.equal(registry.allowedActions.some((action) => action.startsWith('connector.')), false)
   assert.equal(product.featureIds.includes('feature-video'), true)
   assert.equal(registry.allowedActions.includes('experiment.plan.propose'), false)
+  for(const name of ['media.image.inspect','media.image.annotate','media.image.draw'])assert.ok(registry.allowedActions.includes(name))
+  const shapes=definition.inputSchema.properties.shapes
+  assert.equal(shapes.maxItems,128)
+  assert.equal(Object.hasOwn(definition.inputSchema.properties,'svg'),false)
+  assert.match(definition.description,/media\.image\.annotate/)
 })
 
 

@@ -16,7 +16,7 @@ function fixture(t, initial = '2026-08-23T21:59:00.000Z') {
 
 test('daily scheduled tasks use their IANA time zone and survive restart', (t) => {
   const { store } = fixture(t)
-  const task = store.create({ id: 'project-1', dshSessionId: 'session-1' }, {
+  const task = store.create({ id: 'project-1', sessionId: 'session-1' }, {
     name: 'Capture arena', prompt: 'Capture the latest @arena post.', time: '06:00', timeZone: 'Asia/Shanghai'
   })
   assert.equal(task.nextRunAt, '2026-08-23T22:00:00.000Z')
@@ -38,7 +38,7 @@ test('scheduled task runs are project isolated, durable, and recover interruptio
   assert.equal(store.get(second.id).enabled, true)
 })
 
-test('scheduler serializes due and manual DSH task execution', async (t) => {
+test('scheduler serializes due and manual Agent task execution', async (t) => {
   const { store, setNow } = fixture(t, '2026-08-23T05:59:00.000Z')
   const order: string[] = []
   const manager = new ScheduledTaskManager({
@@ -51,8 +51,8 @@ test('scheduler serializes due and manual DSH task execution', async (t) => {
       return `${task.name} done`
     }
   })
-  const first = manager.create({ id: 'project-1', dshSessionId: 'session-1' }, { name: 'Due', prompt: 'due', time: '06:00', timeZone: 'UTC' })
-  const second = manager.create({ id: 'project-1', dshSessionId: 'session-1' }, { name: 'Manual', prompt: 'manual', time: '07:00', timeZone: 'UTC' })
+  const first = manager.create({ id: 'project-1', sessionId: 'session-1' }, { name: 'Due', prompt: 'due', time: '06:00', timeZone: 'UTC' })
+  const second = manager.create({ id: 'project-1', sessionId: 'session-1' }, { name: 'Manual', prompt: 'manual', time: '07:00', timeZone: 'UTC' })
   manager.start()
   setNow('2026-08-23T06:00:01.000Z')
   await manager.tick()

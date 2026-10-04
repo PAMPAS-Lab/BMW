@@ -1,0 +1,662 @@
+{
+  "date": "2026-10-02T13:36:57.260Z",
+  "requestedModel": "deepseek-flash",
+  "provider": "deepseek-official",
+  "harness": "0.2.0-rc.2",
+  "scope": "Synthetic canvas -> BMW screenshot -> authenticated Bridge -> official MCP image handling -> DSH -> real DeepSeek; fresh Session per case",
+  "cases": [
+    {
+      "case": 1,
+      "elapsedMs": 3846,
+      "response": "{\"code\":\"FAFD0EAC36\",\"title\":\"素材统计\",\"total\":756,\"highest\":\"B\",\"difference\":24,\"redPosition\":\"左上\",\"blueCircles\":3,\"greenTriangles\":0}",
+      "headers": [
+        {
+          "header": {
+            "config": {
+              "provider": "deepseek-official",
+              "model": "deepseek-flash",
+              "reasoningEffort": "low",
+              "maxTokens": 4096
+            },
+            "adapterDefaults": {
+              "maxTokens": true
+            },
+            "tools": [
+              {
+                "name": "browser",
+                "description": "The only BMW model capability. Search, inspect, navigate, interact with, capture, record, and analyze tabs owned by the active Project, usually in the background. No Shell, unrestricted filesystem, or external browser tool is available.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "action": {
+                      "type": "string",
+                      "enum": [
+                        "status",
+                        "tabs.list",
+                        "tabs.open",
+                        "tabs.show",
+                        "tabs.close",
+                        "navigate",
+                        "back",
+                        "forward",
+                        "reload",
+                        "observe",
+                        "click",
+                        "type",
+                        "wait",
+                        "key",
+                        "hover",
+                        "page.diagnostics",
+                        "page.media.list",
+                        "page.viewport.set",
+                        "media.screenshot",
+                        "media.download",
+                        "media.video.capture",
+                        "media.record.start",
+                        "media.record.stop",
+                        "project.context",
+                        "project.memory.append",
+                        "project.tasks.append",
+                        "schedule.list",
+                        "schedule.create",
+                        "schedule.update",
+                        "schedule.remove",
+                        "schedule.run"
+                      ]
+                    },
+                    "tabId": {
+                      "type": "string",
+                      "description": "Target tab ID. Omit to use the visible tab."
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "foreground": {
+                      "type": "boolean",
+                      "description": "Defaults to false for background work."
+                    },
+                    "reuse": {
+                      "type": "boolean",
+                      "description": "Defaults to true; reuse an exact URL or suitable same-origin Agent tab."
+                    },
+                    "maxCharacters": {
+                      "type": "number"
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "viewport",
+                        "fullpage",
+                        "background",
+                        "observe"
+                      ]
+                    },
+                    "selector": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    },
+                    "milliseconds": {
+                      "type": "number"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "modifiers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Keyboard modifiers such as shift, control, alt, or meta."
+                    },
+                    "index": {
+                      "type": "number",
+                      "description": "Zero-based match when selector identifies multiple page elements."
+                    },
+                    "maxItems": {
+                      "type": "number",
+                      "description": "Maximum media items to return."
+                    },
+                    "width": {
+                      "type": "number"
+                    },
+                    "height": {
+                      "type": "number"
+                    },
+                    "deviceScaleFactor": {
+                      "type": "number"
+                    },
+                    "mobile": {
+                      "type": "boolean"
+                    },
+                    "filename": {
+                      "type": "string",
+                      "description": "Optional Project artifact filename."
+                    },
+                    "fromStart": {
+                      "type": "boolean",
+                      "description": "Restart finite media at time zero before capture. Defaults to true."
+                    },
+                    "maxDurationMs": {
+                      "type": "number",
+                      "description": "Safety limit from 1 second to 30 minutes. Defaults to 15 minutes."
+                    },
+                    "fps": {
+                      "type": "number"
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "Text to append to Project memory/tasks."
+                    },
+                    "scheduleName": {
+                      "type": "string",
+                      "description": "Short user-facing task name."
+                    },
+                    "schedulePrompt": {
+                      "type": "string",
+                      "description": "Complete natural-language instructions to execute at each occurrence."
+                    },
+                    "scheduleTime": {
+                      "type": "string",
+                      "description": "Local 24-hour time in HH:mm format."
+                    },
+                    "scheduleTimeZone": {
+                      "type": "string",
+                      "description": "IANA time zone such as Asia/Shanghai."
+                    },
+                    "scheduleEnabled": {
+                      "type": "boolean",
+                      "description": "Defaults to true."
+                    },
+                    "scheduledTaskId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "action"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              {
+                "name": "list_mcp_resource_templates",
+                "description": "List parameterized resource URI templates from an MCP server.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "server": {
+                      "type": "string",
+                      "description": "Configured MCP server name."
+                    },
+                    "cursor": {
+                      "type": "string",
+                      "description": "Continuation cursor returned by this server."
+                    }
+                  },
+                  "required": [
+                    "server"
+                  ]
+                }
+              },
+              {
+                "name": "list_mcp_resources",
+                "description": "List resources available from an MCP server.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "server": {
+                      "type": "string",
+                      "description": "Configured MCP server name."
+                    },
+                    "cursor": {
+                      "type": "string",
+                      "description": "Continuation cursor returned by this server."
+                    }
+                  },
+                  "required": [
+                    "server"
+                  ]
+                }
+              },
+              {
+                "name": "read_mcp_resource",
+                "description": "Read an MCP resource by URI from the named server. Use a listed URI or an expanded resource template.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "server": {
+                      "type": "string",
+                      "description": "Configured MCP server name."
+                    },
+                    "uri": {
+                      "type": "string",
+                      "description": "Resource URI to read."
+                    }
+                  },
+                  "required": [
+                    "server",
+                    "uri"
+                  ]
+                }
+              }
+            ]
+          },
+          "reason": "initial"
+        }
+      ],
+      "toolCalls": [
+        {
+          "name": "browser",
+          "arguments": "{\"action\": \"media.screenshot\", \"tabId\": \"vision-fixture\", \"selector\": \"#board\", \"filename\": \"vision.png\"}"
+        }
+      ],
+      "usage": [
+        {
+          "inputTokens": 216,
+          "outputTokens": 113,
+          "cacheReadTokens": 1536,
+          "cacheWriteTokens": 0,
+          "totalTokens": 1865
+        },
+        {
+          "inputTokens": 1407,
+          "outputTokens": 203,
+          "cacheReadTokens": 1792,
+          "cacheWriteTokens": 0,
+          "totalTokens": 3402
+        }
+      ],
+      "checks": [
+        {
+          "field": "code",
+          "expected": "FAFD0EAC36",
+          "actual": "FAFD0EAC36",
+          "passed": true
+        },
+        {
+          "field": "title",
+          "expected": "素材统计",
+          "actual": "素材统计",
+          "passed": true
+        },
+        {
+          "field": "total",
+          "expected": 756,
+          "actual": 756,
+          "passed": true
+        },
+        {
+          "field": "highest",
+          "expected": "B",
+          "actual": "B",
+          "passed": true
+        },
+        {
+          "field": "difference",
+          "expected": 24,
+          "actual": 24,
+          "passed": true
+        },
+        {
+          "field": "redPosition",
+          "expected": "左上",
+          "actual": "左上",
+          "passed": true
+        },
+        {
+          "field": "blueCircles",
+          "expected": 3,
+          "actual": 3,
+          "passed": true
+        },
+        {
+          "field": "greenTriangles",
+          "expected": 0,
+          "actual": 0,
+          "passed": true
+        }
+      ],
+      "modelConfirmed": true,
+      "toolConfirmed": true,
+      "passed": true
+    },
+    {
+      "case": 2,
+      "elapsedMs": 3855,
+      "response": "{\"code\":\"6EBEB97495\",\"title\":\"素材统计\",\"total\":789,\"highest\":\"A\",\"difference\":25,\"redPosition\":\"右下\",\"blueCircles\":4,\"greenTriangles\":0}",
+      "headers": [
+        {
+          "header": {
+            "config": {
+              "provider": "deepseek-official",
+              "model": "deepseek-flash",
+              "reasoningEffort": "low",
+              "maxTokens": 4096
+            },
+            "adapterDefaults": {
+              "maxTokens": true
+            },
+            "tools": [
+              {
+                "name": "browser",
+                "description": "The only BMW model capability. Search, inspect, navigate, interact with, capture, record, and analyze tabs owned by the active Project, usually in the background. No Shell, unrestricted filesystem, or external browser tool is available.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "action": {
+                      "type": "string",
+                      "enum": [
+                        "status",
+                        "tabs.list",
+                        "tabs.open",
+                        "tabs.show",
+                        "tabs.close",
+                        "navigate",
+                        "back",
+                        "forward",
+                        "reload",
+                        "observe",
+                        "click",
+                        "type",
+                        "wait",
+                        "key",
+                        "hover",
+                        "page.diagnostics",
+                        "page.media.list",
+                        "page.viewport.set",
+                        "media.screenshot",
+                        "media.download",
+                        "media.video.capture",
+                        "media.record.start",
+                        "media.record.stop",
+                        "project.context",
+                        "project.memory.append",
+                        "project.tasks.append",
+                        "schedule.list",
+                        "schedule.create",
+                        "schedule.update",
+                        "schedule.remove",
+                        "schedule.run"
+                      ]
+                    },
+                    "tabId": {
+                      "type": "string",
+                      "description": "Target tab ID. Omit to use the visible tab."
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "foreground": {
+                      "type": "boolean",
+                      "description": "Defaults to false for background work."
+                    },
+                    "reuse": {
+                      "type": "boolean",
+                      "description": "Defaults to true; reuse an exact URL or suitable same-origin Agent tab."
+                    },
+                    "maxCharacters": {
+                      "type": "number"
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "viewport",
+                        "fullpage",
+                        "background",
+                        "observe"
+                      ]
+                    },
+                    "selector": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    },
+                    "milliseconds": {
+                      "type": "number"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "modifiers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Keyboard modifiers such as shift, control, alt, or meta."
+                    },
+                    "index": {
+                      "type": "number",
+                      "description": "Zero-based match when selector identifies multiple page elements."
+                    },
+                    "maxItems": {
+                      "type": "number",
+                      "description": "Maximum media items to return."
+                    },
+                    "width": {
+                      "type": "number"
+                    },
+                    "height": {
+                      "type": "number"
+                    },
+                    "deviceScaleFactor": {
+                      "type": "number"
+                    },
+                    "mobile": {
+                      "type": "boolean"
+                    },
+                    "filename": {
+                      "type": "string",
+                      "description": "Optional Project artifact filename."
+                    },
+                    "fromStart": {
+                      "type": "boolean",
+                      "description": "Restart finite media at time zero before capture. Defaults to true."
+                    },
+                    "maxDurationMs": {
+                      "type": "number",
+                      "description": "Safety limit from 1 second to 30 minutes. Defaults to 15 minutes."
+                    },
+                    "fps": {
+                      "type": "number"
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "Text to append to Project memory/tasks."
+                    },
+                    "scheduleName": {
+                      "type": "string",
+                      "description": "Short user-facing task name."
+                    },
+                    "schedulePrompt": {
+                      "type": "string",
+                      "description": "Complete natural-language instructions to execute at each occurrence."
+                    },
+                    "scheduleTime": {
+                      "type": "string",
+                      "description": "Local 24-hour time in HH:mm format."
+                    },
+                    "scheduleTimeZone": {
+                      "type": "string",
+                      "description": "IANA time zone such as Asia/Shanghai."
+                    },
+                    "scheduleEnabled": {
+                      "type": "boolean",
+                      "description": "Defaults to true."
+                    },
+                    "scheduledTaskId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "action"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              {
+                "name": "list_mcp_resource_templates",
+                "description": "List parameterized resource URI templates from an MCP server.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "server": {
+                      "type": "string",
+                      "description": "Configured MCP server name."
+                    },
+                    "cursor": {
+                      "type": "string",
+                      "description": "Continuation cursor returned by this server."
+                    }
+                  },
+                  "required": [
+                    "server"
+                  ]
+                }
+              },
+              {
+                "name": "list_mcp_resources",
+                "description": "List resources available from an MCP server.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "server": {
+                      "type": "string",
+                      "description": "Configured MCP server name."
+                    },
+                    "cursor": {
+                      "type": "string",
+                      "description": "Continuation cursor returned by this server."
+                    }
+                  },
+                  "required": [
+                    "server"
+                  ]
+                }
+              },
+              {
+                "name": "read_mcp_resource",
+                "description": "Read an MCP resource by URI from the named server. Use a listed URI or an expanded resource template.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "server": {
+                      "type": "string",
+                      "description": "Configured MCP server name."
+                    },
+                    "uri": {
+                      "type": "string",
+                      "description": "Resource URI to read."
+                    }
+                  },
+                  "required": [
+                    "server",
+                    "uri"
+                  ]
+                }
+              }
+            ]
+          },
+          "reason": "initial"
+        }
+      ],
+      "toolCalls": [
+        {
+          "name": "browser",
+          "arguments": "{\"action\": \"media.screenshot\", \"tabId\": \"vision-fixture\", \"selector\": \"#board\", \"filename\": \"vision.png\"}"
+        }
+      ],
+      "usage": [
+        {
+          "inputTokens": 216,
+          "outputTokens": 152,
+          "cacheReadTokens": 1536,
+          "cacheWriteTokens": 0,
+          "totalTokens": 1904
+        },
+        {
+          "inputTokens": 1441,
+          "outputTokens": 185,
+          "cacheReadTokens": 1792,
+          "cacheWriteTokens": 0,
+          "totalTokens": 3418
+        }
+      ],
+      "checks": [
+        {
+          "field": "code",
+          "expected": "6EBEB97495",
+          "actual": "6EBEB97495",
+          "passed": true
+        },
+        {
+          "field": "title",
+          "expected": "素材统计",
+          "actual": "素材统计",
+          "passed": true
+        },
+        {
+          "field": "total",
+          "expected": 789,
+          "actual": 789,
+          "passed": true
+        },
+        {
+          "field": "highest",
+          "expected": "A",
+          "actual": "A",
+          "passed": true
+        },
+        {
+          "field": "difference",
+          "expected": 25,
+          "actual": 25,
+          "passed": true
+        },
+        {
+          "field": "redPosition",
+          "expected": "右下",
+          "actual": "右下",
+          "passed": true
+        },
+        {
+          "field": "blueCircles",
+          "expected": 4,
+          "actual": 4,
+          "passed": true
+        },
+        {
+          "field": "greenTriangles",
+          "expected": 0,
+          "actual": 0,
+          "passed": true
+        }
+      ],
+      "modelConfirmed": true,
+      "toolConfirmed": true,
+      "passed": true
+    }
+  ],
+  "ok": true,
+  "captures": [
+    {
+      "case": 1,
+      "path": "case-1.png",
+      "width": 2000,
+      "height": 1600
+    },
+    {
+      "case": 2,
+      "path": "case-2.png",
+      "width": 2000,
+      "height": 1600
+    }
+  ]
+}

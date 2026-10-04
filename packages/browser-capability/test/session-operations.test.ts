@@ -41,11 +41,12 @@ test('Browser bridge pins Project identity, revokes queued Sessions and returns 
   let active = 'p'
   let imagePath = file
   let calls = 0
+  let userOperationBusy = false
   let release: () => void
   let started: () => void
   const gate = new Promise<void>((resolve) => { release = resolve })
   const began = new Promise<void>((resolve) => { started = resolve })
-  const bridge = await createBridgeServer({ async execute(input) {
+  const bridge = await createBridgeServer({ get busy(){return userOperationBusy}, async execute(input) {
     calls++
     if ((input as { action: string }).action === 'wait') { started(); await gate; return {} }
     return { type: 'screenshot', path: imagePath }
@@ -67,6 +68,11 @@ test('Browser bridge pins Project identity, revokes queued Sessions and returns 
     assert.equal((await request('execute', { binding, arguments: { action: 'status' } })).status, 400)
   })
   assert.equal(bridge.busy, false)
+  userOperationBusy=true
+  assert.equal(bridge.busy,true)
+  await assert.rejects(bridge.changeProject(async()=>{throw new Error('Must not enter')}),/browser is busy/)
+  userOperationBusy=false
+  assert.equal(bridge.changingProject,false)
   const image = await request('execute', { binding, arguments: { action: 'media.screenshot' } })
   assert.equal(image.value.images?.[0].data, bytes.toString('base64'))
   const child = spawn(process.execPath, [path.resolve('packages/browser-capability/src/browser-mcp-server.js')], {
@@ -97,4 +103,54 @@ test('Browser bridge pins Project identity, revokes queued Sessions and returns 
   assert.equal((await running).status, 200)
   assert.equal((await queued).status, 400)
   assert.equal((await request('execute', { binding, arguments: { action: 'status' } })).status, 400)
+})
+
+
+test('Browser bridge admits bounded Project frame sets and propagates active MCP cancellation', async (t) => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'bmw-frame-bridge-'))
+  const artifacts = path.join(directory, 'artifacts')
+  await fs.mkdir(artifacts)
+  const file = path.join(artifacts, 'frame.png')
+  const bytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j6xkAAAAASUVORK5CYII=', 'base64')
+  await fs.writeFile(file, bytes)
+  let imagePath = file
+  let cancelled: () => void
+  const cancelledCall = new Promise<void>((resolve) => { cancelled = resolve })
+  let began: () => void
+  const started = new Promise<void>((resolve) => { began = resolve })
+  const bridge = await createBridgeServer({ async execute(raw, { signal } = {}) {
+    if ((raw as { action: string }).action === 'media.convert') {
+      began()
+      return new Promise<never>((_resolve, reject) => signal?.addEventListener('abort', () => { cancelled(); reject(new Error('cancelled')) }, { once: true }))
+    }
+    return { type: 'frame-set', frames: [{ type: 'screenshot', path: imagePath }, { type: 'screenshot', path: imagePath }] }
+  } }, { toolDefinition: new BrowserCapabilityRegistry(bmwProduct).toolDefinition(), resolveProject: (cwd) => cwd === directory ? { id: 'p', directory } : undefined, activeProjectId: () => 'p' })
+  t.after(async () => { await bridge.close(); await fs.rm(directory, { recursive: true, force: true }) })
+  const headers = { authorization: `Bearer ${bridge.token}`, 'content-type': 'application/json' }
+  const registration = await fetch(`${bridge.url}/session/register`, { method: 'POST', headers, body: JSON.stringify({ sessionId: 's', directory }) })
+  const { binding } = await registration.json() as { binding: string }
+  const frames = () => fetch(`${bridge.url}/execute`, { method: 'POST', headers, body: JSON.stringify({ binding, arguments: { action: 'media.frames.sample' } }) })
+  const admitted = await (await frames()).json() as { images: { data: string }[] }
+  assert.deepEqual(admitted.images.map((image) => image.data), [bytes.toString('base64'), bytes.toString('base64')])
+  imagePath = path.join(directory, 'outside.png')
+  await fs.writeFile(imagePath, bytes)
+  assert.equal((await frames()).status, 400)
+  const controller = new AbortController()
+  const call = fetch(`${bridge.url}/execute`, { method: 'POST', headers, body: JSON.stringify({ binding, arguments: { action: 'media.convert' } }), signal: controller.signal })
+  const failed = assert.rejects(call)
+  await started
+  controller.abort()
+  await failed
+  await cancelledCall
+})
+
+test('Studio context bridge authenticates Session ownership and rechecks revocation after GUI flush',async t=>{
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'bmw-context-'));let active='p',release:()=>void,began:()=>void,delay=false
+ const gate=new Promise<void>(resolve=>{release=resolve}),started=new Promise<void>(resolve=>{began=resolve})
+ const bridge=await createBridgeServer({execute:async()=>({})},{resolveProject:cwd=>cwd===directory?{id:'p',directory}:undefined,activeProjectId:()=>active,sessionContext:async(sessionId,projectId)=>{assert.equal(sessionId,'s');assert.equal(projectId,'p');if(delay){began();await gate}return {text:'current draft'}}})
+ t.after(async()=>{await bridge.close();await fs.rm(directory,{recursive:true,force:true})})
+ const request=(endpoint:string,body:unknown,token=bridge.token)=>fetch(bridge.url+'/'+endpoint,{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify(body)})
+ assert.equal((await request('session/context',{},'wrong')).status,401);assert.equal((await request('session/context',{binding:'unknown'})).status,400)
+ const {binding}=await(await request('session/register',{sessionId:'s',directory})).json() as {binding:string};assert.deepEqual(await(await request('session/context',{binding})).json(),{text:'current draft'})
+ active='other';assert.equal((await request('session/context',{binding})).status,400);active='p';delay=true;const pending=request('session/context',{binding});await started;await request('session/release',{binding});release();assert.equal((await pending).status,400)
 })

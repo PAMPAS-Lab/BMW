@@ -43,7 +43,7 @@ const server = http.createServer((request, response) => {
     <article data-testid="tweet"><h1>Latest Arena post</h1><p>BMW selected-element capture fixture.</p><img src="/image.png" alt="fixture image"><video poster="/poster.png" controls><source src="/video.mp4" type="video/mp4"></video><video id="capture-source" autoplay muted></video><canvas id="capture-canvas" width="320" height="180" hidden></canvas></article>
     <script>
       const canvas = document.querySelector('#capture-canvas')
-      const context = canvas.getContext('2d')
+      const context = canvas.getContext('2d', { alpha: false })
       let frame = 0
       setInterval(() => {
         context.fillStyle = frame++ % 2 ? '#49c9a5' : '#875cff'
@@ -134,8 +134,8 @@ async function run(): Promise<void> {
 
   const mediaController = new MediaController({
     session: smokeSession,
-    preloadPath: '',
-    pagePath: '',
+    preloadPath: path.resolve('packages/media-native/src/preload/media-preload.cjs'),
+    pagePath: path.resolve('packages/media-native/src/media/media.html'),
     artifactsDirectory: path.join(projectDirectory, 'artifacts'),
     resolveArtifactsDirectory: () => path.join(projectDirectory, 'artifacts'),
     onStatus: () => {}
@@ -152,12 +152,17 @@ async function run(): Promise<void> {
     throw new Error(`BMW browser-native video capture did not produce a valid WebM stream: ${JSON.stringify(captured)}`)
   }
 
+  const inspectedCapture = await stage('inspect actual BMW video Capture with Mediabunny', mediaController.processArtifact({ action: 'media.inspect', artifactId: path.basename(captured.path) }))
+  if (!('durationSeconds' in inspectedCapture) || inspectedCapture.durationSeconds <= 0) throw new Error('Captured video could not be parsed by the media foundation.')
+  const sampledCapture = await stage('sample actual BMW video Capture', mediaController.processArtifact({ action: 'media.frames.sample', artifactId: path.basename(captured.path), timestampsSeconds: [Math.max(0, inspectedCapture.firstTimestampSeconds) + .1] }))
+  if (!('frames' in sampledCapture) || sampledCapture.frames.length !== 1) throw new Error('Captured video could not be sampled by the media foundation.')
+
   process.stdout.write(`${JSON.stringify({
     ok: true,
     discoveredItems: discovered.items.length,
     screenshot: { width: screenshot.width, height: screenshot.height, bytes: fs.statSync(screenshot.path).size },
     download: { contentType: downloaded.contentType, bytes: downloaded.bytes },
-    capture: { contentType: captured.contentType, bytes: captured.bytes, complete: captured.complete, stopReason: captured.stopReason }
+    capture: { parsedDuration: inspectedCapture.durationSeconds, sampledFrames: sampledCapture.frames.length, contentType: captured.contentType, bytes: captured.bytes, complete: captured.complete, stopReason: captured.stopReason }
   })}\n`)
  } catch (error) {
   exitCode = 1

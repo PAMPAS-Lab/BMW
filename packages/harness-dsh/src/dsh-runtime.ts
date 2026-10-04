@@ -11,7 +11,7 @@ import type { DshValue, DshHistoryRow } from './dsh-transport.js'
 interface RuntimeOptions {
   productId?: string; presetId?: string; patchPath?: string; presetSourcePath?: string
   dshHome?: string; sourceDshHome?: string; workspacePath?: string; workspaceTitle?: string
-  mcpServerPath?: string; clientPluginPath?: string; wvlClientPluginPath?: string; clientPluginId?: string
+  mcpServerPath?: string
   bridgeUrl?: string; bridgeToken?: string
   onLog?: (entry: { stream: string; text: string }) => void
   onStatus?: (entry: Record<string, unknown>) => void
@@ -61,7 +61,7 @@ function sessionTitle(session) {
 export class DshRuntime {
   [key: string]: any
 
-  constructor({ productId = 'bmw', presetId = 'bmw', patchPath, presetSourcePath, dshHome, sourceDshHome, workspacePath, workspaceTitle, mcpServerPath, clientPluginPath, wvlClientPluginPath, clientPluginId, bridgeUrl, bridgeToken, onLog, onStatus }: RuntimeOptions) {
+  constructor({ productId = 'bmw', presetId = 'bmw', patchPath, presetSourcePath, dshHome, sourceDshHome, workspacePath, workspaceTitle, mcpServerPath, bridgeUrl, bridgeToken, onLog, onStatus }: RuntimeOptions) {
     this.productId = productId
     this.presetId = presetId
     this.patchPath = patchPath
@@ -71,8 +71,6 @@ export class DshRuntime {
     this.workspacePath = workspacePath
     this.workspaceTitle = workspaceTitle
     this.mcpServerPath = mcpServerPath
-    this.clientPluginPath = clientPluginPath || wvlClientPluginPath
-    this.clientPluginId = clientPluginId
     this.bridgeUrl = bridgeUrl
     this.bridgeToken = bridgeToken
     this.onLog = onLog
@@ -117,8 +115,6 @@ export class DshRuntime {
       sourceHome: this.sourceDshHome,
       presetId: this.presetId,
       presetSourceDirectory: this.presetSourcePath,
-      clientPluginSourceDirectory: this.clientPluginPath ? path.dirname(this.clientPluginPath) : undefined,
-      clientPluginId: this.clientPluginId,
       workspacePath: this.workspacePath,
       workspaceTitle: this.workspaceTitle
     })
@@ -132,13 +128,11 @@ export class DshRuntime {
       BMW_BRIDGE_URL: this.bridgeUrl,
       BMW_BRIDGE_TOKEN: this.bridgeToken,
       BMW_MCP_SERVER: this.mcpServerPath,
-      BMW_PRODUCT_ID: this.productId,
-      ...(this.clientPluginPath ? { BMW_DSH_WVL_CLIENT: path.join(this.dshHome, 'profiles', 'web', this.clientPluginId || 'bmw-wvl-client', 'index.js') } : {})
+      BMW_PRODUCT_ID: this.productId
     }
     this.emitStatus({ state: 'starting', version: null, url: this.url })
     const presetPatch = path.join(this.dshHome, '.agent-presets', this.presetId, 'profile.patch.yml')
-    const clientPatch = this.clientPluginPath ? ['--patch', path.join(this.dshHome, 'profiles', 'web', this.clientPluginId || 'bmw-wvl-client', 'profile.patch.yml')] : []
-    this.child = spawn('dsh', ['web', '--patch', this.patchPath, '--patch', presetPatch, ...clientPatch, '--host', '127.0.0.1', '--port', String(port), '--no-open'], {
+    this.child = spawn('dsh', ['web', '--patch', this.patchPath, '--patch', presetPatch, '--host', '127.0.0.1', '--port', String(port), '--no-open'], {
       env,
       stdio: ['ignore', 'pipe', 'pipe']
     })
@@ -177,7 +171,7 @@ export class DshRuntime {
   }
 
   async call(method: string, payload: Record<string, unknown> = {}): Promise<DshValue> {
-    if (!this.url || !this.child) throw new Error('DSH is not running.')
+    if (!this.url || !this.child || !this.authCookie) throw new Error('DSH is not ready.')
     if (method === 'workspace.list') {
       const snapshot = await remoteSnapshot(this.url, this.authCookie, 'workspace/follow', {})
       if (snapshot.type !== 'baseline') throw new Error('Invalid DSH workspace baseline.')
@@ -215,7 +209,7 @@ export class DshRuntime {
   }
 
   async callWithReceipt(method, payload = {}) {
-    if (!this.url || !this.child) throw new Error('DSH is not running.')
+    if (!this.url || !this.child || !this.authCookie) throw new Error('DSH is not ready.')
     const rpcId = crypto.randomUUID()
     const wire = remoteRequest(method, payload, rpcId)
     const response = await fetch(`${this.url}/api/${wire.endpoint}`, {
@@ -237,7 +231,7 @@ export class DshRuntime {
 
   async ensureWorkspace(project) {
     const listed = await this.call('workspace.list', {})
-    let workspace = listed.items.find((candidate) => candidate.workspaceId === project.dshWorkspaceId)
+    let workspace = listed.items.find((candidate) => candidate.workspaceId === project.workspaceId)
       || listed.items.find((candidate) => candidate.path === (fs.existsSync(project.directory) ? fs.realpathSync(project.directory) : project.directory))
     if (!workspace) {
       const created = await this.call('workspace.create', { path: project.directory })
@@ -252,10 +246,14 @@ export class DshRuntime {
 
   async activateWorkspace(project) {
     const workspace = await this.ensureWorkspace(project)
-    const listed = await this.call('session.list', {})
-    const session = listed.items.find((candidate) => candidate.sessionId === project.dshSessionId)
-      || listed.items.filter((candidate) => candidate.cwd === workspace.path && candidate.origin !== 'subagent')
-        .sort((a, b) => b.updatedAt - a.updatedAt)[0]
+    const [listed, workspaces] = await Promise.all([this.call('session.list', {}), this.call('workspace.list', {})])
+    const current = workspaces.items.find(item => item.workspaceId === workspace.workspaceId) || workspace
+    const archived = new Set(workspaces.archivedSessionIds || [])
+    const candidates = listed.items.filter(candidate => (current.sessionIds || []).includes(candidate.sessionId)
+      && candidate.cwd === workspace.path && candidate.origin !== 'subagent' && !archived.has(candidate.sessionId)
+      && (candidate.agentPreset == null || candidate.agentPreset === this.presetId))
+    const session = candidates.find(candidate => candidate.sessionId === project.sessionId)
+      || candidates.sort((a, b) => b.updatedAt - a.updatedAt)[0]
       || await this.call('session.create', { workspaceId: workspace.workspaceId, agentPreset: this.presetId })
     return { workspace, sessionId: session.sessionId }
   }
@@ -268,7 +266,7 @@ export class DshRuntime {
     ])
     const currentWorkspace = workspaces.items.find((item) => item.workspaceId === workspace.workspaceId) || workspace
     const archived = new Set(workspaces.archivedSessionIds || [])
-    const membership = new Set(currentWorkspace.sessionIds || [])
+
     const byId = new Map((sessions.items || []).map((item) => [item.sessionId, item]))
     let remoteMatches = null
     const normalizedQuery = String(query || '').trim()
@@ -276,9 +274,11 @@ export class DshRuntime {
       const searched = await this.call('session.search', { query: normalizedQuery })
       remoteMatches = new Map((searched.items || []).map((item) => [item.sessionId, item.snippet]))
     }
-    const items = (currentWorkspace.sessionIds || [])
+    const eligible = (currentWorkspace.sessionIds || [])
       .map((sessionId) => byId.get(sessionId))
-      .filter((item) => item && item.origin !== 'subagent' && !archived.has(item.sessionId))
+      .filter((item) => item && item.cwd === workspace.path && item.origin !== 'subagent' && !archived.has(item.sessionId) && (item.agentPreset == null || item.agentPreset === this.presetId))
+    const membership = new Set(eligible.map(item => item.sessionId))
+    const items = eligible
       .map((item) => ({
         sessionId: item.sessionId,
         title: sessionTitle(item),
@@ -294,7 +294,7 @@ export class DshRuntime {
         || remoteMatches?.has(item.sessionId))
     return {
       workspaceId: workspace.workspaceId,
-      selectedSessionId: project.dshSessionId,
+      selectedSessionId: project.sessionId,
       items,
       hasMore: false,
       membership: [...membership]

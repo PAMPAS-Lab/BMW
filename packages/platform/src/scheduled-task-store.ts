@@ -1,3 +1,4 @@
+import {readStateFile,stateRecord} from './state-load.js'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -133,12 +134,29 @@ export class ScheduledTaskStore {
   }
 
   load(): void {
-    try {
-      const parsed = JSON.parse(fs.readFileSync(this.filePath, 'utf8'))
-      if (parsed?.version === 1 && Array.isArray(parsed.tasks) && Array.isArray(parsed.runs)) this.state = parsed
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') console.error('Failed to load BMW scheduled tasks', error)
-    }
+    const loaded = readStateFile(this.filePath, raw => {
+      const value = stateRecord(raw)
+      if (value.version !== 1 || !Array.isArray(value.tasks) || !Array.isArray(value.runs)) throw new Error('Unsupported or malformed scheduled task state.')
+      const ids = new Set<string>()
+      for (const rawTask of value.tasks) {
+        const task = stateRecord(rawTask), schedule = stateRecord(task.schedule)
+        if (typeof task.id !== 'string' || !task.id || ids.has(task.id) || typeof task.projectId !== 'string' || !task.projectId || typeof task.enabled !== 'boolean' || schedule.kind !== 'daily') throw new Error('Invalid scheduled task identity or schedule.')
+        cleanText(task.name, 'name', 120); cleanText(task.prompt, 'prompt', 20_000)
+        cleanTime(schedule.time); cleanTimeZone(schedule.timeZone)
+        ids.add(task.id)
+      }
+      const runIds = new Set<string>()
+      for (const rawRun of value.runs) {
+        const run = stateRecord(rawRun)
+        if (typeof run.id !== 'string' || !run.id || runIds.has(run.id) || typeof run.taskId !== 'string' || !['queued','running','completed','failed','interrupted'].includes(String(run.status))) throw new Error('Invalid scheduled task run.')
+        const task = value.tasks.find(raw => stateRecord(raw).id === run.taskId)
+        if (typeof run.projectId !== 'string' || (task && stateRecord(task).projectId !== run.projectId)) throw new Error('Scheduled run Project mismatch.')
+        if (!task && ACTIVE_RUN_STATUSES.has(run.status as ScheduledTaskRunStatus)) throw new Error('Active scheduled run has no task.')
+        runIds.add(run.id)
+      }
+      return value as unknown as ScheduledTaskState
+    })
+    if (loaded) this.state = loaded
   }
 
   save(): void {
@@ -169,7 +187,7 @@ export class ScheduledTaskStore {
     return task
   }
 
-  create(project: { id: string; dshSessionId?: string | null }, input: Record<string, unknown>): ScheduledTask {
+  create(project: { id: string; sessionId?: string | null }, input: Record<string, unknown>): ScheduledTask {
     if (this.state.tasks.length >= MAX_TASKS) throw new Error(`BMW supports at most ${MAX_TASKS} scheduled tasks per product profile.`)
     const now = this.now()
     const enabled = input.enabled !== false
@@ -178,7 +196,7 @@ export class ScheduledTaskStore {
     const task: ScheduledTask = {
       id: crypto.randomUUID(),
       projectId: project.id,
-      sessionId: project.dshSessionId || null,
+      sessionId: project.sessionId || null,
       name: cleanText(input.name, 'Scheduled task name', 80),
       prompt: cleanText(input.prompt, 'Scheduled task prompt', 8_000),
       schedule: { kind: 'daily', time, timeZone },
@@ -210,7 +228,7 @@ export class ScheduledTaskStore {
 
   bindSession(taskId: string, sessionId: string): ScheduledTask {
     const task = this.get(taskId)
-    task.sessionId = cleanText(sessionId, 'DSH Session id', 200)
+    task.sessionId = cleanText(sessionId, 'Agent Session id', 200)
     task.updatedAt = this.now().toISOString()
     this.save()
     return structuredClone(task)

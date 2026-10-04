@@ -28,6 +28,7 @@ export interface MediaDownloadInput {
   filename?: string
   referrer?: string
   maximumBytes?: number
+  signal?: AbortSignal
   now?: () => number
 }
 
@@ -73,54 +74,70 @@ export async function downloadMediaArtifact({
   url,
   filename,
   referrer,
+  signal,
   maximumBytes = MAX_MEDIA_BYTES,
   now = () => Date.now()
 }: MediaDownloadInput) {
-  const sourceUrl = new URL(String(url || ''))
-  if (!['http:', 'https:'].includes(sourceUrl.protocol)) throw new Error('Media downloads require an HTTP(S) URL discovered by BMW.')
-  if (!Number.isSafeInteger(maximumBytes) || maximumBytes < 1) throw new TypeError('Media download limit must be a positive safe integer.')
-
-  const response = await fetchImpl(sourceUrl.toString(), {
-    credentials: 'include',
-    redirect: 'follow',
-    referrer: referrer && /^https?:/i.test(referrer) ? referrer : undefined,
-    headers: { accept: 'image/*,video/*,audio/*,application/octet-stream,*/*;q=0.8' }
-  })
-  if (!response.ok) throw new Error(`Media download returned HTTP ${response.status}.`)
-  if (!response.body) throw new Error('Media download returned an empty response body.')
-
-  const declaredBytes = Number(response.headers.get('content-length') || 0)
-  if (declaredBytes > maximumBytes) throw new Error(`Media exceeds the BMW download limit of ${maximumBytes} bytes.`)
-  const contentType = String(response.headers.get('content-type') || 'application/octet-stream').split(';', 1)[0].toLowerCase()
-  const artifactsDirectory = path.join(projectDirectory, 'artifacts')
-  fs.mkdirSync(artifactsDirectory, { recursive: true, mode: 0o700 })
-  const artifactId = artifactFilename(filename, contentType, sourceUrl, now())
-  const filePath = path.join(artifactsDirectory, artifactId)
-  let bytes = 0
-  const limiter = new Transform({
-    transform(chunk, _encoding, callback) {
-      bytes += chunk.length
-      if (bytes > maximumBytes) callback(new Error(`Media exceeds the BMW download limit of ${maximumBytes} bytes.`))
-      else callback(null, chunk)
-    }
-  })
+  const controller=new AbortController()
+  const cancellation=AbortSignal.any([controller.signal,...(signal?[signal]:[]),AbortSignal.timeout(60_000)])
+  let response:Response|undefined
   try {
-    await pipeline(Readable.fromWeb(response.body as any), limiter, fs.createWriteStream(filePath, { flags: 'wx', mode: 0o600 }))
-    const probe = bytes < 64 * 1024 ? fs.readFileSync(filePath) : Buffer.alloc(0)
-    if (probe.length && isIsoBmffInitializationSegment(probe, contentType)) {
-      throw new Error('Media URL returned a DASH initialization segment, not a complete playable file. Use media.video.capture on the page video element.')
+    cancellation.throwIfAborted()
+    const sourceUrl = new URL(String(url || ''))
+    if (!['http:', 'https:'].includes(sourceUrl.protocol)) throw new Error('Media downloads require an HTTP(S) URL discovered by BMW.')
+    if (!Number.isSafeInteger(maximumBytes) || maximumBytes < 1) throw new TypeError('Media download limit must be a positive safe integer.')
+
+    response = await fetchImpl(sourceUrl.toString(), {
+      signal:cancellation,
+      credentials: 'include',
+      redirect: 'follow',
+      referrer: referrer && /^https?:/i.test(referrer) ? referrer : undefined,
+      headers: { accept: 'image/*,video/*,audio/*,application/octet-stream,*/*;q=0.8' }
+    })
+    cancellation.throwIfAborted()
+    if (!response.ok) throw new Error(`Media download returned HTTP ${response.status}.`)
+    if (!response.body) throw new Error('Media download returned an empty response body.')
+
+    const declaredBytes = Number(response.headers.get('content-length') || 0)
+    if (declaredBytes > maximumBytes) throw new Error(`Media exceeds the BMW download limit of ${maximumBytes} bytes.`)
+    const contentType = String(response.headers.get('content-type') || 'application/octet-stream').split(';', 1)[0].toLowerCase()
+    const artifactsDirectory = path.join(projectDirectory, 'artifacts')
+    fs.mkdirSync(artifactsDirectory, { recursive: true, mode: 0o700 })
+    const artifactId = artifactFilename(filename, contentType, sourceUrl, now())
+    const filePath = path.join(artifactsDirectory, artifactId)
+    let bytes = 0
+    const limiter = new Transform({
+      transform(chunk, _encoding, callback) {
+        bytes += chunk.length
+        if (bytes > maximumBytes) callback(new Error(`Media exceeds the BMW download limit of ${maximumBytes} bytes.`))
+        else callback(null, chunk)
+      }
+    })
+    const output=fs.createWriteStream(filePath,{flags:'wx',mode:0o600})
+    let owned=false
+    output.once('open',()=>{owned=true})
+    try {
+      await pipeline(Readable.fromWeb(response.body as any), limiter, output, {signal:cancellation})
+      cancellation.throwIfAborted()
+      const probe = bytes < 64 * 1024 ? fs.readFileSync(filePath) : Buffer.alloc(0)
+      if (probe.length && isIsoBmffInitializationSegment(probe, contentType)) {
+        throw new Error('Media URL returned a DASH initialization segment, not a complete playable file. Use media.video.capture on the page video element.')
+      }
+    } catch (error) {
+      if (owned && fs.existsSync(filePath)) fs.unlinkSync(filePath)
+      throw error
     }
-  } catch (error) {
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
-    throw error
-  }
-  return {
-    artifactId,
-    type: contentType.startsWith('image/') ? 'image' : contentType.startsWith('video/') ? 'video' : contentType.startsWith('audio/') ? 'audio' : 'media',
-    contentType,
-    bytes,
-    sourceUrl: response.url || sourceUrl.toString(),
-    path: filePath
+    return {
+      artifactId,
+      type: contentType.startsWith('image/') ? 'image' : contentType.startsWith('video/') ? 'video' : contentType.startsWith('audio/') ? 'audio' : 'media',
+      contentType,
+      bytes,
+      sourceUrl: response.url || sourceUrl.toString(),
+      path: filePath
+    }
+  } finally {
+    controller.abort()
+    if(response?.body)await response.body.cancel().catch(()=>{})
   }
 }
 

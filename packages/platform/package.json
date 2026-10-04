@@ -5,11 +5,12 @@
   "type": "module",
   "dependencies": {
     "@bmw-agent/browser-capability": "*",
-    "@bmw-agent/harness-dsh": "*",
-    "@bmw-agent/media-native": "*"
+    "@bmw-agent/media-native": "*",
+    "@bmw-agent/agent-contract": "*"
   },
   "exports": {
     ".": "./src/product-definition.js",
-    "./application": "./src/main.js"
+    "./application": "./src/main.js",
+    "./feature-contract": "./src/feature-contract.js"
   }
 }

@@ -1,27 +1,33 @@
 # BMW repository guidance
 
-## Product and ownership
+Browser is boundary, media is native, web is runtime.
 
-- This repository ships exactly one app: `bmw`. BMWVideo is the video/media product and its display name is **BMW**; BMWDev derives from BMW.
-- BMW owns the browser/media/video foundation and `@bmw-agent/product-bmw`. Never import BMWDev, WVL, Dev Runtime or Dev state. Do not recreate the retired BMW Base or BMWVideo app identities.
-- DeepSeek Harness is the only Agent harness. Do not implement another Agent loop.
-- Exactly one model/MCP tool is allowed: `browser`. Add capabilities as browser actions, never extra tools.
-- Dependency direction: app -> product/features -> platform/adapters. Shared implementation must never import apps. The MCP catalog is discovered through the authenticated Bridge.
-- New capabilities use Web APIs, sandboxed browser runtimes, browser extensions or a browser-native Electron adapter. No Shell, unrestricted host filesystem, credentials, cookies, Electron IPC or FFmpeg CLI as model tools.
-- Preserve Session/Project binding, FIFO operations, Project-transition exclusion, screenshot image admission and Project-owned media.
-- No default chat software connectors. Future remote/mobile control is independent.
+## Product contract
 
-## Implementation and verification
+- This repository ships one application: BMW, id `bmw`, profile `BMW`, Chromium partition `persist:bmw`.
+- BMW owns Projects, pages, media, Video Studio, permissions, settings and scheduled tasks. Pages and artifacts belong to a Project; conversations share that Project's resources.
+- Exactly one model/MCP tool is allowed: `browser`. Add capabilities as validated browser actions. The authenticated Bridge publishes the effective catalog.
+- DSH is the sole configured Agent driver and owns its Agent loop. Do not implement another loop or add another harness without an explicit product decision.
+- `apps/bmw/product.ts` selects the driver. Core packages depend on `agent-contract`, never `harness-dsh`, DSH RPC, client storage, selectors, presets or credential configuration.
+- DSH process lifecycle, official transport, managed preset, client/Composer integration and persisted DSH compatibility belong to `harness-dsh`.
+- Preserve Project/Session binding, FIFO operations, Project-transition exclusion, screenshot image admission, cancellation and Project-owned media. Driver bindings are stored under `agentBindings[driverId]`.
+- Use Web APIs, sandboxed browser runtimes and bounded native browser adapters. Never expose shell execution, unrestricted host filesystem, credentials, cookie access, Electron IPC or FFmpeg CLI to the model.
+- Remote and mobile control are independent future interfaces. Do not add chat software connectors, relays or connection settings.
+- Shared implementations must not import apps. BMW has no runtime dependency on another product repository.
 
-- Author implementations, plugins, scripts and tests only in TypeScript. No tracked JS/CJS/MJS; they are disposable compiler output. NodeNext TS imports keep `.js`; preload sources use `.cts` -> `.cjs`.
-- Define contracts at their owning package boundary; avoid new `any`; validate IPC, MCP, persisted and browser input. Frozen legacy typecheck exceptions are listed in `scripts/check-source.ts`; do not expand them.
-- Electron and DSH tests must use disposable `userData`/DSH Home/Workspace, never a real profile.
-- `docs/FUNCTIONAL_SPEC.md` is authoritative. Update human entries with changed/removed features, schemas, permissions and descriptions. Added/moved/renamed/removed tests require `npm run docs:features` and the refreshed inventory.
-- Run `npm run build`, `npm run check`, `npm test`, `npm run test:boundaries`. Runtime changes also require the relevant `test:dsh-e2e`, `test:desktop-e2e`, `test:media-e2e`. Builds clean outputs; do not run build-containing commands concurrently in one checkout.
-- Do not claim coverage from an unrelated test or describe planned video editing/real-model behavior as implemented.
+## Implementation
 
-## Product-specific requirements
+- Author implementations, plugins, scripts and tests in TypeScript. Generated JS/CJS/MJS are ignored compiler output; use NodeNext `.js` imports and `.cts` preload sources.
+- Define typed contracts at package boundaries. Avoid new `any`; validate IPC, browser, driver and persisted input. Do not expand the frozen typecheck exceptions in `scripts/check-source.ts`.
+- Keep existing user profiles, media and documents. Binding compatibility must be idempotent and retain the current Workspace/Session. Never test against a production profile.
+- Video actions live in `feature-video`; media decoding, processing, narration and export live in `media-native`. Draft updates use revisions; background tasks must not overwrite GUI edits.
+- Prefer Mediabunny, WebCodecs, Canvas, WebAudio, WebGPU and MediaRecorder. General HTML import and a general video editor are outside the current contract.
 
-- Reserve `video.*` for future production actions within `browser`; current Video Feature has no production actions, timeline or editor.
-- Prefer WebCodecs, WebGPU, WebAudio, Canvas and MediaRecorder. Do not add FFmpeg without a separate architecture decision; never expose its CLI to DSH.
-- Keep the existing `BMW` profile and `persist:bmw` identity. Do not silently migrate or delete legacy `BMWVideo`/`BMWDev` user data.
+## Verification and documentation
+
+- `docs/FUNCTIONAL_SPEC.md` describes current implementation and is authoritative. Update it with feature, schema, permission and boundary changes.
+- Added, moved, renamed or removed tests require `npm run docs:features`. Keep README, handoff and status documents focused on the current product, not a change diary.
+- Run build, check, unit tests and boundaries. Runtime changes also require the relevant DSH, desktop, Studio, media, video and narration checks.
+- Electron/DSH checks use disposable userData/Home/Workspace. Never use real profiles or interact with operating-system credential prompts.
+- Build commands clean generated output; run them sequentially. For resource-limited hosts use `GOMEMLIMIT=32MiB GOGC=1 GOMAXPROCS=1`.
+- Do not claim paid-model, external-service or production-profile coverage from isolated unit/runtime tests.

@@ -1,0 +1,542 @@
+{
+  "date": "2026-10-02T13:38:22.274Z",
+  "requestedModel": "deepseek-flash",
+  "provider": "deepseek-official",
+  "harness": "0.2.0-rc.2",
+  "scope": "Synthetic canvas -> BMW screenshot -> authenticated Bridge -> official MCP image handling -> DSH -> real DeepSeek; fresh Session per case",
+  "cases": [
+    {
+      "case": 1,
+      "elapsedMs": 3869,
+      "response": "{\"code\":\"602D66AC42\",\"title\":\"素材统计\",\"total\":799,\"highest\":\"B\",\"difference\":24,\"redPosition\":\"左上\",\"blueCircles\":3,\"greenTriangles\":0}",
+      "headers": [
+        {
+          "header": {
+            "config": {
+              "provider": "deepseek-official",
+              "model": "deepseek-flash",
+              "reasoningEffort": "low",
+              "maxTokens": 4096
+            },
+            "adapterDefaults": {
+              "maxTokens": true
+            },
+            "tools": [
+              {
+                "name": "browser",
+                "description": "The only BMW model capability. Search, inspect, navigate, interact with, capture, record, and analyze tabs owned by the active Project, usually in the background. No Shell, unrestricted filesystem, or external browser tool is available.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "action": {
+                      "type": "string",
+                      "enum": [
+                        "status",
+                        "tabs.list",
+                        "tabs.open",
+                        "tabs.show",
+                        "tabs.close",
+                        "navigate",
+                        "back",
+                        "forward",
+                        "reload",
+                        "observe",
+                        "click",
+                        "type",
+                        "wait",
+                        "key",
+                        "hover",
+                        "page.diagnostics",
+                        "page.media.list",
+                        "page.viewport.set",
+                        "media.screenshot",
+                        "media.download",
+                        "media.video.capture",
+                        "media.record.start",
+                        "media.record.stop",
+                        "project.context",
+                        "project.memory.append",
+                        "project.tasks.append",
+                        "schedule.list",
+                        "schedule.create",
+                        "schedule.update",
+                        "schedule.remove",
+                        "schedule.run"
+                      ]
+                    },
+                    "tabId": {
+                      "type": "string",
+                      "description": "Target tab ID. Omit to use the visible tab."
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "foreground": {
+                      "type": "boolean",
+                      "description": "Defaults to false for background work."
+                    },
+                    "reuse": {
+                      "type": "boolean",
+                      "description": "Defaults to true; reuse an exact URL or suitable same-origin Agent tab."
+                    },
+                    "maxCharacters": {
+                      "type": "number"
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "viewport",
+                        "fullpage",
+                        "background",
+                        "observe"
+                      ]
+                    },
+                    "selector": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    },
+                    "milliseconds": {
+                      "type": "number"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "modifiers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Keyboard modifiers such as shift, control, alt, or meta."
+                    },
+                    "index": {
+                      "type": "number",
+                      "description": "Zero-based match when selector identifies multiple page elements."
+                    },
+                    "maxItems": {
+                      "type": "number",
+                      "description": "Maximum media items to return."
+                    },
+                    "width": {
+                      "type": "number"
+                    },
+                    "height": {
+                      "type": "number"
+                    },
+                    "deviceScaleFactor": {
+                      "type": "number"
+                    },
+                    "mobile": {
+                      "type": "boolean"
+                    },
+                    "filename": {
+                      "type": "string",
+                      "description": "Optional Project artifact filename."
+                    },
+                    "fromStart": {
+                      "type": "boolean",
+                      "description": "Restart finite media at time zero before capture. Defaults to true."
+                    },
+                    "maxDurationMs": {
+                      "type": "number",
+                      "description": "Safety limit from 1 second to 30 minutes. Defaults to 15 minutes."
+                    },
+                    "fps": {
+                      "type": "number"
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "Text to append to Project memory/tasks."
+                    },
+                    "scheduleName": {
+                      "type": "string",
+                      "description": "Short user-facing task name."
+                    },
+                    "schedulePrompt": {
+                      "type": "string",
+                      "description": "Complete natural-language instructions to execute at each occurrence."
+                    },
+                    "scheduleTime": {
+                      "type": "string",
+                      "description": "Local 24-hour time in HH:mm format."
+                    },
+                    "scheduleTimeZone": {
+                      "type": "string",
+                      "description": "IANA time zone such as Asia/Shanghai."
+                    },
+                    "scheduleEnabled": {
+                      "type": "boolean",
+                      "description": "Defaults to true."
+                    },
+                    "scheduledTaskId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "action"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            ]
+          },
+          "reason": "initial"
+        }
+      ],
+      "toolCalls": [
+        {
+          "name": "browser",
+          "arguments": "{\"action\": \"media.screenshot\", \"tabId\": \"vision-fixture\", \"selector\": \"#board\", \"filename\": \"vision.png\"}"
+        }
+      ],
+      "usage": [
+        {
+          "inputTokens": 327,
+          "outputTokens": 110,
+          "cacheReadTokens": 1152,
+          "cacheWriteTokens": 0,
+          "totalTokens": 1589
+        },
+        {
+          "inputTokens": 1382,
+          "outputTokens": 45,
+          "cacheReadTokens": 1536,
+          "cacheWriteTokens": 0,
+          "totalTokens": 2963
+        }
+      ],
+      "checks": [
+        {
+          "field": "code",
+          "expected": "602D66AC42",
+          "actual": "602D66AC42",
+          "passed": true
+        },
+        {
+          "field": "title",
+          "expected": "素材统计",
+          "actual": "素材统计",
+          "passed": true
+        },
+        {
+          "field": "total",
+          "expected": 799,
+          "actual": 799,
+          "passed": true
+        },
+        {
+          "field": "highest",
+          "expected": "B",
+          "actual": "B",
+          "passed": true
+        },
+        {
+          "field": "difference",
+          "expected": 24,
+          "actual": 24,
+          "passed": true
+        },
+        {
+          "field": "redPosition",
+          "expected": "左上",
+          "actual": "左上",
+          "passed": true
+        },
+        {
+          "field": "blueCircles",
+          "expected": 3,
+          "actual": 3,
+          "passed": true
+        },
+        {
+          "field": "greenTriangles",
+          "expected": 0,
+          "actual": 0,
+          "passed": true
+        }
+      ],
+      "modelConfirmed": true,
+      "catalogConfirmed": true,
+      "toolConfirmed": true,
+      "passed": true
+    },
+    {
+      "case": 2,
+      "elapsedMs": 3833,
+      "response": "{\"code\":\"A1E1BB1B18\",\"title\":\"素材统计\",\"total\":800,\"highest\":\"A\",\"difference\":25,\"redPosition\":\"右下\",\"blueCircles\":4,\"greenTriangles\":0}",
+      "headers": [
+        {
+          "header": {
+            "config": {
+              "provider": "deepseek-official",
+              "model": "deepseek-flash",
+              "reasoningEffort": "low",
+              "maxTokens": 4096
+            },
+            "adapterDefaults": {
+              "maxTokens": true
+            },
+            "tools": [
+              {
+                "name": "browser",
+                "description": "The only BMW model capability. Search, inspect, navigate, interact with, capture, record, and analyze tabs owned by the active Project, usually in the background. No Shell, unrestricted filesystem, or external browser tool is available.",
+                "parameters": {
+                  "type": "object",
+                  "properties": {
+                    "action": {
+                      "type": "string",
+                      "enum": [
+                        "status",
+                        "tabs.list",
+                        "tabs.open",
+                        "tabs.show",
+                        "tabs.close",
+                        "navigate",
+                        "back",
+                        "forward",
+                        "reload",
+                        "observe",
+                        "click",
+                        "type",
+                        "wait",
+                        "key",
+                        "hover",
+                        "page.diagnostics",
+                        "page.media.list",
+                        "page.viewport.set",
+                        "media.screenshot",
+                        "media.download",
+                        "media.video.capture",
+                        "media.record.start",
+                        "media.record.stop",
+                        "project.context",
+                        "project.memory.append",
+                        "project.tasks.append",
+                        "schedule.list",
+                        "schedule.create",
+                        "schedule.update",
+                        "schedule.remove",
+                        "schedule.run"
+                      ]
+                    },
+                    "tabId": {
+                      "type": "string",
+                      "description": "Target tab ID. Omit to use the visible tab."
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "foreground": {
+                      "type": "boolean",
+                      "description": "Defaults to false for background work."
+                    },
+                    "reuse": {
+                      "type": "boolean",
+                      "description": "Defaults to true; reuse an exact URL or suitable same-origin Agent tab."
+                    },
+                    "maxCharacters": {
+                      "type": "number"
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "viewport",
+                        "fullpage",
+                        "background",
+                        "observe"
+                      ]
+                    },
+                    "selector": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    },
+                    "milliseconds": {
+                      "type": "number"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "modifiers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Keyboard modifiers such as shift, control, alt, or meta."
+                    },
+                    "index": {
+                      "type": "number",
+                      "description": "Zero-based match when selector identifies multiple page elements."
+                    },
+                    "maxItems": {
+                      "type": "number",
+                      "description": "Maximum media items to return."
+                    },
+                    "width": {
+                      "type": "number"
+                    },
+                    "height": {
+                      "type": "number"
+                    },
+                    "deviceScaleFactor": {
+                      "type": "number"
+                    },
+                    "mobile": {
+                      "type": "boolean"
+                    },
+                    "filename": {
+                      "type": "string",
+                      "description": "Optional Project artifact filename."
+                    },
+                    "fromStart": {
+                      "type": "boolean",
+                      "description": "Restart finite media at time zero before capture. Defaults to true."
+                    },
+                    "maxDurationMs": {
+                      "type": "number",
+                      "description": "Safety limit from 1 second to 30 minutes. Defaults to 15 minutes."
+                    },
+                    "fps": {
+                      "type": "number"
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "Text to append to Project memory/tasks."
+                    },
+                    "scheduleName": {
+                      "type": "string",
+                      "description": "Short user-facing task name."
+                    },
+                    "schedulePrompt": {
+                      "type": "string",
+                      "description": "Complete natural-language instructions to execute at each occurrence."
+                    },
+                    "scheduleTime": {
+                      "type": "string",
+                      "description": "Local 24-hour time in HH:mm format."
+                    },
+                    "scheduleTimeZone": {
+                      "type": "string",
+                      "description": "IANA time zone such as Asia/Shanghai."
+                    },
+                    "scheduleEnabled": {
+                      "type": "boolean",
+                      "description": "Defaults to true."
+                    },
+                    "scheduledTaskId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "action"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            ]
+          },
+          "reason": "initial"
+        }
+      ],
+      "toolCalls": [
+        {
+          "name": "browser",
+          "arguments": "{\"action\": \"media.screenshot\", \"tabId\": \"vision-fixture\", \"selector\": \"#board\", \"filename\": \"vision.png\"}"
+        }
+      ],
+      "usage": [
+        {
+          "inputTokens": 199,
+          "outputTokens": 149,
+          "cacheReadTokens": 1280,
+          "cacheWriteTokens": 0,
+          "totalTokens": 1628
+        },
+        {
+          "inputTokens": 1429,
+          "outputTokens": 160,
+          "cacheReadTokens": 1536,
+          "cacheWriteTokens": 0,
+          "totalTokens": 3125
+        }
+      ],
+      "checks": [
+        {
+          "field": "code",
+          "expected": "A1E1BB1B18",
+          "actual": "A1E1BB1B18",
+          "passed": true
+        },
+        {
+          "field": "title",
+          "expected": "素材统计",
+          "actual": "素材统计",
+          "passed": true
+        },
+        {
+          "field": "total",
+          "expected": 800,
+          "actual": 800,
+          "passed": true
+        },
+        {
+          "field": "highest",
+          "expected": "A",
+          "actual": "A",
+          "passed": true
+        },
+        {
+          "field": "difference",
+          "expected": 25,
+          "actual": 25,
+          "passed": true
+        },
+        {
+          "field": "redPosition",
+          "expected": "右下",
+          "actual": "右下",
+          "passed": true
+        },
+        {
+          "field": "blueCircles",
+          "expected": 4,
+          "actual": 4,
+          "passed": true
+        },
+        {
+          "field": "greenTriangles",
+          "expected": 0,
+          "actual": 0,
+          "passed": true
+        }
+      ],
+      "modelConfirmed": true,
+      "catalogConfirmed": true,
+      "toolConfirmed": true,
+      "passed": true
+    }
+  ],
+  "ok": true,
+  "captures": [
+    {
+      "case": 1,
+      "path": "case-1.png",
+      "width": 2000,
+      "height": 1600
+    },
+    {
+      "case": 2,
+      "path": "case-2.png",
+      "width": 2000,
+      "height": 1600
+    }
+  ]
+}

@@ -27,3 +27,8 @@ export const mediaCapturePolicyInternals = {
   base64PayloadFromDataUrl,
   safeCaptureFilename
 }
+
+/** Capture IPC belongs to the current private window's main frame, never a guest or old renderer. */
+export function isOwnedCaptureMessage(event:{sender:unknown;senderFrame:unknown}, window?:{isDestroyed():boolean;webContents:{mainFrame:unknown}}|null):boolean {
+  return Boolean(window&&!window.isDestroyed()&&event.sender===window.webContents&&event.senderFrame===window.webContents.mainFrame)
+}

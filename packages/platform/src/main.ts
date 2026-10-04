@@ -1,11 +1,19 @@
+import {defineProduct} from './product-definition.js'
+import type {ResolvedProductDefinition} from './product-definition.js'
+import {activateFeature} from './feature-contract.js'
+import type {FeatureRuntime} from './feature-contract.js'
+import {assertBrowserFeatureHost} from '@bmw-agent/browser-capability/host'
 import fs from 'node:fs'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import {StateLoadError} from './state-load.js'
+import {createShellIpcRegistrar} from './shell-ipc.js'
 import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, Notification, safeStorage, screen, session, webContents as electronWebContents, WebContentsView } from 'electron'
-import type { MenuItemConstructorOptions } from 'electron'
+import type { MenuItemConstructorOptions, IpcMainEvent } from 'electron'
 import { BrowserKernel } from '@bmw-agent/browser-capability/kernel'
 import { createBridgeServer } from '@bmw-agent/browser-capability/bridge'
-import { DshHarnessPort, DshRuntime, resolveDshHome } from '@bmw-agent/harness-dsh'
+import { AgentSelectionSynchronizer, parseAgentContextState } from '@bmw-agent/agent-contract'
+import type { AgentDriver, AgentRuntime, AgentProject, AgentProjectContext } from '@bmw-agent/agent-contract'
 import { GlobalSettingsStore } from './global-settings-store.js'
 import { LayoutStore } from './layout-store.js'
 import { isOverlayAtDockCorner } from './layout-docking.js'
@@ -14,7 +22,6 @@ import { MediaController } from '@bmw-agent/media-native'
 import { sitePermissionDisposition } from './permission-policy.js'
 import { PermissionStore } from './permission-store.js'
 import { ProjectStore } from './project-store.js'
-import { ProductProfileImporter } from './product-profile-importer.js'
 import { SessionContinuityManager } from './session-continuity.js'
 import { ScheduledTaskManager } from './scheduled-task-manager.js'
 import { ScheduledTaskStore } from './scheduled-task-store.js'
@@ -25,10 +32,11 @@ import { restartBlockReason } from './restart-policy.js'
 const sourceDirectory = path.dirname(fileURLToPath(import.meta.url))
 const projectDirectory = path.resolve(sourceDirectory, '../../..')
 let PRODUCT_NAME = 'BMW'
-const TOP_BAR_HEIGHT = 76
+const TOP_BAR_HEIGHT = 102
 const MIN_AGENT_WIDTH = 360
 
-let productDefinition
+let agentDriver: AgentDriver
+let productDefinition: Readonly<ResolvedProductDefinition>
 
 function installApplicationMenu() {
   const template = [
@@ -86,7 +94,7 @@ let shellView
 let agentView
 let browserKernel
 let bridge
-let harnessPort
+let agentRuntime: AgentRuntime
 let mediaController
 let permissionStore
 let sessionContinuity
@@ -97,6 +105,7 @@ let agentVisible = true
 let agentWidth = 460
 let projectPanelVisible = false
 let layoutSetupVisible = false
+let toolbarPanelVisible = false
 let settingsPanelVisible = false
 let sessionPanelVisible = false
 let scheduledTaskPanelVisible = false
@@ -104,31 +113,81 @@ let layoutSaveTimer
 let overlayDocking = false
 let appQuitting = false
 let bmwSession
-let productFeatureRuntime
-let profileImporter
+let workspaceMode: 'browser'|'studio'='browser'
+let browserAgentVisible=true
+let productFeatureRuntime: FeatureRuntime | undefined
 let scheduledTaskStore
 let scheduledTaskManager
 let scheduledExecutionProjectId = null
 let shutdownPromise: Promise<void> | null = null
 let restartInProgress = false
 
-function activeValidationExecution(): boolean {
-  try {
-    const validation = productFeatureRuntime?.webValidation
-    if (validation?.recording || validation?.running || validation?.experimentRun) return true
-    const runs = productFeatureRuntime?.activeSnapshot?.()?.items || []
-    return runs.some((run) => run.status === 'preparing' || run.status === 'running')
-  } catch {
-    return false
-  }
+let agentContextSync:AgentSelectionSynchronizer|undefined
+let agentContextTimer:ReturnType<typeof setInterval>|undefined
+let agentContextMutationCount=0
+let agentContextState:{state:string;context?:AgentProjectContext;message?:string}={state:'starting'}
+function publishAgentContext(value:typeof agentContextState):void{agentContextState=value;sendToShell('agent-context-state',value)}
+async function withPausedAgentSelection<T>(operation:()=>Promise<T>):Promise<T>{
+ agentContextMutationCount++;agentContextSync?.invalidate()
+ publishAgentContext({state:'waiting',message:'Synchronizing Project, Workspace and conversation…'})
+ try{return await operation()}finally{agentContextMutationCount--;agentContextSync?.invalidate()}
+}
+function agentProject(project): AgentProject {
+ return {id:project.id,name:project.name,directory:project.directory,...projectStore.agentBinding(project.id,agentDriver.id)}
+}
+async function readAgentSelection():Promise<string|null>{
+ if(!agentView||!agentRuntime?.url)return null
+ return agentDriver.client.readSelection(agentView.webContents,agentRuntime.url)
+}
+function startAgentContextSync():void{
+ agentContextSync=new AgentSelectionSynchronizer({
+  readSelection:readAgentSelection,
+  blocked:()=>agentContextMutationCount>0||bridge?.busy===true||Boolean(scheduledExecutionProjectId)||mediaController?.isCaptureActive()===true,
+  resolve:async sessionId=>{
+   const projects=projectStore.list().map(project=>({...agentProject(project),directory:fs.realpathSync(project.directory)}))
+   const context=parseAgentContextState({state:'ready',context:await agentRuntime.resolveContext(sessionId,projects)}).context
+   const target=projects.find(project=>project.id===context.projectId)
+   if(!target||context.directory!==target.directory||context.sessionId!==sessionId||(target.workspaceId&&target.workspaceId!==context.workspaceId))throw new Error('Agent selection does not match a BMW Project binding')
+   const snapshot=await agentRuntime.listProjectSessions(target)
+   if(snapshot.workspaceId!==context.workspaceId||!snapshot.membership.includes(sessionId)||!snapshot.items.some(item=>item.sessionId===sessionId))throw new Error('Agent selection is not an active Project conversation')
+   return context
+  },
+  apply:async(context)=>{
+   const active=projectStore.active()
+   if(active.id===context.projectId&&agentProject(active).sessionId===context.sessionId&&agentProject(active).workspaceId===context.workspaceId)return
+   await productFeatureRuntime?.onSessionWillChange?.()
+   await bridge.changeProject(async()=>{
+    // The bridge is now locked by us; recheck navigation before mutating its Project.
+    if(agentContextMutationCount>0||(await readAgentSelection())!==context.sessionId)return
+    const target=projectStore.get(context.projectId,{includeArchived:false})
+    if(!target)throw new Error('The selected Project is archived')
+    const changed=projectStore.active().id!==target.id
+    if(changed){projectStore.switch(target.id);await browserKernel.switchProject(target)}
+    projectStore.setAgentBinding(target.id,agentDriver.id,{workspaceId:context.workspaceId,sessionId:context.sessionId})
+    if(changed)await productFeatureRuntime?.onProjectActivated?.(projectStore.active())
+    sendToShell('project-state',projectState());layout()
+   })
+   await productFeatureRuntime?.onSessionChanged?.()
+  },
+  restore:async()=>{
+   const project=projectStore.active()
+   if(agentProject(project).sessionId&&agentView&&!agentView.webContents.isDestroyed()){
+    await agentDriver.client.selectSession(agentView.webContents,agentProject(project).sessionId)
+   }
+  },
+  publish:publishAgentContext
+ })
+ agentContextTimer=setInterval(()=>{void agentContextSync?.tick()},750)
+ void agentContextSync.tick()
 }
 
-async function selectedDshTurnIsRunning(): Promise<boolean> {
-  if (!harnessPort?.child || !projectStore) return false
+
+async function selectedAgentTurnIsRunning(): Promise<boolean> {
+  if (!agentRuntime?.running || !projectStore) return false
   try {
     const project = projectStore.active()
     const sessions = await Promise.race([
-      harnessPort.listProjectSessions(project),
+      agentRuntime.listProjectSessions(agentProject(project)),
       new Promise<null>((resolve) => {
         const timer = setTimeout(() => resolve(null), 1_500)
         timer.unref?.()
@@ -144,8 +203,10 @@ async function selectedDshTurnIsRunning(): Promise<boolean> {
 function stopApplicationServices(): Promise<void> {
   if (shutdownPromise) return shutdownPromise
   shutdownPromise = (async () => {
+    if(agentContextTimer)clearInterval(agentContextTimer)
+    agentContextSync?.stop()
     scheduledTaskManager?.stop()
-    harnessPort?.stop()
+    await agentRuntime?.stop()
     const tasks: Promise<unknown>[] = []
     if (bridge) tasks.push(Promise.resolve(bridge.close()))
     if (sessionContinuity) tasks.push(Promise.resolve(sessionContinuity.stop()))
@@ -164,8 +225,7 @@ async function requestApplicationRestart() {
   if (restartInProgress) return { restarting: true }
   const block = restartBlockReason({
     mediaCaptureActive: mediaController?.isCaptureActive?.() === true,
-    scheduledTaskActive: Boolean(scheduledExecutionProjectId),
-    validationRunActive: activeValidationExecution()
+    scheduledTaskActive: Boolean(scheduledExecutionProjectId)
   })
   if (block) {
     await dialog.showMessageBox(mainWindow, {
@@ -178,14 +238,14 @@ async function requestApplicationRestart() {
     return { restarting: false, blocked: true, code: block.code, message: block.message }
   }
 
-  const dshTurnRunning = await selectedDshTurnIsRunning()
+  const agentTurnRunning = await selectedAgentTurnIsRunning()
   const confirmation = await dialog.showMessageBox(mainWindow, {
     type: 'question',
     title: `Restart ${PRODUCT_NAME}`,
     message: `Restart ${PRODUCT_NAME} now?`,
-    detail: `${PRODUCT_NAME} will reopen the same product Profile, Projects, browser tabs, saved login continuity, DSH Sessions, and layout.${dshTurnRunning ? ' The current DSH response will be interrupted.' : ''}`,
+    detail: `${PRODUCT_NAME} will reopen the same product Profile, Projects, browser tabs, saved login continuity, Agent Sessions, and layout.${agentTurnRunning ? ' The current Agent response will be interrupted.' : ''}`,
     buttons: [`Restart ${PRODUCT_NAME}`, 'Cancel'],
-    defaultId: dshTurnRunning ? 1 : 0,
+    defaultId: agentTurnRunning ? 1 : 0,
     cancelId: 1,
     noLink: true
   })
@@ -279,11 +339,15 @@ function sendToAgent(channel, value) {
 }
 
 function raiseProjectPanel() {
-  if ((!projectPanelVisible && !layoutSetupVisible && !settingsPanelVisible && !sessionPanelVisible && !scheduledTaskPanelVisible) || !mainWindow || !shellView) return
+  if ((!projectPanelVisible && !layoutSetupVisible && !settingsPanelVisible && !sessionPanelVisible && !scheduledTaskPanelVisible && !toolbarPanelVisible) || !mainWindow || !shellView) return
   const children = mainWindow.contentView.children
-  if (children.at(-1) === shellView) return
+  if (children.at(-1) === shellView) {
+    if (toolbarPanelVisible) shellView.webContents.focus()
+    return
+  }
   if (children.includes(shellView)) mainWindow.contentView.removeChildView(shellView)
   mainWindow.contentView.addChildView(shellView)
+  if (toolbarPanelVisible) shellView.webContents.focus()
 }
 
 function removeAgentView(parent) {
@@ -319,7 +383,7 @@ function dockOverlayIfNeeded() {
   layoutStore.update({ mode: 'sidebar', visible: true, overlayFullscreen: false })
   layout()
   setTimeout(() => { overlayDocking = false }, 250).unref?.()
-  console.info('[BMW] Docked floating DSH to the sidebar')
+  console.info('[BMW] Docked floating Agent to the sidebar')
   return true
 }
 
@@ -331,7 +395,7 @@ function ensureOverlayWindow() {
     parent: mainWindow,
     minWidth: 420,
     minHeight: 480,
-    title: `${PRODUCT_NAME} — DSH`,
+    title: `${PRODUCT_NAME} — Agent`,
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#111827' : '#f4f7fa',
     show: false,
     resizable: true,
@@ -376,10 +440,13 @@ function layout() {
   const [width, height] = mainWindow.getContentSize()
   const settings = layoutStore?.snapshot() || { mode: 'sidebar', opacity: 1, sidebarWidth: agentWidth, overlayFullscreen: false }
   agentWidth = settings.sidebarWidth
-  shellView.setBounds({ x: 0, y: 0, width, height: projectPanelVisible || layoutSetupVisible || settingsPanelVisible || sessionPanelVisible || scheduledTaskPanelVisible ? height : TOP_BAR_HEIGHT })
-  const sidebar = agentVisible && settings.mode === 'sidebar'
+  shellView.setBounds({ x: 0, y: 0, width, height: projectPanelVisible || layoutSetupVisible || settingsPanelVisible || sessionPanelVisible || scheduledTaskPanelVisible || toolbarPanelVisible ? height : TOP_BAR_HEIGHT })
+  const sidebar = agentVisible && (workspaceMode==='studio'||settings.mode === 'sidebar')
   const actualAgentWidth = sidebar ? Math.min(Math.max(agentWidth, MIN_AGENT_WIDTH), Math.floor(width * 0.55)) : 0
-  browserKernel.setBounds({ x: 0, y: TOP_BAR_HEIGHT, width: width - actualAgentWidth, height: height - TOP_BAR_HEIGHT })
+  const workspaceBounds={x:0,y:TOP_BAR_HEIGHT,width:width-actualAgentWidth,height:height-TOP_BAR_HEIGHT}
+  browserKernel.setBounds(workspaceBounds)
+  // The opaque Studio View covers browser pages; keep their compositor live for capture.
+  productFeatureRuntime?.layout?.(workspaceBounds,workspaceMode==='studio')
   if (sidebar) {
     if (overlayWindow && !overlayWindow.isDestroyed()) {
       removeAgentView(overlayWindow)
@@ -388,7 +455,7 @@ function layout() {
     if (!mainWindow.contentView.children.includes(agentView)) mainWindow.contentView.addChildView(agentView)
     agentView.setBounds({ x: width - actualAgentWidth, y: TOP_BAR_HEIGHT, width: actualAgentWidth, height: height - TOP_BAR_HEIGHT })
   } else if (agentVisible && settings.mode === 'overlay') {
-    if (projectPanelVisible || layoutSetupVisible || settingsPanelVisible || sessionPanelVisible || scheduledTaskPanelVisible) {
+    if (projectPanelVisible || layoutSetupVisible || settingsPanelVisible || sessionPanelVisible || scheduledTaskPanelVisible || toolbarPanelVisible) {
       if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.hide()
     } else {
       attachAgentToOverlay(settings)
@@ -398,104 +465,54 @@ function layout() {
     if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.hide()
   }
   raiseProjectPanel()
-  shellView.webContents.send('layout-state', { ...settings, agentVisible, agentWidth: actualAgentWidth, setupVisible: layoutSetupVisible })
+  shellView.webContents.send('layout-state', { ...settings, agentVisible, agentWidth: actualAgentWidth, setupVisible: layoutSetupVisible,workspaceMode })
 }
 
 function projectState() {
   return projectStore?.snapshot() || { activeProjectId: null, projects: [] }
 }
 
-async function selectDshSession(project, sessionId, { reload = true } = {}) {
-  const snapshot = await harnessPort.listProjectSessions(project)
-  if (!snapshot.membership.includes(sessionId)) throw new Error('That DSH session does not belong to this BMW Project.')
-  projectStore.setDshWorkspaceId(project.id, snapshot.workspaceId)
-  projectStore.setDshSessionId(project.id, sessionId)
+async function selectAgentSession(project, sessionId, { reload = true } = {}) {
+  return withPausedAgentSelection(async()=>{
+  const snapshot = await agentRuntime.listProjectSessions(agentProject(project))
+  if (!snapshot.membership.includes(sessionId)) throw new Error('That Agent session does not belong to this BMW Project.')
+  const changing=projectStore.active().id===project.id&&agentProject(project).sessionId!==sessionId
+  if(changing)await productFeatureRuntime?.onSessionWillChange?.()
+  projectStore.setAgentBinding(project.id,agentDriver.id,{workspaceId:snapshot.workspaceId,sessionId})
+  if(changing)await productFeatureRuntime?.onSessionChanged?.()
   if (agentView && !agentView.webContents.isDestroyed()) {
-    await agentView.webContents.executeJavaScript(`(() => {
-      localStorage.setItem('dsh.sessions.current', JSON.stringify({ sessionId: ${JSON.stringify(sessionId)} }))
-      ${reload ? 'location.reload()' : ''}
-    })()`)
+    await agentDriver.client.selectSession(agentView.webContents,sessionId,reload)
   }
   sendToShell('project-state', projectState())
   return sessionId
+  })
 }
 
-async function applyDshSidebarPolicy() {
-  if (!agentView || agentView.webContents.isDestroyed()) return
-  const visible = settingsStore?.snapshot().dshSidebarVisible === true
-  await agentView.webContents.executeJavaScript(`(() => {
-    const visible = ${JSON.stringify(visible)}
-    const styleId = 'bmw-dsh-sidebar-policy'
-    let style = document.getElementById(styleId)
-    if (!style) {
-      style = document.createElement('style')
-      style.id = styleId
-      document.head.appendChild(style)
-    }
-    style.textContent = '[data-bmw-sidebar-hidden] > :first-child{visibility:hidden!important;pointer-events:none!important;border-right:0!important}[data-bmw-sidebar-hidden] > [data-side="sidebar"]{display:none!important}[data-bmw-sidebar-hidden]{grid-template-columns:0px minmax(0,1fr) var(--bmw-dsh-details-width,0px)!important}'
-    const apply = () => {
-      const overlay = document.querySelector('[data-shell-overlay]')
-      const frame = overlay?.parentElement
-      if (!frame) return
-      const match = /([0-9.]+)px\\s*$/.exec(frame.style.gridTemplateColumns || '')
-      if (match) frame.style.setProperty('--bmw-dsh-details-width', match[1] + 'px')
-      frame.toggleAttribute('data-bmw-sidebar-hidden', !visible)
-    }
-    window.__bmwApplySidebarPolicy = apply
-    apply()
-    window.__bmwSidebarObserver?.disconnect?.()
-    window.__bmwSidebarObserver = new MutationObserver(apply)
-    window.__bmwWatchSidebarPolicy = () => window.__bmwSidebarObserver.observe(document.documentElement, { childList: true, subtree: true })
-    window.__bmwWatchSidebarPolicy()
-    return { visible, applied: Boolean(document.querySelector('[data-shell-overlay]')?.parentElement) }
-  })()`)
+async function applyAgentSidebarPolicy() {
+ if(agentView&&!agentView.webContents.isDestroyed())await agentDriver.client.applySidebarPolicy(agentView.webContents,settingsStore.snapshot().agentSidebarVisible===true)
+}
+async function openAgentAdvancedSettings() {
+ settingsPanelVisible=false;agentVisible=true;layoutStore.update({visible:true});layout()
+ await applyAgentSidebarPolicy()
+ await agentDriver.client.openSettings(agentView.webContents)
+ return {opened:true}
 }
 
-async function openDshAdvancedSettings() {
-  settingsPanelVisible = false
-  agentVisible = true
-  layoutStore.update({ visible: true })
-  layout()
-  await applyDshSidebarPolicy()
-  const opened = await agentView.webContents.executeJavaScript(`(() => {
-    window.__bmwSidebarObserver?.disconnect?.()
-    document.querySelector('[data-shell-overlay]')?.parentElement?.removeAttribute('data-bmw-sidebar-hidden')
-    const buttons = [...document.querySelectorAll('button')]
-    const trigger = buttons.find((button) => ['Settings', '设置'].includes((button.getAttribute('aria-label') || button.textContent || '').trim()))
-    if (!trigger) {
-      window.__bmwApplySidebarPolicy?.()
-      window.__bmwWatchSidebarPolicy?.()
-      return false
-    }
-    trigger.click()
-    let sawSettings = document.querySelector('[aria-modal="true"]') !== null
-    const timer = window.setInterval(() => {
-      const settingsOpen = document.querySelector('[aria-modal="true"]') !== null
-      sawSettings ||= settingsOpen
-      if (!sawSettings || settingsOpen) return
-      window.clearInterval(timer)
-      window.__bmwApplySidebarPolicy?.()
-      window.__bmwWatchSidebarPolicy?.()
-    }, 200)
-    return true
-  })()`)
-  if (!opened) throw new Error('DSH advanced settings are not available yet.')
-  return { opened: true }
-}
-
-async function synchronizeDshProject(project, { activate = false, ensureSession = false } = {}) {
-  if (!harnessPort?.child) return null
-  const result = activate || ensureSession ? await harnessPort.activateWorkspace(project) : { workspace: await harnessPort.ensureWorkspace(project) }
-  projectStore.setDshWorkspaceId(project.id, result.workspace.workspaceId)
-  if (result.sessionId) projectStore.setDshSessionId(project.id, result.sessionId)
+async function synchronizeAgentProject(project, { activate = false, ensureSession = false } = {}) {
+  return withPausedAgentSelection(async()=>{
+  if (!agentRuntime?.running) return null
+  if(!bridge?.changingProject&&projectStore.active().id===project.id)await productFeatureRuntime?.onSessionWillChange?.()
+  const previousSession=agentProject(project).sessionId
+  const result: {workspace: import('@bmw-agent/agent-contract').AgentWorkspace;sessionId?:string} = activate || ensureSession ? await agentRuntime.activateWorkspace(agentProject(project)) : { workspace: await agentRuntime.ensureWorkspace(agentProject(project)) }
+  projectStore.setAgentBinding(project.id,agentDriver.id,{workspaceId:result.workspace.workspaceId})
+  if (result.sessionId) projectStore.setAgentBinding(project.id,agentDriver.id,{sessionId:result.sessionId})
+  if(!bridge?.changingProject&&projectStore.active().id===project.id&&previousSession!==result.sessionId&&result.sessionId)await productFeatureRuntime?.onSessionChanged?.()
   if (activate && agentView && !agentView.webContents.isDestroyed()) {
-    await agentView.webContents.executeJavaScript(`(() => {
-      localStorage.setItem('dsh.sessions.current', JSON.stringify({ sessionId: ${JSON.stringify(result.sessionId)} }))
-      location.reload()
-    })()`)
-    console.info(`[BMW] Activated DSH project "${project.name}" (${result.sessionId})`)
+    await agentDriver.client.selectSession(agentView.webContents,result.sessionId)
+    console.info(`[BMW] Activated Agent project "${project.name}" (${result.sessionId})`)
   }
   return result
+  })
 }
 
 function assertNoScheduledProjectMutation(): void {
@@ -506,10 +523,11 @@ function assertNoScheduledProjectMutation(): void {
 async function activateProject(projectId, { scheduled = false } = {}) {
   if (bridge?.busy) throw new Error('BMW is completing a browser operation. Project switching resumes when it finishes.')
   if (scheduledExecutionProjectId && !scheduled && projectStore.active().id !== projectId) assertNoScheduledProjectMutation()
+  await productFeatureRuntime?.onSessionWillChange?.()
   return bridge.changeProject(async () => {
     const project = projectStore.switch(projectId)
     await browserKernel.switchProject(project)
-    await synchronizeDshProject(project, { activate: true })
+    await synchronizeAgentProject(project, { activate: true })
     await productFeatureRuntime?.onProjectActivated?.(project)
     sendToShell('project-state', projectState())
     layout()
@@ -524,16 +542,16 @@ async function executeScheduledTask(task, run) {
   scheduledExecutionProjectId = target.id
   try {
     if (projectStore.active().id !== target.id) await activateProject(target.id, { scheduled: true })
-    const synchronized = await synchronizeDshProject(target, { ensureSession: true })
-    if (!synchronized?.sessionId) throw new Error('DSH is unavailable for this scheduled task.')
+    const synchronized = await synchronizeAgentProject(target, { ensureSession: true })
+    if (!synchronized?.sessionId) throw new Error('Agent is unavailable for this scheduled task.')
     let sessionId = task.sessionId
-    const sessions = await harnessPort.listProjectSessions(target)
+    const sessions = await agentRuntime.listProjectSessions(agentProject(target))
     if (!sessionId || !sessions.membership.includes(sessionId)) {
       sessionId = synchronized.sessionId
       scheduledTaskStore.bindSession(task.id, sessionId)
     }
     const prompt = `[BMW Scheduled Task · ${task.name}]\n\nThis Project-scoped task is running automatically on its saved daily schedule (${task.schedule.time} ${task.schedule.timeZone}).\n\nTask instructions:\n${task.prompt}\n\nUse only BMW's browser capability. Work in background tabs unless foreground visibility is required to finish the task. Save screenshots, downloaded page media, and recordings as Project-owned artifacts. Do not create, modify, or remove scheduled tasks during this run unless the saved instructions explicitly require it. Do not publish, purchase, delete user data, or expand the task beyond these instructions. Finish with a concise result and list the artifacts you saved.`
-    const replies = await harnessPort.promptAndWait(sessionId, prompt, { timeoutMs: 30 * 60_000 })
+    const replies = await agentRuntime.promptAndWait(sessionId, prompt, { timeoutMs: 30 * 60_000 })
     return replies
   } finally {
     const original = projectStore.get(originalProjectId, { includeArchived: false })
@@ -626,49 +644,57 @@ async function askSitePermission(webContents, permission, callback, details) {
 }
 
 function installIpc() {
-  ipcMain.handle('product-info', () => ({
+  const shellHandle = createShellIpcRegistrar(ipcMain, () => shellView?.webContents, pathToFileURL(path.join(sourceDirectory, 'renderer/shell.html')).href)
+  shellHandle('workspace-mode',async(event,mode:unknown)=>{
+    if(event.sender!==shellView?.webContents||event.senderFrame!==shellView.webContents.mainFrame||!['browser','studio'].includes(String(mode)))throw new Error('Invalid BMW workspace selection.')
+    if(!productFeatureRuntime?.setMode)throw new Error('Workspace modes are unavailable.')
+    if(mode!=='browser'&&mode!=='studio')throw new TypeError('Unknown workspace mode.')
+    await productFeatureRuntime.setMode(mode);return {mode:workspaceMode}
+  })
+  shellHandle('product-panel-open', (event, id:unknown) => {
+    if(event.sender!==shellView?.webContents||event.senderFrame!==shellView.webContents.mainFrame||typeof id!=='string')throw new Error('Only the BMW Shell may open product panels.')
+    if(!productFeatureRuntime?.openPanel)throw new Error('This product has no such panel.')
+    return productFeatureRuntime.openPanel(id)
+  })
+  shellHandle('product-info', () => ({
     id: productDefinition.id,
     name: productDefinition.name,
     features: productDefinition.featureIds,
-    canImportFromBase: productDefinition.id !== 'bmw'
+    agent: {id:agentDriver.id,label:agentDriver.label,baseline:agentDriver.baseline}
   }))
-  ipcMain.handle('product-import-preview', () => profileImporter.preview())
-  ipcMain.handle('product-import-project', async (_event, input) => {
-    assertNoScheduledProjectMutation()
-    return bridge.changeProject(async () => {
-      const result = await profileImporter.importProject(input || {})
-      await browserKernel.switchProject(result.project)
-      await synchronizeDshProject(result.project, { activate: true })
-      sendToShell('project-state', projectState())
-      return { ...result, state: projectState() }
-    })
+  shellHandle('browser-command', async (_event, request) => {
+    if(bridge?.changingProject)throw new Error('BMW Project is changing; retry after activation finishes')
+    return browserKernel.execute(request, { actor: 'user', sessionOwner:agentProject(projectStore.active()).sessionId?{projectId:projectStore.active().id,sessionId:agentProject(projectStore.active()).sessionId}:undefined })
   })
-  ipcMain.handle('web-runtime-settings', async () => productFeatureRuntime?.runtimeSettings?.(settingsStore) || ({ enabled: false, moduleUrl: '', apiKeyConfigured: false, capabilities: null }))
-  ipcMain.handle('web-runtime-settings-update', async (_event, input = {}) => {
-    if (!productFeatureRuntime?.updateRuntimeSettings) throw new Error('Web Runtime settings are unavailable in this product.')
-    return productFeatureRuntime.updateRuntimeSettings(settingsStore, input)
-  })
-  ipcMain.handle('browser-command', async (_event, request) => browserKernel.execute(request, { actor: 'user' }))
-  ipcMain.handle('permission-agent-control', async (_event, enabled) => {
+  shellHandle('permission-agent-control', async (_event, enabled: unknown) => {
+    if (typeof enabled !== 'boolean') throw new TypeError('Agent permission must be a boolean.')
     if (enabled) permissionStore.grantAgentControl()
     else permissionStore.revokeAgentControl()
     browserKernel.emitState()
     return permissionStore.snapshot()
   })
-  ipcMain.handle('agent-panel', (_event, value) => {
+  shellHandle('agent-panel', (_event, value) => {
     agentVisible = typeof value === 'boolean' ? value : !agentVisible
     layoutStore.update({ visible: agentVisible })
     layout()
     return { agentVisible }
   })
-  ipcMain.handle('agent-width', (_event, value) => {
+  shellHandle('agent-width', (_event, value) => {
     const settings = layoutStore.update({ sidebarWidth: value })
     agentWidth = settings.sidebarWidth
     layout()
     return settings
   })
-  ipcMain.handle('layout-settings', () => ({ ...layoutStore.snapshot(), setupVisible: layoutSetupVisible }))
-  ipcMain.handle('layout-panel', (_event, visible) => {
+  shellHandle('layout-settings', () => ({ ...layoutStore.snapshot(), setupVisible: layoutSetupVisible }))
+  shellHandle('toolbar-panel', (event, visible: unknown) => {
+    if (event.sender !== shellView?.webContents || event.senderFrame !== shellView.webContents.mainFrame) throw new Error('Only the BMW Shell may display toolbar menus')
+    if (typeof visible !== 'boolean') throw new Error('Toolbar visibility must be boolean')
+    toolbarPanelVisible = visible
+    layout()
+    if (visible) shellView.webContents.focus()
+    return { visible }
+  })
+  shellHandle('layout-panel', (_event, visible) => {
     layoutSetupVisible = Boolean(visible)
     if (layoutSetupVisible) {
       sessionPanelVisible = false
@@ -677,7 +703,7 @@ function installIpc() {
     layout()
     return { ...layoutStore.snapshot(), setupVisible: layoutSetupVisible }
   })
-  ipcMain.handle('layout-configure', (_event, input) => {
+  shellHandle('layout-configure', (_event, input) => {
     const settings = layoutStore.update({ ...(input || {}), configured: true, visible: true })
     agentVisible = true
     agentWidth = settings.sidebarWidth
@@ -685,16 +711,16 @@ function installIpc() {
     layout()
     return { ...settings, setupVisible: false }
   })
-  ipcMain.handle('layout-fullscreen', (_event, value) => {
+  shellHandle('layout-fullscreen', (_event, value) => {
     const current = layoutStore.snapshot()
-    if (current.mode !== 'overlay') throw new Error('DSH full screen is available in floating layout.')
+    if (current.mode !== 'overlay') throw new Error('Agent full screen is available in floating layout.')
     const settings = layoutStore.update({ overlayFullscreen: Boolean(value), visible: true })
     agentVisible = true
     layout()
     return settings
   })
-  ipcMain.handle('global-settings', () => settingsStore.snapshot())
-  ipcMain.handle('global-settings-panel', (_event, visible) => {
+  shellHandle('global-settings', () => settingsStore.snapshot())
+  shellHandle('global-settings-panel', (_event, visible) => {
     settingsPanelVisible = Boolean(visible)
     if (settingsPanelVisible) {
       projectPanelVisible = false
@@ -705,8 +731,9 @@ function installIpc() {
     layout()
     return { visible: settingsPanelVisible, ...settingsStore.snapshot() }
   })
-  ipcMain.handle('global-settings-update', async (_event, input) => {
+  shellHandle('global-settings-update', async (_event, input) => {
     const previous = settingsStore.snapshot()
+    if(input?.videoPreferences!==undefined&&input.videoPreferencesExpected!==undefined&&JSON.stringify(input.videoPreferencesExpected)!==JSON.stringify(previous.videoPreferences))throw new Error('VIDEO_SETTINGS_CONFLICT: 视频设置已被其他操作更新，请重新打开设置后合并。')
     const settings = settingsStore.update(input || {})
     if (previous.theme !== settings.theme) {
       applyProductTheme(settings.theme)
@@ -714,13 +741,13 @@ function installIpc() {
     if (previous.proxyMode !== settings.proxyMode || previous.proxyRules !== settings.proxyRules || previous.proxyBypassRules !== settings.proxyBypassRules) {
       await settingsStore.applyProxy(bmwSession)
     }
-    if (previous.dshSidebarVisible !== settings.dshSidebarVisible) await applyDshSidebarPolicy()
+    if (previous.agentSidebarVisible !== settings.agentSidebarVisible) await applyAgentSidebarPolicy()
     sendToShell('global-settings-state', settings)
     return settings
   })
-  ipcMain.handle('application-restart', () => requestApplicationRestart())
-  ipcMain.handle('dsh-advanced-settings-open', () => openDshAdvancedSettings())
-  ipcMain.handle('session-panel', async (_event, visible) => {
+  shellHandle('application-restart', () => requestApplicationRestart())
+  shellHandle('agent-advanced-settings-open', () => openAgentAdvancedSettings())
+  shellHandle('session-panel', async (_event, visible) => {
     sessionPanelVisible = Boolean(visible)
     if (sessionPanelVisible) {
       projectPanelVisible = false
@@ -729,9 +756,9 @@ function installIpc() {
       scheduledTaskPanelVisible = false
     }
     layout()
-    return sessionPanelVisible ? harnessPort.listProjectSessions(projectStore.active()) : { visible: false }
+    return sessionPanelVisible ? agentRuntime.listProjectSessions(agentProject(projectStore.active())) : { visible: false }
   })
-  ipcMain.handle('scheduled-task-panel', (_event, visible) => {
+  shellHandle('scheduled-task-panel', (_event, visible) => {
     scheduledTaskPanelVisible = Boolean(visible)
     if (scheduledTaskPanelVisible) {
       projectPanelVisible = false
@@ -742,66 +769,69 @@ function installIpc() {
     layout()
     return scheduledTaskPanelVisible ? scheduledTaskManager.list(projectStore.active().id) : { visible: false }
   })
-  ipcMain.handle('scheduled-task-list', () => scheduledTaskManager.list(projectStore.active().id))
-  ipcMain.handle('scheduled-task-update', (_event, taskId, input) => scheduledTaskManager.update(projectStore.active().id, String(taskId), input || {}))
-  ipcMain.handle('scheduled-task-remove', (_event, taskId) => scheduledTaskManager.remove(projectStore.active().id, String(taskId)))
-  ipcMain.handle('scheduled-task-run', (_event, taskId) => scheduledTaskManager.runNow(projectStore.active().id, String(taskId)))
-  ipcMain.handle('dsh-session-list', (_event, query = '') => harnessPort.listProjectSessions(projectStore.active(), query))
-  ipcMain.handle('dsh-session-create', async () => {
+  shellHandle('scheduled-task-list', () => scheduledTaskManager.list(projectStore.active().id))
+  shellHandle('scheduled-task-update', (_event, taskId, input) => scheduledTaskManager.update(projectStore.active().id, String(taskId), input || {}))
+  shellHandle('scheduled-task-remove', (_event, taskId) => scheduledTaskManager.remove(projectStore.active().id, String(taskId)))
+  shellHandle('scheduled-task-run', (_event, taskId) => scheduledTaskManager.runNow(projectStore.active().id, String(taskId)))
+  shellHandle('agent-session-list', (_event, query = '') => agentRuntime.listProjectSessions(agentProject(projectStore.active()), query))
+  shellHandle('agent-session-create', () => withPausedAgentSelection(async () => {
     const project = projectStore.active()
-    const created = await harnessPort.createProjectSession(project)
-    await selectDshSession(project, created.sessionId)
-    return harnessPort.listProjectSessions(project)
+    await productFeatureRuntime?.onSessionWillChange?.()
+    const created = await agentRuntime.createProjectSession(agentProject(project))
+    await selectAgentSession(project, created.sessionId)
+    return agentRuntime.listProjectSessions(agentProject(project))
+  }))
+  shellHandle('agent-session-select', async (_event, sessionId) => {
+    const project = projectStore.active()
+    await selectAgentSession(project, String(sessionId))
+    return agentRuntime.listProjectSessions(agentProject(project))
   })
-  ipcMain.handle('dsh-session-select', async (_event, sessionId) => {
+  shellHandle('agent-session-rename', async (_event, sessionId, title) => {
     const project = projectStore.active()
-    await selectDshSession(project, String(sessionId))
-    return harnessPort.listProjectSessions(project)
-  })
-  ipcMain.handle('dsh-session-rename', async (_event, sessionId, title) => {
-    const project = projectStore.active()
-    const snapshot = await harnessPort.listProjectSessions(project)
+    const snapshot = await agentRuntime.listProjectSessions(agentProject(project))
     if (!snapshot.membership.includes(sessionId)) throw new Error('That session does not belong to this Project.')
-    await harnessPort.call('session.rename', { sessionId, title: String(title || '') })
-    return harnessPort.listProjectSessions(project)
+    await agentRuntime.renameSession(sessionId,String(title || ''))
+    return agentRuntime.listProjectSessions(agentProject(project))
   })
-  ipcMain.handle('dsh-session-fork', async (_event, sessionId) => {
+  shellHandle('agent-session-fork', async (_event, sessionId) => {
     const project = projectStore.active()
-    const snapshot = await harnessPort.listProjectSessions(project)
+    const snapshot = await agentRuntime.listProjectSessions(agentProject(project))
     if (!snapshot.membership.includes(sessionId)) throw new Error('That session does not belong to this Project.')
-    const forked = await harnessPort.call('session.fork', { sessionId })
-    await selectDshSession(project, forked.sessionId)
-    return harnessPort.listProjectSessions(project)
+    await productFeatureRuntime?.onSessionWillChange?.()
+    const forked = await agentRuntime.forkSession(sessionId)
+    await selectAgentSession(project, forked.sessionId)
+    return agentRuntime.listProjectSessions(agentProject(project))
   })
-  ipcMain.handle('dsh-session-archive', async (_event, sessionId) => {
+  shellHandle('agent-session-archive', async (_event, sessionId) => {
     const project = projectStore.active()
-    const snapshot = await harnessPort.listProjectSessions(project)
+    const snapshot = await agentRuntime.listProjectSessions(agentProject(project))
     if (!snapshot.membership.includes(sessionId)) throw new Error('That session does not belong to this Project.')
-    await harnessPort.call('workspace.archiveSession', { sessionId })
-    if (project.dshSessionId === sessionId) {
-      const remaining = await harnessPort.listProjectSessions(project)
+    if(agentProject(project).sessionId===sessionId)await productFeatureRuntime?.onSessionWillChange?.()
+    await agentRuntime.archiveSession(sessionId)
+    if (agentProject(project).sessionId === sessionId) {
+      const remaining = await agentRuntime.listProjectSessions(agentProject(project))
       let nextId = remaining.items[0]?.sessionId
-      if (!nextId) nextId = (await harnessPort.createProjectSession(project)).sessionId
-      await selectDshSession(project, nextId)
+      if (!nextId) nextId = (await agentRuntime.createProjectSession(agentProject(project))).sessionId
+      await selectAgentSession(project, nextId)
     }
-    return harnessPort.listProjectSessions(project)
+    return agentRuntime.listProjectSessions(agentProject(project))
   })
-  ipcMain.handle('dsh-session-move', async (_event, sessionId, direction) => {
+  shellHandle('agent-session-move', async (_event, sessionId, direction) => {
     const project = projectStore.active()
-    const snapshot = await harnessPort.listProjectSessions(project)
+    const snapshot = await agentRuntime.listProjectSessions(agentProject(project))
     const order = snapshot.membership.filter((id) => snapshot.items.some((item) => item.sessionId === id))
     const index = order.indexOf(sessionId)
     if (index < 0) throw new Error('That session does not belong to this Project.')
     if (direction === 'up' && index > 0) {
-      await harnessPort.call('workspace.insertSessionBefore', { workspaceId: snapshot.workspaceId, sessionId, beforeSessionId: order[index - 1] })
+      await agentRuntime.moveSession(snapshot.workspaceId,sessionId,order[index - 1])
     } else if (direction === 'down' && index < order.length - 1) {
       const beforeSessionId = order[index + 2]
-      await harnessPort.call('workspace.insertSessionBefore', { workspaceId: snapshot.workspaceId, sessionId, ...(beforeSessionId ? { beforeSessionId } : {}) })
+      await agentRuntime.moveSession(snapshot.workspaceId,sessionId,beforeSessionId)
     }
-    return harnessPort.listProjectSessions(project)
+    return agentRuntime.listProjectSessions(agentProject(project))
   })
   productFeatureRuntime?.installIpc?.(ipcMain)
-  ipcMain.handle('session-continuity', async (_event, enabled) => {
+  shellHandle('session-continuity', async (_event, enabled) => {
     const url = browserKernel.activeUrl()
     if (enabled) {
       const origin = new URL(url).origin
@@ -820,9 +850,10 @@ function installIpc() {
     browserKernel.emitState()
     return result
   })
-  ipcMain.handle('project-state', () => projectState())
-  ipcMain.handle('project-menu', () => showProjectMenu())
-  ipcMain.handle('project-panel', (_event, visible) => {
+  shellHandle('project-state', () => projectState())
+  shellHandle('agent-context-state', event => {if(event.sender!==shellView?.webContents||event.senderFrame!==shellView.webContents.mainFrame)throw new Error('Only the BMW Shell may read its context');return agentContextState})
+  shellHandle('project-menu', () => showProjectMenu())
+  shellHandle('project-panel', (_event, visible) => {
     projectPanelVisible = Boolean(visible)
     if (projectPanelVisible) {
       settingsPanelVisible = false
@@ -832,120 +863,109 @@ function installIpc() {
     layout()
     return { visible: projectPanelVisible }
   })
-  ipcMain.handle('project-create', async (_event, input) => {
+  shellHandle('project-create', async (_event, input) => {
     assertNoScheduledProjectMutation()
     return bridge.changeProject(async () => {
       const project = projectStore.needsInitialSetup()
         ? projectStore.completeInitialSetup(input || {})
         : projectStore.create(input || {})
       await browserKernel.switchProject(project)
-      await synchronizeDshProject(project, { activate: true })
+      await synchronizeAgentProject(project, { activate: true })
       await productFeatureRuntime?.onProjectActivated?.(project, { snapshot: false })
       return projectState()
     })
   })
-  ipcMain.handle('project-update', async (_event, projectId, input) => {
+  shellHandle('project-update', async (_event, projectId, input) => {
     const project = projectStore.update(projectId, input || {})
-    await synchronizeDshProject(project)
+    await synchronizeAgentProject(project)
     if (projectId === projectStore.active().id) browserKernel.emitState()
     return projectState()
   })
-  ipcMain.handle('project-archive', async (_event, projectId) => {
+  shellHandle('project-archive', async (_event, projectId) => {
     assertNoScheduledProjectMutation()
     return bridge.changeProject(async () => {
       const archived = projectStore.get(projectId, { includeArchived: false })
       await productFeatureRuntime?.onProjectWillArchive?.(projectId)
       scheduledTaskManager.disableProject(projectId)
       const next = projectStore.archive(projectId)
-      if (archived?.dshWorkspaceId && harnessPort?.child) {
-        await harnessPort.call('workspace.delete', { workspaceId: archived.dshWorkspaceId }).catch((error) => {
-          console.error('Failed to unregister archived DSH workspace', error)
+      if (archived && agentProject(archived).workspaceId && agentRuntime?.running) {
+        await agentRuntime.deleteWorkspace(agentProject(archived).workspaceId).catch((error) => {
+          console.error('Failed to unregister archived Agent workspace', error)
         })
       }
       await productFeatureRuntime?.onProjectArchived?.(projectId, next)
       await browserKernel.switchProject(next)
-      await synchronizeDshProject(next, { activate: true })
+      await synchronizeAgentProject(next, { activate: true })
       return projectState()
     })
   })
-  ipcMain.handle('project-document-read', (_event, projectId, kind) => projectStore.readDocument(projectId, kind))
-  ipcMain.handle('project-document-write', async (_event, projectId, kind, content) => {
+  shellHandle('project-document-read', (_event, projectId, kind) => projectStore.readDocument(projectId, kind))
+  shellHandle('project-document-write', async (_event, projectId, kind, content) => {
     const result = projectStore.writeDocument(projectId, kind, content)
     if (projectId === projectStore.active().id && ['instructions', 'memory'].includes(kind)) {
-      await synchronizeDshProject(projectStore.active(), { activate: true })
+      await synchronizeAgentProject(projectStore.active(), { activate: true })
     }
     return result
   })
-  ipcMain.on('media-chunk', (_event, arrayBuffer) => mediaController.acceptChunk(arrayBuffer))
-  ipcMain.on('media-state', (_event, state) => mediaController.updateState(state))
-  ipcMain.on('media-finished', (_event, summary) => mediaController.finalize(summary))
-  ipcMain.on('media-comparison', (_event, result) => mediaController.acceptComparison(result))
+  const ownsCapture=(event:IpcMainEvent)=>mediaController?.ownsCaptureSender(event)
+  const captureRecord=(value:unknown):value is Record<string,unknown>=>Boolean(value&&typeof value==='object'&&!Array.isArray(value))
+  ipcMain.on('media-chunk',(event,data:unknown)=>{if(ownsCapture(event)&&data instanceof ArrayBuffer&&data.byteLength<=16*1024*1024)mediaController.acceptChunk(data)})
+  ipcMain.on('media-state',(event,state:unknown)=>{if(ownsCapture(event)&&captureRecord(state))mediaController.updateState(state)})
+  ipcMain.on('media-finished',(event,summary:unknown)=>{if(ownsCapture(event)&&captureRecord(summary))void mediaController.finalize(summary).catch(error=>mediaController.updateState({state:'error',message:error.message}))})
+  ipcMain.on('media-comparison',(event,result:unknown)=>{if(ownsCapture(event)&&captureRecord(result))mediaController.acceptComparison(result)})
+
+}
+
+async function loadStartupStores(): Promise<{settings:GlobalSettingsStore;projects:ProjectStore;tasks:ScheduledTaskStore;permissions:PermissionStore;layout:LayoutStore;continuity:SessionContinuityManager}|undefined> {
+  while (!appQuitting) {
+    try {
+      const settings = new GlobalSettingsStore({filePath:path.join(app.getPath('userData'),'global-settings.json'),migrateSettings:agentDriver.migrateSettings,onState:state=>{sendToShell('global-settings-state',state);browserKernel?.videoStudioChanged?.()}})
+      const projects = new ProjectStore({filePath:path.join(app.getPath('userData'),'projects.json'),projectsDirectory:path.join(app.getPath('userData'),'projects'),legacyWorkspacePath:path.join(app.getPath('userData'),'agent-workspace'),migrateProjectMetadata:agentDriver.migrateProjectMetadata,onState:state=>sendToShell('project-state',state)})
+      const tasks = new ScheduledTaskStore({filePath:path.join(app.getPath('userData'),'scheduled-tasks.json'),onState:()=>{if(scheduledTaskManager&&projectStore)sendToShell('scheduled-task-state',scheduledTaskManager.list(projectStore.active().id))}})
+      const permissions = new PermissionStore(path.join(app.getPath('userData'), 'permissions.json'))
+      const layout = new LayoutStore({filePath:path.join(app.getPath('userData'),'layout-settings.json'),onState:state=>sendToShell('layout-state',{...state,agentVisible,setupVisible:layoutSetupVisible})})
+      const continuity = new SessionContinuityManager({session:bmwSession,safeStorage,configPath:path.join(app.getPath('userData'),'session-continuity.json'),snapshotPath:path.join(app.getPath('userData'),'session-cookies.enc'),onState:()=>browserKernel?.emitState()})
+      continuity.load()
+      return {settings,projects,tasks,permissions,layout,continuity}
+    } catch (error:unknown) {
+      if (!(error instanceof StateLoadError)) throw error
+      const result = await dialog.showMessageBox({type:'error',title:'BMW 无法读取保存的数据',message:'保存的数据暂时不可读，或格式不受支持。原文件已保留。',detail:error.message,buttons:['重试','退出'],defaultId:0,cancelId:1,noLink:true})
+      if (result.response !== 0) {app.quit();return undefined}
+    }
+  }
 }
 
 async function createApp() {
   const applicationFeature = productDefinition.features.find((feature) => typeof feature.main?.activate === 'function')
   const browserCapabilities = new BrowserCapabilityRegistry(productDefinition)
-  const { presetSourcePath, patchPath } = productDefinition.dsh
   installApplicationMenu()
   const persistentSession = session.fromPartition(productDefinition.sessionPartition)
   persistentSession.setUserAgent(app.userAgentFallback)
   bmwSession = persistentSession
-  settingsStore = new GlobalSettingsStore({
-    filePath: path.join(app.getPath('userData'), 'global-settings.json'),
-    onState: (state) => sendToShell('global-settings-state', state)
-  })
+  const stores = await loadStartupStores()
+  if (!stores || appQuitting) return
+  settingsStore = stores.settings
+  projectStore = stores.projects
+  scheduledTaskStore = stores.tasks
   applyProductTheme(settingsStore.snapshot().theme)
   await settingsStore.applyProxy(persistentSession)
-  permissionStore = new PermissionStore(path.join(app.getPath('userData'), 'permissions.json'))
-  layoutStore = new LayoutStore({
-    filePath: path.join(app.getPath('userData'), 'layout-settings.json'),
-    onState: (state) => sendToShell('layout-state', { ...state, agentVisible, setupVisible: layoutSetupVisible })
-  })
+  permissionStore = stores.permissions
+  layoutStore = stores.layout
   const initialLayout = layoutStore.snapshot()
   agentVisible = initialLayout.visible
   agentWidth = initialLayout.sidebarWidth
-  projectStore = new ProjectStore({
-    filePath: path.join(app.getPath('userData'), 'projects.json'),
-    projectsDirectory: path.join(app.getPath('userData'), 'projects'),
-    legacyWorkspacePath: path.join(app.getPath('userData'), 'agent-workspace'),
-    onState: (state) => sendToShell('project-state', state)
-  })
-  scheduledTaskStore = new ScheduledTaskStore({
-    filePath: path.join(app.getPath('userData'), 'scheduled-tasks.json'),
-    onState: () => {
-      if (scheduledTaskManager && projectStore) sendToShell('scheduled-task-state', scheduledTaskManager.list(projectStore.active().id))
-    }
-  })
+  /* startup stores are loaded together before application services */
   if (applicationFeature) {
-    productFeatureRuntime = await applicationFeature.main.activate({
+    productFeatureRuntime = await activateFeature(applicationFeature.main, {
       session: persistentSession,
-      moduleUrl: process.env.BMW_WEBCONTAINER_MODULE_URL || settingsStore.snapshot().webContainerModuleUrl,
-      provisionedApiKey: process.env.BMW_WEBCONTAINER_API_KEY || '',
-      secretPath: path.join(app.getPath('userData'), 'web-runtime-secret.json'),
-      safeStorage,
-      projectStore,
-      onRuntimeEvent: (event) => sendToShell('web-runtime-state', event)
+      projectStore
     })
   }
   projectPanelVisible = projectStore.needsInitialSetup()
   layoutSetupVisible = !initialLayout.configured && !projectPanelVisible
-  sessionContinuity = new SessionContinuityManager({
-    session: persistentSession,
-    safeStorage,
-    configPath: path.join(app.getPath('userData'), 'session-continuity.json'),
-    snapshotPath: path.join(app.getPath('userData'), 'session-cookies.enc'),
-    onState: () => browserKernel?.emitState()
-  })
+  sessionContinuity = stores.continuity
   await sessionContinuity.initialize()
-  profileImporter = new ProductProfileImporter({
-    sourceRoot: process.env.BMW_IMPORT_SOURCE_DIR || path.join(app.getPath('appData'), 'BMW'),
-    targetProductId: productDefinition.id,
-    projectStore,
-    webRuntime: productFeatureRuntime?.webRuntime,
-    session: persistentSession,
-    sessionContinuity,
-    safeStorage
-  })
+  if (appQuitting) return
 
   mainWindow = new BrowserWindow({
     width: 1440,
@@ -965,19 +985,23 @@ async function createApp() {
       nodeIntegration: false
     }
   })
+  shellView.webContents.on('will-navigate', event => event.preventDefault())
+  shellView.webContents.setWindowOpenHandler(() => ({action: 'deny'}))
+  shellView.setBackgroundColor('#00000000')
   mainWindow.contentView.addChildView(shellView)
 
   agentView = new WebContentsView({
     webPreferences: {
       session: persistentSession,
-      preload: productDefinition.dsh.preloadPath || path.join(sourceDirectory, 'preload/dsh-base-preload.cjs'),
+      preload: agentDriver.preloadPath,
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false
     }
   })
   agentView.webContents.on('did-finish-load', () => {
-    void applyDshSidebarPolicy().catch((error) => console.error('Failed to apply DSH sidebar policy', error))
+    void applyAgentSidebarPolicy().catch((error) => console.error('Failed to apply Agent sidebar policy', error))
+    agentContextSync?.invalidate()
     void productFeatureRuntime?.onAgentLoaded?.()
   })
 
@@ -989,11 +1013,13 @@ async function createApp() {
     projectStore,
     settingsStore,
     capabilityRegistry: browserCapabilities,
+    getCurrentSessionId: () => agentProject(projectStore.active()).sessionId,
     allowedActions: browserCapabilities.allowedActions,
     artifactsDirectory: path.join(app.getPath('userData'), 'artifacts'),
     pageTheme: nativeTheme.shouldUseDarkColors ? 'dark' : 'light',
     onState: (state) => {
       sendToShell('browser-state', state)
+      layout()
       raiseProjectPanel()
     }
   })
@@ -1004,7 +1030,7 @@ async function createApp() {
     pagePath: path.join(projectDirectory, 'packages/media-native/src/media/media.html'),
     artifactsDirectory: path.join(app.getPath('userData'), 'artifacts'),
     resolveArtifactsDirectory: () => path.join(projectStore.active().directory, 'artifacts'),
-    onStatus: (state) => sendToShell('media-status', state)
+    onStatus: (state) => {sendToShell('media-status', state);productFeatureRuntime?.onMediaStatus?.(state)}
   })
   mediaController.configureDisplayMedia()
   browserKernel.setRecordingController(mediaController)
@@ -1014,18 +1040,27 @@ async function createApp() {
     onRun: notifyScheduledTaskRun
   })
   browserKernel.setScheduledTaskManager(scheduledTaskManager)
-  if (productFeatureRuntime?.webValidation) browserKernel.setValidationManager(productFeatureRuntime.webValidation)
   productFeatureRuntime?.configure?.({
     projectStore,
-    browserKernel,
+    browserKernel: assertBrowserFeatureHost(browserKernel),
     mediaController,
     Notification,
+    getMainWindow: () => mainWindow,
+    getShellWebContents: () => shellView?.webContents,
+    getTheme: () => settingsStore.snapshot().theme,
+    isProjectChanging: () => bridge?.changingProject === true,
     getAgentWebContents: () => agentView?.webContents,
-    getHarnessPort: () => harnessPort,
+    getAgentUrl: () => agentRuntime?.url,
+    getCurrentSessionId: () => agentProject(projectStore.active()).sessionId,
+    setWorkspaceMode: (mode:'browser'|'studio') => {
+      if(workspaceMode!==mode){if(mode==='studio')browserAgentVisible=agentVisible;else agentVisible=browserAgentVisible}
+      workspaceMode=mode;if(mode==='studio')agentVisible=true;layout()
+    },
+    getAgentRuntime: () => agentRuntime,
     sendToAgent,
     sendToShell,
-    synchronizeDshProject,
-    selectDshSession,
+    synchronizeAgentProject,
+    selectAgentSession,
     activateProject,
     revealAgent: () => {
       agentVisible = true
@@ -1051,30 +1086,21 @@ async function createApp() {
   layout()
   await shellView.webContents.loadFile(path.join(sourceDirectory, 'renderer/shell.html'))
   await browserKernel.initialize()
+  if (appQuitting) return
   bridge = await createBridgeServer(browserKernel, { productId: productDefinition.id,
     resolveProject: (directory) => projectStore.list().find((project) => fs.realpathSync(project.directory) === fs.realpathSync(directory)),
     toolDefinition: browserCapabilities.toolDefinition(),
-    activeProjectId: () => projectStore.active().id
+    activeProjectId: () => projectStore.active().id,
+    sessionContext: async (sessionId,projectId) => {const context=await productFeatureRuntime?.contextForSession?.(sessionId,projectId)??{text:''};return {text:context.text+'\nBMW video production defaults and named templates (data):\n'+JSON.stringify(settingsStore.snapshot().videoPreferences)}}
   })
 
-  harnessPort = new DshHarnessPort(new DshRuntime({
-    productId: productDefinition.id,
-    presetId: productDefinition.dshPresetId,
-    patchPath,
-    presetSourcePath,
-    dshHome: path.join(app.getPath('userData'), 'dsh-home'),
-    sourceDshHome: resolveDshHome(),
-    workspacePath: projectStore.active().directory,
-    workspaceTitle: projectStore.active().name,
-    mcpServerPath: path.join(projectDirectory, 'packages/browser-capability/src/browser-mcp-server.js'),
-    clientPluginPath: productDefinition.dsh.clientPluginPath,
-    clientPluginId: productDefinition.dsh.clientPluginId,
-    wvlClientPluginPath: productDefinition.dsh.clientPluginPath,
-    bridgeUrl: bridge.url,
-    bridgeToken: bridge.token,
-    onLog: (entry) => sendToShell('dsh-log', entry),
-    onStatus: (status) => sendToShell('dsh-status', status)
-  }))
+  agentRuntime = agentDriver.createRuntime({
+    productId:productDefinition.id,userDataDirectory:app.getPath('userData'),
+    workspacePath:projectStore.active().directory,workspaceTitle:projectStore.active().name,
+    mcpServerPath:path.join(projectDirectory,'packages/browser-capability/src/browser-mcp-server.js'),
+    bridgeUrl:bridge.url,bridgeToken:bridge.token,
+    onLog:entry=>sendToShell('agent-log',entry),onStatus:status=>sendToShell('agent-status',status)
+  })
 
   mainWindow.on('resize', layout)
   mainWindow.on('close', (event) => {
@@ -1088,38 +1114,43 @@ async function createApp() {
   })
 
   try {
-    const dshUrl = await harnessPort.start()
-    await agentView.webContents.loadURL(dshUrl)
-    await applyDshSidebarPolicy()
+    const agentUrl = await agentRuntime.start()
+    if (appQuitting) return
+    await agentView.webContents.loadURL(agentUrl)
+    await applyAgentSidebarPolicy()
     const activeProject = projectStore.active()
-    await synchronizeDshProject(activeProject, { activate: true })
-    await productFeatureRuntime?.onHarnessStarted?.(activeProject)
+    await synchronizeAgentProject(activeProject, { activate: true })
+    await productFeatureRuntime?.onAgentStarted?.(activeProject)
     for (const project of projectStore.list().filter((candidate) => candidate.id !== activeProject.id)) {
-      await synchronizeDshProject(project).catch((error) => console.error(`Failed to synchronize DSH workspace for ${project.name}`, error))
+      await synchronizeAgentProject(project).catch((error) => console.error(`Failed to synchronize Agent workspace for ${project.name}`, error))
     }
+    startAgentContextSync()
     scheduledTaskManager.start()
     layout()
+    if(process.env.BMW_OPEN_STUDIO==='1')await productFeatureRuntime?.openPanel?.('video-studio')
   } catch (error) {
-    sendToShell('dsh-status', { state: 'error', message: error.message })
-    const patchLabel = path.relative(projectDirectory, patchPath)
-    await agentView.webContents.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`<style>body{font:14px system-ui;background:#111827;color:#e5e7eb;padding:24px}code{color:#7dd3fc}</style><h2>DSH did not start</h2><p>${error.message}</p><p>${PRODUCT_NAME} browser mode remains available.</p><code>dsh web --patch ${patchLabel}</code>`)}`)
+    if (appQuitting) return
+    sendToShell('agent-status', { state: 'error', message: error.message })
+    const escape=(value:string)=>value.replace(/[&<>"']/g,character=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]))
+    await agentView.webContents.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent('<style>body{font:14px system-ui;background:#111827;color:#e5e7eb;padding:24px}</style><h2>'+escape(agentDriver.label)+' did not start</h2><p>'+escape(error.message)+'</p><p>'+escape(PRODUCT_NAME)+' browser mode remains available.</p>'))
   }
 }
 
-export function createBmwApplication(definition) {
+export function createBmwApplication(definition: ResolvedProductDefinition, driver: AgentDriver) {
+  if(!driver?.createRuntime||!driver?.client)throw new Error('An Agent driver is required.')
   if (productDefinition) throw new Error('BMW product application is already configured.')
-  productDefinition = definition
+  agentDriver=driver
+  productDefinition = defineProduct(definition)
   PRODUCT_NAME = definition.name
   if (process.env.BMW_USER_DATA_DIR) {
     const isolatedUserData = path.resolve(process.env.BMW_USER_DATA_DIR)
     fs.mkdirSync(isolatedUserData, { recursive: true, mode: 0o700 })
     app.setPath('userData', isolatedUserData)
-  } else if (definition.id !== 'bmw') {
-    app.setPath('userData', path.join(app.getPath('appData'), definition.userDataName))
+
   }
   app.setName(PRODUCT_NAME)
   app.userAgentFallback = browserCompatibleUserAgent(app.userAgentFallback)
-  app.whenReady().then(createApp)
+  app.whenReady().then(createApp).catch((error:unknown)=>{if(appQuitting)return;console.error('BMW startup failed',error);dialog.showErrorBox('BMW 启动失败',error instanceof Error?error.message:String(error));app.quit()})
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit()
   })

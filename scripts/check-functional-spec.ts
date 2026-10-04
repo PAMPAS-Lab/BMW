@@ -24,37 +24,22 @@ function extractTestNames(source: string): string[] {
   return [...declarations].map((match) => match[1].slice(1, -1).replace(/\s+/g, ' ').trim())
 }
 
-function extractMatches(filePath: string, expression: RegExp): string[] {
-  const source = fs.readFileSync(filePath, 'utf8')
-  return [...source.matchAll(expression)].map((match) => match[1])
-}
-
-function browserActions(): Array<{ group: string; actions: string[] }> {
-  const core = extractMatches(
-    path.join(ROOT, 'packages/browser-capability/src/browser-schema.ts'),
-    /\baction\(\s*'([^']+)'/g
-  )
-  const groups: Array<{ group: string; actions: string[] }> = [
-    { group: 'BMW 核心 Browser Actions', actions: core }
-  ]
-  const indexes = walk(path.join(ROOT, 'packages'))
-    .filter((filePath) => path.basename(filePath) === 'index.ts')
-    .sort((left, right) => relative(left).localeCompare(relative(right)))
-  for (const indexPath of indexes) {
-    const source = fs.readFileSync(indexPath, 'utf8')
-    const actions = new Set([...source.matchAll(/\baction:\s*'([^']+)'/g)].map((match) => match[1]))
-    for (const block of source.matchAll(/export const [A-Z0-9_]*ACTIONS\s*=\s*Object\.freeze\(\[([\s\S]*?)\]\)/g)) {
-      for (const match of block[1].matchAll(/'([^']+)'/g)) actions.add(match[1])
-    }
-    if (actions.size) groups.push({
-      group: `${relative(indexPath)} Feature Browser Actions`,
-      actions: [...actions]
-    })
+async function browserActions(): Promise<Array<{ group: string; actions: string[] }>> {
+  const [{bmwProduct},{BrowserCapabilityRegistry}]=await Promise.all([
+    import('../packages/product-bmw/index.js'),import('../packages/browser-capability/src/browser-capability-registry.js')
+  ])
+  const registry=new BrowserCapabilityRegistry(bmwProduct),groups=new Map<string,string[]>()
+  if(registry.toolDefinition().name!=='browser')throw new Error('BMW must publish exactly browser.')
+  for(const action of registry.allowedActions){
+    const owner=registry.ownerOf(action)
+    if(!owner)throw new Error('Browser Action has no owner: '+action)
+    const group=owner==='browser-capability'?'BMW 核心 Browser Actions':owner+' Feature Browser Actions'
+    groups.set(group,[...(groups.get(group)??[]),action])
   }
-  return groups
+  return [...groups].map(([group,actions])=>({group,actions}))
 }
 
-function renderInventory(): string {
+async function renderInventory(): Promise<string> {
   const testFiles = ['apps', 'packages', 'scripts']
     .flatMap((directory) => walk(path.join(ROOT, directory)))
     .filter((filePath) => filePath.endsWith('.test.ts'))
@@ -69,7 +54,7 @@ function renderInventory(): string {
     '### 当前 Browser Action 清单',
     ''
   ]
-  for (const catalog of browserActions()) {
+  for (const catalog of await browserActions()) {
     lines.push(`- ${catalog.group}（${catalog.actions.length}）：${catalog.actions.map((action) => `\`${action}\``).join('、') || '无'}`)
   }
 
@@ -98,7 +83,7 @@ function replaceInventory(document: string, inventory: string): string {
 
 if (!fs.existsSync(SPEC_PATH)) throw new Error(`Missing ${relative(SPEC_PATH)}.`)
 const document = fs.readFileSync(SPEC_PATH, 'utf8')
-const expected = replaceInventory(document, renderInventory())
+const expected = replaceInventory(document, await renderInventory())
 
 if (process.argv.includes('--write')) {
   fs.writeFileSync(SPEC_PATH, expected.endsWith('\n') ? expected : `${expected}\n`)

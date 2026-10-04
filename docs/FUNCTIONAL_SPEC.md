@@ -1,161 +1,164 @@
 # BMW 功能说明书
 
-文档版本：0.1.0
+Browser is boundary, media is native, web is runtime.
 
-最后更新：2026-10-02
+适用实现：本仓库唯一应用 BMW（id `bmw`）。本说明书是当前功能、Schema、权限和测试的权威索引；文末能力/测试清单由源码生成。
 
-适用仓库/产品：BMW（产品家族仅 BMW 与 BMWDev）
+## 产品与包边界
 
-## 1. 文档定位与维护规则
+| 包 | 责任 |
+|---|---|
+| apps/bmw | 组合 BMW 产品并注入唯一 Agent 驱动 |
+| product-bmw | 浏览器/媒体/视频产品定义，不依赖 DSH |
+| agent-contract | 通用生命周期、Project/Workspace/Session、任务提交、客户端与上下文契约 |
+| harness-dsh | DSH 进程、官方鉴权/传输、预设、模型配置、插件、客户端适配及存储兼容 |
+| platform | 桌面 Shell、Project、设置、权限、会话协调、计划任务和应用生命周期 |
+| browser-capability | 唯一 browser 工具、Action Catalog、Bridge、浏览器页面操作和图像结果准入 |
+| media-native | 原生媒体采集、处理、旁白和合成 |
+| feature-video | Project 视频草稿、Studio 手动操作与自然语言操作 |
 
-本文件是 BMW 独立仓库 的权威功能清单、产品边界说明和测试保障索引。它描述当前仓库中已经实现并可从产品组合中获得的能力；规划项必须明确标为“边界已建”或“未实现”，不能与已交付功能混写。
+DSH `0.2.0-rc.2` 是当前唯一 Agent 驱动，拥有 Agent Loop。核心只依赖契约，禁止直接依赖 DSH 的 RPC 名、页面存储、DOM 选择器、预设与凭据。DSH 使用官方启动 token/cookie 鉴权，日志脱敏；Workspace 和会话历史通过官方 WebSocket 快照读取，取得快照后取消订阅；修改操作留在驱动内。
 
-覆盖标记的含义：
+驱动替换点为 `apps/bmw/product.ts`。未来驱动必须实现相同操作和归属契约，不能把 BMW 页面/媒体所有权、权限或任务队列转交给模型。
 
-- **直接单测**：存在针对该行为或领域规则的自动化测试，表中给出测试文件和 `test(...)` 名称。
-- **契约/间接**：测试覆盖 Action Catalog、产品组合或底层契约，但没有直接驱动完整用户界面或真实外部服务。
-- **无直接单测**：代码已经实现，但当前没有足以证明该行为的专门自动化测试，需要人工验证。
-- **边界已建**：只建立了产品、Feature 或命名空间边界，尚未交付完整业务能力。
+## 桌面、Project 与会话
 
-维护要求：
+- 一个 BMW 主窗口，浏览器与 Video Studio 为共享工作区；右侧 Assistant 使用同一会话。关闭或切换 Studio 不退出应用。
+- 页面视口仿真仅改变网页布局和截图尺寸，原生显示区域仍由工作区边界决定；大视口取材、切换标签页及缩放窗口不能覆盖 Assistant 或 Shell。
+- 顶栏以导航、Project、录制和 Assistant 为主；主题、网络、搜索、布局、驱动侧栏和模型设置进入 Settings。Shell 对话框使用一致字体、主题和控件。
+- Profile `BMW`、Chromium 分区 `persist:bmw`。Project 包含 ID、目录、主页、页面状态、文档、媒体、草稿与 `agentBindings[driverId]`。
+- 每个 Project 对应当前驱动内一个 Workspace，可有多个会话；会话共享 Project 页面和媒体。驱动会话导航通过可信成员关系与目录解析，切换 BMW Project；BMW Project 切换激活对应 Workspace/Session。忙碌期间延迟，过时选择不提交，非法选择恢复。
+- Project 管理支持创建、选择、改名、主页、文档编辑和 archive；archive 保留文件且至少保留一个活动 Project。无永久删除 Project 的 UI。
+- 文档包括 AGENTS、MEMORY、TASKS 和结构化 memory 文件；单文档 256 KiB 上限。Agent 只能追加指定记忆文档。
+- 会话中心提供列出、内容搜索、创建、选择、改名、fork、archive、排序。所有操作验证属于当前 Project；DSH 空会话没有完成 turn 时 fork 明确失败。
+- 驱动绑定兼容保留已有 DSH Workspace/Session，按驱动保存，不改变 Project 身份或媒体。废弃连接器配置自动清理。无聊天软件连接器、聊天转发、其他产品导入或 WebContainer 配置。
 
-1. 新增、修改、移除用户功能或 Browser Action 时，同一提交必须更新本文对应人工条目。
-2. 新增、改名、移动或删除测试文件/测试函数后运行 `npm run docs:features`，提交自动刷新后的文末清单。
-3. `npm run check` 会执行 `npm run check:features`；清单与源码不一致时检查失败。
-4. 没有直接测试的能力必须继续标明“无直接单测”，直至补齐测试，不能用无关测试代替。
-5. 文末两个注释标记之间为生成区，禁止手工编辑。
+保存状态加载遵循失败保护：只有确认文件不存在才初始化。Project、Settings、计划任务、权限、布局和登录保持配置的 JSON 损坏、版本不支持、结构错误或读取失败抛出 `BMW_STATE_LOAD_FAILED`，保留原文件，阻止默认状态写回。启动在加载错误时提供重试/退出；重试重新读取原文件，不自动重置或恢复备份。无版本号的历史 Settings 仍兼容，已有 Project/Workspace/Session 与已删除任务的完成运行历史保留。加密登录快照同样保护读取、解密、版本和结构错误；失败后后台保活、快照及配置写入被拒绝，必须显式修复并重新加载。加密暂不可用时不写快照；恢复可用后先读取验证并恢复既有快照，再采集当前 Cookie。权限和布局兼容无版本号的历史数据。
+- 重启或首次激活 Project 恢复全部已保存页面及活动页；恢复完成前不写入半完成标签状态。离线加载失败仍保留原 URL。
 
-## 2. 产品定位与组合
+直接覆盖：platform 的 Project、driver-boundary、product-boundaries、project-panel-layering、global-settings、layout、permission、scheduled-task 测试；agent-contract 的 context-sync；DSH 的 context/runtime/port/preset。实际 UI 覆盖：driver/desktop/Studio smoke。生产 OS 钥匙串授权由用户完成，不在隔离测试覆盖范围。
 
-本仓库只有 `bmw` App。BMWVideo 的产品简称为 BMW（id bmw）；BMWDev 继承完整 BMW 基础（id bmw-dev）。二者独立 repo、lockfile、Profile 和 DSH Home，不从另一 checkout 读取运行时代码。旧三产品架构已退休。
+Shell 的全部 40 项 invoke 使用统一主进程准入：只接受当前存活 Shell 的主框架及固定本地页面地址。其他 Renderer、子框架和已导航页面在应用处理函数运行前被拒绝；Shell 页面禁止自行导航和打开新窗口。媒体 Worker、Studio 和 Agent 的专用 IPC 仍按各自 sender/token/Project 规则处理。
 
-本产品包含浏览器/媒体核心和 Video Feature 扩展边界，不包含 Dev/WVL。
+## 浏览器、工具和权限
 
-**直接测试**：`packages/platform/test/product-boundaries.test.ts` — `BMW repository builds one app with an inherited Video foundation`、`shared implementations never import apps or Dev capabilities`；MCP Catalog 使用认证 Bridge，不再反向 import App。MCP 边界仍校验唯一 tool 名、Schema、required action 与字符串 enum；直接测试：`packages/browser-capability/test/mcp-tool-catalog.test.ts` — `MCP catalog admission rejects extra tools and malformed action boundaries`。
+模型只有 `browser` 工具，Action enum 与 Schema 通过认证 Bridge 发布；Core 和 Feature 注册冲突在启动时失败。没有额外 shell、文件、凭据、cookie、IPC 或资源工具。
 
-## 3. 共享平台与 Agent 基础
+| 功能组 | 当前行为与边界 |
+|---|---|
+| 页面与导航 | Project 内标签页创建、列出、切换、关闭、导航、历史、搜索、后台默认及用户接管 |
+| 观察与交互 | DOM/可访问性观察、点击、输入、键盘、滚动、悬停、等待、页面只读信息与受限页面执行 |
+| 页面诊断 | 受限 console/network/load/media 摘要、失败证据；绝不扩展成宿主执行 |
+| 截图与图像 | viewport/selector 截图、Project PNG artifact；不改变背景页滚动位置；viewport/selector 均按页面坐标经 CDP 抽取，Studio 用不透明工作区覆盖页面，保留页面渲染表面以继续取材；对截图阶段设期限并取消 |
+| 权限 | 用户控制 Agent Control；按站点处理设备权限；用户侧敏感操作保持权限边界 |
+| 登录连续性 | 用户主动选择站点后用 OS safeStorage 加密 cookies，并周期性 HEAD；关闭不清除当前登录 |
+| 计划任务 | Project 范围日常时间/时区、绑定会话、保存 runs、执行/取消/删除；只用 browser，执行期间禁止冲突 Project 变更 |
 
-| 编号 | 功能 | 行为与边界 | 覆盖与对应测试 |
-|---|---|---|---|
-| P-01 | DSH 唯一 Harness | BMW 启动并复用本机 DSH，通过 BMW 管理的 Preset、Home、Workspace 和 Session 工作；BMW 不实现第二套 Agent Loop。当前适配 DSH `0.2.0-rc.2`：启动使用官方 token/cookie 鉴权，日志隐藏 token；Workspace/Session 历史通过 `/api/remote.mux` 的官方 WebSocket opening snapshot 读取，收到快照即取消订阅；操作调用使用新版斜杠端点与命名参数。 | **直接单测**：`packages/harness-dsh/test/dsh-runtime.test.ts` — `DSH calls use the harness RPC envelope and validate the response`；`BMW creates new DSH sessions with the browser-only preset` |
-| P-02 | HarnessPort 解耦 | 业务通过稳定端口执行健康检查、Session 操作、取消、事件订阅与能力探测，不直接散落依赖 DSH RPC。 | **直接单测**：`packages/harness-dsh/test/harness-port.test.ts` — `HarnessPort delegates runtime operations through a stable BMW interface`；`HarnessPort owns health, cancellation and runtime event subscriptions` |
-| P-03 | DSH Preset 安装与升级隔离 | BMW 只安装/更新自己拥有的 Preset 与插件目录；不覆盖非 BMW 目录。产品 DSH Home 隔离，Credential 采用链接而非复制。通过官方 `dsh-agent-preset` 插件注册隔离预设，本仓库不安装 WVL 客户端。 | **直接单测**：`packages/harness-dsh/test/dsh-preset.test.ts` — `installs and safely updates only the BMW DSH preset`；`does not overwrite a preset directory not owned by BMW`；`isolates product state while linking rather than copying DSH credentials` |
-| P-04 | 单一 Browser Tool | 本产品 MCP `tools/list` 均只返回一个 `browser` Tool；产品差异体现在其 Action enum。DSH 官方 MCP Client 仍负责连接、执行和回收；BMW 适配器把 `mcp__browser__browser` 注册名恢复为 `browser`，拒绝任何额外工具。 | **直接单测**：`packages/browser-capability/test/mcp-tool-catalog.test.ts` — `BMW MCP discovers exactly browser from the authenticated product catalog` |
-| P-05 | Browser Action 注册表 | Core 与 Feature Action 在启动时组合；重名直接失败。MCP 对外暴露产品专属 Schema，核心请求至少校验对象类型和 Action，具体参数再由各 Handler 做运行时校验。 | **直接单测**：`packages/platform/test/product-boundaries.test.ts` — `feature action collisions fail before Electron startup`；`packages/browser-capability/test/browser-schema.test.ts` — `accepts every declared browser action`、`rejects unsupported and malformed requests` |
-| P-06 | 产品继承与独立仓库 | BMW 不含 Dev/WVL；BMWDev 继承 BMW 的 Video 基础，并添加 Web Runtime/WVL；独立 Profile/Partition/Preset。 | **直接单测**：`packages/platform/test/product-boundaries.test.ts` — `BMW repository builds one app with an inherited Video foundation`、`shared implementations never import apps or Dev capabilities` |
-| P-07 | 标准 Chromium 身份 | 页面 User-Agent 去除 Electron/BMW 产品标记，保留标准 Chrome 身份；不伪造浏览器外的额外能力。 | **直接单测**：`packages/platform/test/browser-user-agent.test.ts` — `page user agent exposes Chromium without Electron or BMW shell tokens`；`page user agent strips every BMW product brand and preserves standard Chrome` |
-| P-08 | 首次启动 | 新 Profile 必须创建第一个真实 Project；Home URL 可空并使用 `about:blank`，随后选择侧栏或浮层布局。 | **直接单测**：`packages/platform/test/project-store.test.ts` — `requires the first real Project name without leaving a default BMW Browser project`；`new projects accept an empty home URL and use a blank-page preference`。布局选择由 `packages/platform/test/layout-store.test.ts` — `layout setup is required once and defaults to the sidebar` 保障 |
-| P-09 | 显式导入适配契约 | 公共 ProfileImporter 供 BMWDev 继承使用。BMW 自身是导入来源，不显示 Import from BMW，不自动合并旧 BMWVideo Profile。公共导入过滤规则使用临时目标夹具测试，不能称 BMW 导入 UI 已启用。 | **适配契约测试**：`packages/platform/test/product-profile-importer.test.ts` — `profile import preview exposes selectable data, not secrets or DSH execution state`、`cookie import restores only explicitly selected origins and enables target re-encryption`；BMW 无导入 UI能力 |
+DOM 观察、媒体发现和诊断读取使用统一阶段保护，每阶段最多 15 秒，取消、主 Frame 导航或 Renderer 丢失即停止接纳结果。媒体发现不滚动页面、不等待动画帧；后台素材采集保持前台标签页不变。诊断包含实际 PNG 截图。媒体下载的网络请求和文件流共享取消信号及 60 秒期限，结束流和关闭输出后清理本次部分文件，不删除同名既有 Artifact。只读迟到结果不能恢复文件写入；有副作用的操作不通过遗弃 Promise 释放 FIFO。
 
-DSH 新协议的直接契约测试在 `packages/harness-dsh/test/dsh-transport.test.ts`，覆盖鉴权 URL 边界、命名参数、请求关联、WebSocket cookie/取消/错误帧、单一工具注册。`npm run test:dsh-e2e` 使用临时 DSH Home 和临时 Workspace 验证本仓库产品启动、会话复用/改名/搜索/历史/空会话 Fork 拒绝/取消/归档；不访问真实用户 Profile，不调用付费模型。真实模型输出和完整浏览器 UI 交互仍需人工验证，不能由上述兼容性检查推定覆盖。
+Bridge 验证认证、Session、Project 及目录，按 FIFO 执行；Project 变更期间排除模型操作。期限、取消、停止与关闭清理不能释放仍在运行的敏感工作。DSH 官方 MCP Client 负责图像结果处理，BMW 只接受受限、验证的图像结果。多次基础设施失败中止当前 turn，防止无效重试持续运行。
 
-### 3.0 Browser Session 生命周期、串行化与图像结果
+直接覆盖：browser-capability 的 schema、catalog、session-operations、bridge-shutdown、deadline、screenshot-read 等测试；DSH 的 failure-guard/transport。真实浏览器覆盖：desktop、browser-background 和 media smoke。
 
-DSH 官方 MCP Client 继续拥有连接、重连、取消与图像附件存储。BMW 在工具执行时从真实 `execution.agent.session.header` 提取 Session ID 和 cwd，由受鉴权 Bridge 映射到尚未归档的 Project，发放随机绑定。身份不出现在模型 Schema；模型参数中伪造的内部字段会被可信适配器覆盖。每个活跃 Agent 的绑定在插件销毁时撤销，重连复用当前绑定，Fork/重新加载获得新绑定。尚未激活对应 Project 的调用被拒绝，不能按全局当前 Project 静默重定向。
+## 原生媒体
 
-Bridge 的浏览器调用按 FIFO 串行（比仅按 Project 更严格，因为当前 Electron 窗口共用展示上下文）；Kernel 也串行处理普通 Agent/用户命令。公共 Kernel 留有可信 Feature 内部 test 步骤的重入执行边界；BMW 无 WVL Feature。调用期间拒绝切换、导入、创建和归档 Project；这些 Project 变更的完整异步过程也占用互斥边界，完成前拒绝新的浏览器调用。Session 撤销或 MCP 取消阻止未开始的操作；已经送达网页的操作不会被强行回滚，关闭 Bridge 等待其收尾。Project 页面、登录与媒体 Artifact 保留，Session 生命周期不自动删除用户页面。不同 Session 仍共享同一 Project 页面，不新增 Session Cookie 分区。
+Mediabunny `1.61.0` 与浏览器 WebCodecs 为媒体底座；Canvas/WebAudio/WebGPU/MediaRecorder 用于画面、混音、处理与采集。采集和导出由受限宿主文件 adapter 写入当前 Project artifacts；模型只看到 Artifact ID。
 
-`media.screenshot` 与 `page.diagnostics` 在保留 Artifact 元数据的同时返回 MCP PNG image block；Bridge 只读取该次截图结果、验证真实路径归属 Project artifacts、PNG 签名及 20 MiB 大小上限，无任意文件读取 Action。DSH 官方 Client 再进行自身模型图像准入和持久化；被 DSH 图像策略拒绝时由上游投影诊断文字，不能承诺模型一定获得每幅图像。
+| Action 家族 | 输入、行为与限制 |
+|---|---|
+| page.media / media.download | 当前页面媒体发现、公共 HTTP(S) 媒体下载；受 URL/大小/类型与 Project 边界约束 |
+| media.screenshot / media.record | 当前页面截图与浏览器录制；明确录制状态、停止和保存结果 |
+| media.video.capture | 页面真实视频采集；达到时长上限属于截断结果，不宣称完整 |
+| media.inspect | 当前 Project Artifact 的媒体轨道、时长、尺寸与编码检查 |
+| media.frames.sample | 依据媒体时间抽 PNG；时间/数量有界，保存为 Project Artifact |
+| media.image.inspect | 解码当前 Project 静态 PNG/JPEG/WebP，返回真实尺寸；32 MiB / 16 MP，图片头在分配像素前检查 |
+| media.image.annotate | 以原图像素坐标标注截图/图片，保留尺寸和原文件，输出新的 Project PNG 并回传模型图像 |
+| media.image.draw | 有界原生 Canvas 绘制图解：32..4096 整数尺寸、最多 8 MP、白底默认，可选透明背景 |
+| media.convert | 时间区间裁剪、缩放、MP4/WebM 转换，保留可支持轨道并检查编码器 |
+| video.narrate | 真实 Edge MP3 或本地 Matcha WAV，提供测得时长和 TTS 元数据 |
+| video.compose | 有限结构化分镜合成 MP4，标题/列表/字幕、已有画面和旁白、原创配乐及原声混音 |
 
-**直接自动化覆盖**：`packages/browser-capability/test/session-operations.test.ts` — `Session operations serialize, recheck admission and recover after failure`、`Browser bridge pins Project identity, revokes queued Sessions and returns only owned PNG images`（包括真实 stdio MCP 图像结果）；`packages/harness-dsh/test/dsh-transport.test.ts` — `BMW injects trusted Session identity after model arguments while preserving execution context`。实际付费模型视觉理解、真实 DSH Session 销毁后的绑定撤销、所有 Electron IPC Project 变更入口没有独立完整 E2E 覆盖，不由上述单测推定。
+处理支持进度、期限、取消和部分输出清理，禁止任意 URL、路径、HTML、脚本或 FFmpeg。设备缺少必要编码能力时失败，不伪造成功。实际 alpha 视频允许检查，抽帧/转换拒绝。
 
-### 3.1 官方 DSH Desktop 复用评估（0.2.0-rc.2）
+图像动作使用同一个 `browser` 工具和现有 Project/Session/权限/FIFO/取消边界。Assistant 先截图或 `media.image.inspect`，再使用 `media.image.annotate` 的 `artifactId` 与 `shapes`；新建绘图则使用 `media.image.draw` 的 `width`、`height`、`background` 与 `shapes`。不需要目标标签页。坐标为实际图片像素，文字从左上角定位，超界图形或放不下的文字明确失败，不悄悄裁切。
 
-结论：官方桌面实现可作为后续启动、通信和打包底座的参考或源码复用对象，不能直接作为 BMW 的替换组件。当前实现仍是 BMW 产品壳 + 官方 DSH Web/Remote 协议；本次没有宣称已迁移至 DSH Desktop。
+支持 `rect`、`ellipse`、`line`、`arrow`、`path`、`text` 和 `redact`，按数组顺序绘制；框/椭圆使用 `x/y/width/height`，线/箭头使用 `x1/y1/x2/y2`，路径使用 `points:[{x,y}]`。颜色使用十六进制 RGB/RGBA；默认红色 4px 线条、24px 文字。文字支持中文、换行、`maxWidth` 自动折行、`fontSize`、`bold` 和背景。遮盖 `redact` 只能使用不透明 RGB 色及 opacity=1，写入新 PNG 的像素；原图保留。最多 128 个图形，单路径 256 点、全图 4096 点、全图 4096 文字字符；每段文字最多 512 字符/16 个显式行。新 PNG 最多 20 MiB，完成后实际重新解码核对尺寸再接纳。失败、取消（含完成文件后验收取消）只清理本次输出。
 
-核对固定 Release 源码，而非混用 master 或第三方同名项目：官方 [`apps/desktop/package.json`](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.0-rc.2/apps/desktop/package.json) 把桌面应用标为 private；[架构文档](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.0-rc.2/docs/architecture.md) 描述完整 Electron 产品、私有 Desktop Host、独占的 desktop Profile、签名资源内的精确 DSH Runtime。其 `dsh-app://app/` 页面仍通过经过鉴权的 Web Host HTTP/WebSocket 通信，Node IPC 负责启动与生命周期；并非无需本地服务的第二套 Harness。
+绘图由无网络、无 Node 的隔离媒体 Worker 使用固定 Canvas primitives 执行；拒绝 HTML/SVG/脚本、远程图片、任意输入/输出路径和自选覆盖文件名。新图像成为 Project 素材，可用于 Studio 分镜。传输期限为五分钟（包含排队及输出验收），每个媒体 Worker 保留两分钟期限。
 
-| 范围 | 官方 Desktop 已有实现 | BMW 需要保留/适配的差异 | 判断 |
-|---|---|---|---|
-| Harness 与协议 | 同一个 DSH Web 应用和官方 Remote 协议 | 隔离产品 Preset、恰好一个 `browser` Tool | 可以继续复用，目前已使用相同官方协议 |
-| 桌面启动与资源 | Electron Node 子进程、打包页面、自定义协议、就绪/错误/退出通知 | 当前 BMW 用系统 `dsh`、产品独立 Home、Agent WebContentsView | 适合分阶段迁移；需要固定 Runtime 资源与 Host 契约 |
-| 浏览器 Tab | Sidebar webview guest | BMW 管理 Project-owned Tab、弹窗、页面保存、权限与 Artifact | 不能直接替换 BrowserKernel |
-| 浏览器状态与媒体 | 随进程存活的随机 Workspace 分区；禁止 guest 下载及屏幕捕获权限 | 持久分区、按 Origin 加密 Cookie 连续性、下载、截图、录屏和视频 Capture | 必须保留 BMW Browser/Media 实现或逐项移植 |
-| Product UI | 官方 Workspace、Session、Settings、插件管理与桌面生命周期 | BMW Project 文档、Session Center、浮层、计划任务和两产品独立 | 完整替换属于产品 UI 重构，不是启动参数改动 |
-| 更新与插件 | Shell 与精确 Runtime 作为一个签名更新单元 | BMW 自有品牌、发布渠道和独立数据目录 | 需要 BMW 发布流水线，不能沿用上游更新身份 |
+Edge 默认 `zh-CN-YunxiNeural` 男声、0% 语速，固定 Microsoft 服务，60 秒期限；可选晓晓女声。在线旁白默认打开，关闭后所有 Edge 入口被阻止。本地 `local-matcha/local-zh-en` 使用固定 Sherpa-ONNX WASM，需模型缓存、合成时禁止网络，180 秒期限；不会静默切换提供方或生成无声文件。
 
-浏览器差异直接来自官方 [`browser-guests.ts`](https://github.com/deepseek-ai/deepseek-harness/blob/dsh-v0.2.0-rc.2/apps/desktop/src/browser-guests.ts)：分区名不带 `persist:`，`setDisplayMediaRequestHandler` 返回空授权，`will-download` 阻止下载。这里的限制属于官方 guest 设计，不是 DSH Agent 本身缺少媒体能力。
+直接覆盖：media-native 的 media-controller/media-processing/video-options/video-production；实际 decode/capture/compose/local-speech 在媒体、视频、旁白 smoke 验证。在线 Edge 和付费视觉模型为独立 opt-in，不属于离线检查的成功声明。
 
-建议迁移顺序：先将 HarnessPort 后的启动适配独立成桌面 Runtime Carrier，逐步替换系统 CLI 依赖；再引入 BMW 自有安全协议和打包页面，保留官方 HTTP/WebSocket Remote；最后复用窗口生命周期、崩溃恢复与打包机制。BrowserKernel、MediaController、Project/Session 权限边界和两产品 Feature Graph 始终保留。每一阶段以临时 Profile 验证单 Tool、状态隔离、媒体、Session 和重启恢复，再决定是否切换默认载体。
+## 视频参数和模板
 
-**验证状态**：源码评估；尚未构建或运行官方 Desktop，也未交付 Runtime Carrier、自定义协议或新版签名安装包。官方 Electron 依赖与 BMW 当前版本不同，需单独验证兼容性。独立远程/移动端控制属于后续模块，不借用官方 desktop IPC 作为网络接口。
+Settings 的视频制作项支持比例、分辨率、帧率、内置画面风格、水印、配乐和 TTS。模板按名称保存在 Profile 的 videoPreferences，草稿保存参数快照；不同 Project 可使用同名模板。
 
-## 4. BMW 浏览器与研究能力
+优先级：明确参数 > 指定模板 > 默认值。Agent 可用 `video.settings` 读取/更新/保存模板，或在 `video.studio`/`video.narrate`/`video.compose` 指定模板名和覆盖字段。输入 Schema 闭合、有界；视频设置及草稿采用预期版本冲突检测，拒绝覆盖并发编辑。
 
-### 4.1 Browser Actions
+TTS 设置只是生成参数；已有音频按分镜保存宿主生成记录 `audioGeneration`：`{kind:"tts",options:{provider,voice,ratePercent}}` 表示实际生成参数，`{kind:"imported"}` 表示手动绑定音频，`{kind:"legacy",options:{...}}` 仅保存旧音频编辑前的目标参数基线，不声称实际音色。旧草稿缺字段时保留原音频并显示「参数未记录」；后续改变目标音色/语速会标记旧音频过期。生成音频的脚本、provider、voice 或 ratePercent 改变后需重新生成，预览不混入过期旁白，导出拒绝过期音频。手动绑定音频不受 TTS 设置影响。GUI/Agent 草稿更新不能改写同一音频的真实生成记录、脚本文本及实测时长。字幕内容和样式可独立编辑，不使旁白过期。
 
-| 编号 | Action/功能 | 用户可获得的行为 | 覆盖与对应测试 |
-|---|---|---|---|
-| B-01 | `status` | 读取当前产品、Project、激活 Tab 与浏览器状态。 | **契约/间接**：`packages/browser-capability/test/browser-schema.test.ts` — `accepts every declared browser action`；无直接状态内容单测 |
-| B-02 | `tabs.list`、`tabs.open`、`tabs.show`、`tabs.close` | 列出、后台/前台打开、显示和关闭当前 Project 的 Tab；Agent 打开的 Tab 默认复用，避免污染用户 Tab。 | **直接单测**：`packages/browser-capability/test/tab-policy.test.ts` — `Agent tab reuse prefers an exact URL without navigating`；`Agent tab reuse navigates the most recent same-origin Agent tab but not a user tab`；`Agent tab cap closes only least-recent background Agent tabs` |
-| B-03 | 页面 Popup 归属 | 页面发起的新窗口不会启动外部浏览器，而是转成当前 Project 的 BMW 前台 Tab。第三方（包括 Google）仍可基于嵌入式浏览器环境实施自己的登录风控。 | **无直接单测**：当前需人工验证 Popup、OAuth 回跳与真实账号风控 |
-| B-04 | `navigate`、`back`、`forward`、`reload` | 在 Project-owned Tab 内导航、前进、后退和刷新。 | **契约/间接**：`packages/browser-capability/test/browser-schema.test.ts`；当前无逐项导航单测 |
-| B-05 | `observe` | 读取视口、整页、后台或观察模式下的页面结构和可见文本，并限制返回字符数。 | **契约/间接**：Action Schema 有测试；当前无真实页面语义观察单测 |
-| B-06 | `click`、`type`、`hover`、`key`、`wait` | 通过选择器/可见文本交互，输入字段、悬停、发键盘事件和执行有界等待。 | **契约/间接**：`packages/browser-capability/test/browser-schema.test.ts` — `rejects unsupported and malformed requests`。当前无 Electron 页面交互单测 |
-| B-07 | `page.diagnostics` | 收集目标页面 Console 与网络失败诊断，并返回截图 image/Artifact；作为公共能力可被 BMWDev 继承。 | **契约/间接**：Browser Schema/Catalog 覆盖 Action 声明；本仓无独立真实页面 Console/Network 诊断测试，不引用 BMWDev 的 WVL 测试作为本产品直接覆盖 |
-| B-08 | `page.viewport.set` | 设置宽、高、缩放与移动视口，支持响应式观察和验证。 | **契约/间接**：Action Schema 有测试；当前无 Electron 视口效果单测 |
-| B-09 | `project.context` | 向 Agent 提供当前 Project 元数据及 AGENTS/Memory/Tasks 上下文。 | **契约/间接**：`packages/platform/test/project-store.test.ts` 保障文档边界；无 Browser Action 返回值专门测试 |
-| B-10 | `project.memory.append`、`project.tasks.append` | 仅向 Project Memory/Tasks 追加带来源时间的信息，不允许任意文件写入。 | **直接单测**：`packages/platform/test/project-store.test.ts` — `agent append is limited to memory documents and records provenance time` |
+## Video Studio
 
-### 4.2 原生媒体
+画面素材选择统一提供列表／图标视图、按可见区域加载的真实图片／视频缩略图及放大预览；覆盖素材准备、匹配、工作台、封面和画面片段。预览只读取当前 Project 素材，沿用读取／解码预算、媒体控件与切换取消；显示方式切换不修改视频草稿。
 
-| 编号 | Action/功能 | 用户可获得的行为 | 覆盖与对应测试 |
-|---|---|---|---|
-| M-01 | `page.media.list` | 从页面、选定元素和已观察网络响应中发现图片、视频源、Poster 等媒体 URL。 | **契约/间接**：Action Schema 有测试；当前无真实媒体页面发现单测 |
-| M-02 | `media.screenshot` | 对视口、整页、后台页面或指定元素生成 Project-owned 截图 Artifact；支持选择器和匹配序号。 | **契约/间接**：BMW Catalog 与 Schema 覆盖 Action 存在；当前无截图像素/区域单测 |
-| M-03 | `media.download` | 使用 BMW 浏览器 Session 下载 HTTP(S) 媒体到当前 Project Artifact；限制大小、清理文件名、推断扩展名并拒绝 DASH 初始化碎片。 | **直接单测**：`packages/browser-capability/test/media-artifact.test.ts` — `media download writes a bounded Project artifact through the browser fetch adapter`；`media download rejects non-web URLs and responses beyond its byte limit`；`artifact filenames remove path syntax and infer media extensions`；`media download rejects and removes DASH initialization fragments` |
-| M-04 | `media.video.capture` | 对页面中的 `HTMLVideoElement` 使用 `captureStream()` + `MediaRecorder` 保存完整、可播放的 WebM；默认从头录制，时长上限 30 分钟，数据上限 512 MB，按序写入分段并校验 WebM。 | **直接单测 + Electron E2E**：`packages/media-native/test/media-controller.test.ts` — `browser-native video capture filenames remain Project-local WebM artifacts`、`video chunk decoding ignores commas inside codec parameters`；人工/本地 E2E 命令 `npm run test:media-e2e` |
-| M-05 | `media.record.start`、`media.record.stop` | 录制当前 Tab 的画面/音频为 Project-owned WebM；媒体处理优先走 WebGPU Canvas 管线，不可用时回退 CPU/原始流。 | **契约/间接**：`packages/media-native/test/media-controller.test.ts` 覆盖 Artifact 命名边界；当前无完整 start/stop 单元测试，可用 `npm run test:media-e2e` 做本地 Electron 验证 |
-| M-06 | BMW 媒体查看器 | 截图、录屏与下载媒体在 BMW 自有窗口/Tab 查看，不启动外部浏览器。 | **无直接单测**：需人工验证窗口与媒体播放 |
+交付页可直接查看／另存任意已有成片。`render` 默认复用内容及文件签名一致的已完成 MP4，不启动编码、不增加草稿 revision 或成片记录；`forceRender: true` 明确重新制作。后端签名包含有效合成参数和源素材／输出／验收报告的文件状态；分镜、字幕、音频、尺寸或文件变化使复用失效，封面与准备笔记不影响视频。旧记录缺少签名时仅提供手动查看／另存，不推断为当前成片。签名由完成作业记录，编辑不能伪造；归属和 revision 检查继续执行。
 
-## 5. Projects、Sessions、设置与桌面体验
+草稿保存在 Project 中，但由不可修改的 `ownerSessionId` 强绑定到唯一 Session。一个 Session 可以拥有多个草稿，共用 Project 素材；列表、读取、修改、生成和删除均在后端校验可信调用身份，另一 Session 不能编辑或继承草稿。Bridge 将已认证 Session 身份传递到执行链，Renderer 的归属由主进程确定。未绑定的历史草稿默认不可见，不自动认领。切换 Session 前保存已输入编辑，切换后显示该 Session 的草稿及独立选中状态；没有草稿时显示空状态。草稿 Assistant 请求提交到其所属 Session。当前 Studio 作业未完成时拒绝切换。
 
-| 编号 | 功能 | 行为与边界 | 覆盖与对应测试 |
-|---|---|---|---|
-| U-01 | Project 创建/切换/更新/归档 | 左上角可快速下拉切换；Project Manager 负责创建、编辑和归档。归档不删除项目文件。 | **直接单测**：`packages/platform/test/project-store.test.ts` — `creates, switches, updates and archives projects without deleting their files` |
-| U-02 | Project 文档 | 每项目持有独立 AGENTS、Memory、Tasks 等文档；项目目录和 Connector Binding 隔离。 | **直接单测**：`packages/platform/test/project-store.test.ts` — `agent append is limited to memory documents and records provenance time`；`connector bindings are isolated per project` |
-| U-03 | Tab 状态恢复 | 保存有界数量的 HTTP(S) Tab 元数据，避免把不安全/无关 URL 写入 Project。 | **直接单测**：`packages/platform/test/project-store.test.ts` — `tab state keeps only bounded HTTP(S) URLs` |
-| U-04 | Project Manager 层级 | 浏览器 Tab View 变化后，已打开的 Project Manager 会重新置顶，不被内容页遮挡。 | **直接单测**：`packages/platform/test/project-panel-layering.test.ts` — `an open Project Manager is re-raised after browser tab views change` |
-| U-05 | Project-scoped DSH Session | 激活 Project 时创建或复用其持久 Session；Shell 与 DSH 显示同一 Project。 | **直接单测**：`packages/harness-dsh/test/dsh-runtime.test.ts` — `DSH project activation creates a project-scoped BMW session`；`DSH project activation reuses its persistent project session` |
-| U-06 | Session Center | 按当前 Project 列表/搜索 Session，并支持创建、选择、改名、Fork、归档和顺序移动。产品独立 SQLite 索引在首次内容搜索时打开；会话创建使用各自产品预设。 | **直接单测/部分间接**：`packages/harness-dsh/test/dsh-runtime.test.ts` — `BMW Session Center lists only active sessions in its Project and searches content`、`BMW creates new DSH sessions with the browser-only preset`；改名/Fork/移动的 IPC UI 无逐项单测 |
-| U-07 | DSH Sidebar 覆盖 | BMW Shell 覆盖常用 Project、Session 与设置入口；DSH 原 Sidebar 默认隐藏，可在高级设置启用兼容回退。 | **直接单测/部分间接**：`packages/platform/test/global-settings-store.test.ts` — `legacy DSH Sidebar is an explicit global compatibility fallback`；完整 UI 入口需人工验证 |
-| U-08 | 侧栏/浮层布局 | 首次选择 DSH 侧栏或浮层；浮层可移动、缩放、全屏和设置透明度；拖到右上角可 Dock，点击状态行可回到浮层。 | **直接单测/部分间接**：`packages/platform/test/layout-store.test.ts` — `floating DSH settings persist with bounded size and supported opacity`；`packages/platform/test/layout-docking.test.ts` — `floating DSH docks when its upper-right corner reaches the target corner`、`floating DSH does not dock near only one target edge`、`dock detection rejects invalid window bounds`。拖拽 UI 需人工验证 |
-| U-09 | 统一主题 | BMW Shell 与 DSH 共享 `system`/`light`/`dark` 配置；网页自身主题只在网站支持或 BMW 可注入适配时变化。 | **直接单测/部分间接**：`packages/platform/test/global-settings-store.test.ts` — `global appearance accepts one shared dark, light or system theme`；网页视觉跟随需人工验证 |
-| U-10 | 代理与搜索引擎 | 默认使用系统代理；可配置手动代理。默认 Google，可选其他引擎或带查询占位符的 HTTP(S) 自定义模板。 | **直接单测**：`packages/platform/test/global-settings-store.test.ts` — `global settings default to system proxy and Google search`；`global settings persist manual proxy and generate selected search URLs`；`custom search templates require HTTP(S) and a query placeholder`；`proxy settings apply to the persistent BMW browser session` |
-| U-11 | Browser Permission | 无害展示权限静默允许，敏感浏览器能力只提示一次，噪声/环境权限拒绝。Agent Control 由用户明确开启。 | **直接单测/部分间接**：`packages/platform/test/permission-policy.test.ts` — `denies noisy ambient site permissions without prompting`；`prompts once only for sensitive browser capabilities`；`allows harmless presentation capabilities silently` |
-| U-12 | Cookie/Session 连续性 | 用户按 Origin 显式开启后，用 OS Keychain 加密 Cookie 快照并在重启恢复；关闭连续性只删快照，不清实时 Cookie。 | **直接单测**：`packages/platform/test/session-continuity.test.ts` — `encrypts and restores session cookies only for explicitly enabled origins`；`disabling continuity removes the encrypted snapshot without clearing live cookies`；`cookie matching includes parent-domain cookies but excludes unrelated sites` |
-| U-13 | 后台智能保活 | 对已启用 Origin 优先发送 HEAD；拒绝 HEAD 时执行有界 GET，避免无界后台访问。 | **直接单测**：`packages/platform/test/session-continuity.test.ts` — `background keepalive uses HEAD first for an enabled origin`；`background keepalive falls back to a bounded GET when a site rejects HEAD` |
-| U-14 | 页面保存与键盘菜单 | 页面聚焦时支持平台保存快捷键和完整/单文件保存；DSH 聚焦时不误激活页面保存。键盘菜单激活不抢占带修饰键的页面快捷键。 | **直接单测**：`packages/platform/test/menu-policy.test.ts` — `builds safe webpage filenames and selects complete or single-file saves`；`recognizes keyboard menu activation without stealing modified page shortcuts`；`recognizes only the platform save-page accelerator` |
-| U-15 | DSH 自然语言创建每日任务 | 用户可直接在 DSH 描述“每天几点做什么”；Agent 通过 `schedule.create` 保存完整 Prompt、`HH:mm` 时间和 IANA 时区。`schedule.list`、`schedule.update`、`schedule.remove`、`schedule.run` 用于查询、启停、修改、删除和立即运行。 | **直接单测/契约**：`packages/platform/test/scheduled-task-store.test.ts` — `daily scheduled tasks use their IANA time zone and survive restart`；Browser Action 存在性由 `packages/browser-capability/test/browser-schema.test.ts` 与 Catalog 测试保障 |
-| U-16 | Project/Session 绑定与后台执行 | 任务绑定创建时 Project 和 DSH Session，到点后串行恢复该上下文；DSH 仍只使用 `browser` Tool，并优先在后台 Tab 完成网页截图、媒体下载等工作。运行期间阻止切换/归档 Project，结束后恢复用户原 Project。 | **直接单测/部分间接**：`packages/platform/test/scheduled-task-store.test.ts` — `scheduled task runs are project isolated, durable, and recover interruption`、`scheduler serializes due and manual DSH task execution`；实际 DSH/网页后台执行需 Electron 人工验证 |
-| U-17 | 重启、错过执行与历史 | BMW 重启后保留任务；正在执行的 Run 标为 `interrupted`，已排队 Run 恢复。应用退出或系统休眠期间错过多个周期时只补跑一次，再计算下一天。Scheduled 面板显示启停、下次运行、最近状态，并提供 Run now/Delete；终态发系统通知。macOS 可关闭/隐藏或最小化主窗口而保持调度，显式 Quit 才停止。 | **直接单测/部分间接**：`packages/platform/test/scheduled-task-store.test.ts` 覆盖持久化、中断恢复、串行队列和运行结果；面板、窗口隐藏与系统通知需人工验证。BMW 进程必须保持运行，不能承诺在完全退出时唤醒系统执行 |
-| U-18 | 产品内安全重启 | Settings 与系统应用菜单可重启当前 BMW/BMWDev。重启复用同一产品 Profile、Project、Tab 元数据、已保存的登录连续性、DSH Session 和布局；退出前停止调度器、DSH、Bridge、Session 保活和产品 Feature。正在录制媒体、执行定时任务或运行 WVL 时拒绝重启；普通 DSH 回复运行中会明确警告可能被中断。 | **直接单测/部分间接**：`packages/platform/test/restart-policy.test.ts` — `allows restart when BMW has no active non-durable work`、`blocks restart while media, scheduled tasks, or WVL execution is active`；Electron `app.relaunch()`、菜单/Settings IPC、同 Profile 恢复需临时 Profile E2E 或人工验证 |
+「删除草稿」要求当前版本并确认，移出活跃草稿列表，保留 `video-studio/deleted` 中可恢复记录；不删除 Project 共用素材、封面、字幕或成片文件。删除最后一个草稿恢复空状态。
 
-## 6. 远程控制与聊天软件边界
+Studio 使用主工作区，不创建独立退出入口。GUI 与自然语言共享当前 Session 的草稿、选中分镜、阶段、版本、材料和导出结果；DSH 驱动在官方上下文快照中注入当前 Studio 数据，数据不被当作权限提升指令。
 
-两个新仓库均不包含 connector-feishu 源码或 SDK，默认无聊天软件 Actions/UI/IPC/Relay。旧用户数据保持原状。独立远控/移动端未实现。
+编辑阶段采用画布工作台：左侧分镜与本视频素材、中央适应空间的横/竖屏预览及常驻播放控制、右侧画面/旁白/字幕属性面板、底部按真实时长排列的全片时间轴。属性独立滚动；全片参数、配音默认值和命名模板集中在「视频设置」窗口。五阶段流程和原有脚本工作区保留，画面匹配阶段使用独立属性栏。封面编辑由右上「视频封面」打开，交付由顶栏「交付与导出」打开，属性标签只保留画面、旁白、字幕。顶栏交付按钮默认普通样式，仅交付面板打开时高亮，切换回编辑或封面时恢复。
 
-**直接测试**：`packages/platform/test/remote-control-boundary.test.ts` — `default products reject chat connector actions and retain one browser tool`、`default desktop exposes no Feishu UI, IPC or automatic relay startup`。
+时间轴仅投影已有顺序分镜、视觉片段、实测旁白长度和字幕区间，不新增持久化轨道。点击分镜或片段定位累计时间；播放/跳转跨分镜时同步列表、属性、时间轴与原有 Agent 选中上下文。字幕仍标注估算或编辑来源；过期旁白标注需重生成。切换属性、封面、设置或交付前保存聚焦输入并检查版本，保留撤销/重做。
 
-## 7. 视频制作边界（BMWVideo 简称 BMW）
+封面模式中央只展示独立 PNG，右侧编辑全片封面，暂停视频播放并隐藏视频时间轴；零分镜也可使用。交付集中 MP4、封面 PNG、SRT/VTT、制作检查、字幕下载和历史成片/验收报告。任务状态与保存状态分开显示，媒体作业运行时才显示取消入口；未更新预览显示提示。布局支持窄窗口和明暗主题，不提供尚未实现的自由图层/关键帧控制。
 
-Video Feature 是两个产品共同基础：BMW 直接组合，BMWDev 继承同一 Feature。当前 browser-native 截图、录屏、媒体下载与视频 Capture 可用；feature-video 的 `video.*` 制作动作仍为空，时间线/剪辑器/成片导出/FFmpeg 未实现。
+工作流：
 
-**契约测试**：`packages/platform/test/bmw-catalog.test.ts` — `BMW exposes research/media actions and the Video extension boundary`；产品继承测试保证 Feature 存在，不代表视频制作已经完成。
+1. 素材收集：零分镜可建立草稿；收集笔记、全局提纲、文本、图像、视频和音频。
+2. 脚本创作：全局脚本显示所有分镜；选中分镜对应独立正文/画面要求。添加、删除和排序分镜同步到全局关系。
+3. 制作音频：针对分镜生成、试听和绑定真实旁白，测得时长后设置目标长度。正文变更使旁白 stale；制作时拒绝 stale 音频。
+4. 匹配画面：全 Project 可预览素材缩略图；最多两个并行解码，缓存有界，原生窗口不发出可见性回调时通过渲染/滚动/尺寸变化的布局检查补充加载。选中分镜后按当前分镜、未用素材和其他分镜素材分组，支持拖拽绑定与更换画面。旁白和文本不混入画面候选。素材不足可通过同会话请求采集或明确选择末帧定格。
+5. 预览和编辑：点击分镜跳到其时间位置；以音频时钟同步、按视频帧率定时刷新，不依赖原生窗口的 compositor 回调；暂停、跳转和切换草稿取消过时播放；预览可调整脚本、素材、取景、源起点、速率、音量、原声和字幕，渲染保存 Project 成片与版本。
 
-## 10. 验证和覆盖边界
+`video.studio` 的操作：list/create/read/update/configure/save-template/assets/inspect/read-material/attach/narrate/narrate-pending/check/export-captions/export-cover/render/open/context。请求使用 Artifact ID、Draft ID、Scene ID 和 expectedRevision；update 的草稿为受限对象，无任意 HTML/脚本。attach 验证真实媒体类型和归属。视觉修改保留未改脚本的旁白绑定；脚本变更要求重生成。空草稿可保存、配置和制作封面，不能导出视频；最多 24 分镜，素材集合与正文都有明确上限。
 
-每个仓库独立运行 build/check/test/test:boundaries；使用临时数据运行 test:dsh-e2e、test:desktop-e2e、test:media-e2e。不调用付费模型，不检查真实 Profile。真实模型理解、完整交互与所有 IPC 安全面仍按各项覆盖说明保持未验证，不由冒烟推定。
+全片制作面板显示分镜数、总时长与待制作旁白数，问题可点击定位分镜。`narrate-pending` 使用草稿保存的 TTS 参数顺序制作非空脚本中缺失/过期的旁白，跳过仍有效的生成音频、导入音频和无旁白分镜。每段完成即以 revision 保存并通知 UI；取消、服务失败或并发编辑阻止后续写入，已完成段保留，读取最新 revision 后可续作。禁止在线旁白时批量入口同样拒绝 Edge。音频绑定/再生成后的分镜时长至少覆盖实测音频 + 1 秒和独立编辑字幕的终点，不静默裁剪字幕；60 秒分镜/180 秒全片上限仍有效。
 
-## 11. 当前明确未交付
+`check` 需要 draftId/expectedRevision，只读检查当前 Project 的素材和实际音视频时长，返回 revision、ready、总时长、累计时间轴、画面可用时长/缺口、待制作旁白 Scene ID、带 code/severity/Scene ID 的问题与 checkedAssets。一次检查中共享图片与音视频只探测一次，全部分镜问题汇总；检查期间 revision 变化或取消即拒绝结果。音视频检查可解码轨道、真实 alpha 包和尺寸；图片通过受限原生 Worker 实际解码静态 PNG/JPEG/WebP（verification=decode）。图片头在解码前限制单图 32 MiB/16,777,216 像素，全片唯一素材最多 256 MiB，图片总像素最多 33,554,432；检查、预览和导出共享预算。损坏、动画、SVG 或超预算图片阻止导出。材料库缩略图和图片弹窗也复用同一静态图片头检查，在 createImageBitmap 分配前拒绝超大或动画图片；缩略图最多两路并行、缓存 64 项。check 另返回当前宽高/fps 的 H.264/AAC 编码可用性；不支持时给出 encoding-unavailable。原文件不写回实测 metadata；导出复用同一检查且再次探测，不依赖过时 GUI 报告。源起点必须早于视频末尾，选择 hold 也不能放行无有效源区间；有效片段末尾定格作为 warning 展示，仍允许导出。
 
-- BMWVideo 编辑器、时间线、FFmpeg、制作渲染管线。
-- 默认捆绑的商业 WebContainer 许可与依赖。
-- 安装包、签名/公证、自动更新与发布通道。
-- CI 托管的 Electron UI、真实 Google/X 登录、真实飞书和 GPU 多机型 E2E。
-- 通用 Shell、任意本机文件系统、通用 FFmpeg CLI 等模型 Tool；这些属于架构禁止项，不是待补功能。
+单分镜可含 `visualSegments`，1–8 个图片或视频片段，每段 0.1–60 秒，总和必须等于分镜时长；与分镜级图片/视频绑定互斥。各片段有独立源起点、速率、取景、原声音量与 cut/fade。fade 为经过背景的淡出/淡入，不重叠播放两个视频、不增加时长。GUI 追加等分时间、编辑时长由另一片段补足、移除按比例重新分配；`attach.segmentIndex` 可追加或替换，替换保留时间分配。测得旁白改变分镜长度时同比调整片段；旁白和字幕保持分镜连续时间。预览/导出共享选片、绘制、混音逻辑，串行读取一个视频片段；原声只覆盖对应片段和有效源区间。
 
-## 12. 自动生成的能力与测试清单
+`export-cover` 使用 draftId/expectedRevision 和可选 cover 参数，保存独立的 Project PNG；无需已有分镜、旁白或成片。GUI 的「视频封面」进入编辑与预览页的封面面板，支持当前 Project 静态 PNG/JPEG/WebP、视频指定秒数的真实帧和纯文字背景；标题最多 80 字、副标题最多 160 字，文字位于上方或下方，画面可完整保留或居中裁切填满，背景/文字/强调色为不透明 #RRGGBB。尺寸沿用草稿，宽 320–1920、高 180–1920；单 PNG 最多 20 MiB。静态输入最多 32 MiB/32 MP，视频遵守现有字节/像素预算和 1800 秒时长限制，指定时间须在实际视频轨道范围内，返回实际取帧时间，不伪称精确对齐。
+
+封面参数随草稿 cover 保存，宿主独占 coverExports（最多 30 条，保存参数、尺寸、来源版本及取帧时间）；普通 update 保留省略的参数且不能篡改记录。原生固定 Canvas worker 使用 Project 固定文件句柄、限定 IPC 和禁用网络的沙箱，PNG 完成后重新解码验证尺寸。失败、取消或并发编辑只清理本次输出；封面不修改原图/原视频、分镜、旁白、字幕或视频导出历史。UI 可预览、下载 PNG，切换草稿后仍可查看最近封面；参数或输出尺寸变化提示重新生成。旧草稿无需迁移。
+
+`export-captions` 使用 draftId/expectedRevision 和 captionFormat=srt/vtt，在 Project 素材库创建主进程分配 UUID 的字幕文件。分镜局部字幕转换为全片累计毫秒时间；明确关闭的字幕保持关闭，独立编辑字幕不改脚本和旁白。自动字幕使用有效音频的实测时长，仍属于估算，返回 edited/estimated/mixed，GUI 提示来源。取消/并发修改清理本次输出且不写草稿。单输出最多 512 KiB；下载链接与 Project 文本预览可用。
+
+准备阶段的「让 Assistant 起草脚本」与匹配阶段的「让 Assistant 匹配已有素材」通过当前 Project 的既有 DSH Session 提交固定、受验证的 intent。提交前后检查 Project/revision；不添加工具或循环。辅助提示要求只补空脚本、保留已有分镜 ID/顺序/旁白/字幕及来源，匹配基于已查看的素材，不足则说明缺口。`read-material` 仅读取当前 Project 的受限文本素材，最多 256 KiB UTF-8 并报告截断；材料是数据，不执行 HTML/脚本。实际模型生成质量与外部调用单独验收。
+
+每次原生成片重新读取最终 MP4，核对可解码的 AVC/AAC、宽高、48 kHz 双声道和实际时长；通过后保存 Project JSON 验收报告。记录产物 ID、实际/预期时长、轨道和尺寸，以及渲染帧数、fps、音频峰值、旁白实测时长。exports 记录 verificationArtifactId，GUI 可下载成片及报告；失败清理本次 MP4。编码能力具有设备差异。
+
+原声可保留/静音/调整音量；源区间和播放率同步混音。脚本、旁白文本、字幕内容互有关联但样式独立。当前字幕时间是编辑或估算结果，不宣称自动逐词对齐。
+
+直接覆盖：feature-video 的 draft、assets、context、preview、studio 等测试及 `scripts/video-studio-smoke.ts`。真实最终混音、音轨/时长/播放由 video-production smoke 覆盖；Studio UI 的确定性旁白替身只验证操作路由，不代表外部 TTS 质量。
+
+## 当前范围与维护
+
+通用 NLE、任意 Hyperframes HTML 导入、外部聊天控制、独立远控/移动端、签名安装器和自动升级未实现。核心不会从其他仓库加载运行时代码。自动测试使用临时 Profile、DSH Home 和 Workspace，不能证明真实钥匙串授权、外部服务可用性或全部模型视觉能力。
+
+修改功能/权限/Schema 必须更新本文；新增、移动、删除测试运行 `npm run docs:features`。文末列表由源码生成并由 `npm run check:features` 验证。验证命令和证据边界见 [VERIFICATION.md](VERIFICATION.md)。
+
+## 模块接口与测试分类
+
+模块定义与依赖方向见 [ARCHITECTURE.md](ARCHITECTURE.md)。七个产品包、应用组装和验证工具拥有明确职责，跨模块仅能依赖 package exports 指定的公开文件。Feature 生命周期、Browser 宿主与原生媒体端口有具名 TypeScript 接口；未知跨进程输入与媒体回复仍须运行时校验。公开接口有正反类型消费者、运行时契约测试和对应回归保障。
+
+Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 driver 夹具从 Platform 注入的连接配置出发，经 MCP 适配器和 Bridge 实际操作 Project 页面，并验证权限、绑定及切换后恢复。DSH 的安装版兼容性与持久化绑定验证单列为具体实现/产品装配保障，按 Agent 契约、DSH 实现和产品组装范围选择；Browser 模型接口（Schema、目录、Bridge、MCP）单独改动不会自动启动 DSH。完整离线基线仍执行 DSH。
+
+测试分为 unit、contract、boundary、type、integration、desktop、media、external。`test:plan` 给出选择依据，`test:affected` 根据文件依赖、行为 watch 和接口矩阵执行受影响保障；任何源代码改动保留全局边界。共享验证辅助库的改动自动沿导入/重导出闭包选择所有运行时消费入口；生产模块仍使用接口/行为范围。未知/删除路径、共享配置及验证代码中无法证明的动态导入升级为完整离线集。生产代码不得依赖测试目录或验证工具；Renderer 禁止裸名称或 node: 前缀的 Node 内建模块。生产计算式导入默认拒绝，仅 DSH 插件允许解析声明的固定安装包字面量，不允许新增任意计算式导入。测试未分类、接口保障缺失或生成文档过期直接失败。新构建的源码/输出哈希收据防止使用过期 JS，只有完整离线集通过才更新验证基线。
 
 <!-- BEGIN GENERATED CAPABILITY AND TEST INVENTORY -->
 
@@ -163,9 +166,27 @@ Video Feature 是两个产品共同基础：BMW 直接组合，BMWDev 继承同�
 
 ### 当前 Browser Action 清单
 
-- BMW 核心 Browser Actions（31）：`status`、`tabs.list`、`tabs.open`、`tabs.show`、`tabs.close`、`navigate`、`back`、`forward`、`reload`、`observe`、`click`、`type`、`wait`、`key`、`hover`、`page.diagnostics`、`page.media.list`、`page.viewport.set`、`media.screenshot`、`media.download`、`media.video.capture`、`media.record.start`、`media.record.stop`、`project.context`、`project.memory.append`、`project.tasks.append`、`schedule.list`、`schedule.create`、`schedule.update`、`schedule.remove`、`schedule.run`
+- BMW 核心 Browser Actions（37）：`status`、`tabs.list`、`tabs.open`、`tabs.show`、`tabs.close`、`navigate`、`back`、`forward`、`reload`、`observe`、`click`、`type`、`wait`、`key`、`hover`、`page.diagnostics`、`page.media.list`、`page.viewport.set`、`media.screenshot`、`media.download`、`media.video.capture`、`media.inspect`、`media.frames.sample`、`media.convert`、`media.image.inspect`、`media.image.annotate`、`media.image.draw`、`media.record.start`、`media.record.stop`、`project.context`、`project.memory.append`、`project.tasks.append`、`schedule.list`、`schedule.create`、`schedule.update`、`schedule.remove`、`schedule.run`
+- feature-video Feature Browser Actions（4）：`video.compose`、`video.narrate`、`video.studio`、`video.settings`
 
 ### 当前自动化测试清单
+
+#### `packages/agent-contract/test/context-sync.test.ts`
+
+- `Agent selection coordinates Project changes and rejects stale asynchronous navigation`
+- `Agent selection restores rejected navigation and validates published context`
+
+#### `packages/browser-capability/test/bridge-shutdown.test.ts`
+
+- `Bridge shutdown cancels the active renderer wait before draining FIFO`
+
+#### `packages/browser-capability/test/browser-deadline.test.ts`
+
+- `browser requests are finite while media jobs retain their long budget`
+
+#### `packages/browser-capability/test/browser-host.test.ts`
+
+- `Feature dispatch admits the host port and forwards actor, Project and cancellation without replacing them`
 
 #### `packages/browser-capability/test/browser-schema.test.ts`
 
@@ -184,17 +205,91 @@ Video Feature 是两个产品共同基础：BMW 直接组合，BMWDev 继承同�
 - `media download rejects non-web URLs and responses beyond its byte limit`
 - `artifact filenames remove path syntax and infer media extensions`
 - `media download rejects and removes DASH initialization fragments`
+- `media download cancellation aborts fetch and drains streaming writes before removing partial output`
+- `failed media download never removes an existing artifact with the same filename`
+
+#### `packages/browser-capability/test/renderer-read.test.ts`
+
+- `Renderer read cancellation releases FIFO and ignores late DOM and diagnostic results`
+- `Renderer reads bound deadlines and reject navigation, renderer loss and pre-cancellation`
+
+#### `packages/browser-capability/test/screenshot-read.test.ts`
+
+- `screenshot cancellation releases FIFO and ignores a late renderer result`
+- `screenshot deadline identifies phase and renderer loss removes observers`
+- `screenshot rejects main navigation and never starts already cancelled reads`
 
 #### `packages/browser-capability/test/session-operations.test.ts`
 
 - `Session operations serialize, recheck admission and recover after failure`
 - `Browser bridge pins Project identity, revokes queued Sessions and returns only owned PNG images`
+- `Browser bridge admits bounded Project frame sets and propagates active MCP cancellation`
+- `Studio context bridge authenticates Session ownership and rechecks revocation after GUI flush`
 
 #### `packages/browser-capability/test/tab-policy.test.ts`
 
 - `Agent tab reuse prefers an exact URL without navigating`
 - `Agent tab reuse navigates the most recent same-origin Agent tab but not a user tab`
 - `Agent tab cap closes only least-recent background Agent tabs`
+
+#### `packages/feature-video/test/studio-materials.test.ts`
+
+- `Studio material groups reflect live scene bindings and reuse across Project drafts`
+- `Studio material drops admit only current Project assets matching the target slot`
+
+#### `packages/feature-video/test/video-boundary.test.ts`
+
+- `video actions remain feature-owned in one browser tool and require trusted narration consent`
+
+#### `packages/feature-video/test/video-settings.test.ts`
+
+- `video template settings persist without changing other settings and are reusable by name`
+- `Studio snapshots defaults and templates while visual-only configure retains custom size and CAS`
+- `TTS resolves Edge male defaults named snapshots and explicit overrides while preserving opt-out`
+- `Studio narration uses configurable TTS rather than fixed local speech and enforces the Edge gate`
+
+#### `packages/feature-video/test/video-studio.test.ts`
+
+- `Studio drafts persist per Project and reject conflicting GUI or Agent revisions`
+- `Studio coverage follows actual voice, source trim and speed and requires explicit end hold`
+- `Studio render remeasures artifacts instead of trusting edited duration metadata`
+- `Studio rejects script paths and malformed captions while admitting Project images`
+- `Studio visual edits retain measured narration while rewritten scripts require new speech`
+- `Studio selection validates owning draft and scene and publishes the latest revision as context data`
+- `Studio GUI undo can explicitly clear an attached voice without erasing omitted model bindings`
+- `Preparation persists without scenes, retains legacy bindings and rejects empty export`
+- `Preparation admits Project text and rejects missing and symlink additions without a revision write`
+- `Caption edits preserve voice while regeneration replaces only the selected script audio`
+- `Generated narration records actual parameters and blocks stale voice or rate while visual edits remain ready`
+- `Legacy audio keeps unknown parameters and detects subsequent changes; imported audio ignores TTS preferences`
+- `Production checklist locates timeline gaps, stale speech and invalid starts even with explicit hold`
+- `Measured readiness collects shared and missing asset issues without writes and uses the same export gate`
+- `Readiness rejects alpha, oversized, undecodable tracks, symlinks and revisions changed during inspection`
+- `Pending narration saves each scene, skips current imports and resumes safely after provider failure`
+- `Batch cancellation and concurrent edits reject late results without committing or starting later speech`
+- `Narration preserves independent caption endpoints and refuses scene or whole-film duration overflow`
+- `Batch uses the draft voice snapshot, respects online opt-out and retains completed scenes on cancellation`
+- `Studio exports Project subtitles and literal bounded text while segment changes retain measured narration`
+- `Measured image budget deduplicates shared pictures and unsupported encoders block export without writes`
+- `Cover export admits closed options, legacy drafts and independent zero-scene output`
+- `Cover source admission rejects other Project IDs, audio and symlinks before native work`
+- `Cancelled or conflicting cover jobs remove only their new PNG and preserve GUI changes`
+- `Workbench timeline preserves cumulative fractional scene and segment boundaries with caption provenance`
+- `Workbench timeline labels estimated captions and admits empty cover-only drafts`
+- `Studio Session ownership hides legacy and foreign drafts and rejects every foreign draft operation`
+- `Studio deletion checks Session and revision and keeps shared materials exports and recoverable records`
+- `Studio bridge forwards authenticated Session ownership instead of accepting a caller-selected owner`
+- `Studio pending narration keeps the admitted owner when caller identity changes during an awaited job`
+- `Completed MP4 reuse survives cover/notes edits but invalidates changed composition, files and forged journals`
+
+#### `packages/harness-dsh/test/browser-failure-guard.test.ts`
+
+- `repeated infrastructure failures stop only their official Session until next turn`
+- `selector errors, success and user cancellation do not trip infrastructure guard`
+
+#### `packages/harness-dsh/test/dsh-context.test.ts`
+
+- `DSH selection maps Workspace membership and directory to one BMW Project while sharing its tabs across sessions`
 
 #### `packages/harness-dsh/test/dsh-preset.test.ts`
 
@@ -223,14 +318,57 @@ Video Feature 是两个产品共同基础：BMW 直接组合，BMWDev 继承同�
 
 #### `packages/harness-dsh/test/harness-port.test.ts`
 
-- `HarnessPort delegates runtime operations through a stable BMW interface`
-- `HarnessPort detects WVL commands and client bundle without making them mandatory`
-- `HarnessPort owns health, cancellation and runtime event subscriptions`
+- `DSH driver delegates lifecycle and prompt submission without exposing raw RPC`
+- `DSH driver normalizes mutations, health and cancellation through official transport`
+- `DSH driver rejects malformed wire snapshots before the core receives them`
+
+#### `packages/harness-dsh/test/video-case-log.test.ts`
+
+- `video case export preserves prompts and observable reasoning while redacting credentials and inline media`
+- `video case export reads complete paginated history and rejects duplicate or missing event sequences`
+
+#### `packages/harness-dsh/test/workspace-context.test.ts`
+
+- `DSH Studio assembly preserves the prompt, sole tool and existing context while replacing stale selection`
 
 #### `packages/media-native/test/media-controller.test.ts`
 
 - `browser-native video capture filenames remain Project-local WebM artifacts`
 - `video chunk decoding ignores commas inside codec parameters`
+- `capture IPC admits only the current media main frame`
+
+#### `packages/media-native/test/media-port.test.ts`
+
+- `Native media reply admission rejects host paths, fabricated durations and malformed tracks`
+
+#### `packages/media-native/test/media-processing.test.ts`
+
+- `media actions require artifact IDs and reject unbounded or ambiguous processing requests`
+- `media worker admission rejects missing frames, forged timestamps and unexpected output codecs`
+- `media job I/O pins the Project input and rejects links, out-of-range reads and writes`
+- `media jobs roll back partial artifacts and commit only validated PNG outputs`
+- `media export refuses missing audio, discarded tracks and duplicate track mappings`
+- `media processing rejects transparent video instead of silently changing its colors or alpha`
+- `Image admission rejects non-raster, huge or animated headers before decode and bounds cumulative pixels`
+- `Image drawing admits bounded primitives and rejects executable, outside, transparent-redaction and aggregate inputs`
+- `Drawing output IO has no input, bounds PNG writes and rolls back failed dimensions without changing existing images`
+
+#### `packages/media-native/test/video-options.test.ts`
+
+- `video ratios map to bounded even landscape portrait and square resolutions`
+- `explicit video overrides beat template snapshots and defaults with nested watermark merge`
+- `video templates and styles reject duplicate names arbitrary controls and oversized watermarks`
+
+#### `packages/media-native/test/video-production.test.ts`
+
+- `seekable composition validates Project IDs, bounds and real narration assets`
+- `narration fixes provider and voices and rejects SSML control or arbitrary endpoints`
+- `composition output handle rejects input reads and cleans partial output on cancellation`
+- `Selected source sound trims, retimes, scales mono and stops at its endpoint and scene boundary`
+- `Caption and source audio contracts stay closed and captions estimate within scene-local time`
+- `Visual segments admit bounded clips, preserve scene time and expose deterministic fade boundaries`
+- `SRT and VTT use global cumulative milliseconds, respect disabled captions and label estimated timing`
+- `Bounded Project text export cancels and removes its own output without replacing existing artifacts`
 
 #### `packages/platform/test/bmw-catalog.test.ts`
 
@@ -241,15 +379,34 @@ Video Feature 是两个产品共同基础：BMW 直接组合，BMWDev 继承同�
 - `page user agent exposes Chromium without Electron or BMW shell tokens`
 - `page user agent strips every BMW product brand and preserves standard Chrome`
 
+#### `packages/platform/test/continuity-state.test.ts`
+
+- `Unreadable login configuration or ciphertext blocks background saves and leaves original bytes intact`
+- `Login-state read failures preserve both files and explicit repair/reload resumes initialization`
+- `Encryption becoming available never replaces a snapshot that could not be decrypted`
+- `Valid legacy login configuration and encrypted cookies restore without rewriting files; missing files initialize safely`
+- `Encryption becoming available restores valid saved cookies before a background capture can replace them`
+- `Periodic login maintenance handles late decryption failure without an unhandled rejection or write`
+
+#### `packages/platform/test/driver-boundary.test.ts`
+
+- `saved DSH bindings migrate atomically while Projects, tabs, documents and other drivers survive`
+- `driver settings migration retains sidebar choice and drops unused settings without touching video templates`
+
+#### `packages/platform/test/feature-contract.test.ts`
+
+- `Feature lifecycle admits named hooks and propagates activation failures before wiring`
+- `Product composition freezes one BMW feature set and rejects duplicate identities and extra tools`
+
 #### `packages/platform/test/global-settings-store.test.ts`
 
 - `global settings default to system proxy and Google search`
 - `global settings persist manual proxy and generate selected search URLs`
 - `global appearance accepts one shared dark, light or system theme`
-- `legacy DSH Sidebar is an explicit global compatibility fallback`
+- `Agent sidebar is an explicit global compatibility fallback`
 - `custom search templates require HTTP(S) and a query placeholder`
-- `WebContainer module URL is optional and limited to HTTP(S)`
 - `proxy settings apply to the persistent BMW browser session`
+- `online narration defaults enabled and retains explicit boolean opt-out`
 
 #### `packages/platform/test/layout-docking.test.ts`
 
@@ -274,19 +431,17 @@ Video Feature 是两个产品共同基础：BMW 直接组合，BMWDev 继承同�
 - `prompts once only for sensitive browser capabilities`
 - `allows harmless presentation capabilities silently`
 
+#### `packages/platform/test/permission-store.test.ts`
+
+- `Agent grants/revocation and origin-specific allow/deny decisions survive reload without sharing mutable state`
+- `Permission persistence failure leaves the prior file and in-memory grant unchanged`
+
 #### `packages/platform/test/product-boundaries.test.ts`
 
-- `BMW repository builds one app with an inherited Video foundation`
+- `BMW repository builds one app with a native Video foundation`
 - `feature action collisions fail before Electron startup`
-- `shared implementations never import apps or Dev capabilities`
+- `shared implementations never import apps; only the app selects an Agent driver`
 - `BMW catalog retains one browser tool and its expected action boundary`
-
-#### `packages/platform/test/product-profile-importer.test.ts`
-
-- `profile import preview exposes selectable data, not secrets or DSH execution state`
-- `explicit import copies selected platform data and moves source only into OPFS`
-- `profile importer refuses Project directories outside the Base profile`
-- `cookie import restores only explicitly selected origins and enables target re-encryption`
 
 #### `packages/platform/test/project-panel-layering.test.ts`
 
@@ -300,24 +455,23 @@ Video Feature 是两个产品共同基础：BMW 直接组合，BMWDev 继承同�
 - `new projects accept an empty home URL and use a blank-page preference`
 - `agent append is limited to memory documents and records provenance time`
 - `tab state keeps only bounded HTTP(S) URLs`
-- `connector bindings are isolated per project`
-- `new projects have no chat bindings and legacy bindings remain inert data`
+- `Agent bindings are isolated per Project and driver`
 
 #### `packages/platform/test/remote-control-boundary.test.ts`
 
 - `default products reject chat connector actions and retain one browser tool`
-- `default desktop exposes no Feishu UI, IPC or automatic relay startup`
+- `default desktop exposes no chat connector UI, IPC or automatic relay startup`
 
 #### `packages/platform/test/restart-policy.test.ts`
 
 - `allows restart when BMW has no active non-durable work`
-- `blocks restart while media, scheduled tasks, or WVL execution is active`
+- `blocks restart while media or scheduled tasks are active`
 
 #### `packages/platform/test/scheduled-task-store.test.ts`
 
 - `daily scheduled tasks use their IANA time zone and survive restart`
 - `scheduled task runs are project isolated, durable, and recover interruption`
-- `scheduler serializes due and manual DSH task execution`
+- `scheduler serializes due and manual Agent task execution`
 
 #### `packages/platform/test/session-continuity.test.ts`
 
@@ -326,5 +480,35 @@ Video Feature 是两个产品共同基础：BMW 直接组合，BMWDev 继承同�
 - `background keepalive uses HEAD first for an enabled origin`
 - `background keepalive falls back to a bounded GET when a site rejects HEAD`
 - `cookie matching includes parent-domain cookies but excludes unrelated sites`
+
+#### `packages/platform/test/shell-ipc.test.ts`
+
+- `Shell IPC admits only its trusted live main frame before invoking any privileged handler`
+
+#### `packages/platform/test/state-load.test.ts`
+
+- `Existing malformed and unsupported state never becomes a first-run replacement`
+- `State read failures preserve the file and reject writes for all startup stores`
+- `Missing state initializes once and valid Project bindings and tasks survive reload`
+- `A failed layout reload blocks updates until explicit repair without overwriting its original bytes`
+
+#### `scripts/test/module-boundary.test.ts`
+
+- `Every authored module uses declared public interfaces, acyclic runtime dependencies and classified guarantors`
+- `Dependency guard rejects private imports, driver leakage and privileged renderer imports even when the target exists`
+- `Unclassified tests and missing interface guarantors cannot silently lose coverage`
+- `Architecture rejects production-to-test indirection, bare Node renderer imports and unbounded production loaders`
+
+#### `scripts/test/test-selection.test.ts`
+
+- `Renderer read change selects its direct/consumer guarantees and background runtime without unrelated codecs or speech`
+- `Public contract changes include consumers; deleted/unknown/config changes fail toward full offline coverage`
+- `AST dependency analysis recognizes multiline aliases, exports and dynamic imports while ignoring comment/string decoys`
+- `Git selection preserves both rename paths, staged/uncommitted deletions and untracked files`
+- `Browser interfaces use the neutral model-side driver fixture while DSH integration follows implementation and assembly scope`
+- `Runtime validation helper changes select every dependent entry without pulling concrete DSH into Browser contracts`
+- `Image decoding and visual segment contracts select their actual Studio and native runtime checks`
+- `Drawing implementation and public image actions select native pixel checks and model-side MCP coverage`
+- `Studio cover changes remain affected-only while retaining native/runtime and safety checks`
 
 <!-- END GENERATED CAPABILITY AND TEST INVENTORY -->

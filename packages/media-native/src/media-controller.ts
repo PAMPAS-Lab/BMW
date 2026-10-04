@@ -1,9 +1,15 @@
+import {exportProjectText} from './text-export.js'
+import type {NativeMediaPort} from './media-port.js'
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { once } from 'node:events'
 import { BrowserWindow } from 'electron'
-import { DATA_URL_BASE64_MARKER, MAX_CAPTURE_BYTES, safeCaptureFilename } from './capture-policy.js'
+import { assertNativeProcessingRequest, mediaRecord } from './media-contract.js'
+import { NarrationProcessor } from './narration-processor.js'
+import { CompositionProcessor } from './composition-processor.js'
+import { MediaProcessor, CoverProcessor } from './media-processor.js'
+import { DATA_URL_BASE64_MARKER, MAX_CAPTURE_BYTES, safeCaptureFilename, isOwnedCaptureMessage } from './capture-policy.js'
 
 function delay(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds))
@@ -15,8 +21,12 @@ const ARTIFACT_MIME_TYPES = Object.freeze({
   '.webm': 'video/webm', '.mp4': 'video/mp4', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg'
 })
 
-export class MediaController {
+export class MediaController implements NativeMediaPort {
   [key: string]: any
+  private coverProcessor: CoverProcessor
+  private processor: MediaProcessor
+  private composer: CompositionProcessor
+  private narrator: NarrationProcessor
 
   constructor({ session, preloadPath, pagePath, artifactsDirectory, resolveArtifactsDirectory, onStatus }) {
     this.session = session
@@ -32,7 +42,15 @@ export class MediaController {
     this.metadata = null
     this.elementCapture = null
     this.comparisons = new Map()
+    this.narrator = new NarrationProcessor({ onStatus, pagePath: path.join(path.dirname(pagePath), 'narration.html'), preloadPath: path.join(path.dirname(preloadPath), 'narration-preload.cjs') })
+    this.composer = new CompositionProcessor({ session, onStatus, pagePath: path.join(path.dirname(pagePath), 'composition.html'), preloadPath: path.join(path.dirname(preloadPath), 'composition-preload.cjs') })
+    this.coverProcessor = new CoverProcessor({session,onStatus,pagePath:path.join(path.dirname(pagePath),'processing.cover.html'),preloadPath:path.join(path.dirname(preloadPath),'processing-preload.cjs')})
+    this.processor = new MediaProcessor({ session, onStatus,
+      pagePath: path.join(path.dirname(pagePath), 'processing.html'),
+      preloadPath: path.join(path.dirname(preloadPath), 'processing-preload.cjs') })
   }
+
+  ownsCaptureSender(event:{sender:unknown;senderFrame:unknown}):boolean { return isOwnedCaptureMessage(event,this.window) }
 
   configureDisplayMedia() {
     this.session.setDisplayMediaRequestHandler((_request, callback) => {
@@ -49,7 +67,71 @@ export class MediaController {
   }
 
   isCaptureActive(): boolean {
-    return Boolean(this.file || this.elementCapture)
+    return Boolean(this.file || this.elementCapture || this.processor.busy || this.composer.busy || this.narrator.busy || this.coverProcessor.busy)
+  }
+
+  async narrate(raw: unknown, signal?: AbortSignal) {
+    if (this.isCaptureActive()) throw new Error('Finish the current media job before narration.')
+    const directory = this.resolveArtifactsDirectory?.() || this.artifactsDirectory
+    const result = await this.narrator.narrate(raw, directory, signal)
+    try {
+      const inspection = await this.processor.process({ action: 'media.inspect', artifactId: result.artifactId }, directory, signal)
+      if (!('durationSeconds' in inspection) || !inspection.tracks.some(track => track.type === 'audio' && track.canDecode) || inspection.durationSeconds <= 0 || inspection.durationSeconds > 180) throw new Error('Narration returned no valid decodable speech track.')
+      return { ...result, durationSeconds: inspection.durationSeconds }
+    } catch (error) { await fs.promises.rm(result.path, {force:true}); throw error }
+  }
+
+  async compose(raw: unknown, signal?: AbortSignal) {
+    if (this.isCaptureActive()) throw new Error('Finish the current recording or processing job before composing.')
+    const directory = this.resolveArtifactsDirectory?.() || this.artifactsDirectory
+    const result = await this.composer.compose(raw, directory, signal)
+    try {
+      const inspection = await this.processor.process({ action: 'media.inspect', artifactId: result.artifactId }, directory, signal)
+      if (!('durationSeconds' in inspection) || Math.abs(inspection.durationSeconds - result.durationSeconds) > .2 || inspection.tracks.filter(track => track.type === 'video' && track.codec === 'avc').length !== 1 || inspection.tracks.filter(track => track.type === 'audio' && track.codec === 'aac').length !== 1) throw new Error('Composed file failed actual duration/track verification.')
+      const video=inspection.tracks.find(track=>track.type==='video'),audio=inspection.tracks.find(track=>track.type==='audio')
+      if(video?.width!==result.composition.width||video.height!==result.composition.height||!video.canDecode||!audio?.canDecode||audio.sampleRate!==48000||audio.channels!==2)throw new Error('Composed file failed actual size/audio/decode verification.')
+      const verification={status:'passed',artifactId:result.artifactId,expectedDurationSeconds:result.durationSeconds,actualDurationSeconds:inspection.durationSeconds,width:video.width,height:video.height,fps:result.composition.fps,tracks:inspection.tracks,frames:mediaRecord(result).frames,audioPeak:mediaRecord(result).audioPeak,narrationDurations:mediaRecord(result).narrationDurations}
+      const report=await exportProjectText(directory,'json',JSON.stringify(verification,null,2)+'\n',signal)
+      return { ...result, actualDurationSeconds: inspection.durationSeconds, tracks: inspection.tracks,verification,verificationArtifactId:report.artifactId }
+    } catch (error) { await fs.promises.rm(result.path, { force: true }); throw error }
+  }
+
+  async processArtifact(raw: unknown, signal?: AbortSignal) {
+    if(mediaRecord(raw).action==='video.cover'){
+      if(this.isCaptureActive())throw new Error('Finish the current media job before generating a cover.')
+      const directory=this.resolveArtifactsDirectory?.()||this.artifactsDirectory
+      const result=await this.coverProcessor.render(raw,directory,signal)
+      try{
+        const info=await this.processor.process({action:'media.image.inspect',artifactId:result.artifactId},directory,signal)
+        if(!('width' in info)||info.width!==result.width||info.height!==result.height)throw new Error('Cover failed actual image verification.')
+        signal?.throwIfAborted();return result
+      }catch(error){await fs.promises.rm(result.path,{force:true});throw error}
+    }
+    const request = assertNativeProcessingRequest(raw)
+    const directory = this.resolveArtifactsDirectory?.() || this.artifactsDirectory
+    const result = await this.processor.process(request, directory, signal)
+    if((request.action==='media.image.draw'||request.action==='media.image.annotate')&&'artifactId' in result&&'width' in result){
+      try{
+        const info=await this.processor.process({action:'media.image.inspect',artifactId:result.artifactId},directory,signal)
+        if(!('width' in info)||info.width!==result.width||info.height!==result.height)throw new Error('Drawing failed actual image verification.')
+        return result
+      }catch(error){await fs.promises.rm(result.path,{force:true});throw error}
+    }
+    if (request.action !== 'media.convert' || !('artifactId' in result)||!('tracks' in result)||!('range' in result)) return result
+    // Encoder priming/padding and frame boundaries can affect the actual duration.
+    // Reparse the finalized container before exposing it as a completed export.
+    try {
+      const inspection = await this.processor.process({ action: 'media.inspect', artifactId: result.artifactId }, directory, signal)
+      if (!('durationSeconds' in inspection)) throw new Error('Export metadata verification failed.')
+      const trackKeys = (tracks: readonly { type: string; codec: string | null }[]) => tracks.map((track) => `${track.type}:${track.codec}`).sort().join(',')
+      if (trackKeys(inspection.tracks) !== trackKeys(result.tracks)) throw new Error('Exported file did not preserve its declared tracks.')
+      const { range, ...artifact } = result
+      return { ...artifact, requestedSourceRange: range, durationSeconds: inspection.durationSeconds,
+        firstTimestampSeconds: inspection.firstTimestampSeconds, tracks: inspection.tracks }
+    } catch (error) {
+      await fs.promises.rm(result.path, { force: true })
+      throw error
+    }
   }
 
   projectArtifactPath(filename) {
@@ -83,7 +165,8 @@ export class MediaController {
         session: this.session,
         sandbox: true,
         contextIsolation: true,
-        nodeIntegration: false
+        nodeIntegration: false,
+        backgroundThrottling: false
       }
     })
     await this.window.loadFile(this.pagePath)
@@ -91,6 +174,10 @@ export class MediaController {
 
   async start(tab, request: { fps?: number; width?: number; height?: number } = {}) {
     if (this.file || this.elementCapture) throw new Error('A recording is already active')
+    // A fresh capture renderer prevents old WebGPU canvas/device and stopped streams
+    // leaking into a subsequent tab recording.
+    if (this.window && !this.window.isDestroyed()) this.window.destroy()
+    this.window = null
     await this.#ensureWindow()
     this.window.hide()
     const artifactsDirectory = this.resolveArtifactsDirectory?.(tab) || this.artifactsDirectory
@@ -132,7 +219,8 @@ export class MediaController {
     return { recordingId: this.metadata.id, state: 'stopping' }
   }
 
-  finalize(summary = {}) {
+  async finalize(raw:unknown = {}) {
+    const summary=mediaRecord(raw)
     if (!this.stream || !this.file) return null
     const stream = this.stream
     const result = {
@@ -143,12 +231,17 @@ export class MediaController {
       gpuProcessed: this.metadata.gpu,
       ...summary
     }
+    const finished = once(stream, 'finish')
     stream.end()
-    this.stream = null
-    this.file = null
-    this.target = null
-    this.onStatus?.({ active: false, ...result })
-    return result
+    try {
+      await finished
+      const bytes = fs.statSync(result.path).size
+      if (typeof summary.error==='string') throw new Error(summary.error)
+      if (!bytes) throw new Error('Browser recording produced no media bytes.')
+      this.onStatus?.({ active: false, ...result, bytes })
+      return { ...result, bytes }
+    } catch (error) { await fs.promises.rm(result.path, {force:true}); throw error }
+    finally { this.stream = null; this.file = null; this.target = null }
   }
 
   async captureVideo(tab, request: {
@@ -169,7 +262,7 @@ export class MediaController {
     const filename = `${Date.now()}-${safeCaptureFilename(request.filename)}`
     const filePath = path.join(artifactsDirectory, filename)
     const id = `video-capture-${Date.now()}`
-    const key = `__bmwVideoCapture_${crypto.randomUUID().replaceAll('-', '')}`
+    const key = `__bmwMediaCapture_${crypto.randomUUID().replaceAll('-', '')}`
     const webContents = tab.view.webContents
     const stream = fs.createWriteStream(filePath, { flags: 'wx', mode: 0o600 })
     this.elementCapture = { id, key, webContents, filePath }

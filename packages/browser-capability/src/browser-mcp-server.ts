@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import readline from 'node:readline'
+import { browserDeadlineMs } from './browser-deadline.js'
 import { browserToolCatalog } from './tool-catalog.js'
 const bridgeUrl = process.env.BMW_BRIDGE_URL
 const bridgeToken = process.env.BMW_BRIDGE_TOKEN
@@ -14,15 +15,24 @@ if (!catalogResponse.ok) throw new Error('BMW browser catalog is unavailable')
 const browserTool = browserToolCatalog(await catalogResponse.json())
 
 async function executeBrowser(argumentsValue, signal: AbortSignal) {
+  const deadlineMs = browserDeadlineMs(argumentsValue)
+  const deadline = AbortSignal.timeout(deadlineMs)
+  try {
   const response = await fetch(`${bridgeUrl}/execute`, {
     method: 'POST',
     headers: { authorization: `Bearer ${bridgeToken}`, 'content-type': 'application/json' },
     body: JSON.stringify({ binding: argumentsValue?.__bmwSession, arguments: Object.fromEntries(Object.entries(argumentsValue || {}).filter(([key]) => key !== '__bmwSession')) }),
-    signal
+    signal: AbortSignal.any([signal, deadline])
   })
   const result = await response.json()
-  if (!response.ok || !result.ok) throw new Error(result.error || `Browser bridge returned ${response.status}`)
+  if (!response.ok || !result.ok) throw new Error(`${result.code || "BROWSER_ACTION_FAILED"}: ${result.error || `Browser bridge returned ${response.status}`}`)
   return result
+  } catch (error) {
+    if (signal.aborted) throw new Error('BMW_BROWSER_CANCELLED: browser request cancelled')
+    if (deadline.aborted) throw new Error(`BMW_BROWSER_TIMEOUT: ${String(argumentsValue?.action || 'unknown')} bridge response exceeded ${deadlineMs}ms`)
+    if (error instanceof TypeError) throw new Error(`BMW_BROWSER_TRANSPORT: ${String(argumentsValue?.action || 'unknown')}: ${error.message}`)
+    throw error
+  }
 }
 
 function send(value) {

@@ -1,4 +1,4 @@
-const EMBEDDED_SHELL_TOKEN = /\s(?:Electron|BMW(?:Video|Dev)?)\/[^\s]+/gi
+const EMBEDDED_SHELL_TOKEN = /\s(?:Electron|BMW)\/[^\s]+/gi
 
 /**
  * Present BMW page WebContents as the Chromium browser they actually are.

@@ -1,3 +1,5 @@
+import { normalizeVideoPreferences } from '../../media-native/src/video-options.js'
+import {readStateFile,stateRecord} from './state-load.js'
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -33,8 +35,8 @@ const DEFAULTS = Object.freeze({
   customSearchUrl: '',
   newTabPage: 'search',
   theme: 'dark',
-  dshSidebarVisible: false,
-  webContainerModuleUrl: ''
+  agentSidebarVisible: false,
+  edgeNarrationEnabled: true
 })
 
 function cleanSingleLine(value, maximum = 2_000) {
@@ -53,14 +55,6 @@ function normalizeCustomSearchUrl(value) {
   return template
 }
 
-function normalizeOptionalHttpUrl(value) {
-  const input = cleanSingleLine(value)
-  if (!input) return ''
-  const url = new URL(input)
-  if (!['http:', 'https:'].includes(url.protocol)) throw new Error('WebContainer module URL must use HTTP(S).')
-  return url.toString()
-}
-
 function normalize(input: Record<string, any> = {}) {
   const proxyMode = ['system', 'direct', 'manual'].includes(input.proxyMode) ? input.proxyMode : DEFAULTS.proxyMode
   const searchEngine = input.searchEngine === 'custom' || Object.hasOwn(SEARCH_ENGINES, input.searchEngine)
@@ -72,6 +66,7 @@ function normalize(input: Record<string, any> = {}) {
   if (searchEngine === 'custom' && !customSearchUrl) throw new Error('Choose a custom search URL containing {query}.')
   return {
     version: 1,
+    videoPreferences: normalizeVideoPreferences(input.videoPreferences ?? {}),
     proxyMode,
     proxyRules,
     proxyBypassRules: cleanSingleLine(input.proxyBypassRules ?? DEFAULTS.proxyBypassRules),
@@ -79,8 +74,8 @@ function normalize(input: Record<string, any> = {}) {
     customSearchUrl,
     newTabPage: input.newTabPage === 'blank' ? 'blank' : 'search',
     theme: ['dark', 'light', 'system'].includes(input.theme) ? input.theme : DEFAULTS.theme,
-    dshSidebarVisible: input.dshSidebarVisible === true,
-    webContainerModuleUrl: normalizeOptionalHttpUrl(input.webContainerModuleUrl)
+    agentSidebarVisible: input.agentSidebarVisible === true,
+    edgeNarrationEnabled: input.edgeNarrationEnabled === undefined ? DEFAULTS.edgeNarrationEnabled : input.edgeNarrationEnabled === true
   }
 }
 
@@ -94,7 +89,8 @@ function writeAtomically(filePath, state) {
 export class GlobalSettingsStore {
   [key: string]: any
 
-  constructor({ filePath, onState }) {
+  constructor({ filePath, onState, migrateSettings = (settings: Record<string, unknown>) => settings }) {
+    this.migrateSettings = migrateSettings
     this.filePath = filePath
     this.onState = onState
     this.state = normalize(DEFAULTS)
@@ -102,12 +98,18 @@ export class GlobalSettingsStore {
   }
 
   load() {
-    try {
-      this.state = normalize({ ...DEFAULTS, ...JSON.parse(fs.readFileSync(this.filePath, 'utf8')) })
-    } catch (error) {
-      if (error.code === 'ENOENT') writeAtomically(this.filePath, this.state)
-      else console.error('Failed to load BMW global settings', error)
-    }
+    const loaded = readStateFile(this.filePath, raw => {
+      const saved = stateRecord(raw)
+      // Pre-version settings are an existing supported compatibility format.
+      if (saved.version !== undefined && saved.version !== 1) throw new Error('Unsupported settings version.')
+      for(const key of ['edgeNarrationEnabled','agentSidebarVisible'])if(saved[key]!==undefined&&typeof saved[key]!=='boolean')throw new Error('Invalid saved boolean setting: '+key)
+      for(const key of ['proxyRules','proxyBypassRules','customSearchUrl'])if(saved[key]!==undefined&&typeof saved[key]!=='string')throw new Error('Invalid saved text setting: '+key)
+      for(const [key,allowed] of Object.entries({proxyMode:['system','direct','manual'],theme:['dark','light','system'],searchEngine:['google','bing','duckduckgo','baidu','custom'],newTabPage:['search','blank']}))if(saved[key]!==undefined&&!allowed.includes(String(saved[key])))throw new Error('Invalid saved setting: '+key)
+      return { saved, state: normalize({ ...DEFAULTS, ...this.migrateSettings(saved) }) }
+    })
+    if (!loaded) { writeAtomically(this.filePath, this.state); return }
+    this.state = loaded.state
+    if (JSON.stringify(loaded.saved) !== JSON.stringify(this.state)) writeAtomically(this.filePath, this.state)
   }
 
   snapshot() {

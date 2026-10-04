@@ -6,3 +6,7 @@
   config:
     path: !!js process.env.DSH_HOME + '/session-search.sqlite'
     openAt: first-search
+
+# BMW exposes exactly browser; upstream MCP resources would add three tools.
+- id: mcp-resources
+  disabled: true

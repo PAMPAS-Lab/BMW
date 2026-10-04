@@ -5,9 +5,11 @@ const viewer = document.querySelector('#viewer')
 const viewerTitle = document.querySelector('#viewer-title')
 const viewerMeta = document.querySelector('#viewer-meta')
 const viewerContent = document.querySelector('#viewer-content')
+let recordedStream
 let sourceStream
 let recorder
 let stopRender
+let chunkTail:Promise<void>=Promise.resolve()
 let startedAt
 
 const shader = `
@@ -26,7 +28,7 @@ struct VertexOutput { @builtin(position) position: vec4f, @location(0) uv: vec2f
   return textureSampleBaseClampToEdge(sourceTexture, sourceSampler, input.uv);
 }`
 
-async function createGpuPipeline(width, height) {
+async function createGpuPipeline(width, height, fps = 24) {
   if (!navigator.gpu) return null
   const adapter = await navigator.gpu.requestAdapter()
   if (!adapter) return null
@@ -61,10 +63,12 @@ async function createGpuPipeline(width, height) {
     pass.draw(3)
     pass.end()
     device.queue.submit([encoder.finish()])
-    video.requestVideoFrameCallback(render)
   }
-  video.requestVideoFrameCallback(render)
-  return { stop: () => { cancelled = true }, stream: canvas.captureStream(), device }
+  // Static pages may deliver only one source frame, before this callback is installed.
+  // Draw the current frame immediately and keep emitting at the requested capture rate.
+  render()
+  const timer = setInterval(render, 1000 / fps)
+  return { stop: () => { cancelled = true; clearInterval(timer); device.destroy() }, stream: canvas.captureStream(fps), device }
 }
 
 async function start(options) {
@@ -76,7 +80,7 @@ async function start(options) {
   let outputStream = sourceStream
   let gpu = null
   try {
-    gpu = await createGpuPipeline(width, height)
+    gpu = await createGpuPipeline(width, height, options.fps ?? 24)
     if (gpu) {
       const tracks = [...gpu.stream.getVideoTracks(), ...sourceStream.getAudioTracks()]
       outputStream = new MediaStream(tracks)
@@ -87,14 +91,21 @@ async function start(options) {
   }
   const candidates = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
   const mimeType = candidates.find((candidate) => MediaRecorder.isTypeSupported(candidate)) || ''
+  recordedStream = outputStream
   recorder = new MediaRecorder(outputStream, mimeType ? { mimeType, videoBitsPerSecond: 4_000_000 } : undefined)
-  recorder.ondataavailable = async (event) => {
-    if (event.data.size) bridge.chunk(await event.data.arrayBuffer())
+  chunkTail=Promise.resolve()
+  recorder.ondataavailable = (event) => {
+    if (event.data.size) chunkTail=chunkTail.then(async()=>{bridge.chunk(await event.data.arrayBuffer())})
   }
-  recorder.onstop = () => {
+  recorder.onstop = async () => {
+    let errorMessage:string|undefined
+    try{await chunkTail}catch(error){errorMessage=error instanceof Error?error.message:String(error)}
+    recordedStream?.getTracks().forEach((track) => track.stop())
     sourceStream?.getTracks().forEach((track) => track.stop())
+    recordedStream = null
+    video.srcObject = null
     stopRender?.()
-    bridge.finished({ mimeType: recorder.mimeType, durationMs: Date.now() - startedAt })
+    bridge.finished({ mimeType: recorder.mimeType, durationMs: Date.now() - startedAt, ...(errorMessage?{error:errorMessage}:{}) })
     recorder = null
     sourceStream = null
   }

@@ -11,7 +11,6 @@ test('page user agent exposes Chromium without Electron or BMW shell tokens', ()
 })
 
 test('page user agent strips every BMW product brand and preserves standard Chrome', () => {
-  assert.equal(browserCompatibleUserAgent('Mozilla/5.0 BMWVideo/0.1.0 Chrome/142.0 Safari/537.36'), 'Mozilla/5.0 Chrome/142.0 Safari/537.36')
-  assert.equal(browserCompatibleUserAgent('Mozilla/5.0 BMWDev/0.1.0 Chrome/142.0 Safari/537.36'), 'Mozilla/5.0 Chrome/142.0 Safari/537.36')
+  assert.equal(browserCompatibleUserAgent('Mozilla/5.0 BMW/0.1.0 Chrome/142.0 Safari/537.36'), 'Mozilla/5.0 Chrome/142.0 Safari/537.36')
   assert.equal(browserCompatibleUserAgent('Mozilla/5.0 Chrome/142.0 Safari/537.36'), 'Mozilla/5.0 Chrome/142.0 Safari/537.36')
 })

@@ -12,8 +12,7 @@ test('global settings default to system proxy and Google search', () => {
   assert.equal(settings.searchEngine, 'google')
   assert.equal(settings.newTabPage, 'search')
   assert.equal(settings.theme, 'dark')
-  assert.equal(settings.dshSidebarVisible, false)
-  assert.equal(settings.webContainerModuleUrl, '')
+  assert.equal(settings.agentSidebarVisible, false)
 })
 
 test('global settings persist manual proxy and generate selected search URLs', () => {
@@ -42,19 +41,14 @@ test('global appearance accepts one shared dark, light or system theme', () => {
   assert.equal(globalSettingsInternals.normalize({ theme: 'untrusted' }).theme, 'dark')
 })
 
-test('legacy DSH Sidebar is an explicit global compatibility fallback', () => {
-  assert.equal(globalSettingsInternals.normalize({ dshSidebarVisible: true }).dshSidebarVisible, true)
-  assert.equal(globalSettingsInternals.normalize({ dshSidebarVisible: 'true' }).dshSidebarVisible, false)
+test('Agent sidebar is an explicit global compatibility fallback', () => {
+  assert.equal(globalSettingsInternals.normalize({ agentSidebarVisible: true }).agentSidebarVisible, true)
+  assert.equal(globalSettingsInternals.normalize({ agentSidebarVisible: 'true' }).agentSidebarVisible, false)
 })
 
 test('custom search templates require HTTP(S) and a query placeholder', () => {
   assert.throws(() => globalSettingsInternals.normalize({ searchEngine: 'custom', customSearchUrl: 'https://example.com/search' }), /\{query\}/)
   assert.throws(() => globalSettingsInternals.normalize({ searchEngine: 'custom', customSearchUrl: 'file:///tmp/{query}' }), /HTTP/)
-})
-
-test('WebContainer module URL is optional and limited to HTTP(S)', () => {
-  assert.equal(globalSettingsInternals.normalize({ webContainerModuleUrl: 'https://cdn.example/runtime.js' }).webContainerModuleUrl, 'https://cdn.example/runtime.js')
-  assert.throws(() => globalSettingsInternals.normalize({ webContainerModuleUrl: 'file:///tmp/runtime.js' }), /HTTP/)
 })
 
 test('proxy settings apply to the persistent BMW browser session', async () => {
@@ -69,4 +63,12 @@ test('proxy settings apply to the persistent BMW browser session', async () => {
     ['setProxy', { mode: 'fixed_servers', proxyRules: 'socks5://127.0.0.1:1080', proxyBypassRules: '<local>' }],
     ['closeAllConnections']
   ])
+})
+
+
+test('online narration defaults enabled and retains explicit boolean opt-out', () => {
+  assert.equal(globalSettingsInternals.normalize({}).edgeNarrationEnabled, true)
+  assert.equal(globalSettingsInternals.normalize({edgeNarrationEnabled: 'true'}).edgeNarrationEnabled, false)
+  assert.equal(globalSettingsInternals.normalize({edgeNarrationEnabled: true}).edgeNarrationEnabled, true)
+  assert.equal(globalSettingsInternals.normalize({edgeNarrationEnabled: false}).edgeNarrationEnabled, false)
 })

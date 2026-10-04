@@ -21,3 +21,12 @@ coverage/
 /scripts/**/*.js
 /scripts/**/*.cjs
 /scripts/**/*.mjs
+
+# Local Agent configuration and credentials; never part of application source.
+.dsh/
+.credentials.yaml
+.credentials.yml
+*.pem
+*.key
+/artifacts/
+/Profiles/

@@ -2,7 +2,8 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import test from 'node:test'
-import product from '../../../apps/bmw/product.js'
+import product, {agentDriver} from '../../../apps/bmw/product.js'
+import {dshConfiguration} from '../../harness-dsh/index.js'
 import { bmwProduct } from '@bmw-agent/product-bmw'
 import { BrowserCapabilityRegistry } from '../../browser-capability/src/browser-capability-registry.js'
 
@@ -13,15 +14,16 @@ function sources(directory: string): [string,string][] {
   })
 }
 
-test('BMW repository builds one app with an inherited Video foundation', () => {
-  assert.deepEqual(fs.readdirSync('apps'), ['bmw'])
+test('BMW repository builds one app with a native Video foundation', () => {
+  assert.deepEqual(fs.readdirSync('apps', { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort(), ['bmw'])
+  const lock=JSON.parse(fs.readFileSync('package-lock.json','utf8'))
+  for(const [name,entry] of Object.entries(lock.packages)){
+    assert.equal((entry as {extraneous?:boolean}).extraneous,undefined,name)
+    if(name.startsWith('apps/')||name.startsWith('packages/'))assert.ok(fs.existsSync(path.join(name,'package.json')),name)
+  }
   assert.equal(product.name, 'BMW')
   assert.equal(product.id, 'bmw')
   for (const feature of bmwProduct.features) assert.ok(product.features.includes(feature))
-  assert.equal(product.featureIds.includes('feature-wvl'), false)
-  assert.equal(fs.existsSync('packages/connector-feishu'), false)
-  assert.equal(fs.existsSync('apps/bmw-video'), false)
-  assert.equal(fs.existsSync('packages/feature-wvl'), false); assert.equal(fs.existsSync('packages/dev-web-runtime'), false); assert.equal(fs.existsSync('packages/dev-state'), false)
 })
 
 test('feature action collisions fail before Electron startup', () => {
@@ -31,11 +33,12 @@ test('feature action collisions fail before Electron startup', () => {
   ] }), /registered by both/)
 })
 
-test('shared implementations never import apps or Dev capabilities', () => {
-  for (const directory of ['platform','browser-capability','harness-dsh','media-native','feature-video','product-bmw']) {
+test('shared implementations never import apps; only the app selects an Agent driver', () => {
+  for (const directory of ['agent-contract','platform','browser-capability','harness-dsh','media-native','feature-video','product-bmw']) {
     for (const [file,source] of sources(`packages/${directory}`).filter(([file]) => !file.includes('/test/'))) {
       assert.doesNotMatch(source, /(?:import|from)[^\n]*apps\//,file)
-      assert.doesNotMatch(source, /(?:import|from)[^\n]*@bmw-agent\/(?:feature-wvl|dev-web-runtime|dev-state)/,file)
+      if(directory!=='harness-dsh')assert.doesNotMatch(source, /(?:import|from)[^\n]*(?:harness-dsh|dsh-context|dsh-runtime)/,file)
+      if(directory==='platform')assert.doesNotMatch(source,/dsh\.sessions\.current|\.call\('(?:session|workspace)\.|data-shell-overlay/,file)
     }
   }
 })
@@ -44,6 +47,9 @@ test('BMW catalog retains one browser tool and its expected action boundary', ()
   const registry = new BrowserCapabilityRegistry(product)
   const inherited = new BrowserCapabilityRegistry(bmwProduct)
   assert.equal(registry.toolDefinition().name,'browser')
+  assert.equal(agentDriver.id, 'dsh')
+  assert.equal(Object.hasOwn(product, 'dsh'), false)
+  assert.match(fs.readFileSync(dshConfiguration.patchPath,'utf8'), /- id: mcp-resources\s+disabled: true/, 'The active product profile must disable upstream resource tools')
   for (const action of inherited.allowedActions) assert.ok(registry.allowedActions.includes(action))
   assert.equal(registry.allowedActions.includes('dev.start'), false)
   assert.equal(Object.hasOwn(registry.inputSchema().properties,'plan'), false)

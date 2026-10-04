@@ -4,10 +4,8 @@ import fs from 'node:fs'
 const TYPECHECK_MIGRATION_BASELINE = new Set([
   'packages/harness-dsh/test/dsh-preset.test.ts',
   'packages/harness-dsh/test/dsh-runtime.test.ts',
-  'packages/harness-dsh/test/harness-port.test.ts',
   'packages/platform/test/global-settings-store.test.ts',
   'packages/platform/test/layout-store.test.ts',
-  'packages/platform/test/product-profile-importer.test.ts',
   'packages/platform/test/project-store.test.ts',
   'packages/platform/test/session-continuity.test.ts'
 ])

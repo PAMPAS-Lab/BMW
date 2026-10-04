@@ -26,6 +26,7 @@ test('DSH calls use the harness RPC envelope and validate the response', async (
   const runtime = new DshRuntime({})
   runtime.url = 'http://127.0.0.1:9876'
   runtime.child = {}
+  runtime.authCookie = 'dsh-auth=test'
   const value = await runtime.call('session.list', {})
 
   assert.equal(request.url, 'http://127.0.0.1:9876/api/session/list')
@@ -53,8 +54,8 @@ test('DSH project activation creates a project-scoped BMW session', async () => 
     id: 'project-1',
     name: 'Research',
     directory: '/project',
-    dshWorkspaceId: null,
-    dshSessionId: null
+    workspaceId: null,
+    sessionId: null
   })
 
   assert.equal(result.workspace.title, 'Research')
@@ -70,13 +71,13 @@ test('DSH project activation reuses its persistent project session', async () =>
   const runtime = new DshRuntime({})
   runtime.call = async (method, payload) => {
     calls.push({ method, payload })
-    if (method === 'workspace.list') return { items: [{ workspaceId: 'workspace-1', path: '/project', title: 'Research' }] }
+    if (method === 'workspace.list') return { items: [{ workspaceId: 'workspace-1', path: '/project', title: 'Research', sessionIds: ['session-kept'] }] }
     if (method === 'session.list') return { items: [{ sessionId: 'session-kept', cwd: '/project', updatedAt: 2, running: false, blank: false }] }
     throw new Error(`Unexpected method: ${method}`)
   }
 
   const result = await runtime.activateWorkspace({
-    id: 'project-1', name: 'Research', directory: '/project', dshWorkspaceId: 'workspace-1', dshSessionId: 'session-kept'
+    id: 'project-1', name: 'Research', directory: '/project', workspaceId: 'workspace-1', sessionId: 'session-kept'
   })
 
   assert.equal(result.sessionId, 'session-kept')
@@ -88,10 +89,10 @@ test('BMW Session Center lists only active sessions in its Project and searches 
   runtime.ensureWorkspace = async () => ({ workspaceId: 'workspace-1', path: '/project', title: 'Research', sessionIds: ['session-a', 'session-b', 'session-archived', 'subagent'] })
   runtime.call = async (method, payload) => {
     if (method === 'session.list') return { items: [
-      { sessionId: 'session-a', updatedAt: 2, running: true, blank: false, projections: { values: { title: 'Browser audit' } } },
-      { sessionId: 'session-b', updatedAt: 1, running: false, blank: true },
-      { sessionId: 'session-archived', updatedAt: 1, running: false, blank: false },
-      { sessionId: 'subagent', updatedAt: 3, running: true, blank: false, origin: 'subagent' }
+      { sessionId: 'session-a', cwd: '/project', updatedAt: 2, running: true, blank: false, projections: { values: { title: 'Browser audit' } } },
+      { sessionId: 'session-b', cwd: '/project', updatedAt: 1, running: false, blank: true },
+      { sessionId: 'session-archived', cwd: '/project', updatedAt: 1, running: false, blank: false },
+      { sessionId: 'subagent', cwd: '/project', updatedAt: 3, running: true, blank: false, origin: 'subagent' }
     ] }
     if (method === 'workspace.list') return { items: [{ workspaceId: 'workspace-1', sessionIds: ['session-a', 'session-b', 'session-archived', 'subagent'] }], archivedSessionIds: ['session-archived'] }
     if (method === 'session.search') {
@@ -100,7 +101,7 @@ test('BMW Session Center lists only active sessions in its Project and searches 
     }
     throw new Error(`Unexpected method: ${method}`)
   }
-  const project = { directory: '/project', dshWorkspaceId: 'workspace-1', dshSessionId: 'session-a' }
+  const project = { directory: '/project', workspaceId: 'workspace-1', sessionId: 'session-a' }
   const listed = await runtime.listProjectSessions(project, 'evidence')
   assert.deepEqual(listed.items.map(({ sessionId }) => sessionId), ['session-a'])
   assert.equal(listed.items[0].title, 'Browser audit')
@@ -124,13 +125,13 @@ test('DSH prompt submission preserves exact input and returns every Assistant ou
   runtime.callWithReceipt = async (method, payload) => {
     assert.equal(method, 'session.prompt')
     promptPayload = payload
-    return { rpcId: 'rpc-feishu', value: { accepted: true } }
+    return { rpcId: 'rpc-fixture', value: { accepted: true } }
   }
   runtime.call = async (method) => {
     assert.equal(method, 'session.history')
     return {
       events: [
-        { event: { type: 'user/message', data: { source: { rpcId: 'rpc-feishu' }, content: [{ type: 'text', text: 'hello' }] } } },
+        { event: { type: 'user/message', data: { source: { rpcId: 'rpc-fixture' }, content: [{ type: 'text', text: 'hello' }] } } },
         { event: { type: 'assistant/message', data: { message: { content: [{ type: 'text', text: 'First output' }] } } } },
         { event: { type: 'tool/call', data: { name: 'browser' } } },
         { event: { type: 'assistant/message', data: { message: { content: [{ type: 'text', text: 'Second' }, { type: 'text', text: ' output' }] } } } },
@@ -143,5 +144,5 @@ test('DSH prompt submission preserves exact input and returns every Assistant ou
 
   assert.deepEqual(promptPayload.content, [{ type: 'text', text: 'hello' }])
   assert.deepEqual(replies, ['First output', 'Second output'])
-  assert.equal(await runtime.waitForPromptReply('session-1', 'rpc-feishu', { timeoutMs: 100 }), 'First output\n\nSecond output')
+  assert.equal(await runtime.waitForPromptReply('session-1', 'rpc-fixture', { timeoutMs: 100 }), 'First output\n\nSecond output')
 })

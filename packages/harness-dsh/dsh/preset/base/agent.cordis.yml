@@ -23,7 +23,7 @@
       remains inside its BMW Project and saved DSH Session; BMW must be running
       when it is due.
     complete: true
-    includeRuntimeContext: false
+    includeRuntimeContext: true
 
 - id: bmw-project-instructions
   name: '@deepseek-ai/dsh-agent-instructions'
