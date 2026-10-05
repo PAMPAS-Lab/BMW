@@ -99,7 +99,7 @@ Studio playback samples the audio clock with a frame-rate timer and cancels outd
 
 Production macOS keychain authorization is performed by the user. Isolated desktop verification does not establish production keychain acceptance; native acceptance and production Profile state are recorded separately from automated regressions.
 
-Real-model synthetic image evidence is retained in [DEEPSEEK_FLASH_VISION_TEST.md](DEEPSEEK_FLASH_VISION_TEST.md) and `docs/vision-tests/`. Its scope does not extend to all natural images, small text, arbitrary webpages or complete autonomous video production.
+Optional synthetic vision checks run with `BMW_VISION_TEST=1 NODE_USE_ENV_PROXY=1 npm run test:vision-e2e` using disposable Profiles. New reports, screenshots and receipts are written to the ignored `.bmw-runtime/vision-tests/` directory. A passing run covers only its configured model and synthetic images; it does not establish all natural images, small text, arbitrary webpages or complete autonomous video production.
 
 External publication, paid model calls, operating-system prompts, signing/installers, updater and independent remote/mobile control are outside these standard regression checks.
 

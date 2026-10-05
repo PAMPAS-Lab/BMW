@@ -63,6 +63,5 @@ Shell 顶部运行时徽章仍监听旧 agent-status 通道，而自有 Assistan
 | [AGENT_DRIVER_DESIGN.md](AGENT_DRIVER_DESIGN.md)、[AGENT_DRIVERS_IMPLEMENTATION.md](AGENT_DRIVERS_IMPLEMENTATION.md)、[QODER_BMW.md](QODER_BMW.md) | 三官方驱动的设计、实际验收和接入 |
 | [VIDEO_STUDIO_P0_IMPLEMENTATION.md](VIDEO_STUDIO_P0_IMPLEMENTATION.md) | 当前 P0 摘要及保留的逐阶段实施证据 |
 | [VIDEO_STUDIO_REVIEW.md](VIDEO_STUDIO_REVIEW.md) | 2026-10-04 原始需求评审，原文保留；其中旧待开发判断不是当前状态 |
-| [DEEPSEEK_FLASH_VISION_TEST.md](DEEPSEEK_FLASH_VISION_TEST.md) | 2026-10-02 专项视觉快照，不能外推完整项目验收 |
 
 迁移归档 `../Agent in Browser` 和独立 `../BMWDev` 不属于本次活动 BMW 文档的权威来源。

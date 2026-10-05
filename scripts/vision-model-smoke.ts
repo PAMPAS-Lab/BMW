@@ -14,7 +14,7 @@ import { createBridgeServer } from '../packages/browser-capability/src/bridge-se
 // Explicit opt-in: this integration check sends synthetic images to a paid model.
 if (process.env.BMW_VISION_TEST !== '1') throw new Error('Set BMW_VISION_TEST=1 to authorize real DeepSeek vision requests.')
 const root = path.resolve(import.meta.dirname, '..')
-const output = path.join(root, 'docs/vision-tests', new Date().toISOString().replace(/[:.]/g, '-'))
+const output = path.join(root, '.bmw-runtime', 'vision-tests', new Date().toISOString().replace(/[:.]/g, '-'))
 const temporary = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-vision-smoke-')))
 const userData = path.join(temporary, 'user-data')
 const workspace = path.join(temporary, 'project')

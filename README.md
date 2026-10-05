@@ -85,7 +85,7 @@ npm run test:tts-e2e
 
 标准测试使用临时 Profile，不调用付费模型。含 build 的命令顺序执行；测试和 Action 变更后运行 `npm run docs:features`。
 
-当前视频能力是受限分镜编辑与合成；不包含通用 NLE、任意 HTML 视频导入、安装器签名、自动升级或独立远控服务。透明视频可检查，实际 alpha 视频抽帧和转换明确拒绝。真实模型视觉测试的适用范围见 [视觉证据](docs/DEEPSEEK_FLASH_VISION_TEST.md)。
+当前视频能力是受限分镜编辑与合成；不包含通用 NLE、任意 HTML 视频导入、安装器签名、自动升级或独立远控服务。透明视频可检查，实际 alpha 视频抽帧和转换明确拒绝。真实模型视觉复测的启用方式和适用范围见 [验证说明](docs/VERIFICATION.md)。
 
 实现与边界见 [功能说明书](docs/FUNCTIONAL_SPEC.md)，开发入口见 [AGENTS.md](AGENTS.md)，当前工作状态见 [handoff.md](handoff.md)，验证方法见 [VERIFICATION.md](docs/VERIFICATION.md)。
 
