@@ -65,4 +65,4 @@ Shell 顶部运行时徽章仍监听旧 agent-status 通道，而自有 Assistan
 | [VIDEO_STUDIO_REVIEW.md](VIDEO_STUDIO_REVIEW.md) | 2026-10-04 原始需求评审，原文保留；其中旧待开发判断不是当前状态 |
 | [DEEPSEEK_FLASH_VISION_TEST.md](DEEPSEEK_FLASH_VISION_TEST.md) | 2026-10-02 专项视觉快照，不能外推完整项目验收 |
 
-名称含 ` 2.md` 的三个既有副本保留原字节，属于历史副本，不作为当前文档入口。迁移归档 `../Agent in Browser` 和独立 `../BMWDev` 不属于本次活动 BMW 文档的权威来源。
+迁移归档 `../Agent in Browser` 和独立 `../BMWDev` 不属于本次活动 BMW 文档的权威来源。
