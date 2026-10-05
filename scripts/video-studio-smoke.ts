@@ -15,7 +15,7 @@ import {BrowserKernel} from '../packages/browser-capability/src/browser-kernel.j
 import {BrowserCapabilityRegistry} from '../packages/browser-capability/src/browser-capability-registry.js'
 import {GlobalSettingsStore} from '../packages/platform/src/global-settings-store.js'
 import product from '../apps/bmw/product.js'
-const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-studio-smoke-')),project={id:'studio-project',name:'Studio fixture',directory:path.join(temporary,'project')},artifacts=path.join(project.directory,'artifacts')
+const temporary=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'bmw-studio-smoke-'))),project={id:'studio-project',name:'Studio fixture',directory:path.join(temporary,'project')},artifacts=path.join(project.directory,'artifacts')
 fs.mkdirSync(artifacts,{recursive:true});fs.mkdirSync(path.join(temporary,'profile'));app.setPath('userData',path.join(temporary,'profile'))
 let host:BrowserWindow,studio:WebContents,runtime:VideoStudioRuntime,media:MediaController;let active=project,exitCode=0,mode='browser',currentSession='fixture-session'
 let phase='initializing'
@@ -77,7 +77,7 @@ async function run():Promise<void>{try{
   await click('delivery-open');await click('export');await waitFor(async()=>store.read(draft.id).exports.length===2,'Portrait MP4 export')
   await waitFor(()=>script("document.querySelector('#export-preview video')?.videoHeight===1280"),'Independent portrait playback')
   assert.equal(await script("document.querySelector('#export-preview video').videoWidth"),720)
-  const frameDifference=await script<number>("(async()=>{const video=document.querySelector('#export-preview video');await video.play();await new Promise(resolve=>setTimeout(resolve,100));video.pause();const actual=document.createElement('canvas');actual.width=720;actual.height=1280;const x=actual.getContext('2d');x.drawImage(video,0,0);const preview=document.getElementById('preview').getContext('2d');const a=x.getImageData(5,5,1,1).data,b=preview.getImageData(5,5,1,1).data;return Math.max(...[0,1,2].map(i=>Math.abs(a[i]-b[i])))})()")
+  const frameDifference=await script<number>("(async()=>{const video=document.querySelector('#export-preview video');const firstFrame=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Decoded portrait frame unavailable')),8000);video.requestVideoFrameCallback(()=>{clearTimeout(timer);resolve()})});await video.play();await firstFrame;video.pause();const actual=document.createElement('canvas');actual.width=720;actual.height=1280;const x=actual.getContext('2d');x.drawImage(video,0,0);const preview=document.getElementById('preview').getContext('2d');const a=x.getImageData(5,5,1,1).data,b=preview.getImageData(5,5,1,1).data;return Math.max(...[0,1,2].map(i=>Math.abs(a[i]-b[i])))})()")
   assert.ok(frameDifference<8,'Preview and MP4 share the selected light background')
 
   await waitFor(()=>script("document.querySelector('#export-preview video')?.readyState>=2&&!document.getElementById('export').disabled"),'First export and reuse state ready')
@@ -391,6 +391,163 @@ async function run():Promise<void>{try{
   await waitFor(()=>script("document.getElementById('cover-title').value==='视频封面演示'&&!document.getElementById('cover-show').disabled"),'Cover settings survive draft switch');await click('studio-cover-open');await click('cover-show');await waitFor(()=>script("!document.getElementById('cover-download').hidden&&document.getElementById('cover-image').naturalWidth>0"),'Persisted cover previews again')
   console.log('PASS Studio cover UI: focused title flush, Project image, actual PNG preview/download, unchanged scenes/voice/video exports, zero-scene cover and restored settings/history')
 
+  // Manual focus is editable in the existing visual inspector and survives undo;
+  // compare preview and the real encoded MP4 at matching frame times.
+  const focusImage=await host.webContents.executeJavaScript("(()=>{const c=document.createElement('canvas');c.width=320;c.height=180;const x=c.getContext('2d');x.fillStyle='#2255cc';x.fillRect(0,0,320,180);x.fillStyle='#ee6633';x.fillRect(0,0,160,180);x.fillStyle='#33cc88';x.fillRect(50,60,45,45);return c.toDataURL('image/png').split(',')[1]})()") as string
+  fs.writeFileSync(path.join(artifacts,'focus-grid.png'),Buffer.from(focusImage,'base64'))
+  let focusDraft=await studioExecute({operation:'create',title:'Focus verification'}) as typeof prepared
+  focusDraft.width=640;focusDraft.height=360;focusDraft.fps=12;focusDraft.music=false;focusDraft.scenes=[{...newStudioScene('focus-scene'),title:'可编辑重点',durationSeconds:3,imageArtifactId:'focus-grid.png'}]
+  focusDraft=await studioExecute({operation:'update',draftId:focusDraft.id,expectedRevision:focusDraft.revision,draft:focusDraft}) as typeof prepared
+  await waitFor(()=>script(`!!document.querySelector('#draft-select option[value="${focusDraft.id}"]')`),'Focus draft listed')
+  await script(`document.getElementById('draft-select').value=${JSON.stringify(focusDraft.id)};document.getElementById('draft-select').dispatchEvent(new Event('change',{bubbles:true}));true`)
+  await script("document.querySelector('[data-stage=\"4\"]').click();true")
+  await waitFor(()=>script("!document.getElementById('seek').disabled"),'Focus draft preview ready')
+  await script("document.querySelector('[data-inspector=visual]').click();true")
+  await waitFor(()=>script("!!document.querySelector('.focus-editor button')&&!document.querySelector('.focus-editor button').disabled"),'Focus editor ready')
+  await script("document.querySelector('.focus-editor button').click();true")
+  await waitFor(async()=>store.read(focusDraft.id).scenes[0].focusIntervals?.length===1,'Manual focus saved')
+  await waitFor(()=>script("!document.getElementById('undo').disabled"),'Focus undo available');await click('undo')
+  await waitFor(async()=>!store.read(focusDraft.id).scenes[0].focusIntervals?.length,'Focus undo preserves original visual');await click('redo')
+  await waitFor(async()=>store.read(focusDraft.id).scenes[0].focusIntervals?.length===1,'Focus redo')
+  for(const [key,value] of [['endSeconds',2.5],['zoom',2],['x',.25]] as const){
+    const id='focus-scene-0-'+key;await waitFor(()=>script(`!!document.getElementById(${JSON.stringify(id)})&&!document.getElementById(${JSON.stringify(id)}).disabled`),'Focus field ready')
+    await script(`(()=>{const field=document.getElementById(${JSON.stringify(id)});field.value=${JSON.stringify(String(value))};field.dispatchEvent(new Event('input',{bubbles:true}));return true})()` )
+    // Leaving a focused field for preview must commit before seeking.
+    await click('preview-refresh');await waitFor(async()=>store.read(focusDraft.id).scenes[0].focusIntervals?.[0][key]===value,'Focused focus value committed')
+  }
+  const focusBeforeDelete=store.read(focusDraft.id).scenes[0].focusIntervals
+  await script("document.querySelector('.focus-interval button').click();true")
+  await waitFor(async()=>!store.read(focusDraft.id).scenes[0].focusIntervals?.length,'Last focus deleted')
+  const beforeRejectedFocus=store.read(focusDraft.id),executeBeforeFocusFailure=kernel.execute.bind(kernel)
+  let rejectedFocusSaves=0
+  kernel.execute=async(raw:unknown,options?:{actor?:string;signal?:AbortSignal})=>{
+    const request=raw as {action?:string;studioRequest?:{operation?:string;draft?:typeof focusDraft}}
+    if(options?.actor==='user'&&request.action==='video.studio'&&request.studioRequest?.operation==='update'&&request.studioRequest.draft?.id===focusDraft.id&&request.studioRequest.draft.scenes[0].focusIntervals?.length){rejectedFocusSaves++;throw new TypeError('Unsupported Studio property.')}
+    return executeBeforeFocusFailure(raw,options)
+  }
+  await waitFor(()=>script("!document.querySelector('.focus-editor button').disabled"),'Rejected focus addition ready')
+  await script("document.querySelector('.focus-editor button').click();true")
+  await waitFor(()=>script("document.getElementById('status').textContent.includes('Unsupported Studio property')&&!!document.querySelector('.focus-interval')"),'Rejected focus remains editable')
+  assert.equal(store.read(focusDraft.id).revision,beforeRejectedFocus.revision)
+  await script("(()=>{const f=document.getElementById('focus-scene-0-x');f.focus();f.value='.3';f.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('.focus-interval button').click();return true})()")
+  await waitFor(async()=>store.read(focusDraft.id).revision===beforeRejectedFocus.revision+1&&!store.read(focusDraft.id).scenes[0].focusIntervals?.length,'Rejected focus can be deleted without resaving it')
+  assert.equal(rejectedFocusSaves,1,'Delete must not retry the rejected addition or pending field')
+  assert.equal(store.read(focusDraft.id).scenes[0].imageArtifactId,beforeRejectedFocus.scenes[0].imageArtifactId)
+  await waitFor(()=>script("!document.querySelector('.focus-interval')&&!document.getElementById('save').disabled"),'Deleted focus leaves usable editor')
+  kernel.execute=executeBeforeFocusFailure
+  await click('undo');await waitFor(async()=>store.read(focusDraft.id).scenes[0].focusIntervals?.length===1,'Deletion undo restores focus')
+  await click('redo');await waitFor(async()=>!store.read(focusDraft.id).scenes[0].focusIntervals?.length,'Deletion redo removes focus')
+  await click('undo');await waitFor(async()=>store.read(focusDraft.id).scenes[0].focusIntervals?.length===1,'Focus restored')
+  for(const [key,value] of [['endSeconds',2.5],['zoom',2],['x',.25]] as const){
+    await waitFor(()=>script(`!document.getElementById('focus-scene-0-${key}').disabled`),'Restored focus field ready')
+    await script(`(()=>{const field=document.getElementById('focus-scene-0-${key}');field.value='${value}';field.dispatchEvent(new Event('input',{bubbles:true}));return true})()`)
+    await click('preview-refresh');await waitFor(async()=>store.read(focusDraft.id).scenes[0].focusIntervals?.[0][key]===value,'Restored focus field saved')
+  }
+  assert.deepEqual(store.read(focusDraft.id).scenes[0].focusIntervals,focusBeforeDelete)
+  console.log('PASS focus deletion: last interval, rejected save with pending field, single CAS commit and undo/redo')
+  const focusPixels:number[][]=[]
+  for(const time of [.5,1.5,2.75]){
+    await script(`document.getElementById('seek').value='${time}';document.getElementById('seek').dispatchEvent(new Event('input',{bubbles:true}));true`)
+    await waitFor(()=>script(`Math.abs(Number(document.getElementById('seek').value)-${time})<.001`),'Focus preview seek');await new Promise(resolve=>setTimeout(resolve,120))
+    focusPixels.push(await script("(()=>{const c=document.getElementById('preview');return [...c.getContext('2d').getImageData(0,0,c.width,c.height).data]})()"))
+  }
+  assert.notDeepEqual(focusPixels[0],focusPixels[2],'Focus changes actual source framing')
+  await click('delivery-open');await click('export');await waitFor(async()=>store.read(focusDraft.id).exports.length===1,'Focus MP4 export')
+  const focusExport=store.read(focusDraft.id).exports[0]
+  const focusFrames=await media.processArtifact({action:'media.frames.sample',artifactId:focusExport.artifactId,timestampsSeconds:[.5,1.5,2.75],maxWidth:640,maxHeight:360})
+  if(!('frames' in focusFrames))throw new Error('Focus output has no decoded frames.')
+  const focusErrors:number[]=[]
+  for(const [index,frame] of focusFrames.frames.entries()){
+    const data=fs.readFileSync(path.join(artifacts,frame.artifactId)).toString('base64'),pixels=await script<number[]>(`(async()=>{const image=new Image();image.src='data:image/png;base64,${data}';await image.decode();const c=document.createElement('canvas');c.width=640;c.height=360;const x=c.getContext('2d');x.drawImage(image,0,0);return [...x.getImageData(0,0,640,360).data]})()`)
+    const reference=focusPixels[index];assert.equal(pixels.length,reference.length);let error=0;for(let i=0;i<pixels.length;i++)if(i%4!==3)error+=Math.abs(pixels[i]-reference[i]);error/=640*360*3;focusErrors.push(error);assert.ok(error<7,'Focus preview/export mean pixel difference '+error)
+  }
+  fs.writeFileSync(path.join(libraryProof,'studio-focus.png'),(await captureRendererEvidence(studio)).toPNG());fs.writeFileSync(path.join(libraryProof,'focus-verification.json'),JSON.stringify({times:[.5,1.5,2.75],meanAbsolutePixelErrors:focusErrors,draft:store.read(focusDraft.id)},null,2)+'\n');fs.copyFileSync(path.join(artifacts,focusExport.artifactId),path.join(libraryProof,'focus-sample.mp4'))
+  console.log('PASS manual focus: add/edit/focused flush, undo/redo, shared preview/export pixels at three times',focusErrors)
+
+  // Real decoded one-second tone tests GUI time editing and renderer/native parity.
+  // These manual test timestamps are NOT human acoustic reference annotations.
+  let speechDraft=await studioExecute({operation:'create',title:'Speech anchor UI'}) as typeof prepared
+  speechDraft.width=640;speechDraft.height=360;speechDraft.fps=12;speechDraft.music=false;speechDraft.scenes=[{...newStudioScene('speech-ui'),title:'句锚点校正',narration:'第一句。第二句！',imageArtifactId:'source.png',durationSeconds:2}]
+  speechDraft=await studioExecute({operation:'update',draftId:speechDraft.id,expectedRevision:speechDraft.revision,draft:speechDraft}) as typeof prepared
+  speechDraft=await studioExecute({operation:'attach',draftId:speechDraft.id,expectedRevision:speechDraft.revision,sceneId:'speech-ui',artifactId:'voice.wav',assetKind:'audio'}) as typeof prepared
+  await waitFor(()=>script(`!!document.querySelector('#draft-select option[value="${speechDraft.id}"]')`),'Speech draft listed')
+  await script(`document.getElementById('draft-select').value=${JSON.stringify(speechDraft.id)};document.getElementById('draft-select').dispatchEvent(new Event('change',{bubbles:true}));true`)
+  await click('tab-voice');await waitFor(()=>script("document.querySelectorAll('.speech-row').length===2&&!document.getElementById('seek').disabled"),'Speech editor ready')
+  assert.deepEqual(await script("[...document.querySelectorAll('.speech-row input')].map(n=>n.value)"),['','','',''],'Unverified boundaries stay blank')
+  await script("(()=>{document.querySelector('.speech-editor').open=true;[...document.querySelectorAll('.speech-editor button')].find(n=>n.textContent==='试听 / 继续').click();return true})()")
+  await waitFor(()=>script("document.querySelector('[data-speech-player] audio')?.readyState>=2"),'Actual sentence editor audio playback')
+  await script("document.querySelector('[data-speech-player] audio').pause();true")
+  await script("(()=>{document.querySelector('.speech-editor').open=true;const n=[...document.querySelectorAll('.speech-row input')];for(const [i,value]of ['.1','.4','.5','.9'].entries()){n[i].value=value;n[i].dispatchEvent(new Event('input',{bubbles:true}))}document.querySelectorAll('.speech-editor > .row')[1].querySelector('button').click();return true})()")
+  await waitFor(async()=>store.read(speechDraft.id).scenes[0].speechAnchors?.anchors.length===2,'GUI sentence correction persisted')
+  await waitFor(()=>script("!document.querySelector('.speech-editor button').disabled"),'Sentence save settled')
+  speechDraft=store.read(speechDraft.id);assert.equal(speechDraft.scenes[0].speechAnchors!.origin,'user-edited');assert.equal(speechDraft.scenes[0].speechAnchors!.timeDomain,'audio-file-seconds')
+  await script("(()=>{const n=document.querySelector('.speech-editor input[type=checkbox]');n.checked=true;n.dispatchEvent(new Event('change',{bubbles:true}));return true})()")
+  await waitFor(async()=>store.read(speechDraft.id).scenes[0].speechCaptions===true,'Anchor captions enabled')
+  await script("document.querySelector('.speech-editor').scrollIntoView({block:'start'});true")
+  fs.writeFileSync(path.join(libraryProof,'studio-speech-editor.png'),(await captureRendererEvidence(studio)).toPNG())
+  await click('tab-visual');await waitFor(()=>script("!!document.querySelector('.speech-links button')&&!document.querySelector('.speech-links button').disabled"),'Shared anchor editor ready')
+  await script("document.querySelector('.speech-links').open=true;[...document.querySelectorAll('.speech-links button')].find(n=>n.textContent==='添加按句强调').click();true")
+  await waitFor(async()=>store.read(speechDraft.id).scenes[0].speechLinks?.focus.length===1,'Shared focus reference persisted')
+  await waitFor(()=>script("!!document.getElementById('speech-focus-x-0')&&!document.getElementById('speech-focus-x-0').disabled"),'Shared focus field ready')
+  // Invalid pending data remains visible for repair and does not replace the persisted reference.
+  await script("(()=>{const n=document.getElementById('speech-focus-x-0');n.value='2';n.dispatchEvent(new Event('input',{bubbles:true}));n.dispatchEvent(new Event('change',{bubbles:true}));return true})()")
+  await waitFor(()=>script("document.getElementById('status').textContent.includes('focus x')"),'Invalid shared focus rejected')
+  assert.equal(await script("document.getElementById('speech-focus-x-0').value"),'2');assert.equal(store.read(speechDraft.id).scenes[0].speechLinks!.focus[0].x,.5)
+  // A focused numeric edit with no change event must flush when changing inspector.
+  await script("(()=>{const n=document.getElementById('speech-focus-x-0');n.focus();n.value='.6';n.dispatchEvent(new Event('input',{bubbles:true}));return true})()")
+  await click('tab-captions');await waitFor(async()=>store.read(speechDraft.id).scenes[0].speechLinks?.focus[0].x===.6,'Inspector transition flushes shared focus')
+  await click('undo');await waitFor(async()=>store.read(speechDraft.id).scenes[0].speechLinks?.focus[0].x===.5,'Shared focus undo')
+  await click('redo');await waitFor(async()=>store.read(speechDraft.id).scenes[0].speechLinks?.focus[0].x===.6,'Shared focus redo')
+  assert.deepEqual(store.read(speechDraft.id).scenes[0].speechAnchors,speechDraft.scenes[0].speechAnchors,'Focus edits and undo preserve host timing and real voice')
+  await waitFor(()=>script("document.querySelectorAll('.caption-row').length===2&&!document.getElementById('caption-add').disabled"),'Anchor caption inspector ready')
+  assert.equal(await script("document.getElementById('caption-start-0').value"),'0.6');assert.equal(await script("document.getElementById('caption-end-1').value"),'1.4')
+  const speechPixels:number[][]=[],speechTimes=[.25,.75,1.25]
+  for(const time of speechTimes){await script(`document.getElementById('seek').value=${time};document.getElementById('seek').dispatchEvent(new Event('input',{bubbles:true}));true`);await waitFor(()=>script(`Math.abs(Number(document.getElementById('seek').value)-${time})<.001`),'Speech preview seek');speechPixels.push(await script("(()=>{const c=document.getElementById('preview');return [...c.getContext('2d').getImageData(0,0,c.width,c.height).data]})()"))}
+  await click('delivery-open');await click('studio-export-srt');await waitFor(()=>script("!!document.querySelector('[data-provenance=srt]')"),'Anchored SRT provenance download')
+  await click('studio-export-vtt');await waitFor(()=>script("!!document.querySelector('[data-provenance=vtt]')"),'Anchored VTT provenance download')
+  await click('export');await waitFor(async()=>store.read(speechDraft.id).exports.length===1,'Anchored native MP4')
+  await waitFor(()=>script("document.querySelector('#export-preview video')?.readyState>=2&&!document.getElementById('export').disabled"),'Anchored MP4 settled')
+  const speechErrors:number[]=[]
+  for(const [index,time]of speechTimes.entries()){const actual=await script<number[]>(`(async()=>{const v=document.querySelector('#export-preview video');if(v.currentTime!==${time})await new Promise(resolve=>{v.onseeked=resolve;v.currentTime=${time}});const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;const x=c.getContext('2d');x.drawImage(v,0,0);return [...x.getImageData(0,0,c.width,c.height).data]})()`);let error=0;for(let i=0;i<actual.length;i++)if(i%4!==3)error+=Math.abs(actual[i]-speechPixels[index][i]);error/=640*360*3;speechErrors.push(error);assert.ok(error<7,'Speech preview/native pixels differ '+error)}
+  fs.writeFileSync(path.join(libraryProof,'studio-speech.png'),(await captureRendererEvidence(studio)).toPNG());fs.writeFileSync(path.join(libraryProof,'speech-verification.json'),JSON.stringify({status:'passed',fixture:'actual-one-second-tone',humanReference:false,times:speechTimes,meanAbsolutePixelErrors:speechErrors,draft:store.read(speechDraft.id)},null,2)+'\n');fs.copyFileSync(path.join(artifacts,store.read(speechDraft.id).exports[0].artifactId),path.join(libraryProof,'speech-anchor-sample.mp4'))
+  console.log('PASS Studio sentence correction GUI, trusted user provenance, blank initial times, caption inspector, SRT/VTT provenance and native MP4 parity',speechErrors)
+
+
+  // Title-card board reveal uses the same voice anchors, painter and actual H.264 decoder.
+  let boardDraft=await studioExecute({operation:'create',title:'Speech board UI'}) as typeof prepared
+  boardDraft.width=640;boardDraft.height=360;boardDraft.fps=12;boardDraft.music=false
+  boardDraft.scenes=[{...newStudioScene('board-ui'),title:'句锚点板书',narration:'第一句。第二句！',durationSeconds:2,bullets:['步骤一','步骤二']}]
+  boardDraft=await studioExecute({operation:'update',draftId:boardDraft.id,expectedRevision:boardDraft.revision,draft:boardDraft}) as typeof prepared
+  boardDraft=await studioExecute({operation:'attach',draftId:boardDraft.id,expectedRevision:boardDraft.revision,sceneId:'board-ui',artifactId:'voice.wav',assetKind:'audio'}) as typeof prepared
+  boardDraft=(await studioExecute({operation:'correct-speech',draftId:boardDraft.id,expectedRevision:boardDraft.revision,sceneId:'board-ui',anchors:speechDraft.scenes[0].speechAnchors!.anchors}) as {draft:typeof prepared}).draft
+  boardDraft.scenes[0].speechCaptions=true;boardDraft=await studioExecute({operation:'update',draftId:boardDraft.id,expectedRevision:boardDraft.revision,draft:boardDraft}) as typeof prepared
+  await waitFor(()=>script(`!!document.querySelector('#draft-select option[value="${boardDraft.id}"]')`),'Board draft listed')
+  await script(`document.getElementById('draft-select').value=${JSON.stringify(boardDraft.id)};document.getElementById('draft-select').dispatchEvent(new Event('change',{bubbles:true}));true`)
+  await click('tab-visual');await waitFor(()=>script("!!document.getElementById('speech-bullet-0')&&!document.getElementById('speech-bullet-0').disabled"),'Board links ready')
+  for(const index of [0,1]){
+   const anchorId=boardDraft.scenes[0].speechAnchors!.anchors[index].id
+   await script(`(()=>{document.querySelector('.speech-links').open=true;const n=document.getElementById('speech-bullet-${index}');n.value=${JSON.stringify(anchorId)};n.dispatchEvent(new Event('change',{bubbles:true}));return true})()`)
+   await waitFor(async()=>store.read(boardDraft.id).scenes[0].speechLinks?.bullets.some(b=>b.bulletIndex===index&&b.anchorId===anchorId)===true,'Board anchor persisted')
+   await waitFor(()=>script("!document.getElementById('speech-bullet-0').disabled"),'Board save settled')
+  }
+  assert.equal(await script("document.querySelectorAll('#timeline-reveals button').length"),2)
+  assert.equal(store.read(boardDraft.id).scenes[0].speechAnchors!.origin,'agent-edited','Automated fixture correction is never relabeled human gold')
+  await script("document.querySelector('.speech-links').scrollIntoView({block:'start'});true");fs.writeFileSync(path.join(libraryProof,'studio-board-editor.png'),(await captureRendererEvidence(studio)).toPNG())
+  await script("document.getElementById('speech-bullet-0').scrollIntoView({block:'start'});true");fs.writeFileSync(path.join(libraryProof,'studio-board-bindings.png'),(await captureRendererEvidence(studio)).toPNG())
+  await click('preview-refresh');await waitFor(()=>script("document.getElementById('preview-status').textContent==='预览已更新'&&!document.getElementById('seek').disabled"),'Board preview ready')
+  const boardPixels:number[][]=[],boardTimes=[.25,.75,1.25]
+  for(const time of boardTimes){await script(`document.getElementById('seek').value=${time};document.getElementById('seek').dispatchEvent(new Event('input',{bubbles:true}));true`);await script("new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))");boardPixels.push(await script("(()=>{const c=document.getElementById('preview');return [...c.getContext('2d').getImageData(0,0,c.width,c.height).data]})()"))}
+  // Board row regions are independently empty/revealed; stable placement is verified from real pixels.
+  const regionInk=(pixels:number[],top:number,bottom:number)=>{let count=0;for(let y=top;y<bottom;y++)for(let x=24;x<300;x++){const i=(y*640+x)*4;if(pixels[i]>180&&pixels[i+1]>180&&pixels[i+2]>180)count++}return count}
+  assert.equal(regionInk(boardPixels[0],150,174),0);assert.ok(regionInk(boardPixels[1],150,174)>50);assert.equal(regionInk(boardPixels[1],176,201),0);assert.ok(regionInk(boardPixels[2],176,201)>50)
+  await click('delivery-open');await click('studio-export-vtt');await waitFor(()=>script("!!document.querySelector('[data-provenance=vtt]')"),'Board receipt download')
+  await click('export');await waitFor(async()=>store.read(boardDraft.id).exports.length===1,'Native board MP4')
+  await waitFor(()=>script("document.querySelector('#export-preview video')?.readyState>=2&&!document.getElementById('export').disabled"),'Board MP4 ready')
+  const boardErrors:number[]=[]
+  for(const [index,time]of boardTimes.entries()){const actual=await script<number[]>(`(async()=>{const v=document.querySelector('#export-preview video');if(v.currentTime!==${time})await new Promise(resolve=>{v.onseeked=resolve;v.currentTime=${time}});const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;const x=c.getContext('2d');x.drawImage(v,0,0);return [...x.getImageData(0,0,c.width,c.height).data]})()`);let error=0;for(let i=0;i<actual.length;i++)if(i%4!==3)error+=Math.abs(actual[i]-boardPixels[index][i]);error/=640*360*3;boardErrors.push(error);assert.ok(error<7,'Board preview/native pixels differ '+error)}
+  fs.writeFileSync(path.join(libraryProof,'board-verification.json'),JSON.stringify({status:'passed',fixture:'actual-one-second-tone',humanReference:false,times:boardTimes,meanAbsolutePixelErrors:boardErrors,draft:store.read(boardDraft.id)},null,2)+'\n');fs.copyFileSync(path.join(artifacts,store.read(boardDraft.id).exports[0].artifactId),path.join(libraryProof,'speech-board-sample.mp4'))
+  console.log('PASS Shared sentence focus GUI flush/undo and board reveal/native H.264 parity',boardErrors)
+
   // Session transitions preserve a focused edit and restore isolated selections.
   const sessionAView=studio,selectedA=await script<string>("document.getElementById('draft-select').value")
   await script("document.getElementById('draft-title').value='Saved before Session switch';document.getElementById('draft-title').dispatchEvent(new Event('input',{bubbles:true}));true")
@@ -413,6 +570,34 @@ async function run():Promise<void>{try{
   await runtime.onSessionWillChange();currentSession='fixture-session';await runtime.onSessionChanged();studio=sessionAView
   await waitFor(()=>script("document.getElementById('draft-title').value==='Saved before Session switch'&&document.getElementById('empty-workspace').hidden"),'First Session restored')
   assert.equal(await script("document.getElementById('draft-select').value"),selectedA)
+
+  // Original sound and independently edited bilingual subtitles survive voice removal.
+  let voiceRemovalDraft=await studioExecute({operation:'create',title:'Original sound and conclusion'}) as typeof prepared
+  const borrowedVoice=store.read(prepared.id).scenes.find(item=>item.audioArtifactId)!
+  assert.ok(borrowedVoice.audioArtifactId)
+  voiceRemovalDraft.width=640;voiceRemovalDraft.height=360;voiceRemovalDraft.fps=12;voiceRemovalDraft.music=false
+  voiceRemovalDraft.scenes=[{...borrowedVoice,id:'original-sound',title:'Original sound',durationSeconds:3,videoArtifactId:exported.artifactId,imageArtifactId:undefined,visualSegments:undefined,sourceStartSeconds:0,sourceDurationSeconds:3,keepSourceAudio:true,sourceVolume:1,captions:[{startSeconds:0,endSeconds:2,text:'AI benefits.\nAI 的积极作用。'}],showSceneNumber:false,endPolicy:'hold'}]
+  voiceRemovalDraft=await studioExecute({operation:'update',draftId:voiceRemovalDraft.id,expectedRevision:voiceRemovalDraft.revision,draft:voiceRemovalDraft}) as typeof prepared
+  await waitFor(()=>script(`!!document.querySelector('#draft-select option[value="${voiceRemovalDraft.id}"]')`),'Original sound draft listed')
+  await script(`document.getElementById('draft-select').value=${JSON.stringify(voiceRemovalDraft.id)};document.getElementById('draft-select').dispatchEvent(new Event('change',{bubbles:true}));true`)
+  await waitFor(()=>script("!document.getElementById('draft-title').disabled&&document.getElementById('draft-title').value==='Original sound and conclusion'"),'Original sound draft selected')
+  await click('tab-voice');await click('script-remove-voice')
+  await waitFor(async()=>!store.read(voiceRemovalDraft.id).scenes[0].audioArtifactId,'Voice removal committed')
+  let originalSound=store.read(voiceRemovalDraft.id).scenes[0]
+  assert.equal(originalSound.narration,'');assert.equal(originalSound.keepSourceAudio,true);assert.equal(originalSound.sourceVolume,1);assert.equal(originalSound.captions![0].text,'AI benefits.\nAI 的积极作用。')
+  assert.equal(originalSound.audioText,undefined);assert.equal(originalSound.audioGeneration,undefined);assert.equal(originalSound.audioDurationSeconds,undefined);assert.ok(fs.existsSync(path.join(artifacts,borrowedVoice.audioArtifactId!)))
+  await click('undo');await waitFor(async()=>store.read(voiceRemovalDraft.id).scenes[0].audioArtifactId===borrowedVoice.audioArtifactId,'Voice removal undo');await click('redo');await waitFor(async()=>!store.read(voiceRemovalDraft.id).scenes[0].audioArtifactId,'Voice removal redo')
+  await click('tab-visual');await waitFor(()=>script("!document.getElementById('scene-number').disabled"),'Scene numbering control ready');await click('scene-number');await waitFor(async()=>store.read(voiceRemovalDraft.id).scenes[0].showSceneNumber===true,'Scene number enabled');await click('scene-number');await waitFor(async()=>store.read(voiceRemovalDraft.id).scenes[0].showSceneNumber===false,'Scene number hidden')
+  await script("document.getElementById('duration').value='2.75';document.getElementById('duration').dispatchEvent(new Event('change',{bubbles:true}));true")
+  await waitFor(async()=>store.read(voiceRemovalDraft.id).scenes[0].durationSeconds===2.75,'General field edits preserve multiline captions')
+  assert.deepEqual(store.read(voiceRemovalDraft.id).scenes[0].captions,originalSound.captions)
+  const painterProof=await script<{hidden:string[];shown:string[];captions:{text:string;y:number}[]}>(`(async()=>{
+    const {paintScene}=await import('../../../media-native/src/media/composition-paint.js');const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1440;const context=canvas.getContext('2d'),draws=[];const fill=context.fillText.bind(context);context.fillText=(text,x,y)=>{draws.push({text,y});fill(text,x,y)};
+    const scene={title:'A meaningful conclusion',label:'Summary',durationSeconds:3,narration:'',sourceStartSeconds:0,zoom:1,playbackRate:1,bullets:['A new name is a narrative.','Capability still needs evidence.'],showSceneNumber:false,captions:[{startSeconds:0,endSeconds:2,text:'AI benefits.\\nAI 的积极作用。'}]};const output={width:1080,height:1440,style:'clean-light',watermark:{enabled:true,text:'mark',position:'bottom-right',opacity:1,size:14}};
+    paintScene(context,scene,null,1,3,7,8,0,output);const hidden=draws.map(item=>item.text),captions=draws.filter(item=>['AI benefits.','AI 的积极作用。'].includes(item.text));draws.length=0;paintScene(context,{...scene,showSceneNumber:undefined},null,1,3,7,8,0,output);return {hidden,shown:draws.map(item=>item.text),captions};
+  })()`)
+  assert.ok(!painterProof.hidden.includes('08')&&!painterProof.hidden.includes('08 / 08'));assert.ok(painterProof.shown.includes('08')&&painterProof.shown.includes('08 / 08'));assert.deepEqual(painterProof.captions.map(item=>item.text),['AI benefits.','AI 的积极作用。']);assert.ok(painterProof.captions[1].y>painterProof.captions[0].y)
+  console.log('PASS original sound: remove narration with CAS and undo/redo, preserve independent bilingual captions and source audio; conclusion numbering optional in real Canvas')
   console.log('PASS Studio Session binding: focused flush, independent views/selections, foreign IPC/actions denied, empty state, create/delete confirmation, last deletion empty, shared assets retained')
 }catch(error){exitCode=1;console.error('Failed phase: '+phase);console.error(error);if(studio&&!studio.isDestroyed())console.error('Renderer diagnostics',await studio.executeJavaScript("({status:document.getElementById('status').textContent,time:document.getElementById('seek').value,play:document.getElementById('play').textContent,visibility:document.visibilityState,activation:navigator.userActivation.isActive,activated:navigator.userActivation.hasBeenActive,frames:window.__frameTicks,audio:window.__audioContexts.map(context=>({state:context.state,time:context.currentTime,sampleRate:context.sampleRate}))})"))}finally{clearTimeout(timeout);await runtime?.stop();media?.window?.destroy();host?.destroy();fs.rmSync(temporary,{recursive:true,force:true});app.exit(exitCode)}}
 void run()

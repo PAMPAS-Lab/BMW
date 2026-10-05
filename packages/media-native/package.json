@@ -19,9 +19,13 @@
     "./rendering/image": "./src/media/image-decoder.js",
     "./captions": "./src/caption-export.js",
     "./text-export": "./src/text-export.js",
+    "./focus": "./src/focus-contract.js",
+    "./recording": "./src/recording-contract.js",
     "./visuals": "./src/visual-segments.js",
     "./drawing": "./src/image-drawing-contract.js",
-    "./cover": "./src/media/processing.cover-contract.js"
+    "./cover": "./src/media/processing.cover-contract.js",
+    "./sources": "./src/source-contract.js",
+    "./speech": "./src/speech-contract.js"
   },
   "dependencies": {
     "mediabunny": "1.61.0"

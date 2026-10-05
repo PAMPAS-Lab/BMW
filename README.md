@@ -6,21 +6,19 @@ BMW 是以浏览器为能力边界、以媒体为原生数据的桌面 Agent 工
 
 ## 运行
 
-需要 Node.js 24+、本机 DSH 和可用的模型提供方配置。当前 DSH 适配基线为 `0.2.0-rc.2`，Electron 为 `44.5.1`，Mediabunny 为 `1.61.0`。
+需要 Node.js 24+。BMW Assistant 可选择 DSH、Codex 或 Qoder CN；各引擎使用官方运行时和独立认证配置。默认入口已装配三驱动；新 Profile 默认选择 DSH，之后按 Project 保存所选驱动。当前状态见 [PROJECT_STATUS.md](docs/PROJECT_STATUS.md)，分阶段验收和真实模型证据见 [实施记录](docs/AGENT_DRIVERS_IMPLEMENTATION.md)。DSH 适配基线为 `0.2.0-rc.2`，Electron 为 `44.5.1`，Mediabunny 为 `1.61.0`。
 
 ```bash
 git clone https://github.com/pampas-lab/BMW.git
 cd BMW
 npm ci
 npm install -g @deepseek-ai/dsh@0.2.0-rc.2
-# 首次运行 dsh，按其界面配置模型提供方，然后退出。
-dsh
 npm start
 ```
 
-`dsh` 必须位于 PATH；BMW 读取 `DSH_HOME` 指定的 DSH 配置目录，未设置时使用 `~/.dsh`。BMW 的会话和运行状态保存在自己的 Profile，模型凭据由 DSH 管理，不放入仓库。依赖版本由 `package-lock.json` 固定；TypeScript 在构建时生成运行文件，首次启动会自动构建。
+上面的 DSH 安装只在使用该驱动时需要。`dsh` 必须位于 PATH；BMW 在自己的 `dsh-home` 安装预设，并在首次初始化时从 `DSH_HOME` 或 `~/.dsh` 复制已有普通 CLI 凭据，后续写入不修改原文件。无需先进入 DSH 界面配置模型，可在 BMW 登录框填写 DeepSeek API Key。Codex 通过公共 PATH、应用内 CLI 路径或 `BMW_CODEX_EXECUTABLE` 发现安装；Qoder 的官方 SDK/CLI 随依赖安装。切换 Assistant 驱动会读取认证；缺少凭据时自动打开登录框，可登录或改选其他驱动。DSH 提供 DeepSeek API Key，Codex 提供 ChatGPT 浏览器登录，Qoder CN 使用官方 CLI 浏览器授权。登录后只显示维护的支持名单中由官方目录提供的模型，点击“确认选择”保存；不要求用户发起模型验证或测试对话。Codex API Key 认证可由其独立 CLI 配置识别，BMW 当前没有 API Key 输入表单；未安装时显示安装状态。实际输入前仍自动验证唯一 `browser`。依赖版本由 `package-lock.json` 固定；首次启动自动构建。
 
-产品使用 `BMW` Profile、`persist:bmw` Chromium 分区和 Profile 内的独立 DSH Home。DSH 管理自己的模型配置。系统钥匙串授权由用户自行完成。
+产品使用 `BMW` Profile、`persist:bmw` Chromium 分区。引擎配置分别位于 Profile 的 `dsh-home`、`agent-drivers/codex`、`agent-drivers/qoder-cn`，模型上下文由各引擎保存；BMW 保存会话索引和显示历史。SDK 会话不要求出现在原生桌面侧边栏。系统钥匙串授权由用户自行完成。
 
 隔离体验或测试必须使用临时 Profile：
 
@@ -31,7 +29,7 @@ BMW_USER_DATA_DIR=/tmp/bmw-disposable npm start
 ## 主要能力
 
 - 浏览器标签页、语义观察、页面交互、站点权限、后台取材、登录连续性和按 Project 保存的日常任务。
-- Project ↔ Workspace ↔ Conversation 的可见绑定及双向导航；会话切换同步到对应 Project 的页面和媒体。
+- 稳定 BMW Session 固定所属 Project 和驱动；按驱动保留原生续聊身份。不同驱动共享 Project 页面和媒体，会话切换保留独立历史；DSH 旧 Workspace/Session 身份兼容迁移。
 - 截图、页面媒体发现与下载、视频 Capture、录屏、媒体检查、抽帧、裁剪、缩放和 MP4/WebM 转换。
 - Video Studio 在主窗口中切换工作区：素材收集、全局与分镜脚本、真实旁白、画面匹配、预览编辑和导出。
 - 草稿强绑定所属会话：一个会话可有多个草稿，共享 Project 素材；切换会话切换可见草稿，无草稿显示空状态。支持删除草稿并保留素材与可恢复记录。
@@ -40,6 +38,8 @@ BMW_USER_DATA_DIR=/tmp/bmw-disposable npm start
 - 已有 MP4 可直接查看、另存；视频内容和源素材未变时自动复用新版成片，支持明确重新制作。封面编辑不要求重新编码视频。
 - 比例、分辨率、帧率、画面风格、水印、配乐及 TTS 设置与命名模板。显式参数优先于模板，模板优先于默认值。
 - 默认 Edge 云希男声、0% 语速，在线旁白默认开启；支持关闭在线旁白、选择 Edge 晓晓女声或本地 Matcha 中英语音。改变音色须重新生成已有音频。
+- 页面录制事件与可编辑焦点、限定正文来源、准确原文引用、候选确认和有限下载／播放器采集；来源与冲突状态可导出核对。
+- 固定 whisper.cpp base/small 语音证据、句／段校正与字幕、强调、板书共享锚点；自动句／词／字声学准确率未获批准。
 
 本地语音安装：
 
@@ -54,13 +54,14 @@ NODE_USE_ENV_PROXY=1 npm run setup:local-tts
 ```text
 apps/bmw ── product-bmw ── platform / feature-video
     │                          │
-    └── harness-dsh ── agent-contract
+    ├── harness-dsh / harness-codex / harness-qoder ── agent-contract
+    └── agent-ui ── agent-contract
                                │
 platform ── agent-contract / browser-capability / media-native
 feature-video ── browser-capability / media-native
 ```
 
-`agent-contract` 定义生命周期、Project/Session、任务提交和客户端操作；`harness-dsh` 实现官方协议、预设、图像处理与 UI 适配。应用入口注入驱动，BMW 核心不调用 DSH RPC，也不读取 DSH 页面存储。未来更换 Agent 实现时实现契约并修改应用组合；Project、页面、媒体和 Studio 不需要随驱动重写。
+`agent-contract` 定义生命周期、稳定 BMW Session、原生恢复身份、任务回执、设置及客户端操作；三个 harness 各自实现官方协议、认证、目录准入和事件转换。默认入口注入三驱动装配，BMW Host 与自有 Assistant 协调会话和资源，核心不调用具体驱动 RPC 或读取原生桌面私有存储。Project、页面、媒体和 Studio 保持一份。
 
 模型始终只有一个 `browser` 工具。Bridge 验证会话与 Project、串行执行操作，保护 Project 切换，并限制图像和媒体输出。没有聊天软件连接器、模型 shell 或任意本地文件能力。
 
@@ -90,7 +91,7 @@ npm run test:tts-e2e
 
 ## 模块接口与局部测试
 
-[架构与接口保障](docs/ARCHITECTURE.md)定义九个模块（七个产品包、应用组装、验证工具）、公开入口、依赖方向和八项接口保障。源码依赖、接口测试及分类缺失会使检查失败。
+[架构与接口保障](docs/ARCHITECTURE.md)定义 12 个模块（10 个产品包、应用组装、验证工具）、公开入口、依赖方向、10 项接口保障及 3 项具体实现／装配保障。源码依赖、接口测试及分类缺失会使检查失败。
 
 ```bash
 npm run test:plan -- --files packages/browser-capability/src/renderer-read.ts
@@ -114,8 +115,10 @@ Shell 的全部请求验证来源、主框架和固定本地页面；损坏的�
 ## 仓库内容
 
 - `apps/`：唯一 BMW 应用组合。
-- `packages/`：产品、平台、Agent 契约、DSH 驱动、浏览器、原生媒体与 Video Studio 实现及测试。
+- `packages/`：产品、平台、Agent 契约、自有 Assistant、DSH/Codex/Qoder CN 驱动、浏览器、原生媒体与 Video Studio 实现及测试。
 - `scripts/`：构建、文档清单、分类验证、隔离桌面和媒体工作流检查。
 - `docs/`：功能说明、架构、当前状态、验证方法与合成视觉测试证据。
 
 `node_modules`、生成的 JavaScript、运行日志、Profile、Project 素材、模型缓存和本机凭据由使用者本地维护，不纳入版本控制。迁移来源见 [MIGRATION_PROVENANCE.json](docs/MIGRATION_PROVENANCE.json)；旧多产品迁移归档不属于本仓库。
+
+本地语音锚点研究使用 whisper.cpp 1.9.1（`whisper-cli`）与固定 base/small 缓存；可运行 `node --experimental-strip-types scripts/install-local-asr.ts` 安装模型。缓存不证明时间准确率。Studio 旁白面板支持原始识别证据、句级校正与锚点字幕；画面/旁白属性可按句绑定强调和标题卡板书揭示，共用预览、MP4 与来源清单，支持引用失效检查及撤销。用户已核听并采用十段 base 标注，保留 12 个可编辑片段的 ASR 来源与越界修正；这不构成独立声学金标，自动句／词／字准确率门仍未通过。验收范围见 [当前状态](docs/PROJECT_STATUS.md) 与 [P0 实施记录](docs/VIDEO_STUDIO_P0_IMPLEMENTATION.md)。

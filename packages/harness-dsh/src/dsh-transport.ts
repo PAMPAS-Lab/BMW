@@ -54,7 +54,8 @@ export function launchUrl(line: string, origin: string): string | null {
 }
 
 /** Read a fresh opening snapshot and cancel its server-owned stream immediately. */
-export function remoteSnapshot(origin: string, cookie: string, endpoint: string, args: Record<string, unknown>, timeoutMs = 30_000): Promise<Record<string, unknown>> {
+export function remoteSnapshot(origin: string, cookie: string, endpoint: string, args: Record<string, unknown>, timeoutMs = 30_000,signal?:AbortSignal): Promise<Record<string, unknown>> {
+  signal?.throwIfAborted()
   const url = new URL('/api/remote.mux', origin)
   url.protocol = 'ws:'
   return new Promise((resolve, reject) => {
@@ -65,6 +66,7 @@ export function remoteSnapshot(origin: string, cookie: string, endpoint: string,
       if (settled) return
       settled = true
       clearTimeout(timer)
+      signal?.removeEventListener('abort',abort)
       if (socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ type: 'cancel', streamId }))
         socket.close()
@@ -73,6 +75,9 @@ export function remoteSnapshot(origin: string, cookie: string, endpoint: string,
       else resolve(value!)
     }
     const timer = setTimeout(() => finish(new Error(`DSH ${endpoint} snapshot timed out.`)), timeoutMs)
+    const abort=()=>finish(new Error('DSH history read cancelled'))
+    signal?.addEventListener('abort',abort,{once:true})
+    if(signal?.aborted)abort()
     socket.once('open', () => socket.send(JSON.stringify({ type: 'open', streamId, endpoint, payload: { args } })))
     socket.on('message', (bytes) => {
       try {

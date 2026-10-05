@@ -8,8 +8,9 @@
     </style>
   </head>
   <body>
-    <video id="source" autoplay muted playsinline hidden></video><canvas id="output"></canvas>
+    <video id="source" autoplay muted playsinline style="position:fixed;left:-2px;top:-2px;width:1px;height:1px;opacity:0;pointer-events:none"></video><canvas id="output"></canvas>
     <section id="viewer" class="hidden"><header><strong id="viewer-title">BMW Media</strong><span id="viewer-meta"></span></header><main id="viewer-content"></main></section>
+    <script type="importmap">{"imports":{"mediabunny":"../../../../node_modules/mediabunny/dist/bundles/mediabunny.mjs"}}</script>
     <script type="module" src="./media.js"></script>
   </body>
 </html>

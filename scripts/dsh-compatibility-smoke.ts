@@ -11,6 +11,8 @@ import { DshRuntime, DshHarnessPort } from '../packages/harness-dsh/index.js'
 import product from '../apps/bmw/product.js'
 import { createBridgeServer } from '../packages/browser-capability/src/bridge-server.js'
 import { BrowserCapabilityRegistry } from '../packages/browser-capability/src/browser-capability-registry.js'
+import {readDshLegacySessions} from '../packages/harness-dsh/src/dsh-legacy.js'
+import {DshSettings} from '../packages/harness-dsh/src/dsh-settings.js'
 
 const root = path.resolve(import.meta.dirname, '..')
 const temporary = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-dsh-compatibility-')))
@@ -68,7 +70,30 @@ try {
       await runtime.call('session.cancel', { sessionId })
       await runtime.call('workspace.archiveSession', { sessionId: fork.sessionId })
       assert.equal((await runtime.listProjectSessions(project)).items.some((item) => item.sessionId === fork.sessionId), false)
+      const legacy=await readDshLegacySessions(runtime,[{...project,id:'smoke',workspaceId:String(active.workspace.workspaceId),sessionId:String(sessionId)}],product.id,new AbortController().signal)
+      assert.equal(legacy.find(row=>row.externalSessionId===sessionId)?.title,'Smoke renamed')
+      assert.equal(legacy.find(row=>row.externalSessionId===sessionId)?.selected,true)
+      assert.equal(legacy.find(row=>row.externalSessionId===fork.sessionId)?.archived,true)
+      assert.equal(legacy.find(row=>row.externalSessionId===sessionId)?.messages.length,0)
+      console.log('PASS installed official DSH cold legacy discovery preserves selected/archived native identities without model input')
       console.log(`PASS ${product.id}: authenticated startup, preset, session reuse/rename/search/history/empty-fork guard/cancel/archive`)
-    } finally { runtime.stop(); await bridge.close() }
+    } finally { await runtime.stopAndWait(); await bridge.close() }
   }
+  const settingsRoot=path.join(temporary,'official-settings'),workspace=path.join(settingsRoot,'workspace'),sourceHome=path.join(settingsRoot,'empty-source'),productHome=path.join(settingsRoot,'home')
+  fs.mkdirSync(workspace,{recursive:true});fs.mkdirSync(sourceHome)
+  let browserExecutions=0,selectedModel:string|null=null
+  const bridge=await createBridgeServer({async execute(){browserExecutions++;assert.fail('Cold settings never execute browser work')}},{toolDefinition:new BrowserCapabilityRegistry(product).toolDefinition(),hostManagedSessions:true,resolveProject:()=>undefined,activeProjectId:()=> 'settings-fixture'})
+  const settings=new DshSettings({createRuntime:()=>new DshRuntime({...dshConfiguration,productId:'bmw',dshHome:productHome,sourceDshHome:sourceHome,workspacePath:workspace,workspaceTitle:'Official settings fixture',mcpServerPath:path.join(root,'packages/browser-capability/src/browser-mcp-server.js'),bridgeUrl:bridge.url,bridgeToken:bridge.token,isolateCredentials:true}),model:()=>selectedModel,setModel:model=>{selectedModel=model}})
+  const settingsController=new AbortController(),settingsTimeout=setTimeout(()=>settingsController.abort(),120000),settingsContext={signal:settingsController.signal,openExternal:async()=>assert.fail('DSH settings do not open OAuth')}
+  try{
+    const cold=await settings.execute({action:'refresh'},settingsContext);await settings.drain()
+    assert.ok(cold.models.length>0);assert.ok(cold.loginMethods.some(method=>method.id==='credential:DEEPSEEK_API_KEY'))
+    const configured=await settings.execute({action:'auth.login',methodId:'credential:DEEPSEEK_API_KEY',values:{apiKey:'BMW-disposable-settings-fixture'}},settingsContext);await settings.drain()
+    assert.equal(configured.authentication.state,'ready');assert.equal(JSON.stringify(configured).includes('BMW-disposable-settings-fixture'),false)
+    assert.equal(fs.lstatSync(path.join(productHome,'.credentials.yaml')).isSymbolicLink(),false)
+    assert.equal(fs.existsSync(path.join(sourceHome,'.credentials.yaml')),false)
+    const selected=await settings.execute({action:'model.select',modelId:cold.models[0].id},settingsContext);await settings.drain();assert.equal(selected.selectedModel,cold.models[0].id)
+    const cleared=await settings.execute({action:'auth.logout'},settingsContext);await settings.drain();assert.equal(cleared.canLogout,false);assert.equal(browserExecutions,0)
+    console.log('PASS installed official DSH cold settings: model catalog, credential set/unset void acknowledgements, private provider file and zero Agent/browser input')
+  }finally{clearTimeout(settingsTimeout);settingsController.abort();await settings.drain();await bridge.close()}
 } finally { fs.rmSync(temporary, { recursive: true, force: true }) }

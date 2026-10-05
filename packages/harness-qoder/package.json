@@ -1,0 +1,14 @@
+{
+  "name": "@bmw-agent/harness-qoder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.js"
+  },
+  "dependencies": {
+    "@bmw-agent/agent-contract": "*",
+    "@qodercn-ai/qoderclicn": "1.1.64",
+    "@qodercn-ai/qodercn-agent-sdk": "1.0.50"
+  }
+}

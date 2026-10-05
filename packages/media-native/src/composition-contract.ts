@@ -1,3 +1,5 @@
+import {assertFocusIntervals} from './focus-contract.js'
+import type {FocusInterval} from './focus-contract.js'
 import {assertVisualSegments,sceneVisuals} from './visual-segments.js'
 import type {VisualSegment} from './visual-segments.js'
 import {assertNarrationOptions} from './narration-contract.js'
@@ -8,6 +10,9 @@ import { assertArtifactId, finiteNumber, mediaRecord } from './media-contract.js
 
 /** Closed, seekable composition: no model HTML, script, network URL or host path. */
 export interface CompositionScene {
+  showSceneNumber?:boolean
+  bulletRevealSeconds?:number[]
+  focusIntervals?:FocusInterval[]
   visualSegments?:VisualSegment[]
   durationSeconds: number; title: string; label: string; narration: string
   videoArtifactId?: string; imageArtifactId?: string; audioArtifactId?: string;
@@ -17,7 +22,7 @@ export interface CompositionScene {
 }
 export interface CaptionStyle {fontSize:number;color:string;background:'none'|'outline'|'box';position:'top'|'center'|'bottom';align:'left'|'center'|'right';offsetPercent:number}
 export const captionStyleSchema={type:'object',additionalProperties:false,required:['fontSize','color','background','position','align','offsetPercent'],properties:{fontSize:{type:'number',minimum:12,maximum:64},color:{type:'string',pattern:'^#[0-9a-fA-F]{6}$'},background:{type:'string',enum:['none','outline','box']},position:{type:'string',enum:['top','center','bottom']},align:{type:'string',enum:['left','center','right']},offsetPercent:{type:'number',minimum:-30,maximum:30}}}
-export const sourceAudioProperties={keepSourceAudio:{type:'boolean'},sourceVolume:{type:'number',minimum:0,maximum:2},captionStyle:captionStyleSchema}
+export const sourceAudioProperties={showSceneNumber:{type:'boolean'},keepSourceAudio:{type:'boolean'},sourceVolume:{type:'number',minimum:0,maximum:2},captionStyle:captionStyleSchema}
 export function assertCaptionStyle(raw:unknown):CaptionStyle {
   const value=mediaRecord(raw);keys(value,['fontSize','color','background','position','align','offsetPercent'])
   if(typeof value.color!=='string'||!/^#[0-9a-fA-F]{6}$/.test(value.color)||!['none','outline','box'].includes(String(value.background))||!['top','center','bottom'].includes(String(value.position))||!['left','center','right'].includes(String(value.align)))throw new TypeError('Invalid caption style.')
@@ -52,7 +57,7 @@ export function assertComposition(raw: unknown): MediaComposition {
     height: finiteNumber(value.height ?? 720, 'height', 180, 1920, true), fps: finiteNumber(value.fps ?? 24, 'fps', 12, 30, true),
     music: value.music === undefined ? true : value.music as boolean, scenes: value.scenes.map((rawScene: unknown) => {
       const scene = mediaRecord(rawScene)
-      keys(scene,['durationSeconds','title','label','narration','videoArtifactId','imageArtifactId','audioArtifactId','layout','voiceVolume','captions','sourceStartSeconds','zoom','playbackRate','crop','bullets','keepSourceAudio','sourceVolume','captionStyle','visualSegments'])
+      keys(scene,['durationSeconds','title','label','narration','videoArtifactId','imageArtifactId','audioArtifactId','layout','voiceVolume','captions','sourceStartSeconds','zoom','playbackRate','crop','bullets','keepSourceAudio','sourceVolume','captionStyle','visualSegments','focusIntervals','bulletRevealSeconds','showSceneNumber'])
       if (!Array.isArray(scene.bullets ?? []) || (scene.bullets as unknown[] | undefined)?.length > 3) throw new TypeError('At most three scene bullets.')
       const parsed: CompositionScene = {
         durationSeconds: finiteNumber(scene.durationSeconds, 'scene duration', 1, 60),
@@ -66,9 +71,11 @@ export function assertComposition(raw: unknown): MediaComposition {
         if(parsed.crop.x+parsed.crop.width>1 || parsed.crop.y+parsed.crop.height>1)throw new TypeError('Crop must be inside the source frame.')
       }
       if(scene.layout!==undefined){if(!['presentation','fullscreen'].includes(String(scene.layout)))throw new TypeError('Unknown scene layout.');parsed.layout=scene.layout as CompositionScene['layout']}
+      if(scene.showSceneNumber!==undefined){if(typeof scene.showSceneNumber!=='boolean')throw new TypeError('showSceneNumber must be boolean.');parsed.showSceneNumber=scene.showSceneNumber}
       if(scene.voiceVolume!==undefined)parsed.voiceVolume=finiteNumber(scene.voiceVolume,'voice volume',0,2)
       if(scene.keepSourceAudio!==undefined){if(typeof scene.keepSourceAudio!=='boolean')throw new TypeError('keepSourceAudio must be boolean.');parsed.keepSourceAudio=scene.keepSourceAudio}
       if(scene.sourceVolume!==undefined)parsed.sourceVolume=finiteNumber(scene.sourceVolume,'source audio volume',0,2)
+      if(scene.focusIntervals!==undefined)parsed.focusIntervals=assertFocusIntervals(scene.focusIntervals)
       if(scene.captionStyle!==undefined)parsed.captionStyle=assertCaptionStyle(scene.captionStyle)
       if(scene.captions!==undefined){
         if(!Array.isArray(scene.captions)||scene.captions.length>100)throw new TypeError('At most one hundred caption cues per scene.')
@@ -79,8 +86,13 @@ export function assertComposition(raw: unknown): MediaComposition {
       for (const key of ['videoArtifactId','imageArtifactId','audioArtifactId'] as const) if (scene[key] !== undefined) parsed[key] = assertArtifactId(scene[key])
       if (parsed.narration && !parsed.audioArtifactId) throw new TypeError('Narrated scenes require an audio artifact; text is never treated as synthesized speech.')
       if(scene.visualSegments!==undefined){
+        if(parsed.focusIntervals?.length)throw new Error('Segmented scenes keep focus on each visual segment.')
         if(parsed.videoArtifactId||parsed.imageArtifactId)throw new Error('Choose scene-level footage or visual segments.')
         parsed.visualSegments=assertVisualSegments(scene.visualSegments,parsed.durationSeconds)
+      }
+      if(scene.bulletRevealSeconds!==undefined){
+        if(!Array.isArray(scene.bulletRevealSeconds)||scene.bulletRevealSeconds.length!==parsed.bullets.length||sceneVisuals(parsed).length)throw new TypeError('Bullet reveal requires one time per title-card bullet and no footage.')
+        parsed.bulletRevealSeconds=scene.bulletRevealSeconds.map(time=>finiteNumber(time,'bullet reveal',0,parsed.durationSeconds-.001))
       }
       return parsed
     })

@@ -1,3 +1,3 @@
-import product, { agentDriver } from '../apps/bmw/product.js'
+import product, { agentDriver, createBmwAgentAssembly } from '../apps/bmw/product.js'
 import { createBmwApplication } from '@bmw-agent/platform/application'
-createBmwApplication(product,agentDriver)
+createBmwApplication(product,agentDriver,createBmwAgentAssembly())

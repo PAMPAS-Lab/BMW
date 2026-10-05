@@ -6,7 +6,7 @@ const root=process.cwd(),sources:Record<string,string>={},outputs:Record<string,
 function walk(directory:string):void{for(const entry of fs.readdirSync(directory,{withFileTypes:true})){
   const file=path.join(directory,entry.name)
   if(entry.isDirectory()){walk(file);continue}
-  if(!/\.(ts|cts|mts|html|css|json|yml)$/.test(file))continue
+  if(!/\.(ts|cts|mts|html|css|json|yml)$/.test(file)&&path.basename(file)!=='SKILL.md')continue
   const relative=path.relative(root,file).split(path.sep).join('/')
   sources[relative]=crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
   if(!file.endsWith('.d.ts')&&/\.(ts|cts|mts)$/.test(file)){

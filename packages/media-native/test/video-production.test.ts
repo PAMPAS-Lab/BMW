@@ -1,3 +1,5 @@
+import {assertFocusIntervals,focusFraming,visibleFocusIntervals} from '../src/focus-contract.js'
+import {assertRecordingEvents,recordingEvents,suggestRecordingFocus} from '../src/recording-contract.js'
 import {visualAtTime,fitVisualSegments} from '../src/visual-segments.js'
 import {captionDocument} from '../src/caption-export.js'
 import {exportProjectText} from '../src/text-export.js'
@@ -69,4 +71,32 @@ test('Bounded Project text export cancels and removes its own output without rep
   controller.abort(new Error('Cancelled'));await assert.rejects(exportProjectText(root,'vtt','Caption',controller.signal),/Cancelled/)
   const result=await exportProjectText(root,'vtt','WEBVTT\n\n');assert.equal(await fs.readFile(path.join(root,result.artifactId),'utf8'),'WEBVTT\n\n');assert.equal(await fs.readFile(path.join(root,'existing.srt'),'utf8'),'Keep')
  }finally{await fs.rm(root,{recursive:true,force:true})}
+})
+
+test('Source focus retimes through trims and segments and keeps framing inside the original crop',()=>{
+ const intervals=assertFocusIntervals([{startSeconds:4,endSeconds:8,x:.9,y:.1,zoom:4,emphasize:true}])
+ const visual={videoArtifactId:'record.webm',sourceStartSeconds:2,playbackRate:2,focusIntervals:intervals,crop:{x:.2,y:.2,width:.6,height:.6}}
+ assert.deepEqual(visibleFocusIntervals(visual,8).map(({start,end})=>({start,end})),[{start:1,end:3}])
+ const frame=focusFraming(visual,2);assert.equal(frame.strength,1);assert.equal(frame.crop.width,.15);assert.equal(frame.crop.x,.65);assert.equal(frame.crop.y,.2)
+ assert.deepEqual(focusFraming(visual,0).crop,visual.crop);assert.equal(focusFraming(visual,1).strength,0)
+ const scene=assertComposition({title:'Focus',scenes:[{title:'x',durationSeconds:8,visualSegments:[{...visual,durationSeconds:8}]}]}).scenes[0]
+ assert.deepEqual(scene.visualSegments![0].focusIntervals,intervals)
+ for(const invalid of [[{...intervals[0],x:2}],[{...intervals[0],endSeconds:4}],[{...intervals[0],script:'paint()'}],[intervals[0],{...intervals[0],startSeconds:7}],Array(25).fill(intervals[0])])assert.throws(()=>assertFocusIntervals(invalid))
+ assert.throws(()=>assertComposition({title:'x',scenes:[{...scene,focusIntervals:intervals}]}),/each visual segment/)
+})
+test('Recording evidence has a closed clock/coordinate domain, filters pre-roll and groups real and Agent clicks honestly',()=>{
+ const event={epochMs:101000,kind:'click' as const,source:'page-event' as const,x:400,y:200,viewportWidth:800,viewportHeight:400,surfaceWidth:800,surfaceHeight:400,dpr:2,scrollX:0,scrollY:900}
+ const record=recordingEvents('record.webm',{startedEpochMs:100000,width:1600,height:800},8,{events:[{...event,epochMs:99999},event,{...event,epochMs:101500,source:'agent-action'},{...event,epochMs:107000,x:700}],truncated:false,reason:'requested'},[{sourceEpochMs:101100,outputSeconds:1.1},{sourceEpochMs:101600,outputSeconds:1.6},{sourceEpochMs:107100,outputSeconds:7.1}])
+ assert.equal(record.events.length,3);assert.equal(record.events[0].seconds,1.1);assert.equal(record.events[0].pageSeconds,1);assert.equal(record.events[0].timing,'measured-frame');assert.equal(record.events[1].source,'agent-action');assert.equal(record.events[0].dpr,2)
+ const focus=suggestRecordingFocus(record);assert.equal(focus.length,2);assert.equal(focus[0].endSeconds,3.6);assert.equal(focus[0].zoom,1.5);assert.equal(focus[0].x,.5)
+ assert.throws(()=>assertRecordingEvents(record,'other.webm'),/another video/)
+ for(const raw of [{...record,events:[{...record.events[0],inputText:'secret'}]},{...record,events:[{...record.events[0],url:'https://site.test/?token=secret'}]},{...record,events:[{...record.events[0],seconds:9}]},{...record,events:[{...record.events[0],x:900}]},{...record,events:Array(5001).fill(record.events[0])}])assert.throws(()=>assertRecordingEvents(raw))
+})
+
+test('Title-card reveal has bounded scene-local times, exact bullet identity and no footage; legacy bullets stay immediate',()=>{
+ const base={title:'板书',music:false,scenes:[{title:'推导',durationSeconds:4,bullets:['步骤一','步骤二'],bulletRevealSeconds:[.6,2]}]}
+ assert.deepEqual(assertComposition(base).scenes[0].bulletRevealSeconds,[.6,2])
+ for(const times of [[0],[-1,2],[0,4],[0,NaN],[0,Infinity]])assert.throws(()=>assertComposition({...base,scenes:[{...base.scenes[0],bulletRevealSeconds:times}]}))
+ assert.throws(()=>assertComposition({...base,scenes:[{...base.scenes[0],imageArtifactId:'board.png'}]}),/no footage/)
+ const {bulletRevealSeconds,...legacy}=base.scenes[0];assert.equal(assertComposition({...base,scenes:[legacy]}).scenes[0].bulletRevealSeconds,undefined)
 })

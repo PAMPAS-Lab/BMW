@@ -2,7 +2,7 @@
 
 Follow the root [AGENTS.md](../../AGENTS.md).
 
-This is the only application in this repository. Export the BMW product from `@bmw-agent/product-bmw` and select its sole Agent driver here. The product and core must remain independent of the driver's protocol, configuration, storage and UI implementation.
+This is the only application in this repository. Export the BMW product from `@bmw-agent/product-bmw` and assemble its DSH, Codex and Qoder CN adapters here. The product and core remain independent of provider protocols, credentials, native client storage and Agent loops. BMW's sandboxed Assistant UI communicates through the Host contract. Enable a driver only after its effective browser-only catalog has been verified.
 
 Profile: `BMW`. Partition: `persist:bmw`. Model tool: `browser`.
 

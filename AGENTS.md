@@ -7,10 +7,12 @@ Browser is boundary, media is native, web is runtime.
 - This repository ships one application: BMW, id `bmw`, profile `BMW`, Chromium partition `persist:bmw`.
 - BMW owns Projects, pages, media, Video Studio, permissions, settings and scheduled tasks. Pages and artifacts belong to a Project; conversations share that Project's resources.
 - Exactly one model/MCP tool is allowed: `browser`. Add capabilities as validated browser actions. The authenticated Bridge publishes the effective catalog.
-- DSH is the sole configured Agent driver and owns its Agent loop. Do not implement another loop or add another harness without an explicit product decision.
-- `apps/bmw/product.ts` selects the driver. Core packages depend on `agent-contract`, never `harness-dsh`, DSH RPC, client storage, selectors, presets or credential configuration.
-- DSH process lifecycle, official transport, managed preset, client/Composer integration and persisted DSH compatibility belong to `harness-dsh`.
-- Preserve Project/Session binding, FIFO operations, Project-transition exclusion, screenshot image admission, cancellation and Project-owned media. Driver bindings are stored under `agentBindings[driverId]`.
+- The accepted product decision is one BMW application with DSH, Codex and Qoder CN adapters. Each official runtime owns its Agent loop. BMW Host coordinates input, Sessions, resources and UI; it must not implement a model loop.
+- `apps/bmw/product.ts` assembles the drivers. Core packages depend on `agent-contract`, never concrete harness packages, provider RPC, client storage, selectors, presets or credential configuration.
+- Provider launch/authentication, transport, tool catalog admission and wire-event normalization stay in their respective harness packages. BMW owns the conversation UI; native desktop history visibility is optional.
+- A driver may release model input only after verifying an effective catalog containing exactly BMW `browser`. Prompt instructions or deny callbacks do not establish this boundary. Unverified runtimes remain unavailable.
+- BMW Session IDs are stable and distinct from immutable per-driver resume anchors. Preserve legacy DSH Session IDs for Studio and schedule ownership. Persist input receipts before dispatch; uncertain delivery is never automatically replayed.
+- Preserve Project/Session binding, FIFO operations, Project-transition exclusion, screenshot image admission, cancellation and Project-owned media. Await actual tool/worker cleanup before releasing admission; failed cleanup quarantines the resources until explicit cleanup recovery succeeds.
 - Use Web APIs, sandboxed browser runtimes and bounded native browser adapters. Never expose shell execution, unrestricted host filesystem, credentials, cookie access, Electron IPC or FFmpeg CLI to the model.
 - Remote and mobile control are independent future interfaces. Do not add chat software connectors, relays or connection settings.
 - Shared implementations must not import apps. BMW has no runtime dependency on another product repository.

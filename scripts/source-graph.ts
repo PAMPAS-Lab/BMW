@@ -17,7 +17,7 @@ export function walkFiles(directory: string): string[] {
 }
 export function authoredFiles(root: string): string[] {
   return ['apps','packages','scripts','types'].flatMap(dir => walkFiles(path.join(root,dir)))
-    .filter(file => /\.(ts|cts|mts|html|css|json|yml)$/.test(file)).map(file => path.relative(root,file).split(path.sep).join('/')).sort()
+    .filter(file => /\.(ts|cts|mts|html|css|json|yml)$/.test(file)||path.basename(file)==='SKILL.md').map(file => path.relative(root,file).split(path.sep).join('/')).sort()
 }
 export function importsOf(source: SourceFile, installedPackages: readonly string[] = []): {edges: ImportEdge[]; computed: boolean} {
   const edges: ImportEdge[] = []

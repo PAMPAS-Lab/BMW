@@ -7,7 +7,7 @@ import type { Registry } from './registry.js'
 
 interface AssemblyContext {agent?:{session?:{header?:{id?:unknown;cwd?:unknown}}}}
 interface Assembly {contexts?:{name:string;text:string}[];[key:string]:unknown}
-interface PluginContext {on(event:'session/event',listener:(session:object,event:{type:string})=>void):unknown; on(event:'system-prompt/assemble',listener:(assembly:unknown,context:AssemblyContext,next:()=>Promise<Assembly>)=>Promise<Assembly>):unknown; tools: Registry; effect(callback: () => () => Promise<void>, label: string): unknown; [key: string]: unknown }
+interface PluginContext {on(event:'session/event',listener:(session:object,event:{type:string})=>void):unknown; on(event:'system-prompt/assemble',listener:(assembly:unknown,context:AssemblyContext,next:()=>Promise<Assembly>)=>Promise<Assembly>):unknown; tools: Registry & {schemas(scope:object):{name:string}[]}; effect(callback: () => () => Promise<void>, label: string): unknown; [key: string]: unknown }
 interface McpPlugin { Config: unknown; inject: string[]; apply(ctx: PluginContext, config: unknown): unknown }
 
 // Resolve against the running DSH installation, never a second Harness copy.
@@ -38,8 +38,8 @@ export async function apply(ctx: PluginContext, config: unknown) {
   }, 'bmw-browser.session')
   async function ensureBinding(agent:object,header:{id?:unknown;cwd?:unknown}):Promise<string> {
     if(disposed||typeof header?.id!=='string'||typeof header.cwd!=='string')throw new Error('BMW browser requires a live DSH Session')
-    let binding=bindings.get(agent)
-    if(!binding){binding=bridgeRequest('session/register',{sessionId:header.id,directory:header.cwd}).then(value=>{if(typeof value.binding!=='string')throw new Error('Invalid BMW Session binding');return value.binding});bindings.set(agent,binding);binding.catch(()=>{if(bindings.get(agent)===binding)bindings.delete(agent)})}
+    let binding=process.env.BMW_HARNESS_MANAGED==='1'?undefined:bindings.get(agent)
+    if(!binding){binding=bridgeRequest('session/register',{sessionId:header.id,directory:header.cwd,...(process.env.BMW_HARNESS_MANAGED==='1'?{driverId:process.env.BMW_AGENT_DRIVER}:{})}).then(value=>{if(typeof value.binding!=='string')throw new Error('Invalid BMW Session binding');return value.binding});bindings.set(agent,binding);binding.catch(()=>{if(bindings.get(agent)===binding)bindings.delete(agent)})}
     return binding
   }
   // Official cooperative assembly writes this data to the durable request context.
@@ -49,6 +49,8 @@ export async function apply(ctx: PluginContext, config: unknown) {
     if(agent?.session)failureGuard.assertAvailable(agent.session)
     const assembled=await next()
     if(!agent||!header)return assembled
+    const catalog=ctx.tools.schemas(agent)
+    if(catalog.length!==1||catalog[0].name!=='browser')throw new Error('BMW effective DSH model catalog must remain exactly browser before every model request')
     const value=await bridgeRequest('session/context',{binding:await ensureBinding(agent,header)})
     return appendWorkspaceContext(assembled,value.text)
   })

@@ -23,6 +23,7 @@ export interface ScheduledTask {
   id: string
   projectId: string
   sessionId: string | null
+  driverId: string | null
   name: string
   prompt: string
   schedule: { kind: 'daily'; time: string; timeZone: string }
@@ -143,6 +144,10 @@ export class ScheduledTaskStore {
         if (typeof task.id !== 'string' || !task.id || ids.has(task.id) || typeof task.projectId !== 'string' || !task.projectId || typeof task.enabled !== 'boolean' || schedule.kind !== 'daily') throw new Error('Invalid scheduled task identity or schedule.')
         cleanText(task.name, 'name', 120); cleanText(task.prompt, 'prompt', 20_000)
         cleanTime(schedule.time); cleanTimeZone(schedule.timeZone)
+        if(task.sessionId!==null&&(typeof task.sessionId!=='string'||!task.sessionId||task.sessionId.length>4096))throw new Error('Invalid scheduled Session binding.')
+        if(task.driverId===undefined)task.driverId=task.sessionId?'dsh':null
+        if(task.driverId!==null&&(typeof task.driverId!=='string'||!/^[a-z0-9-]{1,64}$/u.test(task.driverId)))throw new Error('Invalid scheduled driver binding.')
+        if(!task.sessionId||!task.driverId){task.enabled=false;task.nextRunAt=null;task.lastError='Select an explicit BMW Session and driver before enabling this task.'}
         ids.add(task.id)
       }
       const runIds = new Set<string>()
@@ -187,9 +192,12 @@ export class ScheduledTaskStore {
     return task
   }
 
-  create(project: { id: string; sessionId?: string | null }, input: Record<string, unknown>): ScheduledTask {
+  create(project: { id: string; sessionId?: string | null; driverId?: string }, input: Record<string, unknown>): ScheduledTask {
     if (this.state.tasks.length >= MAX_TASKS) throw new Error(`BMW supports at most ${MAX_TASKS} scheduled tasks per product profile.`)
     const now = this.now()
+    if(!project.sessionId)throw new Error('A scheduled task must be pinned to an explicit BMW Session.')
+    const driverId=project.driverId??'dsh'
+    if(!/^[a-z0-9-]{1,64}$/u.test(driverId))throw new Error('Invalid scheduled driver binding.')
     const enabled = input.enabled !== false
     const time = cleanTime(input.time)
     const timeZone = cleanTimeZone(input.timeZone)
@@ -197,6 +205,7 @@ export class ScheduledTaskStore {
       id: crypto.randomUUID(),
       projectId: project.id,
       sessionId: project.sessionId || null,
+      driverId,
       name: cleanText(input.name, 'Scheduled task name', 80),
       prompt: cleanText(input.prompt, 'Scheduled task prompt', 8_000),
       schedule: { kind: 'daily', time, timeZone },
@@ -215,6 +224,7 @@ export class ScheduledTaskStore {
 
   update(projectId: string, taskId: string, input: Record<string, unknown>): ScheduledTask {
     const task = this.getForProject(projectId, taskId)
+    if(input.enabled===true&&(!task.sessionId||!task.driverId))throw new Error('Select an explicit BMW Session and driver before enabling this task.')
     if (input.name !== undefined) task.name = cleanText(input.name, 'Scheduled task name', 80)
     if (input.prompt !== undefined) task.prompt = cleanText(input.prompt, 'Scheduled task prompt', 8_000)
     if (input.time !== undefined) task.schedule.time = cleanTime(input.time)
@@ -226,9 +236,13 @@ export class ScheduledTaskStore {
     return structuredClone(task)
   }
 
-  bindSession(taskId: string, sessionId: string): ScheduledTask {
+  bindSession(taskId: string, sessionId: string, driverId?: string): ScheduledTask {
     const task = this.get(taskId)
+    if(this.activeRun(taskId))throw new Error('Cannot change the binding of a running or queued task.')
+    const driver=driverId??task.driverId
+    if(!driver||!/^[a-z0-9-]{1,64}$/u.test(driver))throw new Error('An explicit scheduled driver is required.')
     task.sessionId = cleanText(sessionId, 'Agent Session id', 200)
+    task.driverId=driver
     task.updatedAt = this.now().toISOString()
     this.save()
     return structuredClone(task)

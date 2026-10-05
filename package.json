@@ -43,7 +43,11 @@
     "test:contracts": "npm run test:classified -- --layer contract,type"
   },
   "dependencies": {
+    "@qodercn-ai/qoderclicn": "1.1.64",
     "ws": "8.21.3"
+  },
+  "overrides": {
+    "sharp": "0.35.4"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

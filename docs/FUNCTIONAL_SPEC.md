@@ -8,29 +8,54 @@ Browser is boundary, media is native, web is runtime.
 
 | 包 | 责任 |
 |---|---|
-| apps/bmw | 组合 BMW 产品并注入唯一 Agent 驱动 |
+| apps/bmw | 组合 BMW 产品，默认入口注入三驱动装配和自有 Assistant |
 | product-bmw | 浏览器/媒体/视频产品定义，不依赖 DSH |
 | agent-contract | 通用生命周期、Project/Workspace/Session、任务提交、客户端与上下文契约 |
 | harness-dsh | DSH 进程、官方鉴权/传输、预设、模型配置、插件、客户端适配及存储兼容 |
+| harness-qoder | 官方 Qoder CN SDK/Worker、有效工具目录准入、原生续聊和事件转换 |
+| harness-codex | 官方 Codex App Server、模型目录预检、dynamic browser 回调与原生续聊 |
+| agent-ui | BMW 自有 sandbox Assistant 界面，仅暴露可信 Host IPC |
 | platform | 桌面 Shell、Project、设置、权限、会话协调、计划任务和应用生命周期 |
 | browser-capability | 唯一 browser 工具、Action Catalog、Bridge、浏览器页面操作和图像结果准入 |
 | media-native | 原生媒体采集、处理、旁白和合成 |
 | feature-video | Project 视频草稿、Studio 手动操作与自然语言操作 |
 
-DSH `0.2.0-rc.2` 是当前唯一 Agent 驱动，拥有 Agent Loop。核心只依赖契约，禁止直接依赖 DSH 的 RPC 名、页面存储、DOM 选择器、预设与凭据。DSH 使用官方启动 token/cookie 鉴权，日志脱敏；Workspace 和会话历史通过官方 WebSocket 快照读取，取得快照后取消订阅；修改操作留在驱动内。
+默认入口装配 DSH `0.2.0-rc.2`、Codex App Server 和 Qoder CN SDK，由各官方运行时拥有 Agent Loop。自有 Assistant、统一设置、旧历史迁移和默认入口已实现。GPT-6 封装时的完整离线快照及三驱动对应型号两轮真实验收通过；后续登录交互完成 32 项局部检查，未重新执行全量或付费模型。各报告的源码与适用范围见 [VERIFICATION.md](VERIFICATION.md)。Codex GPT-6 的独立工具封装与验收见 [实施状态](AGENT_DRIVERS_IMPLEMENTATION.md)。核心只依赖契约，禁止直接依赖具体驱动的 RPC 名、页面存储、DOM 选择器、预设与凭据。DSH 使用官方启动 token/cookie 鉴权，日志脱敏；Workspace 和会话历史通过官方 WebSocket 快照读取，取得快照后取消订阅；修改操作留在驱动内。
 
-驱动替换点为 `apps/bmw/product.ts`。未来驱动必须实现相同操作和归属契约，不能把 BMW 页面/媒体所有权、权限或任务队列转交给模型。
+驱动装配点为 `apps/bmw/product.ts`。所有驱动必须遵循相同归属契约，不能把 BMW 页面/媒体所有权、权限或任务队列转交给模型。方案见 [AGENT_DRIVER_DESIGN.md](AGENT_DRIVER_DESIGN.md)，实际验收和未完成项见 [AGENT_DRIVERS_IMPLEMENTATION.md](AGENT_DRIVERS_IMPLEMENTATION.md)。
+
+## 自有 Assistant 装配（三官方驱动）
+
+- BMW Session 固定 Project 与 driver，provider Session 是不可替换的原生恢复锚点。空会话先于后端连接出现；切换 driver 选择该驱动的既有活动会话，没有才创建空会话，不复制其他引擎的原生历史。
+- Assistant 保存显示消息、事件和输入回执；显示历史不是模型恢复协议。未知投递不自动重发，重启把未完成回执标为 unknown，并显示断连原因。会话索引、偏好和历史全部读取验证后再执行恢复写入；损坏文件保留，启动提供重试/退出。
+- 旧 DSH 迁移通过官方 cold session/list、workspace/follow、session/follow/page 读取固定 Project 绑定，冻结 cursor 并向前读完历史。保留原 Session/Studio owner，导入人类和模型的历史文本；context、替换摘要、私有推理和图像字节仍在原生记录中。History 的一次性来源/cursor/元数据标记先落盘，索引完成后才解除 legacyImportPending；两步之间中断可以从同一已保存切面恢复，不生成虚假输入回执。缺失、外部运行中或跨 Project 的原生身份失败，不选择其他会话。
+- 迁移读写和用户执行共用 Host 排除；原生清理失败保留隔离，清理恢复不重复读取或发送。Assistant 显示恢复失败及显式重试入口；没有活动原生资源的读取失败只禁止受影响旧会话发送，其他驱动仍可使用。已有 driver Workspace 绑定不被 BMW 的统一会话 UI 覆盖。启动验证历史来源与索引的 Project/driver/resume anchor 一致后才执行崩溃恢复。
+- apps/bmw 的 createBmwAgentAssembly 装配 DSH、Codex、Qoder CN，默认从实际 BMW userData 派生 `agent-drivers/codex`、`agent-drivers/qoder-cn`，保留 DSH 的 `dsh-home`；物理路径别名及父子目录重叠被拒绝。Codex 公共 CLI 安装可通过正常 PATH、固定应用 CLI 路径或明确的 BMW_CODEX_EXECUTABLE 发现，缺失时设置仍可显示安装状态，不启动模型。每个引擎仍需在输入前通过实际目录门槛。默认入口已启用此装配，并通过独立进程启动与重启验证；旧 DSH UI 实现仍保留，只有新 UI 所需能力等效后才能移除。最终真实模型复验与目标工作区验收以实施状态中的实际证据为准。
+- 自有 Assistant 设置通过可信闭合 IPC 调用各引擎官方控制 API，不产生模型输入、持久化测试会话或 browser 执行。账号投影与表单 Schema 不含秘密值；密码框在提交、关闭按钮及 Escape 时清空。Codex 浏览器登录、Qoder 官方 CLI 登录、DSH 凭据设置/退出留在适配器内。Qoder CLI 未验证非交互退出，UI 保持该操作禁用。新 Profile 的默认 driver 为 DSH，之后按 Project 保存选择；应用启动不自动发起登录，GUI 切换 driver 后自动读取登录状态；缺少凭据时弹出登录方式，登录对话框可切换其他 driver，先取消并等待当前登录实际清理。登录成功后显示可选模型并由用户点选“确认选择”；无需用户发起工具目录验证或模型推理。模型偏好按 driver 保存，认证、支持名单与账号目录匹配并等待原生控制清理完成后才提交；确认后关闭弹窗。状态读取完成后关闭登录框不会反复自动弹出，重新切换仍会检查；已读取状态缺少认证或有效模型时禁止发送。设置/取消/原生清理持有 Host 排除，清理失败进入隔离，恢复仅重试清理；小窗口保留底部操作，Assistant 跟随 BMW 明暗主题。
+- 每个适配器维护明确的支持名单，并与官方目录取交集；Codex/Qoder 读取账号状态及原生模型目录，DSH 只检查本地 DeepSeek Key 是否配置并读取官方 Provider 目录，不进行 API Key 有效性或余额验证；未知模型及 Qoder 标记禁用项不显示。Codex 支持 `gpt-6.1-sol`、`gpt-6-astra`、`gpt-6-sol`、`gpt-6-luna`、`gpt-5.5`；DSH 支持 `deepseek-official` 下的 `deepseek-flash`、`deepseek-v4-pro`，认证只使用 `DEEPSEEK_API_KEY`，其他 Provider 凭据不构成就绪条件且退出时保留；Qoder CN 支持 `auto`、`qmodel_38max`、`qfmodel`、`qmodel_latest`、`qmodel`、`q37fmodel`、`dmodel`、`dfmodel`、`gmodel`、`gfmodel`、`gm51model`、`kmodel_latest`、`kmodel`、`mmodel`。设置投影中的 `verified` 表示维护名单支持，不表示用户运行过预检或账号拥有推理额度；Qoder 的真实模型验收目前只覆盖 `auto`。
+- 设置不要求用户执行专项验证。Codex 设置选择不调用工具预检；Qoder 冷控制会话仍内部检查 SDK init 的有效工具目录并禁止任何模型消息，DSH 使用官方 cold 设置／目录控制。三者设置均不发送模型输入。
+- 官方引擎拥有 Agent 循环，Host 只协调输入和资源。输入前有效目录必须只有 `browser`；DSH 每次 request assembly 再检查 scoped catalog，Qoder 禁止继承 plugins/skills/settings，Codex 检查 Responses 及 Lite additional_tools。目录成员不证明账号推理额度或实际请求可用。
+- Codex App Server `0.160.0` 对 `gpt-6.1-sol`、`gpt-6-astra`、`gpt-6-sol`、`gpt-6-luna` 使用官方启动配置 `model_catalog_json`。从独立 CLI Profile 的官方目录生成内容寻址的只读策略副本，移除强制 code mode/多 Agent 元数据并清空额外实验工具，保留模型 ID、原生 Lite 传输、推理等级、上下文、图像能力和模型指导。不改写官方 cache/config；官方运行时仍可正常刷新其缓存。副本必须是宿主私有的普通文件，缓存版本、模型缺失、路径碰撞/篡改和实际额外工具均失败拒绝。目录预检与实际启动使用同一个副本；目录准入在模型输入前内部执行，用户模型选择不触发预检。GPT-5.5 保持原有路径，未知 GPT-6 型号不自动套用策略。BMW 不增加模型循环、代码执行工具或其他宿主权限。
+- Host 私有租约绑定 canonical BMW Session；DSH provider 注册只能解析已明确附着的有效 Host 租约。模型不得改写 `__bmwSession`，撤销等待真实 kernel/worker 清理。完成事件在实际清理前不结束回执或释放 FIFO；原生清理失败同样隔离资源，恢复仅重试清理。
+- 自有 Assistant UI 显示消息、工具进度、运行状态、停止和资源恢复，支持 Browser/Studio 模式与上下文。基础 Markdown 用 DOM text nodes 渲染，模型 HTML 不执行。fork 未验证时在会话中心禁用。新的退出路径等待 Assistant 原生进程、Bridge 和 Feature 实际清理。
+- 三个真实引擎已分别通过隔离 BMW 的页面、截图读图、canonical Studio owner 和同一 provider 续聊。DSH/Qoder/Codex 在每轮完成后关闭原生运行进程，以原生存储恢复后续输入；这不证明原生桌面侧边栏同步。测试不用生产桌面 Profile；正常官方 CLI 登录配置与 desktop 私有凭据分离。
+- `qoder-bmw` 作为 harness-qoder 的复用 skill 指导随包分发，SDK 装配直接使用固定指导并保持空 skills 目录；skill 不建立连接和权限边界。接入说明见 [QODER_BMW.md](QODER_BMW.md)。
+
+Shell 顶部旧运行时徽章目前仍使用 legacy `agent-status`，自有 Assistant 状态发布未更新该通道，可能停留在“Starting Assistant…”；实际运行以 Assistant 面板为准。该界面问题尚未修复，见 [当前状态](PROJECT_STATUS.md)。
+
+直接覆盖：Conversation/History/Host/Assistant Controller、三个驱动的契约测试，`assistant.application`、六项 `assistant.startup.*`，以及显式 opt-in 的三个 `external.assistant.*` 原生模型验收。默认入口显示 BMW 自有 Assistant；旧 DSH 界面实现保留用于兼容，尚未移除。
 
 ## 桌面、Project 与会话
 
 - 一个 BMW 主窗口，浏览器与 Video Studio 为共享工作区；右侧 Assistant 使用同一会话。关闭或切换 Studio 不退出应用。
 - 页面视口仿真仅改变网页布局和截图尺寸，原生显示区域仍由工作区边界决定；大视口取材、切换标签页及缩放窗口不能覆盖 Assistant 或 Shell。
+- Shell 渲染器关闭后台节流，使被原生工作区遮挡时仍更新布局与窗口尺寸；设置、会话及计划任务弹窗在重新打开和短窗口下保留可见操作区。此项不新增模型权限。
 - 顶栏以导航、Project、录制和 Assistant 为主；主题、网络、搜索、布局、驱动侧栏和模型设置进入 Settings。Shell 对话框使用一致字体、主题和控件。
 - Profile `BMW`、Chromium 分区 `persist:bmw`。Project 包含 ID、目录、主页、页面状态、文档、媒体、草稿与 `agentBindings[driverId]`。
 - 每个 Project 对应当前驱动内一个 Workspace，可有多个会话；会话共享 Project 页面和媒体。驱动会话导航通过可信成员关系与目录解析，切换 BMW Project；BMW Project 切换激活对应 Workspace/Session。忙碌期间延迟，过时选择不提交，非法选择恢复。
 - Project 管理支持创建、选择、改名、主页、文档编辑和 archive；archive 保留文件且至少保留一个活动 Project。无永久删除 Project 的 UI。
 - 文档包括 AGENTS、MEMORY、TASKS 和结构化 memory 文件；单文档 256 KiB 上限。Agent 只能追加指定记忆文档。
-- 会话中心提供列出、内容搜索、创建、选择、改名、fork、archive、排序。所有操作验证属于当前 Project；DSH 空会话没有完成 turn 时 fork 明确失败。
+- 会话中心提供列出、内容搜索、创建、选择、改名、archive、排序。所有操作验证属于当前 Project；fork 按实际驱动能力启用，当前自有 Assistant 未开放原生 fork。旧 DSH 兼容入口的空会话没有完成 turn 时 fork 明确失败。
 - 驱动绑定兼容保留已有 DSH Workspace/Session，按驱动保存，不改变 Project 身份或媒体。废弃连接器配置自动清理。无聊天软件连接器、聊天转发、其他产品导入或 WebContainer 配置。
 
 保存状态加载遵循失败保护：只有确认文件不存在才初始化。Project、Settings、计划任务、权限、布局和登录保持配置的 JSON 损坏、版本不支持、结构错误或读取失败抛出 `BMW_STATE_LOAD_FAILED`，保留原文件，阻止默认状态写回。启动在加载错误时提供重试/退出；重试重新读取原文件，不自动重置或恢复备份。无版本号的历史 Settings 仍兼容，已有 Project/Workspace/Session 与已删除任务的完成运行历史保留。加密登录快照同样保护读取、解密、版本和结构错误；失败后后台保活、快照及配置写入被拒绝，必须显式修复并重新加载。加密暂不可用时不写快照；恢复可用后先读取验证并恢复既有快照，再采集当前 Cookie。权限和布局兼容无版本号的历史数据。
@@ -38,7 +63,7 @@ DSH `0.2.0-rc.2` 是当前唯一 Agent 驱动，拥有 Agent Loop。核心只依
 
 直接覆盖：platform 的 Project、driver-boundary、product-boundaries、project-panel-layering、global-settings、layout、permission、scheduled-task 测试；agent-contract 的 context-sync；DSH 的 context/runtime/port/preset。实际 UI 覆盖：driver/desktop/Studio smoke。生产 OS 钥匙串授权由用户完成，不在隔离测试覆盖范围。
 
-Shell 的全部 40 项 invoke 使用统一主进程准入：只接受当前存活 Shell 的主框架及固定本地页面地址。其他 Renderer、子框架和已导航页面在应用处理函数运行前被拒绝；Shell 页面禁止自行导航和打开新窗口。媒体 Worker、Studio 和 Agent 的专用 IPC 仍按各自 sender/token/Project 规则处理。
+Shell 的全部 41 项 invoke 使用统一主进程准入：只接受当前存活 Shell 的主框架及固定本地页面地址。其他 Renderer、子框架和已导航页面在应用处理函数运行前被拒绝；Shell 页面禁止自行导航和打开新窗口。媒体 Worker、Studio 和 Agent 的专用 IPC 仍按各自 sender/token/Project 规则处理。
 
 ## 浏览器、工具和权限
 
@@ -52,15 +77,25 @@ Shell 的全部 40 项 invoke 使用统一主进程准入：只接受当前存�
 | 截图与图像 | viewport/selector 截图、Project PNG artifact；不改变背景页滚动位置；viewport/selector 均按页面坐标经 CDP 抽取，Studio 用不透明工作区覆盖页面，保留页面渲染表面以继续取材；对截图阶段设期限并取消 |
 | 权限 | 用户控制 Agent Control；按站点处理设备权限；用户侧敏感操作保持权限边界 |
 | 登录连续性 | 用户主动选择站点后用 OS safeStorage 加密 cookies，并周期性 HEAD；关闭不清除当前登录 |
-| 计划任务 | Project 范围日常时间/时区、绑定会话、保存 runs、执行/取消/删除；只用 browser，执行期间禁止冲突 Project 变更 |
+| 计划任务 | 固定 Project、BMW Session、driver 与时间/时区，保存 runs、执行/取消/删除；绑定失效报错且不自动换会话，无绑定旧任务暂停并提供手动“绑定当前会话”；排队/运行时禁止重绑，只用 browser |
 
 DOM 观察、媒体发现和诊断读取使用统一阶段保护，每阶段最多 15 秒，取消、主 Frame 导航或 Renderer 丢失即停止接纳结果。媒体发现不滚动页面、不等待动画帧；后台素材采集保持前台标签页不变。诊断包含实际 PNG 截图。媒体下载的网络请求和文件流共享取消信号及 60 秒期限，结束流和关闭输出后清理本次部分文件，不删除同名既有 Artifact。只读迟到结果不能恢复文件写入；有副作用的操作不通过遗弃 Promise 释放 FIFO。
 
-Bridge 验证认证、Session、Project 及目录，按 FIFO 执行；Project 变更期间排除模型操作。期限、取消、停止与关闭清理不能释放仍在运行的敏感工作。DSH 官方 MCP Client 负责图像结果处理，BMW 只接受受限、验证的图像结果。多次基础设施失败中止当前 turn，防止无效重试持续运行。
+Bridge 验证认证、Session、Project 及目录，按 FIFO 执行；Project 变更期间排除模型操作。期限、取消、停止与关闭清理不能释放仍在运行的敏感工作。Bridge 校验图像输出；DSH 官方 MCP Client、Qoder 官方 SDK 和 Codex dynamic tool 结果分别承接本驱动的图像传输，BMW 只接受受限、验证的 PNG 图像结果。多次基础设施失败中止当前 turn，防止无效重试持续运行。
 
 直接覆盖：browser-capability 的 schema、catalog、session-operations、bridge-shutdown、deadline、screenshot-read 等测试；DSH 的 failure-guard/transport。真实浏览器覆盖：desktop、browser-background 和 media smoke。
 
+`observe` 可使用 selector/index 限定正文范围，并以最多 16 个 excludeSelectors 排除推荐、头像和推广。返回正文范围、UTF-16 字符口径、可见文本节点提取方式和截断状态（最多 50,000 字符/10,000 文本节点）；范围不存在返回 element-not-found 与空正文，不回退整页。输入控件/隐藏/script/style 内容不进入正文。结构化交互元素仍保留可见控件。
+
+`page.media.list` 指定范围时只返回该范围 DOM 候选，支持同样的排除项，不拼入全页 performance/网络媒体。返回 candidateOnly、范围与候选截断；发现 URL 不代表获取或解码成功。未限定范围的既有全页发现保留。
+
 ## 原生媒体
+
+页面录制保存 `<video Artifact ID>.events.json`。可信主 frame 隔离域只记录点击、滚动、视口与导航，不采集输入文本、键盘、cookies 或页面正文。`page-event` 是真实派发的可信页面事件，不能据此判断是否真人；Agent 的程序化点击独立标为 `agent-action`。滚动/视口按 100ms 限频、点击立即记录；每段最多 5000 事件、5000 个帧时钟映射，JSON 总量最多 2 MiB。录制最多 30 分钟/512 MiB。暂停不支持，主页面导航继续录制，页面关闭停止并保留明确生命周期结果；`discard: true` 删除本次页面录像，字节/元数据预算失败清理本次产物，已有素材保留。停止等待文件流和事件保存/清理结束后返回。
+
+事件保留 `pageSeconds` 原始页面时间及 `seconds` 输出视频时间，`timing` 区分 `measured-frame` 与 `wall-clock`。源视频帧回调同时冻结像素与采集时间，CanvasSource/WebCodecs 以明确时间戳编码；成功编码包的 PTS 与源帧采集时间映射随录像保存；无映射的事件保留墙钟来源，不用于自动焦点。坐标为视口 CSS 像素，另存 DPR、滚动位置、原生录制表面的 CSS 尺寸（含浏览器 zoomFactor），据此映射完整源视频，仿真视口不能代替录制表面尺寸。URL 去除凭据、查询与片段。页面录像使用 append-only WebM；没有时长头/完整索引，读取时实际扫描媒体时间，不将墙钟当作解码时长。没有系统全局鼠标轨迹采集。
+
+录制 runtime 验收另包含真实受控网页的三步任务：选择模板、选择旁白、提交到服务器并导航到持久化任务结果页。通过认证 Bridge 录制，原生页面输入产生点击记录；在 Studio 使用可编辑建议与补充静止讲解焦点，裁切 .2 秒/1.25 倍速，检查按钮/结果范围、旁白绑定及四个选定时间点的预览与 MP4。该夹具不是公开网站或真实 DSH 模型制作；实际本地旁白用于保留绑定验证，未证明人工句边界精度。
 
 Mediabunny `1.61.0` 与浏览器 WebCodecs 为媒体底座；Canvas/WebAudio/WebGPU/MediaRecorder 用于画面、混音、处理与采集。采集和导出由受限宿主文件 adapter 写入当前 Project artifacts；模型只看到 Artifact ID。
 
@@ -90,6 +125,44 @@ Edge 默认 `zh-CN-YunxiNeural` 男声、0% 语速，固定 Microsoft 服务，6
 
 直接覆盖：media-native 的 media-controller/media-processing/video-options/video-production；实际 decode/capture/compose/local-speech 在媒体、视频、旁白 smoke 验证。在线 Edge 和付费视觉模型为独立 opt-in，不属于离线检查的成功声明。
 
+### Studio 语音候选、句级校正与字幕锚点
+
+`video.studio` 新增 `align-speech`、`read-speech`、`correct-speech`，均要求当前 Session 的 draftId、expectedRevision、sceneId。识别只允许固定 base/small，作用于当前有效旁白；成功保存 Project 归一化 WAV、原始 JSON、日志及证据 JSON，草稿只保存受限证据引用及 SHA-256。每次重跑只更新候选，不覆盖已有校正；失败、取消、过时 revision 清理本次登记的新文件，保留原素材及手工记录。读取候选校验证据文件与音频哈希，过期结果只供回溯；整段 ASR 不会被按字数拆成虚构句边界。确定性建议只接受唯一的整句文本匹配及结构可用区间，仍未通过自动精度验收。
+
+校正请求 anchors 最多 100 条，含 id、scriptStart/scriptEnd（UTF16，不能切开 Unicode 字符，每段最多 200 单位）、startSeconds/endSeconds（原始旁白文件秒数）。脚本范围和音频时间均有序且不重叠；终点必须在实际可解码音频和分镜范围内。宿主保存脚本全文/SHA、音频 ID/SHA、实测时长、捕获 revision、创建时间与 `audio-file-seconds`。可信 GUI 调用标 `user-edited`，模型调用标 `agent-edited`，请求不能自称人工审定。普通 update 无法改写这些记录；脚本/音频变化保留旧记录并标过期，重做只影响选中的分镜。
+
+旁白面板内提供原始识别片段/概率/警告、真实音频试听与定位、空白初始句时间、取试听时间、手工调整/删除及保存。未完整填写的编辑阻止离开，不会自动估算补值。`speechCaptions=true` 在没有独立 scene.captions 时消费句锚点；独立编辑字幕优先保留，修改字幕不重做旁白。原始旁白从分镜 .5 秒开始，画面 sourceStartSeconds/playbackRate 不改变其时间；预览和原生导出共用 cue 投影，SRT/VTT 再叠加累计分镜时长。使用锚点前检查脚本/生成参数及实际音频 SHA，编码完成后再检查，过期或变化阻止复用/导出并回滚当前新成片。SRT/VTT 保持标准格式，另存 Project JSON 时间来源清单，标明每场景来源、原始音频绑定、脚本范围与时钟；GUI 提供清单下载。
+
+分镜支持 `showSceneNumber` 布尔选项，默认保留模板编号；关闭时预览与 MP4 同时隐藏大号场景数字及页脚编号，标题卡要点上移利用空间。字幕显式换行保留，支持同一 cue 的中英双语两行排版。旁白面板可移除此段旁白与脚本，解除音频/生成/句锚点绑定但保留 Project 音频文件、原声设置与独立字幕；CAS 和撤销/重做继续生效。
+
+画面和旁白属性提供「按句同步」引用编辑器：`scene.speechLinks` 含最多 3 条 bullets `{anchorId,bulletIndex,text}` 与 24 条 focus `{anchorId,visualIndex,artifactId,x,y,zoom,emphasize}`。板书条目和画面素材保留绑定时身份，修改/移除后保留引用并阻止消费，需重新选择或解除。标题卡板书按句开始逐条揭示，未绑定条目保持立即显示，隐藏条目占据原位置；不扩展自由图层或教学模板。强调使用整句时间，叠加旁白 .5 秒起点后，按累计画面片段时长、sourceStartSeconds 和 playbackRate 映射回源视频秒数。句区间必须完整落在所选片段内，目标必须在当前裁切内；与独立焦点重叠、超预算或源区间不足 100ms 均报错，不移动/覆盖独立焦点。
+
+引用通过既有 update/CAS 保存，支持撤销/重做，不改写宿主锚点与旁白版本。GUI 离开输入框/切换检查器/导出前保存待输入字段；时间轴显示来源与揭示点，旁白轨从实际 .5 秒起点显示。字幕、强调、板书共用纯投影与原生绘制，任何消费者都检查有效脚本/TTS 和实际音频 SHA；SRT/VTT 来源清单同时保存引用、原始锚点、板书时间及焦点投影，独立字幕来源保持独立。`video.compose` 的标题卡可显式使用 `bulletRevealSeconds`，最多 3 个、与 bullets 等长的分镜内秒数，不能与画面素材共用；Studio 草稿不接受该派生字段。
+
+这些用户／Agent 编辑时间不是独立声学人工验收金标。十段 base 标注已按用户核听决定采用为 12 个可编辑句／段锚点；独立声学句边界 P95 仍未建立，自动句／词／字时间批准保持关闭。
+
+### 原生中文语音证据运行端口
+
+media-native 增加仅供宿主消费的 `processArtifact({action:"media.speech.align",artifactId,model:"base"|"small"})`。请求只接受 Project Artifact 和固定候选，不接受执行文件、缓存路径、模型 URL、提示词或额外 CLI 参数；Studio 通过唯一 browser 工具的 `video.studio` 受限请求消费该端口，不直接公开底层 CLI。固定 whisper.cpp 1.9.1、本机 `whisper-cli` 版本与执行文件指纹、官方多语模型的 revision/大小/SHA-256 在每次运行核对。模型由 `scripts/install-local-asr.ts` 安装到受控缓存，原生引擎需另外安装；本机 macOS 已实测，Linux 分支尚未实测。
+
+沙箱浏览器用 Mediabunny 完整读取唯一音轨（最多 180 秒、8 声道、96kHz、累计 32Mi 浮点采样值），按声道均值混音并用 OfflineAudioContext 重采样到单声道 16kHz PCM16。实际原格式、解码起止、归一化采样数、时长及 PCM 饱和采样数进入证据；间隙保留静音，没有根据脚本伸缩音频。原输入前后哈希和路径/文件身份均核对；原文件替换、模型/引擎变化不能被已打开描述符掩盖。
+
+固定 CPU 中文识别保存 Project 归一化 WAV、完整原始 JSON、日志及 SHA-256，返回实际耗时、`audio-file-seconds` 区间与 BPE token 概率均值。原始越界、重叠和低概率区间不压缩或补造，显式标记不可直接采用。`automaticTimingApproved:false`、`wordTimingAvailable:false` 保持关闭；概率不是人工准确率或中文词/字时间。整体最多十分钟、原始 JSON 4 MiB、进程输出 1 MiB、400 区间/16000 token；取消等待子进程及管道退出，随后只清理当前 UUID 产物。Studio 已提供原始候选、句/段级编辑、字幕及点击强调/板书共用引用。十段真实音频的 base 标注经用户试听并明确采用，保存 ASR 辅助核听来源；制作区间仅裁去超出实际音频时长的末尾，原始转写/时间/警告保留，合并整段不拆成虚构句时间。相对采用记录的原始 base 区间位移 P95 为 272.125ms，仅反映末尾边界修正，不是独立声学准确率；不据此批准自动时间能力。当前保留可编辑句/段锚点，自动词/字同步不开放。
+
+## Project 来源与引用
+
+来源通过既有 video.studio 的 operation:source 管理，sourceRequest.operation 为 list/read/collect/confirm/acquire。它在同一 browser FIFO 中执行；当前对话必须属于活动 Project。来源证据由 Project 内会话共享，草稿和引用修改仍受 ownerSessionId 与 revision 保护。
+
+collect 必须提供 bodySelector，支持 index/excludeSelectors；可独立提供 mediaSelector/mediaIndex/mediaExcludeSelectors、authorSelector、publishedSelector、accessSelector 和 Project tabId。固定 DOM 脚本读取限定可见正文与 DOM 媒体，不回退整页，也不混入全页网络资源。输入框、编辑区、隐藏节点及显式排除范围不进入原文。导航、缺失范围、失败和截断分别记录；取消不保存迟到结果。作者和发表时间保留实际元素原文，缺失为 null；标题/作者/日期/限制提示超出各自上限时，获取结果记 truncated 并列出被截断的字段；事件时间另由确认操作声明，采集时间由宿主记录，不相互代替。
+
+Project sources/catalog.json 保存 Schema v1 的页面 URL、获取记录、正文/媒体范围、原文 Artifact/SHA-256、观看限制、候选、确认和实际媒体记录。最多 200 个来源、1000 次获取、每次 80 个候选和 40 次媒体尝试；正文 50000 个 UTF16 单元/256 KiB，元数据 4 MiB。同 URL 合并来源，重复原文可共用内容 Artifact，获取记录与多个 URL 关系保留。过时 source expectedRevision 冲突，损坏目录/改变的原文保持原样并报错；拒绝 symlink，失败仅清理本次新文件。
+
+候选区分 body 图片、cover/poster 和 video/source；发现和确认不等于下载。acquire 的 method=download 取得确认候选的有限 HTTP(S) 文件；blob、分段流/manifest 不绕过下载限制。method=capture 对已确认 video/source 候选采集 HTMLVideoElement，必须给出 videoSelector，可提供 videoIndex、maxDurationMs（1–1800 秒，默认 900 秒）。固定采集程序在同一 Project 页面验证 URL、候选 currentSrc、限定媒体范围及排除项，录制期间继续核对；不能从其他页面、范围或未确认候选获取。不自动登录或导出 cookies。图片实际解码 PNG/JPEG/WebP；视频用私有固定 media.decode.check 逐个解码可支持音视频轨道至文件末尾，保存样本数、媒体时间范围和文件哈希，最多三十分钟/512 MiB、120000 视频帧/250000 音频样本/两分钟作业。该检查不进入模型动作目录。试看/短于观察时长的文件记 partial-preview，其余有限视频记 decoded-file；完整文件解码不证明平台全长。失败/需要登录独立记录，取消清理新下载并保留既有证据。capture 独立保存 pageUrl/candidateUrl/scope、元素选择、fromStart 请求、原播放器 sourceStartSeconds/sourceEndSeconds/sourceDurationSeconds、stopReason 和 UTC 起止时间；媒体文件的 startSeconds/endSeconds 仍是解码文件时间域。播放器 ended 仅证明当前元素结束；达到上限/requested 或试看均记 partial-preview，不宣称平台全长。当前捕获使用原生 MediaRecorder、有限 Base64 拉取（每包 8 MiB、页面缓冲 16 MiB、32 个待处理块）、512 MiB 文件上限和宿主期限；取消/导航/关闭先停止并清理本次录制、恢复播放位置/暂停/loop/rate，再释放工作状态，保留已有媒体。迟到初始化有取消标记。GUI 确认的视频候选提供「采集此播放器」入口，范围选项可指定元素和采集上限。同内容媒体实际核对哈希后共用 Artifact，每次来源证明保留并保存 proofContentId SHA-256。read 和引用导出复核当前媒体/证明文件哈希，返回 mediaAvailability（每次最多共读取 512 MiB，相同文件/哈希复用核对），区分 verified/missing/changed/invalid/not-acquired/unrecorded/budget-exceeded；旧记录缺少证明哈希保留 unrecorded，不修写历史。当前证据不完整时来源预览禁用，引用清单保留历史获取与实际媒体范围并另报可用性；取消核对不写入来源或草稿。
+
+准备页的「网页来源、正文范围与引用」展开区提供页面与正文范围选择、来源详情、原文、候选确认、事件时间、获取和已保存素材预览，默认折叠以保留笔记、大纲和素材入口。preparation.sourceIds 关联此次视频的来源。原文选区可引用到指定分镜；每分镜最多十二条 citations，包含 sourceId/acquisitionId、UTF16 startCharacter/endCharacter/quote、kind=fact/opinion、claim、conflict=pending/conflicting 和 eventAt。更新与导出均核对引用等于保存原文的准确子串。GUI 可以移除引用，沿用保存、撤销和版本冲突。来源/引用元数据不进入合成或旁白绑定，不使成片签名或未改旁白失效。
+
+export-citations 使用 draftId/expectedRevision 创建 Project JSON 清单，最多 512 KiB，返回原文范围、URL、原文 Artifact/哈希、发表/采集/事件时间、获取状态、已有媒体范围/证明 ID 与当前文件可用性。fact 表示引用用途，factChecking 保留 pending；冲突不自动变为已核查。GUI 提供下载入口，导出不修改草稿历史。外部网站质量、B站复测和点评样片单独实测，不能由受控 fixture 推断。
+
 ## 视频参数和模板
 
 Settings 的视频制作项支持比例、分辨率、帧率、内置画面风格、水印、配乐和 TTS。模板按名称保存在 Profile 的 videoPreferences，草稿保存参数快照；不同 Project 可使用同名模板。
@@ -99,6 +172,10 @@ Settings 的视频制作项支持比例、分辨率、帧率、内置画面风�
 TTS 设置只是生成参数；已有音频按分镜保存宿主生成记录 `audioGeneration`：`{kind:"tts",options:{provider,voice,ratePercent}}` 表示实际生成参数，`{kind:"imported"}` 表示手动绑定音频，`{kind:"legacy",options:{...}}` 仅保存旧音频编辑前的目标参数基线，不声称实际音色。旧草稿缺字段时保留原音频并显示「参数未记录」；后续改变目标音色/语速会标记旧音频过期。生成音频的脚本、provider、voice 或 ratePercent 改变后需重新生成，预览不混入过期旁白，导出拒绝过期音频。手动绑定音频不受 TTS 设置影响。GUI/Agent 草稿更新不能改写同一音频的真实生成记录、脚本文本及实测时长。字幕内容和样式可独立编辑，不使旁白过期。
 
 ## Video Studio
+
+单画面和各 visualSegment 支持最多 24 个有序、非重叠 `focusIntervals`：`startSeconds/endSeconds` 是原素材秒数（图片为片段内秒数），最短 100ms；`x/y` 为完整源画面中心 0–1、`zoom` 为 1–4、`emphasize` 控制中心标记。焦点在原 crop 内平滑进出，预览/MP4 使用同一绘制与 trim/rate 映射；时间轴投影重点区间。画面属性提供添加、修改、删除及撤销/重做；聚焦输入在分镜/Session 切换前保存。焦点不重录视频、不使未改旁白过期，但使旧成片复用失效。替换画面移除旧素材的焦点；追加片段保留原画面的焦点。保存失败后的本地焦点仍可删除：删除先移除目标再提交修正后的草稿，不重试已被拒绝的旧草稿；删除目标正在输入的参数随目标一并移除，其他参数输入仍正常提交。删除支持撤销/重做，仍遵守所属 Session 和 revision 冲突检查。
+
+`suggest-focus` 要求所属 Session 的 draftId/expectedRevision/sceneId，支持 segmentIndex；只读取当前 Project 对应录制事件文件，返回实际记录与确定性点击分组建议，不写草稿。建议只使用有实测帧映射且位于录制表面内的点击，缩放上限 1.5。GUI 接受建议后仍可逐项修改；已有手动区间不会被覆盖。普通视频/图片可手动聚焦，缺少录制事件明确提示自动建议不可用。建议不证明操作结果或页面正文都在焦点内，交付样片仍需审片。
 
 画面素材选择统一提供列表／图标视图、按可见区域加载的真实图片／视频缩略图及放大预览；覆盖素材准备、匹配、工作台、封面和画面片段。预览只读取当前 Project 素材，沿用读取／解码预算、媒体控件与切换取消；显示方式切换不修改视频草稿。
 
@@ -138,7 +215,7 @@ Studio 使用主工作区，不创建独立退出入口。GUI 与自然语言共
 
 `export-captions` 使用 draftId/expectedRevision 和 captionFormat=srt/vtt，在 Project 素材库创建主进程分配 UUID 的字幕文件。分镜局部字幕转换为全片累计毫秒时间；明确关闭的字幕保持关闭，独立编辑字幕不改脚本和旁白。自动字幕使用有效音频的实测时长，仍属于估算，返回 edited/estimated/mixed，GUI 提示来源。取消/并发修改清理本次输出且不写草稿。单输出最多 512 KiB；下载链接与 Project 文本预览可用。
 
-准备阶段的「让 Assistant 起草脚本」与匹配阶段的「让 Assistant 匹配已有素材」通过当前 Project 的既有 DSH Session 提交固定、受验证的 intent。提交前后检查 Project/revision；不添加工具或循环。辅助提示要求只补空脚本、保留已有分镜 ID/顺序/旁白/字幕及来源，匹配基于已查看的素材，不足则说明缺口。`read-material` 仅读取当前 Project 的受限文本素材，最多 256 KiB UTF-8 并报告截断；材料是数据，不执行 HTML/脚本。实际模型生成质量与外部调用单独验收。
+准备阶段的「让 Assistant 起草脚本」与匹配阶段的「让 Assistant 匹配已有素材」通过草稿所属的 BMW Session 及其固定 driver 提交固定、受验证的 intent；旧兼容入口沿用 DSH Session 绑定。提交前后检查 Project/revision；不添加工具或循环。辅助提示要求只补空脚本、保留已有分镜 ID/顺序/旁白/字幕及来源，匹配基于已查看的素材，不足则说明缺口。`read-material` 仅读取当前 Project 的受限文本素材，最多 256 KiB UTF-8 并报告截断；材料是数据，不执行 HTML/脚本。实际模型生成质量与外部调用单独验收。
 
 每次原生成片重新读取最终 MP4，核对可解码的 AVC/AAC、宽高、48 kHz 双声道和实际时长；通过后保存 Project JSON 验收报告。记录产物 ID、实际/预期时长、轨道和尺寸，以及渲染帧数、fps、音频峰值、旁白实测时长。exports 记录 verificationArtifactId，GUI 可下载成片及报告；失败清理本次 MP4。编码能力具有设备差异。
 
@@ -171,10 +248,25 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 
 ### 当前自动化测试清单
 
+#### `packages/agent-contract/test/assistant-ui.test.ts`
+
+- `Assistant IPC admits only named bounded commands with explicit Session/run identities`
+
 #### `packages/agent-contract/test/context-sync.test.ts`
 
 - `Agent selection coordinates Project changes and rejects stale asynchronous navigation`
 - `Agent selection restores rejected navigation and validates published context`
+
+#### `packages/agent-contract/test/conversation.test.ts`
+
+- `BMW conversations admit a visible blank Session without a provider identity`
+- `driver capability declarations fail closed instead of enabling missing features`
+- `driver events reject extra execution tools and malformed interaction decisions`
+- `event envelopes require explicit Session/run identity and a positive replay sequence`
+
+#### `packages/agent-contract/test/driver-settings.test.ts`
+
+- `Settings commands are closed and snapshots reject credential-bearing form defaults`
 
 #### `packages/browser-capability/test/bridge-shutdown.test.ts`
 
@@ -193,6 +285,14 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `accepts every declared browser action`
 - `rejects unsupported and malformed requests`
 - `returns only string tab ids`
+- `body ranges bound selectors and exclusions and reject malformed scope rather than broadening it`
+
+#### `packages/browser-capability/test/collect-page-source.test.ts`
+
+- `Source collection retains scoped originals, unknown dates and candidate-only roles with no global resource admission`
+- `Missing source range never invokes media fallback; truncation, visible trial evidence and missing explicit media range remain explicit`
+- `Navigation across collection phases yields navigated evidence; cancellation leaves no late candidate admission or listeners`
+- `Clipped metadata remains explicitly truncated rather than silently admitted as complete author/date evidence`
 
 #### `packages/browser-capability/test/mcp-tool-catalog.test.ts`
 
@@ -219,6 +319,12 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `screenshot deadline identifies phase and renderer loss removes observers`
 - `screenshot rejects main navigation and never starts already cancelled reads`
 
+#### `packages/browser-capability/test/session-leases.test.ts`
+
+- `managed provider registration resolves only an attached live Host lease and keeps the canonical BMW owner`
+- `Session lease revocation aborts its work but awaits actual cleanup before returning`
+- `Qoder/Codex MCP receives host scope from its private environment and rejects model scope substitution`
+
 #### `packages/browser-capability/test/session-operations.test.ts`
 
 - `Session operations serialize, recheck admission and recover after failure`
@@ -236,6 +342,11 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 
 - `Studio material groups reflect live scene bindings and reuse across Project drafts`
 - `Studio material drops admit only current Project assets matching the target slot`
+
+#### `packages/feature-video/test/studio-sources.test.ts`
+
+- `Studio source evidence is Project-shared, while citation edits keep Session ownership/CAS and actual original UTF16 ranges`
+- `Native full-file decode admission rejects empty/dropped track evidence and remains a private host action`
 
 #### `packages/feature-video/test/video-boundary.test.ts`
 
@@ -281,15 +392,73 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `Studio bridge forwards authenticated Session ownership instead of accepting a caller-selected owner`
 - `Studio pending narration keeps the admitted owner when caller identity changes during an awaited job`
 - `Completed MP4 reuse survives cover/notes edits but invalidates changed composition, files and forged journals`
+- `Focus suggestions admit only Project recordings at the owning revision and never overwrite manual focus or speech`
+- `Sentence spans reject overlap/forgery/Unicode splits and ASR paragraphs are not divided into invented sentence times`
+- `Host sentence correction binds actual hashes and trusted actor; ordinary draft updates cannot replace it`
+- `Speech evidence success/rerun preserves correction; cancelled or conflicting recognition rolls back only new outputs`
+- `Anchored captions share voice offset and cumulative film time; independent edits remain and file/script changes fail closed`
+- `Anchored render rechecks the audio after encode and rolls back only newly created MP4/report on late replacement`
+- `Speech links preserve target identity, map trimmed/rated segmented focus, and reject orphan, crop, overlap and boundary changes`
+- `Title-card reveal links preserve static rows and independent captions; changed bullets and forged raw times cannot be adopted`
+- `Focus-only anchor consumption verifies actual audio hashes and exports truthful receipts; editable links support CAS undo without rewriting host anchors`
+- `Studio preserves optional scene numbering and bilingual line breaks through composition and revisions`
+
+#### `packages/harness-codex/test/codex-backend.test.ts`
+
+- `GPT-6 uses the exact admitted startup catalog when resuming its native Session before dispatch`
+- `GPT-6 never starts a native runtime without its admitted startup catalog`
+- `Codex admits input after catalog verification, resumes the same provider and normalizes browser/image/message receipts`
+- `Codex rechecks live authentication and model membership before creating or resuming a native Session`
+- `Codex catalog failure never starts the provider or releases a user message`
+- `Codex rejects a foreign tool scope and waits for transport cleanup`
+- `Codex cancellation racing the input receipt sends one interrupt after the turn becomes known`
+
+#### `packages/harness-codex/test/codex-installation.test.ts`
+
+- `Codex public CLI discovery resolves executable files and an explicit missing installation never falls back`
+- `A missing Codex installation keeps BMW settings available and rejects input before opening a connection`
+
+#### `packages/harness-codex/test/codex-policy.test.ts`
+
+- `Codex effective catalog reads Responses and Responses Lite additional_tools, including hidden extra namespaces`
+- `Codex browser thread excludes environments, shell, MCP helpers and question tools before user input`
+- `GPT-6 startup catalog changes only tool metadata and preserves native model capabilities and transport`
+- `GPT-6 host catalog is immutable, content addressed and private without modifying the official model cache`
+
+#### `packages/harness-codex/test/codex-settings.test.ts`
+
+- `Codex settings project official paginated models and account status without model input or account metadata`
+- `Codex never commits a verified model while its native settings process fails to close`
+- `Codex selects maintained supported models without user preflight and rejects unsupported catalog entries`
+- `Codex browser login completes only for its login ID and admits an official origin`
+- `Cancelling Codex login cancels the native operation and never selects a model`
 
 #### `packages/harness-dsh/test/browser-failure-guard.test.ts`
 
 - `repeated infrastructure failures stop only their official Session until next turn`
 - `selector errors, success and user cancellation do not trip infrastructure guard`
 
+#### `packages/harness-dsh/test/dsh-backend.test.ts`
+
+- `DSH preparation failures retain cleanup ownership and permit retry only after actual native drain`
+- `DSH rejects malformed native membership before creating a Session or submitting input`
+- `DSH stop retains the native process until an actual exit event, including legacy lifecycle callers`
+- `DSH child errors cannot masquerade as physical cleanup and a later exit permits recovery`
+
 #### `packages/harness-dsh/test/dsh-context.test.ts`
 
 - `DSH selection maps Workspace membership and directory to one BMW Project while sharing its tabs across sessions`
+
+#### `packages/harness-dsh/test/dsh-events.test.ts`
+
+- `DSH pre-input admission uses the exact scoped model catalog and immutable Project identity`
+- `DSH durable events retain tool IDs and text without leaking image bytes or thinking`
+
+#### `packages/harness-dsh/test/dsh-legacy.test.ts`
+
+- `legacy display imports human/model text without context, summaries, private reasoning or pixels`
+- `cold DSH migration reads all backward pages at one cursor and preserves archived/parent identities`
+- `missing native bindings and pagination without progress fail instead of choosing another Session`
 
 #### `packages/harness-dsh/test/dsh-preset.test.ts`
 
@@ -306,6 +475,12 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `BMW Session Center lists only active sessions in its Project and searches content`
 - `BMW creates new DSH sessions with the browser-only preset`
 - `DSH prompt submission preserves exact input and returns every Assistant output in order`
+
+#### `packages/harness-dsh/test/dsh-settings.test.ts`
+
+- `Owned DSH credential migration detaches the legacy link and preserves the original provider file`
+- `A dangling legacy DSH credential link fails closed before official writes can follow it`
+- `DSH settings use official redacted control APIs and preserve exact model routes`
 
 #### `packages/harness-dsh/test/dsh-transport.test.ts`
 
@@ -331,11 +506,33 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 
 - `DSH Studio assembly preserves the prompt, sole tool and existing context while replacing stale selection`
 
+#### `packages/harness-qoder/test/qoder-backend.test.ts`
+
+- `Qoder releases UUID-stamped user input only after the effective catalog and binds provider resume identity`
+- `Qoder preflight failure closes its worker without consuming input or falling back to a new Session`
+- `Qoder cancellation retains failed native cleanup ownership and recovery never resubmits input`
+
+#### `packages/harness-qoder/test/qoder-events.test.ts`
+
+- `Qoder effective initialization rejects builtins, foreign MCP, inherited plugins and unsupported runtime`
+- `Qoder content blocks sharing a model message ID retain distinct tool/text identities and stream one reply`
+- `Qoder unexpected tools, unfinished calls and mismatched streaming prefixes fail closed`
+- `Qoder split MCP image result stays in the native context and cannot complete a foreign call twice`
+
+#### `packages/harness-qoder/test/qoder-settings.test.ts`
+
+- `Qoder settings discover the official models with no persistent session or released user input`
+- `Qoder selection checks the official model catalog and does not persist a disabled model`
+- `Unexpected Qoder model work in a settings control session fails before preference writes`
+- `Qoder preference commit waits for actual cleanup and a failed close retains recovery ownership`
+- `Qoder cold zero-turn login failure exposes login controls; execution results are still rejected`
+
 #### `packages/media-native/test/media-controller.test.ts`
 
 - `browser-native video capture filenames remain Project-local WebM artifacts`
 - `video chunk decoding ignores commas inside codec parameters`
 - `capture IPC admits only the current media main frame`
+- `Selected-video cancellation drains late initialization and removes only its new file`
 
 #### `packages/media-native/test/media-port.test.ts`
 
@@ -353,6 +550,19 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `Image drawing admits bounded primitives and rejects executable, outside, transparent-redaction and aggregate inputs`
 - `Drawing output IO has no input, bounds PNG writes and rolls back failed dimensions without changing existing images`
 
+#### `packages/media-native/test/speech.test.ts`
+
+- `Speech requests admit fixed models and Project artifacts, never executable, cache, language, prompt or CLI options`
+- `ASR parser preserves out-of-audio/overlapping boundaries and token probability without claiming word accuracy`
+- `Speech evidence rejects fabricated approval, foreign hashes, frame clocks and silently cleared warnings`
+- `Speech mapping uses actual source trim/rate, narration offset and cumulative film time without clamping hidden anchors`
+- `Speech normalization replies require actual bounded sample provenance`
+- `Normalized WAV outputs reject fake headers/sample counts and preserve original Project input`
+- `Speech subprocess cancellation waits for termination before rejecting and cannot leave a late output`
+- `Speech subprocess rejects bounded log overflow and version/runtime failures after child settlement`
+- `Speech fingerprints reject replaced artifacts even when an already-open descriptor still has the original bytes`
+- `Speech subprocess keeps UTF-8 log characters intact across raw pipe chunks`
+
 #### `packages/media-native/test/video-options.test.ts`
 
 - `video ratios map to bounded even landscape portrait and square resolutions`
@@ -369,6 +579,39 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `Visual segments admit bounded clips, preserve scene time and expose deterministic fade boundaries`
 - `SRT and VTT use global cumulative milliseconds, respect disabled captions and label estimated timing`
 - `Bounded Project text export cancels and removes its own output without replacing existing artifacts`
+- `Source focus retimes through trims and segments and keeps framing inside the original crop`
+- `Recording evidence has a closed clock/coordinate domain, filters pre-roll and groups real and Agent clicks honestly`
+- `Title-card reveal has bounded scene-local times, exact bullet identity and no footage; legacy bullets stay immediate`
+
+#### `packages/platform/test/agent-history-store.test.ts`
+
+- `display history survives restart, keeps bounded ordered streaming and cannot replace submission receipts`
+- `history never admits foreign, out-of-order or terminal-late events and preserves corrupt saved files`
+
+#### `packages/platform/test/agent-host.test.ts`
+
+- `Agent input and BMW Session appear before connection; failed catalog preflight never releases the prompt`
+- `provider terminal notification does not finish the receipt or release FIFO before browser drain`
+- `cancel waits for the active browser tool to drain and cancels queued input without sending it`
+- `cancelling another queued Session returns while the active Session keeps its browser resource`
+- `failed drain quarantines resources; recovery cleans up without replaying uncertain input`
+- `transport failure after acceptance keeps the delivery uncertain without inventing success or replay`
+- `late or duplicate tool callbacks fail the run rather than moving admission forward`
+- `a queued Session cannot execute in a different Project after selection changes`
+- `approval response requires the current Project, active run and an offered choice`
+- `provisional completion followed by provider failure never persists a finished receipt`
+- `failed native cleanup holds admission even after browser drain and recovery never replays input`
+- `late callbacks cannot resurrect an uncertain submission after its native transport settled`
+
+#### `packages/platform/test/agent-settings-controller.test.ts`
+
+- `Settings cancellation retains Host exclusion until actual cleanup and never exposes provider secret errors`
+- `Settings cleanup failure quarantines admission; recovery retries only cleanup`
+- `Model preferences survive Project selection writes and stay separate for every driver`
+
+#### `packages/platform/test/assistant-controller.test.ts`
+
+- `Assistant controls persist per-Project driver selection, reject foreign Sessions and exclude transitions during a turn`
 
 #### `packages/platform/test/bmw-catalog.test.ts`
 
@@ -387,6 +630,15 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `Valid legacy login configuration and encrypted cookies restore without rewriting files; missing files initialize safely`
 - `Encryption becoming available restores valid saved cookies before a background capture can replace them`
 - `Periodic login maintenance handles late decryption failure without an unhandled rejection or write`
+
+#### `packages/platform/test/conversation-store.test.ts`
+
+- `blank BMW Sessions are durable and visible before either external Agent starts`
+- `provider identities cannot silently rebind or cross Project ownership`
+- `legacy DSH imports preserve immutable Studio owner IDs and are idempotent`
+- `restart marks incomplete executions disconnected without replaying or losing their resume anchor`
+- `foreign, running and archived Sessions cannot be selected or reordered across their boundaries`
+- `unreadable saved indexes and a second stale writer never overwrite existing state`
 
 #### `packages/platform/test/driver-boundary.test.ts`
 
@@ -419,6 +671,15 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `layout setup is required once and defaults to the sidebar`
 - `floating DSH settings persist with bounded size and supported opacity`
 
+#### `packages/platform/test/legacy-conversation-migration.test.ts`
+
+- `legacy history/ownership/lineage/archive survive migration and repeated startup without fabricated input receipts`
+- `native read failure preserves the old owner and blocks only its input until explicit retry`
+- `crash between display-history commit and index completion finishes the original frozen import without overwriting it`
+- `native cleanup failure holds resource exclusion; recovery drains only and never reruns discovery or inputs`
+- `foreign or missing native records never replace the preserved saved Session`
+- `saved legacy source/binding mismatch blocks startup before interrupted-state recovery can write`
+
 #### `packages/platform/test/menu-policy.test.ts`
 
 - `builds safe webpage filenames and selects complete or single-file saves`
@@ -447,6 +708,15 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 
 - `an open Project Manager is re-raised after browser tab views change`
 
+#### `packages/platform/test/project-source-store.test.ts`
+
+- `Source text content deduplicates across URLs while acquisitions, missing dates and candidate confirmation remain independent`
+- `Concurrent source commits and cancellation after writing remove only current text outputs`
+- `Source corrupt state, mutated original text and symlinked artifacts fail closed without overwriting evidence`
+- `Closed source requests reject missing ranges, credentials, injected file receipts and fictional fact-check status`
+- `Current source media and proof hashes report missing/changed/linked/legacy evidence without rewriting acquisition history`
+- `Capture requests require a video selector and measured source evidence cannot cross the confirmed range or claim platform completeness`
+
 #### `packages/platform/test/project-store.test.ts`
 
 - `requires the first real Project name without leaving a default BMW Browser project`
@@ -472,6 +742,7 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `daily scheduled tasks use their IANA time zone and survive restart`
 - `scheduled task runs are project isolated, durable, and recover interruption`
 - `scheduler serializes due and manual Agent task execution`
+- `legacy schedules retain their DSH binding and unbound schedules require explicit repair`
 
 #### `packages/platform/test/session-continuity.test.ts`
 
@@ -491,6 +762,11 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `State read failures preserve the file and reject writes for all startup stores`
 - `Missing state initializes once and valid Project bindings and tasks survive reload`
 - `A failed layout reload blocks updates until explicit repair without overwriting its original bytes`
+
+#### `scripts/agent-assembly.test.ts`
+
+- `BMW composes all three official backends through the neutral Host contract without starting them`
+- `BMW default composition derives profiles from its overridden userData and rejects physical aliases`
 
 #### `scripts/test/module-boundary.test.ts`
 
@@ -512,3 +788,5 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `Studio cover changes remain affected-only while retaining native/runtime and safety checks`
 
 <!-- END GENERATED CAPABILITY AND TEST INVENTORY -->
+
+固定中文 ASR 资源准备、原始证据和可编辑锚点的当前行为见上文“原生中文语音证据运行端口”；用户核听采用记录和仍关闭的自动精度门见 [VERIFICATION.md](VERIFICATION.md#user-listened-whisper-base-adoption)。

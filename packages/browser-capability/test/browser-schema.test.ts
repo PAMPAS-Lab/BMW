@@ -16,3 +16,9 @@ test('returns only string tab ids', () => {
   assert.equal(targetTabId({ tabId: 'tab-1' }), 'tab-1')
   assert.equal(targetTabId({ tabId: 1 }), undefined)
 })
+
+
+test('body ranges bound selectors and exclusions and reject malformed scope rather than broadening it',()=>{
+  assert.equal(assertBrowserRequest({action:'observe',selector:'article',index:1,excludeSelectors:['.avatar','.recommended']}).selector,'article')
+  for(const action of ['observe','page.media.list'])for(const options of [{selector:''},{selector:42},{index:-1},{index:1.1},{excludeSelectors:['']},{excludeSelectors:Array(17).fill('aside')},{maxCharacters:Infinity}])assert.throws(()=>assertBrowserRequest({action,...options}),/selector|index|budget/)
+})

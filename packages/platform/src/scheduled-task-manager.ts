@@ -48,7 +48,7 @@ export class ScheduledTaskManager {
     }
   }
 
-  create(project: { id: string; sessionId?: string | null }, input: Record<string, unknown>): ScheduledTask {
+  create(project: { id: string; sessionId?: string | null; driverId?: string }, input: Record<string, unknown>): ScheduledTask {
     return this.store.create(project, input)
   }
 

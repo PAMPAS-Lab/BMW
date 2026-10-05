@@ -1,122 +1,104 @@
+import {Output,AppendOnlyStreamTarget,WebMOutputFormat,CanvasSource,MediaStreamAudioTrackSource,canEncodeVideo} from 'mediabunny'
+
 const bridge = window.bmwMedia
 const video = document.querySelector('#source') as HTMLVideoElement
-const canvas = document.querySelector('#output') as HTMLCanvasElement
 const viewer = document.querySelector('#viewer')
 const viewerTitle = document.querySelector('#viewer-title')
 const viewerMeta = document.querySelector('#viewer-meta')
 const viewerContent = document.querySelector('#viewer-content')
-let recordedStream
-let sourceStream
-let recorder
-let stopRender
-let chunkTail:Promise<void>=Promise.resolve()
-let startedAt
+let capture: {stop:()=>Promise<void>} | undefined
+let starting=false
+let pendingStop=false
 
-const shader = `
-struct VertexOutput { @builtin(position) position: vec4f, @location(0) uv: vec2f }
-@vertex fn vertexMain(@builtin(vertex_index) index: u32) -> VertexOutput {
-  var positions = array<vec2f, 3>(vec2f(-1.0, -1.0), vec2f(3.0, -1.0), vec2f(-1.0, 3.0));
-  var uvs = array<vec2f, 3>(vec2f(0.0, 1.0), vec2f(2.0, 1.0), vec2f(0.0, -1.0));
-  var output: VertexOutput;
-  output.position = vec4f(positions[index], 0.0, 1.0);
-  output.uv = uvs[index];
-  return output;
-}
-@group(0) @binding(0) var sourceSampler: sampler;
-@group(0) @binding(1) var sourceTexture: texture_external;
-@fragment fn fragmentMain(input: VertexOutput) -> @location(0) vec4f {
-  return textureSampleBaseClampToEdge(sourceTexture, sourceSampler, input.uv);
-}`
-
-async function createGpuPipeline(width, height, fps = 24) {
-  if (!navigator.gpu) return null
-  const adapter = await navigator.gpu.requestAdapter()
-  if (!adapter) return null
-  const device = await adapter.requestDevice()
-  const context = canvas.getContext('webgpu') as any
-  const format = navigator.gpu.getPreferredCanvasFormat()
-  canvas.width = width
-  canvas.height = height
-  context.configure({ device, format, alphaMode: 'opaque' })
-  const module = device.createShaderModule({ code: shader })
-  const pipeline = device.createRenderPipeline({
-    layout: 'auto',
-    vertex: { module, entryPoint: 'vertexMain' },
-    fragment: { module, entryPoint: 'fragmentMain', targets: [{ format }] },
-    primitive: { topology: 'triangle-list' }
-  })
-  const sampler = device.createSampler({ magFilter: 'linear', minFilter: 'linear' })
-  let cancelled = false
-  const render = () => {
-    if (cancelled || video.readyState < 2) return
-    const externalTexture = device.importExternalTexture({ source: video })
-    const bindGroup = device.createBindGroup({
-      layout: pipeline.getBindGroupLayout(0),
-      entries: [{ binding: 0, resource: sampler }, { binding: 1, resource: externalTexture }]
-    })
-    const encoder = device.createCommandEncoder()
-    const pass = encoder.beginRenderPass({
-      colorAttachments: [{ view: context.getCurrentTexture().createView(), clearValue: [0, 0, 0, 1], loadOp: 'clear', storeOp: 'store' }]
-    })
-    pass.setPipeline(pipeline)
-    pass.setBindGroup(0, bindGroup)
-    pass.draw(3)
-    pass.end()
-    device.queue.submit([encoder.finish()])
+// Capture the pixels inside the source-frame callback. A later timer must never
+// pair newly presented pixels with an earlier callback's capture timestamp.
+async function start(options:{fps?:number;width?:number;height?:number}) {
+  const stream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:{ideal:options.fps,max:options.fps}},audio:true})
+  let output:Output|undefined,frameHandle:number|undefined,timer:ReturnType<typeof setTimeout>|undefined
+  let stopping=false,tail:Promise<void>=Promise.resolve(),startedAt=0,sourceEpochMs:number|undefined
+  let errorMessage:string|undefined
+  const frameClock:{sourceEpochMs:number;outputSeconds:number}[]=[],pendingFrames=new Map<number,number>()
+  let frameClockTruncated=false
+  const surface=new OffscreenCanvas(1,1),context=surface.getContext('2d',{alpha:false})!
+  const cleanup=()=>{
+    if(timer!==undefined)clearTimeout(timer)
+    if(frameHandle!==undefined)video.cancelVideoFrameCallback(frameHandle)
+    stream.getTracks().forEach(track=>track.stop());video.srcObject=null;surface.width=0;surface.height=0
   }
-  // Static pages may deliver only one source frame, before this callback is installed.
-  // Draw the current frame immediately and keep emitting at the requested capture rate.
-  render()
-  const timer = setInterval(render, 1000 / fps)
-  return { stop: () => { cancelled = true; clearInterval(timer); device.destroy() }, stream: canvas.captureStream(fps), device }
-}
-
-async function start(options) {
-  sourceStream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: options.fps }, audio: true })
-  video.srcObject = sourceStream
-  await video.play()
-  const width = video.videoWidth || options.width
-  const height = video.videoHeight || options.height
-  let outputStream = sourceStream
-  let gpu = null
   try {
-    gpu = await createGpuPipeline(width, height, options.fps ?? 24)
-    if (gpu) {
-      const tracks = [...gpu.stream.getVideoTracks(), ...sourceStream.getAudioTracks()]
-      outputStream = new MediaStream(tracks)
-      stopRender = gpu.stop
+    const fps=options.fps??24
+    let width=0,height=0,firstFrameResolve:()=>void
+    const firstFrame=new Promise<void>(resolve=>{firstFrameResolve=resolve})
+    const observe=()=>{frameHandle=video.requestVideoFrameCallback((_now,metadata)=>{
+      if(stopping)return
+      if(!width){width=video.videoWidth||metadata.width;height=video.videoHeight||metadata.height;surface.width=width;surface.height=height}
+      context.drawImage(video,0,0,width,height)
+      sourceEpochMs=typeof metadata.captureTime==='number'&&Number.isFinite(metadata.captureTime)?performance.timeOrigin+metadata.captureTime:undefined
+      firstFrameResolve();observe()
+    })}
+    // Install before play: static pages can present their only initial frame here.
+    video.srcObject=stream;observe();await video.play()
+    let firstFrameTimer:ReturnType<typeof setTimeout>
+    try{await Promise.race([firstFrame,new Promise<never>((_resolve,reject)=>{firstFrameTimer=setTimeout(()=>reject(new Error('Recording source did not present a frame.')),5000)})])}finally{clearTimeout(firstFrameTimer!)}
+    if(!width||!height||!Number.isFinite(fps)||fps<1||fps>60)throw new Error('Invalid recording dimensions or frame rate.')
+    const codec=await canEncodeVideo('vp9',{width,height,frameRate:fps,bitrate:4_000_000})?'vp9':'vp8'
+    if(!(await canEncodeVideo(codec,{width,height,frameRate:fps,bitrate:4_000_000})))throw new Error('Native recording encoder unavailable.')
+    output=new Output({format:new WebMOutputFormat({appendOnly:true}),target:new AppendOnlyStreamTarget(new WritableStream<Uint8Array>({write(data){
+      for(let offset=0;offset<data.byteLength;offset+=1024*1024)bridge.chunk(data.slice(offset,offset+1024*1024).buffer)
+    }}))})
+    const encoded=new CanvasSource(surface,{codec,bitrate:4_000_000,latencyMode:'realtime',onEncodedPacket(packet){
+      const key=Math.round(packet.timestamp*1e6),epoch=pendingFrames.get(key);pendingFrames.delete(key)
+      if(epoch===undefined||frameClock.at(-1)?.sourceEpochMs===epoch)return
+      if(frameClock.length>=5000){frameClockTruncated=true;return}
+      frameClock.push({sourceEpochMs:epoch,outputSeconds:packet.timestamp})
+    }})
+    output.addVideoTrack(encoded,{frameRate:fps})
+    const audioTrack=stream.getAudioTracks()[0]
+    let audio:MediaStreamAudioTrackSource|undefined,audioOffset:number|undefined
+    if(audioTrack){audio=new MediaStreamAudioTrackSource(audioTrack,{codec:'opus',bitrate:128_000,transform:{process(sample){
+      audioOffset??=(performance.timeOrigin+performance.now()-startedAt)/1000-sample.timestamp
+      sample.setTimestamp(Math.max(0,sample.timestamp+audioOffset));return sample
+    }}});output.addAudioTrack(audio)}
+    startedAt=performance.timeOrigin+performance.now()
+    await output.start()
+    let lastTimestamp=-1
+    const tick=async()=>{
+      if(stopping)return
+      const timestamp=(performance.timeOrigin+performance.now()-startedAt)/1000
+      if(timestamp>lastTimestamp){
+        lastTimestamp=timestamp
+        // Bound pending encoder evidence; apply backpressure instead of silently
+        // dropping frames or assigning wall-clock estimates a measured label.
+        if(pendingFrames.size>=16)throw new Error('Recording encoder clock budget exceeded.')
+        const key=Math.round(timestamp*1e6)
+        if(sourceEpochMs!==undefined)pendingFrames.set(key,sourceEpochMs)
+        await encoded.add(timestamp,1/fps)
+      }
+      if(!stopping)timer=setTimeout(schedule,1000/fps)
     }
-  } catch (error) {
-    console.error('WebGPU media pipeline unavailable', error)
-  }
-  const candidates = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
-  const mimeType = candidates.find((candidate) => MediaRecorder.isTypeSupported(candidate)) || ''
-  recordedStream = outputStream
-  recorder = new MediaRecorder(outputStream, mimeType ? { mimeType, videoBitsPerSecond: 4_000_000 } : undefined)
-  chunkTail=Promise.resolve()
-  recorder.ondataavailable = (event) => {
-    if (event.data.size) chunkTail=chunkTail.then(async()=>{bridge.chunk(await event.data.arrayBuffer())})
-  }
-  recorder.onstop = async () => {
-    let errorMessage:string|undefined
-    try{await chunkTail}catch(error){errorMessage=error instanceof Error?error.message:String(error)}
-    recordedStream?.getTracks().forEach((track) => track.stop())
-    sourceStream?.getTracks().forEach((track) => track.stop())
-    recordedStream = null
-    video.srcObject = null
-    stopRender?.()
-    bridge.finished({ mimeType: recorder.mimeType, durationMs: Date.now() - startedAt, ...(errorMessage?{error:errorMessage}:{}) })
-    recorder = null
-    sourceStream = null
-  }
-  startedAt = Date.now()
-  recorder.start(1000)
-  bridge.state({ state: 'recording', gpu: Boolean(gpu), width, height, mimeType: recorder.mimeType })
+    const schedule=()=>{tail=tick().catch(error=>{errorMessage=error instanceof Error?error.message:String(error);void stop()})}
+    let stopPromise:Promise<void>|undefined
+    const stop=():Promise<void>=>{
+      if(stopPromise)return stopPromise
+      stopping=true;if(timer!==undefined)clearTimeout(timer)
+      const durationMs=performance.timeOrigin+performance.now()-startedAt
+      stopPromise=(async()=>{
+        try{await tail;await output!.finalize()}catch(error){errorMessage??=error instanceof Error?error.message:String(error);await output!.cancel().catch(()=>{})}
+        finally{cleanup();capture=undefined;bridge.finished({frameClock,frameClockTruncated,mimeType:'video/webm',durationMs,...(errorMessage?{error:errorMessage}:{})})}
+      })()
+      return stopPromise
+    }
+    if(audio)void audio.errorPromise.catch(error=>{errorMessage=error instanceof Error?error.message:String(error);void stop()})
+    capture={stop};stream.getVideoTracks()[0]?.addEventListener('ended',()=>{void stop()},{once:true})
+    schedule()
+    bridge.state({state:'recording',clock:{startedEpochMs:startedAt,width,height},gpu:false,width,height,mimeType:'video/webm'})
+    if(pendingStop)void stop()
+  }catch(error){cleanup();await output?.cancel().catch(()=>{});throw error}
 }
 
 bridge.onCommand((command) => {
-  if (command.type === 'start' && !recorder) start(command).catch((error) => bridge.state({ state: 'error', message: error.message }))
-  if (command.type === 'stop' && recorder && recorder.state !== 'inactive') recorder.stop()
+  if(command.type==='start'&&!capture&&!starting){starting=true;pendingStop=false;void start(command).catch(error=>bridge.state({state:'error',message:error.message})).finally(()=>{starting=false})}
+  if(command.type==='stop'){if(capture)void capture.stop();else if(starting)pendingStop=true}
   if (command.type === 'compare') compareImages(command)
     .then((result) => bridge.comparison({ requestId: command.requestId, result }))
     .catch((error) => bridge.comparison({ requestId: command.requestId, error: error.message }))

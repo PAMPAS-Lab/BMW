@@ -100,11 +100,17 @@ function ensureProductSettings(productHome, presetId) {
   writeAtomically(settingsPath, content)
 }
 
-export function prepareProductDshHome({ productHome, sourceHome = resolveDshHome(), presetId = 'bmw', presetSourceDirectory, workspacePath, workspaceTitle = 'BMW Project' }) {
+export function prepareProductDshHome({ productHome, sourceHome = resolveDshHome(), presetId = 'bmw', presetSourceDirectory, workspacePath, workspaceTitle = 'BMW Project',isolateCredentials=false }) {
   fs.mkdirSync(productHome, { recursive: true, mode: 0o700 })
   const sourceCredentials = path.join(sourceHome, '.credentials.yaml')
   const productCredentials = path.join(productHome, '.credentials.yaml')
-  if (fs.existsSync(sourceCredentials) && !fs.existsSync(productCredentials)) {
+  if(isolateCredentials){
+    // The new owned driver takes a private copy of the normal DSH credential
+    // provider file. Future official writes must never follow its legacy link.
+    const existing=fs.lstatSync(productCredentials,{throwIfNoEntry:false}),linked=existing?.isSymbolicLink()===true
+    const origin=linked?productCredentials:!existing&&fs.existsSync(sourceCredentials)?sourceCredentials:null
+    if(origin){const stat=fs.statSync(origin);if(!stat.isFile()||stat.size>1024*1024)throw new Error('DSH credential provider file exceeds its migration budget');writeAtomically(productCredentials,fs.readFileSync(origin));fs.chmodSync(productCredentials,0o600)}
+  }else if (fs.existsSync(sourceCredentials) && !fs.existsSync(productCredentials)) {
     fs.symlinkSync(sourceCredentials, productCredentials, 'file')
   }
   ensureProductSettings(productHome, presetId)

@@ -1,3 +1,4 @@
+import {assertPageScope} from './page-scope.js'
 import type {BrowserActionContext} from './browser-host.js'
 export type JsonSchema = Readonly<Record<string, unknown>>
 
@@ -62,7 +63,10 @@ export const BROWSER_CORE_ACTION_DEFINITIONS: readonly BrowserActionDefinition[]
   action('back', 'Navigate the target tab backward.'),
   action('forward', 'Navigate the target tab forward.'),
   action('reload', 'Reload the target tab.'),
-  action('observe', 'Read the target page structure and visible content.', {
+  action('observe', 'Read visible content in an optional selected body range; exclude recommendation/avatar/promotion selectors explicitly. Reports missing ranges and truncation without falling back to the whole page.', {
+    selector: { type: 'string' },
+    index: { type: 'number', description: 'Zero-based match when selector identifies multiple page elements.' },
+    excludeSelectors:{type:'array',maxItems:16,items:{type:'string',minLength:1,maxLength:500}},
     maxCharacters: { type: 'number' },
     mode: { type: 'string', enum: ['viewport', 'fullpage', 'background', 'observe'] }
   }),
@@ -87,7 +91,8 @@ export const BROWSER_CORE_ACTION_DEFINITIONS: readonly BrowserActionDefinition[]
   action('page.media.list', 'List downloadable images, video sources, posters, and observed media responses within a page or selected element.', {
     selector: { type: 'string' },
     index: { type: 'number', description: 'Zero-based match when selector identifies multiple page elements.' },
-    maxItems: { type: 'number', description: 'Maximum media items to return.' }
+    maxItems: { type: 'number', description: 'Maximum media items to return.' },
+    excludeSelectors:{type:'array',maxItems:16,items:{type:'string',minLength:1,maxLength:500}}
   }),
   action('page.viewport.set', 'Set the target page viewport.', {
     width: { type: 'number' },
@@ -138,8 +143,8 @@ export const BROWSER_CORE_ACTION_DEFINITIONS: readonly BrowserActionDefinition[]
   action('media.image.draw', 'Draw a diagram or illustration using native Canvas primitives. Requires width/height (integers 32..4096, at most 8 megapixels) and shapes. Background defaults white; none preserves transparency. Supports rect, ellipse, line, arrow, path, text and redact. Pixel coordinates, hex colors, default red stroke 4px; text default 24px with top-left anchor and wrapping. Shapes and text must fit. Saves a new Project PNG and returns it as a model image. No arbitrary code, SVG, HTML, paths or URLs.', {
     width:{type:'number'},height:{type:'number'},background:drawingFill,shapes:drawingShapes
   },['width','height','shapes']),
-  action('media.record.start', 'Start browser-native recording for the target tab.', { fps: { type: 'number' } }),
-  action('media.record.stop', 'Stop recording and save a Project-owned media artifact.'),
+  action('media.record.start', 'Start browser-native page recording with bounded page click/scroll/viewport events. Events use recording seconds and viewport CSS pixels; DPR and output mapping are saved in a Project sidecar. Programmatic Agent clicks are marked separately. Pause is unsupported; top-frame navigation continues. No input text or global keyboard capture.', { fps: { type: 'number' } }),
+  action('media.record.stop', 'Stop recording and save a Project-owned media artifact and event record. discard=true cancels and removes only this recording and sidecar.', {discard:{type:'boolean'}}),
   action('project.context', 'Read the active Project documents and metadata.'),
   action('project.memory.append', 'Append a provenance-stamped note to Project Memory.', {
     content: { type: 'string', description: 'Text to append to Project memory/tasks.' }
@@ -182,6 +187,7 @@ export function assertBrowserRequest(value: unknown, allowedActions: readonly st
   if (typeof request.action !== 'string' || !allowedActions.includes(request.action)) {
     throw new TypeError(`Unsupported browser action: ${String(request.action)}`)
   }
+  if(request.action==='observe'||request.action==='page.media.list')assertPageScope(request)
   return request as BrowserRequest
 }
 

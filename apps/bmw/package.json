@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@bmw-agent/agent-ui": "*",
+    "@bmw-agent/harness-codex": "*",
+    "@bmw-agent/harness-qoder": "*",
     "@bmw-agent/harness-dsh": "*",
     "@bmw-agent/platform": "*",
     "@bmw-agent/product-bmw": "*"

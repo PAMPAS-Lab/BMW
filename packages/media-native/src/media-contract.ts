@@ -13,9 +13,11 @@ export type MediaProcessRequest =
   | { action: 'media.inspect'; artifactId: string }
   | { action: 'media.frames.sample'; artifactId: string; timestampsSeconds: number[]; maxWidth: number; maxHeight: number }
   | { action: 'media.convert'; artifactId: string; outputFormat: 'mp4' | 'webm'; trimStartSeconds?: number; trimEndSeconds?: number; outputWidth?: number; outputHeight?: number }
-export type NativeProcessingRequest=MediaProcessRequest|{action:'media.encode.check';width:number;height:number;fps:number}
+export type NativeProcessingRequest=MediaProcessRequest|{action:'media.speech.normalize';artifactId:string}|{action:'media.decode.check';artifactId:string}|{action:'media.encode.check';width:number;height:number;fps:number}
 export function assertNativeProcessingRequest(raw:unknown):NativeProcessingRequest {
   const value=mediaRecord(raw)
+  if(value.action==='media.speech.normalize'){if(Object.keys(value).some(key=>!['action','artifactId'].includes(key)))throw new TypeError('Unsupported speech normalization property.');return {action:value.action,artifactId:assertArtifactId(value.artifactId)}}
+  if(value.action==='media.decode.check'){if(Object.keys(value).some(key=>!['action','artifactId'].includes(key)))throw new TypeError('Unsupported full decode property.');return {action:'media.decode.check',artifactId:assertArtifactId(value.artifactId)}}
   if(value.action==='media.encode.check'){
     if(Object.keys(value).some(key=>!['action','width','height','fps'].includes(key)))throw new TypeError('Unsupported encoding property.')
     const width=finiteNumber(value.width,'width',320,1920,true),height=finiteNumber(value.height,'height',180,1920,true),fps=finiteNumber(value.fps,'fps',12,30,true)
@@ -37,12 +39,26 @@ export interface MediaTrackInfo {
 export interface MediaInfo {
   container: string; contentType: string; durationSeconds: number; firstTimestampSeconds: number; tracks: MediaTrackInfo[]
 }
+export interface FullMediaDecode {kind:'decoding';completeFile:true;container:string;contentType:string;durationSeconds:number;firstTimestampSeconds:number;tracks:{id:number;type:'video'|'audio';codec:string;sampleCount:number;startSeconds:number;endSeconds:number}[]}
+export function assertFullMediaDecode(raw:unknown):FullMediaDecode {
+ const value=mediaRecord(raw)
+ if(value.kind!=='decoding'||value.completeFile!==true||typeof value.container!=='string'||value.container.length>80||typeof value.contentType!=='string'||value.contentType.length>200||!Array.isArray(value.tracks)||!value.tracks.length||value.tracks.length>16)throw new TypeError('Invalid full-file decode evidence.')
+ const duration=finiteNumber(value.durationSeconds,'decoded duration',.001,MEDIA_LIMITS.durationSeconds),first=finiteNumber(value.firstTimestampSeconds,'decoded first timestamp',-MEDIA_LIMITS.durationSeconds,MEDIA_LIMITS.durationSeconds),ids=new Set<number>()
+ for(const raw of value.tracks){const track=mediaRecord(raw),id=finiteNumber(track.id,'decoded track',0,Number.MAX_SAFE_INTEGER,true);if(ids.has(id)||!['video','audio'].includes(String(track.type))||typeof track.codec!=='string'||!track.codec||track.codec.length>100)throw new TypeError('Invalid decoded track.');ids.add(id)
+  finiteNumber(track.sampleCount,'decoded samples',1,track.type==='video'?120000:250000,true)
+  const start=finiteNumber(track.startSeconds,'decoded start',-MEDIA_LIMITS.durationSeconds,MEDIA_LIMITS.durationSeconds),end=finiteNumber(track.endSeconds,'decoded end',start+.000001,MEDIA_LIMITS.durationSeconds+first)
+  if(start<first-.25||end>first+duration+.25)throw new TypeError('Decoded samples exceed the file timeline.')
+ }
+ return value as unknown as FullMediaDecode
+}
 export interface SampledFrame {
   outputIndex: number; requestedTimestampSeconds: number; timestampSeconds: number; durationSeconds: number; width: number; height: number
 }
 export type MediaWorkerResult =
+  | {kind:'speech-pcm';info:import('./speech-contract.js').SpeechNormalization}
   | DrawingResult
   | {kind:'image';info:import('./image-contract.js').ImageInspection}
+  | {kind:'decoding';info:FullMediaDecode}
   | {kind:'encoding';info:EncodingInspection}
   | { kind: 'inspection'; info: MediaInfo }
   | { kind: 'frames'; frames: SampledFrame[] }
@@ -106,7 +122,17 @@ export function assertMediaProcessRequest(value: unknown): MediaProcessRequest {
 export function assertMediaWorkerResult(value: unknown, request: NativeProcessingRequest): MediaWorkerResult {
   const result = mediaRecord(value)
   if(request.action==='media.image.annotate'||request.action==='media.image.draw'){assertDrawingResult(result,request)}
+  else if(request.action==='media.speech.normalize'&&result.kind==='speech-pcm'){
+    const info=mediaRecord(result.info),frames=finiteNumber(info.frames,'speech samples',160,180*16000,true)
+    if(Object.keys(info).some(key=>!['kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix'].includes(key)))throw new TypeError('Unsupported speech normalization evidence.')
+    if(info.kind!=='speech-pcm'||info.sampleRate!==16000||info.channels!==1||info.sampleType!=='pcm-s16le'||info.downmix!=='channel-mean'||info.durationSeconds!==frames/16000)throw new TypeError('Invalid normalized speech metadata.')
+    finiteNumber(info.clippedSamples,'PCM saturation samples',0,frames,true)
+    finiteNumber(info.inputSampleRate,'speech input rate',8000,96000,true);finiteNumber(info.inputChannels,'speech input channels',1,8,true)
+    const start=finiteNumber(info.decodedStartSeconds,'speech decode start',0,180),end=finiteNumber(info.decodedEndSeconds,'speech decode end',start+.000001,180)
+    if(end>frames/16000+1/16000)throw new TypeError('Speech decode exceeds its sample timeline.')
+  }
   else if(request.action==='media.image.inspect'&&result.kind==='image'){assertImageInspection(result.info)}
+  else if(request.action==='media.decode.check'&&result.kind==='decoding')assertFullMediaDecode(result.info)
   else if(request.action==='media.encode.check'&&result.kind==='encoding'){
     const info=assertEncodingInspection(result.info)
     if(info.width!==request.width||info.height!==request.height||info.fps!==request.fps)throw new TypeError('Encoding reply dimensions mismatch.')
@@ -164,3 +190,5 @@ export function assertProcessableVideoTracks(tracks: readonly MediaTrackInfo[]):
     if ((track.width ?? 0) * (track.height ?? 0) > MEDIA_LIMITS.sourcePixels) throw new Error('Source video exceeds the decode resolution limit.')
   }
 }
+
+export function assertMediaInfo(raw:unknown):MediaInfo {const result=assertMediaWorkerResult({kind:'inspection',info:raw},{action:'media.inspect',artifactId:'inspection'});if(result.kind!=='inspection')throw new TypeError('Invalid media inspection.');return result.info}

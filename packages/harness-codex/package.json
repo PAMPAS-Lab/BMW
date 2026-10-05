@@ -1,0 +1,8 @@
+{
+  "name": "@bmw-agent/harness-codex",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": { "@bmw-agent/agent-contract": "*" },
+  "exports": { ".": "./index.js" }
+}

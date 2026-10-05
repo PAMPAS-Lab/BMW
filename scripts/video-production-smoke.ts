@@ -9,7 +9,7 @@ import { BrowserCapabilityRegistry } from '../packages/browser-capability/src/br
 import { createBridgeServer } from '../packages/browser-capability/src/bridge-server.js'
 import {GlobalSettingsStore} from '../packages/platform/src/global-settings-store.js'
 import product from '../apps/bmw/product.js'
-const temporary=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-video-smoke-'))
+const temporary=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'bmw-video-smoke-')))
 const project={id:'video-smoke',name:'Isolated video smoke',directory:path.join(temporary,'project')}, artifacts=path.join(project.directory,'artifacts')
 fs.mkdirSync(artifacts,{recursive:true}); fs.mkdirSync(path.join(temporary,'profile'));app.setPath('userData',path.join(temporary,'profile'))
 let window:BrowserWindow|undefined, bridge:Awaited<ReturnType<typeof createBridgeServer>>|undefined, cancel:AbortController|undefined
@@ -27,7 +27,7 @@ async function run():Promise<void>{
   const registration=await fetch(`${bridge.url}/session/register`,{method:'POST',headers,body:JSON.stringify({sessionId:'video-smoke',directory:project.directory})})
   const {binding}=await registration.json() as {binding:string}
   const execute=async(args:unknown)=>{const response=await fetch(`${bridge!.url}/execute`,{method:'POST',headers,body:JSON.stringify({binding,arguments:args})});const body=await response.json() as {error?:string;result:Record<string,unknown>;images:unknown[]};if(!response.ok)throw new Error(body.error);return body}
-  // Two static tab captures exercise fresh WebGPU renderers and multi-cluster WebM without seek indexes.
+  // Two static tab captures exercise fresh native encoders and multi-cluster WebM without seek indexes.
   media.configureDisplayMedia()
   let completed:((value:unknown)=>void)=()=>{}
   ipcMain.on('media-chunk',(event,data:ArrayBuffer)=>{if(media.ownsCaptureSender(event))media.acceptChunk(data)})

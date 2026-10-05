@@ -37,19 +37,38 @@ async function readJson(request: http.IncomingMessage): Promise<unknown> {
 }
 
 interface Project { id: string; directory: string }
-interface BridgeOptions { productId?: string; resolveProject?: (directory: string) => Project | undefined; activeProjectId?: () => string; toolDefinition?: unknown; sessionContext?:(sessionId:string,projectId:string)=>Promise<{text:string}>|{text:string} }
+interface BridgeOptions { productId?: string; resolveProject?: (directory: string) => Project | undefined; activeProjectId?: () => string; toolDefinition?: unknown; hostManagedSessions?: boolean; sessionContext?:(sessionId:string,projectId:string)=>Promise<{text:string}>|{text:string} }
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid browser bridge input')
   return value as Record<string, unknown>
 }
 
-export async function createBridgeServer(browserKernel: BrowserExecutor, { productId = 'bmw', resolveProject, activeProjectId, toolDefinition,sessionContext }: BridgeOptions = {}) {
+export async function createBridgeServer(browserKernel: BrowserExecutor, { productId = 'bmw', resolveProject, activeProjectId, toolDefinition,hostManagedSessions=false,sessionContext }: BridgeOptions = {}) {
   const token = crypto.randomBytes(32).toString('hex')
   const operations = new SessionOperations()
   const bindings = new Map<string, { project: Project; sessionId: string }>()
-  const activeCalls = new Set<AbortController>()
+  const activeCalls = new Map<AbortController, { binding: string; settled: Promise<unknown> }>()
+  const providerBindings = new Map<string, string>()
+  const providerKey = (driverId: string, sessionId: string, directory: string) => JSON.stringify([driverId,sessionId,directory])
   let closing = false
   let projectChanging = false
+  function register(sessionId: string, directory: string): string {
+    if (closing || projectChanging) throw new Error('BMW browser is changing or shutting down')
+    if (!sessionId || sessionId.length > 4096 || /[\u0000-\u001f\u007f]/u.test(sessionId)) throw new Error('Invalid Agent Session identity')
+    const project = resolveProject?.(directory)
+    if (!project) throw new Error('Agent Session does not belong to an active BMW Project')
+    const binding = crypto.randomBytes(32).toString('hex')
+    bindings.set(binding, { project: { ...project }, sessionId })
+    return binding
+  }
+  async function release(binding: string): Promise<void> {
+    // Revoke admission first, then wait for actual kernel/worker cleanup.
+    bindings.delete(binding)
+    for(const [key,value]of providerBindings)if(value===binding)providerBindings.delete(key)
+    const calls = [...activeCalls].filter(([, call]) => call.binding === binding)
+    for (const [controller] of calls) controller.abort(new Error('BMW_BROWSER_CANCELLED: Session released'))
+    await Promise.allSettled(calls.map(([, call]) => call.settled))
+  }
   const server = http.createServer(async (request, response) => {
     if (request.headers.authorization !== `Bearer ${token}`) {
       json(response, 401, { error: 'unauthorized' })
@@ -73,16 +92,20 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
       if (closing) throw new Error('BMW browser bridge is shutting down')
       if (request.url === '/session/register') {
         if (typeof input.sessionId !== 'string' || !input.sessionId || typeof input.directory !== 'string') throw new Error('Invalid Agent Session identity')
-        const project = resolveProject?.(input.directory)
-        if (!project) throw new Error('Agent Session does not belong to an active BMW Project')
-        const binding = crypto.randomBytes(32).toString('hex')
-        bindings.set(binding, { project, sessionId: input.sessionId })
+        let binding:string
+        if(hostManagedSessions){
+          if(typeof input.driverId!=='string')throw new Error('BMW driver identity is required')
+          const project=resolveProject?.(input.directory)
+          const admitted=project?providerBindings.get(providerKey(input.driverId,input.sessionId,project.directory)):undefined
+          if(!admitted||!bindings.has(admitted))throw new Error('Provider Session has no live BMW Host lease')
+          binding=admitted
+        }else binding=register(input.sessionId, input.directory)
         json(response, 200, { binding })
         return
       }
       if (typeof input.binding !== 'string') throw new Error('BMW browser requires a Session binding')
       if (request.url === '/session/release') {
-        bindings.delete(input.binding)
+        await release(input.binding)
         json(response, 200, { ok: true })
         return
       }
@@ -102,12 +125,12 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
       response.on('close', () => { disconnected = true; if (!response.writableEnded) cancellation.abort(new Error('Browser call cancelled.')) })
       const started = Date.now()
       const actionName = String(record(input.arguments).action || 'unknown')
-      activeCalls.add(cancellation)
-      const value = await operations.run(() => {
+      const work = operations.run(() => {
         if (closing || projectChanging || disconnected || bindings.get(binding) !== owner) throw new Error('BMW browser Session was released or cancelled')
         if (activeProjectId?.() !== owner.project.id) throw new Error('Activate the Session’s BMW Project before using browser')
       }, async () => {
         const result = await browserKernel.execute(input.arguments, { signal: cancellation.signal, sessionOwner:{projectId:owner.project.id,sessionId:owner.sessionId} })
+        if (cancellation.signal.aborted || bindings.get(binding) !== owner || closing || projectChanging || activeProjectId?.() !== owner.project.id) throw new Error('BMW_BROWSER_CANCELLED: Session changed before its browser result drained')
         const images: { type: 'image'; mimeType: 'image/png'; data: string }[] = []
         const action = record(input.arguments).action
         if (action === 'media.screenshot' || action === 'page.diagnostics' || action === 'media.frames.sample'||action==='media.image.annotate'||action==='media.image.draw') {
@@ -135,6 +158,8 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
         console.warn(`[BMW browser] ${actionName} failed after ${Date.now() - started}ms: ${error && typeof error === 'object' && 'code' in error ? String(error.code) : 'BROWSER_ACTION_FAILED'}`)
         throw error
       }).finally(() => activeCalls.delete(cancellation))
+      activeCalls.set(cancellation, { binding, settled: work })
+      const value = await work
       json(response, 200, { ok: true, ...value })
     } catch (caught) {
       const error = caught as ErrorWithCode
@@ -160,11 +185,22 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
       try { return await operation() } finally { projectChanging = false }
     },
     token,
+    /** Host-private lease API. Models only receive the browser schema. */
+    registerSession: register,
+    attachProviderSession(binding: string, driverId: string, sessionId: string): void {
+      const owner=bindings.get(binding)
+      if(closing||projectChanging||!owner||!/^[a-z0-9-]{1,64}$/u.test(driverId)||!sessionId||sessionId.length>4096)throw new Error('Invalid provider Session lease attachment')
+      const key=providerKey(driverId,sessionId,owner.project.directory),existing=providerBindings.get(key)
+      if(existing&&existing!==binding)throw new Error('Provider Session already owns another live BMW lease')
+      providerBindings.set(key,binding)
+    },
+    releaseSession: release,
     url: `http://127.0.0.1:${address.port}`,
     close: async () => {
       closing = true
       bindings.clear()
-      for (const call of activeCalls) call.abort(new Error('BMW_BROWSER_CANCELLED: bridge shutting down'))
+      providerBindings.clear()
+      for (const call of activeCalls.keys()) call.abort(new Error('BMW_BROWSER_CANCELLED: bridge shutting down'))
       await operations.drain()
       await new Promise<void>((resolve) => server.close(() => resolve()))
     }

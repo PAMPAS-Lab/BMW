@@ -1,3 +1,7 @@
+import crypto from 'node:crypto'
+import {assertSentenceAnchors,sentenceSuggestions,scriptSentences,speechCaptionCues,speechScene,assertStudioSpeechLinks,usesStudioSpeech} from '../src/studio-speech-contract.js'
+import {assertSpeechEvidence} from '../../media-native/src/speech-contract.js'
+import {LOCAL_ASR_MODELS,LOCAL_ASR_MODEL_REVISION} from '../../media-native/src/local-asr-assets.js'
 import {studioTimeline,studioSceneIndex} from '../src/studio-timeline.js'
 import {studioAssistantRequest,studioAssistantPrompt} from '../src/studio-assistant.js'
 import {assertStudioMode,assertStudioSelection,studioPromptContext} from '../src/studio-context.js'
@@ -307,7 +311,7 @@ test('Workbench timeline preserves cumulative fractional scene and segment bound
     draft.scenes.push(second);const model=studioTimeline(draft);assert.equal(model.duration,5.75)
     assert.deepEqual(model.clips.filter(clip=>clip.kind==='visual').map(clip=>[clip.start,clip.end]),[[2.5,3.75],[3.75,5.75]])
     assert.deepEqual(model.clips.filter(clip=>clip.kind==='caption').map(clip=>[clip.sceneIndex,clip.start,clip.end,clip.estimated]),[[1,2.75,4.25,false]])
-    assert.deepEqual(model.clips.filter(clip=>clip.kind==='voice').map(clip=>[clip.start,clip.end,clip.stale]),[[0,1.5,false]])
+    assert.deepEqual(model.clips.filter(clip=>clip.kind==='voice').map(clip=>[clip.start,clip.end,clip.stale]),[[.5,2,false]])
     for(const [time,index]of [[0,0],[2.499,0],[2.5,1],[5.75,1]] as const)assert.equal(studioSceneIndex(draft,time),index)
     first.narration='改稿';assert.equal(studioTimeline(draft).clips.find(clip=>clip.kind==='voice')!.stale,true)
   }finally{value.close()}
@@ -375,7 +379,7 @@ test('Studio pending narration keeps the admitted owner when caller identity cha
 
 test('Completed MP4 reuse survives cover/notes edits but invalidates changed composition, files and forged journals',async()=>{
   const value=fixture();try{
-    fs.writeFileSync(path.join(value.root,'artifacts','frame.png'),'source');let renders=0
+    fs.writeFileSync(path.join(value.root,'artifacts','frame.png'),'source');fs.writeFileSync(path.join(value.root,'artifacts','voice.wav'),'existing audio');let renders=0
     const service=new FixtureVideoStudioService({projectStore:{active:()=>({id:'p',name:'P',directory:value.root})},execute:async()=>({}),recordingController:{narrate:async()=>({}),processArtifact:async()=>({type:'image',contentType:'image/png',width:320,height:180,pixels:57600,bytes:6,frames:1}),compose:async()=>{const artifactId='final-'+(++renders)+'.mp4';fs.writeFileSync(path.join(value.root,'artifacts',artifactId),'completed');return {artifactId,durationSeconds:8}}}})
     let draft=sceneDraft(value.store,'Reuse');draft.scenes[0].imageArtifactId='frame.png';draft=value.store.update(draft.id,draft.revision,draft)
     // Journal admission is independently tested; initial render is provided a valid measured fixture.
@@ -386,7 +390,7 @@ test('Completed MP4 reuse survives cover/notes edits but invalidates changed com
     draft.cover={...draft.cover!,title:'独立封面'};draft.preparation.notes='Updated notes';draft=value.store.update(draft.id,draft.revision,draft)
     assert.equal(value.store.reusableExport(draft)?.artifactId,'first.mp4')
     const stable=structuredClone(draft)
-    for(const change of [(d:VideoDraft)=>{d.scenes[0].captions=[{startSeconds:0,endSeconds:1,text:'changed'}]},(d:VideoDraft)=>{d.width=640},(d:VideoDraft)=>{d.scenes[0].durationSeconds=9}]){const changed=structuredClone(stable);change(changed);assert.equal(value.store.reusableExport(changed),undefined)}
+    for(const change of [(d:VideoDraft)=>{d.scenes[0].focusIntervals=[{startSeconds:1,endSeconds:3,x:.5,y:.5,zoom:2,emphasize:false}]},(d:VideoDraft)=>{d.scenes[0].audioArtifactId='voice.wav';d.scenes[0].audioText='';d.scenes[0].audioDurationSeconds=1},(d:VideoDraft)=>{d.scenes[0].crop={x:0,y:0,width:.5,height:.5}},(d:VideoDraft)=>{d.scenes[0].captions=[{startSeconds:0,endSeconds:1,text:'changed'}]},(d:VideoDraft)=>{d.width=640},(d:VideoDraft)=>{d.scenes[0].durationSeconds=9}]){const changed=structuredClone(stable);change(changed);assert.equal(value.store.reusableExport(changed),undefined)}
     const forged=structuredClone(draft);forged.exports[0].fingerprint='a'.repeat(64);draft=value.store.update(draft.id,draft.revision,forged);assert.notEqual(draft.exports[0].fingerprint,'a'.repeat(64));assert.ok(value.store.reusableExport(draft))
     fs.writeFileSync(path.join(value.root,'artifacts','report.json'),'changed report');assert.equal(value.store.reusableExport(draft),undefined)
     draft=value.store.addExport(draft.id,draft.revision,{artifactId:'first.mp4',durationSeconds:8});assert.ok(value.store.reusableExport(draft))
@@ -396,5 +400,153 @@ test('Completed MP4 reuse survives cover/notes edits but invalidates changed com
     assert.throws(()=>assertStudioRequest({operation:'render',forceRender:'yes'}),/boolean/);assert.throws(()=>assertStudioRequest({operation:'read',forceRender:true}),/render/)
     assert.equal(assertStudioRequest({operation:'render',forceRender:true}).forceRender,true)
     await assert.rejects(service.execute({operation:'render',draftId:draft.id,expectedRevision:draft.revision-1}),/STUDIO_CONFLICT/)
+  }finally{value.close()}
+})
+
+test('Focus suggestions admit only Project recordings at the owning revision and never overwrite manual focus or speech',async()=>{
+ const value=fixture();try{
+  let draft=sceneDraft(value.store,'焦点');Object.assign(draft.scenes[0],{videoArtifactId:'record.webm',sourceDurationSeconds:20,narration:'旁白',audioArtifactId:'voice.wav',audioText:'旁白',audioDurationSeconds:2,focusIntervals:[{startSeconds:5,endSeconds:7,x:.5,y:.5,zoom:2,emphasize:false}]});draft=value.store.update(draft.id,1,draft)
+  const service=new FixtureVideoStudioService({projectStore:{active:()=>({id:'p',name:'P',directory:value.root})},execute:async()=>({}),recordingController:{narrate:async()=>{throw new Error('must not narrate')},compose:async()=>({}),processArtifact:async()=>({})}})
+  const request={operation:'suggest-focus',draftId:draft.id,expectedRevision:draft.revision,sceneId:draft.scenes[0].id}
+  await assert.rejects(service.execute(request),/自动建议不可用/)
+  const record={version:1,artifactId:'record.webm',timeDomain:'recording-seconds',coordinateDomain:'viewport-css-pixels',mapping:'viewport-to-output',clock:{startedEpochMs:100000,width:1600,height:800},durationSeconds:8,sampleIntervalMs:100,pausePolicy:'unsupported',navigationPolicy:'continue',truncated:false,stopReason:'requested',frameClock:[{sourceEpochMs:101020,outputSeconds:1}],frameClockTruncated:false,events:[{pageSeconds:.98,timing:'measured-frame',kind:'click',source:'page-event',seconds:1,x:400,y:200,viewportWidth:800,viewportHeight:400,surfaceWidth:800,surfaceHeight:400,dpr:2,scrollX:0,scrollY:0}]}
+  fs.writeFileSync(path.join(value.root,'artifacts','record.webm.events.json'),JSON.stringify(record))
+  const result=await service.execute(request) as {focusIntervals:{startSeconds:number}[]};assert.equal(result.focusIntervals.length,1);assert.deepEqual(value.store.read(draft.id),draft)
+  const clips=studioTimeline(draft).clips.filter(clip=>clip.kind==='focus');assert.equal(clips[0].start,5);assert.equal(clips[0].end,7)
+  draft.scenes[0].focusIntervals![0].zoom=1.2;draft=value.store.update(draft.id,draft.revision,draft);assert.equal(sceneCoverage(draft.scenes[0],draft.tts).audioStale,false)
+  await assert.rejects(service.execute(request),/STUDIO_CONFLICT/)
+  fs.writeFileSync(path.join(value.root,'artifacts','record.webm.events.json'),JSON.stringify({...record,artifactId:'foreign.webm'}));await assert.rejects(service.execute({...request,expectedRevision:draft.revision}),/another video/)
+  fs.rmSync(path.join(value.root,'artifacts','record.webm.events.json'));fs.symlinkSync('/etc/hosts',path.join(value.root,'artifacts','record.webm.events.json'));await assert.rejects(service.execute({...request,expectedRevision:draft.revision}),/自动建议不可用/)
+ }finally{value.close()}
+})
+
+const speechHash=(data:string|Uint8Array)=>crypto.createHash('sha256').update(data).digest('hex')
+function speechFixture(){
+ const f=fixture();f.root=fs.realpathSync(f.root);const directory=path.join(f.root,'artifacts');fs.writeFileSync(path.join(directory,'voice.wav'),'original voice');let draft=sceneDraft(f.store,'句锚点');Object.assign(draft.scenes[0],{narration:'第一句。第二句！',audioArtifactId:'voice.wav',audioText:'第一句。第二句！',audioDurationSeconds:3,bullets:['要点']});draft=f.store.update(draft.id,draft.revision,draft,true)
+ const kernel:StudioKernel={projectStore:{active:()=>({id:'speech-project',name:'P',directory:f.root})},execute:async()=>({}),recordingController:{narrate:async()=>{throw new Error('No synthesis in contract fixture.')},compose:async()=>({}),processArtifact:async()=>({durationSeconds:3,tracks:[{type:'audio',canDecode:true}]})}}
+ const service=new VideoStudioService(kernel),owner={projectId:'speech-project',sessionId:'fixture-session'}
+ const request=(operation:string,current=draft)=>({operation,draftId:current.id,expectedRevision:current.revision,sceneId:current.scenes[0].id})
+ const anchors=[{id:'first',scriptStart:0,scriptEnd:4,startSeconds:.1,endSeconds:1},{id:'second',scriptStart:4,scriptEnd:8,startSeconds:1.3,endSeconds:2.8}]
+ return {...f,directory,kernel,service,owner,draft,request,anchors}
+}
+function speechFixtureEvidence(directory:string,script:string){
+ const token=crypto.randomUUID(),rawArtifactId='speech-'+token+'-raw.json',logArtifactId='speech-'+token+'-log.json',normalizedArtifactId='media-'+crypto.randomUUID()+'-speech.wav'
+ for(const id of [rawArtifactId,logArtifactId,normalizedArtifactId])fs.writeFileSync(path.join(directory,id),'new '+id)
+ return assertSpeechEvidence({kind:'speech-evidence',provider:'whisper.cpp',engineVersion:'1.9.1',model:'base',modelRevision:LOCAL_ASR_MODEL_REVISION,modelSha256:LOCAL_ASR_MODELS.base.sha256,engineSha256:'a'.repeat(64),sourceArtifactId:'voice.wav',sourceSha256:speechHash(fs.readFileSync(path.join(directory,'voice.wav'))),normalizedArtifactId,normalizedSha256:speechHash(fs.readFileSync(path.join(directory,normalizedArtifactId))),rawArtifactId,rawSha256:speechHash(fs.readFileSync(path.join(directory,rawArtifactId))),logArtifactId,logSha256:speechHash(fs.readFileSync(path.join(directory,logArtifactId))),sampleRate:16000,channels:1,sampleType:'pcm-s16le',downmix:'channel-mean',timeDomain:'audio-file-seconds',durationSeconds:3,elapsedSeconds:1,createdAt:new Date().toISOString(),normalization:{kind:'speech-pcm',sampleRate:16000,channels:1,sampleType:'pcm-s16le',frames:48000,durationSeconds:3,inputSampleRate:48000,inputChannels:1,decodedStartSeconds:0,decodedEndSeconds:3,clippedSamples:0,downmix:'channel-mean'},segments:[{id:'segment-1',text:script,startSeconds:0,endSeconds:3,tokenMeanProbability:.9,usable:true,warnings:[]}],automaticTimingApproved:false,wordTimingAvailable:false})
+}
+test('Sentence spans reject overlap/forgery/Unicode splits and ASR paragraphs are not divided into invented sentence times',()=>{
+ assert.equal(scriptSentences('数字 3.5，先说一句。然后说第二句！').length,2)
+ assert.throws(()=>assertSentenceAnchors([{id:'a',scriptStart:0,scriptEnd:1,startSeconds:0,endSeconds:1}],'😀'),/Unicode/)
+ assert.throws(()=>assertSentenceAnchors([{id:'a',scriptStart:0,scriptEnd:4,startSeconds:0,endSeconds:2},{id:'b',scriptStart:4,scriptEnd:8,startSeconds:1,endSeconds:3}],'第一句。第二句！'),/anchor start/)
+ assert.throws(()=>assertStudioRequest({operation:'correct-speech',draftId:'draft',expectedRevision:1,sceneId:'scene',anchors:[],origin:'user-edited'}),/Unsupported/)
+ const f=speechFixture();try{const evidence=speechFixtureEvidence(f.directory,f.draft.scenes[0].narration);assert.deepEqual(sentenceSuggestions(f.draft.scenes[0].narration,evidence),[]);evidence.segments[0].text='第一句。';assert.equal(sentenceSuggestions(f.draft.scenes[0].narration,evidence).length,1);evidence.segments[0].usable=false;assert.deepEqual(sentenceSuggestions(f.draft.scenes[0].narration,evidence),[])}finally{f.close()}
+})
+test('Host sentence correction binds actual hashes and trusted actor; ordinary draft updates cannot replace it',async()=>{
+ const f=speechFixture();try{
+  const result=await f.service.execute({...f.request('correct-speech'),anchors:f.anchors},undefined,f.owner,'user') as {draft:VideoDraft};let draft=result.draft,scene=draft.scenes[0];assert.equal(scene.speechAnchors!.origin,'user-edited');assert.equal(scene.speechAnchors!.scriptSha256,speechHash(scene.narration));assert.equal(scene.speechAnchors!.audioSha256,speechHash('original voice'));assert.equal(scene.speechAnchors!.durationSeconds,3)
+  const saved=structuredClone(scene.speechAnchors);scene.speechAnchors!.origin='agent-edited';scene.speechAnchors!.anchors[0].startSeconds=.2;draft=f.store.update(draft.id,draft.revision,draft);assert.deepEqual(draft.scenes[0].speechAnchors,saved)
+  draft.scenes[0].speechAnchors=undefined;draft=f.store.update(draft.id,draft.revision,draft);assert.deepEqual(draft.scenes[0].speechAnchors,saved)
+  const agent=await f.service.execute({...f.request('correct-speech',draft),anchors:f.anchors},undefined,f.owner) as {draft:VideoDraft};assert.equal(agent.draft.scenes[0].speechAnchors!.origin,'agent-edited')
+  await assert.rejects(f.service.execute({...f.request('correct-speech',agent.draft),anchors:f.anchors},undefined,{...f.owner,sessionId:'foreign'}),/SESSION_MISMATCH/)
+  await assert.rejects(f.service.execute({...f.request('correct-speech',agent.draft),anchors:[{...f.anchors[0],endSeconds:3.01}]},undefined,f.owner),/anchor end/)
+ }finally{f.close()}
+})
+test('Speech evidence success/rerun preserves correction; cancelled or conflicting recognition rolls back only new outputs',async()=>{
+ const f=speechFixture();try{
+  let draft=(await f.service.execute({...f.request('correct-speech'),anchors:f.anchors},undefined,f.owner,'user') as {draft:VideoDraft}).draft
+  let callback:()=>void=()=>{},cancel:AbortController|undefined
+  f.kernel.recordingController.processArtifact=async raw=>{const r=raw as {action:string};if(r.action!=='media.speech.align')return {durationSeconds:3,tracks:[{type:'audio',canDecode:true}]};const evidence=speechFixtureEvidence(f.directory,draft.scenes[0].narration);callback();return evidence}
+  for(let i=0;i<2;i++){const result=await f.service.execute({...f.request('align-speech',draft),speechModel:'base'},undefined,f.owner) as {draft:VideoDraft;manualEditsPreserved:boolean};assert.equal(result.manualEditsPreserved,true);assert.deepEqual(result.draft.scenes[0].speechAnchors,draft.scenes[0].speechAnchors);draft=result.draft}
+  const read=await f.service.execute(f.request('read-speech',draft),undefined,f.owner) as {suggestions:unknown[];stale:boolean};assert.equal(read.stale,false);assert.deepEqual(read.suggestions,[])
+  const before=fs.readdirSync(f.directory).sort(),manual=structuredClone(draft.scenes[0].speechAnchors)
+  callback=()=>{const d=f.store.read(draft.id);d.title='concurrent';f.store.update(d.id,d.revision,d)}
+  await assert.rejects(f.service.execute(f.request('align-speech',draft),undefined,f.owner),/STUDIO_CONFLICT/);assert.deepEqual(fs.readdirSync(f.directory).sort(),before);assert.deepEqual(f.store.read(draft.id).scenes[0].speechAnchors,manual)
+  draft=f.store.read(draft.id);cancel=new AbortController();callback=()=>cancel!.abort(new Error('cancel recognition'))
+  await assert.rejects(f.service.execute(f.request('align-speech',draft),cancel.signal,f.owner),/cancel recognition/);assert.deepEqual(fs.readdirSync(f.directory).sort(),before);assert.deepEqual(f.store.read(draft.id).scenes[0].speechAnchors,manual)
+  callback=()=>{};fs.writeFileSync(path.join(f.directory,'voice.wav'),'replaced voice');assert.equal((await f.service.execute(f.request('read-speech',draft),undefined,f.owner) as {stale:boolean}).stale,true)
+ }finally{f.close()}
+})
+test('Anchored captions share voice offset and cumulative film time; independent edits remain and file/script changes fail closed',async()=>{
+ const f=speechFixture();try{
+  let draft=(await f.service.execute({...f.request('correct-speech'),anchors:f.anchors},undefined,f.owner,'user') as {draft:VideoDraft}).draft
+  const other={...newStudioScene('other'),bullets:['前导'],durationSeconds:2,captions:[{startSeconds:0,endSeconds:1,text:'前导字幕'}]};draft.scenes.unshift(other);draft.scenes[1].speechCaptions=true;draft=f.store.update(draft.id,draft.revision,draft)
+  assert.deepEqual(speechCaptionCues(draft.scenes[1]).map(c=>[c.startSeconds,c.endSeconds]),[[.6,1.5],[1.8,3.3]])
+  assert.deepEqual(draftComposition(draft).scenes[1].captions,speechCaptionCues(draft.scenes[1]));const timeline=studioTimeline(draft).clips.filter(c=>c.kind==='caption'&&c.sceneIndex===1);assert.equal(timeline[0].start,2.6);assert.equal(timeline[0].estimated,false)
+  for(const captionFormat of ['srt','vtt']){const output=await f.service.execute({operation:'export-captions',draftId:draft.id,expectedRevision:draft.revision,captionFormat},undefined,f.owner) as {artifactId:string;provenanceArtifactId:string;sentenceTiming:string};const text=fs.readFileSync(path.join(f.directory,output.artifactId),'utf8');assert.match(text,captionFormat==='srt'?/00:00:02,600 --> 00:00:03,500/:/00:00:02\.600 --> 00:00:03\.500/);const proof=JSON.parse(fs.readFileSync(path.join(f.directory,output.provenanceArtifactId),'utf8'));assert.equal(proof.scenes[1].origin,'user-edited');assert.equal(proof.scenes[1].filmStartSeconds,2);assert.equal(proof.wordTimingAvailable,false)}
+  draft.scenes[1].narration='改写第一句。第二句！';draft=f.store.update(draft.id,draft.revision,draft);assert.equal(draftReadiness(draft).issues.some(i=>i.code==='speech-anchors'),true);await assert.rejects(f.service.execute({operation:'export-captions',draftId:draft.id,expectedRevision:draft.revision,captionFormat:'srt'},undefined,f.owner),/SPEECH_STALE/)
+  draft.scenes[1].captions=[{startSeconds:1,endSeconds:2,text:'独立字幕'}];draft=f.store.update(draft.id,draft.revision,draft);const independent=await f.service.execute({operation:'export-captions',draftId:draft.id,expectedRevision:draft.revision,captionFormat:'srt'},undefined,f.owner) as {artifactId:string};assert.match(fs.readFileSync(path.join(f.directory,independent.artifactId),'utf8'),/独立字幕/)
+  draft.scenes[1].narration='第一句。第二句！';delete draft.scenes[1].captions;draft=f.store.update(draft.id,draft.revision,draft);fs.writeFileSync(path.join(f.directory,'voice.wav'),'mutated');const before=fs.readdirSync(f.directory).sort();await assert.rejects(f.service.execute({operation:'export-captions',draftId:draft.id,expectedRevision:draft.revision,captionFormat:'vtt'},undefined,f.owner),/旁白文件已变化/);assert.deepEqual(fs.readdirSync(f.directory).sort(),before)
+ }finally{f.close()}
+})
+
+test('Anchored render rechecks the audio after encode and rolls back only newly created MP4/report on late replacement',async()=>{
+ const f=speechFixture();try{
+  let draft=(await f.service.execute({...f.request('correct-speech'),anchors:f.anchors},undefined,f.owner) as {draft:VideoDraft}).draft;draft.scenes[0].speechCaptions=true;draft=f.store.update(draft.id,draft.revision,draft)
+  fs.writeFileSync(path.join(f.directory,'old.mp4'),'old movie')
+  f.kernel.recordingController.processArtifact=async raw=>{const r=raw as {action:string;width:number;height:number;fps:number};if(r.action==='media.encode.check')return {kind:'encoding',width:r.width,height:r.height,fps:r.fps,videoCodec:'avc',audioCodec:'aac',videoSupported:true,audioSupported:true};return {durationSeconds:3,tracks:[{type:'audio',canDecode:true}]}}
+  f.kernel.recordingController.compose=async()=>{fs.writeFileSync(path.join(f.directory,'new.mp4'),'new movie');fs.writeFileSync(path.join(f.directory,'new-report.json'),'new report');fs.writeFileSync(path.join(f.directory,'voice.wav'),'replaced during encode');return {artifactId:'new.mp4',verificationArtifactId:'new-report.json',durationSeconds:8}}
+  const before=fs.readdirSync(f.directory).sort();await assert.rejects(f.service.execute({operation:'render',draftId:draft.id,expectedRevision:draft.revision},undefined,f.owner),/旁白文件已变化/);assert.deepEqual(fs.readdirSync(f.directory).sort(),before);assert.equal(fs.readFileSync(path.join(f.directory,'old.mp4'),'utf8'),'old movie');assert.deepEqual(f.store.read(draft.id).scenes[0].speechAnchors,draft.scenes[0].speechAnchors);assert.equal(f.store.read(draft.id).exports.length,0)
+ }finally{f.close()}
+})
+
+test('Speech links preserve target identity, map trimmed/rated segmented focus, and reject orphan, crop, overlap and boundary changes',async()=>{
+ const f=speechFixture();try{
+  const draft=(await f.service.execute({...f.request('correct-speech'),anchors:f.anchors},undefined,f.owner,'user') as {draft:VideoDraft}).draft,scene=draft.scenes[0]
+  scene.videoArtifactId='recording.mp4';scene.sourceStartSeconds=3;scene.playbackRate=2;scene.sourceDurationSeconds=30
+  scene.focusIntervals=[{startSeconds:0,endSeconds:1,x:.5,y:.5,zoom:1.5,emphasize:false}]
+  scene.speechLinks={bullets:[],focus:[{anchorId:f.anchors[0].id,visualIndex:0,artifactId:'recording.mp4',x:.6,y:.4,zoom:2,emphasize:true}]}
+  const before=structuredClone(scene),resolved=speechScene(scene);assert.deepEqual(scene,before,'Projection never mutates persisted references or independent focus')
+  assert.deepEqual(resolved.focusIntervals?.map(v=>[v.startSeconds,v.endSeconds]),[[0,1],[4.2,6]])
+  assert.deepEqual(draftComposition(draft).scenes[0].focusIntervals,resolved.focusIntervals);assert.equal(sceneCoverage(scene,draft.tts).audioStale,false)
+  const timeline=studioTimeline(draft).clips;assert.ok(Math.abs(timeline.find(c=>c.kind==='focus'&&c.origin==='用户编辑')!.start-.6)<1e-9);assert.equal(timeline.find(c=>c.kind==='voice')?.start,.5)
+  scene.videoArtifactId='replacement.mp4';assert.throws(()=>speechScene(scene),/REFERENCE/);scene.videoArtifactId='recording.mp4'
+  scene.crop={x:0,y:0,width:.5,height:.5};assert.throws(()=>speechScene(scene),/裁切之外/);delete scene.crop
+  scene.focusIntervals=[{startSeconds:4,endSeconds:5,x:.5,y:.5,zoom:1.5,emphasize:false}];assert.throws(()=>speechScene(scene),/STUDIO_SPEECH_FOCUS/);delete scene.focusIntervals
+  scene.speechLinks.focus[0].anchorId='removed';assert.throws(()=>speechScene(scene),/句锚点已删除/);scene.speechLinks.focus[0].anchorId=f.anchors[1].id
+  delete scene.videoArtifactId;scene.visualSegments=[{durationSeconds:2,imageArtifactId:'first.png',sourceStartSeconds:0,playbackRate:1,zoom:1,transition:'cut',transitionSeconds:.2},{durationSeconds:6,videoArtifactId:'recording.mp4',sourceStartSeconds:4,playbackRate:.5,sourceDurationSeconds:30,zoom:1,transition:'cut',transitionSeconds:.2}]
+  scene.speechLinks.focus[0].visualIndex=1;assert.throws(()=>speechScene(scene),/跨越画面边界/)
+  scene.speechAnchors!.anchors[1].startSeconds=2;scene.speechAnchors!.anchors[1].endSeconds=3
+  assert.deepEqual(speechScene(scene).visualSegments![1].focusIntervals?.map(v=>[v.startSeconds,v.endSeconds]),[[4.25,4.75]])
+  scene.speechLinks.focus[0].visualIndex=7;assert.throws(()=>speechScene(scene),/片段已移除/)
+  assert.throws(()=>assertStudioSpeechLinks({bullets:[],focus:[{...before.speechLinks!.focus[0],path:'/private/file'}]}),/Unsupported/)
+  assert.throws(()=>assertStudioSpeechLinks({bullets:[],focus:[before.speechLinks!.focus[0],before.speechLinks!.focus[0]]}),/duplicate/)
+ }finally{f.close()}
+})
+test('Title-card reveal links preserve static rows and independent captions; changed bullets and forged raw times cannot be adopted',async()=>{
+ const f=speechFixture();try{
+  const draft=(await f.service.execute({...f.request('correct-speech'),anchors:f.anchors},undefined,f.owner,'user') as {draft:VideoDraft}).draft,scene=draft.scenes[0]
+  scene.bullets=['第一步','始终可见','第二步'];scene.captions=[{startSeconds:0,endSeconds:1,text:'独立字幕'}];scene.speechCaptions=true
+  scene.speechLinks={focus:[],bullets:[{bulletIndex:0,text:'第一步',anchorId:f.anchors[0].id},{bulletIndex:2,text:'第二步',anchorId:f.anchors[1].id}]}
+  const projected=speechScene(scene);assert.deepEqual(projected.bulletRevealSeconds,[.6,0,1.8]);assert.deepEqual(projected.captions,scene.captions);assert.equal(usesStudioSpeech(scene),true)
+  assert.deepEqual(draftComposition(draft).scenes[0].bulletRevealSeconds,[.6,0,1.8]);assert.equal(studioTimeline(draft).clips.filter(c=>c.kind==='reveal').length,2)
+  scene.bullets[0]='改写第一步';assert.throws(()=>speechScene(scene),/板书条目已修改/);assert.equal(draftReadiness(draft).issues.some(i=>i.code==='speech-anchors'),true);scene.bullets[0]='第一步'
+  scene.imageArtifactId='board.png';assert.throws(()=>speechScene(scene),/标题卡/);delete scene.imageArtifactId
+  assert.throws(()=>assertVideoDraft({...draft,scenes:[{...scene,bulletRevealSeconds:[0,0,0]}]}),/Unsupported Studio/)
+  assert.throws(()=>assertStudioSpeechLinks({bullets:[scene.speechLinks.bullets[0],scene.speechLinks.bullets[0]],focus:[]}),/duplicate/)
+ }finally{f.close()}
+})
+test('Focus-only anchor consumption verifies actual audio hashes and exports truthful receipts; editable links support CAS undo without rewriting host anchors',async()=>{
+ const f=speechFixture();try{
+  let draft=(await f.service.execute({...f.request('correct-speech'),anchors:f.anchors},undefined,f.owner,'user') as {draft:VideoDraft}).draft
+  draft.scenes[0].imageArtifactId='board.png';draft.scenes[0].captions=[{startSeconds:0,endSeconds:1,text:'独立'}]
+  const anchor=structuredClone(draft.scenes[0].speechAnchors),snapshot=structuredClone(draft)
+  draft.scenes[0].speechLinks={bullets:[],focus:[{anchorId:f.anchors[0].id,visualIndex:0,artifactId:'board.png',x:.5,y:.5,zoom:2,emphasize:true}]};draft=f.store.update(draft.id,draft.revision,draft)
+  assert.deepEqual(draft.scenes[0].speechAnchors,anchor);assert.throws(()=>f.store.update(draft.id,draft.revision-1,snapshot),/STUDIO_CONFLICT/)
+  const receipt=await f.service.execute({operation:'export-captions',draftId:draft.id,expectedRevision:draft.revision,captionFormat:'vtt'},undefined,f.owner) as {artifactId:string;provenanceArtifactId:string}
+  const proof=JSON.parse(fs.readFileSync(path.join(f.directory,receipt.provenanceArtifactId),'utf8'));assert.equal(proof.scenes[0].origin,'independently-edited');assert.equal(proof.scenes[0].binding.origin,'user-edited');assert.equal(proof.scenes[0].focus[0][0].startSeconds,.6);assert.equal(proof.scenes[0].links.focus[0].artifactId,'board.png')
+  const links=structuredClone(draft.scenes[0].speechLinks);snapshot.revision=draft.revision;draft=f.store.update(draft.id,draft.revision,snapshot);assert.equal(draft.scenes[0].speechLinks,undefined);assert.deepEqual(draft.scenes[0].speechAnchors,anchor)
+  draft.scenes[0].speechLinks=links;draft=f.store.update(draft.id,draft.revision,draft);fs.writeFileSync(path.join(f.directory,'voice.wav'),'changed audio');const before=fs.readdirSync(f.directory).sort()
+  await assert.rejects(f.service.execute({operation:'export-captions',draftId:draft.id,expectedRevision:draft.revision,captionFormat:'vtt'},undefined,f.owner),/旁白文件已变化/);assert.deepEqual(fs.readdirSync(f.directory).sort(),before)
+ }finally{f.close()}
+})
+
+test('Studio preserves optional scene numbering and bilingual line breaks through composition and revisions',()=>{
+  const value=fixture();try{
+    let draft=sceneDraft(value.store,'双语与总结');draft.scenes[0].showSceneNumber=false;draft.scenes[0].keepSourceAudio=true;draft.scenes[0].bullets=['改名是叙事，能力仍需验证。'];draft.scenes[0].captions=[{startSeconds:0,endSeconds:2,text:'AI benefits.\nAI 的积极作用。'}]
+    draft=value.store.update(draft.id,draft.revision,draft)
+    const composed=draftComposition(draft)
+    assert.equal(composed.scenes[0].showSceneNumber,false);assert.equal(composed.scenes[0].keepSourceAudio,true);assert.equal(composed.scenes[0].captions![0].text,'AI benefits.\nAI 的积极作用。');assert.equal(newStudioScene('legacy').showSceneNumber,undefined)
+    assert.throws(()=>assertComposition({...composed,scenes:[{...composed.scenes[0],showSceneNumber:'false'}]}),/showSceneNumber must be boolean/)
+    assert.throws(()=>value.store.update(draft.id,draft.revision-1,draft),/STUDIO_CONFLICT/)
   }finally{value.close()}
 })

@@ -11,6 +11,7 @@
   "exports": {
     ".": "./src/product-definition.js",
     "./application": "./src/main.js",
+    "./assistant": "./src/assistant-service.js",
     "./feature-contract": "./src/feature-contract.js"
   }
 }

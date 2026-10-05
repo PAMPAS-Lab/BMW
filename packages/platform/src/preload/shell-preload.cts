@@ -31,6 +31,7 @@ contextBridge.exposeInMainWorld('bmw', {
   scheduledTaskPanel: (visible) => ipcRenderer.invoke('scheduled-task-panel', visible),
   scheduledTasks: () => ipcRenderer.invoke('scheduled-task-list'),
   updateScheduledTask: (taskId, input) => ipcRenderer.invoke('scheduled-task-update', taskId, input),
+  bindScheduledTask: taskId => ipcRenderer.invoke('scheduled-task-bind-current', taskId),
   removeScheduledTask: (taskId) => ipcRenderer.invoke('scheduled-task-remove', taskId),
   runScheduledTask: (taskId) => ipcRenderer.invoke('scheduled-task-run', taskId),
   projectState: () => ipcRenderer.invoke('project-state'),

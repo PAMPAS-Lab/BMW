@@ -6,9 +6,11 @@ import {assertBrowserFeatureHost} from '@bmw-agent/browser-capability/host'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import {AssistantService,loadAssistantStores} from './assistant-service.js'
+import type {AgentApplicationAssembly,AssistantStores} from './assistant-service.js'
 import {StateLoadError} from './state-load.js'
 import {createShellIpcRegistrar} from './shell-ipc.js'
-import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, Notification, safeStorage, screen, session, webContents as electronWebContents, WebContentsView } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, Notification, safeStorage, screen, session, shell, webContents as electronWebContents, WebContentsView } from 'electron'
 import type { MenuItemConstructorOptions, IpcMainEvent } from 'electron'
 import { BrowserKernel } from '@bmw-agent/browser-capability/kernel'
 import { createBridgeServer } from '@bmw-agent/browser-capability/bridge'
@@ -18,6 +20,7 @@ import { GlobalSettingsStore } from './global-settings-store.js'
 import { LayoutStore } from './layout-store.js'
 import { isOverlayAtDockCorner } from './layout-docking.js'
 import { isApplicationMenuShortcut, isSavePageShortcut, pageSaveType, suggestedPageFilename } from './menu-policy.js'
+import {ProjectSourceStore} from './project-source-store.js'
 import { MediaController } from '@bmw-agent/media-native'
 import { sitePermissionDisposition } from './permission-policy.js'
 import { PermissionStore } from './permission-store.js'
@@ -35,6 +38,9 @@ let PRODUCT_NAME = 'BMW'
 const TOP_BAR_HEIGHT = 102
 const MIN_AGENT_WIDTH = 360
 
+let agentAssembly: AgentApplicationAssembly | undefined
+let assistantService: AssistantService | undefined
+let assistantPublishTimer: ReturnType<typeof setTimeout> | undefined
 let agentDriver: AgentDriver
 let productDefinition: Readonly<ResolvedProductDefinition>
 
@@ -133,9 +139,11 @@ async function withPausedAgentSelection<T>(operation:()=>Promise<T>):Promise<T>{
  try{return await operation()}finally{agentContextMutationCount--;agentContextSync?.invalidate()}
 }
 function agentProject(project): AgentProject {
+ if(assistantService)return {id:project.id,name:project.name,directory:project.directory,workspaceId:project.id,sessionId:assistantService.selected(project.id)}
  return {id:project.id,name:project.name,directory:project.directory,...projectStore.agentBinding(project.id,agentDriver.id)}
 }
 async function readAgentSelection():Promise<string|null>{
+ if(assistantService)return assistantService.selected(projectStore.active().id)
  if(!agentView||!agentRuntime?.url)return null
  return agentDriver.client.readSelection(agentView.webContents,agentRuntime.url)
 }
@@ -206,18 +214,21 @@ function stopApplicationServices(): Promise<void> {
     if(agentContextTimer)clearInterval(agentContextTimer)
     agentContextSync?.stop()
     scheduledTaskManager?.stop()
-    await agentRuntime?.stop()
+    if(assistantPublishTimer)clearTimeout(assistantPublishTimer)
     const tasks: Promise<unknown>[] = []
+    if(agentRuntime)tasks.push(Promise.resolve(agentRuntime.stop()))
     if (bridge) tasks.push(Promise.resolve(bridge.close()))
     if (sessionContinuity) tasks.push(Promise.resolve(sessionContinuity.stop()))
     if (productFeatureRuntime?.stop) tasks.push(Promise.resolve(productFeatureRuntime.stop()))
-    await Promise.allSettled(tasks)
+    const results = await Promise.allSettled(tasks)
+    const failure = results.find((row): row is PromiseRejectedResult => row.status === 'rejected')
+    if(failure)throw failure.reason
     try {
       bmwSession?.flushStorageData()
     } catch (error) {
       console.error('Failed to flush BMW browser storage during shutdown', error)
     }
-  })()
+  })().catch(error=>{shutdownPromise=null;throw error})
   return shutdownPromise
 }
 
@@ -472,7 +483,35 @@ function projectState() {
   return projectStore?.snapshot() || { activeProjectId: null, projects: [] }
 }
 
+function publishAssistantState():void{
+ if(!assistantService||appQuitting)return
+ if(assistantPublishTimer)return
+ assistantPublishTimer=setTimeout(()=>{
+  assistantPublishTimer=undefined
+  if(!assistantService||!agentView||agentView.webContents.isDestroyed())return
+  const state=assistantService.controller.snapshot()
+  agentView.webContents.send('bmw-assistant-state',state)
+  sendToShell('project-state',projectState())
+  if(sessionPanelVisible)void agentRuntime.listProjectSessions(agentProject(projectStore.active())).then(value=>sendToShell('agent-session-state',value))
+ },40)
+}
+async function publishAssistantSelection():Promise<void>{
+ if(!assistantService)return
+ const project=projectStore.active(),sessionId=assistantService.selected(project.id)
+ if(sessionId)publishAgentContext({state:'ready',context:await agentRuntime.resolveContext(sessionId,projectStore.list().map(agentProject))})
+ else publishAgentContext({state:'waiting',message:'Create a BMW conversation to continue.'})
+ publishAssistantState()
+}
 async function selectAgentSession(project, sessionId, { reload = true } = {}) {
+  if(assistantService){
+   if(project.id!==projectStore.active().id)throw new Error('Activate the Project before selecting its conversation')
+   if(assistantService.host.busy)throw new Error('Stop and drain the Agent before changing conversations')
+   const changing=assistantService.selected(project.id)!==sessionId
+   if(changing)await productFeatureRuntime?.onSessionWillChange?.()
+   await bridge.changeProject(async()=>{assistantService.select(sessionId,project.id)})
+   if(changing)await productFeatureRuntime?.onSessionChanged?.()
+   await publishAssistantSelection();return sessionId
+  }
   return withPausedAgentSelection(async()=>{
   const snapshot = await agentRuntime.listProjectSessions(agentProject(project))
   if (!snapshot.membership.includes(sessionId)) throw new Error('That Agent session does not belong to this BMW Project.')
@@ -489,16 +528,22 @@ async function selectAgentSession(project, sessionId, { reload = true } = {}) {
 }
 
 async function applyAgentSidebarPolicy() {
- if(agentView&&!agentView.webContents.isDestroyed())await agentDriver.client.applySidebarPolicy(agentView.webContents,settingsStore.snapshot().agentSidebarVisible===true)
+ if(agentView&&!agentView.webContents.isDestroyed())await (agentAssembly?.client??agentDriver.client).applySidebarPolicy(agentView.webContents,settingsStore.snapshot().agentSidebarVisible===true)
 }
 async function openAgentAdvancedSettings() {
  settingsPanelVisible=false;agentVisible=true;layoutStore.update({visible:true});layout()
  await applyAgentSidebarPolicy()
- await agentDriver.client.openSettings(agentView.webContents)
+ await (agentAssembly?.client??agentDriver.client).openSettings(agentView.webContents)
  return {opened:true}
 }
 
 async function synchronizeAgentProject(project, { activate = false, ensureSession = false } = {}) {
+  if(assistantService){
+   if(!agentRuntime.running)return null
+   const result:{workspace:import('@bmw-agent/agent-contract').AgentWorkspace;sessionId?:string}=activate||ensureSession?await agentRuntime.activateWorkspace(agentProject(project)):{workspace:await agentRuntime.ensureWorkspace(agentProject(project))}
+   if(activate)await publishAssistantSelection()
+   return result
+  }
   return withPausedAgentSelection(async()=>{
   if (!agentRuntime?.running) return null
   if(!bridge?.changingProject&&projectStore.active().id===project.id)await productFeatureRuntime?.onSessionWillChange?.()
@@ -516,11 +561,13 @@ async function synchronizeAgentProject(project, { activate = false, ensureSessio
 }
 
 function assertNoScheduledProjectMutation(): void {
+  if(assistantService?.host.busy)throw new Error('Stop and drain the Agent before changing Projects')
   if (bridge?.busy) throw new Error('BMW is completing a browser operation. Project changes resume when it finishes.')
   if (scheduledExecutionProjectId) throw new Error('BMW is completing a scheduled task. Project switching and archival resume when it finishes.')
 }
 
 async function activateProject(projectId, { scheduled = false } = {}) {
+  if(assistantService?.host.busy)throw new Error('Stop and drain the Agent before changing Projects')
   if (bridge?.busy) throw new Error('BMW is completing a browser operation. Project switching resumes when it finishes.')
   if (scheduledExecutionProjectId && !scheduled && projectStore.active().id !== projectId) assertNoScheduledProjectMutation()
   await productFeatureRuntime?.onSessionWillChange?.()
@@ -539,26 +586,32 @@ async function executeScheduledTask(task, run) {
   const originalProjectId = projectStore.active().id
   const target = projectStore.get(task.projectId, { includeArchived: false })
   if (!target) throw new Error('The scheduled task Project is archived or unavailable.')
+  if(!task.sessionId||!task.driverId)throw new Error('This scheduled task has no explicit BMW Session and driver binding.')
+  if(assistantService){
+    const owner=assistantService.conversations.get(task.sessionId,target.id)
+    if(owner.archivedAt!==null||owner.driverId!==task.driverId)throw new Error('The saved scheduled Session or driver is unavailable. Repair its binding explicitly.')
+  }else if(task.driverId!==agentDriver.id)throw new Error('The saved scheduled driver is not active in this BMW application.')
+  const originalSessionId=assistantService?.selected(originalProjectId)
   scheduledExecutionProjectId = target.id
   try {
     if (projectStore.active().id !== target.id) await activateProject(target.id, { scheduled: true })
     const synchronized = await synchronizeAgentProject(target, { ensureSession: true })
     if (!synchronized?.sessionId) throw new Error('Agent is unavailable for this scheduled task.')
-    let sessionId = task.sessionId
+    const sessionId = task.sessionId
     const sessions = await agentRuntime.listProjectSessions(agentProject(target))
-    if (!sessionId || !sessions.membership.includes(sessionId)) {
-      sessionId = synchronized.sessionId
-      scheduledTaskStore.bindSession(task.id, sessionId)
-    }
+    if (!sessions.membership.includes(sessionId))throw new Error('The saved scheduled Session is unavailable. Repair its binding explicitly.')
+    if(assistantService){await productFeatureRuntime?.onSessionWillChange?.();await bridge.changeProject(async()=>{assistantService.select(sessionId,target.id)});await productFeatureRuntime?.onSessionChanged?.();await publishAssistantSelection()}
     const prompt = `[BMW Scheduled Task · ${task.name}]\n\nThis Project-scoped task is running automatically on its saved daily schedule (${task.schedule.time} ${task.schedule.timeZone}).\n\nTask instructions:\n${task.prompt}\n\nUse only BMW's browser capability. Work in background tabs unless foreground visibility is required to finish the task. Save screenshots, downloaded page media, and recordings as Project-owned artifacts. Do not create, modify, or remove scheduled tasks during this run unless the saved instructions explicitly require it. Do not publish, purchase, delete user data, or expand the task beyond these instructions. Finish with a concise result and list the artifacts you saved.`
     const replies = await agentRuntime.promptAndWait(sessionId, prompt, { timeoutMs: 30 * 60_000 })
     return replies
   } finally {
+    try{
     const original = projectStore.get(originalProjectId, { includeArchived: false })
     if (original && original.id !== target.id && projectStore.active().id === target.id) {
       await activateProject(original.id, { scheduled: true }).catch((error) => console.error('Failed to restore the Project after a scheduled task', error))
     }
-    scheduledExecutionProjectId = null
+    if(assistantService&&originalSessionId&&original?.id===projectStore.active().id&&!assistantService.host.busy){await productFeatureRuntime?.onSessionWillChange?.();await bridge.changeProject(async()=>assistantService.select(originalSessionId,original.id));await productFeatureRuntime?.onSessionChanged?.();await publishAssistantSelection()}
+    }finally{scheduledExecutionProjectId = null}
   }
 }
 
@@ -660,7 +713,7 @@ function installIpc() {
     id: productDefinition.id,
     name: productDefinition.name,
     features: productDefinition.featureIds,
-    agent: {id:agentDriver.id,label:agentDriver.label,baseline:agentDriver.baseline}
+    agent: {id:agentDriver.id,label:agentAssembly?'BMW Assistant':agentDriver.label,baseline:agentAssembly?'官方 Agent 引擎':agentDriver.baseline,ownedUI:Boolean(agentAssembly)}
   }))
   shellHandle('browser-command', async (_event, request) => {
     if(bridge?.changingProject)throw new Error('BMW Project is changing; retry after activation finishes')
@@ -771,6 +824,12 @@ function installIpc() {
   })
   shellHandle('scheduled-task-list', () => scheduledTaskManager.list(projectStore.active().id))
   shellHandle('scheduled-task-update', (_event, taskId, input) => scheduledTaskManager.update(projectStore.active().id, String(taskId), input || {}))
+  shellHandle('scheduled-task-bind-current', (_event, taskId) => {
+    const project=projectStore.active(),task=scheduledTaskStore.getForProject(project.id,String(taskId)),sessionId=agentProject(project).sessionId
+    if(!sessionId)throw new Error('Select a BMW Session before binding this scheduled task.')
+    const driverId=assistantService?assistantService.conversations.get(sessionId,project.id).driverId:agentDriver.id
+    return scheduledTaskStore.bindSession(task.id,sessionId,driverId)
+  })
   shellHandle('scheduled-task-remove', (_event, taskId) => scheduledTaskManager.remove(projectStore.active().id, String(taskId)))
   shellHandle('scheduled-task-run', (_event, taskId) => scheduledTaskManager.runNow(projectStore.active().id, String(taskId)))
   shellHandle('agent-session-list', (_event, query = '') => agentRuntime.listProjectSessions(agentProject(projectStore.active()), query))
@@ -916,7 +975,7 @@ function installIpc() {
 
 }
 
-async function loadStartupStores(): Promise<{settings:GlobalSettingsStore;projects:ProjectStore;tasks:ScheduledTaskStore;permissions:PermissionStore;layout:LayoutStore;continuity:SessionContinuityManager}|undefined> {
+async function loadStartupStores(): Promise<{settings:GlobalSettingsStore;projects:ProjectStore;tasks:ScheduledTaskStore;permissions:PermissionStore;layout:LayoutStore;continuity:SessionContinuityManager;assistant?:AssistantStores}|undefined> {
   while (!appQuitting) {
     try {
       const settings = new GlobalSettingsStore({filePath:path.join(app.getPath('userData'),'global-settings.json'),migrateSettings:agentDriver.migrateSettings,onState:state=>{sendToShell('global-settings-state',state);browserKernel?.videoStudioChanged?.()}})
@@ -926,7 +985,8 @@ async function loadStartupStores(): Promise<{settings:GlobalSettingsStore;projec
       const layout = new LayoutStore({filePath:path.join(app.getPath('userData'),'layout-settings.json'),onState:state=>sendToShell('layout-state',{...state,agentVisible,setupVisible:layoutSetupVisible})})
       const continuity = new SessionContinuityManager({session:bmwSession,safeStorage,configPath:path.join(app.getPath('userData'),'session-continuity.json'),snapshotPath:path.join(app.getPath('userData'),'session-cookies.enc'),onState:()=>browserKernel?.emitState()})
       continuity.load()
-      return {settings,projects,tasks,permissions,layout,continuity}
+      const assistant=agentAssembly?loadAssistantStores(app.getPath('userData'),agentAssembly.defaultDriverId,publishAssistantState):undefined
+      return {settings,projects,tasks,permissions,layout,continuity,assistant}
     } catch (error:unknown) {
       if (!(error instanceof StateLoadError)) throw error
       const result = await dialog.showMessageBox({type:'error',title:'BMW 无法读取保存的数据',message:'保存的数据暂时不可读，或格式不受支持。原文件已保留。',detail:error.message,buttons:['重试','退出'],defaultId:0,cancelId:1,noLink:true})
@@ -982,7 +1042,9 @@ async function createApp() {
       preload: path.join(sourceDirectory, 'preload/shell-preload.cjs'),
       sandbox: true,
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      // The fixed Shell must observe native panel resizes while covered or backgrounded.
+      backgroundThrottling: false
     }
   })
   shellView.webContents.on('will-navigate', event => event.preventDefault())
@@ -993,16 +1055,18 @@ async function createApp() {
   agentView = new WebContentsView({
     webPreferences: {
       session: persistentSession,
-      preload: agentDriver.preloadPath,
+      preload: agentAssembly?.preloadPath??agentDriver.preloadPath,
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false
     }
   })
+  if(agentAssembly){agentView.webContents.on('will-navigate',event=>event.preventDefault());agentView.webContents.setWindowOpenHandler(()=>({action:'deny'}))}
   agentView.webContents.on('did-finish-load', () => {
     void applyAgentSidebarPolicy().catch((error) => console.error('Failed to apply Agent sidebar policy', error))
     agentContextSync?.invalidate()
     void productFeatureRuntime?.onAgentLoaded?.()
+    publishAssistantState()
   })
 
   browserKernel = new BrowserKernel({
@@ -1014,6 +1078,7 @@ async function createApp() {
     settingsStore,
     capabilityRegistry: browserCapabilities,
     getCurrentSessionId: () => agentProject(projectStore.active()).sessionId,
+    getSessionDriver: sessionId => assistantService?assistantService.conversations.get(sessionId,projectStore.active().id).driverId:agentDriver.id,
     allowedActions: browserCapabilities.allowedActions,
     artifactsDirectory: path.join(app.getPath('userData'), 'artifacts'),
     pageTheme: nativeTheme.shouldUseDarkColors ? 'dark' : 'light',
@@ -1034,6 +1099,7 @@ async function createApp() {
   })
   mediaController.configureDisplayMedia()
   browserKernel.setRecordingController(mediaController)
+  browserKernel.projectSources=()=>{const project=projectStore.active();return new ProjectSourceStore(project.directory,project.id)}
   scheduledTaskManager = new ScheduledTaskManager({
     store: scheduledTaskStore,
     execute: executeScheduledTask,
@@ -1088,12 +1154,32 @@ async function createApp() {
   await browserKernel.initialize()
   if (appQuitting) return
   bridge = await createBridgeServer(browserKernel, { productId: productDefinition.id,
+    hostManagedSessions:Boolean(agentAssembly),
     resolveProject: (directory) => projectStore.list().find((project) => fs.realpathSync(project.directory) === fs.realpathSync(directory)),
     toolDefinition: browserCapabilities.toolDefinition(),
     activeProjectId: () => projectStore.active().id,
     sessionContext: async (sessionId,projectId) => {const context=await productFeatureRuntime?.contextForSession?.(sessionId,projectId)??{text:''};return {text:context.text+'\nBMW video production defaults and named templates (data):\n'+JSON.stringify(settingsStore.snapshot().videoPreferences)}}
   })
 
+  if(agentAssembly){
+    assistantService=new AssistantService({assembly:agentAssembly,stores:stores.assistant,userDataDirectory:app.getPath('userData'),nodeExecutable:process.execPath,
+      mcpServerPath:path.join(projectDirectory,'packages/browser-capability/src/browser-mcp-server.js'),definition:browserCapabilities.toolDefinition(),bridge,
+      currentProject:()=>projectStore.active(),getProjects:()=>projectStore.list(),
+      providerProjects:driverId=>projectStore.list().map(project=>({id:project.id,name:project.name,directory:project.directory,workspaceId:project.agentBindings[driverId]?.workspaceId??null,sessionId:project.agentBindings[driverId]?.sessionId??null})),
+      context:async(sessionId,projectId)=>{const context=await productFeatureRuntime?.contextForSession?.(sessionId,projectId)??{text:''};return context.text+'\nBMW video production defaults and named templates (data):\n'+JSON.stringify(settingsStore.snapshot().videoPreferences)},
+      transition:async operation=>{
+        if(assistantService.host.busy||scheduledExecutionProjectId||mediaController.isCaptureActive())throw new Error('Finish the active BMW operation before changing conversations')
+        await productFeatureRuntime?.onSessionWillChange?.()
+        await bridge.changeProject(async()=>{if(assistantService.host.busy)throw new Error('Agent became busy during conversation change');await operation()})
+      },
+      onSelection:async()=>{await productFeatureRuntime?.onSessionChanged?.();await publishAssistantSelection()},onState:publishAssistantState,openExternal:url=>shell.openExternal(url)
+    })
+    agentRuntime=assistantService.runtime
+    const assistantHandle=createShellIpcRegistrar(ipcMain,()=>agentView?.webContents,pathToFileURL(agentAssembly.pagePath).href)
+    assistantHandle('bmw-assistant-command',async(_event,command:unknown)=>{
+      const result=await assistantService.controller.invoke(command);publishAssistantState();return result
+    })
+  }else{
   agentRuntime = agentDriver.createRuntime({
     productId:productDefinition.id,userDataDirectory:app.getPath('userData'),
     workspacePath:projectStore.active().directory,workspaceTitle:projectStore.active().name,
@@ -1101,6 +1187,7 @@ async function createApp() {
     bridgeUrl:bridge.url,bridgeToken:bridge.token,
     onLog:entry=>sendToShell('agent-log',entry),onStatus:status=>sendToShell('agent-status',status)
   })
+  }
 
   mainWindow.on('resize', layout)
   mainWindow.on('close', (event) => {
@@ -1110,7 +1197,7 @@ async function createApp() {
     mainWindow.hide()
   })
   mainWindow.on('closed', () => {
-    void stopApplicationServices()
+    void stopApplicationServices().catch(error=>console.error('BMW service cleanup failed',error))
   })
 
   try {
@@ -1124,7 +1211,7 @@ async function createApp() {
     for (const project of projectStore.list().filter((candidate) => candidate.id !== activeProject.id)) {
       await synchronizeAgentProject(project).catch((error) => console.error(`Failed to synchronize Agent workspace for ${project.name}`, error))
     }
-    startAgentContextSync()
+    if(assistantService)await publishAssistantSelection();else startAgentContextSync()
     scheduledTaskManager.start()
     layout()
     if(process.env.BMW_OPEN_STUDIO==='1')await productFeatureRuntime?.openPanel?.('video-studio')
@@ -1136,10 +1223,11 @@ async function createApp() {
   }
 }
 
-export function createBmwApplication(definition: ResolvedProductDefinition, driver: AgentDriver) {
+export function createBmwApplication(definition: ResolvedProductDefinition, driver: AgentDriver, assembly?: AgentApplicationAssembly) {
   if(!driver?.createRuntime||!driver?.client)throw new Error('An Agent driver is required.')
   if (productDefinition) throw new Error('BMW product application is already configured.')
   agentDriver=driver
+  agentAssembly=assembly
   productDefinition = defineProduct(definition)
   PRODUCT_NAME = definition.name
   if (process.env.BMW_USER_DATA_DIR) {
@@ -1159,8 +1247,20 @@ export function createBmwApplication(definition: ResolvedProductDefinition, driv
     mainWindow.show()
     layout()
   })
-  app.on('before-quit', () => {
-    appQuitting = true
-    void stopApplicationServices()
+  let cleanupFinished=false,quitCleanup:Promise<void>|undefined
+  app.on('before-quit', event => {
+    if(cleanupFinished)return
+    event.preventDefault()
+    if(quitCleanup)return
+    appQuitting=true
+    quitCleanup=(async()=>{
+      for(;;){
+        try{await stopApplicationServices();cleanupFinished=true;app.quit();return}
+        catch(error:unknown){
+          const choice=await dialog.showMessageBox({type:'error',title:'BMW 尚未完成资源清理',message:'退出前未能确认 Agent 和浏览器任务已停止。',detail:error instanceof Error?error.message:'资源清理失败',buttons:['重试清理','强制退出'],defaultId:0,cancelId:0,noLink:true})
+          if(choice.response===1){app.exit(1);return}
+        }
+      }
+    })()
   })
 }

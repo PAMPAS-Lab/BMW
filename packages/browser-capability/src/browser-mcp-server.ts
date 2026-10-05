@@ -4,6 +4,8 @@ import { browserDeadlineMs } from './browser-deadline.js'
 import { browserToolCatalog } from './tool-catalog.js'
 const bridgeUrl = process.env.BMW_BRIDGE_URL
 const bridgeToken = process.env.BMW_BRIDGE_TOKEN
+const privateBinding = process.env.BMW_SESSION_BINDING
+if (privateBinding !== undefined && !/^[a-f0-9]{64}$/u.test(privateBinding)) throw new Error('Invalid host-owned BMW Session binding')
 
 if (!bridgeUrl || !bridgeToken) {
   process.stderr.write('BMW MCP bridge environment is missing.\n')
@@ -15,13 +17,14 @@ if (!catalogResponse.ok) throw new Error('BMW browser catalog is unavailable')
 const browserTool = browserToolCatalog(await catalogResponse.json())
 
 async function executeBrowser(argumentsValue, signal: AbortSignal) {
+  if (privateBinding && Object.hasOwn(argumentsValue || {}, '__bmwSession')) throw new Error('BMW Session scope is owned by the host')
   const deadlineMs = browserDeadlineMs(argumentsValue)
   const deadline = AbortSignal.timeout(deadlineMs)
   try {
   const response = await fetch(`${bridgeUrl}/execute`, {
     method: 'POST',
     headers: { authorization: `Bearer ${bridgeToken}`, 'content-type': 'application/json' },
-    body: JSON.stringify({ binding: argumentsValue?.__bmwSession, arguments: Object.fromEntries(Object.entries(argumentsValue || {}).filter(([key]) => key !== '__bmwSession')) }),
+    body: JSON.stringify({ binding: privateBinding ?? argumentsValue?.__bmwSession, arguments: Object.fromEntries(Object.entries(argumentsValue || {}).filter(([key]) => key !== '__bmwSession')) }),
     signal: AbortSignal.any([signal, deadline])
   })
   const result = await response.json()

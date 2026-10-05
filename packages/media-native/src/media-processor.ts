@@ -24,6 +24,7 @@ export class MediaProcessor {
     let abort: (() => void) | undefined
     let reply: ((event: IpcMainInvokeEvent, value: unknown) => void) | undefined
     let registered = false
+    let sourceSha256:string|undefined
     let ioTail: Promise<unknown> = Promise.resolve()
     const runIO = <T>(operation: () => Promise<T>): Promise<T> => {
       const result = ioTail.then(operation)
@@ -31,7 +32,8 @@ export class MediaProcessor {
       return result
     }
     try {
-      if(request.action!=='media.encode.check')io = await ArtifactJobIO.open(directory, request)
+      if(request.action!=='media.encode.check')io = await ArtifactJobIO.open(directory,request.action==='media.decode.check'?{action:'media.inspect',artifactId:request.artifactId}:request)
+      if(request.action==='media.speech.normalize')sourceSha256=await io!.fingerprint(signal)
       if((request.action==='media.image.inspect'||request.action==='media.image.annotate')&&io!.bytes>32*1024*1024)throw new Error('Image exceeds 32 MiB.')
       signal?.throwIfAborted()
       const token = crypto.randomUUID()
@@ -81,10 +83,13 @@ export class MediaProcessor {
       mediaWindow.webContents.send('bmw-media-process', { token, bytes: io?.bytes??0, request })
       const result = await pending
       signal?.throwIfAborted()
-      const artifacts = io?await io.finish(result.kind === 'frames' ? result.frames.length : result.kind === 'conversion'||result.kind==='drawing' ? 1 : 0,result.kind==='drawing'?result:undefined):[]
+      if(request.action==='media.speech.normalize'&&await io!.fingerprint(signal)!==sourceSha256)throw new Error('Speech source changed during normalization.')
+      const artifacts = io?await io.finish(result.kind === 'frames' ? result.frames.length : result.kind === 'conversion'||result.kind==='drawing'||result.kind==='speech-pcm' ? 1 : 0,result.kind==='drawing'?result:undefined):[]
+      if(result.kind==='speech-pcm'){if(artifacts[0].bytes!==44+result.info.frames*2){await fs.rm(artifacts[0].path,{force:true});throw new Error('Speech WAV sample count disagrees with normalization.')}return {...artifacts[0],sourceArtifactId:request.action==='media.speech.normalize'?request.artifactId:undefined,sourceSha256,normalization:result.info,contentType:'audio/wav',type:'audio'}}
       if(result.kind==='encoding')return result.info
       const base = { sourceArtifactId: 'artifactId' in request?request.artifactId:undefined, sourceBytes: io?.bytes??0, engine: 'mediabunny-webcodecs' }
       if(result.kind==='drawing')return {...base,...artifacts[0],type:'screenshot',contentType:'image/png',state:'completed',engine:'bmw-native-canvas',width:result.width,height:result.height,shapeCount:result.shapeCount}
+      if(result.kind==='decoding')return {...base,...result.info}
       if(result.kind==='image')return {...base,...result.info}
       if (result.kind === 'inspection') return { ...base, ...result.info }
       if (result.kind === 'frames') return { ...base, type: 'frame-set', frames: result.frames.map((frame, index) => ({ ...frame, ...artifacts[index], type: 'screenshot', contentType: 'image/png' })) }

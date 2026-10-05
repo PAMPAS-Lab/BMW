@@ -7,6 +7,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import {assertVideoDraft,draftComposition,studioId,studioText} from './studio-contract.js'
+import type {StudioSpeechCandidate,StudioSpeechAnchors} from './studio-speech-contract.js'
 import type {VideoDraft,StudioAsset} from './studio-contract.js'
 
 /** Project-local editable state. No renderer or model may choose a host path. */
@@ -59,6 +60,7 @@ export class VideoStudioStore {
     // for the same scene/script; a rewritten script still needs new narration.
     for(const scene of next.scenes){
       const previous=current.scenes.find(value=>value.id===scene.id)
+      scene.speechCandidate=previous?.speechCandidate;scene.speechAnchors=previous?.speechAnchors
       const inputScene=(value.scenes as Record<string,unknown>[]).find(item=>item.id===scene.id)
       // Sandboxed GUI snapshots can explicitly carry undefined over structured IPC.
       // That clears a newly attached voice on undo; omitted model fields retain it.
@@ -75,6 +77,12 @@ export class VideoStudioStore {
     // The export journal belongs to completed jobs, not editable input.
     next.exports=current.exports;next.coverExports=current.coverExports;next.revision++;next.updatedAt=new Date().toISOString()
     return this.write(next)
+  }
+  setSpeech(id:string,expectedRevision:number,sceneId:string,kind:'candidate'|'anchors',record:StudioSpeechCandidate|StudioSpeechAnchors):VideoDraft {
+    const current=this.read(id);if(current.revision!==expectedRevision)throw new Error('STUDIO_CONFLICT: 语音校正期间草稿已更新。')
+    const scene=current.scenes.find(scene=>scene.id===sceneId);if(!scene)throw new Error('Unknown Studio scene.')
+    if(kind==='candidate')scene.speechCandidate=record as StudioSpeechCandidate;else scene.speechAnchors=record as StudioSpeechAnchors
+    current.revision++;current.updatedAt=new Date().toISOString();return this.write(current)
   }
   delete(id:string,expectedRevision:number):{deleted:string} {
     const current=this.read(id)

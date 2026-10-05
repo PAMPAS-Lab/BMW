@@ -1,3 +1,9 @@
+import {SpeechProcessor} from './speech-processor.js'
+import {VideoElementCapture} from './video-element-capture.js'
+import type {SourceCaptureGuard} from './source-contract.js'
+import type {WebContents} from 'electron'
+import {recordingEvents,assertRecordingFrameClock,RECORDING_EVENT_BYTES} from './recording-contract.js'
+import type {RecordingClock,RecordingEventSource} from './recording-contract.js'
 import {exportProjectText} from './text-export.js'
 import type {NativeMediaPort} from './media-port.js'
 import fs from 'node:fs'
@@ -5,15 +11,11 @@ import path from 'node:path'
 import crypto from 'node:crypto'
 import { once } from 'node:events'
 import { BrowserWindow } from 'electron'
-import { assertNativeProcessingRequest, mediaRecord } from './media-contract.js'
+import { assertMediaInfo,assertNativeProcessingRequest, mediaRecord } from './media-contract.js'
 import { NarrationProcessor } from './narration-processor.js'
 import { CompositionProcessor } from './composition-processor.js'
 import { MediaProcessor, CoverProcessor } from './media-processor.js'
-import { DATA_URL_BASE64_MARKER, MAX_CAPTURE_BYTES, safeCaptureFilename, isOwnedCaptureMessage } from './capture-policy.js'
-
-function delay(milliseconds: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, milliseconds))
-}
+import { MAX_CAPTURE_BYTES, isOwnedCaptureMessage } from './capture-policy.js'
 
 const ARTIFACT_MIME_TYPES = Object.freeze({
   '.json': 'application/json', '.txt': 'text/plain', '.log': 'text/plain', '.md': 'text/markdown',
@@ -23,9 +25,22 @@ const ARTIFACT_MIME_TYPES = Object.freeze({
 
 export class MediaController implements NativeMediaPort {
   [key: string]: any
+  private eventSource?:RecordingEventSource
+  private recordingClock?:RecordingClock
+  private recordingBytes=0
+  private recordingDiscard=false
+  private recordingStopReason='requested'
+  private recordingTimer?:NodeJS.Timeout
+  private captureFailure?:Error
+  private finalizing?:Promise<unknown>
+  private recordingCompletion?:Promise<unknown>
+  private resolveRecording?:(result:unknown)=>void
+  private rejectRecording?:(error:unknown)=>void
+  private captureStreamError=(error:Error):void=>{this.captureFailure=error;void this.stop().catch(()=>{})}
   private coverProcessor: CoverProcessor
   private processor: MediaProcessor
   private composer: CompositionProcessor
+  private speechProcessor:SpeechProcessor
   private narrator: NarrationProcessor
 
   constructor({ session, preloadPath, pagePath, artifactsDirectory, resolveArtifactsDirectory, onStatus }) {
@@ -48,6 +63,7 @@ export class MediaController implements NativeMediaPort {
     this.processor = new MediaProcessor({ session, onStatus,
       pagePath: path.join(path.dirname(pagePath), 'processing.html'),
       preloadPath: path.join(path.dirname(preloadPath), 'processing-preload.cjs') })
+    this.speechProcessor=new SpeechProcessor({onStatus,normalize:(raw,directory,signal)=>this.processor.process(raw,directory,signal)})
   }
 
   ownsCaptureSender(event:{sender:unknown;senderFrame:unknown}):boolean { return isOwnedCaptureMessage(event,this.window) }
@@ -67,7 +83,7 @@ export class MediaController implements NativeMediaPort {
   }
 
   isCaptureActive(): boolean {
-    return Boolean(this.file || this.elementCapture || this.processor.busy || this.composer.busy || this.narrator.busy || this.coverProcessor.busy)
+    return Boolean(this.file || this.elementCapture || this.processor.busy || this.composer.busy || this.narrator.busy || this.coverProcessor.busy || this.speechProcessor.busy)
   }
 
   async narrate(raw: unknown, signal?: AbortSignal) {
@@ -75,7 +91,7 @@ export class MediaController implements NativeMediaPort {
     const directory = this.resolveArtifactsDirectory?.() || this.artifactsDirectory
     const result = await this.narrator.narrate(raw, directory, signal)
     try {
-      const inspection = await this.processor.process({ action: 'media.inspect', artifactId: result.artifactId }, directory, signal)
+      const inspection = assertMediaInfo(await this.processor.process({ action: 'media.inspect', artifactId: result.artifactId }, directory, signal))
       if (!('durationSeconds' in inspection) || !inspection.tracks.some(track => track.type === 'audio' && track.canDecode) || inspection.durationSeconds <= 0 || inspection.durationSeconds > 180) throw new Error('Narration returned no valid decodable speech track.')
       return { ...result, durationSeconds: inspection.durationSeconds }
     } catch (error) { await fs.promises.rm(result.path, {force:true}); throw error }
@@ -86,7 +102,7 @@ export class MediaController implements NativeMediaPort {
     const directory = this.resolveArtifactsDirectory?.() || this.artifactsDirectory
     const result = await this.composer.compose(raw, directory, signal)
     try {
-      const inspection = await this.processor.process({ action: 'media.inspect', artifactId: result.artifactId }, directory, signal)
+      const inspection = assertMediaInfo(await this.processor.process({ action: 'media.inspect', artifactId: result.artifactId }, directory, signal))
       if (!('durationSeconds' in inspection) || Math.abs(inspection.durationSeconds - result.durationSeconds) > .2 || inspection.tracks.filter(track => track.type === 'video' && track.codec === 'avc').length !== 1 || inspection.tracks.filter(track => track.type === 'audio' && track.codec === 'aac').length !== 1) throw new Error('Composed file failed actual duration/track verification.')
       const video=inspection.tracks.find(track=>track.type==='video'),audio=inspection.tracks.find(track=>track.type==='audio')
       if(video?.width!==result.composition.width||video.height!==result.composition.height||!video.canDecode||!audio?.canDecode||audio.sampleRate!==48000||audio.channels!==2)throw new Error('Composed file failed actual size/audio/decode verification.')
@@ -97,6 +113,8 @@ export class MediaController implements NativeMediaPort {
   }
 
   async processArtifact(raw: unknown, signal?: AbortSignal) {
+    if(mediaRecord(raw).action==='media.speech.align'){if(this.isCaptureActive())throw new Error('Finish the current media job before speech alignment.');const directory=this.resolveArtifactsDirectory?.()||this.artifactsDirectory;return this.speechProcessor.align(raw,directory,signal)}
+    if(mediaRecord(raw).action==='media.speech.normalize')throw new Error('Speech normalization is private to its owning alignment job.')
     if(mediaRecord(raw).action==='video.cover'){
       if(this.isCaptureActive())throw new Error('Finish the current media job before generating a cover.')
       const directory=this.resolveArtifactsDirectory?.()||this.artifactsDirectory
@@ -121,7 +139,7 @@ export class MediaController implements NativeMediaPort {
     // Encoder priming/padding and frame boundaries can affect the actual duration.
     // Reparse the finalized container before exposing it as a completed export.
     try {
-      const inspection = await this.processor.process({ action: 'media.inspect', artifactId: result.artifactId }, directory, signal)
+      const inspection = assertMediaInfo(await this.processor.process({ action: 'media.inspect', artifactId: result.artifactId }, directory, signal))
       if (!('durationSeconds' in inspection)) throw new Error('Export metadata verification failed.')
       const trackKeys = (tracks: readonly { type: string; codec: string | null }[]) => tracks.map((track) => `${track.type}:${track.codec}`).sort().join(',')
       if (trackKeys(inspection.tracks) !== trackKeys(result.tracks)) throw new Error('Exported file did not preserve its declared tracks.')
@@ -172,21 +190,28 @@ export class MediaController implements NativeMediaPort {
     await this.window.loadFile(this.pagePath)
   }
 
-  async start(tab, request: { fps?: number; width?: number; height?: number } = {}) {
-    if (this.file || this.elementCapture) throw new Error('A recording is already active')
+  async start(tab, request: { fps?: number; width?: number; height?: number } = {}, eventSource?:RecordingEventSource,signal?:AbortSignal) {
+    signal?.throwIfAborted()
+    if (this.isCaptureActive()) throw new Error('A media job is already active')
     // A fresh capture renderer prevents old WebGPU canvas/device and stopped streams
     // leaking into a subsequent tab recording.
     if (this.window && !this.window.isDestroyed()) this.window.destroy()
     this.window = null
     await this.#ensureWindow()
+    signal?.throwIfAborted()
     this.window.hide()
     const artifactsDirectory = this.resolveArtifactsDirectory?.(tab) || this.artifactsDirectory
     fs.mkdirSync(artifactsDirectory, { recursive: true })
+    if(fs.realpathSync(artifactsDirectory)!==path.resolve(artifactsDirectory)||fs.lstatSync(artifactsDirectory).isSymbolicLink())throw new Error('Recording artifacts must stay inside their Project.')
     this.target = tab
-    const id = `recording-${Date.now()}`
+    const id = `recording-${crypto.randomUUID()}`
+    this.recordingCompletion=new Promise<unknown>((resolve,reject)=>{this.resolveRecording=resolve;this.rejectRecording=reject});void this.recordingCompletion.catch(()=>{})
+    this.eventSource=eventSource;this.recordingClock=undefined;this.recordingBytes=0;this.recordingDiscard=false;this.recordingStopReason='requested';this.captureFailure=undefined
+    this.recordingTimer=setTimeout(()=>{this.recordingStopReason='maximum-duration';void this.stop().catch(()=>{})},1_799_000)
     const filePath = path.join(artifactsDirectory, `${id}.webm`)
     this.file = filePath
-    this.stream = fs.createWriteStream(filePath, { mode: 0o600 })
+    this.stream = fs.createWriteStream(filePath, { mode: 0o600,flags:'wx' })
+    this.stream.on('error',this.captureStreamError)
     this.metadata = { id, filePath, startedAt: Date.now(), tabId: tab.id, gpu: null }
     this.onStatus?.({ active: true, ...this.metadata })
     this.window.webContents.send('media-command', {
@@ -200,29 +225,45 @@ export class MediaController implements NativeMediaPort {
 
   acceptChunk(chunk) {
     if (!this.stream) return
+    this.recordingBytes+=chunk.byteLength
+    if(this.recordingBytes>MAX_CAPTURE_BYTES){this.captureFailure=new Error('Recording byte budget exceeded.');void this.stop().catch(()=>{});return}
     this.stream.write(Buffer.from(chunk))
   }
 
   updateState(state) {
+    if(state.state==='recording'&&state.clock&&!this.recordingClock){
+      const clock=mediaRecord(state.clock)
+      if([clock.startedEpochMs,clock.width,clock.height].every(value=>typeof value==='number'&&Number.isFinite(value))){this.recordingClock=clock as unknown as RecordingClock;this.eventSource?.begin(this.recordingClock)}
+    }
+    if(state.state==='error'&&this.file){this.captureFailure=new Error(String(state.message||'Recording could not start.'));void this.finalize({error:this.captureFailure.message}).catch(error=>this.onStatus?.({active:false,state:'error',message:error instanceof Error?error.message:String(error)}))}
+
     if (this.metadata && typeof state.gpu === 'boolean') this.metadata.gpu = state.gpu
     this.onStatus?.({ active: Boolean(this.file), ...this.metadata, ...state })
   }
 
-  async stop() {
+  async stop(request:{discard?:boolean}={}) {
     if (this.elementCapture) {
+      if(request.discard)throw new Error('discard cancels page recordings; selected-video jobs use their cancellation signal.')
       const capture = this.elementCapture
-      await capture.webContents.executeJavaScript(`globalThis[${JSON.stringify(capture.key)}]?.stop('requested')`, true).catch(() => {})
-      return { recordingId: capture.id, state: 'stopping' }
+      return capture.stop()
     }
     if (!this.file) return { state: 'idle' }
+    if(request.discard)this.recordingDiscard=true
     this.window.webContents.send('media-command', { type: 'stop' })
-    return { recordingId: this.metadata.id, state: 'stopping' }
+    return this.recordingCompletion??{ recordingId: this.metadata.id, state: 'stopping' }
   }
 
-  async finalize(raw:unknown = {}) {
+  async finalize(raw:unknown = {}):Promise<unknown> {
+    if(this.finalizing)return this.finalizing
+    this.finalizing=this.finalizeRecording(raw)
+    try{const result=await this.finalizing;this.resolveRecording?.(result);return result}catch(error){this.rejectRecording?.(error);throw error}finally{this.finalizing=undefined;this.resolveRecording=undefined;this.rejectRecording=undefined;this.recordingCompletion=undefined}
+  }
+  private async finalizeRecording(raw:unknown) {
     const summary=mediaRecord(raw)
     if (!this.stream || !this.file) return null
     const stream = this.stream
+    if(this.recordingTimer)clearTimeout(this.recordingTimer)
+    const eventPath=this.file+'.events.json'
     const result = {
       artifactId: path.basename(this.file),
       type: 'recording',
@@ -231,207 +272,36 @@ export class MediaController implements NativeMediaPort {
       gpuProcessed: this.metadata.gpu,
       ...summary
     }
-    const finished = once(stream, 'finish')
-    stream.end()
     try {
+      if(stream.destroyed)throw this.captureFailure??new Error('Recording stream closed before finalization.')
+      const finished = once(stream, 'finish')
+      stream.end()
       await finished
+      if(this.captureFailure)throw this.captureFailure
       const bytes = fs.statSync(result.path).size
       if (typeof summary.error==='string') throw new Error(summary.error)
       if (!bytes) throw new Error('Browser recording produced no media bytes.')
-      this.onStatus?.({ active: false, ...result, bytes })
-      return { ...result, bytes }
-    } catch (error) { await fs.promises.rm(result.path, {force:true}); throw error }
-    finally { this.stream = null; this.file = null; this.target = null }
+      const clock=this.recordingClock
+      if(!clock)throw new Error('Recording did not establish its media clock.')
+      const durationMs=Number(summary.durationMs)
+      if(!Number.isFinite(durationMs)||durationMs<=0||durationMs>1800000)throw new Error('Invalid recording duration.')
+      const packet=await this.eventSource?.collect(clock.startedEpochMs+durationMs)
+      if(this.recordingDiscard){await fs.promises.rm(result.path,{force:true});this.onStatus?.({active:false,state:'cancelled',recordingId:this.metadata.id});return {state:'cancelled',recordingId:this.metadata.id}}
+      if(packet?.reason==='requested')packet.reason=this.recordingStopReason
+      const events=packet?recordingEvents(result.artifactId,clock,durationMs/1000,packet,assertRecordingFrameClock(summary.frameClock??[],durationMs/1000),summary.frameClockTruncated===true):undefined
+      if(events){const text=JSON.stringify(events,null,2)+'\n';if(Buffer.byteLength(text)>RECORDING_EVENT_BYTES)throw new Error('Recording event byte budget exceeded.');await fs.promises.writeFile(eventPath,text,{mode:0o600,flag:'wx'})}
+      const completed={...result,state:'completed',durationMs,bytes,...(events?{eventsArtifactId:path.basename(eventPath),eventCount:events.events.length,eventsTruncated:events.truncated}:{})}
+      this.onStatus?.({ active: false, ...completed })
+      return completed
+    } catch (error) { await Promise.all([fs.promises.rm(result.path,{force:true}),fs.promises.rm(eventPath,{force:true})]);throw error }
+    finally { await this.eventSource?.dispose();this.eventSource=undefined;this.recordingClock=undefined;stream.removeListener('error',this.captureStreamError);this.stream = null; this.file = null; this.target = null }
   }
 
-  async captureVideo(tab, request: {
-    selector?: unknown
-    index?: unknown
-    filename?: unknown
-    fromStart?: unknown
-    maxDurationMs?: unknown
-  } = {}) {
-    if (this.file || this.elementCapture) throw new Error('A recording is already active')
-    const selector = String(request.selector || '').trim()
-    if (!selector) throw new Error('media.video.capture requires a video or content-card selector.')
-    const index = Math.max(0, Math.floor(Number(request.index) || 0))
-    const fromStart = request.fromStart !== false
-    const maxDurationMs = Math.min(Math.max(Math.floor(Number(request.maxDurationMs) || 15 * 60_000), 1_000), 30 * 60_000)
-    const artifactsDirectory = this.resolveArtifactsDirectory?.(tab) || this.artifactsDirectory
-    fs.mkdirSync(artifactsDirectory, { recursive: true, mode: 0o700 })
-    const filename = `${Date.now()}-${safeCaptureFilename(request.filename)}`
-    const filePath = path.join(artifactsDirectory, filename)
-    const id = `video-capture-${Date.now()}`
-    const key = `__bmwMediaCapture_${crypto.randomUUID().replaceAll('-', '')}`
-    const webContents = tab.view.webContents
-    const stream = fs.createWriteStream(filePath, { flags: 'wx', mode: 0o600 })
-    this.elementCapture = { id, key, webContents, filePath }
-    this.onStatus?.({ active: true, id, filePath, tabId: tab.id, state: 'starting', kind: 'video-element' })
-
-    let bytes = 0
-    let initialization: Record<string, unknown> | null = null
-    let stopReason = 'unknown'
-    const startedAt = Date.now()
-    try {
-      initialization = await webContents.executeJavaScript(`(async () => {
-        const key = ${JSON.stringify(key)}
-        if (globalThis[key]) throw new Error('BMW video capture state already exists.')
-        const selector = ${JSON.stringify(selector)}
-        const index = ${JSON.stringify(index)}
-        const roots = Array.from(document.querySelectorAll(selector))
-        const root = roots[index]
-        if (!root) return { ok: false, reason: 'No element matched the capture selector and index.', matches: roots.length }
-        const video = root instanceof HTMLVideoElement ? root : root.querySelector('video')
-        if (!video) return { ok: false, reason: 'The selected element does not contain an HTML video element.', matches: roots.length }
-        const captureStream = video.captureStream || video.mozCaptureStream
-        if (typeof captureStream !== 'function') return { ok: false, reason: 'HTMLMediaElement.captureStream is unavailable in this Chromium build.' }
-        const initial = {
-          currentTime: Number.isFinite(video.currentTime) ? video.currentTime : 0,
-          paused: video.paused,
-          loop: video.loop,
-          playbackRate: video.playbackRate
-        }
-        const state = {
-          ready: Object.create(null), nextSequence: 0, nextPull: 0,
-          pending: 0, done: false, error: '', reason: '', recorder: null,
-          timer: 0, endedListener: null, initial, video
-        }
-        const restore = () => {
-          clearTimeout(state.timer)
-          if (state.endedListener) video.removeEventListener('ended', state.endedListener)
-          video.loop = initial.loop
-          video.playbackRate = initial.playbackRate
-          try { if (Number.isFinite(initial.currentTime)) video.currentTime = initial.currentTime } catch {}
-          if (initial.paused) video.pause()
-          delete globalThis[key]
-        }
-        const stop = (reason = 'requested') => {
-          if (state.done || !state.recorder || state.recorder.state === 'inactive') return false
-          state.reason = reason
-          state.recorder.stop()
-          return true
-        }
-        const pull = () => {
-          const chunks = []
-          while (Object.hasOwn(state.ready, state.nextPull)) {
-            chunks.push(state.ready[state.nextPull])
-            delete state.ready[state.nextPull]
-            state.nextPull += 1
-          }
-          return { chunks, pending: state.pending, done: state.done, error: state.error, reason: state.reason }
-        }
-        globalThis[key] = { stop, pull, restore }
-        try {
-          video.loop = false
-          video.playbackRate = 1
-          if (${JSON.stringify(fromStart)} && Number.isFinite(video.duration) && video.duration > 0 && video.currentTime > 0.05) {
-            video.currentTime = 0
-            await Promise.race([
-              new Promise((resolve) => video.addEventListener('seeked', resolve, { once: true })),
-              new Promise((resolve) => setTimeout(resolve, 3000))
-            ])
-          }
-          const mediaStream = captureStream.call(video)
-          const candidates = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm']
-          const mimeType = candidates.find((candidate) => MediaRecorder.isTypeSupported(candidate)) || ''
-          const recorder = new MediaRecorder(mediaStream, mimeType ? { mimeType, videoBitsPerSecond: 4_000_000 } : undefined)
-          state.recorder = recorder
-          recorder.ondataavailable = (event) => {
-            if (!event.data.size) return
-            const sequence = state.nextSequence++
-            state.pending += 1
-            const reader = new FileReader()
-            reader.onloadend = () => {
-              const value = String(reader.result || '')
-              const marker = ${JSON.stringify(DATA_URL_BASE64_MARKER)}
-              const markerIndex = value.indexOf(marker)
-              if (markerIndex < 0) state.error = 'Captured video chunk was not encoded as a Base64 Data URL.'
-              else state.ready[sequence] = value.slice(markerIndex + marker.length)
-              state.pending -= 1
-            }
-            reader.onerror = () => {
-              state.error = reader.error?.message || 'Failed to encode a captured video chunk.'
-              state.pending -= 1
-            }
-            reader.readAsDataURL(event.data)
-          }
-          recorder.onerror = (event) => {
-            state.error = event.error?.message || 'Browser MediaRecorder failed.'
-            state.reason = 'error'
-          }
-          recorder.onstop = () => { state.done = true }
-          state.endedListener = () => stop('ended')
-          video.addEventListener('ended', state.endedListener, { once: true })
-          state.timer = setTimeout(() => stop('maximum-duration'), ${JSON.stringify(maxDurationMs)})
-          recorder.start(1000)
-          await video.play()
-          return {
-            ok: true, matches: roots.length, selectedIndex: index,
-            mimeType: recorder.mimeType || mimeType || 'video/webm',
-            duration: Number.isFinite(video.duration) ? video.duration : null,
-            videoTracks: mediaStream.getVideoTracks().length,
-            audioTracks: mediaStream.getAudioTracks().length,
-            muted: video.muted
-          }
-        } catch (error) {
-          state.error = error instanceof Error ? error.message : String(error)
-          state.reason = 'initialization-error'
-          state.done = true
-          return { ok: false, reason: state.error, matches: roots.length }
-        }
-      })()`, true)
-      if (!initialization?.ok) throw new Error(String(initialization?.reason || 'Browser video capture could not start.'))
-      this.onStatus?.({ active: true, id, filePath, tabId: tab.id, state: 'recording', kind: 'video-element', ...initialization })
-
-      while (true) {
-        await delay(500)
-        const packet = await webContents.executeJavaScript(`globalThis[${JSON.stringify(key)}]?.pull()`, true)
-        if (!packet) throw new Error('The page navigated or removed the BMW video capture state.')
-        for (const encoded of packet.chunks || []) {
-          const chunk = Buffer.from(String(encoded), 'base64')
-          bytes += chunk.length
-          if (bytes > MAX_CAPTURE_BYTES) {
-            await webContents.executeJavaScript(`globalThis[${JSON.stringify(key)}]?.stop('size-limit')`, true).catch(() => {})
-            throw new Error(`Captured video exceeds the BMW limit of ${MAX_CAPTURE_BYTES} bytes.`)
-          }
-          if (!stream.write(chunk)) await once(stream, 'drain')
-        }
-        if (packet.error) throw new Error(String(packet.error))
-        stopReason = String(packet.reason || stopReason)
-        if (packet.done && Number(packet.pending || 0) === 0 && !(packet.chunks || []).length) break
-      }
-      stream.end()
-      await once(stream, 'finish')
-      if (bytes < 1_024) throw new Error('Browser video capture produced an empty or invalid recording.')
-      const header = Buffer.alloc(4)
-      const descriptor = fs.openSync(filePath, 'r')
-      try { fs.readSync(descriptor, header, 0, header.length, 0) } finally { fs.closeSync(descriptor) }
-      if (!header.equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]))) {
-        throw new Error('Browser video capture did not produce a valid WebM/EBML header.')
-      }
-      return {
-        artifactId: path.basename(filePath),
-        type: 'video',
-        contentType: String(initialization.mimeType || 'video/webm'),
-        bytes,
-        path: filePath,
-        durationMs: Date.now() - startedAt,
-        sourceDurationSeconds: initialization.duration,
-        videoTracks: initialization.videoTracks,
-        audioTracks: initialization.audioTracks,
-        complete: stopReason === 'ended',
-        stopReason,
-        tab: { id: tab.id, title: tab.title, url: tab.url }
-      }
-    } catch (error) {
-      stream.destroy()
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
-      throw error
-    } finally {
-      await webContents.executeJavaScript(`globalThis[${JSON.stringify(key)}]?.restore()`, true).catch(() => {})
-      this.elementCapture = null
-      this.onStatus?.({ active: false, id, filePath, tabId: tab.id, state: 'idle', kind: 'video-element' })
-    }
+  async captureVideo(tab:{id:string;title:string;url:string;view:{webContents:WebContents}},request:{selector?:unknown;index?:unknown;filename?:unknown;fromStart?:unknown;maxDurationMs?:unknown;sourceGuard?:SourceCaptureGuard}={},signal?:AbortSignal){
+    signal?.throwIfAborted();if(this.isCaptureActive())throw new Error('A media job is already active.')
+    const directory=this.resolveArtifactsDirectory?.(tab)||this.artifactsDirectory;fs.mkdirSync(directory,{recursive:true,mode:0o700})
+    const capture=new VideoElementCapture(tab.view.webContents,directory,request,{id:tab.id,title:tab.title,url:tab.url},value=>this.onStatus?.(value));this.elementCapture=capture
+    try{return await capture.run(signal)}finally{if(this.elementCapture===capture)this.elementCapture=null}
   }
 
   async compareImages(baselinePng, currentPng) {

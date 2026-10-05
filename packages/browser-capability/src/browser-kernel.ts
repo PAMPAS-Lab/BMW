@@ -1,4 +1,8 @@
+import {collectPageSource} from './collect-page-source.js'
+import type {SourceCollection,ProjectSourcePort} from '@bmw-agent/media-native/sources'
+import {assertPageScope,pageRangeExpression} from './page-scope.js'
 import crypto from 'node:crypto'
+import {PageRecordingEvents} from './page-recording-events.js'
 import { readRendererPhase } from './renderer-read.js'
 import { readScreenshotPhase } from './screenshot-read.js'
 import { SessionOperations } from './session-operations.js'
@@ -49,8 +53,9 @@ function projectStartUrl(project) {
 export class BrowserKernel {
   [key: string]: any
 
-  constructor({ window, session, permissionStore, sessionContinuity, projectStore, settingsStore, capabilityRegistry, allowedActions, artifactsDirectory, pageTheme = 'dark', onState, getCurrentSessionId = () => null }) {
+  constructor({ window, session, permissionStore, sessionContinuity, projectStore, settingsStore, capabilityRegistry, allowedActions, artifactsDirectory, pageTheme = 'dark', onState, getCurrentSessionId = () => null, getSessionDriver = (_sessionId:string) => 'dsh' }) {
     this.getCurrentSessionId = getCurrentSessionId
+    this.getSessionDriver = getSessionDriver
     this.window = window
     this.session = session
     this.permissionStore = permissionStore
@@ -427,7 +432,8 @@ export class BrowserKernel {
       const project = this.projectStore.active()
       if (request.action === 'schedule.list') return this.scheduledTaskManager.list(project.id)
       if (request.action === 'schedule.create') {
-        return this.scheduledTaskManager.create({id:project.id,sessionId:this.getCurrentSessionId()}, {
+        const sessionId=sessionOwner?.sessionId??this.getCurrentSessionId()
+        return this.scheduledTaskManager.create({id:project.id,sessionId,driverId:this.getSessionDriver(sessionId)}, {
           name: request.scheduleName,
           prompt: request.schedulePrompt,
           time: request.scheduleTime,
@@ -499,23 +505,29 @@ export class BrowserKernel {
     if (request.action === 'type') return this.type(tab, request)
     if (request.action === 'media.screenshot') return this.screenshot(tab, request, signal)
     if (request.action === 'media.download') return this.downloadMedia(tab, request, signal)
-    if (request.action === 'media.video.capture') return this.recordingController.captureVideo(tab, request)
-    if (request.action === 'media.record.start') return this.recordingController.start(tab, request)
-    if (request.action === 'media.record.stop') return this.recordingController.stop()
+    if (request.action === 'media.video.capture') return this.recordingController.captureVideo(tab, request, signal)
+    if (request.action === 'media.record.start') {
+      const source=await new PageRecordingEvents(tab.view.webContents,()=>{void this.recordingController.stop().catch(()=>{})},()=>tab.view.getBounds()).prepare()
+      tab.recordingEvents=source
+      try{return await this.recordingController.start(tab,request,source,signal)}catch(error){await source.dispose();delete tab.recordingEvents;throw error}
+    }
+    if (request.action === 'media.record.stop') return this.recordingController.stop(request)
     throw new Error(`Unimplemented browser action: ${request.action}`)
   }
 
   async observe(tab, request, signal?:AbortSignal) {
-    const maxCharacters = Math.min(Math.max(Number(request.maxCharacters) || 12_000, 1_000), 50_000)
+    const scope=assertPageScope(request)
     const result = await readRendererPhase<{title:string;url:string;text:string;interactive:unknown[];semantic:unknown[]}>(tab.view.webContents, 'observe', 'dom', () => tab.view.webContents.executeJavaScript(`(() => {
+      const {root,exclude,text,range}=${pageRangeExpression(scope)}
       const isVisible = (element) => {
+        if(element.closest(${JSON.stringify(['script','style','template','noscript','[hidden]','[aria-hidden="true"]',...scope.excludeSelectors].join(','))}))return false
         const style = getComputedStyle(element)
         const rect = element.getBoundingClientRect()
         return style.visibility !== 'hidden' && style.display !== 'none' && rect.width > 0 && rect.height > 0
       }
       const classStates = ${JSON.stringify(SEMANTIC_CLASS_STATES)}
       const ariaStates = ${JSON.stringify(SEMANTIC_ARIA_STATES)}
-      const interactive = [...document.querySelectorAll('a,button,input,textarea,select,[role="button"],[contenteditable="true"]')]
+      const interactive = [...(root?.querySelectorAll('a,button,input,textarea,select,[role="button"],[contenteditable="true"]')??[])]
         .filter(isVisible)
         .slice(0, 160)
         .map((element, index) => ({
@@ -526,7 +538,7 @@ export class BrowserKernel {
           ariaLabel: element.getAttribute('aria-label'),
           href: element.href || null
         }))
-      const semantic = [...document.querySelectorAll([
+      const semantic = [...(root?.querySelectorAll([
         'li',
         'tr',
         '[role]',
@@ -539,7 +551,7 @@ export class BrowserKernel {
         '[data-read]',
         '[data-unread]',
         ...classStates.map((state) => '.' + state)
-      ].join(','))]
+      ].join(','))??[])]
         .filter(isVisible)
         .slice(0, 240)
         .map((element, index) => {
@@ -567,7 +579,8 @@ export class BrowserKernel {
       return {
         title: document.title,
         url: location.href,
-        text: (document.body?.innerText || '').slice(0, ${maxCharacters}),
+        text,
+        range,
         interactive,
         semantic
       }
@@ -588,10 +601,13 @@ export class BrowserKernel {
       )
       if (!element) return { ok: false, reason: 'element-not-found' }
       element.scrollIntoView({ block: 'center', inline: 'center' })
+      const rect=element.getBoundingClientRect();const recordingEvent={epochMs:performance.timeOrigin+performance.now(),kind:'click',source:'agent-action',x:Math.max(0,Math.min(innerWidth,rect.x+rect.width/2)),y:Math.max(0,Math.min(innerHeight,rect.y+rect.height/2)),viewportWidth:innerWidth,viewportHeight:innerHeight,dpr:devicePixelRatio,scrollX:Math.max(0,scrollX),scrollY:Math.max(0,scrollY)}
       element.click()
-      return { ok: true, tag: element.tagName.toLowerCase(), text: (element.innerText || element.value || '').trim().slice(0, 200) }
+      return { recordingEvent, ok: true, tag: element.tagName.toLowerCase(), text: (element.innerText || element.value || '').trim().slice(0, 200) }
     })()`, true)
     if (!result.ok) throw new Error(result.reason)
+    tab.recordingEvents?.agentClick(result.recordingEvent)
+    delete result.recordingEvent
     return result
   }
 
@@ -632,12 +648,28 @@ export class BrowserKernel {
     return structuredClone(this.diagnostics.get(tabId) || { console: [], network: [], media: [], loadFailures: [] })
   }
 
+  projectSources?:()=>ProjectSourcePort
+  sourcePages():{id:string;url:string;title:string}[]{return this.state().tabs.map(tab=>({id:tab.id,url:tab.url,title:tab.title}))}
+  async downloadSource(request:{url:string;pageUrl:string;filename:string;tabId?:string},signal?:AbortSignal):Promise<unknown>{
+    const tab=this.requireTab(request.tabId),address=new URL(tab.view.webContents.getURL());address.hash=''
+    if(address.href!==request.pageUrl)throw new Error('Source page changed; return to the observed page before acquiring media.')
+    return this.downloadMedia(tab,{url:request.url,filename:request.filename},signal)
+  }
+  async captureSource(request:{sourceGuard:import('@bmw-agent/media-native/sources').SourceCaptureGuard;videoSelector:string;videoIndex?:number;maxDurationMs?:number;filename:string;tabId?:string},signal?:AbortSignal){
+    const tab=this.requireTab(request.tabId)
+    return this.recordingController.captureVideo(tab,{selector:request.videoSelector,index:request.videoIndex??0,filename:request.filename,fromStart:true,maxDurationMs:request.maxDurationMs,sourceGuard:request.sourceGuard},signal)
+  }
+  async collectSource(request:SourceCollection,signal?:AbortSignal){
+    const tab=this.requireTab(request.tabId)
+    return collectPageSource(tab.view.webContents,request,(scope,phaseSignal)=>this.listMedia(tab,scope,phaseSignal),signal)
+  }
+
   async listMedia(tab, request, signal?:AbortSignal) {
-    const selector = typeof request.selector === 'string' && request.selector.trim() ? request.selector.trim() : null
-    const index = Math.min(Math.max(Math.floor(Number(request.index) || 0), 0), 10_000)
+    const {selector,index,excludeSelectors}=assertPageScope(request)
     const maxItems = Math.min(Math.max(Math.floor(Number(request.maxItems) || 80), 1), 240)
-    const result = await readRendererPhase<{ok:boolean;reason?:string;items:Record<string,unknown>[];matches:number;selectedIndex:number;text:string}>(tab.view.webContents, 'page.media.list', 'dom', () => tab.view.webContents.executeJavaScript(`(async () => {
+    const result = await readRendererPhase<{ok:boolean;reason?:string;items:Record<string,unknown>[];matches:number;selectedIndex:number;text:string;range:unknown}>(tab.view.webContents, 'page.media.list', 'dom', () => tab.view.webContents.executeJavaScript(`(async () => {
       const selector = ${JSON.stringify(selector)}
+      const {text:bodyText,range:bodyRange}=${pageRangeExpression(assertPageScope({...request,maxCharacters:5000}))}
       const index = ${index}
       const roots = selector ? [...document.querySelectorAll(selector)] : [document]
       const root = roots[index]
@@ -646,10 +678,12 @@ export class BrowserKernel {
         if (!value || /^blob:|^data:/i.test(value)) return value || ''
         try { return new URL(value, location.href).toString() } catch { return value }
       }
+      const excluded=${JSON.stringify('script,style,template,noscript,input,textarea,select,[contenteditable]:not([contenteditable="false"]),[hidden],[aria-hidden="true"]')}+${JSON.stringify(excludeSelectors.length?','+excludeSelectors.join(','):'')}
+      document.querySelector(excluded)
       const descendants = (tag) => [
         ...(root instanceof Element && root.matches(tag) ? [root] : []),
         ...root.querySelectorAll(tag)
-      ]
+      ].filter(element=>!element.closest(excluded))
       const bestSrcset = (image) => {
         const candidates = String(image.srcset || '').split(',').map((part) => {
           const fields = part.trim().split(' ').filter(Boolean)
@@ -694,12 +728,13 @@ export class BrowserKernel {
         matches: roots.length,
         selectedIndex: index,
         pageUrl: location.href,
-        text: (root.innerText || '').trim().split(' ').filter(Boolean).join(' ').slice(0, 5000),
-        items: [...images, ...videos, ...sources, ...performanceMedia]
+        text: bodyText,
+        range:bodyRange,
+        items: [...images, ...videos, ...sources, ...(selector?[]:performanceMedia)]
       }
     })()`, true), signal)
     if (!result.ok) throw new Error(result.reason)
-    const observed = this.diagnosticsFor(tab.id).media.map((item) => ({ kind: 'network', ...item }))
+    const observed = selector?[]:this.diagnosticsFor(tab.id).media.map((item) => ({ kind: 'network', ...item }))
     const unique = new Map()
     for (const item of [...result.items, ...observed]) {
       const url = String(item.url || '')
@@ -713,6 +748,10 @@ export class BrowserKernel {
       matches: result.matches,
       selectedIndex: result.selectedIndex,
       text: result.text,
+      range:result.range,
+      scope:selector?'selected-element':'page',
+      candidateOnly:true,
+      truncated:unique.size>maxItems,
       items: [...unique.values()].slice(0, maxItems)
     }
   }

@@ -6,13 +6,13 @@ test('DSH driver delegates lifecycle and prompt submission without exposing raw 
  const calls:unknown[]=[],runtime=new DshRuntime({})
  runtime.url='http://127.0.0.1:1234'
  runtime.start=async()=>{calls.push('start');return runtime.url}
- runtime.stop=()=>{calls.push('stop')}
+ runtime.stopAndWait=async()=>{calls.push('stop')}
  runtime.enqueuePrompt=async(sessionId,text)=>{calls.push({sessionId,text});return '00000000-0000-0000-0000-000000000001'}
  const port=new DshHarnessPort(runtime)
  assert.equal(await port.start(),runtime.url)
  assert.equal(await port.enqueuePrompt('session-1','hello'),'00000000-0000-0000-0000-000000000001')
  assert.equal('call' in port,false)
- port.stop()
+ await port.stop()
  assert.deepEqual(calls,['start',{sessionId:'session-1',text:'hello'},'stop'])
 })
 test('DSH driver normalizes mutations, health and cancellation through official transport',async t=>{

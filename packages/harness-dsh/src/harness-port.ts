@@ -26,7 +26,7 @@ export class DshHarnessPort implements AgentRuntime {
  get running():boolean{return Boolean(this.runtime.child && this.runtime.authCookie)}
  get url():string|null{return this.runtime.url}
  start():Promise<string>{return this.runtime.start()}
- stop():void{this.runtime.stop()}
+ stop():Promise<void>{return this.runtime.stopAndWait()}
  async ensureWorkspace(project:AgentProject):Promise<AgentWorkspace>{return workspace(await this.runtime.ensureWorkspace(project))}
  async activateWorkspace(project:AgentProject):Promise<{workspace:AgentWorkspace;sessionId:string}>{
   const result=object(await this.runtime.activateWorkspace(project))

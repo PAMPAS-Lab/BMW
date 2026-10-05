@@ -49,6 +49,7 @@ try {
     const background = await live.openTab({ url: fixtureUrl, source: 'agent', reuse: false })
     view = live.tabs.get(background.id).view
     assert.equal(view.getBounds().width, 900)
+    console.log('Background phase: detached selector screenshot')
     const artifact = await live.execute({ action: 'media.screenshot', tabId: background.id, selector: 'article[data-testid="tweet"]' })
     const scale = screen.getDisplayMatching(host.getBounds()).scaleFactor
     assert.equal(artifact.width, 560 * scale)
@@ -64,6 +65,7 @@ try {
     assert.equal(await view.webContents.executeJavaScript('scrollY'),0,'Media discovery must not scroll hidden pages')
     assert.equal(live.activeTabId,active.id)
     const observation=await live.execute({action:'observe',tabId:background.id});assert.match(observation.text,/Background post/)
+    console.log('Background phase: diagnostics screenshot')
     const diagnostics=await live.execute({action:'page.diagnostics',tabId:background.id});assert.ok(diagnostics.screenshot.width>0)
     const wc = view.webContents, original = wc.executeJavaScript.bind(wc)
     let entered: () => void, complete: (value: unknown) => void
@@ -93,6 +95,7 @@ try {
       finish({ok:true,items:[],text:'late'});await pause(0);assert.deepEqual(fs.readdirSync(root),before)
       wc.executeJavaScript=original
     }
+    console.log('Background phase: detached viewport screenshot')
     const viewport = await live.execute({ action: 'media.screenshot', tabId: background.id })
     assert.equal(viewport.width, 900 * scale)
     assert.equal(viewport.height, 700 * scale)
@@ -111,8 +114,11 @@ try {
       await live.execute({action:'page.viewport.set',tabId:active.id,width,height,deviceScaleFactor:1})
       assert.deepEqual(await page.webContents.executeJavaScript('({width:innerWidth,height:innerHeight})'),{width,height},'Requested screenshot layout is preserved')
       await pause(80)
+      console.log('Background phase: native workspace capture',width,height)
       const surface = await page.webContents.capturePage()
+      console.log('Background phase: native capture complete',surface.getSize())
       assert.deepEqual(surface.getSize(),{width:480*scale,height:600*scale},'Native capture retains the workspace pixel dimensions')
+      console.log('Background phase: full emulated screenshot',width,height)
       const screenshot = await live.execute({action:'media.screenshot',tabId:active.id})
       assert.equal(screenshot.width,width);assert.equal(screenshot.height,height,'Full emulated screenshot extends beyond visible surface')
       live.showTab(background.id);live.showTab(active.id)

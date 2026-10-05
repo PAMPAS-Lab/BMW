@@ -239,7 +239,7 @@ function renderScheduledTasks() {
     heading.append(name, badge)
     const schedule = document.createElement('span')
     schedule.className = 'scheduled-task-schedule'
-    schedule.textContent = `Daily ${task.schedule.time} · ${task.schedule.timeZone} · next ${scheduledTaskTime(task.nextRunAt)}`
+    schedule.textContent = `Daily ${task.schedule.time} · ${task.schedule.timeZone} · next ${scheduledTaskTime(task.nextRunAt)} · ${task.driverId || '未绑定驱动'} · ${task.sessionId || '未绑定会话'}`
     const prompt = document.createElement('div')
     prompt.className = 'scheduled-task-prompt'
     prompt.textContent = task.prompt
@@ -287,7 +287,9 @@ function renderScheduledTasks() {
         await refreshScheduledTasks()
       } catch (error) { scheduledTaskMessage.textContent = error.message }
     })
-    actions.append(enabledLabel, runNow, remove)
+    const bind=document.createElement('button');bind.textContent='绑定当前会话';bind.disabled=Boolean(activeRun)
+    bind.addEventListener('click',async()=>{try{await api.bindScheduledTask(task.id);await refreshScheduledTasks()}catch(error){scheduledTaskMessage.textContent=error.message}})
+    actions.append(enabledLabel, runNow, bind, remove)
     row.append(main, actions)
     return row
   }))
@@ -406,6 +408,8 @@ function renderAgentSessions() {
     const fork = action('Fork', async () => {
       try { setSessionMessage('Forking session…'); agentSessions = await api.forkAgentSession(item.sessionId); renderAgentSessions(); setSessionMessage('Fork created and selected.') } catch (error) { setSessionMessage(error.message, true) }
     })
+    fork.disabled=item.canFork===false||item.running
+    if(item.canFork===false)fork.title='This driver has not enabled verified conversation branching'
     const archive = action('Archive', async () => {
       if (!window.confirm(`Archive “${item.title}”? Its Agent log is retained.`)) return
       try { agentSessions = await api.archiveAgentSession(item.sessionId); renderAgentSessions(); setSessionMessage('Session archived; its log remains on disk.') } catch (error) { setSessionMessage(error.message, true) }
@@ -910,7 +914,7 @@ api.productInfo().then((product) => {
   productInfo = product
   productBrand.textContent = product.name
   document.querySelector('#settings-agent-driver').textContent = product.agent.label+' runtime · '+product.agent.baseline
-  document.querySelector('#settings-agent-advanced').textContent = 'Open '+product.agent.label+' models, input behavior, permissions & plugins'
+  document.querySelector('#settings-agent-advanced').textContent = product.agent.ownedUI?'打开当前 Agent 的登录与模型设置':'Open '+product.agent.label+' models, input behavior, permissions & plugins'
   settingsRestart.textContent = `Restart ${product.name}…`
   document.title = product.name
   renderGlobalSettings()

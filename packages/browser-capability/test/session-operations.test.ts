@@ -98,9 +98,10 @@ test('Browser bridge pins Project identity, revokes queued Sessions and returns 
   const running = request('execute', { binding, arguments: { action: 'wait' } })
   await began
   const queued = request('execute', { binding, arguments: { action: 'wait' } })
-  await request('session/release', { binding })
+  const released = bridge.releaseSession(binding)
   release()
-  assert.equal((await running).status, 200)
+  await released
+  assert.equal((await running).status, 400)
   assert.equal((await queued).status, 400)
   assert.equal((await request('execute', { binding, arguments: { action: 'status' } })).status, 400)
 })

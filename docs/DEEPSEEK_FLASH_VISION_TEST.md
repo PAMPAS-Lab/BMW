@@ -1,5 +1,7 @@
 # DeepSeek Flash 真实视觉测试
 
+这是 2026-10-02 的专项视觉证据快照；其协议和能力结论仅适用于当时的对应链路。当前三驱动、登录与边界回归范围见 [PROJECT_STATUS.md](PROJECT_STATUS.md) 和 [VERIFICATION.md](VERIFICATION.md)。
+
 日期：2026-10-02。产品：BMW。DSH 0.2.0-rc.2；Electron 44.5.1；官方 deepseek-official 路由、deepseek-flash、low reasoning、4096 最大输出 token。
 
 ## 官方模型核对
@@ -38,4 +40,4 @@ BMW_VISION_TEST=1 NODE_USE_ENV_PROXY=1 npm run test:vision-e2e
 
 ## 范围限制
 
-这证明清晰合成截图的 OCR、数值/图表和简单空间理解及 BMW 图像链路可用，不是通用视觉评测。真实网页复杂交互、点击坐标精度、小字/模糊图、自然照片、跨图比较、连续视频理解及长会话图像压缩仍未测试。DSH Session 销毁撤权和完整 IPC 攻击面仍需独立覆盖。
+这证明清晰合成截图的 OCR、数值/图表和简单空间理解及 BMW 图像链路可用，不是通用视觉评测。真实网页复杂交互、点击坐标精度、小字/模糊图、自然照片、跨图比较、连续视频理解及长会话图像压缩仍未测试。本专项没有覆盖 Session 销毁撤权或完整 IPC 准入；后续对应租约、清理、Shell 请求与框架拒绝保障由 [VERIFICATION.md](VERIFICATION.md) 和生成的测试清单单列，不能由此视觉成绩推断。

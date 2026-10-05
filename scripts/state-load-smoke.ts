@@ -9,6 +9,8 @@ import {bmwProduct} from '../packages/product-bmw/index.js'
 import {ProjectStore} from '../packages/platform/src/project-store.js'
 import {LayoutStore} from '../packages/platform/src/layout-store.js'
 
+process.on('uncaughtException',(error:Error)=>{console.error(error);process.exit(1)})
+
 /** Contract fixture: no Agent loop, model, child process or network. */
 class FixtureRuntime implements AgentRuntime {
  running=false
@@ -87,7 +89,7 @@ const originalDialog=dialog.showMessageBox
 Object.assign(dialog,{showMessageBox:async()=>{
  prompts++;assert.equal(fs.readFileSync(stateFile,'utf8'),invalid)
  assert.equal(BrowserWindow.getAllWindows().length,0,'No privileged UI or Agent starts with unreadable Project data')
- if(scenario==='exit'){app.once('will-quit',()=>{assert.equal(fs.readFileSync(stateFile,'utf8'),invalid);assert.equal(runtime.running,false);console.log('PASS startup '+kind+' exit preserves unreadable state');fs.rmSync(temporary,{recursive:true,force:true});app.exit(0)});return {response:1,checkboxChecked:false}}
+ if(scenario==='exit'){app.once('will-quit',()=>{assert.equal(fs.readFileSync(stateFile,'utf8'),invalid);assert.equal(runtime.running,false);console.log('PASS startup '+kind+' exit preserves unreadable state');console.log('Startup evidence: '+temporary);app.exit(0)});return {response:1,checkboxChecked:false}}
  fs.writeFileSync(stateFile,original);return {response:0,checkboxChecked:false}
 }})
 const errors:string[]=[]
@@ -125,7 +127,7 @@ try{
  assert.equal(errors.length,0,errors.join('\n'))
  console.log('PASS provider-neutral BMW core: lifecycle, Shell, Project bindings, sessions, rename/select, foreign ownership denial and Project transition with fixture driver')
 }catch(error){exitCode=1;console.error(error)}
-finally{clearTimeout(watchdog);Object.assign(dialog,{showMessageBox:originalDialog});runtime.stop();fs.rmSync(temporary,{recursive:true,force:true});app.exit(exitCode)}
+finally{clearTimeout(watchdog);Object.assign(dialog,{showMessageBox:originalDialog});runtime.stop();console.log('Startup evidence: '+temporary);app.exit(exitCode)}
 
 }
 void run()

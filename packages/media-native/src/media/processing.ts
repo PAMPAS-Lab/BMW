@@ -1,12 +1,13 @@
+import {normalizeSpeech} from './speech-normalize.js'
 import {paintDrawing} from './image-drawing.js'
 import {decodeProjectImage} from './image-decoder.js'
 import {ImageDecodeBudget} from '../image-contract.js'
 import { Input, CustomSource, MP4, QTFF, WEBM, MATROSKA, MP3, WAVE, OGG, ADTS, FLAC, MPEG_TS,
-  CanvasSink, EncodedPacketSink, Output, StreamTarget, Mp4OutputFormat, WebMOutputFormat, Conversion, canEncodeVideo, canEncodeAudio } from 'mediabunny'
+  VideoSampleSink,AudioSampleSink,CanvasSink, EncodedPacketSink, Output, StreamTarget, Mp4OutputFormat, WebMOutputFormat, Conversion, canEncodeVideo, canEncodeAudio } from 'mediabunny'
 import type { InputTrack, StreamTargetChunk } from 'mediabunny'
 import { LinearFrameReader, normalizeBrowserVideoColor } from './linear-frames.js'
 import { assertNativeProcessingRequest, assertPreservedMediaTracks, assertProcessableVideoTracks, MEDIA_LIMITS } from '../media-contract.js'
-import type { MediaInfo, MediaTrackInfo, MediaWorkerResult, MediaProcessingBridge, MediaProcessingCommand, SampledFrame } from '../media-contract.js'
+import type { MediaInfo, MediaTrackInfo, MediaWorkerResult, MediaProcessingBridge, MediaProcessingCommand, SampledFrame,FullMediaDecode } from '../media-contract.js'
 
 declare global { interface Window { bmwMediaProcessing: MediaProcessingBridge } }
 const bridge = window.bmwMediaProcessing
@@ -89,7 +90,24 @@ async function processMedia(command: MediaProcessingCommand): Promise<void> {
     for (const track of await input.getVideoTracks()) await normalizeBrowserVideoColor(track)
     const metadata = await info(input)
     let result: MediaWorkerResult
-    if (request.action === 'media.inspect') result = { kind: 'inspection', info: metadata }
+    if(request.action==='media.speech.normalize'){const normalized=await normalizeSpeech(input);await write(command.token,0,0,normalized.data);result={kind:'speech-pcm',info:normalized.info}}
+    else if (request.action === 'media.inspect') result = { kind: 'inspection', info: metadata }
+    else if(request.action==='media.decode.check'){
+      if(!Number.isFinite(metadata.durationSeconds)||metadata.durationSeconds<=0||metadata.durationSeconds>MEDIA_LIMITS.durationSeconds)throw new Error('Full-file decode requires finite media up to thirty minutes.')
+      assertProcessableVideoTracks(metadata.tracks)
+      const tracks:FullMediaDecode['tracks']=[]
+      for(const track of await input.getTracks()){
+        if(!track.isVideoTrack()&&!track.isAudioTrack())continue
+        if(!await track.canDecode())throw new Error('A source media track cannot be decoded.')
+        let sampleCount=0,startSeconds=Infinity,endSeconds=-Infinity
+        const samples=track.isVideoTrack()?new VideoSampleSink(track).samples():new AudioSampleSink(track).samples()
+        for await(const sample of samples){try{if(++sampleCount>(track.isVideoTrack()?120000:250000))throw new Error('Full-file decode sample budget exceeded.');startSeconds=Math.min(startSeconds,sample.timestamp);endSeconds=Math.max(endSeconds,sample.timestamp+sample.duration)}finally{sample.close()}}
+        if(!sampleCount)throw new Error('Source track decoded no samples.')
+        tracks.push({id:track.id,type:track.type as 'video'|'audio',codec:(await track.getCodec())!,sampleCount,startSeconds,endSeconds})
+      }
+      if(!tracks.length)throw new Error('Source file has no decoded audio/video tracks.')
+      result={kind:'decoding',info:{kind:'decoding',completeFile:true,container:metadata.container,contentType:metadata.contentType,durationSeconds:metadata.durationSeconds,firstTimestampSeconds:metadata.firstTimestampSeconds,tracks}}
+    }
     else {
       if (!Number.isFinite(metadata.durationSeconds) || metadata.durationSeconds <= 0 || metadata.durationSeconds > MEDIA_LIMITS.durationSeconds) throw new Error('Media processing supports finite files up to 30 minutes.')
       assertProcessableVideoTracks(metadata.tracks)

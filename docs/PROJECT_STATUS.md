@@ -2,28 +2,67 @@
 
 Browser is boundary, media is native, web is runtime.
 
-| 范围 | 当前状态 | 边界 |
+本页按 2026-10-05 的活动 BMW 代码核对。当前功能、Schema、权限与生成测试清单以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准；模块和接口以 [ARCHITECTURE.md](ARCHITECTURE.md) 的生成区为准。
+
+| 范围 | 当前状态 | 实际边界 |
 |---|---|---|
-| 桌面工作区 | 已实现 | 一个 BMW 应用；浏览器和 Studio 共用主窗口与 Assistant |
-| Project 与会话 | 已实现 | 一个 Project 对应驱动内一个 Workspace，可有多个会话，共享页面和媒体 |
-| Agent 驱动 | 已分离 | 核心只依赖 agent-contract；应用注入唯一 DSH 驱动 |
-| 浏览器操作 | 已实现 | 唯一 browser 工具；Project/Session 验证、FIFO、切换锁、期限与取消 |
-| 素材与原生媒体 | 已实现 | 截图、下载、Capture、录屏、检查、抽帧、裁剪缩放、转换 |
-| 视频工作流 | 已实现 | 素材收集 → 脚本 → 旁白 → 画面匹配 → 预览编辑与导出 |
-| Studio 素材编辑 | 已实现 | 准备/匹配/工作台/封面/片段统一缩略图、放大预览与列表/图标切换；使用分组、拖拽绑定与时间轴定位 |
-| 草稿归属 | 已实现 | 一个会话多个草稿，强绑定唯一会话；切换可见列表、空状态、版本校验与可恢复删除 |
-| 封面与交付 | 已实现 | 专用上方入口；独立 PNG 封面、SRT/VTT、已有 MP4 直接查看/另存、匹配成片复用及明确重制 |
-| 脚本与旁白 | 已实现 | 全局脚本对应分镜脚本；正文、音色、语速与生成记录匹配；导入/旧音频诚实标注，字幕样式独立 |
-| 参数与模板 | 已实现 | 比例、分辨率、帧率、画面风格、水印、配乐、TTS 命名模板 |
-| 外部控制 | 未实现 | 未来独立远控/移动接口；无聊天软件连接器 |
-| 交付安装包 | 未实现 | 无签名、安装器与自动升级 |
+| 桌面工作区 | 已实现 | 一个 BMW；浏览器和 Video Studio 共用 Project 与自有 Assistant |
+| Agent 驱动 | 三驱动已启用 | DSH、Codex App Server、Qoder CN SDK 各自拥有官方 Agent 循环；核心只依赖通用契约 |
+| 登录与模型选择 | 已实现 | GUI 切换驱动自动读取认证；缺少凭据时弹出登录方式，可改选驱动；登录后点选支持模型并确认 |
+| Project 与会话 | 已实现 | 稳定 BMW Session 固定 Project/driver；原生恢复身份不可替换，旧 DSH owner 保留；页面与媒体由 Project 共享 |
+| 浏览器与图像 | 已实现 | 唯一 browser 工具；页面交互、后台取材、图像检查/标注/绘图、FIFO、权限、租约与实际清理 |
+| 素材与媒体 | 已实现 | 截图、有限下载、视频采集、页面录制事件、检查、抽帧、裁剪缩放与转换 |
+| 来源与引用 | 已实现 | 限定正文采集、原文/哈希、候选确认、有限播放器采集、准确 UTF-16 引用和当前媒体可用性；冲突仍待用户核查 |
+| Video Studio | 已实现 | 草稿 owner/revision、脚本、真实旁白、匹配、预览、焦点、板书、独立封面与 MP4/SRT/VTT/来源清单 |
+| 中文语音锚点 | 可编辑句/段已交付 | 固定 base/small 原始证据与校正；十段 base 标注已由用户核听采用，保留 12 个锚点的来源；自动精度门未通过 |
+| 参数与模板 | 已实现 | 比例、分辨率、帧率、风格、水印、配乐与 TTS 模板；默认 Edge 云希、0% 语速，支持本地 Matcha |
+| 计划任务 | 已实现 | 固定 Project/Session/driver，失效绑定报错；跨驱动运行恢复用户选择，排队/运行时禁止重绑 |
+| 外部控制 | 未实现 | 无独立远控/移动服务或聊天软件连接器；SDK 会话不要求出现在原生桌面列表 |
+| 安装交付 | 未实现 | 无签名安装器、自动更新；以源码与固定依赖启动 |
 
-DSH 基线 `0.2.0-rc.2`，Electron `44.5.1`，Mediabunny `1.61.0`。技术边界、具体 Schema 与测试见 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md)。
+## 运行与认证
 
-DSH 的协议、身份验证、模型配置和官方客户端 DOM 都留在驱动包。更换 Agent 需要实现契约并调整应用入口，不需要把页面归属、媒体处理或视频草稿搬入新 Agent。
+固定版本为 Node.js 24+、Electron `44.5.1`、Mediabunny `1.61.0`、DSH `0.2.0-rc.2`、Codex App Server `0.160.0`、Qoder CN SDK `1.0.50` / Worker `1.1.64`。依赖安装版由 lockfile 固定，外部 CLI 还需通过运行时版本准入。
 
-设备编码能力和外部 Edge 服务影响媒体成功率。透明视频的实际 alpha 抽帧/转换、通用 NLE、任意 HTML 导入不在当前实现范围。合成视觉测试不能证明全部真实网页的视觉能力。
+默认入口由 `scripts/product-entry.ts` 调用 `apps/bmw/agent-assembly.ts`。新 Profile 默认 DSH，之后按 Project 保存 driver 选择。启动沿用已有选择，不自动发起登录；GUI 切换时检查认证。
 
-稳定性检查覆盖已有状态读取保护、后台 DOM 读取期限与取消、下载回滚、旁白生成参数、全部页面重启恢复与注册表能力清单。单元/边界、启动重试/退出、驱动、DSH、Studio、媒体、视频和本地 TTS 回归按源码分类执行；当前功能和测试清单以 FUNCTIONAL_SPEC 为准。桌面工作区、Project/会话（含实际重启）、设置、原生焦点/键盘四组独立通过；生产 Profile、钥匙串与实际桌面体验单列人工验收。覆盖和证据见 [VERIFICATION.md](VERIFICATION.md)。
+Profile 为 `BMW`，浏览器分区为 `persist:bmw`。三个引擎分别使用 `dsh-home`、`agent-drivers/codex`、`agent-drivers/qoder-cn`；BMW 保存会话索引、显示历史、回执与模型偏好。DSH 初次初始化可复制普通 CLI 凭据，后续凭据写入只落在 BMW 的独立文件；Codex/Qoder 不读取原生桌面的私有凭据。
 
-模块职责、公开接口、依赖方向与测试保障见 [ARCHITECTURE.md](ARCHITECTURE.md)。局部改动可用 `test:plan -- --files <路径>` 查看保障集，再用 `test:affected` 执行；未分类或无法证明影响范围的改动不能静默跳过验证。
+DSH 提供 DeepSeek API Key，Codex 提供 ChatGPT 浏览器登录，Qoder CN 调用官方 CLI 登录。Codex 可识别独立 CLI 中的既有 API Key，BMW 当前没有 API Key 输入表单。Qoder 没有已验证的非交互退出控制，退出按钮禁用。DSH 检查的是 Key 是否配置，不验证 Key 有效性或余额。
+
+支持名单与官方目录匹配后才可选择：Codex 为四个已封装 GPT-6 型号与 GPT-5.5；DSH 为两个官方 DeepSeek 路由；Qoder CN 为维护的 14 个启用型号，完整 ID 见功能规格。支持名单不等于账号推理额度，也不代表全部型号逐一完成付费验收。设置不发送模型输入；Qoder 冷控制会话仍内部核对 SDK 初始化目录，实际输入前所有引擎均要求有效工具目录恰好一个 browser。
+
+## 当前验证证据
+
+| 报告 | 执行范围 | 结论的适用范围 |
+|---|---|---|
+| `2026-10-05-gpt6-browser` | 112 项离线检查及 5 个检查门通过 | GPT-6 封装时的完整源码快照；不是后续登录改动的全量复跑 |
+| `2026-10-05-login-flow` | 32 项选定检查及 4 个检查门通过 | 最新登录/选择流程、相关契约、隔离 Assistant 与边界；合入审计证明候选和活动源码一致 |
+| 三引擎与 GPT-6 真模型验收 | 隔离页面、随机截图读图、Studio owner、原生进程结束后的同一 Session 续聊 | 仅对应实际执行的型号；Qoder 为 auto，Codex 四个 GPT-6 与 GPT-5.5，DSH 为当时的官方 Flash |
+| Studio base 采用 | 十段音频、12 个可编辑片段、实际 MP4/SRT/VTT/板书与成片复用 | 用户核听后的 ASR 辅助采用；独立声学 P95 未建立，自动词/字同步未批准 |
+
+报告、原始日志、失败记录与人工验收边界见 [VERIFICATION.md](VERIFICATION.md)。文档更新不重新运行付费模型或把历史报告改成新结果；只有成功的完整离线运行更新完整通过基线。
+
+## 当前限制与待修复项
+
+Shell 顶部运行时徽章仍监听旧 agent-status 通道，而自有 Assistant 的状态发布只更新 Assistant、Project 与会话视图，因此可能一直显示“Starting Assistant…”。实际运行状态以 Assistant 面板为准。代码位置为 [状态发布](../packages/platform/src/main.ts#L486) 与 [旧状态渲染](../packages/platform/src/renderer/shell.ts#L155)；本次文档核对记录此问题，尚未改动运行代码。
+
+原生桌面会话同步、fork、steer、Agent 原生审批与 nativeOpen 未启用。未知投递不自动重发；损坏状态保留原文件并提供重试/退出，原生清理失败保留资源隔离。生产钥匙串与真实 Profile 体验由用户验收。
+
+设备编码能力及 Edge 外部服务影响媒体成功率。真实 alpha 视频抽帧/转换、通用 NLE、任意 HTML 视频导入、自由图层/关键帧、自动句/词/字声学同步及可选数字人尚不属于当前交付；ASR 本机 macOS 分支有实测，Linux 分支尚未实测。
+
+## 文档入口与历史材料
+
+| 文档 | 用途 |
+|---|---|
+| [README.md](../README.md) | 安装、登录和主要工作流 |
+| [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) | 当前行为、Schema、权限及生成能力/测试清单 |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | 12 个模块、10 项接口保障和 3 项具体实现保障；导出与依赖检查 |
+| [VERIFICATION.md](VERIFICATION.md) | 分阶段报告、测试方法与证据限制 |
+| [handoff.md](../handoff.md)、[agent.md](../agent.md)、[AGENTS.md](../AGENTS.md) | 当前开发交接与规范 |
+| [AGENT_DRIVER_DESIGN.md](AGENT_DRIVER_DESIGN.md)、[AGENT_DRIVERS_IMPLEMENTATION.md](AGENT_DRIVERS_IMPLEMENTATION.md)、[QODER_BMW.md](QODER_BMW.md) | 三官方驱动的设计、实际验收和接入 |
+| [VIDEO_STUDIO_P0_IMPLEMENTATION.md](VIDEO_STUDIO_P0_IMPLEMENTATION.md) | 当前 P0 摘要及保留的逐阶段实施证据 |
+| [VIDEO_STUDIO_REVIEW.md](VIDEO_STUDIO_REVIEW.md) | 2026-10-04 原始需求评审，原文保留；其中旧待开发判断不是当前状态 |
+| [DEEPSEEK_FLASH_VISION_TEST.md](DEEPSEEK_FLASH_VISION_TEST.md) | 2026-10-02 专项视觉快照，不能外推完整项目验收 |
+
+名称含 ` 2.md` 的三个既有副本保留原字节，属于历史副本，不作为当前文档入口。迁移归档 `../Agent in Browser` 和独立 `../BMWDev` 不属于本次活动 BMW 文档的权威来源。

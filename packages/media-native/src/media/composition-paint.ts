@@ -1,10 +1,11 @@
+import {focusFraming} from '../focus-contract.js'
 import {sceneVisuals,visualAtTime} from '../visual-segments.js'
 import type { CompositionScene, MediaComposition } from '../composition-contract.js'
 import { DEFAULT_VIDEO_OPTIONS } from '../video-options.js'
 import {estimatedCaptionCues} from '../composition-contract.js'
 export interface CompositionCanvasFrame {canvas:HTMLCanvasElement|OffscreenCanvas}
 const font = '"PingFang SC", "Microsoft YaHei", sans-serif'
-function lines(context:CanvasRenderingContext2D,text:string,width:number):string[]{const result:string[]=[];let line='';for(const character of text){if(context.measureText(line+character).width>width&&line){result.push(line);line=''}line+=character}if(line)result.push(line);return result}
+function lines(context:CanvasRenderingContext2D,text:string,width:number):string[]{const result:string[]=[];let line='';for(const character of text){if(character==='\n'){result.push(line);line='';continue}if(character==='\r')continue;if(context.measureText(line+character).width>width&&line){result.push(line);line=''}line+=character}if(line)result.push(line);return result}
 /** A single responsive painter is used by Studio preview and MP4 export. */
 export function paintScene(context:CanvasRenderingContext2D,scene:CompositionScene,frame:CompositionCanvasFrame|null,time:number,duration:number,index:number,total:number,narrationDuration:number,output?:Pick<MediaComposition,'width'|'height'|'style'|'watermark'>):void {
   const height=output?.height??720,width=output?.width??1280,W=720*width/height,H=720,margin=W<600?24:48
@@ -30,16 +31,20 @@ export function paintScene(context:CanvasRenderingContext2D,scene:CompositionSce
     context.save();context.beginPath();context.roundRect(area.x,area.y,area.width,area.height,minimal?0:16);context.clip()
     context.fillStyle=light?'#e7edf5':'#232323';context.fillRect(area.x,area.y,area.width,area.height)
     context.globalAlpha=visual?.opacity??1
-    const crop=framing.crop??{x:0,y:0,width:1,height:1},sourceWidth=frame.canvas.width*crop.width,sourceHeight=frame.canvas.height*crop.height
+    const focused=focusFraming(framing,visual?.localSeconds??time),crop=focused.crop,sourceWidth=frame.canvas.width*crop.width,sourceHeight=frame.canvas.height*crop.height
     const scale=Math.min(area.width/sourceWidth,area.height/sourceHeight)*(1+(framing.zoom-1)*Math.min(1,(visual?.localSeconds??time)/framing.durationSeconds)),drawWidth=sourceWidth*scale,drawHeight=sourceHeight*scale
     context.drawImage(frame.canvas,frame.canvas.width*crop.x,frame.canvas.height*crop.y,sourceWidth,sourceHeight,area.x+(area.width-drawWidth)/2,area.y+(area.height-drawHeight)/2,drawWidth,drawHeight)
+    if(focused.focus?.emphasize&&focused.strength>0){
+      const x=area.x+(area.width-drawWidth)/2+(focused.focus.x-crop.x)/crop.width*drawWidth,y=area.y+(area.height-drawHeight)/2+(focused.focus.y-crop.y)/crop.height*drawHeight
+      context.globalAlpha=(visual?.opacity??1)*focused.strength;context.strokeStyle='#ffcc33';context.lineWidth=3;context.beginPath();context.arc(x,y,14,0,Math.PI*2);context.stroke()
+    }
     context.restore()
     if(!minimal){context.strokeStyle=light?'#2369db44':'#a2f4d044';context.lineWidth=2;context.beginPath();context.roundRect(area.x,area.y,area.width,area.height,16);context.stroke()}
   }else{
-    context.save();context.globalAlpha=ease;context.fillStyle=accent;context.font=`800 ${W<600?80:110}px ${font}`;context.fillText(String(index+1).padStart(2,'0'),margin,265)
+    context.save();context.globalAlpha=ease;context.fillStyle=accent;context.font=`800 ${W<600?80:110}px ${font}`;if(scene.showSceneNumber!==false)context.fillText(String(index+1).padStart(2,'0'),margin,265)
     context.fillStyle=ink
-    let y=340
-    for(const bullet of scene.bullets){context.font=`600 ${W<600?24:34}px ${font}`;for(const line of lines(context,bullet,W-margin*2).slice(0,2)){context.fillText(line,margin,y);y+=W<600?32:42}y+=12}
+    let y=scene.showSceneNumber===false?240:340
+    for(const [bulletIndex,bullet] of scene.bullets.entries()){context.font=`600 ${W<600?24:34}px ${font}`;for(const line of lines(context,bullet,W-margin*2).slice(0,2)){if(time>=(scene.bulletRevealSeconds?.[bulletIndex]??0))context.fillText(line,margin,y);y+=W<600?32:42}y+=12}
     context.restore()
   }
   // Estimated sentence captions follow measured audio; no word-alignment claim.
@@ -59,7 +64,7 @@ export function paintScene(context:CanvasRenderingContext2D,scene:CompositionSce
   context.fillStyle=muted;context.font=`14px ${font}`
   const rightWatermark=watermark.enabled&&watermark.position==='bottom-right'
   const counter=`${String(index+1).padStart(2,'0')} / ${String(total).padStart(2,'0')}`
-  context.fillText(counter,rightWatermark?margin:W-margin-context.measureText(counter).width,704)
+  if(scene.showSceneNumber!==false)context.fillText(counter,rightWatermark?margin:W-margin-context.measureText(counter).width,704)
   if(watermark.enabled){context.save();context.globalAlpha=watermark.opacity;context.fillStyle=muted;context.font=`${watermark.size}px ${font}`
     const maxWidth=W-margin*2,measured=context.measureText(watermark.text).width
     if(measured>maxWidth)context.font=`${watermark.size*maxWidth/measured}px ${font}`

@@ -24,7 +24,9 @@ export class StudioWorkbench {
     node('delivery-panel').hidden=!editing||mode!=='delivery'
     const audioPanel=(document.querySelector('.script-audio-panel') as HTMLElement),scriptEditor=(document.querySelector('.script-editor') as HTMLElement)
     const parent=editing?node('voice-actions'):scriptEditor;if(audioPanel.parentElement!==parent)parent.append(audioPanel)
+    const speechPanel=node('studio-speech-editor');if(speechPanel.parentElement!==parent)parent.append(speechPanel)
     node('voice-actions').hidden=!editing||!hasScene||mode!=='voice'
+    node('studio-speech-links').hidden=stage<3||!hasScene||!['visual','voice'].includes(mode)
     node('match-controls').hidden=stage<3||!hasScene||mode!=='visual';node('visual-segments').hidden=stage<3||!hasScene||mode!=='visual'
     node('canvas-workspace').hidden=!editing||!draft
     node('preview').parentElement!.hidden=!hasScene||mode==='cover';node('transport').hidden=!hasScene||mode==='cover'
@@ -40,8 +42,8 @@ export class StudioWorkbench {
     node('timeline-body').style.minWidth=`${Math.max(640,model.duration*28)}px`
     const ruler=node('timeline-ruler');ruler.replaceChildren()
     for(let i=0;i<=6;i++){const mark=document.createElement('span');mark.style.left=`${i/6*100}%`;mark.textContent=(model.duration*i/6).toFixed(1)+'s';ruler.append(mark)}
-    for(const [kind,id,label]of [['scene','timeline','分镜'],['visual','timeline-visuals','画面'],['voice','timeline-voice','旁白'],['caption','timeline-captions','字幕']] as const){
-      const row=node(id);row.replaceChildren();const name=document.createElement('span');name.className='track-label';name.textContent=label
+    for(const [kind,id,label]of [['scene','timeline','分镜'],['visual','timeline-visuals','画面'],['focus','timeline-focus','重点'],['reveal','timeline-reveals','板书'],['voice','timeline-voice','旁白'],['caption','timeline-captions','字幕']] as const){
+      const row=node(id);if(kind==='reveal')row.hidden=!model.clips.some(c=>c.kind==='reveal');row.replaceChildren();const name=document.createElement('span');name.className='track-label';name.textContent=label
       const lane=document.createElement('div');lane.className='track-lane';row.append(name,lane)
       for(const clip of model.clips.filter(clip=>clip.kind===kind))lane.append(this.clip(clip,index,model.duration))
       if(!lane.childElementCount){const empty=document.createElement('span');empty.className='track-empty';empty.textContent='未设置';lane.append(empty)}
@@ -51,7 +53,7 @@ export class StudioWorkbench {
     const button=document.createElement('button');button.className='timeline-clip';button.classList.toggle('selected',clip.sceneIndex===index);button.classList.toggle('stale',Boolean(clip.stale))
     button.dataset.sceneIndex=String(clip.sceneIndex);button.dataset.seconds=String(clip.start);button.dataset.kind=clip.kind
     button.style.left=`${clip.start/duration*100}%`;button.style.width=`${(clip.end-clip.start)/duration*100}%`
-    button.textContent=clip.label;const description=`${clip.label} · ${clip.start.toFixed(2)}–${clip.end.toFixed(2)} 秒${clip.estimated?' · 估算字幕':''}${clip.stale?' · 旁白需重生成':''}`;button.title=description;button.setAttribute('aria-label',description);button.setAttribute('aria-pressed',String(clip.sceneIndex===index));return button
+    button.textContent=clip.label;const description=`${clip.label} · ${clip.start.toFixed(2)}–${clip.end.toFixed(2)} 秒${clip.estimated?' · 估算字幕':''}${clip.origin?' · '+clip.origin:''}${clip.stale?' · 绑定需修复':''}`;button.title=description;button.setAttribute('aria-label',description);button.setAttribute('aria-pressed',String(clip.sceneIndex===index));return button
   }
   time(seconds:number):void{const ratio=this.duration?Math.min(1,Math.max(0,seconds/this.duration)):0;node('timeline-playhead').style.left=`calc(${48*(1-ratio)}px + ${100*ratio}%)`}
 }
