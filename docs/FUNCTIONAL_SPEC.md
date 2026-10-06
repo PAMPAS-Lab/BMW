@@ -47,6 +47,10 @@ Shell 运行时徽章从自有 Assistant 状态发布，显示等待、执行和
 
 直接覆盖：Conversation/History/Host/Assistant Controller、三个驱动契约与 `agent.data-migration`，`assistant.application`、六项 `assistant.startup.*`，以及显式 opt-in 的三个 `external.assistant.*`。
 
+Studio 新增工作流入口、方法目录与数据扩展已撤回，界面恢复到添加前版本。使用扩展字段的当天测试草稿移入可恢复的已删除目录，素材与导出文件保留；其他草稿不修改。历史方法回执快照已按用户要求清理，读取兼容代码已取消；正常会话消息与回执保留。后续简单默认、多模式与智能体任务交互方案见 [VIDEO_STUDIO_NEXT.md](VIDEO_STUDIO_NEXT.md)。
+
+普通 `video.compose` 在有宿主验证的 BMW 会话时，成功后原子保存该会话所属的新 Studio 草稿、原始分镜及已有 MP4；返回 `studioDraft` 并通知已打开的工作区，不覆盖已有草稿。已有音频保留为导入素材，不推断 TTS 生成参数。直接 `bulletRevealSeconds` 无法无损表示为 Studio 语音锚点时，保留独立成片并明确返回 `studioWarning`；没有会话的宿主调用仍只合成媒体。失败、取消、所属 Project 变化不登记新草稿。Studio 无草稿时显示明确空状态，加载完成后不继续显示“加载中”。
+
 ## 桌面、Project 与会话
 
 - 一个 BMW 主窗口，浏览器与 Video Studio 为共享工作区；右侧 Assistant 使用同一会话。关闭或切换 Studio 不退出应用。
@@ -376,6 +380,8 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 #### `packages/feature-video/test/video-boundary.test.ts`
 
 - `video actions remain feature-owned in one browser tool and require trusted narration consent`
+- `Session-owned direct composition registers an editable draft and existing export without changing other drafts`
+- `Direct composition never registers cancelled, failed or foreign work; unsupported timing stays explicitly standalone`
 
 #### `packages/feature-video/test/video-settings.test.ts`
 

@@ -1,6 +1,8 @@
+import {assertComposition} from '../../media-native/src/composition-contract.js'
+import {assertMediaArtifactReceipt} from '@bmw-agent/media-native/port'
 import {compositionAssets} from '@bmw-agent/media-native/composition'
 import type {VideoCoverOptions} from '@bmw-agent/media-native/cover'
-import { mediaRecord } from '../../media-native/src/media-contract.js'
+import { finiteNumber, mediaRecord } from '../../media-native/src/media-contract.js'
 import { resolveVideoOutput } from '../../media-native/src/video-options.js'
 import type { VideoOptions } from '../../media-native/src/video-options.js'
 import crypto from 'node:crypto'
@@ -47,6 +49,23 @@ export class VideoStudioStore {
     if(fs.readdirSync(this.directory).filter(name=>/^[a-zA-Z0-9-]+\.json$/.test(name)).length>=100)throw new Error('A Project supports at most one hundred video drafts.')
     const output=options??resolveVideoOutput({})
     return this.write({version:1,id:crypto.randomUUID(),ownerSessionId:this.ownerSessionId,revision:1,title:studioText(title,'title',80)||'新视频',width:output.width,height:output.height,fps:output.fps,music:output.music,tts:output.tts,style:output.style,watermark:output.watermark,...(output.templateName?{templateName:output.templateName}:{}),scenes:[],preparation:{notes:'',outline:'',artifactIds:[]},updatedAt:new Date().toISOString(),exports:[]})
+  }
+  /** Save a host-completed direct composition without overwriting any existing draft. */
+  addComposition(raw:unknown,receipt:unknown):VideoDraft {
+    if(!this.ownerSessionId)throw new Error('STUDIO_SESSION_REQUIRED: 成片草稿需要绑定对话。')
+    const composition=assertComposition(raw),output=assertMediaArtifactReceipt(receipt)
+    if(composition.scenes.some(scene=>scene.bulletRevealSeconds!==undefined))throw new Error('Direct bullet reveal timing cannot be imported into editable Studio anchors.')
+    if(fs.readdirSync(this.directory).filter(name=>/^[a-zA-Z0-9-]+\.json$/.test(name)).length>=100)throw new Error('A Project supports at most one hundred video drafts.')
+    const measured=output.narrationDurations
+    if(measured!==undefined&&(!Array.isArray(measured)||measured.length!==composition.scenes.length))throw new Error('Invalid composition narration measurements.')
+    const scenes=composition.scenes.map((scene,index)=>({...scene,id:crypto.randomUUID(),visualBrief:'',sources:[],endPolicy:'hold',...(scene.audioArtifactId?{audioText:scene.narration,audioGeneration:{kind:'imported'},...(Array.isArray(measured)?{audioDurationSeconds:finiteNumber(measured[index],'audio duration',.01,180)}:{})}:{})}))
+    const createdAt=new Date().toISOString()
+    const draft=assertVideoDraft({...composition,version:1,id:crypto.randomUUID(),ownerSessionId:this.ownerSessionId,revision:1,scenes,preparation:{notes:'由已完成的直接合成恢复。保留原分镜、音频、画面和成片；已有音频作为导入素材，未推断生成参数。直接合成的画面末帧停留策略已保留。',outline:'',artifactIds:compositionAssets(composition)},updatedAt:createdAt,exports:[]})
+    const completed={artifactId:output.artifactId,durationSeconds:output.durationSeconds,...(typeof output.verificationArtifactId==='string'?{verificationArtifactId:output.verificationArtifactId}:{})}
+    const fingerprint=this.exportFingerprint(draft,completed)
+    // Admit the entire draft and completed export atomically: no empty draft on failure.
+    draft.exports=[{...completed,...(fingerprint?{fingerprint}:{}),revision:1,createdAt}]
+    return this.write(draft)
   }
   update(id:unknown,expectedRevision:unknown,raw:unknown,trustedAudio=false,trustedCaptions=false):VideoDraft {
     const current=this.read(id)

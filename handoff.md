@@ -40,6 +40,8 @@ Existing corrupt/unreadable Project, global settings, scheduled-task, permission
 
 现行详细契约和验收项见 [FUNCTIONAL_SPEC.md](docs/FUNCTIONAL_SPEC.md) 与 [VIDEO_STUDIO_NEXT.md](docs/VIDEO_STUDIO_NEXT.md)。历史 review 与 P0 文档保留原文，不作为本期完成证明。
 
+Studio has reverted the added workflow UI and method execution catalog. The user-authorized current-day extended test draft is recoverably retired; other drafts and all assets/exports are preserved. Historical method snapshots and their compatibility decoder have been removed at the user’s request; ordinary conversation history remains. The future simple-default, opt-in guided/editing modes and distinct Assistant task interactions are planned in [VIDEO_STUDIO_NEXT.md](docs/VIDEO_STUDIO_NEXT.md); they are not current features.
+
 ## Working rules and commands
 
 Read [AGENTS.md](AGENTS.md) and [FUNCTIONAL_SPEC.md](docs/FUNCTIONAL_SPEC.md). Keep one browser tool and no additional Agent loop. Test only disposable profiles. Build commands clean outputs and must run sequentially.
@@ -93,3 +95,5 @@ Shared validation helper changes automatically select dependent runtime checks. 
 ## Studio focus deletion recovery
 
 Focus edits can remove a locally added interval after its save is rejected without first retrying the rejected draft. Removing an interval discards pending input for that interval and retains other edits and CAS checks. Studio runtime regression covers last-interval deletion, rejected-save recovery with focused input, and deletion undo/redo. Running BMW must be restarted after rebuilding so its main process and newly loaded Studio renderer share the same contract.
+
+Direct video compositions from an authenticated BMW Session now register a new editable Studio draft and completed MP4 without changing existing drafts. Audio is retained as imported with measured durations; Studio notifies the owning Session view. Direct bullet reveal times remain standalone with an explicit warning because the Studio speech-anchor model cannot preserve them losslessly. Host calls without a Session remain standalone. The Qoder CN three-scene production output has been recovered from its admitted completed receipt, without encoding again.

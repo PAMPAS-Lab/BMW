@@ -1,3 +1,6 @@
+import {VideoStudioStore} from '../packages/feature-video/src/studio-store.js'
+import {draftComposition} from '../packages/feature-video/src/studio-contract.js'
+import {assertComposition} from '../packages/media-native/src/composition-contract.js'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -61,6 +64,12 @@ async function run():Promise<void>{
   fs.writeFileSync(path.join(artifacts,'voice.wav'),wav)
   const composition={title:'产品介绍',width:640,height:360,fps:12,music:true,scenes:[{durationSeconds:3,title:'真实素材',label:'01 / START',crop:{x:.1,y:.1,width:.8,height:.8},playbackRate:.4,narration:'这是测试旁白。',videoArtifactId:'footage.webm',audioArtifactId:'voice.wav'},{durationSeconds:2,title:'关键收益',label:'02 / WHY',bullets:['可重复定位','浏览器原生导出']}]}
   const exported=(await execute({action:'video.compose',composition})).result
+  const registration=exported.studioDraft as {id:string;revision:number;sceneCount:number};assert.ok(registration?.id)
+  const studioStore=new VideoStudioStore(project.directory,'video-smoke'),editable=studioStore.read(registration.id)
+  assert.equal(editable.ownerSessionId,'video-smoke');assert.deepEqual(draftComposition(editable),assertComposition(exported.composition));assert.equal(studioStore.reusableExport(editable)?.artifactId,exported.artifactId)
+  const existing=(await execute({action:'video.studio',studioRequest:{operation:'render',draftId:editable.id,expectedRevision:editable.revision}})).result
+  assert.equal(existing.reused,true);assert.equal((existing.export as {artifactId:string}).artifactId,exported.artifactId)
+  console.log('PASS direct composition registers Session-owned editable Studio scenes and reuses the native completed MP4')
   assert.equal(exported.durationSeconds,5);assert.equal(exported.frames,60)
   assert.ok(Math.abs(Number(exported.actualDurationSeconds)-5)<.2)
   const inspected=(await execute({action:'media.inspect',artifactId:exported.artifactId})).result

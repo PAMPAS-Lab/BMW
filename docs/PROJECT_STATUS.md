@@ -5,6 +5,8 @@ Video Studio 增强的现行范围包括：预览位置与分镜同步、待测�
 
 Browser is boundary, media is native, web is runtime.
 
+新增 Video Studio 工作流与 UI 已撤回；当天扩展测试草稿已移入可恢复目录，其他草稿保留；历史方法快照及读取兼容已取消。默认简单制作、按需高级模式和智能体任务反馈的重新设计见 [VIDEO_STUDIO_NEXT.md](VIDEO_STUDIO_NEXT.md)，尚未实施。
+
 本页按 2026-10-05 的活动 BMW 代码核对。当前功能、Schema、权限与生成测试清单以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准；模块和接口以 [ARCHITECTURE.md](ARCHITECTURE.md) 的生成区为准。
 
 | 范围 | 当前状态 | 实际边界 |
