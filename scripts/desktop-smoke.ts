@@ -1,12 +1,13 @@
+import {requireCurrentAgentData} from '../packages/platform/src/agent-data-format.js'
 import {captureRendererEvidence} from './renderer-evidence.js'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
-import { app, BrowserWindow, WebContentsView, webContents, ipcMain } from 'electron'
+import { app, BrowserWindow, WebContentsView, webContents, ipcMain, Menu } from 'electron'
 import type { WebContents } from 'electron'
-import bmw, { agentDriver } from '../apps/bmw/product.js'
+import bmw, { createBmwAgentAssembly } from '../apps/bmw/product.js'
 import { createBmwApplication } from '../packages/platform/src/main.js'
 import { ProjectStore } from '../packages/platform/src/project-store.js'
 import { LayoutStore } from '../packages/platform/src/layout-store.js'
@@ -21,14 +22,20 @@ const temporary = process.env.BMW_DESKTOP_RESTORE_ROOT??fs.realpathSync(fs.mkdte
 const userData = path.join(temporary, 'user-data')
 fs.mkdirSync(userData,{recursive:true})
 process.env.BMW_USER_DATA_DIR = userData
+requireCurrentAgentData(process.env.BMW_USER_DATA_DIR)
 process.env.DSH_HOME = path.join(temporary, 'empty-source-home')
 fs.mkdirSync(process.env.DSH_HOME,{recursive:true})
-const store = new ProjectStore({ filePath: path.join(userData, 'projects.json'), projectsDirectory: path.join(userData, 'projects'), legacyWorkspacePath: path.join(userData, 'legacy-workspace'), onState: undefined })
+const store = new ProjectStore({ filePath: path.join(userData, 'projects.json'), projectsDirectory: path.join(userData, 'projects'), initialWorkspacePath: path.join(userData, 'legacy-workspace'), onState: undefined })
 if(group!=='restore')store.completeInitialSetup({ name: 'Isolated Base smoke', homeUrl: '' })
 const layout = new LayoutStore({ filePath: path.join(userData, 'layout-settings.json'), onState: undefined })
 if(group!=='restore')layout.update({ configured: true, mode: 'sidebar' })
 const errors: string[] = []
 app.on('web-contents-created', (_event, contents) => {
+  const execute=contents.executeJavaScript.bind(contents)
+  contents.executeJavaScript=async(source,userGesture)=>{
+    try{return await execute(source,userGesture)}
+    catch(error:unknown){console.error('Desktop renderer script failed:',source);throw error}
+  }
   contents.on('console-message', (details) => {
     if (details.level === 'error' && /shell|TypeError|ReferenceError/.test(details.message)) errors.push(details.message)
   })
@@ -37,7 +44,7 @@ const fixture = http.createServer((_request, response) => {
   response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' })
   response.end('<!doctype html><title>BMW popup fixture</title><p>Temporary local fixture.</p>')
 })
-createBmwApplication(bmw,agentDriver)
+createBmwApplication(bmw,createBmwAgentAssembly())
 
 async function waitFor<T>(operation: () => Promise<T | null>, deadline = Date.now() + 60_000): Promise<T> {
   while (Date.now() < deadline) {
@@ -69,7 +76,7 @@ try {
       chatUi: document.querySelector('[id*="connector"]') !== null,
       projects: await api.projectState() }
   })()`)
-  markStage('Desktop smoke: product and IPC returned; checking DSH Session')
+  markStage('Desktop smoke: product and IPC returned; checking BMW Session')
   assert.equal(result.product.id, 'bmw')
   assert.deepEqual(result.product.features, ['feature-video'])
   assert.equal(result.removed, true)
@@ -84,22 +91,25 @@ try {
   })
   stage = 'Agent startup and context ready'
   await waitFor(async () => (await shell.executeJavaScript('window.bmw.agentContext()')).state === 'ready' ? true : null)
-  markStage('Desktop smoke: DSH Session and context ready; creating Project')
+  markStage('Desktop smoke: BMW Session and context ready; creating Project')
   if(group==='restore'){
     stage='projects/restart'
     const expected=JSON.parse(fs.readFileSync(path.join(temporary,'restart.json'),'utf8'))
     const actual=await shell.executeJavaScript('window.bmw.projectState()')
     assert.equal(actual.activeProjectId,expected.activeProjectId)
-    assert.deepEqual(actual.projects.map(project=>({id:project.id,agentBindings:project.agentBindings})),expected.projects)
+    assert.equal((await shell.executeJavaScript('window.bmw.listAgentSessions()')).selectedSessionId,expected.sessionId)
+    assert.deepEqual(actual.projects.map(project=>({id:project.id,name:project.name,directory:project.directory})),expected.projects)
     const restored=await shell.executeJavaScript("window.bmw.browser({action:'status'})")
     assert.deepEqual(restored.tabs.map(tab=>tab.url).sort(),expected.tabUrls)
     assert.equal(await shell.executeJavaScript("window.bmw.readProjectDocument("+JSON.stringify(expected.activeProjectId)+",'memory').then(value=>value.content)"),expected.memory)
     const draft=await shell.executeJavaScript("window.bmw.browser({action:'video.studio',studioRequest:{operation:'read',draftId:"+JSON.stringify(expected.draftId)+"}})")
     assert.equal(draft.id,expected.draftId);assert.equal(draft.title,'Restart preserved draft')
-    console.log('PASS real desktop restart: Project IDs, DSH bindings, active pages, memory and Studio draft survived')
+    console.log('PASS real desktop restart: Project IDs, BMW Session selection, active pages, memory and Studio draft survived')
     return
   }
   const before = await shell.executeJavaScript('window.bmw.projectState()')
+  const initialSession=(await shell.executeJavaScript('window.bmw.listAgentSessions()')).selectedSessionId
+  assert.ok(initialSession)
 
   await new Promise<void>((resolve, reject) => { fixture.once('error', reject); fixture.listen(0, '127.0.0.1', resolve) })
   const address = fixture.address()
@@ -116,28 +126,36 @@ try {
   const shellView = host.contentView.children.find(view => view instanceof WebContentsView && view.webContents === shell)!
   const visible = async (selector: string) => waitFor(async () => await shell.executeJavaScript('!document.querySelector(' + JSON.stringify(selector) + ').classList.contains("hidden")') ? true : null)
   const click = (selector: string) => shell.executeJavaScript('document.querySelector(' + JSON.stringify(selector) + ').click();true')
+  const switchProject=async(project:{id:string;name:string})=>{
+    let opened:Menu|undefined
+    const popup=Menu.prototype.popup
+    try{
+      Menu.prototype.popup=function(){opened=this}
+      await shell.executeJavaScript('window.bmw.projectMenu()')
+    }finally{Menu.prototype.popup=popup}
+    const item=opened?.items.find(item=>item.type==='radio'&&item.label===project.name)
+    assert.ok(item,'The Project must be selectable through the native BMW menu')
+    item.click()
+    await waitFor(async()=>{const value=await shell.executeJavaScript('window.bmw.agentContext()');return value.state==='ready'&&value.context?.projectId===project.id?value:null})
+  }
   const saveShell = async (name: string) => { await shell.executeJavaScript('new Promise(resolve=>setTimeout(resolve,30))'); fs.mkdirSync(process.env.BMW_VALIDATION_DIR??path.join(process.cwd(), '.bmw-runtime'), {recursive:true}); fs.writeFileSync(path.join(process.env.BMW_VALIDATION_DIR??path.join(process.cwd(), '.bmw-runtime'), name), (await captureRendererEvidence(shell)).toPNG()) }
   const toolbar = await shell.executeJavaScript(`({actions:[...document.querySelectorAll('.chrome > button')].map(button=>button.id),newTabs:document.querySelectorAll('#new-tab').length,newTabInStrip:Boolean(document.querySelector('#tab-strip #new-tab')),statusTag:document.querySelector('#status').tagName,brand:document.querySelector('.brand').textContent.trim(),brandMarks:document.querySelectorAll('.brand .mark').length,actionStyles:['record','agent-toggle'].map(id=>{const element=document.getElementById(id),style=getComputedStyle(element);return {fontSize:style.fontSize,fontWeight:style.fontWeight,lineHeight:style.lineHeight,height:element.getBoundingClientRect().height,alignItems:style.alignItems}})})`)
   assert.deepEqual(toolbar.actions, ['project-switcher','record','agent-toggle','more-button'])
   assert.equal(toolbar.brand, 'BMW'); assert.equal(toolbar.brandMarks, 0)
   assert.deepEqual(toolbar.actionStyles, Array.from({length:2},()=>({fontSize:'12px',fontWeight:'400',lineHeight:'18px',height:32,alignItems:'center'})))
   assert.equal(toolbar.newTabs, 1); assert.equal(toolbar.newTabInStrip, true); assert.equal(toolbar.statusTag, 'SPAN')
-  const appearanceDsh = await waitFor(async () => webContents.getAllWebContents().find(contents => /^http:\/\/127\.0\.0\.1:/.test(contents.getURL()) && !contents.getURL().startsWith(origin) && !contents.isLoading()) || null)
-  await appearanceDsh.executeJavaScript("(()=>{if(document.body.textContent.includes('Preview Notice')){const button=[...document.querySelectorAll('button')].find(button=>button.textContent.trim()==='Continue');button?.click()}return true})()")
-  await waitFor(async()=>await appearanceDsh.executeJavaScript("(()=>{const text=document.body.textContent;if(text.includes('Add an API key to get started')){const button=[...document.querySelectorAll('button')].find(button=>button.textContent.trim()==='Configure later');button?.click();return false}return !text.includes('Preview Notice')})()")?true:null)
+  const assistantView=await waitFor(async()=>webContents.getAllWebContents().find(contents=>contents.getURL().endsWith('/assistant.html')&&!contents.isLoading())??null)
   stage=group
   if(group==='workspace'){
-  const sessionBefore=await appearanceDsh.executeJavaScript("localStorage.getItem('dsh.sessions.current')")
-  assert.ok(sessionBefore&&JSON.parse(sessionBefore).sessionId,'Mode switching must retain a real DSH Session')
+  const sessionBefore=(await assistantView.executeJavaScript("window.bmwAssistant.invoke({action:'snapshot'})")).selectedSessionId
+  assert.equal(sessionBefore,initialSession)
   const windowsBefore=BrowserWindow.getAllWindows().length
   await click('#studio-workspace')
   const studioContents=await waitFor(async()=>webContents.getAllWebContents().find(contents=>contents.getURL().endsWith('/studio.html')&&!contents.isLoading())||null)
-  await waitFor(async()=>await appearanceDsh.executeJavaScript("Boolean(document.querySelector('#bmw-workspace-mode'))")?true:null)
-  assert.equal(await appearanceDsh.executeJavaScript("document.querySelector('#bmw-workspace-mode').getClientRects().length>0"),true,'Composer mode is visible after the upstream welcome notice')
-  const composerGeometry=await appearanceDsh.executeJavaScript("(()=>{const rail=document.getElementById('bmw-video-mode'),scroll=document.querySelector('[data-input-scroll]'),placeholder=document.querySelector('[data-composer-placeholder]');const r=rail.getBoundingClientRect(),s=scroll.getBoundingClientRect(),p=placeholder?.getBoundingClientRect();return {sameCard:rail.parentElement===scroll.parentElement,railBottom:r.bottom,scrollTop:s.top,placeholderOverlap:Boolean(p&&r.left<p.right&&r.right>p.left&&r.top<p.bottom&&r.bottom>p.top)}})()")
-  assert.equal(composerGeometry.sameCard,true,'Mode control belongs to the official composer card')
-  assert.ok(composerGeometry.railBottom<=composerGeometry.scrollTop+1,'Mode rail stays above the editor scroll area')
-  assert.equal(composerGeometry.placeholderOverlap,false,'Mode control must not cover the official input placeholder')
+  await waitFor(async()=>await assistantView.executeJavaScript("Boolean(document.querySelector('#workspace-mode'))")?true:null)
+  assert.equal(await assistantView.executeJavaScript("document.querySelector('#workspace-mode').getClientRects().length>0"),true,'Composer mode is visible after the Assistant is ready')
+  const composerGeometry=await assistantView.executeJavaScript("(()=>{const mode=document.getElementById('workspace-mode').getBoundingClientRect(),input=document.getElementById('input').getBoundingClientRect();return {modeVisible:mode.width>0&&mode.height>0,inputVisible:input.width>0&&input.height>0,overlap:mode.left<input.right&&mode.right>input.left&&mode.top<input.bottom&&mode.bottom>input.top}})()")
+  assert.equal(composerGeometry.modeVisible,true);assert.equal(composerGeometry.inputVisible,true);assert.equal(composerGeometry.overlap,false)
   assert.equal(BrowserWindow.getAllWindows().length,windowsBefore,'Studio must not create another window')
   assert.ok(host.contentView.children.some(view=>view instanceof WebContentsView&&view.webContents===studioContents))
   await studioContents.executeJavaScript("document.getElementById('new-draft').click();true")
@@ -148,11 +166,11 @@ try {
   await studioContents.executeJavaScript("document.querySelector('#script-outline button').click();true")
   await waitFor(async()=>await studioContents.executeJavaScript("document.querySelectorAll('#scene-list button').length===1&&!document.getElementById('scene-title').disabled")?true:null)
   await studioContents.executeJavaScript("document.getElementById('scene-title').value='同一会话的手动修改';document.getElementById('scene-title').dispatchEvent(new Event('change',{bubbles:true}));true")
-  await waitFor(async()=>await appearanceDsh.executeJavaScript("document.querySelector('#bmw-video-context').textContent.includes('同一会话的手动修改')")?true:null)
+  await waitFor(async()=>await assistantView.executeJavaScript("document.querySelector('#studio-context').textContent.includes('同一会话的手动修改')")?true:null)
   const draftContext=await shell.executeJavaScript("window.bmw.browser({action:'video.studio',studioRequest:{operation:'context'}})")
   assert.equal(draftContext.mode,'studio');assert.ok(draftContext.selection.draftId)
   await waitFor(async()=>await studioContents.executeJavaScript("!document.getElementById('draft-title').disabled")?true:null)
-  const ownerSession=JSON.parse(sessionBefore).sessionId,ownerDraftId=draftContext.selection.draftId
+  const ownerSession=sessionBefore,ownerDraftId=draftContext.selection.draftId
   await studioContents.executeJavaScript("document.getElementById('draft-title').value='Session-owned desktop draft';document.getElementById('draft-title').dispatchEvent(new Event('input',{bubbles:true}));true")
   const secondSessionSnapshot=await shell.executeJavaScript('window.bmw.createAgentSession()'),secondSession={sessionId:secondSessionSnapshot.selectedSessionId}
   assert.notEqual(secondSession.sessionId,ownerSession)
@@ -163,32 +181,31 @@ try {
   await shell.executeJavaScript('window.bmw.selectAgentSession('+JSON.stringify(ownerSession)+')')
   await waitFor(async()=>await studioContents.executeJavaScript("document.getElementById('draft-title').value==='Session-owned desktop draft'&&!document.getElementById('draft-title').disabled")?true:null)
   assert.equal((await shell.executeJavaScript("window.bmw.browser({action:'video.studio',studioRequest:{operation:'read',draftId:"+JSON.stringify(ownerDraftId)+"}})")).ownerSessionId,ownerSession)
-  // Official DSH navigation within the same Project also switches Studio.
-  await waitFor(async()=>!appearanceDsh.isLoading()&&await appearanceDsh.executeJavaScript("Boolean(document.querySelector('#bmw-workspace-mode'))")?true:null)
-  await agentDriver.client.selectSession(appearanceDsh,secondSession.sessionId)
+  // Owned Assistant navigation within the same Project also switches Studio.
+  await waitFor(async()=>!assistantView.isLoading()&&await assistantView.executeJavaScript("Boolean(document.querySelector('#workspace-mode'))")?true:null)
+  await assistantView.executeJavaScript('window.bmwAssistant.invoke('+JSON.stringify({action:'session.select',sessionId:secondSession.sessionId})+')')
   await waitFor(async()=>await shell.executeJavaScript("window.bmw.browser({action:'video.studio',studioRequest:{operation:'list'}}).then(value=>value.sessionId==="+JSON.stringify(secondSession.sessionId)+")")?true:null)
   await waitFor(async()=>await secondStudio.executeJavaScript("!document.getElementById('empty-workspace').hidden")?true:null)
   await shell.executeJavaScript('window.bmw.selectAgentSession('+JSON.stringify(ownerSession)+')')
   await waitFor(async()=>await studioContents.executeJavaScript("document.getElementById('draft-select').value==="+JSON.stringify(ownerDraftId))?true:null)
-  console.log('PASS real DSH Session ownership: Shell creation/selection and official Agent navigation switch Studio, focused edits persist, foreign reads fail and empty state restores')
+  console.log('PASS real BMW Session ownership: Shell creation/selection and owned Assistant navigation switch Studio, focused edits persist, foreign reads fail and empty state restores')
   const backgroundTab=await shell.executeJavaScript("window.bmw.browser({action:'tabs.show',tabId:"+JSON.stringify(firstTab.id)+"})")
   assert.equal(backgroundTab.id,firstTab.id)
   const page=webContents.getAllWebContents().find(contents=>contents.getURL()===origin+'/first')!
   assert.ok(await page.executeJavaScript('innerWidth>0&&innerHeight>0'),'Hidden browser retains a usable capture viewport')
   markStage('Desktop smoke: capturing browser viewport behind Studio')
   const hiddenCapture=await shell.executeJavaScript("window.bmw.browser({action:'media.screenshot',tabId:"+JSON.stringify(firstTab.id)+",mode:'viewport'})");assert.ok(hiddenCapture.width>0&&hiddenCapture.height>0&&fs.statSync(hiddenCapture.path).size>100,'Studio retains actual browser screenshots')
-  await click('#more-button');await visible('#more-menu');assert.equal(host.contentView.children.at(-1),shellView,'More menu stays above Studio and DSH');await click('#toolbar-dismiss')
+  await click('#more-button');await visible('#more-menu');assert.equal(host.contentView.children.at(-1),shellView,'More menu stays above Studio and Assistant');await click('#toolbar-dismiss')
   markStage('Desktop smoke: browser screenshot passed; capturing Studio and Agent surfaces')
-  const composerDom=await appearanceDsh.executeJavaScript("(()=>{let element=document.querySelector('[contenteditable=\"true\"]');const ancestors=[];for(let i=0;element&&i<5;i++,element=element.parentElement)ancestors.push({tag:element.tagName,className:element.className,html:element.outerHTML.slice(0,20000),style:getComputedStyle(element).position});return ancestors})()");fs.mkdirSync('.bmw-runtime/studio-validation',{recursive:true});fs.writeFileSync('.bmw-runtime/studio-validation/dsh-composer-dom.json',JSON.stringify(composerDom,null,2))
-  fs.mkdirSync('.bmw-runtime/studio-validation',{recursive:true});fs.writeFileSync('.bmw-runtime/studio-validation/integrated-studio-view.png',(await captureRendererEvidence(studioContents)).toPNG());fs.writeFileSync('.bmw-runtime/studio-validation/integrated-dsh-view.png',(await captureRendererEvidence(appearanceDsh)).toPNG())
-  await appearanceDsh.executeJavaScript("document.querySelector('#bmw-workspace-mode').value='browser';document.querySelector('#bmw-workspace-mode').dispatchEvent(new Event('change',{bubbles:true}));true")
+  fs.mkdirSync('.bmw-runtime/studio-validation',{recursive:true});fs.writeFileSync('.bmw-runtime/studio-validation/integrated-studio-view.png',(await captureRendererEvidence(studioContents)).toPNG());fs.writeFileSync('.bmw-runtime/studio-validation/integrated-assistant-view.png',(await captureRendererEvidence(assistantView)).toPNG())
+  await assistantView.executeJavaScript("document.querySelector('#workspace-mode').value='browser';document.querySelector('#workspace-mode').dispatchEvent(new Event('change',{bubbles:true}));true")
   await waitFor(async()=>await shell.executeJavaScript("!document.body.classList.contains('video-workspace')")?true:null)
   assert.equal(studioContents.isDestroyed(),false);assert.equal(host.isDestroyed(),false)
-  assert.equal(await appearanceDsh.executeJavaScript("localStorage.getItem('dsh.sessions.current')"),sessionBefore)
+  assert.equal((await assistantView.executeJavaScript("window.bmwAssistant.invoke({action:'snapshot'})")).selectedSessionId,sessionBefore)
   await click('#studio-workspace');await waitFor(async()=>await studioContents.executeJavaScript("document.getElementById('scene-title').value==='同一会话的手动修改'")?true:null)
   await studioContents.executeJavaScript("document.getElementById('leave').click();true")
   await waitFor(async()=>await shell.executeJavaScript("!document.body.classList.contains('video-workspace')")?true:null)
-  console.log('PASS integrated Studio: one main window, official DSH composer mode, shared draft, retained browser viewport, menus, return and same Session')
+  console.log('PASS integrated Studio: one main window, owned Assistant mode, shared draft, retained browser viewport, menus, return and same Session')
   }
   if(group==='settings'){
   await click('#new-tab')
@@ -252,8 +269,8 @@ try {
   await waitFor(async () => shellView.getBounds().height === 102 ? true : null)
   await saveShell('balanced-toolbar-desktop.png')
   // Verify real computed surfaces in both themes, with scrollable content at the minimum window size.
-  const dshFont = await appearanceDsh.executeJavaScript('getComputedStyle(document.body).fontFamily')
-  assert.equal(await shell.executeJavaScript('getComputedStyle(document.body).fontFamily'), dshFont, 'BMW and DSH must use the same system font stack')
+  const dshFont = await assistantView.executeJavaScript('getComputedStyle(document.body).fontFamily')
+  assert.equal(await shell.executeJavaScript('getComputedStyle(document.body).fontFamily'), dshFont, 'BMW and Assistant must use the same system font stack')
   const appearanceSettings = await shell.executeJavaScript('window.bmw.globalSettings()')
   const originalBounds = host.getBounds()
   const inspectDialog = async (selector: string) => {
@@ -304,7 +321,7 @@ try {
   }
   await shell.executeJavaScript('window.bmw.updateGlobalSettings('+JSON.stringify(appearanceSettings)+')')
   await waitFor(async()=>await shell.executeJavaScript("matchMedia('(prefers-color-scheme: dark)').matches")?true:null)
-  console.log('PASS unified surfaces: BMW/DSH system font, readable type hierarchy, all settings categories, Conversations and schedules in dark/light themes, short-window scrolling and visible actions')
+  console.log('PASS unified surfaces: BMW/Assistant system font, readable type hierarchy, all settings categories, Conversations and schedules in dark/light themes, short-window scrolling and visible actions')
 
   console.log('PASS balanced toolbar: real menus, native View layering, new tab, site origin, Assistant visibility/permission, scheduled tasks, settings categories, saved layout and preserved draft, conversation entry')
 
@@ -326,54 +343,39 @@ try {
   assert.equal(await popup.executeJavaScript("typeof require === 'undefined' && typeof window.bmw === 'undefined' && document.cookie.includes('bmw_smoke=1')"), true)
   console.log('PASS popup: Project-owned, shared browser Session, OS sandbox, no Node/privileged preload')
 
-  const agent = await waitFor(async()=>webContents.getAllWebContents().find(contents=>/^http:\/\/127\.0\.0\.1:/.test(contents.getURL())&&!contents.getURL().startsWith(origin)&&!contents.isLoading())||null)
-  const selectInDsh=async(id:string)=>{
-    await agent.executeJavaScript(`localStorage.setItem('dsh.sessions.current',JSON.stringify({sessionId:${JSON.stringify(id)}}));location.reload()`)
-  }
   const firstProject=before.projects.find((project:{id:string})=>project.id===before.activeProjectId)
-  await selectInDsh(firstProject.agentBindings.dsh.sessionId)
-  await waitFor(async()=>{
-    const context=await shell.executeJavaScript('window.bmw.agentContext()')
-    const project=await shell.executeJavaScript('window.bmw.projectState()')
-    return context.state==='ready'&&context.context?.sessionId===firstProject.agentBindings.dsh.sessionId&&project.activeProjectId===firstProject.id?context:null
-  })
+  const secondProject=created.projects.find((project:{id:string})=>project.id===created.activeProjectId)
+  const secondSession=(await shell.executeJavaScript('window.bmw.listAgentSessions()')).selectedSessionId
+  const foreign=await assistantView.executeJavaScript('window.bmwAssistant.invoke('+JSON.stringify({action:'session.select',sessionId:initialSession})+').then(()=>false,error=>String(error))')
+  assert.match(String(foreign),/does not belong to this Project/)
+  await switchProject(firstProject)
+  await waitFor(async()=>{const value=await shell.executeJavaScript('window.bmw.agentContext()');return value.state==='ready'&&value.context?.sessionId===initialSession&&value.context.projectId===firstProject.id?value:null})
   const switched=await shell.executeJavaScript("window.bmw.browser({action:'status'})")
   assert.equal(switched.activeProject.id,firstProject.id)
-  assert.equal(switched.activeTabId,firstTab.id,'DSH Workspace selection must restore the last visible Project tab, not the last created tab')
+  assert.equal(switched.activeTabId,firstTab.id,'BMW Project selection restores its last visible page')
   assert.deepEqual(switched.tabs.map((tab:{id:string})=>tab.id).sort(),[firstTab.id,otherFirstTab.id].sort())
-  assert.match(await shell.executeJavaScript("document.querySelector('#context-workspace').textContent"),/Workspace: Isolated Base smoke/)
-  const firstWorkspaceId=(await shell.executeJavaScript('window.bmw.agentContext()')).context.workspaceId
-  console.log('PASS DSH selected Session: cross-Project tabs restored')
+  assert.match(await shell.executeJavaScript("document.querySelector('#context-workspace').textContent"),/Isolated Base smoke/)
+  assert.equal(Object.hasOwn((await shell.executeJavaScript('window.bmw.agentContext()')).context,'workspaceId'),false)
   const sameProject=await shell.executeJavaScript('window.bmw.createAgentSession()')
-  assert.notEqual(sameProject.selectedSessionId,firstProject.agentBindings.dsh.sessionId)
-  await waitFor(async()=>{const value=await shell.executeJavaScript('window.bmw.agentContext()');return value.context?.sessionId===sameProject.selectedSessionId&&value.state==='ready'?value:null})
-  await shell.executeJavaScript(`window.bmw.renameAgentSession(${JSON.stringify(firstProject.agentBindings.dsh.sessionId)},'First conversation')`)
-  await selectInDsh(firstProject.agentBindings.dsh.sessionId)
+  assert.notEqual(sameProject.selectedSessionId,initialSession)
+  await shell.executeJavaScript('window.bmw.renameAgentSession('+JSON.stringify(initialSession)+",'First conversation')")
+  await assistantView.executeJavaScript('window.bmwAssistant.invoke('+JSON.stringify({action:'session.select',sessionId:initialSession})+')')
   await waitFor(async()=>{const value=await shell.executeJavaScript('window.bmw.agentContext()');return value.context?.sessionTitle==='First conversation'&&value.state==='ready'?value:null})
   const shared=await shell.executeJavaScript("window.bmw.browser({action:'status'})")
   assert.equal(shared.activeTabId,firstTab.id);assert.deepEqual(shared.tabs.map((tab:{id:string})=>tab.id),switched.tabs.map((tab:{id:string})=>tab.id))
   assert.match(await shell.executeJavaScript("document.querySelector('#context-session').textContent"),/First conversation/)
-  const secondProject=created.projects.find((project:{id:string})=>project.id===created.activeProjectId)
-  await selectInDsh(secondProject.agentBindings.dsh.sessionId)
-  await waitFor(async()=>{const value=await shell.executeJavaScript('window.bmw.agentContext()');const project=await shell.executeJavaScript('window.bmw.projectState()');return value.context?.sessionId===secondProject.agentBindings.dsh.sessionId&&project.activeProjectId===secondProject.id&&value.state==='ready'?value:null})
+  await switchProject(secondProject)
+  await waitFor(async()=>{const value=await shell.executeJavaScript('window.bmw.agentContext()');return value.context?.sessionId===secondSession&&value.context.projectId===secondProject.id&&value.state==='ready'?value:null})
   const returned=await shell.executeJavaScript("window.bmw.browser({action:'status'})")
   assert.ok(returned.tabs.some((tab:{url:string})=>tab.url===origin+'/popup'))
   assert.equal(returned.tabs.some((tab:{url:string})=>tab.url===origin+'/first'),false)
   assert.equal(await popup.executeJavaScript("typeof window.bmw==='undefined'"),true)
-
-  console.log('PASS same-Project conversations share tabs; return to second Project restores its popup')
-  await shell.executeJavaScript('window.bmw.updateGlobalSettings({agentSidebarVisible:true})')
-  await agent.executeJavaScript("document.querySelector('button[aria-label=\"Open sidebar\"]')?.click();true")
-  await waitFor(async()=>await agent.executeJavaScript(`Boolean(document.querySelector('[data-row-key="workspace:${firstWorkspaceId}"]'))`)?true:null)
-  const nativeClick=await agent.executeJavaScript(`(()=>{const row=document.querySelector('[data-row-key="workspace:${firstWorkspaceId}"]');const button=[...row.querySelectorAll('button')].find(button=>/new session|new chat|新会话|新建/i.test(button.getAttribute('aria-label')||''));if(!button)return [...row.querySelectorAll('button')].map(button=>button.getAttribute('aria-label'));button.click();return true})()`)
-  assert.equal(nativeClick,true,'The real DSH Workspace create-conversation button must be clicked')
-  await waitFor(async()=>{const value=await shell.executeJavaScript('window.bmw.agentContext()');const project=await shell.executeJavaScript('window.bmw.projectState()');return value.state==='ready'&&value.context?.projectId===firstProject.id&&project.activeProjectId===firstProject.id?value:null})
+  await switchProject(firstProject)
+  await assistantView.executeJavaScript("document.getElementById('create').click();true")
+  await waitFor(async()=>{const value=await shell.executeJavaScript('window.bmw.agentContext()');return value.state==='ready'&&value.context?.sessionId!==initialSession&&value.context?.projectId===firstProject.id?value:null})
   assert.equal((await shell.executeJavaScript("window.bmw.browser({action:'status'})")).activeTabId,firstTab.id)
-  console.log('PASS native DSH Workspace button: creates/selects browser-only session and switches BMW Project/pages')
-
   const image=await captureRendererEvidence(shell);fs.mkdirSync(path.join(process.cwd(),'.bmw-runtime'),{recursive:true});fs.writeFileSync(path.join(process.cwd(),'.bmw-runtime/context-link-desktop.png'),image.toPNG())
-  console.log('PASS context: real DSH selection store + reload, bidirectional Project/page switching, same-Project shared tabs, Workspace and selected Session UI; no real Profile')
-
+  console.log('PASS owned BMW context: foreign selection rejected, Project/page restoration, same-Project conversations share pages and Assistant creates a stable blank Session')
 
   const archivedCandidate=await shell.executeJavaScript('window.bmw.createAgentSession()')
   await shell.executeJavaScript('window.bmw.archiveAgentSession('+JSON.stringify(archivedCandidate.selectedSessionId)+')')
@@ -382,7 +384,7 @@ try {
   assert.ok(afterArchive.selectedSessionId&&afterArchive.selectedSessionId!==archivedCandidate.selectedSessionId)
   // All document delays and browser broadcasts below belong to this disposable Profile.
   const projectEditorState = await shell.executeJavaScript('window.bmw.projectState()')
-  const editorStore = new ProjectStore({filePath:path.join(userData,'projects.json'),projectsDirectory:path.join(userData,'projects'),legacyWorkspacePath:path.join(userData,'legacy-workspace'),onState:undefined})
+  const editorStore = new ProjectStore({filePath:path.join(userData,'projects.json'),projectsDirectory:path.join(userData,'projects'),initialWorkspacePath:path.join(userData,'legacy-workspace'),onState:undefined})
   editorStore.writeDocument(firstProject.id,'instructions','# First instructions')
   editorStore.writeDocument(secondProject.id,'instructions','# Second instructions')
   editorStore.writeDocument(firstProject.id,'memory','# First memory')
@@ -463,7 +465,7 @@ try {
   const persisted=await shell.executeJavaScript('window.bmw.projectState()'),status=await shell.executeJavaScript("window.bmw.browser({action:'status'})")
   const restartDraft=await shell.executeJavaScript("window.bmw.browser({action:'video.studio',studioRequest:{operation:'create',title:'Restart preserved draft'}})")
   const memory=await shell.executeJavaScript("window.bmw.readProjectDocument("+JSON.stringify(persisted.activeProjectId)+",'memory').then(value=>value.content)")
-  fs.writeFileSync(path.join(temporary,'restart.json'),JSON.stringify({activeProjectId:persisted.activeProjectId,projects:persisted.projects.map(project=>({id:project.id,agentBindings:project.agentBindings})),tabUrls:status.tabs.map(tab=>tab.url).sort(),memory,draftId:restartDraft.id}))
+  fs.writeFileSync(path.join(temporary,'restart.json'),JSON.stringify({activeProjectId:persisted.activeProjectId,projects:persisted.projects.map(project=>({id:project.id,name:project.name,directory:project.directory})),tabUrls:status.tabs.map(tab=>tab.url).sort(),memory,draftId:restartDraft.id,sessionId:(await shell.executeJavaScript('window.bmw.listAgentSessions()')).selectedSessionId}))
   if(process.env.BMW_DESKTOP_RESTART_MARKER)fs.writeFileSync(process.env.BMW_DESKTOP_RESTART_MARKER,temporary)
   }
   if(group==='native'){
@@ -472,6 +474,11 @@ try {
   if(process.platform==='darwin'){app.setActivationPolicy('regular');await app.dock?.show()}
   host.show();app.focus({steal:true});host.focus()
   await waitFor(async () => host.isFocused() ? true : null,Date.now()+15_000)
+  assistantView.focus();await assistantView.executeJavaScript("document.getElementById('input').focus();true")
+  assistantView.insertText('Native composer input')
+  await waitFor(async()=>await assistantView.executeJavaScript("document.getElementById('input').value==='Native composer input'")?true:null)
+  await assistantView.executeJavaScript("document.getElementById('input').value='';true")
+  assert.equal((await assistantView.executeJavaScript("window.bmwAssistant.invoke({action:'snapshot'})")).messages.length,0)
   await click('#more-button'); await visible('#more-menu')
   await waitFor(async () => shellView.getBounds().height > 102 ? true : null)
   assert.equal(host.contentView.children.at(-1), shellView, 'Toolbar popup must sit above native browser views')
@@ -488,11 +495,11 @@ try {
   const firstProject=before.projects.find(project=>project.id===before.activeProjectId)
   const created=await shell.executeJavaScript("window.bmw.createProject({name:'Second isolated Project',homeUrl:''})")
   const secondProject=created.projects.find(project=>project.id===created.activeProjectId)
-  await appearanceDsh.executeJavaScript("localStorage.setItem('dsh.sessions.current',JSON.stringify({sessionId:"+JSON.stringify(firstProject.agentBindings.dsh.sessionId)+"}));location.reload()")
+  await switchProject(firstProject)
   await waitFor(async()=>{const value=await shell.executeJavaScript('window.bmw.agentContext()');return value.state==='ready'&&value.context?.projectId===firstProject.id?value:null})
   // All document delays and browser broadcasts below belong to this disposable Profile.
   const projectEditorState = await shell.executeJavaScript('window.bmw.projectState()')
-  const editorStore = new ProjectStore({filePath:path.join(userData,'projects.json'),projectsDirectory:path.join(userData,'projects'),legacyWorkspacePath:path.join(userData,'legacy-workspace'),onState:undefined})
+  const editorStore = new ProjectStore({filePath:path.join(userData,'projects.json'),projectsDirectory:path.join(userData,'projects'),initialWorkspacePath:path.join(userData,'legacy-workspace'),onState:undefined})
   editorStore.writeDocument(firstProject.id,'instructions','# First instructions')
   editorStore.writeDocument(secondProject.id,'instructions','# Second instructions')
   editorStore.writeDocument(firstProject.id,'memory','# First memory')
@@ -572,7 +579,7 @@ try {
 
   }
   assert.deepEqual(errors, [])
-  console.log('PASS Base desktop: real shell, isolated DSH session, no chat UI/preload/actions/default bindings')
+  console.log('PASS Base desktop: real shell, isolated BMW session, no chat UI/preload/actions/default bindings')
 } catch (error) {
   console.error(error)
   process.exitCode = 1

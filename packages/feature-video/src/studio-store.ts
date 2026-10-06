@@ -48,7 +48,7 @@ export class VideoStudioStore {
     const output=options??resolveVideoOutput({})
     return this.write({version:1,id:crypto.randomUUID(),ownerSessionId:this.ownerSessionId,revision:1,title:studioText(title,'title',80)||'新视频',width:output.width,height:output.height,fps:output.fps,music:output.music,tts:output.tts,style:output.style,watermark:output.watermark,...(output.templateName?{templateName:output.templateName}:{}),scenes:[],preparation:{notes:'',outline:'',artifactIds:[]},updatedAt:new Date().toISOString(),exports:[]})
   }
-  update(id:unknown,expectedRevision:unknown,raw:unknown,trustedAudio=false):VideoDraft {
+  update(id:unknown,expectedRevision:unknown,raw:unknown,trustedAudio=false,trustedCaptions=false):VideoDraft {
     const current=this.read(id)
     if(current.revision!==expectedRevision)throw new Error('STUDIO_CONFLICT: 草稿已被其他编辑更新，请重新加载后合并修改。')
     const value=mediaRecord(raw)
@@ -60,6 +60,8 @@ export class VideoStudioStore {
     // for the same scene/script; a rewritten script still needs new narration.
     for(const scene of next.scenes){
       const previous=current.scenes.find(value=>value.id===scene.id)
+      scene.sourceSpeech=previous?.sourceSpeech;scene.sourceCaptionBinding=previous?.sourceCaptionBinding
+      for(const cue of scene.captions??[]){const old=previous?.captions?.find(old=>old.text===cue.text&&old.startSeconds===cue.startSeconds&&old.endSeconds===cue.endSeconds)??previous?.captions?.find(old=>old.text===cue.text);if(cue.translationText!==old?.translationText){if(!trustedCaptions&&old?.translationOrigin==='user-edited')throw new Error('STUDIO_TRANSLATION_EDITED: 保留用户校正的译文。');cue.translationOrigin=trustedCaptions?'user-edited':'agent-edited'}else cue.translationOrigin=old?.translationOrigin}
       scene.speechCandidate=previous?.speechCandidate;scene.speechAnchors=previous?.speechAnchors
       const inputScene=(value.scenes as Record<string,unknown>[]).find(item=>item.id===scene.id)
       // Sandboxed GUI snapshots can explicitly carry undefined over structured IPC.
@@ -78,6 +80,7 @@ export class VideoStudioStore {
     next.exports=current.exports;next.coverExports=current.coverExports;next.revision++;next.updatedAt=new Date().toISOString()
     return this.write(next)
   }
+  setSourceSpeech(id:string,revision:number,sceneId:string,change:(scene:VideoDraft['scenes'][number])=>void):VideoDraft{const current=this.read(id);if(current.revision!==revision)throw new Error('STUDIO_CONFLICT: 原声字幕期间草稿变化。');const scene=current.scenes.find(s=>s.id===sceneId);if(!scene)throw new Error('Unknown Studio scene.');change(scene);current.revision++;current.updatedAt=new Date().toISOString();return this.write(current)}
   setSpeech(id:string,expectedRevision:number,sceneId:string,kind:'candidate'|'anchors',record:StudioSpeechCandidate|StudioSpeechAnchors):VideoDraft {
     const current=this.read(id);if(current.revision!==expectedRevision)throw new Error('STUDIO_CONFLICT: 语音校正期间草稿已更新。')
     const scene=current.scenes.find(scene=>scene.id===sceneId);if(!scene)throw new Error('Unknown Studio scene.')

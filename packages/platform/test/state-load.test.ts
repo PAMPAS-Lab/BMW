@@ -17,7 +17,7 @@ function fixture(){
 const constructors={
  permissions:(filePath:string)=>new PermissionStore(filePath),
  layout:(filePath:string)=>new LayoutStore({filePath}),
- projects:(filePath:string)=>new ProjectStore({filePath,projectsDirectory:path.join(path.dirname(filePath),'projects'),legacyWorkspacePath:path.join(path.dirname(filePath),'workspace'),onState:undefined}),
+ projects:(filePath:string)=>new ProjectStore({filePath,projectsDirectory:path.join(path.dirname(filePath),'projects'),initialWorkspacePath:path.join(path.dirname(filePath),'workspace'),onState:undefined}),
  settings:(filePath:string)=>new GlobalSettingsStore({filePath,onState:undefined}),
  tasks:(filePath:string)=>new ScheduledTaskStore({filePath})
 }
@@ -35,16 +35,15 @@ test('State read failures preserve the file and reject writes for all startup st
   t.mock.restoreAll();assert.equal(read(value.filePath,'utf8'),original);assert.deepEqual(fs.readdirSync(value.root),['state.json'])
  }finally{t.mock.restoreAll();value.close()}
 })
-test('Missing state initializes once and valid Project bindings and tasks survive reload',()=>{
+test('Missing state initializes once and BMW Project identity, documents and explicit task ownership survive reload',()=>{
  const value=fixture();try{
   const projectPath=path.join(value.root,'projects.json'),settingsPath=path.join(value.root,'settings.json'),taskPath=path.join(value.root,'tasks.json')
   const project=constructors.projects(projectPath),id=project.active().id
-  project.setAgentBinding(id,'dsh',{workspaceId:'workspace',sessionId:'session'})
   project.writeDocument(id,'memory','Preserved memory')
   const settings=constructors.settings(settingsPath);settings.update({edgeNarrationEnabled:false})
-  const tasks=constructors.tasks(taskPath);tasks.create({id,sessionId:'session'},{name:'Daily',prompt:'Read only',time:'09:00',timeZone:'Asia/Shanghai',enabled:true})
+  const tasks=constructors.tasks(taskPath);tasks.create({id,driverId:'fixture',sessionId:'session'},{name:'Daily',prompt:'Read only',time:'09:00',timeZone:'Asia/Shanghai',enabled:true})
   const reload=constructors.projects(projectPath)
-  assert.equal(reload.active().id,id);assert.equal(reload.agentBinding(id,'dsh').sessionId,'session');assert.equal(reload.readDocument(id,'memory').content,'Preserved memory\n')
+  assert.equal(reload.active().id,id);assert.equal(Object.hasOwn(reload.active(),'agentBindings'),false);assert.equal(reload.readDocument(id,'memory').content,'Preserved memory\n')
   assert.equal(constructors.settings(settingsPath).snapshot().edgeNarrationEnabled,false)
   assert.equal(constructors.tasks(taskPath).list(id).length,1)
  }finally{value.close()}

@@ -1,24 +1,23 @@
 import path from 'node:path'
 import { agentRecord, agentText } from '@bmw-agent/agent-contract'
-import type { AgentBackend, AgentClient, AgentRunRequest,AgentProject } from '@bmw-agent/agent-contract'
+import type { AgentBackend, AgentRunRequest,AgentProject } from '@bmw-agent/agent-contract'
 import type { createBridgeServer } from '@bmw-agent/browser-capability/bridge'
 import { AgentHost } from './agent-host.js'
 import { ConversationStore } from './conversation-store.js'
 import { AgentHistoryStore } from './agent-history-store.js'
 import { AgentPreferenceStore } from './agent-preference-store.js'
-import { AgentWorkspaceRuntime } from './agent-workspace-runtime.js'
+import { BmwSessionService } from './session-service.js'
 import { AssistantController } from './assistant-controller.js'
 import type { AgentHostProject } from './agent-host.js'
-import {LegacyConversationMigration} from './legacy-conversation-migration.js'
 import {AgentSettingsController} from './agent-settings-controller.js'
 
 type BrowserBridge = Awaited<ReturnType<typeof createBridgeServer>>
 export interface AssistantStores {conversations:ConversationStore;history:AgentHistoryStore;preferences:AgentPreferenceStore}
 export function loadAssistantStores(directory:string,defaultDriverId:string,onState?:()=>void):AssistantStores{
   const conversations=new ConversationStore(path.join(directory,'agent-conversations.json'),onState,{recoverOnLoad:false})
-  const history=new AgentHistoryStore(path.join(directory,'agent-history'))
+  const history=new AgentHistoryStore(path.join(directory,'agent-history'),sessionId=>conversations.get(sessionId))
   const preferences=new AgentPreferenceStore(path.join(directory,'agent-preferences.json'),defaultDriverId)
-  for(const row of conversations.all()){history.snapshot(row.sessionId);history.validateLegacyBinding(row)}
+  for(const row of conversations.all()){history.snapshot(row.sessionId);history.validateBinding(row)}
   for(const sessionId of conversations.recoveredSessionIds)history.recoverInterrupted(sessionId)
   conversations.recoverAfterStartup()
   return {conversations,history,preferences}
@@ -36,9 +35,8 @@ export interface AgentBridgeConnection {
 export interface AgentApplicationAssembly {
   pagePath: string
   preloadPath: string
-  client: AgentClient
   defaultDriverId: string
-  createBackends(config: { userDataDirectory: string; connection(request: AgentRunRequest): Promise<AgentBridgeConnection>;projects(driverId:string):AgentProject[];legacyConnection:Pick<AgentBridgeConnection,'bridgeUrl'|'bridgeToken'|'mcpServerPath'>;nodeExecutable:string;model(driverId:string):string|null;setModel(driverId:string,modelId:string):void;definition:AgentBridgeConnection['definition'] }): readonly AgentBackend[]
+  createBackends(config: { userDataDirectory: string; connection(request: AgentRunRequest): Promise<AgentBridgeConnection>;projects():AgentProject[];controlConnection:Pick<AgentBridgeConnection,'bridgeUrl'|'bridgeToken'|'mcpServerPath'>;nodeExecutable:string;model(driverId:string):string|null;setModel(driverId:string,modelId:string):void;definition:AgentBridgeConnection['definition'] }): readonly AgentBackend[]
 }
 export interface AssistantServiceOptions {
   stores?:AssistantStores
@@ -50,7 +48,6 @@ export interface AssistantServiceOptions {
   bridge: BrowserBridge
   currentProject(): AgentHostProject
   getProjects(): AgentHostProject[]
-  providerProjects?(driverId:string):AgentProject[]
   context(sessionId: string, projectId: string): Promise<string>
   transition(operation: () => Promise<void>): Promise<void>
   onSelection(sessionId: string | null): Promise<void>
@@ -64,8 +61,7 @@ export class AssistantService {
   readonly preferences: AgentPreferenceStore
   readonly host: AgentHost
   readonly controller: AssistantController
-  readonly runtime: AgentWorkspaceRuntime
-  readonly migration:LegacyConversationMigration
+  readonly sessions: BmwSessionService
   readonly settings:AgentSettingsController
   private readonly leases = new Map<string, string>()
   private readonly unsubscribe: () => void
@@ -74,22 +70,21 @@ export class AssistantService {
     this.conversations = stores.conversations
     this.history = stores.history
     this.preferences = stores.preferences
-    const projects=(driverId:string)=>options.providerProjects?.(driverId)??options.getProjects()
+    const projects=()=>options.getProjects()
     const backends=options.assembly.createBackends({userDataDirectory:options.userDataDirectory,connection:request=>this.connection(request),projects,
-      legacyConnection:{bridgeUrl:options.bridge.url,bridgeToken:options.bridge.token,mcpServerPath:options.mcpServerPath},nodeExecutable:options.nodeExecutable,model:driverId=>this.preferences.model(driverId),setModel:(driverId,modelId)=>this.preferences.setModel(driverId,modelId),definition:options.definition})
+      controlConnection:{bridgeUrl:options.bridge.url,bridgeToken:options.bridge.token,mcpServerPath:options.mcpServerPath},nodeExecutable:options.nodeExecutable,model:driverId=>this.preferences.model(driverId),setModel:(driverId,modelId)=>this.preferences.setModel(driverId,modelId),definition:options.definition})
     this.host = new AgentHost({ conversations: this.conversations, history: this.history,backends,
-      currentProject: options.currentProject, context: options.context,
+      currentProject: options.currentProject, context: options.context,onSettingsInvalidated:driverId=>this.settings.invalidate(driverId),
       drain: async request => { const binding = this.leases.get(request.runId); if (binding) { await options.bridge.releaseSession(binding); this.leases.delete(request.runId) } }
     })
-    this.migration=new LegacyConversationMigration({host:this.host,conversations:this.conversations,history:this.history,backends,projects,onState:options.onState})
-    this.settings=new AgentSettingsController({host:this.host,backends,openExternal:options.openExternal??(async()=>{throw new Error('Official login browser is unavailable')}),onState:options.onState})
+    this.settings=new AgentSettingsController({host:this.host,backends,configurationKey:driverId=>this.preferences.model(driverId)??'',openExternal:options.openExternal??(async()=>{throw new Error('Official login browser is unavailable')}),onState:options.onState})
     this.unsubscribe = this.host.subscribe(options.onState)
     this.controller = new AssistantController({ host: this.host, conversations: this.conversations, history: this.history, currentProject: options.currentProject,
       getDriver: projectId => this.preferences.get(projectId), setDriver: (projectId, driverId) => this.preferences.set(projectId, driverId),
-      transition: options.transition, onSelection: options.onSelection,legacyImports:()=>this.migration.snapshot(),retryLegacy:driverId=>this.migration.retry(driverId),settings:this.settings
+      transition: options.transition, onSelection: options.onSelection,settings:this.settings
     })
-    this.runtime = new AgentWorkspaceRuntime({ host: this.host, conversations: this.conversations, history: this.history, pagePath: options.assembly.pagePath,
-      currentProject: options.currentProject, getProjects: options.getProjects, getDriver: projectId => this.preferences.get(projectId),initialize:()=>this.migration.start(),beforeStop:async()=>{await this.settings.close();await this.migration.close()}
+    this.sessions = new BmwSessionService({ host: this.host, conversations: this.conversations, history: this.history,
+      currentProject: options.currentProject, getProjects: options.getProjects, getDriver: projectId => this.preferences.get(projectId)
     })
   }
   selected(projectId: string): string | null { return this.conversations.selected(projectId, this.preferences.get(projectId)) }
@@ -124,5 +119,5 @@ export class AssistantService {
       }
     }
   }
-  async close(): Promise<void> { this.unsubscribe(); await this.runtime.stop() }
+  async close(): Promise<void> { this.unsubscribe(); await this.settings.close();await this.host.close() }
 }

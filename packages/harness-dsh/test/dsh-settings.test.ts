@@ -7,21 +7,21 @@ import {DshSettings,dshModelRoute} from '../src/dsh-settings.js'
 import {DshRuntime} from '../src/dsh-runtime.js'
 import {prepareProductDshHome} from '../src/dsh-preset.js'
 import type {DshValue} from '../src/dsh-transport.js'
-test('Owned DSH credential migration detaches the legacy link and preserves the original provider file',t=>{
+test('Owned DSH initialization privately copies provider credentials and never rewrites their source',t=>{
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-dsh-credentials-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}))
   const sourceHome=path.join(root,'source'),productHome=path.join(root,'bmw'),workspacePath=path.join(root,'workspace');fs.mkdirSync(sourceHome);fs.mkdirSync(productHome)
-  const original=path.join(sourceHome,'.credentials.yaml'),owned=path.join(productHome,'.credentials.yaml');fs.writeFileSync(original,'fixture: retained\n');fs.symlinkSync(original,owned)
-  prepareProductDshHome({sourceHome,productHome,workspacePath,presetSourceDirectory:path.resolve('packages/harness-dsh/dsh/preset/base'),isolateCredentials:true})
-  assert.equal(fs.lstatSync(owned).isSymbolicLink(),false);assert.equal(fs.statSync(owned).mode&0o777,0o600);assert.equal(fs.readFileSync(owned,'utf8'),'fixture: retained\n')
+  const original=path.join(sourceHome,'.credentials.yaml'),owned=path.join(productHome,'.credentials.yaml');fs.writeFileSync(original,'fixture: retained\n')
+  const options={sourceHome,productHome,workspacePath,presetSourceDirectory:path.resolve('packages/harness-dsh/dsh/preset/base')}
+  prepareProductDshHome(options)
+  assert.equal(fs.lstatSync(owned).isSymbolicLink(),false);assert.equal(fs.statSync(owned).mode&0o777,0o600)
   fs.writeFileSync(owned,'fixture: changed only in BMW\n');assert.equal(fs.readFileSync(original,'utf8'),'fixture: retained\n')
-  prepareProductDshHome({sourceHome,productHome,workspacePath,presetSourceDirectory:path.resolve('packages/harness-dsh/dsh/preset/base'),isolateCredentials:true})
-  assert.equal(fs.readFileSync(owned,'utf8'),'fixture: changed only in BMW\n')
+  prepareProductDshHome(options);assert.equal(fs.readFileSync(owned,'utf8'),'fixture: changed only in BMW\n')
 })
 test('A dangling legacy DSH credential link fails closed before official writes can follow it',t=>{
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-dsh-credentials-missing-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}))
   const sourceHome=path.join(root,'source'),productHome=path.join(root,'bmw');fs.mkdirSync(sourceHome);fs.mkdirSync(productHome)
   const missing=path.join(sourceHome,'.credentials.yaml'),owned=path.join(productHome,'.credentials.yaml');fs.symlinkSync(missing,owned)
-  assert.throws(()=>prepareProductDshHome({sourceHome,productHome,workspacePath:path.join(root,'workspace'),presetSourceDirectory:path.resolve('packages/harness-dsh/dsh/preset/base'),isolateCredentials:true}),/ENOENT/)
+  assert.throws(()=>prepareProductDshHome({sourceHome,productHome,workspacePath:path.join(root,'workspace'),presetSourceDirectory:path.resolve('packages/harness-dsh/dsh/preset/base')}),/Migrate the linked/)
   assert.equal(fs.lstatSync(owned).isSymbolicLink(),true);assert.equal(fs.existsSync(missing),false)
 })
 test('DSH settings use official redacted control APIs and preserve exact model routes',async()=>{

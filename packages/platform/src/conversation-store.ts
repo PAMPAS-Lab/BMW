@@ -1,19 +1,19 @@
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import { agentIdentifier, agentRecord, agentText, parseAgentConversation,parseAgentLegacySession } from '@bmw-agent/agent-contract'
-import type { AgentConversation, AgentConversationStatus,AgentLegacySession } from '@bmw-agent/agent-contract'
+import { agentIdentifier, agentRecord, agentText, parseAgentConversation } from '@bmw-agent/agent-contract'
+import type { AgentConversation, AgentConversationStatus } from '@bmw-agent/agent-contract'
 import { readStateFile } from './state-load.js'
 
 interface Selection { projectId: string; driverId: string; sessionId: string }
-interface ConversationState { version: 1; revision: number; conversations: AgentConversation[]; selections: Selection[] }
+interface ConversationState { version: 2; revision: number; conversations: AgentConversation[]; selections: Selection[] }
 const transient = new Set<AgentConversationStatus>(['queued', 'running', 'waiting-user', 'waiting-approval', 'cancelling'])
 function selectionKey(value: Pick<Selection, 'projectId' | 'driverId'>): string { return JSON.stringify([value.projectId, value.driverId]) }
 function bindingKey(value: AgentConversation): string { return JSON.stringify([value.driverId, value.externalSessionId]) }
-function parseState(raw: unknown): ConversationState {
+export function parseConversationState(raw: unknown): ConversationState {
   const value = agentRecord(raw, 'BMW conversation state')
   if (Object.keys(value).some(key => !['version', 'revision', 'conversations', 'selections'].includes(key))) throw new Error('Unknown conversation state field')
-  if (value.version !== 1 || !Number.isSafeInteger(value.revision) || Number(value.revision) < 0 || !Array.isArray(value.conversations) || !Array.isArray(value.selections)) throw new Error('Unsupported conversation state')
+  if (value.version !== 2 || !Number.isSafeInteger(value.revision) || Number(value.revision) < 0 || !Array.isArray(value.conversations) || !Array.isArray(value.selections)) throw new Error('Unsupported conversation state')
   if (value.conversations.length > 100000 || value.selections.length > 100000) throw new Error('Conversation index exceeds its budget')
   const conversations = value.conversations.map(parseAgentConversation), identities = new Set<string>(), bindings = new Set<string>()
   for (const row of conversations) {
@@ -36,7 +36,7 @@ function parseState(raw: unknown): ConversationState {
     keys.add(key)
     return selection
   })
-  return { version: 1, revision: Number(value.revision), conversations, selections }
+  return { version: 2, revision: Number(value.revision), conversations, selections }
 }
 
 /** Host-owned index. Provider transcripts remain the authority for model resume. */
@@ -44,7 +44,7 @@ export class ConversationStore {
   private state: ConversationState
   readonly recoveredSessionIds: readonly string[]
   constructor(private readonly filePath: string, private readonly onChange?: () => void, options: { recoverOnLoad?: boolean } = {}) {
-    this.state = readStateFile(filePath, parseState) ?? { version: 1, revision: 0, conversations: [], selections: [] }
+    this.state = readStateFile(filePath, parseConversationState) ?? { version: 2, revision: 0, conversations: [], selections: [] }
     this.recoveredSessionIds = this.state.conversations.filter(row => transient.has(row.status)).map(row => row.sessionId)
     // A crashed connection is never presented as still running or automatically replayed.
     if(options.recoverOnLoad!==false)this.recoverAfterStartup()
@@ -59,7 +59,7 @@ export class ConversationStore {
     const next = structuredClone(this.state)
     change(next)
     next.revision++
-    parseState(next)
+    parseConversationState(next)
     fs.mkdirSync(path.dirname(this.filePath), { recursive: true, mode: 0o700 })
     const lock = this.filePath + '.lock'
     let handle: number
@@ -67,7 +67,7 @@ export class ConversationStore {
     catch (error: unknown) { if ((error as NodeJS.ErrnoException).code === 'EEXIST') throw new Error('BMW conversation state is being written; retry after the other writer finishes'); throw error }
     const temporary = this.filePath + '.tmp-' + crypto.randomUUID()
     try {
-      const current = readStateFile(this.filePath, parseState)
+      const current = readStateFile(this.filePath, parseConversationState)
       if ((current?.revision ?? 0) !== this.state.revision) throw new Error('BMW conversation state changed in another writer; reload before saving')
       fs.writeFileSync(temporary, JSON.stringify(next, null, 2) + '\n', { mode: 0o600, flag: 'wx' })
       fs.renameSync(temporary, this.filePath)
@@ -101,42 +101,6 @@ export class ConversationStore {
     const row = parseAgentConversation({ sessionId: crypto.randomUUID(), projectId, driverId, externalSessionId: null, title, createdAt: now, updatedAt: now, archivedAt: null, parentSessionId, status: 'idle' })
     this.commit(next => { next.conversations.push(row); this.selectIn(next, row) })
     return structuredClone(row)
-  }
-  /** Preserve old DSH IDs so existing Studio ownerSessionId references remain valid. */
-  importLegacy(projectId: string, driverId: string, externalSessionId: string, title: string, createdAt: number): AgentConversation {
-    const existing = this.state.conversations.find(row => row.driverId === driverId && row.externalSessionId === externalSessionId)
-    if (existing) {
-      if (existing.projectId !== projectId) throw new Error('Legacy Session belongs to another Project')
-      return structuredClone(existing)
-    }
-    if (this.state.conversations.some(row => row.sessionId === externalSessionId)) throw new Error('Legacy Session identity conflicts with an existing BMW Session')
-    const now = Math.max(Date.now(), createdAt)
-    const row = parseAgentConversation({ sessionId: externalSessionId, projectId, driverId, externalSessionId, title, createdAt, updatedAt: now, archivedAt: null, parentSessionId: null, status: 'idle',legacyImportPending:true })
-    this.commit(next => next.conversations.push(row))
-    return structuredClone(row)
-  }
-  markLegacyPending(sessionId:string):void {
-    const row=this.get(sessionId)
-    if(row.sessionId!==row.externalSessionId)throw new Error('Only preserved legacy Sessions may be imported')
-    if(row.legacyImportPending)return
-    this.commit(next=>{next.conversations.find(item=>item.sessionId===sessionId)!.legacyImportPending=true})
-  }
-  /** Call only after the matching display history has committed successfully. */
-  completeLegacy(driverId:string,raw:AgentLegacySession):void {
-    const source=parseAgentLegacySession(raw),row=this.get(source.externalSessionId,source.projectId)
-    if(row.driverId!==driverId||row.externalSessionId!==source.externalSessionId)throw new Error('Legacy import binding changed')
-    if(!row.legacyImportPending)return
-    this.commit(next=>{
-      const target=next.conversations.find(item=>item.sessionId===row.sessionId)!
-      target.title=source.title;target.createdAt=source.createdAt;target.updatedAt=source.updatedAt
-      target.archivedAt=source.archived?Math.max(Date.now(),source.updatedAt):null
-      const parent=next.conversations.find(item=>item.driverId===driverId&&item.externalSessionId===source.parentExternalSessionId&&item.projectId===source.projectId)
-      target.parentSessionId=parent?.sessionId??null
-      if(source.parentExternalSessionId)target.externalParentSessionId=source.parentExternalSessionId
-      delete target.legacyImportPending
-      if(source.archived)next.selections=next.selections.filter(item=>item.sessionId!==target.sessionId)
-      else if(source.selected&&!next.selections.some(item=>item.projectId===source.projectId&&item.driverId===driverId))this.selectIn(next,target)
-    })
   }
   bind(sessionId: string, externalSessionId: string): void {
     agentIdentifier(externalSessionId)

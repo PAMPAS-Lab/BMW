@@ -1,8 +1,8 @@
-import {agentIdentifier,agentRecord,agentText} from './conversation.js'
-import type {AgentMessage} from './conversation.js'
+import {agentIdentifier,agentRecord,agentText} from '@bmw-agent/agent-contract'
+import type {AgentMessage} from '@bmw-agent/agent-contract'
 
 /** Display-only import. Native transcripts remain the authority for resume. */
-export interface AgentLegacySession {
+export interface DshMigrationSource {
   projectId:string
   externalSessionId:string
   parentExternalSessionId:string|null
@@ -14,7 +14,7 @@ export interface AgentLegacySession {
   throughSequence:number
   messages:AgentMessage[]
 }
-export function parseAgentLegacySession(raw:unknown):AgentLegacySession {
+export function parseDshMigrationSource(raw:unknown):DshMigrationSource {
   const row=agentRecord(raw,'legacy Agent conversation')
   const fields=['projectId','externalSessionId','parentExternalSessionId','title','createdAt','updatedAt','archived','selected','throughSequence','messages']
   if(Object.keys(row).some(key=>!fields.includes(key))||typeof row.archived!=='boolean'||typeof row.selected!=='boolean'||!Array.isArray(row.messages)||row.messages.length>100000)throw new Error('Invalid legacy Agent conversation')

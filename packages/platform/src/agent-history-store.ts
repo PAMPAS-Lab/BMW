@@ -1,25 +1,19 @@
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import { agentIdentifier, agentRecord, agentText, parseAgentEvent,parseAgentLegacySession } from '@bmw-agent/agent-contract'
-import type { AgentEvent, AgentMessage, AgentInteraction,AgentLegacySession,AgentConversation } from '@bmw-agent/agent-contract'
+import { agentIdentifier, agentRecord, agentText, parseAgentEvent } from '@bmw-agent/agent-contract'
+import type { AgentEvent, AgentMessage, AgentInteraction,AgentConversation } from '@bmw-agent/agent-contract'
 import { readStateFile,StateLoadError } from './state-load.js'
 
 export interface AgentReceipt { runId: string; messageId: string; providerReceiptId: string | null; state: 'prepared' | 'accepted' | 'finished' | 'unknown'; outcome: 'success' | 'interrupted' | 'failed' | null }
-export interface AgentHistory { version: 1; sessionId: string; revision: number; events: AgentEvent[]; messages: AgentMessage[]; interactions: AgentInteraction[]; receipts: AgentReceipt[]; legacyImport?:{driverId:string;externalSessionId:string;throughSequence:number;source:Omit<AgentLegacySession,'messages'>} }
-function parseHistory(raw: unknown, sessionId: string): AgentHistory {
+export interface AgentHistory { version: 2; sessionId: string; revision: number; events: AgentEvent[]; messages: AgentMessage[]; interactions: AgentInteraction[]; receipts: AgentReceipt[]; owner:{projectId:string;driverId:string;externalSessionId:string|null} }
+export function parseAgentHistory(raw: unknown, sessionId: string): AgentHistory {
   const value = agentRecord(raw, 'Agent history')
-  if (value.version !== 1 || value.sessionId !== sessionId || !Number.isSafeInteger(value.revision) || Number(value.revision) < 0 || !Array.isArray(value.events) || !Array.isArray(value.messages) || !Array.isArray(value.interactions) || !Array.isArray(value.receipts)) throw new Error('Invalid saved Agent history')
-  if (Object.keys(value).some(key => !['version', 'sessionId', 'revision', 'events', 'messages', 'interactions', 'receipts','legacyImport'].includes(key))) throw new Error('Unknown Agent history field')
-  let legacyImport:AgentHistory['legacyImport']
-  if(value.legacyImport!==undefined){
-    const marker=agentRecord(value.legacyImport)
-    if(Object.keys(marker).some(key=>!['driverId','externalSessionId','throughSequence','source'].includes(key))||!Number.isSafeInteger(marker.throughSequence)||Number(marker.throughSequence)<0)throw new Error('Invalid legacy history marker')
-    const {messages:_messages,...source}=parseAgentLegacySession({...agentRecord(marker.source),messages:[]})
-    legacyImport={driverId:agentIdentifier(marker.driverId),externalSessionId:agentIdentifier(marker.externalSessionId),throughSequence:Number(marker.throughSequence),source}
-    if(legacyImport.externalSessionId!==sessionId)throw new Error('Legacy history must retain its original Session identity')
-    if(source.externalSessionId!==sessionId||source.throughSequence!==legacyImport.throughSequence)throw new Error('Legacy history source does not match its cursor')
-  }
+  if (value.version !== 2 || value.sessionId !== sessionId || !Number.isSafeInteger(value.revision) || Number(value.revision) < 0 || !Array.isArray(value.events) || !Array.isArray(value.messages) || !Array.isArray(value.interactions) || !Array.isArray(value.receipts)) throw new Error('Invalid saved Agent history')
+  if (Object.keys(value).some(key => !['version', 'sessionId', 'revision', 'events', 'messages', 'interactions', 'receipts','owner'].includes(key))) throw new Error('Unknown Agent history field')
+  const ownerRow=agentRecord(value.owner,'history owner')
+  if(Object.keys(ownerRow).some(key=>!['projectId','driverId','externalSessionId'].includes(key)))throw new Error('Unknown history owner field')
+  const owner={projectId:agentIdentifier(ownerRow.projectId),driverId:agentIdentifier(ownerRow.driverId),externalSessionId:ownerRow.externalSessionId===null?null:agentIdentifier(ownerRow.externalSessionId)}
   const events = value.events.map(parseAgentEvent)
   for (let index = 0; index < events.length; index++) if (events[index].sessionId !== sessionId || events[index].sequence !== index + 1) throw new Error('Invalid Agent history ordering')
   const ids = new Set<string>()
@@ -55,11 +49,11 @@ function parseHistory(raw: unknown, sessionId: string): AgentHistory {
     }
   }
   if (JSON.stringify(interactions) !== JSON.stringify(value.interactions)) throw new Error('Invalid saved Agent interaction projection')
-  return { version: 1, sessionId, revision: Number(value.revision), events, messages, interactions, receipts,...(legacyImport?{legacyImport}:{}) }
+  return { version: 2, sessionId, revision: Number(value.revision), events, messages, interactions, receipts,owner }
 }
 export class AgentHistoryStore {
   private readonly cache = new Map<string, AgentHistory>()
-  constructor(private readonly directory: string) {}
+  constructor(private readonly directory: string, private readonly conversation:(sessionId:string)=>AgentConversation) {}
   private file(sessionId: string): string {
     agentIdentifier(sessionId)
     return path.join(this.directory, crypto.createHash('sha256').update(sessionId).digest('hex') + '.json')
@@ -67,45 +61,28 @@ export class AgentHistoryStore {
   private read(sessionId: string): AgentHistory {
     let value = this.cache.get(sessionId)
     if (!value) {
-      value = readStateFile(this.file(sessionId), raw => parseHistory(raw, sessionId)) ?? { version: 1, sessionId, revision: 0, events: [], messages: [], interactions: [], receipts: [] }
+      const row=this.conversation(sessionId)
+      value = readStateFile(this.file(sessionId), raw => parseAgentHistory(raw, sessionId)) ?? { version: 2, sessionId, revision: 0, events: [], messages: [], interactions: [], receipts: [],owner:{projectId:row.projectId,driverId:row.driverId,externalSessionId:row.externalSessionId} }
       this.cache.set(sessionId, value)
     }
     return value
   }
   snapshot(sessionId: string): AgentHistory { return structuredClone(this.read(sessionId)) }
-  validateLegacyBinding(row:AgentConversation):void {
-    const marker=this.read(row.sessionId).legacyImport
-    if(marker&&(marker.driverId!==row.driverId||marker.externalSessionId!==row.externalSessionId||marker.source.projectId!==row.projectId))throw new StateLoadError(this.file(row.sessionId),new Error('Legacy display history belongs to another Project or driver binding'))
-  }
-  legacySource(sessionId:string):AgentLegacySession|null {
-    const value=this.read(sessionId)
-    return value.legacyImport?parseAgentLegacySession({...value.legacyImport.source,messages:structuredClone(value.messages)}):null
-  }
-  importLegacy(driverId:string,raw:AgentLegacySession):void {
-    agentIdentifier(driverId)
-    const source=parseAgentLegacySession(raw),sessionId=source.externalSessionId,before=this.read(sessionId)
-    if(before.legacyImport){
-      if(before.legacyImport.driverId!==driverId||before.legacyImport.externalSessionId!==sessionId)throw new Error('Legacy history source changed')
-      return
-    }
-    if(before.receipts.length||before.messages.length||before.events.length)throw new Error('Legacy import cannot overwrite BMW conversation history')
-    this.commit(sessionId,next=>{
-      next.messages=structuredClone(source.messages)
-      const {messages:_messages,...metadata}=source
-      next.legacyImport={driverId,externalSessionId:sessionId,throughSequence:source.throughSequence,source:metadata}
-    })
+  validateBinding(row:AgentConversation):void {
+    const owner=this.read(row.sessionId).owner
+    if(owner.driverId!==row.driverId||owner.projectId!==row.projectId||owner.externalSessionId!==row.externalSessionId)throw new StateLoadError(this.file(row.sessionId),new Error('Display history belongs to another Project or driver binding'))
   }
   private commit(sessionId: string, change: (next: AgentHistory) => void): void {
     const before = this.read(sessionId), next = structuredClone(before)
     change(next); next.revision++
-    parseHistory(next, sessionId)
+    parseAgentHistory(next, sessionId)
     const body = JSON.stringify(next)
     if (Buffer.byteLength(body) > 64 * 1024 * 1024) throw new Error('BMW Agent history exceeds its storage budget')
     fs.mkdirSync(this.directory, { recursive: true, mode: 0o700 })
     const file = this.file(sessionId), temporary = file + '.tmp-' + crypto.randomUUID(), lock = file + '.lock'
     const handle = fs.openSync(lock, 'wx', 0o600)
     try {
-      const current = readStateFile(file, raw => parseHistory(raw, sessionId))
+      const current = readStateFile(file, raw => parseAgentHistory(raw, sessionId))
       if ((current?.revision ?? 0) !== before.revision) throw new Error('Agent history changed in another writer; reload before saving')
       fs.writeFileSync(temporary, body + '\n', { mode: 0o600, flag: 'wx' }); fs.renameSync(temporary, file)
       this.cache.set(sessionId, next)
@@ -126,6 +103,10 @@ export class AgentHistoryStore {
       const receipt = next.receipts.find(row => row.runId === event.runId)
       if (!receipt || receipt.state === 'finished') throw new Error('Agent event belongs to an inactive submission')
       const payload = event.event
+      if(payload.type==='session.bound'){
+        if(next.owner.externalSessionId!==null&&next.owner.externalSessionId!==payload.externalSessionId)throw new Error('History resume anchor cannot be replaced')
+        next.owner.externalSessionId=payload.externalSessionId
+      }
       if (payload.type === 'input.accepted') {
         if (receipt.providerReceiptId !== null && receipt.providerReceiptId !== payload.receiptId) throw new Error('Agent submission receipt cannot be replaced')
         receipt.providerReceiptId = payload.receiptId; receipt.state = 'accepted'

@@ -15,7 +15,8 @@ interface RuntimeOptions {
   mcpServerPath?: string
   bridgeUrl?: string; bridgeToken?: string
   controlFilePath?: string
-  isolateCredentials?:boolean
+  sessionBinding?:string
+  catalogOnly?:boolean
   onLog?: (entry: { stream: string; text: string }) => void
   onStatus?: (entry: Record<string, unknown>) => void
 }
@@ -65,7 +66,7 @@ export class DshRuntime {
   [key: string]: any
   private stoppingChild:ChildProcess|null=null
 
-  constructor({ productId = 'bmw', presetId = 'bmw', patchPath, presetSourcePath, dshHome, sourceDshHome, workspacePath, workspaceTitle, mcpServerPath, bridgeUrl, bridgeToken, controlFilePath,isolateCredentials, onLog, onStatus }: RuntimeOptions) {
+  constructor({ productId = 'bmw', presetId = 'bmw', patchPath, presetSourcePath, dshHome, sourceDshHome, workspacePath, workspaceTitle, mcpServerPath, bridgeUrl, bridgeToken, controlFilePath,sessionBinding,catalogOnly, onLog, onStatus }: RuntimeOptions) {
     this.productId = productId
     this.presetId = presetId
     this.patchPath = patchPath
@@ -78,7 +79,8 @@ export class DshRuntime {
     this.bridgeUrl = bridgeUrl
     this.bridgeToken = bridgeToken
     this.controlFilePath = controlFilePath
-    this.isolateCredentials=isolateCredentials
+    this.sessionBinding=sessionBinding
+    this.catalogOnly=catalogOnly===true
     this.onLog = onLog
     this.onStatus = onStatus
     this.child = null
@@ -124,7 +126,7 @@ export class DshRuntime {
       presetSourceDirectory: this.presetSourcePath,
       workspacePath: this.workspacePath,
       workspaceTitle: this.workspaceTitle
-      ,isolateCredentials:this.isolateCredentials
+
     })
     const port = await reservePort()
     this.url = `http://127.0.0.1:${port}`
@@ -137,7 +139,9 @@ export class DshRuntime {
       BMW_BRIDGE_TOKEN: this.bridgeToken,
       BMW_MCP_SERVER: this.mcpServerPath,
       BMW_PRODUCT_ID: this.productId,
-      ...(this.controlFilePath ? { BMW_DSH_CONTROL_FILE: this.controlFilePath, BMW_AGENT_DRIVER: 'dsh', BMW_HARNESS_MANAGED: '1' } : {})
+      BMW_SESSION_BINDING:this.sessionBinding??'',
+      BMW_CATALOG_ONLY:this.catalogOnly?'1':'',
+      ...(this.controlFilePath ? { BMW_DSH_CONTROL_FILE: this.controlFilePath, BMW_AGENT_DRIVER: 'dsh' } : {})
     }
     this.emitStatus({ state: 'starting', version: null, url: this.url })
     const presetPatch = path.join(this.dshHome, '.agent-presets', this.presetId, 'profile.patch.yml')
@@ -277,6 +281,7 @@ export class DshRuntime {
 
   async ensureWorkspace(project) {
     const listed = await this.call('workspace.list', {})
+    if(project.workspaceId&&!listed.items.some(candidate=>candidate.workspaceId===project.workspaceId))throw new Error('Saved DSH Workspace is unavailable; repair its mapping explicitly')
     let workspace = listed.items.find((candidate) => candidate.workspaceId === project.workspaceId)
       || listed.items.find((candidate) => candidate.path === (fs.existsSync(project.directory) ? fs.realpathSync(project.directory) : project.directory))
     if (!workspace) {

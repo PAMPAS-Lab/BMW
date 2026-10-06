@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {spawn} from 'node:child_process'
 import readline from 'node:readline'
-import type {AgentRuntimeConfiguration} from '@bmw-agent/agent-contract'
+export interface FixtureBrowserConnection {bridgeUrl:string;bridgeToken:string;mcpServerPath:string;binding?:string;driverId?:string}
 
 export function fixtureRecord(value: unknown): Record<string, unknown> {
   assert.ok(value && typeof value === 'object' && !Array.isArray(value), 'Expected a fixture protocol object')
@@ -9,9 +9,9 @@ export function fixtureRecord(value: unknown): Record<string, unknown> {
 }
 /** A model-side MCP client for contract tests. It starts only BMW's MCP adapter;
  * no DSH process, model, Agent loop or external service is loaded. */
-export function createFixtureBrowserClient(config: AgentRuntimeConfiguration) {
+export function createFixtureBrowserClient(config: FixtureBrowserConnection) {
   const child = spawn(process.execPath, [config.mcpServerPath], {
-    env: {...process.env, ELECTRON_RUN_AS_NODE:'1', BMW_BRIDGE_URL:config.bridgeUrl, BMW_BRIDGE_TOKEN:config.bridgeToken},
+    env: {...process.env, ELECTRON_RUN_AS_NODE:'1', BMW_BRIDGE_URL:config.bridgeUrl, BMW_BRIDGE_TOKEN:config.bridgeToken,...(config.binding?{BMW_SESSION_BINDING:config.binding,BMW_CATALOG_ONLY:''}:{BMW_SESSION_BINDING:'',BMW_CATALOG_ONLY:'1'})},
     stdio:['pipe','pipe','pipe']
   })
   let sequence = 0, stderr = '', ended = false
@@ -54,13 +54,15 @@ export function createFixtureBrowserClient(config: AgentRuntimeConfiguration) {
     return value
   }
   async function register(sessionId:string,directory:string):Promise<string> {
-    const reply=await post('/session/register',{sessionId,directory})
+    const reply=await post('/session/register',{sessionId,directory,driverId:config.driverId??'fixture'})
     assert.equal(typeof reply.binding,'string');assert.ok(reply.binding)
     return reply.binding as string
   }
   return {request,post,register,
     async call(binding:string,argumentsValue:Record<string,unknown>):Promise<Record<string,unknown>> {
-      return fixtureRecord(await request('tools/call',{name:'browser',arguments:{...argumentsValue,__bmwSession:binding}}))
+      if(config.binding===binding)return fixtureRecord(await request('tools/call',{name:'browser',arguments:argumentsValue}))
+      const scoped=createFixtureBrowserClient({...config,binding})
+      try{return fixtureRecord(await scoped.request('tools/call',{name:'browser',arguments:argumentsValue}))}finally{await scoped.close()}
     },
     async close():Promise<void> {
       lines.close();fail(new Error('Fixture MCP client closed'))

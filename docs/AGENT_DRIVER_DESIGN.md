@@ -53,7 +53,7 @@ BMW Session 是稳定的产品身份，固定 Project 与 driver；provider Sess
 
 每个计划任务固定 Project、BMW Session 与 driver。绑定失效时记录失败，要求用户显式修复，不能改为当前会话或另一个引擎。排队/运行时禁止重绑，执行遵循同一资源队列和 Studio 修订保护。
 
-保留旧 DSH UI 直至新 UI 在所需能力上等效。迁移通过官方协议读取旧会话和显示历史，保存原有 Project/Workspace/Session 与媒体身份。先在隔离副本验收，再按修改前清单合并本次增量，保护原仓库已有改动。
+BMW 只使用自有 Host 与 Assistant；已移除旧 DSH 客户端/DOM 选择入口。核心 Project 不存储原生 Workspace；DSH 在自己的 harness 映射文件维护它，Codex/Qoder 使用各自原生恢复身份。历史格式通过独立命令读取隔离 DSH Home 的官方会话/历史快照，再统一为 v2。迁移不进入日常启动或 Agent 排队路径，保留已有 BMW Session、Studio owner、计划任务及原生锚点，备份并检查并发改动。详见 [AGENT_DATA_MIGRATION.md](AGENT_DATA_MIGRATION.md)。
 
 ## 验收与当前证据
 

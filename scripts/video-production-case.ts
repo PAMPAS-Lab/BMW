@@ -46,8 +46,7 @@ async function run(): Promise<void> {
     return result
   } },{toolDefinition:registry.toolDefinition(),resolveProject:directory=>directory===workspace?project:undefined,activeProjectId:()=>project.id})
   const headers = {authorization:`Bearer ${bridge.token}`,'content-type':'application/json'}
-  const registration = await fetch(`${bridge.url}/session/register`,{method:'POST',headers,body:JSON.stringify({sessionId:'arena-video-production',directory:workspace})})
-  const {binding} = await registration.json() as {binding:string}
+  const binding=bridge.registerSession('arena-video-production',workspace)
   const calls: unknown[] = []
   const execute = async (args: unknown) => {
     const response=await fetch(`${bridge!.url}/execute`,{method:'POST',headers,body:JSON.stringify({binding,arguments:args})})

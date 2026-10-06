@@ -51,8 +51,7 @@ try {
   kernel.setRecordingController(media)
   bridge = await createBridgeServer(kernel, { toolDefinition: registry.toolDefinition(), resolveProject: (directory) => directory === project.directory ? project : undefined, activeProjectId: () => project.id })
   const headers = { authorization: `Bearer ${bridge.token}`, 'content-type': 'application/json' }
-  const registration = await fetch(`${bridge.url}/session/register`, { method: 'POST', headers, body: JSON.stringify({ sessionId: 'media-job-session', directory: project.directory }) })
-  const { binding } = await registration.json() as { binding: string }
+  const binding=bridge.registerSession('media-job-session',project.directory)
   const bridgeCall = async (args: unknown) => {
     const response = await fetch(`${bridge!.url}/execute`, { method: 'POST', headers, body: JSON.stringify({ binding, arguments: args }) })
     const result = await response.json() as { result: unknown; images: { mimeType: string; data: string }[]; error?: string }

@@ -12,7 +12,8 @@ test('global settings default to system proxy and Google search', () => {
   assert.equal(settings.searchEngine, 'google')
   assert.equal(settings.newTabPage, 'search')
   assert.equal(settings.theme, 'dark')
-  assert.equal(settings.agentSidebarVisible, false)
+  assert.equal(settings.version, 2)
+  assert.equal(Object.hasOwn(settings,'agentSidebarVisible'), false)
 })
 
 test('global settings persist manual proxy and generate selected search URLs', () => {
@@ -41,9 +42,15 @@ test('global appearance accepts one shared dark, light or system theme', () => {
   assert.equal(globalSettingsInternals.normalize({ theme: 'untrusted' }).theme, 'dark')
 })
 
-test('Agent sidebar is an explicit global compatibility fallback', () => {
-  assert.equal(globalSettingsInternals.normalize({ agentSidebarVisible: true }).agentSidebarVisible, true)
-  assert.equal(globalSettingsInternals.normalize({ agentSidebarVisible: 'true' }).agentSidebarVisible, false)
+test('Current settings reload preserves appearance without a native Agent sidebar setting', () => {
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-settings-current-'))
+ try{
+  const filePath=path.join(root,'settings.json'),store=new GlobalSettingsStore({filePath})
+  store.update({theme:'light',newTabPage:'blank'})
+  const reloaded=new GlobalSettingsStore({filePath})
+  assert.equal(reloaded.snapshot().theme,'light');assert.equal(reloaded.newTabUrl(),'about:blank')
+  assert.equal(Object.hasOwn(reloaded.snapshot(),'agentSidebarVisible'),false)
+ }finally{fs.rmSync(root,{recursive:true,force:true})}
 })
 
 test('custom search templates require HTTP(S) and a query placeholder', () => {

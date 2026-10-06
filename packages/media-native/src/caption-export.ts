@@ -1,4 +1,4 @@
-import {estimatedCaptionCues} from './composition-contract.js'
+import {captionText,estimatedCaptionCues} from './composition-contract.js'
 import type {CompositionScene} from './composition-contract.js'
 export function captionDocument(scenes:readonly (CompositionScene&{audioDurationSeconds?:number})[],width:number,height:number,format:'srt'|'vtt'):{text:string;cueCount:number;timing:'edited'|'estimated'|'mixed'} {
   if(format!=='srt'&&format!=='vtt')throw new Error('Unsupported caption format.')
@@ -8,7 +8,7 @@ export function captionDocument(scenes:readonly (CompositionScene&{audioDuration
     const local=scene.captions??estimatedCaptionCues(scene,width,height,scene.audioDurationSeconds??0)
     if(local.length){if(scene.captions)edited=true;else estimated=true}
     for(const cue of local){
-      const text=cue.text.replace(/\r\n?/g,'\n').split('\n').map(line=>line.trim()).filter(Boolean).join('\n').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      const text=captionText(cue,scene.captionDisplay).replace(/\r\n?/g,'\n').split('\n').map(line=>line.trim()).filter(Boolean).join('\n').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
       if(!text)continue
       const begin=Math.round((start+cue.startSeconds)*1000),end=Math.round((start+cue.endSeconds)*1000)
       if(end<=begin)throw new Error('Caption is shorter than the export millisecond precision.')

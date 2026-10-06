@@ -1,3 +1,4 @@
+import {requireCurrentAgentData} from '../packages/platform/src/agent-data-format.js'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -5,9 +6,9 @@ import path from 'node:path'
 import http from 'node:http'
 import crypto from 'node:crypto'
 import { app, ipcMain, webContents,dialog,BrowserWindow } from 'electron'
-import type { AgentBackend, AgentDriver, AgentRunRequest, AssistantState,AgentDriverSettings } from '@bmw-agent/agent-contract'
+import type { AgentBackend, AgentRunRequest, AssistantState,AgentDriverSettings } from '@bmw-agent/agent-contract'
 import { agentRecord } from '@bmw-agent/agent-contract'
-import { assistantClient, assistantPagePath, assistantPreloadPath } from '@bmw-agent/agent-ui'
+import { assistantPagePath, assistantPreloadPath } from '@bmw-agent/agent-ui'
 import { createBmwApplication } from '../packages/platform/src/main.js'
 import { ProjectStore } from '../packages/platform/src/project-store.js'
 import { LayoutStore } from '../packages/platform/src/layout-store.js'
@@ -22,14 +23,13 @@ const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-assistan
 const profile = path.join(root, 'profile')
 console.log('Assistant application fixture: '+root)
 process.env.BMW_USER_DATA_DIR = profile
-const projects = new ProjectStore({ filePath: path.join(profile, 'projects.json'), projectsDirectory: path.join(root, 'projects'), legacyWorkspacePath: path.join(root, 'workspace'), onState: undefined })
+requireCurrentAgentData(process.env.BMW_USER_DATA_DIR)
+const projects = new ProjectStore({ filePath: path.join(profile, 'projects.json'), projectsDirectory: path.join(root, 'projects'), initialWorkspacePath: path.join(root, 'workspace'), onState: undefined })
 projects.completeInitialSetup({ name: 'Assistant contract Project', homeUrl: '' })
 new LayoutStore({ filePath: path.join(profile, 'layout-settings.json'), onState: undefined }).update({ configured: true, mode: 'sidebar' })
 const startupKind=process.env.BMW_ASSISTANT_STARTUP_KIND,startupScenario=process.env.BMW_ASSISTANT_STARTUP_SCENARIO??'retry'
-const legacyCase=process.env.BMW_ASSISTANT_LEGACY_CASE
 const scheduleCase=process.env.BMW_ASSISTANT_SCHEDULE_CASE==='1'
-if(scheduleCase){assert.equal(startupKind,undefined);assert.equal(legacyCase,undefined)}
-if(legacyCase){assert.ok(['retry','cleanup'].includes(legacyCase));assert.equal(startupKind,undefined);projects.setAgentBinding(projects.active().id,'fixture',{workspaceId:'legacy-workspace',sessionId:'legacy-owner'})}
+if(scheduleCase)assert.equal(startupKind,undefined)
 let startupPrompts=0
 if(startupKind){
   assert.ok(['conversations','preferences','history'].includes(startupKind))
@@ -63,6 +63,7 @@ const fixtureReply='BMW browser and Studio completed\n\n**Project** `verified`\n
 let closeStarted!:()=>void,finishClose!:()=>void,willQuit=false
 const scheduledCalls:{driverId:string;sessionId:string;projectId:string;draftId:string}[]=[]
 let settingsCleanupStarted=false,finishSettingsCleanup:(()=>void)|undefined
+let holdSettingsRefresh=false,settingsRefreshes=0,loginRefreshes=0,finishSettingsRefresh:(()=>void)|undefined
 const closing=new Promise<void>(resolve=>{closeStarted=resolve}),closeGate=new Promise<void>(resolve=>{finishClose=resolve})
 app.once('will-quit',()=>{willQuit=true})
 const backend: AgentBackend = {
@@ -101,28 +102,20 @@ const backend: AgentBackend = {
   },
   async interrupt() {}, async respond() { throw new Error('No fixture questions') }, async close() {closeStarted();await closeGate}
 }
-let legacyReads=0,legacyDrains=0
-if(legacyCase){
-  backend.readLegacySessions=async boundProjects=>{
-    legacyReads++
-    assert.equal(boundProjects[0].workspaceId,'legacy-workspace');assert.equal(boundProjects[0].sessionId,'legacy-owner')
-    if(legacyCase==='retry'&&legacyReads===1)throw new Error('Fixture native history temporarily unavailable')
-    return [{projectId:projects.active().id,externalSessionId:'legacy-owner',parentExternalSessionId:null,title:'Preserved legacy conversation',createdAt:1,updatedAt:3,archived:false,selected:true,throughSequence:8,messages:[{id:'legacy-user',role:'user',text:'Preserved legacy human prompt',createdAt:2,complete:true},{id:'legacy-assistant',role:'assistant',text:'Preserved legacy reply',createdAt:3,complete:true}]}]
-  }
-  backend.drainLegacy=async()=>{legacyDrains++;if(legacyCase==='cleanup'&&legacyDrains===1)throw new Error('Fixture native cleanup temporarily unavailable')}
-}
-const driver: AgentDriver = { id: 'fixture', label: 'Fixture', baseline: 'No legacy runtime', preloadPath: assistantPreloadPath, client: assistantClient,
-  createRuntime() { throw new Error('Owned Assistant must not start the legacy runtime') }, migrateProjectMetadata: value => value, migrateSettings: value => value }
 const handlers = new Map<string, Parameters<typeof ipcMain.handle>[1]>()
 const handle = ipcMain.handle.bind(ipcMain)
 ipcMain.handle = (channel, listener) => { handlers.set(channel, listener); handle(channel, listener) }
-createBmwApplication(bmwProduct, driver, { pagePath: assistantPagePath, preloadPath: assistantPreloadPath, client: assistantClient, defaultDriverId: 'fixture',
+createBmwApplication(bmwProduct, { pagePath: assistantPagePath, preloadPath: assistantPreloadPath, defaultDriverId: 'fixture',
   createBackends(config) {
     const prepare = backend.prepare.bind(backend)
     backend.prepare = async request => { connection = await config.connection(request); return prepare(request) }
     let settingsCleanup:Promise<void>|undefined
     const settings=():AgentDriverSettings=>({authentication:{state:'ready',label:'官方测试账号已连接'},models:[{id:'fixture-model',label:'Fixture model',description:'No inference',availability:'verified'},{id:'disabled-model',label:'Unavailable model',description:'Not available',availability:'unavailable'}],selectedModel:config.model('fixture'),loginMethods:[{id:'fixture-login',label:'测试凭据',fields:[{id:'apiKey',label:'API Key',secret:true,required:true}]}],canLogout:false})
     backend.settings=async(request,context)=>{
+      if(request.action==='refresh'){
+        settingsRefreshes++
+        if(holdSettingsRefresh)await new Promise<void>(resolve=>{finishSettingsRefresh=resolve})
+      }
       await new Promise(resolve=>setImmediate(resolve));context.signal.throwIfAborted()
       if(request.action==='model.select'){assert.equal(request.modelId,'fixture-model');config.setModel('fixture',request.modelId)}
       if(request.action==='auth.login'){
@@ -139,13 +132,14 @@ createBmwApplication(bmwProduct, driver, { pagePath: assistantPagePath, preloadP
       other.prepare=async request=>{connection=await config.connection(request);latestRequest=request;return other.description}
       return [backend,other]
     }
-    if(!startupKind&&!legacyCase){
+    if(!startupKind){
       let authenticated=false
       const other:AgentBackend={...backend,description:{...backend.description,id:'fixture-login',label:'Login driver fixture'},close:async()=>{},drainSettings:async()=>{}}
       other.prepare=async()=>assert.fail('Login settings must not prepare a model turn')
       other.run=async()=>assert.fail('Login settings must not release model input')
       other.settings=async(request,context)=>{
         context.signal.throwIfAborted()
+        if(request.action==='refresh')loginRefreshes++
         if(request.action==='auth.login'){assert.equal(request.methodId,'fixture-key');assert.equal(request.values.apiKey,'fixture-login-success');authenticated=true}
         if(request.action==='model.select'){assert.ok(authenticated);assert.equal(request.modelId,'login-model');config.setModel('fixture-login',request.modelId)}
         return {authentication:{state:authenticated?'ready':'required',label:authenticated?'测试账号已登录':'请先登录'},models:[{id:'login-model',label:'Supported login model',description:'No inference',availability:'verified'},{id:'unknown-model',label:'Unknown model',description:'Not admitted',availability:'unverified'},{id:'unavailable-model',label:'Unavailable model',description:'Disabled',availability:'unavailable'}],selectedModel:config.model('fixture-login'),loginMethods:[{id:'fixture-key',label:'测试 API Key',fields:[{id:'apiKey',label:'API Key',secret:true,required:true}]}],canLogout:false}
@@ -179,29 +173,6 @@ try {
     assert.equal(initial.messages.length,1);assert.equal(initial.events.at(-1)?.event.type,'turn.disconnected')
     assert.equal(initial.sessions[0].externalSessionId,'provider-'+initial.selectedSessionId)
     console.log('PASS Assistant startup '+startupKind+' retry preserves identities and recovers delivery without replay')
-  }else if(legacyCase){
-    assert.equal(initial.selectedSessionId,'legacy-owner');assert.equal(initial.sessions[0].externalSessionId,'legacy-owner')
-    const failed=await waitFor(async()=>{const state=await snapshot();return state.legacyImports?.[0]?.state==='failed'?state:null},'legacy failure visible')
-    await waitFor(async()=>await assistant.executeJavaScript('document.getElementById("legacy-imports").hidden===false')?true:null,'legacy retry UI')
-    assert.match(await assistant.executeJavaScript('document.getElementById("legacy-imports").textContent'),/恢复失败/)
-    if(legacyCase==='retry'){
-      assert.equal(failed.sessions[0].legacyImportPending,true)
-      assert.equal(await assistant.executeJavaScript('document.getElementById("send").disabled'),true)
-      await assert.rejects(assistant.executeJavaScript('window.bmwAssistant.invoke({action:"message.send",sessionId:"legacy-owner",text:"Must not be dispatched"})'),/Restore this legacy/)
-    }else{
-      assert.equal(failed.resourcesDisconnected,true);assert.equal(failed.busy,true)
-      await assert.rejects(shell.executeJavaScript('window.bmw.createProject({name:"must not switch during native cleanup",homeUrl:""})'),/Stop and drain/)
-      await assistant.executeJavaScript('document.getElementById("recover").click()')
-      await waitFor(async()=>{const state=await snapshot();return !state.busy&&!state.resourcesDisconnected?state:null},'native cleanup recovery')
-      assert.equal(legacyReads,1,'Cleanup recovery must not repeat discovery or dispatch input')
-    }
-    await assistant.executeJavaScript('document.querySelector("#legacy-imports button").click()')
-    const restored=await waitFor(async()=>{const state=await snapshot();return !state.busy&&state.legacyImports?.[0]?.state==='complete'?state:null},'legacy history retry complete')
-    assert.equal(restored.selectedSessionId,'legacy-owner');assert.equal(restored.sessions[0].legacyImportPending,undefined)
-    assert.deepEqual(restored.messages.map(row=>row.text),['Preserved legacy human prompt','Preserved legacy reply'])
-    const binding=new ProjectStore({filePath:path.join(profile,'projects.json'),projectsDirectory:path.join(root,'projects'),legacyWorkspacePath:path.join(root,'workspace'),onState:undefined}).agentBinding(projects.active().id,'fixture')
-    assert.deepEqual(binding,{workspaceId:'legacy-workspace',sessionId:'legacy-owner'})
-    console.log('PASS Assistant legacy '+legacyCase+': preserved native owner/history, actual retry controls, input/Project exclusion and independent cleanup recovery')
   }else{assert.equal(initial.sessions[0].externalSessionId,null);assert.equal(initial.messages.length,0)}
   assert.equal(await assistant.executeJavaScript('typeof window.require'), 'undefined')
   const invoke = handlers.get('bmw-assistant-command')!; assert.ok(invoke)
@@ -236,9 +207,19 @@ try {
     app.once('will-quit',()=>{clearTimeout(watchdog);server.closeAllConnections();server.close();console.log('PASS cross-driver schedule: both pinned engines/Sessions, real Studio ownership and restored selection');app.exit(0)})
     finishClose();app.quit();return
   }
-  if(!startupKind&&!legacyCase){
-    console.log('Settings UI: opening trusted Shell entry')
+  if(!startupKind){
+    console.log('Settings UI: repeated opens share one pending refresh')
+    holdSettingsRefresh=true
     await shell.executeJavaScript('window.bmw.openAgentAdvancedSettings()')
+    await waitFor(async()=>finishSettingsRefresh?true:null,'delayed settings refresh began')
+    await assistant.executeJavaScript('document.getElementById("agent-settings-open").click();document.getElementById("agent-settings-open").click()')
+    await assistant.executeJavaScript('window.bmwAssistant.invoke({action:"settings.run",driverId:"fixture",request:{action:"refresh"}})')
+    assert.equal(settingsRefreshes,1,'Repeated settings opens and IPC refresh share one native read')
+    assert.equal((await snapshot()).busy,true)
+    assert.equal(await assistant.executeJavaScript('document.getElementById("error").hidden'),true)
+    assert.match(await assistant.executeJavaScript('document.getElementById("status").textContent'),/正在读取登录状态/)
+    holdSettingsRefresh=false;finishSettingsRefresh!()
+
     await waitFor(async()=>{const state=await snapshot();return state.settings?.phase==='idle'&&!state.busy?state:null},'official settings refresh')
     await waitFor(async()=>await assistant.executeJavaScript('Boolean(document.querySelector("#agent-model option[value=fixture-model]")&&document.querySelector("#agent-login-fields input"))')?true:null,'settings projection rendered')
     assert.equal(await assistant.executeJavaScript('document.getElementById("agent-settings").open'),true)
@@ -249,7 +230,16 @@ try {
     await waitFor(async()=>await assistant.executeJavaScript('!document.getElementById("agent-settings").open')?true:null,'model confirmation closes dialog')
     await shell.executeJavaScript('window.bmw.openAgentAdvancedSettings()')
     await waitFor(async()=>{const state=await snapshot();return state.settings?.phase==='idle'&&!state.busy?state:null},'settings reopened')
-    console.log('Settings UI: model persisted; checking compact dialog')
+    assert.equal(settingsRefreshes,1,'Reopening completed settings reuses its Profile cache')
+    await assistant.executeJavaScript('document.getElementById("agent-settings-close").click();document.getElementById("agent-settings-open").click();document.getElementById("agent-settings-open").click()')
+    assert.equal(settingsRefreshes,1,'Repeated completed opens start no native process')
+    assert.match(await assistant.executeJavaScript('document.getElementById("agent-auth-checked").textContent'),/登录状态检查/)
+    await assistant.executeJavaScript('document.getElementById("agent-refresh").click()')
+    await waitFor(async()=>settingsRefreshes===2&&(await snapshot()).settings?.phase==='idle'&&!(await snapshot()).busy?true:null,'explicit authentication refresh')
+    await waitFor(async()=>await assistant.executeJavaScript('!document.getElementById("agent-model-refresh").disabled')?true:null,'model refresh control ready after state publication')
+    await assistant.executeJavaScript('document.getElementById("agent-model-refresh").click()')
+    await waitFor(async()=>settingsRefreshes===3&&(await snapshot()).settings?.phase==='idle'&&!(await snapshot()).busy?true:null,'explicit model refresh')
+    console.log('Settings UI: cached views and both explicit refresh entries; checking compact dialog')
     const window=BrowserWindow.getAllWindows()[0],originalSize=window.getSize();window.setSize(840,560)
     await waitFor(async()=>await assistant.executeJavaScript('(()=>{const r=document.getElementById("agent-settings").getBoundingClientRect(),b=document.getElementById("agent-settings-close").getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&b.bottom<=innerHeight})()')?true:null,'compact settings fitting')
     fs.writeFileSync(path.join(root,'assistant-settings.png'),(await assistant.capturePage()).toPNG())
@@ -268,6 +258,9 @@ try {
     await assert.rejects(shell.executeJavaScript('window.bmw.createProject({name:"must not switch during settings cleanup",homeUrl:""})'),/Stop and drain/)
     assert.equal((await snapshot()).busy,true)
     assert.equal((await snapshot()).driverId,'fixture','Driver switch must wait for actual login cleanup')
+    await waitFor(async()=>await assistant.executeJavaScript('/正在取消设置并清理/.test(document.getElementById("status").textContent)')?true:null,'cancellation cleanup status rendered')
+    await assistant.executeJavaScript('document.getElementById("agent-settings-open").click();document.getElementById("agent-settings-open").click()')
+    assert.equal(await assistant.executeJavaScript('document.getElementById("error").hidden'),true,'Opening settings during driver cancellation must not race another refresh')
     finishSettingsCleanup!()
     const cancelled=await waitFor(async()=>{const state=await snapshot();return state.driverId==='fixture-login'&&state.settings?.phase==='idle'&&!state.busy?state:null},'driver switched after actual login cleanup')
     assert.equal(JSON.stringify(cancelled).includes('fixture-one-shot-secret'),false)
@@ -276,10 +269,17 @@ try {
     assert.equal(await assistant.executeJavaScript('document.querySelector("#agent-login-fields input").value'),'')
     const chooseDriver=async(id:string)=>{
       await assistant.executeJavaScript('document.getElementById("driver").value='+JSON.stringify(id)+';document.getElementById("driver").dispatchEvent(new Event("change"))')
-      await waitFor(async()=>{const state=await snapshot();return state.driverId===id&&state.settings?.phase==='idle'&&!state.busy?state:null},'automatic driver settings refresh '+id)
+      await waitFor(async()=>{const state=await snapshot();return state.driverId===id&&state.settings&&state.settings.phase!=='working'&&!state.busy?state:null},'automatic driver settings refresh '+id)
+      await waitFor(async()=>await assistant.executeJavaScript('document.getElementById("agent-settings-driver").value==='+JSON.stringify(id)+'&&!document.getElementById("agent-settings-driver").disabled&&!document.getElementById("agent-refresh").disabled')?true:null,'driver settings view ready '+id)
     }
     await chooseDriver('fixture')
+    assert.equal((await snapshot()).settings?.value,null,'Cancelled authentication cannot restore cached ready state')
+    await assistant.executeJavaScript('document.getElementById("agent-refresh").click()')
+    await waitFor(async()=>{const state=await snapshot();return state.settings?.phase==='idle'&&!state.busy?true:null},'explicit retry after cancelled authentication')
+    await assistant.executeJavaScript('document.getElementById("agent-settings-close").click()')
+    const beforeSwitchBack=settingsRefreshes
     await chooseDriver('fixture-login')
+    assert.equal(loginRefreshes,1,'Switching back to the login driver reuses its first snapshot')
     await waitFor(async()=>await assistant.executeJavaScript('document.getElementById("agent-settings").open&&document.getElementById("agent-model-section").hidden')?true:null,'driver selector automatically opens missing login')
     await assistant.executeJavaScript('document.querySelector("#agent-login-fields input").value="fixture-login-success";document.getElementById("agent-login").requestSubmit()')
     await waitFor(async()=>{const state=await snapshot();return state.settings?.phase==='idle'&&state.settings.value?.authentication.state==='ready'&&!state.busy?state:null},'successful login exposes supported models')
@@ -296,6 +296,8 @@ try {
     assert.equal(latestRequest,null,'Login and model selection must not send inference input')
     await chooseDriver('fixture')
     assert.equal((await snapshot()).selectedSessionId,initial.selectedSessionId)
+    assert.equal(settingsRefreshes,beforeSwitchBack,'Switching back to a ready driver starts no native refresh')
+    assert.equal(loginRefreshes,1)
     assert.equal(await assistant.executeJavaScript('document.getElementById("agent-settings").open'),false)
     console.log('PASS automatic login dialog: switch during login awaits cleanup; cancel and change drivers; supported-only models; confirmation without inference')
     console.log('PASS actual Assistant settings: Shell entry, model persistence, compact dialog, secret clearing, cancellation and awaited native cleanup')

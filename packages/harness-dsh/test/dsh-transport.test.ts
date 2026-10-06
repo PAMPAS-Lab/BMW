@@ -73,14 +73,15 @@ test('DSH command discovery normalizes the official array response and sends aut
 })
 
 
-test('BMW injects trusted Session identity after model arguments while preserving execution context', async () => {
+test('BMW scoped registry checks execution identity without changing model arguments or native execution context', async () => {
   let registered: { name: string; execute?: unknown }
   const execution = { agent: { session: { header: { id: 'real', cwd: '/project' } } } }
-  const registry = browserRegistry({ register(definition) { registered = definition; return () => {} } }, async (args) => ({ ...(args as Record<string, unknown>), __bmwSession: 'trusted' }))
+  const registry = browserRegistry({ register(definition) { registered = definition; return () => {} } }, async (args, exec) => { assert.equal(exec,execution); if(Object.hasOwn(args as object,'__bmwSession'))throw new Error('Model cannot set scope');return args })
   registry.register({ name: 'mcp__browser__browser', execute: (args: unknown, exec: unknown) => {
     assert.equal(exec, execution)
     return args
   } })
   const invoke = registered.execute as (args: unknown, execution: unknown) => Promise<unknown>
-  assert.deepEqual(await invoke({ action: 'status', __bmwSession: 'forged' }, execution), { action: 'status', __bmwSession: 'trusted' })
+  const args={action:'status'};assert.equal(await invoke(args,execution),args)
+  await assert.rejects(invoke({action:'status',__bmwSession:'forged'},execution),/cannot set scope/)
 })

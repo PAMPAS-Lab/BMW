@@ -38,8 +38,9 @@ export async function apply(ctx: PluginContext, config: unknown) {
   }, 'bmw-browser.session')
   async function ensureBinding(agent:object,header:{id?:unknown;cwd?:unknown}):Promise<string> {
     if(disposed||typeof header?.id!=='string'||typeof header.cwd!=='string')throw new Error('BMW browser requires a live DSH Session')
-    let binding=process.env.BMW_HARNESS_MANAGED==='1'?undefined:bindings.get(agent)
-    if(!binding){binding=bridgeRequest('session/register',{sessionId:header.id,directory:header.cwd,...(process.env.BMW_HARNESS_MANAGED==='1'?{driverId:process.env.BMW_AGENT_DRIVER}:{})}).then(value=>{if(typeof value.binding!=='string')throw new Error('Invalid BMW Session binding');return value.binding});bindings.set(agent,binding);binding.catch(()=>{if(bindings.get(agent)===binding)bindings.delete(agent)})}
+    if(!process.env.BMW_SESSION_BINDING)throw new Error('DSH execution requires a Host Session lease')
+    let binding=bindings.get(agent)
+    if(!binding){binding=bridgeRequest('session/register',{sessionId:header.id,directory:header.cwd,driverId:'dsh'}).then(value=>{if(value.binding!==process.env.BMW_SESSION_BINDING)throw new Error('DSH Session differs from its Host lease');return value.binding});bindings.set(agent,binding);binding.catch(()=>{if(bindings.get(agent)===binding)bindings.delete(agent)})}
     return binding
   }
   // Official cooperative assembly writes this data to the durable request context.
@@ -60,10 +61,11 @@ export async function apply(ctx: PluginContext, config: unknown) {
     const agent = exec?.agent
     const header = agent?.session?.header
     if (!agent || typeof header?.id !== 'string' || typeof header.cwd !== 'string') throw new Error('BMW browser requires a live DSH Session')
-    const token = await ensureBinding(agent,header)
+    await ensureBinding(agent,header)
     if (disposed || exec.signal?.aborted) throw new Error('BMW browser Session was disposed or cancelled')
     failureGuard.assertAvailable(agent.session)
-    return { ...(typeof args === 'object' && args !== null ? args : {}), __bmwSession: token }
+    if(typeof args==='object'&&args!==null&&Object.hasOwn(args,'__bmwSession'))throw new Error('DSH model cannot set BMW Session scope')
+    return args
   }, (execution, error) => {
     const exec = execution as { agent?: { session?: object }; signal?: AbortSignal }
     if (exec.agent?.session) failureGuard.observe(exec.agent.session, error, exec.signal?.aborted === true)

@@ -1,3 +1,4 @@
+import {requireCurrentAgentData} from '../packages/platform/src/agent-data-format.js'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -22,10 +23,11 @@ const address=fixture.address();assert.ok(address&&typeof address==='object')
 const pageUrl='http://127.0.0.1:'+address.port+'/shared'
 fs.mkdirSync(sourceHome,{recursive:true})
 process.env.BMW_USER_DATA_DIR=profile
+requireCurrentAgentData(process.env.BMW_USER_DATA_DIR)
 process.env.DSH_HOME=sourceHome
 process.env.BMW_CODEX_EXECUTABLE=path.join(root,'uninstalled-codex')
 if(phase==='create'){
-  const projects=new ProjectStore({filePath:path.join(profile,'projects.json'),projectsDirectory:path.join(root,'projects'),legacyWorkspacePath:path.join(root,'workspace'),onState:undefined})
+  const projects=new ProjectStore({filePath:path.join(profile,'projects.json'),projectsDirectory:path.join(root,'projects'),initialWorkspacePath:path.join(root,'workspace'),onState:undefined})
   projects.completeInitialSetup({name:'Default entry Project',homeUrl:''})
   new LayoutStore({filePath:path.join(profile,'layout-settings.json'),onState:undefined}).update({configured:true,mode:'sidebar'})
 }
@@ -46,7 +48,7 @@ async function run():Promise<void>{
   const snapshot=()=>invoke({action:'snapshot'})
   const initial=await waitFor(async()=>{const state=await snapshot();return state.selectedSessionId?state:null},'blank Session')
   const product=agentRecord(await shell.executeJavaScript('window.bmw.productInfo()'))
-  assert.equal(agentRecord(product.agent).ownedUI,true)
+  assert.equal(agentRecord(product.agent).label,'BMW Assistant')
   assert.deepEqual(initial.drivers.map(row=>row.id),['dsh','codex','qoder-cn'])
   assert.equal(initial.driverId,'dsh');assert.equal(initial.busy,false)
   assert.equal(await assistant.executeJavaScript('typeof window.require'),'undefined')

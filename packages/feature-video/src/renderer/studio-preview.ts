@@ -1,9 +1,10 @@
+import {sourceCaptionsStale} from '../studio-source-speech-contract.js'
 import {sceneVisuals,visualAtTime} from '../../../media-native/src/visual-segments.js'
 import {decodeProjectImage} from '../../../media-native/src/media/image-decoder.js'
 import {ImageDecodeBudget,DECODE_BUDGET} from '../../../media-native/src/image-contract.js'
 import {Input,BlobSource,ALL_FORMATS} from 'mediabunny'
 import {LinearFrameReader,normalizeBrowserVideoColor} from '../../../media-native/src/media/linear-frames.js'
-import {paintScene} from '../../../media-native/src/media/composition-paint.js'
+import {assertCompositionText,paintScene} from '../../../media-native/src/media/composition-paint.js'
 import {mixCompositionAudio} from '../../../media-native/src/media/composition-audio.js'
 import {compositionDuration,sceneAtTime} from '../../../media-native/src/composition-contract.js'
 import type {MediaComposition} from '../../../media-native/src/composition-contract.js'
@@ -29,7 +30,7 @@ export class StudioPreview {
   private queue:Promise<void>=Promise.resolve();private playing=false;private generation=0
   private tickTimer?:ReturnType<typeof setTimeout>;private playbackGeneration=0
   constructor(private canvas:HTMLCanvasElement,private load:(id:string)=>Promise<Uint8Array>,private onTime:(time:number,playing:boolean)=>void){}
-  async prepare(draft:VideoDraft):Promise<void>{
+  async prepare(draft:VideoDraft,position=0):Promise<void>{
     await this.dispose();const generation=++this.generation
     this.composition={title:draft.title,width:draft.width,height:draft.height,fps:draft.fps,music:draft.music,style:draft.style,watermark:draft.watermark,scenes:draft.scenes.map(scene=>({...speechScene(scene),audioArtifactId:!sceneCoverage(scene,draft.tts).audioStale?scene.audioArtifactId:undefined}))}
     let bytes=0;const imageBudget=new ImageDecodeBudget()
@@ -42,6 +43,7 @@ export class StudioPreview {
         if(generation!==this.generation){asset.input?.dispose();if(asset.image){asset.image.width=0;asset.image.height=0}return}
         this.assets.set(id,asset)
       }
+      for(const scene of draft.scenes)if(scene.sourceCaptionBinding){const binding=scene.sourceCaptionBinding,data=this.assets.get(binding.sourceArtifactId)?.data;if(sourceCaptionsStale(scene)||!data)throw new Error('STUDIO_SOURCE_SPEECH_STALE: 原声字幕需要重新应用。');const sha=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data as Uint8Array<ArrayBuffer>)),byte=>byte.toString(16).padStart(2,'0')).join('');if(sha!==binding.sourceSha256)throw new Error('STUDIO_SOURCE_SPEECH_STALE: 原视频文件已变化。')}
       const hashes=new Map<string,string>()
       for(const scene of draft.scenes)if(usesStudioSpeech(scene)){
         const binding=scene.speechAnchors!,data=this.assets.get(binding.audioArtifactId)?.data;if(!data||sceneCoverage(scene,draft.tts).audioStale)throw new Error('STUDIO_SPEECH_STALE: 锚点旁白已过期。')
@@ -51,7 +53,8 @@ export class StudioPreview {
       if(generation!==this.generation)return
       this.audio=new AudioContext({sampleRate:48000});const mix=await mixCompositionAudio(this.composition,this.assets,this.audio)
       this.mixed=mix.mixed;this.voiceDurations=mix.narrationDurations;this.canvas.width=draft.width;this.canvas.height=draft.height
-      await this.seek(0)
+      assertCompositionText(this.canvas.getContext('2d')!,this.composition,this.voiceDurations)
+      await this.seek(position)
     }catch(error){await this.dispose();throw error}
   }
   async seek(time:number):Promise<void>{this.pause();this.position=Math.max(0,Math.min(time,this.duration-.001));const position=this.position,generation=this.generation;await this.draw(position);if(generation===this.generation&&position===this.position&&!this.playing)this.onTime(position,false)}

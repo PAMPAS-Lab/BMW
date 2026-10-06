@@ -12,6 +12,7 @@
     ".": "./src/product-definition.js",
     "./application": "./src/main.js",
     "./assistant": "./src/assistant-service.js",
-    "./feature-contract": "./src/feature-contract.js"
+    "./feature-contract": "./src/feature-contract.js",
+    "./agent-data": "./src/agent-data-schema.js"
   }
 }

@@ -37,13 +37,13 @@ async function readJson(request: http.IncomingMessage): Promise<unknown> {
 }
 
 interface Project { id: string; directory: string }
-interface BridgeOptions { productId?: string; resolveProject?: (directory: string) => Project | undefined; activeProjectId?: () => string; toolDefinition?: unknown; hostManagedSessions?: boolean; sessionContext?:(sessionId:string,projectId:string)=>Promise<{text:string}>|{text:string} }
+interface BridgeOptions { productId?: string; resolveProject?: (directory: string) => Project | undefined; activeProjectId?: () => string; toolDefinition?: unknown; sessionContext?:(sessionId:string,projectId:string)=>Promise<{text:string}>|{text:string} }
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid browser bridge input')
   return value as Record<string, unknown>
 }
 
-export async function createBridgeServer(browserKernel: BrowserExecutor, { productId = 'bmw', resolveProject, activeProjectId, toolDefinition,hostManagedSessions=false,sessionContext }: BridgeOptions = {}) {
+export async function createBridgeServer(browserKernel: BrowserExecutor, { productId = 'bmw', resolveProject, activeProjectId, toolDefinition,sessionContext }: BridgeOptions = {}) {
   const token = crypto.randomBytes(32).toString('hex')
   const operations = new SessionOperations()
   const bindings = new Map<string, { project: Project; sessionId: string }>()
@@ -92,14 +92,10 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
       if (closing) throw new Error('BMW browser bridge is shutting down')
       if (request.url === '/session/register') {
         if (typeof input.sessionId !== 'string' || !input.sessionId || typeof input.directory !== 'string') throw new Error('Invalid Agent Session identity')
-        let binding:string
-        if(hostManagedSessions){
-          if(typeof input.driverId!=='string')throw new Error('BMW driver identity is required')
-          const project=resolveProject?.(input.directory)
-          const admitted=project?providerBindings.get(providerKey(input.driverId,input.sessionId,project.directory)):undefined
-          if(!admitted||!bindings.has(admitted))throw new Error('Provider Session has no live BMW Host lease')
-          binding=admitted
-        }else binding=register(input.sessionId, input.directory)
+        if(typeof input.driverId!=='string')throw new Error('BMW driver identity is required')
+        const project=resolveProject?.(input.directory)
+        const binding=project?providerBindings.get(providerKey(input.driverId,input.sessionId,project.directory)):undefined
+        if(!binding||!bindings.has(binding))throw new Error('Provider Session has no live BMW Host lease')
         json(response, 200, { binding })
         return
       }

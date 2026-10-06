@@ -3,8 +3,15 @@ const element=<T extends HTMLElement>(id:string)=>document.getElementById(id) as
 export function createAgentSettingsView(invoke:(command:AssistantCommand)=>Promise<boolean>,onLocalStateChange:()=>void=()=>{}):{render(state:AssistantState):void;open():void;selectDriver(driverId:string):Promise<boolean>;canSend():boolean}{
   const dialog=element<HTMLDialogElement>('agent-settings'),model=element<HTMLSelectElement>('agent-model'),method=element<HTMLSelectElement>('agent-login-method'),fields=element('agent-login-fields')
   const driver=element<HTMLSelectElement>('agent-settings-driver')
-  let state:AssistantState|null=null,fieldIdentity='',switching=false,autoSetup:string|null=null,selection:{driverId:string;modelId:string}|null=null
-  const run=async(request:Extract<AssistantCommand,{action:'settings.run'}>['request'])=>state?invoke({action:'settings.run',driverId:state.driverId,request}):false
+  let state:AssistantState|null=null,fieldIdentity='',switching=false,refreshPending=false,autoSetup:string|null=null,selection:{driverId:string;modelId:string}|null=null
+  const run=async(request:Extract<AssistantCommand,{action:'settings.run'}>['request']):Promise<boolean>=>{
+    if(!state)return false
+    const refresh=request.action==='refresh'||request.action==='ensure'
+    if(refresh&&(refreshPending||state.settings?.driverId===state.driverId&&state.settings.phase==='working'))return true
+    if(refresh)refreshPending=true
+    try{return await invoke({action:'settings.run',driverId:state.driverId,request})}
+    finally{if(refresh)refreshPending=false}
+  }
   const clearFields=()=>{for(const input of fields.querySelectorAll<HTMLInputElement>('input'))input.value=''}
   async function selectDriver(driverId:string):Promise<boolean>{
     if(switching)return false
@@ -13,7 +20,7 @@ export function createAgentSettingsView(invoke:(command:AssistantCommand)=>Promi
       if(state?.settings?.phase==='working'&&!await invoke({action:'settings.cancel'}))return false
       if(!await invoke({action:'driver.select',driverId}))return false
       autoSetup=driverId
-      return await run({action:'refresh'})
+      return await run({action:'ensure'})
     }finally{switching=false;onLocalStateChange()}
   }
   const renderFields=()=>{
@@ -27,6 +34,7 @@ export function createAgentSettingsView(invoke:(command:AssistantCommand)=>Promi
   driver.onchange=()=>{void selectDriver(driver.value)}
   model.onchange=()=>onLocalStateChange()
   element('agent-refresh').onclick=()=>{void run({action:'refresh'})}
+  element('agent-model-refresh').onclick=()=>{void run({action:'refresh'})}
   element('agent-model-save').onclick=()=>{if(model.value&&state){selection={driverId:state.driverId,modelId:model.value};void run({action:'model.select',modelId:model.value}).then(accepted=>{if(!accepted)selection=null})}}
   element<HTMLFormElement>('agent-login').onsubmit=event=>{
     event.preventDefault();const values:Record<string,string>=Object.create(null)
@@ -39,7 +47,7 @@ export function createAgentSettingsView(invoke:(command:AssistantCommand)=>Promi
   dialog.oncancel=()=>clearFields()
   dialog.onclose=()=>{clearFields();if(state?.settings?.phase==='working')void invoke({action:'settings.cancel'})}
   return {
-    open(){if(!dialog.open)dialog.showModal();void run({action:'refresh'})},
+    open(){if(!dialog.open)dialog.showModal();if(!switching&&!state?.settings&&!state?.busy)void run({action:'ensure'});onLocalStateChange()},
     selectDriver,
     canSend(){const current=state?.settings?.driverId===state?.driverId?state?.settings:null;return !switching&&(!current||current.phase==='idle'&&current.value?.authentication.state==='ready'&&current.value.models.some(row=>row.availability==='verified'&&row.id===current.value?.selectedModel))},
     render(next){
@@ -48,8 +56,11 @@ export function createAgentSettingsView(invoke:(command:AssistantCommand)=>Promi
       const current=next.settings?.driverId===next.driverId?next.settings:null,value=current?.value??null,working=current?.phase==='working'
       const authenticated=value?.authentication.state==='ready',models=value?.models.filter(row=>row.availability==='verified')??[]
       element('agent-settings-title').textContent=(next.drivers.find(row=>row.id===next.driverId)?.label??'Agent')+(authenticated?' · 选择模型':' · 登录')
-      element('agent-auth-state').textContent=value?.authentication.label??'正在读取登录状态…'
+      element('agent-auth-state').textContent=value?.authentication.label??(working?'正在读取登录状态…':'登录状态尚未检查；可点击刷新')
       element('agent-settings-status').textContent=current?.message??''
+      const checked=(at:number|null|undefined,stale:boolean|undefined,ttl:number):string=>at==null?'尚未检查 / 待检查':new Date(at).toLocaleString()+(stale||Date.now()-at>=ttl?' · 待检查':'')
+      element('agent-auth-checked').textContent='登录状态检查：'+checked(current?.cache?.authenticationCheckedAt,current?.cache?.authenticationStale,5*60*1000)
+      element('agent-model-checked').textContent='模型目录检查：'+checked(current?.cache?.modelsCheckedAt,current?.cache?.modelsStale,30*60*1000)
       driver.replaceChildren(...next.drivers.map(row=>{const option=document.createElement('option');option.value=row.id;option.textContent=row.label;return option}));driver.value=next.driverId
       driver.disabled=switching||next.busy&&!working
       element('agent-model-section').hidden=!authenticated
@@ -63,7 +74,7 @@ export function createAgentSettingsView(invoke:(command:AssistantCommand)=>Promi
       if(value?.loginMethods.some(row=>row.id===previousMethod))method.value=previousMethod
       renderFields()
       const blocked=working||next.busy||switching
-      for(const id of ['agent-refresh','agent-model-save','agent-login-submit','agent-logout'])element<HTMLButtonElement>(id).disabled=blocked||(id==='agent-model-save'&&(!authenticated||!model.value))||(id==='agent-login-submit'&&!value?.loginMethods.length)||(id==='agent-logout'&&!value?.canLogout)
+      for(const id of ['agent-refresh','agent-model-refresh','agent-model-save','agent-login-submit','agent-logout'])element<HTMLButtonElement>(id).disabled=blocked||(id==='agent-model-save'&&(!authenticated||!model.value))||(id==='agent-login-submit'&&!value?.loginMethods.length)||(id==='agent-logout'&&!value?.canLogout)
       model.disabled=method.disabled=blocked
       for(const input of fields.querySelectorAll<HTMLInputElement>('input'))input.disabled=blocked
       element('agent-settings-cancel').hidden=!working

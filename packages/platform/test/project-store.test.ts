@@ -12,7 +12,7 @@ function createStore(t, { completeSetup = true } = {}) {
   const store = new ProjectStore({
     filePath: path.join(root, 'projects.json'),
     projectsDirectory: path.join(root, 'projects'),
-    legacyWorkspacePath: path.join(root, 'legacy-workspace')
+    initialWorkspacePath: path.join(root, 'legacy-workspace')
   })
   if (completeSetup) store.completeInitialSetup({ name: 'BMW Browser', homeUrl: 'https://www.google.com/' })
   return {
@@ -51,7 +51,7 @@ test('does not send existing BMW installations back through first-project setup'
   const reloaded = new ProjectStore({
     filePath: statePath,
     projectsDirectory: path.join(root, 'projects'),
-    legacyWorkspacePath: path.join(root, 'legacy-workspace')
+    initialWorkspacePath: path.join(root, 'legacy-workspace')
   })
   assert.equal(reloaded.needsInitialSetup(), false)
   assert.equal(reloaded.active().id, store.active().id)
@@ -110,12 +110,14 @@ test('tab state keeps only bounded HTTP(S) URLs', (t) => {
   })
 })
 
-test('Agent bindings are isolated per Project and driver',t=>{
- const {store}=createStore(t),first=store.active(),second=store.create({name:'Second Project'})
- store.setAgentBinding(first.id,'fixture',{workspaceId:'first',sessionId:'s1'})
- store.setAgentBinding(second.id,'fixture',{workspaceId:'second',sessionId:'s2'})
- assert.deepEqual(store.agentBinding(first.id,'fixture'),{workspaceId:'first',sessionId:'s1'})
- assert.deepEqual(store.agentBinding(second.id,'fixture'),{workspaceId:'second',sessionId:'s2'})
- assert.deepEqual(store.agentBinding(first.id,'other'),{workspaceId:null,sessionId:null})
- assert.equal('connectors' in second,false)
+test('Project persistence contains only BMW ownership and keeps independent documents across reload',t=>{
+ const {store,root}=createStore(t),first=store.active(),second=store.create({name:'Second Project'})
+ store.writeDocument(first.id,'memory','First facts');store.writeDocument(second.id,'memory','Second facts')
+ const saved=JSON.parse(fs.readFileSync(path.join(root,'projects.json'),'utf8'))
+ assert.equal(saved.version,2)
+ for(const project of saved.projects)for(const key of ['agentBindings','dshWorkspaceId','dshSessionId','connectors'])assert.equal(Object.hasOwn(project,key),false)
+ const restored=new ProjectStore({filePath:store.filePath,projectsDirectory:path.join(root,'projects'),initialWorkspacePath:path.join(root,'workspace')})
+ assert.equal(restored.active().id,second.id);restored.switch(first.id)
+ assert.equal(restored.readDocument(first.id,'memory').content,'First facts\n')
+ assert.equal(restored.readDocument(second.id,'memory').content,'Second facts\n')
 })

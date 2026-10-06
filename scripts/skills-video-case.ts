@@ -48,7 +48,7 @@ async function run():Promise<void>{
   secrets.push(bridge.token)
   journal.verification.toolDefinition=registry.toolDefinition();persist()
   const headers={authorization:`Bearer ${bridge.token}`,'content-type':'application/json'}
-  const registration=await fetch(`${bridge.url}/session/register`,{method:'POST',headers,body:JSON.stringify({sessionId:'skills-video-production',directory:workspace})});const {binding}=await registration.json() as {binding:string}
+  const binding=bridge.registerSession('skills-video-production',workspace)
   const execute=async(input:unknown)=>{const response=await fetch(`${bridge!.url}/execute`,{method:'POST',headers,body:JSON.stringify({binding,arguments:input})});const body=object(await response.json());if(!response.ok)throw new Error(String(body.error));return object(body.result)}
   const load=async(url:string)=>{
    void window!.loadURL(url).catch(error=>console.log('Page load:',error.message))

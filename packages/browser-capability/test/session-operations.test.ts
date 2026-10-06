@@ -57,7 +57,9 @@ test('Browser bridge pins Project identity, revokes queued Sessions and returns 
     return { status: response.status, value: await response.json() as { binding?: string; images?: { data: string }[]; error?: string } }
   }
   assert.equal((await request('session/register', { sessionId: 's', directory: '/' })).status, 400)
-  const { value: { binding } } = await request('session/register', { sessionId: 's', directory })
+  const binding=bridge.registerSession('s',directory)
+  bridge.attachProviderSession(binding,'fixture','native-s')
+  assert.equal((await request('session/register',{sessionId:'native-s',driverId:'fixture',directory})).value.binding,binding)
   assert.equal((await request('execute', { action: 'status' })).status, 400)
   active = 'other'
   assert.equal((await request('execute', { binding, arguments: { action: 'media.screenshot' } })).status, 400)
@@ -76,7 +78,7 @@ test('Browser bridge pins Project identity, revokes queued Sessions and returns 
   const image = await request('execute', { binding, arguments: { action: 'media.screenshot' } })
   assert.equal(image.value.images?.[0].data, bytes.toString('base64'))
   const child = spawn(process.execPath, [path.resolve('packages/browser-capability/src/browser-mcp-server.js')], {
-    env: { ...process.env, BMW_PRODUCT_ID: 'bmw', BMW_BRIDGE_URL: bridge.url, BMW_BRIDGE_TOKEN: bridge.token }, stdio: ['pipe', 'pipe', 'pipe']
+    env: { ...process.env, BMW_PRODUCT_ID: 'bmw', BMW_BRIDGE_URL: bridge.url, BMW_BRIDGE_TOKEN: bridge.token, BMW_SESSION_BINDING:binding, BMW_CATALOG_ONLY:'' }, stdio: ['pipe', 'pipe', 'pipe']
   })
   t.after(() => { child.kill() })
   const lines = readline.createInterface({ input: child.stdout })
@@ -84,7 +86,7 @@ test('Browser bridge pins Project identity, revokes queued Sessions and returns 
     lines.once('line', (line) => { try { resolve(JSON.parse(line)) } catch (error) { reject(error) } })
     child.once('error', reject)
   })
-  child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'browser', arguments: { action: 'media.screenshot', __bmwSession: binding } } })}\n`)
+  child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'browser', arguments: { action: 'media.screenshot' } } })}\n`)
   const wire = await received
   assert.deepEqual(wire.result.content.map((block) => block.type), ['text', 'image'])
   assert.equal(wire.result.content[1].data, bytes.toString('base64'))
@@ -128,8 +130,7 @@ test('Browser bridge admits bounded Project frame sets and propagates active MCP
   } }, { toolDefinition: new BrowserCapabilityRegistry(bmwProduct).toolDefinition(), resolveProject: (cwd) => cwd === directory ? { id: 'p', directory } : undefined, activeProjectId: () => 'p' })
   t.after(async () => { await bridge.close(); await fs.rm(directory, { recursive: true, force: true }) })
   const headers = { authorization: `Bearer ${bridge.token}`, 'content-type': 'application/json' }
-  const registration = await fetch(`${bridge.url}/session/register`, { method: 'POST', headers, body: JSON.stringify({ sessionId: 's', directory }) })
-  const { binding } = await registration.json() as { binding: string }
+  const binding=bridge.registerSession('s',directory)
   const frames = () => fetch(`${bridge.url}/execute`, { method: 'POST', headers, body: JSON.stringify({ binding, arguments: { action: 'media.frames.sample' } }) })
   const admitted = await (await frames()).json() as { images: { data: string }[] }
   assert.deepEqual(admitted.images.map((image) => image.data), [bytes.toString('base64'), bytes.toString('base64')])
@@ -152,6 +153,6 @@ test('Studio context bridge authenticates Session ownership and rechecks revocat
  t.after(async()=>{await bridge.close();await fs.rm(directory,{recursive:true,force:true})})
  const request=(endpoint:string,body:unknown,token=bridge.token)=>fetch(bridge.url+'/'+endpoint,{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify(body)})
  assert.equal((await request('session/context',{},'wrong')).status,401);assert.equal((await request('session/context',{binding:'unknown'})).status,400)
- const {binding}=await(await request('session/register',{sessionId:'s',directory})).json() as {binding:string};assert.deepEqual(await(await request('session/context',{binding})).json(),{text:'current draft'})
+ const binding=bridge.registerSession('s',directory);assert.deepEqual(await(await request('session/context',{binding})).json(),{text:'current draft'})
  active='other';assert.equal((await request('session/context',{binding})).status,400);active='p';delay=true;const pending=request('session/context',{binding});await started;await request('session/release',{binding});release();assert.equal((await pending).status,400)
 })

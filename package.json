@@ -40,7 +40,8 @@
     "test:plan": "npm run build --silent && node scripts/test-runner.js --plan",
     "test:affected": "npm run build --silent && node scripts/test-runner.js --affected",
     "test:unit": "npm run test:classified -- --layer unit",
-    "test:contracts": "npm run test:classified -- --layer contract,type"
+    "test:contracts": "npm run test:classified -- --layer contract,type",
+    "migrate:agent-data": "npm run build --silent && node scripts/migrate-agent-data.js"
   },
   "dependencies": {
     "@qodercn-ai/qoderclicn": "1.1.64",

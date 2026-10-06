@@ -37,7 +37,7 @@ export interface ScheduledTask {
 }
 
 interface ScheduledTaskState {
-  version: 1
+  version: 2
   tasks: ScheduledTask[]
   runs: ScheduledTaskRun[]
 }
@@ -121,23 +121,9 @@ export function nextDailyRunAt(time: string, timeZone: string, after = new Date(
   throw new Error('Could not calculate the next scheduled task occurrence.')
 }
 
-export class ScheduledTaskStore {
-  readonly filePath: string
-  readonly now: () => Date
-  readonly onState?: ScheduledTaskStoreOptions['onState']
-  state: ScheduledTaskState = { version: 1, tasks: [], runs: [] }
-
-  constructor({ filePath, now = () => new Date(), onState }: ScheduledTaskStoreOptions) {
-    this.filePath = filePath
-    this.now = now
-    this.onState = onState
-    this.load()
-  }
-
-  load(): void {
-    const loaded = readStateFile(this.filePath, raw => {
+export function parseScheduledTaskState(raw:unknown):ScheduledTaskState {
       const value = stateRecord(raw)
-      if (value.version !== 1 || !Array.isArray(value.tasks) || !Array.isArray(value.runs)) throw new Error('Unsupported or malformed scheduled task state.')
+      if (value.version !== 2 || !Array.isArray(value.tasks) || !Array.isArray(value.runs)) throw new Error('Unsupported or malformed scheduled task state.')
       const ids = new Set<string>()
       for (const rawTask of value.tasks) {
         const task = stateRecord(rawTask), schedule = stateRecord(task.schedule)
@@ -145,7 +131,7 @@ export class ScheduledTaskStore {
         cleanText(task.name, 'name', 120); cleanText(task.prompt, 'prompt', 20_000)
         cleanTime(schedule.time); cleanTimeZone(schedule.timeZone)
         if(task.sessionId!==null&&(typeof task.sessionId!=='string'||!task.sessionId||task.sessionId.length>4096))throw new Error('Invalid scheduled Session binding.')
-        if(task.driverId===undefined)task.driverId=task.sessionId?'dsh':null
+        if(task.driverId===undefined)throw new Error('An explicit scheduled driver is required.')
         if(task.driverId!==null&&(typeof task.driverId!=='string'||!/^[a-z0-9-]{1,64}$/u.test(task.driverId)))throw new Error('Invalid scheduled driver binding.')
         if(!task.sessionId||!task.driverId){task.enabled=false;task.nextRunAt=null;task.lastError='Select an explicit BMW Session and driver before enabling this task.'}
         ids.add(task.id)
@@ -160,7 +146,23 @@ export class ScheduledTaskStore {
         runIds.add(run.id)
       }
       return value as unknown as ScheduledTaskState
-    })
+}
+
+export class ScheduledTaskStore {
+  readonly filePath: string
+  readonly now: () => Date
+  readonly onState?: ScheduledTaskStoreOptions['onState']
+  state: ScheduledTaskState = { version: 2, tasks: [], runs: [] }
+
+  constructor({ filePath, now = () => new Date(), onState }: ScheduledTaskStoreOptions) {
+    this.filePath = filePath
+    this.now = now
+    this.onState = onState
+    this.load()
+  }
+
+  load(): void {
+    const loaded = readStateFile(this.filePath,parseScheduledTaskState)
     if (loaded) this.state = loaded
   }
 
@@ -192,11 +194,12 @@ export class ScheduledTaskStore {
     return task
   }
 
-  create(project: { id: string; sessionId?: string | null; driverId?: string }, input: Record<string, unknown>): ScheduledTask {
+  create(project: { id: string; sessionId?: string | null; driverId: string }, input: Record<string, unknown>): ScheduledTask {
     if (this.state.tasks.length >= MAX_TASKS) throw new Error(`BMW supports at most ${MAX_TASKS} scheduled tasks per product profile.`)
     const now = this.now()
     if(!project.sessionId)throw new Error('A scheduled task must be pinned to an explicit BMW Session.')
-    const driverId=project.driverId??'dsh'
+    const driverId=project.driverId
+    if(!driverId)throw new Error('An explicit scheduled driver is required.')
     if(!/^[a-z0-9-]{1,64}$/u.test(driverId))throw new Error('Invalid scheduled driver binding.')
     const enabled = input.enabled !== false
     const time = cleanTime(input.time)

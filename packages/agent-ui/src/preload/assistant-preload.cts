@@ -9,6 +9,11 @@ const port: AssistantUiPort = {
     ipcRenderer.on('bmw-assistant-state', receive)
     return () => ipcRenderer.removeListener('bmw-assistant-state', receive)
   },
+  onOpenSettings(listener) {
+    const receive=()=>listener()
+    ipcRenderer.on('bmw-assistant-open-settings',receive)
+    return ()=>ipcRenderer.removeListener('bmw-assistant-open-settings',receive)
+  },
   onComposerContext(listener) {
     const receive = (_event: unknown, value: unknown) => listener(value)
     ipcRenderer.on('video-workspace-state', receive)

@@ -124,9 +124,10 @@ export function assertMediaWorkerResult(value: unknown, request: NativeProcessin
   if(request.action==='media.image.annotate'||request.action==='media.image.draw'){assertDrawingResult(result,request)}
   else if(request.action==='media.speech.normalize'&&result.kind==='speech-pcm'){
     const info=mediaRecord(result.info),frames=finiteNumber(info.frames,'speech samples',160,180*16000,true)
-    if(Object.keys(info).some(key=>!['kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix'].includes(key)))throw new TypeError('Unsupported speech normalization evidence.')
+    if(Object.keys(info).some(key=>!['kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix','discardedTailFrames'].includes(key)))throw new TypeError('Unsupported speech normalization evidence.')
     if(info.kind!=='speech-pcm'||info.sampleRate!==16000||info.channels!==1||info.sampleType!=='pcm-s16le'||info.downmix!=='channel-mean'||info.durationSeconds!==frames/16000)throw new TypeError('Invalid normalized speech metadata.')
     finiteNumber(info.clippedSamples,'PCM saturation samples',0,frames,true)
+    if(info.discardedTailFrames!==undefined)finiteNumber(info.discardedTailFrames,'discarded Opus padding frames',0,Math.ceil(Number(info.inputSampleRate)*.12)+2,true)
     finiteNumber(info.inputSampleRate,'speech input rate',8000,96000,true);finiteNumber(info.inputChannels,'speech input channels',1,8,true)
     const start=finiteNumber(info.decodedStartSeconds,'speech decode start',0,180),end=finiteNumber(info.decodedEndSeconds,'speech decode end',start+.000001,180)
     if(end>frames/16000+1/16000)throw new TypeError('Speech decode exceeds its sample timeline.')

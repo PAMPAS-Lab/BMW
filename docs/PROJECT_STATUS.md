@@ -1,5 +1,8 @@
 # BMW 当前实现
 
+
+Video Studio 增强的现行范围包括：预览位置与分镜同步、待测量/实测覆盖、文字排版与关键帧审片、视频原声 ASR/校正/双语字幕，以及 summary/comparison/screenshot 固定模板。完整音轨 ASR 仍限制 180 秒；没有长视频分块或自动词级时标。具体契约见 FUNCTIONAL_SPEC，专项验收与后续缺口见 VIDEO_STUDIO_NEXT；人工转写精度和付费翻译质量不由离线夹具证明。
+
 Browser is boundary, media is native, web is runtime.
 
 本页按 2026-10-05 的活动 BMW 代码核对。当前功能、Schema、权限与生成测试清单以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准；模块和接口以 [ARCHITECTURE.md](ARCHITECTURE.md) 的生成区为准。
@@ -9,7 +12,7 @@ Browser is boundary, media is native, web is runtime.
 | 桌面工作区 | 已实现 | 一个 BMW；浏览器和 Video Studio 共用 Project 与自有 Assistant |
 | Agent 驱动 | 三驱动已启用 | DSH、Codex App Server、Qoder CN SDK 各自拥有官方 Agent 循环；核心只依赖通用契约 |
 | 登录与模型选择 | 已实现 | GUI 切换驱动自动读取认证；缺少凭据时弹出登录方式，可改选驱动；登录后点选支持模型并确认 |
-| Project 与会话 | 已实现 | 稳定 BMW Session 固定 Project/driver；原生恢复身份不可替换，旧 DSH owner 保留；页面与媒体由 Project 共享 |
+| Project 与会话 | 已实现 | 稳定 BMW Session 固定 Project/driver；原生恢复身份不可替换，旧 ID 经显式迁移保留；核心 Project 无原生映射，页面与媒体由 Project 共享 |
 | 浏览器与图像 | 已实现 | 唯一 browser 工具；页面交互、后台取材、图像检查/标注/绘图、FIFO、权限、租约与实际清理 |
 | 素材与媒体 | 已实现 | 截图、有限下载、视频采集、页面录制事件、检查、抽帧、裁剪缩放与转换 |
 | 来源与引用 | 已实现 | 限定正文采集、原文/哈希、候选确认、有限播放器采集、准确 UTF-16 引用和当前媒体可用性；冲突仍待用户核查 |
@@ -36,8 +39,9 @@ DSH 提供 DeepSeek API Key，Codex 提供 ChatGPT 浏览器登录，Qoder CN �
 
 | 报告 | 执行范围 | 结论的适用范围 |
 |---|---|---|
+| `2026-10-05-agent-data` | 109 项离线检查及 5 个检查门通过 | 显式迁移、严格加载、Host/MCP、DSH 冷导出及桌面/重启/Studio/媒体；不包含真实 Profile 迁移或付费推理 |
 | `2026-10-05-gpt6-browser` | 112 项离线检查及 5 个检查门通过 | GPT-6 封装时的完整源码快照；不是后续登录改动的全量复跑 |
-| `2026-10-05-login-flow` | 32 项选定检查及 4 个检查门通过 | 最新登录/选择流程、相关契约、隔离 Assistant 与边界；合入审计证明候选和活动源码一致 |
+| `2026-10-05-login-flow` | 32 项选定检查及 4 个检查门通过 | 登录/选择流程快照、相关契约、隔离 Assistant 与边界；合入审计证明候选和活动源码一致 |
 | 三引擎与 GPT-6 真模型验收 | 隔离页面、随机截图读图、Studio owner、原生进程结束后的同一 Session 续聊 | 仅对应实际执行的型号；Qoder 为 auto，Codex 四个 GPT-6 与 GPT-5.5，DSH 为当时的官方 Flash |
 | Studio base 采用 | 十段音频、12 个可编辑片段、实际 MP4/SRT/VTT/板书与成片复用 | 用户核听后的 ASR 辅助采用；独立声学 P95 未建立，自动词/字同步未批准 |
 
@@ -45,7 +49,7 @@ DSH 提供 DeepSeek API Key，Codex 提供 ChatGPT 浏览器登录，Qoder CN �
 
 ## 当前限制与待修复项
 
-Shell 顶部运行时徽章仍监听旧 agent-status 通道，而自有 Assistant 的状态发布只更新 Assistant、Project 与会话视图，因此可能一直显示“Starting Assistant…”。实际运行状态以 Assistant 面板为准。代码位置为 [状态发布](../packages/platform/src/main.ts#L486) 与 [旧状态渲染](../packages/platform/src/renderer/shell.ts#L155)；本次文档核对记录此问题，尚未改动运行代码。
+Shell 顶部运行时徽章已接入自有 Assistant 状态，统一显示等待、运行与资源断连。Agent 数据采用 v2；旧 Profile 必须先退出应用并运行显式迁移。本机真实 Profile 已按明确授权完成迁移：10 个 Project、28 个原有 BMW 会话保留并导入 4 个原生 DSH 会话（共 32 个），9 个 Studio 草稿及全部 848 个 Project 文件保持原字节；模型偏好、历史、输入回执和恢复锚点保留。备份和审计见验证文档，重复预检为零改动。操作、备份与恢复步骤见 [AGENT_DATA_MIGRATION.md](AGENT_DATA_MIGRATION.md)。
 
 原生桌面会话同步、fork、steer、Agent 原生审批与 nativeOpen 未启用。未知投递不自动重发；损坏状态保留原文件并提供重试/退出，原生清理失败保留资源隔离。生产钥匙串与真实 Profile 体验由用户验收。
 

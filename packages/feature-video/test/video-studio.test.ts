@@ -1,3 +1,4 @@
+import {assertSourceCues,projectSourceCues,sourceCaptionClock,sourceCaptionsStale} from '../src/studio-source-speech-contract.js'
 import crypto from 'node:crypto'
 import {assertSentenceAnchors,sentenceSuggestions,scriptSentences,speechCaptionCues,speechScene,assertStudioSpeechLinks,usesStudioSpeech} from '../src/studio-speech-contract.js'
 import {assertSpeechEvidence} from '../../media-native/src/speech-contract.js'
@@ -358,7 +359,7 @@ test('Studio bridge forwards authenticated Session ownership instead of acceptin
   const kernel:StudioKernel={projectStore:{active:()=>({id:'p',name:'P',directory:value.root})},execute:async()=>({}),recordingController:{narrate:async()=>({}),compose:async()=>({}),processArtifact:async()=>({})}},service=new VideoStudioService(kernel)
   bridge=await createBridgeServer({execute:async(raw,options)=>service.execute((raw as {studioRequest:unknown}).studioRequest,options?.signal,options?.sessionOwner)},{resolveProject:directory=>({id:'p',directory}),activeProjectId:()=> 'p'})
   const request=async(endpoint:string,body:unknown)=>{const response=await fetch(bridge!.url+'/'+endpoint,{method:'POST',headers:{authorization:'Bearer '+bridge!.token,'content-type':'application/json'},body:JSON.stringify(body)});return response.json() as Promise<{binding:string;result:VideoDraft&{drafts:VideoDraft[]};ok:boolean;error:string}>}
-  const a=await request('session/register',{sessionId:'fixture-session',directory:value.root}),b=await request('session/register',{sessionId:'second-session',directory:value.root})
+  const a={binding:bridge.registerSession('fixture-session',value.root)},b={binding:bridge.registerSession('second-session',value.root)}
   const created=await request('execute',{binding:a.binding,arguments:{action:'video.studio',studioRequest:{operation:'create',title:'Owned'}}});assert.equal(created.result.ownerSessionId,'fixture-session')
   const listed=await request('execute',{binding:b.binding,arguments:{action:'video.studio',studioRequest:{operation:'list'}}});assert.deepEqual(listed.result.drafts,[])
   const changed=await request('execute',{binding:b.binding,sessionOwner:{projectId:'p',sessionId:'fixture-session'},arguments:{action:'video.studio',studioRequest:{operation:'update',draftId:created.result.id,expectedRevision:1,draft:created.result}}});assert.equal(changed.ok,false);assert.match(changed.error,/STUDIO_SESSION_MISMATCH/)
@@ -549,4 +550,55 @@ test('Studio preserves optional scene numbering and bilingual line breaks throug
     assert.throws(()=>assertComposition({...composed,scenes:[{...composed.scenes[0],showSceneNumber:'false'}]}),/showSceneNumber must be boolean/)
     assert.throws(()=>value.store.update(draft.id,draft.revision-1,draft),/STUDIO_CONFLICT/)
   }finally{value.close()}
+})
+
+
+test('Unknown footage is pending measurement rather than a false source-range or footage-gap error',()=>{
+ const value=fixture();try{const draft=sceneDraft(value.store,'Pending footage');Object.assign(draft.scenes[0],{videoArtifactId:'clip.webm',sourceStartSeconds:5});delete draft.scenes[0].sourceDurationSeconds
+  const pending=draftReadiness(draft);assert.equal(sceneCoverage(draft.scenes[0]).measured,false);assert.ok(pending.issues.some(issue=>issue.code==='duration-unmeasured'));assert.ok(!pending.issues.some(issue=>['source-range','footage-gap'].includes(issue.code)))
+  draft.scenes[0].sourceDurationSeconds=6;const measured=draftReadiness(draft);assert.equal(measured.scenes[0].measured,true);assert.ok(measured.issues.some(issue=>issue.code==='footage-gap'));assert.equal(measured.scenes[0].gapSeconds,7)
+  draft.scenes[0].sourceStartSeconds=6;assert.ok(draftReadiness(draft).issues.some(issue=>issue.code==='source-range'))
+ }finally{value.close()}
+})
+
+test('Source caption clocks clip trim edges, apply rate and preceding segment offset with zero narration lead',()=>{
+ const scene=newStudioScene('source');scene.durationSeconds=7;scene.visualSegments=[{...scene,imageArtifactId:'lead.png',durationSeconds:2,transition:'cut',transitionSeconds:0},{...scene,videoArtifactId:'clip.webm',durationSeconds:5,sourceStartSeconds:10,playbackRate:2,transition:'cut',transitionSeconds:0}]
+ const cues=assertSourceCues([{startSeconds:8,endSeconds:12,text:'clip start'},{startSeconds:14,endSeconds:18,text:'middle'},{startSeconds:19,endSeconds:25,text:'clip end'}],30)
+ assert.deepEqual(projectSourceCues(scene,1,cues),[{startSeconds:2,endSeconds:3,text:'clip start'},{startSeconds:4,endSeconds:6,text:'middle'},{startSeconds:6.5,endSeconds:7,text:'clip end'}])
+ scene.sourceCaptionBinding={sourceArtifactId:'clip.webm',sourceSha256:'a'.repeat(64),segmentIndex:1,clock:sourceCaptionClock(scene,1),origin:'user-edited'};assert.equal(sourceCaptionsStale(scene),false)
+ scene.visualSegments[1].playbackRate=1;assert.equal(sourceCaptionsStale(scene),true)
+ for(const raw of [[{startSeconds:2,endSeconds:1,text:'bad'}],[{startSeconds:0,endSeconds:2,text:'a'},{startSeconds:1,endSeconds:3,text:'b'}],[{startSeconds:0,endSeconds:1,text:'a',translationText:'not source'}]])assert.throws(()=>assertSourceCues(raw))
+})
+function sourceFixture(){const f=speechFixture();f.draft.scenes[0]={...newStudioScene('source'),videoArtifactId:'voice.wav',durationSeconds:2,sourceStartSeconds:.5,keepSourceAudio:true,captions:[{startSeconds:0,endSeconds:1,text:'Independent'}]};f.draft=f.store.update(f.draft.id,f.draft.revision,f.draft);f.request=(operation:string,current=f.draft)=>({operation,draftId:current.id,expectedRevision:current.revision,sceneId:current.scenes[0].id});return f}
+test('Original-source ASR keeps independent captions; reviewed apply maps actual clock and preserves source evidence',async()=>{
+ const f=sourceFixture();try{
+  f.kernel.recordingController.processArtifact=async raw=>{const request=raw as {language:string;model:string};assert.equal(request.language,'en');assert.equal(request.model,'base');return speechFixtureEvidence(f.directory,'Original English')}
+  const result=await f.service.execute({...f.request('recognize-source'),speechLanguage:'en',speechModel:'base'},undefined,f.owner) as {draft:VideoDraft};let draft=result.draft
+  assert.equal(draft.scenes[0].captions![0].text,'Independent');assert.ok(draft.scenes[0].sourceSpeech);assert.equal(draft.scenes[0].speechAnchors,undefined)
+  const read=await f.service.execute(f.request('read-source-speech',draft),undefined,f.owner) as {stale:boolean};assert.equal(read.stale,false)
+  const applied=await f.service.execute({...f.request('apply-source-captions',draft),sourceCues:[{startSeconds:0,endSeconds:1,text:'English'},{startSeconds:1,endSeconds:3,text:'More'}]},undefined,f.owner,'user') as {draft:VideoDraft};draft=applied.draft
+  assert.deepEqual(draft.scenes[0].captions,[{startSeconds:0,endSeconds:.5,text:'English'},{startSeconds:.5,endSeconds:2,text:'More'}]);assert.equal(draft.scenes[0].sourceCaptionBinding!.origin,'user-edited');assert.equal(draft.scenes[0].captionDisplay,'bilingual')
+  draft.scenes[0].sourceStartSeconds=1;draft=f.store.update(draft.id,draft.revision,draft);assert.ok(draftReadiness(draft).issues.some(issue=>issue.code==='source-captions-stale'))
+  await assert.rejects(f.service.execute({operation:'export-captions',draftId:draft.id,expectedRevision:draft.revision,captionFormat:'srt'},undefined,f.owner),/STUDIO_SOURCE_SPEECH_STALE/)
+  const remapped=await f.service.execute({...f.request('apply-source-captions',draft),sourceCues:[{startSeconds:1,endSeconds:3,text:'More'}]},undefined,f.owner) as {draft:VideoDraft};draft=remapped.draft;assert.equal(draft.scenes[0].captions![0].startSeconds,0)
+  fs.writeFileSync(path.join(f.directory,'voice.wav'),'changed source');await assert.rejects(f.service.execute({operation:'export-captions',draftId:draft.id,expectedRevision:draft.revision,captionFormat:'srt'},undefined,f.owner),/原视频|source/i)
+  const detached=await f.service.execute(f.request('detach-source-captions',draft),undefined,f.owner) as {draft:VideoDraft};assert.equal(detached.draft.scenes[0].sourceCaptionBinding,undefined);assert.equal(detached.draft.scenes[0].captions![0].text,'More')
+ }finally{f.close()}
+})
+test('Original-source recognition rolls back only new artifacts on cancellation, CAS conflict and source hash change',async()=>{
+ for(const scenario of ['cancel','conflict','hash'] as const){const f=sourceFixture();try{const before=fs.readdirSync(f.directory).sort(),controller=new AbortController();f.kernel.recordingController.processArtifact=async()=>{const evidence=speechFixtureEvidence(f.directory,'Original');if(scenario==='cancel')controller.abort(new Error('cancel source'));if(scenario==='conflict'){const draft=f.store.read(f.draft.id);draft.scenes[0].title='GUI wins';f.store.update(draft.id,draft.revision,draft)}if(scenario==='hash')fs.writeFileSync(path.join(f.directory,'voice.wav'),'changed');return evidence}
+  await assert.rejects(f.service.execute(f.request('recognize-source'),controller.signal,f.owner));assert.deepEqual(fs.readdirSync(f.directory).sort(),before);assert.equal(f.store.read(f.draft.id).scenes[0].sourceSpeech,undefined);assert.equal(f.store.read(f.draft.id).scenes[0].captions![0].text,'Independent')
+ }finally{f.close()}}
+})
+test('Bilingual translation preserves original times and user corrections, and fails atomically on stale original or CAS',async()=>{
+ const f=sourceFixture();try{let draft=f.draft;draft.scenes[0].captions=[{startSeconds:0,endSeconds:1,text:'Hello',translationText:'人工译文'},{startSeconds:1,endSeconds:2,text:'World'}];draft=f.store.update(draft.id,draft.revision,draft,false,true)
+  const original=draft.scenes[0].captions!.map(({translationText,translationOrigin,...cue})=>cue)
+  const translated=await f.service.execute({...f.request('set-caption-translations',draft),translations:[{cueIndex:0,originalText:'Hello',translationText:'模型重译'},{cueIndex:1,originalText:'World',translationText:'世界'}]},undefined,f.owner) as {draft:VideoDraft;skippedCueIndices:number[]};draft=translated.draft
+  assert.deepEqual(translated.skippedCueIndices,[0]);assert.equal(draft.scenes[0].captions![0].translationText,'人工译文');assert.equal(draft.scenes[0].captions![1].translationOrigin,'agent-edited');assert.deepEqual(draft.scenes[0].captions!.map(({translationText,translationOrigin,...cue})=>cue),original)
+  const before=fs.readFileSync(path.join(f.store.directory,draft.id+'.json'),'utf8')
+  await assert.rejects(f.service.execute({...f.request('set-caption-translations',draft),translations:[{cueIndex:1,originalText:'Changed',translationText:'bad'}]},undefined,f.owner),/STUDIO_CONFLICT/)
+  await assert.rejects(f.service.execute({...f.request('set-caption-translations',draft),expectedRevision:draft.revision-1,translations:[{cueIndex:1,originalText:'World',translationText:'bad'}]},undefined,f.owner),/STUDIO_CONFLICT/);assert.equal(fs.readFileSync(path.join(f.store.directory,draft.id+'.json'),'utf8'),before)
+  const hostile=structuredClone(draft);hostile.scenes[0].captions![0].translationText='agent overwrite';assert.throws(()=>f.store.update(hostile.id,hostile.revision,hostile),/STUDIO_TRANSLATION_EDITED/)
+  assert.throws(()=>assertStudioRequest({...f.request('set-caption-translations',draft),translations:[{cueIndex:1,originalText:'World',translationText:'a'},{cueIndex:1,originalText:'World',translationText:'b'}]}))
+ }finally{f.close()}
 })

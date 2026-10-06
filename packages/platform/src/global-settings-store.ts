@@ -27,7 +27,7 @@ const SEARCH_ENGINES = Object.freeze({
 })
 
 const DEFAULTS = Object.freeze({
-  version: 1,
+  version: 2,
   proxyMode: 'system',
   proxyRules: '',
   proxyBypassRules: '<local>',
@@ -35,7 +35,6 @@ const DEFAULTS = Object.freeze({
   customSearchUrl: '',
   newTabPage: 'search',
   theme: 'dark',
-  agentSidebarVisible: false,
   edgeNarrationEnabled: true
 })
 
@@ -65,7 +64,7 @@ function normalize(input: Record<string, any> = {}) {
   const customSearchUrl = normalizeCustomSearchUrl(input.customSearchUrl)
   if (searchEngine === 'custom' && !customSearchUrl) throw new Error('Choose a custom search URL containing {query}.')
   return {
-    version: 1,
+    version: 2,
     videoPreferences: normalizeVideoPreferences(input.videoPreferences ?? {}),
     proxyMode,
     proxyRules,
@@ -74,7 +73,6 @@ function normalize(input: Record<string, any> = {}) {
     customSearchUrl,
     newTabPage: input.newTabPage === 'blank' ? 'blank' : 'search',
     theme: ['dark', 'light', 'system'].includes(input.theme) ? input.theme : DEFAULTS.theme,
-    agentSidebarVisible: input.agentSidebarVisible === true,
     edgeNarrationEnabled: input.edgeNarrationEnabled === undefined ? DEFAULTS.edgeNarrationEnabled : input.edgeNarrationEnabled === true
   }
 }
@@ -86,11 +84,21 @@ function writeAtomically(filePath, state) {
   fs.renameSync(temporary, filePath)
 }
 
+export function parseGlobalSettingsState(raw:unknown) {
+      const saved = stateRecord(raw)
+      if(Object.keys(saved).some(key=>!['version','videoPreferences','proxyMode','proxyRules','proxyBypassRules','searchEngine','customSearchUrl','newTabPage','theme','edgeNarrationEnabled'].includes(key)))throw new Error('Unknown global settings field; explicit migration is required.')
+      // Existing data must match the current format; use the explicit migration tool for old Profiles.
+      if (saved.version !== 2) throw new Error('Unsupported settings version.')
+      for(const key of ['edgeNarrationEnabled'])if(saved[key]!==undefined&&typeof saved[key]!=='boolean')throw new Error('Invalid saved boolean setting: '+key)
+      for(const key of ['proxyRules','proxyBypassRules','customSearchUrl'])if(saved[key]!==undefined&&typeof saved[key]!=='string')throw new Error('Invalid saved text setting: '+key)
+      for(const [key,allowed] of Object.entries({proxyMode:['system','direct','manual'],theme:['dark','light','system'],searchEngine:['google','bing','duckduckgo','baidu','custom'],newTabPage:['search','blank']}))if(saved[key]!==undefined&&!allowed.includes(String(saved[key])))throw new Error('Invalid saved setting: '+key)
+      return { saved, state: normalize({ ...DEFAULTS, ...saved }) }
+}
+
 export class GlobalSettingsStore {
   [key: string]: any
 
-  constructor({ filePath, onState, migrateSettings = (settings: Record<string, unknown>) => settings }) {
-    this.migrateSettings = migrateSettings
+  constructor({ filePath, onState }) {
     this.filePath = filePath
     this.onState = onState
     this.state = normalize(DEFAULTS)
@@ -98,15 +106,7 @@ export class GlobalSettingsStore {
   }
 
   load() {
-    const loaded = readStateFile(this.filePath, raw => {
-      const saved = stateRecord(raw)
-      // Pre-version settings are an existing supported compatibility format.
-      if (saved.version !== undefined && saved.version !== 1) throw new Error('Unsupported settings version.')
-      for(const key of ['edgeNarrationEnabled','agentSidebarVisible'])if(saved[key]!==undefined&&typeof saved[key]!=='boolean')throw new Error('Invalid saved boolean setting: '+key)
-      for(const key of ['proxyRules','proxyBypassRules','customSearchUrl'])if(saved[key]!==undefined&&typeof saved[key]!=='string')throw new Error('Invalid saved text setting: '+key)
-      for(const [key,allowed] of Object.entries({proxyMode:['system','direct','manual'],theme:['dark','light','system'],searchEngine:['google','bing','duckduckgo','baidu','custom'],newTabPage:['search','blank']}))if(saved[key]!==undefined&&!allowed.includes(String(saved[key])))throw new Error('Invalid saved setting: '+key)
-      return { saved, state: normalize({ ...DEFAULTS, ...this.migrateSettings(saved) }) }
-    })
+    const loaded = readStateFile(this.filePath,parseGlobalSettingsState)
     if (!loaded) { writeAtomically(this.filePath, this.state); return }
     this.state = loaded.state
     if (JSON.stringify(loaded.saved) !== JSON.stringify(this.state)) writeAtomically(this.filePath, this.state)

@@ -95,6 +95,7 @@ export function architectureViolations(root: string, graph: SourceGraph): string
       }
       if (!known.has(edge.target)) {failures.push(`${file}: unresolved authored import ${edge.specifier}`);continue}
       if (!test && edge.target.includes('/test/')) failures.push(file+': production import reaches test-only code '+edge.target)
+      if(!test&&edge.target.includes('/migration/')&&!file.includes('/migration/'))failures.push(file+': normal runtime import reaches explicit migration code '+edge.target)
       const dependency = ownerOf(edge.target)
       if (!dependency || owner.id === dependency.id || test) continue
       const allowed = [...owner.runtimeDependencies,...(edge.typeOnly ? owner.typeDependencies ?? [] : [])]

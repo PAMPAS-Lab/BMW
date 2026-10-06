@@ -32,14 +32,6 @@ test('provider identities cannot silently rebind or cross Project ownership', t 
   assert.throws(() => store.select(a.sessionId, 'other'), /does not belong/)
   assert.throws(() => store.create('p', 'codex', 'Branch', a.sessionId), /keep its driver/)
 })
-test('legacy DSH imports preserve immutable Studio owner IDs and are idempotent', t => {
-  const { file, store } = fixture(t)
-  const first = store.importLegacy('p', 'dsh', 'existing-owner-session', 'Existing conversation', 1)
-  assert.equal(first.sessionId, 'existing-owner-session')
-  assert.deepEqual(store.importLegacy('p', 'dsh', 'existing-owner-session', 'Different title', 2), first)
-  assert.equal(new ConversationStore(file).get(first.sessionId).sessionId, 'existing-owner-session')
-  assert.throws(() => store.importLegacy('foreign', 'dsh', 'existing-owner-session', 'Foreign', 1), /another Project/)
-})
 test('restart marks incomplete executions disconnected without replaying or losing their resume anchor', t => {
   const { file, store } = fixture(t)
   const session = store.create('p', 'qoder-cn')

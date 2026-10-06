@@ -13,7 +13,7 @@ function deferred<T>() {
 }
 test('managed provider registration resolves only an attached live Host lease and keeps the canonical BMW owner', async t => {
   const owners:unknown[]=[]
-  const bridge=await createBridgeServer({async execute(_input,options){owners.push(options?.sessionOwner);return {ok:true}}},{hostManagedSessions:true,resolveProject:directory=>directory==='/project'?{id:'p',directory}:undefined,activeProjectId:()=> 'p'})
+  const bridge=await createBridgeServer({async execute(_input,options){owners.push(options?.sessionOwner);return {ok:true}}},{resolveProject:directory=>directory==='/project'?{id:'p',directory}:undefined,activeProjectId:()=> 'p'})
   t.after(()=>bridge.close())
   const headers={authorization:'Bearer '+bridge.token,'content-type':'application/json'}
   const register=(sessionId:string,driverId='dsh')=>fetch(bridge.url+'/session/register',{method:'POST',headers,body:JSON.stringify({sessionId,driverId,directory:'/project'})})

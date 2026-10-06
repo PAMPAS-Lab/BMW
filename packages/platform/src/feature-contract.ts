@@ -1,6 +1,5 @@
 import type {NativeMediaPort} from '@bmw-agent/media-native/port'
 import type {BrowserWindow, IpcMain, Notification, Session, WebContents} from 'electron'
-import type {AgentRuntime} from '@bmw-agent/agent-contract'
 import type {ActiveProject, ActiveProjectProvider, BrowserFeatureHost} from '@bmw-agent/browser-capability/host'
 
 export interface FeatureActivationOptions {session: Session; projectStore: ActiveProjectProvider}
@@ -17,11 +16,11 @@ export interface FeatureHost {
   getAgentUrl?(): string | null | undefined
   setWorkspaceMode?(mode: 'browser' | 'studio'): void
   getCurrentSessionId?(): string | null | undefined
-  getAgentRuntime(): Pick<AgentRuntime, 'enqueuePrompt'>
+  enqueueAssistant(sessionId:string,text:string):Promise<string>
   sendToAgent?(channel: string, value: unknown): void
   sendToShell?(channel: string, value: unknown): void
   synchronizeAgentProject(project: ActiveProject, options?: {activate?: boolean; ensureSession?: boolean}): Promise<{sessionId?: string}>
-  selectAgentSession?(sessionId: string, reload?: boolean): Promise<unknown>
+  selectAgentSession?(sessionId: string): Promise<unknown>
   activateProject?(projectId: string): Promise<unknown>
   revealAgent(): void
 }

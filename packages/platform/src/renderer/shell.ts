@@ -46,7 +46,6 @@ const videoTemplateName=document.querySelector('#settings-video-template-name') 
 const videoTemplateNote=document.querySelector('#settings-video-template-note') as HTMLElement
 function renderVideoTemplates():void{const selected=videoTemplateSelect.value;videoTemplateSelect.replaceChildren(new Option('选择模板…',''),...videoPreferencesDraft.templates.map(item=>new Option(item.name,item.name)));videoTemplateSelect.value=selected}
 const settingsEdgeNarration = document.querySelector('#settings-edge-narration') as HTMLInputElement
-const settingsAgentSidebar = document.querySelector('#settings-agent-sidebar')
 const settingsRestart = document.querySelector('#settings-restart')
 const sessionOverlay = document.querySelector('#session-overlay')
 const sessionTitle = document.querySelector('#session-title')
@@ -117,7 +116,7 @@ let projectSavePending = false
 let documentKind = 'instructions'
 let creatingProject = false
 let initialProjectSetup = false
-let globalSettings: Record<string, any> = { proxyMode: 'system', proxyRules: '', proxyBypassRules: '<local>', searchEngine: 'google', customSearchUrl: '', newTabPage: 'search', theme: 'dark', agentSidebarVisible: false }
+let globalSettings: Record<string, any> = { proxyMode: 'system', proxyRules: '', proxyBypassRules: '<local>', searchEngine: 'google', customSearchUrl: '', newTabPage: 'search', theme: 'dark' }
 let agentSessions: Record<string, any> = { selectedSessionId: null, items: [] }
 let sessionSearchTimer
 let productInfo = { id: 'bmw', name: 'BMW', agent: {id:'',label:'Agent',baseline:''} }
@@ -131,17 +130,17 @@ function renderContext():void{
  const linked=Boolean(context&&project&&context.projectId===project.id)
  document.querySelector('#context-project').textContent='Project: '+name
  const workspace=document.querySelector('#context-workspace')
- workspace.textContent='↔ Workspace: '+(linked?context.workspaceTitle:project?.agentBindings?.[productInfo.agent.id]?.workspaceId?name:'Connecting…')
- workspace.title=linked?context.directory:'Each BMW Project has one Agent Workspace'
+ workspace.textContent='Project: '+name
+ workspace.title=linked?context.directory:'Conversations share this Project’s pages and media'
  const selected=document.querySelector('#context-session')
  selected.textContent='Conversation: '+(contextState.state==='empty'?'None selected':linked?context.sessionTitle:'Connecting…')+' ▾'
- selected.title=linked?`Selected conversation · ${context.sessionCount} sessions in this Workspace`:'Choose a conversation in this Project'
+ selected.title=linked?`Selected conversation · ${context.sessionCount} sessions in this Project`:'Choose a conversation in this Project'
  document.querySelector('#context-pages').textContent=`${browserState.tabs.length} pages · shared across conversations`
  const message=document.querySelector('#context-message')
  message.textContent=contextState.message||''
  message.classList.toggle('hidden',!contextState.message)
  document.querySelector('#context-strip').classList.toggle('context-error',contextState.state==='error')
- document.querySelector('#session-workspace').textContent=`Project: ${name} ↔ Workspace: ${linked?context.workspaceTitle:name} · ${agentSessions.items.length} sessions · shared Project pages`
+ document.querySelector('#session-workspace').textContent=`Project: ${name} · ${agentSessions.items.length} sessions · shared Project pages`
 }
 function receiveAgentContext(value:unknown):void{
  try{const next=parseAgentContextState(value);contextState={...next,context:next.context||contextState.context};renderContext();if(!sessionOverlay.classList.contains('hidden'))void refreshAgentSessions()}
@@ -156,6 +155,7 @@ function renderAgentStatus() {
   const labels = {
     starting: 'Starting Agent…',
     ready: 'Agent ready',
+    working: 'Agent working…',
     stopped: 'Agent stopped',
     error: `Agent error: ${agentStatusState.message || 'Unknown error'}`
   }
@@ -326,7 +326,6 @@ function renderGlobalSettings() {
   settingsSearchEngine.value = globalSettings.searchEngine
   settingsCustomSearch.value = globalSettings.customSearchUrl || ''
   settingsNewTab.value = globalSettings.newTabPage
-  settingsAgentSidebar.checked = globalSettings.agentSidebarVisible === true
   settingsEdgeNarration.checked = globalSettings.edgeNarrationEnabled === true
   settingsProxyManual.classList.toggle('hidden', settingsProxyMode.value !== 'manual')
   settingsCustomSearchRow.classList.toggle('hidden', settingsSearchEngine.value !== 'custom')
@@ -573,7 +572,7 @@ function renderProjectEditor({ preserveDraft = false } = {}) {
     projectHome.value = creatingProject ? '' : project?.homeUrl || ''
   }
   const binding=document.querySelector('#project-binding')
-  binding.textContent=creatingProject?'Each Project links one Workspace; its sessions share pages and media.':`Project: ${project?.name||''} ↔ Workspace: ${project?.agentBindings?.[productInfo.agent.id]?.workspaceId?project.name:'Connecting…'}. ${project?.id===projectsState.activeProjectId&&contextState.context?.projectId===project.id?'Selected session: '+contextState.context.sessionTitle:'Select this Project to see its conversations.'} Sessions share this Project’s pages and media.`
+  binding.textContent=creatingProject?'Conversations share their Project’s pages and media.':`Project: ${project?.name||''}. ${project?.id===projectsState.activeProjectId&&contextState.context?.projectId===project.id?'Selected session: '+contextState.context.sessionTitle:'Select this Project to see its conversations.'} Sessions share this Project’s pages and media.`
   projectDocument.disabled = creatingProject || projectDocumentLoading || projectSavePending
   projectName.disabled = projectSavePending
   projectHome.disabled = projectSavePending
@@ -598,7 +597,7 @@ async function openProjectManager({ create = false, initial = false } = {}) {
   document.querySelector('#project-manager-title').textContent = initialProjectSetup ? 'Set up your first BMW Project' : 'BMW Projects'
   document.querySelector('#project-manager-subtitle').textContent = initialProjectSetup
     ? 'Name the work this browser and its Agent session will belong to'
-    : 'Workspace, browser state, instructions and durable memory'
+    : 'Browser state, instructions and durable memory'
   projectOverlay.classList.remove('hidden')
   await api.projectPanel(true)
   renderProjects()
@@ -742,7 +741,6 @@ document.querySelector('#settings-save').addEventListener('click', async () => {
       searchEngine: settingsSearchEngine.value,
       customSearchUrl: settingsCustomSearch.value,
       newTabPage: settingsNewTab.value,
-      agentSidebarVisible: settingsAgentSidebar.checked,
       edgeNarrationEnabled: settingsEdgeNarration.checked,
       ...(videoPreferencesDirty?{videoPreferences:{...videoPreferencesDraft,defaults:videoOptionsForm.read()},videoPreferencesExpected}:{})
     })
@@ -914,7 +912,7 @@ api.productInfo().then((product) => {
   productInfo = product
   productBrand.textContent = product.name
   document.querySelector('#settings-agent-driver').textContent = product.agent.label+' runtime · '+product.agent.baseline
-  document.querySelector('#settings-agent-advanced').textContent = product.agent.ownedUI?'打开当前 Agent 的登录与模型设置':'Open '+product.agent.label+' models, input behavior, permissions & plugins'
+  document.querySelector('#settings-agent-advanced').textContent = '打开当前 Agent 的登录与模型设置'
   settingsRestart.textContent = `Restart ${product.name}…`
   document.title = product.name
   renderGlobalSettings()

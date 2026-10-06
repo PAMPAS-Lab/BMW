@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
-import {dshLegacyMessages,readDshLegacySessions} from '../src/dsh-legacy.js'
+import {dshMigrationMessages,readDshMigrationSessions} from '../migration/history.js'
 import type {DshRuntime} from '../src/dsh-runtime.js'
 
 function message(seq:number,type='user/message',source='user',text='Human prompt'){
@@ -12,11 +12,11 @@ function message(seq:number,type='user/message',source='user',text='Human prompt
 }
 test('legacy display imports human/model text without context, summaries, private reasoning or pixels',()=>{
   const records=[message(1),message(2,'user/message','context','Injected instructions'),message(3,'assistant/message','model','Visible reply'),{...message(4,'assistant/message','model','Compaction summary'),event:{...message(4).event,type:'assistant/message',surfaceOp:{op:'replace',startSeq:1,endSeq:3},data:{message:{content:[{type:'text',text:'Compaction summary'}],source:{kind:'model'}}}}}]
-  const result=dshLegacyMessages('old-session',records,4)
+  const result=dshMigrationMessages('old-session',records,4)
   assert.deepEqual(result.map(row=>[row.role,row.text]),[['user','Human prompt'],['assistant','Visible reply']])
-  assert.deepEqual(dshLegacyMessages('old-session',records,4),result)
-  assert.throws(()=>dshLegacyMessages('old-session',[message(2),message(1)],2),/not ordered/)
-  assert.throws(()=>dshLegacyMessages('old-session',[message(2)],1),/frozen cursor/)
+  assert.deepEqual(dshMigrationMessages('old-session',records,4),result)
+  assert.throws(()=>dshMigrationMessages('old-session',[message(2),message(1)],2),/not ordered/)
+  assert.throws(()=>dshMigrationMessages('old-session',[message(2)],1),/frozen cursor/)
 })
 test('cold DSH migration reads all backward pages at one cursor and preserves archived/parent identities',async t=>{
   const directory=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'bmw-dsh-legacy-')))
@@ -30,7 +30,7 @@ test('cold DSH migration reads all backward pages at one cursor and preserves ar
     if(method==='session.page'){assert.equal(payload.throughSeq,300);assert.equal(payload.beforeSeq,300);return {records:[message(1)],hasMore:false}}
     assert.fail('Migration attempted a native mutation: '+method)
   }}as unknown as DshRuntime
-  const result=await readDshLegacySessions(runtime,[{id:'project',name:'Disposable',directory,workspaceId:'workspace',sessionId:'child'}],'bmw',signal)
+  const result=await readDshMigrationSessions(runtime,[{id:'project',name:'Disposable',directory,workspaceId:'workspace',sessionId:'child'}],'bmw',signal)
   assert.deepEqual(result.map(row=>row.externalSessionId),['parent','child','archived'])
   assert.equal(result[1].parentExternalSessionId,'parent');assert.equal(result[1].selected,true)
   assert.deepEqual(result[1].messages.map(row=>row.text),['Human prompt','Latest reply'])
@@ -48,6 +48,6 @@ test('missing native bindings and pagination without progress fail instead of ch
     if(method==='session.page')return {records:[message(2)],hasMore:true}
     assert.fail('Unexpected native mutation')
   }}as unknown as DshRuntime
-  await assert.rejects(readDshLegacySessions(runtime,[project],'bmw',new AbortController().signal),/Saved DSH Session is unavailable/)
-  await assert.rejects(readDshLegacySessions(runtime,[{...project,sessionId:'present'}],'bmw',new AbortController().signal),/made no progress/)
+  await assert.rejects(readDshMigrationSessions(runtime,[project],'bmw',new AbortController().signal),/Saved DSH Session is unavailable/)
+  await assert.rejects(readDshMigrationSessions(runtime,[{...project,sessionId:'present'}],'bmw',new AbortController().signal),/made no progress/)
 })

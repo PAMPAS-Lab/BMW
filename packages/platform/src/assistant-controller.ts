@@ -1,5 +1,5 @@
 import { agentIdentifier, parseAssistantCommand } from '@bmw-agent/agent-contract'
-import type { AssistantState, AgentConversation,AssistantLegacyImportState } from '@bmw-agent/agent-contract'
+import type { AssistantState, AgentConversation } from '@bmw-agent/agent-contract'
 import type { AgentHost } from './agent-host.js'
 import type { AgentHistoryStore } from './agent-history-store.js'
 import type { ConversationStore } from './conversation-store.js'
@@ -14,8 +14,6 @@ export interface AssistantControllerOptions {
   /** Flush Studio, acquire transition exclusion and publish canonical selection. */
   transition(operation: () => Promise<void>): Promise<void>
   onSelection(sessionId: string | null): Promise<void>
-  legacyImports?():AssistantLegacyImportState[]
-  retryLegacy?(driverId:string):Promise<void>
   settings?:AgentSettingsController
 }
 export class AssistantController {
@@ -24,8 +22,9 @@ export class AssistantController {
     const { host, conversations, history } = this.options, project = this.options.currentProject(), driverId = this.options.getDriver(project.id)
     const selectedSessionId = conversations.selected(project.id, driverId)
     const saved = selectedSessionId ? history.snapshot(selectedSessionId) : null
+    const settings=this.options.settings?.snapshot(driverId)
     const activeRunId = saved?.receipts.find(row => row.runId === host.activeRunId)?.runId ?? null
-    return { project, driverId, drivers: host.descriptions(), sessions: conversations.list(project.id), selectedSessionId, messages: saved?.messages ?? [], events: saved?.events ?? [], interactions: activeRunId ? saved!.interactions : [], activeRunId, busy: host.busy, resourcesDisconnected:host.resourcesDisconnected,...(this.options.legacyImports?{legacyImports:this.options.legacyImports()}:{}),...(this.options.settings?.snapshot()?{settings:this.options.settings.snapshot()}:{} ) }
+    return { project, driverId, drivers: host.descriptions(), sessions: conversations.list(project.id), selectedSessionId, messages: saved?.messages ?? [], events: saved?.events ?? [], interactions: activeRunId ? saved!.interactions : [], activeRunId, busy: host.busy, resourcesDisconnected:host.resourcesDisconnected,...(settings?{settings}:{} ) }
   }
   private member(sessionId: string): AgentConversation { return this.options.conversations.get(agentIdentifier(sessionId), this.options.currentProject().id) }
   private async selection(operation: () => Promise<void>): Promise<void> {
@@ -41,10 +40,6 @@ export class AssistantController {
         if(!this.options.settings)throw new Error('Agent settings are unavailable')
         this.options.settings.start(command.driverId,command.request);break
       case 'settings.cancel':await this.options.settings?.cancel();break
-      case 'legacy.retry':
-        if(!this.options.retryLegacy)throw new Error('Legacy conversation migration is not installed')
-        if(host.busy)throw new Error('Finish native cleanup before retrying legacy migration')
-        await this.selection(async()=>this.options.retryLegacy!(command.driverId));break
       case 'driver.select':
         if (!host.descriptions().some(row => row.id === command.driverId)) throw new Error('This Agent driver is not installed')
         await this.selection(async () => {
@@ -63,7 +58,18 @@ export class AssistantController {
         await this.selection(async () => { conversations.select(row.sessionId, row.projectId); this.options.setDriver(row.projectId, row.driverId) }); break
       }
       case 'session.rename': { const row = this.member(command.sessionId); conversations.rename(row.sessionId, row.projectId, command.title); break }
-      case 'session.archive': { const row = this.member(command.sessionId); await this.selection(async () => { conversations.archive(row.sessionId, row.projectId) }); break }
+      case 'session.archive': {
+        const row = this.member(command.sessionId)
+        await this.selection(async () => {
+          conversations.archive(row.sessionId, row.projectId)
+          const driverId=this.options.getDriver(row.projectId)
+          if(!conversations.selected(row.projectId,driverId)){
+            const remaining=conversations.list(row.projectId,{driverId}).at(-1)
+            if(remaining)conversations.select(remaining.sessionId,row.projectId)
+            else host.create(driverId)
+          }
+        });break
+      }
       case 'message.send': this.member(command.sessionId);if(command.sessionId!==this.snapshot().selectedSessionId)throw new Error('Select the BMW Session before sending its message');host.enqueue(command.sessionId, command.text); break
       case 'message.cancel': this.member(command.sessionId); await host.cancel(command.sessionId); break
       case 'interaction.respond': this.member(command.sessionId); await host.respond(command.sessionId, command.runId, command.interactionId, command.response); break

@@ -12,15 +12,17 @@ export interface AgentDriverSettings {
 }
 export type AgentSettingsRequest =
   | {action:'refresh'}
+  /** Reuse the Profile's display cache; cold-load only when no attempt exists. */
+  | {action:'ensure'}
   | {action:'model.select';modelId:string}
   | {action:'auth.login';methodId:string;values:Record<string,string>}
   | {action:'auth.logout'}
 export interface AgentSettingsContext {signal:AbortSignal;openExternal(url:string):Promise<void>}
-export interface AssistantSettingsState {driverId:string;phase:'idle'|'working'|'failed';message:string;value:AgentDriverSettings|null}
+export interface AssistantSettingsState {driverId:string;phase:'idle'|'working'|'failed';message:string;value:AgentDriverSettings|null;cache?:{authenticationCheckedAt:number|null;modelsCheckedAt:number|null;authenticationStale:boolean;modelsStale:boolean}}
 function closed(value:Record<string,unknown>,keys:readonly string[]):void{if(Object.keys(value).some(key=>!keys.includes(key)))throw new Error('Unknown Agent settings field')}
 export function parseAgentSettingsRequest(raw:unknown):AgentSettingsRequest{
   const value=agentRecord(raw)
-  if(value.action==='refresh'||value.action==='auth.logout'){closed(value,['action']);return {action:value.action}}
+  if(value.action==='refresh'||value.action==='ensure'||value.action==='auth.logout'){closed(value,['action']);return {action:value.action}}
   if(value.action==='model.select'){closed(value,['action','modelId']);return {action:value.action,modelId:agentIdentifier(value.modelId)}}
   if(value.action==='auth.login'){
     closed(value,['action','methodId','values']);const rawValues=agentRecord(value.values),values:Record<string,string>=Object.create(null)

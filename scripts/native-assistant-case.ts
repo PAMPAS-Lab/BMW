@@ -1,3 +1,4 @@
+import {requireCurrentAgentData} from '../packages/platform/src/agent-data-format.js'
 import assert from 'node:assert/strict'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
@@ -5,11 +6,11 @@ import os from 'node:os'
 import path from 'node:path'
 import http from 'node:http'
 import { app, webContents } from 'electron'
-import { assistantClient, assistantPagePath, assistantPreloadPath } from '@bmw-agent/agent-ui'
+import { assistantPagePath, assistantPreloadPath } from '@bmw-agent/agent-ui'
 import { QoderBackend } from '@bmw-agent/harness-qoder'
 import { query } from '@qodercn-ai/qodercn-agent-sdk'
 import { CodexBackend } from '@bmw-agent/harness-codex'
-import { dshDriver,DshBackend,DshRuntime } from '@bmw-agent/harness-dsh'
+import { DshBackend,DshRuntime } from '@bmw-agent/harness-dsh'
 import { agentRecord } from '@bmw-agent/agent-contract'
 import type { AssistantState } from '@bmw-agent/agent-contract'
 import { createBmwApplication } from '../packages/platform/src/main.js'
@@ -23,7 +24,8 @@ const codexModel=process.env.BMW_NATIVE_CODEX_MODEL??'gpt-5.5'
 if(!['gpt-5.5','gpt-6.1-sol','gpt-6-astra','gpt-6-sol','gpt-6-luna'].includes(codexModel))throw new Error('Unverified native Codex acceptance model')
 const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-native-assistant-'))), profile = path.join(root, 'profile')
 process.env.BMW_USER_DATA_DIR = profile
-const projects = new ProjectStore({ filePath: path.join(profile, 'projects.json'), projectsDirectory: path.join(root, 'projects'), legacyWorkspacePath: path.join(root, 'workspace'), onState: undefined })
+requireCurrentAgentData(process.env.BMW_USER_DATA_DIR)
+const projects = new ProjectStore({ filePath: path.join(profile, 'projects.json'), projectsDirectory: path.join(root, 'projects'), initialWorkspacePath: path.join(root, 'workspace'), onState: undefined })
 projects.completeInitialSetup({ name: 'Native ' + driverId + ' acceptance', homeUrl: '' })
 new LayoutStore({ filePath: path.join(profile, 'layout-settings.json'), onState: undefined }).update({ configured: true, mode: 'sidebar' })
 const nonce = 'BMW-' + crypto.randomBytes(4).toString('hex').toUpperCase(), memory = 'BMW-RESUME-' + crypto.randomBytes(4).toString('hex').toUpperCase()
@@ -38,7 +40,7 @@ const evidence: Record<string, unknown> = { driverId, root, sourceRoot,
   nativeScriptSha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(sourceRoot,'scripts/native-assistant-case.ts'))).digest('hex'),
   buildReceiptSha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(sourceRoot,'.bmw-runtime/build-receipt.json'))).digest('hex'),
   ...(driverId==='codex'?{model:codexModel}:{}), paidInference: true, nativeDesktopProfileUsed: false }
-createBmwApplication(bmwProduct, dshDriver, { pagePath: assistantPagePath, preloadPath: assistantPreloadPath, client: assistantClient, defaultDriverId: driverId,
+createBmwApplication(bmwProduct,  { pagePath: assistantPagePath, preloadPath: assistantPreloadPath, defaultDriverId: driverId,
   createBackends(config) {
     const connection: typeof config.connection = async request => {
       const native = await config.connection(request), execute = native.execute
@@ -52,7 +54,7 @@ createBmwApplication(bmwProduct, dshDriver, { pagePath: assistantPagePath, prelo
       } }
     }
     if(driverId==='dsh')return [new DshBackend({userDataDirectory:config.userDataDirectory,project:projectId=>{
-      const project=projects.get(projectId);return {id:project.id,name:project.name,directory:project.directory,workspaceId:null,sessionId:null}
+      const project=projects.get(projectId);return {id:project.id,name:project.name,directory:project.directory}
     },connection,runtimeFactory:options=>new class extends DshRuntime {
       override async call(method:string,payload:Record<string,unknown>={}):Promise<Awaited<ReturnType<DshRuntime['call']>>>{
         const reply=await super.call(method,payload)

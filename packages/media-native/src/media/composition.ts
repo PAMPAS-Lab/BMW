@@ -7,7 +7,7 @@ import { assertComposition, compositionDuration, sceneAtTime } from '../composit
 import type { CompositionBridge, CompositionCommand, CompositionScene } from '../composition-contract.js'
 import { LinearFrameReader, normalizeBrowserVideoColor } from './linear-frames.js'
 import { MEDIA_LIMITS } from '../media-contract.js'
-import { paintScene } from './composition-paint.js'
+import { assertCompositionText,paintScene } from './composition-paint.js'
 import { mixCompositionAudio } from './composition-audio.js'
 
 declare global { interface Window { bmwComposition: CompositionBridge } }
@@ -45,6 +45,7 @@ async function compose(command: CompositionCommand): Promise<void> {
     const {mixed,narrationDurations,audioPeak}=await mixCompositionAudio(composition,assets,audioContext)
     const canvas = document.createElement('canvas'); canvas.width = composition.width; canvas.height = composition.height
     const context = canvas.getContext('2d', { alpha: false })!
+    assertCompositionText(context,composition,narrationDurations)
     const videoSource = new CanvasSource(canvas, { codec: 'avc', bitrate: 5_000_000 })
     const audioSource = new AudioBufferSource({ codec: 'aac', bitrate: 192_000 })
     output = new Output({ format: new Mp4OutputFormat({ fastStart: false }), target: new StreamTarget(new WritableStream<StreamTargetChunk>({ write: chunk => write(command.token, chunk) }), { chunked: true, chunkSize: MEDIA_LIMITS.chunkBytes }) })

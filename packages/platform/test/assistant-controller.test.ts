@@ -11,7 +11,7 @@ import { AssistantController } from '../src/assistant-controller.js'
 import { AgentPreferenceStore } from '../src/agent-preference-store.js'
 test('Assistant controls persist per-Project driver selection, reject foreign Sessions and exclude transitions during a turn', async t => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-assistant-controller-'))
-  const conversations = new ConversationStore(path.join(root, 'sessions.json')), history = new AgentHistoryStore(path.join(root, 'history'))
+  const conversations = new ConversationStore(path.join(root, 'sessions.json')), history = new AgentHistoryStore(path.join(root, 'history'),sessionId=>conversations.get(sessionId))
   const preferences = new AgentPreferenceStore(path.join(root, 'preferences.json'), 'a')
   let finish!: () => void, started!: () => void
   const gate = new Promise<void>(resolve => { finish = resolve }), began = new Promise<void>(resolve => { started = resolve })
@@ -47,7 +47,7 @@ test('Assistant controls persist per-Project driver selection, reject foreign Se
   await assert.rejects(controller.invoke({ action: 'message.send', sessionId: foreign.sessionId, text: 'Foreign' }), /does not belong/)
   await controller.invoke({ action: 'message.cancel', sessionId: selected })
   const archived = await controller.invoke({ action: 'session.archive', sessionId: selected })
-  assert.equal(archived.selectedSessionId, null)
+  assert.equal(archived.selectedSessionId, switched.selectedSessionId)
   assert.equal(archived.sessions.length, 1)
   assert.equal(conversations.get(selected).driverId, 'b')
   const firstB=switched.selectedSessionId!

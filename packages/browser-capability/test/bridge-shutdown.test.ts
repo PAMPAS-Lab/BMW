@@ -13,8 +13,8 @@ test('Bridge shutdown cancels the active renderer wait before draining FIFO', { 
     const response = await fetch(`${bridge.url}/${endpoint}`, { method: 'POST', headers: { authorization: `Bearer ${bridge.token}`, 'content-type': 'application/json' }, body: JSON.stringify(body) })
     return await response.json() as { binding?: string; ok?: boolean; error?: string }
   }
-  const registration = await request('session/register', { sessionId: 's', directory: '/disposable-project' })
-  const pending = request('execute', { binding: registration.binding, arguments: { action: 'media.screenshot' } })
+  const binding=bridge.registerSession('s','/disposable-project')
+  const pending=request('execute',{binding,arguments:{action:'media.screenshot'}})
   await started
   await bridge.close()
   const result = await pending

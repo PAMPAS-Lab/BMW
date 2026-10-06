@@ -159,7 +159,7 @@ export class VideoStudioRuntime implements FeatureRuntime {
         const prompt=studioAssistantPrompt(draft,request.intent,request.sceneId)
         this.authorize(event,request.projectId)
         if(new VideoStudioStore(project.directory,owner.sessionId).read(draft.id).revision!==request.expectedRevision)throw new Error('STUDIO_CONFLICT: Draft changed before Assistant submission.')
-        await config.getAgentRuntime().enqueuePrompt(owner.sessionId,prompt)
+        await config.enqueueAssistant(owner.sessionId,prompt)
 
       }
       config.revealAgent();config.getMainWindow()?.show();config.getMainWindow()?.focus();return {opened:true}

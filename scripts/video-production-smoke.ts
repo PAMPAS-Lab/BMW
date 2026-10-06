@@ -24,8 +24,7 @@ async function run():Promise<void>{
   const kernel=new BrowserKernel({window,session:browserSession,capabilityRegistry:registry,permissionStore:{hasAgentControl:()=>granted},projectStore:{active:()=>project},artifactsDirectory:artifacts,sessionContinuity:undefined,settingsStore:new GlobalSettingsStore({filePath:path.join(temporary,'settings.json'),onState:undefined}),allowedActions:undefined,onState:undefined});kernel.setRecordingController(media)
   bridge=await createBridgeServer(kernel,{toolDefinition:registry.toolDefinition(),resolveProject:directory=>directory===project.directory?project:undefined,activeProjectId:()=>project.id})
   const headers={authorization:`Bearer ${bridge.token}`,'content-type':'application/json'}
-  const registration=await fetch(`${bridge.url}/session/register`,{method:'POST',headers,body:JSON.stringify({sessionId:'video-smoke',directory:project.directory})})
-  const {binding}=await registration.json() as {binding:string}
+  const binding=bridge.registerSession('video-smoke',project.directory)
   const execute=async(args:unknown)=>{const response=await fetch(`${bridge!.url}/execute`,{method:'POST',headers,body:JSON.stringify({binding,arguments:args})});const body=await response.json() as {error?:string;result:Record<string,unknown>;images:unknown[]};if(!response.ok)throw new Error(body.error);return body}
   // Two static tab captures exercise fresh native encoders and multi-cluster WebM without seek indexes.
   media.configureDisplayMedia()

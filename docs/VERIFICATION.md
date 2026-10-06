@@ -8,18 +8,25 @@ Current application state is indexed in [PROJECT_STATUS.md](PROJECT_STATUS.md). 
 
 | Evidence | Executed result | Scope |
 |---|---|---|
+| [Unified Agent data/offline report](../.bmw-runtime/classified-tests/2026-10-05-agent-data/result.json) | 109 selected offline checks and 5 gates passed; 5 external items not run | Strict v2 data, explicit migration, neutral Host/MCP and DSH cold export; desktop/restart, Studio, media, video and local narration; no paid inference |
 | [GPT-6 full offline snapshot](../.bmw-runtime/classified-tests/2026-10-05-gpt6-browser/result.json) | 112 selected offline checks and 5 gates passed; 5 external items not run | The GPT-6 wrapper source at that run; includes DSH, owned/default Assistant, desktop, Studio, native media, video and local narration |
 | [Login-flow affected report](../.bmw-runtime/classified-tests/2026-10-05-login-flow/result.json) and [integration audit](../.bmw-runtime/classified-tests/2026-10-05-login-flow/integration-audit.json) | 32 selected checks and 4 gates passed; remaining categories excluded by scope | Later authentication/dialog/supported-model changes; no full media rerun or paid inference |
 | [Native model evidence](AGENT_DRIVERS_IMPLEMENTATION.md) | Two real turns for the recorded DSH/Qoder/Codex models and all four wrapped GPT-6 models plus GPT-5.5 | Disposable Profiles; screenshot pixels, canonical Studio owner and native Session recovery; Qoder paid coverage is auto only |
 | [Whisper base adoption](#user-listened-whisper-base-adoption) | Ten actual clips, 12 editable anchors, MP4/SRT/VTT/board and reuse passed | User-listened ASR-assisted reference; independent acoustic gold/P95 not established, automatic timing not approved |
 
-The current architecture catalog has 12 modules, 10 direct interfaces and 3 implementation/assembly guarantors. Feature/test and architecture inventories are generated from the current source. This documentation synchronization checks current type/source/architecture gates, local links, recorded report statuses and source correspondence; it does not run a new full regression or paid model.
+The current architecture catalog has 12 modules, 10 direct interfaces and 3 implementation/assembly guarantors. Feature/test and architecture inventories are generated from the current source. The unified Agent-data change runs a new full offline baseline after its isolated checks. Its report preserves the actual source hashes and failed attempts separately; historical GPT-6 and login reports remain unchanged. Paid model evidence is not rerun by this baseline.
+
+## Unified Agent data and migration
+
+`agent-data-migration` verifies retained BMW IDs/native anchors/history, archived native import, selected-session recovery, schedule driver inference, credential link detachment, backup/rollback and concurrent-change protection. Strict daily loaders and the Profile process lock are covered separately. The normal application cannot import the DSH migration entry. Shell and owned Assistant creation/archive now share the controller notification path, so Studio receives the same owner changes.
+
+The explicitly authorized real Profile migration completed separately from automated regression: 10 Projects, 28 original BMW Sessions retained, 4 native DSH Sessions imported (32 total), 9 Studio drafts and 38 metadata writes, without warnings. The private backup is `~/Library/Application Support/BMW-agent-data-backup-1791209775488`; its manifest is complete and backup/output hashes match. The preservation audit confirms all 848 Project files and 1,135 native DSH Home files are byte-identical except the new harness mapping, with existing IDs, selections, resume anchors, display history, input receipts and model preferences retained. A repeated plan reports alreadyCurrent and zero changes. [Migration audit](../.bmw-runtime/agent-data-closure/2026-10-05/actual-profile-after-audit.json) and [result](../.bmw-runtime/agent-data-closure/2026-10-05/actual-migration-result.json) record this execution; they do not establish paid inference or production-keychain coverage. The offline report retains its original documentation hashes; only evidence documentation changed after that run. See [AGENT_DATA_MIGRATION.md](AGENT_DATA_MIGRATION.md). Normal desktop relaunch restored the original Project, Qoder CN selection, history and web page with the Assistant ready badge; its Studio correctly showed the current Session’s empty draft state, then returned to the browser. The post-launch preservation audit still matched original Session metadata, selections, preferences, history/receipts and all nine draft bytes. No model message was sent. Automated tests use disposable Profiles.
 
 ## Authentication and owned Assistant checks
 
 `codex.settings`, `qoder.settings`, `dsh.settings` and `platform.agent-settings` exercise cold official control projections, missing authentication, unknown/disabled models, no model input, redaction, preference persistence after actual cleanup, cancellation and quarantine recovery. Codex selection asserts that the separate catalog gate is not invoked; its effective-tool gate still runs before actual input. Qoder cold control initialization still verifies its effective browser catalog and rejects any model work.
 
-`assistant.application` uses an isolated Electron Profile and synthetic credentials to exercise GUI driver changes, automatic login dialogs, changing drivers during login only after native drain, clearing submitted/closed secrets, supported-only model display, confirmation/dialog close and blocked composer submission before model selection. The same fixture retains actual browser/screenshot/Studio ownership and shutdown checks. `assistant.default`, schedules, legacy retry and protected startup checks cover the declared downstream consumers. These fixtures do not establish real OAuth/key validity, production keychain behavior, account quota or paid inference for every supported model ID.
+`assistant.application` uses an isolated Electron Profile and synthetic credentials to exercise GUI driver changes, automatic login dialogs, changing drivers during login only after native drain, clearing submitted/closed secrets, supported-only model display, confirmation/dialog close and blocked composer submission before model selection. The same fixture retains actual browser/screenshot/Studio ownership and shutdown checks. `assistant.default`, schedules and protected startup checks cover the declared downstream consumers. These fixtures do not establish real OAuth/key validity, production keychain behavior, account quota or paid inference for every supported model ID.
 
 ## Commands and coverage
 
@@ -39,7 +46,7 @@ The current architecture catalog has 12 modules, 10 direct interfaces and 3 impl
 
 Run build-containing commands sequentially. The Electron runner creates disposable profiles and uses a mock keychain on macOS; it does not modify or validate a production profile. DSH compatibility tests use a disposable Home/Workspace and no paid model.
 
-Unit migration tests verify existing Workspace/Session IDs, Project documents and tab state survive while unused connector configuration is removed. Driver boundary tests forbid concrete harness imports, provider RPC and client storage/selectors in the core. The fixture driver test proves the core can operate through the contract without loading the DSH Agent process.
+Explicit migration tests verify stable BMW/native identities, preserved display history and Studio/media bytes, archived Project import, failed-write rollback, stale-plan rejection and concurrent-edit protection. Current-format stores reject old Agent files rather than converting them at startup. Driver boundary tests forbid concrete harness imports, provider RPC and client storage/selectors in the core. The fixture driver test proves the core can operate through the contract without loading the DSH Agent process.
 
 Studio workflow tests use deterministic narration fixtures to check UI routing and state. Those fixtures are not external TTS or model-quality evidence. Actual local speech is verified separately. Edge service checks require `BMW_TTS_TEST_PROVIDER=edge`; paid model vision requires `BMW_VISION_TEST=1`.
 
@@ -111,7 +118,7 @@ External publication, paid model calls, operating-system prompts, signing/instal
 
 ## Direct contracts versus concrete implementations
 
-Browser and AgentDriver direct guarantees do not require the installed DSH implementation. The neutral `driver` fixture captures Platform-injected `AgentRuntimeConfiguration`, launches only BMW's MCP adapter and calls real browser actions over authenticated Bridge transport. It verifies the sole browser tool, actual pages shared with GUI, permission denial, foreign/forged/released binding rejection and recovery after switching Projects. No Agent loop, model or DSH process is used.
+Browser and AgentDriver direct guarantees do not require the installed DSH implementation. The neutral `driver` fixture uses the Platform-injected Host-private `AgentBridgeConnection`, launches only BMW's MCP adapter and calls real browser actions over authenticated Bridge transport. It verifies the sole browser tool, actual pages shared with GUI, permission denial, foreign/forged/released binding rejection and recovery after switching Projects. No Agent loop, model or DSH process is used.
 
 `bmw-dsh-assembly` is a separate implementation/assembly guarantee. Agent contract, DSH implementation or product assembly changes select it; Browser schema/catalog/Bridge/MCP-only changes select the neutral fixture without starting DSH. Full offline verification still includes DSH. Selection regression tests enforce both the exclusion and the positive/mixed-change cases. Installed DSH smoke verifies startup/auth/prompt/session compatibility rather than direct Browser action coverage.
 
@@ -176,3 +183,38 @@ Ten real Chinese audio clips and both fixed ASR candidates remain available in t
 On 2026-10-05 the user explicitly confirmed listening and requested use of the base annotations. The existing review checkbox was checked; the ten-clip ASR-assisted record was saved with original segment provenance. Only ten out-of-audio ends were bounded to the actual file durations; no internal boundaries or merged paragraphs were invented. The raw-to-adopted boundary displacement nearest-rank P95 is 272.125ms over 24 start/end values. It is a dependent-reference correction metric, not independent acoustic accuracy, and does not approve automatic timing. Low-confidence/misrecognition warnings and the untouched raw outputs remain available.
 
 The unchanged isolated application source consumes all ten actual WAVs through the sole browser catalog with a trusted user actor and Project/Session/revision admission. Twelve host-hashed editable anchors drive the same .5s-offset caption and board projection. Actual SRT/VTT exports retain provenance; the H.264/AAC sample is about 107.648 seconds, completed MP4 reuse preserves revision, and the Studio GUI shows ten scenes and real preview. The first artifact workflow attempt failed when seeking before async preview preparation; it is preserved under initial-preview-race, and the successful retry waits for readiness before seeking. Evidence, original/corrected reference, per-clip correction displacement and the final runtime result are in `/Users/changliangxu/.codex/visualizations/2026/10/04/01a104f1-7632-7513-b35c-55e2a2d5de67/bmw-p0/base-adoption/`. This adds acceptance artifacts and documentation, not production code. The previously passing full offline baseline remains evidence for identical runtime source; documentation-only gates are recorded separately. Paid models, Edge and production Profile/keychain are not covered.
+
+
+## Video Studio 本期专项验收（2026-10-05）
+
+可靠编辑/文字与关键帧审片、视频原声双语字幕和 summary/comparison/screenshot 固定模板已完成源代码实施、测试与现行文档。测试在 `/private/tmp/bmw-studio-next/repo` 隔离副本执行；没有构建运行中的生产仓库、修改生产草稿或用真实 Profile 作为夹具。
+
+- 本次实际生产/测试文件范围选择 39 组分类回归，`selection.full=false`；全部通过。包括构建、架构、源代码策略、功能索引与桌面组关卡共 44 个 passed 记录。分类目录登记和生成文档分别校验；范围不混入既有未提交 Agent 工作。相关范围覆盖 owner/CAS/FIFO、来源、原生媒体端口、旧 Studio、桌面工作区、编码、本地旁白与 ASR。
+- 专项字幕/视频/语音测试共 71 项通过；覆盖原视频剪裁/变速/前置片段偏移、无 .5 秒旁白偏移、人工译文保护、原文/CAS 冲突、源 SHA 变化、取消与新产物回滚、模板/文字溢出和 SRT/VTT 显示模式。
+- 原生验收分别使用实际本地英文 TTS 视频，以及只读复制到临时 Project 的既有公开视频。公开采访实际识别 35.118 秒音轨、9 段原始 base 结果；Opus 末包超过实际音轨终点的 2160 个输入帧被受限裁去并入证据，源时间零点不变。原始文件 SHA 在验收后仍与识别证据一致。
+- GUI 验证识别结果可见、原文件试听、核听确认、独立原文/译文编辑、人工译文重译保护、未保存校正外部更新/CAS 不丢失、明确重新加载恢复、模板撤销重做、预览刷新时间/属性同步与关键帧缩略图。多视频片段重新读取识别结果后，选择器与试听都返回该证据的原视频。
+- 两种比例（640×360、540×720）实际 H.264/AAC MP4 与预览逐四个时间点比较，均通过像素误差上限；双语 SRT/VTT 和 source 来源清单一致。有效但溢出的长双语字幕阻止编码，无新增完成输出，既有成片保留。旧隐藏窗口的帧检查改为等待 `seeked` 后实际 Canvas 像素，仍检查解码和预览一致性。
+- 39 组回归报告是 Opus 与未保存校正保护后的精确快照。其后仅修改原声 GUI 的识别片段/试听原文件选择及 `studio-next-smoke.ts` 多片段验收；这两份最终文件已重新 build/check 并通过公开视频完整 native 验收。报告与后续文件哈希分开记录，不把旧快照宣称为最终文件全量再跑。
+
+完整证据目录：/Users/changliangxu/.codex/visualizations/2026/10/04/01a104f1-7632-7513-b35c-55e2a2d5de67/bmw-studio-next。包含 before-source、前后 SHA 清单、明确变更文件范围、classified-final/result.json、fresh build/check/unit 日志、最终 verification.json、原始 Whisper JSON、字幕、原声/关键帧 UI、两种比例示例 MP4 和关键帧。保存了既有未提交代码；历史 VIDEO_STUDIO_REVIEW 与 P0 文档未重写。
+
+限制：自动 GUI 夹具不证明人工转写准确率；Assistant 翻译路由使用受控接收端，不计作付费模型翻译质量验收。完整原声 ASR 上限仍为 180 秒，无长片分块/自动词级时间。当前 Mac 锁定，生产桌面未观察或重启；新代码在运行中的 BMW 生效还需退出后构建并重新启动。
+
+## 2026-10-06 Agent 设置重复刷新修复
+
+同一驱动在设置读取、登录、模型修改或其连接清理期间收到的 refresh 合并为已有状态读取；新的登录/模型修改及其他驱动的设置仍被排除。清理失败保持隔离，必须先恢复清理。设置窗口在驱动切换期间不再竞争刷新，Assistant 明确显示读取与取消/清理状态。
+
+最终局部报告：`.bmw-runtime/classified-tests/2026-10-06-agent-settings-coalescing-final-01a104f1/result.json`。声明五个代码/测试文件，选择 21 组回归，全数通过；构建回执、源码规范、功能清单与架构门通过，无全量回退，源码在运行期间未变化。覆盖真实 Electron 的重复打开设置/IPC 刷新共用单次原生读取、取消后等待实际清理再切换、会话/Project 归属、默认三驱动装配、调度、六种启动恢复及桌面 Project 重启。另有设置、Host、Assistant 与三驱动设置契约共 31 项单元测试通过，完整 check 通过；日志保存在最终报告目录的 additional-unit.log 与 additional-check.log。单元测试与生产源一致，后续只调整 Electron 新用例的实际按钮入口及异步状态等待。
+
+初次界面回归的错误调用及异步断言失败保留在此前报告和本地日志；最终证据以 final 报告为准。所有自动运行时验证使用临时 Profile，无付费推理或外部登录验收。报告包含本段追加之前的文档哈希；本段追加没有改变运行源码或编译产物。
+
+修复版本已按用户要求正常退出旧应用、重新构建并以现有 BMW Profile 启动；现场只观察到原 Project/会话、Qoder CN 选择与 Assistant ready，无错误提示。这是正常启动观察，不能替代生产凭据或真实模型推理验收。
+
+
+## 2026-10-06 — Profile 内分 Agent 设置缓存（方案 B）
+
+最终源码重新构建并通过 `npm run check`。本次以十个实际修改的源码/测试文件显式选择 43 组回归，`full:false`、无 fallback，全部通过；报告为 `.bmw-runtime/classified-tests/2026-10-06-agent-settings-cache-final/result.json`，修改前快照保存在同目录 `before/`。源文件哈希在追加本节之前全部再次核对一致；本节是报告完成后的证据说明。此前 `2026-10-06-agent-settings-cache` 报告保留，其中设置 UI 脚本因主进程完成早于 Renderer 按钮可用而点击无效，最终脚本已等待真实控件状态并通过。
+
+缓存回归覆盖每 driver/每 Profile 隔离、跨 Project 复用、5/30 分钟独立过期标记、查看不启动原生进程或获取维护排除、显式刷新、偏好/baseline 变化、任务失败失效且不重放、认证取消与部分失败清空旧就绪状态、取消读取不能发布新时间，以及清理隔离不被缓存查看绕过。实际 Electron 脚本计数确认首次读取后反复打开/切回没有增加原生读取次数；两个手动入口均可刷新。
+
+相关官方适配器契约、有效单 browser 准入、真实隔离 DSH 设置 set/unset 与零输入、Assistant 登录/模型确认/取消清理、跨 driver schedule 与 Project/Session/Studio 归属、受保护状态启动 retry/exit、Shell IPC 与实际 Project 重启全部通过。自动化只使用一次性 Profile/Home，不证明真实账号额度、付费推理或生产 keychain 授权。生产 BMW 的正常重启仅用于加载新构建，与隔离回归证据分开。

@@ -45,3 +45,9 @@ test('Architecture rejects production-to-test indirection, bare Node renderer im
   assert.equal(graph.dynamicImports.includes('packages/harness-dsh/dsh/plugins/browser-mcp/index.ts'),false,'The sole installed DSH loader is resolved from its fixed approved package literal')
   assert.ok(graph.imports['packages/harness-dsh/dsh/plugins/browser-mcp/index.ts'].some(edge=>edge.specifier==='@deepseek-ai/dsh-mcp-client'))
 })
+
+test('Normal harness startup cannot import the explicit migration entry',()=>{
+ const root=process.cwd(),graph=readSourceGraph(root)
+ const mutated:SourceGraph={...graph,imports:{...graph.imports,'packages/harness-dsh/src/dsh-backend.ts':[{specifier:'../migration/index.js',typeOnly:false,target:'packages/harness-dsh/migration/index.ts'}]}}
+ assert.match(architectureViolations(root,mutated).join('\n'),/normal runtime import reaches explicit migration code/)
+})

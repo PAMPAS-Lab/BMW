@@ -1,22 +1,22 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { agentIdentifier, agentRecord } from '@bmw-agent/agent-contract'
-import type { AgentBackend, AgentDriverDescription, AgentDriverEvent, AgentProject, AgentRunRequest, AgentRunResult,AgentLegacySession } from '@bmw-agent/agent-contract'
+import type { AgentBackend, AgentDriverDescription, AgentDriverEvent, AgentProject, AgentRunRequest, AgentRunResult } from '@bmw-agent/agent-contract'
 import { DshRuntime } from './dsh-runtime.js'
-import { dshConfiguration } from './driver.js'
+import { dshConfiguration } from './configuration.js'
 import { resolveDshHome } from './dsh-preset.js'
 import { DshEvents, dshBrowserCatalog } from './dsh-events.js'
-import {readDshLegacySessions} from './dsh-legacy.js'
+import {DshProjectBindings} from './project-bindings.js'
 import {DshSettings,dshModelRoute} from './dsh-settings.js'
 import type {AgentSettingsRequest,AgentSettingsContext,AgentDriverSettings} from '@bmw-agent/agent-contract'
 
 export interface DshBackendOptions {
   userDataDirectory:string
   sourceDshHome?:string
-  connection(request:AgentRunRequest):Promise<{bridgeUrl:string;bridgeToken:string;mcpServerPath:string;attachProviderSession(externalSessionId:string):void}>
+  connection(request:AgentRunRequest):Promise<{bridgeUrl:string;bridgeToken:string;mcpServerPath:string;binding:string;attachProviderSession(externalSessionId:string):void}>
   project(projectId:string):AgentProject
   runtimeFactory?:(config:ConstructorParameters<typeof DshRuntime>[0])=>DshRuntime
-  legacyConnection?:{bridgeUrl:string;bridgeToken:string;mcpServerPath:string}
+  controlConnection?:{bridgeUrl:string;bridgeToken:string;mcpServerPath:string}
   getModel?():string|null
   setModel?(modelId:string):void
   settingsProject?():AgentProject
@@ -29,26 +29,27 @@ export class DshBackend implements AgentBackend {
   private prepared:Prepared|undefined
   private owner:{sessionId:string;runId:string;stage:'preparing'|'ready'|'settled'}|undefined
   private closed=false
-  private legacyRuntime:DshRuntime|undefined
   private settingsPort:DshSettings|undefined
-  constructor(private readonly options:DshBackendOptions){}
+  private readonly bindings:DshProjectBindings
+  constructor(private readonly options:DshBackendOptions){this.bindings=new DshProjectBindings(path.join(options.userDataDirectory,'dsh-home','bmw-project-bindings.json'))}
   private async start(request:AgentRunRequest):Promise<Awaited<ReturnType<DshBackendOptions['connection']>>> {
     const connection=await this.options.connection(request)
     if(!this.runtime){
-      this.runtime=(this.options.runtimeFactory??(config=>new DshRuntime(config)))({...dshConfiguration,productId:'bmw',dshHome:path.join(this.options.userDataDirectory,'dsh-home'),sourceDshHome:this.options.sourceDshHome??resolveDshHome(),workspacePath:request.project.directory,workspaceTitle:request.project.name,bridgeUrl:connection.bridgeUrl,bridgeToken:connection.bridgeToken,mcpServerPath:connection.mcpServerPath,controlFilePath:path.join(this.options.userDataDirectory,'dsh-home','.bmw-driver-control.json'),isolateCredentials:true})
+      this.runtime=(this.options.runtimeFactory??(config=>new DshRuntime(config)))({...dshConfiguration,productId:'bmw',dshHome:path.join(this.options.userDataDirectory,'dsh-home'),sourceDshHome:this.options.sourceDshHome??resolveDshHome(),workspacePath:request.project.directory,workspaceTitle:request.project.name,bridgeUrl:connection.bridgeUrl,bridgeToken:connection.bridgeToken,mcpServerPath:connection.mcpServerPath,controlFilePath:path.join(this.options.userDataDirectory,'dsh-home','.bmw-driver-control.json'),sessionBinding:connection.binding})
       this.startPromise=this.runtime.start()
     }
     try{await this.startPromise}catch(error:unknown){await this.stopRuntime();throw error}
     return connection
   }
   async prepare(request:AgentRunRequest):Promise<AgentDriverDescription>{
-    if(this.closed||this.owner||this.legacyRuntime||this.settingsPort?.busy)throw new Error('DSH backend is closed or owns another turn')
+    if(this.closed||this.owner||this.settingsPort?.busy)throw new Error('DSH backend is closed or owns another turn')
     request.signal.throwIfAborted()
     this.owner={sessionId:request.sessionId,runId:request.runId,stage:'preparing'}
-    const connection=await this.start(request),runtime=this.runtime!,project=this.options.project(request.project.id)
+    const connection=await this.start(request),runtime=this.runtime!,project=this.bindings.project(this.options.project(request.project.id))
     if(project.directory!==request.project.directory)throw new Error('DSH Project membership changed')
     const sessions=agentRecord(await runtime.listProjectSessions(project))
     if(!Array.isArray(sessions.items)||!Array.isArray(sessions.membership))throw new Error('Invalid DSH Session list')
+    this.bindings.remember(project,agentIdentifier(sessions.workspaceId))
     let externalSessionId=request.externalSessionId
     if(externalSessionId){
       const native=sessions.items.map(row=>agentRecord(row)).find(row=>row.sessionId===externalSessionId)
@@ -117,28 +118,14 @@ export class DshBackend implements AgentBackend {
     this.prepared=undefined;this.owner=undefined
   }
   async respond():Promise<void>{throw new Error('DSH browser permissions use BMW controls')}
-  async readLegacySessions(projects:readonly AgentProject[],signal:AbortSignal):Promise<AgentLegacySession[]>{
-    if(this.closed||this.owner)throw new Error('DSH backend is closed or owns another turn')
-    await this.drainLegacy()
-    const bound=projects.filter(project=>project.workspaceId||project.sessionId)
-    if(!bound.length)return []
-    if(!this.options.legacyConnection)throw new Error('DSH legacy discovery requires a Host-owned Bridge connection')
-    signal.throwIfAborted()
-    const project=bound[0]
-    this.legacyRuntime=(this.options.runtimeFactory??(config=>new DshRuntime(config)))({...dshConfiguration,...this.options.legacyConnection,productId:'bmw',dshHome:path.join(this.options.userDataDirectory,'dsh-home'),sourceDshHome:this.options.sourceDshHome??resolveDshHome(),workspacePath:project.directory,workspaceTitle:project.name})
-    await this.legacyRuntime.start()
-    signal.throwIfAborted()
-    return readDshLegacySessions(this.legacyRuntime,bound,dshConfiguration.presetId,signal)
-  }
-  async drainLegacy():Promise<void>{await this.legacyRuntime?.stopAndWait();this.legacyRuntime=undefined}
   async settings(request:AgentSettingsRequest,context:AgentSettingsContext):Promise<AgentDriverSettings>{
-    if(this.closed||this.owner||this.legacyRuntime||!this.options.legacyConnection||!this.options.setModel||!this.options.settingsProject)throw new Error('DSH settings are unavailable while native work is active')
+    if(this.closed||this.owner||!this.options.controlConnection||!this.options.setModel||!this.options.settingsProject)throw new Error('DSH settings are unavailable while native work is active')
     this.settingsPort??=new DshSettings({model:()=>this.options.getModel?.()??null,setModel:this.options.setModel,createRuntime:()=>{
-      const project=this.options.settingsProject!(),connection=this.options.legacyConnection!
-      return (this.options.runtimeFactory??(config=>new DshRuntime(config)))({...dshConfiguration,productId:'bmw',dshHome:path.join(this.options.userDataDirectory,'dsh-home'),sourceDshHome:this.options.sourceDshHome??resolveDshHome(),workspacePath:project.directory,workspaceTitle:project.name,...connection,isolateCredentials:true})
+      const project=this.options.settingsProject!(),connection=this.options.controlConnection!
+      return (this.options.runtimeFactory??(config=>new DshRuntime(config)))({...dshConfiguration,productId:'bmw',dshHome:path.join(this.options.userDataDirectory,'dsh-home'),sourceDshHome:this.options.sourceDshHome??resolveDshHome(),workspacePath:project.directory,workspaceTitle:project.name,...connection,catalogOnly:true})
     }})
     return this.settingsPort.execute(request,context)
   }
   async drainSettings():Promise<void>{await this.settingsPort?.drain()}
-  async close():Promise<void>{this.closed=true;const results=await Promise.allSettled([this.stopRuntime(),this.drainLegacy(),this.drainSettings()]);const failure=results.find((row):row is PromiseRejectedResult=>row.status==='rejected');if(failure)throw failure.reason;this.prepared=undefined;this.owner=undefined}
+  async close():Promise<void>{this.closed=true;const results=await Promise.allSettled([this.stopRuntime(),this.drainSettings()]);const failure=results.find((row):row is PromiseRejectedResult=>row.status==='rejected');if(failure)throw failure.reason;this.prepared=undefined;this.owner=undefined}
 }

@@ -25,7 +25,7 @@
       <button id="agent-toggle" class="agent-toggle toolbar-action" aria-pressed="true">Assistant</button>
       <button id="more-button" class="quiet" title="More" aria-label="More" aria-haspopup="menu" aria-expanded="false">⋯</button>
     </header>
-    <section id="context-strip" class="context-strip" aria-label="Project workspace and conversation"><span id="context-project" class="hidden">Project</span><span id="context-workspace">↔ Workspace</span><button id="context-session" type="button">Conversation: Connecting… ▾</button><span id="context-pages">0 pages · shared by sessions</span><span id="status" class="status" role="status" aria-live="polite">Starting assistant…</span><span id="context-message" class="hidden" role="status" aria-live="polite"></span></section>
+    <section id="context-strip" class="context-strip" aria-label="Project and conversation"><span id="context-project" class="hidden">Project</span><span id="context-workspace">Project</span><button id="context-session" type="button">Conversation: Connecting… ▾</button><span id="context-pages">0 pages · shared by sessions</span><span id="status" class="status" role="status" aria-live="polite">Starting assistant…</span><span id="context-message" class="hidden" role="status" aria-live="polite"></span></section>
     <section id="tab-strip" class="tab-strip"><div class="workspace-switcher" aria-label="Workspaces"><button id="browser-workspace" aria-pressed="true">浏览器</button><button id="studio-workspace" aria-pressed="false">Video Studio</button></div><div id="tabs-list" class="tabs-list"></div><button id="new-tab" class="quiet" title="New tab" aria-label="New tab">＋</button></section>
     <div id="toolbar-dismiss" class="toolbar-dismiss hidden"></div>
     <section id="more-menu" class="toolbar-popup hidden" role="menu" aria-label="More">
@@ -46,7 +46,7 @@
     <div id="session-overlay" class="session-overlay bmw-overlay hidden" role="dialog" aria-modal="true" aria-label="BMW Session Center">
       <section class="session-window bmw-dialog">
         <header class="session-header dialog-header">
-          <div><strong id="session-title">Conversations</strong><span id="session-workspace">One Project ↔ one Workspace; sessions share its pages and media.</span></div>
+          <div><strong id="session-title">Conversations</strong><span id="session-workspace">Conversations share their Project’s pages and media.</span></div>
           <button id="session-close" class="dialog-close" aria-label="Close Session Center">×</button>
         </header>
         <div class="session-toolbar">
@@ -62,7 +62,7 @@
     <div id="project-overlay" class="project-overlay bmw-overlay hidden" role="dialog" aria-modal="true" aria-label="BMW Project Manager">
       <section class="project-manager bmw-dialog">
         <header class="project-manager-header dialog-header">
-          <div><strong id="project-manager-title">BMW Projects</strong><span id="project-manager-subtitle">Workspace, browser state, instructions and durable memory</span></div>
+          <div><strong id="project-manager-title">BMW Projects</strong><span id="project-manager-subtitle">Browser state, instructions and durable memory</span></div>
           <div class="project-manager-header-actions"><button id="project-close" class="dialog-close" aria-label="Close project manager">×</button></div>
         </header>
         <div class="project-manager-body">
@@ -75,7 +75,7 @@
               <label>Name<input id="project-name" maxlength="80" /></label>
               <label>Home URL (optional)<input id="project-home" type="url" placeholder="Blank page" /></label>
             </div>
-            <section id="project-binding" class="project-binding" aria-label="Project Workspace binding"></section>
+            <section id="project-binding" class="project-binding" aria-label="Project conversation ownership"></section>
             <div id="project-doc-tabs" class="project-doc-tabs">
               <button data-kind="instructions" class="active">AGENTS.md</button>
               <button data-kind="memory">MEMORY.md</button>
@@ -228,8 +228,6 @@
           </section>
           <section class="settings-section hidden" data-settings-section="advanced">
             <div class="settings-section-title"><strong id="settings-agent-driver">Agent runtime</strong><span>BMW owns navigation; Agent remains independently upgradeable.</span></div>
-            <label class="settings-check"><input id="settings-agent-sidebar" type="checkbox" /> Show the Agent sidebar</label>
-            <p class="settings-note">Off by default because BMW Projects and Session Center cover workspace and session navigation. Enable it only as an upstream compatibility or diagnostics fallback.</p>
             <div class="settings-agent-policy">
               <span><b>Agent preset</b> BMW browser-only (managed)</span>
               <span><b>Permissions</b> Browser is the capability boundary (managed)</span>

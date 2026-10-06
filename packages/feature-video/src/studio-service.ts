@@ -1,3 +1,4 @@
+import {sourceSpeechOperation} from './studio-source-speech.js'
 import {studioSpeechOperation,verifyStudioSpeech} from './studio-speech.js'
 import {speechScene,usesSpeechCaptions,usesStudioSpeech} from './studio-speech-contract.js'
 import {StudioSources} from './studio-sources.js'
@@ -31,7 +32,7 @@ export class VideoStudioService {
     studioId(owner.sessionId)
     const scope={projectId:owner.projectId,sessionId:owner.sessionId}
     const request=assertStudioRequest(raw),result=await this.perform(request,signal,scope,actor)
-    if(['align-speech','correct-speech','create','delete','update','attach','narrate','narrate-pending','render','export-cover','configure','save-template'].includes(request.operation))this.kernel.videoStudioChanged?.(scope)
+    if(['recognize-source','apply-source-captions','detach-source-captions','set-caption-translations','align-speech','correct-speech','create','delete','update','attach','narrate','narrate-pending','render','export-cover','configure','save-template'].includes(request.operation))this.kernel.videoStudioChanged?.(scope)
     return result
   }
   private async perform(raw:unknown,signal:AbortSignal|undefined,owner:BrowserSessionOwner,actor:'user'|'agent'='agent'):Promise<unknown>{
@@ -65,7 +66,7 @@ export class VideoStudioService {
       for(const artifactId of next.preparation.artifactIds.filter(value=>!current.preparation.artifactIds.includes(value))){signal?.throwIfAborted();const input=await ArtifactJobIO.open(path.join(project.directory,'artifacts'),{action:'media.inspect',artifactId});await input.close()}
       if(next.cover?.sourceArtifactId&&next.cover.sourceArtifactId!==current.cover?.sourceArtifactId){const input=await ArtifactJobIO.open(path.join(project.directory,'artifacts'),{action:'media.inspect',artifactId:next.cover.sourceArtifactId});await input.close()}
       signal?.throwIfAborted()
-      return store.update(id,request.expectedRevision,request.draft)
+      return store.update(id,request.expectedRevision,request.draft,false,actor==='user')
     }
     const draft=store.read(id)
     if(draft.revision!==request.expectedRevision)throw new Error('STUDIO_CONFLICT: 请使用当前草稿版本。')
@@ -121,13 +122,13 @@ export class VideoStudioService {
       // per-scene clock, exact script span, manual/Agent origin and audio identity.
       let provenanceArtifact:{artifactId:string;bytes:number}|undefined
       try{
-        if(draft.scenes.some(usesStudioSpeech)){
+        if(draft.scenes.some(scene=>usesStudioSpeech(scene)||scene.sourceCaptionBinding||scene.captions?.some(cue=>cue.translationText))){
           const scenes=[];let filmStartSeconds=0
-          for(const scene of draft.scenes){scenes.push({sceneId:scene.id,filmStartSeconds,origin:usesSpeechCaptions(scene)?scene.speechAnchors!.origin:scene.captions===undefined?'estimated':'independently-edited',...(usesStudioSpeech(scene)?{binding:scene.speechAnchors,links:scene.speechLinks,cues:speechScene(scene).captions,bulletRevealSeconds:speechScene(scene).bulletRevealSeconds,focus:sceneVisuals(speechScene(scene)).map(v=>v.focusIntervals)}:{} )});filmStartSeconds+=scene.durationSeconds}
-          provenanceArtifact=await exportProjectText(path.join(project.directory,'artifacts'),'json',JSON.stringify({version:1,draftId:draft.id,revision:draft.revision,captionArtifactId:result.artifactId,format:request.captionFormat,voiceOffsetSeconds:.5,timeDomain:'film-seconds',automaticTimingApproved:false,wordTimingAvailable:false,scenes},null,2)+'\n',signal,()=>this.assertRevision(store,draft))
+          for(const scene of draft.scenes){scenes.push({sceneId:scene.id,filmStartSeconds,sourceCaptionBinding:scene.sourceCaptionBinding,captionDisplay:scene.captionDisplay,translations:scene.captions?.map((cue,index)=>({index,origin:cue.translationOrigin})),origin:usesSpeechCaptions(scene)?scene.speechAnchors!.origin:scene.captions===undefined?'estimated':'independently-edited',...(usesStudioSpeech(scene)?{binding:scene.speechAnchors,links:scene.speechLinks,cues:speechScene(scene).captions,bulletRevealSeconds:speechScene(scene).bulletRevealSeconds,focus:sceneVisuals(speechScene(scene)).map(v=>v.focusIntervals)}:{} )});filmStartSeconds+=scene.durationSeconds}
+          provenanceArtifact=await exportProjectText(path.join(project.directory,'artifacts'),'json',JSON.stringify({version:1,draftId:draft.id,revision:draft.revision,captionArtifactId:result.artifactId,format:request.captionFormat,voiceOffsetSeconds:.5,sourceOffsetSeconds:0,timeDomain:'film-seconds',automaticTimingApproved:false,wordTimingAvailable:false,scenes},null,2)+'\n',signal,()=>this.assertRevision(store,draft))
         }
         await verifyStudioSpeech(draft,path.join(project.directory,'artifacts'),signal);signal?.throwIfAborted();this.assertRevision(store,draft)
-        return {...result,draftId:draft.id,revision:draft.revision,type:'subtitles',format:request.captionFormat,contentType:request.captionFormat==='vtt'?'text/vtt':'application/x-subrip',cueCount:document.cueCount,timing:document.timing,...(provenanceArtifact?{provenanceArtifactId:provenanceArtifact.artifactId,sentenceTiming:'edited-audio-anchors'}:{})}
+        return {...result,draftId:draft.id,revision:draft.revision,type:'subtitles',format:request.captionFormat,contentType:request.captionFormat==='vtt'?'text/vtt':'application/x-subrip',cueCount:document.cueCount,timing:document.timing,...(provenanceArtifact?{provenanceArtifactId:provenanceArtifact.artifactId,sentenceTiming:draft.scenes.some(scene=>scene.sourceCaptionBinding)?'edited-source-cues':draft.scenes.some(usesStudioSpeech)?'edited-audio-anchors':'independently-edited'}:{})}
       }catch(error){for(const artifactId of [result.artifactId,provenanceArtifact?.artifactId].filter(Boolean))await fs.rm(path.join(project.directory,'artifacts',artifactId),{force:true});throw error}
     }
     if(request.operation==='narrate-pending'){
@@ -163,6 +164,7 @@ export class VideoStudioService {
     }
     const scene=draft.scenes.find(scene=>scene.id===request.sceneId)
     if(!scene)throw new Error('Unknown Studio scene.')
+    if(['recognize-source','read-source-speech','apply-source-captions','detach-source-captions','set-caption-translations'].includes(request.operation))return sourceSpeechOperation(this.kernel,store,draft,scene,request,path.join(project.directory,'artifacts'),()=>{if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Studio Project changed during source speech.');this.assertRevision(store,draft)},actor,signal)
     if(['align-speech','read-speech','correct-speech'].includes(request.operation))return studioSpeechOperation(this.kernel,store,draft,scene,request,path.join(project.directory,'artifacts'),()=>{if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Studio Project changed during speech operation.');this.assertRevision(store,draft)},actor,signal)
     if(request.operation==='suggest-focus'){
       const visual=request.segmentIndex===undefined?scene:scene.visualSegments?.[request.segmentIndex]

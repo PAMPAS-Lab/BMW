@@ -10,19 +10,26 @@ import { assertArtifactId, finiteNumber, mediaRecord } from './media-contract.js
 
 /** Closed, seekable composition: no model HTML, script, network URL or host path. */
 export interface CompositionScene {
+  sceneTemplate?:SceneTemplate
+  captionDisplay?:'original'|'translation'|'bilingual'
   showSceneNumber?:boolean
   bulletRevealSeconds?:number[]
   focusIntervals?:FocusInterval[]
   visualSegments?:VisualSegment[]
   durationSeconds: number; title: string; label: string; narration: string
   videoArtifactId?: string; imageArtifactId?: string; audioArtifactId?: string;
-  layout?: 'presentation' | 'fullscreen'; voiceVolume?: number; captions?: {startSeconds:number;endSeconds:number;text:string}[]; sourceStartSeconds: number
+  layout?: 'presentation' | 'fullscreen'; voiceVolume?: number; captions?: CaptionCue[]; sourceStartSeconds: number
   zoom: number; playbackRate: number; crop?: {x:number;y:number;width:number;height:number}; bullets: string[]
   keepSourceAudio?:boolean; sourceVolume?:number; captionStyle?:CaptionStyle
 }
+export interface CaptionCue {startSeconds:number;endSeconds:number;text:string;translationText?:string;translationOrigin?:'user-edited'|'agent-edited'}
+export interface SceneTemplate {kind:'summary'|'comparison'|'screenshot';accentColor?:string;backgroundColor?:string;textColor?:string;emphasisIndex?:number}
+export const sceneTemplateSchema={type:'object',additionalProperties:false,required:['kind'],properties:{kind:{enum:['summary','comparison','screenshot']},accentColor:{type:'string',pattern:'^#[0-9a-fA-F]{6}$'},backgroundColor:{type:'string',pattern:'^#[0-9a-fA-F]{6}$'},textColor:{type:'string',pattern:'^#[0-9a-fA-F]{6}$'},emphasisIndex:{type:'integer',minimum:0,maximum:2}}}
+export function assertSceneTemplate(raw:unknown):SceneTemplate{const v=mediaRecord(raw);keys(v,['kind','accentColor','backgroundColor','textColor','emphasisIndex']);if(!['summary','comparison','screenshot'].includes(String(v.kind)))throw new TypeError('Unsupported scene template.');const result:SceneTemplate={kind:v.kind as SceneTemplate['kind']};for(const k of ['accentColor','backgroundColor','textColor'] as const)if(v[k]!==undefined){if(typeof v[k]!=='string'||!/^#[0-9a-fA-F]{6}$/.test(v[k]))throw new TypeError('Template colors require opaque hex.');result[k]=v[k]}if(v.emphasisIndex!==undefined)result.emphasisIndex=finiteNumber(v.emphasisIndex,'emphasis index',0,2,true);return result}
+export function captionText(cue:CaptionCue,mode:CompositionScene['captionDisplay']='bilingual'):string{return mode==='original'?cue.text:mode==='translation'?(cue.translationText??''):cue.translationText?cue.text+'\n'+cue.translationText:cue.text}
 export interface CaptionStyle {fontSize:number;color:string;background:'none'|'outline'|'box';position:'top'|'center'|'bottom';align:'left'|'center'|'right';offsetPercent:number}
 export const captionStyleSchema={type:'object',additionalProperties:false,required:['fontSize','color','background','position','align','offsetPercent'],properties:{fontSize:{type:'number',minimum:12,maximum:64},color:{type:'string',pattern:'^#[0-9a-fA-F]{6}$'},background:{type:'string',enum:['none','outline','box']},position:{type:'string',enum:['top','center','bottom']},align:{type:'string',enum:['left','center','right']},offsetPercent:{type:'number',minimum:-30,maximum:30}}}
-export const sourceAudioProperties={showSceneNumber:{type:'boolean'},keepSourceAudio:{type:'boolean'},sourceVolume:{type:'number',minimum:0,maximum:2},captionStyle:captionStyleSchema}
+export const sourceAudioProperties={sceneTemplate:sceneTemplateSchema,captionDisplay:{enum:['original','translation','bilingual']},showSceneNumber:{type:'boolean'},keepSourceAudio:{type:'boolean'},sourceVolume:{type:'number',minimum:0,maximum:2},captionStyle:captionStyleSchema}
 export function assertCaptionStyle(raw:unknown):CaptionStyle {
   const value=mediaRecord(raw);keys(value,['fontSize','color','background','position','align','offsetPercent'])
   if(typeof value.color!=='string'||!/^#[0-9a-fA-F]{6}$/.test(value.color)||!['none','outline','box'].includes(String(value.background))||!['top','center','bottom'].includes(String(value.position))||!['left','center','right'].includes(String(value.align)))throw new TypeError('Invalid caption style.')
@@ -57,7 +64,7 @@ export function assertComposition(raw: unknown): MediaComposition {
     height: finiteNumber(value.height ?? 720, 'height', 180, 1920, true), fps: finiteNumber(value.fps ?? 24, 'fps', 12, 30, true),
     music: value.music === undefined ? true : value.music as boolean, scenes: value.scenes.map((rawScene: unknown) => {
       const scene = mediaRecord(rawScene)
-      keys(scene,['durationSeconds','title','label','narration','videoArtifactId','imageArtifactId','audioArtifactId','layout','voiceVolume','captions','sourceStartSeconds','zoom','playbackRate','crop','bullets','keepSourceAudio','sourceVolume','captionStyle','visualSegments','focusIntervals','bulletRevealSeconds','showSceneNumber'])
+      keys(scene,['durationSeconds','title','label','narration','videoArtifactId','imageArtifactId','audioArtifactId','layout','voiceVolume','captions','sourceStartSeconds','zoom','playbackRate','crop','bullets','keepSourceAudio','sourceVolume','captionStyle','visualSegments','focusIntervals','bulletRevealSeconds','showSceneNumber','sceneTemplate','captionDisplay'])
       if (!Array.isArray(scene.bullets ?? []) || (scene.bullets as unknown[] | undefined)?.length > 3) throw new TypeError('At most three scene bullets.')
       const parsed: CompositionScene = {
         durationSeconds: finiteNumber(scene.durationSeconds, 'scene duration', 1, 60),
@@ -71,6 +78,8 @@ export function assertComposition(raw: unknown): MediaComposition {
         if(parsed.crop.x+parsed.crop.width>1 || parsed.crop.y+parsed.crop.height>1)throw new TypeError('Crop must be inside the source frame.')
       }
       if(scene.layout!==undefined){if(!['presentation','fullscreen'].includes(String(scene.layout)))throw new TypeError('Unknown scene layout.');parsed.layout=scene.layout as CompositionScene['layout']}
+      if(scene.sceneTemplate!==undefined)parsed.sceneTemplate=assertSceneTemplate(scene.sceneTemplate)
+      if(scene.captionDisplay!==undefined){if(!['original','translation','bilingual'].includes(String(scene.captionDisplay)))throw new TypeError('Unsupported caption display.');parsed.captionDisplay=scene.captionDisplay as CompositionScene['captionDisplay']}
       if(scene.showSceneNumber!==undefined){if(typeof scene.showSceneNumber!=='boolean')throw new TypeError('showSceneNumber must be boolean.');parsed.showSceneNumber=scene.showSceneNumber}
       if(scene.voiceVolume!==undefined)parsed.voiceVolume=finiteNumber(scene.voiceVolume,'voice volume',0,2)
       if(scene.keepSourceAudio!==undefined){if(typeof scene.keepSourceAudio!=='boolean')throw new TypeError('keepSourceAudio must be boolean.');parsed.keepSourceAudio=scene.keepSourceAudio}
@@ -79,7 +88,7 @@ export function assertComposition(raw: unknown): MediaComposition {
       if(scene.captionStyle!==undefined)parsed.captionStyle=assertCaptionStyle(scene.captionStyle)
       if(scene.captions!==undefined){
         if(!Array.isArray(scene.captions)||scene.captions.length>100)throw new TypeError('At most one hundred caption cues per scene.')
-        parsed.captions=scene.captions.map(raw=>{const cue=mediaRecord(raw);keys(cue,['startSeconds','endSeconds','text']);const startSeconds=finiteNumber(cue.startSeconds,'caption start',0,parsed.durationSeconds),endSeconds=finiteNumber(cue.endSeconds,'caption end',0,parsed.durationSeconds);if(endSeconds<=startSeconds)throw new TypeError('Caption end must follow start.');return {startSeconds,endSeconds,text:text(cue.text,'caption',200)}})
+        parsed.captions=scene.captions.map(raw=>{const cue=mediaRecord(raw);keys(cue,['startSeconds','endSeconds','text','translationText','translationOrigin']);if(cue.translationOrigin!==undefined&&!['user-edited','agent-edited'].includes(String(cue.translationOrigin)))throw new TypeError('Invalid translation origin.');const startSeconds=finiteNumber(cue.startSeconds,'caption start',0,parsed.durationSeconds),endSeconds=finiteNumber(cue.endSeconds,'caption end',0,parsed.durationSeconds);if(endSeconds<=startSeconds)throw new TypeError('Caption end must follow start.');return {startSeconds,endSeconds,text:text(cue.text,'caption',200),...(cue.translationText===undefined?{}:{translationText:text(cue.translationText,'caption translation',200)}),...(cue.translationOrigin===undefined?{}:{translationOrigin:cue.translationOrigin as 'user-edited'|'agent-edited'})}})
         if(parsed.captions.some((cue,index)=>index>0&&cue.startSeconds<parsed.captions![index-1].endSeconds))throw new TypeError('Caption cues must be ordered and nonoverlapping.')
       }
       if(scene.videoArtifactId&&scene.imageArtifactId)throw new TypeError('Choose a video or image, not both.')

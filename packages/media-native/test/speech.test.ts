@@ -1,3 +1,4 @@
+import {speechDecodedRange} from '../src/speech-contract.js'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import fs from 'node:fs/promises'
@@ -12,9 +13,9 @@ const segment=(from=0,to=1000,p=.9,text='中文。')=>({offsets:{from,to},text,t
 const raw=(segments=[segment()])=>({model:{type:'small',multilingual:true},params:{language:'zh',translate:false},result:{language:'zh'},transcription:segments})
 const normalization={kind:'speech-pcm' as const,sampleRate:16000 as const,channels:1 as const,sampleType:'pcm-s16le' as const,downmix:'channel-mean' as const,frames:32000,durationSeconds:2,inputSampleRate:48000,inputChannels:2,decodedStartSeconds:0,decodedEndSeconds:2,clippedSamples:0}
 const evidence=()=>({kind:'speech-evidence',provider:'whisper.cpp',engineVersion:'1.9.1',model:'small',modelRevision:LOCAL_ASR_MODEL_REVISION,modelSha256:LOCAL_ASR_MODELS.small.sha256,engineSha256:'a'.repeat(64),sourceArtifactId:'speech.wav',sourceSha256:'b'.repeat(64),normalizedArtifactId:'normalized.wav',normalizedSha256:'c'.repeat(64),rawArtifactId:'raw.json',rawSha256:'d'.repeat(64),logArtifactId:'log.json',logSha256:'e'.repeat(64),sampleRate:16000,channels:1,sampleType:'pcm-s16le',downmix:'channel-mean',normalization,timeDomain:'audio-file-seconds',durationSeconds:2,elapsedSeconds:1,createdAt:'2026-10-04T00:00:00.000Z',segments:whisperSegments(raw(),2,'small'),automaticTimingApproved:false,wordTimingAvailable:false})
-test('Speech requests admit fixed models and Project artifacts, never executable, cache, language, prompt or CLI options',()=>{
+test('Speech requests admit fixed models and Project artifacts, never executable, cache, prompt or CLI options',()=>{
  assert.equal(assertSpeechRequest({action:'media.speech.align',artifactId:'voice.wav'}).model,'small')
- for(const extra of [{model:'arbitrary'},{executable:'/bin/sh'},{modelPath:'/tmp/model'},{args:['-h']},{language:'auto'},{prompt:'invent timings'}])assert.throws(()=>assertSpeechRequest({action:'media.speech.align',artifactId:'voice.wav',...extra}))
+ for(const extra of [{model:'arbitrary'},{executable:'/bin/sh'},{modelPath:'/tmp/model'},{args:['-h']},{language:'fr'},{prompt:'invent timings'}])assert.throws(()=>assertSpeechRequest({action:'media.speech.align',artifactId:'voice.wav',...extra}))
  for(const artifactId of ['../voice.wav','/tmp/a.wav','https://example.com/a.mp3'])assert.throws(()=>assertSpeechRequest({action:'media.speech.align',artifactId}))
  assert.equal(assertNativeProcessingRequest({action:'media.speech.normalize',artifactId:'voice.wav'}).action,'media.speech.normalize')
  assert.throws(()=>assertMediaProcessRequest({action:'media.speech.normalize',artifactId:'voice.wav'}))
@@ -73,4 +74,17 @@ test('Speech fingerprints reject replaced artifacts even when an already-open de
 test('Speech subprocess keeps UTF-8 log characters intact across raw pipe chunks',async t=>{
  const root=await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(),'bmw-speech-utf8-')));t.after(()=>fs.rm(root,{recursive:true,force:true}));const script="const bytes=Buffer.from('中文锚点');process.stdout.write(bytes.subarray(0,1));setTimeout(()=>process.stdout.write(bytes.subarray(1)),20)"
  const output=await runSpeechProcess(process.execPath,['-e',script],root,new AbortController().signal,5000);assert.equal(output.stdout,'中文锚点')
+})
+
+test('Speech language is an explicit fixed choice and English or automatic ASR retains source language',()=>{
+ assert.equal(assertSpeechRequest({action:'media.speech.align',artifactId:'source.webm',language:'en',model:'base'}).language,'en')
+ const english={...raw(),params:{language:'en',translate:false},result:{language:'en'}};assert.equal(whisperSegments(english,2,'small','en').length,1)
+ const automatic={...english,params:{language:'auto',translate:false}};assert.equal(whisperSegments(automatic,2,'small','auto').length,1)
+ assert.throws(()=>whisperSegments(english,2,'small','zh'));assert.throws(()=>whisperSegments({...automatic,params:{language:'auto',translate:true}},2,'small','auto'))
+})
+
+test('Opus final packet padding is bounded and recorded without moving the original audio clock',()=>{
+ const range=speechDecodedRange(35.103,35.163,35.118,48000,'opus');assert.equal(range.end,35.118);assert.equal(range.discardedTailFrames,2160)
+ for(const args of [[35.2,35.26,35.118,48000,'opus'],[35,35.5,35.118,48000,'opus'],[35.103,35.163,35.118,48000,'aac'],[-.01,.01,35,48000,'opus']] as const)assert.throws(()=>speechDecodedRange(args[0],args[1],args[2],args[3],args[4]))
+ const proof=evidence();const normalized={...proof.normalization,discardedTailFrames:2160};assertSpeechEvidence({...proof,normalization:normalized});assert.throws(()=>assertSpeechEvidence({...proof,normalization:{...normalized,discardedTailFrames:999999}}))
 })

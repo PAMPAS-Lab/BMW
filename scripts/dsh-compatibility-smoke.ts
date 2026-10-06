@@ -7,11 +7,11 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { DshRuntime, DshHarnessPort } from '../packages/harness-dsh/index.js'
+import { DshRuntime } from '../packages/harness-dsh/index.js'
 import product from '../apps/bmw/product.js'
 import { createBridgeServer } from '../packages/browser-capability/src/bridge-server.js'
 import { BrowserCapabilityRegistry } from '../packages/browser-capability/src/browser-capability-registry.js'
-import {readDshLegacySessions} from '../packages/harness-dsh/src/dsh-legacy.js'
+import {readDshMigrationSessions} from '../packages/harness-dsh/migration/index.js'
 import {DshSettings} from '../packages/harness-dsh/src/dsh-settings.js'
 
 const root = path.resolve(import.meta.dirname, '..')
@@ -44,7 +44,7 @@ try {
       dshHome: path.join(temporary, product.id, 'home'), sourceDshHome: path.join(temporary, 'empty-source-home'),
       workspacePath: workspace, workspaceTitle: 'Compatibility smoke',
       mcpServerPath: path.join(root, 'packages/browser-capability/src/browser-mcp-server.js'),
-      bridgeUrl: bridge.url, bridgeToken: bridge.token,
+      bridgeUrl: bridge.url, bridgeToken: bridge.token,catalogOnly:true,
       onLog: ({ text }: { text: string }) => process.stderr.write(text) })
     try {
       const url = await runtime.start()
@@ -53,11 +53,10 @@ try {
       const active = await runtime.activateWorkspace(project)
       const sessionId = active.sessionId
       assert.ok(sessionId)
-      const port=new DshHarnessPort(runtime)
-      const normalized=await port.listProjectSessions({...project,id:'smoke',workspaceId:String(active.workspace.workspaceId),sessionId:String(sessionId)})
+      const normalized=await runtime.listProjectSessions({...project,id:'smoke',workspaceId:String(active.workspace.workspaceId),sessionId:String(sessionId)})
       assert.equal(normalized.selectedSessionId,sessionId)
       assert.equal(normalized.items[0].sessionId,sessionId)
-      assert.equal((await port.health()).ready,true)
+      assert.equal((await runtime.call('session.list',{})).items instanceof Array,true)
       assert.equal((await runtime.activateWorkspace(project)).sessionId, sessionId)
       await runtime.call('session.rename', { sessionId, title: 'Smoke renamed' })
       const list = await runtime.listProjectSessions(project, 'Smoke')
@@ -70,7 +69,7 @@ try {
       await runtime.call('session.cancel', { sessionId })
       await runtime.call('workspace.archiveSession', { sessionId: fork.sessionId })
       assert.equal((await runtime.listProjectSessions(project)).items.some((item) => item.sessionId === fork.sessionId), false)
-      const legacy=await readDshLegacySessions(runtime,[{...project,id:'smoke',workspaceId:String(active.workspace.workspaceId),sessionId:String(sessionId)}],product.id,new AbortController().signal)
+      const legacy=await readDshMigrationSessions(runtime,[{...project,id:'smoke',workspaceId:String(active.workspace.workspaceId),sessionId:String(sessionId)}],product.id,new AbortController().signal)
       assert.equal(legacy.find(row=>row.externalSessionId===sessionId)?.title,'Smoke renamed')
       assert.equal(legacy.find(row=>row.externalSessionId===sessionId)?.selected,true)
       assert.equal(legacy.find(row=>row.externalSessionId===fork.sessionId)?.archived,true)
@@ -82,8 +81,8 @@ try {
   const settingsRoot=path.join(temporary,'official-settings'),workspace=path.join(settingsRoot,'workspace'),sourceHome=path.join(settingsRoot,'empty-source'),productHome=path.join(settingsRoot,'home')
   fs.mkdirSync(workspace,{recursive:true});fs.mkdirSync(sourceHome)
   let browserExecutions=0,selectedModel:string|null=null
-  const bridge=await createBridgeServer({async execute(){browserExecutions++;assert.fail('Cold settings never execute browser work')}},{toolDefinition:new BrowserCapabilityRegistry(product).toolDefinition(),hostManagedSessions:true,resolveProject:()=>undefined,activeProjectId:()=> 'settings-fixture'})
-  const settings=new DshSettings({createRuntime:()=>new DshRuntime({...dshConfiguration,productId:'bmw',dshHome:productHome,sourceDshHome:sourceHome,workspacePath:workspace,workspaceTitle:'Official settings fixture',mcpServerPath:path.join(root,'packages/browser-capability/src/browser-mcp-server.js'),bridgeUrl:bridge.url,bridgeToken:bridge.token,isolateCredentials:true}),model:()=>selectedModel,setModel:model=>{selectedModel=model}})
+  const bridge=await createBridgeServer({async execute(){browserExecutions++;assert.fail('Cold settings never execute browser work')}},{toolDefinition:new BrowserCapabilityRegistry(product).toolDefinition(),resolveProject:()=>undefined,activeProjectId:()=> 'settings-fixture'})
+  const settings=new DshSettings({createRuntime:()=>new DshRuntime({...dshConfiguration,productId:'bmw',dshHome:productHome,sourceDshHome:sourceHome,workspacePath:workspace,workspaceTitle:'Official settings fixture',mcpServerPath:path.join(root,'packages/browser-capability/src/browser-mcp-server.js'),bridgeUrl:bridge.url,bridgeToken:bridge.token,catalogOnly:true}),model:()=>selectedModel,setModel:model=>{selectedModel=model}})
   const settingsController=new AbortController(),settingsTimeout=setTimeout(()=>settingsController.abort(),120000),settingsContext={signal:settingsController.signal,openExternal:async()=>assert.fail('DSH settings do not open OAuth')}
   try{
     const cold=await settings.execute({action:'refresh'},settingsContext);await settings.drain()

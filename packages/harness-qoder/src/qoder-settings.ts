@@ -47,9 +47,8 @@ export class QoderSettings {
     const controller=new AbortController(),connection=this.options.connection,model=request.action==='model.select'?request.modelId:this.options.model()
     const native=(this.options.queryFactory??query)({prompt:prompt(),options:{cwd:this.options.configDirectory,auth:qodercliAuth(),env:{QODERCN_CONFIG_DIR:this.options.configDirectory,ELECTRON_RUN_AS_NODE:'1'},abortController:controller,
       ...(model?{model}:{}),tools:[],skills:[],plugins:[],settingSources:[],strictMcpConfig:true,persistSession:false,includePartialMessages:false,controlRequestTimeoutMs:15000,stderr:()=>{},
-      // This syntactically valid, unregistered binding can discover the schema but
-      // cannot execute any BMW action. No Project or BMW Session is created here.
-      mcpServers:{bmw:{type:'stdio',command:connection.nodeExecutable,args:[connection.mcpServerPath],env:{BMW_BRIDGE_URL:connection.bridgeUrl,BMW_BRIDGE_TOKEN:connection.bridgeToken,BMW_SESSION_BINDING:'0'.repeat(64),ELECTRON_RUN_AS_NODE:'1'},tools:[{name:'browser',exposedName:'browser',permission_policy:'always_allow',alwaysLoad:true}]}},
+      // Control discovery has no BMW execution lease and cannot call browser.
+      mcpServers:{bmw:{type:'stdio',command:connection.nodeExecutable,args:[connection.mcpServerPath],env:{BMW_BRIDGE_URL:connection.bridgeUrl,BMW_BRIDGE_TOKEN:connection.bridgeToken,BMW_CATALOG_ONLY:'1',ELECTRON_RUN_AS_NODE:'1'},tools:[{name:'browser',exposedName:'browser',permission_policy:'always_allow',alwaysLoad:true}]}},
       canUseTool:async()=>({behavior:'deny',interrupt:true,message:'BMW settings never execute model tools'})
     }})
     const held={query:native,controller,release,reader:Promise.resolve()};this.control=held

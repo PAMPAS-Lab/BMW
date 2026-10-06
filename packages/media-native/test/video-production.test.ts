@@ -1,3 +1,4 @@
+import {reviewSceneText,assertCompositionText} from '../src/media/composition-text.js'
 import {assertFocusIntervals,focusFraming,visibleFocusIntervals} from '../src/focus-contract.js'
 import {assertRecordingEvents,recordingEvents,suggestRecordingFocus} from '../src/recording-contract.js'
 import {visualAtTime,fitVisualSegments} from '../src/visual-segments.js'
@@ -99,4 +100,18 @@ test('Title-card reveal has bounded scene-local times, exact bullet identity and
  for(const times of [[0],[-1,2],[0,4],[0,NaN],[0,Infinity]])assert.throws(()=>assertComposition({...base,scenes:[{...base.scenes[0],bulletRevealSeconds:times}]}))
  assert.throws(()=>assertComposition({...base,scenes:[{...base.scenes[0],imageArtifactId:'board.png'}]}),/no footage/)
  const {bulletRevealSeconds,...legacy}=base.scenes[0];assert.equal(assertComposition({...base,scenes:[legacy]}).scenes[0].bulletRevealSeconds,undefined)
+})
+
+test('Bilingual SRT and VTT select original, translation or both without changing timing',()=>{
+ const composition=assertComposition({title:'字幕',scenes:[{title:'scene',durationSeconds:3,captions:[{startSeconds:0,endSeconds:2,text:'Hello world',translationText:'你好世界'}]}]})
+ for(const mode of ['original','translation','bilingual'] as const){composition.scenes[0].captionDisplay=mode;const srt=captionDocument(composition.scenes,1280,720,'srt').text,vtt=captionDocument(composition.scenes,1280,720,'vtt').text;assert.ok(srt.includes('00:00:00,000 --> 00:00:02,000'));assert.equal(srt.includes('Hello world'),mode!=='translation');assert.equal(vtt.includes('你好世界'),mode!=='original')}
+ assert.throws(()=>assertComposition({...composition,scenes:[{...composition.scenes[0],captionDisplay:'secret'}]}))
+})
+test('Fixed templates validate bounded colors/content and reject text overflow before encoding',()=>{
+ const measure={font:'',measureText(text:string){const size=Number(/([0-9]+)px/.exec(this.font)?.[1]??24);return {width:text.length*size*.7}}}
+ for(const kind of ['summary','comparison','screenshot'] as const){const composition=assertComposition({title:'template',width:540,height:720,scenes:[{title:'固定模板',durationSeconds:8,sceneTemplate:{kind,accentColor:'#22cc88'},bullets:kind==='summary'?['观点一','观点二','观点三']:kind==='comparison'?['方案一','方案二']:['截图说明'],...(kind==='screenshot'?{imageArtifactId:'source.png'}:{})}]});assertCompositionText(measure,composition);assert.equal(reviewSceneText(measure,composition.scenes[0],540,720).filter(i=>i.severity==='error').length,0)}
+ for(const sceneTemplate of [{kind:'html',markup:'<b>x</b>'},{kind:'summary',accentColor:'url(x)'},{kind:'comparison',emphasisIndex:99}])assert.throws(()=>assertComposition({title:'bad',scenes:[{title:'s',durationSeconds:8,sceneTemplate}]}))
+ const wrong=assertComposition({title:'wrong',scenes:[{title:'s',durationSeconds:8,sceneTemplate:{kind:'summary'},bullets:['only one']}]});assert.throws(()=>assertCompositionText(measure,wrong),/三点总结/)
+ const overflowing=assertComposition({title:'overflow',width:360,height:640,scenes:[{title:'s',durationSeconds:8,captions:[{startSeconds:0,endSeconds:.3,text:'字幕'.repeat(90),translationText:'x'.repeat(190)}]}]});assert.throws(()=>assertCompositionText(measure,overflowing),/字幕/)
+ const warnings=reviewSceneText(measure,{...wrong.scenes[0],sceneTemplate:undefined,captions:[{startSeconds:0,endSeconds:.1,text:'很密集的字幕内容'}],captionStyle:{fontSize:22,color:'#ffffff',background:'none',position:'center',align:'center',offsetPercent:0}},1280,720);assert.ok(warnings.some(i=>i.code==='caption-density'));assert.ok(warnings.some(i=>i.code==='text-overlap'))
 })

@@ -21,7 +21,7 @@ Browser is boundary, media is native, web is runtime.
 
 - Author implementations, plugins, scripts and tests in TypeScript. Generated JS/CJS/MJS are ignored compiler output; use NodeNext `.js` imports and `.cts` preload sources.
 - Define typed contracts at package boundaries. Avoid new `any`; validate IPC, browser, driver and persisted input. Do not expand the frozen typecheck exceptions in `scripts/check-source.ts`.
-- Keep existing user profiles, media and documents. Binding compatibility must be idempotent and retain the current Workspace/Session. Never test against a production profile.
+- Keep existing user profiles, media and documents. Normal startup accepts only the current Agent data format. Historical DSH conversion belongs to the explicit migration command and its harness export; preserve all BMW Session IDs, native resume anchors and Studio/schedule owners. Never import the harness migration entry from normal runtime code. Never test against a production profile.
 - Video actions live in `feature-video`; media decoding, processing, narration and export live in `media-native`. Draft updates use revisions; background tasks must not overwrite GUI edits.
 - Prefer Mediabunny, WebCodecs, Canvas, WebAudio, WebGPU and MediaRecorder. General HTML import and a general video editor are outside the current contract.
 

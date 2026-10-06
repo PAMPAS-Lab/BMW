@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import test from 'node:test'
-import product, {agentDriver} from '../../../apps/bmw/product.js'
+import product, {createBmwAgentAssembly} from '../../../apps/bmw/product.js'
 import {dshConfiguration} from '../../harness-dsh/index.js'
 import { bmwProduct } from '@bmw-agent/product-bmw'
 import { BrowserCapabilityRegistry } from '../../browser-capability/src/browser-capability-registry.js'
@@ -47,7 +47,7 @@ test('BMW catalog retains one browser tool and its expected action boundary', ()
   const registry = new BrowserCapabilityRegistry(product)
   const inherited = new BrowserCapabilityRegistry(bmwProduct)
   assert.equal(registry.toolDefinition().name,'browser')
-  assert.equal(agentDriver.id, 'dsh')
+  assert.equal(createBmwAgentAssembly().defaultDriverId, 'dsh')
   assert.equal(Object.hasOwn(product, 'dsh'), false)
   assert.match(fs.readFileSync(dshConfiguration.patchPath,'utf8'), /- id: mcp-resources\s+disabled: true/, 'The active product profile must disable upstream resource tools')
   for (const action of inherited.allowedActions) assert.ok(registry.allowedActions.includes(action))

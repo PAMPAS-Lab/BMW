@@ -17,7 +17,7 @@ test('DSH preparation failures retain cleanup ownership and permit retry only af
   t.after(()=>fs.rmSync(root,{recursive:true,force:true}))
   let starts=0,closes=0
   const runtime={async start(){starts++;throw new Error('Fixture native startup failed')},async stopAndWait(){closes++;if(closes===1)throw new Error('Fixture native cleanup failed')}}as unknown as DshRuntime
-  const backend=new DshBackend({userDataDirectory:root,sourceDshHome:root,project:()=>({id:'project',name:'Disposable',directory:root}),connection:async()=>({bridgeUrl:'http://127.0.0.1:1',bridgeToken:'fixture',mcpServerPath:'/disposable/mcp.js',attachProviderSession(){assert.fail('No provider may be attached before preflight succeeds')}}),runtimeFactory:()=>runtime})
+  const backend=new DshBackend({userDataDirectory:root,sourceDshHome:root,project:()=>({id:'project',name:'Disposable',directory:root}),connection:async()=>({bridgeUrl:'http://127.0.0.1:1',bridgeToken:'fixture',mcpServerPath:'/disposable/mcp.js',binding:'a'.repeat(64),attachProviderSession(){assert.fail('No provider may be attached before preflight succeeds')}}),runtimeFactory:()=>runtime})
   t.after(()=>backend.close())
   const run=request(root)
   await assert.rejects(backend.prepare(run),/native cleanup failed/)
@@ -35,7 +35,7 @@ test('DSH rejects malformed native membership before creating a Session or submi
   t.after(()=>fs.rmSync(root,{recursive:true,force:true}))
   let closes=0
   const runtime={async start(){return 'http://127.0.0.1:1'},async listProjectSessions(){return {items:[],membership:'foreign'}},async createProjectSession(){assert.fail('Malformed membership must not create a native Session')},async enqueuePrompt(){assert.fail('No input may be submitted')},async stopAndWait(){closes++}}as unknown as DshRuntime
-  const backend=new DshBackend({userDataDirectory:root,sourceDshHome:root,project:()=>({id:'project',name:'Disposable',directory:root}),connection:async()=>({bridgeUrl:'http://127.0.0.1:1',bridgeToken:'fixture',mcpServerPath:'/disposable/mcp.js',attachProviderSession(){assert.fail('No provider may be attached')}}),runtimeFactory:()=>runtime})
+  const backend=new DshBackend({userDataDirectory:root,sourceDshHome:root,project:()=>({id:'project',name:'Disposable',directory:root}),connection:async()=>({bridgeUrl:'http://127.0.0.1:1',bridgeToken:'fixture',mcpServerPath:'/disposable/mcp.js',binding:'a'.repeat(64),attachProviderSession(){assert.fail('No provider may be attached')}}),runtimeFactory:()=>runtime})
   t.after(()=>backend.close())
   const run=request(root)
   await assert.rejects(backend.prepare(run),/Invalid DSH Session list/)

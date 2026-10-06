@@ -26,10 +26,12 @@ npm start
 BMW_USER_DATA_DIR=/tmp/bmw-disposable npm start
 ```
 
+旧 Profile 升级前退出 BMW，按 [Agent 数据迁移](docs/AGENT_DATA_MIGRATION.md) 执行 `--plan` 和 `--apply`。迁移保留会话 ID、显示历史、模型选择、Studio 归属与素材，自动备份本次修改的元数据；旧格式不会在应用启动时自动转换。
+
 ## 主要能力
 
 - 浏览器标签页、语义观察、页面交互、站点权限、后台取材、登录连续性和按 Project 保存的日常任务。
-- 稳定 BMW Session 固定所属 Project 和驱动；按驱动保留原生续聊身份。不同驱动共享 Project 页面和媒体，会话切换保留独立历史；DSH 旧 Workspace/Session 身份兼容迁移。
+- 稳定 BMW Session 固定所属 Project 和驱动；按驱动保留原生续聊身份。不同驱动共享 Project 页面和媒体，会话切换保留独立历史；旧 DSH 身份由一次性迁移保留；日常启动不转换旧数据，原生 Workspace 映射只在对应 harness 内维护。
 - 截图、页面媒体发现与下载、视频 Capture、录屏、媒体检查、抽帧、裁剪、缩放和 MP4/WebM 转换。
 - Video Studio 在主窗口中切换工作区：素材收集、全局与分镜脚本、真实旁白、画面匹配、预览编辑和导出。
 - 草稿强绑定所属会话：一个会话可有多个草稿，共享 Project 素材；切换会话切换可见草稿，无草稿显示空状态。支持删除草稿并保留素材与可恢复记录。
@@ -61,7 +63,7 @@ platform ── agent-contract / browser-capability / media-native
 feature-video ── browser-capability / media-native
 ```
 
-`agent-contract` 定义生命周期、稳定 BMW Session、原生恢复身份、任务回执、设置及客户端操作；三个 harness 各自实现官方协议、认证、目录准入和事件转换。默认入口注入三驱动装配，BMW Host 与自有 Assistant 协调会话和资源，核心不调用具体驱动 RPC 或读取原生桌面私有存储。Project、页面、媒体和 Studio 保持一份。
+`agent-contract` 定义官方后端生命周期、稳定 BMW Session、原生恢复身份、任务回执、设置及 BMW 上下文；三个 harness 各自实现官方协议、认证、目录准入和事件转换。默认入口注入三驱动装配，BMW Host 与自有 Assistant 协调会话和资源，核心不调用具体驱动 RPC 或读取原生桌面私有存储。Project、页面、媒体和 Studio 保持一份。
 
 模型始终只有一个 `browser` 工具。Bridge 验证会话与 Project、串行执行操作，保护 Project 切换，并限制图像和媒体输出。没有聊天软件连接器、模型 shell 或任意本地文件能力。
 
@@ -101,7 +103,7 @@ npm run test:contracts
 
 每个入口先串行构建一次，再按文件依赖与接口保障选择测试，并报告选择和排除原因。默认 `test:affected` 对比最后完整通过的源码哈希基线；删除、未知路径、共享配置或无法证明的动态导入会升级为全量离线测试。`--files` 使用仓库相对路径，表示调用者声明的改动范围。新报告位于 `.bmw-runtime/classified-tests/`，既有报告保留。
 
-Browser 和 AgentDriver 的直接接口保障使用通用 driver 夹具，经真实 MCP/Bridge 操作 Project 页面。DSH 专有与产品装配回归单列；Browser 模型接口（Schema、目录、Bridge、MCP）单独改动不会自动启动 DSH，通用 Agent 契约、DSH 实现、产品组装及完整基线仍会验证它。
+Browser 和 AgentBackend 的直接接口保障使用通用 driver 夹具，经真实 MCP/Bridge 操作 Project 页面。DSH 专有与产品装配回归单列；Browser 模型接口（Schema、目录、Bridge、MCP）单独改动不会自动启动 DSH，通用 Agent 契约、DSH 实现、产品组装及完整基线仍会验证它。
 
 Shell 的全部请求验证来源、主框架和固定本地页面；损坏的权限、布局、登录保持配置与加密快照和 Project 一样提供保留原文件的重试/退出。共享测试辅助库改动会自动选择运行时消费测试；生产代码不能引用测试目录、验证工具或任意计算式模块加载。
 

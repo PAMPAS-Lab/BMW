@@ -37,24 +37,9 @@ function writeAtomically(filePath, content) {
   fs.renameSync(temporary, filePath)
 }
 
-function ensureProjectMetadata(project, migrateProjectMetadata) {
-  const before = JSON.stringify(project)
-  const migrated = migrateProjectMetadata(project)
-  for(const key of Object.keys(project))if(!Object.hasOwn(migrated,key))delete project[key]
-  Object.assign(project, migrated)
-  // Retired connection settings have no consumer or authority in BMW.
-  delete project.connectors
-  project.agentBindings ||= {}
-  if (typeof project.agentBindings !== 'object' || Array.isArray(project.agentBindings)) throw new Error('Invalid Agent bindings.')
-  for (const [driverId, raw] of Object.entries(project.agentBindings)) {
-    if (!/^[a-z0-9-]{1,64}$/.test(driverId) || !raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Invalid Agent binding.')
-    const binding = raw as Record<string, unknown>
-    for (const key of ['workspaceId', 'sessionId']) {
-      if (binding[key] !== null && (typeof binding[key] !== 'string' || !binding[key] || String(binding[key]).length > 4096)) throw new Error('Invalid Agent binding identifier.')
-    }
-    project.agentBindings[driverId] = {workspaceId: binding.workspaceId, sessionId: binding.sessionId}
-  }
-  return before !== JSON.stringify(project)
+function validateProjectMetadata(project:Record<string,unknown>):void {
+  const fields=['id','name','directory','homeUrl','tabState','createdAt','updatedAt','archivedAt']
+  if(Object.keys(project).some(key=>!fields.includes(key)))throw new Error('Unknown Project data field; explicit migration is required.')
 }
 
 function documentTemplate(kind, projectName) {
@@ -85,36 +70,37 @@ Durable, verified facts that should survive across sessions. Keep entries concis
   return `# ${projectName} — ${title}\n\n`
 }
 
-export class ProjectStore {
-  [key: string]: any
-
-  constructor({ filePath, projectsDirectory, legacyWorkspacePath, onState, migrateProjectMetadata = (project: Record<string, unknown>) => project }) {
-    this.migrateProjectMetadata = migrateProjectMetadata
-    this.filePath = filePath
-    this.projectsDirectory = projectsDirectory
-    this.legacyWorkspacePath = legacyWorkspacePath
-    this.onState = onState
-    this.state = { version: 1, activeProjectId: null, projects: [], initialSetupPending: false }
-    this.load()
-    this.ensureInitialProject()
-  }
-
-  load() {
-    const parsed = readStateFile(this.filePath, raw => {
+export function parseProjectState(raw:unknown) {
       const value = stateRecord(raw)
-      if (value.version !== 1 || (!Array.isArray(value.projects)||!value.projects.length)) throw new Error('Unsupported or malformed Project state.')
+      if (value.version !== 2 || (!Array.isArray(value.projects)||!value.projects.length)) throw new Error('Unsupported or malformed Project state.')
       const ids = new Set<string>()
       for (const rawProject of value.projects) {
         const project = stateRecord(rawProject)
         if (typeof project.id !== 'string' || !project.id || ids.has(project.id) || typeof project.directory !== 'string' || !path.isAbsolute(project.directory)) throw new Error('Invalid Project identity or directory.')
         cleanName(project.name); cleanHomeUrl(project.homeUrl)
         // Validate every migration before any Project documents or state are written.
-        ensureProjectMetadata(structuredClone(project), this.migrateProjectMetadata)
+        validateProjectMetadata(project)
         ids.add(project.id)
       }
       if (value.activeProjectId !== null && typeof value.activeProjectId !== 'string') throw new Error('Invalid active Project identity.')
       return { ...value, initialSetupPending: value.initialSetupPending === true }
-    })
+}
+
+export class ProjectStore {
+  [key: string]: any
+
+  constructor({ filePath, projectsDirectory, initialWorkspacePath, onState }) {
+    this.filePath = filePath
+    this.projectsDirectory = projectsDirectory
+    this.initialWorkspacePath = initialWorkspacePath
+    this.onState = onState
+    this.state = { version: 2, activeProjectId: null, projects: [], initialSetupPending: false }
+    this.load()
+    this.ensureInitialProject()
+  }
+
+  load() {
+    const parsed = readStateFile(this.filePath,parseProjectState)
     if (parsed) this.state = parsed
   }
 
@@ -127,7 +113,7 @@ export class ProjectStore {
     if (this.state.projects.length) {
       let changed = false
       for (const project of this.state.projects) {
-        changed = ensureProjectMetadata(project, this.migrateProjectMetadata) || changed
+        validateProjectMetadata(project)
         this.ensureProjectFiles(project)
       }
       if (!this.get(this.state.activeProjectId, { includeArchived: false })) {
@@ -140,7 +126,7 @@ export class ProjectStore {
     const project = this.makeProject({
       name: 'Untitled Project',
       homeUrl: '',
-      directory: this.legacyWorkspacePath
+      directory: this.initialWorkspacePath
     })
     this.state.projects.push(project)
     this.state.activeProjectId = project.id
@@ -156,7 +142,6 @@ export class ProjectStore {
       name: cleanName(name),
       directory,
       homeUrl: cleanHomeUrl(homeUrl),
-      agentBindings: {},
       tabState: { urls: [], activeUrl: null },
       createdAt: now,
       updatedAt: now,
@@ -255,25 +240,6 @@ export class ProjectStore {
     project.updatedAt = new Date().toISOString()
     this.save()
     return { ...project }
-  }
-
-  agentBinding(id: string, driverId: string): { workspaceId: string | null; sessionId: string | null } {
-    const project = this.get(id)
-    if (!project) throw new Error('Unknown project: ' + id)
-    return structuredClone(project.agentBindings[driverId] || {workspaceId: null, sessionId: null})
-  }
-
-  setAgentBinding(id: string, driverId: string, input: {workspaceId?: string | null; sessionId?: string | null}): void {
-    const project = this.get(id)
-    if (!project) throw new Error('Unknown project: ' + id)
-    const binding = {...this.agentBinding(id, driverId), ...input}
-    // Validate the candidate without mutating the stored Project on failure.
-    const candidate = {...project, agentBindings: {...project.agentBindings, [driverId]: binding}}
-    ensureProjectMetadata(candidate, value => value)
-    if (JSON.stringify(project.agentBindings[driverId]) === JSON.stringify(binding)) return
-    project.agentBindings = candidate.agentBindings
-    project.updatedAt = new Date().toISOString()
-    this.save()
   }
 
   archive(id) {

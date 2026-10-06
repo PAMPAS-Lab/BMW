@@ -1,3 +1,4 @@
+import {requireCurrentAgentData} from '../packages/platform/src/agent-data-format.js'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -5,81 +6,51 @@ import path from 'node:path'
 import http from 'node:http'
 import {createFixtureBrowserClient,fixtureRecord} from './fixture-browser-client.js'
 import {app,webContents,ipcMain} from 'electron'
-import type {AgentDriver,AgentProject,AgentRuntime,AgentRuntimeConfiguration,AgentSession,AgentWorkspace} from '@bmw-agent/agent-contract'
+import type {AgentBackend,AgentRunRequest} from '@bmw-agent/agent-contract'
+import {assistantPagePath,assistantPreloadPath} from '@bmw-agent/agent-ui'
+import type {AgentBridgeConnection} from '../packages/platform/src/assistant-service.js'
 import {createBmwApplication} from '../packages/platform/src/main.js'
 import {bmwProduct} from '../packages/product-bmw/index.js'
 import {ProjectStore} from '../packages/platform/src/project-store.js'
 import {PermissionStore} from '../packages/platform/src/permission-store.js'
 import {LayoutStore} from '../packages/platform/src/layout-store.js'
 
-/** Provider-neutral runtime fixture: no Agent loop, model or concrete harness. */
-class FixtureRuntime implements AgentRuntime {
- running=false
- readonly url='data:text/html;charset=utf-8,'+encodeURIComponent('<h1>Fixture Agent</h1>')
- private workspaces=new Map<string,AgentWorkspace>()
- private sessions=new Map<string,AgentSession>()
- private sequence=0
- async start(){this.running=true;return this.url}
- stop(){this.running=false}
- async ensureWorkspace(project:AgentProject){
-  let workspace=this.workspaces.get(project.directory)
-  if(!workspace){workspace={workspaceId:'w'+(++this.sequence),title:project.name,path:project.directory,sessionIds:[]};this.workspaces.set(project.directory,workspace)}
-  workspace.title=project.name
-  return structuredClone(workspace)
- }
- async activateWorkspace(project:AgentProject){
-  const workspace=await this.ensureWorkspace(project)
-  const sessionId=project.sessionId&&workspace.sessionIds.includes(project.sessionId)?project.sessionId:workspace.sessionIds[0]||(await this.createProjectSession(project)).sessionId
-  return {workspace:await this.ensureWorkspace(project),sessionId}
- }
- async listProjectSessions(project:AgentProject,query=''){
-  const workspace=await this.ensureWorkspace(project)
-  return {workspaceId:workspace.workspaceId,selectedSessionId:project.sessionId??null,items:workspace.sessionIds.map(id=>this.sessions.get(id)).filter((row):row is AgentSession=>Boolean(row)&&row.title.includes(query)),hasMore:false,membership:workspace.sessionIds}
- }
- async createProjectSession(project:AgentProject){
-  await this.ensureWorkspace(project)
-  const workspace=this.workspaces.get(project.directory),sessionId='s'+(++this.sequence)
-  workspace.sessionIds.push(sessionId);this.sessions.set(sessionId,{sessionId,title:'New conversation',updatedAt:Date.now(),running:false,blank:true,parentSessionId:null,snippet:''})
-  return {sessionId}
- }
- async renameSession(id:string,title:string){this.sessions.get(id).title=title}
- async forkSession(id:string){const workspace=[...this.workspaces.values()].find(row=>row.sessionIds.includes(id));return this.createProjectSession({id:'fixture',name:workspace.title,directory:workspace.path})}
- async archiveSession(id:string){for(const row of this.workspaces.values())row.sessionIds=row.sessionIds.filter(item=>item!==id);this.sessions.delete(id)}
- async moveSession(workspaceId:string,id:string,before?:string){const row=[...this.workspaces.values()].find(item=>item.workspaceId===workspaceId);row.sessionIds=row.sessionIds.filter(item=>item!==id);const index=before?row.sessionIds.indexOf(before):-1;row.sessionIds.splice(index<0?row.sessionIds.length:index,0,id)}
- async deleteWorkspace(id:string){for(const [directory,row] of this.workspaces)if(row.workspaceId===id)this.workspaces.delete(directory)}
- async resolveContext(id:string,projects:AgentProject[]){
-  const workspace=[...this.workspaces.values()].find(row=>row.sessionIds.includes(id)),session=this.sessions.get(id)
-  const owners=projects.filter(project=>project.directory===workspace?.path&&(!project.workspaceId||project.workspaceId===workspace.workspaceId))
-  if(!workspace||!session||owners.length!==1)throw new Error('Unbound fixture selection')
-  const project=owners[0]
-  return {projectId:project.id,projectName:project.name,directory:project.directory,workspaceId:workspace.workspaceId,workspaceTitle:workspace.title,sessionId:id,sessionTitle:session.title,sessionCount:workspace.sessionIds.length}
- }
- async enqueuePrompt(){return 'fixture-ack'}
- async promptAndWait(){return 'fixture-complete'}
- async cancelSession(){return {cancelled:true}}
-}
 const temporary=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'bmw-driver-core-')))
 process.env.BMW_USER_DATA_DIR=path.join(temporary,'profile')
-const store=new ProjectStore({filePath:path.join(process.env.BMW_USER_DATA_DIR,'projects.json'),projectsDirectory:path.join(temporary,'projects'),legacyWorkspacePath:path.join(temporary,'workspace'),onState:undefined})
+requireCurrentAgentData(process.env.BMW_USER_DATA_DIR)
+const store=new ProjectStore({filePath:path.join(process.env.BMW_USER_DATA_DIR,'projects.json'),projectsDirectory:path.join(temporary,'projects'),initialWorkspacePath:path.join(temporary,'workspace'),onState:undefined})
 store.completeInitialSetup({name:'Contract Project',homeUrl:''})
 new LayoutStore({filePath:path.join(process.env.BMW_USER_DATA_DIR,'layout-settings.json'),onState:undefined}).update({configured:true,mode:'sidebar'})
-const runtime=new FixtureRuntime()
-let runtimeConfiguration:AgentRuntimeConfiguration|undefined
-const driver:AgentDriver={
- id:'fixture',label:'Fixture Agent',baseline:'contract-test',preloadPath:path.resolve(import.meta.dirname,'../packages/agent-contract/test/fixture-preload.cjs'),
- createRuntime:config=>{runtimeConfiguration=config;return runtime},migrateProjectMetadata:value=>value,migrateSettings:value=>value,
- client:{
-  async readSelection(surface){const value=await surface.executeJavaScript('document.documentElement.dataset.sessionId||null');if(value!==null&&typeof value!=='string')throw new Error('Invalid fixture selection');return value as string|null},
-  async selectSession(surface,id){await surface.executeJavaScript('document.documentElement.dataset.sessionId='+JSON.stringify(id))},
-  async applySidebarPolicy(){},async openSettings(){}
- }
+let connection:AgentBridgeConnection|undefined,finishRun:(()=>void)|undefined,cancelRun:(()=>void)|undefined
+const backend:AgentBackend={
+ description:{id:'fixture',label:'Fixture',baseline:'contract-test',capabilities:{streaming:false,images:true,interrupt:true,steer:false,fork:false,approvals:false,nativeOpen:false,browserOnly:false}},
+ async prepare(request){
+   connection.attachProviderSession(request.externalSessionId??'fixture-native:'+request.sessionId)
+   const client=createFixtureBrowserClient(connection)
+   try{
+     await client.request('initialize',{protocolVersion:'2025-06-18',capabilities:{},clientInfo:{name:'neutral-preflight',version:'1'}})
+     const catalog=fixtureRecord(await client.request('tools/list'));assert.ok(Array.isArray(catalog.tools));assert.deepEqual(catalog.tools.map(tool=>fixtureRecord(tool).name),['browser'])
+   }finally{await client.close()}
+   return {...this.description,capabilities:{...this.description.capabilities,browserOnly:true}}
+ },
+ async run(request,emit){
+   await emit({type:'session.bound',externalSessionId:request.externalSessionId??'fixture-native:'+request.sessionId})
+   await emit({type:'input.accepted',receiptId:'fixture-'+request.runId})
+   const outcome=await new Promise<'success'|'interrupted'>(resolve=>{finishRun=()=>resolve('success');cancelRun=()=>resolve('interrupted');if(request.signal.aborted)cancelRun()})
+   await emit({type:'turn.completed',outcome,message:''});return {outcome,message:''}
+ },
+ async interrupt(){cancelRun?.()},async respond(){throw new Error('No fixture interactions')},async close(){cancelRun?.()}
 }
 const errors:string[]=[]
 app.on('web-contents-created',(_event,contents)=>contents.on('console-message',details=>{if(details.level==='error')errors.push(details.message)}))
 const invokeHandlers=new Map<string,Parameters<typeof ipcMain.handle>[1]>()
 const installHandler=ipcMain.handle.bind(ipcMain)
 ipcMain.handle=(channel,listener)=>{invokeHandlers.set(channel,listener);installHandler(channel,listener)}
-createBmwApplication(bmwProduct,driver)
+createBmwApplication(bmwProduct,{pagePath:assistantPagePath,preloadPath:assistantPreloadPath,defaultDriverId:'fixture',createBackends(config){
+ const prepare=backend.prepare.bind(backend)
+ backend.prepare=async(request:AgentRunRequest)=>{connection=await config.connection(request);return prepare(request)}
+ return [backend]
+}})
 async function waitFor<T>(read:()=>Promise<T|null>):Promise<T>{
  const end=Date.now()+30000
  while(Date.now()<end){const value=await read();if(value!==null)return value;await new Promise(resolve=>setTimeout(resolve,100))}
@@ -109,19 +80,27 @@ try{
  await shell.executeJavaScript("document.getElementById('ipc-child-fixture').remove()")
  assert.equal(new PermissionStore(path.join(process.env.BMW_USER_DATA_DIR,'permissions.json')).hasAgentControl(),false)
  console.log('PASS Shell IPC: all '+shellChannels.length+' exposed invokes reject non-Shell and real child-frame events before state changes')
- assert.ok(runtimeConfiguration,'Platform must inject the generic Browser connection configuration')
- const config=runtimeConfiguration
+ const assistant=await waitFor(async()=>webContents.getAllWebContents().find(contents=>contents.getURL().endsWith('/assistant.html')&&!contents.isLoading())??null)
+ const initial=await shell.executeJavaScript('(async()=>({project:(await window.bmw.projectState()).projects[0],sessionId:(await window.bmw.listAgentSessions()).selectedSessionId}))()')
+ const startRun=async(sessionId:string)=>{
+   finishRun=undefined
+   await assistant.executeJavaScript('window.bmwAssistant.invoke('+JSON.stringify({action:'message.send',sessionId,text:'Hold a neutral contract execution lease'})+')')
+   await waitFor(async()=>finishRun&&connection?true:null)
+ }
+ const finish=async()=>{finishRun?.();await waitFor(async()=>await assistant.executeJavaScript('window.bmwAssistant.invoke({action:"snapshot"}).then(value=>!value.busy?true:null)'))}
+ await startRun(initial.sessionId)
+ assert.ok(connection,'Platform must inject a generic Host execution lease')
+ const config=connection
  const unauthorized=await fetch(config.bridgeUrl+'/health',{headers:{authorization:'Bearer invalid-fixture'},signal:AbortSignal.timeout(10000)})
  assert.equal(unauthorized.status,401)
- const initial=await shell.executeJavaScript('(async()=>({project:(await window.bmw.projectState()).projects[0],sessionId:(await window.bmw.listAgentSessions()).selectedSessionId}))()')
  model=createFixtureBrowserClient(config)
  const initialized=fixtureRecord(await model.request('initialize',{protocolVersion:'2025-06-18',capabilities:{},clientInfo:{name:'neutral-contract-fixture',version:'1'}}))
  assert.equal(fixtureRecord(initialized.serverInfo).name,'bmw-browser')
  const catalog=fixtureRecord(await model.request('tools/list'))
  assert.ok(Array.isArray(catalog.tools));assert.deepEqual(catalog.tools.map(tool=>fixtureRecord(tool).name),['browser'])
- const binding=await model.register(initial.sessionId,initial.project.directory)
+ const binding=await model.register('fixture-native:'+initial.sessionId,initial.project.directory)
  const foreignDirectory=path.join(temporary,'foreign-project');fs.mkdirSync(foreignDirectory)
- await assert.rejects(model.register('foreign',foreignDirectory),/active BMW Project/)
+ await assert.rejects(model.register('foreign',foreignDirectory),/live BMW Host lease/)
  const modelStatus=fixtureRecord((await model.call(binding,{action:'status'})).structuredContent)
  assert.equal(fixtureRecord(modelStatus.activeProject).id,initial.project.id)
  await assert.rejects(model.call(binding,{action:'tabs.list'}),/PERMISSION_REQUIRED/)
@@ -149,10 +128,11 @@ try{
  const drawing=await model.call(binding,{action:'media.image.draw',width:320,height:180,shapes:[{type:'text',x:20,y:20,text:'BMW drawing',fontSize:24,color:'#000000'},{type:'arrow',x1:20,y1:80,x2:200,y2:80}]})
  assert.equal(fixtureRecord(drawing.structuredContent).width,320);assert.ok(Array.isArray(drawing.content)&&drawing.content.map(fixtureRecord).some(part=>part.type==='image'))
  console.log('PASS model-side MCP: real screenshot -> native annotation and drawing -> Project PNG and image content, originals preserved')
- await assert.rejects(model.call('forged-fixture',{action:'status'}),/Session has ended/)
+ await assert.rejects(model.call('b'.repeat(64),{action:'status'}),/Session has ended/)
  await assert.rejects(model.request('tools/call',{name:'shell',arguments:{}}),/Unknown tool/)
  await assert.rejects(model.call(binding,{action:'connector.external.status'}),/Unsupported browser action/)
  await model.call(binding,{action:'tabs.close',tabId:opened.id})
+ await finish()
  const proof=await shell.executeJavaScript([
  '(async()=>{const api=window.bmw,first=(await api.projectState()).projects[0],initial=await api.listAgentSessions();',
  'const firstId=initial.selectedSessionId;await api.renameAgentSession(firstId,"Original conversation");',
@@ -162,25 +142,27 @@ try{
  'const next=await api.createProject({name:"Second Contract Project",homeUrl:""});',
  'return {product:await api.productInfo(),first,firstId,selected,rejected,next,status:await api.browser({action:"status"})}})()'
  ].join('\n'))
- assert.equal(proof.product.agent.id,'fixture');assert.equal(runtime.running,true)
- assert.equal(proof.selected.selectedSessionId,proof.firstId);assert.equal(proof.selected.items[0].title,'Original conversation');assert.equal(proof.rejected,true)
+ assert.equal(proof.product.agent.label,'BMW Assistant')
+ assert.equal(proof.selected.selectedSessionId,proof.firstId);assert.equal(proof.selected.items[0].title,'Fixture · Original conversation');assert.equal(proof.rejected,true)
  assert.notEqual(proof.next.activeProjectId,proof.first.id)
- assert.equal(Object.hasOwn(proof.next.projects[0].agentBindings,'fixture'),true)
- assert.equal(Object.hasOwn(proof.next.projects[0].agentBindings,'dsh'),false)
+ assert.equal(Object.hasOwn(proof.next.projects[0],'agentBindings'),false)
  const keys=await shell.executeJavaScript('Object.keys(window.bmw)')
  assert.equal(keys.some((key:string)=>/Dsh|Import|WebRuntime/.test(key)),false)
- await assert.rejects(model.call(binding,{action:'status'}),/Activate the Session/)
+ await assert.rejects(model.call(binding,{action:'status'}),/Session has ended/)
  await model.post('/session/release',{binding})
  await assert.rejects(model.call(binding,{action:'status'}),/Session has ended/)
  const current=proof.next.projects.find((project:{id:string})=>project.id===proof.next.activeProjectId)
- const currentBinding=await model.register(current.agentBindings.fixture.sessionId,current.directory)
+ const currentSession=await shell.executeJavaScript('window.bmw.listAgentSessions().then(value=>value.selectedSessionId)')
+ await startRun(currentSession)
+ const currentBinding=await model.register('fixture-native:'+currentSession,current.directory)
  assert.equal(fixtureRecord(fixtureRecord((await model.call(currentBinding,{action:'status'})).structuredContent).activeProject).id,current.id)
  await model.post('/session/release',{binding:currentBinding})
+ await finish()
  assert.equal(errors.length,0,errors.join('\n'))
  console.log('PASS neutral Browser/Driver connection: injected configuration, MCP initialize/sole browser tool, permission denial, real Project tabs shared with GUI, forged/foreign/released binding denial and Project-switch recovery; no DSH or model')
  console.log('PASS provider-neutral BMW core: lifecycle, Shell, Project bindings, sessions, rename/select, foreign ownership denial and Project transition with fixture driver')
 }catch(error){exitCode=1;console.error(error)}
-finally{clearTimeout(watchdog);await model?.close();fixtureServer.closeAllConnections();if(fixtureServer.listening)await new Promise<void>(resolve=>fixtureServer.close(()=>resolve()));runtime.stop();fs.rmSync(temporary,{recursive:true,force:true});app.exit(exitCode)}
+finally{clearTimeout(watchdog);await model?.close();fixtureServer.closeAllConnections();if(fixtureServer.listening)await new Promise<void>(resolve=>fixtureServer.close(()=>resolve()));finishRun?.();app.once('will-quit',()=>{fs.rmSync(temporary,{recursive:true,force:true});app.exit(exitCode)});app.quit()}
 
 }
 void run()

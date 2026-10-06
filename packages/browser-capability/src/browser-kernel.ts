@@ -53,7 +53,7 @@ function projectStartUrl(project) {
 export class BrowserKernel {
   [key: string]: any
 
-  constructor({ window, session, permissionStore, sessionContinuity, projectStore, settingsStore, capabilityRegistry, allowedActions, artifactsDirectory, pageTheme = 'dark', onState, getCurrentSessionId = () => null, getSessionDriver = (_sessionId:string) => 'dsh' }) {
+  constructor({ window, session, permissionStore, sessionContinuity, projectStore, settingsStore, capabilityRegistry, allowedActions, artifactsDirectory, pageTheme = 'dark', onState, getCurrentSessionId = () => null, getSessionDriver = (_sessionId:string):string => {throw new Error('An explicit BMW Session driver is required')} }) {
     this.getCurrentSessionId = getCurrentSessionId
     this.getSessionDriver = getSessionDriver
     this.window = window

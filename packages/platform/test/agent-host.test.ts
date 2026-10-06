@@ -17,7 +17,7 @@ function deferred<T>() {
 const success: AgentRunResult = { outcome: 'success', message: '' }
 function fixture(t: TestContext, run: AgentBackend['run'], drain: (request: AgentRunRequest) => Promise<void> = async () => {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-agent-host-'))
-  const conversations = new ConversationStore(path.join(root, 'sessions.json')), history = new AgentHistoryStore(path.join(root, 'history'))
+  const conversations = new ConversationStore(path.join(root, 'sessions.json')), history = new AgentHistoryStore(path.join(root, 'history'),sessionId=>conversations.get(sessionId))
   const backend: AgentBackend = {
     description: { id: 'fixture', label: 'Isolated test', baseline: 'fixture', capabilities: { streaming: true, images: false, interrupt: true, steer: false, fork: false, approvals: true, nativeOpen: false, browserOnly: true } },
     prepare: async () => backend.description, run, interrupt: async () => {}, respond: async () => {}, close: async () => {}

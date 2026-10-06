@@ -31,7 +31,7 @@ test('does not overwrite a preset directory not owned by BMW', (context) => {
 })
 
 
-test('isolates product state while linking rather than copying DSH credentials', (context) => {
+test('isolates product state and privately seeds credentials without shared writable links', (context) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-dsh-home-'))
   context.after(() => fs.rmSync(root, { recursive: true, force: true }))
   const sourceHome = path.join(root, 'source')
@@ -41,8 +41,11 @@ test('isolates product state while linking rather than copying DSH credentials',
   fs.writeFileSync(path.join(sourceHome, '.credentials.yaml'), 'not-read-by-product')
   prepareProductDshHome({ productHome, sourceHome, presetSourceDirectory: sourceDirectory, workspacePath, workspaceTitle: 'Active Research' })
   const credentialLink = path.join(productHome, '.credentials.yaml')
-  assert.equal(fs.lstatSync(credentialLink).isSymbolicLink(), true)
-  assert.equal(fs.readlinkSync(credentialLink), path.join(sourceHome, '.credentials.yaml'))
+  assert.equal(fs.lstatSync(credentialLink).isSymbolicLink(), false)
+  assert.equal(fs.readFileSync(credentialLink,'utf8'), 'not-read-by-product')
+  assert.equal(fs.statSync(credentialLink).mode & 0o777,0o600)
+  fs.writeFileSync(credentialLink,'private login')
+  assert.equal(fs.readFileSync(path.join(sourceHome,'.credentials.yaml'),'utf8'),'not-read-by-product')
   assert.equal(fs.existsSync(path.join(productHome, '.agent-presets', 'bmw', 'agent.cordis.yml')), true)
   assert.match(fs.readFileSync(path.join(productHome, 'settings.yaml'), 'utf8'), /default: bmw/)
   assert.match(fs.readFileSync(path.join(productHome, 'settings.yaml'), 'utf8'), /ui-theme:\n  preference: system/)

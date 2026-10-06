@@ -13,6 +13,8 @@ export interface AgentHostOptions {
   context(sessionId: string, projectId: string): Promise<string>
   /** Revoke the run's tool binding and await its actual browser work, including cancellation. */
   drain(request: AgentRunRequest): Promise<void>
+  /** Invalidate display cache only; never refresh or replay a failed native task. */
+  onSettingsInvalidated?(driverId:string):void
 }
 interface PendingRun {
   request: AgentRunRequest
@@ -93,7 +95,6 @@ export class AgentHost {
     agentText(text, 65536)
     if (!text.trim()) throw new Error('Enter a message before sending')
     const row = this.member(sessionId), project = this.options.currentProject()
-    if(row.legacyImportPending)throw new Error('Restore this legacy conversation history before sending; retry its migration in BMW')
     if (row.externalSessionId === null && this.options.history.snapshot(sessionId).receipts.some(receipt => receipt.state === 'unknown')) throw new Error('An uncertain submission has no provider resume anchor; create an explicit new BMW Session')
     const backend = this.backend(row.driverId), controller = new AbortController(), runId = crypto.randomUUID(), messageId = crypto.randomUUID()
     this.options.history.prepare(sessionId, runId, messageId, text)
@@ -182,12 +183,14 @@ export class AgentHost {
           if (eventFailure) throw eventFailure
           if (!result || !['success', 'interrupted', 'failed'].includes(result.outcome)) throw new Error('Invalid Agent run result')
           agentText(result.message, 16384)
+          if(result.outcome==='failed')this.options.onSettingsInvalidated?.(backend.description.id)
           if (terminal && terminal.outcome !== result.outcome) throw new Error('Agent result disagrees with its terminal event')
           if (tools.size || requested.size) throw new Error('Agent returned before its tools or interactions drained')
         }
       }
     } catch (error: unknown) {
       failure = error
+      if(!controller.signal.aborted)this.options.onSettingsInvalidated?.(backend.description.id)
       controller.abort()
       if (entered) { try { await backend.interrupt(request.sessionId, request.runId) } catch { /* Resource drain below remains authoritative. */ } }
     }

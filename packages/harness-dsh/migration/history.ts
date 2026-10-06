@@ -1,9 +1,12 @@
 import crypto from 'node:crypto'
 import fs from 'node:fs'
-import {agentIdentifier,agentRecord,agentText,parseAgentLegacySession} from '@bmw-agent/agent-contract'
-import type {AgentLegacySession,AgentMessage,AgentProject} from '@bmw-agent/agent-contract'
-import type {DshRuntime} from './dsh-runtime.js'
-import {dshMessageText} from './dsh-events.js'
+import {agentIdentifier,agentRecord,agentText} from '@bmw-agent/agent-contract'
+import type {AgentMessage} from '@bmw-agent/agent-contract'
+import type {DshRuntime} from '../src/dsh-runtime.js'
+import type {DshProject} from '../src/project-bindings.js'
+import {parseDshMigrationSource} from './source.js'
+import type {DshMigrationSource} from './source.js'
+import {dshMessageText} from '../src/dsh-events.js'
 
 function rows(value:unknown,label:string):Record<string,unknown>[] {
   if(!Array.isArray(value)||value.length>100000)throw new Error('Invalid DSH '+label)
@@ -15,7 +18,7 @@ function timestamp(value:unknown):number {
 }
 /** Durable display history retains original human/model messages, including compacted prefixes.
  * Synthetic context, replacement summaries, thinking and image bytes stay native. */
-export function dshLegacyMessages(sessionId:string,records:readonly Record<string,unknown>[],cursor:number):AgentMessage[] {
+export function dshMigrationMessages(sessionId:string,records:readonly Record<string,unknown>[],cursor:number):AgentMessage[] {
   const messages:AgentMessage[]=[]
   let previous=-1
   for(const raw of records){
@@ -57,7 +60,7 @@ async function history(runtime:DshRuntime,sessionId:string,signal:AbortSignal):P
   return {header,cursor,records}
 }
 /** Only cold official reads; no ensureWorkspace, rename, prompt or Agent promotion. */
-export async function readDshLegacySessions(runtime:DshRuntime,projects:readonly AgentProject[],presetId:string,signal:AbortSignal):Promise<AgentLegacySession[]> {
+export async function readDshMigrationSessions(runtime:DshRuntime,projects:readonly (DshProject&{archivedProject?:boolean})[],presetId:string,signal:AbortSignal):Promise<DshMigrationSource[]> {
   const [listed,workspaceList]=await Promise.all([
     runtime.call('session.list',{}, {signal}),runtime.call('workspace.list',{}, {signal})
   ])
@@ -66,16 +69,19 @@ export async function readDshLegacySessions(runtime:DshRuntime,projects:readonly
   const archived=new Set(workspaceList.archivedSessionIds.map(id=>agentIdentifier(id)))
   const byId=new Map<string,Record<string,unknown>>()
   for(const row of sessions){const id=agentIdentifier(row.sessionId);if(byId.has(id))throw new Error('Duplicate DSH Session identity');byId.set(id,row)}
-  const imported:AgentLegacySession[]=[],claimed=new Set<string>()
+  const imported:DshMigrationSource[]=[],claimed=new Set<string>()
   for(const project of projects){
     signal.throwIfAborted()
     if(!project.workspaceId&&!project.sessionId)continue
     const directory=fs.realpathSync(project.directory)
     const matches=workspaces.filter(row=>row.workspaceId===project.workspaceId)
-    if(matches.length!==1||typeof matches[0].path!=='string'||fs.realpathSync(matches[0].path)!==directory)throw new Error('Saved DSH workspace is unavailable in its BMW Project')
+    if(matches.length>1)throw new Error('Ambiguous saved DSH Workspace')
+    if(matches.length===0&&!project.archivedProject)throw new Error('Saved DSH Workspace is unavailable in its active BMW Project')
     const workspace=matches[0]
-    if(!Array.isArray(workspace.sessionIds))throw new Error('Invalid DSH workspace membership')
-    const membership=new Set(workspace.sessionIds.map(id=>agentIdentifier(id)))
+    if(workspace&&(typeof workspace.path!=='string'||fs.realpathSync(workspace.path)!==directory||!Array.isArray(workspace.sessionIds)))throw new Error('Invalid DSH Workspace directory or membership')
+    // BMW's retired archive path removed native Workspaces. Only explicit
+    // migration may recover those Sessions using both native list and header cwd.
+    const membership=new Set(workspace?(workspace.sessionIds as unknown[]).map(id=>agentIdentifier(id)):sessions.filter(row=>row.cwd===directory).map(row=>agentIdentifier(row.sessionId)))
     const ids=[...membership,...sessions.filter(row=>archived.has(String(row.sessionId))&&row.cwd===directory).map(row=>agentIdentifier(row.sessionId))]
     if(project.sessionId&&!ids.includes(project.sessionId))throw new Error('Saved DSH Session is unavailable in its BMW Project')
     for(const id of new Set(ids)){
@@ -84,6 +90,7 @@ export async function readDshLegacySessions(runtime:DshRuntime,projects:readonly
       if(row.origin==='subagent')continue
       if(row.cwd!==directory)throw new Error('DSH Session directory differs from its BMW Project')
       const saved=await history(runtime,id,signal),header=saved.header
+      if(!workspace&&header.cwd!==directory)throw new Error('Archived Project recovery requires a matching native history directory')
       if(header.agentPreset!==undefined&&header.agentPreset!==presetId){if(id===project.sessionId)throw new Error('Saved DSH Session uses another Agent preset');continue}
       if(header.cwd!==undefined&&(typeof header.cwd!=='string'||fs.realpathSync(header.cwd)!==directory))throw new Error('DSH history directory differs from its BMW Project')
       if(header.origin==='subagent')continue
@@ -94,8 +101,8 @@ export async function readDshLegacySessions(runtime:DshRuntime,projects:readonly
       if(row.parentSessionId!==undefined&&row.parentSessionId!==parent)throw new Error('DSH legacy lineage changed')
       const values=row.projections===undefined?{}:agentRecord(agentRecord(row.projections).values)
       const title=typeof values.title==='string'&&values.title.trim()?agentText(values.title.trim(),200):id
-      const createdAt=timestamp(header.createdAt),messages=dshLegacyMessages(id,saved.records,saved.cursor)
-      imported.push(parseAgentLegacySession({projectId:project.id,externalSessionId:id,parentExternalSessionId:parent,title,createdAt,updatedAt:messages.reduce((latest,message)=>Math.max(latest,message.createdAt),Math.max(createdAt,timestamp(row.updatedAt))),archived:archived.has(id),selected:project.sessionId===id&&!archived.has(id),throughSequence:saved.cursor,messages}))
+      const createdAt=timestamp(header.createdAt),messages=dshMigrationMessages(id,saved.records,saved.cursor)
+      imported.push(parseDshMigrationSource({projectId:project.id,externalSessionId:id,parentExternalSessionId:parent,title,createdAt,updatedAt:messages.reduce((latest,message)=>Math.max(latest,message.createdAt),Math.max(createdAt,timestamp(row.updatedAt))),archived:archived.has(id),selected:project.sessionId===id&&!archived.has(id),throughSequence:saved.cursor,messages}))
     }
   }
   return imported

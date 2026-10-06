@@ -1,3 +1,4 @@
+import {sourceCaptionsStale} from './studio-source-speech-contract.js'
 import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -20,7 +21,7 @@ async function readEvidence(directory:string,id:string,expectedSha:string,signal
 /** Called before reuse/render/export. A filename and saved duration are insufficient evidence. */
 export async function verifyStudioSpeech(draft:VideoDraft,directory:string,signal?:AbortSignal):Promise<void>{
  const hashes=new Map<string,string>()
- for(const scene of draft.scenes){if(!usesStudioSpeech(scene))continue;speechScene(scene);const record=scene.speechAnchors
+ for(const scene of draft.scenes){if(scene.sourceCaptionBinding){if(sourceCaptionsStale(scene)||await studioAudioHash(directory,scene.sourceCaptionBinding.sourceArtifactId,signal)!==scene.sourceCaptionBinding.sourceSha256)throw new Error('STUDIO_SOURCE_SPEECH_STALE: 原声字幕与素材或剪裁/速度不一致。')}if(!usesStudioSpeech(scene))continue;speechScene(scene);const record=scene.speechAnchors
   if(speechBindingStale(scene,record)||!record?.anchors.length||sceneCoverage(scene,draft.tts).audioStale||sha(scene.narration)!==record.scriptSha256)throw new Error('STUDIO_SPEECH_STALE: 句锚点与当前脚本、旁白版本不一致。')
   let actual=hashes.get(record.audioArtifactId);if(!actual){actual=await studioAudioHash(directory,record.audioArtifactId,signal);hashes.set(record.audioArtifactId,actual)}
   if(actual!==record.audioSha256)throw new Error('STUDIO_SPEECH_STALE: 旁白文件已变化，旧句锚点不可使用。')

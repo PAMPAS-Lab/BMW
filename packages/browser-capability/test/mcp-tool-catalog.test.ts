@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import path from 'node:path'
+import readline from 'node:readline'
 import test from 'node:test'
 import product from '../../../apps/bmw/product.js'
 import { BrowserCapabilityRegistry } from '../src/browser-capability-registry.js'
@@ -14,7 +15,7 @@ test('BMW MCP discovers exactly browser from the authenticated product catalog',
   t.after(() => bridge.close())
   assert.equal((await fetch(`${bridge.url}/tool`)).status, 401)
   const child = spawn(process.execPath, [path.resolve('packages/browser-capability/src/browser-mcp-server.js')], {
-    env: { ...process.env, BMW_BRIDGE_URL: bridge.url, BMW_BRIDGE_TOKEN: bridge.token }, stdio: ['pipe','pipe','pipe']
+    env: { ...process.env, BMW_BRIDGE_URL: bridge.url, BMW_BRIDGE_TOKEN: bridge.token, BMW_SESSION_BINDING:'', BMW_CATALOG_ONLY:'1' }, stdio: ['pipe','pipe','pipe']
   })
   t.after(() => { child.kill() })
   const result = await new Promise<{ result: { tools: unknown[] } }>((resolve, reject) => {
@@ -30,6 +31,14 @@ test('BMW MCP discovers exactly browser from the authenticated product catalog',
     child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' })}\n`)
   })
   assert.deepEqual(result.result.tools, [definition])
+  const lines=readline.createInterface({input:child.stdout})
+  const denied=new Promise<{error:{message:string}}>((resolve,reject)=>{
+    lines.once('line',line=>{try{resolve(JSON.parse(line))}catch(error){reject(error)}})
+    child.once('error',reject)
+  })
+  child.stdin.write(JSON.stringify({jsonrpc:'2.0',id:2,method:'tools/call',params:{name:'browser',arguments:{action:'status'}}})+'\n')
+  assert.match((await denied).error.message,/catalog-only connection cannot execute/)
+  lines.close()
   assert.equal(registry.allowedActions.some((action) => action.startsWith('connector.')), false)
   assert.equal(product.featureIds.includes('feature-video'), true)
   assert.equal(registry.allowedActions.includes('experiment.plan.propose'), false)

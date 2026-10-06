@@ -26,14 +26,10 @@ function render(next: AssistantState): void {
   setOptions(sessions, next.sessions.filter(row => row.driverId === next.driverId).map(row => ({ id: row.sessionId, text: row.title })), next.selectedSessionId)
   const session = next.sessions.find(row => row.sessionId === next.selectedSessionId)
   document.documentElement.dataset.status = session?.status ?? ''
-  element('status').textContent = session?.legacyImportPending?'旧会话历史待恢复；原会话和视频草稿身份已保留':session ? statuses[session.status] : '新建会话后，可以在 BMW 中直接交互'
-  if(!next.busy&&!session?.legacyImportPending&&!settingsView.canSend())element('status').textContent=next.settings?.value?.authentication.state==='ready'?'请选择模型并确认':'请登录当前 Agent，或切换其他驱动'
-  const imports=element('legacy-imports');imports.replaceChildren()
-  for(const row of next.legacyImports??[])if(row.state!=='complete'){
-    const text=document.createElement('p');text.textContent=(next.drivers.find(driver=>driver.id===row.driverId)?.label??row.driverId)+' · '+(row.state==='failed'?'旧会话恢复失败：'+row.message:row.state==='running'?'正在恢复旧会话历史…':'旧会话等待恢复');imports.append(text)
-    if(row.state==='failed'){const retry=document.createElement('button');retry.textContent='重试恢复';retry.disabled=changing||next.busy;retry.onclick=()=>{void invoke({action:'legacy.retry',driverId:row.driverId})};imports.append(retry)}
-  }
-  imports.hidden=imports.childElementCount===0
+  element('status').textContent = session ? statuses[session.status] : '新建会话后，可以在 BMW 中直接交互'
+  if(next.settings?.phase==='working')element('status').textContent=next.settings.message
+  else if(next.busy&&!next.activeRunId)element('status').textContent=next.resourcesDisconnected?'Agent 连接清理失败，请先恢复连接清理':'正在清理 Agent 连接，请稍候'
+  if(!next.busy&&!settingsView.canSend())element('status').textContent=next.settings?.value?.authentication.state==='ready'?'请选择模型并确认':'请登录当前 Agent，或切换其他驱动'
   const nearBottom = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 80
   messages.replaceChildren()
   if (!next.messages.length) { const empty = document.createElement('p'); empty.className = 'empty'; empty.textContent = '对话、进度和结果显示在 BMW。\nAgent 使用当前 Project 的页面和媒体。'; messages.append(empty) }
@@ -59,7 +55,7 @@ function render(next: AssistantState): void {
   for (const id of ['create', 'archive', 'rename']) element<HTMLButtonElement>(id).disabled = changing || next.busy || (id !== 'create' && !session)
   driver.disabled = sessions.disabled = changing || next.busy
   workspaceMode.disabled = changing || next.busy
-  element<HTMLButtonElement>('send').disabled = changing || !session||Boolean(session.legacyImportPending)||Boolean(next.legacyImports?.some(row=>row.state==='running'))||next.settings?.phase==='working'||!settingsView.canSend()
+  element<HTMLButtonElement>('send').disabled = changing || !session||next.settings?.phase==='working'||!settingsView.canSend()
   element<HTMLButtonElement>('stop').disabled = changing || !next.activeRunId
   element('recover').hidden = !next.resourcesDisconnected
   element('queue').textContent = next.busy ? '发送新消息将加入 BMW 队列' : ''
@@ -68,7 +64,7 @@ async function invoke(command: AssistantCommand): Promise<boolean> {
   if (changing) return false
   changing = true; error.hidden = true
   try { render(await window.bmwAssistant.invoke(command)); return true }
-  catch (caught: unknown) { error.textContent = caught instanceof Error ? caught.message : '操作失败'; error.hidden = false; return false }
+  catch (caught: unknown) { error.textContent = caught instanceof Error ? caught.message.replace(/^Error invoking remote method 'bmw-assistant-command': (?:Error: )?/u,'') : '操作失败'; error.hidden = false; return false }
   finally { changing = false; if (state) render(state) }
 }
 driver.onchange = () => { void settingsView.selectDriver(driver.value) }
@@ -81,9 +77,7 @@ element('stop').onclick = () => { if (state?.selectedSessionId) void invoke({ ac
 element('recover').onclick = () => { void invoke({ action: 'resources.recover' }) }
 element<HTMLFormElement>('composer').onsubmit = event => { event.preventDefault(); if (state?.selectedSessionId && !state.busy && settingsView.canSend() && input.value.trim()) { const text = input.value; void invoke({ action: 'message.send', sessionId: state.selectedSessionId, text }).then(sent => { if (sent && input.value === text) input.value = '' }) } }
 input.onkeydown = event => { if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) element<HTMLFormElement>('composer').requestSubmit() }
-window.addEventListener('bmw-select-session', event => { const value = (event as CustomEvent<unknown>).detail; if (typeof value === 'string' && value !== state?.selectedSessionId) void invoke({ action: 'session.select', sessionId: value }) })
-window.bmwSelectSession = async sessionId => sessionId === state?.selectedSessionId || invoke({ action: 'session.select', sessionId })
-window.bmwOpenAgentSettings=()=>settingsView.open()
+window.bmwAssistant.onOpenSettings(()=>settingsView.open())
 element('agent-settings-open').onclick=()=>settingsView.open()
 window.bmwAssistant.subscribe(render)
 window.bmwAssistant.onComposerContext(renderContext)

@@ -1,6 +1,6 @@
 # BMW 驱动实施与验收
 
-BMW 使用自有 Assistant、Project、页面、媒体和 Video Studio，DSH、Codex、Qoder CN 各自运行官方 Agent 循环。默认入口已接入三驱动，旧 DSH 会话与 Studio 身份保留。原生桌面对话列表同步未启用；用户在 BMW 内交互。
+BMW 使用自有 Assistant、Project、页面、媒体和 Video Studio，DSH、Codex、Qoder CN 各自运行官方 Agent 循环。默认入口只使用统一 Host 与 Assistant，旧 DSH 客户端、DOM 选择和启动时历史兼容入口已移除。核心 Project 不存储原生映射；DSH harness 维护 Workspace，BMW 统一索引和显示历史采用 v2。显式迁移保留旧会话与 Studio 身份，操作见 [AGENT_DATA_MIGRATION.md](AGENT_DATA_MIGRATION.md)。原生桌面对话列表同步未启用；用户在 BMW 内交互。
 
 ## 已实现的边界
 

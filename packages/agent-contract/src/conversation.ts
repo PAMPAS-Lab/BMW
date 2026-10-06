@@ -1,6 +1,4 @@
 /** BMW identities are stable; provider identities are only resume anchors. */
-import type {AgentProject} from '../index.js'
-import type {AgentLegacySession} from './legacy-session.js'
 import type {AgentDriverSettings,AgentSettingsRequest,AgentSettingsContext} from './driver-settings.js'
 export type AgentConversationStatus = 'idle' | 'queued' | 'running' | 'waiting-user' | 'waiting-approval' | 'cancelling' | 'interrupted' | 'failed' | 'disconnected'
 export interface AgentConversation {
@@ -14,7 +12,6 @@ export interface AgentConversation {
   archivedAt: number | null
   parentSessionId: string | null
   status: AgentConversationStatus
-  legacyImportPending?:true
   /** Native lineage may refer outside the BMW Project; it never grants membership. */
   externalParentSessionId?:string
 }
@@ -88,10 +85,6 @@ export interface AgentBackend {
   close(): Promise<void>
   /** Retry per-run native cleanup after a failed transport/close; never resubmit input. */
   drain?(sessionId: string, runId: string): Promise<void>
-  /** Cold, display-only discovery of existing Project-bound native Sessions. */
-  readLegacySessions?(projects:readonly AgentProject[],signal:AbortSignal):Promise<AgentLegacySession[]>
-  /** Must accompany readLegacySessions; actual native cleanup may be retried. */
-  drainLegacy?():Promise<void>
   /** Official control operations only; never releases model input. */
   settings?(request:AgentSettingsRequest,context:AgentSettingsContext):Promise<AgentDriverSettings>
   /** Actual cleanup, including an interrupted login, retained until successful. */
@@ -121,8 +114,7 @@ function closed(value: Record<string, unknown>, fields: readonly string[]): void
 }
 export function parseAgentConversation(raw: unknown): AgentConversation {
   const value = agentRecord(raw, 'Agent conversation')
-  closed(value, ['sessionId', 'projectId', 'driverId', 'externalSessionId', 'title', 'createdAt', 'updatedAt', 'archivedAt', 'parentSessionId', 'status','legacyImportPending','externalParentSessionId'])
-  if(value.legacyImportPending!==undefined&&value.legacyImportPending!==true)throw new Error('Invalid legacy import state')
+  closed(value, ['sessionId', 'projectId', 'driverId', 'externalSessionId', 'title', 'createdAt', 'updatedAt', 'archivedAt', 'parentSessionId', 'status','externalParentSessionId'])
   if (typeof value.driverId !== 'string' || !/^[a-z0-9-]{1,64}$/u.test(value.driverId)) throw new Error('Invalid Agent driver identity')
   if (typeof value.status !== 'string' || !statuses.includes(value.status)) throw new Error('Invalid Agent conversation status')
   const title = agentText(value.title, 200, 'Agent title')
@@ -132,12 +124,10 @@ export function parseAgentConversation(raw: unknown): AgentConversation {
     externalSessionId: nullableIdentity(value.externalSessionId), title,
     createdAt: time(value.createdAt), updatedAt: time(value.updatedAt), archivedAt: value.archivedAt === null ? null : time(value.archivedAt),
     parentSessionId: nullableIdentity(value.parentSessionId), status: value.status as AgentConversationStatus,
-    ...(value.legacyImportPending===true?{legacyImportPending:true as const}:{}),
     ...(value.externalParentSessionId===undefined?{}:{externalParentSessionId:agentIdentifier(value.externalParentSessionId)})
   }
   if (result.updatedAt < result.createdAt || (result.archivedAt !== null && result.archivedAt < result.createdAt)) throw new Error('Invalid Agent conversation chronology')
   if (result.parentSessionId === result.sessionId) throw new Error('An Agent conversation cannot be its own parent')
-  if(result.legacyImportPending&&result.sessionId!==result.externalSessionId)throw new Error('Legacy import must retain its original Session identity')
   return result
 }
 export function parseAgentCapabilities(raw: unknown): AgentDriverCapabilities {
