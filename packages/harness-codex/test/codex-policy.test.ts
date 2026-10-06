@@ -3,8 +3,19 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
-import { codexModelTools, codexThreadParameters } from '../src/codex-policy.js'
+import { codexModelTools, codexThreadParameters, codexProtocolVersion } from '../src/codex-policy.js'
 import {codexBrowserModelCatalog,materializeCodexBrowserCatalog} from '../src/codex-model-catalog.js'
+test('Codex protocol admits verified patch versions and reports detected and supported versions',()=>{
+  for(const version of ['0.160.0','0.160.1']){
+    assert.equal(codexProtocolVersion('codex-cli '+version),version)
+    assert.doesNotThrow(()=>codexBrowserModelCatalog({...officialCatalog(),client_version:version},'gpt-6.1-sol'))
+  }
+  for(const version of ['0.160.2','0.161.0','0.159.0','0.160.1-dev']){
+    assert.throws(()=>codexProtocolVersion('codex-cli '+version),error=>error instanceof Error&&error.message.includes(version)&&error.message.includes('0.160.0、0.160.1'))
+    assert.throws(()=>codexBrowserModelCatalog({...officialCatalog(),client_version:version},'gpt-6.1-sol'),/catalog/)
+  }
+  assert.throws(()=>codexProtocolVersion('other-cli 0.160.1'),/other-cli/)
+})
 test('Codex effective catalog reads Responses and Responses Lite additional_tools, including hidden extra namespaces', () => {
   assert.deepEqual(codexModelTools({ tools: [{ type: 'function', name: 'browser' }] }).map(row => row.name), ['browser'])
   const lite = { input: [{ type: 'message', content: [{ text: 'Only browser is allowed' }] }, { type: 'additional_tools', tools: [{ type: 'namespace', name: 'functions', tools: [{ type: 'custom', name: 'exec' }] }, { type: 'namespace', name: 'collaboration', tools: [{ type: 'function', name: 'spawn_agent' }] }] }] }

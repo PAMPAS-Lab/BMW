@@ -8,7 +8,7 @@ import { createCodexRpc } from './codex-rpc.js'
 import type { CodexRpc } from './codex-rpc.js'
 import {CodexSettings,codexAccountModels} from './codex-settings.js'
 import {findCodexExecutable} from './codex-installation.js'
-import {codexNeedsBrowserCatalog} from './codex-model-catalog.js'
+import {codexNeedsBrowserCatalog,codexVerifiedProtocolVersions} from './codex-model-catalog.js'
 import type {AgentSettingsRequest,AgentSettingsContext,AgentDriverSettings} from '@bmw-agent/agent-contract'
 
 export interface CodexBrowserConnection {
@@ -55,7 +55,7 @@ interface Run {
 }
 export class CodexBackend implements AgentBackend {
   readonly description: AgentDriverDescription = {
-    id: 'codex', label: 'Codex', baseline: 'App Server 0.160.0 / dynamicTools',
+    id: 'codex', label: 'Codex', baseline: 'App Server '+codexVerifiedProtocolVersions.join(' / ')+' / dynamicTools',
     capabilities: { streaming: true, images: true, interrupt: true, steer: false, fork: false, approvals: false, nativeOpen: false, browserOnly: false }
   }
   private readonly runs = new Map<string, Run>()

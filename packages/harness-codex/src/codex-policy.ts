@@ -8,7 +8,7 @@ import type { AddressInfo } from 'node:net'
 import { agentRecord } from '@bmw-agent/agent-contract'
 import type { CodexRpc } from './codex-rpc.js'
 import { createCodexRpc } from './codex-rpc.js'
-import {materializeCodexBrowserCatalog} from './codex-model-catalog.js'
+import {materializeCodexBrowserCatalog,codexSupportsProtocolVersion,codexVerifiedProtocolVersions} from './codex-model-catalog.js'
 
 export interface CodexBrowserDefinition { name: 'browser'; description: string; inputSchema: Record<string, unknown> }
 /** Responses and Responses Lite carry the authoritative catalog differently. */
@@ -53,6 +53,11 @@ export function codexThreadParameters(directory: string, model: string, definiti
   return { cwd: directory, model, config: structuredClone(codexBrowserConfig), environments: [], sandbox: 'read-only', approvalPolicy: 'never',
     dynamicTools: [definition], developerInstructions: 'You are BMW Assistant. Use browser for Project pages, images, media and Video Studio. BMW owns resource and Session scope. Current Project context:\n' + context }
 }
+export function codexProtocolVersion(output:string):string {
+  const value=output.startsWith('codex-cli ')?output.slice('codex-cli '.length):undefined
+  if(!codexSupportsProtocolVersion(value))throw new Error('BMW 尚未验证当前 Codex 版本（'+output+'）；已支持 App Server '+codexVerifiedProtocolVersions.join('、')+'。请更新 BMW 适配或指定已支持的官方 CLI。')
+  return value
+}
 function version(executable: string): Promise<string> {
   return new Promise((resolve, reject) => execFile(executable, ['--version'], { timeout: 5000, maxBuffer: 4096 }, (error, stdout) => error ? reject(error) : resolve(stdout.trim())))
 }
@@ -63,7 +68,7 @@ export class CodexCatalogGate {
   async verify(executable: string, configDirectory: string, model: string, definition: CodexBrowserDefinition, signal: AbortSignal): Promise<string|void> {
     signal.throwIfAborted()
     fs.mkdirSync(configDirectory, { recursive: true, mode: 0o700 })
-    if (await version(executable) !== 'codex-cli 0.160.0') throw new Error('Codex BMW currently requires the verified App Server 0.160.0 protocol')
+    codexProtocolVersion(await version(executable))
     const digest = crypto.createHash('sha256')
     for await (const chunk of fs.createReadStream(executable)) digest.update(chunk)
     const configPath = path.join(configDirectory, 'config.toml')

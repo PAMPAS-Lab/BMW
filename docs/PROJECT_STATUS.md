@@ -25,7 +25,7 @@ Browser is boundary, media is native, web is runtime.
 
 ## 运行与认证
 
-固定版本为 Node.js 24+、Electron `44.5.1`、Mediabunny `1.61.0`、DSH `0.2.0-rc.2`、Codex App Server `0.160.0`、Qoder CN SDK `1.0.50` / Worker `1.1.64`。依赖安装版由 lockfile 固定，外部 CLI 还需通过运行时版本准入。
+固定版本为 Node.js 24+、Electron `44.5.1`、Mediabunny `1.61.0`、DSH `0.2.0-rc.2`、Codex App Server `0.160.0` / `0.160.1`、Qoder CN SDK `1.0.50` / Worker `1.1.64`。依赖安装版由 lockfile 固定，外部 CLI 还需通过运行时版本准入。
 
 默认入口由 `scripts/product-entry.ts` 调用 `apps/bmw/agent-assembly.ts`。新 Profile 默认 DSH，之后按 Project 保存 driver 选择。启动沿用已有选择，不自动发起登录；GUI 切换时检查认证。
 

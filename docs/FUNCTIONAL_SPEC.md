@@ -37,7 +37,7 @@ Browser is boundary, media is native, web is runtime.
 - 每个适配器维护明确的支持名单，并与官方目录取交集；Codex/Qoder 读取账号状态及原生模型目录，DSH 只检查本地 DeepSeek Key 是否配置并读取官方 Provider 目录，不进行 API Key 有效性或余额验证；未知模型及 Qoder 标记禁用项不显示。Codex 支持 `gpt-6.1-sol`、`gpt-6-astra`、`gpt-6-sol`、`gpt-6-luna`、`gpt-5.5`；DSH 支持 `deepseek-official` 下的 `deepseek-flash`、`deepseek-v4-pro`，认证只使用 `DEEPSEEK_API_KEY`，其他 Provider 凭据不构成就绪条件且退出时保留；Qoder CN 支持 `auto`、`qmodel_38max`、`qfmodel`、`qmodel_latest`、`qmodel`、`q37fmodel`、`dmodel`、`dfmodel`、`gmodel`、`gfmodel`、`gm51model`、`kmodel_latest`、`kmodel`、`mmodel`。设置投影中的 `verified` 表示维护名单支持，不表示用户运行过预检或账号拥有推理额度；Qoder 的真实模型验收目前只覆盖 `auto`。
 - 设置不要求用户执行专项验证。Codex 设置选择不调用工具预检；Qoder 冷控制会话仍内部检查 SDK init 的有效工具目录并禁止任何模型消息，DSH 使用官方 cold 设置／目录控制。三者设置均不发送模型输入。
 - 官方引擎拥有 Agent 循环，Host 只协调输入和资源。输入前有效目录必须只有 `browser`；DSH 每次 request assembly 再检查 scoped catalog，Qoder 禁止继承 plugins/skills/settings，Codex 检查 Responses 及 Lite additional_tools。目录成员不证明账号推理额度或实际请求可用。
-- Codex App Server `0.160.0` 对 `gpt-6.1-sol`、`gpt-6-astra`、`gpt-6-sol`、`gpt-6-luna` 使用官方启动配置 `model_catalog_json`。从独立 CLI Profile 的官方目录生成内容寻址的只读策略副本，移除强制 code mode/多 Agent 元数据并清空额外实验工具，保留模型 ID、原生 Lite 传输、推理等级、上下文、图像能力和模型指导。不改写官方 cache/config；官方运行时仍可正常刷新其缓存。副本必须是宿主私有的普通文件，缓存版本、模型缺失、路径碰撞/篡改和实际额外工具均失败拒绝。目录预检与实际启动使用同一个副本；目录准入在模型输入前内部执行，用户模型选择不触发预检。GPT-5.5 保持原有路径，未知 GPT-6 型号不自动套用策略。BMW 不增加模型循环、代码执行工具或其他宿主权限。
+- Codex App Server `0.160.0`、`0.160.1` 使用统一的已验证版本白名单，CLI 与官方模型缓存均拒绝未知版本；CLI 错误明确显示实际版本及已支持版本。对 `gpt-6.1-sol`、`gpt-6-astra`、`gpt-6-sol`、`gpt-6-luna` 使用官方启动配置 `model_catalog_json`。从独立 CLI Profile 的官方目录生成内容寻址的只读策略副本，移除强制 code mode/多 Agent 元数据并清空额外实验工具，保留模型 ID、原生 Lite 传输、推理等级、上下文、图像能力和模型指导。不改写官方 cache/config；官方运行时仍可正常刷新其缓存。副本必须是宿主私有的普通文件，缓存版本、模型缺失、路径碰撞/篡改和实际额外工具均失败拒绝。目录预检与实际启动使用同一个副本；目录准入在模型输入前内部执行，用户模型选择不触发预检。GPT-5.5 保持原有路径，未知 GPT-6 型号不自动套用策略。BMW 不增加模型循环、代码执行工具或其他宿主权限。
 - Host 私有租约绑定 canonical BMW Session；provider 注册只能解析已明确附着的有效 Host 租约。MCP 执行 scope 通过私有环境传递，显式 catalog-only 模式只提供目录且禁止工具执行，模型传入 `__bmwSession` 始终拒绝。撤销等待真实 kernel/worker 清理。完成事件在实际清理前不结束回执或释放 FIFO；原生清理失败同样隔离资源，恢复仅重试清理。
 - 自有 Assistant UI 显示消息、工具进度、运行状态、停止和资源恢复，支持 Browser/Studio 模式与上下文。基础 Markdown 用 DOM text nodes 渲染，模型 HTML 不执行。fork 未验证时在会话中心禁用。新的退出路径等待 Assistant 原生进程、Bridge 和 Feature 实际清理。
 - 三个真实引擎已分别通过隔离 BMW 的页面、截图读图、canonical Studio owner 和同一 provider 续聊。DSH/Qoder/Codex 在每轮完成后关闭原生运行进程，以原生存储恢复后续输入；这不证明原生桌面侧边栏同步。测试不用生产桌面 Profile；正常官方 CLI 登录配置与 desktop 私有凭据分离。
@@ -450,6 +450,7 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 
 #### `packages/harness-codex/test/codex-policy.test.ts`
 
+- `Codex protocol admits verified patch versions and reports detected and supported versions`
 - `Codex effective catalog reads Responses and Responses Lite additional_tools, including hidden extra namespaces`
 - `Codex browser thread excludes environments, shell, MCP helpers and question tools before user input`
 - `GPT-6 startup catalog changes only tool metadata and preserves native model capabilities and transport`

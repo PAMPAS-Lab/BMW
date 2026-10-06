@@ -3,13 +3,16 @@ import path from 'node:path'
 import crypto from 'node:crypto'
 import {agentRecord} from '@bmw-agent/agent-contract'
 
+export const codexVerifiedProtocolVersions:readonly string[]=Object.freeze(['0.160.0','0.160.1'])
+export function codexSupportsProtocolVersion(value:unknown):value is string{return typeof value==='string'&&codexVerifiedProtocolVersions.includes(value)}
+
 const browserModels=new Set(['gpt-6.1-sol','gpt-6-astra','gpt-6-sol','gpt-6-luna'])
 export function codexNeedsBrowserCatalog(model:string):boolean{return browserModels.has(model)}
 
 /** Official startup catalog projection; model IDs, native transport and model capabilities stay intact. */
 export function codexBrowserModelCatalog(raw:unknown,model:string):{models:Record<string,unknown>[]} {
   const cache=agentRecord(raw)
-  if(cache.client_version!=='0.160.0'||!Array.isArray(cache.models)||!cache.models.length||cache.models.length>1000)throw new Error('Codex GPT-6 requires a current official model catalog; refresh Codex settings')
+  if(!codexSupportsProtocolVersion(cache.client_version)||!Array.isArray(cache.models)||!cache.models.length||cache.models.length>1000)throw new Error('Codex GPT-6 requires a current official model catalog; refresh Codex settings')
   const seen=new Set<string>()
   const models=cache.models.map(value=>{
     const row=agentRecord(value)
@@ -17,7 +20,7 @@ export function codexBrowserModelCatalog(raw:unknown,model:string):{models:Recor
     seen.add(row.slug)
     const next=structuredClone(row)
     if(browserModels.has(row.slug)){
-      // Forced model tool modes override ordinary feature flags in 0.160.0.
+      // Forced model tool modes override ordinary feature flags in the verified 0.160.0/0.160.1 runtimes.
       // Omission restores the runtime defaults, which obey BMW's disabled flags.
       delete next.tool_mode;delete next.multi_agent_version;delete next.multi_agent_reasoning_effort
       next.experimental_supported_tools=[]
