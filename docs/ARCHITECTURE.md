@@ -242,6 +242,7 @@ npm run test:affected
 | studio.visual-effects | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_VISUAL_EFFECTS_CASE=1 |
 | studio.main-mute | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_MAIN_MUTE_CASE=1 |
 | studio.track-menu | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_TRACK_MENU_CASE=1 |
+| studio.card-text | desktop | feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_CARD_TEXT_CASE=1 |
 | studio.card-pair | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_CARD_PAIR_CASE=1 |
 | studio.reference-analysis | desktop | platform, feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_REFERENCE_CASE=1 |
 | studio.review-adoption | desktop | platform, feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_REVIEW_CASE=1 |

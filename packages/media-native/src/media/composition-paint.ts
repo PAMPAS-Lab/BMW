@@ -6,12 +6,14 @@ import type { CompositionScene, MediaComposition } from '../composition-contract
 import { DEFAULT_VIDEO_OPTIONS } from '../video-options.js'
 import {captionText,estimatedCaptionCues} from '../composition-contract.js'
 export interface CompositionCanvasFrame {canvas:HTMLCanvasElement|OffscreenCanvas}
+/** Normalized bounds of text actually painted, for fixed-template GUI editing. */
+export interface CompositionTextBox {kind:'title'|'bullet';index:number;x:number;y:number;width:number;height:number}
 import {fitText,templateBoxes} from './composition-text.js'
 export {reviewSceneText,assertCompositionText} from './composition-text.js'
 const font = '"PingFang SC", "Microsoft YaHei", sans-serif'
 function lines(context:CanvasRenderingContext2D,text:string,width:number):string[]{const result:string[]=[];let line='';for(const character of text){if(character==='\n'){result.push(line);line='';continue}if(character==='\r')continue;if(context.measureText(line+character).width>width&&line){result.push(line);line=''}line+=character}if(line)result.push(line);return result}
 /** A single responsive painter is used by Studio preview and MP4 export. */
-export function paintScene(context:CanvasRenderingContext2D,scene:CompositionScene,frame:CompositionCanvasFrame|null,time:number,_duration:number,index:number,total:number,narrationDuration:number,output?:Pick<MediaComposition,'width'|'height'|'style'|'watermark'>):void {
+export function paintScene(context:CanvasRenderingContext2D,scene:CompositionScene,frame:CompositionCanvasFrame|null,time:number,_duration:number,index:number,total:number,narrationDuration:number,output?:Pick<MediaComposition,'width'|'height'|'style'|'watermark'>,onText?:(box:CompositionTextBox)=>void):void {
   const height=output?.height??720,width=output?.width??1280,W=720*width/height,H=720,margin=W<600?24:48
   const style=output?.style??'bmw-dark',light=style==='clean-light',minimal=style==='minimal'
   const ink=scene.sceneTemplate?.textColor??(light?'#172536':'#ffffff'),muted=light?'#65758b':'#7e90a9',accent=scene.sceneTemplate?.accentColor??(light?'#2369db':minimal?'#ffffff':'#a2f4d0')
@@ -19,17 +21,18 @@ export function paintScene(context:CanvasRenderingContext2D,scene:CompositionSce
   const watermark=output?.watermark??DEFAULT_VIDEO_OPTIONS.watermark,headerOffset=watermark.enabled&&watermark.position.startsWith('top')?24:0
   const clock=scenePlaybackClock(scene,index,total),presentationTime=clock.startSeconds+time
   const ease=1-Math.pow(1-Math.min(1,presentationTime/.8),3)
+  const textBox=(kind:CompositionTextBox['kind'],index:number,text:string,x:number,y:number,size:number,offset=0)=>{if(!onText||!text||(ease<=0&&(kind==='title'||!scene.sceneTemplate)))return;const measured=context.measureText(text);onText?.({kind,index,x:x/W,y:(y-size+offset)/H,width:Math.max(1,measured.width)/W,height:size*1.3/H})}
   if(light||minimal){context.fillStyle=light?'#f8fafc':'#111111'}else{const gradient=context.createLinearGradient(0,0,W,H);gradient.addColorStop(0,'#101827');gradient.addColorStop(1,'#181b36');context.fillStyle=gradient}
   if(scene.sceneTemplate?.backgroundColor)context.fillStyle=scene.sceneTemplate.backgroundColor
   context.fillRect(0,0,W,H)
   context.fillStyle=accent;context.font=`600 16px ${font}`;context.fillText(scene.label.toUpperCase(),margin,37+headerOffset)
   context.save();context.globalAlpha=ease;context.translate(0,18*(1-ease));context.fillStyle=ink
   const titleBase=W<600?28:42;context.font=`700 ${titleBase}px ${font}`
-  if(W<600){
+  if(W<600||scene.title.includes('\n')){
     const titleLines=lines(context,scene.title,W-margin*2)
     const displayed=titleLines.length>2?[titleLines[0],titleLines.slice(1).join('')]:titleLines
-    displayed.forEach((line,row)=>{const measured=context.measureText(line).width;context.font=`700 ${Math.min(titleBase,titleBase*(W-margin*2)/Math.max(1,measured))}px ${font}`;context.fillText(line,margin,(displayed.length>1?77+row*30:91)+headerOffset);context.font=`700 ${titleBase}px ${font}`})
-  }else{const titleSize=Math.min(titleBase,titleBase*(W-margin*2)/Math.max(1,context.measureText(scene.title).width));context.font=`700 ${titleSize}px ${font}`;context.fillText(scene.title,margin,91+headerOffset)}
+    displayed.forEach((line,row)=>{const measured=context.measureText(line).width,size=Math.min(W<600?titleBase:28,titleBase*(W-margin*2)/Math.max(1,measured)),y=(displayed.length>1?(W<600?77:61)+row*30:91)+headerOffset;context.font=`700 ${size}px ${font}`;context.fillText(line,margin,y);textBox('title',0,line,margin,y,size,18*(1-ease));context.font=`700 ${titleBase}px ${font}`})
+  }else{const titleSize=Math.min(titleBase,titleBase*(W-margin*2)/Math.max(1,context.measureText(scene.title).width));context.font=`700 ${titleSize}px ${font}`;context.fillText(scene.title,margin,91+headerOffset);textBox('title',0,scene.title,margin,91+headerOffset,titleSize,18*(1-ease))}
   context.restore()
   const visual=visualAtTime(scene,time),framing=visual?.segment??scene
   if(frame){
@@ -52,13 +55,13 @@ export function paintScene(context:CanvasRenderingContext2D,scene:CompositionSce
     context.save();context.globalAlpha=ease;context.fillStyle=accent;context.font=`800 ${W<600?80:110}px ${font}`;if(!scene.sceneTemplate&&scene.showSceneNumber!==false)context.fillText(String(clock.sceneNumber).padStart(2,'0'),margin,265)
     context.fillStyle=ink
     let y=scene.showSceneNumber===false?240:340
-    if(!scene.sceneTemplate)for(const [bulletIndex,bullet] of scene.bullets.entries()){const fit=fitText(context,bullet,W-margin*2,2,W<600?24:34);if(fit.overflow)throw new Error('STUDIO_TEXT_LAYOUT: 画面文字放不下。');context.font=`600 ${fit.size}px ${font}`;for(const line of fit.lines){if(presentationTime>=(scene.bulletRevealSeconds?.[bulletIndex]??0))context.fillText(line,margin,y);y+=W<600?32:42}y+=12}
+    if(!scene.sceneTemplate)for(const [bulletIndex,bullet] of scene.bullets.entries()){const fit=fitText(context,bullet,W-margin*2,2,W<600?24:34);if(fit.overflow)throw new Error('STUDIO_TEXT_LAYOUT: 画面文字放不下。');context.font=`600 ${fit.size}px ${font}`;for(const line of fit.lines){if(presentationTime>=(scene.bulletRevealSeconds?.[bulletIndex]??0)){context.fillText(line,margin,y);textBox('bullet',bulletIndex,line,margin,y,fit.size)}y+=W<600?32:42}y+=12}
     context.restore()
   }
   if(scene.sceneTemplate){for(const [index,box]of templateBoxes(scene,W).entries()){
     const text=scene.bullets[index];if(!text||presentationTime<(scene.bulletRevealSeconds?.[index]??0))continue
     const fit=fitText(context,text,box.width-28,Math.max(1,Math.floor((box.height-24)/24)),W<600?24:34,box.height-24);if(fit.overflow)throw new Error('STUDIO_TEXT_LAYOUT: 模板文字放不下。')
-    context.save();context.fillStyle=light?'#e7edf5':'#232b39';context.beginPath();context.roundRect(box.x,box.y,box.width,box.height,10);context.fill();context.fillStyle=accent;context.fillRect(box.x,box.y,4,box.height);context.fillStyle=scene.sceneTemplate.emphasisIndex===index?accent:ink;context.font=`600 ${fit.size}px ${font}`;fit.lines.forEach((line,row)=>context.fillText(line,box.x+14,box.y+12+fit.size+row*fit.size*1.3));context.restore()
+    context.save();context.fillStyle=light?'#e7edf5':'#232b39';context.beginPath();context.roundRect(box.x,box.y,box.width,box.height,10);context.fill();context.fillStyle=accent;context.fillRect(box.x,box.y,4,box.height);context.fillStyle=scene.sceneTemplate.emphasisIndex===index?accent:ink;context.font=`600 ${fit.size}px ${font}`;fit.lines.forEach((line,row)=>{const y=box.y+12+fit.size+row*fit.size*1.3;context.fillText(line,box.x+14,y);textBox('bullet',index,line,box.x+14,y,fit.size)});context.restore()
   }}
   // Estimated sentence captions follow measured audio; no word-alignment claim.
   const captionSize=scene.captionStyle?.fontSize??(W<600?22:28)

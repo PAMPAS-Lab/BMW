@@ -10,6 +10,7 @@ import {ImageDecodeBudget,DECODE_BUDGET} from '../../../media-native/src/image-c
 import {Input,BlobSource,ALL_FORMATS} from 'mediabunny'
 import {LinearFrameReader,normalizeBrowserVideoColor} from '../../../media-native/src/media/linear-frames.js'
 import {assertCompositionText,paintScene} from '../../../media-native/src/media/composition-paint.js'
+import type {CompositionTextBox} from '../../../media-native/src/media/composition-paint.js'
 import {mixCompositionAudio} from '../../../media-native/src/media/composition-audio.js'
 import {compositionDuration,sceneAtTime,compositionAssets,compositionImageIds} from '../../../media-native/src/composition-contract.js'
 import type {MediaComposition} from '../../../media-native/src/composition-contract.js'
@@ -31,6 +32,9 @@ declare global{interface Window{bmwStudio:StudioBridge;bmwStudioFlush?:()=>Promi
 type Asset={data:Uint8Array;input?:Input;image?:HTMLCanvasElement}
 /** One serialized decoder; audio time is the preview clock, matching the export mix. */
 export class StudioPreview {
+  private paintedText?:{draftId:string;revision:number;sceneId:string;boxes:CompositionTextBox[]}
+  /** Only the currently rendered revision can admit an on-canvas text edit. */
+  text(draft:VideoDraft):{sceneId:string;boxes:CompositionTextBox[]}|undefined {const painted=this.paintedText;return painted&&painted.draftId===draft.id&&painted.revision===draft.revision?{sceneId:painted.sceneId,boxes:painted.boxes}:undefined}
   private layers?:CompositionLayerPainter
   private preparedOwner?:{draftId:string;revision:number;sceneIds:string[]}
   private visualOverride?:{sceneIndex:number;id:string;layer:VisualLayer}
@@ -64,6 +68,7 @@ export class StudioPreview {
       if(!before||!after||before.bytes!==after.bytes||before.modifiedAt!==after.modifiedAt)return false
     }
     owner.revision=next.revision
+    if(this.paintedText)this.paintedText.revision=next.revision
     return true
   }
   private async prepareCurrent(draft:VideoDraft,position:number,generation:number):Promise<boolean>{
@@ -168,13 +173,15 @@ export class StudioPreview {
     if(segment.videoArtifactId&&!this.reader){const track=await this.assets.get(segment.videoArtifactId)?.input?.getPrimaryVideoTrack();if(!track||!await track.canDecode())throw new Error('Footage cannot be decoded.');if(await track.getDisplayWidth()*await track.getDisplayHeight()>16_777_216)throw new Error('Video exceeds decode limit.');await normalizeBrowserVideoColor(track);this.reader=new LinearFrameReader(track,{width:1600})}
     const frame=segment.imageArtifactId?{canvas:this.assets.get(segment.imageArtifactId)!.image!}:this.reader?await this.reader.get(target):null;this.readerTime=target
     if(generation!==this.generation)return
-    const context=this.canvas.getContext('2d',{alpha:false})!;context.save();paintScene(context,scene,frame,timing.localSeconds,scene.durationSeconds,timing.index,this.composition.scenes.length,this.voiceDurations[timing.index]??0,this.composition);context.restore()
+    this.paintedText=undefined
+    const boxes:CompositionTextBox[]=[],context=this.canvas.getContext('2d',{alpha:false})!;context.save();paintScene(context,scene,frame,timing.localSeconds,scene.durationSeconds,timing.index,this.composition.scenes.length,this.voiceDurations[timing.index]??0,this.composition,box=>boxes.push(box));context.restore()
     const visible=this.withVisualOverride(this.composition);await this.layers?.paint(context,visible,visible.scenes[timing.index],time,timing.localSeconds)
+    const owner=this.preparedOwner;if(generation===this.generation&&owner)this.paintedText={draftId:owner.draftId,revision:owner.revision,sceneId:owner.sceneIds[timing.index],boxes}
   });return this.queue}
   private clearSurface():void{this.canvas.getContext('2d')?.clearRect(0,0,this.canvas.width,this.canvas.height)}
   private invalidate():number{
     const generation=++this.generation
-    this.preparedOwner=undefined;this.visualOverride=undefined;this.visualRequest++
+    this.preparedOwner=undefined;this.paintedText=undefined;this.visualOverride=undefined;this.visualRequest++
     this.pause();this.composition=undefined;this.position=0;this.clearSurface();this.onTime(0,false)
     return generation
   }

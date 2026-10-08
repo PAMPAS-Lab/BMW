@@ -13,6 +13,7 @@ type CardActions={
   action(id:string):Promise<void>
   move(id:string,targetId:string,after:boolean,owner:StudioCardMoveOwner):Promise<void>
   ask(id:string):Promise<void>
+  text():Promise<void>
   pause():void
   flush():Promise<void>
   thumbnail(container:HTMLElement,artifactId:string):void
@@ -53,6 +54,7 @@ export class StudioCards {
           case 'voice':await this.open('voice');return
           case 'asset':await this.openMaterials(true);return
           case 'ask':await actions.ask(button.dataset.cardScene!);return
+          case 'text':await actions.text();return
           default:await actions.action(button.dataset.cardAction!);return
         }
       })()
@@ -171,7 +173,7 @@ export class StudioCards {
         if(scene.visualBrief.length>120){const detail=document.createElement('details'),summary=document.createElement('summary');detail.className='studio-card-intent-detail';detail.dataset.cardIntent=scene.id;detail.open=this.expandedIntents.has(scene.id);summary.textContent='画面意图 · 展开查看';detail.append(summary,intent);picture.append(detail)}else{const label=document.createElement('small');label.textContent='画面意图';picture.append(label,intent)}
       }
       if(selected){body.classList.add('studio-card-editor');body.append(this.editor)
-        const tools=document.createElement('div');tools.className='studio-card-tools';for(const [action,label]of [['asset','换画面'],['voice','声音与字幕']] as const)tools.append(this.button(label,action,scene.id,c.disabled));card.append(tools)
+        const tools=document.createElement('div');tools.className='studio-card-tools';for(const [action,label]of [['text','编辑卡片'],['asset','换画面'],['voice','声音与字幕']] as const)tools.append(this.button(label,action,scene.id,c.disabled));card.append(tools)
       }else{const label=document.createElement('small');label.className='studio-card-script-label';label.textContent='旁白 / 脚本';const text=document.createElement('p');text.className='studio-card-script';text.textContent=scene.narration||'点击此镜头编写脚本';body.append(label,text)}
       if(scene.layers?.length||scene.audioTracks?.length||c.draft!.layers?.length||c.draft!.audioTracks?.length||(scene.visualSegments?.length??0)>1||scene.focusIntervals?.length){const advanced=this.button('含高级编辑 ›','advanced',scene.id,c.disabled);advanced.className='studio-card-advanced';advanced.title='在高级编辑中查看此镜头的图层、音轨与取景';card.append(advanced)}
       if(scene.presentationWindow&&scene.presentationWindow.startSeconds>0){const continuation=document.createElement('small');continuation.className='muted';continuation.textContent='续段 · 保留完整脚本，复用原旁白区间';card.append(continuation)}

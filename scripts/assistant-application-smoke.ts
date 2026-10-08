@@ -494,7 +494,7 @@ try {
   console.log('PASS real native Studio immersive bounds, measured Assistant docking, same WebContents/input/history, collapse and card roundtrip')
   const cardsRead=async()=>agentRecord(await videoView.executeJavaScript('(async()=>{const state=await window.bmwStudio.state();return state.drafts.find(draft=>draft.id==='+JSON.stringify(pinnedDraftId)+')})()'))
   const beforeCards=await cardsRead();assert.ok(Array.isArray(beforeCards.scenes));const cardOrder=beforeCards.scenes.map(value=>agentRecord(value).id)
-  assert.deepEqual(await videoView.executeJavaScript("[...document.querySelectorAll('.studio-card.selected .studio-card-tools button')].map(button=>button.dataset.cardAction)"),['asset','voice'],'Current card exposes only two local detail actions')
+  assert.deepEqual(await videoView.executeJavaScript("[...document.querySelectorAll('.studio-card.selected .studio-card-tools button')].map(button=>button.dataset.cardAction)"),['text','asset','voice'],'Current card exposes text, visual and voice editing entries')
   assert.equal(await videoView.executeJavaScript("!!document.querySelector('.studio-card.selected .studio-card-menu [data-card-action=ask]')"),true,'Assistant delegation is a labeled contextual menu action')
   await videoView.executeJavaScript("document.getElementById('inspector').dataset.identity='canonical-inspector';document.querySelector('.studio-card.selected [data-card-action=voice]').click();true")
   await waitFor(async()=>await videoView.executeJavaScript("document.getElementById('card-detail').open&&Boolean(document.querySelector('#card-detail-body #voice-actions:not([hidden])'))")?true:null,'card voice details')
