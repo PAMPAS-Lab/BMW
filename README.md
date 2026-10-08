@@ -119,7 +119,7 @@ Shell 的全部请求验证来源、主框架和固定本地页面；损坏的�
 - `apps/`：唯一 BMW 应用组合。
 - `packages/`：产品、平台、Agent 契约、自有 Assistant、DSH/Codex/Qoder CN 驱动、浏览器、原生媒体与 Video Studio 实现及测试。
 - `scripts/`：构建、文档清单、分类验证、隔离桌面和媒体工作流检查。
-- `docs/`：功能说明、架构、当前状态、验证方法与合成视觉测试证据。
+- `docs/`：功能说明、架构、当前状态、验证方法与合成视觉测试证据；[专项功能调研](docs/research/README.md)收集外部工具比较与候选方案。
 
 `node_modules`、生成的 JavaScript、运行日志、Profile、Project 素材、模型缓存和本机凭据由使用者本地维护，不纳入版本控制。迁移来源见 [MIGRATION_PROVENANCE.json](docs/MIGRATION_PROVENANCE.json)；旧多产品迁移归档不属于本仓库。
 
