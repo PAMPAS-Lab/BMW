@@ -129,9 +129,10 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
         if (cancellation.signal.aborted || bindings.get(binding) !== owner || closing || projectChanging || activeProjectId?.() !== owner.project.id) throw new Error('BMW_BROWSER_CANCELLED: Session changed before its browser result drained')
         const images: { type: 'image'; mimeType: 'image/png'; data: string }[] = []
         const action = record(input.arguments).action
-        if (action === 'media.screenshot' || action === 'page.diagnostics' || action === 'media.frames.sample'||action==='media.image.annotate'||action==='media.image.draw') {
+        const referenceImages=action==='video.studio'&&['prepare-reference','read-reference'].includes(String(record(record(input.arguments).studioRequest).operation))
+        if (referenceImages || action === 'media.screenshot' || action === 'page.diagnostics' || action === 'media.frames.sample'||action==='media.image.annotate'||action==='media.image.draw') {
           const value = record(result)
-          const artifacts = action === 'page.diagnostics' ? [record(value.screenshot)] : action === 'media.frames.sample' ? value.frames : [value]
+          const artifacts = action === 'page.diagnostics' ? [record(value.screenshot)] : action === 'media.frames.sample'||referenceImages ? value.frames : [value]
           if (!Array.isArray(artifacts) || artifacts.length < 1 || artifacts.length > 8) throw new Error('Invalid image artifact collection')
           let admittedBytes = 0
           for (const item of artifacts) {
@@ -145,6 +146,8 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
             if (!stat.isFile() || admittedBytes > 20 * 1024 * 1024) throw new Error('Screenshot exceeds image admission limit')
             const bytes = await fs.readFile(file)
             if (!bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) throw new Error('Invalid PNG screenshot')
+            if(referenceImages&&(typeof artifact.sha256!=='string'||!/^[a-f0-9]{64}$/.test(artifact.sha256)||crypto.createHash('sha256').update(bytes).digest('hex')!==artifact.sha256))throw new Error('Reference PNG changed before image admission')
+            cancellation.signal.throwIfAborted()
             images.push({ type: 'image', mimeType: 'image/png', data: bytes.toString('base64') })
           }
         }

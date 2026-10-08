@@ -18,26 +18,43 @@ test('BMW MCP discovers exactly browser from the authenticated product catalog',
     env: { ...process.env, BMW_BRIDGE_URL: bridge.url, BMW_BRIDGE_TOKEN: bridge.token, BMW_SESSION_BINDING:'', BMW_CATALOG_ONLY:'1' }, stdio: ['pipe','pipe','pipe']
   })
   t.after(() => { child.kill() })
-  const result = await new Promise<{ result: { tools: unknown[] } }>((resolve, reject) => {
-    let output = ''
-    child.stdout.on('data', (chunk: Buffer) => {
-      output += chunk.toString()
-      const line = output.split('\n').find(Boolean)
-      if (!line) return
-      try { resolve(JSON.parse(line)) } catch (error) { reject(error) }
+  // MCP messages are newline-delimited, not aligned to stdout chunks. The
+  // effective catalog can cross pipe buffers and UTF-8 characters can be split.
+  const lines = readline.createInterface({ input: child.stdout, crlfDelay: Infinity })
+  t.after(() => lines.close())
+  function response<T>(): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => finish(new Error('MCP response deadline exceeded')), 10000)
+      const closed = () => finish(new Error('MCP exited before a complete response'))
+      const failed = (error: Error) => finish(error)
+      const received = (line: string) => {
+        try { finish(undefined, JSON.parse(line) as T) } catch (error) { finish(error as Error) }
+      }
+      function finish(error?: Error, result?: T) {
+        clearTimeout(timeout)
+        lines.off('line', received)
+        lines.off('close', closed)
+        child.off('error', failed)
+        if (error) reject(error)
+        else resolve(result as T)
+      }
+      lines.once('line', received)
+      lines.once('close', closed)
+      child.once('error', failed)
     })
-    child.once('error', reject)
-    child.once('exit', () => { if (!output) reject(new Error('MCP exited before catalog discovery')) })
-    child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' })}\n`)
-  })
+  }
+  const discovery = response<{ jsonrpc: string; id: number; result: { tools: unknown[] } }>()
+  child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) + '\n')
+  const result = await discovery
+  assert.equal(result.jsonrpc, '2.0')
+  assert.equal(result.id, 1)
   assert.deepEqual(result.result.tools, [definition])
-  const lines=readline.createInterface({input:child.stdout})
-  const denied=new Promise<{error:{message:string}}>((resolve,reject)=>{
-    lines.once('line',line=>{try{resolve(JSON.parse(line))}catch(error){reject(error)}})
-    child.once('error',reject)
-  })
+  const denied = response<{ jsonrpc: string; id: number; error: { message: string } }>()
   child.stdin.write(JSON.stringify({jsonrpc:'2.0',id:2,method:'tools/call',params:{name:'browser',arguments:{action:'status'}}})+'\n')
-  assert.match((await denied).error.message,/catalog-only connection cannot execute/)
+  const denial = await denied
+  assert.equal(denial.jsonrpc, '2.0')
+  assert.equal(denial.id, 2)
+  assert.match(denial.error.message,/catalog-only connection cannot execute/)
   lines.close()
   assert.equal(registry.allowedActions.some((action) => action.startsWith('connector.')), false)
   assert.equal(product.featureIds.includes('feature-video'), true)

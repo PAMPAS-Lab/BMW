@@ -2,7 +2,7 @@
 
 Browser is boundary, media is native, web is runtime.
 
-适用实现：本仓库唯一应用 BMW（id `bmw`）。本说明书是当前功能、Schema、权限和测试的权威索引；文末能力/测试清单由源码生成。
+适用实现：本仓库唯一应用 BMW（id `bmw`）。本说明书是当前功能、Schema、权限和测试的权威索引；文末能力、Studio 操作和测试清单由源码生成；运行时测试分支见 ARCHITECTURE 的生成表。当前实现核对日期为 2026-10-08。
 
 ## 产品与包边界
 
@@ -47,7 +47,7 @@ Shell 运行时徽章从自有 Assistant 状态发布，显示等待、执行和
 
 直接覆盖：Conversation/History/Host/Assistant Controller、三个驱动契约与 `agent.data-migration`，`assistant.application`、六项 `assistant.startup.*`，以及显式 opt-in 的三个 `external.assistant.*`。
 
-Studio 新增工作流入口、方法目录与数据扩展已撤回，界面恢复到添加前版本。使用扩展字段的当天测试草稿移入可恢复的已删除目录，素材与导出文件保留；其他草稿不修改。历史方法回执快照已按用户要求清理，读取兼容代码已取消；正常会话消息与回执保留。后续简单默认、多模式与智能体任务交互方案见 [VIDEO_STUDIO_NEXT.md](VIDEO_STUDIO_NEXT.md)。
+
 
 普通 `video.compose` 在有宿主验证的 BMW 会话时，成功后原子保存该会话所属的新 Studio 草稿、原始分镜及已有 MP4；返回 `studioDraft` 并通知已打开的工作区，不覆盖已有草稿。已有音频保留为导入素材，不推断 TTS 生成参数。直接 `bulletRevealSeconds` 无法无损表示为 Studio 语音锚点时，保留独立成片并明确返回 `studioWarning`；没有会话的宿主调用仍只合成媒体。失败、取消、所属 Project 变化不登记新草稿。Studio 无草稿时显示明确空状态，加载完成后不继续显示“加载中”。
 
@@ -155,9 +155,11 @@ media-native 增加仅供宿主消费的 `processArtifact({action:"media.speech.
 
 固定 CPU 识别（旧旁白默认中文，视频原声默认自动检测语言）保存 Project 归一化 WAV、完整原始 JSON、日志及 SHA-256，返回实际耗时、`audio-file-seconds` 区间与 BPE token 概率均值。原始越界、重叠和低概率区间不压缩或补造，显式标记不可直接采用。`automaticTimingApproved:false`、`wordTimingAvailable:false` 保持关闭；概率不是人工准确率或中文词/字时间。整体最多十分钟、原始 JSON 4 MiB、进程输出 1 MiB、400 区间/16000 token；取消等待子进程及管道退出，随后只清理当前 UUID 产物。Studio 已提供原始候选、句/段级编辑、字幕及点击强调/板书共用引用。十段真实音频的 base 标注经用户试听并明确采用，保存 ASR 辅助核听来源；制作区间仅裁去超出实际音频时长的末尾，原始转写/时间/警告保留，合并整段不拆成虚构句时间。相对采用记录的原始 base 区间位移 P95 为 272.125ms，仅反映末尾边界修正，不是独立声学准确率；不据此批准自动时间能力。当前保留可编辑句/段锚点，自动词/字同步不开放。
 
-### Studio 下一期：可靠审片、视频原声双语与有限模板
+### 预览检查、视频原声双语与有限模板
 
-更新预览保留当前全片时间，并将分镜、画布、时间轴与属性同步；视频时长未知显示“待测量”，不按零秒误报缺画面。制作检查读取真实素材时长并显示当前版本的实测覆盖，检查不会写回草稿。草稿更新后旧报告及关键帧失效。
+更新同一草稿的预览保留当前全片时间，并将分镜、画布、时间轴与属性同步；切换草稿立即清空原画布和播放时间、恢复待准备提示。预览准备与释放串行，取消等待实际资源加载、绘制和解码器清理，过时准备不会被标记为就绪；视频时长未知显示“待测量”，不按零秒误报缺画面。制作检查读取真实素材时长并显示当前版本的实测覆盖，检查不会写回草稿。草稿更新后旧报告及关键帧失效。
+
+后台通知先按同一 Studio 的 Project/Session 读取新状态，读取串行且工作区代次变化后丢弃旧响应；GUI 作业必须等到自己的新快照再读取新成片素材。只增加成片/封面记录、revision 和 updatedAt 的更新，在所有编辑内容、所有者及已解码素材的大小/修改时间相同且无待输入/手势时，推进已准备预览的版本而不重新解码，保留播放头、对象选择及撤销/重做。实际内容更新仅在本地干净时同步，保留选中镜头身份与播放时间并自动准备新预览；外部内容替换清空旧编辑历史。待输入、未保存或对象手势期间不覆盖字段、不移动焦点、不静默变更请求版本；新的真实成片仍可在交付历史看到，保存冲突保持可见，需明确重新加载。简单模式在干净预览工作区收到新的当前有效成片时自动显示中央 MP4；高级保持当前对象编辑，成片不自动播放，隐藏草稿预览时暂停声音。作业期间通知合并到结束后处理，不重发任何模型/媒体命令。
 
 交付面板提供文字/字幕审片与“生成当前草稿关键帧”；按当前草稿逐分镜生成本地预览缩略图，点击返回对应时间，生成后恢复原位置。预览和原生 MP4 共用 Canvas 排版。文字全部保留，允许有限缩小字号并提示；最小字号仍放不下时，预览/编码返回 `STUDIO_TEXT_LAYOUT`，不静默截去剩余行。提示涵盖字幕阅读密度、标题卡停留时间、上方/中央字幕遮挡、缺少译文和字号缩小。审片提示不是事实核查或人工可读性认证。
 
@@ -171,7 +173,7 @@ media-native 增加仅供宿主消费的 `processArtifact({action:"media.speech.
 | `detach-source-captions` | 保留独立字幕，解除原视频时间关联 |
 | `set-caption-translations` | translations 为 cueIndex/originalText/translationText；核对当前原文与版本，保留原文和时间，跳过已有 user-edited 译文，返回 skippedCueIndices |
 
-字幕编辑器分别编辑原文与译文，共用起止秒数；`captionDisplay` 为 original/translation/bilingual，对预览、MP4、SRT/VTT 一致生效，旧单语字幕保持原来的文本。字幕人工修改以宿主可信 actor 标记，模型不能声明人工审核。字幕来源清单记录 sourceCaptionBinding、显示模式、译文来源、分镜全片起点；原声字幕没有旁白的 .5 秒偏移。剪裁/变速/前置片段时长或源文件 SHA 变化会阻止预览、成片复用、编码与字幕导出，需重新识别/应用或显式解除关联。翻译请求交给当前拥有该草稿的 Assistant，继续使用所选官方驱动，不新增模型循环。
+字幕编辑器分别编辑原文与译文，共用起止秒数；`captionDisplay` 为 original/translation/bilingual，对预览、MP4、SRT/VTT 一致生效，旧单语字幕保持原来的文本。字幕人工修改以宿主可信 actor 标记，模型不能声明人工审核。字幕来源清单记录 sourceCaptionBinding、显示模式、译文来源、分镜全片起点；原声字幕没有旁白的 .5 秒偏移。同一已识别素材的剪裁、变速、前置片段时长或调序现在按已核对源字幕重新映射，人工原文/译文保留；超出核对范围、删除/替换稳定片段、来源 SHA 变化或含糊的同时字幕/源时间编辑仍阻止消费，需重新应用或显式解除关联。翻译请求交给当前拥有该草稿的 Assistant，继续使用所选官方驱动，不新增模型循环。
 
 原声 GUI 提供 base/small、语言选择、原视频试听、识别时间/原文校正和核听确认；未确认不能通过 GUI 应用。识别与应用不生成旁白，不自动删掉用户既有旁白或启用原声，保留原声仍由现有开关控制。ASR 单个完整原视频音轨最多 180 秒；尚无长片分块/区间识别，自动词级时间仍未开放。源候选为宿主持久证据，独立字幕与模板编辑可撤销；应用源识别明确替换当前分镜字幕，不能以模型 draft 更新伪造识别记录。
 
@@ -203,7 +205,29 @@ TTS 设置只是生成参数；已有音频按分镜保存宿主生成记录 `au
 
 ## Video Studio
 
-单画面和各 visualSegment 支持最多 24 个有序、非重叠 `focusIntervals`：`startSeconds/endSeconds` 是原素材秒数（图片为片段内秒数），最短 100ms；`x/y` 为完整源画面中心 0–1、`zoom` 为 1–4、`emphasize` 控制中心标记。焦点在原 crop 内平滑进出，预览/MP4 使用同一绘制与 trim/rate 映射；时间轴投影重点区间。画面属性提供添加、修改、删除及撤销/重做；聚焦输入在分镜/Session 切换前保存。焦点不重录视频、不使未改旁白过期，但使旧成片复用失效。替换画面移除旧素材的焦点；追加片段保留原画面的焦点。保存失败后的本地焦点仍可删除：删除先移除目标再提交修正后的草稿，不重试已被拒绝的旧草稿；删除目标正在输入的参数随目标一并移除，其他参数输入仍正常提交。删除支持撤销/重做，仍遵守所属 Session 和 revision 冲突检查。
+Studio 默认使用镜头卡片、脚本与预览的统一工作台；高级编辑为主动开启的全窗口多轨视图，同一 Assistant 转为浮框。两种视图共享草稿、媒体、撤销和归属，没有第二个自然语言输入。用户已要求暂不继续 UI／工作流优化；本轮仅核查一致性。专用 AI 图片／视频素材生成暂缓，素材准备使用现有 Project 文件及浏览器采集能力。
+
+卡片拖动提供明确的前/后插入位置及边缘自动滚动，只在松开时沿原 CAS 保存，可撤销。未保存输入先正常保存；保存期间已松手或取消，不延续拖动。同版本预览和任务刷新保留手势及标记；Project、Session、草稿/revision、模式变化，以及 Esc、区外松手、指针取消、失焦和缩放取消。镜头身份、旁白、字幕、图层及旧成片保留；不新增按钮，原菜单调序继续可用。
+
+可选测试版审阅支持字幕样式与原文/译文/双语显示建议，使用有限结构化 before/after（null 表示未设置）和已有样式契约。建议保存不改画面；用户逐条采纳/忽略/撤销，保留字幕内容、时间、来源和实测旁白。字段或定位时间变化时拒绝覆盖；未设置字段撤销后恢复未设置。前后对照用可读样式标签，不新增常驻按钮或模型工具；实际画面依据与建议质量仍需人工核对。
+
+自动打开高级 Assistant 时，若正常 320px 高度的四角都遮挡所选对象，尝试使用最大可放置的 240–320px 高度，保留输入和发送区并避开播放控制；已选高度随此 Session 的打开浮框保留，选择变化不跳动。用户拖放保留位置与高度；未手动摆放的浮框明确重新打开时重新计算。该高度由原生 Host 内部布局回传，不新增用户/模型参数或编辑草稿数据。
+
+素材准备提供同一全片任务入口“让助手准备素材”，在目标与素材及高级素材资源区复用。允许零分镜草稿；提交前保存当前输入并捕获 Project/Session/草稿，阻止重复提交和同一 Assistant 忙时提交，沿用原归属及 expectedRevision 检查。任务只复用/采集真实 Project 文件并合并 preparation，实际列表随后台更新，不自行更换画面、创建镜头或制作成片；专用 AI 图像/视频生成服务仍未接入，不把任务已提交当作完成。
+
+高级画面与独立图层提供默认折叠的“颜色与模糊”：亮度 0.25–2、对比度/饱和度 0–2、模糊 0–12 输出像素。使用封闭数值 effects，按固定顺序绘制，不接收 CSS、URL 或脚本。主画面仅处理素材，不改变标题、字幕和聚焦标记；独立对象仅处理其自身。可明确清除效果；修剪和分割保留参数；主画面可卡片往返，独立图层按共享兼容性约束保留高级编辑，沿用原保存、CAS、锁定、撤销和共享预览/原生导出。
+
+主旁白提供“静音此镜头全部旁白”，独立于 voiceVolume，保留原音量、实测音频、voiceTiming/voiceSegments 和字幕。旁白片段共享镜头静音状态，界面明确作用范围，时间轴文字标识静音。视频画面属性提供“静音此画面片段原声”，沿用 keepSourceAudio，不改源区间、sourceVolume 或原声字幕绑定。两者复用保存、CAS、撤销和预览/原生导出；静音或零音量旁白不触发背景音自动避让。普通 Agent 更新省略 voiceMuted 时保留当前值，显式 false 可取消静音，带 undefined 的 GUI 历史快照可清除此字段。无旁白时控件禁用，图片不提供原声控制。
+
+### 有限多轨与独立对象
+
+有限图层使用镜头局部 `layers/audioTracks` 与全片 `layers/audioTracks`，每个容器各最多八项、全片最多 64 个独立对象。视觉对象为文字/矩形/Project 图片或视频，时间、标准化几何、透明度、层次、显隐/锁定、淡入淡出及显式 2–12 个关键帧为封闭字段；同一时刻最多四个视频叠加解码器。图片沿用共享 32 百万像素/256 MiB 预算，视频解码检查实际尺寸、透明数据与源区间。独立音轨按实际源区间/速度/音量流式混合，支持静音、淡入淡出和旁白实际区间内降低至 25% 的配乐增益；预览与 H.264/AAC 导出使用相同混合与图层绘制。越界对象保留原值并阻断预览/导出，不静默截断；普通更新省略既有图层时保留；清除独立对象须在可信高级编辑中执行，简洁更新不能用显式空数组丢弃对象。新素材必须在当前 Project 中通过 ArtifactJobIO；复制镜头给局部对象新身份。没有 shell、HTML 或任意渲染脚本入口。高级资源分素材/脚本/元素/音频；文字、矩形、图片、视频和音频可加入当前镜头或全片容器。音视频按实际可解码轨道的首时间戳和终点确定源区间。对象可从画布命中或独立时间轴选择，属性支持内容/几何/层次/显隐/锁定/音量/静音/旁白避让/淡入淡出和显式关键帧，使用同一草稿 CAS、撤销、保存与预览。时间轴独立片段可拖动移动、两边修剪、按播放头分割；缩放保留对象选择。关键帧裁剪保持边界样本；缓入缓出采用受限 `easingRange: [from, to]` 保留原 smoothstep 的连续区间，重复修剪/分割及播放头插点保持位置、尺寸和关键帧透明度曲线。该字段只用于缓入缓出，两个有限端点必须在 0–1 内并严格递增；不接受曲线代码或表达式。共享绘制器按区间重新归一化，原先无区间字段的动画保持原行为。属性标明“保留原曲线”，明确修改插值会重设该段曲线。保持区不制造额外无用端点，切割十二关键帧的动画仍在既有预算内；新增点超过十二个则拒绝并保留原值。片段淡入淡出的边缘行为沿用既有规则，本项不代表所有效果的无损裁剪。保存冲突保留对象输入和当前模式，明确确认重载后才放弃。独立对象存在时拒绝返回卡片并保留对象及选择；撤销或移除后恢复简洁编辑资格。当前画布选择、移动、缩放与实时像素更新已接入；空白选择打开原有全片参数，按草稿版本应用、可撤销，模式切换保存参数并保留全片选择。主轨、有限整镜头分割和逐项审阅使用下文同一契约。受限对象与动画不构成通用 NLE；超出契约的复杂绑定仍拒绝。
+
+独立图层和音轨的时间轴行提供一个对象菜单（亦支持右键与 Shift+F10）：编辑属性、锁定/解除锁定、隐藏画面或静音/取消静音。使用已有 locked/hidden/muted 字段和原 CAS/撤销/预览/导出，不新增副本或工具。菜单捕获所属草稿、会话与 revision；版本、模式或归属变化关闭菜单，过期点击拒绝。锁定对象的可修改参数、删除、动画及分割呈禁用，仍可解锁、隐藏或静音；锁定沿用既有编辑保护，不作为宿主权限。菜单键盘导航和 Esc 返回触发点；滚动/缩放窗口关闭菜单，避免悬在错误轨道。
+
+高级编辑的画布与时间轴之间提供可聚焦分隔条：默认约占可用编辑区 34%，拖动或上下方向键调整，Home/End 到最小/最大，Esc、指针取消或窗口失焦恢复本次拖动前高度。边界保留至少 220px 上半编辑区；轨道在时间轴内滚动。按 Project/Session/草稿保存当前 View 的比例偏好，往返保留，窄窗仅限幅，不改视频数据、revision 或撤销历史。布局变化同步原生 Assistant 避让区域及响应抽屉。
+
+单画面和各 visualSegment 支持最多 24 个有序、非重叠 `focusIntervals`：`startSeconds/endSeconds` 是原素材秒数（图片为原画面效果秒数，内容分割后保留），最短 100ms；`x/y` 为完整源画面中心 0–1、`zoom` 为 1–4、`emphasize` 控制中心标记。焦点在原 crop 内平滑进出，预览/MP4 使用同一绘制与 trim/rate 映射；时间轴投影重点区间。画面属性提供添加、修改、删除及撤销/重做；聚焦输入在分镜/Session 切换前保存。焦点不重录视频、不使未改旁白过期，但使旧成片复用失效。替换画面移除旧素材的焦点；追加片段保留原画面的焦点。保存失败后的本地焦点仍可删除：删除先移除目标再提交修正后的草稿，不重试已被拒绝的旧草稿；删除目标正在输入的参数随目标一并移除，其他参数输入仍正常提交。删除支持撤销/重做，仍遵守所属 Session 和 revision 冲突检查。
 
 `suggest-focus` 要求所属 Session 的 draftId/expectedRevision/sceneId，支持 segmentIndex；只读取当前 Project 对应录制事件文件，返回实际记录与确定性点击分组建议，不写草稿。建议只使用有实测帧映射且位于录制表面内的点击，缩放上限 1.5。GUI 接受建议后仍可逐项修改；已有手动区间不会被覆盖。普通视频/图片可手动聚焦，缺少录制事件明确提示自动建议不可用。建议不证明操作结果或页面正文都在焦点内，交付样片仍需审片。
 
@@ -217,21 +241,37 @@ TTS 设置只是生成参数；已有音频按分镜保存宿主生成记录 `au
 
 Studio 使用主工作区，不创建独立退出入口。GUI 与自然语言共享当前 Session 的草稿、选中分镜、阶段、版本、材料和导出结果；DSH 驱动在官方上下文快照中注入当前 Studio 数据，数据不被当作权限提升指令。
 
-编辑阶段采用画布工作台：左侧分镜与本视频素材、中央适应空间的横/竖屏预览及常驻播放控制、右侧画面/旁白/字幕属性面板、底部按真实时长排列的全片时间轴。属性独立滚动；全片参数、配音默认值和命名模板集中在「视频设置」窗口。五阶段流程和原有脚本工作区保留，画面匹配阶段使用独立属性栏。封面编辑由右上「视频封面」打开，交付由顶栏「交付与导出」打开，属性标签只保留画面、旁白、字幕。顶栏交付按钮默认普通样式，仅交付面板打开时高亮，切换回编辑或封面时恢复。
+默认「卡片编辑」把纵向镜头卡片、同一份 scene.narration 脚本和预览放在工作台。当前卡片复用 canonical script-current 编辑器，不维护另一份脚本；只展开所选卡片，其他卡片保留可读正文、缩略图和旁白状态。当前卡片只常驻「换画面」「声音与字幕」两项详情入口；画面取景和明确标识的 Assistant 委托放在镜头菜单，可关闭详情继续复用原有编辑器。支持按镜头 ID 校验的拖动调序及菜单调序、复制、删除和撤销；Project 原素材不重复复制、不随镜头删除。目标、背景、受众、大纲与素材集中在「目标与素材」详情；空状态示例只预填原有 Assistant 输入，发送后才执行。
 
-时间轴仅投影已有顺序分镜、视觉片段、实测旁白长度和字幕区间，不新增持久化轨道。点击分镜或片段定位累计时间；播放/跳转跨分镜时同步列表、属性、时间轴与原有 Agent 选中上下文。字幕仍标注估算或编辑来源；过期旁白标注需重生成。切换属性、封面、设置或交付前保存聚焦输入并检查版本，保留撤销/重做。
+主轨操作按镜头 ID、片段类型/索引和捕获的 revision 校验。镜头调序保持卡片顺序一致；主序列改时长顺移后续镜头，局部对象仍属于原镜头，全片对象保持绝对时钟。越界对象、字幕重叠或引用无效会拒绝操作并保留原值。旁白新增可选封闭 `voiceTiming {startSeconds,sourceStartSeconds,durationSeconds,playbackRate}`；`audioDurationSeconds` 仍是原文件实测长度，不作为播放片段长度改写。默认仍从 0.5 秒播放完整旁白并保留 1 秒总留白。明确编辑的播放区间按实际解码音频复核，预览、AAC 混音、配乐避让、估算字幕及人工句锚点共用该时钟。句锚点保留原音频秒数与哈希，修剪排除被引用句时要求明确调整引用，不自动截断。独立字幕时序修改不改写旁白。时间属性输入在外部更新/版本冲突中保留，用户明确重载才放弃。字幕来源 receipt 记录 voiceTiming；不把估算字幕当作自动对齐。
 
-封面模式中央只展示独立 PNG，右侧编辑全片封面，暂停视频播放并隐藏视频时间轴；零分镜也可使用。交付集中 MP4、封面 PNG、SRT/VTT、制作检查、字幕下载和历史成片/验收报告。任务状态与保存状态分开显示，媒体作业运行时才显示取消入口；未更新预览显示提示。布局支持窄窗口和明暗主题，不提供尚未实现的自由图层/关键帧控制。
+旁白可在播放头处分割为一至八个 `voiceSegments`，与 `voiceTiming` 互斥；每段有稳定 ID、镜头内开始、原音频源开始、播放长度与速度，输出按时间排序且不得重叠，实际源区间复核后才能播放／导出。分割保留原文件、原实测时长、正文和句锚点哈希；连续源／输出的切点合并句投影与配乐避让，避免人为插入淡入或重复句动画。移动／修剪／速度编辑只改选中段，不伪造词级时间。独立人工字幕不随旁白重写，关联句投影到可见区间；完全移除仍被引用的句须先处理引用。换文件或重新配音显式清除旧播放区间；旧调用省略该字段时保留已有片段，GUI 撤销用显式清除恢复原时钟。
 
-工作流：
+主画面分割保留镜头、旁白、原句锚点和独立字幕，不改写源文件；左片段保留既有 ID，右片段生成新 ID。封闭的 effectWindow 保留原始推近、图片聚焦和淡入／淡出的秒数域；视频聚焦继续使用原视频秒数。明确改变片段转场可建立独立透明度时钟，仍保留画面运动时钟。连续、同原声音量的分割片段复用同一次原声解码，避免 AAC 在每个切点重复起跑；连续同源、同速度、同源区间的分割片段投影成一个原声字幕播放组；宿主据旧身份或唯一相同播放时钟重定位可信证据／字幕绑定，人工原文及译文不覆盖。实际移动、修剪、换素材或调速造成播放组变化时原绑定仍可判为过期，不能仅靠文件名猜测重新绑定。效果窗之外的扩展不自动建立新来源时钟；有限整镜头分割见下文。
 
-1. 素材收集：零分镜可建立草稿；收集笔记、全局提纲、文本、图像、视频和音频。
-2. 脚本创作：全局脚本显示所有分镜；选中分镜对应独立正文/画面要求。添加、删除和排序分镜同步到全局关系。
-3. 制作音频：针对分镜生成、试听和绑定真实旁白，测得时长后设置目标长度。正文变更使旁白 stale；制作时拒绝 stale 音频。
-4. 匹配画面：全 Project 可预览素材缩略图；最多两个并行解码，缓存有界，原生窗口不发出可见性回调时通过渲染/滚动/尺寸变化的布局检查补充加载。选中分镜后按当前分镜、未用素材和其他分镜素材分组，支持拖拽绑定与更换画面。旁白和文本不混入画面候选。素材不足可通过同会话请求采集或明确选择末帧定格。
-5. 预览和编辑：点击分镜跳到其时间位置；以音频时钟同步、按视频帧率定时刷新，不依赖原生窗口的 compositor 回调；暂停、跳转和切换草稿取消过时播放；预览可调整脚本、素材、取景、源起点、速率、音量、原声和字幕，渲染保存 Project 成片与版本。
+时间轴单击主片段只选择并暂停，不移动播放头；原生标尺输入和键盘定位沿用同一播放与版本保护。主画面和旁白片段的 ID 可成为 Assistant 精确对象范围，第一次输入后独立固定；GUI 撤销移除片段后清理失效选择，但不改变已固定请求，发送时仍拒绝被删／错误类型／其他镜头的目标。
 
-`video.studio` 的操作：list/create/read/update/configure/save-template/assets/inspect/read-material/attach/narrate/narrate-pending/check/export-captions/export-cover/render/open/context。请求使用 Artifact ID、Draft ID、Scene ID 和 expectedRevision；update 的草稿为受限对象，无任意 HTML/脚本。attach 验证真实媒体类型和归属。视觉修改保留未改脚本的旁白绑定；脚本变更要求重生成。空草稿可保存、配置和制作封面，不能导出视频；最多 24 分镜，素材集合与正文都有明确上限。
+高级编辑需主动开启，宿主将 Studio 扩展到完整应用内容区，隐藏浏览器 Shell 与固定聊天侧栏；应用内沉浸不改变操作系统全屏状态。上半部资源左侧、画布中央、所选分镜画面／旁白／字幕属性右侧，底部展示同一草稿的主轨与独立图层/音轨。主镜头可拖动调序、右边缘改时长，画面片段可调序/修剪；旁白可移动/修剪并精确设置源区间、播放长度和速度；字幕可移动/修剪/按播放头分割，保留双语内容。独立对象可移动、修剪与分割。主画面可在播放头处分割为最多八个内容片段；有限整镜头内容分割已实现；超出可信来源范围的复杂关联重绑定拒绝。切换前保存输入、校验版本、暂停播放；失败保留当前视图与输入。进入高级时回到草稿画布，准备当前预览后启用定位，避免沿用成片视图或待准备的 1 秒范围。往返保留草稿、选中分镜、播放位置、撤销／重做、原 Assistant WebContents 与未发送文字；返回恢复侧栏宽度。高级编辑进入时，先完成保存和工作区重排／实测边界，再自动将原聊天展示为最大 320×320 的小浮框；可收起为状态胶囊。修改分阶段确认等任务偏好不会关闭已打开浮框或重新打开用户已收起的聊天。浮框位于实测属性列左侧，限制在时间轴和实际播放条上方；Renderer 可上报闭合数值范围内的 floatBottom，为自由浮动额外预留播放条，主动停靠仍使用完整属性区。自动选位的浮框在明确收起后重开时可重新避让当前对象；已打开的浮框和用户手动位置不因选择／播放改变而跳动。浮框保留范围、输入、最近消息和任务状态，完整会话可展开；驱动切换仍可通过设置操作。用户主动停靠时才替代属性区，收起恢复属性；Renderer 通过合并计时器、resize 和尺寸观察上报实际属性列边界，Native View 依此停靠；上报不依赖 requestAnimationFrame。原生 Studio/Assistant 层级直接重排已挂载 View，避免不必要的拆卸；隔离桌面验收须等待实际渲染后比较同一时刻 DOM 与原生边界。较大窗口默认自由浮动；小于 1000px 的窗口暂时停靠。小窗关闭不覆盖用户的浮动偏好，恢复大窗后按原偏好和位置展开。宿主模态层及 Studio 详情暂时隐藏聊天，关闭后恢复。
+
+高级资源/属性响应布局使用同一 canonical DOM：宽度 ≥1100px 保留两侧栏，700–1099px 把资源折为可打开抽屉，<700px 将资源和属性折为一个非模态抽屉。打开/切换/关闭先保存输入；资源与属性详情互斥，宽窗恢复时把原节点移回，未保存字段不复制或丢弃。抽屉仅占上半编辑区，时间轴继续可操作。高级模式的原生主窗口最小尺寸为 420×640，退出后恢复 960×640；若返回时低于普通宽度则扩至原最小宽度。小窗聊天按实测上半区宽度停靠，详情期间暂时隐藏原聊天。
+
+原生浮框首次展开根据资源/属性边界及选中对象的实际矩形选择遮挡最少的角落；空间不足不保证零遮挡。首次自由位置确定后保留，后续选择/播放不自动跳位。标题栏拖动合并连续指针请求并顺序移动同一 Native View；Esc、取消或失去手势恢复起点，收起/停靠先结束并排空拖动。拖动、收起和停靠都捕获 Project/Session，宿主拒绝过时归属；请求不改变草稿或发送模型输入。几何契约允许紧凑停靠属性宽度最多为整个窗口，资源宽度最多一半，避让矩形闭合且不得越过标准化窗口边界。
+
+离开 Studio、切换会话或替换当前 View 时，宿主记录实际暂停的 View 并发送隐藏通知。返回已缓存的同 Project／Session 工作区也必须在归属校验通过后发送恢复通知；不能仅依赖 owner 是否变化。原 Renderer 恢复顺序读取和合并通知，获取新增 Project 素材，不改写草稿或重新发送请求；重复打开已经活动的 View 不重复重置预览。销毁时清除暂停记录。
+
+聊天在开始输入时固定「整支视频／镜头／画面、旁白或字幕」目标；后续界面选择不会改目标，可主动更改。未发送文字和目标按 Project/Session 保留。提交由原 Assistant 主框架经闭合 IPC 验证归属及目标存在，先保存 GUI，读取目标最新 revision 并冻结上下文进入 Host FIFO；DSH 官方上下文入口与其他驱动使用同一活动请求快照。拒绝外部发送者、跨 Project/Session、已删镜头、保存冲突和非法字段；拒绝保留输入、不产生请求。独立视觉图层和音轨使用闭合的 layer {id,kind}，镜头内对象附 sceneId，全片对象不附 sceneId；不能混用旧 objectKind。Host 保存前后检查精确容器、对象类型与存在，并把名称/时间等有限数据冻结到请求上下文。对象属性的“让助手调整此对象…”只预填，不执行；已有未发送文字时保留原文和目标，不追加另一条委托。当前选择已删除的对象不能成为新的 live 范围，已固定请求仍会在发送时拒绝。主画面对象范围可带 visualSegmentId，必须同时为 object／visual、带所属 sceneId，不能混合旁白 ID 或独立图层；身份格式沿用已有画面片段的闭合字符集。宿主校验当前草稿的精确片段存在，冻结名称、镜头内开始及长度。时间轴选择携带实际稳定 ID，调序后重新按身份解析当前位置；删除后清除 GUI 选择，固定请求仍在发送时拒绝。尚无持久 ID 的旧单画面沿用镜头画面范围，不在选择时改写草稿或制造临时身份。该范围是用户请求上下文，不扩展或替代 browser 的授权。既有 browser 工具数、官方循环、取消清理与未知投递不重发规则保持不变。可选“分阶段确认”是冻结的任务说明，实际模型遵从仍需效果验收。
+
+Studio 任务卡读取宿主统一 Assistant 会话状态与实际 browser 工具事件，严格过滤 Project/Session，区分排队、执行、等待、取消清理、失败和未知结果。停止委托宿主原有取消链并等待清理，不自动重发未知任务。对话成功结束不被当作成片生成；卡片另外显示真实草稿/素材/导出记录。保存与原生媒体作业进度分别显示，不估算 Agent 百分比。DSH、Codex、Qoder 共用该投影，无额外模型工具或 Agent 循环。
+
+成片生成时简单视图可展示实际 MP4并切回草稿；旧文件和当前草稿独立保留，复用状态来自后端指纹。顶部单一交付入口随状态显示「生成视频／制作更新／导出视频」，先打开检查与导出面板，列明待制作旁白镜头。用户确认后仅执行 narrate-pending 中失效或缺失的旁白，再用当前 revision 执行完整 render；生成过程锁定编辑，取消／失败保留已经提交的旁白和旧成片，不继续后续编码。当前有效成片直接复用，不重配音、不重复增加导出记录。视频编码仍可能重做全片。强制重做、封面／字幕／历史及默认关闭的可选测试审阅位于二级入口。真实素材、时长、语音、预算及编码技术门槛继续约束导出。
+
+主轨由已有顺序分镜、视觉片段、旁白播放窗口和字幕区间投影；独立轨道由持久化 layers/audioTracks 投影。手动编辑写回同一规范字段，不另存一份时间轴模型。点击分镜或片段定位累计时间；播放/跳转跨分镜时同步列表、属性、时间轴与原有 Agent 选中上下文。字幕仍标注估算或编辑来源；过期旁白标注需重生成。切换属性、封面、设置或交付前保存聚焦输入并检查版本，保留撤销/重做。
+
+封面模式中央只展示独立 PNG，左侧编辑全片封面，暂停视频播放并隐藏视频时间轴；零分镜也可使用。交付集中 MP4、封面 PNG、SRT/VTT、制作检查、字幕下载和历史成片/验收报告。任务状态与保存状态分开显示，媒体作业运行时才显示取消入口；未更新预览显示提示。布局支持窄窗口和明暗主题，仅开放已有保存、共享预览与真实导出实现的有限图层/显式关键帧控制。
+
+默认工作路径：可选填写目标／受众／背景 → 准备真实素材 → 在卡片内编辑脚本和画面 → 预览 → 检查与导出。材料、全局脚本、旁白、匹配和详细属性是按需展开的编辑入口，不要求用户逐阶段通关。高级模式把同一内容呈现为多轨工作区，导出规则一致。审阅是交付区默认折叠的测试功能，不成为导出门槛。
+
+`video.studio` 的操作全集从有效 Action Schema 生成在文末。请求使用 Artifact ID、Draft ID、Scene ID 和 expectedRevision；update 的草稿为受限对象，无任意 HTML/脚本。attach 验证真实媒体类型和归属。视觉修改保留未改脚本的旁白绑定；脚本变更要求重生成。空草稿可保存、准备素材、配置和制作封面，不能导出视频；最多 24 分镜、180 秒全片，素材集合与正文有明确上限。
 
 全片制作面板显示分镜数、总时长与待制作旁白数，问题可点击定位分镜。`narrate-pending` 使用草稿保存的 TTS 参数顺序制作非空脚本中缺失/过期的旁白，跳过仍有效的生成音频、导入音频和无旁白分镜。每段完成即以 revision 保存并通知 UI；取消、服务失败或并发编辑阻止后续写入，已完成段保留，读取最新 revision 后可续作。禁止在线旁白时批量入口同样拒绝 Edge。音频绑定/再生成后的分镜时长至少覆盖实测音频 + 1 秒和独立编辑字幕的终点，不静默裁剪字幕；60 秒分镜/180 秒全片上限仍有效。
 
@@ -259,13 +299,150 @@ Studio 使用主工作区，不创建独立退出入口。GUI 与自然语言共
 
 修改功能/权限/Schema 必须更新本文；新增、移动、删除测试运行 `npm run docs:features`。文末列表由源码生成并由 `npm run check:features` 验证。验证命令和证据边界见 [VERIFICATION.md](VERIFICATION.md)。
 
+## 共享视频文档与编辑器兼容性
+
+Video Studio 保存 format=bmw.video / schemaVersion=2.0 的单份规范文档。content 分为 settings、brief、story.scenes、timeline.regions/tracks/clips 与 cover；records 保留 Host 的媒体/语音来源与实测绑定、审阅/参考和导出日志。story 不保存镜头位置或时长，region 是全片顺序和时间权威；字幕 clip 使用 start/end，其余显式 clip 使用 start/duration。放置时间是 1000000 ticks/s，迁移残差最多 ±0.5 微秒，源媒体秒数与原始时钟完整保留，分数帧率和任意空隙/嵌套序列尚未开放。预览、导出和旧 read/update 使用受校验的无损 v1 投影，不持久化第二份草稿。
+
+simple.cards/1 是高级模型的可逆子集；仅进入高级模式、主画面/旁白裁剪、固定效果等不永久锁定。任一独立叠加图层、独立音轨或自由关键帧要求高级编辑；隐藏/静音/锁定仍存在。compatibility 根据当前内容/版本返回对象、路径、原因。简洁写入同时校验当前和最终合并后的候选，不能用遗漏字段/空数组丢弃高级内容；返回卡片由 Host 校验当前 owner、selection/revision、dirty 和兼容性，UI 提示原因。撤销/移除这些对象后可恢复卡片资格；已保存的高级草稿在卡片视图只读，可从原入口进入高级。无自动有损降级。
+
+唯一 browser 的 video.studio 提供 describe-schema、read-document、compatibility、validate-edit、apply-edit、migrate-document。类型命令包括 scene.set/reorder，clip.move/trim/split/effects/mute，layer.add/set/remove，固定 ID、类型和全片时钟；最多 32 条，一次 CAS 保存。试算不写入，结构/原生支持、可逆性与实际渲染就绪分别判断；真实素材准入、翻译保护、源时钟/日志保留沿现有 Host 校验。Agent 不能自行声明高级权限，提交前重新核验可信当前高级界面与 Project。试算不证明媒体/排版或渲染成功，生成的新 ID 必须在 apply 后重读。
+
+旧 v1 只读加载不改文件；首个成功编辑或显式 migrate-document 才升级，迁移前把原字节按 SHA-256 保存到 Project video-studio/schema-backups。迁移不改内容版本或媒体/成片；所有字段反向投影不同、超限或无法表达时拒绝写入。固定 owner、同版校验、原子文件替换、私有备份和签名历史保持。
+
+[Video Document 2.0](VIDEO_DOCUMENT_V2.md) 说明实际字段、能力预算及迁移，[Agent 视频接口](AGENT_VIDEO_EDITING.md) 给出调用约定。机器 Schema 与示例由运行时类型编码器生成并纳入 npm run check；video.schema 覆盖迁移/闭包/字段完整性/权限，studio.schema 覆盖真实鼠标对象创建、UI/IPC 返回限制、陈旧版本、签名撤销、试算和原生 MP4。专用 AI 素材生成继续暂缓。
+
 ## 模块接口与测试分类
 
-模块定义与依赖方向见 [ARCHITECTURE.md](ARCHITECTURE.md)。七个产品包、应用组装和验证工具拥有明确职责，跨模块仅能依赖 package exports 指定的公开文件。Feature 生命周期、Browser 宿主与原生媒体端口有具名 TypeScript 接口；未知跨进程输入与媒体回复仍须运行时校验。公开接口有正反类型消费者、运行时契约测试和对应回归保障。
+模块定义与依赖方向见 [ARCHITECTURE.md](ARCHITECTURE.md)。十个产品包、应用组装和验证工具拥有明确职责，跨模块仅能依赖 package exports 指定的公开文件。Feature 生命周期、Browser 宿主与原生媒体端口有具名 TypeScript 接口；未知跨进程输入与媒体回复仍须运行时校验。公开接口有正反类型消费者、运行时契约测试和对应回归保障。
 
 Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 driver 夹具从 Platform 注入的连接配置出发，经 MCP 适配器和 Bridge 实际操作 Project 页面，并验证权限、绑定及切换后恢复。DSH 的安装版兼容性与持久化绑定验证单列为具体实现/产品装配保障，按 Agent 契约、DSH 实现和产品组装范围选择；Browser 模型接口（Schema、目录、Bridge、MCP）单独改动不会自动启动 DSH。完整离线基线仍执行 DSH。
 
 测试分为 unit、contract、boundary、type、integration、desktop、media、external。`test:plan` 给出选择依据，`test:affected` 根据文件依赖、行为 watch 和接口矩阵执行受影响保障；任何源代码改动保留全局边界。共享验证辅助库的改动自动沿导入/重导出闭包选择所有运行时消费入口；生产模块仍使用接口/行为范围。未知/删除路径、共享配置及验证代码中无法证明的动态导入升级为完整离线集。生产代码不得依赖测试目录或验证工具；Renderer 禁止裸名称或 node: 前缀的 Node 内建模块。生产计算式导入默认拒绝，仅 DSH 插件允许解析声明的固定安装包字面量，不允许新增任意计算式导入。测试未分类、接口保障缺失或生成文档过期直接失败。新构建的源码/输出哈希收据防止使用过期 JS，只有完整离线集通过才更新验证基线。
+
+固定中文 ASR 资源准备、原始证据和可编辑锚点的当前行为见上文“原生中文语音证据运行端口”；用户核听采用记录和仍关闭的自动精度门见 [VERIFICATION.md](VERIFICATION.md#user-listened-whisper-base-adoption)。
+
+画布独立视觉对象的选择边框和拖动/缩放手柄是 GUI 覆盖层，不写入视频像素。点击和手势按实际 object-fit 留白后的画幅映射；镜头局部/全片对象保持原身份、时间和来源。变换对原有各关键帧应用相同位移/尺寸比例并以所有帧边界限制；不暗中生成动画、不改变 easing。一次拖动对应一次版本校验保存与撤销，指针取消/失焦恢复反馈；锁定、保存中和待处理属性输入阻止变换。拖动期间复用已准备的素材、音频与共享导出绘制器，合并指针事件为单个进行中绘制和最新几何，不为每个事件重新解码素材或建立音频上下文。临时覆盖仅允许同一已准备草稿/镜头/对象的几何变化，不能改来源、时间、文字或关键帧时钟；松手前不写草稿。Esc、指针取消、失焦和切换模式恢复原画面；切换/销毁在释放素材前排空临时绘制，避免迟到帧污染新预览。高级低频操作进入“更多”，复用并移动原 DOM 控件，返回卡片恢复原父节点；重复分镜条隐藏，由时间轴保留镜头导航。
+
+点击画布无独立对象的区域选中全片设置，清除对象选择，发布整片范围并暂停预览。全片参数复用同一 `VideoOptionsForm`、模板及应用控件，临时移动到属性区；原设置对话框打开时移回，关闭后恢复，始终只有一份控件和参数。声音、品牌水印与模板按需展开。待应用参数不会在普通 render 或外部更新中重置；视图/会话切换前通过 configure/CAS 保存，一步撤销，失败保留输入和原视图，明确确认重载后才丢弃。无高级对象的草稿可往返并恢复全片选择；含独立对象时保存待编辑参数，但返回卡片被兼容性约束拒绝，保留高级选择。
+
+预览完成不得覆盖主轨、独立对象或其他待保存字段的外部更新/冲突提示。实际预览准备完成只更新预览状态；存在待编辑输入时保留当前保存提示，避免把未提交或版本已变化的输入称为“草稿已保存”。主轨保存仍使用捕获的 Project/draft/revision 和原 CAS，不自动重放到新版本。
+
+### 独立对象分割后的原淡入淡出
+
+图层和独立音轨新增可选封闭 fadeWindow {originId,startSeconds,durationSeconds}，原时间范围 0–180 秒、长度至少 0.1 秒、当前片段须完全落在原范围内。分割/修剪保留原淡入淡出秒数，在原效果时钟上取样；短片段不重启/压缩效果。已有无窗口对象沿用原行为。视觉透明度和流式音频增益共用 layerFadeGain，关键帧仍独立保留原限制曲线。生成的曲线子域端点只在原合法端点内消除浮点舍入，用户输入验证不放宽。
+
+同源、同原效果身份/时间、相邻播放/源区间且速度、音量、静音、旁白避让和淡入淡出一致的音频切片复用一次连续解码，避免 AAC 片段处重复引入解码起始差异；独立修改任一策略会分开处理。对象身份与持久切片保留，不压平轨道。原素材不改写。
+
+所选对象的折叠淡入淡出属性标注「保留原曲线」，原秒数只读；明确「按当前片段重设淡入淡出」才移除窗口并将秒数限制到当前片段。操作保留媒体、几何和关键帧，用原 CAS 保存/撤销。淡入淡出/清除动画预设明确重设效果，单纯编辑文本/位置/音量不重设。超出原窗口的时长编辑拒绝并保留输入。此项不代表整镜头分割、全部效果、参考生成素材或逐项审阅已经完成。
+
+### 原声字幕随主画面重新映射
+
+SourceCaptionBinding 增加可选封闭 sourceCues、sourceRange 与 visualSegmentId；sourceCues 最多 100 条、源时间 0–180 秒、原文/译文各最多 200 字，区间排序不重叠，sourceRange 必須同时提供并包含所有核对区间。新的 apply-source-captions 保存用户核对的完整原声 cue 及实际原文件范围，并对已存在稳定 ID 的连续源组保存准确片段身份。旧数据不自动获取全源审核资格：首次映射只能保留当时可见的源范围，越界须重新应用。字幕/原素材/证据文件不重写。
+
+主画面移动、修剪、源起点/速度和前置片段变化，经同一源组重新投影字幕，无旁白 .5 秒偏移。保留当前人工正文、译文及来源标记，镜头边界截断不猜测词级时标；根 cue 中未播放的核对部分仍保存，再次扩展可恢复。单独字幕正文/时间编辑同步回源 cue；宿主翻译操作同样保留根记录。直接提交不能伪造 sourceCues/sourceRange、人工来源、SHA 或稳定目标，宿主只使用原可信记录。稳定片段被删除或换成另一 ID 时不自动采用同名文件；普通编辑删除稳定 ID 后不能采用同名无 ID 画面；恢复原无 ID 的旧状态必须通过宿主已确认的完整历史快照。未分段画面没有画面片段 ID，镜头 ID 不被借用为字幕目标。
+
+画面时间与字幕正文同时变化且既非原字幕也非确定的新投影时，返回 STUDIO_SOURCE_REBIND_CONFLICT 并不写新版本。超出核对范围返回 STUDIO_SOURCE_CUES_REQUIRED；有独立时间区间的旧字幕不会被默认为全源字幕。源 SHA 校验、Project/Session 归属、CAS、FIFO、取消、原语音锚点和单 browser 边界保持。生成的投影时间在真实镜头/片段范围内消除浮点终点越界；外部输入验证不放宽。所选主画面属性提供简短说明，错误保留当前输入。
+
+这项完成当前原声字幕的复杂源时间重映射，为整镜头分割提供基础；整镜头内容/旁白句锚点拆分、剩余有限效果、参考/生成素材、逐项实验审阅与完整制作/压力验收仍属于原设计待办。
+
+时间轴主轨编辑在保存后继续持有操作，直到选择恢复及真实预览准备完成，才重新开放分割与播放头；连续操作不会读取上一次的左侧选择。当前原生事务专项和完整前台鼠标回归分别记录，后者仍需解锁桌面后原样补验。
+
+
+### 宿主已确认的历史恢复
+
+list 为同 Project/Session 的每个当前草稿内容返回 snapshotProof。当前进程的服务使用私有随机密钥，对规范化编辑内容及 Project/Session 作 HMAC；版本/更新时间和导出记录不属于可恢复内容。restore 封闭请求必须提供 draftId、当前 expectedRevision、完整原草稿及 64 位十六进制证明。内容、审核来源、素材、owner 或其他字段不同均拒绝；另一服务实例、新进程或外来 Project/Session 不可采用。签名不验证素材当下的真实性，不替代消费前的 SHA、锚点、编码及媒体检查。
+
+现有撤销/重做在捕获已保存、内容相同的快照时记录此证明，恢复被删除镜头时可保持宿主已确认的句锚点、原声识别/根 cue、人工译文和音频测量。restore 保留最新视频/封面导出记录，使用原 CAS 和新版本写入，并继续 owner/FIFO/取消边界。没有证明的未保存历史仍走普通更新；无效证明不会回退为普通更新或重放，输入/错误保留。无新增用户按钮、模型循环、工具、路径、磁盘历史或生产数据迁移；证明随宿主服务生命周期失效。该基础用于整镜头分割，新分割及完整工作流仍按原设计推进。
+
+Studio stop 先关闭新的 IPC/打开准入，再关闭所有 View 并等待已打开或正在打开的素材句柄完成关闭；停止后不重新打开 Studio，排队中的旧素材读取不得新建句柄。
+
+### 原始镜头时钟与明确静音
+
+共享合成支持有限 presentationWindow：originId 为 1–80 个字母／数字／连字符，startSeconds 为 0–60 秒，durationSeconds 为原镜头 1–60 秒，musicIndex、sceneNumber、sceneCount 为 1–24 的整数；子段必须完全在原镜头范围内，sceneNumber 不超过 sceneCount。标题入场、要点出现时间、画面编号／进度和自动配乐使用原镜头时钟，字幕、媒体与独立对象仍使用各自局部时钟。bulletRevealSeconds 在原镜头范围内验证。原始时钟未提供时保持旧合成行为。Studio 普通 update 从同一镜头保留宿主已有 presentationWindow，不接受用户／Agent 原始请求创建或重设宿主来源；超过原时钟的延长明确拒绝，签名历史恢复继续沿用原版本／归属校验。
+
+voiceSegments 可以明确为空数组，含义是此段不播放旁白；缺少该字段仍沿用旧完整旁白行为。空数组保留原音频与脚本绑定，声音／自动字幕投影为空，独立人工字幕保留，主轨不会选择不存在的第一个旁白段。旁白时长计算对空集合保持有限值。原生导出回执报告实测原音频总长（至多 180 秒），宿主验证实际播放窗口是否在源文件与镜头范围内；不能再用原音频总长代替播放长度。无旁白镜头仅接受零音频时长，缺失／伪造／越界回执拒绝。
+
+这些共享媒体基础现已用于下面的有限整镜头分割；句锚点／句聚焦／板书与已核对原声字幕的整镜头分配现已接入下节的可信原始播放投影。
+
+### 有限整镜头分割
+
+既有 video.studio 新增封闭 split-scene 操作，只接收 operation、draftId、expectedRevision、sceneId、splitSeconds；切点是镜头局部 1–59 秒，两侧各至少 1 秒，最多二十四镜头。不能附带原始草稿／历史证明／外部路径。宿主按同一 owner、CAS、FIFO 和取消准入一次写入，失败不改变原 JSON；成功 revision 加一并发出一次通知，保留现有视频／封面输出日志。
+
+画面按交集直接分配到两侧，不创建临时第九片段；左／完整右片段保留身份，跨切点右片段获新身份。视频源起点按原速度前移，原 focus、zoom 和 effectWindow 的来源时钟保持。完整旁白脚本／原音频／实测总长／生成绑定不改写，有限 voiceSegments 分配原播放区间；没有旁白的子段明确为静音。独立字幕在切点裁剪时间，原文、人工译文与来源保持完整，不猜测字词对应位置。局部图层／音轨分配同一源时间、锁定状态、淡入淡出来源和严格裁剪的关键帧曲线；全片图层／音轨逐字段不变。所有原镜头在首次分割时固定 presentationWindow，后续标题／编号／进度／音乐不重启。原声视频的相邻同来源 effectWindow 区间跨镜头共同解码；同名文件或有间隙、速度／音量变化不能合并。
+
+时间轴沿用同一个分割入口，选择整镜头时标为「分割整镜头」，选择具体画面／旁白／字幕／独立对象时对应原有操作。保存、右续段选择、原播放头恢复和真实预览准备持有同一编辑事务；成功后才进入 Undo 历史，CAS 失败不造历史／脏草稿。签名 Undo/Redo 保留原始时钟和身份；撤销删除所选续段时清除过期 GUI 选择。卡片续段说明保留完整脚本并复用原旁白区间。宿主重新生成／导入不同旁白时可重建该镜头的原始时钟，普通 update 不能伪造重设。
+
+句锚点／句聚焦／要点与已核对原声字幕现可按下面的可信来源时钟进行整镜头分割，原证据与来源保持；不能把分割视为新的听审或源字幕确认。已有局部／全片越界对象、切点产生不足 0.1 秒的画面／旁白／图层、已测量视频末帧停留区域、总对象超六十四或关键帧超十二都原子拒绝，不裁掉未处理内容。任意复杂编辑后的绑定恢复仍需明确处理；已有基础效果、参考抽样、逐项审阅和制作恢复分别遵守下文契约，不自动扩展权限。
+
+### 整镜头的可信语音与原声字幕分配
+
+Studio 私有 speechPlaybackOrigin 仅由宿主分割／明确句校正派生，包含原镜头 presentationWindow 范围内零至八个完整 voiceSegments 和至多 2000 字符的当前播放 clock；clock 包含源音频身份、实测时长和有限播放窗口，连续且同速度的源／播放片段合并，时间按微秒规范化，片段 ID 与对象键顺序不改变时钟。原句锚点、脚本／音频 SHA、校正来源、时间域和 capturedRevision 原样保留。普通 update 从同一音频保留宿主原时钟，不能提交新的／改写原时钟；合法省略原音频字段在验证来源前恢复原绑定，明确移除或绑定不同音频解除该时钟。该私有字段在共享媒体合成前剥离，不扩展模型执行边界。
+
+分割保留整句原文。自动锚点字幕按子段的实际旁白区间裁剪显示且保持动态投影；静音子段为空。句聚焦以原始完整句区间投影到每个画面来源时钟，不在切点压缩／重启曲线；画面引用只分配到原画面实际出现的子段并重映射下标，素材身份、裁切与独立焦点冲突检查继续执行。无素材标题卡的板书揭示直接保留原时钟值，即使子段静音或揭示已发生，不相减再相加制造浮点边界变化。播放窗口发生实际变化时，消耗原引用拒绝；通过现有 correct-speech 明确校正可按当前有限播放重建来源投影，未改播放时钟的校正不重启原曲线。没有自动听审／词级时间／新的 ASR 认可。
+
+原声字幕由宿主将已核对 sourceCues／sourceRange 和原文件 SHA 分配到仍包含原稳定画面组的子段，保留隐藏已核对 cue、全文、人工译文和校正来源，不扩展核对区间。丢失原画面组的子段解除该原声元数据，只保留独立字幕；识别候选随原素材实际成员重映射，不采用同名无来源片段。组外独立字幕按切点裁剪；跨越组边界的含糊独立字幕、过期身份／时钟、超核对范围、交叠／超预算仍原子拒绝。整镜头服务在分配前重查实际语音／原声文件 SHA，异步读取期间取消或并发更新不写入；保存前继续同一 owner／CAS／FIFO。签名 Undo／Redo 与卡片／高级模式使用同一规范草稿，保留这些可信记录。
+
+这一实现仅覆盖当前可信来源契约内的整镜头绑定分配。任意复杂重绑定、效果扩展与完整用户体验验收不由本实现保证；参考抽样与有限逐项审阅见下文，AI 生成暂缓。
+
+## 制作取消、清理与明确续做
+
+统一「生成视频／制作更新／导出视频」仍沿用一次确认与既有原生旁白、编码。取消按钮在命令执行时可用；请求取消后变为不可重复点击的「正在停止…」，作业状态明确「正在停止并清理…」，实际命令／资源尚未排空时仍不开放编辑或下一命令。取消回执的迟到文字只作用于同一命令代次，不能覆盖已经结束或后来新命令的状态。停止不抹除已逐镜提交的旁白，也不抹除历史成片。
+
+制作停止／失败后从所属草稿重新读取已提交状态，说明尚待制作的旁白段数和「再次确认制作」的恢复方式；不自动重发、不自动续做。用户再次确认后跳过仍有效的旁白，再完成检查和完整 MP4。取消显示「制作已停止」，失败显示「制作未完成」；用户提示去除 Electron IPC 外壳，保留实际失败原因。并发改稿按现有 revision 拒绝旧结果，人工字幕与译文保持独立。
+
+隔离 Studio 原生专项 `BMW_STUDIO_PRODUCTION_RECOVERY_CASE=1` 已验证第三段 provider 失败、第二段处理中取消／并发改稿、实际编码完成而尚未入库时取消／并发改稿五种路径。取消期间另一 IPC 命令拒绝，清理完成前制作按钮保持禁用；初始有效旁白及第一段新旁白保留，原 MP4 字节／日志不变。后两项实际新编码及验证文件在未提交时回滚。明确重试只生成剩余／重新变过脚本的旁白，获得新增的可解码 H264／AAC MP4，不覆盖旧结果。声音来源是已测量合成 WAV 夹具，控制门限用于确定原生提交边界；不证明真实 TTS 网络／付费效果、编码进行中所有取消点、生产 Profile 或完整前台鼠标验收。
+
+## 可选逐项审阅（测试功能）
+
+“检查与导出”里的审阅区默认折叠。让 Assistant 提出建议沿用当前所属对话与官方运行时，不增加模型循环或工具；本地文字检查和关键帧仍可独立使用。新建议通过唯一 browser 的 video.studio propose-review 提交，需当前 draftId/expectedRevision 和闭合 reviewProposal：sceneId、field（title/narration/visualBrief/captionStyle/captionDisplay）、精确 before、after、reason、镜头内 seconds。宿主核对镜头、原值、时间、归属与 CAS，生成 ID、作者来源、原 revision 与日期；建议只是作者提供的依据，不代表事实核查。每草稿最多四十条记录，字段/文本/时间有界；未知字段与通用补丁拒绝。
+
+reviewItems 是宿主所有的持久审阅日志，不计入视频内容比较。普通 update、签名 restore 保留当前日志，不能伪造、覆盖或清除建议；日志更新保留已准备预览和当前版本关键帧。read/list 返回记录，所属视图自动刷新建议；用户可以展开修改前后内容，定位到对应镜头和全片时间。Agent 的专用审阅操作只能提出建议；adopt-review/dismiss-review/undo-review 需要 GUI user 身份、当前 revision 与 reviewId。采纳只改一个字段，撤销只恢复该字段；原值/新值与当前字段不同、镜头删除、旧版本、已处理状态均拒绝，保留当前内容。忽略可处理陈旧的待处理建议，视频不变。采纳与状态在同一原子草稿写入提交，期间其他修改、人工双语字幕、原音频和当前导出日志保留。旁白脚本变更使旧音频待更新，不自动生成旁白或 MP4；撤销恢复原脚本后按现有实测绑定判断有效性。
+
+文本建议的 before/after 使用字符串；captionStyle 使用完整六字段样式或 null，captionDisplay 使用 original/translation/bilingual 或 null，null 表示未设置。采纳与撤销核对原字段和定位时间，保留字幕内容、时间、来源及原旁白。只显示译文要求已有译文。未设置字段撤销恢复未设置。此项不接受任意补丁或 CSS，不保证 Agent 建议质量；实际画面依据仍需人工核对。
+
+## 参考素材分析与制作背景
+
+参考分析进入原有图片/视频素材预览的上下文入口，不增加常驻阶段按钮或第二个聊天输入。先“生成参考帧”，再“让 Assistant 分析参考 ↗”；结果在原素材列表显示就绪标记，重新打开可看实际 PNG、源时间、分析与将加入的文字。点帧可在原素材预览定位实际源时间。内容分析需要当前官方 Agent 运行时，宿主只准备图片证据和路由原会话，不自行执行模型循环。
+
+唯一 browser 的 video.studio 增加封闭 prepare-reference/read-reference/set-reference-analysis/apply-reference-notes。draftId/expectedRevision、Project/Session、当前素材种类/身份均校验；prepare-reference 可为视频指定一至八个不同有限源秒数，默认在实际视频轨范围抽三点；图片仅静态一帧。media.inspect 的视频轨 now 返回 startSeconds/endSeconds，按真实轨道起止采样，不把音频尾部导致的总媒体时长当成视频终点；其他检查和音轨字段保留。图片先实际检查解码后产生 640×360 原生适配 PNG，视频通过已有原生取帧产生不超过 640×360 的 PNG。记录保存源 ID/SHA/字节数/尺寸、总媒体时长/实际视频区间、请求与实际帧时间、帧 ID/SHA/尺寸、原版本/日期。源预算 256 MiB、单源 16 Mp，静态图片同时服从原图片 32 MiB 预算；视频不超过 1800 秒，最多八份记录，每份一至八帧。
+
+referenceRecords 是宿主所有日志，排除于视频内容比较；普通 update 与签名 restore 保留最新记录，不能伪造或清空。读取/保存分析/明确加入背景前核对当前源和所有帧 SHA，读取帧后再次核对源。Bridge 把这些返回作为真实模型 PNG 图像，沿用实际 Project 路径、PNG、数量/总字节预算与取消检查，并对将返回的实际字节再次核对记录 SHA。frames 路径是宿主结果，不向模型开放任意本地文件读写。
+
+分析是作者提供的 summary 与实际采样 frameIndex 的 description/adaptation，文本、数量及字段封闭；不能伪装未采样画面或整段视频/音轨已审阅。analysisOrigin 区分 user/agent，Agent 不覆盖用户校正。用户“加入制作背景”要求当前 beforeNotes 与 CAS，仅追加可预览的参考块；不自动改脚本、重配音或导出。原保存/签名撤销重做保留参考日志、期间的媒体、手工字幕和导出记录。
+
+原生输出仅在来源再次核对和当前归属/CAS 成功后提交。取消/冲突/验证失败只删除本次新建、身份相符的帧，不删旧资源；等待真实清理完成才重新准入。取消反馈说明已保存成果保留；源/帧变化显示重新生成参考帧的说明。原会话委托失败，即使弹窗已经关闭，也向仍属原视频的状态区报告恢复方式，不自动重发。宿主诊断仍保留原错误，不把 Electron 包装或错误码直接展示为恢复文案。
+
+当前为有限抽样参考分析；尚无自动全视频分段/节奏/音轨分析、语义真值保证或实际 AI 图片/视频生成工作流。达到八份记录上限时禁止新取帧，用户现可通过下面的折叠记录管理释放额度；旧参考图片与原媒体仍保留。完整视频语义分析、复杂引用恢复与完整用户体验仍未获该抽样验证证明；后续 UI 优化已暂停。
+
+## 卡片内画面与脚本配对
+
+默认卡片编辑把所选镜头的原 canonical script-current 编辑器与画面缩略图、画面意图放在同一张卡片；其他镜头显示完整脚本文字。卡片按自身可用宽度排列：350px 以上左右配对，较窄时上下排列，避免全窗断点和侧栏变化造成截断。长画面意图超过 120 字时用按需展开保留全文；没有省略保存内容。当前镜头仍只有“换画面”“声音与字幕”两项常驻详情入口，镜头菜单、素材/声音详情和高级编辑共用原草稿、编辑器与 revision/history，不新增脚本副本或聊天框。
+
+实际编译组件、生产 HTML/CSS 与原生参考 PNG 已在 headless Chromium 通过 24 镜头长中文、1200/900/700/620/420 五种窗口宽度、完整文字、无横向溢出和 canonical DOM 身份检查。解锁后完整新增原生 case 已通过五种宽度、固定预览、详情返回、保存冲突保留输入、高级/卡片往返、1.25 秒播放头、手工字幕/独立对象/音频与签名撤销重做（早期测试记录）；当前独立对象返卡片由共享 schema 拒绝，原生回归检查原因提示和撤销恢复；旧 MP4 指纹和独立旧草稿保持。组件检查与实际 DOM/IPC/Canvas 原生检查分别记录；它们不能替代前台鼠标与用户验收。
+
+## 参考记录的额度恢复
+
+现有参考素材弹窗增加默认折叠的“管理参考记录 · n/8”，显示当前草稿全部记录的素材、日期、帧数与分析状态；同一素材的记录可切换查看，仍经原 SHA 核对后才能使用。用户可明确移除单份记录并释放一个取帧名额；移除仅变更宿主 referenceRecords 日志，保留全部 Project 源文件/参考 PNG、已加入制作背景的文字、脚本/字幕/图层和导出。操作中禁用管理按钮；移除当前记录后清空其画廊与分析，不能继续用已移除记录委托 Assistant，其他记录可明确重新读取。没有新增常驻工作台按钮或聊天入口。
+
+remove-reference 是封闭请求，必须包含 draftId/expectedRevision/referenceId，只允许可信 GUI user actor，Agent 调用拒绝。沿用 owner/CAS/取消/FIFO；只操作元数据，不读取已过期或丢失的源/帧，因此这些记录仍可恢复额度。未知 ID、错误归属、版本冲突或取消不写入、不发送变更通知。读取失败后当前记录提供明确“重新读取”，仍核对最新源/帧，不自动恢复就绪或重发任务。普通 update/签名内容 Undo 不恢复已移除的宿主日志；界面明确说明内容撤销不恢复参考记录，可重新取帧，原图片仍可作为 Project 素材使用。
+
+真实宿主单元契约覆盖八份记录满额、用户专属移除、错误归属/CAS/取消、失效源/帧仍可移除、媒体与背景/脚本/导出保全、内容历史不复活旧记录及重新取帧预算。实际组件与服务回调的交互证据另见 VERIFICATION；不等同于 Electron 原生/前台、付费模型或生成服务验收。完整视频语义分析尚未实现，分析质量需人工核对，专用 AI 图片／视频生成暂缓。
+
+## 两种编辑视图共用精简操作栏
+
+卡片与高级模式共用原有顶栏控件：视频名称、保存状态、撤销/重做、目标与素材、视图切换与单一交付入口。作品切换、新建/删除、视频设置、重载、手动保存和返回浏览器移入同一“更多”菜单，不复制字段或事件；点击菜单外或 Escape 收起。尚未创建／选中草稿时目标与素材禁用；零分镜草稿仍可准备素材。错误后的明确重载仍可从菜单进入。
+
+含局部/全片图层或独立音轨、多个画面片段或焦点区间的卡片显示一条“含高级编辑”上下文入口，选择同一镜头后沿已有保存/CAS/模式切换进入高级编辑；不扁平化、不新建草稿。卡片按 Project/Session/草稿在当前页面记忆滚动位置，最多保留十六份；长画面意图的展开状态在同一草稿渲染和模式往返中保留。卡片容器关闭浏览器自动滚动锚定，仅在卡片视图记录位置，避免高级布局重排污染原位置。上述 UI 不增加模型工具、网络调用或媒体模型。
+
+## 空草稿到卡片初稿与竖屏交付
+
+简单模式在空草稿的素材/背景区显示原有“让 Assistant 生成卡片初稿”委托入口，沿原所属 Session 与 script intent，不增加聊天框或模型循环；背景可空。大纲保持原字段，在默认折叠区按需阅读与修改。已有分镜时同一委托变为完善脚本，保留原提示词的用户内容保护。
+
+同一草稿从零分镜收到后台初稿，且页面没有待保存输入时，简单视图进入镜头卡片与草稿预览，并关闭原准备资料详情。待保存输入存在时继续保留文字和当前页面，明确重新加载后才接收外部版本并打开卡片。Project/Session/版本准入、结果通知和 unknown 不重发沿原规则；视图切换不写草稿内容。
+
+卡片预览按当前区域高度适配横/竖画幅，播放和定位控件始终留在预览区，不随卡片滚动，也不要求滚动竖屏画面后才能播放。交付计划只显示待更新旁白数量和制作影响，完整镜头名单保留在默认折叠区；有效旧成片复用时不显示待更新名单。可选测试审阅默认折叠，不成为导出门槛。
+
+预览准备期间，时间轴分割与播放/定位控件一同禁用；真实准备完成后按当前编辑状态恢复，避免使用未完成预览的播放头进行分割。
 
 <!-- BEGIN GENERATED CAPABILITY AND TEST INVENTORY -->
 
@@ -275,6 +452,8 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 
 - BMW 核心 Browser Actions（37）：`status`、`tabs.list`、`tabs.open`、`tabs.show`、`tabs.close`、`navigate`、`back`、`forward`、`reload`、`observe`、`click`、`type`、`wait`、`key`、`hover`、`page.diagnostics`、`page.media.list`、`page.viewport.set`、`media.screenshot`、`media.download`、`media.video.capture`、`media.inspect`、`media.frames.sample`、`media.convert`、`media.image.inspect`、`media.image.annotate`、`media.image.draw`、`media.record.start`、`media.record.stop`、`project.context`、`project.memory.append`、`project.tasks.append`、`schedule.list`、`schedule.create`、`schedule.update`、`schedule.remove`、`schedule.run`
 - feature-video Feature Browser Actions（4）：`video.compose`、`video.narrate`、`video.studio`、`video.settings`
+
+- video.studio 操作（47）：`describe-schema`、`read-document`、`compatibility`、`validate-edit`、`apply-edit`、`migrate-document`、`remove-reference`、`prepare-reference`、`read-reference`、`set-reference-analysis`、`apply-reference-notes`、`propose-review`、`adopt-review`、`dismiss-review`、`undo-review`、`split-scene`、`restore`、`recognize-source`、`read-source-speech`、`apply-source-captions`、`detach-source-captions`、`set-caption-translations`、`align-speech`、`read-speech`、`correct-speech`、`source`、`export-citations`、`list`、`create`、`read`、`delete`、`update`、`narrate`、`narrate-pending`、`check`、`export-captions`、`export-cover`、`read-material`、`suggest-focus`、`render`、`assets`、`inspect`、`attach`、`open`、`context`、`configure`、`save-template`。字段、用户专属操作与归属检查见上方契约。
 
 ### 当前自动化测试清单
 
@@ -296,6 +475,10 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 #### `packages/agent-contract/test/driver-settings.test.ts`
 
 - `Settings commands are closed and snapshots reject credential-bearing form defaults`
+
+#### `packages/agent-ui/test/studio-composer-scope.test.ts`
+
+- `Composer pins a visual piece at first input, preserves owner drafts and clears piece identity for broader scopes`
 
 #### `packages/browser-capability/test/bridge-shutdown.test.ts`
 
@@ -383,6 +566,18 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `Session-owned direct composition registers an editable draft and existing export without changing other drafts`
 - `Direct composition never registers cancelled, failed or foreign work; unsupported timing stays explicitly standalone`
 
+#### `packages/feature-video/test/video-document.test.ts`
+
+- `Canonical v2 preserves preparation, script, subtitles, source clocks, output settings and journals exactly`
+- `Shared codec accounts for segmented fallback, empty voice, independent effects and original fade/keyframe clocks`
+- `Integer placement with bounded residual preserves legacy JS clocks without rounding trusted source time`
+- `Timeline owns chronology; invalid versions, unknown fields, duplicate IDs, gaps and unmapped objects fail closed`
+- `Simple profile is a reversible subset; hidden/muted advanced objects block until removed, with no persisted mode lock`
+- `Simple typed edits remain closed and roundtrip across both editors`
+- `Canonical persistence and v1 migration preserve originals, owner, exports and revision; invalid reads do not rewrite`
+- `Agent operations enforce trusted scope, current revision, atomic dry runs and actual advanced authorization`
+- `Typed independent edits convert global time to owning scene and preserve original fade clocks on trim/split`
+
 #### `packages/feature-video/test/video-settings.test.ts`
 
 - `video template settings persist without changing other settings and are reusable by name`
@@ -393,6 +588,7 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 #### `packages/feature-video/test/video-studio.test.ts`
 
 - `Studio drafts persist per Project and reject conflicting GUI or Agent revisions`
+- `Only owned journal revisions retain prepared content; captions, clocks, preparation and output edits require reconciliation`
 - `Studio coverage follows actual voice, source trim and speed and requires explicit end hold`
 - `Studio render remeasures artifacts instead of trusting edited duration metadata`
 - `Studio rejects script paths and malformed captions while admitting Project images`
@@ -438,6 +634,70 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `Original-source ASR keeps independent captions; reviewed apply maps actual clock and preserves source evidence`
 - `Original-source recognition rolls back only new artifacts on cancellation, CAS conflict and source hash change`
 - `Bilingual translation preserves original times and user corrections, and fails atomically on stale original or CAS`
+- `Studio simple-first view policy stays separate from video data and freezes confirmation context`
+- `Studio chat and renderer geometry reject foreign fields and invalid native layout bounds`
+- `Studio pinned prompt scopes validate whole-film, scene and object data before admission`
+- `Independent Assistant targets bind exact local/global containers and reject deleted or mixed identities`
+- `Studio preserves advanced layer containers during omitted model updates and keeps out-of-range edits recoverable`
+- `Studio rejects layer references outside its Project before saving and checks actual overlay source durations`
+- `Independent GUI edits preserve local/global identity, source clocks and lock admission`
+- `Animated timeline cuts retain linear and restricted easing samples`
+- `Canvas transforms preserve animation shape, identity and timing while bounding every frame`
+- `Main voice timing preserves measured source and maps preview, captions and manual audio anchors`
+- `Main sequence reorder and ripple edits keep local ownership and absolute global tracks`
+- `Main subtitle move, trim and split materialize one canonical ordered bilingual cue list`
+- `Invalid voice source windows remain readiness issues without invented timeline captions`
+- `Studio live chat requests pin an immutable owner and validate actual panel/selection bounds`
+- `Repeated easing trims, splits and inserted keyframes preserve the full source curve and persisted ranges`
+- `Narration splitting preserves source identity, continuous sentence captions and focus before independent piece edits`
+- `Narration piece schemas and clocks reject ambiguity, coercion, source overflow and excess pieces`
+- `Stored narration pieces survive omitted model fields, preserve independent captions and enforce captured revision`
+- `Exact narration piece Assistant targets reject deleted, foreign-container and mixed scopes`
+- `Main visual cuts preserve image/video framing, zoom and fade envelopes at arbitrary and repeated cut points`
+- `Visual splits preserve sentence focus links and trusted source subtitles, including later segment reindex and undo`
+- `An explicit local transition keeps the original motion clock, and later cuts preserve both clocks`
+- `Exact visual piece scope survives reordering and rejects deleted, foreign and mixed targets`
+- `Independent cuts preserve full fade and keyframe samples in scene and film clocks`
+- `Reviewed source subtitles rebind trim, speed, offset, reorder and undo with original cues and manual translations`
+- `Legacy source subtitle bindings admit only reviewed visible range and reject forged roots or unreviewed extension`
+- `Source subtitle identity never adopts a deleted stable clip and host translation edits survive later reprojection`
+- `Host-approved history restores deleted scene speech/source records and preserves the current export journal`
+- `Snapshot approval cannot authorize modified content, foreign owners, another host, cancellation or stale revisions`
+- `Unsegmented source bindings never adopt scene IDs and anonymous replacement needs approved history`
+- `Explicit silent narration pieces retain source binding and manual captions without implicit replay`
+- `Raw Studio updates cannot mint or reset a host presentation origin`
+- `Whole-scene split partitions eight visuals directly, freezes original chapters and preserves complete bilingual text`
+- `Whole-scene split preserves silent prefixes, exact voice source intervals and original audio receipts through repeated cuts`
+- `Whole-scene local layer split retains locked easing, fades and audio source clocks while global tracks stay exact`
+- `Whole-scene admission rejects spoofed payloads, unmeasured/bound speech and tiny fragments without changing saved bytes`
+- `Whole-scene host operation shares owner/CAS/cancellation and sends one notification only after the atomic write`
+- `Whole-scene rejects tiny visual cuts, invalid local objects, held-source cuts and global object overflow atomically`
+- `Bound whole-scene split retains original sentence/focus clocks, silent pieces and exact reviewed anchors across repeated cuts`
+- `Bound title-card cuts retain original bullet reveal times even in silent prefix and following suffix`
+- `Bound source captions partition trusted roots, hidden reviewed cues, edited translation and independent out-of-group cues`
+- `Whole-scene source binding rejects ambiguous crossing captions or stale identities before writing`
+- `Bound split consumption rechecks actual source/voice hashes and preserves cancellation and CAS after asynchronous reads`
+- `Explicit host sentence correction rebases changed playback origin; raw edits cannot mint/reset it and new audio clears it`
+- `Experimental review persists bounded proposals as host-owned journals without editing film or accepting raw journal forgery`
+- `Review adoption and selective undo retain unrelated edits, generated voice, bilingual captions and export journals`
+- `Review blocks stale field/scene/CAS, unauthorized Agent adoption and cancellation atomically with no notifications`
+- `Review undo refuses later field edits and deletion; forty-record budget and closed request validation fail without partial writes`
+- `Review Assistant uses the same owned full-film request and only proposes concrete individual suggestions`
+- `Reference preparation saves source and frame fingerprints as immutable journals without editing canonical scenes or letting update/restore forge records`
+- `Native reference receipt mismatch and changed source roll back only newly claimed frames and retain old files/draft`
+- `Reference analysis targets actual sampled frames, protects user corrections and requires explicit exact notes adoption while keeping scripts and captions`
+- `Reference cancellation and concurrent GUI CAS after native completion wait for rollback without orphan frames or overwriting user changes`
+- `Reference Bridge admits real bound PNG bytes and rejects post-service tampering, while closed requests, foreign owners and budgets stay bounded`
+- `Reference Assistant pins its prepared identity in the original request and refuses pretending sampled frames are full-video review`
+- `User reference management releases the eight-record budget without reading changed media or deleting PNGs, preserves notes/content/history and prevents Agent removal`
+- `Reference removal accepts only an owned record identity and revision, never paths, bulk lists or analysis payloads`
+- `Scene narration mute retains gain, measured audio, timing and captions through omission, explicit unmute and CAS`
+- `Main footage mute resolves stable segment identity without changing source clock, gain or captions`
+- `Visual effect edits preserve source/narration clocks, captions and stable targets through trim, split and clearing`
+- `Whole-scene splitting moves main footage effects onto derived visual segments without applying them to captions`
+- `Material preparation allows zero-scene film scope and preserves real-artifact and stage boundaries`
+- `Subtitle review validates finite structured values and readable labels without accepting styles or field coercion`
+- `Subtitle review adoption and selective undo retain exact voice, captions, source clock and unrelated edits; unset fields restore unset`
 
 #### `packages/harness-codex/test/codex-backend.test.ts`
 
@@ -568,6 +828,7 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 #### `packages/media-native/test/media-port.test.ts`
 
 - `Native media reply admission rejects host paths, fabricated durations and malformed tracks`
+- `Inspected video track range is finite and lies inside measured media, allowing an AAC tail without extending video`
 
 #### `packages/media-native/test/media-processing.test.ts`
 
@@ -617,6 +878,15 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `Title-card reveal has bounded scene-local times, exact bullet identity and no footage; legacy bullets stay immediate`
 - `Bilingual SRT and VTT select original, translation or both without changing timing`
 - `Fixed templates validate bounded colors/content and reject text overflow before encoding`
+- `independent layers validate identities, Project references, ranges and video decoder overlap`
+- `explicit layer keyframes interpolate geometry and fading without changing base values`
+- `streamed source audio supports bounded fade gain without samples outside the selected interval`
+- `Restricted easing admits only closed increasing domains and stays stable near curve endpoints`
+- `Visual effect clocks are finite closed bounded data with unique piece identities`
+- `Closed independent fade windows admit short preserved pieces and reject invalid original clocks`
+- `Original presentation windows validate root bounds and preserve counters after repeated cuts`
+- `Native narration receipts distinguish source duration from short and silent playback pieces`
+- `Visual effects are closed finite numbers shared by scene footage, segments and independent objects`
 
 #### `packages/platform/test/agent-history-store.test.ts`
 
@@ -637,6 +907,7 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `provisional completion followed by provider failure never persists a finished receipt`
 - `failed native cleanup holds admission even after browser drain and recovery never replays input`
 - `late callbacks cannot resurrect an uncertain submission after its native transport settled`
+- `queued Studio requests freeze their explicit context and expose it only to the active owner`
 
 #### `packages/platform/test/agent-settings-controller.test.ts`
 
@@ -702,6 +973,10 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `floating DSH docks when its upper-right corner reaches the target corner`
 - `floating DSH does not dock near only one target edge`
 - `dock detection rejects invalid window bounds`
+- `Studio chat docks in the measured property area and free movement remains above the timeline`
+- `Studio initial float avoids selected pixels and reserves resources; manual position stays authoritative`
+- `Studio free float reserves actual transport while docking still uses the complete property area`
+- `Studio automatic float fits a wide selected object and pins its chosen height across later selection and manual movement`
 
 #### `packages/platform/test/layout-store.test.ts`
 
@@ -825,7 +1100,7 @@ Browser 与 AgentDriver 的直接保障不依赖具体 DSH 实现；通用 drive
 - `Image decoding and visual segment contracts select their actual Studio and native runtime checks`
 - `Drawing implementation and public image actions select native pixel checks and model-side MCP coverage`
 - `Studio cover changes remain affected-only while retaining native/runtime and safety checks`
+- `Studio effects, mute and object-state implementation changes retain their native GUI/export guarantors`
+- `Every Studio smoke environment branch is admitted by a classified runtime entry`
 
 <!-- END GENERATED CAPABILITY AND TEST INVENTORY -->
-
-固定中文 ASR 资源准备、原始证据和可编辑锚点的当前行为见上文“原生中文语音证据运行端口”；用户核听采用记录和仍关闭的自动精度门见 [VERIFICATION.md](VERIFICATION.md#user-listened-whisper-base-adoption)。

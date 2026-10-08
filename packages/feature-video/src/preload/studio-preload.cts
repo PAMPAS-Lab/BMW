@@ -1,6 +1,13 @@
 const {contextBridge,ipcRenderer}=require('electron')
 contextBridge.exposeInMainWorld('bmwStudio',{
   selection:(value:unknown)=>ipcRenderer.invoke('video-studio-selection',value),
+  chat:(value:unknown)=>ipcRenderer.invoke('video-studio-chat',value),
+  geometry:(value:unknown)=>ipcRenderer.invoke('video-studio-geometry',value),
+  onChat:(listener:(value:unknown)=>void)=>ipcRenderer.on('video-studio-chat-view',(_event:unknown,value:unknown)=>listener(value)),
+  view:(value:unknown)=>ipcRenderer.invoke('video-studio-view',value),
+  prefill:(text:string)=>ipcRenderer.invoke('video-studio-prefill',text),
+  cancelTask:()=>ipcRenderer.invoke('video-studio-task-cancel'),
+  onTask:(listener:(value:unknown)=>void)=>ipcRenderer.on('video-studio-task',(_event:unknown,value:unknown)=>listener(value)),
   leave:()=>ipcRenderer.invoke('video-studio-leave'),
   state:()=>ipcRenderer.invoke('video-studio-state'),
   command:(projectId:string,request:unknown)=>ipcRenderer.invoke('video-studio-command',projectId,request),

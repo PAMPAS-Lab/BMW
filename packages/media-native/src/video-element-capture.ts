@@ -4,7 +4,7 @@ import path from 'node:path'
 import type {FileHandle} from 'node:fs/promises'
 import type {WebContents} from 'electron'
 import {MAX_CAPTURE_BYTES,safeCaptureFilename} from './capture-policy.js'
-import {mediaRecord,finiteNumber} from './media-contract.js'
+import {finiteNumber} from './media-contract.js'
 import {assertSourceCaptureEvidence,assertSourceCaptureGuard} from './source-contract.js'
 import type {SourceCaptureGuard,SourceCaptureEvidence} from './source-contract.js'
 interface CaptureRequest {selector?:unknown;index?:unknown;filename?:unknown;fromStart?:unknown;maxDurationMs?:unknown;sourceGuard?:SourceCaptureGuard}

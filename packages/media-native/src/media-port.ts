@@ -1,5 +1,5 @@
 import {assertArtifactId, finiteNumber, mediaRecord} from './media-contract.js'
-export interface MediaInspectionReply {durationSeconds: number; tracks: {type: 'audio' | 'video' | 'subtitle'; canDecode: boolean; width?:number; height?:number; hasAlphaData?:boolean}[]}
+export interface MediaInspectionReply {durationSeconds: number; tracks: {type: 'audio' | 'video' | 'subtitle'; canDecode: boolean; width?:number; height?:number; hasAlphaData?:boolean;startSeconds?:number;endSeconds?:number}[]}
 
 /** Host-only port. Unknown payloads are admitted by the native request validators.
  * Cancellation settles after output cleanup; consumers must admit unknown replies. */
@@ -25,6 +25,7 @@ export function assertMediaInspection(raw: unknown): MediaInspectionReply {
   if (!Array.isArray(value.tracks) || !value.tracks.length || value.tracks.length>16 || value.tracks.some(raw => {
     const track = mediaRecord(raw)
     for(const key of ['width','height'] as const)if(track[key]!==undefined)finiteNumber(track[key],key,1,Number.MAX_SAFE_INTEGER,true)
+    if(track.startSeconds!==undefined||track.endSeconds!==undefined){const start=finiteNumber(track.startSeconds,'video track start',-1800,1800),end=finiteNumber(track.endSeconds,'video track end',start,1800);if(track.type!=='video'||end>Number(value.durationSeconds))throw new TypeError('Invalid native video track range.')}
     if(track.hasAlphaData!==undefined&&typeof track.hasAlphaData!=='boolean')throw new TypeError('Invalid native alpha metadata.')
     return !['audio', 'video', 'subtitle'].includes(String(track.type)) || typeof track.canDecode !== 'boolean'
   })) throw new TypeError('Invalid native media inspection reply.')

@@ -19,6 +19,7 @@ export interface AgentHostOptions {
 interface PendingRun {
   request: AgentRunRequest
   backend: AgentBackend
+  frozenContext?:string
   controller: AbortController
   settled: Promise<AgentRunResult>
   resolve: (result: AgentRunResult) => void
@@ -88,11 +89,13 @@ export class AgentHost {
     this.publish(row.sessionId)
     return row
   }
-  enqueue(sessionId: string, text: string): { runId: string; messageId: string } {
+  activeContext(sessionId:string,projectId:string):string|null{const request=this.active?.request;return request?.sessionId===sessionId&&request.project.id===projectId&&request.context?request.context:null}
+  enqueue(sessionId: string, text: string, frozenContext?:string): { runId: string; messageId: string } {
     if (this.closed) throw new Error('BMW Agent host has closed')
     if(this.maintenance)throw new Error('BMW Agent resources are completing maintenance')
     if (this.quarantined) throw new Error('BMW Agent resources are disconnected; drain recovery must finish before sending')
     agentText(text, 65536)
+    if(frozenContext!==undefined)agentText(frozenContext,16384,'BMW frozen context')
     if (!text.trim()) throw new Error('Enter a message before sending')
     const row = this.member(sessionId), project = this.options.currentProject()
     if (row.externalSessionId === null && this.options.history.snapshot(sessionId).receipts.some(receipt => receipt.state === 'unknown')) throw new Error('An uncertain submission has no provider resume anchor; create an explicit new BMW Session')
@@ -102,7 +105,7 @@ export class AgentHost {
     const settled = new Promise<AgentRunResult>((accept, decline) => { resolve = accept; reject = decline })
     // A UI submission may never await the result. Keep failures available to wait().
     void settled.catch(() => {})
-    const pending: PendingRun = { request: { sessionId, externalSessionId: row.externalSessionId, runId, messageId, project: structuredClone(project), text, context: '', signal: controller.signal }, backend, controller, settled, resolve: resolve!, reject: reject! }
+    const pending: PendingRun = { request: { sessionId, externalSessionId: row.externalSessionId, runId, messageId, project: structuredClone(project), text, context: '', signal: controller.signal }, backend, frozenContext, controller, settled, resolve: resolve!, reject: reject! }
     this.pending.set(runId, pending)
     if (this.active?.request.sessionId !== sessionId) this.options.conversations.setStatus(sessionId, 'queued')
     this.publish(sessionId)
@@ -171,7 +174,7 @@ export class AgentHost {
         const row = this.member(request.sessionId)
         if (row.projectId !== request.project.id || row.driverId !== backend.description.id) throw new Error('Agent Session membership changed before execution')
         request.externalSessionId = row.externalSessionId
-        request.context = agentText(await this.options.context(row.sessionId, row.projectId), 16384, 'BMW Project context')
+        request.context = agentText(pending.frozenContext??await this.options.context(row.sessionId, row.projectId), 16384, 'BMW Project context')
         const ready = await backend.prepare(request)
         if (ready.id !== row.driverId || !parseAgentCapabilities(ready.capabilities).browserOnly) throw new Error('Agent driver has not verified a browser-only tool catalog')
         if (controller.signal.aborted) result = { outcome: 'interrupted', message: 'Message cancelled during driver preparation' }

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "commands": [
+    {
+      "op": "scene.set",
+      "sceneId": "opening",
+      "patch": {
+        "script": "新的旁白。"
+      }
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+import {checkStudioSpeechOrigin} from './studio-speech-origin.js'
+import {narrationSceneRanges} from '../../media-native/src/composition-contract.js'
 import {assertArtifactId,finiteNumber,mediaRecord} from '../../media-native/src/media-contract.js'
 import {assertFocusIntervals,focusSourceTime} from '../../media-native/src/focus-contract.js'
 import {sceneVisuals} from '../../media-native/src/visual-segments.js'
@@ -33,11 +35,14 @@ export function assertStudioSpeechCandidate(raw:unknown):StudioSpeechCandidate {
 export function assertStudioSpeechAnchors(raw:unknown):StudioSpeechAnchors {const v=mediaRecord(raw);closed(v,[...bindingKeys,'origin','anchors']);if(v.origin!=='user-edited'&&v.origin!=='agent-edited')throw new TypeError('Invalid sentence edit provenance.');const b=binding(v);return {...b,origin:v.origin,anchors:assertSentenceAnchors(v.anchors,b.scriptText,b.durationSeconds)}}
 export function speechBindingStale(scene:StudioScene,value:SpeechBinding|undefined):boolean {return !value||value.scriptText!==scene.narration||value.audioArtifactId!==scene.audioArtifactId||scene.audioText!==scene.narration}
 export function usesSpeechCaptions(scene:StudioScene):boolean{return scene.speechCaptions===true&&scene.captions===undefined}
-/** Manual timestamps refer to the original voice file. Voice starts at .5s; visual speed does not retime it. */
+/** Manual timestamps refer to the original voice file. Playback projects through explicit voice timing; visual speed does not retime it. */
 export function speechCaptionCues(scene:StudioScene):NonNullable<StudioScene['captions']>{
+ checkStudioSpeechOrigin(scene)
  const value=scene.speechAnchors
  if(speechBindingStale(scene,value)||!value?.anchors.length)throw new Error('STUDIO_SPEECH_STALE: 句锚点缺失或已过期，请重新校正或关闭锚点字幕。')
- return value.anchors.map(a=>{const startSeconds=.5+a.startSeconds,endSeconds=.5+a.endSeconds;if(endSeconds>scene.durationSeconds)throw new Error('STUDIO_SPEECH_RANGE: 分镜没有容纳句锚点。');return {startSeconds,endSeconds,text:scene.narration.slice(a.scriptStart,a.scriptEnd)}})
+ const cues=value.anchors.flatMap(a=>narrationSceneRanges(scene,a.startSeconds,a.endSeconds).map(range=>({startSeconds:range.start,endSeconds:range.end,text:scene.narration.slice(a.scriptStart,a.scriptEnd)}))).sort((a,b)=>a.startSeconds-b.startSeconds)
+ if(cues.length>100||cues.some(c=>c.endSeconds>scene.durationSeconds))throw new Error('STUDIO_SPEECH_RANGE: 句锚点超过镜头时间或字幕预算。')
+ return cues
 }
 export function assertStudioSpeechLinks(raw:unknown):StudioSpeechLinks {
  const v=mediaRecord(raw);closed(v,['bullets','focus'])
@@ -57,27 +62,32 @@ export function usesStudioSpeech(scene:StudioScene):boolean {return usesSpeechCa
 /** One projection for GUI, preview and native export. References never adopt a changed target. */
 export function speechScene(scene:StudioScene):StudioScene {
  if(!usesStudioSpeech(scene))return scene
+ checkStudioSpeechOrigin(scene)
  const cues=usesSpeechCaptions(scene)?speechCaptionCues(scene):undefined,links=scene.speechLinks
  if(!links?.bullets.length&&!links?.focus.length)return {...scene,captions:cues}
  const binding=scene.speechAnchors
  if(speechBindingStale(scene,binding)||!binding?.anchors.length)throw new Error('STUDIO_SPEECH_STALE: 强调或板书引用的句锚点已过期，请重新校正或解除引用。')
- const range=(id:string)=>{const anchor=binding.anchors.find(a=>a.id===id);if(!anchor)throw new Error('STUDIO_SPEECH_REFERENCE: 引用的句锚点已删除，请重新选择。');const start=.5+anchor.startSeconds,end=.5+anchor.endSeconds;if(end>scene.durationSeconds)throw new Error('STUDIO_SPEECH_RANGE: 分镜没有容纳句锚点。');return {start,end}}
+ const range=(id:string,originalClock=false)=>{const anchor=binding.anchors.find(a=>a.id===id);if(!anchor)throw new Error('STUDIO_SPEECH_REFERENCE: 引用的句锚点已删除，请重新选择。');const origin=scene.speechPlaybackOrigin,offset=origin?scene.presentationWindow!.startSeconds:0,ranges=narrationSceneRanges(origin??scene,anchor.startSeconds,anchor.endSeconds);if(!ranges.length||ranges.some(r=>r.end>(origin?scene.presentationWindow!.durationSeconds:scene.durationSeconds)))throw new Error('STUDIO_SPEECH_RANGE: 引用的句锚点已不在播放片段内，请重新绑定或解除引用。');return originalClock?ranges:ranges.map(r=>({...r,start:r.start-offset,end:r.end-offset}))}
  const result={...scene,...(cues?{captions:cues}:{} )},visuals=sceneVisuals(scene)
  if(links.bullets.length){
   if(visuals.length)throw new Error('STUDIO_SPEECH_REFERENCE: 板书揭示用于无画面素材的标题卡，请解除画面或板书引用。')
   result.bulletRevealSeconds=scene.bullets.map(()=>0)
-  for(const link of links.bullets){if(scene.bullets[link.bulletIndex]!==link.text)throw new Error('STUDIO_SPEECH_REFERENCE: 板书条目已修改或移除，请重新绑定。');result.bulletRevealSeconds[link.bulletIndex]=range(link.anchorId).start}
+  for(const link of links.bullets){if(scene.bullets[link.bulletIndex]!==link.text)throw new Error('STUDIO_SPEECH_REFERENCE: 板书条目已修改或移除，请重新绑定。');result.bulletRevealSeconds[link.bulletIndex]=range(link.anchorId,true)[0].start}
  }
  if(links.focus.length){
   const projected=visuals.map(v=>({...v,focusIntervals:[...(v.focusIntervals??[])]}));let visualStart=0
   for(const [index,visual] of projected.entries()){
    for(const link of links.focus.filter(f=>f.visualIndex===index)){
     if(link.artifactId!==(visual.imageArtifactId??visual.videoArtifactId))throw new Error('STUDIO_SPEECH_REFERENCE: 强调画面已替换，请重新绑定素材。')
-    const {start,end}=range(link.anchorId)
-    if(start<visualStart||end>visualStart+visual.durationSeconds)throw new Error('STUDIO_SPEECH_RANGE: 句区间跨越画面边界，请调整分段或句锚点。')
+    for(const {start,end} of range(link.anchorId)){
+    const window='effectWindow' in visual?visual.effectWindow:undefined,rootStart=visualStart-(window?.startSeconds??0),rootEnd=rootStart+(window?.durationSeconds??visual.durationSeconds)
+    if(start<rootStart-.000001||end>rootEnd+.000001)throw new Error('STUDIO_SPEECH_RANGE: 句区间跨越画面边界，请调整分段或句锚点。')
     const crop=visual.crop??{x:0,y:0,width:1,height:1}
     if(link.x<crop.x||link.x>crop.x+crop.width||link.y<crop.y||link.y>crop.y+crop.height)throw new Error('STUDIO_SPEECH_RANGE: 强调目标位于当前裁切之外，请调整位置或裁切。')
-    visual.focusIntervals.push({startSeconds:focusSourceTime(visual,start-visualStart),endSeconds:focusSourceTime(visual,end-visualStart),x:link.x,y:link.y,zoom:link.zoom,emphasize:link.emphasize})
+    if(end<=visualStart||start>=visualStart+visual.durationSeconds)continue
+    const rootVisual={...visual,effectWindow:undefined,sourceStartSeconds:visual.videoArtifactId?visual.sourceStartSeconds-(window?.startSeconds??0)*visual.playbackRate:0}
+    visual.focusIntervals.push({startSeconds:focusSourceTime(rootVisual,start-rootStart),endSeconds:focusSourceTime(rootVisual,end-rootStart),x:link.x,y:link.y,zoom:link.zoom,emphasize:link.emphasize})
+   }
    }
    visual.focusIntervals.sort((a,b)=>a.startSeconds-b.startSeconds)
    try{visual.focusIntervals=assertFocusIntervals(visual.focusIntervals)}catch(error){throw new Error('STUDIO_SPEECH_FOCUS: 强调与独立焦点重叠、超预算或源时间不足 100ms。'+(error instanceof Error?error.message:String(error)))}

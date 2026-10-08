@@ -30,13 +30,15 @@ BMW_USER_DATA_DIR=/tmp/bmw-disposable npm start
 
 ## 主要能力
 
+用户已暂停后续 UI／工作流优化，专用 AI 图片／视频素材生成暂缓；当前范围见 [Studio 范围](docs/VIDEO_STUDIO_NEXT.md)。
+
 - 浏览器标签页、语义观察、页面交互、站点权限、后台取材、登录连续性和按 Project 保存的日常任务。
 - 稳定 BMW Session 固定所属 Project 和驱动；按驱动保留原生续聊身份。不同驱动共享 Project 页面和媒体，会话切换保留独立历史；旧 DSH 身份由一次性迁移保留；日常启动不转换旧数据，原生 Workspace 映射只在对应 harness 内维护。
 - 截图、页面媒体发现与下载、视频 Capture、录屏、媒体检查、抽帧、裁剪、缩放和 MP4/WebM 转换。
 - Video Studio 在主窗口中切换工作区：素材收集、全局与分镜脚本、真实旁白、画面匹配、预览编辑和导出。
 - 草稿强绑定所属会话：一个会话可有多个草稿，共享 Project 素材；切换会话切换可见草稿，无草稿显示空状态。支持删除草稿并保留素材与可恢复记录。
 - 素材准备、匹配、工作台、封面和画面片段均支持真实图片／视频缩略图、放大预览与列表／图标切换；支持拖拽绑定、使用关系分组与时间轴定位。
-- 画布工作台保留“画面、旁白、字幕”编辑选项；封面和交付从上方专用入口进入。支持独立封面 PNG、SRT/VTT 字幕、每分镜最多八段画面及切换／淡入淡出。
+- Video Studio 默认把镜头卡片、脚本与预览放在一个工作台；高级编辑主动开启，使用全窗口资源／画布／属性／多轨，同一 Assistant 转为小浮框或停靠。两种视图共享 Video Document 2.0、保存与撤销；简洁编辑是可逆子集，独立图层／音轨／自由关键帧要求高级编辑，移除或撤销后可恢复简洁模式。支持主轨和独立图层／音轨、有限关键帧、整镜头分割、基础颜色／模糊和静音；参考抽样与逐项审阅按需使用，审阅标为可选测试功能。
 - 已有 MP4 可直接查看、另存；视频内容和源素材未变时自动复用新版成片，支持明确重新制作。封面编辑不要求重新编码视频。
 - 比例、分辨率、帧率、画面风格、水印、配乐及 TTS 设置与命名模板。显式参数优先于模板，模板优先于默认值。
 - 默认 Edge 云希男声、0% 语速，在线旁白默认开启；支持关闭在线旁白、选择 Edge 晓晓女声或本地 Matcha 中英语音。改变音色须重新生成已有音频。
@@ -83,11 +85,11 @@ npm run test:video-e2e
 npm run test:tts-e2e
 ```
 
-局部改动默认先用下方 `test:plan` / `test:affected -- --files ...` 查看并执行本次范围；既有未提交工作不应混入本次文件列表。`verify:stability` 显式使用 `--all`，一定触发全量测试。完整串行验证：`npm run verify:stability`。该入口构建一次，再执行检查、单元/边界及运行时回归；记录源码哈希、依赖版本和通过/失败/未执行结果。桌面测试分为工作区、Project/会话（含实际重启）、设置、原生焦点/键盘四组，单组失败不阻止其余组运行。新证据在 `.bmw-runtime/classified-tests/`，既有证据保留。
+局部改动默认先用下方 `test:plan` / `test:affected -- --files ...` 查看并执行本次范围；既有未提交工作不应混入本次文件列表。`verify:stability` 显式使用 `--all`，一定触发全量测试。完整串行验证：`npm run verify:stability`。该入口构建一次，再执行检查、单元/边界及运行时回归；记录源码哈希、依赖版本和通过/失败/未执行结果。桌面工作区测试分为工作区、Project/会话（含实际重启）、设置、原生焦点/键盘四组；Studio 各专用环境分支另由分类目录逐项执行，单组失败不阻止其余组运行。新证据在 `.bmw-runtime/classified-tests/`，既有证据保留。
 
 标准测试使用临时 Profile，不调用付费模型。含 build 的命令顺序执行；测试和 Action 变更后运行 `npm run docs:features`。
 
-当前视频能力是受限分镜编辑与合成；不包含通用 NLE、任意 HTML 视频导入、安装器签名、自动升级或独立远控服务。透明视频可检查，实际 alpha 视频抽帧和转换明确拒绝。真实模型视觉复测的启用方式和适用范围见 [验证说明](docs/VERIFICATION.md)。
+当前视频能力是受限分镜、多轨编辑与合成；不包含通用 NLE、任意 HTML 视频导入、安装器签名、自动升级或独立远控服务。透明视频可检查，实际 alpha 视频抽帧和转换明确拒绝。真实模型视觉复测的启用方式和适用范围见 [验证说明](docs/VERIFICATION.md)。
 
 实现与边界见 [功能说明书](docs/FUNCTIONAL_SPEC.md)，开发入口见 [AGENTS.md](AGENTS.md)，当前工作状态见 [handoff.md](handoff.md)，验证方法见 [VERIFICATION.md](docs/VERIFICATION.md)。
 
@@ -124,3 +126,5 @@ Shell 的全部请求验证来源、主框架和固定本地页面；损坏的�
 `node_modules`、生成的 JavaScript、运行日志、Profile、Project 素材、模型缓存和本机凭据由使用者本地维护，不纳入版本控制。迁移来源见 [MIGRATION_PROVENANCE.json](docs/MIGRATION_PROVENANCE.json)；旧多产品迁移归档不属于本仓库。
 
 本地语音锚点研究使用 whisper.cpp 1.9.1（`whisper-cli`）与固定 base/small 缓存；可运行 `node --experimental-strip-types scripts/install-local-asr.ts` 安装模型。缓存不证明时间准确率。Studio 旁白面板支持原始识别证据、句级校正与锚点字幕；画面/旁白属性可按句绑定强调和标题卡板书揭示，共用预览、MP4 与来源清单，支持引用失效检查及撤销。用户已核听并采用十段 base 标注，保留 12 个可编辑片段的 ASR 来源与越界修正；这不构成独立声学金标，自动句／词／字准确率门仍未通过。验收范围见 [当前状态](docs/PROJECT_STATUS.md) 与 [P0 实施记录](docs/VIDEO_STUDIO_P0_IMPLEMENTATION.md)。
+
+视频共享结构、迁移与权限见 [Video Document 2.0](docs/VIDEO_DOCUMENT_V2.md)，外部 Agent 调用见 [视频编辑接口](docs/AGENT_VIDEO_EDITING.md)。

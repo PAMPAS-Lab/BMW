@@ -1,101 +1,40 @@
-# Video Studio 本期范围与后续缺口
+# Video Studio 当前范围与暂停的后续优化
 
-本期按用户接受的三项顺序实施；功能契约以 FUNCTIONAL_SPEC 为准，历史 VIDEO_STUDIO_REVIEW 与 P0 文档保留原文。
+核对日期：2026-10-08。功能字段与拒绝规则以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，测试分支以 [ARCHITECTURE.md](ARCHITECTURE.md) 生成表为准。
 
-| 范围 | 实现与验收 |
-|---|---|
-| 可靠编辑与审片 | 更新预览保持位置及分镜同步；未知时长待测量；文字不静默截断；文字密度/停留/遮挡/字号提示；当前版本关键帧缩略图与定位 |
-| 视频原声双语字幕 | 固定 base/small，语言 auto/en/zh；原视频试听与核听校正；剪裁/速度/片段偏移映射；原文译文独立编辑共用时间；重译保护人工译文；MP4/SRT/VTT 与来源清单 |
-| 有限表达模板 | 三点总结、两项对比、截图解读；固定配色/强调；共用预览与原生绘制；保留已有素材与音频；CAS 与撤销重做 |
+用户已确认卡片与高级多轨两个方向基本成立，但要求暂不继续 UI／工作流优化。已获授权实施共享视频 schema，UI 只增加兼容性提示与模式返回约束；其他 UI／工作流优化仍暂停。专用 AI 图片／视频素材生成暂缓；素材使用真实 Project 文件、网页采集、截屏与录屏。
 
-验收入口为现有 video-studio/video-production/speech 契约测试与新增 studio-next-smoke。Electron 使用临时 profile/Project，不自动测试生产 profile 或系统钥匙串。模拟 Assistant 路由只证明请求交给正确会话；不计作付费模型翻译验收。原声识别保留原始转写区间/警告，不把自动时标宣称为人工真值。
+## 已实现与对应保障
 
-当前仍可讨论的改进：超过 180 秒的原声分段识别与多片段字幕合并、逐词时间精度、字幕可读性的人工校准、模板内可编辑的更多关系结构。一般 HTML 导入、自由多轨、数字人、多机位与通用 NLE 不在本期范围。
-
-验证结果和可复查产物在 VERIFICATION.md 的本期专项记录中。完整作者源代码范围、前后哈希和运行日志与产物一起保存，避免把仓库其他未提交工作归入本期。
-
-本期验收已通过 39 组文件范围分类回归、71 项专项字幕/视频/语音测试与真实英文视频的原生导出检查。`VERIFICATION.md` 区分分类快照及最终两文件的 follow-up 验收，并明确生产实例尚未重启（Mac 锁定）。
-
-## 工作流改进重新设计（待设计与验收，暂不实施）
-
-2026-10-06 决策：撤回本轮新增工作流和 UI，保留独立的 Codex 0.160.1 兼容修正。恢复添加这些工作流之前的操作界面，后续先验证交互方案，再逐项重引入能力。本节是后续计划，不代表当前已开放这些入口。
-
-### 本次能力回顾
-
-功能价值主要来自对素材、叙事和结果的约束，而不是按钮数量。
-
-| 本次尝试的能力 | 有价值的部分 | 下次如何呈现 |
+| 能力 | 代码入口 | 分类测试 ID |
 |---|---|---|
-| 可选制作背景与产品导演 | 理清目标、受众、平台、时长和表达倾向，降低脚本偏题 | 普通用户一句话描述；高级用户才展开结构化简报。缺少背景不阻塞制作 |
-| 无分镜时采集与内容分析 | 先获得真实资料、截图、录屏，再依据实际内容安排镜头 | 统一为“准备素材”的任务进度与结果，不按检索、截屏、录屏、分析各增加一个主按钮 |
-| 功能—操作—结果—证据—镜头关联 | 防止把介绍性卡片当成真实演示，知道还缺什么画面 | 默认仅显示与当前视频有关的缺口；完整证据表只在高级模式查看 |
-| 大纲与分镜脚本 | 在开始配音和编码之前确认叙事结构，保留人工内容与场景 ID | 展示可阅读的脚本提案和逐镜采纳入口；不强制初学者学习全部阶段名 |
-| 12 个镜头方案及聚焦建议 | 给采集和剪辑提供可执行的表达方法，尊重现有素材 | 在相关镜头旁按需推荐 1–3 个适用方案；完整目录放在高级模式，不铺满工作台 |
-| 旁白、字幕与画面衔接 | 复用实际媒体能力，保护用户校正和独立字幕 | 日常合成为“制作视频”；具体语音和时序工具进入所选镜头的详细编辑 |
-| 封面与交付 | 导出成片及相关交付物 | 一个主要交付入口；封面、字幕文件等作为可选结果 |
-| 成片审阅 | 发现可定位的问题，提供有依据的改进建议 | 最后单列、默认关闭、明确“测试功能”；每次少量建议，支持定位与逐项采纳，不作为导出门槛 |
-| 提示词方法及冻结记录 | 在同一会话复用叙事方法，保留任务所用说明版本 | 作为 BMW 的内部内容方法；一般用户只表达目标，无需理解 skill、方法 ID 或版本 |
+| Video Document 2.0、无损迁移、简洁可逆子集与类型命令 | [video-document.ts](../packages/feature-video/src/video-document.ts)、[video-edit.ts](../packages/feature-video/src/video-edit.ts)、[studio-compatibility.ts](../packages/feature-video/src/studio-compatibility.ts) | video.schema、studio.schema |
+| 卡片内脚本／画面与固定预览、拖动调序 | [renderer/studio-cards.ts](../packages/feature-video/src/renderer/studio-cards.ts)、[studio.ts](../packages/feature-video/src/renderer/studio.ts) | studio.card-pair、studio |
+| 空草稿、后台初稿、成片与竖屏交付 | [renderer/studio-workflow.ts](../packages/feature-video/src/renderer/studio-workflow.ts)、[studio.ts](../packages/feature-video/src/renderer/studio.ts) | studio.workflow-entry |
+| 零分镜素材准备与真实网页采集 | [studio-assistant.ts](../packages/feature-video/src/studio-assistant.ts)、[studio-runtime.ts](../packages/feature-video/src/studio-runtime.ts) | studio.materials-entry、driver |
+| 全窗口高级布局、同一 Assistant 浮框／停靠与固定输入范围 | [platform/studio-layout.ts](../packages/platform/src/studio-layout.ts)、[studio-runtime.ts](../packages/feature-video/src/studio-runtime.ts)、[agent-ui](../packages/agent-ui/src/renderer/assistant.ts) | assistant.application、platform.docking、agent.studio-composer |
+| 主轨、独立对象、画布移动缩放与有限关键帧 | [studio-main-edits.ts](../packages/feature-video/src/studio-main-edits.ts)、[studio-layer-edits.ts](../packages/feature-video/src/studio-layer-edits.ts)、[renderer](../packages/feature-video/src/renderer) | video.studio、studio、video |
+| 有限整镜头分割、原始时钟及可信句／原声字幕绑定 | [studio-scene-split.ts](../packages/feature-video/src/studio-scene-split.ts)、[studio-speech-origin.ts](../packages/feature-video/src/studio-speech-origin.ts) | studio.whole-scene-split、studio.bound-scene-split、media.scene-clock |
+| 原声字幕重新映射与人工双语保护 | [studio-source-speech-contract.ts](../packages/feature-video/src/studio-source-speech-contract.ts)、[studio-source-speech.ts](../packages/feature-video/src/studio-source-speech.ts) | studio.source-caption-rebind、studio.next |
+| 原淡入淡出／缓动区间连续性 | [studio-layer-edits.ts](../packages/feature-video/src/studio-layer-edits.ts)、[media-native/composition-layers.ts](../packages/media-native/src/composition-layers.ts) | studio.layer-fade-continuity、media.production |
+| 主旁白／原声静音与配乐避让 | [studio-main-edits.ts](../packages/feature-video/src/studio-main-edits.ts)、[media-native/composition-audio.ts](../packages/media-native/src/media/composition-audio.ts) | studio.main-mute |
+| 有限亮度／对比度／饱和度／模糊 | [media-native/visual-effects.ts](../packages/media-native/src/visual-effects.ts)、[shared painters](../packages/media-native/src/media/composition-paint.ts) | studio.visual-effects |
+| 图层／音轨锁定、隐藏、静音及对象菜单 | [renderer/studio-layer-editor.ts](../packages/feature-video/src/renderer/studio-layer-editor.ts) | studio.track-menu |
+| 参考帧抽样、SHA 核对、背景采用及记录管理 | [studio-reference.ts](../packages/feature-video/src/studio-reference.ts)、[renderer/studio-reference-editor.ts](../packages/feature-video/src/renderer/studio-reference-editor.ts) | studio.reference-analysis、video.studio |
+| 可选逐项文本／字幕样式／显示模式审阅 | [studio-review.ts](../packages/feature-video/src/studio-review.ts)、[studio-service.ts](../packages/feature-video/src/studio-service.ts) | studio.review-adoption、video.studio |
+| 签名历史恢复、选择性配音、制作取消与明确续做 | [studio-snapshot-proof.ts](../packages/feature-video/src/studio-snapshot-proof.ts)、[studio-service.ts](../packages/feature-video/src/studio-service.ts)、[studio.ts](../packages/feature-video/src/renderer/studio.ts) | studio.approved-history、studio.production-recovery |
+| 工作区恢复和素材读取 | [studio-runtime.ts](../packages/feature-video/src/studio-runtime.ts)、[studio.ts](../packages/feature-video/src/renderer/studio.ts) | studio.workspace-resume |
 
-### 交互问题与设计原则
+表中代码入口链接到实际作者源码。同一 smoke 文件的专用环境分支并不由默认 test:studio-e2e 全部触发，完整 offline runner 按目录逐项执行；配置见架构生成表。
 
-这次界面把生产步骤、数据编辑、原生媒体操作和智能体任务同时暴露为按钮。用户难以判断点击后是立即处理、打开编辑界面，还是将任务送到右侧 Assistant；新增阶段与原有旁白、检查、聚焦、封面等入口叠加，增加了判断成本。功能成立不等于必须拥有一个常驻按钮。
+## 当前边界
 
-默认面向没有剪辑经验、也没有明确高级要求的人。用视频目标、素材和可看见的结果组织界面；只在用户主动进入高级模式后展示完整工作流、结构化制作数据及镜头方法。先验证主界面和状态转换，再新增入口，不能通过“更多工具”折叠一整组方法按钮来代替整体简化。
+有限多轨、显式关键帧和基础特效已经实现，不再列为待开发。更多复杂效果、任意动画曲线、任意复杂引用重绑定与通用 NLE 尚未实现，也不在此次一致性修正中扩展。
 
-### 多模式方案
+审阅默认折叠、单列为测试功能，用户逐条采纳／忽略／撤销。参考分析仅依据实际采样 PNG；它们不保证完整视频语义、事实正确性或建议质量。原声 ASR 完整音轨最多 180 秒，没有长视频分块与自动词／字准确率认可。分阶段确认是给官方 Agent 的任务说明，遵从质量需要真实使用验收。
 
-| 模式 | 适用需求 | 主要界面 | 工作流切换 |
-|---|---|---|---|
-| 简单制作（默认） | 一句话制作视频、已有素材快速成片 | 需求输入、素材区、预览、一个主要下一步按钮；比例与时长少量可选项 | 不显示工作流选择器，不要求先挑方法或填写完整简报 |
-| 引导制作（高级选项） | 希望逐步确认素材、结构和成片 | 可选背景 → 素材 → 大纲与脚本 → 制作 → 检查导出；每步突出一个主要动作和对应产物 | 用户主动选择后才显示阶段导航；可以跳过背景、返回前一步 |
-| 详细编辑（高级选项） | 明确需要逐镜修改、字幕校正、语音或聚焦控制 | 现有画布、时间轴、素材侧栏与上下文属性；只展示所选对象的工具 | 主动进入后才显示更深入的编辑入口；镜头方案按需打开 |
+## 暂停的优化议题
 
-“使用方式”放在设置或轻量二级入口，不占据默认制作页面的主要位置，也不在首次打开时强迫选择。暂不再增加模板工作流、专家工作流等并列模式；具体制作倾向可作为引导模式的可选项。默认模式是否足够完成任务，应通过普通用户实测决定。
+后续如用户恢复优化，可再讨论卡片信息密度、画布与多轨布局、复杂任务与手动动作区分、快捷操作及完整真实制作体验。保持两种模式与默认简洁入口。当前 schema 的模式返回约束见 [Video Document 2.0](VIDEO_DOCUMENT_V2.md)；后续 UI 优化应遵守同一时间权威、简洁可逆子集及当前原生能力边界。
 
-各模式共用一个 Project、同一会话所属草稿、相同媒体与导出记录。切换只是改变信息展示和控制粒度，不创建副本，不触发智能体，也不重新配音或导出；切换前保存编辑，失败时留在当前模式。模式偏好可记忆，但不得把高级功能偷偷展开到普通用户的默认界面。
-
-### 明确区分直接操作与智能体任务
-
-| 交互类型 | 命名与外观 | 执行反馈 |
-|---|---|---|
-| 本地明确操作 | “保存”“播放”“生成旁白”“导出 MP4”等清楚的动词，普通按钮 | 就地显示处理范围、进度、结果与可用取消；不产生新的智能体消息 |
-| 委托智能体 | 明确写“让 Assistant …”，带统一的 Assistant 标识；不与直接操作混成同一排快捷按钮 | 点击后在 Studio 显示已提交任务卡，并与右侧所属会话对应；显示准备、排队、执行、完成或失败 |
-| 建议与方案 | 结果卡中显示“查看建议”“采纳这一项” | 查看建议不改草稿；采纳明确说明会改变的镜头或字段，保留撤销和 revision 检查 |
-
-简单模式的主要动作可以委托 Assistant，但标签须明确，例如“让 Assistant 制作初稿”，旁边说明将使用当前素材和所属会话。执行前展示简短任务摘要和缺口；普通、可撤销操作不增加多余确认步骤，需要用户选择来源、明确修改范围或使用外部服务时才询问相关信息。
-
-任务不能只在右侧聊天中有反馈。Studio 应有与草稿关联的任务卡、完成摘要和结果入口，用户无需来回查聊天记录；右侧仍是同一个 Agent 会话，不增加另一套循环。切换视图、重复点击、取消、失败和重启都必须保持可理解的状态；未知提交不自动重发。
-
-### 简单模式的主路径
-
-1. 输入想做的视频，或添加已有素材。背景、受众和风格按需补充，预设合理默认值。
-2. “让 Assistant 制作初稿”：按当前资料与授权范围安排素材、结构和分镜；缺口以少量明确问题呈现，不生成一排能力按钮。
-3. 查看可播放初稿和少量关键说明；用自然语言调整，或主动进入详细编辑。素材采集、大纲和脚本作为可查看的过程产物，不要求逐项操作全部步骤。
-4. “检查并导出”：技术条件由现有实测检查保证，失败项可定位；允许直接使用已有可复用成片。可选封面、字幕文件在交付结果旁提供。
-
-第一版优先保证“已有素材 → 初稿 → 修改 → 导出”。自主网上取材作为后续增强，其来源真实性、录屏完成度与实际素材分析需分别验证，不把本地测试或任务已提交当成真实制作效果已通过。
-
-### 审阅与修改闭环
-
-技术检查仍由宿主实测，智能体审阅单列为可选测试功能。一次最多提供少量、可定位到场景和全片时间的建议，说明观察依据、建议的具体改变与执行能力。只支持能安全落到现有数据操作上的逐项修改；需要重录、重配音或无法可靠自动完成的改动明确作为待办。单项采纳、预览、撤销后再处理下一项，不把长篇审片报告等同于可以自动逐步修改。
-
-### 提示词 skill 融入 BMW 整体体系
-
-纯提示词方法作为 BMW 共用内容能力，围绕“我要完成什么”匹配，不作为默认工具选择。用户可直接要求产品介绍、整理脚本、解释截图等；系统结合用户明确目标和当前资源提供适用的建议，明确采纳后才应用到当前任务。高级用户可在二级入口查看或切换方法，普通用户无需理解方法名称和底层 skill。
-
-提示词只改变任务说明，不授予工具、宿主权限或发布能力。仍使用原会话及唯一 browser，产物归 Project；执行类扩展必须独立验证原生能力与实际工具目录。方法所需输入、输出和适用条件应清楚，但版本、内容指纹等实现信息留在可展开记录中。冻结任务说明、保留用户原文、保护人工修改、冲突重读及未知提交不自动重发应作为恢复该能力的前置条件。
-
-### 实施顺序与验收
-
-1. 先做简单、引导和详细编辑的交互原型。用相同的“已有素材做产品视频”任务比较完成率、犹豫位置、往返聊天次数和误点击，不先堆叠全部方法。
-2. 落地默认简单模式和清楚的任务反馈，再支持主动切换；验证三个模式共享同一草稿及切换时的编辑保存。
-3. 逐项恢复素材分析、产品导演、镜头建议等能力；每恢复一项都需证明默认主界面没有多一组常驻按钮，且任务结果能被理解和逐项采用。
-4. 最后验证自主取材与可选审阅；分别记录实际模型效果、媒体质量和人工验收，测试功能不影响日常交付。
-
-验收应包括：首次使用无需选择工作流或 skill；不先填写背景也能开始；默认界面同一时刻只有一个主要推进动作；用户能够在点击前辨认直接处理与 Assistant 委托；运行中在 Studio 看到任务状态及范围；完成后定位到实际结果；高级用户主动切换后能找到完整工具；模式切换不复制草稿或重新执行；旧项目、语音、字幕与成片仍可编辑和导出；模型不能覆盖人工确认，错误与未知提交不会自动重试。
-
-### 本次撤回与数据保全
-
-新增入口、方法目录、阶段 UI 与 Studio 数据扩展已撤回。用户允许不保留当天新增的测试视频草稿；本次识别到一份“BMW｜从网页资料到视频成片”，移入 Project 的可恢复已删除目录并保存原始 JSON 备份。素材、旁白、字幕、导出文件及其他草稿不删除。该测试草稿的元数据留在备份中，恢复它时需使用对应的扩展 Schema，不能直接用旧版读取。
-
-历史方法回执中的 skill 快照已按用户要求清理，历史方法包的读取兼容与指纹校验代码已取消；正常会话消息、任务回执及所属关系保留。新任务不能选择或注入方法，也无活动目录、额外工具或 Agent 循环；未知提交不自动重放。
+此前回退决策、旧 A/B 方案、逐阶段待办和原测试结果见 [历史快照](history/2026-10-07-consistency/index.md)。当时尚未实现的判断已从当前范围移除；历史证据保留原文，并按原源码日期解释。

@@ -12,8 +12,20 @@ export function assertFocusIntervals(raw:unknown):FocusInterval[]{
     return result
   })
 }
-export interface FocusVisual {focusIntervals?:FocusInterval[];sourceStartSeconds:number;playbackRate:number;videoArtifactId?:string;crop?:{x:number;y:number;width:number;height:number}}
-export function focusSourceTime(visual:FocusVisual,localSeconds:number):number{return visual.videoArtifactId?visual.sourceStartSeconds+Math.max(0,localSeconds)*visual.playbackRate:Math.max(0,localSeconds)}
+/** Original elapsed effect clock retained by a content split; no expressions. */
+export interface VisualEffectWindow {opacityStartSeconds?:number;opacityDurationSeconds?:number;originId:string;startSeconds:number;durationSeconds:number;fadeInSeconds:number;fadeOutSeconds:number}
+export const visualEffectWindowSchema={type:'object',additionalProperties:false,required:['originId','startSeconds','durationSeconds','fadeInSeconds','fadeOutSeconds'],properties:{opacityStartSeconds:{type:'number',minimum:0,maximum:60},opacityDurationSeconds:{type:'number',minimum:.1,maximum:60},originId:{type:'string',pattern:'^[a-zA-Z0-9_-]{1,80}$'},startSeconds:{type:'number',minimum:0,maximum:60},durationSeconds:{type:'number',minimum:.1,maximum:60},fadeInSeconds:{type:'number',minimum:0,maximum:1},fadeOutSeconds:{type:'number',minimum:0,maximum:1}}}
+export function assertVisualEffectWindow(raw:unknown):VisualEffectWindow {
+ const v=mediaRecord(raw)
+ if(Object.keys(v).some(k=>!['originId','startSeconds','durationSeconds','fadeInSeconds','fadeOutSeconds','opacityStartSeconds','opacityDurationSeconds'].includes(k))||typeof v.originId!=='string'||!/^[a-zA-Z0-9_-]{1,80}$/.test(v.originId))throw new Error('Invalid visual effect window.')
+ const startSeconds=finiteNumber(v.startSeconds,'effect offset',0,60),durationSeconds=finiteNumber(v.durationSeconds,'effect duration',.1,60)
+ if(startSeconds>=durationSeconds)throw new Error('Effect offset must be inside its original duration.')
+ const hasOpacity=v.opacityStartSeconds!==undefined||v.opacityDurationSeconds!==undefined,opacityStartSeconds=hasOpacity?finiteNumber(v.opacityStartSeconds,'opacity offset',0,60):undefined,opacityDurationSeconds=hasOpacity?finiteNumber(v.opacityDurationSeconds,'opacity duration',.1,60):undefined
+ if(hasOpacity&&opacityStartSeconds!>=opacityDurationSeconds!)throw new Error('Opacity offset must be inside its original duration.')
+ return {...(hasOpacity?{opacityStartSeconds,opacityDurationSeconds}:{}),originId:v.originId,startSeconds,durationSeconds,fadeInSeconds:finiteNumber(v.fadeInSeconds,'effect fade in',0,Math.min(1,durationSeconds/2)),fadeOutSeconds:finiteNumber(v.fadeOutSeconds,'effect fade out',0,Math.min(1,durationSeconds/2))}
+}
+export interface FocusVisual {effectWindow?:VisualEffectWindow;focusIntervals?:FocusInterval[];sourceStartSeconds:number;playbackRate:number;videoArtifactId?:string;crop?:{x:number;y:number;width:number;height:number}}
+export function focusSourceTime(visual:FocusVisual,localSeconds:number):number{return visual.videoArtifactId?visual.sourceStartSeconds+Math.max(0,localSeconds)*visual.playbackRate:(visual.effectWindow?.startSeconds??0)+Math.max(0,localSeconds)}
 /** Shared by preview/export: smooth entry/exit over <=300ms of source time;
  * clamped inside the original crop. Markers use that same source-to-output transform. */
 export function focusFraming(visual:FocusVisual,localSeconds:number):{crop:NonNullable<FocusVisual['crop']>;focus?:FocusInterval;strength:number}{
@@ -24,6 +36,6 @@ export function focusFraming(visual:FocusVisual,localSeconds:number):{crop:NonNu
   return {crop:{x:Math.max(base.x,Math.min(base.x+base.width-width,centerX-width/2)),y:Math.max(base.y,Math.min(base.y+base.height-height,centerY-height/2)),width,height},focus,strength}
 }
 export function visibleFocusIntervals(visual:FocusVisual,duration:number):{start:number;end:number;focus:FocusInterval}[]{
-  const rate=visual.videoArtifactId?visual.playbackRate:1,start=visual.videoArtifactId?visual.sourceStartSeconds:0
+  const rate=visual.videoArtifactId?visual.playbackRate:1,start=visual.videoArtifactId?visual.sourceStartSeconds:(visual.effectWindow?.startSeconds??0)
   return (visual.focusIntervals??[]).map(focus=>({focus,start:Math.max(0,(focus.startSeconds-start)/rate),end:Math.min(duration,(focus.endSeconds-start)/rate)})).filter(item=>item.end>item.start)
 }

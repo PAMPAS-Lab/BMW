@@ -11,7 +11,7 @@ BMW 使用自有 Assistant、Project、页面、媒体和 Video Studio，DSH、C
 
 GUI 切换驱动后自动读取认证。未登录时显示登录对话框及驱动切换入口；登录期间切换会先取消并等待实际清理。登录后只显示适配器支持名单与官方目录的交集，用户点选“确认选择”即可；设置不产生付费推理或用户发起的专项预检，Qoder 冷控制会话仍内部检查 SDK 初始化目录；实际输入前仍执行唯一 `browser` 准入。名单见 [功能规格](FUNCTIONAL_SPEC.md)。
 
-当前固定运行时：DSH `0.2.0-rc.2`、Codex App Server `0.160.0`、Qoder CN SDK `1.0.50` / Worker `1.1.64`。未知协议版本仍拒绝。Qoder 只继承明确的严格 MCP 配置；DSH 每次请求检查 scoped catalog。
+当前固定运行时：DSH `0.2.0-rc.2`、Codex App Server `0.160.0` / `0.160.1`、Qoder CN SDK `1.0.50` / Worker `1.1.64`。未知协议版本仍拒绝。Qoder 只继承明确的严格 MCP 配置；DSH 每次请求检查 scoped catalog。
 
 ## Codex GPT-6 工具封装
 
@@ -24,6 +24,8 @@ GUI 切换驱动后自动读取认证。未登录时显示登录对话框及驱�
 副本不包含缓存的账号身份、etag 等根元数据，不改写官方 cache/config；官方运行时可正常刷新自己的缓存。错误版本、模型缺失、重复身份、符号链接、已发布文件内容变化和额外工具都失败拒绝。新增未知 GPT-6 型号不自动套用本策略。
 
 依据：[官方启动模型目录配置](https://learn.chatgpt.com/docs/config-file/config-reference)、[官方模型目录与工具能力说明](https://learn.chatgpt.com/docs/enterprise/roll-out-a-gateway)。此处直接使用官方 Codex 服务，未引入网关或第三方模型代理。
+
+以下实测记录保留当时的源码与运行时版本；它们不能替代当前回归。当前准入版本由 codex-model-catalog.ts 与 codex-policy.test.ts 共同核对，本轮一致性检查见 [VERIFICATION.md](VERIFICATION.md)。
 
 ## GPT-6 封装时的真实模型证据
 

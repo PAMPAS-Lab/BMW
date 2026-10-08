@@ -62,10 +62,11 @@ async function run():Promise<void>{
   const wav=Buffer.alloc(44+48000*2);wav.write('RIFF');wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(48000,24);wav.writeUInt32LE(96000,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(96000,40)
   for(let index=0;index<48000;index++)wav.writeInt16LE(Math.round(Math.sin(index/48000*440*Math.PI*2)*7000),44+index*2)
   fs.writeFileSync(path.join(artifacts,'voice.wav'),wav)
-  const composition={title:'产品介绍',width:640,height:360,fps:12,music:true,scenes:[{durationSeconds:3,title:'真实素材',label:'01 / START',crop:{x:.1,y:.1,width:.8,height:.8},playbackRate:.4,narration:'这是测试旁白。',videoArtifactId:'footage.webm',audioArtifactId:'voice.wav'},{durationSeconds:2,title:'关键收益',label:'02 / WHY',bullets:['可重复定位','浏览器原生导出']}]}
+  const composition={title:'产品介绍',width:640,height:360,fps:12,music:true,layers:[{id:'restricted-browser-layer',title:'Browser eased layer',kind:'rectangle',startSeconds:0,durationSeconds:2,x:.05,y:.05,width:.1,height:.1,color:'#22dd88',keyframes:[{timeSeconds:0,x:.05,y:.05,width:.1,height:.1,opacity:1,easing:'linear'},{timeSeconds:2,x:.6,y:.05,width:.1,height:.1,opacity:.6,easing:'ease-in-out',easingRange:[.2,.8]}]}],scenes:[{durationSeconds:3,title:'真实素材',label:'01 / START',crop:{x:.1,y:.1,width:.8,height:.8},playbackRate:.4,narration:'这是测试旁白。',videoArtifactId:'footage.webm',audioArtifactId:'voice.wav'},{durationSeconds:2,title:'关键收益',label:'02 / WHY',bullets:['可重复定位','浏览器原生导出']}]}
   const exported=(await execute({action:'video.compose',composition})).result
   const registration=exported.studioDraft as {id:string;revision:number;sceneCount:number};assert.ok(registration?.id)
   const studioStore=new VideoStudioStore(project.directory,'video-smoke'),editable=studioStore.read(registration.id)
+  assert.deepEqual(editable.layers![0].keyframes![1].easingRange,[.2,.8],'Authenticated browser composition preserves the same restricted curve in its editable Studio draft')
   assert.equal(editable.ownerSessionId,'video-smoke');assert.deepEqual(draftComposition(editable),assertComposition(exported.composition));assert.equal(studioStore.reusableExport(editable)?.artifactId,exported.artifactId)
   const existing=(await execute({action:'video.studio',studioRequest:{operation:'render',draftId:editable.id,expectedRevision:editable.revision}})).result
   assert.equal(existing.reused,true);assert.equal((existing.export as {artifactId:string}).artifactId,exported.artifactId)
@@ -102,8 +103,9 @@ async function run():Promise<void>{
   await assert.rejects(execute({action:'video.compose',composition:{...optionsCase,templateName:'不存在'}}),/找不到/)
   granted=false;await assert.rejects(execute({action:'video.compose',composition}),/agent control/);granted=true
   const before=fs.readdirSync(artifacts).sort()
-  await assert.rejects(execute({action:'video.compose',composition:{...composition,scenes:[{...composition.scenes[0],durationSeconds:1}]}}),/exceeds scene/)
+  await assert.rejects(execute({action:'video.compose',composition:{...composition,layers:[],scenes:[{...composition.scenes[0],durationSeconds:1}]}}),{name:'Error',message:'旁白实测音频的播放区间超过镜头；请延长镜头或明确修剪旁白。'})
   await assert.rejects(execute({action:'video.compose',composition:{...composition,scenes:[{...composition.scenes[0],videoArtifactId:'../outside.webm'}]}}),/artifactId/)
+  await assert.rejects(execute({action:'video.compose',composition:{...composition,layers:[{...composition.layers[0],keyframes:[composition.layers[0].keyframes[0],{...composition.layers[0].keyframes[1],easingRange:[.8,.2]}]}]}}),/range/)
   assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
   cancel=new AbortController();await assert.rejects(kernel.execute({action:'video.compose',composition},{signal:cancel.signal}),/cancellation/);cancel=undefined
   assert.equal(media.isCaptureActive(),false);assert.deepEqual(fs.readdirSync(artifacts).sort(),before)

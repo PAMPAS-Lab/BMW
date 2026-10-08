@@ -10,6 +10,8 @@ BMW 保持一个应用、唯一 `browser` 工具，以及 DSH、Codex、Qoder CN
 
 Shell 的全部 invoke 共用 sender、主框架和固定本地 URL 准入，在应用逻辑执行前拒绝其他 Renderer、子框架及已导航页面。Project、设置、计划任务、权限、布局、登录保持配置和加密快照在启动时预读；损坏、读取或解密失败提供重试/退出，后台写入不能替换不可读原文件。
 
+Studio 的中立 AssistantStudioTarget 扩展为可选的闭合 layer {id,kind}；Feature 负责本地/全片容器存在性，Agent UI 负责第一笔输入固定范围和已有输入保护，Host FIFO 保存不可变请求上下文。对象元数据仅包含名称、类型及时间，不增加模型工具、宿主权限或核心到具体 harness 的依赖。浮框与停靠属于平台布局：实测属性列和时间轴边界限制 Native View；小窗强制停靠是临时有效布局，不覆盖用户原偏好。
+
 ## 直接接口保障与实现保障
 
 代码依赖方向是三个 harness → `agent-contract`，Platform 将 Browser 与通用 AgentBackend 连接起来。Browser 和 AgentDriver 抽象均不依赖 DSH；接口的消费方、测试选择关系与运行时导入依赖是不同概念。
@@ -27,7 +29,7 @@ Shell 的全部 invoke 共用 sender、主框架和固定本地 URL 准入，在
 | boundary | 模块依赖、公开入口、唯一工具、禁止能力 | Node + 全局静态检查 |
 | type | 正例与 `@ts-expect-error` 反例消费者 | 每次新构建必须通过 |
 | integration | Electron/驱动/Studio/后台页面 | 临时 Profile、Project、DSH Home |
-| desktop | 工作区、Project/会话及实际重启、设置、原生焦点/键盘 | 四组独立报告 |
+| desktop | 工作区、Project/会话及实际重启、设置、原生焦点/键盘，以及 Studio 原生交互专项 | 工作区四组与 Studio 各环境分支独立报告 |
 | media | 实际编码、播放、音频、取消和回滚 | Electron + 临时素材 + 本地 TTS |
 | external | 付费模型、Edge 外部语音 | 单列 opt-in，不自动纳入局部或完整离线验证 |
 
@@ -85,9 +87,9 @@ npm run test:affected
 | feature-lifecycle | platform → feature-video, product-bmw | Named activation/configure/layout/context/shutdown hooks; malformed runtime hooks fail before wiring; no extra model tools. | platform.feature-contract, api.types, desktop.workspace |
 | browser-feature-host | browser-capability → platform, feature-video | Minimum Project/settings/media ports, actor enum, cancellation signal; validated action dispatch remains the only execution entry. | browser.host-contract, api.types, video.boundary, driver |
 | browser-model | browser-capability → platform, feature-video | Exactly browser; bounded closed requests, authenticated Project/Session admission, FIFO, cancellation and image admission. | browser.sources, browser.schema, browser.catalog, browser.operations, browser.shutdown, browser.deadline, platform.boundaries, driver |
-| native-media | media-native → browser-capability, platform, feature-video | Artifact IDs rather than caller paths; bounded request/reply admission; actual duration/track checks; cancellation drains output before rollback. | speech, media.speech, platform.sources, video.sources, sources, media.port-contract, api.types, media.controller, media.processing, media.production, media.processing-runtime, video, localNarration |
+| native-media | media-native → browser-capability, platform, feature-video | Artifact IDs rather than caller paths; bounded request/reply admission; actual duration/track checks; bounded local/global layers, explicit keyframes and streamed independent audio share preview/export; cancellation drains output before rollback. | speech, media.speech, platform.sources, video.sources, sources, media.port-contract, api.types, media.controller, media.processing, media.production, media.processing-runtime, video, studio, localNarration |
 | project-storage | platform → browser-capability, feature-video, application | BMW Project identity/documents/page state without native mappings, preserved unreadable Project/settings/tasks/permissions/layout/login state and encrypted snapshots, only missing-file initialization; no production Profile in tests. | platform.sources, platform.projects, platform.state, platform.permission-store, platform.continuity-state, platform.driver-binding, startup-recovery, startup-exit, startup.permissions.retry, startup.permissions.exit, startup.layout.retry, startup.layout.exit, startup.continuity-config.retry, startup.continuity-config.exit, startup.continuity-snapshot.retry, startup.continuity-snapshot.exit, desktop.projects |
-| studio-draft | feature-video → platform, browser-capability | Project-owned drafts/artifacts, revision conflicts, actual narration provenance and stale export rejection; independent caption/visual edits. | video.sources, video.studio, video.settings, video.boundary, studio, desktop.workspace |
+| studio-draft | feature-video → platform, browser-capability | Canonical Video Document 2.0, lossless v1 migration, reversible simple subset, content-derived advanced guard, typed CAS edits; Project-owned drafts/artifacts, revision conflicts, actual narration provenance and stale export rejection; independent caption/visual edits. | video.schema, studio.schema, video.sources, video.studio, video.settings, video.boundary, studio, desktop.workspace |
 | sandbox-io | media-native → feature-video, platform | Pinned Project artifacts, token/sender/offset bounds, isolated browser workers; no shell, cookies or unrestricted filesystem exposure. | media.processing, media.controller, media.capture, video, studio |
 
 ### 具体实现与产品装配保障
@@ -114,7 +116,7 @@ npm run test:affected
 
 - agent-contract: `packages/agent-contract/index.ts`
 - agent-ui: `packages/agent-ui/index.ts`
-- media-native: `packages/media-native/src/media-controller.ts`, `packages/media-native/src/media-port.ts`, `packages/media-native/src/media-contract.ts`, `packages/media-native/src/composition-contract.ts`, `packages/media-native/src/narration-contract.ts`, `packages/media-native/src/video-options.ts`, `packages/media-native/src/video-options-form.ts`, `packages/media-native/src/artifact-job-io.ts`, `packages/media-native/src/media/composition-audio.ts`, `packages/media-native/src/media/composition-paint.ts`, `packages/media-native/src/media/linear-frames.ts`, `packages/media-native/src/image-contract.ts`, `packages/media-native/src/media/image-decoder.ts`, `packages/media-native/src/caption-export.ts`, `packages/media-native/src/text-export.ts`, `packages/media-native/src/focus-contract.ts`, `packages/media-native/src/recording-contract.ts`, `packages/media-native/src/visual-segments.ts`, `packages/media-native/src/image-drawing-contract.ts`, `packages/media-native/src/media/processing.cover-contract.ts`, `packages/media-native/src/source-contract.ts`, `packages/media-native/src/speech-contract.ts`
+- media-native: `packages/media-native/src/media-controller.ts`, `packages/media-native/src/media-port.ts`, `packages/media-native/src/media-contract.ts`, `packages/media-native/src/composition-contract.ts`, `packages/media-native/src/composition-layers.ts`, `packages/media-native/src/media/composition-layers-paint.ts`, `packages/media-native/src/narration-contract.ts`, `packages/media-native/src/video-options.ts`, `packages/media-native/src/video-options-form.ts`, `packages/media-native/src/artifact-job-io.ts`, `packages/media-native/src/media/composition-audio.ts`, `packages/media-native/src/media/composition-paint.ts`, `packages/media-native/src/media/linear-frames.ts`, `packages/media-native/src/image-contract.ts`, `packages/media-native/src/media/image-decoder.ts`, `packages/media-native/src/caption-export.ts`, `packages/media-native/src/text-export.ts`, `packages/media-native/src/focus-contract.ts`, `packages/media-native/src/recording-contract.ts`, `packages/media-native/src/visual-segments.ts`, `packages/media-native/src/image-drawing-contract.ts`, `packages/media-native/src/media/processing.cover-contract.ts`, `packages/media-native/src/source-contract.ts`, `packages/media-native/src/speech-contract.ts`, `packages/media-native/src/visual-effects.ts`
 - browser-capability: `packages/browser-capability/src/browser-schema.ts`, `packages/browser-capability/src/bridge-server.ts`, `packages/browser-capability/src/browser-kernel.ts`, `packages/browser-capability/src/browser-capability-registry.ts`, `packages/browser-capability/src/browser-host.ts`
 - platform: `packages/platform/src/product-definition.ts`, `packages/platform/src/main.ts`, `packages/platform/src/assistant-service.ts`, `packages/platform/src/feature-contract.ts`, `packages/platform/src/agent-data-schema.ts`
 - feature-video: `packages/feature-video/index.ts`
@@ -125,122 +127,142 @@ npm run test:affected
 
 ### 分类测试清单
 
-| ID | 分类 | 归属 | 入口 |
-|---|---|---|---|
-| agent.context | contract | agent-contract | packages/agent-contract/test/context-sync.test.ts |
-| agent.conversation | contract | agent-contract | packages/agent-contract/test/conversation.test.ts |
-| bmw.agent-assembly | contract | application, agent-ui, harness-dsh, harness-codex, harness-qoder | scripts/agent-assembly.test.ts |
-| agent.data-migration | contract | validation, platform, harness-dsh | scripts/agent-data-migration.test.ts |
-| dsh.project-bindings | contract | harness-dsh | packages/harness-dsh/test/project-bindings.test.ts |
-| dsh.migration-history | contract | harness-dsh | packages/harness-dsh/test/dsh-migration.test.ts |
-| agent.assistant-ui | contract | agent-contract | packages/agent-contract/test/assistant-ui.test.ts |
-| agent.driver-settings | contract | agent-contract | packages/agent-contract/test/driver-settings.test.ts |
-| platform.agent-settings | contract | platform | packages/platform/test/agent-settings-controller.test.ts |
-| codex.settings | contract | harness-codex | packages/harness-codex/test/codex-settings.test.ts |
-| codex.installation | contract | harness-codex | packages/harness-codex/test/codex-installation.test.ts |
-| qoder.settings | contract | harness-qoder | packages/harness-qoder/test/qoder-settings.test.ts |
-| dsh.settings | contract | harness-dsh | packages/harness-dsh/test/dsh-settings.test.ts |
-| platform.assistant-controller | contract | platform | packages/platform/test/assistant-controller.test.ts |
-| platform.conversation-store | contract | platform | packages/platform/test/conversation-store.test.ts |
-| platform.agent-history | contract | platform | packages/platform/test/agent-history-store.test.ts |
-| platform.agent-host | contract | platform | packages/platform/test/agent-host.test.ts |
-| browser.session-leases | contract | browser-capability | packages/browser-capability/test/session-leases.test.ts |
-| codex.policy | contract | harness-codex | packages/harness-codex/test/codex-policy.test.ts |
-| codex.backend | contract | harness-codex | packages/harness-codex/test/codex-backend.test.ts |
-| dsh.events | contract | harness-dsh | packages/harness-dsh/test/dsh-events.test.ts |
-| dsh.backend | contract | harness-dsh | packages/harness-dsh/test/dsh-backend.test.ts |
-| qoder.events | contract | harness-qoder | packages/harness-qoder/test/qoder-events.test.ts |
-| qoder.backend | contract | harness-qoder | packages/harness-qoder/test/qoder-backend.test.ts |
-| browser.schema | contract | browser-capability | packages/browser-capability/test/browser-schema.test.ts |
-| browser.catalog | contract | browser-capability | packages/browser-capability/test/mcp-tool-catalog.test.ts |
-| browser.operations | contract | browser-capability | packages/browser-capability/test/session-operations.test.ts |
-| browser.shutdown | contract | browser-capability | packages/browser-capability/test/bridge-shutdown.test.ts |
-| browser.deadline | contract | browser-capability | packages/browser-capability/test/browser-deadline.test.ts |
-| browser.screenshot | unit | browser-capability | packages/browser-capability/test/screenshot-read.test.ts |
-| browser.renderer-read | unit | browser-capability | packages/browser-capability/test/renderer-read.test.ts |
-| browser.download | unit | browser-capability | packages/browser-capability/test/media-artifact.test.ts |
-| browser.tab-policy | unit | browser-capability | packages/browser-capability/test/tab-policy.test.ts |
-| browser.sources | contract | browser-capability | packages/browser-capability/test/collect-page-source.test.ts |
-| platform.sources | contract | platform | packages/platform/test/project-source-store.test.ts |
-| video.sources | contract | feature-video | packages/feature-video/test/studio-sources.test.ts |
-| browser.host-contract | contract | browser-capability | packages/browser-capability/test/browser-host.test.ts |
-| dsh.dsh-runtime | contract | harness-dsh | packages/harness-dsh/test/dsh-runtime.test.ts |
-| dsh.dsh-transport | contract | harness-dsh | packages/harness-dsh/test/dsh-transport.test.ts |
-| dsh.dsh-preset | contract | harness-dsh | packages/harness-dsh/test/dsh-preset.test.ts |
-| dsh.browser-failure-guard | unit | harness-dsh | packages/harness-dsh/test/browser-failure-guard.test.ts |
-| dsh.workspace-context | contract | harness-dsh | packages/harness-dsh/test/workspace-context.test.ts |
-| dsh.video-case-log | unit | harness-dsh | packages/harness-dsh/test/video-case-log.test.ts |
-| media.controller | contract | media-native | packages/media-native/test/media-controller.test.ts |
-| media.processing | contract | media-native | packages/media-native/test/media-processing.test.ts |
-| media.production | contract | media-native | packages/media-native/test/video-production.test.ts |
-| media.options | unit | media-native | packages/media-native/test/video-options.test.ts |
-| media.speech | contract | media-native | packages/media-native/test/speech.test.ts |
-| media.port-contract | contract | media-native | packages/media-native/test/media-port.test.ts |
-| platform.projects | unit | platform | packages/platform/test/project-store.test.ts |
-| platform.settings | unit | platform | packages/platform/test/global-settings-store.test.ts |
-| platform.schedules | unit | platform | packages/platform/test/scheduled-task-store.test.ts |
-| platform.state | contract | platform | packages/platform/test/state-load.test.ts |
-| platform.layout | unit | platform | packages/platform/test/layout-store.test.ts |
-| platform.docking | unit | platform | packages/platform/test/layout-docking.test.ts |
-| platform.permissions | unit | platform | packages/platform/test/permission-policy.test.ts |
-| platform.menu | unit | platform | packages/platform/test/menu-policy.test.ts |
-| platform.restart | unit | platform | packages/platform/test/restart-policy.test.ts |
-| platform.continuity | contract | platform | packages/platform/test/session-continuity.test.ts |
-| platform.user-agent | unit | platform | packages/platform/test/browser-user-agent.test.ts |
-| platform.project-panel | unit | platform | packages/platform/test/project-panel-layering.test.ts |
-| platform.driver-binding | contract | platform | packages/platform/test/driver-boundary.test.ts |
-| platform.catalog | boundary | platform | packages/platform/test/bmw-catalog.test.ts |
-| platform.boundaries | boundary | platform | packages/platform/test/product-boundaries.test.ts |
-| platform.remote-boundary | boundary | platform | packages/platform/test/remote-control-boundary.test.ts |
-| platform.shell-ipc | contract | platform | packages/platform/test/shell-ipc.test.ts |
-| platform.permission-store | contract | platform | packages/platform/test/permission-store.test.ts |
-| platform.continuity-state | contract | platform | packages/platform/test/continuity-state.test.ts |
-| platform.feature-contract | contract | platform | packages/platform/test/feature-contract.test.ts |
-| video.materials | unit | feature-video | packages/feature-video/test/studio-materials.test.ts |
-| video.studio | contract | feature-video | packages/feature-video/test/video-studio.test.ts |
-| video.settings | contract | feature-video | packages/feature-video/test/video-settings.test.ts |
-| video.boundary | boundary | feature-video | packages/feature-video/test/video-boundary.test.ts |
-| architecture.boundaries | boundary | validation | scripts/test/module-boundary.test.ts |
-| validation.selection | unit | validation | scripts/test/test-selection.test.ts |
-| api.types | type | validation, platform, agent-contract, browser-capability, media-native, feature-video | scripts/test/public-interfaces.type-test.ts |
-| sources | media | platform, browser-capability, media-native, feature-video | scripts/source-studio-smoke.ts |
-| assistant.default | integration | application, platform, agent-contract, agent-ui, harness-dsh, harness-codex, harness-qoder, browser-capability, feature-video | scripts/assistant-default-suite.ts |
-| assistant.application | integration | platform, agent-contract, agent-ui, browser-capability, feature-video | scripts/assistant-application-smoke.ts |
-| assistant.schedules | integration | platform, agent-contract, agent-ui, browser-capability, feature-video | scripts/assistant-application-smoke.ts |
-| assistant.startup.conversations.retry | integration | platform, agent-contract, agent-ui | scripts/assistant-application-smoke.ts |
-| assistant.startup.conversations.exit | integration | platform, agent-contract, agent-ui | scripts/assistant-application-smoke.ts |
-| assistant.startup.preferences.retry | integration | platform, agent-contract, agent-ui | scripts/assistant-application-smoke.ts |
-| assistant.startup.preferences.exit | integration | platform, agent-contract, agent-ui | scripts/assistant-application-smoke.ts |
-| assistant.startup.history.retry | integration | platform, agent-contract, agent-ui | scripts/assistant-application-smoke.ts |
-| assistant.startup.history.exit | integration | platform, agent-contract, agent-ui | scripts/assistant-application-smoke.ts |
-| driver | integration | platform, agent-contract, browser-capability | scripts/agent-driver-smoke.ts |
-| startup-recovery | integration | platform | scripts/state-load-smoke.ts |
-| startup-exit | integration | platform | scripts/state-load-smoke.ts |
-| startup.permissions.retry | integration | platform | scripts/state-load-smoke.ts |
-| startup.permissions.exit | integration | platform | scripts/state-load-smoke.ts |
-| startup.layout.retry | integration | platform | scripts/state-load-smoke.ts |
-| startup.layout.exit | integration | platform | scripts/state-load-smoke.ts |
-| startup.continuity-config.retry | integration | platform | scripts/state-load-smoke.ts |
-| startup.continuity-config.exit | integration | platform | scripts/state-load-smoke.ts |
-| startup.continuity-snapshot.retry | integration | platform | scripts/state-load-smoke.ts |
-| startup.continuity-snapshot.exit | integration | platform | scripts/state-load-smoke.ts |
-| dsh | integration | harness-dsh, agent-contract | scripts/dsh-compatibility-smoke.ts |
-| desktop.workspace | desktop | platform, harness-dsh, browser-capability, feature-video | scripts/desktop-smoke.ts [workspace] |
-| desktop.projects | desktop | platform, harness-dsh, browser-capability, feature-video | scripts/desktop-smoke.ts [projects] |
-| desktop.settings | desktop | platform, harness-dsh, browser-capability, feature-video | scripts/desktop-smoke.ts [settings] |
-| desktop.native | desktop | platform, harness-dsh, browser-capability, feature-video | scripts/desktop-smoke.ts [native] |
-| studio.next | integration | feature-video, media-native | scripts/studio-next-smoke.ts |
-| studio | integration | feature-video, media-native | scripts/video-studio-smoke.ts |
-| browser.background | integration | browser-capability | scripts/browser-background-smoke.ts |
-| media.capture | media | media-native, browser-capability | scripts/media-capture-smoke.ts |
-| media.processing-runtime | media | media-native | scripts/media-processing-smoke.ts |
-| video | media | media-native, feature-video | scripts/video-production-smoke.ts |
-| speech | media | media-native | scripts/speech-alignment-smoke.ts |
-| localNarration | media | media-native | scripts/narration-smoke.ts |
-| external.assistant.qoder-cn | external (opt-in) | agent-ui, platform, browser-capability, feature-video, harness-qoder, harness-codex, harness-dsh | scripts/native-assistant-case.ts |
-| external.assistant.codex | external (opt-in) | agent-ui, platform, browser-capability, feature-video, harness-qoder, harness-codex, harness-dsh | scripts/native-assistant-case.ts |
-| external.assistant.dsh | external (opt-in) | agent-ui, platform, browser-capability, feature-video, harness-qoder, harness-codex, harness-dsh | scripts/native-assistant-case.ts |
-| external.vision | external (opt-in) | browser-capability, harness-dsh | scripts/vision-model-smoke.ts |
-| external.edge | external (opt-in) | media-native | scripts/narration-smoke.ts |
+| ID | 分类 | 归属 | 入口 | 配置／分支 |
+|---|---|---|---|---|
+| agent.context | contract | agent-contract | packages/agent-contract/test/context-sync.test.ts | 默认 |
+| agent.conversation | contract | agent-contract | packages/agent-contract/test/conversation.test.ts | 默认 |
+| bmw.agent-assembly | contract | application, agent-ui, harness-dsh, harness-codex, harness-qoder | scripts/agent-assembly.test.ts | 默认 |
+| agent.data-migration | contract | validation, platform, harness-dsh | scripts/agent-data-migration.test.ts | 默认 |
+| dsh.project-bindings | contract | harness-dsh | packages/harness-dsh/test/project-bindings.test.ts | 默认 |
+| dsh.migration-history | contract | harness-dsh | packages/harness-dsh/test/dsh-migration.test.ts | 默认 |
+| agent.studio-composer | contract | agent-ui | packages/agent-ui/test/studio-composer-scope.test.ts | 默认 |
+| agent.assistant-ui | contract | agent-contract | packages/agent-contract/test/assistant-ui.test.ts | 默认 |
+| agent.driver-settings | contract | agent-contract | packages/agent-contract/test/driver-settings.test.ts | 默认 |
+| platform.agent-settings | contract | platform | packages/platform/test/agent-settings-controller.test.ts | 默认 |
+| codex.settings | contract | harness-codex | packages/harness-codex/test/codex-settings.test.ts | 默认 |
+| codex.installation | contract | harness-codex | packages/harness-codex/test/codex-installation.test.ts | 默认 |
+| qoder.settings | contract | harness-qoder | packages/harness-qoder/test/qoder-settings.test.ts | 默认 |
+| dsh.settings | contract | harness-dsh | packages/harness-dsh/test/dsh-settings.test.ts | 默认 |
+| platform.assistant-controller | contract | platform | packages/platform/test/assistant-controller.test.ts | 默认 |
+| platform.conversation-store | contract | platform | packages/platform/test/conversation-store.test.ts | 默认 |
+| platform.agent-history | contract | platform | packages/platform/test/agent-history-store.test.ts | 默认 |
+| platform.agent-host | contract | platform | packages/platform/test/agent-host.test.ts | 默认 |
+| browser.session-leases | contract | browser-capability | packages/browser-capability/test/session-leases.test.ts | 默认 |
+| codex.policy | contract | harness-codex | packages/harness-codex/test/codex-policy.test.ts | 默认 |
+| codex.backend | contract | harness-codex | packages/harness-codex/test/codex-backend.test.ts | 默认 |
+| dsh.events | contract | harness-dsh | packages/harness-dsh/test/dsh-events.test.ts | 默认 |
+| dsh.backend | contract | harness-dsh | packages/harness-dsh/test/dsh-backend.test.ts | 默认 |
+| qoder.events | contract | harness-qoder | packages/harness-qoder/test/qoder-events.test.ts | 默认 |
+| qoder.backend | contract | harness-qoder | packages/harness-qoder/test/qoder-backend.test.ts | 默认 |
+| browser.schema | contract | browser-capability | packages/browser-capability/test/browser-schema.test.ts | 默认 |
+| browser.catalog | contract | browser-capability | packages/browser-capability/test/mcp-tool-catalog.test.ts | 默认 |
+| browser.operations | contract | browser-capability | packages/browser-capability/test/session-operations.test.ts | 默认 |
+| browser.shutdown | contract | browser-capability | packages/browser-capability/test/bridge-shutdown.test.ts | 默认 |
+| browser.deadline | contract | browser-capability | packages/browser-capability/test/browser-deadline.test.ts | 默认 |
+| browser.screenshot | unit | browser-capability | packages/browser-capability/test/screenshot-read.test.ts | 默认 |
+| browser.renderer-read | unit | browser-capability | packages/browser-capability/test/renderer-read.test.ts | 默认 |
+| browser.download | unit | browser-capability | packages/browser-capability/test/media-artifact.test.ts | 默认 |
+| browser.tab-policy | unit | browser-capability | packages/browser-capability/test/tab-policy.test.ts | 默认 |
+| browser.sources | contract | browser-capability | packages/browser-capability/test/collect-page-source.test.ts | 默认 |
+| platform.sources | contract | platform | packages/platform/test/project-source-store.test.ts | 默认 |
+| video.sources | contract | feature-video | packages/feature-video/test/studio-sources.test.ts | 默认 |
+| browser.host-contract | contract | browser-capability | packages/browser-capability/test/browser-host.test.ts | 默认 |
+| dsh.dsh-runtime | contract | harness-dsh | packages/harness-dsh/test/dsh-runtime.test.ts | 默认 |
+| dsh.dsh-transport | contract | harness-dsh | packages/harness-dsh/test/dsh-transport.test.ts | 默认 |
+| dsh.dsh-preset | contract | harness-dsh | packages/harness-dsh/test/dsh-preset.test.ts | 默认 |
+| dsh.browser-failure-guard | unit | harness-dsh | packages/harness-dsh/test/browser-failure-guard.test.ts | 默认 |
+| dsh.workspace-context | contract | harness-dsh | packages/harness-dsh/test/workspace-context.test.ts | 默认 |
+| dsh.video-case-log | unit | harness-dsh | packages/harness-dsh/test/video-case-log.test.ts | 默认 |
+| media.controller | contract | media-native | packages/media-native/test/media-controller.test.ts | 默认 |
+| media.processing | contract | media-native | packages/media-native/test/media-processing.test.ts | 默认 |
+| media.production | contract | media-native | packages/media-native/test/video-production.test.ts | 默认 |
+| media.options | unit | media-native | packages/media-native/test/video-options.test.ts | 默认 |
+| media.scene-clock | media | media-native, feature-video | scripts/scene-clock-smoke.ts | 默认 |
+| media.speech | contract | media-native | packages/media-native/test/speech.test.ts | 默认 |
+| media.port-contract | contract | media-native | packages/media-native/test/media-port.test.ts | 默认 |
+| platform.projects | unit | platform | packages/platform/test/project-store.test.ts | 默认 |
+| platform.settings | unit | platform | packages/platform/test/global-settings-store.test.ts | 默认 |
+| platform.schedules | unit | platform | packages/platform/test/scheduled-task-store.test.ts | 默认 |
+| platform.state | contract | platform | packages/platform/test/state-load.test.ts | 默认 |
+| platform.layout | unit | platform | packages/platform/test/layout-store.test.ts | 默认 |
+| platform.docking | unit | platform | packages/platform/test/layout-docking.test.ts | 默认 |
+| platform.permissions | unit | platform | packages/platform/test/permission-policy.test.ts | 默认 |
+| platform.menu | unit | platform | packages/platform/test/menu-policy.test.ts | 默认 |
+| platform.restart | unit | platform | packages/platform/test/restart-policy.test.ts | 默认 |
+| platform.continuity | contract | platform | packages/platform/test/session-continuity.test.ts | 默认 |
+| platform.user-agent | unit | platform | packages/platform/test/browser-user-agent.test.ts | 默认 |
+| platform.project-panel | unit | platform | packages/platform/test/project-panel-layering.test.ts | 默认 |
+| platform.driver-binding | contract | platform | packages/platform/test/driver-boundary.test.ts | 默认 |
+| platform.catalog | boundary | platform | packages/platform/test/bmw-catalog.test.ts | 默认 |
+| platform.boundaries | boundary | platform | packages/platform/test/product-boundaries.test.ts | 默认 |
+| platform.remote-boundary | boundary | platform | packages/platform/test/remote-control-boundary.test.ts | 默认 |
+| platform.shell-ipc | contract | platform | packages/platform/test/shell-ipc.test.ts | 默认 |
+| platform.permission-store | contract | platform | packages/platform/test/permission-store.test.ts | 默认 |
+| platform.continuity-state | contract | platform | packages/platform/test/continuity-state.test.ts | 默认 |
+| platform.feature-contract | contract | platform | packages/platform/test/feature-contract.test.ts | 默认 |
+| video.schema-publication | contract | feature-video, validation | scripts/video-schema-document.ts | 默认 |
+| video.schema | contract | feature-video | packages/feature-video/test/video-document.test.ts | 默认 |
+| video.materials | unit | feature-video | packages/feature-video/test/studio-materials.test.ts | 默认 |
+| video.studio | contract | feature-video | packages/feature-video/test/video-studio.test.ts | 默认 |
+| video.settings | contract | feature-video | packages/feature-video/test/video-settings.test.ts | 默认 |
+| video.boundary | boundary | feature-video | packages/feature-video/test/video-boundary.test.ts | 默认 |
+| architecture.boundaries | boundary | validation | scripts/test/module-boundary.test.ts | 默认 |
+| validation.selection | unit | validation | scripts/test/test-selection.test.ts | 默认 |
+| api.types | type | validation, platform, agent-contract, browser-capability, media-native, feature-video | scripts/test/public-interfaces.type-test.ts | 默认 |
+| sources | media | platform, browser-capability, media-native, feature-video | scripts/source-studio-smoke.ts | 默认 |
+| assistant.default | integration | application, platform, agent-contract, agent-ui, harness-dsh, harness-codex, harness-qoder, browser-capability, feature-video | scripts/assistant-default-suite.ts | 默认 |
+| assistant.application | integration | platform, agent-contract, agent-ui, browser-capability, feature-video | scripts/assistant-application-smoke.ts | 默认 |
+| assistant.schedules | integration | platform, agent-contract, agent-ui, browser-capability, feature-video | scripts/assistant-application-smoke.ts | BMW_ASSISTANT_SCHEDULE_CASE=1 |
+| assistant.startup.conversations.retry | integration | platform, agent-contract, agent-ui | scripts/assistant-application-smoke.ts | BMW_ASSISTANT_STARTUP_KIND=conversations; BMW_ASSISTANT_STARTUP_SCENARIO=retry |
+| assistant.startup.conversations.exit | integration | platform, agent-contract, agent-ui | scripts/assistant-application-smoke.ts | BMW_ASSISTANT_STARTUP_KIND=conversations; BMW_ASSISTANT_STARTUP_SCENARIO=exit |
+| assistant.startup.preferences.retry | integration | platform, agent-contract, agent-ui | scripts/assistant-application-smoke.ts | BMW_ASSISTANT_STARTUP_KIND=preferences; BMW_ASSISTANT_STARTUP_SCENARIO=retry |
+| assistant.startup.preferences.exit | integration | platform, agent-contract, agent-ui | scripts/assistant-application-smoke.ts | BMW_ASSISTANT_STARTUP_KIND=preferences; BMW_ASSISTANT_STARTUP_SCENARIO=exit |
+| assistant.startup.history.retry | integration | platform, agent-contract, agent-ui | scripts/assistant-application-smoke.ts | BMW_ASSISTANT_STARTUP_KIND=history; BMW_ASSISTANT_STARTUP_SCENARIO=retry |
+| assistant.startup.history.exit | integration | platform, agent-contract, agent-ui | scripts/assistant-application-smoke.ts | BMW_ASSISTANT_STARTUP_KIND=history; BMW_ASSISTANT_STARTUP_SCENARIO=exit |
+| driver | integration | platform, agent-contract, browser-capability | scripts/agent-driver-smoke.ts | 默认 |
+| startup-recovery | integration | platform | scripts/state-load-smoke.ts | BMW_STATE_STARTUP_SCENARIO=retry |
+| startup-exit | integration | platform | scripts/state-load-smoke.ts | BMW_STATE_STARTUP_SCENARIO=exit |
+| startup.permissions.retry | integration | platform | scripts/state-load-smoke.ts | BMW_STATE_STARTUP_KIND=permissions; BMW_STATE_STARTUP_SCENARIO=retry |
+| startup.permissions.exit | integration | platform | scripts/state-load-smoke.ts | BMW_STATE_STARTUP_KIND=permissions; BMW_STATE_STARTUP_SCENARIO=exit |
+| startup.layout.retry | integration | platform | scripts/state-load-smoke.ts | BMW_STATE_STARTUP_KIND=layout; BMW_STATE_STARTUP_SCENARIO=retry |
+| startup.layout.exit | integration | platform | scripts/state-load-smoke.ts | BMW_STATE_STARTUP_KIND=layout; BMW_STATE_STARTUP_SCENARIO=exit |
+| startup.continuity-config.retry | integration | platform | scripts/state-load-smoke.ts | BMW_STATE_STARTUP_KIND=continuity-config; BMW_STATE_STARTUP_SCENARIO=retry |
+| startup.continuity-config.exit | integration | platform | scripts/state-load-smoke.ts | BMW_STATE_STARTUP_KIND=continuity-config; BMW_STATE_STARTUP_SCENARIO=exit |
+| startup.continuity-snapshot.retry | integration | platform | scripts/state-load-smoke.ts | BMW_STATE_STARTUP_KIND=continuity-snapshot; BMW_STATE_STARTUP_SCENARIO=retry |
+| startup.continuity-snapshot.exit | integration | platform | scripts/state-load-smoke.ts | BMW_STATE_STARTUP_KIND=continuity-snapshot; BMW_STATE_STARTUP_SCENARIO=exit |
+| dsh | integration | harness-dsh, agent-contract | scripts/dsh-compatibility-smoke.ts | 默认 |
+| desktop.workspace | desktop | platform, harness-dsh, browser-capability, feature-video | scripts/desktop-smoke.ts | group=workspace |
+| desktop.projects | desktop | platform, harness-dsh, browser-capability, feature-video | scripts/desktop-smoke.ts | group=projects |
+| desktop.settings | desktop | platform, harness-dsh, browser-capability, feature-video | scripts/desktop-smoke.ts | group=settings |
+| desktop.native | desktop | platform, harness-dsh, browser-capability, feature-video | scripts/desktop-smoke.ts | group=native |
+| studio.next | integration | feature-video, media-native | scripts/studio-next-smoke.ts | 默认 |
+| studio.schema | desktop | platform, feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_SCHEMA_CASE=1 |
+| studio.workflow-entry | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_WORKFLOW_ENTRY_CASE=1 |
+| studio.materials-entry | desktop | platform, feature-video, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_MATERIALS_ENTRY_CASE=1 |
+| studio.visual-effects | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_VISUAL_EFFECTS_CASE=1 |
+| studio.main-mute | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_MAIN_MUTE_CASE=1 |
+| studio.track-menu | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_TRACK_MENU_CASE=1 |
+| studio.card-pair | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_CARD_PAIR_CASE=1 |
+| studio.reference-analysis | desktop | platform, feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_REFERENCE_CASE=1 |
+| studio.review-adoption | desktop | platform, feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_REVIEW_CASE=1 |
+| studio.production-recovery | desktop | platform, feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_PRODUCTION_RECOVERY_CASE=1 |
+| studio.bound-scene-split | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_BOUND_SCENE_CASE=1 |
+| studio.whole-scene-split | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_WHOLE_SCENE_CASE=1 |
+| studio.approved-history | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_SNAPSHOT_CASE=1 |
+| studio.source-caption-rebind | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_SOURCE_REBIND_CASE=1 |
+| studio.layer-fade-continuity | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_LAYER_FADE_CASE=1 |
+| studio.workspace-resume | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_RESUME_CASE=1 |
+| studio | integration | feature-video, media-native | scripts/video-studio-smoke.ts | 默认 |
+| browser.background | integration | browser-capability | scripts/browser-background-smoke.ts | 默认 |
+| media.capture | media | media-native, browser-capability | scripts/media-capture-smoke.ts | 默认 |
+| media.processing-runtime | media | media-native | scripts/media-processing-smoke.ts | 默认 |
+| video | media | media-native, feature-video | scripts/video-production-smoke.ts | 默认 |
+| speech | media | media-native | scripts/speech-alignment-smoke.ts | 默认 |
+| localNarration | media | media-native | scripts/narration-smoke.ts | BMW_TTS_TEST_PROVIDER=local-matcha |
+| external.assistant.qoder-cn | external (opt-in) | agent-ui, platform, browser-capability, feature-video, harness-qoder, harness-codex, harness-dsh | scripts/native-assistant-case.ts | BMW_NATIVE_DRIVER=qoder-cn; opt-in: BMW_NATIVE_DRIVER=qoder-cn |
+| external.assistant.codex | external (opt-in) | agent-ui, platform, browser-capability, feature-video, harness-qoder, harness-codex, harness-dsh | scripts/native-assistant-case.ts | BMW_NATIVE_DRIVER=codex; opt-in: BMW_NATIVE_DRIVER=codex |
+| external.assistant.dsh | external (opt-in) | agent-ui, platform, browser-capability, feature-video, harness-qoder, harness-codex, harness-dsh | scripts/native-assistant-case.ts | BMW_NATIVE_DRIVER=dsh; opt-in: BMW_NATIVE_DRIVER=dsh |
+| external.vision | external (opt-in) | browser-capability, harness-dsh | scripts/vision-model-smoke.ts | opt-in: BMW_VISION_TEST=1 |
+| external.edge | external (opt-in) | media-native | scripts/narration-smoke.ts | BMW_TTS_TEST_PROVIDER=edge; opt-in: BMW_TTS_TEST_PROVIDER=edge |
 
 <!-- END GENERATED MODULE CONTRACTS -->

@@ -1,4 +1,4 @@
-import {sceneVisuals,fitVisualSegments} from '../../media-native/src/visual-segments.js'
+import {sceneVisuals} from '../../media-native/src/visual-segments.js'
 import type {StudioAsset, VideoDraft} from './studio-contract.js'
 
 export interface AssetUsage {draftId:string;sceneId:string;label:string}

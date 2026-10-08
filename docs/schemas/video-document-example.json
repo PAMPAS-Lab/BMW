@@ -1,0 +1,129 @@
+{
+  "format": "bmw.video",
+  "schemaVersion": "2.0",
+  "id": "example-video",
+  "revision": 1,
+  "owner": {
+    "sessionId": "example-session"
+  },
+  "content": {
+    "title": "产品介绍",
+    "settings": {
+      "width": 1280,
+      "height": 720,
+      "music": false,
+      "tts": {
+        "provider": "edge-readaloud",
+        "voice": "zh-CN-YunxiNeural",
+        "ratePercent": 0
+      },
+      "style": "bmw-dark",
+      "watermark": {
+        "enabled": true,
+        "text": "BMW / WEB STORIES",
+        "position": "bottom-left",
+        "opacity": 1,
+        "size": 14
+      },
+      "timebase": 1000000,
+      "frameRate": {
+        "numerator": 24,
+        "denominator": 1
+      }
+    },
+    "brief": {
+      "notes": "面向首次使用者，简洁地展示核心操作。",
+      "outline": "问题 → 操作 → 结果",
+      "artifactIds": []
+    },
+    "story": {
+      "scenes": [
+        {
+          "id": "opening",
+          "title": "新分镜",
+          "label": "",
+          "visualBrief": "",
+          "sources": [],
+          "bullets": [],
+          "endPolicy": "require-footage",
+          "script": "用真实操作展示产品价值。"
+        }
+      ]
+    },
+    "timeline": {
+      "duration": {
+        "ticks": 8000000
+      },
+      "regions": [
+        {
+          "id": "region-opening",
+          "sceneId": "opening",
+          "start": {
+            "ticks": 0
+          },
+          "duration": {
+            "ticks": 8000000
+          }
+        }
+      ],
+      "tracks": [
+        {
+          "id": "primary-opening",
+          "kind": "visual",
+          "role": "primary",
+          "sceneId": "opening",
+          "clips": [
+            {
+              "id": "visual-7-opening-0",
+              "kind": "visual",
+              "sceneId": "opening",
+              "timing": {
+                "clock": "scene",
+                "start": {
+                  "ticks": 0
+                },
+                "duration": {
+                  "ticks": 8000000
+                }
+              },
+              "properties": {
+                "sourceStartSeconds": 0,
+                "playbackRate": 1,
+                "zoom": 1
+              },
+              "encoding": "single"
+            }
+          ]
+        },
+        {
+          "id": "voice-opening",
+          "kind": "audio",
+          "role": "narration",
+          "sceneId": "opening",
+          "clips": []
+        }
+      ]
+    },
+    "cover": {
+      "title": "产品介绍",
+      "subtitle": "",
+      "timestampSeconds": 0,
+      "position": "bottom",
+      "fit": "contain",
+      "background": "#101827",
+      "textColor": "#ffffff",
+      "accentColor": "#67d5a0"
+    }
+  },
+  "records": {
+    "updatedAt": "2026-10-08T00:00:00.000Z",
+    "exports": [],
+    "coverExports": [],
+    "sceneEvidence": [
+      {
+        "sceneId": "opening",
+        "voiceEncoding": "auto"
+      }
+    ]
+  }
+}

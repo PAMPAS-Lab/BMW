@@ -24,7 +24,7 @@ function extractTestNames(source: string): string[] {
   return [...declarations].map((match) => match[1].slice(1, -1).replace(/\s+/g, ' ').trim())
 }
 
-async function browserActions(): Promise<Array<{ group: string; actions: string[] }>> {
+async function browserActions(): Promise<{groups:Array<{group:string;actions:string[]}>;studioOperations:string[]}> {
   const [{bmwProduct},{BrowserCapabilityRegistry}]=await Promise.all([
     import('../packages/product-bmw/index.js'),import('../packages/browser-capability/src/browser-capability-registry.js')
   ])
@@ -36,7 +36,13 @@ async function browserActions(): Promise<Array<{ group: string; actions: string[
     const group=owner==='browser-capability'?'BMW 核心 Browser Actions':owner+' Feature Browser Actions'
     groups.set(group,[...(groups.get(group)??[]),action])
   }
-  return [...groups].map(([group,actions])=>({group,actions}))
+  let operations:unknown=registry.definition('video.studio')?.inputSchema
+  for(const key of ['properties','studioRequest','properties','operation','enum']){
+    if(!operations||typeof operations!=='object'||Array.isArray(operations))throw new Error('Missing video.studio operation schema.')
+    operations=(operations as Record<string,unknown>)[key]
+  }
+  if(!Array.isArray(operations)||operations.some(value=>typeof value!=='string'))throw new Error('Invalid video.studio operations.')
+  return {groups:[...groups].map(([group,actions])=>({group,actions})),studioOperations:operations as string[]}
 }
 
 async function renderInventory(): Promise<string> {
@@ -54,11 +60,12 @@ async function renderInventory(): Promise<string> {
     '### 当前 Browser Action 清单',
     ''
   ]
-  for (const catalog of await browserActions()) {
+  const capabilities=await browserActions()
+  for (const catalog of capabilities.groups) {
     lines.push(`- ${catalog.group}（${catalog.actions.length}）：${catalog.actions.map((action) => `\`${action}\``).join('、') || '无'}`)
   }
 
-  lines.push('', '### 当前自动化测试清单', '')
+  lines.push('', `- video.studio 操作（${capabilities.studioOperations.length}）：${capabilities.studioOperations.map(operation=>`\`${operation}\``).join('、')}。字段、用户专属操作与归属检查见上方契约。`, '', '### 当前自动化测试清单', '')
   for (const filePath of testFiles) {
     const file = relative(filePath)
     const tests = extractTestNames(fs.readFileSync(filePath, 'utf8'))

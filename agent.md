@@ -1,8 +1,7 @@
 # BMW Agent entry
 
-Browser is boundary, media is native, web is runtime.
+Read [AGENTS.md](AGENTS.md), [handoff.md](handoff.md) and [FUNCTIONAL_SPEC.md](docs/FUNCTIONAL_SPEC.md). AGENTS.md is the canonical coding instruction source; FUNCTIONAL_SPEC describes current implementation.
 
-Read [AGENTS.md](AGENTS.md), [handoff.md](handoff.md) and [FUNCTIONAL_SPEC.md](docs/FUNCTIONAL_SPEC.md).
-`AGENTS.md` is the canonical coding instruction source.
+BMW owns Projects, pages, media, Sessions and Video Studio. The application entry supplies DSH, Codex and Qoder CN; each official runtime owns its Agent loop, and the model has exactly one browser tool. Preserve Project/Session ownership, CAS, FIFO and actual cancellation/cleanup. Historical conversion is an explicit command, never normal startup.
 
-BMW core owns Projects, browser pages, native media and conversation display. The default entry supplies createBmwAgentAssembly and the owned Assistant, with each official runtime retaining its Agent loop. Keep provider protocols, auth and catalog verification inside the corresponding harness package. The application has one owned Host/UI entry. Core Projects contain no native Workspace or Session fields; DSH Workspace mappings live in its harness-owned file. Old Agent data is converted only by the explicit migration command, with backups and stable owner IDs; normal startup refuses old formats. Current supported models, login behavior and remaining limits are indexed in [PROJECT_STATUS.md](docs/PROJECT_STATUS.md). The unified Agent-data offline report, earlier GPT-6/login-flow snapshots and paid two-turn acceptance are separate evidence snapshots in [VERIFICATION.md](docs/VERIFICATION.md); do not describe the older full report as a fresh run of newer source.
+The user has paused UI/workflow optimization and deferred dedicated AI image/video generation. The approved current work implements shared Video Document 2.0, lossless v1 migration and content-derived simple/advanced compatibility. Schema and Agent editing are defined in [VIDEO_DOCUMENT_V2.md](docs/VIDEO_DOCUMENT_V2.md) and [AGENT_VIDEO_EDITING.md](docs/AGENT_VIDEO_EDITING.md). Use only this project's existing implementation and plans. Current scope and validation are indexed in [PROJECT_STATUS.md](docs/PROJECT_STATUS.md) and [VERIFICATION.md](docs/VERIFICATION.md).

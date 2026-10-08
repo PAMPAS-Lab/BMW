@@ -3,7 +3,7 @@ import {paintDrawing} from './image-drawing.js'
 import {decodeProjectImage} from './image-decoder.js'
 import {ImageDecodeBudget} from '../image-contract.js'
 import { Input, CustomSource, MP4, QTFF, WEBM, MATROSKA, MP3, WAVE, OGG, ADTS, FLAC, MPEG_TS,
-  VideoSampleSink,AudioSampleSink,CanvasSink, EncodedPacketSink, Output, StreamTarget, Mp4OutputFormat, WebMOutputFormat, Conversion, canEncodeVideo, canEncodeAudio } from 'mediabunny'
+  VideoSampleSink,AudioSampleSink, EncodedPacketSink, Output, StreamTarget, Mp4OutputFormat, WebMOutputFormat, Conversion, canEncodeVideo, canEncodeAudio } from 'mediabunny'
 import type { InputTrack, StreamTargetChunk } from 'mediabunny'
 import { LinearFrameReader, normalizeBrowserVideoColor } from './linear-frames.js'
 import { assertNativeProcessingRequest, assertPreservedMediaTracks, assertProcessableVideoTracks, MEDIA_LIMITS } from '../media-contract.js'
@@ -18,7 +18,7 @@ async function info(input: Input): Promise<MediaInfo> {
   const details: MediaTrackInfo[] = []
   for (const track of tracks) {
     const item: MediaTrackInfo = { id: track.id, type: track.type, codec: await track.getCodec(), canDecode: await track.canDecode() }
-    if (track.isVideoTrack()) Object.assign(item, { width: await track.getDisplayWidth(), height: await track.getDisplayHeight(), rotation: await track.getRotation(), canBeTransparent: await track.canBeTransparent() })
+    if (track.isVideoTrack()) Object.assign(item, { width: await track.getDisplayWidth(), height: await track.getDisplayHeight(), rotation: await track.getRotation(), startSeconds:await track.getFirstTimestamp(),endSeconds:await track.computeDuration(),canBeTransparent: await track.canBeTransparent() })
     if(track.isVideoTrack()&&item.canBeTransparent){
       const codec=await track.getCodec();item.hasAlphaData=codec!=='vp8'&&codec!=='vp9'
       if(!item.hasAlphaData)for await(const packet of new EncodedPacketSink(track).packets(undefined,undefined,{metadataOnly:true}))if((packet.sideData.alphaByteLength??0)>0){item.hasAlphaData=true;break}

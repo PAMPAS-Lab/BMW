@@ -14,7 +14,7 @@ export class StudioMaterialsView {
   private inputs=new Set<Input>();private dialog?:HTMLDialogElement;private modalURL?:string;private modalGeneration=0
   private mode:'preparation'|'matching'='preparation'
   private displayMode:'icons'|'list'='icons';private pickerDisposers:(()=>void)[]=[]
-  constructor(private context:()=>Context|undefined,private read:(project:string,id:string,offset:number,length:number)=>Promise<Uint8Array>,private attach:(asset:StudioAsset,sceneId:string)=>Promise<void>,private collect:(asset:StudioAsset,selected:boolean)=>Promise<void>,private message:(text:string)=>void,private rerender:()=>void=()=>{}){}
+  constructor(private context:()=>Context|undefined,private read:(project:string,id:string,offset:number,length:number)=>Promise<Uint8Array>,private attach:(asset:StudioAsset,sceneId:string)=>Promise<void>,private collect:(asset:StudioAsset,selected:boolean)=>Promise<void>,private message:(text:string)=>void,private rerender:()=>void=()=>{},private reference?:(asset:StudioAsset)=>Promise<void>){}
   private key(project:string,asset:StudioAsset):string{return `${project}/${asset.artifactId}/${asset.bytes}/${asset.modifiedAt}`}
   private guard(fn:()=>Promise<void>):()=>void{return ()=>{void fn().catch(error=>this.message(String(error instanceof Error?error.message:error)))}}
   bindDrop(target:HTMLElement,sceneId:string,slot?:'visual'|'audio'):void{
@@ -52,6 +52,7 @@ export class StudioMaterialsView {
         const name=document.createElement('div');name.className='material-name';name.textContent=asset.artifactId;name.title=asset.artifactId
         const detail=document.createElement('small');detail.className='material-detail';detail.textContent=`${kinds[asset.kind]} · ${(asset.bytes/MiB).toFixed(1)} MB`
         const refs=document.createElement('small');refs.className='material-usage';refs.textContent=mode==='preparation'?(key==='current'?'已加入此次制作':'保存在当前 Project'):usage.length?`已用 ${usage.length} 处分镜`:'尚未使用';refs.title=usage.map(item=>item.label).join('\n')
+        const reference=[...(draft.referenceRecords??[])].reverse().find(r=>r.sourceArtifactId===asset.artifactId);if(reference)refs.textContent+=reference.analysis?' · 参考分析已就绪':' · 已取参考帧'
         const use=document.createElement('button');use.textContent=mode==='preparation'?(key==='current'?'移出此次素材':'加入此次素材'):key==='current'?'已用于此分镜':'用于当前分镜';use.disabled=disabled||(mode==='matching'&&key==='current');use.onclick=this.guard(()=>mode==='preparation'?this.collect(asset,key!=='current'):this.attach(asset,sceneId!))
         card.append(preview,name,detail,refs,use);grid.append(card)
         if(asset.kind==='image'||asset.kind==='video'){
@@ -97,7 +98,7 @@ export class StudioMaterialsView {
       const card=document.createElement('article');card.className='material-card asset-choice';card.dataset.choiceId=asset.artifactId;card.classList.toggle('selected',selected===asset.artifactId)
       const thumb=document.createElement('button');thumb.className='material-thumb';thumb.textContent=asset.kind==='audio'?'♫ 音频':asset.kind==='text'?'文字':'加载预览…';thumb.disabled=context.disabled;thumb.setAttribute('aria-label','预览 '+asset.artifactId);thumb.onclick=this.guard(()=>this.open(asset,undefined,true))
       const name=document.createElement('div');name.className='material-name';name.textContent=asset.artifactId;name.title=asset.artifactId
-      const detail=document.createElement('small');detail.className='material-detail';detail.textContent=kinds[asset.kind]+' · '+(asset.bytes/MiB).toFixed(1)+' MB'
+      const detail=document.createElement('small');detail.className='material-detail';detail.textContent=kinds[asset.kind]+' · '+(asset.bytes/MiB).toFixed(1)+' MB';const reference=[...(context.draft.referenceRecords??[])].reverse().find(r=>r.sourceArtifactId===asset.artifactId);if(reference)detail.textContent+=reference.analysis?' · 参考分析已就绪':' · 已取参考帧'
       card.append(thumb,name,detail)
       if(choose){const use=document.createElement('button');use.className='asset-choose';use.textContent=selected===asset.artifactId?'已选择':'选择此素材';use.disabled=context.disabled||selected===asset.artifactId;use.setAttribute('aria-pressed',String(selected===asset.artifactId));use.onclick=this.guard(async()=>{if(active())await choose(asset)});card.append(use)}
       grid.append(card)
@@ -146,18 +147,18 @@ export class StudioMaterialsView {
     const thumb={url:URL.createObjectURL(blob),detail},key=this.key(project,asset),old=this.cache.get(key);if(old)URL.revokeObjectURL(old.url);this.cache.set(key,thumb)
     while(this.cache.size>64){const [id,item]=this.cache.entries().next().value!;URL.revokeObjectURL(item.url);this.cache.delete(id)}return thumb
   }
-  async open(asset:StudioAsset,sceneId?:string,previewOnly=false):Promise<void>{
+  async open(asset:StudioAsset,sceneId?:string,previewOnly=false,timestampSeconds?:number):Promise<void>{
     const context=this.context();if(!context||context.disabled)return;const project=context.state.project.id;if(this.projectId!==project){this.clear();this.projectId=project}this.close();const token=++this.modalGeneration
     const dialog=document.createElement('dialog');dialog.className='material-preview-dialog';dialog.setAttribute('aria-label','素材预览');const title=document.createElement('h3');title.textContent=asset.artifactId
     const close=document.createElement('button');close.textContent='关闭';close.onclick=()=>this.close();const content=document.createElement('div');content.className='material-preview-body';content.textContent='正在加载素材…'
     const use=document.createElement('button');use.textContent=this.mode==='preparation'?'加入此次素材':'用于当前分镜';use.className='primary';use.disabled=this.mode==='preparation'&&context.draft.preparation.artifactIds.includes(asset.artifactId);const mode=this.mode;use.onclick=this.guard(async()=>{this.close();if(mode==='preparation')await this.collect(asset,true);else if(sceneId)await this.attach(asset,sceneId)})
-    const actions=document.createElement('div');actions.className='row';actions.append(close);if(!previewOnly)actions.append(use);dialog.append(title,content,actions);document.body.append(dialog);this.dialog=dialog;dialog.addEventListener('cancel',()=>this.close());dialog.showModal()
+    const actions=document.createElement('div');actions.className='row';actions.append(close);if(!previewOnly)actions.append(use);if(this.reference&&['image','video'].includes(asset.kind)){const analyze=document.createElement('button');analyze.textContent='参考分析…';analyze.dataset.materialReference=asset.artifactId;analyze.onclick=this.guard(async()=>{this.close();await this.reference!(asset)});actions.append(analyze)}dialog.append(title,content,actions);document.body.append(dialog);this.dialog=dialog;dialog.addEventListener('cancel',()=>this.close());dialog.showModal()
     try{const data=await this.load(project,asset,asset.kind==='text'?2*MiB:asset.kind==='image'?DECODE_BUDGET.imageBytes:128*MiB,()=>token===this.modalGeneration);if(token!==this.modalGeneration)return
       if(asset.kind==='text'){const text=document.createElement('pre');text.className='material-text';text.textContent=new TextDecoder('utf-8',{fatal:true}).decode(data);content.replaceChildren(text);return}
       if(asset.kind==='image'){const header=imageHeader(data),bitmap=await createImageBitmap(new Blob([data]));const large=bitmap.width*bitmap.height!==header.pixels;bitmap.close();if(large)throw new Error('图片超过页内预览像素上限。');if(token!==this.modalGeneration)return}
       const url=URL.createObjectURL(new Blob([data]));this.modalURL=url
       const media=asset.kind==='image'?document.createElement('img'):document.createElement(asset.kind==='video'?'video':'audio');media.src=url
-      if(media instanceof HTMLMediaElement){media.controls=true;media.preload='metadata'}else media.alt=asset.artifactId
+      if(media instanceof HTMLMediaElement){media.controls=true;media.preload='metadata';if(timestampSeconds!==undefined&&asset.kind==='video')media.addEventListener('loadedmetadata',()=>{if(token===this.modalGeneration)media.currentTime=Math.min(timestampSeconds,Math.max(0,media.duration-.001))},{once:true})}else media.alt=asset.artifactId
       content.replaceChildren(media)
     }catch(error){if(token===this.modalGeneration)content.textContent=error instanceof Error?error.message:String(error)}
   }

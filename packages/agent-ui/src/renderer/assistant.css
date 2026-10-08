@@ -21,3 +21,35 @@ dialog{color:inherit;background:#151e2b;border:1px solid #567cb0;border-radius:1
 }
 
 [hidden]{display:none!important}
+
+body[data-presentation=floating]{border:1px solid #567cb0;border-radius:10px;overflow:hidden}
+body[data-presentation=floating]>header{padding:8px;gap:5px;cursor:grab;touch-action:none}body[data-presentation=floating]>header button{padding:4px;font-size:11px}body[data-presentation=floating]>header #project{display:none}body[data-presentation=floating]>header #driver{max-width:85px;font-size:11px;padding:4px}
+body[data-presentation=floating]:not(.full-history)>nav,body[data-presentation=floating] #workspace-mode{display:none}body[data-presentation=floating]>nav{padding:6px}body[data-presentation=floating] #status{padding:5px 9px;font-size:11px}body[data-presentation=floating] #workspace-context{padding:4px 9px;border-bottom:1px solid #33445c}body[data-presentation=floating] main{min-height:40px;padding:9px}body[data-presentation=floating] #composer{padding:8px}body[data-presentation=floating] textarea{max-height:100px;min-height:60px}body[data-presentation=floating] .message{margin-bottom:10px}body[data-presentation=floating] footer{padding-top:5px}
+
+body[data-presentation=floating][data-docked=true]{border-radius:0;border:0}body[data-presentation=floating][data-docked=true]>header{cursor:default}body[data-presentation=floating]:not(.full-history) .message:nth-last-of-type(n+4){display:none}
+body[data-presentation=floating]>header{flex-wrap:wrap}body[data-presentation=floating] #studio-chat-history,body[data-presentation=floating] #studio-chat-dock{font-size:11px}
+
+#studio-scope{font-size:12px;white-space:normal;text-align:left;margin-bottom:8px;max-width:100%}#studio-scope-choices{display:grid;gap:8px;margin:12px 0}#studio-scope-dialog{max-width:calc(100vw - 16px)}
+
+/* Keep the compact Studio float usable without reproducing the full sidebar chrome. */
+body[data-presentation=floating]{overflow:auto}
+body[data-presentation=floating]>header,body[data-presentation=floating]>nav,body[data-presentation=floating] #status,body[data-presentation=floating] #composer{flex-shrink:0}
+body[data-presentation=floating]>header #driver,body[data-presentation=floating] #workspace-context{display:none}
+body[data-presentation=floating] main{min-height:0}
+body[data-presentation=floating] #interactions{max-height:30%;overflow:auto;flex-shrink:0}
+body[data-presentation=floating]:not(.full-history) .tool:nth-last-child(n+4){display:none}
+
+/* A clear 240–280px canvas corner still keeps scope, input and send visible. */
+@media (max-height:280px){
+ body[data-presentation=floating]>header{padding:6px;gap:4px}
+ body[data-presentation=floating]>header strong{font-size:12px}
+ body[data-presentation=floating]>header button{padding:3px;font-size:11px}
+ body[data-presentation=floating] #status{padding:3px 8px;max-height:24px;overflow:auto}
+ body[data-presentation=floating] #error{max-height:32px;overflow:auto;padding:4px;margin:0 8px 4px;flex-shrink:1}
+ body[data-presentation=floating] main{padding:4px 8px}
+ body[data-presentation=floating] #composer{padding:6px}
+ body[data-presentation=floating] #studio-scope{font-size:11px;max-height:40px;overflow:auto;margin-bottom:5px;padding:5px}
+ body[data-presentation=floating] #input{height:56px;min-height:48px;max-height:70px}
+ body[data-presentation=floating] #composer footer{padding-top:4px}
+ body[data-presentation=floating] #composer footer button{padding:5px;font-size:12px}
+}

@@ -3,7 +3,12 @@ import type {BrowserWindow, IpcMain, Notification, Session, WebContents} from 'e
 import type {ActiveProject, ActiveProjectProvider, BrowserFeatureHost} from '@bmw-agent/browser-capability/host'
 
 export interface FeatureActivationOptions {session: Session; projectStore: ActiveProjectProvider}
+/** Read-only projection of the owned Assistant; no provider protocol or extra loop. */
+export interface FeatureAssistantActivity {projectId:string;sessionId:string|null;status:string;runId:string|null;action?:string;message?:string}
+export interface FeatureStudioRegion {top:number;bottom:number;floatBottom?:number;propertyWidth:number;resourceWidth?:number;avoid?:{x:number;y:number;width:number;height:number};obscured?:boolean}
+export interface FeatureStudioPresentation {immersive:boolean;chatOpen:boolean;position?:{x:number;y:number};docked?:boolean;region?:FeatureStudioRegion;floatHeight?:number}
 export interface FeatureHost {
+  setStudioPresentation?(value:FeatureStudioPresentation):void
   browserKernel: BrowserFeatureHost
   projectStore: ActiveProjectProvider
   mediaController?: NativeMediaPort
@@ -16,7 +21,9 @@ export interface FeatureHost {
   getAgentUrl?(): string | null | undefined
   setWorkspaceMode?(mode: 'browser' | 'studio'): void
   getCurrentSessionId?(): string | null | undefined
-  enqueueAssistant(sessionId:string,text:string):Promise<string>
+  enqueueAssistant(sessionId:string,text:string,frozenContext?:string):Promise<string>
+  getAssistantActivity?():FeatureAssistantActivity
+  cancelAssistant?(sessionId:string):Promise<unknown>
   sendToAgent?(channel: string, value: unknown): void
   sendToShell?(channel: string, value: unknown): void
   synchronizeAgentProject(project: ActiveProject, options?: {activate?: boolean; ensureSession?: boolean}): Promise<{sessionId?: string}>
@@ -39,10 +46,12 @@ export interface FeatureRuntime {
   onSessionChanged?(): void | Promise<void>
   onAgentLoaded?(): void | Promise<void>
   onMediaStatus?(value: unknown): void
+  onAssistantChanged?(): void
+  onStudioPresentation?(value:FeatureStudioPresentation):void
   stop?(): void | Promise<void>
 }
 export interface FeatureActivation {activate(options: FeatureActivationOptions): FeatureRuntime | Promise<FeatureRuntime>}
-const hooks: readonly (keyof FeatureRuntime)[] = ['configure','installIpc','layout','setMode','openPanel','contextForSession','onProjectActivated','onProjectWillArchive','onProjectArchived','onAgentStarted','onAgentLoaded','onSessionWillChange','onSessionChanged','onMediaStatus','stop']
+const hooks: readonly (keyof FeatureRuntime)[] = ['configure','installIpc','layout','setMode','openPanel','contextForSession','onProjectActivated','onProjectWillArchive','onProjectArchived','onAgentStarted','onAgentLoaded','onSessionWillChange','onSessionChanged','onMediaStatus','onAssistantChanged','onStudioPresentation','stop']
 export function assertFeatureRuntime(raw: unknown): FeatureRuntime {
   if (!raw || typeof raw !== 'object') throw new TypeError('Feature activation must return a runtime.')
   const value = raw as FeatureRuntime

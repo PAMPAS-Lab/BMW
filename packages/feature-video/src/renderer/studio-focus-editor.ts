@@ -6,7 +6,7 @@ export function renderFocusEditor(root:HTMLElement,scene:StudioScene,index:numbe
   const title=document.createElement('h4');title.textContent='重点区间 · 原素材时间';section.append(title)
   const run=(action:()=>Promise<void>)=>{void action().catch(error=>message(error instanceof Error?error.message:String(error)))}
   const update=(fn:(list:FocusInterval[])=>void)=>edit(scene=>{const target=index===undefined?scene:scene.visualSegments![index];const list=target.focusIntervals??=[];fn(list);list.sort((a,b)=>a.startSeconds-b.startSeconds)})
-  const info=document.createElement('p');info.className='muted';info.textContent='视频使用原素材秒数，剪裁/变速后自动映射；图片使用片段内秒数。中心 X/Y 为完整原画面 0–1 比例。修改后可撤销。';section.append(info)
+  const info=document.createElement('p');info.className='muted';info.textContent='视频使用原素材秒数，剪裁/变速后自动映射；图片使用原画面的效果秒数，分割后沿用原时间。中心 X/Y 为完整原画面 0–1 比例。修改后可撤销。';section.append(info)
   const add=document.createElement('button');add.textContent='手动添加焦点';add.disabled=disabled||(visual.focusIntervals?.length??0)>=24
   add.onclick=()=>run(()=>update(list=>{const start=Math.max(focusSourceTime(visual,0),list.at(-1)?.endSeconds??0);list.push({startSeconds:start,endSeconds:start+1,x:.5,y:.5,zoom:1.5,emphasize:false})}));section.append(add)
   const auto=document.createElement('button');auto.textContent='根据录制点击建议';auto.disabled=disabled||!visual.videoArtifactId

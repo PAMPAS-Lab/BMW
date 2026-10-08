@@ -1,5 +1,7 @@
+import {visualEffectFilter} from '../visual-effects.js'
+import {scenePlaybackClock} from '../scene-playback-window.js'
 import {focusFraming} from '../focus-contract.js'
-import {sceneVisuals,visualAtTime} from '../visual-segments.js'
+import {visualAtTime,visualZoom} from '../visual-segments.js'
 import type { CompositionScene, MediaComposition } from '../composition-contract.js'
 import { DEFAULT_VIDEO_OPTIONS } from '../video-options.js'
 import {captionText,estimatedCaptionCues} from '../composition-contract.js'
@@ -9,13 +11,14 @@ export {reviewSceneText,assertCompositionText} from './composition-text.js'
 const font = '"PingFang SC", "Microsoft YaHei", sans-serif'
 function lines(context:CanvasRenderingContext2D,text:string,width:number):string[]{const result:string[]=[];let line='';for(const character of text){if(character==='\n'){result.push(line);line='';continue}if(character==='\r')continue;if(context.measureText(line+character).width>width&&line){result.push(line);line=''}line+=character}if(line)result.push(line);return result}
 /** A single responsive painter is used by Studio preview and MP4 export. */
-export function paintScene(context:CanvasRenderingContext2D,scene:CompositionScene,frame:CompositionCanvasFrame|null,time:number,duration:number,index:number,total:number,narrationDuration:number,output?:Pick<MediaComposition,'width'|'height'|'style'|'watermark'>):void {
+export function paintScene(context:CanvasRenderingContext2D,scene:CompositionScene,frame:CompositionCanvasFrame|null,time:number,_duration:number,index:number,total:number,narrationDuration:number,output?:Pick<MediaComposition,'width'|'height'|'style'|'watermark'>):void {
   const height=output?.height??720,width=output?.width??1280,W=720*width/height,H=720,margin=W<600?24:48
   const style=output?.style??'bmw-dark',light=style==='clean-light',minimal=style==='minimal'
   const ink=scene.sceneTemplate?.textColor??(light?'#172536':'#ffffff'),muted=light?'#65758b':'#7e90a9',accent=scene.sceneTemplate?.accentColor??(light?'#2369db':minimal?'#ffffff':'#a2f4d0')
   context.save();context.scale(height/720,height/720)
   const watermark=output?.watermark??DEFAULT_VIDEO_OPTIONS.watermark,headerOffset=watermark.enabled&&watermark.position.startsWith('top')?24:0
-  const ease=1-Math.pow(1-Math.min(1,time/.8),3)
+  const clock=scenePlaybackClock(scene,index,total),presentationTime=clock.startSeconds+time
+  const ease=1-Math.pow(1-Math.min(1,presentationTime/.8),3)
   if(light||minimal){context.fillStyle=light?'#f8fafc':'#111111'}else{const gradient=context.createLinearGradient(0,0,W,H);gradient.addColorStop(0,'#101827');gradient.addColorStop(1,'#181b36');context.fillStyle=gradient}
   if(scene.sceneTemplate?.backgroundColor)context.fillStyle=scene.sceneTemplate.backgroundColor
   context.fillRect(0,0,W,H)
@@ -35,8 +38,10 @@ export function paintScene(context:CanvasRenderingContext2D,scene:CompositionSce
     context.fillStyle=light?'#e7edf5':'#232323';context.fillRect(area.x,area.y,area.width,area.height)
     context.globalAlpha=visual?.opacity??1
     const focused=focusFraming(framing,visual?.localSeconds??time),crop=focused.crop,sourceWidth=frame.canvas.width*crop.width,sourceHeight=frame.canvas.height*crop.height
-    const scale=Math.min(area.width/sourceWidth,area.height/sourceHeight)*(1+(framing.zoom-1)*Math.min(1,(visual?.localSeconds??time)/framing.durationSeconds)),drawWidth=sourceWidth*scale,drawHeight=sourceHeight*scale
+    const scale=Math.min(area.width/sourceWidth,area.height/sourceHeight)*visualZoom(framing,visual?.localSeconds??time),drawWidth=sourceWidth*scale,drawHeight=sourceHeight*scale
+    context.save();context.filter=visualEffectFilter(framing.effects)
     context.drawImage(frame.canvas,frame.canvas.width*crop.x,frame.canvas.height*crop.y,sourceWidth,sourceHeight,area.x+(area.width-drawWidth)/2,area.y+(area.height-drawHeight)/2,drawWidth,drawHeight)
+    context.restore()
     if(focused.focus?.emphasize&&focused.strength>0){
       const x=area.x+(area.width-drawWidth)/2+(focused.focus.x-crop.x)/crop.width*drawWidth,y=area.y+(area.height-drawHeight)/2+(focused.focus.y-crop.y)/crop.height*drawHeight
       context.globalAlpha=(visual?.opacity??1)*focused.strength;context.strokeStyle='#ffcc33';context.lineWidth=3;context.beginPath();context.arc(x,y,14,0,Math.PI*2);context.stroke()
@@ -44,14 +49,14 @@ export function paintScene(context:CanvasRenderingContext2D,scene:CompositionSce
     context.restore()
     if(!minimal){context.strokeStyle=light?'#2369db44':'#a2f4d044';context.lineWidth=2;context.beginPath();context.roundRect(area.x,area.y,area.width,area.height,16);context.stroke()}
   }else{
-    context.save();context.globalAlpha=ease;context.fillStyle=accent;context.font=`800 ${W<600?80:110}px ${font}`;if(!scene.sceneTemplate&&scene.showSceneNumber!==false)context.fillText(String(index+1).padStart(2,'0'),margin,265)
+    context.save();context.globalAlpha=ease;context.fillStyle=accent;context.font=`800 ${W<600?80:110}px ${font}`;if(!scene.sceneTemplate&&scene.showSceneNumber!==false)context.fillText(String(clock.sceneNumber).padStart(2,'0'),margin,265)
     context.fillStyle=ink
     let y=scene.showSceneNumber===false?240:340
-    if(!scene.sceneTemplate)for(const [bulletIndex,bullet] of scene.bullets.entries()){const fit=fitText(context,bullet,W-margin*2,2,W<600?24:34);if(fit.overflow)throw new Error('STUDIO_TEXT_LAYOUT: 画面文字放不下。');context.font=`600 ${fit.size}px ${font}`;for(const line of fit.lines){if(time>=(scene.bulletRevealSeconds?.[bulletIndex]??0))context.fillText(line,margin,y);y+=W<600?32:42}y+=12}
+    if(!scene.sceneTemplate)for(const [bulletIndex,bullet] of scene.bullets.entries()){const fit=fitText(context,bullet,W-margin*2,2,W<600?24:34);if(fit.overflow)throw new Error('STUDIO_TEXT_LAYOUT: 画面文字放不下。');context.font=`600 ${fit.size}px ${font}`;for(const line of fit.lines){if(presentationTime>=(scene.bulletRevealSeconds?.[bulletIndex]??0))context.fillText(line,margin,y);y+=W<600?32:42}y+=12}
     context.restore()
   }
   if(scene.sceneTemplate){for(const [index,box]of templateBoxes(scene,W).entries()){
-    const text=scene.bullets[index];if(!text||time<(scene.bulletRevealSeconds?.[index]??0))continue
+    const text=scene.bullets[index];if(!text||presentationTime<(scene.bulletRevealSeconds?.[index]??0))continue
     const fit=fitText(context,text,box.width-28,Math.max(1,Math.floor((box.height-24)/24)),W<600?24:34,box.height-24);if(fit.overflow)throw new Error('STUDIO_TEXT_LAYOUT: 模板文字放不下。')
     context.save();context.fillStyle=light?'#e7edf5':'#232b39';context.beginPath();context.roundRect(box.x,box.y,box.width,box.height,10);context.fill();context.fillStyle=accent;context.fillRect(box.x,box.y,4,box.height);context.fillStyle=scene.sceneTemplate.emphasisIndex===index?accent:ink;context.font=`600 ${fit.size}px ${font}`;fit.lines.forEach((line,row)=>context.fillText(line,box.x+14,box.y+12+fit.size+row*fit.size*1.3));context.restore()
   }}
@@ -72,7 +77,7 @@ export function paintScene(context:CanvasRenderingContext2D,scene:CompositionSce
   })
   context.fillStyle=muted;context.font=`14px ${font}`
   const rightWatermark=watermark.enabled&&watermark.position==='bottom-right'
-  const counter=`${String(index+1).padStart(2,'0')} / ${String(total).padStart(2,'0')}`
+  const counter=`${String(clock.sceneNumber).padStart(2,'0')} / ${String(clock.sceneCount).padStart(2,'0')}`
   if(scene.showSceneNumber!==false)context.fillText(counter,rightWatermark?margin:W-margin-context.measureText(counter).width,704)
   if(watermark.enabled){context.save();context.globalAlpha=watermark.opacity;context.fillStyle=muted;context.font=`${watermark.size}px ${font}`
     const maxWidth=W-margin*2,measured=context.measureText(watermark.text).width
@@ -80,6 +85,6 @@ export function paintScene(context:CanvasRenderingContext2D,scene:CompositionSce
     const x=watermark.position.endsWith('right')?W-margin-context.measureText(watermark.text).width:margin
     context.fillText(watermark.text,x,watermark.position.startsWith('top')?Math.max(18,watermark.size+4):704);context.restore()
   }
-  if(!minimal){context.fillStyle=accent;context.fillRect(0,716,W*(index+Math.min(1,time/duration))/total,4)}
+  if(!minimal){context.fillStyle=accent;context.fillRect(0,716,W*(clock.sceneNumber-1+Math.min(1,presentationTime/clock.durationSeconds))/clock.sceneCount,4)}
   context.restore()
 }

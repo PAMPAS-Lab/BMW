@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 import type { TestContext } from 'node:test'
-import type { AgentBackend, AgentDriverEvent, AgentRunRequest, AgentRunResult } from '@bmw-agent/agent-contract'
+import type { AgentBackend, AgentRunRequest, AgentRunResult } from '@bmw-agent/agent-contract'
 import { AgentHost } from '../src/agent-host.js'
 import { AgentHistoryStore } from '../src/agent-history-store.js'
 import { ConversationStore } from '../src/conversation-store.js'
@@ -185,4 +185,21 @@ test('late callbacks cannot resurrect an uncertain submission after its native t
   const before=f.history.snapshot(session.sessionId)
   await assert.rejects(callback!({type:'input.accepted',receiptId:'late'}),/after the native run settled/)
   assert.deepEqual(f.history.snapshot(session.sessionId),before)
+})
+
+test('queued Studio requests freeze their explicit context and expose it only to the active owner',async t=>{
+ const started=deferred<void>(),release=deferred<void>(),contexts:string[]=[]
+ const f=fixture(t,async request=>{contexts.push(request.context);if(request.text==='first'){started.resolve();await release.promise}return success})
+ const session=f.host.create('fixture'),first=f.host.enqueue(session.sessionId,'first','Pinned scene one')
+ await started.promise
+ assert.equal(f.host.activeContext(session.sessionId,'p'),'Pinned scene one')
+ assert.equal(f.host.activeContext(session.sessionId,'foreign'),null)
+ assert.equal(f.host.activeContext('foreign','p'),null)
+ const second=f.host.enqueue(session.sessionId,'second','Pinned scene two')
+ assert.equal(f.host.activeContext(session.sessionId,'p'),'Pinned scene one','Queued context never replaces the active request')
+ release.resolve();await f.host.wait(first.runId);await f.host.wait(second.runId)
+ assert.deepEqual(contexts,['Pinned scene one','Pinned scene two'])
+ assert.equal(f.host.activeContext(session.sessionId,'p'),null)
+ assert.throws(()=>f.host.enqueue(session.sessionId,'invalid','x'.repeat(16385)))
+ assert.equal(f.history.snapshot(session.sessionId).receipts.length,2,'Invalid context cannot persist a receipt')
 })

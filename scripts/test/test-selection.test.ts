@@ -7,6 +7,7 @@ import test from 'node:test'
 import {API} from 'typescript/unstable/sync'
 import {importsOf,readSourceGraph} from '../source-graph.js'
 import {selectTests} from '../test-selection.js'
+import {tests} from '../test-catalog.js'
 import {gitChanges,parseOptions} from '../test-runner.js'
 
 test('Renderer read change selects its direct/consumer guarantees and background runtime without unrelated codecs or speech',()=>{
@@ -110,4 +111,30 @@ test('Studio cover changes remain affected-only while retaining native/runtime a
  for(const id of ['studio','video','media.processing-runtime','video.studio','api.types','architecture.boundaries'])assert.ok(ids.includes(id),id)
  for(const id of ['dsh','desktop.settings','desktop.projects','desktop.native','startup-recovery'])assert.equal(ids.includes(id),false,id)
  const paint=selectTests(graph,['packages/media-native/src/media/processing.cover-paint.ts']);assert.equal(paint.full,false);assert.ok(paint.selected.some(item=>item.test.id==='media.processing-runtime'))
+})
+
+test('Studio effects, mute and object-state implementation changes retain their native GUI/export guarantors',()=>{
+ const graph=readSourceGraph(process.cwd())
+ const cases:[string,string[]][]=[
+  ['packages/media-native/src/visual-effects.ts',['studio.visual-effects']],
+  ['packages/media-native/src/media/composition-paint.ts',['studio.visual-effects']],
+  ['packages/media-native/src/media/composition-audio.ts',['studio.main-mute','studio.track-menu']],
+  ['packages/media-native/src/narration-timing.ts',['studio.main-mute']],
+  ['packages/feature-video/src/studio-layer-edits.ts',['studio.visual-effects','studio.track-menu']],
+  ['packages/feature-video/src/studio-store.ts',['studio.visual-effects','studio.main-mute','studio.track-menu','studio.card-pair']],
+  ['packages/feature-video/src/renderer/studio-workflow.ts',['studio.card-pair','studio']]
+ ]
+ for(const [file,expected]of cases){
+  const selection=selectTests(graph,[file]),ids=selection.selected.map(item=>item.test.id)
+  assert.equal(selection.full,false,file)
+  for(const id of expected)assert.ok(ids.includes(id),file+' must select '+id)
+  assert.equal(ids.some(id=>id.startsWith('external.')),false,file)
+ }
+})
+
+test('Every Studio smoke environment branch is admitted by a classified runtime entry',()=>{
+ const source=fs.readFileSync('scripts/video-studio-smoke.ts','utf8')
+ const switches=[...source.matchAll(/process\.env\.(BMW_STUDIO_[A-Z_]+CASE)===/g)].map(match=>match[1])
+ assert.ok(switches.length>=13,'Keep the dedicated editing/recovery branches covered')
+ for(const key of switches)assert.equal(tests.some(test=>test.file==='scripts/video-studio-smoke.ts'&&test.env?.[key]==='1'),true,key)
 })

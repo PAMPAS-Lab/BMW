@@ -11,3 +11,5 @@ test('Native media reply admission rejects host paths, fabricated durations and 
   assert.equal(assertMediaInspection({durationSeconds:3,tracks:[{type:'audio',canDecode:true}]}).tracks[0].type,'audio')
   for(const tracks of [[],[{type:'shell',canDecode:true}],[{type:'audio',canDecode:'yes'}]])assert.throws(()=>assertMediaInspection({durationSeconds:3,tracks}),/inspection/)
 })
+
+test('Inspected video track range is finite and lies inside measured media, allowing an AAC tail without extending video',()=>{const valid={durationSeconds:2.07,tracks:[{type:'video',canDecode:true,width:640,height:360,startSeconds:0,endSeconds:2}]};assert.equal(assertMediaInspection(valid).tracks[0].endSeconds,2);for(const track of [{...valid.tracks[0],endSeconds:3},{...valid.tracks[0],startSeconds:undefined},{...valid.tracks[0],endSeconds:Infinity},{...valid.tracks[0],type:'audio'},{...valid.tracks[0],startSeconds:2,endSeconds:1}])assert.throws(()=>assertMediaInspection({...valid,tracks:[track]}))})

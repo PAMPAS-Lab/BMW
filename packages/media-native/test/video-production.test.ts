@@ -1,5 +1,8 @@
+import {assertVisualEffects,visualEffectFilter} from '../src/visual-effects.js'
+import {scenePlaybackClock} from '../src/scene-playback-window.js'
+import {assertVisualLayers,assertAudioLayers,activeVisualLayers,visualLayerBox,layerFadeGain,assertLayerFadeWindow} from '../src/composition-layers.js'
 import {reviewSceneText,assertCompositionText} from '../src/media/composition-text.js'
-import {assertFocusIntervals,focusFraming,visibleFocusIntervals} from '../src/focus-contract.js'
+import {assertVisualEffectWindow,assertFocusIntervals,focusFraming,visibleFocusIntervals} from '../src/focus-contract.js'
 import {assertRecordingEvents,recordingEvents,suggestRecordingFocus} from '../src/recording-contract.js'
 import {visualAtTime,fitVisualSegments} from '../src/visual-segments.js'
 import {captionDocument} from '../src/caption-export.js'
@@ -10,7 +13,7 @@ import test from 'node:test'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import { assertComposition, compositionAssets, compositionDuration, sceneAtTime, estimatedCaptionCues } from '../src/composition-contract.js'
+import { assertNarrationReceipt,assertComposition, compositionAssets, compositionDuration, sceneAtTime, estimatedCaptionCues } from '../src/composition-contract.js'
 import { assertNarration } from '../src/narration-contract.js'
 import { ArtifactJobIO } from '../src/artifact-job-io.js'
 const scene = { title: '介绍', durationSeconds: 10, videoArtifactId: 'page.webm' }
@@ -44,10 +47,10 @@ test('Selected source sound trims, retimes, scales mono and stops at its endpoin
   const bounded=[new Float32Array(48000)];mixSourceAudioChunk(bounded,chunk,0,0,.2,0,1,1);assert.ok(bounded[0][9500]>.19);assert.equal(bounded[0][9600],0,'No bleed into following scene')
 })
 test('Caption and source audio contracts stay closed and captions estimate within scene-local time',()=>{
-  const style={fontSize:28,color:'#ffffff',background:'outline',position:'top',align:'left',offsetPercent:0};const raw={title:'Style',durationSeconds:4,narration:'One sentence. Another sentence.',audioArtifactId:'voice.wav',videoArtifactId:'clip.mp4',captionStyle:style,keepSourceAudio:true,sourceVolume:.5}
-  const composition=assertComposition({title:'x',scenes:[raw]});assert.equal(composition.scenes[0].keepSourceAudio,true)
+  const style={fontSize:28,color:'#ffffff',background:'outline',position:'top',align:'left',offsetPercent:0};const raw={title:'Style',durationSeconds:4,narration:'One sentence. Another sentence.',audioArtifactId:'voice.wav',videoArtifactId:'clip.mp4',captionStyle:style,voiceMuted:true,voiceVolume:.4,keepSourceAudio:true,sourceVolume:.5}
+  const composition=assertComposition({title:'x',scenes:[raw]});assert.equal(composition.scenes[0].keepSourceAudio,true);assert.equal(composition.scenes[0].voiceMuted,true);assert.equal(composition.scenes[0].voiceVolume,.4)
   const cues=estimatedCaptionCues(composition.scenes[0],640,360,2);assert.ok(cues.length);assert.equal(cues[0].startSeconds,.5);assert.equal(cues.at(-1)!.endSeconds,2.5)
-  for(const changed of [{keepSourceAudio:'yes'},{sourceVolume:3},{captionStyle:{...style,color:'url(https://example.com)'}},{captionStyle:{...style,fontSize:65}},{captionStyle:{...style,fontUrl:'https://example.com'}}])assert.throws(()=>assertComposition({title:'x',scenes:[{...raw,...changed}]}))
+  for(const changed of [{voiceMuted:'yes'},{voiceMuted:1},{voiceMuted:null},{keepSourceAudio:'yes'},{sourceVolume:3},{captionStyle:{...style,color:'url(https://example.com)'}},{captionStyle:{...style,fontSize:65}},{captionStyle:{...style,fontUrl:'https://example.com'}}])assert.throws(()=>assertComposition({title:'x',scenes:[{...raw,...changed}]}))
 })
 
 
@@ -114,4 +117,102 @@ test('Fixed templates validate bounded colors/content and reject text overflow b
  const wrong=assertComposition({title:'wrong',scenes:[{title:'s',durationSeconds:8,sceneTemplate:{kind:'summary'},bullets:['only one']}]});assert.throws(()=>assertCompositionText(measure,wrong),/三点总结/)
  const overflowing=assertComposition({title:'overflow',width:360,height:640,scenes:[{title:'s',durationSeconds:8,captions:[{startSeconds:0,endSeconds:.3,text:'字幕'.repeat(90),translationText:'x'.repeat(190)}]}]});assert.throws(()=>assertCompositionText(measure,overflowing),/字幕/)
  const warnings=reviewSceneText(measure,{...wrong.scenes[0],sceneTemplate:undefined,captions:[{startSeconds:0,endSeconds:.1,text:'很密集的字幕内容'}],captionStyle:{fontSize:22,color:'#ffffff',background:'none',position:'center',align:'center',offsetPercent:0}},1280,720);assert.ok(warnings.some(i=>i.code==='caption-density'));assert.ok(warnings.some(i=>i.code==='text-overlap'))
+})
+
+const overlay={id:'pip',title:'画中画',kind:'image',artifactId:'picture.png',startSeconds:1,durationSeconds:2,x:.5,y:.2,width:.4,height:.4,color:'#ffffff'}
+test('independent layers validate identities, Project references, ranges and video decoder overlap',()=>{
+ const composition=assertComposition({title:'Layers',music:false,layers:[{...overlay,id:'global'}],audioTracks:[{id:'music',title:'配乐',artifactId:'music.wav',startSeconds:0,durationSeconds:4}],scenes:[{title:'One',durationSeconds:4,imageArtifactId:'base.png',layers:[overlay]}]})
+ assert.deepEqual(compositionAssets(composition),['base.png','picture.png','music.wav'])
+ assert.equal(activeVisualLayers(composition,composition.scenes[0],1.5,1.5).length,2)
+ assert.equal(activeVisualLayers(composition,composition.scenes[0],.5,.5).length,0)
+ assert.throws(()=>assertComposition({...composition,layers:[overlay]}),/Duplicate/)
+ assert.throws(()=>assertVisualLayers([{...overlay,artifactId:'../elsewhere.png'}]),/artifactId/)
+ assert.throws(()=>assertVisualLayers([{...overlay,script:'anything'}]),/Unsupported/)
+ assert.throws(()=>assertVisualLayers([{...overlay,x:.9}]),/inside/)
+ assert.throws(()=>assertAudioLayers([{id:'bad',title:'bad',artifactId:'http://example.com/music',startSeconds:0,durationSeconds:2}]),/artifactId/)
+ assert.throws(()=>assertComposition({...composition,layers:[{...overlay,id:'range',durationSeconds:4}]}),/超过/)
+ assert.throws(()=>assertComposition({title:'Too many decoders',scenes:[{title:'One',durationSeconds:4,layers:Array.from({length:5},(_,index)=>({...overlay,id:'video-'+index,kind:'video',artifactId:'clip.webm'}))}]}),/four simultaneous/)
+ assertComposition({title:'Sequential decoders',scenes:[{title:'One',durationSeconds:4,layers:Array.from({length:5},(_,index)=>({...overlay,id:'video-'+index,kind:'video',artifactId:'clip.webm',startSeconds:index*.4,durationSeconds:.4}))}]})
+})
+test('explicit layer keyframes interpolate geometry and fading without changing base values',()=>{
+ const layer=assertVisualLayers([{...overlay,opacity:.8,fadeInSeconds:1,fadeOutSeconds:1,keyframes:[{timeSeconds:0,x:0,y:.2,width:.4,height:.4,opacity:.4,easing:'linear'},{timeSeconds:2,x:.5,y:.2,width:.4,height:.4,opacity:1,easing:'ease-in-out'}]}])[0]
+ const box=visualLayerBox(layer,1);assert.equal(box.x,.25);assert.equal(box.opacity,.7);assert.equal(layer.x,.5)
+ assert.equal(visualLayerBox(layer,0).opacity,0);assert.ok(visualLayerBox(layer,1.8).opacity<.25)
+ assert.throws(()=>assertVisualLayers([{...overlay,keyframes:layer.keyframes?.slice().reverse()}]),/increasing/)
+ assert.throws(()=>assertVisualLayers([{...overlay,keyframes:[{timeSeconds:1,x:0,y:0,width:1,height:1,opacity:1,easing:'javascript'}]}]),/two to twelve/)
+})
+test('streamed source audio supports bounded fade gain without samples outside the selected interval',()=>{
+ const target=[new Float32Array(48000)],chunk={sampleRate:48000,numberOfChannels:1,length:48000,getChannelData:()=>new Float32Array(48000).fill(.8)}
+ mixSourceAudioChunk(target,chunk,0,.25,.5,0,1,.5,time=>Math.min(1,time/.1,(.5-time)/.1))
+ assert.equal(target[0][11999],0);assert.equal(target[0][12000],0);assert.ok(Math.abs(target[0][24000]-.4)<.00001);assert.equal(target[0][36000],0)
+})
+
+test('Restricted easing admits only closed increasing domains and stays stable near curve endpoints',()=>{
+ const frame={timeSeconds:0,x:0,y:0,width:.2,height:.2,opacity:.2,easing:'linear'},last={...frame,timeSeconds:2,x:.5,opacity:1,easing:'ease-in-out'}
+ assert.throws(()=>assertVisualLayers([{...overlay,kind:['image']}]),/Unsupported/)
+ for(const easing of [['linear'],['ease-in-out'],{toString:()=> 'linear'}])assert.throws(()=>assertVisualLayers([{...overlay,keyframes:[frame,{...last,easing}]}]),/Unknown animation/)
+ for(const range of [[0,0],[.7,.3],[-.1,.5],[0,1.1],[0,NaN],[0,Infinity],[0,1,.5],'0,1',{}])assert.throws(()=>assertVisualLayers([{...overlay,keyframes:[frame,{...last,easingRange:range}]}]),/range/)
+ assert.throws(()=>assertVisualLayers([{...overlay,keyframes:[frame,{...last,easing:'linear',easingRange:[0,1]}]}]),/range/)
+ assert.throws(()=>assertVisualLayers([{...overlay,keyframes:[frame,{...last,easingRange:[0,1],expression:'code'}]}]),/Unsupported/)
+ for(const range of [[0,1],[.1,.9],[0,1e-8],[1-1e-8,1]]){
+  const layer=assertVisualLayers([{...overlay,keyframes:[frame,{...last,easingRange:range}]}])[0]
+  assert.equal(visualLayerBox(layer,0).x,0);assert.equal(visualLayerBox(layer,2).x,.5)
+  let previous=-1;for(let i=0;i<=100;i++){const x=visualLayerBox(layer,i/50).x;assert.ok(Number.isFinite(x)&&x>=previous-1e-12&&x>=0&&x<=.5);previous=x}
+  const fraction=visualLayerBox(layer,1).x/.5
+  if(range[1]===1e-8)assert.ok(Math.abs(fraction-.25)<1e-7)
+  if(range[0]===1-1e-8)assert.ok(Math.abs(fraction-.75)<1e-7)
+ }
+})
+
+
+test('Visual effect clocks are finite closed bounded data with unique piece identities',()=>{
+ const window={originId:'origin',startSeconds:.2,durationSeconds:2,fadeInSeconds:.3,fadeOutSeconds:.3}
+ const composition=()=>({title:'Window',scenes:[{title:'One',durationSeconds:1,visualSegments:[{id:'piece',imageArtifactId:'image.png',durationSeconds:1,effectWindow:window}]}]})
+ assertComposition(composition());assert.deepEqual(assertVisualEffectWindow(window),window)
+ for(const extra of [{expression:'code'},{startSeconds:NaN},{durationSeconds:Infinity},{originId:['origin']},{startSeconds:2},{fadeInSeconds:2}])assert.throws(()=>assertVisualEffectWindow({...window,...extra}))
+ assert.throws(()=>assertComposition({...composition(),scenes:[{...composition().scenes[0],visualSegments:[{...composition().scenes[0].visualSegments[0],durationSeconds:1,effectWindow:{...window,startSeconds:1.2}}]}]}),/exceeds/)
+ assert.throws(()=>assertComposition({...composition(),scenes:[{...composition().scenes[0],durationSeconds:2,visualSegments:[...composition().scenes[0].visualSegments,...composition().scenes[0].visualSegments]}]}),/Duplicate visual/)
+})
+
+test('Closed independent fade windows admit short preserved pieces and reject invalid original clocks',()=>{
+ const fadeWindow={originId:'original-fade',startSeconds:.2,durationSeconds:2},visual={id:'window-visual',title:'Window',kind:'rectangle',startSeconds:0,durationSeconds:.1,x:.1,y:.1,width:.2,height:.2,color:'#ffffff',fadeInSeconds:1,fadeOutSeconds:.5,fadeWindow}
+ const v=assertVisualLayers([visual])[0],a=assertAudioLayers([{id:'window-audio',title:'Audio',artifactId:'tone.wav',startSeconds:0,durationSeconds:.1,fadeInSeconds:1,fadeOutSeconds:.5,fadeWindow}])[0]
+ assert.ok(Math.abs(layerFadeGain(v,.05)-.25)<1e-12);assert.equal(visualLayerBox(v,.05).opacity,layerFadeGain(a,.05));assert.deepEqual(assertLayerFadeWindow(fadeWindow),fadeWindow)
+ for(const extra of [{expression:'code'},{startSeconds:-1},{startSeconds:Infinity},{startSeconds:2},{durationSeconds:NaN},{originId:'../outside'},{originId:false}])assert.throws(()=>assertVisualLayers([{...visual,fadeWindow:{...fadeWindow,...extra}}]))
+ assert.throws(()=>assertAudioLayers([{...a,fadeWindow:{...fadeWindow,startSeconds:1.95}}]),/超过保留/)
+ assert.throws(()=>assertVisualLayers([{...visual,fadeInSeconds:1.01}]),/fade in/);assert.throws(()=>layerFadeGain(a,NaN),/Invalid fade/)
+ assert.equal(assertVisualLayers([{...visual,fadeWindow:undefined,fadeInSeconds:.05,fadeOutSeconds:.05}])[0].fadeWindow,undefined)
+ const composition=assertComposition({title:'Window schema',music:false,layers:[visual],audioTracks:[a],scenes:[{title:'Base',durationSeconds:2}]});assert.deepEqual(composition.layers![0].fadeWindow,fadeWindow)
+})
+
+test('Original presentation windows validate root bounds and preserve counters after repeated cuts',()=>{
+ const origin={originId:'root-scene',startSeconds:2.52,durationSeconds:4,musicIndex:1,sceneNumber:1,sceneCount:2}
+ const root={title:'Cut',durationSeconds:1.48,bullets:['A','B','C'],bulletRevealSeconds:[.2,1.7,2.9],presentationWindow:origin}
+ const parsed=assertComposition({title:'Root clock',scenes:[root]}).scenes[0]
+ assert.deepEqual(parsed.presentationWindow,origin);assert.deepEqual(parsed.bulletRevealSeconds,root.bulletRevealSeconds)
+ assert.deepEqual(scenePlaybackClock(parsed,2,4),origin)
+ const legacy=assertComposition({title:'Legacy',scenes:[scene]}).scenes[0]
+ assert.deepEqual(scenePlaybackClock(legacy,2,4),{originId:'unsegmented',startSeconds:0,durationSeconds:10,musicIndex:3,sceneNumber:3,sceneCount:4})
+ for(const change of [{originId:'../root'},{originId:['root']},{startSeconds:-1},{startSeconds:2.53},{startSeconds:'2.52'},{durationSeconds:61},{durationSeconds:NaN},{musicIndex:0},{musicIndex:1.5},{sceneNumber:3},{sceneCount:25},{sceneCount:'2'},{url:'https://example.test'},{shell:'run'}])assert.throws(()=>assertComposition({title:'Invalid',scenes:[{...root,presentationWindow:{...origin,...change}}]}))
+ assert.throws(()=>assertComposition({title:'Invalid',scenes:[{...root,presentationWindow:null}]}))
+ assert.throws(()=>assertComposition({title:'Invalid',scenes:[{...root,bulletRevealSeconds:[0,1,4]}]}),/bullet reveal/)
+})
+
+test('Native narration receipts distinguish source duration from short and silent playback pieces',()=>{
+ const source={title:'Piece',durationSeconds:1.2,audioArtifactId:'voice.wav',voiceSegments:[{id:'piece',startSeconds:0,sourceStartSeconds:1,durationSeconds:1,playbackRate:1}]}
+ const scenes=assertComposition({title:'Receipt',scenes:[source,{...source,voiceSegments:[]},{title:'No voice',durationSeconds:1}]}).scenes
+ assert.deepEqual(assertNarrationReceipt(scenes,[2,2,0]),[2,2,0])
+ for(const value of [[0,2,0],[1.9,2,0],[2,2,1],[2,181,0],[2,'2',0],[2,NaN,0],[2,2],[2,2,0,0]])assert.throws(()=>assertNarrationReceipt(scenes,value))
+ const legacy=assertComposition({title:'Receipt',scenes:[{title:'Legacy',durationSeconds:3,audioArtifactId:'voice.wav'}]}).scenes
+ assert.deepEqual(assertNarrationReceipt(legacy,[2]),[2]);assert.throws(()=>assertNarrationReceipt(legacy,[2.01]),/播放区间/)
+})
+
+test('Visual effects are closed finite numbers shared by scene footage, segments and independent objects',()=>{
+ const effects=assertVisualEffects({brightness:.7,contrast:1.2,saturation:0,blurPixels:8})
+ assert.equal(visualEffectFilter(effects),'brightness(0.7) contrast(1.2) saturate(0) blur(8px)');assert.equal(visualEffectFilter(assertVisualEffects({})),'none')
+ const input={title:'Effects',durationSeconds:2,imageArtifactId:'source.png',effects},composition=assertComposition({title:'Effects',scenes:[input]});assert.deepEqual(composition.scenes[0].effects,effects)
+ const segmented=assertComposition({title:'Effects',scenes:[{title:'Parts',durationSeconds:2,visualSegments:[{durationSeconds:1,imageArtifactId:'source.png',effects},{durationSeconds:1,videoArtifactId:'source.mp4'}]}]});assert.deepEqual(segmented.scenes[0].visualSegments![0].effects,effects)
+ const layer={id:'effects-object',title:'Object',kind:'rectangle',startSeconds:0,durationSeconds:2,x:.1,y:.1,width:.2,height:.2,color:'#00cc00',effects};assert.deepEqual(assertVisualLayers([layer])[0].effects,effects)
+ for(const bad of [{brightness:0},{brightness:2.01},{contrast:-.1},{saturation:3},{blurPixels:13},{blurPixels:NaN},{brightness:Infinity},{saturation:null},{blurPixels:'8px'},{css:'url(file://outside)'},{filter:'contrast(1)'},null,[]]){assert.throws(()=>assertVisualEffects(bad));assert.throws(()=>assertComposition({title:'Invalid',scenes:[{...input,effects:bad}]}));assert.throws(()=>assertVisualLayers([{...layer,effects:bad}]))}
+ assert.throws(()=>assertComposition({title:'Invalid',scenes:[{title:'No footage',durationSeconds:2,effects}]}),/footage/);assert.throws(()=>assertComposition({...segmented,scenes:[{...segmented.scenes[0],effects}]}),/visual segment/)
 })

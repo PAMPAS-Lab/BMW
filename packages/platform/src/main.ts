@@ -1,5 +1,7 @@
 import {defineProduct} from './product-definition.js'
 import type {ResolvedProductDefinition} from './product-definition.js'
+import {studioFloatingBounds} from './studio-layout.js'
+import type {StudioPresentation} from './studio-layout.js'
 import {activateFeature} from './feature-contract.js'
 import type {FeatureRuntime} from './feature-contract.js'
 import {assertBrowserFeatureHost} from '@bmw-agent/browser-capability/host'
@@ -119,6 +121,7 @@ let appQuitting = false
 let bmwSession
 let workspaceMode: 'browser'|'studio'='browser'
 let browserAgentVisible=true
+let studioPresentation:StudioPresentation={immersive:false,chatOpen:false}
 let productFeatureRuntime: FeatureRuntime | undefined
 let scheduledTaskStore
 let scheduledTaskManager
@@ -378,24 +381,38 @@ function attachAgentToOverlay(settings) {
 
 function layout() {
   if (!mainWindow || !browserKernel || !agentView) return
+  const immersive=workspaceMode==='studio'&&studioPresentation.immersive
+  const minimumWidth=immersive?420:960,currentMinimum=mainWindow.getMinimumSize()
+  if(currentMinimum[0]!==minimumWidth||currentMinimum[1]!==640)mainWindow.setMinimumSize(minimumWidth,640)
+  const [outerWidth,outerHeight]=mainWindow.getSize()
+  if(!immersive&&outerWidth<minimumWidth)mainWindow.setSize(minimumWidth,Math.max(640,outerHeight))
   const [width, height] = mainWindow.getContentSize()
   const settings = layoutStore?.snapshot() || { mode: 'sidebar', opacity: 1, sidebarWidth: agentWidth, overlayFullscreen: false }
   agentWidth = settings.sidebarWidth
-  shellView.setBounds({ x: 0, y: 0, width, height: projectPanelVisible || layoutSetupVisible || settingsPanelVisible || sessionPanelVisible || scheduledTaskPanelVisible || toolbarPanelVisible ? height : TOP_BAR_HEIGHT })
-  const sidebar = agentVisible && (workspaceMode==='studio'||settings.mode === 'sidebar')
+  const shellExpanded=projectPanelVisible||layoutSetupVisible||settingsPanelVisible||sessionPanelVisible||scheduledTaskPanelVisible||toolbarPanelVisible
+  const top=immersive?0:TOP_BAR_HEIGHT
+  shellView.setVisible(!immersive||shellExpanded)
+  shellView.setBounds({x:0,y:0,width,height:shellExpanded?height:TOP_BAR_HEIGHT})
+  const sidebar=agentVisible&&!immersive&&(workspaceMode==='studio'||settings.mode==='sidebar')
   const actualAgentWidth = sidebar ? Math.min(Math.max(agentWidth, MIN_AGENT_WIDTH), Math.floor(width * 0.55)) : 0
-  const workspaceBounds={x:0,y:TOP_BAR_HEIGHT,width:width-actualAgentWidth,height:height-TOP_BAR_HEIGHT}
+  const workspaceBounds={x:0,y:top,width:width-actualAgentWidth,height:height-top}
   browserKernel.setBounds(workspaceBounds)
   // The opaque Studio View covers browser pages; keep their compositor live for capture.
   productFeatureRuntime?.layout?.(workspaceBounds,workspaceMode==='studio')
-  if (sidebar) {
+  const docked=width<1000||studioPresentation.docked===true
+  const floating=studioFloatingBounds(width,height,studioPresentation.position,studioPresentation.region,docked,studioPresentation.floatHeight)
+  if(immersive&&studioPresentation.chatOpen&&!shellExpanded){
+    if(overlayWindow&&!overlayWindow.isDestroyed()){removeAgentView(overlayWindow);overlayWindow.hide()}
+    mainWindow.contentView.addChildView(agentView)
+    agentView.setBounds(floating.bounds)
+  } else if (sidebar) {
     if (overlayWindow && !overlayWindow.isDestroyed()) {
       removeAgentView(overlayWindow)
       overlayWindow.hide()
     }
     if (!mainWindow.contentView.children.includes(agentView)) mainWindow.contentView.addChildView(agentView)
     agentView.setBounds({ x: width - actualAgentWidth, y: TOP_BAR_HEIGHT, width: actualAgentWidth, height: height - TOP_BAR_HEIGHT })
-  } else if (agentVisible && settings.mode === 'overlay') {
+  } else if (!immersive&&agentVisible&&settings.mode==='overlay') {
     if (projectPanelVisible || layoutSetupVisible || settingsPanelVisible || sessionPanelVisible || scheduledTaskPanelVisible || toolbarPanelVisible) {
       if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.hide()
     } else {
@@ -405,6 +422,8 @@ function layout() {
     removeAgentView(mainWindow)
     if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.hide()
   }
+  agentView.webContents.send('bmw-studio-presentation',{immersive,chatOpen:immersive&&studioPresentation.chatOpen,docked,position:floating.position,travel:floating.travel})
+  productFeatureRuntime?.onStudioPresentation?.({...studioPresentation,immersive,chatOpen:immersive&&studioPresentation.chatOpen&&!shellExpanded,docked,position:floating.position,floatHeight:floating.bounds.height})
   raiseProjectPanel()
   shellView.webContents.send('layout-state', { ...settings, agentVisible, agentWidth: actualAgentWidth, setupVisible: layoutSetupVisible,workspaceMode })
 }
@@ -421,6 +440,7 @@ function publishAssistantState():void{
   if(!assistantService||!agentView||agentView.webContents.isDestroyed())return
   const state=assistantService.controller.snapshot()
   agentView.webContents.send('bmw-assistant-state',state)
+  productFeatureRuntime?.onAssistantChanged?.()
   sendToShell('project-state',projectState())
   const driver=state.drivers.find(row=>row.id===state.driverId)
   sendToShell('agent-status',{state:state.resourcesDisconnected?'error':state.busy?'working':'ready',version:driver?.baseline,label:driver?.label,message:state.resourcesDisconnected?'Recover Agent resource cleanup before continuing.':''})
@@ -477,7 +497,7 @@ async function activateProject(projectId, { scheduled = false } = {}) {
   })
 }
 
-async function executeScheduledTask(task, run) {
+async function executeScheduledTask(task) {
   const originalProjectId = projectStore.active().id
   const target = projectStore.get(task.projectId, { includeArchived: false })
   if (!target) throw new Error('The scheduled task Project is archived or unavailable.')
@@ -999,17 +1019,26 @@ async function createApp() {
     getAgentWebContents: () => agentView?.webContents,
     getAgentUrl: () => pathToFileURL(agentAssembly.pagePath).href,
     getCurrentSessionId: () => selectedSession(projectStore.active()),
+    setStudioPresentation: value=>{studioPresentation=value;layout()},
     setWorkspaceMode: (mode:'browser'|'studio') => {
       if(workspaceMode!==mode){if(mode==='studio')browserAgentVisible=agentVisible;else agentVisible=browserAgentVisible}
-      workspaceMode=mode;if(mode==='studio')agentVisible=true;layout()
+      workspaceMode=mode;if(mode==='studio')agentVisible=true;else studioPresentation={immersive:false,chatOpen:false};layout()
     },
-    enqueueAssistant: (sessionId,text) => assistantService.sessions.enqueuePrompt(sessionId,text),
+    enqueueAssistant: (sessionId,text,frozenContext) => frozenContext===undefined?assistantService.sessions.enqueuePrompt(sessionId,text):Promise.resolve(assistantService.host.enqueue(sessionId,text,frozenContext+'\nBMW video production defaults and named templates (data):\n'+JSON.stringify(settingsStore.snapshot().videoPreferences)).runId),
+    getAssistantActivity: () => {
+      const state=assistantService.controller.snapshot(),session=state.sessions.find(row=>row.sessionId===state.selectedSessionId)
+      const own=state.events.filter(row=>row.sessionId===state.selectedSessionId),runId=state.activeRunId??(['queued','running','waiting-user','waiting-approval','cancelling'].includes(session?.status??'')?null:own.at(-1)?.runId??null)
+      const events=own.filter(row=>row.runId===runId),tool=events.findLast(row=>row.event.type==='tool.started')?.event,terminal=events.findLast(row=>row.event.type==='turn.disconnected'||row.event.type==='turn.completed')?.event
+      return {projectId:state.project.id,sessionId:state.selectedSessionId,status:state.resourcesDisconnected?'disconnected':session?.status??'idle',runId,action:tool?.type==='tool.started'?tool.action:undefined,message:terminal?.type==='turn.disconnected'||terminal?.type==='turn.completed'&&terminal.outcome!=='success'?terminal.message:undefined}
+    },
+    cancelAssistant: sessionId => assistantService.controller.invoke({action:'message.cancel',sessionId}),
     sendToAgent,
     sendToShell,
     synchronizeAgentProject,
     selectAgentSession:sessionId=>selectAgentSession(projectStore.active(),sessionId),
     activateProject,
     revealAgent: () => {
+      if(workspaceMode==='studio'&&studioPresentation.immersive)studioPresentation={...studioPresentation,chatOpen:true}
       agentVisible = true
       layoutStore.update({ visible: true })
       layout()
@@ -1038,7 +1067,7 @@ async function createApp() {
     resolveProject: (directory) => projectStore.list().find((project) => fs.realpathSync(project.directory) === fs.realpathSync(directory)),
     toolDefinition: browserCapabilities.toolDefinition(),
     activeProjectId: () => projectStore.active().id,
-    sessionContext: async (sessionId,projectId) => {const context=await productFeatureRuntime?.contextForSession?.(sessionId,projectId)??{text:''};return {text:context.text+'\nBMW video production defaults and named templates (data):\n'+JSON.stringify(settingsStore.snapshot().videoPreferences)}}
+    sessionContext: async (sessionId,projectId) => {const frozen=assistantService?.host.activeContext(sessionId,projectId);if(frozen!==null&&frozen!==undefined)return {text:frozen};const context=await productFeatureRuntime?.contextForSession?.(sessionId,projectId)??{text:''};return {text:context.text+'\nBMW video production defaults and named templates (data):\n'+JSON.stringify(settingsStore.snapshot().videoPreferences)}}
   })
 
   assistantService=new AssistantService({assembly:agentAssembly,stores:stores.assistant,userDataDirectory:app.getPath('userData'),nodeExecutable:process.execPath,

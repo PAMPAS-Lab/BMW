@@ -1,3 +1,4 @@
+import {narrationSceneRanges} from '../../media-native/src/composition-contract.js'
 import {sourceCaptionsStale} from './studio-source-speech-contract.js'
 import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
@@ -43,7 +44,7 @@ export async function studioSpeechOperation(kernel:StudioKernel,store:VideoStudi
  if(request.operation==='correct-speech'){
   const info=assertMediaInspection(await kernel.recordingController.processArtifact({action:'media.inspect',artifactId:scene.audioArtifactId},signal));if(!info.tracks.some(t=>t.type==='audio'&&t.canDecode))throw new Error('句锚点需要可解码的旁白。')
   const anchors=assertSentenceAnchors(request.anchors,scene.narration,info.durationSeconds)
-  if(anchors.some(a=>a.endSeconds+.5>scene.durationSeconds))throw new Error('分镜时长没有容纳句锚点与旁白起始留白。')
+  if(anchors.some(a=>narrationSceneRanges(scene,a.startSeconds,a.endSeconds).some(range=>range.start<0||range.end>scene.durationSeconds)))throw new Error('分镜时长没有容纳句锚点与旁白起始留白。')
   if(await studioAudioHash(directory,scene.audioArtifactId,signal)!==audioSha256)throw new Error('STUDIO_SPEECH_STALE: 校正期间旁白文件变化。');check()
   const record=assertStudioSpeechAnchors({...base(info.durationSeconds),origin:actor==='user'?'user-edited':'agent-edited',anchors})
   return {draft:store.setSpeech(draft.id,draft.revision,scene.id,'anchors',record),anchors:record,automaticTimingApproved:false,wordTimingAvailable:false}

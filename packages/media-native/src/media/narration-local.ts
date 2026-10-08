@@ -1,5 +1,5 @@
 import { assertNarration } from '../narration-contract.js'
-import type { NarrationBridge, NarrationRequest } from '../narration-contract.js'
+import type { NarrationBridge } from '../narration-contract.js'
 declare global { interface Window { bmwNarration: NarrationBridge } }
 function wav(samples: Float32Array, sampleRate: number): Uint8Array {
   if (!Number.isSafeInteger(sampleRate) || sampleRate < 8000 || sampleRate > 48000 || samples.length < 1 || samples.length > sampleRate * 180) throw new Error('Invalid local TTS signal.')

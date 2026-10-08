@@ -29,9 +29,14 @@ export type AssistantCommand =
   | { action: 'resources.recover' }
   | { action:'settings.run';driverId:string;request:AgentSettingsRequest }
   | { action:'settings.cancel' }
+export interface AssistantStudioTarget {projectId:string;sessionId:string;draftId:string;kind:'film'|'scene'|'object';sceneId?:string;objectKind?:'visual'|'voice'|'captions';layer?:{id:string;kind:'visual'|'audio'};voiceSegmentId?:string;visualSegmentId?:string}
 export interface AssistantUiPort {
+  sendStudioPrompt?(value:{text:string;target:AssistantStudioTarget}):Promise<unknown>
   invoke(command: AssistantCommand): Promise<AssistantState>
   subscribe(listener: (state: AssistantState) => void): () => void
+  setStudioChat?(value:unknown):Promise<unknown>
+  onStudioPresentation?(listener:(value:unknown)=>void):()=>void
+  onComposerPrefill?(listener:(value:unknown)=>void):()=>void
   onComposerContext(listener: (value: unknown) => void): () => void
   onOpenSettings(listener: () => void): () => void
   composerContext(): Promise<unknown>

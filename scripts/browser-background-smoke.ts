@@ -22,8 +22,6 @@ try {
   view = new WebContentsView({ webPreferences: { session: isolated, sandbox: true, contextIsolation: true, nodeIntegration: false } })
   // This Agent view is never attached or foregrounded, as in the incident.
   await view.webContents.loadURL('data:text/html,' + encodeURIComponent('<style>body{margin:0}article{width:560px;height:380px;background:rgb(49,170,119)}</style><article data-testid="tweet">Background post<img src="https://example.com/picture.png"></article>'))
-  const tab = { id: 'background', title: 'post', view }
-  const kernel = { artifactsDirectory: root, serializeTab: () => ({ id: tab.id }) }
   if (process.env.BMW_REPRODUCE_OLD_SCREENSHOT === '1') {
     let settled = false
     const pending = view.webContents.executeJavaScript(`(async () => {

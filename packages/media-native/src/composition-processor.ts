@@ -3,8 +3,8 @@ import fs from 'node:fs/promises'
 import { BrowserWindow, ipcMain } from 'electron'
 import type { Session, IpcMainInvokeEvent } from 'electron'
 import { ArtifactJobIO } from './artifact-job-io.js'
-import { assertComposition, compositionAssets, compositionDuration } from './composition-contract.js'
-import { finiteNumber, mediaRecord, MEDIA_LIMITS } from './media-contract.js'
+import { assertNarrationReceipt,assertComposition, compositionAssets, compositionDuration } from './composition-contract.js'
+import { finiteNumber, mediaRecord } from './media-contract.js'
 
 /** Bounded multi-asset browser job. Renderer receives only pinned Project handles. */
 export class CompositionProcessor {
@@ -64,8 +64,7 @@ export class CompositionProcessor {
               const result = mediaRecord(value.result)
               if (result.frames !== Math.ceil(compositionDuration(composition) * composition.fps) || result.durationSeconds !== compositionDuration(composition) || result.width !== composition.width || result.height !== composition.height) throw new Error('Composition result does not match its manifest.')
               finiteNumber(result.audioPeak, 'audio peak', 0, 1)
-              if (!Array.isArray(result.narrationDurations) || result.narrationDurations.length !== composition.scenes.length) throw new Error('Missing narration timing receipt.')
-              result.narrationDurations.forEach((duration, index) => finiteNumber(duration, 'narration duration', 0, composition.scenes[index].durationSeconds - 1))
+              assertNarrationReceipt(composition.scenes,result.narrationDurations)
               resolve(result)
             }
           } catch (error) { if (event.sender === jobWindow.webContents) reject(error) }

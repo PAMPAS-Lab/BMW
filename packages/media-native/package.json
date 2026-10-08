@@ -8,6 +8,8 @@
     "./port": "./src/media-port.js",
     "./contract": "./src/media-contract.js",
     "./composition": "./src/composition-contract.js",
+    "./layers": "./src/composition-layers.js",
+    "./rendering/layers": "./src/media/composition-layers-paint.js",
     "./narration": "./src/narration-contract.js",
     "./video-options": "./src/video-options.js",
     "./video-options-form": "./src/video-options-form.js",
@@ -25,7 +27,8 @@
     "./drawing": "./src/image-drawing-contract.js",
     "./cover": "./src/media/processing.cover-contract.js",
     "./sources": "./src/source-contract.js",
-    "./speech": "./src/speech-contract.js"
+    "./speech": "./src/speech-contract.js",
+    "./visual-effects": "./src/visual-effects.js"
   },
   "dependencies": {
     "mediabunny": "1.61.0"

@@ -34,7 +34,7 @@ export function assertEncodingInspection(raw:unknown):EncodingInspection {
 }
 export interface MediaTrackInfo {
   id: number; type: 'video' | 'audio' | 'subtitle'; codec: string | null; canDecode: boolean
-  width?: number; height?: number; rotation?: number; canBeTransparent?: boolean; hasAlphaData?: boolean; sampleRate?: number; channels?: number
+  startSeconds?:number;endSeconds?:number; width?: number; height?: number; rotation?: number; canBeTransparent?: boolean; hasAlphaData?: boolean; sampleRate?: number; channels?: number
 }
 export interface MediaInfo {
   container: string; contentType: string; durationSeconds: number; firstTimestampSeconds: number; tracks: MediaTrackInfo[]
@@ -148,6 +148,7 @@ export function assertMediaWorkerResult(value: unknown, request: NativeProcessin
       finiteNumber(track.id, 'track id', 0, Number.MAX_SAFE_INTEGER, true)
       if (!['video', 'audio', 'subtitle'].includes(String(track.type)) || (track.codec !== null && typeof track.codec !== 'string') || typeof track.canDecode !== 'boolean') throw new TypeError('Invalid media track.')
       for (const key of ['width','height','sampleRate','channels'] as const) if (track[key] !== undefined) finiteNumber(track[key], key, 1, Number.MAX_SAFE_INTEGER, true)
+      if(track.startSeconds!==undefined||track.endSeconds!==undefined){const start=finiteNumber(track.startSeconds,'video track start',-Number.MAX_SAFE_INTEGER,Number.MAX_SAFE_INTEGER),end=finiteNumber(track.endSeconds,'video track end',start,Number.MAX_SAFE_INTEGER);if(track.type!=='video'||end>Number(info.durationSeconds))throw new TypeError('Invalid inspected video track range.')}
       if(track.hasAlphaData!==undefined&&typeof track.hasAlphaData!=='boolean')throw new TypeError('Invalid alpha packet metadata.')
       if (track.canBeTransparent !== undefined && typeof track.canBeTransparent !== 'boolean') throw new TypeError('Invalid transparency metadata.')
       if (track.rotation !== undefined) finiteNumber(track.rotation, 'rotation', 0, 360)

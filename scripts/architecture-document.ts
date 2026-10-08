@@ -15,8 +15,8 @@ export function architectureInventory(graph:SourceGraph):string{
   for(const module of modules)for(const [file,packages] of Object.entries(module.installedImports??{}))lines.push(`| ${module.id} | ${file} | ${packages.join(', ')} |`)
   lines.push('','### 公开入口','','跨模块相对导入也只能指向这些入口；浏览器中的 ES 模块继续使用相对 URL。','')
   for(const [module,files]of Object.entries(graph.exports))lines.push(`- ${module}: ${files.map(file=>'`'+file+'`').join(', ')}`)
-  lines.push('','### 分类测试清单','','| ID | 分类 | 归属 | 入口 |','|---|---|---|---|')
-  for(const test of tests)lines.push(`| ${test.id} | ${test.layer}${test.optIn?' (opt-in)':''} | ${test.modules.join(', ')} | ${test.file}${test.group?' ['+test.group+']':''} |`)
+  lines.push('','### 分类测试清单','','| ID | 分类 | 归属 | 入口 | 配置／分支 |','|---|---|---|---|---|')
+  for(const test of tests)lines.push(`| ${test.id} | ${test.layer}${test.optIn?' (opt-in)':''} | ${test.modules.join(', ')} | ${test.file} | ${[test.group?'group='+test.group:'',...Object.entries(test.env??{}).map(([key,value])=>key+'='+value),test.optIn?'opt-in: '+test.optIn:''].filter(Boolean).join('; ')||'默认'} |`)
   lines.push('',end)
   return lines.join('\n')
 }

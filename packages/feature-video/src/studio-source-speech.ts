@@ -4,7 +4,7 @@ import crypto from 'node:crypto'
 import {ArtifactJobIO} from '../../media-native/src/artifact-job-io.js'
 import {assertSpeechEvidence} from '../../media-native/src/speech-contract.js'
 import {exportProjectText} from '../../media-native/src/text-export.js'
-import {sceneVisuals} from '../../media-native/src/visual-segments.js'
+import {sceneVisuals,visualPlaybackGroup} from '../../media-native/src/visual-segments.js'
 import {assertSourceCues,projectSourceCues,sourceCaptionClock} from './studio-source-speech-contract.js'
 import {studioAudioHash} from './studio-speech.js'
 import type {StudioKernel} from './studio-service.js'
@@ -38,6 +38,6 @@ export async function sourceSpeechOperation(kernel:StudioKernel,store:VideoStudi
  if(request.operation==='read-source-speech')return {candidate,evidence,stale,automaticTimingApproved:false}
  if(stale)throw new Error('STUDIO_SOURCE_SPEECH_STALE: 原视频已变化，请重新识别。')
  const cues=projectSourceCues(scene,candidate.segmentIndex,assertSourceCues(request.sourceCues,candidate.durationSeconds));if(!cues.length)throw new Error('没有字幕落在当前视频区间。')
- const clock=sourceCaptionClock(scene,candidate.segmentIndex);check()
- return {draft:store.setSourceSpeech(draft.id,draft.revision,scene.id,s=>{s.captions=cues;s.captionDisplay='bilingual';s.sourceCaptionBinding={sourceArtifactId:candidate.sourceArtifactId,sourceSha256:candidate.sourceSha256,segmentIndex:candidate.segmentIndex,clock,origin:actor==='user'?'user-edited':'agent-edited'}}),cueCount:cues.length,automaticTimingApproved:false}
+ const clock=sourceCaptionClock(scene,candidate.segmentIndex),boundIndex=visualPlaybackGroup(scene,candidate.segmentIndex).index,boundVisual=scene.visualSegments?.[boundIndex];check()
+ return {draft:store.setSourceSpeech(draft.id,draft.revision,scene.id,s=>{s.captions=cues;s.captionDisplay='bilingual';s.sourceCaptionBinding={sourceArtifactId:candidate.sourceArtifactId,sourceSha256:candidate.sourceSha256,segmentIndex:boundIndex,...(boundVisual?.id?{visualSegmentId:boundVisual.id}:{}),clock,origin:actor==='user'?'user-edited':'agent-edited',sourceCues:assertSourceCues(request.sourceCues,candidate.durationSeconds),sourceRange:{startSeconds:0,endSeconds:candidate.durationSeconds}}}),cueCount:cues.length,automaticTimingApproved:false}
 }

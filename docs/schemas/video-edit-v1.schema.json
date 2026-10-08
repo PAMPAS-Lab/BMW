@@ -1,0 +1,570 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bmw.local/schemas/video-edit/1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "scene.set"
+              },
+              "sceneId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9-]{1,80}$"
+              },
+              "patch": {
+                "minProperties": 1,
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "maxLength": 44
+                  },
+                  "visualBrief": {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "bullets": {
+                    "type": "array",
+                    "maxItems": 3,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "layout": {
+                    "type": "string",
+                    "enum": [
+                      "presentation",
+                      "fullscreen"
+                    ]
+                  },
+                  "captionStyle": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "fontSize",
+                      "color",
+                      "background",
+                      "position",
+                      "align",
+                      "offsetPercent"
+                    ],
+                    "properties": {
+                      "fontSize": {
+                        "type": "number",
+                        "minimum": 12,
+                        "maximum": 64
+                      },
+                      "color": {
+                        "type": "string",
+                        "pattern": "^#[0-9a-fA-F]{6}$"
+                      },
+                      "background": {
+                        "type": "string",
+                        "enum": [
+                          "none",
+                          "outline",
+                          "box"
+                        ]
+                      },
+                      "position": {
+                        "type": "string",
+                        "enum": [
+                          "top",
+                          "center",
+                          "bottom"
+                        ]
+                      },
+                      "align": {
+                        "type": "string",
+                        "enum": [
+                          "left",
+                          "center",
+                          "right"
+                        ]
+                      },
+                      "offsetPercent": {
+                        "type": "number",
+                        "minimum": -30,
+                        "maximum": 30
+                      }
+                    }
+                  },
+                  "captionDisplay": {
+                    "enum": [
+                      "original",
+                      "translation",
+                      "bilingual"
+                    ]
+                  },
+                  "showSceneNumber": {
+                    "type": "boolean"
+                  },
+                  "sceneTemplate": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "kind"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "summary",
+                          "comparison",
+                          "screenshot"
+                        ]
+                      },
+                      "accentColor": {
+                        "type": "string",
+                        "pattern": "^#[0-9a-fA-F]{6}$"
+                      },
+                      "backgroundColor": {
+                        "type": "string",
+                        "pattern": "^#[0-9a-fA-F]{6}$"
+                      },
+                      "textColor": {
+                        "type": "string",
+                        "pattern": "^#[0-9a-fA-F]{6}$"
+                      },
+                      "emphasisIndex": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 2
+                      }
+                    }
+                  },
+                  "endPolicy": {
+                    "type": "string",
+                    "enum": [
+                      "require-footage",
+                      "hold"
+                    ]
+                  },
+                  "script": {
+                    "type": "string",
+                    "maxLength": 1000
+                  }
+                },
+                "required": []
+              }
+            },
+            "required": [
+              "op",
+              "sceneId",
+              "patch"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "scene.reorder"
+              },
+              "sceneIds": {
+                "type": "array",
+                "maxItems": 24,
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "pattern": "^[a-zA-Z0-9-]{1,80}$"
+                }
+              }
+            },
+            "required": [
+              "op",
+              "sceneIds"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "clip.move"
+              },
+              "clipId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]{1,256}$"
+              },
+              "time": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "ticks": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1800000000
+                  },
+                  "residualSeconds": {
+                    "type": "number",
+                    "minimum": -5.00001e-7,
+                    "maximum": 5.00001e-7
+                  }
+                },
+                "required": [
+                  "ticks"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "clipId",
+              "time"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "clip.split"
+              },
+              "clipId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]{1,256}$"
+              },
+              "time": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "ticks": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1800000000
+                  },
+                  "residualSeconds": {
+                    "type": "number",
+                    "minimum": -5.00001e-7,
+                    "maximum": 5.00001e-7
+                  }
+                },
+                "required": [
+                  "ticks"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "clipId",
+              "time"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "clip.trim"
+              },
+              "clipId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]{1,256}$"
+              },
+              "edge": {
+                "enum": [
+                  "start",
+                  "end"
+                ]
+              },
+              "time": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "ticks": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1800000000
+                  },
+                  "residualSeconds": {
+                    "type": "number",
+                    "minimum": -5.00001e-7,
+                    "maximum": 5.00001e-7
+                  }
+                },
+                "required": [
+                  "ticks"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "clipId",
+              "edge",
+              "time"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "clip.effects"
+              },
+              "clipId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]{1,256}$"
+              },
+              "effects": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "brightness": {
+                        "type": "number",
+                        "minimum": 0.25,
+                        "maximum": 2
+                      },
+                      "contrast": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 2
+                      },
+                      "saturation": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 2
+                      },
+                      "blurPixels": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 12
+                      }
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "clipId",
+              "effects"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "clip.mute"
+              },
+              "clipId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]{1,256}$"
+              },
+              "muted": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "op",
+              "clipId",
+              "muted"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "layer.remove"
+              },
+              "clipId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]{1,256}$"
+              }
+            },
+            "required": [
+              "op",
+              "clipId"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "layer.set"
+              },
+              "clipId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]{1,256}$"
+              },
+              "patch": {
+                "minProperties": 1,
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "width": {
+                    "type": "number"
+                  },
+                  "height": {
+                    "type": "number"
+                  },
+                  "opacity": {
+                    "type": "number"
+                  },
+                  "zIndex": {
+                    "type": "integer"
+                  },
+                  "hidden": {
+                    "type": "boolean"
+                  },
+                  "locked": {
+                    "type": "boolean"
+                  },
+                  "color": {
+                    "type": "string",
+                    "pattern": "^#[a-fA-F0-9]{6}$"
+                  },
+                  "text": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "fontSize": {
+                    "type": "number"
+                  },
+                  "volume": {
+                    "type": "number"
+                  },
+                  "muted": {
+                    "type": "boolean"
+                  },
+                  "fadeInSeconds": {
+                    "type": "number"
+                  },
+                  "fadeOutSeconds": {
+                    "type": "number"
+                  },
+                  "ducking": {
+                    "type": "boolean"
+                  },
+                  "keyframes": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 12,
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "timeSeconds",
+                        "x",
+                        "y",
+                        "width",
+                        "height",
+                        "opacity",
+                        "easing"
+                      ],
+                      "properties": {
+                        "timeSeconds": {
+                          "type": "number"
+                        },
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "width": {
+                          "type": "number"
+                        },
+                        "height": {
+                          "type": "number"
+                        },
+                        "opacity": {
+                          "type": "number"
+                        },
+                        "easing": {
+                          "enum": [
+                            "linear",
+                            "ease-in-out"
+                          ]
+                        },
+                        "easingRange": {
+                          "type": "array",
+                          "minItems": 2,
+                          "maxItems": 2,
+                          "items": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": []
+              }
+            },
+            "required": [
+              "op",
+              "clipId",
+              "patch"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "layer.add"
+              },
+              "kind": {
+                "enum": [
+                  "text",
+                  "rectangle",
+                  "image",
+                  "video",
+                  "audio"
+                ]
+              },
+              "sceneId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9-]{1,80}$"
+              },
+              "artifactId": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "op",
+              "kind"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "version",
+    "commands"
+  ]
+}
