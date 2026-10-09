@@ -92,14 +92,15 @@ async function bytes(id:string):Promise<Uint8Array>{const projectId=state.projec
 const preview=new StudioPreview(element<HTMLCanvasElement>('preview'),bytes,(time,playing)=>{input('seek').value=String(time);element('time').textContent=`${format(time)} / ${format(preview.duration)}`;element('play').textContent=playing?'暂停':'播放';workbench.time(time);layerEditor.time();if(draft){const at=studioSceneIndex(draft,time),id=draft.scenes[at]?.id;for(const card of document.querySelectorAll('[data-card-id]') as HTMLElement[])card.classList.toggle('playing',playing&&card.dataset.cardId===id)}cardText.time()})
 const cardText=new StudioCardTextEditor({
  state:()=>state&&draft&&draft.scenes[sceneIndex]?{projectId:state.project.id,sessionId:state.sessionId??null,draft,scene:scene(),active:workflow.view.mode==='simple'&&stage===4&&workflow.result==='draft'&&!['cover','delivery'].includes(workbench.mode),disabled:busy||invalidProject||viewChanging||Boolean(savePending)||simpleReadOnly(),previewReady:!previewDirty&&!previewPreparing}:undefined,
- bytes,painted:()=>draft?preview.text(draft):undefined,flush:()=>flushEdits(),pause:()=>preview.pause(),notify:message,
+ images:()=>state?.assets.filter(a=>a.kind==='image').map(a=>({artifactId:a.artifactId,name:a.artifactId}))??[],bytes,painted:()=>draft?preview.text(draft):undefined,flush:()=>flushEdits(),pause:()=>preview.pause(),notify:message,
+ globalTitle:async()=>{await flushEdits();editable();preview.pause();input('draft-title').focus();input('draft-title').select()},
  select:async id=>{editable();const index=draft!.scenes.findIndex(scene=>scene.id===id);if(index<0)throw new Error('文字所属镜头已变化。');sceneIndex=index;renderStage();await publishSelection()},
  commit:async(owner,field,text,append)=>{
   const current=()=>{editable();if(!draft||state.project.id!==owner.projectId||(state.sessionId??null)!==owner.sessionId||draft.id!==owner.draftId||draft.revision!==owner.revision)throw new Error('STUDIO_CONFLICT: 标题卡文字版本已变化，输入保留。');const index=draft.scenes.findIndex(scene=>scene.id===owner.sceneId);if(index<0)throw new Error('文字所属镜头已删除。');return index}
   current();await flushEdits(true,false,true,true,true,true,false);const index=current(),next=clone(draft!),target=next.scenes[index]
   if(append){if(field.kind!=='bullet'||field.index!==target.bullets.length)throw new Error('新增要点所属位置已变化。');next.scenes[index]=changeCardBullet(target,{operation:'add',text})}else if(field.kind==='title')target.title=text;else{if(field.index<0||field.index>=target.bullets.length)throw new Error('画面要点已变化。');target.bullets[field.index]=text}
   const candidate=assertVideoDraft(next),context=document.createElement('canvas').getContext('2d')!
-  const errors=reviewSceneText(context,speechScene(candidate.scenes[index]),candidate.width,candidate.height).filter(issue=>issue.severity==='error'&&issue.code==='text-overflow'&&issue.message.startsWith('第 '))
+  const errors=reviewSceneText(context,speechScene(candidate.scenes[index]),candidate.width,candidate.height,undefined,candidate.cardLayout).filter(issue=>issue.severity==='error'&&issue.code==='text-overflow'&&!issue.message.startsWith('字幕'))
   if(errors.length)throw new Error(errors.map(issue=>issue.message).join('；'))
   const previous=draft,previousDirty=dirty,previousUndo=[...undo],previousRedo=[...redo],previousRestore=restorePending
   if(!sameStudioDraftContent(draft!,candidate)){history();draft=candidate;checked=undefined;reviewFrames=undefined}
@@ -114,14 +115,14 @@ const cardText=new StudioCardTextEditor({
   try{await save(false)}catch(error){if(draft===candidate){draft=previous;dirty=previousDirty;undo=previousUndo;redo=previousRedo;restorePending=previousRestore;render()}throw error}
   message('要点已删除，可撤销；旁白与字幕保留。')
  },
- template:async(owner,kind)=>{
+ template:async(owner,kind,spec)=>{
   const current=()=>{editable();if(!draft||state.project.id!==owner.projectId||(state.sessionId??null)!==owner.sessionId||draft.id!==owner.draftId||draft.revision!==owner.revision)throw new Error('STUDIO_CONFLICT: 版式所属草稿版本已变化，请重新打开版式选择。');const index=draft.scenes.findIndex(scene=>scene.id===owner.sceneId);if(index<0)throw new Error('版式所属镜头已删除。');return index}
-  current();await flushEdits(true,false,true,true,true,true,false);const index=current(),candidate=clone(draft!);candidate.scenes[index]=cardTemplateScene(candidate.scenes[index],kind);assertVideoDraft(candidate)
-  const errors=reviewSceneText(document.createElement('canvas').getContext('2d')!,speechScene(candidate.scenes[index]),candidate.width,candidate.height).filter(issue=>issue.severity==='error');if(errors.length)throw new Error(errors.map(issue=>issue.message).join('；'))
+  current();await flushEdits(true,false,true,true,true,true,false);const index=current(),candidate=clone(draft!);candidate.scenes[index]=cardTemplateScene(candidate.scenes[index],kind,spec);assertVideoDraft(candidate)
+  const errors=reviewSceneText(document.createElement('canvas').getContext('2d')!,speechScene(candidate.scenes[index]),candidate.width,candidate.height,undefined,candidate.cardLayout).filter(issue=>issue.severity==='error');if(errors.length)throw new Error(errors.map(issue=>issue.message).join('；'))
   const previous=draft,previousDirty=dirty,previousUndo=[...undo],previousRedo=[...redo],previousRestore=restorePending
   if(!sameStudioDraftContent(draft!,candidate)){history();draft=candidate;checked=undefined;reviewFrames=undefined}
   try{await save(false)}catch(error){if(draft===candidate){draft=previous;dirty=previousDirty;undo=previousUndo;redo=previousRedo;restorePending=previousRestore;render()}throw error}
-  message('当前镜头版式已保存，可撤销；文字、旁白、字幕与素材保留。')
+  message('当前卡片已保存，可撤销；旁白、字幕与项目素材文件保留。')
  },
  refresh:async()=>{if(draft?.scenes.length)await prepare()}
 })
@@ -195,7 +196,7 @@ function renderTextReview():void{
  const issues=element('studio-review-issues'),frames=element('studio-review-frames');issues.replaceChildren();frames.replaceChildren();if(!draft){element('studio-review-status').textContent='';return}
  const canvas=document.createElement('canvas'),context=canvas.getContext('2d')!;let count=0,errors=0,offset=0
  for(const [index,value]of draft.scenes.entries()){
-  try{for(const issue of reviewSceneText(context,speechScene(value),draft.width,draft.height,value.audioDurationSeconds)){count++;if(issue.severity==='error')errors++;const seconds=offset+issue.seconds,node=button(value.title+'：'+issue.message,()=>seekTo(seconds));node.classList.add('production-issue');node.dataset.severity=issue.severity;issues.append(node)}}catch(error){errors++;issues.append(paragraph(error instanceof Error?error.message:String(error)))}
+  try{for(const issue of reviewSceneText(context,speechScene(value),draft.width,draft.height,value.audioDurationSeconds,draft.cardLayout)){count++;if(issue.severity==='error')errors++;const seconds=offset+issue.seconds,node=button(value.title+'：'+issue.message,()=>seekTo(seconds));node.classList.add('production-issue');node.dataset.severity=issue.severity;issues.append(node)}}catch(error){errors++;issues.append(paragraph(error instanceof Error?error.message:String(error)))}
   const at=offset+Math.min(1,value.durationSeconds/2);const node=button(`${index+1} · ${value.title}`,()=>seekTo(at));if(reviewFrames?.id===draft.id&&reviewFrames.revision===draft.revision&&reviewFrames.images[index]){const image=document.createElement('img');image.src=reviewFrames.images[index];image.alt=value.title+'关键帧';image.style.width='120px';image.style.display='block';node.prepend(image)}frames.append(node);offset+=value.durationSeconds
  }
  element('studio-review-status').textContent=`当前草稿 v${draft.revision} · ${errors} 项需修正 · ${count-errors} 项审阅提示。点击分镜查看关键帧；这不代表内容事实已经核查。`

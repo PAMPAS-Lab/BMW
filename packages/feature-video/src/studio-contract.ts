@@ -1,3 +1,5 @@
+import {assertDetailedReady} from '../../media-native/src/card-details.js'
+import {CARD_TEMPLATES} from '../../media-native/src/card-templates.js'
 import type {VideoEdit} from './video-edit-contract.js'
 import {assertVideoEdit} from './video-edit-contract.js'
 import {assertReferenceRecords,assertReferenceAnalysis} from './studio-reference-contract.js'
@@ -7,6 +9,8 @@ import type {StudioReviewProposal,StudioReviewItem} from './studio-review.js'
 import {assertStudioSpeechOrigin} from './studio-speech-origin.js'
 import type {StudioSpeechPlaybackOrigin} from './studio-speech-origin.js'
 import {narrationWindows} from '../../media-native/src/composition-contract.js'
+import {assertNarrationTiming} from '../../media-native/src/composition-contract.js'
+import type {NarrationTiming} from '../../media-native/src/composition-contract.js'
 import {assertVisualLayers,assertAudioLayers,layerProblems,assertLayerIdentities} from '../../media-native/src/composition-layers.js'
 import type {LayerContainer} from '../../media-native/src/composition-layers.js'
 import {assertSourceCandidate,assertSourceCaptionBinding,assertSourceCues,sourceCaptionsStale} from './studio-source-speech-contract.js'
@@ -26,7 +30,7 @@ import { assertArtifactId, finiteNumber, mediaRecord } from '../../media-native/
 import { assertComposition } from '../../media-native/src/composition-contract.js'
 import type { MediaComposition, CompositionScene } from '../../media-native/src/composition-contract.js'
 
-export type AudioGeneration = {kind:'tts'|'legacy';options:NarrationOptions}|{kind:'imported'}
+export type AudioGeneration = ({kind:'tts'|'legacy';options:NarrationOptions}|{kind:'imported'})&{autoTiming?:NarrationTiming}
 export interface StudioScene extends CompositionScene {
   speechPlaybackOrigin?:StudioSpeechPlaybackOrigin
   sourceSpeech?:SourceSpeechCandidate
@@ -51,7 +55,7 @@ export interface VideoDraft extends LayerContainer {
   reviewItems?:StudioReviewItem[]
   version: 1; id: string; ownerSessionId?:string; revision: number; title: string
   width: number; height: number; fps: number; music: boolean
-  tts?:NarrationOptions; style?:VideoOptions['style']; watermark?:VideoWatermark; templateName?:string
+  cardLayout?:VideoOptions['cardLayout'];narrationPacing?:VideoOptions['narrationPacing'];tts?:NarrationOptions; style?:VideoOptions['style']; watermark?:VideoWatermark; templateName?:string
   scenes: StudioScene[]; updatedAt: string
   cover?:VideoCoverOptions; coverExports?:CoverExport[]
   preparation:StudioPreparation
@@ -69,6 +73,7 @@ export interface StudioPreparation {notes:string;outline:string;artifactIds:stri
 export interface StudioAsset {artifactId: string; bytes: number; kind: 'video'|'audio'|'image'|'text'; modifiedAt: string}
 export interface StudioState {project: {id:string;name:string}; sessionId?:string; drafts: VideoDraft[]; assets: StudioAsset[]; theme:'light'|'dark';videoPreferences?:VideoPreferences;reusableExports?:Record<string,string>;snapshotProofs?:Record<string,string>}
 export interface StudioRequest {
+  cardTemplateId?:import('../../media-native/src/card-templates.js').CardTemplateId
   edit?:VideoEdit
   referenceId?:string;referenceAnalysis?:StudioReferenceAnalysis;timestampsSeconds?:number[];beforeNotes?:string
   reviewProposal?:StudioReviewProposal;reviewId?:string
@@ -78,7 +83,7 @@ export interface StudioRequest {
   speechModel?:'base'|'small'; anchors?:SentenceAnchor[]
   snapshotProof?:string
   splitSeconds?:number
-  operation:'describe-schema'|'read-document'|'compatibility'|'validate-edit'|'apply-edit'|'migrate-document'|'remove-reference'|'prepare-reference'|'read-reference'|'set-reference-analysis'|'apply-reference-notes'|'propose-review'|'adopt-review'|'dismiss-review'|'undo-review'|'split-scene'|'restore'|'recognize-source'|'read-source-speech'|'apply-source-captions'|'detach-source-captions'|'set-caption-translations'|'align-speech'|'read-speech'|'correct-speech'|'source'|'export-citations'|'list'|'create'|'read'|'delete'|'update'|'narrate'|'narrate-pending'|'check'|'export-captions'|'export-cover'|'read-material'|'suggest-focus'|'render'|'assets'|'inspect'|'attach'|'open'|'context'|'configure'|'save-template'
+  operation:'describe-template'|'describe-schema'|'read-document'|'compatibility'|'validate-edit'|'apply-edit'|'migrate-document'|'remove-reference'|'prepare-reference'|'read-reference'|'set-reference-analysis'|'apply-reference-notes'|'propose-review'|'adopt-review'|'dismiss-review'|'undo-review'|'split-scene'|'restore'|'recognize-source'|'read-source-speech'|'apply-source-captions'|'detach-source-captions'|'set-caption-translations'|'align-speech'|'read-speech'|'correct-speech'|'source'|'export-citations'|'list'|'create'|'read'|'delete'|'update'|'narrate'|'narrate-pending'|'check'|'export-captions'|'export-cover'|'read-material'|'suggest-focus'|'render'|'assets'|'inspect'|'attach'|'open'|'context'|'configure'|'save-template'
   templateName?:string; options?:VideoOptionOverrides
   draftId?: string; expectedRevision?: number; draft?: unknown; title?: string
   cover?:VideoCoverOptions
@@ -99,10 +104,12 @@ function closed(value:Record<string,unknown>,keys:readonly string[]):void {
 }
 export function assertStudioRequest(raw:unknown):StudioRequest {
   const value=mediaRecord(raw)
-  closed(value,['edit','operation','draftId','expectedRevision','draft','title','sceneId','artifactId','assetKind','ratePercent','templateName','options','provider','voice','captionFormat','segmentIndex','cover','forceRender','sourceRequest','speechModel','anchors','speechLanguage','sourceCues','translations','snapshotProof','splitSeconds','reviewProposal','reviewId','referenceId','referenceAnalysis','timestampsSeconds','beforeNotes'])
-  if(!['describe-schema','read-document','compatibility','validate-edit','apply-edit','migrate-document','remove-reference','prepare-reference','read-reference','set-reference-analysis','apply-reference-notes','propose-review','adopt-review','dismiss-review','undo-review','split-scene','restore','recognize-source','read-source-speech','apply-source-captions','detach-source-captions','set-caption-translations','align-speech','read-speech','correct-speech','source','export-citations','list','create','read','delete','update','narrate','narrate-pending','check','export-captions','export-cover','read-material','suggest-focus','render','assets','inspect','attach','open','context','configure','save-template'].includes(String(value.operation)))throw new TypeError('Unknown Studio operation.')
+  closed(value,['cardTemplateId','edit','operation','draftId','expectedRevision','draft','title','sceneId','artifactId','assetKind','ratePercent','templateName','options','provider','voice','captionFormat','segmentIndex','cover','forceRender','sourceRequest','speechModel','anchors','speechLanguage','sourceCues','translations','snapshotProof','splitSeconds','reviewProposal','reviewId','referenceId','referenceAnalysis','timestampsSeconds','beforeNotes'])
+  if(!['describe-template','describe-schema','read-document','compatibility','validate-edit','apply-edit','migrate-document','remove-reference','prepare-reference','read-reference','set-reference-analysis','apply-reference-notes','propose-review','adopt-review','dismiss-review','undo-review','split-scene','restore','recognize-source','read-source-speech','apply-source-captions','detach-source-captions','set-caption-translations','align-speech','read-speech','correct-speech','source','export-citations','list','create','read','delete','update','narrate','narrate-pending','check','export-captions','export-cover','read-material','suggest-focus','render','assets','inspect','attach','open','context','configure','save-template'].includes(String(value.operation)))throw new TypeError('Unknown Studio operation.')
   const result:StudioRequest={operation:value.operation as StudioRequest['operation']}
   if(result.operation==='describe-schema'){closed(value,['operation']);return result}
+  if(result.operation==='describe-template'){closed(value,['operation','cardTemplateId']);const definition=CARD_TEMPLATES.find(item=>item.id===value.cardTemplateId);if(!definition)throw new TypeError('CARD_TEMPLATE: Unknown template.');return {operation:'describe-template',cardTemplateId:definition.id}}
+  if(value.cardTemplateId!==undefined)throw new TypeError('cardTemplateId requires describe-template.')
   if(['read-document','compatibility','migrate-document','validate-edit','apply-edit'].includes(result.operation)){
     const edits=result.operation==='validate-edit'||result.operation==='apply-edit'
     closed(value,['operation','draftId','expectedRevision',...(edits?['edit']:[])])
@@ -175,7 +182,7 @@ export function assertStudioRequest(raw:unknown):StudioRequest {
   if(value.draft!==undefined)result.draft=value.draft
   return result
 }
-const sceneKeys=['id','title','label','narration','visualBrief','sources','durationSeconds','videoArtifactId','imageArtifactId','audioArtifactId','audioText','audioGeneration','audioDurationSeconds','sourceDurationSeconds','sourceStartSeconds','zoom','playbackRate','crop','bullets','endPolicy','effects','layout','voiceVolume','voiceMuted','voiceTiming','voiceSegments','captions','keepSourceAudio','sourceVolume','captionStyle','visualSegments','focusIntervals','citations','speechCandidate','speechAnchors','speechCaptions','speechLinks','showSceneNumber','sceneTemplate','captionDisplay','sourceSpeech','sourceCaptionBinding','layers','audioTracks','presentationWindow','speechPlaybackOrigin'] as const
+const sceneKeys=['cardSpec','id','title','label','narration','visualBrief','sources','durationSeconds','videoArtifactId','imageArtifactId','audioArtifactId','audioText','audioGeneration','audioDurationSeconds','sourceDurationSeconds','sourceStartSeconds','zoom','playbackRate','crop','bullets','endPolicy','effects','layout','voiceVolume','voiceMuted','voiceTiming','voiceSegments','captions','keepSourceAudio','sourceVolume','captionStyle','visualSegments','focusIntervals','citations','speechCandidate','speechAnchors','speechCaptions','speechLinks','showSceneNumber','sceneTemplate','captionDisplay','sourceSpeech','sourceCaptionBinding','layers','audioTracks','presentationWindow','speechPlaybackOrigin'] as const
 export function newStudioScene(id:string,title='新分镜'):StudioScene{return assertStudioScene({id,title,label:'',narration:'',visualBrief:'',sources:[],durationSeconds:8,sourceStartSeconds:0,zoom:1,playbackRate:1,bullets:[],endPolicy:'require-footage'})}
 export function assertPreparation(raw:unknown,scenes:StudioScene[]):StudioPreparation{
   const legacy=raw===undefined,value=mediaRecord(raw??{});closed(value,['notes','outline','artifactIds','sourceIds'])
@@ -206,7 +213,7 @@ export function assertStudioScene(raw:unknown):StudioScene {
   if(value.citations!==undefined){if(!Array.isArray(value.citations)||value.citations.length>12)throw new TypeError('At most twelve citations per scene.');result.citations=value.citations.map(assertSourceCitation)}
   if(value.audioGeneration!==undefined){
     const generation=mediaRecord(value.audioGeneration)
-    closed(generation,generation.kind==='imported'?['kind']:['kind','options'])
+    closed(generation,generation.kind==='imported'?['kind','autoTiming']:['kind','options','autoTiming'])
     if(generation.kind==='imported')result.audioGeneration={kind:'imported'}
     else if(generation.kind==='tts'||generation.kind==='legacy'){
       const options=mediaRecord(generation.options)
@@ -214,6 +221,7 @@ export function assertStudioScene(raw:unknown):StudioScene {
       result.audioGeneration={kind:generation.kind,options:assertNarrationOptions(options)}
     }
     else throw new TypeError('Invalid audio generation record.')
+    if(generation.autoTiming!==undefined)result.audioGeneration.autoTiming=assertNarrationTiming(generation.autoTiming)
   }
   if(value.sourceSpeech!==undefined)result.sourceSpeech=assertSourceCandidate(value.sourceSpeech)
   if(value.sourceCaptionBinding!==undefined)result.sourceCaptionBinding=assertSourceCaptionBinding(value.sourceCaptionBinding)
@@ -228,11 +236,11 @@ export function assertStudioScene(raw:unknown):StudioScene {
   return result
 }
 export function assertVideoDraft(raw:unknown):VideoDraft {
-  const value=mediaRecord(raw);closed(value,['version','id','ownerSessionId','revision','title','width','height','fps','music','style','watermark','templateName','tts','scenes','preparation','updatedAt','exports','cover','coverExports','layers','audioTracks','reviewItems','referenceRecords'])
+  const value=mediaRecord(raw);closed(value,['cardLayout','narrationPacing','version','id','ownerSessionId','revision','title','width','height','fps','music','style','watermark','templateName','tts','scenes','preparation','updatedAt','exports','cover','coverExports','layers','audioTracks','reviewItems','referenceRecords'])
   if(value.version!==1||!Array.isArray(value.scenes)||value.scenes.length>24)throw new TypeError('A Studio draft supports zero to twenty-four scenes.')
   const scenes=value.scenes.map(assertStudioScene)
   if(new Set(scenes.map(scene=>scene.id)).size!==scenes.length)throw new TypeError('Duplicate scene identity.')
-  const settings=assertComposition({title:value.title,width:value.width,height:value.height,fps:value.fps,music:value.music,style:value.style,watermark:value.watermark,templateName:value.templateName,scenes:scenes.length?scenes.map(scene=>({title:scene.title,durationSeconds:scene.durationSeconds})):[{title:'Preparation',durationSeconds:1}]})
+  const settings=assertComposition({title:value.title,cardLayout:value.cardLayout,narrationPacing:value.narrationPacing,width:value.width,height:value.height,fps:value.fps,music:value.music,style:value.style,watermark:value.watermark,templateName:value.templateName,scenes:scenes.length?scenes.map(scene=>({title:scene.title,durationSeconds:scene.durationSeconds})):[{title:'Preparation',durationSeconds:1}]})
   if(!Array.isArray(value.exports)||value.exports.length>30)throw new TypeError('Invalid export history.')
   const exports=value.exports.map(raw=>{const item=mediaRecord(raw);closed(item,['artifactId','revision','createdAt','durationSeconds','verificationArtifactId','fingerprint']);if(item.fingerprint!==undefined&&(typeof item.fingerprint!=='string'||!/^[a-f0-9]{64}$/.test(item.fingerprint)))throw new TypeError('Invalid export fingerprint.');return {artifactId:assertArtifactId(item.artifactId),...(item.fingerprint?{fingerprint:String(item.fingerprint)}:{}),...(item.verificationArtifactId?{verificationArtifactId:assertArtifactId(item.verificationArtifactId)}:{}),revision:finiteNumber(item.revision,'export revision',1,1_000_000,true),createdAt:studioText(item.createdAt,'export date',40),durationSeconds:finiteNumber(item.durationSeconds,'export duration',1,181)}})
   const coverExports=value.coverExports??[]
@@ -241,7 +249,7 @@ export function assertVideoDraft(raw:unknown):VideoDraft {
     const receipt=assertCoverReceipt({...item,type:'screenshot',contentType:'image/png'},width,height)
     return {...receipt,revision:finiteNumber(item.revision,'cover revision',1,1_000_000,true),createdAt:studioText(item.createdAt,'cover date',40),options:assertCoverOptions(item.options),...(item.actualTimestampSeconds===undefined?{}:{actualTimestampSeconds:finiteNumber(item.actualTimestampSeconds,'actual cover timestamp',0,1800)})}
   })
-  const result:VideoDraft={...(value.referenceRecords===undefined?{}:{referenceRecords:assertReferenceRecords(value.referenceRecords)}),...(value.reviewItems===undefined?{}:{reviewItems:assertStudioReviewItems(value.reviewItems)}),version:1,id:studioId(value.id),...(value.ownerSessionId===undefined?{}:{ownerSessionId:studioId(value.ownerSessionId)}),revision:finiteNumber(value.revision,'revision',1,1_000_000,true),title:settings.title,width:settings.width,height:settings.height,fps:settings.fps,music:settings.music,tts:assertNarrationOptions(value.tts??{}),style:settings.style,watermark:settings.watermark,...(settings.templateName?{templateName:settings.templateName}:{}),...(value.layers===undefined?{}:{layers:assertVisualLayers(value.layers)}),...(value.audioTracks===undefined?{}:{audioTracks:assertAudioLayers(value.audioTracks)}),scenes,preparation:assertPreparation(value.preparation,scenes),cover:assertCoverOptions(value.cover??{title:settings.title}),coverExports:covers,updatedAt:studioText(value.updatedAt,'update date',40),exports}
+  const result:VideoDraft={...(value.referenceRecords===undefined?{}:{referenceRecords:assertReferenceRecords(value.referenceRecords)}),...(value.reviewItems===undefined?{}:{reviewItems:assertStudioReviewItems(value.reviewItems)}),version:1,id:studioId(value.id),...(value.ownerSessionId===undefined?{}:{ownerSessionId:studioId(value.ownerSessionId)}),revision:finiteNumber(value.revision,'revision',1,1_000_000,true),title:settings.title,...(settings.cardLayout===undefined?{}:{cardLayout:settings.cardLayout}),...(settings.narrationPacing===undefined?{}:{narrationPacing:settings.narrationPacing}),width:settings.width,height:settings.height,fps:settings.fps,music:settings.music,tts:assertNarrationOptions(value.tts??{}),style:settings.style,watermark:settings.watermark,...(settings.templateName?{templateName:settings.templateName}:{}),...(value.layers===undefined?{}:{layers:assertVisualLayers(value.layers)}),...(value.audioTracks===undefined?{}:{audioTracks:assertAudioLayers(value.audioTracks)}),scenes,preparation:assertPreparation(value.preparation,scenes),cover:assertCoverOptions(value.cover??{title:settings.title.replace(/[\r\n]+/g," ")}),coverExports:covers,updatedAt:studioText(value.updatedAt,'update date',40),exports}
   assertLayerIdentities(result);return result
 }
 export function sameNarrationOptions(a:NarrationOptions,b:NarrationOptions):boolean {
@@ -262,7 +270,7 @@ export function sceneCoverage(scene:StudioScene,tts?:NarrationOptions):{required
   return {required:scene.durationSeconds,available,measured,gap:measured?Math.max(0,scene.durationSeconds-available):0,audioStale:Boolean((scene.narration||scene.audioText)&&(!scene.audioArtifactId||scene.audioText!==scene.narration))||Boolean(scene.audioArtifactId&&tts&&scene.audioGeneration&&scene.audioGeneration.kind!=='imported'&&!sameNarrationOptions(scene.audioGeneration.options,tts))}
 }
 export interface StudioIssue {
-  code:'layer-range'|'source-captions-stale'|'duration-unmeasured'|'speech-anchors'|'empty-draft'|'narration-stale'|'audio-duration'|'footage-gap'|'source-range'|'missing-visual'|'held-frame'|'asset-unavailable'|'asset-budget'|'encoding-unavailable'
+  code:'card-incomplete'|'card-source-stale'|'layer-range'|'source-captions-stale'|'duration-unmeasured'|'speech-anchors'|'empty-draft'|'narration-stale'|'audio-duration'|'footage-gap'|'source-range'|'missing-visual'|'held-frame'|'asset-unavailable'|'asset-budget'|'encoding-unavailable'
   severity:'error'|'warning'; segmentIndex?:number; message:string; sceneId?:string; artifactId?:string
 }
 export interface StudioReadiness {
@@ -278,6 +286,8 @@ export function draftReadiness(draft:VideoDraft):StudioReadiness {
   for(const scene of draft.scenes){
     const coverage=sceneCoverage(scene,draft.tts)
     const issue=(code:StudioIssue['code'],message:string,severity:StudioIssue['severity']='error')=>issues.push({code,severity,sceneId:scene.id,message:`${scene.title}：${message}`})
+    if(scene.cardSpec?.version===2)try{assertDetailedReady(scene.cardSpec)}catch(error){issue('card-incomplete',error instanceof Error?error.message:String(error))}
+    if(scene.cardSpec?.templateId==='metric/backdrop'&&scene.cardSpec.phase==='to-evidence'&&scene.cardSpec.holdSeconds+1.6>(scene.presentationWindow?.durationSeconds??scene.durationSeconds))issue('card-incomplete','请为数字退場后保留至少一秒依据阅读')
     if(sourceCaptionsStale(scene))issue('source-captions-stale','原声字幕的素材或剪裁/速度已改变，请重新应用或解除关联')
     if(usesStudioSpeech(scene)){try{speechScene(scene)}catch(error){issue('speech-anchors',error instanceof Error?error.message:String(error))}}
     if(scene.narration.trim()&&coverage.audioStale)pendingNarrationSceneIds.push(scene.id)
@@ -290,7 +300,7 @@ export function draftReadiness(draft:VideoDraft):StudioReadiness {
       if(segment.sourceStartSeconds>=(segment.sourceDurationSeconds??0))issue('source-range',prefix+'素材起点必须早于视频结束；请调整起点或更换素材')
       else if(gap>.05){if(scene.endPolicy==='hold')issue('held-frame',prefix+`已选择末帧定格 ${gap.toFixed(1)} 秒`,'warning');else issue('footage-gap',prefix+`需补录 ${gap.toFixed(1)} 秒或明确选择定格`)}
     }
-    if(!sceneVisuals(scene).length&&!scene.bullets.length)issue('missing-visual','需要画面素材或标题卡内容')
+    if(!sceneVisuals(scene).length&&!scene.bullets.length&&!scene.cardSpec)issue('missing-visual','需要画面素材或标题卡内容')
     const endSeconds=startSeconds+scene.durationSeconds
     scenes.push({sceneId:scene.id,startSeconds,endSeconds,availableSeconds:coverage.available,gapSeconds:coverage.gap,measured:coverage.measured});startSeconds=endSeconds
   }
@@ -298,11 +308,27 @@ export function draftReadiness(draft:VideoDraft):StudioReadiness {
   for(const scene of draft.scenes)for(const message of layerProblems(scene,scene.durationSeconds))issues.push({code:'layer-range',severity:'error',sceneId:scene.id,message})
   return {draftId:draft.id,revision:draft.revision,ready:!issues.some(issue=>issue.severity==='error'),durationSeconds:startSeconds,pendingNarrationSceneIds,scenes,issues}
 }
-export function narrationSceneDuration(scene:StudioScene,audioSeconds:number,fps:number):number {
+export function narrationSceneDuration(scene:StudioScene,audioSeconds:number,fps:number,tailFrames=0):number {
   // Independent edited captions must survive a shorter regenerated recording.
   const voice=scene.voiceTiming||scene.voiceSegments?Math.max(0,...narrationWindows({...scene,durationSeconds:60},audioSeconds).map(t=>t.startSeconds+t.durationSeconds)):audioSeconds+1
   if(scene.voiceTiming||scene.voiceSegments)narrationWindows({...scene,durationSeconds:60},audioSeconds)
-  return Math.ceil(Math.max(1,voice,...(scene.captions??[]).map(cue=>cue.endSeconds),...(scene.layers??[]).map(v=>v.startSeconds+v.durationSeconds),...(scene.audioTracks??[]).map(v=>v.startSeconds+v.durationSeconds))*fps)/fps
+  return Math.ceil(Math.max(1,voice+tailFrames/fps,...(scene.captions??[]).map(cue=>cue.endSeconds),...(scene.layers??[]).map(v=>v.startSeconds+v.durationSeconds),...(scene.audioTracks??[]).map(v=>v.startSeconds+v.durationSeconds))*fps-1e-7)/fps
+}
+/** Only a matching host snapshot is automatic. Any changed window or segment is a manual cut. */
+export function applyNarrationPacing(scene:StudioScene,audioSeconds:number,fps:number,pacing:VideoOptions['narrationPacing']):NarrationTiming|undefined {
+ finiteNumber(fps,'fps',12,30,true);finiteNumber(audioSeconds,'audio duration',.01,180)
+ const previous=scene.audioGeneration?.autoTiming,automatic=Boolean(previous&&scene.voiceTiming&&(['startSeconds','sourceStartSeconds','durationSeconds','playbackRate'] as const).every(key=>scene.voiceTiming![key]===previous[key]))
+ if(scene.voiceSegments!==undefined||scene.voiceTiming&&!automatic){scene.durationSeconds=Math.max(scene.durationSeconds,narrationSceneDuration(scene,audioSeconds,fps));return undefined}
+ if(pacing==='compact'){
+  if(audioSeconds<.1)throw new Error('STUDIO_NARRATION_PACING: 紧凑旁白至少需要 0.1 秒音频，请选择标准节奏。')
+  const timing=assertNarrationTiming({startSeconds:2/fps,sourceStartSeconds:0,durationSeconds:audioSeconds,playbackRate:1})
+  scene.voiceTiming=timing;delete scene.voiceSegments
+  scene.durationSeconds=narrationSceneDuration(scene,audioSeconds,fps,2)
+  return {...timing}
+ }
+ delete scene.voiceTiming;delete scene.voiceSegments
+ scene.durationSeconds=narrationSceneDuration(scene,audioSeconds,fps)
+ return undefined
 }
 export function draftProblems(draft:VideoDraft):string[] {
   return draftReadiness(draft).issues.filter(issue=>issue.severity==='error').map(issue=>issue.message)
@@ -310,5 +336,5 @@ export function draftProblems(draft:VideoDraft):string[] {
 export function draftComposition(draft:VideoDraft):MediaComposition {
   const issues=draftProblems(draft);if(issues.length)throw new Error(issues.join('\n'))
   const scenes=draft.scenes.map(scene=>{const value={...speechScene(scene)} as unknown as Record<string,unknown>;for(const key of ['id','visualBrief','sources','citations','audioText','audioGeneration','audioDurationSeconds','sourceDurationSeconds','endPolicy','speechCandidate','speechAnchors','speechCaptions','speechLinks','sourceSpeech','sourceCaptionBinding','speechPlaybackOrigin'])delete value[key];return value})
-  return assertComposition({title:draft.title,width:draft.width,height:draft.height,fps:draft.fps,music:draft.music,tts:draft.tts,style:draft.style,watermark:draft.watermark,templateName:draft.templateName,layers:draft.layers,audioTracks:draft.audioTracks,scenes})
+  return assertComposition({title:draft.title,cardLayout:draft.cardLayout,narrationPacing:draft.narrationPacing,width:draft.width,height:draft.height,fps:draft.fps,music:draft.music,tts:draft.tts,style:draft.style,watermark:draft.watermark,templateName:draft.templateName,layers:draft.layers,audioTracks:draft.audioTracks,scenes})
 }

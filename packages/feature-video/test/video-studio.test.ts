@@ -25,10 +25,52 @@ import {VideoStudioStore} from '../src/studio-store.js'
 import {VideoStudioService} from '../src/studio-service.js'
 import type {VideoDraft} from '../src/studio-contract.js'
 import type {StudioKernel} from '../src/studio-service.js'
-import {assertStudioRequest,assertVideoDraft,sameStudioDraftContent,narrationSceneDuration,draftComposition,draftReadiness,sceneCoverage,newStudioScene} from '../src/studio-contract.js'
+import {assertStudioRequest,assertVideoDraft,sameStudioDraftContent,narrationSceneDuration,applyNarrationPacing,draftComposition,draftReadiness,sceneCoverage,newStudioScene} from '../src/studio-contract.js'
 import {assertComposition,compositionAssets} from '../../media-native/src/composition-contract.js'
 function sceneDraft(store:VideoStudioStore,title:string){const draft=store.create(title);draft.scenes.push(newStudioScene('first-scene'));return draft}
 function fixture(){const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-studio-test-'));fs.mkdirSync(path.join(root,'artifacts'));return {root,store:new VideoStudioStore(root,'fixture-session'),close:()=>fs.rmSync(root,{recursive:true,force:true})}}
+test('card image inspection exposes actual pinned identity; changed source before or after encode blocks and rolls back only new exports',async()=>{
+ const f=fixture();try{
+  const directory=path.join(f.root,'artifacts'),file=path.join(directory,'source.png'),data=Buffer.from('controlled native decode fixture');fs.writeFileSync(file,data);fs.writeFileSync(path.join(directory,'old.mp4'),'old export')
+  const kernel:StudioKernel={projectStore:{active:()=>({id:'p',name:'P',directory:f.root})},execute:async()=>({}),recordingController:{narrate:async()=>({}),processArtifact:async raw=>{const r=raw as {action:string;width:number;height:number;fps:number};return r.action==='media.image.inspect'?{kind:'image',contentType:'image/png',width:1,height:1,pixels:1,bytes:data.length,canDecode:true}:{kind:'encoding',width:r.width,height:r.height,fps:r.fps,videoCodec:'avc',audioCodec:'aac',videoSupported:true,audioSupported:true}},compose:async()=>{fs.writeFileSync(path.join(directory,'new.mp4'),'new');fs.writeFileSync(path.join(directory,'new-report.json'),'report');fs.writeFileSync(file,'changed during encode');return {artifactId:'new.mp4',verificationArtifactId:'new-report.json',durationSeconds:8}}}}
+  const service=new FixtureVideoStudioService(kernel),inspected=await service.execute({operation:'inspect',artifactId:'source.png',assetKind:'image'}) as {source:{artifactId:string;sha256:string}}
+  assert.deepEqual(inspected.source,{artifactId:'source.png',sha256:crypto.createHash('sha256').update(data).digest('hex')})
+  let d=sceneDraft(f.store,'Pinned source');d.scenes[0].imageArtifactId='source.png';d.scenes[0].cardSpec={version:2,templateId:'evidence/highlight',highlights:[{source:inspected.source,rects:[{x:.1,y:.1,width:.2,height:.2}],style:'invert',name:'重点',startSeconds:0,endSeconds:4}]};d=f.store.update(d.id,d.revision,d)
+  const before=fs.readdirSync(directory).sort();await assert.rejects(service.execute({operation:'render',draftId:d.id,expectedRevision:d.revision}),/STALE/);assert.deepEqual(fs.readdirSync(directory).sort(),before);assert.equal(fs.readFileSync(path.join(directory,'old.mp4'),'utf8'),'old export');assert.equal(f.store.read(d.id).exports.length,0)
+  const checked=await service.execute({operation:'check',draftId:d.id,expectedRevision:d.revision}) as ReturnType<typeof draftReadiness>;assert.equal(checked.ready,false);assert.ok(checked.issues.some(issue=>issue.code==='card-source-stale'));assert.equal(f.store.read(d.id).revision,d.revision)
+ }finally{f.close()}
+})
+test('compact playback uses measured source time and preserves manual captions, cuts and explicit silence',()=>{
+ const scene=newStudioScene('compact'),timing=applyNarrationPacing(scene,2,30,'compact')!
+ assert.deepEqual(timing,{startSeconds:2/30,sourceStartSeconds:0,durationSeconds:2,playbackRate:1});assert.equal(scene.durationSeconds,64/30)
+ scene.audioGeneration={kind:'imported',autoTiming:timing}
+ const next=applyNarrationPacing(scene,3,30,'compact')!;assert.equal(next.durationSeconds,3);assert.equal(scene.durationSeconds,94/30,'A matching automatic window expands with regenerated audio')
+ scene.audioGeneration={kind:'imported',autoTiming:next};scene.captions=[{startSeconds:0,endSeconds:5,text:'人工字幕'}]
+ applyNarrationPacing(scene,1,30,'compact');assert.equal(scene.durationSeconds,5)
+ const cut={...newStudioScene('manual'),voiceTiming:{startSeconds:.4,sourceStartSeconds:.6,durationSeconds:.8,playbackRate:1}},original=structuredClone(cut.voiceTiming)
+ assert.equal(applyNarrationPacing(cut,2,30,'compact'),undefined);assert.deepEqual(cut.voiceTiming,original);assert.equal(cut.durationSeconds,8,'Manual card duration is not shortened during audio replacement')
+ assert.throws(()=>applyNarrationPacing(cut,.5,30,'compact'),/源区间/);assert.deepEqual(cut.voiceTiming,original)
+ const silent={...newStudioScene('silent'),voiceSegments:[]};applyNarrationPacing(silent,2,30,'compact');assert.deepEqual(silent.voiceSegments,[]);assert.equal(silent.voiceTiming,undefined)
+ assert.throws(()=>applyNarrationPacing(newStudioScene('short'),.05,30,'compact'),/0.1/)
+})
+test('host generation and audio import apply compact pacing, protect auto receipts and retain manual playback on replacement',async()=>{
+ const f=fixture();try{
+  fs.writeFileSync(path.join(f.root,'artifacts','import.wav'),'temporary fixture')
+  let duration=2,serial=0,draft=sceneDraft(f.store,'Compact service');draft.narrationPacing='compact';draft.scenes[0].narration='原始脚本';draft=f.store.update(draft.id,draft.revision,draft)
+  const service=new FixtureVideoStudioService({projectStore:{active:()=>({id:'p',name:'P',directory:f.root})},execute:async()=>({}),recordingController:{narrate:async()=>({artifactId:`speech-${++serial}.wav`,durationSeconds:duration}),compose:async()=>({}),processArtifact:async()=>({durationSeconds:duration,tracks:[{type:'audio',canDecode:true}]})}})
+  const narrate=async()=>{const result=await service.execute({operation:'narrate',draftId:draft.id,expectedRevision:draft.revision,sceneId:draft.scenes[0].id,provider:'local-matcha'}) as {draft:VideoDraft};draft=result.draft}
+  await narrate();assert.equal(draft.scenes[0].voiceTiming?.startSeconds,2/draft.fps);assert.equal(draft.scenes[0].audioDurationSeconds,2)
+  duration=3;await narrate();assert.equal(draft.scenes[0].voiceTiming?.durationSeconds,3,'Regeneration must not retain a shorter automatic window')
+  const changed=structuredClone(draft);changed.scenes[0].audioGeneration!.autoTiming!.durationSeconds=1
+  draft=f.store.update(draft.id,draft.revision,changed);assert.equal(draft.scenes[0].audioGeneration?.autoTiming?.durationSeconds,3,'Untrusted edits cannot relabel a cut as automatic')
+  draft.scenes[0].voiceTiming={startSeconds:.3,sourceStartSeconds:.5,durationSeconds:1,playbackRate:1};draft=f.store.update(draft.id,draft.revision,draft)
+  const manual=structuredClone(draft.scenes[0].voiceTiming);await narrate();assert.deepEqual(draft.scenes[0].voiceTiming,manual);assert.equal(draft.scenes[0].audioGeneration?.autoTiming,undefined)
+  draft=await service.execute({operation:'attach',draftId:draft.id,expectedRevision:draft.revision,sceneId:draft.scenes[0].id,artifactId:'import.wav',assetKind:'audio'}) as VideoDraft;assert.deepEqual(draft.scenes[0].voiceTiming,manual)
+  draft.scenes[0].voiceTiming=undefined;draft=f.store.update(draft.id,draft.revision,draft)
+  draft=await service.execute({operation:'attach',draftId:draft.id,expectedRevision:draft.revision,sceneId:draft.scenes[0].id,artifactId:'import.wav',assetKind:'audio'}) as VideoDraft
+  assert.equal(draft.scenes[0].audioGeneration?.kind,'imported');assert.equal(draft.scenes[0].voiceTiming?.durationSeconds,3);assert.equal(draft.scenes[0].audioGeneration?.autoTiming?.startSeconds,2/draft.fps)
+ }finally{f.close()}
+})
 test('Studio drafts persist per Project and reject conflicting GUI or Agent revisions',()=>{
   const a=fixture(),b=fixture();try{const draft=sceneDraft(a.store,'项目视频');draft.scenes[0].narration='尚未制作的旁白。';const updated=a.store.update(draft.id,1,draft);assert.equal(updated.revision,2);assert.equal(new VideoStudioStore(a.root).read(draft.id).scenes[0].narration,draft.scenes[0].narration);assert.throws(()=>a.store.update(draft.id,1,draft),/STUDIO_CONFLICT/);assert.throws(()=>b.store.read(draft.id),/ENOENT/);assert.throws(()=>a.store.read('../outside'),/identity/);fs.symlinkSync(path.join(a.root,'video-studio',draft.id+'.json'),path.join(a.root,'video-studio','linked.json'));assert.throws(()=>a.store.read('linked'),/Invalid Studio/)}finally{a.close();b.close()}
 })

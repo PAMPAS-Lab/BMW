@@ -1,0 +1,41 @@
+{
+  "checkedOn": "2026-10-09",
+  "sourceSha256": "f676a8b05e5d47c7d473379864a5a01d7c0409feaadc3ba319a965857a2b674a",
+  "scope": "Codex visually inspected all 14 contact sheets and selected native-size frames; observations are not full video/audio or news/mathematical fact verification.",
+  "viewedSheets": [
+    "sheet-01.jpg",
+    "sheet-02.jpg",
+    "sheet-03.jpg",
+    "sheet-04.jpg",
+    "sheet-05.jpg",
+    "sheet-06.jpg",
+    "sheet-07.jpg",
+    "sheet-08.jpg",
+    "sheet-09.jpg",
+    "sheet-10.jpg",
+    "sheet-11.jpg",
+    "sheet-12.jpg",
+    "sheet-13.jpg",
+    "sheet-14.jpg"
+  ],
+  "fullSizeDetailSeconds": [
+    11.5,
+    42.5,
+    53.5,
+    66.5,
+    96.5,
+    97.5,
+    98,
+    119,
+    120
+  ],
+  "samplesReviewed": 265,
+  "observationGroups": 26,
+  "allSampleTimesHaveExactlyOneObservationGroup": true,
+  "limitations": [
+    "Half-second sampling can miss shorter events",
+    "No precise cuts or motion curves",
+    "No full audio listening/ASR/OCR",
+    "No inferred original authoring tool, generation method or continuous pointer track"
+  ]
+}

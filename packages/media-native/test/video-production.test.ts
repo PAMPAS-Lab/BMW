@@ -5,6 +5,10 @@ import {reviewSceneText,assertCompositionText} from '../src/media/composition-te
 import {assertVisualEffectWindow,assertFocusIntervals,focusFraming,visibleFocusIntervals} from '../src/focus-contract.js'
 import {assertRecordingEvents,recordingEvents,suggestRecordingFocus} from '../src/recording-contract.js'
 import {visualAtTime,fitVisualSegments} from '../src/visual-segments.js'
+import {CARD_TEMPLATES,assertCardSpec,cardMetricText,cardPaintScene} from '../src/card-templates.js'
+import {assertDetailedReady,verifyCardSources,cardImageAssets} from '../src/card-details.js'
+import {readingCrop} from '../src/media/card-details-paint.js'
+import crypto from 'node:crypto'
 import {captionDocument} from '../src/caption-export.js'
 import {exportProjectText} from '../src/text-export.js'
 import {mixSourceAudioChunk} from '../src/source-audio.js'
@@ -17,6 +21,76 @@ import { assertNarrationReceipt,assertComposition, compositionAssets, compositio
 import { assertNarration } from '../src/narration-contract.js'
 import { ArtifactJobIO } from '../src/artifact-job-io.js'
 const scene = { title: '介绍', durationSeconds: 10, videoArtifactId: 'page.webm' }
+test('detailed cards pin actual source bytes, reject changed sources, bound geometry and keep dedicated assets in decode budget',async()=>{
+ const data=new TextEncoder().encode('actual source bytes'),source={artifactId:'source.png',sha256:crypto.createHash('sha256').update(data).digest('hex')},rect={x:.1,y:.2,width:.4,height:.15}
+ const spec=assertCardSpec({version:2,templateId:'evidence/highlight',reading:{mode:'whole-to-detail',targets:[{source,rect,name:'原句'}],returnToWhole:true},highlights:[{source,rects:[rect],name:'三行之一',style:'invert',startSeconds:1,endSeconds:4}]})
+ assert.equal(spec.version,2);if(spec.version!==2)return
+ assertDetailedReady(spec);await verifyCardSources([spec],()=>data);await assert.rejects(verifyCardSources([spec],()=>new Uint8Array([1])),/STALE/)
+ assert.throws(()=>assertCardSpec({...spec,reading:{mode:'whole-to-detail',targets:[{source,rect:{...rect,x:.9},name:'bad'}],returnToWhole:false}}),/源图/)
+ assert.throws(()=>assertCardSpec({...spec,highlights:[{source,rects:[rect,rect,rect,rect],name:'bad',style:'invert',startSeconds:0,endSeconds:1}]}),/数量/)
+ assert.throws(()=>assertComposition({title:'x',scenes:[{title:'x',durationSeconds:5,imageArtifactId:'other.png',cardSpec:spec}]}),/更换/)
+ assert.throws(()=>assertComposition({title:'x',scenes:[{title:'x',durationSeconds:5,imageArtifactId:'source.png',zoom:1.2,cardSpec:spec}]}),/手工/)
+ const quote=assertCardSpec({version:2,templateId:'evidence/person-quote',quote:{excerpt:'可核对原句',translation:'Editorial translation',attribution:'明确作者与来源',display:'staged'},person:{artifactId:'portrait.png',name:'测试人物',role:'受控素材',layout:'corner'}})
+ assert.equal(quote.version,2);if(quote.version!==2)return
+ assertDetailedReady(quote);assert.deepEqual(cardImageAssets(quote),['portrait.png'])
+ const composition=assertComposition({title:'x',scenes:[{title:'x',durationSeconds:5,imageArtifactId:'source.png',cardSpec:quote}]});assert.deepEqual(compositionAssets(composition),['source.png','portrait.png'])
+ assert.throws(()=>assertDetailedReady(assertCardSpec({version:2,templateId:'evidence/translation',quote:{excerpt:'',translation:'',attribution:'',display:'simultaneous'}}) as Extract<typeof quote,{version:2}>),/INCOMPLETE/)
+})
+test('reading recipes keep whole/detail dwell and bounded scale; range semantics reject invented proportion and invalid ordering',()=>{
+ const source={artifactId:'source.png',sha256:'a'.repeat(64)},base={x:0,y:0,width:1,height:1},reading={mode:'whole-to-detail' as const,targets:[{source,rect:{x:.1,y:.3,width:.25,height:.08},name:'原句'}],returnToWhole:true}
+ assert.deepEqual(readingCrop(reading,'source.png',base,0,9),base)
+ const detail=readingCrop(reading,'source.png',base,4,9);assert.ok(detail.width>=.25&&detail.height>=.25);assert.deepEqual(readingCrop(reading,'source.png',base,8,9),base)
+ assert.deepEqual(readingCrop(reading,'other.png',base,4,9),base)
+ const numeric={mode:'numeric',axisLabel:'实测范围',minimum:-10,maximum:20,start:-5,end:5,thresholds:[0,10],unit:'s',condition:'真实测量条件'}
+ assertCardSpec({version:2,templateId:'diagram/range',range:numeric})
+ for(const patch of [{maximum:-10},{start:10,end:0},{thresholds:[10,0]},{thresholds:[30]},{fakeScale:1}])assert.throws(()=>assertCardSpec({version:2,templateId:'diagram/range',range:{...numeric,...patch}}))
+ assertCardSpec({version:2,templateId:'diagram/range',range:{mode:'symbolic',axisLabel:'能力范围',regionLabel:'已实现',thresholdLabels:['目标'],condition:'示意，不代表实测进度'}})
+ assert.throws(()=>assertCardSpec({version:2,templateId:'metric/backdrop',value:1.234,decimals:2,unit:'%',phase:'hold',holdSeconds:2}),/小数位/)
+})
+test('news layout rejects unsupported shapes and misleading coercion and checks its real text budget',()=>{
+ const base={title:'栏目标题',cardLayout:'news',scenes:[{title:'三个观点',durationSeconds:6,bullets:['一','二','三'],cardSpec:{version:1,templateId:'points/three'}}]}
+ const measure={font:'',measureText(text:string){const size=Number(this.font.match(/(\d+)px/)?.[1]??24);return {width:Array.from(text).length*size}}}
+ for(const [width,height]of [[1280,720],[720,1280]]){
+  const composition=assertComposition({...base,width,height});assert.equal(composition.cardLayout,'news');assertCompositionText(measure,composition)
+  assert.throws(()=>assertCompositionText(measure,{...composition,title:'长\n'.repeat(40)}),'Headline must fit its reserved region')
+ }
+ for(const patch of [{title:''},{width:720,height:720},{cardLayout:['news']},{cardLayout:{toString:()=> 'news'}},{narrationPacing:['compact']},{narrationPacing:'fast'}])assert.throws(()=>assertComposition({...base,...patch}))
+ const legacy=assertComposition({title:'旧版',scenes:[scene]});assert.equal(Object.hasOwn(legacy,'cardLayout'),false);assert.equal(Object.hasOwn(legacy,'narrationPacing'),false)
+})
+test('eight card categories admit their actual assets and reject unsupported content without dropping it',()=>{
+ const inputs=[
+  {templateId:'title/basic',bullets:['副标题']},
+  {templateId:'points/three',bullets:['一','二','三']},
+  {templateId:'comparison/two',bullets:['左','右']},
+  {templateId:'metric/hero',value:722,decimals:0,unit:'篇'},
+  {templateId:'evidence/screenshot',imageArtifactId:'source.png',bullets:['说明']},
+  {templateId:'demo/recording',videoArtifactId:'screen.webm'},
+  {templateId:'diagram/image',imageArtifactId:'diagram.png'},
+  {templateId:'media/sequence',visualSegments:[{imageArtifactId:'one.png',durationSeconds:2},{videoArtifactId:'two.mp4',durationSeconds:2}]}
+ ]
+ assert.equal(new Set(CARD_TEMPLATES.map(item=>item.category)).size,8)
+ for(const input of inputs){const {templateId,value,decimals,unit,...content}=input;const cardSpec={version:1,templateId,...(value===undefined?{}:{value,decimals,unit})};const result=assertComposition({title:'Cards',scenes:[{title:'测试',durationSeconds:4,...content,cardSpec}]}).scenes[0];assert.deepEqual(result.cardSpec,cardSpec)}
+ const make=(templateId:string,content:object={})=>assertComposition({title:'Invalid',scenes:[{title:'x',durationSeconds:4,cardSpec:{version:1,templateId},...content}]})
+ assert.throws(()=>make('points/three',{bullets:['一','二']}),/恰好三项/)
+ assert.throws(()=>make('comparison/two',{bullets:['一','二','三']}),/恰好两项/)
+ assert.throws(()=>make('title/basic',{imageArtifactId:'source.png'}),/确认转换/)
+ assert.throws(()=>make('demo/recording',{imageArtifactId:'source.png'}),/录屏视频/)
+ assert.throws(()=>make('diagram/image',{videoArtifactId:'clip.mp4'}),/一张图片/)
+ assert.throws(()=>make('evidence/screenshot'),/实际画面/)
+ assert.throws(()=>make('points/three',{bullets:['一','二','三'],sceneTemplate:{kind:'summary'}}),/不能同时/)
+})
+test('closed card presets retain exact numeric representation and seek on original scene clocks',()=>{
+ const metric=assertCardSpec({version:1,templateId:'metric/hero',value:722,decimals:0,unit:'篇',motion:'count-up'})
+ assert.equal(metric.templateId,'metric/hero');if(metric.templateId!=='metric/hero')throw new Error('metric expected')
+ assert.equal(cardMetricText(metric,0),'0篇');assert.equal(cardMetricText(metric,.6),'361篇');assert.equal(cardMetricText(metric,1.2),'722篇');assert.equal(cardMetricText(metric,50),'722篇')
+ for(const patch of [{value:-1},{value:Infinity},{value:1000000000},{value:1.234,decimals:2},{value:1.2,decimals:0},{unit:'123456789'},{motion:'reveal-items'},{html:'<script>'},{version:2}])assert.throws(()=>assertCardSpec({...metric,...patch}))
+ assert.throws(()=>assertCardSpec({version:1,templateId:'title/basic',motion:'count-up'}),/不支持/)
+ const first=assertComposition({title:'Reveal',scenes:[{title:'三项',durationSeconds:8,bullets:['一','二','三'],cardSpec:{version:1,templateId:'points/three',motion:'reveal-items'}}]}).scenes[0]
+ const continuation={...first,durationSeconds:4,presentationWindow:{originId:'first',startSeconds:4,durationSeconds:8,musicIndex:1,sceneNumber:1,sceneCount:1}}
+ assert.deepEqual(cardPaintScene(first).bulletRevealSeconds,[0,1.5,3]);assert.deepEqual(cardPaintScene(continuation).bulletRevealSeconds,[0,1.5,3])
+ assert.equal(scenePlaybackClock(continuation,1,2).startSeconds,4)
+ assert.equal(first.sceneTemplate,undefined,'Rendering does not persist an alternate authority')
+})
 test('seekable composition validates Project IDs, bounds and real narration assets', () => {
   const composition = assertComposition({title:'产品介绍',scenes:[scene,{...scene,title:'下一段',durationSeconds:20}]})
   assert.equal(compositionDuration(composition),30); assert.deepEqual(compositionAssets(composition),['page.webm'])

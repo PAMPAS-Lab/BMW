@@ -179,6 +179,16 @@ media-native 增加仅供宿主消费的 `processArtifact({action:"media.speech.
 
 `sceneTemplate` 是固定版式数据：summary 用三条要点和无画面素材的标题卡，comparison 用两项观点和无画面素材的标题卡，screenshot 用一段现有画面和一条说明。可选 accentColor/backgroundColor/textColor 为固定 #RRGGBB；emphasisIndex 为 0..2。GUI 提供版式、配色和重点选择；内容数量/素材不符合模板时阻止消费。标题卡模板不显示占位大数字，底部页码仍受 showSceneNumber 开关控制。模板不改变原素材、旁白或字幕，不接受 HTML/脚本或自由轨道。
 
+原生卡片目录保持标题、要点、对比、数字、证据、演示、图解、素材八类。基础 CardSpec v1 使用九个固定模板（含兼容列表），新增 CardSpec v2 的证据阅读、原句重点、原文/译文、人物引述、背景数字、关键词、共同目标和范围关系，图解图片可选升级为 v2 阅读配方。目录、闭合参数 Schema、GUI、原生预览与导出共用 media-native 的 card-templates/card-details 契约；不接受用户代码、任意组件或隐藏 layer。describe-schema 发布八类摘要与 simple.cards/3，describe-template 按所选模板懒返回该类变体与其参数。图像 inspect 返回实际 Artifact/SHA-256，模型仍只调用唯一 browser。
+
+阅读配方固定整页→重点、局部→全貌或有限顺序阅读，最多三处（译文/人物版最多一处），自动分配停留及有界过渡；不覆盖手工 focus/zoom。重点最多三组，每组最多三行源图矩形，支持框线、底色及实际已绘源像素反白。源坐标跟随同一裁切/阅读变换，人物/身份/译文为固定槽；目标属于实际源 Artifact/哈希，换图拒绝沿用旧框，同名文件变化会在预览、就绪检查、编码及提交后校验失败。人物及节点专用图也进入 Project 素材引用、解码和总预算。原句/译文分别最多 160 字符，明确译文和引述来源；一个人物图、姓名 32/身份 64 字符，两种固定位置，不自动抠图。未填专用内容允许编辑，导出拒绝空原句、缺来源、缺人物或不完整图解。横竖屏文字放不下时拒绝导出，不静默截断。
+
+背景数字保留精确非负数/两位小数/八字符单位规则，最多一张静态依据；大字→依据读取原镜头表现时钟，退场后至少一秒阅读。关键词复用 scene.title，最多 20 字符，整句淡入/擦入，不创建逐字对象。共同目标固定二至三个对象和一个目标，标签或图片、关系 24 字符，节点可逐项出现；范围关系数值模式严格校验轴界、区域及至多两个递增阈值，符号模式明确示意/非比例，须填写轴含义及条件。复杂公式、通用图表、真实连续指针轨迹、3D 和任意 HTML 仍不在契约内。
+
+GUI 先显示八类，更多表达按四个有变体的类别折叠；所选变体只显示必要专用槽及一个阅读/重点折叠区。真实预览框选将鼠标范围反算到源坐标、计算真实哈希，重点可命名、增行、删除、调序和修改有限秒数。专用内容沿 owner/revision CAS 与签名撤销保存，错误输入保留，Esc 取消；转换提示关闭的专用表现，Project 原文件保留。时序为估算/手工秒数，新增配方不承诺逐词 ASR 或自动跟随句锚点；已有按句 focus 入口保持独立。一个旁白段落可配既有 visualSegments，多画面不要求重复 TTS。整镜头切割保留阅读/重点/计数/退场原时钟，分配当前来源的目标，无目标的证据子段回到基础证据，旁白及字幕不重写。
+
+文档含 v2 专用卡显式写为 2.2；基础卡/全片新设置/自动旁白回执仍为 2.1，其余旧内容为 2.0，旧版本明确拒绝新版本字段。内容签名含所有专用槽及素材，缓存按实际内容/文件检查；源变化或 CAS 冲突仅清理本次新成片和报告，旧草稿/成片保留。原生验收覆盖横竖屏新增变体、真实红→青反白像素、源变化回滚、鼠标框选/SHA、撤销/重做、译文保存及实际 MP4。OpenAI 官方博客样片使用真实公开截图/录屏、本地旁白及编辑示意图，增加阅读、反白、译文、背景数字、关键词和共同目标；署名仅为 OpenAI，未构造个人引述。字幕为句级估算；隔离测试不代表付费模型或生产 Profile 覆盖。
+
 专项验收：`scripts/studio-next-smoke.ts` 使用临时 profile/Project、实际本地英文 TTS 视频和 Whisper base，验证试听/校正/人工译文保留、Assistant 路由、预览位置与属性同步、模板撤销重做、关键帧、双语 SRT/VTT、横屏/竖屏预览与实际 MP4 像素一致性、溢出失败清理。可通过 `BMW_STUDIO_SOURCE` 复制既有公开视频到临时 Project 验证 ASR；不写入原文件。此自动夹具不证明人工转写准确率，也不证明付费模型翻译质量。
 
 ## Project 来源与引用
@@ -194,6 +204,10 @@ Project sources/catalog.json 保存 Schema v1 的页面 URL、获取记录、正
 准备页的「网页来源、正文范围与引用」展开区提供页面与正文范围选择、来源详情、原文、候选确认、事件时间、获取和已保存素材预览，默认折叠以保留笔记、大纲和素材入口。preparation.sourceIds 关联此次视频的来源。原文选区可引用到指定分镜；每分镜最多十二条 citations，包含 sourceId/acquisitionId、UTF16 startCharacter/endCharacter/quote、kind=fact/opinion、claim、conflict=pending/conflicting 和 eventAt。更新与导出均核对引用等于保存原文的准确子串。GUI 可以移除引用，沿用保存、撤销和版本冲突。来源/引用元数据不进入合成或旁白绑定，不使成片签名或未改旁白失效。
 
 export-citations 使用 draftId/expectedRevision 创建 Project JSON 清单，最多 512 KiB，返回原文范围、URL、原文 Artifact/哈希、发表/采集/事件时间、获取状态、已有媒体范围/证明 ID 与当前文件可用性。fact 表示引用用途，factChecking 保留 pending；冲突不自动变为已核查。GUI 提供下载入口，导出不修改草稿历史。外部网站质量、B站复测和点评样片单独实测，不能由受控 fixture 推断。
+
+资讯布局通过可选 `cardLayout: standard|news` 保存于全片参数；旧内容缺省不写入新值。news 仅支持 16:9/9:16，使用全片标题（最多三行）、顶部文字品牌、固定卡内标题/内容区域和原字幕，隐藏旧编号与进度条；标准布局保持原行为。新参数贯通命名模板、configure、Studio 预览、composition、直接成片恢复和 2.1 文档；2.0 拒绝这些新字段。全片标题的实际绘制框可点击定位原全片标题控件，不修改 scene.title。多行视频标题保留，自动封面标题将换行转为空格，显式封面不改。共享排版校验检查全片标题与卡片区域；资讯品牌固定在顶部，原位置值保留供标准布局使用。原生运行检查已导出八类标准/资讯横竖屏 MP4 并解码每卡画面；官方博客八类样片已实际导出并检查动态帧与音轨；解锁后的原生卡片编辑和窗口尺寸检查通过；样片字幕为句级估算，音轨解码/识别不替代人工核听。
+
+全片可选 `narrationPacing: standard|compact` 用于后续生成/导入完整旁白。compact 以真实源音频长度建立显式 voiceTiming，首尾各两帧，镜头按帧网格取整（避免浮点残差额外多一帧）；不剪除文件自身静音。`audioGeneration.autoTiming` 保存宿主自动窗口快照，普通更新不可伪造或改写；只有当前播放窗口仍匹配快照，重新生成时才更新到新的完整音频长度。已修改窗口、任何 voiceSegments（含显式静音）保留剪切和镜头时长，源区间超过新音频时报错；人工字幕和独立对象终点仍约束时长。切换全片节奏不重排现有音频，新的 standard 完整旁白沿原留白。服务单测覆盖生成、导入、自动重算、元数据防伪及人工剪切；原生检查用实际 WAV 测量验证两帧起止、MP4 时长和持久的自动窗口快照。本项不代表真实 TTS 声学拼接或逐字同步验收。
 
 ## 视频参数和模板
 
@@ -303,7 +317,7 @@ Studio 任务卡读取宿主统一 Assistant 会话状态与实际 browser 工�
 
 Video Studio 保存 format=bmw.video / schemaVersion=2.0 的单份规范文档。content 分为 settings、brief、story.scenes、timeline.regions/tracks/clips 与 cover；records 保留 Host 的媒体/语音来源与实测绑定、审阅/参考和导出日志。story 不保存镜头位置或时长，region 是全片顺序和时间权威；字幕 clip 使用 start/end，其余显式 clip 使用 start/duration。放置时间是 1000000 ticks/s，迁移残差最多 ±0.5 微秒，源媒体秒数与原始时钟完整保留，分数帧率和任意空隙/嵌套序列尚未开放。预览、导出和旧 read/update 使用受校验的无损 v1 投影，不持久化第二份草稿。
 
-simple.cards/1 是高级模型的可逆子集；仅进入高级模式、主画面/旁白裁剪、固定效果等不永久锁定。任一独立叠加图层、独立音轨或自由关键帧要求高级编辑；隐藏/静音/锁定仍存在。compatibility 根据当前内容/版本返回对象、路径、原因。简洁写入同时校验当前和最终合并后的候选，不能用遗漏字段/空数组丢弃高级内容；返回卡片由 Host 校验当前 owner、selection/revision、dirty 和兼容性，UI 提示原因。撤销/移除这些对象后可恢复卡片资格；已保存的高级草稿在卡片视图只读，可从原入口进入高级。无自动有损降级。
+simple.cards/3 是高级模型的可逆子集，继续接受原 simple.cards/1 的内容；仅进入高级模式、主画面/旁白裁剪、固定效果等不永久锁定。任一独立叠加图层、独立音轨或自由关键帧要求高级编辑；隐藏/静音/锁定仍存在。compatibility 根据当前内容/版本返回对象、路径、原因。简洁写入同时校验当前和最终合并后的候选，不能用遗漏字段/空数组丢弃高级内容；返回卡片由 Host 校验当前 owner、selection/revision、dirty 和兼容性，UI 提示原因。撤销/移除这些对象后可恢复卡片资格；已保存的高级草稿在卡片视图只读，可从原入口进入高级。无自动有损降级。
 
 唯一 browser 的 video.studio 提供 describe-schema、read-document、compatibility、validate-edit、apply-edit、migrate-document。类型命令包括 scene.set/reorder，clip.move/trim/split/effects/mute，layer.add/set/remove，固定 ID、类型和全片时钟；最多 32 条，一次 CAS 保存。试算不写入，结构/原生支持、可逆性与实际渲染就绪分别判断；真实素材准入、翻译保护、源时钟/日志保留沿现有 Host 校验。Agent 不能自行声明高级权限，提交前重新核验可信当前高级界面与 Project。试算不证明媒体/排版或渲染成功，生成的新 ID 必须在 apply 后重读。
 
@@ -453,7 +467,7 @@ remove-reference 是封闭请求，必须包含 draftId/expectedRevision/referen
 - BMW 核心 Browser Actions（37）：`status`、`tabs.list`、`tabs.open`、`tabs.show`、`tabs.close`、`navigate`、`back`、`forward`、`reload`、`observe`、`click`、`type`、`wait`、`key`、`hover`、`page.diagnostics`、`page.media.list`、`page.viewport.set`、`media.screenshot`、`media.download`、`media.video.capture`、`media.inspect`、`media.frames.sample`、`media.convert`、`media.image.inspect`、`media.image.annotate`、`media.image.draw`、`media.record.start`、`media.record.stop`、`project.context`、`project.memory.append`、`project.tasks.append`、`schedule.list`、`schedule.create`、`schedule.update`、`schedule.remove`、`schedule.run`
 - feature-video Feature Browser Actions（4）：`video.compose`、`video.narrate`、`video.studio`、`video.settings`
 
-- video.studio 操作（47）：`describe-schema`、`read-document`、`compatibility`、`validate-edit`、`apply-edit`、`migrate-document`、`remove-reference`、`prepare-reference`、`read-reference`、`set-reference-analysis`、`apply-reference-notes`、`propose-review`、`adopt-review`、`dismiss-review`、`undo-review`、`split-scene`、`restore`、`recognize-source`、`read-source-speech`、`apply-source-captions`、`detach-source-captions`、`set-caption-translations`、`align-speech`、`read-speech`、`correct-speech`、`source`、`export-citations`、`list`、`create`、`read`、`delete`、`update`、`narrate`、`narrate-pending`、`check`、`export-captions`、`export-cover`、`read-material`、`suggest-focus`、`render`、`assets`、`inspect`、`attach`、`open`、`context`、`configure`、`save-template`。字段、用户专属操作与归属检查见上方契约。
+- video.studio 操作（48）：`describe-template`、`describe-schema`、`read-document`、`compatibility`、`validate-edit`、`apply-edit`、`migrate-document`、`remove-reference`、`prepare-reference`、`read-reference`、`set-reference-analysis`、`apply-reference-notes`、`propose-review`、`adopt-review`、`dismiss-review`、`undo-review`、`split-scene`、`restore`、`recognize-source`、`read-source-speech`、`apply-source-captions`、`detach-source-captions`、`set-caption-translations`、`align-speech`、`read-speech`、`correct-speech`、`source`、`export-citations`、`list`、`create`、`read`、`delete`、`update`、`narrate`、`narrate-pending`、`check`、`export-captions`、`export-cover`、`read-material`、`suggest-focus`、`render`、`assets`、`inspect`、`attach`、`open`、`context`、`configure`、`save-template`。字段、用户专属操作与归属检查见上方契约。
 
 ### 当前自动化测试清单
 
@@ -568,6 +582,13 @@ remove-reference 是封闭请求，必须包含 draftId/expectedRevision/referen
 
 #### `packages/feature-video/test/video-document.test.ts`
 
+- `detailed source reading and background phases require 2.2 and survive CAS splits and signed restore without restarting`
+- `persisted card splits retain original metric and reveal clocks across reorder and codec restoration`
+- `global layout and pacing persist in 2.1 and survive ordinary updates without rewriting old drafts`
+- `automatic narration receipts keep the new document version independently of optional presentation settings`
+- `model catalog shares eight categories and lazily returns only the selected closed template`
+- `explicit template conversion preserves text and source files, rejects count loss and reports visual detachment`
+- `card documents persist their only content authority in 2.1 while old 2.0 stays unchanged`
 - `Canonical v2 preserves preparation, script, subtitles, source clocks, output settings and journals exactly`
 - `Shared codec accounts for segmented fallback, empty voice, independent effects and original fade/keyframe clocks`
 - `Integer placement with bounded residual preserves legacy JS clocks without rounding trusted source time`
@@ -587,6 +608,9 @@ remove-reference 是封闭请求，必须包含 draftId/expectedRevision/referen
 
 #### `packages/feature-video/test/video-studio.test.ts`
 
+- `card image inspection exposes actual pinned identity; changed source before or after encode blocks and rolls back only new exports`
+- `compact playback uses measured source time and preserves manual captions, cuts and explicit silence`
+- `host generation and audio import apply compact pacing, protect auto receipts and retain manual playback on replacement`
 - `Studio drafts persist per Project and reject conflicting GUI or Agent revisions`
 - `Only owned journal revisions retain prepared content; captions, clocks, preparation and output edits require reconciliation`
 - `Studio coverage follows actual voice, source trim and speed and requires explicit end hold`
@@ -865,6 +889,11 @@ remove-reference 是封闭请求，必须包含 draftId/expectedRevision/referen
 
 #### `packages/media-native/test/video-production.test.ts`
 
+- `detailed cards pin actual source bytes, reject changed sources, bound geometry and keep dedicated assets in decode budget`
+- `reading recipes keep whole/detail dwell and bounded scale; range semantics reject invented proportion and invalid ordering`
+- `news layout rejects unsupported shapes and misleading coercion and checks its real text budget`
+- `eight card categories admit their actual assets and reject unsupported content without dropping it`
+- `closed card presets retain exact numeric representation and seek on original scene clocks`
 - `seekable composition validates Project IDs, bounds and real narration assets`
 - `narration fixes provider and voices and rejects SSML control or arbitrary endpoints`
 - `composition output handle rejects input reads and cleans partial output on cancellation`

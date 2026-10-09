@@ -1,6 +1,9 @@
+import crypto from 'node:crypto'
 import {VideoStudioStore} from '../packages/feature-video/src/studio-store.js'
-import {draftComposition} from '../packages/feature-video/src/studio-contract.js'
+import {draftComposition,newStudioScene} from '../packages/feature-video/src/studio-contract.js'
+import type {VideoDraft} from '../packages/feature-video/src/studio-contract.js'
 import {assertComposition} from '../packages/media-native/src/composition-contract.js'
+import {DEFAULT_VIDEO_OPTIONS} from '../packages/media-native/src/video-options.js'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -17,11 +20,12 @@ const project={id:'video-smoke',name:'Isolated video smoke',directory:path.join(
 fs.mkdirSync(artifacts,{recursive:true}); fs.mkdirSync(path.join(temporary,'profile'));app.setPath('userData',path.join(temporary,'profile'))
 let window:BrowserWindow|undefined, bridge:Awaited<ReturnType<typeof createBridgeServer>>|undefined, cancel:AbortController|undefined
 let granted=true, exitCode=0
-const timeout=setTimeout(()=>app.exit(1),150_000)
+const timeout=setTimeout(()=>app.exit(1),300_000)
 async function run():Promise<void>{
  try{
   await app.whenReady();const browserSession=session.fromPartition(`bmw-video-smoke-${process.pid}`)
-  window=new BrowserWindow({show:false,webPreferences:{session:browserSession,sandbox:true,contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}})
+  // Chromium tab capture on macOS requires a presented surface; hidden windows can encode black frames.
+  window=new BrowserWindow({show:true,webPreferences:{session:browserSession,sandbox:true,contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}})
   await window.loadURL('data:text/html,<title>Video fixture</title>')
   const registry=new BrowserCapabilityRegistry(product), media=new MediaController({session:browserSession,preloadPath:path.resolve('packages/media-native/src/preload/media-preload.cjs'),pagePath:path.resolve('packages/media-native/src/media/media.html'),artifactsDirectory:artifacts,resolveArtifactsDirectory:()=>artifacts,onStatus:(value:{progress?:number})=>{if((value.progress??0)>0)cancel?.abort(new Error('E2E composition cancellation'))}})
   const kernel=new BrowserKernel({window,session:browserSession,capabilityRegistry:registry,permissionStore:{hasAgentControl:()=>granted},projectStore:{active:()=>project},artifactsDirectory:artifacts,sessionContinuity:undefined,settingsStore:new GlobalSettingsStore({filePath:path.join(temporary,'settings.json'),onState:undefined}),allowedActions:undefined,onState:undefined});kernel.setRecordingController(media)
@@ -71,6 +75,16 @@ async function run():Promise<void>{
   const existing=(await execute({action:'video.studio',studioRequest:{operation:'render',draftId:editable.id,expectedRevision:editable.revision}})).result
   assert.equal(existing.reused,true);assert.equal((existing.export as {artifactId:string}).artifactId,exported.artifactId)
   console.log('PASS direct composition registers Session-owned editable Studio scenes and reuses the native completed MP4')
+  let compact=studioStore.create('紧凑音频实测',{...DEFAULT_VIDEO_OPTIONS,aspectRatio:'16:9',resolution:'custom',width:640,height:360,fps:12,music:false,narrationPacing:'compact'})
+  compact.scenes=[{...newStudioScene('compact-audio'),title:'实测音频',bullets:['保留原音频时长'],narration:'实际音轨',cardSpec:{version:1,templateId:'title/basic'}}]
+  compact=studioStore.update(compact.id,compact.revision,compact)
+  compact=(await execute({action:'video.studio',studioRequest:{operation:'attach',draftId:compact.id,expectedRevision:compact.revision,sceneId:'compact-audio',artifactId:'voice.wav',assetKind:'audio'}})).result as unknown as VideoDraft
+  assert.equal(compact.scenes[0].audioDurationSeconds,1);assert.equal(compact.scenes[0].voiceTiming?.startSeconds,2/12);assert.equal(compact.scenes[0].durationSeconds,16/12)
+  const compactOutput=(await execute({action:'video.studio',studioRequest:{operation:'render',draftId:compact.id,expectedRevision:compact.revision}})).result
+  const compactExport=compactOutput.export as {artifactId:string};assert.ok(compactExport.artifactId)
+  const compactAudio=(await execute({action:'media.inspect',artifactId:compactExport.artifactId})).result;assert.ok(Math.abs(Number(compactAudio.durationSeconds)-16/12)<.15)
+  assert.deepEqual(studioStore.read(compact.id).scenes[0].audioGeneration?.autoTiming,compact.scenes[0].voiceTiming,'Native measured audio admits the host automatic timing receipt')
+  console.log('PASS compact import: real WAV measurement, two-frame lead/tail, explicit source clock and native MP4 duration')
   assert.equal(exported.durationSeconds,5);assert.equal(exported.frames,60)
   assert.ok(Math.abs(Number(exported.actualDurationSeconds)-5)<.2)
   const inspected=(await execute({action:'media.inspect',artifactId:exported.artifactId})).result
@@ -88,6 +102,53 @@ async function run():Promise<void>{
   for(const piece of pieces)pixels.push(await window.webContents.executeJavaScript(`(async()=>{const image=new Image();image.src=${JSON.stringify('data:image/png;base64,'+fs.readFileSync(piece.path).toString('base64'))};await image.decode();const c=document.createElement('canvas');c.width=640;c.height=360;const x=c.getContext('2d');x.drawImage(image,0,0);return [...x.getImageData(320,180,1,1).data]})()`) as number[])
   assert.ok(pixels[0][0]>150&&pixels[0][1]<70,'First real clip stays red');assert.ok(pixels[2][1]>150&&pixels[2][0]<70,'Second real clip switches to green');assert.ok(pixels[1][1]<pixels[2][1]-60,'Actual encoded fade has intermediate opacity')
   console.log('PASS two real Video segments: serial decoder switch, fixed four-second duration, frame/color/fade verification and durable receipt',pixels)
+  const cardImage=await window.webContents.executeJavaScript("(()=>{const c=document.createElement('canvas');c.width=640;c.height=360;const x=c.getContext('2d');x.fillStyle='#ee3333';x.fillRect(0,0,640,360);x.fillStyle='white';x.font='32px sans-serif';x.fillText('Controlled source image',40,180);return c.toDataURL('image/png').split(',')[1]})()") as string
+  fs.writeFileSync(path.join(artifacts,'card-source.png'),Buffer.from(cardImage,'base64'))
+  const cards=[
+   {title:'模板目录',bullets:['八类表达方式'],cardSpec:{version:1,templateId:'title/basic',motion:'fade-in'}},
+   {title:'三个结论',bullets:['结构明确','内容有界','原生渲染'],cardSpec:{version:1,templateId:'points/three',motion:'reveal-items'}},
+   {title:'两项对比',bullets:['文字模板','素材模板'],cardSpec:{version:1,templateId:'comparison/two'}},
+   {title:'数字强调',bullets:['受控测试数值'],cardSpec:{version:1,templateId:'metric/hero',value:44,decimals:0,unit:'%',motion:'count-up'}},
+   {title:'原文证据',bullets:['受控截图素材'],imageArtifactId:'card-source.png',cardSpec:{version:1,templateId:'evidence/screenshot'}},
+   {title:'真实录屏',videoArtifactId:captured[0],cardSpec:{version:1,templateId:'demo/recording'}},
+   {title:'静态图解',imageArtifactId:'card-source.png',cardSpec:{version:1,templateId:'diagram/image',motion:'slow-push'}},
+   {title:'顺序素材',visualSegments:[{imageArtifactId:'card-source.png',durationSeconds:1},{videoArtifactId:captured[1],durationSeconds:1}],cardSpec:{version:1,templateId:'media/sequence'}}
+  ].map(scene=>({...scene,durationSeconds:2}))
+  for(const [width,height] of [[640,360],[360,640]])for(const cardLayout of ['standard','news'] as const){
+   const output=(await execute({action:'video.compose',composition:{title:'八类卡片原生验收\n统一栏目标题',cardLayout,width,height,fps:12,music:false,watermark:{enabled:cardLayout==='news',text:'BMW',position:'top-right'},scenes:cards}})).result
+   assert.equal(output.frames,192);assert.ok(Math.abs(Number(output.actualDurationSeconds)-16)<.2)
+   const registered=output.studioDraft as {id:string};assert.deepEqual(studioStore.read(registered.id).scenes.map(s=>s.cardSpec?.templateId),cards.map(s=>s.cardSpec.templateId),'Native cards retain an editable Session-owned draft')
+   assert.equal(studioStore.read(registered.id).cardLayout,cardLayout,'Global layout survives native composition registration')
+   const samples=(await execute({action:'media.frames.sample',artifactId:output.artifactId,timestampsSeconds:cards.map((_,i)=>i*2+1.5)})).result.frames as {path:string}[]
+   assert.equal(samples.length,8);for(const sample of samples)assert.ok(fs.statSync(sample.path).size>1000,'Each category produces a real decoded frame')
+   if(process.env.BMW_VALIDATION_DIR){const name=`eight-cards-${cardLayout}-${width}x${height}`;fs.mkdirSync(process.env.BMW_VALIDATION_DIR,{recursive:true});fs.copyFileSync(String(output.path),path.join(process.env.BMW_VALIDATION_DIR,name+'.mp4'));samples.forEach((sample,i)=>fs.copyFileSync(sample.path,path.join(process.env.BMW_VALIDATION_DIR!,name+`-${i}.png`)))}
+  }
+  const source={artifactId:'card-source.png',sha256:crypto.createHash('sha256').update(fs.readFileSync(path.join(artifacts,'card-source.png'))).digest('hex')},rect={x:.1,y:.1,width:.4,height:.3},reading={mode:'sequence',targets:[{source,rect,name:'一处'},{source,rect:{x:.5,y:.5,width:.4,height:.3},name:'另一处'}],returnToWhole:true},quote={excerpt:'Controlled original quote.',translation:'明确标注的编辑译文',attribution:'受控测试来源 · 测试人物',display:'staged'}
+  const detailedCards=[
+    {title:'实际像素反白',imageArtifactId:source.artifactId,cardSpec:{version:2,templateId:'evidence/highlight',highlights:[{source,rects:[rect],name:'第一重点',style:'invert',startSeconds:0,endSeconds:4}]}},
+    {title:'两处阅读',imageArtifactId:source.artifactId,cardSpec:{version:2,templateId:'evidence/reading',reading}},
+    {title:'原文与译文',imageArtifactId:source.artifactId,cardSpec:{version:2,templateId:'evidence/translation',quote}},
+    {title:'右侧人物引述',imageArtifactId:source.artifactId,cardSpec:{version:2,templateId:'evidence/person-quote',quote,person:{artifactId:source.artifactId,name:'测试人物',role:'合成测试素材',layout:'right'}}},
+    {title:'角标人物引述',imageArtifactId:source.artifactId,cardSpec:{version:2,templateId:'evidence/person-quote',quote,person:{artifactId:source.artifactId,name:'测试人物',role:'合成测试素材',layout:'corner'}}},
+    {title:'数字退回依据',imageArtifactId:source.artifactId,cardSpec:{version:2,templateId:'metric/backdrop',motion:'count-up',value:44,decimals:0,unit:'%',phase:'to-evidence',holdSeconds:1.2}},
+    {title:'整句关键词',imageArtifactId:source.artifactId,cardSpec:{version:2,templateId:'title/emphasis',motion:'wipe'}},
+    {title:'图解读图',imageArtifactId:source.artifactId,cardSpec:{version:2,templateId:'diagram/image',reading}},
+    {title:'对象共同目标',cardSpec:{version:2,templateId:'diagram/to-target',motion:'reveal-items',objects:[{label:'对象一'},{label:'对象二'},{label:'对象三'}],target:{label:'共同目标'},relation:'条件下的关系'}},
+    {title:'符号范围',cardSpec:{version:2,templateId:'diagram/range',range:{mode:'symbolic',axisLabel:'说明关系',regionLabel:'已达区域',thresholdLabels:['目标'],condition:'仅为示意，不代表实测进度'}}},
+    {title:'真实数值范围',cardSpec:{version:2,templateId:'diagram/range',range:{mode:'numeric',axisLabel:'受控测试数值',minimum:0,maximum:100,start:0,end:44,thresholds:[60,80],unit:'%',condition:'合成测试数据，非产品性能'}}}
+  ].map(scene=>({...scene,durationSeconds:4}))
+  for(const [width,height]of [[640,360],[360,640]]){
+    const output=(await execute({action:'video.compose',composition:{title:'新增变体 · 原生验收',cardLayout:'news',width,height,fps:12,music:false,watermark:{enabled:false},scenes:detailedCards}})).result
+    assert.equal(output.frames,528);const samples: {path:string}[]=[]
+    for(let start=0;start<detailedCards.length;start+=8)samples.push(...(await execute({action:'media.frames.sample',artifactId:output.artifactId,timestampsSeconds:detailedCards.slice(start,start+8).map((_,i)=>(start+i)*4+1.5)})).result.frames as {path:string}[])
+    assert.equal(samples.length,detailedCards.length)
+    const first=fs.readFileSync(samples[0].path).toString('base64'),pixel=await window.webContents.executeJavaScript('(async()=>{const image=new Image();image.src="data:image/png;base64,'+first+'";await image.decode();const c=document.createElement("canvas");c.width=image.width;c.height=image.height;const x=c.getContext("2d");x.drawImage(image,0,0);const W=720*'+width+'/'+height+',margin=W<600?24:48,scale=Math.min((W-margin*2)/640,362/360),dx=(W-640*scale)/2+.3*640*scale,dy=236+(362-360*scale)/2+.2*360*scale;return [...x.getImageData(Math.floor(dx*'+height+'/720),Math.floor(dy*'+height+'/720),1,1).data]})()') as number[]
+    assert.ok(pixel[0]<65&&pixel[1]>150&&pixel[2]>150,'Original red source pixels actually invert to cyan: '+pixel.join(','))
+    if(process.env.BMW_VALIDATION_DIR){fs.copyFileSync(String(output.path),path.join(process.env.BMW_VALIDATION_DIR,'detailed-'+width+'x'+height+'.mp4'));samples.forEach((sample,i)=>fs.copyFileSync(sample.path,path.join(process.env.BMW_VALIDATION_DIR!,'detailed-'+width+'x'+height+'-'+i+'.png')))}
+  }
+  const beforeStale=fs.readdirSync(artifacts).sort();await assert.rejects(execute({action:'video.compose',composition:{title:'stale',width:640,height:360,fps:12,music:false,scenes:[{...detailedCards[0],cardSpec:{...detailedCards[0].cardSpec,highlights:[{source:{...source,sha256:'0'.repeat(64)},rects:[rect],name:'stale',style:'invert',startSeconds:0,endSeconds:4}]}}]}}),/STALE/);assert.deepEqual(fs.readdirSync(artifacts).sort(),beforeStale)
+  console.log('PASS detailed variants: both aspect ratios, actual inverted pixels, two reading targets, quote/translation, both person positions, count/backdrop, wipe, diagrams, numeric/symbolic range and stale-source rollback')
+  console.log('PASS eight native card categories: landscape/portrait real MP4 decode and editable Session-owned persistence')
   await execute({action:'video.settings',settingsRequest:{operation:'save-template',name:'竖屏品牌',options:{aspectRatio:'9:16',resolution:'720p',fps:12,music:false,style:'clean-light',watermark:{text:'MARK',position:'top-right',size:32,opacity:1}}}})
   const optionsCase={title:'模板制作',templateName:'竖屏品牌',scenes:[{durationSeconds:1,title:'模板测试',label:'TEST'}]}
   const withMark=(await execute({action:'video.compose',composition:optionsCase})).result

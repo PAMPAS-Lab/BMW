@@ -12,7 +12,7 @@ export function resolvedComposition(raw:unknown,preferences:unknown):MediaCompos
   for(const key of VIDEO_OPTION_KEYS)if(value[key]!==undefined)patch[key]=value[key]
   if(value.resolution==='custom'){patch.width=value.width;patch.height=value.height}
   const output=resolveVideoOutput(preferences,patch,value.templateName,{width:value.width,height:value.height})
-  const composition:Record<string,unknown>={...value,width:output.width,height:output.height,fps:output.fps,music:output.music,style:output.style,watermark:output.watermark,tts:output.tts}
+  const composition:Record<string,unknown>={...value,width:output.width,height:output.height,fps:output.fps,music:output.music,...(output.cardLayout===undefined?{}:{cardLayout:output.cardLayout}),...(output.narrationPacing===undefined?{}:{narrationPacing:output.narrationPacing}),style:output.style,watermark:output.watermark,tts:output.tts}
   delete composition.aspectRatio;delete composition.resolution
   return assertComposition(composition)
 }

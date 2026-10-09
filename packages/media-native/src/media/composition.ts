@@ -1,3 +1,4 @@
+import {verifyCardSources,assertDetailedReady} from '../card-details.js'
 import {CompositionLayerPainter} from './composition-layers-paint.js'
 import {sceneVisuals,visualAtTime} from '../visual-segments.js'
 import {decodeProjectImage} from './image-decoder.js'
@@ -44,6 +45,8 @@ async function compose(command: CompositionCommand): Promise<void> {
       const input = new Input({ formats: [MP4, QTFF, WEBM, MATROSKA, MP3, WAVE, OGG, ADTS, FLAC, MPEG_TS], source: new BlobSource(new Blob([data as Uint8Array<ArrayBuffer>])) })
       inputs.push(input); assets.set(command.assets[index].artifactId, { input, data })
     }
+    await verifyCardSources(composition.scenes.map(s=>s.cardSpec?.version===2?s.cardSpec:undefined),id=>assets.get(id)?.data)
+    for(const scene of composition.scenes)if(scene.cardSpec?.version===2)assertDetailedReady(scene.cardSpec)
     layers=new CompositionLayerPainter(assets)
     audioContext = new AudioContext({ sampleRate: 48000 })
     const {mixed,narrationDurations,audioPeak}=await mixCompositionAudio(composition,assets,audioContext)
@@ -83,7 +86,7 @@ async function compose(command: CompositionCommand): Promise<void> {
       const sourceFrame = segment.imageArtifactId ? {canvas:assets.get(segment.imageArtifactId)!.image!} : reader ? await reader.get(segment.sourceStartSeconds + (visual?.localSeconds??timing.localSeconds) * segment.playbackRate) : null
       if (reader && !sourceFrame) throw new Error('Scene footage frame is unavailable.')
       context.save()
-      paintScene(context, scene, sourceFrame, timing.localSeconds, scene.durationSeconds, timing.index, composition.scenes.length, narrationDurations[timing.index], composition); context.restore()
+      paintScene(context, scene, sourceFrame, timing.localSeconds, scene.durationSeconds, timing.index, composition.scenes.length, narrationDurations[timing.index], composition,undefined,assets); context.restore()
       await layers.paint(context,composition,scene,time,timing.localSeconds)
       await videoSource.add(time, Math.min(1 / fps, duration - time), { keyFrame: frameIndex % (fps * 2) === 0 })
       const audioEnd = Math.min(mixed.length, Math.ceil((time + 1 / fps) * 48000))

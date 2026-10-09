@@ -1,3 +1,4 @@
+import {cardSourcePins} from './card-details.js'
 import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import { BrowserWindow, ipcMain } from 'electron'
@@ -80,6 +81,8 @@ export class CompositionProcessor {
       jobWindow.webContents.send('bmw-composition-process', { token, composition, assets: inputs.map(input => ({ artifactId: 'artifactId' in input.request?input.request.artifactId:(()=>{throw new Error('Composition asset must have an input.')})(), bytes: input.bytes })) })
       const receipt = await pending
       signal?.throwIfAborted()
+      const pins=composition.scenes.flatMap(scene=>cardSourcePins(scene.cardSpec?.version===2?scene.cardSpec:undefined)),hashes=new Map<string,string>()
+      for(const pin of pins){let actual=hashes.get(pin.artifactId);if(!actual){const input=inputs.find(input=>'artifactId'in input.request&&input.request.artifactId===pin.artifactId);if(!input)throw new Error('CARD_SOURCE_STALE: Missing pinned source.');actual=await input.fingerprint(signal);hashes.set(pin.artifactId,actual)}if(actual!==pin.sha256)throw new Error('CARD_SOURCE_STALE: Source changed during encoding.')}
       const [artifact] = await jobOutput.finish(1)
       completedPath = artifact.path
       return { ...artifact, type: 'video', contentType: 'video/mp4', state: 'completed', engine: 'bmw-seekable-canvas-mediabunny', ...receipt, durationSeconds: compositionDuration(composition), composition }

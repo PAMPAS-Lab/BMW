@@ -1,6 +1,6 @@
 import {assertVideoDraft} from './studio-contract.js'
 import type {VideoDraft} from './studio-contract.js'
-export const SIMPLE_VIDEO_PROFILE='simple.cards/1'
+export const SIMPLE_VIDEO_PROFILE='simple.cards/3'
 export interface StudioCompatibility {profile:typeof SIMPLE_VIDEO_PROFILE;draftId:string;revision:number;simpleEditable:boolean;advancedEditable:true;blockingReasons:{code:string;objectId:string;path:string;message:string}[]}
 /** Derived from content, never a persisted lock or a client-supplied certificate. */
 export function studioCompatibility(raw:VideoDraft):StudioCompatibility {

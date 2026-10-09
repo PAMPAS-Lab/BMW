@@ -57,6 +57,12 @@ export function splitStudioScene(value:VideoDraft,sceneId:string,cut:number):Stu
    visualStart+=visual.durationSeconds
   }
   if(fragments.length){child.visualSegments=fragments;for(const key of ['effects','imageArtifactId','videoArtifactId','sourceDurationSeconds','focusIntervals'] as const)delete child[key]}
+  if(child.cardSpec?.version===2&&('reading'in child.cardSpec||'highlights'in child.cardSpec)){
+   const ids=new Set(fragments.flatMap(v=>v.imageArtifactId?[v.imageArtifactId]:[])),spec=child.cardSpec
+   if(spec.reading){spec.reading.targets=spec.reading.targets.filter(t=>ids.has(t.source.artifactId));if(!spec.reading.targets.length)delete spec.reading}
+   if(spec.highlights)spec.highlights=spec.highlights.filter(h=>ids.has(h.source.artifactId))
+   if(spec.templateId==='evidence/reading'&&!spec.reading||spec.templateId==='evidence/highlight'&&!spec.highlights?.length)child.cardSpec={version:1,templateId:'evidence/screenshot'}
+  }
   child.captions=cues.flatMap(cue=>{const a=Math.max(from,cue.startSeconds),b=Math.min(to,cue.endSeconds);return b>a+epsilon?[{...cue,startSeconds:a-from,endSeconds:b-from}]:[]})
   if(usesSpeechCaptions(scene))delete child.captions
   if(child.speechLinks)child.speechLinks.focus=child.speechLinks.focus.flatMap(link=>{const visualIndex=target.visualIndices.indexOf(link.visualIndex);return visualIndex<0?[]:[{...link,visualIndex}]})

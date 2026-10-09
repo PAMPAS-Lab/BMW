@@ -1,3 +1,4 @@
+import {verifyCardSources} from '../../../media-native/src/card-details.js'
 import {studioLayer} from '../studio-layer-edits.js'
 import type {StudioLayerSelection} from '../studio-layer-edits.js'
 import type {VisualLayer} from '../../../media-native/src/composition-layers.js'
@@ -10,7 +11,7 @@ import {ImageDecodeBudget,DECODE_BUDGET} from '../../../media-native/src/image-c
 import {Input,BlobSource,ALL_FORMATS} from 'mediabunny'
 import {LinearFrameReader,normalizeBrowserVideoColor} from '../../../media-native/src/media/linear-frames.js'
 import {assertCompositionText,paintScene} from '../../../media-native/src/media/composition-paint.js'
-import type {CompositionTextBox} from '../../../media-native/src/media/composition-paint.js'
+import type {CompositionVisualBox,CompositionTextBox} from '../../../media-native/src/media/composition-paint.js'
 import {mixCompositionAudio} from '../../../media-native/src/media/composition-audio.js'
 import {compositionDuration,sceneAtTime,compositionAssets,compositionImageIds} from '../../../media-native/src/composition-contract.js'
 import type {MediaComposition} from '../../../media-native/src/composition-contract.js'
@@ -32,9 +33,9 @@ declare global{interface Window{bmwStudio:StudioBridge;bmwStudioFlush?:()=>Promi
 type Asset={data:Uint8Array;input?:Input;image?:HTMLCanvasElement}
 /** One serialized decoder; audio time is the preview clock, matching the export mix. */
 export class StudioPreview {
-  private paintedText?:{draftId:string;revision:number;sceneId:string;boxes:CompositionTextBox[]}
+  private paintedText?:{draftId:string;revision:number;sceneId:string;boxes:CompositionTextBox[];visual?:CompositionVisualBox}
   /** Only the currently rendered revision can admit an on-canvas text edit. */
-  text(draft:VideoDraft):{sceneId:string;boxes:CompositionTextBox[]}|undefined {const painted=this.paintedText;return painted&&painted.draftId===draft.id&&painted.revision===draft.revision?{sceneId:painted.sceneId,boxes:painted.boxes}:undefined}
+  text(draft:VideoDraft):{sceneId:string;boxes:CompositionTextBox[];visual?:CompositionVisualBox}|undefined {const painted=this.paintedText;return painted&&painted.draftId===draft.id&&painted.revision===draft.revision?{sceneId:painted.sceneId,boxes:painted.boxes,visual:painted.visual}:undefined}
   private layers?:CompositionLayerPainter
   private preparedOwner?:{draftId:string;revision:number;sceneIds:string[]}
   private visualOverride?:{sceneIndex:number;id:string;layer:VisualLayer}
@@ -73,7 +74,7 @@ export class StudioPreview {
   }
   private async prepareCurrent(draft:VideoDraft,position:number,generation:number):Promise<boolean>{
     this.preparedOwner={draftId:draft.id,revision:draft.revision,sceneIds:draft.scenes.map(scene=>scene.id)}
-    this.composition={title:draft.title,width:draft.width,height:draft.height,fps:draft.fps,music:draft.music,style:draft.style,watermark:draft.watermark,layers:draft.layers,audioTracks:draft.audioTracks,scenes:draft.scenes.map(scene=>({...speechScene(scene),audioArtifactId:!sceneCoverage(scene,draft.tts).audioStale?scene.audioArtifactId:undefined}))}
+    this.composition={title:draft.title,cardLayout:draft.cardLayout,narrationPacing:draft.narrationPacing,width:draft.width,height:draft.height,fps:draft.fps,music:draft.music,style:draft.style,watermark:draft.watermark,layers:draft.layers,audioTracks:draft.audioTracks,scenes:draft.scenes.map(scene=>({...speechScene(scene),audioArtifactId:!sceneCoverage(scene,draft.tts).audioStale?scene.audioArtifactId:undefined}))}
     const composition=this.composition
     let bytes=0;const imageBudget=new ImageDecodeBudget(),imageIds=compositionImageIds(composition)
     try{
@@ -86,6 +87,8 @@ export class StudioPreview {
         if(generation!==this.generation){asset.input?.dispose();if(asset.image){asset.image.width=0;asset.image.height=0}return false}
         this.assets.set(id,asset)
       }
+      await verifyCardSources(draft.scenes.map(s=>s.cardSpec?.version===2?s.cardSpec:undefined),id=>this.assets.get(id)?.data)
+      if(generation!==this.generation)return false
       for(const scene of draft.scenes)if(scene.sourceCaptionBinding){const binding=scene.sourceCaptionBinding,data=this.assets.get(binding.sourceArtifactId)?.data;if(sourceCaptionsStale(scene)||!data)throw new Error('STUDIO_SOURCE_SPEECH_STALE: 原声字幕需要重新应用。');const sha=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data as Uint8Array<ArrayBuffer>)),byte=>byte.toString(16).padStart(2,'0')).join('');if(sha!==binding.sourceSha256)throw new Error('STUDIO_SOURCE_SPEECH_STALE: 原视频文件已变化。')}
       const hashes=new Map<string,string>()
       for(const scene of draft.scenes)if(usesStudioSpeech(scene)){
@@ -174,9 +177,10 @@ export class StudioPreview {
     const frame=segment.imageArtifactId?{canvas:this.assets.get(segment.imageArtifactId)!.image!}:this.reader?await this.reader.get(target):null;this.readerTime=target
     if(generation!==this.generation)return
     this.paintedText=undefined
-    const boxes:CompositionTextBox[]=[],context=this.canvas.getContext('2d',{alpha:false})!;context.save();paintScene(context,scene,frame,timing.localSeconds,scene.durationSeconds,timing.index,this.composition.scenes.length,this.voiceDurations[timing.index]??0,this.composition,box=>boxes.push(box));context.restore()
+    let visualBox:CompositionVisualBox|undefined
+    const boxes:CompositionTextBox[]=[],context=this.canvas.getContext('2d',{alpha:false})!;context.save();paintScene(context,scene,frame,timing.localSeconds,scene.durationSeconds,timing.index,this.composition.scenes.length,this.voiceDurations[timing.index]??0,this.composition,box=>boxes.push(box),this.assets,box=>{visualBox=box});context.restore()
     const visible=this.withVisualOverride(this.composition);await this.layers?.paint(context,visible,visible.scenes[timing.index],time,timing.localSeconds)
-    const owner=this.preparedOwner;if(generation===this.generation&&owner)this.paintedText={draftId:owner.draftId,revision:owner.revision,sceneId:owner.sceneIds[timing.index],boxes}
+    const owner=this.preparedOwner;if(generation===this.generation&&owner)this.paintedText={draftId:owner.draftId,revision:owner.revision,sceneId:owner.sceneIds[timing.index],boxes,visual:visualBox}
   });return this.queue}
   private clearSurface():void{this.canvas.getContext('2d')?.clearRect(0,0,this.canvas.width,this.canvas.height)}
   private invalidate():number{

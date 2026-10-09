@@ -4,6 +4,8 @@ import {focusIntervalsSchema,visualEffectWindowSchema,assertVisualEffectWindow} 
 import type {FocusInterval,VisualEffectWindow} from './focus-contract.js'
 import {assertComposition} from './composition-contract.js'
 import type {CompositionScene} from './composition-contract.js'
+import {sceneVisuals} from './scene-visuals.js'
+export {sceneVisuals} from './scene-visuals.js'
 import {finiteNumber,mediaRecord} from './media-contract.js'
 export interface VisualSegment {
   effects?:VisualEffects
@@ -34,7 +36,6 @@ export function assertVisualSegments(raw:unknown,duration:number):VisualSegment[
   if(Math.abs(segments.reduce((sum,item)=>sum+item.durationSeconds,0)-duration)>.00001)throw new Error('Visual segment durations must equal the scene duration.')
   return segments
 }
-export function sceneVisuals(scene:CompositionScene):(VisualSegment|CompositionScene&{sourceDurationSeconds?:number})[]{return scene.visualSegments??(scene.imageArtifactId||scene.videoArtifactId?[scene]:[])}
 export function visualAtTime(scene:CompositionScene,time:number):{segment:ReturnType<typeof sceneVisuals>[number];index:number;localSeconds:number;opacity:number}|undefined {
   const visuals=sceneVisuals(scene);let start=0
   for(const [index,segment] of visuals.entries()){

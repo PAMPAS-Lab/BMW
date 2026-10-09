@@ -30,3 +30,8 @@ coverage/
 *.key
 /artifacts/
 /Profiles/
+
+# Local reference-analysis media; keep research notes and reproducible manifests.
+/docs/design/weibo-reference-5351813827791942/**/*.jpg
+/docs/design/weibo-reference-5351813827791942/**/*.png
+/docs/design/weibo-reference-5351813827791942/reference.mp4

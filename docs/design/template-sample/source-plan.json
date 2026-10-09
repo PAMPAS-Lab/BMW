@@ -1,0 +1,84 @@
+{
+  "status": "first-batch-implemented-and-verified-with-eight-card-video",
+  "checkedOn": "2026-10-08",
+  "source": {
+    "url": "https://openai.com/index/gpt-6-for-everyone/",
+    "title": "GPT-6 and Intelligent UI for everyone",
+    "publishedOn": "2026-10-07",
+    "publisher": "OpenAI",
+    "selection": "One of the latest dated articles listed by the official newsroom on the check date."
+  },
+  "cards": [
+    {
+      "templateId": "title/basic",
+      "purpose": "Introduce the article and publication date"
+    },
+    {
+      "templateId": "metric/hero",
+      "value": 44,
+      "decimals": 0,
+      "unit": "%",
+      "purpose": "Publisher-reported average earlier answer start for web-search questions",
+      "qualification": "GPT-6 Instant versus GPT-5.6 Instant; this is not total answer completion time or a BMW measurement"
+    },
+    {
+      "templateId": "evidence/screenshot",
+      "purpose": "Show the original evaluation paragraph and its conditions",
+      "assetStatus": "actual browser viewport screenshot, cropped in editable scene"
+    },
+    {
+      "templateId": "demo/recording",
+      "purpose": "Navigate the public article and its embedded example",
+      "assetStatus": "actual public bicycle controls recording; no paid model session; pointer events unavailable"
+    },
+    {
+      "templateId": "diagram/image",
+      "purpose": "Explain how a question can lead to text, a visual or an interactive interface",
+      "assetStatus": "original BMW native Canvas diagram, labeled editorial illustration"
+    },
+    {
+      "templateId": "comparison/two",
+      "purpose": "Compare the article's stated Sol and Luna ChatGPT plan availability"
+    },
+    {
+      "templateId": "media/sequence",
+      "purpose": "Show two views of the public bicycle example",
+      "assetStatus": "actual screenshot plus decoded recording frame"
+    },
+    {
+      "templateId": "points/three",
+      "purpose": "Summarize the three uses: visual answers, interactive explanations, task-specific tools"
+    }
+  ],
+  "implementationEvidence": {
+    "cardFoundation": "Shared eight-category catalog, closed cardSpec, Studio fields and 2.1 round-trip implemented; persisted cut clocks and final encoded cut frames checked",
+    "newsLayout": "Standard/news native MP4 exported in landscape and portrait; all sixteen news frames inspected",
+    "compactPacing": "Host generation/import tests and native measured WAV-to-MP4 check passed; manual cuts and caption endpoints retained",
+    "studioOptions": "Dedicated DOM/IPC configure, headline action, signed undo/redo and measured import case passed",
+    "nativePointerRetest": "After user desktop unlock on 2026-10-09, read-only ioreg reports IOConsoleLocked=No. Native card text double-click/edit/cancel/narrow resize, actual news headline click, schema object mouse interaction, card-pair five widths and card sorting all passed in disposable Profiles.",
+    "cardCutAudit": "Persisted metric/reveal split, reorder and codec restoration test passed; original motion clocks retained",
+    "automaticTimingVersion": "Automatic narration receipts require document 2.1 even without layout/pacing settings; closed runtime and published schema reject downgrade",
+    "mediaSuite": ".bmw-runtime/classified-tests/2026-10-08T15-58-53-870Z/result.json passed all media checks, including source, capture, processing, video, speech and actual local narration",
+    "dshCompatibility": "Official runtime compatibility check passed in disposable Home/Workspace; no paid-model claim",
+    "desktop": "Disposable desktop workspace/settings and unlocked native-focus/Project mouse group passed; production Profile/keychain not tested.",
+    "nativeEvidence": ".bmw-runtime/card-template-validation/2026-10-09-unlocked",
+    "studio": "Current-version base Studio end-to-end passed after unlock: actual preview/export, owner/CAS, Session binding, native timeline edits, audio/caption/source preservation, background completion and cleanup."
+  },
+  "sampleEvidence": {
+    "projectDirectory": ".bmw-runtime/card-blog-sample",
+    "document": ".bmw-runtime/card-blog-sample/editable-document.json",
+    "renderReceipt": ".bmw-runtime/card-blog-sample/render.json",
+    "independentPlayback": ".bmw-runtime/card-blog-sample/independent-playback.json",
+    "durationSeconds": 45.034667,
+    "dimensions": "720x1280",
+    "audio": "Eight actual local-matcha Chinese narration files; independently decoded MP4 peak 0.78104 and RMS 0.14635. Local Whisper recognition of the final MP4 checked narrative coverage and retained the completion-time negation; recognition contains errors and is not a full listening check.",
+    "visualReview": "Eight final MP4 scene frames and 25 dynamic/before-after-cut frames inspected; count-up, reveal, actual recording changes, sequence and cut boundaries checked. Evidence/demo crop and narration revised.",
+    "dynamicReview": ".bmw-runtime/card-blog-sample/dynamic-review.json",
+    "audioRecognition": ".bmw-runtime/card-blog-sample/audio-asr-review.json",
+    "limitations": "Sentence subtitles are estimated, not acoustic alignment; narration has not been fully listened to; no valid continuous pointer track. The editable sample belongs to the isolated sample Project and is not registered in the production profile."
+  },
+  "remaining": [],
+  "optionalReview": [
+    "Full human narration listening; estimated sentence subtitles are not acoustic alignment"
+  ]
+}

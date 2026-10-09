@@ -79,7 +79,7 @@ export class VideoStudioStore {
     if(!this.ownerSessionId)throw new Error('STUDIO_SESSION_REQUIRED: 创建草稿需要绑定对话。')
     if(fs.readdirSync(this.directory).filter(name=>/^[a-zA-Z0-9-]+\.json$/.test(name)).length>=100)throw new Error('A Project supports at most one hundred video drafts.')
     const output=options??resolveVideoOutput({})
-    return this.write({version:1,id:crypto.randomUUID(),ownerSessionId:this.ownerSessionId,revision:1,title:studioText(title,'title',80)||'新视频',width:output.width,height:output.height,fps:output.fps,music:output.music,tts:output.tts,style:output.style,watermark:output.watermark,...(output.templateName?{templateName:output.templateName}:{}),scenes:[],preparation:{notes:'',outline:'',artifactIds:[]},updatedAt:new Date().toISOString(),exports:[]})
+    return this.write({version:1,id:crypto.randomUUID(),ownerSessionId:this.ownerSessionId,revision:1,title:studioText(title,'title',80)||'新视频',width:output.width,height:output.height,fps:output.fps,music:output.music,...(output.cardLayout===undefined?{}:{cardLayout:output.cardLayout}),...(output.narrationPacing===undefined?{}:{narrationPacing:output.narrationPacing}),tts:output.tts,style:output.style,watermark:output.watermark,...(output.templateName?{templateName:output.templateName}:{}),scenes:[],preparation:{notes:'',outline:'',artifactIds:[]},updatedAt:new Date().toISOString(),exports:[]})
   }
   /** Save a host-completed direct composition without overwriting any existing draft. */
   addComposition(raw:unknown,receipt:unknown):VideoDraft {
@@ -113,7 +113,7 @@ export class VideoStudioStore {
       if(previous&&!Object.hasOwn(input,'voiceSegments')&&!Object.hasOwn(input,'voiceTiming')&&(input.audioArtifactId===previous.audioArtifactId||!Object.hasOwn(input,'audioArtifactId')&&input.narration===previous.narration))return {...input,audioArtifactId:input.audioArtifactId??previous.audioArtifactId,voiceTiming:previous.voiceTiming,voiceSegments:previous.voiceSegments}
       return input
     }):value.scenes
-    const next=assertVideoDraft({...value,scenes,ownerSessionId:current.ownerSessionId,preparation:value.preparation===undefined?current.preparation:value.preparation,tts:value.tts===undefined?current.tts:value.tts,cover:value.cover===undefined?current.cover:value.cover,layers:Object.hasOwn(value,'layers')?value.layers:current.layers,audioTracks:Object.hasOwn(value,'audioTracks')?value.audioTracks:current.audioTracks})
+    const next=assertVideoDraft({...value,cardLayout:value.cardLayout===undefined?current.cardLayout:value.cardLayout,narrationPacing:value.narrationPacing===undefined?current.narrationPacing:value.narrationPacing,scenes,ownerSessionId:current.ownerSessionId,preparation:value.preparation===undefined?current.preparation:value.preparation,tts:value.tts===undefined?current.tts:value.tts,cover:value.cover===undefined?current.cover:value.cover,layers:Object.hasOwn(value,'layers')?value.layers:current.layers,audioTracks:Object.hasOwn(value,'audioTracks')?value.audioTracks:current.audioTracks})
     if(next.id!==current.id||next.revision!==current.revision)throw new Error('Draft update must use its current identity and revision.')
     // Visual edits may omit generated speech metadata. Keep the measured binding
     // for the same scene/script; a rewritten script still needs new narration.

@@ -1,3 +1,5 @@
+import {cardImageAssets,cardSourcePins} from '../../media-native/src/card-details.js'
+import {CARD_TEMPLATES,cardTemplate,cardSpecSchema} from '../../media-native/src/card-templates.js'
 import {videoDocumentSchema,videoDocumentFromDraft} from './video-document.js'
 import {applyVideoEdit,videoEditSchema} from './video-edit.js'
 import {studioCompatibility,requireSimpleVideoEdit,requireSimpleVideo} from './studio-compatibility.js'
@@ -27,7 +29,7 @@ import {requireNarrationEnabled} from './video-settings.js'
 import { normalizeVideoPreferences, resolveVideoOutput, optionsFromOutput, saveVideoTemplate } from '../../media-native/src/video-options.js'
 import path from 'node:path'
 import {VideoStudioStore} from './studio-store.js'
-import {assertStudioRequest,assertVideoDraft,draftComposition,draftReadiness,narrationSceneDuration,sceneCoverage,studioId} from './studio-contract.js'
+import {assertStudioRequest,assertVideoDraft,draftComposition,draftReadiness,applyNarrationPacing,sceneCoverage,studioId} from './studio-contract.js'
 import {mediaRecord,finiteNumber} from '../../media-native/src/media-contract.js'
 import {ArtifactJobIO} from '../../media-native/src/artifact-job-io.js'
 import type {VideoDraft,StudioReadiness} from './studio-contract.js'
@@ -50,11 +52,12 @@ export class VideoStudioService {
     if(project.id!==owner.projectId)throw new Error('Studio Project changed during operation.')
     signal?.throwIfAborted()
     const sources=new StudioSources(this.kernel)
-    if(request.operation==='describe-schema')return {schemaVersion:'2.0',documentSchema:videoDocumentSchema,editSchema:videoEditSchema,capabilities:{profile:'simple.cards/1',frameRates:{minimum:12,maximum:30,denominator:1},maxScenes:24,maxDurationSeconds:180,maxVisualSegmentsPerScene:8,maxIndependentObjects:64,sequentialRegions:true,freeTimelineGaps:false,nestedSequences:false,aiAssetGeneration:false},authorization:{projectId:owner.projectId,sessionId:owner.sessionId,advancedEditing:context?.view?.mode==='advanced'},commands:['scene.set','scene.reorder','clip.move','clip.trim','clip.split','clip.effects','clip.mute','layer.add','layer.set','layer.remove']}
+    if(request.operation==='describe-schema')return {schemaVersion:'2.2',supportedDocumentVersions:['2.0','2.1','2.2'],cardTemplates:CARD_TEMPLATES.filter(item=>item.version===1&&item.id!=='points/list').map(({id,category,name,purpose})=>({id,category,name,purpose})),documentSchema:videoDocumentSchema,editSchema:videoEditSchema,capabilities:{profile:'simple.cards/3',frameRates:{minimum:12,maximum:30,denominator:1},maxScenes:24,maxDurationSeconds:180,maxVisualSegmentsPerScene:8,maxIndependentObjects:64,sequentialRegions:true,freeTimelineGaps:false,nestedSequences:false,aiAssetGeneration:false},authorization:{projectId:owner.projectId,sessionId:owner.sessionId,advancedEditing:context?.view?.mode==='advanced'},commands:['scene.set','scene.reorder','clip.move','clip.trim','clip.split','clip.effects','clip.mute','layer.add','layer.set','layer.remove']}
+    if(request.operation==='describe-template')return {template:cardTemplate(request.cardTemplateId!),cardSpecSchema:{oneOf:cardSpecSchema.oneOf.filter(branch=>branch.properties.templateId.const===request.cardTemplateId)},variants:CARD_TEMPLATES.filter(item=>item.category===cardTemplate(request.cardTemplateId!).category).map(({id,name,purpose})=>({id,name,purpose})),defaults:{motion:'none'},supportedAspectRatios:['16:9','9:16'],limits:{title:44,bullet:64,maxVisualSegments:8,maxDurationSeconds:60},guidance:['Fill canonical scene fields named by slots; cardSpec stores bounded dedicated slots. Version 2 cards require document 2.2; source rectangles are pinned to actual artifact SHA-256.','Use real Project artifacts and source URLs; example labels are not factual evidence.','Plan one purpose per card, fetch missing assets, validate the draft, then inspect actual preview.','Do not delete extra bullets to fit a different template; use a list or split the card.','Recording focus is not a measured pointer trajectory.']};
     if(request.operation==='source')return sources.execute(request.sourceRequest,signal)
     if(request.operation==='open'){if(!this.kernel.videoStudioOpen)throw new Error('Studio UI is unavailable in this host.');return this.kernel.videoStudioOpen(owner)}
     if(request.operation==='context')return this.kernel.videoStudioContext?.(owner)??{mode:'browser',selection:null}
-    if(request.operation==='list'){const drafts=store.list();return {project:{id:project.id,name:project.name},sessionId:owner.sessionId,drafts,compatibility:Object.fromEntries(drafts.map(d=>[d.id,studioCompatibility(d)])),schemaVersion:'2.0',snapshotProofs:Object.fromEntries(drafts.map(draft=>[draft.id,this.snapshots.issue(owner,draft)])),reusableExports:Object.fromEntries(drafts.flatMap(draft=>{const output=store.reusableExport(draft);return output?[[draft.id,output.artifactId]]:[]})),videoPreferences:normalizeVideoPreferences(this.kernel.settingsStore?.snapshot().videoPreferences??{})}}
+    if(request.operation==='list'){const drafts=store.list();return {project:{id:project.id,name:project.name},sessionId:owner.sessionId,drafts,compatibility:Object.fromEntries(drafts.map(d=>[d.id,studioCompatibility(d)])),schemaVersion:'2.2',supportedDocumentVersions:['2.0','2.1','2.2'],snapshotProofs:Object.fromEntries(drafts.map(draft=>[draft.id,this.snapshots.issue(owner,draft)])),reusableExports:Object.fromEntries(drafts.flatMap(draft=>{const output=store.reusableExport(draft);return output?[[draft.id,output.artifactId]]:[]})),videoPreferences:normalizeVideoPreferences(this.kernel.settingsStore?.snapshot().videoPreferences??{})}}
     if(request.operation==='assets')return {assets:store.assets(project.directory)}
     if(request.operation==='create')return store.create(request.title??'新视频',resolveVideoOutput(this.kernel.settingsStore?.snapshot().videoPreferences,request.options??{},request.templateName))
     if(request.operation==='read-material'){
@@ -63,8 +66,9 @@ export class VideoStudioService {
       try{const bytes=await input.read(0,Math.min(input.bytes,256*1024));signal?.throwIfAborted();return {artifactId:asset.artifactId,text:new TextDecoder('utf-8',{fatal:true}).decode(bytes,{stream:input.bytes>bytes.length}),truncated:input.bytes>bytes.length,bytes:input.bytes}}finally{await input.close()}
     }
     if(request.operation==='inspect'){
-      const action=request.assetKind==='image'?'media.image.inspect':'media.inspect',result=await this.kernel.recordingController.processArtifact({action,artifactId:request.artifactId},signal)
-      return action==='media.image.inspect'?assertImageInspection(result):assertMediaInspection(result)
+      if(request.assetKind!=='image')return assertMediaInspection(await this.kernel.recordingController.processArtifact({action:'media.inspect',artifactId:request.artifactId},signal))
+      const input=await ArtifactJobIO.open(path.join(project.directory,'artifacts'),{action:'media.inspect',artifactId:request.artifactId!})
+      try{const sha256=await input.fingerprint(signal),info=assertImageInspection(await this.kernel.recordingController.processArtifact({action:'media.image.inspect',artifactId:request.artifactId},signal));if(await input.fingerprint(signal)!==sha256)throw new Error('CARD_SOURCE_STALE: Source changed during image inspection.');return {...info,source:{artifactId:request.artifactId!,sha256}}}finally{await input.close()}
     }
     const id=studioId(request.draftId)
     if(request.operation==='read')return store.read(id)
@@ -84,7 +88,7 @@ export class VideoStudioService {
       for(const scene of next.scenes)for(const citation of scene.citations??[])await sources.citation(citation,signal)
       for(const artifactId of next.preparation.artifactIds.filter(value=>!current.preparation.artifactIds.includes(value))){signal?.throwIfAborted();const input=await ArtifactJobIO.open(path.join(project.directory,'artifacts'),{action:'media.inspect',artifactId});await input.close()}
       if(next.cover?.sourceArtifactId&&next.cover.sourceArtifactId!==current.cover?.sourceArtifactId){const input=await ArtifactJobIO.open(path.join(project.directory,'artifacts'),{action:'media.inspect',artifactId:next.cover.sourceArtifactId});await input.close()}
-      for(const artifactId of new Set([...layerAssets(next),...next.scenes.flatMap(layerAssets)])){
+      for(const artifactId of new Set([...layerAssets(next),...next.scenes.flatMap(layerAssets),...next.scenes.flatMap(s=>cardImageAssets(s.cardSpec?.version===2?s.cardSpec:undefined))])){
         signal?.throwIfAborted();const input=await ArtifactJobIO.open(path.join(project.directory,'artifacts'),{action:'media.inspect',artifactId});await input.close()
       }
       signal?.throwIfAborted()
@@ -138,7 +142,7 @@ export class VideoStudioService {
       if(!request.templateName)preferences.defaults=optionsFromOutput(draft)
       const retainDimensions=!request.templateName&&request.options?.aspectRatio===undefined&&request.options?.resolution===undefined&&request.options?.width===undefined&&request.options?.height===undefined
       const output=resolveVideoOutput(preferences,request.options??{},request.templateName,retainDimensions?{width:draft.width,height:draft.height}:undefined)
-      draft.width=output.width;draft.height=output.height;draft.fps=output.fps;draft.music=output.music;draft.style=output.style;draft.tts=output.tts;draft.watermark=output.watermark
+      draft.cardLayout=output.cardLayout;draft.narrationPacing=output.narrationPacing;draft.width=output.width;draft.height=output.height;draft.fps=output.fps;draft.music=output.music;draft.style=output.style;draft.tts=output.tts;draft.watermark=output.watermark
       if(output.templateName)draft.templateName=output.templateName;else delete draft.templateName
       return store.update(id,draft.revision,draft)
     }
@@ -195,7 +199,7 @@ export class VideoStudioService {
       return {draft:current,completedSceneIds,skippedSceneIds:draft.scenes.filter(scene=>!pending.includes(scene.id)).map(scene=>scene.id)}
     }
     if(request.operation==='render'){
-      await verifyStudioSpeech(draft,path.join(project.directory,'artifacts'),signal);this.assertRevision(store,draft)
+      await verifyStudioSpeech(draft,path.join(project.directory,'artifacts'),signal);await this.verifyCardPins(draft,path.join(project.directory,'artifacts'),signal);this.assertRevision(store,draft)
       const cached=request.forceRender?undefined:store.reusableExport(draft)
       if(cached){signal?.throwIfAborted();this.assertRevision(store,draft);return {draft,export:{...cached,type:'video',contentType:'video/mp4'},reused:true}}
       await this.assertAssets(draft,project.directory,signal)
@@ -207,7 +211,7 @@ export class VideoStudioService {
       try{
         for(const artifactId of [result.artifactId,...(typeof result.verificationArtifactId==='string'?[result.verificationArtifactId]:[])])if(!before.has(artifactId)){const file=path.join(root,artifactId),stat=await fs.lstat(file).catch(error=>{if(error.code==='ENOENT')return undefined;throw error});if(stat?.isFile()&&!stat.isSymbolicLink())created.set(file,{dev:stat.dev,ino:stat.ino})}
         signal?.throwIfAborted();if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Studio Project changed during export.');this.assertRevision(store,draft)
-        await verifyStudioSpeech(draft,directory,signal);signal?.throwIfAborted();this.assertRevision(store,draft)
+        await verifyStudioSpeech(draft,directory,signal);await this.verifyCardPins(draft,directory,signal);signal?.throwIfAborted();this.assertRevision(store,draft)
         const updated=store.addExport(id,draft.revision,{artifactId:String(result.artifactId),durationSeconds:finiteNumber(result.durationSeconds,'duration',1,180),...(result.verificationArtifactId?{verificationArtifactId:String(result.verificationArtifactId)}:{})})
         committed=true;return {draft:updated,export:result}
       }finally{if(!committed){const current=await fs.lstat(directory);if(current.dev!==rootIdentity.dev||current.ino!==rootIdentity.ino||current.isSymbolicLink()||await fs.realpath(directory)!==root)throw new Error('Export Project changed; cleanup refused.');for(const [file,identity] of created){const stat=await fs.lstat(file).catch(error=>{if(error.code==='ENOENT')return undefined;throw error});if(stat?.dev===identity.dev&&stat.ino===identity.ino&&!stat.isSymbolicLink())await fs.unlink(file)}}}
@@ -236,9 +240,9 @@ export class VideoStudioService {
       const result=assertMediaArtifactReceipt(await this.kernel.recordingController.narrate({text:scene.narration,...tts},signal))
       signal?.throwIfAborted()
       draft.tts=tts
-      scene.voiceTiming=undefined;scene.voiceSegments=undefined
-      scene.audioGeneration={kind:'tts',options:tts};scene.audioArtifactId=String(result.artifactId);scene.audioText=scene.narration;scene.audioDurationSeconds=finiteNumber(result.durationSeconds,'audio duration',.01,180)
-      scene.durationSeconds=narrationSceneDuration(scene,scene.audioDurationSeconds,draft.fps);if(scene.visualSegments)fitVisualSegments(scene.visualSegments,scene.durationSeconds)
+      const duration=finiteNumber(result.durationSeconds,'audio duration',.01,180),autoTiming=applyNarrationPacing(scene,duration,draft.fps,draft.narrationPacing)
+      scene.audioGeneration={kind:'tts',options:tts,...(autoTiming?{autoTiming}:{})};scene.audioArtifactId=String(result.artifactId);scene.audioText=scene.narration;scene.audioDurationSeconds=duration
+      if(scene.visualSegments)fitVisualSegments(scene.visualSegments,scene.durationSeconds)
       return {draft:store.update(id,draft.revision,draft,true),audio:result}
     }
     if(request.operation==='attach'){
@@ -266,7 +270,7 @@ export class VideoStudioService {
         if(!Array.isArray(tracks)||!tracks.some(track=>track.type===request.assetKind&&track.canDecode))throw new Error('Artifact has no decodable selected track.')
         const duration=finiteNumber(info.durationSeconds,'media duration',.01,1800)
         if(request.assetKind==='video'){scene.videoArtifactId=request.artifactId;scene.sourceDurationSeconds=duration;delete scene.imageArtifactId}
-        else{scene.voiceTiming=undefined;scene.voiceSegments=undefined;scene.audioGeneration={kind:'imported'};scene.audioArtifactId=request.artifactId;scene.audioText=scene.narration;scene.audioDurationSeconds=duration;scene.durationSeconds=narrationSceneDuration(scene,duration,draft.fps);if(scene.visualSegments)fitVisualSegments(scene.visualSegments,scene.durationSeconds)}
+        else{const autoTiming=applyNarrationPacing(scene,duration,draft.fps,draft.narrationPacing);scene.audioGeneration={kind:'imported',...(autoTiming?{autoTiming}:{})};scene.audioArtifactId=request.artifactId;scene.audioText=scene.narration;scene.audioDurationSeconds=duration;if(scene.visualSegments)fitVisualSegments(scene.visualSegments,scene.durationSeconds)}
       }
       if(request.assetKind!=='audio'){delete scene.visualSegments;delete scene.focusIntervals}
       signal?.throwIfAborted()
@@ -290,6 +294,7 @@ export class VideoStudioService {
       {id:segment.videoArtifactId,kind:'video' as const,setDuration:(duration:number|undefined)=>{segment.sourceDurationSeconds=duration}},
       {id:segment.imageArtifactId,kind:'image' as const,setDuration:()=>{}}
     ])
+    references.push(...cardImageAssets(scene.cardSpec?.version===2?scene.cardSpec:undefined).map(id=>({id,kind:'image' as const,setDuration:()=>{}})))
     references.push({id:scene.audioArtifactId,kind:'audio',setDuration:duration=>{scene.audioDurationSeconds=duration}},...layerReferences(scene))
     return {title:scene.title,id:scene.id,references}
     })
@@ -315,6 +320,7 @@ export class VideoStudioService {
       try{const info=await pending;setDuration(info.durationSeconds)}
       catch(error){signal?.throwIfAborted();const range=error instanceof Error&&error.message.startsWith('源区间');failures.push({code:range?'source-range':'asset-unavailable',severity:'error',sceneId:scene.id,artifactId:id,message:range?`${scene.title}：${error.message}`:`${scene.title}：素材 ${id} 无法读取或不支持解码，请替换素材`})}
     }
+    try{await this.verifyCardPins(draft,path.join(projectDirectory,'artifacts'),signal)}catch(error){signal?.throwIfAborted();failures.push({code:'card-source-stale',severity:'error',message:error instanceof Error?error.message:String(error)})}
     signal?.throwIfAborted();this.assertRevision(store,draft)
     const report=draftReadiness(draft);report.issues.push(...failures)
     try{await verifyStudioSpeech(draft,path.join(projectDirectory,'artifacts'),signal)}catch(error){signal?.throwIfAborted();report.issues.push({code:'speech-anchors',severity:'error',message:error instanceof Error?error.message:String(error)})}
@@ -324,6 +330,12 @@ export class VideoStudioService {
     if(!encoding.videoSupported||!encoding.audioSupported)report.issues.push({code:'encoding-unavailable',severity:'error',message:'此设备不支持当前参数的 H.264/AAC 编码，请调整视频参数。'})
     report.ready=!report.issues.some(issue=>issue.severity==='error')
     return {...report,checkedAssets,encoding}
+  }
+  private async verifyCardPins(draft:VideoDraft,directory:string,signal?:AbortSignal):Promise<void>{
+    const checked=new Map<string,string>();for(const scene of draft.scenes)for(const pin of cardSourcePins(scene.cardSpec?.version===2?scene.cardSpec:undefined)){
+      let sha=checked.get(pin.artifactId);if(!sha){const input=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:pin.artifactId});try{sha=await input.fingerprint(signal);checked.set(pin.artifactId,sha)}finally{await input.close()}}
+      if(sha!==pin.sha256)throw new Error('CARD_SOURCE_STALE: 源图已变化，旧重点失效，请重新框选。')
+    }
   }
   private async assertAssets(draft:VideoDraft,projectDirectory:string,signal?:AbortSignal):Promise<void>{
     const report=await this.checkDraft(draft,projectDirectory,new VideoStudioStore(projectDirectory),signal)

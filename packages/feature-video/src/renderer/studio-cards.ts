@@ -1,6 +1,7 @@
 import type {StudioState,VideoDraft} from '../studio-contract.js'
 import {sceneCoverage} from '../studio-contract.js'
 import {sceneVisuals} from '../../../media-native/src/visual-segments.js'
+import {currentCardTemplate,cardTemplateName} from '../studio-card-templates.js'
 import type {InspectorMode} from './studio-workbench.js'
 
 type CardContext={state:StudioState;draft?:VideoDraft;index:number;simple:boolean;stage:number;mode:InspectorMode;disabled:boolean;pending:boolean}
@@ -163,7 +164,8 @@ export class StudioCards {
       const menu=document.createElement('details');menu.className='studio-card-menu';const summary=document.createElement('summary');summary.textContent='···';summary.setAttribute('aria-label','镜头 '+(index+1)+' 的操作')
       const menuBody=document.createElement('div');for(const [action,label]of [['move-up','向前移动'],['move-down','向后移动'],['duplicate','复制镜头'],['visual','画面取景'],['ask','让 Assistant 改这一镜…'],['remove-scene','删除镜头']] as const){const b=this.button(label,action,scene.id,c.disabled||action==='move-up'&&index===0||action==='move-down'&&index===c.draft!.scenes.length-1);menuBody.append(b)}menu.append(summary,menuBody)
       const handle=document.createElement('span');handle.textContent='⠿';handle.className='studio-card-drag';handle.draggable=false;handle.setAttribute('aria-disabled',String(c.disabled));handle.dataset.dragScene=scene.id;handle.setAttribute('aria-label','拖动镜头排序，也可使用操作菜单')
-      heading.append(handle,number,title,length,menu);card.append(heading)
+      const category=document.createElement('small');category.className='studio-card-category';category.textContent=cardTemplateName(currentCardTemplate(scene))
+      heading.append(handle,number,title,category,length,menu);card.append(heading)
       const content=document.createElement('div');content.className='studio-card-content'
       const picture=document.createElement('div');picture.className='studio-card-picture';const body=document.createElement('div');body.className='studio-card-script-content';content.append(picture,body);card.append(content)
       const asset=sceneVisuals(scene)[0],id=asset?.imageArtifactId??asset?.videoArtifactId
@@ -175,7 +177,8 @@ export class StudioCards {
       if(selected){body.classList.add('studio-card-editor');body.append(this.editor)
         const tools=document.createElement('div');tools.className='studio-card-tools';for(const [action,label]of [['text','编辑卡片'],['asset','换画面'],['voice','声音与字幕']] as const)tools.append(this.button(label,action,scene.id,c.disabled));card.append(tools)
       }else{const label=document.createElement('small');label.className='studio-card-script-label';label.textContent='旁白 / 脚本';const text=document.createElement('p');text.className='studio-card-script';text.textContent=scene.narration||'点击此镜头编写脚本';body.append(label,text)}
-      if(scene.layers?.length||scene.audioTracks?.length||c.draft!.layers?.length||c.draft!.audioTracks?.length||(scene.visualSegments?.length??0)>1||scene.focusIntervals?.length){const advanced=this.button('含高级编辑 ›','advanced',scene.id,c.disabled);advanced.className='studio-card-advanced';advanced.title='在高级编辑中查看此镜头的图层、音轨与取景';card.append(advanced)}
+      if(scene.layers?.length||scene.audioTracks?.length||c.draft!.layers?.length||c.draft!.audioTracks?.length){const advanced=this.button('含高级编辑 ›','advanced',scene.id,c.disabled);advanced.className='studio-card-advanced';advanced.title='在高级编辑中查看此镜头的图层与音轨';card.append(advanced)}
+      else if((scene.visualSegments?.length??0)>1||sceneVisuals(scene).some(item=>item.focusIntervals?.length)){const visual=this.button(scene.visualSegments?.length?'多画面 · '+scene.visualSegments.length+' 段':'取景已设置','visual',scene.id,c.disabled);visual.className='studio-card-visual-detail';card.append(visual)}
       if(scene.presentationWindow&&scene.presentationWindow.startSeconds>0){const continuation=document.createElement('small');continuation.className='muted';continuation.textContent='续段 · 保留完整脚本，复用原旁白区间';card.append(continuation)}
       const audio=document.createElement('small');audio.className='studio-card-audio';audio.textContent=sceneCoverage(scene,c.draft!.tts).audioStale?'此段旁白待更新':scene.audioArtifactId?'旁白已就绪':'未使用旁白';card.append(audio)
       if(card.parentElement!==list)list.append(card)
