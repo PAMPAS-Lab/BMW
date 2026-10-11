@@ -3,6 +3,7 @@ import type { AssistantCommand, AssistantState, AssistantUiPort } from '../../..
 import {renderMessageContent} from './message-content.js'
 import {createAgentSettingsView} from './agent-settings.js'
 import {StudioComposerScope} from './studio-composer-scope.js'
+import {conversationTimeline} from './conversation-timeline.js'
 declare global { interface Window { bmwAssistant: AssistantUiPort; bmwSelectSession(sessionId: string): Promise<boolean>;bmwOpenAgentSettings():void } }
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T
 const driver = element<HTMLSelectElement>('driver'), sessions = element<HTMLSelectElement>('sessions'), input = element<HTMLTextAreaElement>('input'), messages = element<HTMLElement>('messages'), error = element<HTMLElement>('error')
@@ -39,17 +40,16 @@ function render(next: AssistantState): void {
   const nearBottom = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 80
   messages.replaceChildren()
   if (!next.messages.length) { const empty = document.createElement('p'); empty.className = 'empty'; empty.textContent = '对话、进度和结果显示在 BMW。\nAgent 使用当前 Project 的页面和媒体。'; messages.append(empty) }
-  for (const message of next.messages) {
+  for (const entry of conversationTimeline(next)) {
+    if(entry.kind!=='message'){
+      const progress=document.createElement('div');progress.className=entry.kind==='tool'?'tool':'turn-outcome';progress.dataset.status=entry.status;progress.textContent=entry.text;messages.append(progress);continue
+    }
+    const message=entry.message
     const article = document.createElement('article'); article.className = 'message ' + message.role
+    article.dataset.messageId=message.id
     const label = document.createElement('small'); label.textContent = message.role === 'user' ? '你' : (next.drivers.find(row => row.id === next.driverId)?.label ?? 'Assistant') + (message.complete ? '' : ' · 正在回复')
     const text = document.createElement('div');text.className='message-content';renderMessageContent(text,message.text)
     article.append(label, text); messages.append(article)
-  }
-  for (const envelope of next.events.slice(-100)) {
-    const event = envelope.event
-    if (event.type === 'tool.started') { const tool = document.createElement('div'); tool.className = 'tool'; tool.textContent = 'browser · ' + event.action; messages.append(tool) }
-    if (event.type === 'turn.completed' && event.outcome !== 'success' && event.message) { const tool = document.createElement('div'); tool.className = 'tool'; tool.textContent = event.message; messages.append(tool) }
-    if (event.type === 'turn.disconnected') { const tool = document.createElement('div'); tool.className = 'tool'; tool.textContent = event.message; messages.append(tool) }
   }
   if (nearBottom) messages.scrollTop = messages.scrollHeight
   const interactions = element('interactions'); interactions.replaceChildren()

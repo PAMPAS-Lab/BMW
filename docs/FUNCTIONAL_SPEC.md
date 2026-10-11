@@ -39,7 +39,7 @@ Browser is boundary, media is native, web is runtime.
 - 官方引擎拥有 Agent 循环，Host 只协调输入和资源。输入前有效目录必须只有 `browser`；DSH 每次 request assembly 再检查 scoped catalog，Qoder 禁止继承 plugins/skills/settings，Codex 检查 Responses 及 Lite additional_tools。目录成员不证明账号推理额度或实际请求可用。
 - Codex App Server `0.160.0`、`0.160.1` 使用统一的已验证版本白名单，CLI 与官方模型缓存均拒绝未知版本；CLI 错误明确显示实际版本及已支持版本。对 `gpt-6.1-sol`、`gpt-6-astra`、`gpt-6-sol`、`gpt-6-luna` 使用官方启动配置 `model_catalog_json`。从独立 CLI Profile 的官方目录生成内容寻址的只读策略副本，移除强制 code mode/多 Agent 元数据并清空额外实验工具，保留模型 ID、原生 Lite 传输、推理等级、上下文、图像能力和模型指导。不改写官方 cache/config；官方运行时仍可正常刷新其缓存。副本必须是宿主私有的普通文件，缓存版本、模型缺失、路径碰撞/篡改和实际额外工具均失败拒绝。目录预检与实际启动使用同一个副本；目录准入在模型输入前内部执行，用户模型选择不触发预检。GPT-5.5 保持原有路径，未知 GPT-6 型号不自动套用策略。BMW 不增加模型循环、代码执行工具或其他宿主权限。
 - Host 私有租约绑定 canonical BMW Session；provider 注册只能解析已明确附着的有效 Host 租约。MCP 执行 scope 通过私有环境传递，显式 catalog-only 模式只提供目录且禁止工具执行，模型传入 `__bmwSession` 始终拒绝。撤销等待真实 kernel/worker 清理。完成事件在实际清理前不结束回执或释放 FIFO；原生清理失败同样隔离资源，恢复仅重试清理。
-- 自有 Assistant UI 显示消息、工具进度、运行状态、停止和资源恢复，支持 Browser/Studio 模式与上下文。基础 Markdown 用 DOM text nodes 渲染，模型 HTML 不执行。fork 未验证时在会话中心禁用。新的退出路径等待 Assistant 原生进程、Bridge 和 Feature 实际清理。
+- 自有 Assistant UI 按发生顺序穿插显示消息和最近 100 条事件中的工具进度；流式消息保留首次出现的位置，同毫秒按 Host 事件顺序显示。工具显示已完成、失败、执行中或结果未确认，停止与断连不伪装成功；最终回复后显示本轮完成／停止／失败状态，历史重载保持相同顺序。界面提供运行状态、停止和资源恢复，支持 Browser/Studio 模式与上下文。基础 Markdown 用 DOM text nodes 渲染，模型 HTML 不执行。fork 未验证时在会话中心禁用。新的退出路径等待 Assistant 原生进程、Bridge 和 Feature 实际清理。
 - 三个真实引擎已分别通过隔离 BMW 的页面、截图读图、canonical Studio owner 和同一 provider 续聊。DSH/Qoder/Codex 在每轮完成后关闭原生运行进程，以原生存储恢复后续输入；这不证明原生桌面侧边栏同步。测试不用生产桌面 Profile；正常官方 CLI 登录配置与 desktop 私有凭据分离。
 - `qoder-bmw` 作为 harness-qoder 的复用 skill 指导随包分发，SDK 装配直接使用固定指导并保持空 skills 目录；skill 不建立连接和权限边界。接入说明见 [QODER_BMW.md](QODER_BMW.md)。
 

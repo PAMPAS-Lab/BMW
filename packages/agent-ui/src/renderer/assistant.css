@@ -21,6 +21,8 @@ dialog{color:inherit;background:#151e2b;border:1px solid #567cb0;border-radius:1
 }
 
 [hidden]{display:none!important}
+.turn-outcome{margin:8px 0 16px;color:#9cacc0;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(prefers-color-scheme:light){.turn-outcome{color:#53667f}}
 
 body[data-presentation=floating]{border:1px solid #567cb0;border-radius:10px;overflow:hidden}
 body[data-presentation=floating]>header{padding:8px;gap:5px;cursor:grab;touch-action:none}body[data-presentation=floating]>header button{padding:4px;font-size:11px}body[data-presentation=floating]>header #project{display:none}body[data-presentation=floating]>header #driver{max-width:85px;font-size:11px;padding:4px}

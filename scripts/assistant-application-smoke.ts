@@ -95,8 +95,11 @@ const backend: AgentBackend = {
       imageCount += reply.images?.length ?? 0
       await emit({ type: 'tool.completed', callId, success: true, message: '' }); return agentRecord(reply.result)
     }
+    await emit({type:'message.completed',messageId:'progress-open-'+request.runId,text:'Inspecting the Project page'})
     const tab = await browser({ action: 'tabs.open', url: pageUrl, foreground: false, reuse: false })
+    await emit({type:'message.delta',messageId:'progress-capture-'+request.runId,text:'Capturing '})
     await browser({ action: 'media.screenshot', tabId: tab.id })
+    await emit({type:'message.completed',messageId:'progress-capture-'+request.runId,text:'Capturing the original page completed'})
     const draft = await browser({ action: 'video.studio', studioRequest: { operation: 'create', title: 'Assistant-owned draft' } })
     draftOwner = String(draft.ownerSessionId ?? '')
     await emit({ type: 'message.delta', messageId: 'reply-' + request.runId, text: 'BMW ' })
@@ -325,6 +328,20 @@ try {
   assert.equal(await assistant.executeJavaScript('document.querySelector(".message.assistant strong").textContent'),'Project')
   assert.equal(await assistant.executeJavaScript('document.querySelectorAll(".message img").length'),0)
   assert.equal(await assistant.executeJavaScript('window.fixtureHtmlExecuted===true'),false)
+  const checkTimeline=async()=>{
+    await waitFor(async()=>await assistant.executeJavaScript('document.querySelector("#messages> :last-child")?.textContent==="本轮已完成"')?true:null,'finished turn at bottom')
+    const rows=await assistant.executeJavaScript('[...document.getElementById("messages").children].map(node=>({text:node.textContent,kind:node.className,status:node.dataset.status}))') as {text:string;kind:string;status?:string}[]
+    assert.deepEqual(rows.map(row=>row.kind),['message user','message assistant','tool','message assistant','tool','tool','message assistant','turn-outcome'],'Tool progress belongs between its actual messages, including streaming first position')
+    assert.ok(rows[1].text.includes('Inspecting the Project page'))
+    assert.ok(rows[3].text.includes('Capturing the original page completed'))
+    assert.ok(rows[6].text.includes('BMW browser and Studio completed'),'Final response stays below tools')
+    assert.ok(rows.filter(row=>row.kind==='tool').every(row=>row.status==='completed'&&row.text.endsWith('已完成')),'Completed tools never look pending')
+  }
+  await checkTimeline()
+  assistant.reload()
+  await waitFor(async()=>!assistant.isLoading()&&await assistant.executeJavaScript('typeof window.bmwAssistant==="object"')?true:null,'Assistant history reload')
+  await checkTimeline()
+  console.log('PASS actual Assistant chronological tools, streaming position, completed outcome and persisted history reload')
   assert.equal(latestRequest?.sessionId, initial.selectedSessionId)
   assert.equal(draftOwner, initial.selectedSessionId)
   assert.equal(complete.sessions[0].externalSessionId,initial.sessions[0].externalSessionId??'provider-' + initial.selectedSessionId)
