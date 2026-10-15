@@ -1,9 +1,8 @@
-# Video Studio 当前范围与暂停的后续优化
+# Video Studio 当前范围
 
-核对日期：2026-10-08。功能字段与拒绝规则以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，测试分支以 [ARCHITECTURE.md](ARCHITECTURE.md) 生成表为准。
+核对日期：2026-10-14。功能字段与拒绝规则以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，测试分支以 [ARCHITECTURE.md](ARCHITECTURE.md) 生成表为准。
 
-用户已确认卡片与高级多轨两个方向基本成立，但要求暂不继续 UI／工作流优化。已获授权实施共享视频 schema，UI 只增加兼容性提示与模式返回约束；其他 UI／工作流优化仍暂停。专用 AI 图片／视频素材生成暂缓；素材使用真实 Project 文件、网页采集、截屏与录屏。
-
+当前范围包含共享视频文档、两种编辑视图、真实素材与旁白，以及关键状态/手机审片、句级卡片引用、Project 素材索引、区间 ASR、原声转解说和录屏整理。专用 AI 图片／视频素材生成暂缓。
 ## 已实现与对应保障
 
 | 能力 | 代码入口 | 分类测试 ID |
@@ -23,18 +22,25 @@
 | 参考帧抽样、SHA 核对、背景采用及记录管理 | [studio-reference.ts](../packages/feature-video/src/studio-reference.ts)、[renderer/studio-reference-editor.ts](../packages/feature-video/src/renderer/studio-reference-editor.ts) | studio.reference-analysis、video.studio |
 | 可选逐项文本／字幕样式／显示模式审阅 | [studio-review.ts](../packages/feature-video/src/studio-review.ts)、[studio-service.ts](../packages/feature-video/src/studio-service.ts) | studio.review-adoption、video.studio |
 | 签名历史恢复、选择性配音、制作取消与明确续做 | [studio-snapshot-proof.ts](../packages/feature-video/src/studio-snapshot-proof.ts)、[studio-service.ts](../packages/feature-video/src/studio-service.ts)、[studio.ts](../packages/feature-video/src/renderer/studio.ts) | studio.approved-history、studio.production-recovery |
+| 局部字幕／卡片／句关联命令与有界模型读取 | [video-edit.ts](../packages/feature-video/src/video-edit.ts)、[studio-agent-result.ts](../packages/feature-video/src/studio-agent-result.ts)、[studio-read-contract.ts](../packages/feature-video/src/studio-read-contract.ts) | video.schema、video.studio、sources |
+| 完整字幕底框、共享安全布局与实际像素遮挡观察 | [composition-text.ts](../packages/media-native/src/media/composition-text.ts)、[composition-quality.ts](../packages/media-native/src/composition-quality.ts) | media.production、video |
+| 当前成片指纹绑定的审片覆盖与分作者意见 | [export-review-journal.ts](../packages/feature-video/src/export-review-journal.ts)、[studio-export-review-state.ts](../packages/feature-video/src/studio-export-review-state.ts) | video.studio、studio.export-review |
+| 官方事件／实际保存进度与显式恢复输入准备 | [assistant-activity.ts](../packages/platform/src/assistant-activity.ts)、[studio-production-progress.ts](../packages/feature-video/src/studio-production-progress.ts)、[studio-runtime.ts](../packages/feature-video/src/studio-runtime.ts) | platform.assistant-controller、studio.production-recovery |
+| 2.5 时间方法记录、实际音频核对与只读句级节奏诊断 | [studio-speech.ts](../packages/feature-video/src/studio-speech.ts)、[studio-timing.ts](../packages/feature-video/src/studio-timing.ts)、[studio-timing-diagnostics.ts](../packages/feature-video/src/studio-timing-diagnostics.ts) | video.schema、video.studio、studio.export-review |
 | 工作区恢复和素材读取 | [studio-runtime.ts](../packages/feature-video/src/studio-runtime.ts)、[studio.ts](../packages/feature-video/src/renderer/studio.ts) | studio.workspace-resume |
 
 表中代码入口链接到实际作者源码。同一 smoke 文件的专用环境分支并不由默认 test:studio-e2e 全部触发，完整 offline runner 按目录逐项执行；配置见架构生成表。
 
+手机成片审片、素材索引、配方与录屏 GUI 验收共用 studio.export-review；区间 ASR 与原时间检索由 speech/media 与 video.material-index 覆盖；声音切换、放大镜和录屏压缩由 video 原生导出覆盖。具体预算和失败行为维护在功能规格。
+
 ## 当前边界
 
-有限多轨、显式关键帧和基础特效已经实现，不再列为待开发。更多复杂效果、任意动画曲线、任意复杂引用重绑定与通用 NLE 尚未实现，也不在此次一致性修正中扩展。
+有限多轨、显式关键帧和基础特效已经实现，不再列为待开发。更多复杂效果、任意动画曲线、任意复杂引用重绑定与通用 NLE 尚未实现，也不在当前能力范围。
 
-审阅默认折叠、单列为测试功能，用户逐条采纳／忽略／撤销。参考分析仅依据实际采样 PNG；它们不保证完整视频语义、事实正确性或建议质量。原声 ASR 完整音轨最多 180 秒，没有长视频分块与自动词／字准确率认可。分阶段确认是给官方 Agent 的任务说明，遵从质量需要真实使用验收。
+审阅默认折叠、单列为测试功能，用户逐条采纳／忽略／撤销。参考分析仅依据实际采样 PNG；它们不保证完整视频语义、事实正确性或建议质量。原声 ASR 完整音轨最多 180 秒；最多 1800 秒源文件可按至多 180 秒区间进行 Project 索引。自动词／字准确率未批准。分阶段确认是给官方 Agent 的任务说明，遵从质量需要真实使用验收。
 
-## 暂停的优化议题
+## 后续议题
 
-后续如用户恢复优化，可再讨论卡片信息密度、画布与多轨布局、复杂任务与手动动作区分、快捷操作及完整真实制作体验。保持两种模式与默认简洁入口。当前 schema 的模式返回约束见 [Video Document 2.0](VIDEO_DOCUMENT_V2.md)；后续 UI 优化应遵守同一时间权威、简洁可逆子集及当前原生能力边界。
+后续可讨论卡片信息密度、画布与多轨布局、复杂任务与手动动作区分、快捷操作及完整真实制作体验。保持两种模式与默认简洁入口。当前 schema 的模式返回约束见 [Video Document 2.0](VIDEO_DOCUMENT_V2.md)；后续 UI 优化应遵守同一时间权威、简洁可逆子集及当前原生能力边界。
 
 此前回退决策、旧 A/B 方案、逐阶段待办和原测试结果见 [历史快照](history/2026-10-07-consistency/index.md)。当时尚未实现的判断已从当前范围移除；历史证据保留原文，并按原源码日期解释。

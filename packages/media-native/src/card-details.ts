@@ -2,8 +2,11 @@ import {assertArtifactId,finiteNumber,mediaRecord} from './media-contract.js'
 
 export interface SourcePin {artifactId:string;sha256:string}
 export interface SourceRect {x:number;y:number;width:number;height:number}
-export interface ReadingTarget {source:SourcePin;rect:SourceRect;name:string}
+export interface ReadingTarget {source:SourcePin;rect:SourceRect;name:string;lineCount?:number}
 export interface CardReading {mode:'whole-to-detail'|'detail-to-whole'|'sequence';targets:ReadingTarget[];returnToWhole:boolean}
+/** Recommended authoring preset, not a migration of existing saved cards.
+ * The source line count must still be supplied after inspecting the pixels. */
+export const CONTEXT_READING=Object.freeze({mode:'whole-to-detail' as const,returnToWhole:true,phases:['context','locate','zoom','detail','return'] as const,locate:.18,zoom:.30,detail:.44,hold:.64,return:.84})
 export interface CardHighlight {source:SourcePin;name:string;rects:SourceRect[];style:'outline'|'fill'|'invert';startSeconds:number;endSeconds:number}
 export interface EvidenceDetails {reading?:CardReading;highlights?:CardHighlight[]}
 export interface QuoteDetails {excerpt:string;translation:string;attribution:string;display:'simultaneous'|'staged'}
@@ -17,6 +20,7 @@ export type DetailedCardSpec=
  |{version:2;templateId:'metric/backdrop';motion?:'none'|'fade-in'|'count-up';value:number;decimals:0|1|2;unit:string;phase:'hold'|'to-evidence';holdSeconds:number}
  |{version:2;templateId:'title/emphasis';motion?:'none'|'fade-in'|'wipe'}
  |{version:2;templateId:'diagram/to-target';motion?:'none'|'reveal-items';objects:DiagramNode[];target:DiagramNode;relation:string}
+ |{version:2;templateId:'diagram/sequence';motion?:'none'|'reveal-items';nodes:DiagramNode[];shape:'steps'|'funnel';footnote:string}
  |{version:2;templateId:'diagram/range';motion?:'none';range:CardRange}
 
 const object=<T extends Record<string,unknown>>(required:readonly string[],properties:T)=>({type:'object',additionalProperties:false,required,properties})
@@ -25,13 +29,14 @@ const number=(minimum:number,maximum:number)=>({type:'number',minimum,maximum})
 const list=(items:unknown,minItems:number,maxItems:number)=>({type:'array',items,minItems,maxItems})
 export const sourcePinSchema=object(['artifactId','sha256'],{artifactId:{type:'string',minLength:1,maxLength:180},sha256:{type:'string',pattern:'^[a-f0-9]{64}$'}})
 export const sourceRectSchema=object(['x','y','width','height'],{x:number(0,1),y:number(0,1),width:number(.005,1),height:number(.005,1)})
-const readingSchema=object(['mode','targets','returnToWhole'],{mode:{enum:['whole-to-detail','detail-to-whole','sequence']},targets:list(object(['source','rect','name'],{source:sourcePinSchema,rect:sourceRectSchema,name:string(32)}),1,3),returnToWhole:{type:'boolean'}})
+export const readingTargetLimit=(mode:CardReading['mode'],maximum:number):number=>mode==='sequence'?maximum:1
+const readingSchema=(maximum:number)=>({oneOf:(['whole-to-detail','detail-to-whole','sequence'] as const).map(mode=>object(['mode','targets','returnToWhole'],{mode:{const:mode},targets:list(object(['source','rect','name'],{source:sourcePinSchema,rect:sourceRectSchema,name:string(32),lineCount:{type:'integer',minimum:1,maximum:8,description:'Author-counted text lines in this exact source rectangle. Whole-to-detail enables context, box and stationary close-up; sequence enables phone pan. Source-line count is not OCR or a readability guarantee.'}}),1,readingTargetLimit(mode,maximum)),returnToWhole:{type:'boolean'}}))})
 const highlightSchema=object(['source','name','rects','style','startSeconds','endSeconds'],{source:sourcePinSchema,name:string(32),rects:list(sourceRectSchema,1,3),style:{enum:['outline','fill','invert']},startSeconds:number(0,60),endSeconds:number(.1,60)})
 const quoteSchema=object(['excerpt','translation','attribution','display'],{excerpt:string(160),translation:string(160),attribution:string(240),display:{enum:['simultaneous','staged']}})
 const nodeSchema=object(['label'],{label:string(32),imageArtifactId:{type:'string',minLength:1,maxLength:180}})
 const rangeCommon={axisLabel:string(48),condition:string(100)}
 const rangeSchema={oneOf:[object(['mode','axisLabel','minimum','maximum','start','end','thresholds','unit','condition'],{mode:{const:'numeric'},...rangeCommon,minimum:number(-1e9,1e9),maximum:number(-1e9,1e9),start:number(-1e9,1e9),end:number(-1e9,1e9),thresholds:list(number(-1e9,1e9),0,2),unit:string(8)}),object(['mode','axisLabel','regionLabel','thresholdLabels','condition'],{mode:{const:'symbolic'},...rangeCommon,regionLabel:string(48),thresholdLabels:list(string(32),0,2)})]}
-const evidence=(max:number)=>({reading:readingSchema,highlights:list(highlightSchema,0,max)})
+const evidence=(max:number)=>({reading:readingSchema(max),highlights:list(highlightSchema,0,max)})
 const detailed=(id:string,required:string[],properties:Record<string,unknown>,motions:string[]=['none'])=>object(['version','templateId',...required],{version:{const:2},templateId:{const:id},motion:{enum:motions},...properties})
 export const detailedCardSchemas=[
  ...['evidence/reading','evidence/highlight','diagram/image'].map(id=>detailed(id,[],evidence(3))),
@@ -40,6 +45,7 @@ export const detailedCardSchemas=[
  detailed('metric/backdrop',['value','decimals','unit','phase','holdSeconds'],{value:number(0,999999999.99),decimals:{enum:[0,1,2]},unit:string(8),phase:{enum:['hold','to-evidence']},holdSeconds:number(1.2,30)},['none','fade-in','count-up']),
  detailed('title/emphasis',[],{},['none','fade-in','wipe']),
  detailed('diagram/to-target',['objects','target','relation'],{objects:list(nodeSchema,2,3),target:nodeSchema,relation:string(24)},['none','reveal-items']),
+ detailed('diagram/sequence',['nodes','shape','footnote'],{nodes:list(object(['label'],{label:string(32)}),2,4),shape:{enum:['steps','funnel']},footnote:string(100)},['none','reveal-items']),
  detailed('diagram/range',['range'],{range:rangeSchema})
 ]
 function closed(raw:unknown,fields:readonly string[]):Record<string,unknown>{const v=mediaRecord(raw);if(Object.keys(v).some(key=>!fields.includes(key)))throw new TypeError('CARD_DETAILS: 不接受额外字段。');return v}
@@ -48,7 +54,7 @@ function choice<T extends string>(value:unknown,values:readonly T[]):T{if(!value
 function array<T>(value:unknown,min:number,max:number,parse:(raw:unknown)=>T):T[]{if(!Array.isArray(value)||value.length<min||value.length>max)throw new TypeError(`CARD_DETAILS: 数量必须为 ${min}–${max}。`);return value.map(parse)}
 export function assertSourcePin(raw:unknown):SourcePin{const v=closed(raw,['artifactId','sha256']);if(typeof v.sha256!=='string'||!/^[a-f0-9]{64}$/.test(v.sha256))throw new TypeError('CARD_SOURCE: 需要真实源文件 SHA-256。');return {artifactId:assertArtifactId(v.artifactId),sha256:v.sha256}}
 export function assertSourceRect(raw:unknown):SourceRect{const v=closed(raw,['x','y','width','height']),r={x:finiteNumber(v.x,'rect x',0,1),y:finiteNumber(v.y,'rect y',0,1),width:finiteNumber(v.width,'rect width',.005,1),height:finiteNumber(v.height,'rect height',.005,1)};if(r.x+r.width>1+1e-9||r.y+r.height>1+1e-9)throw new TypeError('CARD_RECT: 重点必须在源图内。');return r}
-function reading(raw:unknown,max:number):CardReading{const v=closed(raw,['mode','targets','returnToWhole']),mode=choice(v.mode,['whole-to-detail','detail-to-whole','sequence'] as const);if(typeof v.returnToWhole!=='boolean')throw new TypeError('CARD_READING: 需要明确是否回到全貌。');const targets=array(v.targets,1,max,raw=>{const t=closed(raw,['source','rect','name']);return {source:assertSourcePin(t.source),rect:assertSourceRect(t.rect),name:text(t.name,32)}});if(mode!=='sequence'&&targets.length!==1)throw new TypeError('CARD_READING: 此方式只接受一个目标。');return {mode,targets,returnToWhole:v.returnToWhole}}
+function reading(raw:unknown,max:number):CardReading{const v=closed(raw,['mode','targets','returnToWhole']),mode=choice(v.mode,['whole-to-detail','detail-to-whole','sequence'] as const);if(typeof v.returnToWhole!=='boolean')throw new TypeError('CARD_READING: 需要明确是否回到全貌。');if(Array.isArray(v.targets)&&v.targets.length>readingTargetLimit(mode,max))throw new TypeError('CARD_READING: reading.targets for '+mode+' accepts 1..'+readingTargetLimit(mode,max)+' targets; use sequence for multiple targets when this template permits it.');const targets=array(v.targets,1,readingTargetLimit(mode,max),raw=>{const t=closed(raw,['source','rect','name','lineCount']);return {source:assertSourcePin(t.source),rect:assertSourceRect(t.rect),name:text(t.name,32),...(t.lineCount===undefined?{}:{lineCount:finiteNumber(t.lineCount,'reading line count',1,8,true)})}});return {mode,targets,returnToWhole:v.returnToWhole}}
 function highlight(raw:unknown):CardHighlight{const v=closed(raw,['source','name','rects','style','startSeconds','endSeconds']),startSeconds=finiteNumber(v.startSeconds,'highlight start',0,60),endSeconds=finiteNumber(v.endSeconds,'highlight end',startSeconds+.1,60);return {source:assertSourcePin(v.source),name:text(v.name,32),rects:array(v.rects,1,3,assertSourceRect),style:choice(v.style,['outline','fill','invert'] as const),startSeconds,endSeconds}}
 function quote(raw:unknown):QuoteDetails{const v=closed(raw,['excerpt','translation','attribution','display']);return {excerpt:text(v.excerpt,160),translation:text(v.translation,160),attribution:text(v.attribution,240),display:choice(v.display,['simultaneous','staged'] as const)}}
 function node(raw:unknown):DiagramNode{const v=closed(raw,['label','imageArtifactId']);return {label:text(v.label,32),...(v.imageArtifactId===undefined?{}:{imageArtifactId:assertArtifactId(v.imageArtifactId)})}}
@@ -68,9 +74,10 @@ export function assertDetailedCard(raw:unknown):DetailedCardSpec {
  if(v.templateId==='metric/backdrop'){const value=finiteNumber(v.value,'card value',0,999999999.99),decimals=finiteNumber(v.decimals,'decimals',0,2,true) as 0|1|2;if(Number(value.toFixed(decimals))!==value)throw new TypeError('CARD_METRIC: 小数位与数值不一致。');return {version:2,templateId:v.templateId,...motion,value,decimals,unit:text(v.unit,8),phase:choice(v.phase,['hold','to-evidence'] as const),holdSeconds:finiteNumber(v.holdSeconds,'hold',1.2,30)} as DetailedCardSpec}
  if(v.templateId==='title/emphasis')return {version:2,templateId:v.templateId,...motion} as DetailedCardSpec
  if(v.templateId==='diagram/to-target')return {version:2,templateId:v.templateId,...motion,objects:array(v.objects,2,3,node),target:node(v.target),relation:text(v.relation,24)} as DetailedCardSpec
+ if(v.templateId==='diagram/sequence')return {version:2,templateId:v.templateId,...motion,nodes:array(v.nodes,2,4,raw=>{const n=closed(raw,['label']);return {label:text(n.label,32)}}),shape:choice(v.shape,['steps','funnel'] as const),footnote:text(v.footnote,100)} as DetailedCardSpec
  return {version:2,templateId:'diagram/range',...motion,range:range(v.range)} as DetailedCardSpec
 }
-export function cardImageAssets(spec:DetailedCardSpec|undefined):string[]{if(!spec)return [];if(spec.templateId==='evidence/person-quote')return spec.person.artifactId?[spec.person.artifactId]:[];if(spec.templateId==='diagram/to-target')return [...spec.objects,spec.target].flatMap(n=>n.imageArtifactId?[n.imageArtifactId]:[]);return []}
+export function cardImageAssets(spec:DetailedCardSpec|undefined):string[]{if(!spec)return [];if(spec.templateId==='evidence/person-quote')return spec.person.artifactId?[spec.person.artifactId]:[];if(spec.templateId==='diagram/to-target')return [...spec.objects,spec.target].flatMap(n=>n.imageArtifactId?[n.imageArtifactId]:[]);if(spec.templateId==='diagram/sequence')return spec.nodes.flatMap(n=>n.imageArtifactId?[n.imageArtifactId]:[]);return []}
 export function cardSourcePins(spec:DetailedCardSpec|undefined):SourcePin[]{return spec&&'reading'in spec||spec&&'highlights'in spec?[...(spec.reading?.targets.map(t=>t.source)??[]),...(spec.highlights?.map(h=>h.source)??[])]:[]}
 /** Empty dedicated slots are editable draft state, never publishable placeholders. */
 export function assertDetailedReady(spec:DetailedCardSpec):void {
@@ -80,6 +87,7 @@ export function assertDetailedReady(spec:DetailedCardSpec):void {
  if('quote'in spec&&(!spec.quote.excerpt.trim()||!spec.quote.attribution.trim()))fail('请填写可核对的原句与引述来源。')
  if('person'in spec&&(!spec.person.artifactId||!spec.person.name.trim()))fail('请填写人物图与姓名。')
  if(spec.templateId==='diagram/to-target'&&[...spec.objects,spec.target].some(n=>!n.label.trim()))fail('请填写所有对象与目标的标签。')
+ if(spec.templateId==='diagram/sequence'&&(spec.nodes.some(n=>!n.label.trim())||!spec.footnote.trim()))fail('请填写顺序节点及图解口径；漏斗宽度为非比例示意。')
  if(spec.templateId==='diagram/range'&&(!spec.range.axisLabel.trim()||!spec.range.condition.trim()))fail('请填写轴含义与适用条件。')
 }
 /** Compare actual bytes, both in preview and worker, before any pixels are admitted. */

@@ -146,3 +146,15 @@ test('Drawing output IO has no input, bounds PNG writes and rolls back failed di
  await annotation.write(0,0,png);const [output]=await annotation.finish(1,{width:1,height:1})
  assert.notEqual(output.artifactId,'original.png');assert.deepEqual(await fs.readFile(path.join(artifacts,'original.png')),png)
 })
+
+test('Drawing validation identifies wrong action fields and nested property paths without exposing values',()=>{
+ const shapes=[{type:'text',x:20,y:20,text:'test'}]
+ assert.throws(()=>assertImageDrawingRequest({action:'media.image.draw',artifactId:'private-value',filename:'private-name',shapes}),error=>{
+  assert.ok(error instanceof Error);assert.match(error.message,/request: "artifactId", "filename"/);assert.match(error.message,/requires width, height and shapes/);assert.match(error.message,/media.image.annotate/);assert.doesNotMatch(error.message,/private-value|private-name/);return true
+ })
+ assert.throws(()=>assertImageDrawingRequest({action:'media.image.draw',shapes}),/requires width and height/)
+ assert.throws(()=>assertImageDrawingRequest({action:'media.image.draw',width:320,height:180,shapes:[{...shapes[0],align:'center'}]}),/shapes\[0\]: "align"/)
+ assert.throws(()=>assertImageDrawingRequest({action:'media.image.draw',width:320,height:180,shapes:[{type:'path',points:[{x:0,y:0,z:1},{x:10,y:10}]}]}),/shapes\[0\]\.points\[0\]: "z"/)
+ assert.equal(assertImageDrawingRequest({action:'media.image.draw',width:320,height:180,shapes}).action,'media.image.draw')
+ assert.equal(assertImageDrawingRequest({action:'media.image.annotate',artifactId:'existing.png',shapes}).action,'media.image.annotate')
+})

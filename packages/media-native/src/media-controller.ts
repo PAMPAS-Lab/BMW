@@ -1,3 +1,4 @@
+import {ArtifactJobIO} from './artifact-job-io.js'
 import {SpeechProcessor} from './speech-processor.js'
 import {VideoElementCapture} from './video-element-capture.js'
 import type {SourceCaptureGuard} from './source-contract.js'
@@ -107,7 +108,7 @@ export class MediaController implements NativeMediaPort {
       const video=inspection.tracks.find(track=>track.type==='video'),audio=inspection.tracks.find(track=>track.type==='audio')
       if(video?.width!==result.composition.width||video.height!==result.composition.height||!video.canDecode||!audio?.canDecode||audio.sampleRate!==48000||audio.channels!==2)throw new Error('Composed file failed actual size/audio/decode verification.')
       const verification={status:'passed',artifactId:result.artifactId,expectedDurationSeconds:result.durationSeconds,actualDurationSeconds:inspection.durationSeconds,width:video.width,height:video.height,fps:result.composition.fps,tracks:inspection.tracks,frames:mediaRecord(result).frames,audioPeak:mediaRecord(result).audioPeak,narrationDurations:mediaRecord(result).narrationDurations}
-      const report=await exportProjectText(directory,'json',JSON.stringify(verification,null,2)+'\n',signal)
+      const report=await exportProjectText(directory,'json',JSON.stringify({...verification,quality:mediaRecord(result).quality},null,2)+'\n',signal)
       return { ...result, actualDurationSeconds: inspection.durationSeconds, tracks: inspection.tracks,verification,verificationArtifactId:report.artifactId }
     } catch (error) { await fs.promises.rm(result.path, { force: true }); throw error }
   }
@@ -288,9 +289,14 @@ export class MediaController implements NativeMediaPort {
       const packet=await this.eventSource?.collect(clock.startedEpochMs+durationMs)
       if(this.recordingDiscard){await fs.promises.rm(result.path,{force:true});this.onStatus?.({active:false,state:'cancelled',recordingId:this.metadata.id});return {state:'cancelled',recordingId:this.metadata.id}}
       if(packet?.reason==='requested')packet.reason=this.recordingStopReason
-      const events=packet?recordingEvents(result.artifactId,clock,durationMs/1000,packet,assertRecordingFrameClock(summary.frameClock??[],durationMs/1000),summary.frameClockTruncated===true):undefined
+      const recordingInput=await ArtifactJobIO.open(path.dirname(result.path),{action:'media.inspect',artifactId:result.artifactId});let videoSha256:string;try{videoSha256=await recordingInput.fingerprint()}finally{await recordingInput.close()}
+      const events=packet?recordingEvents(result.artifactId,clock,durationMs/1000,packet,assertRecordingFrameClock(summary.frameClock??[],durationMs/1000),summary.frameClockTruncated===true,videoSha256):undefined
       if(events){const text=JSON.stringify(events,null,2)+'\n';if(Buffer.byteLength(text)>RECORDING_EVENT_BYTES)throw new Error('Recording event byte budget exceeded.');await fs.promises.writeFile(eventPath,text,{mode:0o600,flag:'wx'})}
-      const completed={...result,state:'completed',durationMs,bytes,...(events?{eventsArtifactId:path.basename(eventPath),eventCount:events.events.length,eventsTruncated:events.truncated}:{})}
+      const inspection=assertMediaInfo(await this.processor.process({action:'media.inspect',artifactId:result.artifactId},path.dirname(result.path))),video='tracks' in inspection?inspection.tracks.find(track=>track.type==='video'&&track.canDecode):undefined
+      if(!video||!('durationSeconds' in inspection)||inspection.durationSeconds<=0||video.startSeconds===undefined||video.endSeconds===undefined)throw new Error('Recorded container has no finite decodable video range.')
+      if(this.recordingDiscard){await fs.promises.rm(result.path,{force:true});await fs.promises.rm(eventPath,{force:true});return {state:'cancelled',recordingId:this.metadata.id}}
+      const usability={status:'inspected-unreviewed',videoSha256,durationSeconds:inspection.durationSeconds,videoStartSeconds:video.startSeconds,videoEndSeconds:video.endSeconds,width:video.width,height:video.height,audio:'tracks' in inspection&&inspection.tracks.some(track=>track.type==='audio'&&track.canDecode)?'track-present-unlistened':'no-decodable-track',stopReason:packet?.reason??this.recordingStopReason,partial:(packet?.reason??this.recordingStopReason)!=='requested',frameDecodeVerified:false,semanticVerification:false}
+      const completed={...result,state:'completed',durationMs,bytes,usability,...(events?{eventsArtifactId:path.basename(eventPath),eventCount:events.events.length,eventsTruncated:events.truncated}:{})}
       this.onStatus?.({ active: false, ...completed })
       return completed
     } catch (error) { await Promise.all([fs.promises.rm(result.path,{force:true}),fs.promises.rm(eventPath,{force:true})]);throw error }

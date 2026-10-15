@@ -1,3 +1,4 @@
+import {assistantActivity} from './assistant-activity.js'
 import {defineProduct} from './product-definition.js'
 import type {ResolvedProductDefinition} from './product-definition.js'
 import {studioFloatingBounds} from './studio-layout.js'
@@ -1025,12 +1026,7 @@ async function createApp() {
       workspaceMode=mode;if(mode==='studio')agentVisible=true;else studioPresentation={immersive:false,chatOpen:false};layout()
     },
     enqueueAssistant: (sessionId,text,frozenContext) => frozenContext===undefined?assistantService.sessions.enqueuePrompt(sessionId,text):Promise.resolve(assistantService.host.enqueue(sessionId,text,frozenContext+'\nBMW video production defaults and named templates (data):\n'+JSON.stringify(settingsStore.snapshot().videoPreferences)).runId),
-    getAssistantActivity: () => {
-      const state=assistantService.controller.snapshot(),session=state.sessions.find(row=>row.sessionId===state.selectedSessionId)
-      const own=state.events.filter(row=>row.sessionId===state.selectedSessionId),runId=state.activeRunId??(['queued','running','waiting-user','waiting-approval','cancelling'].includes(session?.status??'')?null:own.at(-1)?.runId??null)
-      const events=own.filter(row=>row.runId===runId),tool=events.findLast(row=>row.event.type==='tool.started')?.event,terminal=events.findLast(row=>row.event.type==='turn.disconnected'||row.event.type==='turn.completed')?.event
-      return {projectId:state.project.id,sessionId:state.selectedSessionId,status:state.resourcesDisconnected?'disconnected':session?.status??'idle',runId,action:tool?.type==='tool.started'?tool.action:undefined,message:terminal?.type==='turn.disconnected'||terminal?.type==='turn.completed'&&terminal.outcome!=='success'?terminal.message:undefined}
-    },
+    getAssistantActivity: () => assistantActivity(assistantService.controller.snapshot()),
     cancelAssistant: sessionId => assistantService.controller.invoke({action:'message.cancel',sessionId}),
     sendToAgent,
     sendToShell,

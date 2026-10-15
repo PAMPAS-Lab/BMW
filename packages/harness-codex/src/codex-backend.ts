@@ -7,7 +7,7 @@ import type { CodexBrowserDefinition } from './codex-policy.js'
 import { createCodexRpc } from './codex-rpc.js'
 import type { CodexRpc } from './codex-rpc.js'
 import {CodexSettings,codexAccountModels} from './codex-settings.js'
-import {findCodexExecutable} from './codex-installation.js'
+import {findCodexExecutable,rememberCodexExecutable} from './codex-installation.js'
 import {codexNeedsBrowserCatalog,codexVerifiedProtocolVersions} from './codex-model-catalog.js'
 import type {AgentSettingsRequest,AgentSettingsContext,AgentDriverSettings} from '@bmw-agent/agent-contract'
 
@@ -71,7 +71,7 @@ export class CodexBackend implements AgentBackend {
   async prepare(request: AgentRunRequest): Promise<AgentDriverDescription> {
     if (this.closed || this.runs.size||this.settingsPort?.busy) throw new Error('Codex backend is closed or still owns an active process')
     request.signal.throwIfAborted()
-    const executable=this.options.executable??findCodexExecutable()
+    const executable=this.options.executable??findCodexExecutable({configDirectory:this.options.configDirectory})
     if(!executable)throw new Error('未找到 Codex 官方 CLI；请安装 Codex 后打开 Agent 设置')
     fs.mkdirSync(this.options.configDirectory, { recursive: true, mode: 0o700 })
     const model=this.options.getModel?.()??this.options.model
@@ -80,6 +80,7 @@ export class CodexBackend implements AgentBackend {
     const modelCatalogPath=await this.gate.verify(executable, this.options.configDirectory, model, connection.definition, request.signal)
     if(codexNeedsBrowserCatalog(model)&&typeof modelCatalogPath!=='string')throw new Error('Codex GPT-6 browser catalog was not admitted')
     request.signal.throwIfAborted()
+    if(!this.options.executable)rememberCodexExecutable(this.options.configDirectory,executable)
     const rpc = (this.options.rpcFactory ?? createCodexRpc)(executable, request.project.directory, this.options.configDirectory,{},typeof modelCatalogPath==='string'?modelCatalogPath:undefined)
     let accept!: () => void, resolve!: Run['resolve'], reject!: Run['reject']
     const accepted = new Promise<void>(yes => { accept = yes })
@@ -119,7 +120,9 @@ export class CodexBackend implements AgentBackend {
         // Dynamic tools persist in official rollout metadata. Resume never adopts
         // another provider Session or substitutes a new one after a failure.
         delete params.dynamicTools
-        started = agentRecord(await rpc.call('thread/resume', { ...params, threadId: request.externalSessionId }))
+        // BMW already owns its visible history. Hydrating all official turns
+        // would replay accumulated image payloads into one oversized RPC line.
+        started = agentRecord(await rpc.call('thread/resume', { ...params, threadId: request.externalSessionId, excludeTurns: true }))
       } else started = agentRecord(await rpc.call('thread/start', params))
       run.threadId = agentIdentifier(agentRecord(started.thread).id)
       if (request.externalSessionId && run.threadId !== request.externalSessionId) throw new Error('Codex resumed a different provider Session')
@@ -130,7 +133,7 @@ export class CodexBackend implements AgentBackend {
   }
   async settings(request:AgentSettingsRequest,context:AgentSettingsContext):Promise<AgentDriverSettings>{
     if(this.closed||this.runs.size||this.settingsPort?.busy||!this.options.definition||!this.options.setModel)throw new Error('Codex settings are unavailable while native work is active')
-    const executable=this.options.executable??findCodexExecutable()
+    const executable=this.options.executable??findCodexExecutable({configDirectory:this.options.configDirectory})
     if(!executable){if(request.action!=='refresh')throw new Error('Codex 官方 CLI 尚未安装');return {authentication:{state:'unknown',label:'未找到 Codex 官方 CLI；安装后点击刷新'},models:[],selectedModel:this.options.getModel?.()??this.options.model??null,loginMethods:[],canLogout:false}}
     if(!this.settingsPort||this.settingsExecutable!==executable){this.settingsPort=new CodexSettings({executable,configDirectory:this.options.configDirectory,model:()=>this.options.getModel?.()??this.options.model??null,setModel:this.options.setModel,definition:this.options.definition,gate:this.gate,rpcFactory:this.options.rpcFactory});this.settingsExecutable=executable}
     return this.settingsPort.execute(request,context)
@@ -187,11 +190,13 @@ export class CodexBackend implements AgentBackend {
         run.request.signal.throwIfAborted()
         const reply = await run.connection.execute(argumentsValue, run.request.signal)
         run.request.signal.throwIfAborted()
-        const contentItems: ({ type: 'inputText'; text: string } | { type: 'inputImage'; imageUrl: string })[] = [{ type: 'inputText', text: agentText(JSON.stringify(reply.result), 2 * 1024 * 1024) }]
+        const resultText=agentText(JSON.stringify(reply.result), 2 * 1024 * 1024)
+        const contentItems: ({ type: 'inputText'; text: string } | { type: 'inputImage'; imageUrl: string })[] = [{ type: 'inputText', text: resultText }]
         for (const image of reply.images ?? []) {
           if (image.type !== 'image' || image.mimeType !== 'image/png' || image.data.length > 28 * 1024 * 1024 || !/^[a-zA-Z0-9+/]+={0,2}$/u.test(image.data)) throw new Error('Invalid admitted BMW PNG image')
           contentItems.push({ type: 'inputImage', imageUrl: 'data:image/png;base64,' + image.data })
         }
+        message = resultText.length<=16384?resultText:JSON.stringify({resultTruncated:true,resultCharacters:resultText.length,preview:resultText.slice(0,2000)})
         success = true
         return { success, contentItems }
       } catch (error: unknown) {

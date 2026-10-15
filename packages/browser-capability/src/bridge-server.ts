@@ -129,7 +129,7 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
         if (cancellation.signal.aborted || bindings.get(binding) !== owner || closing || projectChanging || activeProjectId?.() !== owner.project.id) throw new Error('BMW_BROWSER_CANCELLED: Session changed before its browser result drained')
         const images: { type: 'image'; mimeType: 'image/png'; data: string }[] = []
         const action = record(input.arguments).action
-        const referenceImages=action==='video.studio'&&['prepare-reference','read-reference'].includes(String(record(record(input.arguments).studioRequest).operation))
+        const referenceImages=action==='video.studio'&&['prepare-reference','read-reference','review-export'].includes(String(record(record(input.arguments).studioRequest).operation))
         if (referenceImages || action === 'media.screenshot' || action === 'page.diagnostics' || action === 'media.frames.sample'||action==='media.image.annotate'||action==='media.image.draw') {
           const value = record(result)
           const artifacts = action === 'page.diagnostics' ? [record(value.screenshot)] : action === 'media.frames.sample'||referenceImages ? value.frames : [value]

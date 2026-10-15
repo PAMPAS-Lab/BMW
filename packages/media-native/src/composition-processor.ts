@@ -6,6 +6,7 @@ import type { Session, IpcMainInvokeEvent } from 'electron'
 import { ArtifactJobIO } from './artifact-job-io.js'
 import { assertNarrationReceipt,assertComposition, compositionAssets, compositionDuration } from './composition-contract.js'
 import { finiteNumber, mediaRecord } from './media-contract.js'
+import {assertCompositionQuality,compositionQualityPlan} from './composition-quality.js'
 
 /** Bounded multi-asset browser job. Renderer receives only pinned Project handles. */
 export class CompositionProcessor {
@@ -66,6 +67,8 @@ export class CompositionProcessor {
               if (result.frames !== Math.ceil(compositionDuration(composition) * composition.fps) || result.durationSeconds !== compositionDuration(composition) || result.width !== composition.width || result.height !== composition.height) throw new Error('Composition result does not match its manifest.')
               finiteNumber(result.audioPeak, 'audio peak', 0, 1)
               assertNarrationReceipt(composition.scenes,result.narrationDurations)
+              const quality=assertCompositionQuality(result.quality),plan=compositionQualityPlan(composition,result.narrationDurations as number[])
+              if(JSON.stringify(quality.samples)!==JSON.stringify(plan.samples)||quality.omittedCandidates!==plan.omittedCandidates)throw new Error('Composition quality coverage does not match its manifest.')
               resolve(result)
             }
           } catch (error) { if (event.sender === jobWindow.webContents) reject(error) }

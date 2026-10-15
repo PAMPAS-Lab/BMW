@@ -13,10 +13,12 @@ export type MediaProcessRequest =
   | { action: 'media.inspect'; artifactId: string }
   | { action: 'media.frames.sample'; artifactId: string; timestampsSeconds: number[]; maxWidth: number; maxHeight: number }
   | { action: 'media.convert'; artifactId: string; outputFormat: 'mp4' | 'webm'; trimStartSeconds?: number; trimEndSeconds?: number; outputWidth?: number; outputHeight?: number }
-export type NativeProcessingRequest=MediaProcessRequest|{action:'media.speech.normalize';artifactId:string}|{action:'media.decode.check';artifactId:string}|{action:'media.encode.check';width:number;height:number;fps:number}
+import {assertSpeechSourceRange,assertSpeechRangeEvidence} from './speech-range.js'
+import type {SpeechSourceRange} from './speech-range.js'
+export type NativeProcessingRequest=MediaProcessRequest|{action:'media.speech.normalize';artifactId:string;sourceRange?:SpeechSourceRange}|{action:'media.decode.check';artifactId:string}|{action:'media.encode.check';width:number;height:number;fps:number}
 export function assertNativeProcessingRequest(raw:unknown):NativeProcessingRequest {
   const value=mediaRecord(raw)
-  if(value.action==='media.speech.normalize'){if(Object.keys(value).some(key=>!['action','artifactId'].includes(key)))throw new TypeError('Unsupported speech normalization property.');return {action:value.action,artifactId:assertArtifactId(value.artifactId)}}
+  if(value.action==='media.speech.normalize'){if(Object.keys(value).some(key=>!['action','artifactId','sourceRange'].includes(key)))throw new TypeError('Unsupported speech normalization property.');return {action:value.action,artifactId:assertArtifactId(value.artifactId),...(value.sourceRange===undefined?{}:{sourceRange:assertSpeechSourceRange(value.sourceRange)})}}
   if(value.action==='media.decode.check'){if(Object.keys(value).some(key=>!['action','artifactId'].includes(key)))throw new TypeError('Unsupported full decode property.');return {action:'media.decode.check',artifactId:assertArtifactId(value.artifactId)}}
   if(value.action==='media.encode.check'){
     if(Object.keys(value).some(key=>!['action','width','height','fps'].includes(key)))throw new TypeError('Unsupported encoding property.')
@@ -124,8 +126,9 @@ export function assertMediaWorkerResult(value: unknown, request: NativeProcessin
   if(request.action==='media.image.annotate'||request.action==='media.image.draw'){assertDrawingResult(result,request)}
   else if(request.action==='media.speech.normalize'&&result.kind==='speech-pcm'){
     const info=mediaRecord(result.info),frames=finiteNumber(info.frames,'speech samples',160,180*16000,true)
-    if(Object.keys(info).some(key=>!['kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix','discardedTailFrames'].includes(key)))throw new TypeError('Unsupported speech normalization evidence.')
+    if(Object.keys(info).some(key=>!['kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix','discardedTailFrames','sourceRange','sourceDurationSeconds'].includes(key)))throw new TypeError('Unsupported speech normalization evidence.')
     if(info.kind!=='speech-pcm'||info.sampleRate!==16000||info.channels!==1||info.sampleType!=='pcm-s16le'||info.downmix!=='channel-mean'||info.durationSeconds!==frames/16000)throw new TypeError('Invalid normalized speech metadata.')
+    assertSpeechRangeEvidence(info,request.sourceRange);if(!request.sourceRange&&info.sourceRange!==undefined)throw new TypeError('Unrequested speech source interval.');
     finiteNumber(info.clippedSamples,'PCM saturation samples',0,frames,true)
     if(info.discardedTailFrames!==undefined)finiteNumber(info.discardedTailFrames,'discarded Opus padding frames',0,Math.ceil(Number(info.inputSampleRate)*.12)+2,true)
     finiteNumber(info.inputSampleRate,'speech input rate',8000,96000,true);finiteNumber(info.inputChannels,'speech input channels',1,8,true)
@@ -148,7 +151,7 @@ export function assertMediaWorkerResult(value: unknown, request: NativeProcessin
       finiteNumber(track.id, 'track id', 0, Number.MAX_SAFE_INTEGER, true)
       if (!['video', 'audio', 'subtitle'].includes(String(track.type)) || (track.codec !== null && typeof track.codec !== 'string') || typeof track.canDecode !== 'boolean') throw new TypeError('Invalid media track.')
       for (const key of ['width','height','sampleRate','channels'] as const) if (track[key] !== undefined) finiteNumber(track[key], key, 1, Number.MAX_SAFE_INTEGER, true)
-      if(track.startSeconds!==undefined||track.endSeconds!==undefined){const start=finiteNumber(track.startSeconds,'video track start',-Number.MAX_SAFE_INTEGER,Number.MAX_SAFE_INTEGER),end=finiteNumber(track.endSeconds,'video track end',start,Number.MAX_SAFE_INTEGER);if(track.type!=='video'||end>Number(info.durationSeconds))throw new TypeError('Invalid inspected video track range.')}
+      if(track.startSeconds!==undefined||track.endSeconds!==undefined){const start=finiteNumber(track.startSeconds,'video track start',-Number.MAX_SAFE_INTEGER,Number.MAX_SAFE_INTEGER),end=finiteNumber(track.endSeconds,'video track end',start,Number.MAX_SAFE_INTEGER);if(!['video','audio'].includes(String(track.type))||end>Number(info.durationSeconds))throw new TypeError('Invalid inspected media track range.')}
       if(track.hasAlphaData!==undefined&&typeof track.hasAlphaData!=='boolean')throw new TypeError('Invalid alpha packet metadata.')
       if (track.canBeTransparent !== undefined && typeof track.canBeTransparent !== 'boolean') throw new TypeError('Invalid transparency metadata.')
       if (track.rotation !== undefined) finiteNumber(track.rotation, 'rotation', 0, 360)

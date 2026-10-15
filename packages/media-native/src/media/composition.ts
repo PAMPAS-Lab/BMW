@@ -11,6 +11,9 @@ import { LinearFrameReader, normalizeBrowserVideoColor } from './linear-frames.j
 import { MEDIA_LIMITS } from '../media-contract.js'
 import { assertCompositionText,paintScene } from './composition-paint.js'
 import { mixCompositionAudio } from './composition-audio.js'
+import {compositionQualityPlan,paintedTextIssues,QUALITY_LIMITS,StaticHoldObserver} from '../composition-quality.js'
+import type {CompositionQuality} from '../composition-quality.js'
+import {traceCanvasText} from './canvas-text-trace.js'
 
 declare global { interface Window { bmwComposition: CompositionBridge } }
 const bridge = window.bmwComposition
@@ -53,6 +56,8 @@ async function compose(command: CompositionCommand): Promise<void> {
     const canvas = document.createElement('canvas'); canvas.width = composition.width; canvas.height = composition.height
     const context = canvas.getContext('2d', { alpha: false })!
     assertCompositionText(context,composition,narrationDurations)
+    const plan=compositionQualityPlan(composition,narrationDurations),quality:CompositionQuality={version:1,kind:'composition-quality',coverage:'critical-state-samples',phoneWidth:390,semanticVerification:'requires-visual-review',...plan,issues:[],omittedIssues:0,omittedTextObservations:0},sampleFrames=new Map(plan.samples.map(sample=>[Math.round(sample.seconds*fps),sample])),seenIssues=new Set<string>()
+    const observation=document.createElement('canvas');observation.width=32;observation.height=32;const observationContext=observation.getContext('2d',{willReadFrequently:true})!,holds=new StaticHoldObserver()
     const videoSource = new CanvasSource(canvas, { codec: 'avc', bitrate: 5_000_000 })
     const audioSource = new AudioBufferSource({ codec: 'aac', bitrate: 192_000 })
     output = new Output({ format: new Mp4OutputFormat({ fastStart: false }), target: new StreamTarget(new WritableStream<StreamTargetChunk>({ write: chunk => write(command.token, chunk) }), { chunked: true, chunkSize: MEDIA_LIMITS.chunkBytes }) })
@@ -85,9 +90,9 @@ async function compose(command: CompositionCommand): Promise<void> {
       }
       const sourceFrame = segment.imageArtifactId ? {canvas:assets.get(segment.imageArtifactId)!.image!} : reader ? await reader.get(segment.sourceStartSeconds + (visual?.localSeconds??timing.localSeconds) * segment.playbackRate) : null
       if (reader && !sourceFrame) throw new Error('Scene footage frame is unavailable.')
-      context.save()
-      paintScene(context, scene, sourceFrame, timing.localSeconds, scene.durationSeconds, timing.index, composition.scenes.length, narrationDurations[timing.index], composition,undefined,assets); context.restore()
-      await layers.paint(context,composition,scene,time,timing.localSeconds)
+      const paint=async()=>{context.save();try{paintScene(context, scene, sourceFrame, timing.localSeconds, scene.durationSeconds, timing.index, composition.scenes.length, narrationDurations[timing.index], composition,undefined,assets)}finally{context.restore()}await layers!.paint(context,composition,scene,time,timing.localSeconds)}
+      const sample=sampleFrames.get(frameIndex)
+      if(sample){const observation=await traceCanvasText(context,paint);quality.omittedTextObservations!+=observation.omittedTexts;observationContext.drawImage(canvas,0,canvas.height*.2,canvas.width,canvas.height*.62,0,0,32,32);const hold=holds.observe(sample,observationContext.getImageData(0,0,32,32).data);for(const issue of [...paintedTextIssues(observation.texts,composition.width,composition.height,sample,observation.backings),...(hold?[hold]:[])]){const key=JSON.stringify([issue.sceneIndex,issue.code,issue.text]);if(seenIssues.has(key))continue;if(quality.issues.length<QUALITY_LIMITS.issues){seenIssues.add(key);quality.issues.push(issue)}else quality.omittedIssues++}}else await paint()
       await videoSource.add(time, Math.min(1 / fps, duration - time), { keyFrame: frameIndex % (fps * 2) === 0 })
       const audioEnd = Math.min(mixed.length, Math.ceil((time + 1 / fps) * 48000))
       if (audioEnd > audioOffset) {
@@ -98,7 +103,7 @@ async function compose(command: CompositionCommand): Promise<void> {
       if (frameIndex % fps === 0) bridge.reply({ token: command.token, progress: frameIndex / frames })
     }
     await reader?.close(); videoSource.close(); audioSource.close(); await output.finalize()
-    bridge.reply({ token: command.token, result: { frames, durationSeconds: duration, width: composition.width, height: composition.height, audioPeak, narrationDurations, captions: 'explicit cues or estimated sentence timing; not word aligned', independentAudioTracks:(composition.audioTracks?.length??0)+composition.scenes.reduce((n,scene)=>n+(scene.audioTracks?.length??0),0),visualLayers:(composition.layers?.length??0)+composition.scenes.reduce((n,scene)=>n+(scene.layers?.length??0),0),sourceAudio: composition.scenes.some(scene=>sceneVisuals(scene).some(segment=>segment.keepSourceAudio))?'selected footage original audio mixed with source trim, speed and volume; no sound after source end':'footage muted; narration and original synthesized music bed mixed' } })
+    bridge.reply({ token: command.token, result: { frames, durationSeconds: duration, width: composition.width, height: composition.height, audioPeak, narrationDurations, quality, captions: 'explicit cues or estimated sentence timing; not word aligned', independentAudioTracks:(composition.audioTracks?.length??0)+composition.scenes.reduce((n,scene)=>n+(scene.audioTracks?.length??0),0),visualLayers:(composition.layers?.length??0)+composition.scenes.reduce((n,scene)=>n+(scene.layers?.length??0),0),sourceAudio: composition.scenes.some(scene=>sceneVisuals(scene).some(segment=>segment.keepSourceAudio))?'selected footage original audio mixed with source trim, speed and volume; no sound after source end':'footage muted; narration and original synthesized music bed mixed' } })
   } catch (error) {
     await output?.cancel().catch(() => {})
     bridge.reply({ token: command.token, error: error instanceof Error ? error.message : String(error) })

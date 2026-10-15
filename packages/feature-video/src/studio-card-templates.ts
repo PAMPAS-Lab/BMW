@@ -16,6 +16,7 @@ export function initialCardSpec(scene:StudioScene,id:CardTemplateId):CardSpec {
  if(id==='evidence/translation')return {version:2,templateId:id,quote}
  if(id==='evidence/person-quote')return {version:2,templateId:id,quote,person:{name:'',role:'',layout:'right'}}
  if(id==='diagram/to-target')return {version:2,templateId:id,objects:[{label:scene.bullets[0]??''},{label:scene.bullets[1]??''},...(scene.bullets[2]?[{label:scene.bullets[2]}]:[])],target:{label:''},relation:''}
+ if(id==='diagram/sequence')return {version:2,templateId:id,nodes:[{label:scene.bullets[0]??''},{label:scene.bullets[1]??''},...(scene.bullets[2]?[{label:scene.bullets[2]}]:[])],shape:'steps',footnote:''}
  if(id==='diagram/range')return {version:2,templateId:id,range:{mode:'symbolic',axisLabel:'',regionLabel:'',thresholdLabels:[],condition:''}}
  return assertCardSpec({version:definition.version,templateId:id})
 }
@@ -32,9 +33,9 @@ export function planCardTemplate(scene:StudioScene,choice:CardTemplateChoice,spe
   if(spec&&spec.templateId!==id)throw new Error('CARD_TEMPLATE: 模板参数不属于所选模板。')
   next.cardSpec=assertCardSpec(spec??initialCardSpec(scene,id))
   if(scene.cardSpec?.version===2&&scene.cardSpec.templateId!==id)notices.push('当前变体的阅读重点、译文、人物或结构槽将不显示；原文件保留，可撤销。')
-  if(['diagram/to-target','diagram/range'].includes(id)&&next.bullets.length){if(id==='diagram/range')throw new Error('范围关系使用专用槽；请先保留原说明再确认移除要点。');next.bullets=[];delete next.bulletRevealSeconds;notices.push('现有要点转为对象标签；请填写共同目标。')}
+  if(['diagram/to-target','diagram/sequence','diagram/range'].includes(id)&&next.bullets.length){if(id==='diagram/range')throw new Error('范围关系使用专用槽；请先保留原说明再确认移除要点。');next.bullets=[];delete next.bulletRevealSeconds;notices.push('现有要点转为对象标签；请填写共同目标。')}
   if(next.sceneTemplate){delete next.sceneTemplate;notices.push('旧版配色与重点改用模板统一风格；内容保留，可撤销。')}
-  if(['title/basic','points/three','points/list','comparison/two','diagram/to-target','diagram/range'].includes(id)&&sceneVisuals(next).length){
+  if(['title/basic','points/three','points/list','comparison/two','diagram/to-target','diagram/sequence','diagram/range'].includes(id)&&sceneVisuals(next).length){
    if(next.speechLinks?.focus.length||next.sourceCaptionBinding||next.sourceSpeech)throw new Error('请先解除源字幕或按句聚焦绑定，再转换为文字卡。')
    for(const key of ['visualSegments','imageArtifactId','videoArtifactId','focusIntervals','effects','sourceDurationSeconds','keepSourceAudio','sourceVolume'] as const)delete next[key]
    next.sourceStartSeconds=0;next.zoom=1;next.playbackRate=1;delete next.crop
@@ -46,8 +47,8 @@ export function planCardTemplate(scene:StudioScene,choice:CardTemplateChoice,spe
 }
 export function cardTemplateScene(scene:StudioScene,choice:CardTemplateChoice,spec?:CardSpec):StudioScene{return planCardTemplate(scene,choice,spec).scene}
 export function cardShowsBullets(scene:StudioScene):boolean {
- return scene.cardSpec?!['demo/recording','media/sequence','diagram/to-target','diagram/range'].includes(scene.cardSpec.templateId):!sceneVisuals(scene).length||Boolean(scene.sceneTemplate)
+ return scene.cardSpec?!['demo/recording','media/sequence','diagram/to-target','diagram/sequence','diagram/range'].includes(scene.cardSpec.templateId):!sceneVisuals(scene).length||Boolean(scene.sceneTemplate)
 }
 export function cardBulletLimit(scene:StudioScene):number {
- return scene.cardSpec?.version===2?(['diagram/to-target','diagram/range'].includes(scene.cardSpec.templateId)?0:1):scene.cardSpec?['title/basic','metric/hero','evidence/screenshot','diagram/image'].includes(scene.cardSpec.templateId)?1:['demo/recording','media/sequence'].includes(scene.cardSpec.templateId)?0:3:3
+ return scene.cardSpec?.version===2?(['diagram/to-target','diagram/sequence','diagram/range'].includes(scene.cardSpec.templateId)?0:1):scene.cardSpec?['title/basic','metric/hero','evidence/screenshot','diagram/image'].includes(scene.cardSpec.templateId)?1:['demo/recording','media/sequence'].includes(scene.cardSpec.templateId)?0:3:3
 }

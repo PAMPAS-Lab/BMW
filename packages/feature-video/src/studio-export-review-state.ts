@@ -1,0 +1,47 @@
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import {ArtifactJobIO} from '../../media-native/src/artifact-job-io.js'
+import {mediaRecord} from '../../media-native/src/media-contract.js'
+import {assertCompositionQuality} from '../../media-native/src/composition-quality.js'
+import type {CompositionQuality} from '../../media-native/src/composition-quality.js'
+import {compositionAssets} from '../../media-native/src/composition-contract.js'
+import {draftComposition} from './studio-contract.js'
+import type {VideoDraft,StudioRequest} from './studio-contract.js'
+import {STUDIO_EXPORT_RENDERER_VERSION} from './studio-store.js'
+import type {VideoStudioStore} from './studio-store.js'
+import {ExportReviewJournal} from './export-review-journal.js'
+import type {ExportReviewSnapshot} from './export-review-journal.js'
+const canonical=(v:unknown):unknown=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).filter(([,x])=>x!==undefined).sort(([a],[b])=>a.localeCompare(b)).map(([k,x])=>[k,canonical(x)])):v
+function snapshot(draft:VideoDraft,output:VideoDraft['exports'][number],quality:CompositionQuality,directory:string):ExportReviewSnapshot {
+ const composition=draftComposition(draft),{scenes,...settings}=composition;let startSeconds=0
+ return {fingerprint:output.fingerprint!,artifactId:output.artifactId,createdAt:output.createdAt,scenes:scenes.map((scene,index)=>{
+  const assets=compositionAssets({...composition,scenes:[scene]}).sort().map(id=>{const stat=fs.lstatSync(path.join(directory,id),{bigint:true});if(!stat.isFile()||stat.isSymbolicLink())throw new Error('Review material unavailable.');return [id,String(stat.size),String(stat.mtimeNs),String(stat.ctimeNs),String(stat.ino)]}),signature=crypto.createHash('sha256').update(JSON.stringify(canonical({renderer:STUDIO_EXPORT_RENDERER_VERSION,settings,scene,startSeconds,assets}))).digest('hex');startSeconds+=scene.durationSeconds
+  return {sceneId:draft.scenes[index].id,signature,totalSamples:quality.samples.filter(s=>s.sceneIndex===index).length,frames:[]}
+ })}
+}
+export async function currentExportReview(store:VideoStudioStore,draft:VideoDraft,directory:string,guard:()=>void,signal?:AbortSignal){
+ const check=()=>{signal?.throwIfAborted();guard()},output=store.reusableExport(draft)
+ check();if(!output?.verificationArtifactId)throw new Error('STUDIO_REVIEW_EXPORT_REQUIRED: 请先制作当前版本的视频。')
+ const input=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:output.verificationArtifactId});let quality:CompositionQuality,technicalStatus:'passed'|'unrecorded'
+ try{if(input.bytes>512*1024)throw new Error('Quality report exceeds its byte budget.');const report=mediaRecord(JSON.parse(new TextDecoder('utf8',{fatal:true}).decode(await input.read(0,input.bytes))));if(report.artifactId!==output.artifactId||report.width!==draft.width||report.height!==draft.height)throw new Error('Quality report does not match current export.');if(!report.quality)throw new Error('STUDIO_REVIEW_REPORT_REQUIRED: 旧成片没有画面检查记录，请明确重新制作。');quality=assertCompositionQuality(report.quality);technicalStatus=report.status==='passed'?'passed':'unrecorded'}finally{await input.close()}
+ check();if(store.reusableExport(draft)?.fingerprint!==output.fingerprint)throw new Error('STUDIO_CONFLICT: 成片或来源已变化，请重新审片。')
+ return {output,quality,technicalStatus,snapshot:snapshot(draft,output,quality,directory),journal:new ExportReviewJournal(store.directory,draft.id,store.ownerSessionId!)}
+}
+async function validFrames(context:Awaited<ReturnType<typeof currentExportReview>>,directory:string,signal?:AbortSignal){
+ const valid=new Map<string,Set<number>>(),current=context.journal.current(context.snapshot)
+ for(const [sceneIndex,scene]of current.scenes.entries()){
+  const indices=new Set<number>(),samples=context.quality.samples.filter(s=>s.sceneIndex===sceneIndex);valid.set(scene.sceneId,indices)
+  for(const f of scene.frames){signal?.throwIfAborted();if(samples[f.index]?.seconds!==f.seconds)continue
+   let input:ArtifactJobIO|undefined
+   try{input=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:f.artifactId});if(await input.fingerprint(signal)===f.sha256)indices.add(f.index)}catch{signal?.throwIfAborted()}finally{await input?.close()}
+  }
+ }
+ return valid
+}
+export async function exportReviewState(store:VideoStudioStore,draft:VideoDraft,request:StudioRequest,directory:string,guard:()=>void,actor:'agent'|'user',signal?:AbortSignal){
+ const context=await currentExportReview(store,draft,directory,guard,signal),valid=await validFrames(context,directory,signal)
+ signal?.throwIfAborted();guard();if(store.reusableExport(draft)?.fingerprint!==context.output.fingerprint)throw new Error('STUDIO_CONFLICT: 成片或来源已变化，请重新审片。')
+ if(request.operation==='record-export-review')context.journal.recordVerdict(context.snapshot,request.exportReview!,request.sceneId,actor,valid)
+ return {draftId:draft.id,revision:draft.revision,technical:{status:context.technicalStatus,reportArtifactId:context.output.verificationArtifactId},layout:{status:context.quality.issues.length||context.quality.omittedIssues?'issues-present':'no-issues-in-samples',issueCount:context.quality.issues.length,omittedIssues:context.quality.omittedIssues,omittedCandidates:context.quality.omittedCandidates,coverage:context.quality.coverage,semanticVerification:context.quality.semanticVerification},...context.journal.status(context.snapshot,valid)}
+}

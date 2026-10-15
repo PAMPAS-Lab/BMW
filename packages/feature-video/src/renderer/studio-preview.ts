@@ -25,7 +25,7 @@ export interface StudioBridge {
   importAsset(projectId:string):Promise<unknown>;cancel():Promise<unknown>;assistant(request?:unknown):Promise<unknown>
   geometry(value:unknown):Promise<unknown>;onChat(listener:(value:unknown)=>void):void
   chat(value:unknown):Promise<unknown>;view(value:unknown):Promise<unknown>;prefill(text:string):Promise<unknown>;cancelTask():Promise<unknown>
-  onTask(listener:(value:unknown)=>void):void
+  onTask(listener:(value:unknown)=>void):void;prepareRecovery(value:{draftId:string;expectedRevision:number}):Promise<unknown>
   selection(value:unknown):Promise<unknown>;leave():Promise<unknown>
   onChange(listener:(value:unknown)=>void):void;onProgress(listener:(value:unknown)=>void):void
 }

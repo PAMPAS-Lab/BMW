@@ -13,6 +13,8 @@ function node(id:string,file:string,layer:TestLayer,module:ModuleId,watch?:reado
 }
 const p='packages/'
 export const tests: readonly TestDefinition[] = [
+  node('video.material-index',p+'feature-video/test/material-index.test.ts','contract','feature-video'),
+  {id:'studio.export-review',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['feature-video','media-native','browser-capability'],runner:'electron',env:{BMW_STUDIO_EXPORT_REVIEW_CASE:'1'},watch:['packages/feature-video/src/','packages/media-native/src/composition-quality.ts','packages/media-native/src/card-cues.ts','packages/media-native/src/media/composition.ts','packages/media-native/src/media/canvas-text-trace.ts','packages/media-native/src/media/card-details-paint.ts','packages/browser-capability/src/bridge-server.ts']},
   node('agent.context',p+'agent-contract/test/context-sync.test.ts','contract','agent-contract'),
   node('agent.conversation',p+'agent-contract/test/conversation.test.ts','contract','agent-contract'),
   {id:'bmw.agent-assembly',file:'scripts/agent-assembly.test.ts',layer:'contract',modules:['application','agent-ui','harness-dsh','harness-codex','harness-qoder'],runner:'node-test'},

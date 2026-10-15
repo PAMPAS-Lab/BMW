@@ -19,6 +19,7 @@ test('video template settings persist without changing other settings and are re
     const context={browserKernel:{settingsStore:store,projectStore:{active:()=>({id:'p',name:'P',directory:dir})},recordingController:{narrate:async()=>({}),compose:async()=>({}),processArtifact:async()=>({})},execute:async()=>({})}}
     await videoSettingsAction.execute(context,{action:'video.settings',settingsRequest:{operation:'save-template',name:'品牌竖屏',options:{aspectRatio:'9:16',style:'clean-light',watermark:{text:'品牌'}}}})
     const restored=new GlobalSettingsStore({filePath,onState:undefined});assert.equal(restored.snapshot().searchEngine,'bing')
+    assert.throws(()=>resolvedComposition({title:'Injected private clock',scenes:[{title:'Scene',durationSeconds:2,cardCues:[]}]},{}),/host-derived/)
     const composition=resolvedComposition({title:'演示',templateName:'品牌竖屏',watermark:{enabled:false},scenes:[{title:'第一幕',durationSeconds:1}]},restored.snapshot().videoPreferences)
     const custom=resolvedComposition({title:'自定义',resolution:'custom',width:640,height:640,scenes:[{title:'测试',durationSeconds:1}]},{})
     assert.deepEqual([custom.width,custom.height],[640,640])

@@ -1,3 +1,5 @@
+import {recordingEvents} from '../../media-native/src/recording-contract.js'
+import {recordingPlanDraft,assertEditedRecordingPlan} from '../src/studio-recording-plan.js'
 import {videoDraftFromDocument} from '../src/video-document.js'
 import {assertStudioReviewProposal,studioReviewValueLabel} from '../src/studio-review.js'
 import {videoFeature} from '../index.js'
@@ -22,13 +24,149 @@ import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 import {VideoStudioStore} from '../src/studio-store.js'
+import type {ExportReviewSnapshot} from '../src/export-review-journal.js'
 import {VideoStudioService} from '../src/studio-service.js'
 import type {VideoDraft} from '../src/studio-contract.js'
 import type {StudioKernel} from '../src/studio-service.js'
 import {assertStudioRequest,assertVideoDraft,sameStudioDraftContent,narrationSceneDuration,applyNarrationPacing,draftComposition,draftReadiness,sceneCoverage,newStudioScene} from '../src/studio-contract.js'
 import {assertComposition,compositionAssets} from '../../media-native/src/composition-contract.js'
+import {compositionQualityPlan} from '../../media-native/src/composition-quality.js'
+import {cardSpeechTargets} from '../src/studio-card-speech.js'
+import {splitStudioScene} from '../src/studio-scene-split.js'
+import {sourceNarrationDraft,assertSourceNarrationRecipe} from '../src/source-narration-recipe.js'
+import {videoDocumentFromDraft} from '../src/video-document.js'
+import {assertStudioProductionProgress,assertStudioRecoveryRequest,canPrepareStudioRecovery,studioProductionFacts,studioActivitySilence,studioRecoveryPrompt} from '../src/studio-production-progress.js'
+import {StudioWorkflow} from '../src/renderer/studio-workflow.js'
+import {sceneTimingDiagnostics} from '../src/studio-timing-diagnostics.js'
+import {assertSpeechTimingProvenance} from '../src/studio-speech-provenance.js'
+test('Task display handles empty workspaces, owned completed tools and silent intervals without treating them as stopped jobs',()=>{
+ const f=fixture(),previous=Object.getOwnPropertyDescriptor(globalThis,'document'),nodes=new Map<string,{hidden:boolean;disabled:boolean;textContent:string}>();for(const id of ['studio-task','task-title','task-detail','task-stop','task-continue'])nodes.set(id,{hidden:false,disabled:false,textContent:''})
+ Object.defineProperty(globalThis,'document',{configurable:true,value:{getElementById:(id:string)=>nodes.get(id)}})
+ try{
+  const workflow=new StudioWorkflow(),state={project:{id:'p',name:'P'},sessionId:'fixture-session',drafts:[],assets:[],theme:'light' as const},d=sceneDraft(f.store,'Task facts');d.scenes[0].narration='待制作脚本'
+  workflow.activity={projectId:'p',sessionId:'fixture-session',status:'idle',runId:null};workflow.renderTask(state,undefined,false,96000);assert.equal(nodes.get('studio-task')!.hidden,true)
+  workflow.activity={projectId:'p',sessionId:'fixture-session',status:'running',runId:'run',toolRunning:false,lastEventAt:1000,lastToolCompletedAt:1000,lastToolAction:'video.studio',lastToolSucceeded:true,dispatchBlocked:true};workflow.renderTask(state,d,false,96000)
+  assert.match(nodes.get('task-detail')!.textContent,/等待本轮后续事件/);assert.match(nodes.get('task-detail')!.textContent,/不能认定任务停止/);assert.equal(nodes.get('task-continue')!.hidden,true)
+  workflow.productionProgress={draftId:d.id,revision:d.revision,operation:'narrate-pending',phase:'started',currentSceneId:'first-scene',completedSceneIds:[],pendingSceneIds:['first-scene'],updatedAt:95000};workflow.renderTask(state,d,false,96000);assert.doesNotMatch(nodes.get('task-detail')!.textContent,/较长时间没有新事件/)
+  workflow.activity={...workflow.activity,status:'idle',dispatchBlocked:false};workflow.renderTask(state,d,false,96000);assert.equal(nodes.get('task-continue')!.hidden,false);assert.equal(nodes.get('task-continue')!.disabled,false)
+  workflow.activity={...workflow.activity,sessionId:'foreign'};workflow.renderTask(state,d,false,96000);assert.equal(nodes.get('studio-task')!.hidden,true);assert.equal(nodes.get('task-detail')!.textContent,'')
+ }finally{if(previous)Object.defineProperty(globalThis,'document',previous);else Reflect.deleteProperty(globalThis,'document');f.close()}
+})
+test('Production facts and explicit recovery use current owned records, never infer a stalled runtime or replay uncertain input',()=>{
+ const f=fixture();try{
+  const d=sceneDraft(f.store,'Recover'),scene=d.scenes[0];scene.narration=scene.audioText='当前脚本';scene.audioArtifactId='voice.wav';scene.audioDurationSeconds=1;scene.audioGeneration={kind:'imported'};d.scenes.push({...newStudioScene('pending'),narration:'待生成脚本'});d.preparation.notes='保留用户背景'
+  const facts=studioProductionFacts(d);assert.deepEqual(facts.readyNarrationSceneIds,['first-scene']);assert.deepEqual(facts.pendingNarrationSceneIds,['pending'])
+  const activity={projectId:'p',sessionId:'fixture-session',status:'idle',runId:'run',dispatchBlocked:false};assert.equal(canPrepareStudioRecovery(activity,d),true)
+  for(const changed of [{...activity,status:'running'},{...activity,status:'disconnected'},{...activity,dispatchBlocked:true},{...activity,toolRunning:true},{...activity,sessionId:'other'}])assert.equal(canPrepareStudioRecovery(changed,d),false)
+  const prompt=studioRecoveryPrompt(d,null),data=JSON.parse(prompt.split('\n').at(-1)!);assert.equal(data.automaticReplay,false);assert.equal(data.currentExportArtifactId,null);assert.deepEqual(data.pendingNarrationSceneIds,['pending']);assert.match(prompt,/不要重放/);assert.match(prompt,/不宣称用户验收/)
+  assert.equal(studioActivitySilence({...activity,status:'running',lastEventAt:1000},96000),95);assert.equal(studioActivitySilence({...activity,status:'running'},96000),undefined);assert.equal(studioActivitySilence({...activity,lastEventAt:1000},96000),undefined)
+  assert.deepEqual(assertStudioRecoveryRequest({draftId:d.id,expectedRevision:d.revision}),{draftId:d.id,expectedRevision:d.revision});assert.throws(()=>assertStudioRecoveryRequest({draftId:d.id,expectedRevision:d.revision,text:'Replay arbitrary input'}))
+  const progress={draftId:d.id,revision:2,operation:'narrate-pending',phase:'failed',completedSceneIds:['first-scene'],pendingSceneIds:['first-scene','pending'],updatedAt:1000};assert.equal(assertStudioProductionProgress(progress).completedSceneIds.length,1,'A later manual script edit can make a previously saved scene pending again')
+  assert.throws(()=>assertStudioProductionProgress({...progress,completedSceneIds:['first-scene','first-scene']}));assert.throws(()=>assertStudioProductionProgress({...progress,ownerSessionId:'foreign'}))
+ }finally{f.close()}
+})
 function sceneDraft(store:VideoStudioStore,title:string){const draft=store.create(title);draft.scenes.push(newStudioScene('first-scene'));return draft}
 function fixture(){const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-studio-test-'));fs.mkdirSync(path.join(root,'artifacts'));return {root,store:new VideoStudioStore(root,'fixture-session'),close:()=>fs.rmSync(root,{recursive:true,force:true})}}
+test('original-to-narration recipe keeps continuous footage, measured voice, bilingual source text and explicit caption clocks',()=>{
+ const f=fixture();try{
+  const d=sceneDraft(f.store,'Original then explanation'),scene=d.scenes[0];Object.assign(scene,{videoArtifactId:'source.mp4',sourceStartSeconds:.1,sourceDurationSeconds:20,audioArtifactId:'voice.wav',audioText:'中文解释。',narration:'中文解释。',audioDurationSeconds:4,voiceMuted:true,captions:[{startSeconds:.5,endSeconds:3,text:'Original quote.',translationText:'人工译文',translationOrigin:'user-edited' as const}]});scene.sourceCaptionBinding={sourceArtifactId:'source.mp4',sourceSha256:'a'.repeat(64),segmentIndex:0,clock:sourceCaptionClock(scene,0),origin:'user-edited',sourceCues:[{startSeconds:.6,endSeconds:3.1,text:'Original quote.',translationText:'人工译文',translationOrigin:'user-edited'}],sourceRange:{startSeconds:0,endSeconds:20}}
+  const recipe=assertSourceNarrationRecipe({leadSeconds:2,sourceVolume:.8,voiceVolume:1.2,fitToVoice:true,allowEndHold:false,captions:'original-then-voice',voiceCaptionTiming:'estimated'}),result=sourceNarrationDraft(d,scene.id,recipe,{sourceStartSeconds:.1,sourceEndSeconds:20,audioDurationSeconds:4}),next=result.draft.scenes[0]
+  assert.equal(next.visualSegments![0].keepSourceAudio,true);assert.equal(next.visualSegments![1].keepSourceAudio,false);assert.equal(next.visualSegments![1].sourceStartSeconds,2.1);assert.equal(next.voiceTiming!.startSeconds,2);assert.equal(next.voiceTiming!.durationSeconds,4);assert.equal(next.voiceMuted,false);assert.equal(next.voiceVolume,1.2);assert.equal(next.captions![0].translationText,'人工译文');assert.equal(next.captions![0].endSeconds,2);assert.equal(next.captions![1].startSeconds,2);assert.equal(next.sourceCaptionBinding,undefined);assert.deepEqual(result.sourceCaptionSnapshot,scene.sourceCaptionBinding);assert.equal(result.captionTiming,'estimated-sentence-timing');assert.equal(d.scenes[0].videoArtifactId,'source.mp4')
+  assert.doesNotThrow(()=>draftComposition(result.draft));assert.throws(()=>sourceNarrationDraft(d,scene.id,recipe,{sourceStartSeconds:.2,sourceEndSeconds:20,audioDurationSeconds:4}),/起点/);assert.throws(()=>sourceNarrationDraft(d,scene.id,recipe,{sourceStartSeconds:.1,sourceEndSeconds:3,audioDurationSeconds:4}),/不足/);assert.throws(()=>sourceNarrationDraft(result.draft,scene.id,recipe,{sourceStartSeconds:.1,sourceEndSeconds:20,audioDurationSeconds:4}),/尚未分割/)
+ }finally{f.close()}
+})
+test('explicit local narration changes only the selected scene voice choice and preserves completed global-provider scenes',async()=>{
+ const f=fixture();try{
+  const directory=path.join(f.root,'artifacts'),tts={provider:'edge-readaloud' as const,voice:'zh-CN-YunxiNeural' as const,ratePercent:0};fs.writeFileSync(path.join(directory,'edge.wav'),'old edge voice');let d=f.store.create('Local recovery');d.tts=tts;d.scenes=['first','second'].map(id=>({...newStudioScene(id),bullets:['内容'],narration:'当前脚本',audioText:'当前脚本',audioArtifactId:'edge.wav',audioDurationSeconds:2,durationSeconds:3,audioGeneration:{kind:'tts' as const,options:tts}}));d=f.store.update(d.id,d.revision,d,true)
+  const kernel:StudioKernel={projectStore:{active:()=>({id:'p',name:'P',directory:f.root})},execute:async()=>({}),recordingController:{processArtifact:async()=>({}),compose:async()=>({}),narrate:async raw=>{assert.equal((raw as {provider:string}).provider,'local-matcha');fs.writeFileSync(path.join(directory,'local.wav'),'new local voice');return {artifactId:'local.wav',durationSeconds:2}}}},service=new VideoStudioService(kernel),result=await service.execute({operation:'narrate-local',draftId:d.id,expectedRevision:d.revision,sceneId:'first'},undefined,{projectId:'p',sessionId:'fixture-session'}) as {draft:VideoDraft}
+  assert.deepEqual(result.draft.tts,tts);assert.equal(result.draft.scenes[0].narrationOptions!.provider,'local-matcha');assert.equal(sceneCoverage(result.draft.scenes[0],tts).audioStale,false);assert.deepEqual(result.draft.scenes[1],d.scenes[1]);assert.equal(draftReadiness(result.draft).pendingNarrationSceneIds.length,0);assert.equal(videoDocumentFromDraft(result.draft).schemaVersion,'2.3')
+  const raw=structuredClone(result.draft);delete raw.scenes[0].narrationOptions;const kept=f.store.update(raw.id,raw.revision,raw);assert.equal(kept.scenes[0].narrationOptions!.provider,'local-matcha');assert.throws(()=>assertStudioRequest({operation:'narrate-local',draftId:d.id,expectedRevision:d.revision,sceneId:'first',provider:'edge-readaloud'}))
+ }finally{f.close()}
+})
+test('sentence-linked card slots bind exact content, project compact voice time, survive whole-scene cuts and require document 2.3',()=>{
+ const f=fixture();try{
+  let d=sceneDraft(f.store,'Card speech');const scene=d.scenes[0];scene.title='关键结论';scene.narration=scene.audioText='第一句。第二句。';scene.audioArtifactId='voice.wav';scene.audioDurationSeconds=4;scene.cardSpec={version:2,templateId:'title/emphasis',motion:'wipe'};scene.voiceTiming={startSeconds:2/24,sourceStartSeconds:0,durationSeconds:4,playbackRate:1}
+  d=f.store.update(d.id,d.revision,d);d=f.store.setSpeech(d.id,d.revision,scene.id,'anchors',{scriptText:scene.narration,scriptSha256:'a'.repeat(64),audioArtifactId:'voice.wav',audioSha256:'b'.repeat(64),durationSeconds:4,createdAt:'2026-10-14T00:00:00.000Z',capturedRevision:d.revision,timeDomain:'audio-file-seconds',origin:'user-edited',anchors:[{id:'sentence-one',scriptStart:0,scriptEnd:4,startSeconds:0,endSeconds:1},{id:'sentence-two',scriptStart:4,scriptEnd:8,startSeconds:2,endSeconds:4}]})
+  const {label,...target}=cardSpeechTargets(d.scenes[0])[0];d.scenes[0].speechLinks={bullets:[],focus:[],cards:[{...target,anchorId:'sentence-two'}]};d=f.store.update(d.id,d.revision,d)
+  const cue=speechScene(d.scenes[0]).cardCues![0];assert.equal(cue.startSeconds,2+2/24);assert.equal(cue.endSeconds,4+2/24);assert.equal(d.scenes[0].cardCues,undefined)
+  const doc=videoDocumentFromDraft(d);assert.equal(doc.schemaVersion,'2.3');assert.deepEqual(videoDraftFromDocument(doc),d);assert.throws(()=>videoDraftFromDocument({...doc,schemaVersion:'2.2'}),/require 2.3/)
+  const split=splitStudioScene(d,scene.id,3).draft;assert.deepEqual(speechScene(split.scenes[0]).cardCues,speechScene(split.scenes[1]).cardCues);assert.equal(studioTimeline(split).clips.filter(c=>c.label==='关键词 1').length,2)
+  const changed=structuredClone(d.scenes[0]);changed.title='另一结论';assert.throws(()=>speechScene(changed),/目标已修改/);changed.title=d.scenes[0].title;changed.audioArtifactId='replacement.wav';assert.throws(()=>speechScene(changed),/STALE/)
+  assert.throws(()=>assertVideoDraft({...d,scenes:[{...d.scenes[0],cardCues:[cue]}]}),/Unsupported Studio property/)
+ }finally{f.close()}
+})
+test('reading and highlight sentence references preserve pinned source identity and reject partial or altered target sets',()=>{
+ const scene=newStudioScene('evidence');scene.narration=scene.audioText='第一句。第二句。';scene.audioArtifactId='voice.wav';scene.audioDurationSeconds=4;scene.imageArtifactId='proof.png';const pin={artifactId:'proof.png',sha256:'c'.repeat(64)}
+ scene.cardSpec={version:2,templateId:'evidence/reading',reading:{mode:'sequence',returnToWhole:true,targets:[{source:pin,rect:{x:.1,y:.1,width:.2,height:.1},name:'完整第一句'},{source:pin,rect:{x:.1,y:.5,width:.2,height:.1},name:'完整第二句'}]},highlights:[{source:pin,rects:[{x:.1,y:.1,width:.2,height:.1}],style:'invert',name:'第一句',startSeconds:0,endSeconds:1}]}
+ scene.speechAnchors={scriptText:scene.narration,scriptSha256:'a'.repeat(64),audioArtifactId:'voice.wav',audioSha256:'b'.repeat(64),durationSeconds:4,createdAt:'2026-10-14T00:00:00.000Z',capturedRevision:1,timeDomain:'audio-file-seconds',origin:'agent-edited',anchors:[{id:'one',scriptStart:0,scriptEnd:4,startSeconds:0,endSeconds:1},{id:'two',scriptStart:4,scriptEnd:8,startSeconds:2,endSeconds:4}]}
+ scene.speechLinks={bullets:[],focus:[],cards:cardSpeechTargets(scene).map(({label,...target})=>({...target,anchorId:target.kind==='reading'&&target.index===1?'two':'one'}))}
+ assert.equal(speechScene(scene).cardCues!.length,3);assert.equal(scene.cardSpec.highlights![0].startSeconds,0)
+ const partial=structuredClone(scene);partial.speechLinks!.cards!.splice(1,1);assert.throws(()=>speechScene(partial),/全部阅读目标/)
+ const changed=structuredClone(scene);if(changed.cardSpec?.version===2&&'reading'in changed.cardSpec)changed.cardSpec.reading!.targets[0].source.sha256='d'.repeat(64);assert.throws(()=>speechScene(changed),/目标已修改/)
+})
+test('actual export review rejects foreign ownership and stale receipts and rolls back newly sampled images on a revision race',async()=>{
+ const f=fixture();try{
+  const directory=path.join(f.root,'artifacts');let d=sceneDraft(f.store,'Review');d.scenes[0].bullets=['Review content'];d=f.store.update(d.id,d.revision,d)
+  const quality={version:1,kind:'composition-quality',coverage:'critical-state-samples',phoneWidth:390,semanticVerification:'requires-visual-review',...compositionQualityPlan(draftComposition(d)),issues:[],omittedIssues:0}
+  fs.writeFileSync(path.join(directory,'completed.mp4'),'fixture MP4');fs.writeFileSync(path.join(directory,'report.json'),JSON.stringify({artifactId:'completed.mp4',width:d.width,height:d.height,quality}));d=f.store.addExport(d.id,d.revision,{artifactId:'completed.mp4',verificationArtifactId:'report.json',durationSeconds:8})
+  let calls=0,race=false
+  const kernel:StudioKernel={projectStore:{active:()=>({id:'p',name:'P',directory:f.root})},execute:async()=>({}),recordingController:{narrate:async()=>({}),compose:async()=>({}),processArtifact:async raw=>{calls++;const r=raw as {artifactId:string;timestampsSeconds:number[]};const frames=r.timestampsSeconds.map((seconds,i)=>{const artifactId='review-'+i+'.png';fs.writeFileSync(path.join(directory,artifactId),'controlled sampler fixture');return {artifactId,outputIndex:i,requestedTimestampSeconds:seconds,timestampSeconds:seconds,type:'screenshot',contentType:'image/png',width:390,height:219}});if(race){const current=f.store.read(d.id);current.title='Concurrent edit';f.store.update(d.id,current.revision,current)}return {type:'frame-set',sourceArtifactId:r.artifactId,frames}}}}
+  const service=new VideoStudioService(kernel),request={operation:'review-export',draftId:d.id,expectedRevision:d.revision,sceneId:d.scenes[0].id},owner={projectId:'p',sessionId:'fixture-session'}
+  await assert.rejects(service.execute(request,undefined,{projectId:'p',sessionId:'foreign'}),/owner|Session|所属|Unknown|not owned/i);assert.equal(calls,0)
+  const before=fs.readdirSync(directory).sort();race=true;await assert.rejects(service.execute(request,undefined,owner),/CONFLICT/);assert.deepEqual(fs.readdirSync(directory).sort(),before);assert.equal(f.store.read(d.id).title,'Concurrent edit')
+  race=false;const current=f.store.read(d.id);await assert.rejects(service.execute({...request,expectedRevision:current.revision},undefined,owner),/REVIEW_EXPORT_REQUIRED/);assert.equal(calls,1)
+  assert.throws(()=>assertStudioRequest({...request,reviewOffset:17}));assert.throws(()=>assertStudioRequest({...request,path:'/tmp/anything'}));assert.throws(()=>assertStudioRequest({operation:'check',draftId:d.id,expectedRevision:d.revision,reviewOffset:0}))
+ }finally{f.close()}
+})
+test('Export review persists current frame coverage and separate declared assessments, invalidates stale evidence and prioritizes changed scenes without reusing approval',async t=>{
+ t.mock.timers.enable({apis:['Date'],now:Date.parse('2026-10-14T10:00:00.000Z')})
+ const f=fixture();try{
+  const directory=path.join(f.root,'artifacts'),owner={projectId:'p',sessionId:'fixture-session'};let d=sceneDraft(f.store,'Journal')
+  d.scenes[0].bullets=['第一镜头'];d.scenes[0].captions=Array.from({length:8},(_,i)=>({startSeconds:i,endSeconds:i+.8,text:'第'+i+'句'}));d.scenes.push({...newStudioScene('second-scene','第二镜头'),bullets:['第二镜头']});d=f.store.update(d.id,d.revision,d)
+  const exportFixture=(suffix:string)=>{const quality={version:1,kind:'composition-quality',coverage:'critical-state-samples',phoneWidth:390,semanticVerification:'requires-visual-review',...compositionQualityPlan(draftComposition(d)),issues:[],omittedIssues:0},artifactId='completed-'+suffix+'.mp4',verificationArtifactId='report-'+suffix+'.json';fs.writeFileSync(path.join(directory,artifactId),'controlled MP4 '+suffix);fs.writeFileSync(path.join(directory,verificationArtifactId),JSON.stringify({status:'passed',artifactId,width:d.width,height:d.height,quality}));d=f.store.addExport(d.id,d.revision,{artifactId,verificationArtifactId,durationSeconds:16})}
+  exportFixture('one');let calls=0
+  const kernel:StudioKernel={projectStore:{active:()=>({id:'p',name:'Fixture',directory:fs.realpathSync(f.root)})},execute:async()=>({}),recordingController:{narrate:async()=>({}),compose:async()=>({}),processArtifact:async raw=>{
+   const request=raw as {artifactId:string;timestampsSeconds:number[]};calls++
+   const frames=request.timestampsSeconds.map((seconds,i)=>{const artifactId=`journal-frame-${calls}-${i}.png`;fs.writeFileSync(path.join(directory,artifactId),'controlled native sampler '+calls+' '+i);return {artifactId,outputIndex:i,requestedTimestampSeconds:seconds,timestampSeconds:seconds,type:'screenshot',contentType:'image/png',width:390,height:219}})
+   return {type:'frame-set',sourceArtifactId:request.artifactId,frames}
+  }}},service=new VideoStudioService(kernel)
+  type State={exportFingerprint:string;technical:{status:string};layout:{status:string};agent:{status:string};user:{status:string;authority:string};scenes:{sceneId:string;generatedCurrentFrames:number;totalSamples:number;frameGenerationComplete:boolean;agent:{status:string};user:{status:string};missingReviewOffsets:number[]}[];plan:{changedSceneIds:string[];unchangedSceneIds:string[];requiresFullFilmReview:boolean;reuseOldFrames:boolean}}
+  const request=(operation:string,extra:Record<string,unknown>={})=>({operation,draftId:d.id,expectedRevision:d.revision,...extra}),status=async()=>service.execute(request('review-status'),undefined,owner) as Promise<State>,assess=async(scope:'scene'|'film',sceneId?:string,actor:'user'|'agent'='agent',fingerprint?:string)=>service.execute(request('record-export-review',{...(sceneId?{sceneId}:{}),exportReview:{exportFingerprint:fingerprint??(await status()).exportFingerprint,scope,status:'passed',notes:'检查了当前实际输出的阅读、字幕与图解状态；这是该作者声明，不代表自动语义认证。'}}),undefined,owner,actor)
+  let state=await status();const firstFingerprint=state.exportFingerprint;assert.equal(state.technical.status,'passed');assert.equal(state.layout.status,'no-issues-in-samples');assert.equal(state.agent.status,'pending');assert.equal(state.user.status,'pending');assert.equal(fs.existsSync(path.join(f.store.directory,'export-reviews')),false,'Status reads do not create journals')
+  await assert.rejects(assess('scene','first-scene'),/INCOMPLETE/);await assert.rejects(assess('film'),/INCOMPLETE/)
+  const one=await service.execute(request('review-export',{sceneId:'first-scene',reviewOffset:0}),undefined,owner) as {frames:{artifactId:string}[];nextOffset:number};assert.equal(one.nextOffset,8)
+  state=await status();assert.equal(state.scenes[0].generatedCurrentFrames,8);assert.equal(state.scenes[0].agent.status,'pending','Generating PNGs must never become model approval')
+  for(const scene of d.scenes){let offset:number|null=scene.id==='first-scene'?8:0;while(offset!==null){const page=await service.execute(request('review-export',{sceneId:scene.id,reviewOffset:offset}),undefined,owner) as {nextOffset:number|null};offset=page.nextOffset}}
+  state=await status();assert.ok(state.scenes.every(s=>s.frameGenerationComplete));assert.equal(state.agent.status,'pending');assert.equal(state.user.status,'pending')
+  for(const scene of d.scenes)await assess('scene',scene.id)
+  assert.equal((await status()).agent.status,'pending','Per-scene declarations do not silently declare whole-film review')
+  await assess('film');state=await status();assert.equal(state.agent.status,'passed');assert.equal(state.user.status,'pending')
+  await assess('film',undefined,'user');state=await status();assert.equal(state.user.status,'passed');assert.equal(state.user.authority,'user-declared')
+  await service.execute(request('record-export-review',{sceneId:'first-scene',exportReview:{exportFingerprint:firstFingerprint,scope:'scene',status:'needs-fix',notes:'用户后来发现新的画面问题。'}}),undefined,owner,'user');assert.equal((await status()).user.status,'needs-recheck');await assess('scene','first-scene','user')
+  assert.equal((await status()).user.status,'needs-recheck','A later scene pass cannot revive the earlier whole-film declaration, even within one clock tick');await assess('film',undefined,'user');assert.equal((await status()).user.status,'passed')
+  await service.execute(request('record-export-review',{sceneId:'first-scene',exportReview:{exportFingerprint:firstFingerprint,scope:'scene',status:'needs-fix',notes:'模型复查发现字幕遮挡。'}}),undefined,owner,'agent');assert.equal((await status()).agent.status,'needs-recheck');await assess('scene','first-scene');assert.equal((await status()).agent.status,'needs-recheck','Model scene approval also requires a fresh explicit whole-film declaration');await assess('film');assert.equal((await status()).agent.status,'passed')
+  t.mock.timers.setTime(Date.parse('2026-10-14T09:59:00.000Z'));await assess('scene','second-scene','user');assert.equal((await status()).user.status,'needs-recheck','Wall-clock rollback cannot hide a newer scene declaration');await assess('film',undefined,'user');assert.equal((await status()).user.status,'passed')
+  const rollbackJournal=JSON.parse(fs.readFileSync(path.join(f.store.directory,'export-reviews',d.id+'.json'),'utf8')) as {exports:ExportReviewSnapshot[]};assert.equal(rollbackJournal.exports[0].user!.createdAt,'2026-10-14T09:59:00.000Z','Ordering must not invent future wall-clock timestamps')
+  assert.throws(()=>assertStudioRequest(request('record-export-review',{exportReview:{exportFingerprint:firstFingerprint,scope:'film',status:'passed',notes:'伪造用户',actor:'user'}})))
+  await assert.rejects(assess('film',undefined,'agent','a'.repeat(64)),/STALE/)
+  fs.writeFileSync(path.join(directory,one.frames[0].artifactId),'changed image');state=await status();assert.equal(state.scenes[0].frameGenerationComplete,false);assert.equal(state.scenes[0].agent.status,'needs-recheck');assert.equal(state.agent.status,'needs-recheck')
+  await service.execute(request('review-export',{sceneId:'first-scene',reviewOffset:0}),undefined,owner);state=await status();assert.equal(state.scenes[0].generatedCurrentFrames,state.scenes[0].totalSamples,'Overlapping pages count each actual sample once')
+  const legacyFile=path.join(f.store.directory,'export-reviews',d.id+'.json'),legacy=JSON.parse(fs.readFileSync(legacyFile,'utf8')) as {version:1|2;exports:ExportReviewSnapshot[]};assert.equal(legacy.version,2)
+  const duplicate=structuredClone(legacy);duplicate.exports[0].agent!.sequence=duplicate.exports[0].scenes[0].agent!.sequence;fs.writeFileSync(legacyFile,JSON.stringify(duplicate));await assert.rejects(status(),/Duplicate.*sequence/)
+  fs.writeFileSync(legacyFile,JSON.stringify({...legacy,exports:[{...legacy.exports[0],agent:null}]}));await assert.rejects(status(),'Malformed persisted assessments must be rejected rather than silently discarded')
+  fs.writeFileSync(legacyFile,JSON.stringify({...legacy,version:1}));await assert.rejects(status(),/Invalid export review assessment/,'Legacy versions reject newer ordered-assessment fields')
+  legacy.version=1;for(const e of legacy.exports)for(const a of [e.agent,e.user,...e.scenes.flatMap(s=>[s.agent,s.user])])if(a)delete a.sequence
+  const legacyBytes=JSON.stringify(legacy);fs.writeFileSync(legacyFile,legacyBytes);state=await status();assert.equal(state.agent.status,'needs-recheck');assert.equal(state.user.status,'needs-recheck');assert.equal(fs.readFileSync(legacyFile,'utf8'),legacyBytes,'Reading a legacy journal never rewrites it or certifies ambiguous same-time order')
+  await assess('film');assert.equal((await status()).agent.status,'passed');assert.equal((await status()).user.status,'needs-recheck');await assess('film',undefined,'user');assert.equal((await status()).user.status,'passed');assert.equal((JSON.parse(fs.readFileSync(legacyFile,'utf8')) as {version:number}).version,2,'Explicit new declarations retain legacy frames and adopt ordered journal writes')
+  d=f.store.read(d.id);d.scenes[1].title='第二镜头已修正';d=f.store.update(d.id,d.revision,d);await assert.rejects(status(),/REVIEW_EXPORT_REQUIRED/);exportFixture('two')
+  state=await status();assert.deepEqual(state.plan.changedSceneIds,['second-scene']);assert.deepEqual(state.plan.unchangedSceneIds,['first-scene']);assert.equal(state.plan.requiresFullFilmReview,true);assert.equal(state.plan.reuseOldFrames,false);assert.ok(state.scenes.every(s=>s.generatedCurrentFrames===0&&s.agent.status==='pending'));assert.equal(state.user.status,'pending');await assert.rejects(assess('film',undefined,'agent',firstFingerprint),/STALE/)
+  await assert.rejects(service.execute(request('review-status'),undefined,{...owner,sessionId:'foreign'}),/owner|Session|所属|Unknown|not owned/i)
+  const current=d.revision;await assert.rejects(service.execute({...request('review-status'),expectedRevision:current-1},undefined,owner),/CONFLICT/)
+  const file=path.join(f.store.directory,'export-reviews',d.id+'.json'),originalJournal=fs.readFileSync(file,'utf8'),journal=JSON.parse(originalJournal);journal.ownerSessionId='foreign';fs.writeFileSync(file,JSON.stringify(journal));await assert.rejects(status(),/foreign/)
+  fs.writeFileSync(file,originalJournal);const saved=file+'.saved';fs.renameSync(file,saved);fs.symlinkSync(saved,file);await assert.rejects(status(),/journal file/);fs.unlinkSync(file);fs.renameSync(saved,file)
+  fs.writeFileSync(file,' '.repeat(2*1024*1024+1));await assert.rejects(status(),/journal file/)
+ }finally{f.close()}
+})
 test('card image inspection exposes actual pinned identity; changed source before or after encode blocks and rolls back only new exports',async()=>{
  const f=fixture();try{
   const directory=path.join(f.root,'artifacts'),file=path.join(directory,'source.png'),data=Buffer.from('controlled native decode fixture');fs.writeFileSync(file,data);fs.writeFileSync(path.join(directory,'old.mp4'),'old export')
@@ -238,12 +376,17 @@ test('Readiness rejects alpha, oversized, undecodable tracks, symlinks and revis
 
 test('Pending narration saves each scene, skips current imports and resumes safely after provider failure',async()=>{
  const value=fixture();try{
-  const calls:string[]=[],changes:number[]=[];let fail=true
-  const service=new FixtureVideoStudioService({projectStore:{active:()=>({id:'p',name:'P',directory:value.root})},execute:async()=>({}),videoStudioChanged:()=>{changes.push(value.store.read(draft.id).revision)},recordingController:{narrate:async raw=>{const text=(raw as {text:string}).text;calls.push(text);if(text==='Second'&&fail)throw new Error('Provider failed');return {artifactId:text+'.wav',durationSeconds:2}},compose:async()=>({}),processArtifact:async()=>({})}})
+  const calls:string[]=[],changes:number[]=[],facts:ReturnType<typeof assertStudioProductionProgress>[]=[];let fail=true
+  const service=new FixtureVideoStudioService({projectStore:{active:()=>({id:'p',name:'P',directory:value.root})},execute:async()=>({}),videoStudioChanged:(owner,progress)=>{assert.equal(owner?.sessionId,'fixture-session');changes.push(value.store.read(draft.id).revision);if(progress)facts.push(assertStudioProductionProgress(progress))},recordingController:{narrate:async raw=>{const text=(raw as {text:string}).text;calls.push(text);if(text==='Second'&&fail)throw new Error('Provider failed');return {artifactId:text+'.wav',durationSeconds:2}},compose:async()=>({}),processArtifact:async()=>({})}})
   let draft=sceneDraft(value.store,'Batch');draft.tts={provider:'local-matcha',voice:'local-zh-en',ratePercent:0};draft.scenes[0].narration='First';draft.scenes.push({...newStudioScene('second'),narration:'Second'},{...newStudioScene('import'),narration:'Import',audioText:'Import',audioArtifactId:'import.wav',audioDurationSeconds:1},{...newStudioScene('silent'),bullets:['Silent card']})
   draft=value.store.update(draft.id,1,draft)
-  await assert.rejects(service.execute({operation:'narrate-pending',draftId:draft.id,expectedRevision:draft.revision}),/Provider failed/)
+  await assert.rejects(service.execute({operation:'narrate-pending',draftId:draft.id,expectedRevision:draft.revision}),error=>{
+   assert.ok(error instanceof Error);assert.match(error.message,/Provider failed/)
+   const progress=JSON.parse(error.message.split('STUDIO_NARRATION_PROGRESS: ')[1]) as {currentRevision:number;completedSceneIds:string[];pendingSceneIds:string[];requiresFreshRead:boolean;automaticReplay:boolean}
+   assert.equal(progress.currentRevision,draft.revision+1);assert.deepEqual(progress.completedSceneIds,['first-scene']);assert.deepEqual(progress.pendingSceneIds,['second']);assert.equal(progress.requiresFreshRead,true);assert.equal(progress.automaticReplay,false);return true
+  })
   let current=value.store.read(draft.id);assert.equal(current.revision,draft.revision+1);assert.equal(current.scenes[0].audioText,'First');assert.equal(current.scenes[1].audioArtifactId,undefined);assert.equal(current.scenes[2].audioArtifactId,'import.wav');assert.ok(changes.includes(current.revision))
+  assert.deepEqual(facts.map(f=>f.phase),['started','scene-completed','started','failed']);assert.deepEqual(facts.at(-1)!.completedSceneIds,['first-scene']);assert.deepEqual(facts.at(-1)!.pendingSceneIds,['second']);assert.equal(facts.at(-1)!.revision,current.revision)
   fail=false;const resumed=await service.execute({operation:'narrate-pending',draftId:current.id,expectedRevision:current.revision}) as {draft:VideoDraft;completedSceneIds:string[];skippedSceneIds:string[]};assert.deepEqual(resumed.completedSceneIds,['second']);assert.deepEqual(resumed.skippedSceneIds,['first-scene','import','silent']);assert.deepEqual(calls,['First','Second','Second']);assert.equal(resumed.draft.scenes[1].durationSeconds,3)
   const noop=await service.execute({operation:'narrate-pending',draftId:current.id,expectedRevision:resumed.draft.revision}) as {draft:VideoDraft;completedSceneIds:string[]};assert.equal(noop.draft.revision,resumed.draft.revision);assert.deepEqual(noop.completedSceneIds,[])
  }finally{value.close()}
@@ -440,6 +583,22 @@ test('Studio pending narration keeps the admitted owner when caller identity cha
 })
 
 
+test('Legacy renderer exports remain in history but cannot be reused as current theme-correct output',()=>{
+ const value=fixture();try{
+  const directory=path.join(value.root,'artifacts');fs.writeFileSync(path.join(directory,'legacy.mp4'),'legacy pixels')
+  let draft=sceneDraft(value.store,'Renderer upgrade');draft.scenes[0].bullets=['Existing title card'];draft=value.store.update(draft.id,draft.revision,draft);draft=value.store.addExport(draft.id,draft.revision,{artifactId:'legacy.mp4',durationSeconds:8})
+  // Reconstruct the exact pre-upgrade hash using the same unchanged files.
+  const stat=fs.lstatSync(path.join(directory,'legacy.mp4'),{bigint:true}),assets=[['legacy.mp4',String(stat.size),String(stat.mtimeNs),String(stat.ctimeNs),String(stat.ino)]]
+  const canonical=(input:unknown):unknown=>Array.isArray(input)?input.map(canonical):input!==null&&typeof input==='object'?Object.fromEntries(Object.entries(input).filter(([,v])=>v!==undefined).sort(([a],[b])=>a.localeCompare(b)).map(([key,v])=>[key,canonical(v)])):input
+  const legacy=crypto.createHash('sha256').update(JSON.stringify(canonical({composition:draftComposition(draft),assets}))).digest('hex')
+  const file=path.join(value.store.directory,draft.id+'.json'),document=JSON.parse(fs.readFileSync(file,'utf8'));document.records.exports[0].fingerprint=legacy;fs.writeFileSync(file,JSON.stringify(document))
+  const before=fs.readFileSync(file);draft=value.store.read(draft.id)
+  assert.equal(value.store.reusableExport(draft),undefined);assert.equal(draft.exports[0].fingerprint,legacy);assert.deepEqual(fs.readFileSync(file),before);assert.equal(fs.readFileSync(path.join(directory,'legacy.mp4'),'utf8'),'legacy pixels')
+  fs.writeFileSync(path.join(directory,'current.mp4'),'current pixels');draft=value.store.addExport(draft.id,draft.revision,{artifactId:'current.mp4',durationSeconds:8})
+  assert.equal(value.store.reusableExport(draft)?.artifactId,'current.mp4');assert.equal(draft.exports[0].artifactId,'legacy.mp4');assert.equal(draft.exports[0].fingerprint,legacy)
+ }finally{value.close()}
+})
+
 test('Completed MP4 reuse survives cover/notes edits but invalidates changed composition, files and forged journals',async()=>{
   const value=fixture();try{
     fs.writeFileSync(path.join(value.root,'artifacts','frame.png'),'source');fs.writeFileSync(path.join(value.root,'artifacts','voice.wav'),'existing audio');let renders=0
@@ -497,6 +656,64 @@ function speechFixtureEvidence(directory:string,script:string){
  for(const id of [rawArtifactId,logArtifactId,normalizedArtifactId])fs.writeFileSync(path.join(directory,id),'new '+id)
  return assertSpeechEvidence({kind:'speech-evidence',provider:'whisper.cpp',engineVersion:'1.9.1',model:'base',modelRevision:LOCAL_ASR_MODEL_REVISION,modelSha256:LOCAL_ASR_MODELS.base.sha256,engineSha256:'a'.repeat(64),sourceArtifactId:'voice.wav',sourceSha256:speechHash(fs.readFileSync(path.join(directory,'voice.wav'))),normalizedArtifactId,normalizedSha256:speechHash(fs.readFileSync(path.join(directory,normalizedArtifactId))),rawArtifactId,rawSha256:speechHash(fs.readFileSync(path.join(directory,rawArtifactId))),logArtifactId,logSha256:speechHash(fs.readFileSync(path.join(directory,logArtifactId))),sampleRate:16000,channels:1,sampleType:'pcm-s16le',downmix:'channel-mean',timeDomain:'audio-file-seconds',durationSeconds:3,elapsedSeconds:1,createdAt:new Date().toISOString(),normalization:{kind:'speech-pcm',sampleRate:16000,channels:1,sampleType:'pcm-s16le',frames:48000,durationSeconds:3,inputSampleRate:48000,inputChannels:1,decodedStartSeconds:0,decodedEndSeconds:3,clippedSamples:0,downmix:'channel-mean'},segments:[{id:'segment-1',text:script,startSeconds:0,endSeconds:3,tokenMeanProbability:.9,usable:true,warnings:[]}],automaticTimingApproved:false,wordTimingAvailable:false})
 }
+test('Explicit timing provenance binds native editorial estimates or real ASR references, remains read-only in ordinary edits and diagnoses changed evidence',async()=>{
+ const f=speechFixture();try{
+  let d=f.draft;d.scenes[0].bullets=[];d.scenes[0].imageArtifactId='source.png';fs.writeFileSync(path.join(f.directory,'source.png'),'controlled pinned image')
+  d.scenes[0].cardSpec={version:2,templateId:'evidence/reading',reading:{mode:'whole-to-detail',returnToWhole:true,targets:[{source:{artifactId:'source.png',sha256:speechHash('controlled pinned image')},rect:{x:.1,y:.2,width:.4,height:.04},lineCount:1,name:'完整原句'}]}};d=f.store.update(d.id,d.revision,d)
+  const before=fs.readFileSync(path.join(f.store.directory,d.id+'.json'),'utf8'),estimate=await f.service.execute(f.request('estimate-speech',d),undefined,f.owner) as {anchors:typeof f.anchors;applyEstimate:{timingBasis:string}}
+  assert.equal(estimate.applyEstimate.timingBasis,'editorial-estimate');assert.equal(fs.readFileSync(path.join(f.store.directory,d.id+'.json'),'utf8'),before)
+  d=(await f.service.execute({...f.request('correct-speech',d),timingBasis:'editorial-estimate',cardLinks:[{kind:'reading',index:0,anchorId:'sentence-1'}]},undefined,f.owner) as {draft:VideoDraft}).draft
+  assert.deepEqual(d.scenes[0].speechAnchors!.anchors,estimate.anchors);assert.deepEqual(d.scenes[0].speechAnchors!.timingProvenance,{basis:'editorial-estimate'});assert.equal(f.store.readDocument(d.id).schemaVersion,'2.5')
+  const diag=await f.service.execute(f.request('diagnose-timing',d),undefined,f.owner) as ReturnType<typeof sceneTimingDiagnostics>;assert.equal(diag.audio.actualDurationSeconds,3);assert.equal(diag.audio.anchorState,'verified');assert.equal(diag.timing.basis,'editorial-estimate');assert.equal(diag.timing.acousticWordTimingApproved,false);assert.ok(diag.issues.some(i=>i.code==='reading-window-short'));assert.ok(diag.issues.some(i=>i.code==='trailing-hold'))
+  const split=splitStudioScene(d,d.scenes[0].id,1);for(const s of split.draft.scenes){const partial=sceneTimingDiagnostics(s);if(partial.readingWindows[0]?.detailVisibleSeconds===0)assert.ok(partial.issues.some(i=>i.code==='reading-partial-window'))}
+  const forged=structuredClone(d);forged.scenes[0].speechAnchors!.timingProvenance={basis:'manual-edit'};d=f.store.update(d.id,d.revision,forged);assert.equal(d.scenes[0].speechAnchors!.timingProvenance!.basis,'editorial-estimate','Ordinary updates retain the Host record rather than adopting supplied provenance')
+  const changed=structuredClone(estimate.anchors);changed[0].endSeconds-=.1;await assert.rejects(f.service.execute({...f.request('correct-speech',d),timingBasis:'editorial-estimate',anchors:changed},undefined,f.owner),/TIMING_BASIS/)
+  d=(await f.service.execute({...f.request('correct-speech',d),timingBasis:'manual-edit',anchors:changed},undefined,f.owner) as {draft:VideoDraft}).draft;assert.equal(d.scenes[0].speechAnchors!.timingProvenance!.basis,'manual-edit');assert.equal(d.scenes[0].speechAnchors!.origin,'agent-edited')
+  await assert.rejects(f.service.execute({...f.request('correct-speech',d),timingBasis:'asr-reference',anchors:f.anchors},undefined,f.owner),/TIMING_BASIS/)
+  f.kernel.recordingController.processArtifact=async raw=>{if((raw as {action:string}).action==='media.speech.align')return speechFixtureEvidence(f.directory,d.scenes[0].narration);return {durationSeconds:3,tracks:[{type:'audio',canDecode:true}]}}
+  d=(await f.service.execute(f.request('align-speech',d),undefined,f.owner) as {draft:VideoDraft}).draft
+  d=(await f.service.execute({...f.request('correct-speech',d),timingBasis:'asr-reference',anchors:f.anchors,cardLinks:[{kind:'reading',index:0,anchorId:'first'}]},undefined,f.owner) as {draft:VideoDraft}).draft
+  const provenance=assertSpeechTimingProvenance(d.scenes[0].speechAnchors!.timingProvenance);if(provenance.basis!=='asr-reference')throw new Error('Expected real ASR provenance.')
+  assert.equal(provenance.evidenceArtifactId,d.scenes[0].speechCandidate!.evidenceArtifactId)
+  const verified=await f.service.execute(f.request('diagnose-timing',d),undefined,f.owner) as ReturnType<typeof sceneTimingDiagnostics>;assert.equal(verified.audio.provenanceState,'verified');assert.equal(verified.timing.acousticWordTimingApproved,false)
+  const inspect=f.kernel.recordingController.processArtifact;f.kernel.recordingController.processArtifact=async()=>{throw new Error('Controlled audio decode failure')}
+  try{const unavailable=await f.service.execute(f.request('diagnose-timing',d),undefined,f.owner) as ReturnType<typeof sceneTimingDiagnostics>;assert.equal(unavailable.audio.audioState,'unavailable');assert.equal(unavailable.audio.provenanceState,'stale');assert.equal(unavailable.audio.actualDurationSeconds,undefined)}finally{f.kernel.recordingController.processArtifact=inspect}
+  fs.writeFileSync(path.join(f.directory,provenance.evidenceArtifactId),'changed ASR evidence')
+  const stale=await f.service.execute(f.request('diagnose-timing',d),undefined,f.owner) as ReturnType<typeof sceneTimingDiagnostics>;assert.equal(stale.audio.provenanceState,'stale');assert.equal(stale.audio.audioState,'decoded');assert.ok(stale.issues.some(i=>i.code==='binding-stale'))
+  const bytes=fs.readFileSync(path.join(f.store.directory,d.id+'.json'),'utf8');await assert.rejects(f.service.execute({...f.request('correct-speech',d),timingBasis:'asr-reference',anchors:f.anchors},undefined,f.owner),/changed/);assert.equal(fs.readFileSync(path.join(f.store.directory,d.id+'.json'),'utf8'),bytes)
+  fs.writeFileSync(path.join(f.directory,'voice.wav'),'replaced voice')
+  const changedVoice=await f.service.execute(f.request('diagnose-timing',d),undefined,f.owner) as ReturnType<typeof sceneTimingDiagnostics>;assert.equal(changedVoice.audio.anchorState,'stale');assert.equal(changedVoice.audio.provenanceState,'stale');assert.equal(fs.readFileSync(path.join(f.store.directory,d.id+'.json'),'utf8'),bytes,'Diagnostics never edits the draft')
+  await assert.rejects(f.service.execute({...f.request('diagnose-timing',d),expectedRevision:d.revision-1},undefined,f.owner),/CONFLICT/)
+  assert.throws(()=>assertStudioRequest({...f.request('diagnose-timing',d),timingBasis:'manual-edit'}));assert.throws(()=>assertStudioRequest({...f.request('correct-speech',d),timingBasis:'asr-reference'}))
+ }finally{f.close()}
+})
+test('Sentence rhythm diagnostics flag long or dense arguments and long diagram holds while preserving text, source clocks and full graph associations',()=>{
+ const f=speechFixture();try{
+  const long={...f.draft.scenes[0],narration:'这是一个需要按论点拆开的完整说明'.repeat(6)+'。'};assert.ok(sceneTimingDiagnostics(long).issues.some(i=>i.code==='long-sentence'))
+  const s=f.draft.scenes[0];s.bullets=[];s.durationSeconds=18;s.audioDurationSeconds=11;s.cardSpec={version:2,templateId:'diagram/sequence',shape:'steps',nodes:[{label:'第一句'},{label:'第二句'}],footnote:'非因果'};s.speechAnchors={scriptText:s.narration,scriptSha256:speechHash(s.narration),audioArtifactId:'voice.wav',audioSha256:speechHash('original voice'),durationSeconds:11,createdAt:new Date().toISOString(),capturedRevision:1,timeDomain:'audio-file-seconds',origin:'agent-edited',anchors:[{id:'first',scriptStart:0,scriptEnd:4,startSeconds:0,endSeconds:10},{id:'second',scriptStart:4,scriptEnd:8,startSeconds:10,endSeconds:11}]};s.speechLinks={bullets:[],focus:[],cards:cardSpeechTargets(s).map(({label,...target},i)=>({...target,anchorId:i?'second':'first'}))}
+  const before=JSON.stringify(s),result=sceneTimingDiagnostics(s);assert.equal(JSON.stringify(s),before);assert.equal(result.linkedTargetCount,2);assert.equal(result.requiresAssociationReview,true);assert.ok(result.issues.some(i=>i.code==='long-node-hold'));assert.ok(result.issues.some(i=>i.code==='trailing-hold'));assert.ok(result.issues.some(i=>i.code==='timing-unrecorded'));assert.ok(result.issues.some(i=>i.code==='association-review'))
+  s.speechAnchors.anchors[0].endSeconds=.1;const dense=sceneTimingDiagnostics(s);assert.ok(dense.issues.some(i=>i.code==='dense-sentence'))
+  s.speechLinks.cards![1].anchorId='first';assert.ok(sceneTimingDiagnostics(s).issues.some(i=>i.code==='diagram-window-overlap'),'Overlapping exclusive node cues cannot all become visible highlights')
+  s.voiceTiming={startSeconds:0,durationSeconds:5.5,sourceStartSeconds:0,playbackRate:2};assert.ok(Math.abs(sceneTimingDiagnostics(s).sentences[0].presentationSeconds!-.05)<1e-8,'Density uses actual voice playback rate rather than raw audio time')
+ }finally{f.close()}
+})
+test('Native timing diagnostics observe changing audio and reject a revision race without modifying media or returning an old result',async()=>{
+ const f=speechFixture();try{
+  let d=(await f.service.execute({...f.request('correct-speech'),timingBasis:'manual-edit',anchors:f.anchors},undefined,f.owner) as {draft:VideoDraft}).draft
+  const before=JSON.stringify(f.store.read(d.id));f.kernel.recordingController.processArtifact=async()=>{fs.writeFileSync(path.join(f.directory,'voice.wav'),'external replacement during inspect');return {durationSeconds:3,tracks:[{type:'audio',canDecode:true}]}}
+  const changed=await f.service.execute(f.request('diagnose-timing',d),undefined,f.owner) as ReturnType<typeof sceneTimingDiagnostics>;assert.equal(changed.audio.audioState,'changed');assert.equal(changed.audio.actualDurationSeconds,undefined);assert.equal(JSON.stringify(f.store.read(d.id)),before)
+  f.kernel.recordingController.processArtifact=async()=>{const current=f.store.read(d.id);current.title='并发修改保留';f.store.update(current.id,current.revision,current);return {durationSeconds:3,tracks:[{type:'audio',canDecode:true}]}}
+  await assert.rejects(f.service.execute(f.request('diagnose-timing',d),undefined,f.owner),/CONFLICT/);d=f.store.read(d.id);assert.equal(d.title,'并发修改保留');assert.equal(fs.readFileSync(path.join(f.directory,'voice.wav'),'utf8'),'external replacement during inspect')
+ }finally{f.close()}
+})
+test('Editorial estimates are read-only and corrected anchors plus current card targets commit atomically',async()=>{
+ const f=speechFixture();try{let d=f.draft;d.scenes[0].bullets=[];d.scenes[0].cardSpec={version:2,templateId:'diagram/sequence',shape:'steps',nodes:[{label:'第一句'},{label:'第二句'}],footnote:'编辑顺序'};d=f.store.update(d.id,d.revision,d);const before=fs.readFileSync(path.join(f.store.directory,d.id+'.json'),'utf8')
+ const estimate=await f.service.execute(f.request('estimate-speech',d),undefined,f.owner) as {anchors:typeof f.anchors;orderedCardLinks:{kind:'diagram';index:number;anchorId:string}[];automaticTimingApproved:boolean;timingKind:string};assert.equal(estimate.timingKind,'editorial-estimate');assert.equal(estimate.automaticTimingApproved,false);assert.equal(estimate.anchors[0].startSeconds,0);assert.equal(estimate.anchors.at(-1)!.endSeconds,3);assert.equal(fs.readFileSync(path.join(f.store.directory,d.id+'.json'),'utf8'),before)
+ await assert.rejects(f.service.execute({...f.request('correct-speech',d),anchors:estimate.anchors,cardLinks:[{kind:'diagram',index:3,anchorId:'sentence-1'}]},undefined,f.owner),/current card target/);assert.equal(fs.readFileSync(path.join(f.store.directory,d.id+'.json'),'utf8'),before)
+ d=(await f.service.execute({...f.request('correct-speech',d),anchors:estimate.anchors,cardLinks:estimate.orderedCardLinks},undefined,f.owner) as {draft:VideoDraft}).draft;assert.equal(d.revision,f.draft.revision+2);assert.equal(d.scenes[0].speechAnchors!.origin,'agent-edited');assert.equal(d.scenes[0].speechLinks!.cards!.length,2);assert.equal(draftComposition(d).scenes[0].cardCues!.length,2)
+ const committed=fs.readFileSync(path.join(f.store.directory,d.id+'.json'),'utf8');await assert.rejects(f.service.execute({...f.request('correct-speech',d),expectedRevision:d.revision-1,anchors:estimate.anchors,cardLinks:[]},undefined,f.owner),/CONFLICT/);assert.equal(fs.readFileSync(path.join(f.store.directory,d.id+'.json'),'utf8'),committed)
+ }finally{f.close()}
+})
 test('Sentence spans reject overlap/forgery/Unicode splits and ASR paragraphs are not divided into invented sentence times',()=>{
  assert.equal(scriptSentences('数字 3.5，先说一句。然后说第二句！').length,2)
  assert.throws(()=>assertSentenceAnchors([{id:'a',scriptStart:0,scriptEnd:1,startSeconds:0,endSeconds:1}],'😀'),/Unicode/)
@@ -1425,4 +1642,30 @@ test('Subtitle review adoption and selective undo retain exact voice, captions, 
  await assert.rejects(f.execute({operation:'adopt-review',draftId:d.id,expectedRevision:d.revision,reviewId:item.id},'user'),/STUDIO_REVIEW_STALE/);assert.deepEqual(fs.readFileSync(path.join(f.root,'video-studio',d.id+'.json')),bytes)
  assertVideoDraft(new VideoStudioStore(f.root,'fixture-session').read(d.id))
  }finally{f.close()}
+})
+
+test('shorter regenerated narration preserves authored card highlight clocks and split presentation windows',()=>{
+ const scene=newStudioScene('timed-evidence');scene.durationSeconds=25;scene.imageArtifactId='source.png'
+ scene.cardSpec={version:2,templateId:'evidence/highlight',highlights:[{source:{artifactId:'source.png',sha256:'a'.repeat(64)},rects:[{x:.1,y:.1,width:.2,height:.2}],name:'Late emphasis',style:'outline',startSeconds:18,endSeconds:21.5}]}
+ const before=structuredClone(scene.cardSpec)
+ applyNarrationPacing(scene,5,24,'standard');assert.equal(scene.durationSeconds,21.5);assert.deepEqual(scene.cardSpec,before)
+ scene.durationSeconds=25;applyNarrationPacing(scene,5,24,'compact');assert.equal(scene.durationSeconds,21.5);assert.deepEqual(scene.cardSpec,before)
+ scene.presentationWindow={originId:'original',startSeconds:10,durationSeconds:25,musicIndex:0,sceneNumber:1,sceneCount:1};scene.durationSeconds=5;delete scene.voiceTiming
+ assert.equal(narrationSceneDuration(scene,2,24),5);assert.deepEqual(scene.cardSpec,before)
+})
+
+test('recording compression preserves a continuous source clock and refuses implicit speech or overlay retiming',()=>{
+ const f=fixture();try{const d=sceneDraft(f.store,'Recording');Object.assign(d.scenes[0],{videoArtifactId:'screen.webm',durationSeconds:10,sourceStartSeconds:2,sourceDurationSeconds:12,keepSourceAudio:true});const edits=assertEditedRecordingPlan([{startSeconds:2,endSeconds:4,kind:'operation',rate:1,mute:false},{startSeconds:4,endSeconds:10,kind:'wait-candidate',rate:2,mute:true},{startSeconds:10,endSeconds:12,kind:'result-candidate',rate:1,mute:false}]),next=recordingPlanDraft(d,d.scenes[0].id,edits);assert.equal(next.scenes[0].durationSeconds,7);assert.equal(next.scenes[0].visualSegments![1].sourceStartSeconds,4);assert.equal(next.scenes[0].visualSegments![1].durationSeconds,3);assert.equal(next.scenes[0].visualSegments![1].keepSourceAudio,false);assert.throws(()=>recordingPlanDraft(d,d.scenes[0].id,[{...edits[0],endSeconds:3},...edits.slice(1)]),/连续/);d.scenes[0].narration='不能暗中重排';assert.throws(()=>recordingPlanDraft(d,d.scenes[0].id,edits),/旁白/)}finally{f.close()}
+})
+
+test('late narration completion preserves GUI revision and cleans only its newly created audio',async()=>{
+ const f=fixture();try{let d=sceneDraft(f.store,'Narration race');d.scenes[0].narration='当前脚本';d=f.store.update(d.id,d.revision,d);const directory=path.join(f.root,'artifacts');fs.writeFileSync(path.join(directory,'kept.wav'),'earlier artifact');const kernel:StudioKernel={projectStore:{active:()=>({id:'p',name:'P',directory:f.root})},execute:async()=>({}),recordingController:{processArtifact:async()=>({}),compose:async()=>({}),narrate:async()=>{fs.writeFileSync(path.join(directory,'late.wav'),'late completed local voice');const newer=f.store.read(d.id);newer.scenes[0].narration='界面新脚本';f.store.update(d.id,newer.revision,newer);return {artifactId:'late.wav',durationSeconds:2}}}},service=new VideoStudioService(kernel);await assert.rejects(service.execute({operation:'narrate-local',draftId:d.id,expectedRevision:d.revision,sceneId:d.scenes[0].id},undefined,{projectId:'p',sessionId:'fixture-session'}),/STUDIO_CONFLICT/);assert.equal(f.store.read(d.id).scenes[0].narration,'界面新脚本');assert.equal(fs.existsSync(path.join(directory,'late.wav')),false);assert.equal(fs.readFileSync(path.join(directory,'kept.wav'),'utf8'),'earlier artifact')}finally{f.close()}
+})
+
+test('recording macro request admits only explicit hash-bound edits',()=>{
+ const request={operation:'apply-recording-plan',draftId:'draft',expectedRevision:1,sceneId:'scene',recordingSourceSha256:'a'.repeat(64),recordingEventsSha256:'b'.repeat(64),recordingPlan:[{startSeconds:0,endSeconds:2,kind:'operation',rate:1,mute:false}]};assert.equal(assertStudioRequest(request).recordingPlan?.length,1);assert.throws(()=>assertStudioRequest({...request,recordingSourceSha256:'bad'}),/fingerprints/);assert.throws(()=>assertStudioRequest({...request,operation:'read'}),/require apply/)
+})
+
+test('new recording focus suggestions reject replaced source bytes while retaining the current draft',async()=>{
+ const f=fixture();try{let d=sceneDraft(f.store,'Recorded focus');d.scenes[0].videoArtifactId='screen.webm';d=f.store.update(d.id,d.revision,d);const directory=path.join(f.root,'artifacts'),file=path.join(directory,'screen.webm');fs.writeFileSync(file,'recorded original');const sha=crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex'),events=recordingEvents('screen.webm',{startedEpochMs:100000,width:800,height:400},8,{events:[],truncated:false,reason:'requested'},[],false,sha);fs.writeFileSync(file+'.events.json',JSON.stringify(events));const kernel:StudioKernel={projectStore:{active:()=>({id:'p',name:'P',directory:f.root})},execute:async()=>({}),recordingController:{processArtifact:async()=>({}),compose:async()=>({}),narrate:async()=>({})}},service=new VideoStudioService(kernel),request={operation:'suggest-focus',draftId:d.id,expectedRevision:d.revision,sceneId:d.scenes[0].id},owner={projectId:'p',sessionId:'fixture-session'};assert.equal((await service.execute(request,undefined,owner) as {sourceBinding:string}).sourceBinding,'recorded-fingerprint');fs.writeFileSync(file,'replacement bytes');await assert.rejects(service.execute(request,undefined,owner),/旧焦点事件/);assert.equal(f.store.read(d.id).revision,d.revision)}finally{f.close()}
 })

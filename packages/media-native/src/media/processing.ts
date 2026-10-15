@@ -23,7 +23,7 @@ async function info(input: Input): Promise<MediaInfo> {
       const codec=await track.getCodec();item.hasAlphaData=codec!=='vp8'&&codec!=='vp9'
       if(!item.hasAlphaData)for await(const packet of new EncodedPacketSink(track).packets(undefined,undefined,{metadataOnly:true}))if((packet.sideData.alphaByteLength??0)>0){item.hasAlphaData=true;break}
     }
-    if (track.isAudioTrack()) Object.assign(item, { channels: await track.getNumberOfChannels(), sampleRate: await track.getSampleRate() })
+    if (track.isAudioTrack()) Object.assign(item, { channels: await track.getNumberOfChannels(), sampleRate: await track.getSampleRate(),startSeconds:await track.getFirstTimestamp(),endSeconds:await track.computeDuration() })
     details.push(item)
   }
   return { container: (await input.getFormat()).name, contentType: await input.getMimeType(),
@@ -90,7 +90,7 @@ async function processMedia(command: MediaProcessingCommand): Promise<void> {
     for (const track of await input.getVideoTracks()) await normalizeBrowserVideoColor(track)
     const metadata = await info(input)
     let result: MediaWorkerResult
-    if(request.action==='media.speech.normalize'){const normalized=await normalizeSpeech(input);await write(command.token,0,0,normalized.data);result={kind:'speech-pcm',info:normalized.info}}
+    if(request.action==='media.speech.normalize'){const normalized=await normalizeSpeech(input,request.sourceRange);await write(command.token,0,0,normalized.data);result={kind:'speech-pcm',info:normalized.info}}
     else if (request.action === 'media.inspect') result = { kind: 'inspection', info: metadata }
     else if(request.action==='media.decode.check'){
       if(!Number.isFinite(metadata.durationSeconds)||metadata.durationSeconds<=0||metadata.durationSeconds>MEDIA_LIMITS.durationSeconds)throw new Error('Full-file decode requires finite media up to thirty minutes.')

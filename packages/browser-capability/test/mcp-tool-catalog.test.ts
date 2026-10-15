@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process'
 import path from 'node:path'
 import readline from 'node:readline'
 import test from 'node:test'
+import {Ajv} from 'ajv'
 import product from '../../../apps/bmw/product.js'
 import { BrowserCapabilityRegistry } from '../src/browser-capability-registry.js'
 import { browserToolCatalog } from '../src/tool-catalog.js'
@@ -73,4 +74,30 @@ test('MCP catalog admission rejects extra tools and malformed action boundaries'
   assert.throws(() => browserToolCatalog({ ...tool, name: 'shell' }), /exactly browser/)
   assert.throws(() => browserToolCatalog({ ...tool, inputSchema: { ...tool.inputSchema, additionalProperties: true } }), /input schema/)
   assert.throws(() => browserToolCatalog({ ...tool, inputSchema: { ...tool.inputSchema, properties: { action: { type: 'string', enum: [7] } } } }), /action enum/)
+})
+
+test('Published browser schema separates canvas drawing, annotation and Studio arguments by action', () => {
+  const registry=new BrowserCapabilityRegistry(product),schema=registry.inputSchema()
+  const validate=new Ajv({strict:false}).compile(schema)
+  const shapes=[{type:'text',x:20,y:20,text:'Diagram',color:'#172536'}]
+  for(const input of [
+    {action:'status'},
+    {action:'media.image.draw',width:320,height:180,shapes},
+    {action:'media.image.annotate',artifactId:'existing.png',shapes},
+    {action:'video.studio',studioRequest:{operation:'narrate-pending',draftId:'draft',expectedRevision:2}}
+  ])assert.equal(validate(input),true,JSON.stringify(validate.errors))
+  for(const input of [
+    {action:'media.image.draw',artifactId:'existing.png',shapes},
+    {action:'media.image.draw',width:320,height:180,filename:'overwrite.png',shapes},
+    {action:'media.image.draw',width:320,shapes},
+    {action:'media.image.annotate',width:320,height:180,shapes},
+    {action:'media.image.annotate',artifactId:'existing.png',width:320,shapes},
+    {action:'status',artifactId:'existing.png'},
+    {action:'video.studio',operation:'narrate-pending',draftId:'draft',expectedRevision:'2'},
+    {action:'video.studio',studioRequest:{operation:'narrate-pending',draftId:'draft',expectedRevision:'2'}}
+  ])assert.equal(validate(input),false,JSON.stringify(input))
+  const branches=schema.oneOf as {description:string;properties:{action:{const:string}}}[]
+  assert.deepEqual(branches.map(branch=>branch.properties.action.const),registry.allowedActions)
+  assert.match(branches.find(branch=>branch.properties.action.const==='media.image.draw')!.description,/Requires width\/height/)
+  assert.match(registry.toolDefinition().description,/do not pass artifactId or filename/)
 })

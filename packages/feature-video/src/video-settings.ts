@@ -9,6 +9,7 @@ export type {VideoSettingsPort as VideoSettingsStore} from '@bmw-agent/browser-c
 import type {VideoSettingsPort as VideoSettingsStore} from '@bmw-agent/browser-capability/host'
 export function resolvedComposition(raw:unknown,preferences:unknown):MediaComposition {
   const value=mediaRecord(raw),patch:Record<string,unknown>={}
+  if(Array.isArray(value.scenes)&&value.scenes.some(scene=>Object.hasOwn(mediaRecord(scene),'cardCues')))throw new TypeError('Card cues are host-derived Studio output; bind sentence references in video.studio.')
   for(const key of VIDEO_OPTION_KEYS)if(value[key]!==undefined)patch[key]=value[key]
   if(value.resolution==='custom'){patch.width=value.width;patch.height=value.height}
   const output=resolveVideoOutput(preferences,patch,value.templateName,{width:value.width,height:value.height})

@@ -1,4 +1,5 @@
 import {visualEffectFilter} from '../visual-effects.js'
+import {paintLoupe} from './loupe-paint.js'
 import {scenePlaybackClock} from '../scene-playback-window.js'
 import {focusFraming} from '../focus-contract.js'
 import {visualAtTime,visualZoom} from '../visual-segments.js'
@@ -6,10 +7,13 @@ import {cardMetricText,cardPaintScene} from '../card-templates.js'
 import type { CompositionScene, MediaComposition } from '../composition-contract.js'
 import { DEFAULT_VIDEO_OPTIONS } from '../video-options.js'
 import {captionText,estimatedCaptionCues} from '../composition-contract.js'
+import {captionBacking,captionLayout} from './composition-text.js'
+import {withCanvasPaintRole} from './canvas-paint-role.js'
 export interface CompositionCanvasFrame {canvas:HTMLCanvasElement|OffscreenCanvas}
 /** Normalized bounds of text actually painted, for fixed-template GUI editing. */
 export interface CompositionTextBox {kind:'title'|'bullet'|'global-title';index:number;x:number;y:number;width:number;height:number}
-import {readingCrop,paintHighlights,paintDetailedCard,detailedVisualArea} from './card-details-paint.js'
+import {readingCrop,speechReadingCrop,paintHighlights,paintDetailedCard,detailedVisualArea} from './card-details-paint.js'
+import {phoneReadingView} from './phone-reading.js'
 import type {SourceRect} from '../card-details.js'
 export interface CompositionVisualBox {artifactId:string;crop:SourceRect;x:number;y:number;width:number;height:number}
 import {fitText,templateBoxes} from './composition-text.js'
@@ -58,25 +62,34 @@ export function paintScene(context:CanvasRenderingContext2D,scene:CompositionSce
   const visual=visualAtTime(scene,time),framing=visual?.segment??scene
   if(frame){
     const baseArea=news?{x:margin,y:236,width:W-margin*2,height:scene.sceneTemplate?.kind==='screenshot'?280:362}:scene.layout==='fullscreen'?{x:0,y:110+headerOffset,width:W,height:510-headerOffset}:{x:margin,y:122+headerOffset,width:W-margin*2,height:(scene.sceneTemplate?.kind==='screenshot'?390:484)-headerOffset}
-    const area=detailedVisualArea(card?.version===2?card:undefined,baseArea)
+    let area=detailedVisualArea(card?.version===2?card:undefined,baseArea)
+    const focused=focusFraming(framing,visual?.localSeconds??time),reading=card?.version===2&&'reading'in card?card.reading:undefined
+    const phone=phoneReadingView(reading,framing.imageArtifactId,focused.crop,frame.canvas.width,frame.canvas.height,area,presentationTime,clock.durationSeconds,W,scene.cardCues)
+    if(phone)area=phone.area
+    const crop=phone?.crop??(scene.cardCues?.some(c=>c.kind==='reading')&&reading?speechReadingCrop(reading,framing.imageArtifactId,focused.crop,presentationTime,scene.cardCues):readingCrop(reading,framing.imageArtifactId,focused.crop,'effectWindow'in framing&&framing.effectWindow?(framing.effectWindow.startSeconds+(visual?.localSeconds??time)):scene.visualSegments?(visual?.localSeconds??time):presentationTime,'effectWindow'in framing&&framing.effectWindow?framing.effectWindow.durationSeconds:scene.visualSegments?framing.durationSeconds:clock.durationSeconds)),sourceWidth=frame.canvas.width*crop.width,sourceHeight=frame.canvas.height*crop.height
     context.save();context.beginPath();context.roundRect(area.x,area.y,area.width,area.height,minimal?0:16);context.clip()
     context.fillStyle=light?'#e7edf5':'#232323';context.fillRect(area.x,area.y,area.width,area.height)
     context.globalAlpha=visual?.opacity??1
-    const focused=focusFraming(framing,visual?.localSeconds??time),crop=readingCrop(card?.version===2&&'reading'in card?card.reading:undefined,framing.imageArtifactId,focused.crop,'effectWindow'in framing&&framing.effectWindow?(framing.effectWindow.startSeconds+(visual?.localSeconds??time)):scene.visualSegments?(visual?.localSeconds??time):presentationTime,'effectWindow'in framing&&framing.effectWindow?framing.effectWindow.durationSeconds:scene.visualSegments?framing.durationSeconds:clock.durationSeconds),sourceWidth=frame.canvas.width*crop.width,sourceHeight=frame.canvas.height*crop.height
     const push=card?.motion==='slow-push'?1+.06*Math.min(1,presentationTime/clock.durationSeconds):1
-    const scale=Math.min(area.width/sourceWidth,area.height/sourceHeight)*visualZoom(framing,visual?.localSeconds??time)*push,drawWidth=sourceWidth*scale,drawHeight=sourceHeight*scale
+    const scale=Math.min(area.width/sourceWidth,area.height/sourceHeight)*(phone?.phase?1:visualZoom(framing,visual?.localSeconds??time)*push),drawWidth=sourceWidth*scale,drawHeight=sourceHeight*scale
     context.save();context.filter=visualEffectFilter(framing.effects)
     context.drawImage(frame.canvas,frame.canvas.width*crop.x,frame.canvas.height*crop.y,sourceWidth,sourceHeight,area.x+(area.width-drawWidth)/2,area.y+(area.height-drawHeight)/2,drawWidth,drawHeight)
     context.restore()
     const drawn={x:area.x+(area.width-drawWidth)/2,y:area.y+(area.height-drawHeight)/2,width:drawWidth,height:drawHeight}
-    if(card?.version===2&&'highlights'in card){context.save();context.beginPath();context.rect(drawn.x,drawn.y,drawn.width,drawn.height);context.clip();paintHighlights(context,card.highlights,framing.imageArtifactId,presentationTime,crop,drawn);context.restore()}
+    if(phone?.highlight){
+      const r=phone.highlight,x=drawn.x+(r.x-crop.x)/crop.width*drawn.width,y=drawn.y+(r.y-crop.y)/crop.height*drawn.height,w=r.width/crop.width*drawn.width,h=r.height/crop.height*drawn.height
+      context.save();context.fillStyle='#10182766';context.fillRect(drawn.x,drawn.y,drawn.width,Math.max(0,y-drawn.y));context.fillRect(drawn.x,y+h,drawn.width,Math.max(0,drawn.y+drawn.height-y-h));context.fillRect(drawn.x,y,Math.max(0,x-drawn.x),h);context.fillRect(x+w,y,Math.max(0,drawn.x+drawn.width-x-w),h);context.strokeStyle=accent;context.lineWidth=3;context.strokeRect(x,y,w,h);context.restore()
+    }
+    if(card?.version===2&&'highlights'in card){context.save();context.beginPath();context.rect(drawn.x,drawn.y,drawn.width,drawn.height);context.clip();paintHighlights(context,card.highlights,framing.imageArtifactId,presentationTime,crop,drawn,scene.cardCues);context.restore()}
     if(framing.imageArtifactId)onVisual?.({artifactId:framing.imageArtifactId,crop,x:drawn.x/W,y:drawn.y/H,width:drawn.width/W,height:drawn.height/H})
+    if(focused.focus?.mode==='loupe'){context.save();context.filter=visualEffectFilter(framing.effects);paintLoupe(context,frame.canvas,focused.focus,crop,area,drawn,focused.strength);context.restore()}
     if(focused.focus?.emphasize&&focused.strength>0){
       const x=area.x+(area.width-drawWidth)/2+(focused.focus.x-crop.x)/crop.width*drawWidth,y=area.y+(area.height-drawHeight)/2+(focused.focus.y-crop.y)/crop.height*drawHeight
       context.globalAlpha=(visual?.opacity??1)*focused.strength;context.strokeStyle='#ffcc33';context.lineWidth=3;context.beginPath();context.arc(x,y,14,0,Math.PI*2);context.stroke()
     }
     context.restore()
     if(!minimal){context.strokeStyle=light?'#2369db44':'#a2f4d044';context.lineWidth=2;context.beginPath();context.roundRect(area.x,area.y,area.width,area.height,16);context.stroke()}
+    if(phone){const phase=phone.phase?({context:'原文全貌',locate:'定位原句',zoom:'放大原句',detail:'原句细节',return:'返回全貌'} as const)[phone.phase]:undefined;context.fillStyle=accent;context.font=`500 14px ${font}`;context.fillText(phone.name+(phase?' · '+phase:phone.pan?' · 原图横向阅读':''),area.x,area.y+area.height+24);if(!phase){context.fillStyle=light?'#2369db44':'#a2f4d044';context.fillRect(area.x,area.y+area.height+34,area.width,3);context.fillStyle=accent;context.fillRect(area.x,area.y+area.height+34,area.width*phone.progress,3)}}
   }else{
     context.save();context.globalAlpha=ease;context.fillStyle=accent;context.font=`800 ${W<600?80:110}px ${font}`;if(!scene.sceneTemplate&&scene.showSceneNumber!==false)context.fillText(String(clock.sceneNumber).padStart(2,'0'),margin,265)
     context.fillStyle=ink
@@ -90,7 +103,8 @@ export function paintScene(context:CanvasRenderingContext2D,scene:CompositionSce
     context.save();if(card?.motion==='fade-in')context.globalAlpha=ease;context.fillStyle=light?'#e7edf5':'#232b39';context.beginPath();context.roundRect(box.x,box.y,box.width,box.height,10);context.fill();context.fillStyle=accent;context.fillRect(box.x,box.y,4,box.height);context.fillStyle=scene.sceneTemplate.emphasisIndex===index?accent:ink;context.font=`600 ${fit.size}px ${font}`;fit.lines.forEach((line,row)=>{const y=box.y+12+fit.size+row*fit.size*1.3;context.fillText(line,box.x+14,y);textBox('bullet',index,line,box.x+14,y,fit.size)});context.restore()
   }}
   if(card&&['title/basic','title/emphasis','metric/hero','metric/backdrop'].includes(card.templateId)){
-    context.save();context.globalAlpha=ease;context.fillStyle=ink
+    const cue=scene.cardCues?.find(c=>c.kind===(card.templateId==='metric/backdrop'?'metric':'keyword')),visible=!cue||presentationTime>=cue.startSeconds&&(card.templateId!=='metric/backdrop'||presentationTime<cue.endSeconds),cardTime=cue?presentationTime-cue.startSeconds:presentationTime
+    context.save();context.globalAlpha=visible?ease:0;context.fillStyle=ink
     const draw=(text:string,y:number,size:number,kind:CompositionTextBox['kind']|null,maximumLines=2)=>{
       const fitted=fitText(context,text,W-margin*2,maximumLines,size)
       if(fitted.overflow)throw new Error('STUDIO_TEXT_LAYOUT: 卡片文字放不下。')
@@ -103,39 +117,35 @@ export function paintScene(context:CanvasRenderingContext2D,scene:CompositionSce
       draw(originalScene.title,news?330:280,W<600?38:64,'title')
       if(originalScene.bullets[0])draw(originalScene.bullets[0],news?510:460,W<600?24:34,'bullet')
     }else if(card.templateId==='metric/hero'||card.templateId==='metric/backdrop'){
-      if(card.templateId==='metric/backdrop'&&card.phase==='to-evidence')context.globalAlpha*=Math.max(0,1-(presentationTime-card.holdSeconds)/.6)
+      if(card.templateId==='metric/backdrop'&&card.phase==='to-evidence')context.globalAlpha*=Math.max(0,1-(cardTime-card.holdSeconds)/.6)
       if(frame){context.fillStyle='#000000a6';context.fillRect(0,news?236:170,W,news?362:390);context.fillStyle=ink}
-      draw(cardMetricText(card,presentationTime),news?380:365,W<600?68:110,null,1)
+      draw(cardMetricText(card,Math.max(0,cardTime)),news?380:365,W<600?68:110,null,1)
       if(originalScene.bullets[0])draw(originalScene.bullets[0],news?550:520,W<600?24:34,'bullet')
     }
     context.restore()
   }
   if(card?.version===2&&'quote'in card&&originalScene.bullets[0]){context.fillStyle=ink;const fit=fitText(context,originalScene.bullets[0],W-margin*2,1,16);if(fit.overflow)throw new Error('STUDIO_TEXT_LAYOUT: 引述说明过长。');context.font=`600 ${fit.size}px ${font}`;context.fillText(fit.lines[0]??'',margin,228)}
-  if(card?.version===2)paintDetailedCard(context,card,W,presentationTime,clock.durationSeconds,cardAssets)
+  if(card?.version===2)paintDetailedCard(context,card,W,presentationTime,clock.durationSeconds,cardAssets,{ink,muted:light?'#65758b':'#c4cbd7',accent,panel:light?'#e7edf5':'#354152',connection:light?'#2369db':'#8ebaff',mark:light?'#946200':'#ffcc33',rangeFill:light?'#207a6a':'#62b5a6'},undefined,scene.cardCues)
   // Estimated sentence captions follow measured audio; no word-alignment claim.
-  const captionSize=scene.captionStyle?.fontSize??(W<600?22:28)
   const cues=scene.captions??estimatedCaptionCues(scene,width,height,narrationDuration)
   const cue=cues.find(cue=>time>=cue.startSeconds&&time<cue.endSeconds),caption=cue?captionText(cue,scene.captionDisplay):''
-  context.fillStyle=scene.captionStyle?.color??ink;context.font=`500 ${captionSize}px ${font}`
-  const fitted=fitText(context,caption,W-margin*2,scene.captionStyle||cue?.translationText?3:2,captionSize);if(fitted.overflow)throw new Error('STUDIO_TEXT_LAYOUT: 字幕超出显示行数。');context.font=`500 ${fitted.size}px ${font}`
-  const captionLines=fitted.lines,look=scene.captionStyle,lineHeight=look||cue?.translationText?fitted.size*1.3:35
-  const anchor=look?.position==='top'?80:look?.position==='center'?360-(captionLines.length-1)*lineHeight/2:644
-  const baseline=Math.max(fitted.size+8,Math.min(686-(captionLines.length-1)*lineHeight,anchor+(look?.offsetPercent??0)*7.2))
-  captionLines.forEach((line,row)=>{
-    const measured=context.measureText(line).width,x=look?.align==='left'?margin:look?.align==='right'?W-margin-measured:(W-measured)/2,y=baseline+row*lineHeight
-    if(look?.background==='box'){context.save();context.fillStyle='#000000b3';context.fillRect(x-8,y-fitted.size-4,measured+16,lineHeight+8);context.restore()}
-    if(look?.background==='outline'){context.save();context.strokeStyle='#000000';context.lineJoin='round';context.lineWidth=Math.max(2,fitted.size*.12);context.strokeText(line,x,y);context.restore()}
-    context.fillText(line,x,y)
-  })
+  const look=scene.captionStyle,layout=captionLayout(context,caption,W,look,Boolean(cue?.translationText)),backing=captionBacking(look?.color??ink)
+  if(layout.overflow)throw new Error('STUDIO_TEXT_LAYOUT: 字幕超出显示行数。')
+  context.fillStyle=look?.color??ink;context.font=`500 ${layout.size}px ${font}`
+  if(look?.background==='box'&&layout.box)withCanvasPaintRole(context,'caption-background',()=>{const b=layout.box!;context.save();context.fillStyle=backing.box;context.fillRect(b.x,b.y,b.width,b.height);context.restore()})
+  withCanvasPaintRole(context,'caption',()=>{for(const {text,x,y}of layout.lines){
+    if(look?.background==='outline'){context.save();context.strokeStyle=backing.outline;context.lineJoin='round';context.lineWidth=Math.max(2,layout.size*.12);context.strokeText(text,x,y);context.restore()}
+    context.fillText(text,x,y)
+  }})
   context.fillStyle=muted;context.font=`14px ${font}`
   const rightWatermark=watermark.enabled&&watermark.position==='bottom-right'
   const counter=`${String(clock.sceneNumber).padStart(2,'0')} / ${String(clock.sceneCount).padStart(2,'0')}`
-  if(scene.showSceneNumber!==false)context.fillText(counter,rightWatermark?margin:W-margin-context.measureText(counter).width,704)
+  if(scene.showSceneNumber!==false)withCanvasPaintRole(context,'counter',()=>context.fillText(counter,rightWatermark?margin:W-margin-context.measureText(counter).width,704))
   if(watermark.enabled){context.save();context.globalAlpha=watermark.opacity;context.fillStyle=muted;context.font=`${watermark.size}px ${font}`
     const maxWidth=W-margin*2,measured=context.measureText(watermark.text).width
     if(measured>maxWidth)context.font=`${watermark.size*maxWidth/measured}px ${font}`
     const x=watermark.position.endsWith('right')?W-margin-context.measureText(watermark.text).width:margin
-    context.fillText(watermark.text,x,news?Math.max(18,watermark.size+4):watermark.position.startsWith('top')?Math.max(18,watermark.size+4):704);context.restore()
+    withCanvasPaintRole(context,'watermark',()=>context.fillText(watermark.text,x,news?Math.max(18,watermark.size+4):watermark.position.startsWith('top')?Math.max(18,watermark.size+4):704));context.restore()
   }
   if(!minimal&&!news){context.fillStyle=accent;context.fillRect(0,716,W*(clock.sceneNumber-1+Math.min(1,presentationTime/clock.durationSeconds))/clock.sceneCount,4)}
   context.restore()

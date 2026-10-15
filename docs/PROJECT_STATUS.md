@@ -1,20 +1,22 @@
 # BMW 当前实现
 
-核对日期：2026-10-08。当前行为与 Schema 见 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md)，模块／接口／测试分支见 [ARCHITECTURE.md](ARCHITECTURE.md)，报告见 [VERIFICATION.md](VERIFICATION.md)。
+核对日期：2026-10-14。当前行为与 Schema 见 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md)，模块／接口／测试分支见 [ARCHITECTURE.md](ARCHITECTURE.md)，报告见 [VERIFICATION.md](VERIFICATION.md)。
 
 | 范围 | 当前实现与边界 |
 |---|---|
 | 桌面与 Agent | 一个 BMW，浏览器／Video Studio／自有 Assistant；DSH、Codex、Qoder CN 各拥有官方循环，唯一 browser 模型工具 |
 | Project 与 Session | Project 共享页面和媒体；稳定 Session 固定 Project／driver，Studio 草稿固定唯一 owner；CAS、FIFO、取消清理和 unknown 不重发 |
 | 浏览器与媒体 | 页面交互、后台取材、截图、录屏、有限下载、图像检查／标注／绘图、抽帧、裁剪缩放与转换 |
-| 视频数据约定 | 单份 Video Document 2.0；可逆简洁子集；类型 CAS 命令／试算、owner 保护、v1 原字节备份；未知/未实现结构拒绝 |
+| 视频数据约定 | 单份 Video Document 2.0–2.5；可逆简洁子集；类型 CAS 命令／试算、owner 保护、v1 原字节备份；未知/未实现结构拒绝 |
 | Video Studio 默认视图 | 卡片内脚本、画面、预览；目标／素材与细节按需展开，统一交付入口 |
 | Video Studio 高级视图 | 全窗口资源／画布／属性／多轨、同一 Assistant 浮框／停靠；主轨、独立对象、有限关键帧、整镜头分割、基础颜色／模糊与静音 |
-| 语音与字幕 | 真实旁白、原音频播放区间、句级校正／聚焦／板书、原声 ASR 与人工双语字幕；完整音轨 ASR 最多 180 秒，自动词／字精度未批准 |
+| 语音与字幕 | 真实旁白、原音频播放区间、句级校正／聚焦／板书、原声 ASR 与人工双语字幕；完整字幕底框与共享安全布局；2.5 时间方法记录及只读句级节奏诊断；完整音轨 ASR 最多 180 秒；30 分钟源文件可按区间索引，自动词／字精度未批准 |
 | 参考与审阅 | SHA 绑定的实际抽样参考 PNG、分析记录与背景采用；可选逐项文本／字幕样式审阅为测试功能，需人工判断 |
-| 交付与恢复 | 选择性更新失效旁白、实际 MP4 与内容指纹复用、封面 PNG、SRT/VTT／来源清单、取消后明确续做与签名撤销 |
+| 交付与恢复 | 实际 MP4 手机审阅、指纹绑定的覆盖记录与独立技术／版式／Agent／用户意见、关键状态文本检查、原声转解说、单镜头本地恢复、选择性更新失效旁白、实际 MP4 与内容指纹复用、封面 PNG、SRT/VTT／来源清单、取消后明确续做与签名撤销 |
 | 计划任务 | 固定 Project／Session／driver；失效绑定报错，排队／运行时禁止重绑 |
-| 当前暂停／未实现 | UI／工作流继续优化暂停；专用 AI 图片／视频生成暂缓；没有通用 NLE、任意 HTML、远控客户端、签名安装器与自动更新 |
+| 当前未实现 | 专用 AI 图片／视频生成暂缓；没有通用 NLE、任意 HTML、远控客户端、签名安装器与自动更新 |
+
+Project 素材索引支持来源/说明/原始语音检索；录屏支持事件绑定的操作/等待/结果候选、显式两倍速压缩与保留全画面的放大镜；卡片表现可绑定已编辑句锚点；时间方法和作者分别记录，不认证声学精度。模型结果使用有界摘要和分页，局部命令保留无关内容与 Host 证据；恢复区显示实际事件与保存事实，明确准备续做输入，不自动重发。
 
 Studio 详细映射见 [VIDEO_STUDIO_NEXT.md](VIDEO_STUDIO_NEXT.md)。实现与自动测试通过不等于付费模型、生产钥匙串、完整视频语义或用户体验验收。
 

@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import {runRecordingWorkflowCase} from './recording-workflow-case.js'
 import fs from 'node:fs'
 import http from 'node:http'
@@ -199,8 +200,9 @@ async function run(): Promise<void> {
       window.webContents.sendInputEvent({type:'mouseDown',x:70,y:45,button:'left',clickCount:1})
       window.webContents.sendInputEvent({type:'mouseUp',x:70,y:45,button:'left',clickCount:1})
       await wait(300);await mediaController.stop()
-      const result=await stage('finalize page recording '+dpr,resultPromise) as {artifactId:string;eventsArtifactId:string;path:string}
+      const result=await stage('finalize page recording '+dpr,resultPromise) as {artifactId:string;eventsArtifactId:string;path:string;usability:{status:string;videoSha256:string;videoStartSeconds:number;videoEndSeconds:number;frameDecodeVerified:boolean}}
       const events=assertRecordingEvents(JSON.parse(fs.readFileSync(path.join(projectDirectory,'artifacts',result.eventsArtifactId),'utf8')),result.artifactId)
+      const actualSha=crypto.createHash('sha256').update(fs.readFileSync(result.path)).digest('hex');if(events.videoSha256!==actualSha||result.usability.videoSha256!==actualSha||result.usability.status!=='inspected-unreviewed'||result.usability.videoEndSeconds<=result.usability.videoStartSeconds||result.usability.frameDecodeVerified!==false)throw new Error('Recording usability lacks bounded actual container/source evidence.')
       const clicks=events.events.filter(e=>e.kind==='click');if(clicks.length!==3||clicks[0].source!=='page-event'||clicks[1].source!=='agent-action'||clicks[2].source!=='page-event')throw new Error('Real and Agent clicks were not recorded separately: '+JSON.stringify(events))
       if(!events.events.some(e=>e.kind==='scroll'&&e.scrollY>=350)||!events.events.some(e=>e.kind==='viewport'&&e.viewportWidth===760)||!events.events.some(e=>e.kind==='navigation'&&e.url===url+'next')||clicks.some(e=>e.dpr!==dpr))throw new Error('Recording missed scroll/viewport/navigation/DPR evidence.')
       const timing=clicks[0].seconds,times=Array.from({length:8},(_,i)=>Math.max(0,timing-.12+i*.04))

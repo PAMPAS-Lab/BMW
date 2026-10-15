@@ -11,8 +11,8 @@ export class ArtifactJobIO {
   private outputs = new Map<number, { handle: FileHandle; artifactId: string; path: string; bytes: number }>()
   private closed = false
   private token = crypto.randomUUID()
-  private constructor(readonly root: string, private input: FileHandle | undefined, readonly bytes: number, readonly request: MediaProcessRequest|{action:'media.speech.normalize';artifactId:string},private rootIdentity?:{dev:number;ino:number}) {}
-  static async open(directory: string, request: MediaProcessRequest|{action:'media.speech.normalize';artifactId:string}): Promise<ArtifactJobIO> {
+  private constructor(readonly root: string, private input: FileHandle | undefined, readonly bytes: number, readonly request: MediaProcessRequest|{action:'media.speech.normalize';artifactId:string;sourceRange?:import('./speech-range.js').SpeechSourceRange},private rootIdentity?:{dev:number;ino:number}) {}
+  static async open(directory: string, request: MediaProcessRequest|{action:'media.speech.normalize';artifactId:string;sourceRange?:import('./speech-range.js').SpeechSourceRange}): Promise<ArtifactJobIO> {
     const root = await fs.realpath(directory),rootIdentity=await fs.stat(root)
     if(request.action==='media.image.draw')return new ArtifactJobIO(root,undefined,0,request,rootIdentity)
     const file = path.join(root, assertArtifactId(request.artifactId))

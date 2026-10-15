@@ -1,3 +1,5 @@
+import {assertCardSpeechLinks,cardSpeechTargets,cardSpeechLinksSchema} from './studio-card-speech.js'
+import type {CardSpeechLink} from './studio-card-speech.js'
 import {checkStudioSpeechOrigin} from './studio-speech-origin.js'
 import {narrationSceneRanges} from '../../media-native/src/composition-contract.js'
 import {assertArtifactId,finiteNumber,mediaRecord} from '../../media-native/src/media-contract.js'
@@ -6,13 +8,15 @@ import {sceneVisuals} from '../../media-native/src/visual-segments.js'
 import {speechSha} from '../../media-native/src/speech-contract.js'
 import type {SpeechEvidence} from '../../media-native/src/speech-contract.js'
 import type {StudioScene} from './studio-contract.js'
+import {assertSpeechTimingProvenance,speechTimingProvenanceSchema} from './studio-speech-provenance.js'
+import type {SpeechTimingProvenance} from './studio-speech-provenance.js'
 export interface SpeechBulletLink {anchorId:string;bulletIndex:number;text:string}
 export interface SpeechFocusLink {anchorId:string;visualIndex:number;artifactId:string;x:number;y:number;zoom:number;emphasize:boolean}
-export interface StudioSpeechLinks {bullets:SpeechBulletLink[];focus:SpeechFocusLink[]}
+export interface StudioSpeechLinks {cards?:CardSpeechLink[];bullets:SpeechBulletLink[];focus:SpeechFocusLink[]}
 export interface SentenceAnchor {id:string;scriptStart:number;scriptEnd:number;startSeconds:number;endSeconds:number}
 export interface SpeechBinding {scriptText:string;scriptSha256:string;audioArtifactId:string;audioSha256:string;durationSeconds:number;createdAt:string;capturedRevision:number;timeDomain:'audio-file-seconds'}
 export interface StudioSpeechCandidate extends SpeechBinding {evidenceArtifactId:string;evidenceSha256:string}
-export interface StudioSpeechAnchors extends SpeechBinding {origin:'user-edited'|'agent-edited';anchors:SentenceAnchor[]}
+export interface StudioSpeechAnchors extends SpeechBinding {origin:'user-edited'|'agent-edited';anchors:SentenceAnchor[];timingProvenance?:SpeechTimingProvenance}
 function closed(value:Record<string,unknown>,keys:readonly string[]){if(Object.keys(value).some(key=>!keys.includes(key)))throw new TypeError('Unsupported Studio speech property.')}
 const bindingKeys=['scriptText','scriptSha256','audioArtifactId','audioSha256','durationSeconds','createdAt','capturedRevision','timeDomain']
 function binding(value:Record<string,unknown>):SpeechBinding {
@@ -32,7 +36,7 @@ export function assertSentenceAnchors(raw:unknown,script?:string,duration=180):S
  })
 }
 export function assertStudioSpeechCandidate(raw:unknown):StudioSpeechCandidate {const v=mediaRecord(raw);closed(v,[...bindingKeys,'evidenceArtifactId','evidenceSha256']);return {...binding(v),evidenceArtifactId:assertArtifactId(v.evidenceArtifactId),evidenceSha256:speechSha(v.evidenceSha256)}}
-export function assertStudioSpeechAnchors(raw:unknown):StudioSpeechAnchors {const v=mediaRecord(raw);closed(v,[...bindingKeys,'origin','anchors']);if(v.origin!=='user-edited'&&v.origin!=='agent-edited')throw new TypeError('Invalid sentence edit provenance.');const b=binding(v);return {...b,origin:v.origin,anchors:assertSentenceAnchors(v.anchors,b.scriptText,b.durationSeconds)}}
+export function assertStudioSpeechAnchors(raw:unknown):StudioSpeechAnchors {const v=mediaRecord(raw);closed(v,[...bindingKeys,'origin','anchors','timingProvenance']);if(v.origin!=='user-edited'&&v.origin!=='agent-edited')throw new TypeError('Invalid sentence edit provenance.');const b=binding(v);return {...b,origin:v.origin,anchors:assertSentenceAnchors(v.anchors,b.scriptText,b.durationSeconds),...(v.timingProvenance===undefined?{}:{timingProvenance:assertSpeechTimingProvenance(v.timingProvenance)})}}
 export function speechBindingStale(scene:StudioScene,value:SpeechBinding|undefined):boolean {return !value||value.scriptText!==scene.narration||value.audioArtifactId!==scene.audioArtifactId||scene.audioText!==scene.narration}
 export function usesSpeechCaptions(scene:StudioScene):boolean{return scene.speechCaptions===true&&scene.captions===undefined}
 /** Manual timestamps refer to the original voice file. Playback projects through explicit voice timing; visual speed does not retime it. */
@@ -45,7 +49,7 @@ export function speechCaptionCues(scene:StudioScene):NonNullable<StudioScene['ca
  return cues
 }
 export function assertStudioSpeechLinks(raw:unknown):StudioSpeechLinks {
- const v=mediaRecord(raw);closed(v,['bullets','focus'])
+ const v=mediaRecord(raw);closed(v,['bullets','focus','cards'])
  if(!Array.isArray(v.bullets)||v.bullets.length>3||!Array.isArray(v.focus)||v.focus.length>24)throw new TypeError('At most three bullet links and 24 focus links per scene.')
  const identity=(raw:unknown)=>{if(typeof raw!=='string'||!/^[a-zA-Z0-9-]{1,80}$/.test(raw))throw new TypeError('Invalid speech anchor reference.');return raw},indices=new Set<number>(),targets=new Set<string>()
  const bullets=v.bullets.map(raw=>{const b=mediaRecord(raw);closed(b,['anchorId','bulletIndex','text']);const bulletIndex=finiteNumber(b.bulletIndex,'bullet index',0,2,true)
@@ -56,19 +60,20 @@ export function assertStudioSpeechLinks(raw:unknown):StudioSpeechLinks {
   if(targets.has(key)||typeof f.emphasize!=='boolean')throw new TypeError('Invalid or duplicate focus reference.');targets.add(key)
   return {anchorId,visualIndex,artifactId:assertArtifactId(f.artifactId),x:finiteNumber(f.x,'focus x',0,1),y:finiteNumber(f.y,'focus y',0,1),zoom:finiteNumber(f.zoom,'focus zoom',1,4),emphasize:f.emphasize}
  })
- return {bullets,focus}
+ return {bullets,focus,...(v.cards===undefined?{}:{cards:assertCardSpeechLinks(v.cards)})}
 }
-export function usesStudioSpeech(scene:StudioScene):boolean {return usesSpeechCaptions(scene)||Boolean(scene.speechLinks?.bullets.length||scene.speechLinks?.focus.length)}
+export function usesStudioSpeech(scene:StudioScene):boolean {return usesSpeechCaptions(scene)||Boolean(scene.speechLinks?.bullets.length||scene.speechLinks?.focus.length||scene.speechLinks?.cards?.length)}
 /** One projection for GUI, preview and native export. References never adopt a changed target. */
 export function speechScene(scene:StudioScene):StudioScene {
  if(!usesStudioSpeech(scene))return scene
  checkStudioSpeechOrigin(scene)
  const cues=usesSpeechCaptions(scene)?speechCaptionCues(scene):undefined,links=scene.speechLinks
- if(!links?.bullets.length&&!links?.focus.length)return {...scene,captions:cues}
+ if(!links?.bullets.length&&!links?.focus.length&&!links?.cards?.length)return {...scene,captions:cues}
  const binding=scene.speechAnchors
  if(speechBindingStale(scene,binding)||!binding?.anchors.length)throw new Error('STUDIO_SPEECH_STALE: 强调或板书引用的句锚点已过期，请重新校正或解除引用。')
  const range=(id:string,originalClock=false)=>{const anchor=binding.anchors.find(a=>a.id===id);if(!anchor)throw new Error('STUDIO_SPEECH_REFERENCE: 引用的句锚点已删除，请重新选择。');const origin=scene.speechPlaybackOrigin,offset=origin?scene.presentationWindow!.startSeconds:0,ranges=narrationSceneRanges(origin??scene,anchor.startSeconds,anchor.endSeconds);if(!ranges.length||ranges.some(r=>r.end>(origin?scene.presentationWindow!.durationSeconds:scene.durationSeconds)))throw new Error('STUDIO_SPEECH_RANGE: 引用的句锚点已不在播放片段内，请重新绑定或解除引用。');return originalClock?ranges:ranges.map(r=>({...r,start:r.start-offset,end:r.end-offset}))}
  const result={...scene,...(cues?{captions:cues}:{} )},visuals=sceneVisuals(scene)
+ if(links.cards?.length){const targets=cardSpeechTargets(scene);result.cardCues=links.cards.map(link=>{if(!targets.some(t=>t.kind===link.kind&&t.index===link.index&&t.templateId===link.templateId&&t.target===link.target))throw new Error('STUDIO_SPEECH_REFERENCE: 卡片目标已修改或移除，请重新绑定。');const ranges=range(link.anchorId,true);if(ranges.length!==1)throw new Error('STUDIO_SPEECH_RANGE: 卡片句区间不连续，请重新校正。');return {kind:link.kind,index:link.index,startSeconds:ranges[0].start,endSeconds:ranges[0].end}});const reading=result.cardCues.filter(c=>c.kind==='reading').sort((a,b)=>a.startSeconds-b.startSeconds);if(reading.length&&reading.length!==targets.filter(t=>t.kind==='reading').length)throw new Error('STUDIO_SPEECH_REFERENCE: 请绑定全部阅读目标，或解除阅读引用。');if(reading.some((c,i)=>i>0&&c.startSeconds<reading[i-1].endSeconds))throw new Error('STUDIO_SPEECH_RANGE: 阅读句区间不能重叠。')}
  if(links.bullets.length){
   if(visuals.length)throw new Error('STUDIO_SPEECH_REFERENCE: 板书揭示用于无画面素材的标题卡，请解除画面或板书引用。')
   result.bulletRevealSeconds=scene.bullets.map(()=>0)
@@ -113,10 +118,10 @@ const string={type:'string'},sha={type:'string',pattern:'^[a-f0-9]{64}$'}
 export const sentenceAnchorsSchema={type:'array',maxItems:100,items:{type:'object',additionalProperties:false,required:['id','scriptStart','scriptEnd','startSeconds','endSeconds'],properties:{id:{type:'string',pattern:'^[a-zA-Z0-9-]{1,80}$'},scriptStart:{type:'integer',minimum:0,maximum:1000},scriptEnd:{type:'integer',minimum:1,maximum:1000},startSeconds:{type:'number',minimum:0,maximum:180},endSeconds:{type:'number',minimum:0,maximum:180}}}}
 const properties={scriptText:{type:'string',maxLength:1000},scriptSha256:sha,audioArtifactId:string,audioSha256:sha,durationSeconds:{type:'number',minimum:.01,maximum:180},createdAt:string,capturedRevision:{type:'integer',minimum:1},timeDomain:{const:'audio-file-seconds'}}
 export const studioSpeechCandidateSchema={type:'object',additionalProperties:false,required:[...bindingKeys,'evidenceArtifactId','evidenceSha256'],properties:{...properties,evidenceArtifactId:string,evidenceSha256:sha}}
-export const studioSpeechAnchorsSchema={type:'object',additionalProperties:false,required:[...bindingKeys,'origin','anchors'],properties:{...properties,origin:{enum:['user-edited','agent-edited']},anchors:sentenceAnchorsSchema}}
+export const studioSpeechAnchorsSchema={type:'object',additionalProperties:false,required:[...bindingKeys,'origin','anchors'],properties:{...properties,origin:{enum:['user-edited','agent-edited']},anchors:sentenceAnchorsSchema,timingProvenance:speechTimingProvenanceSchema}}
 
 const anchorReference={type:'string',pattern:'^[a-zA-Z0-9-]{1,80}$'}
-export const studioSpeechLinksSchema={type:'object',additionalProperties:false,required:['bullets','focus'],properties:{
+export const studioSpeechLinksSchema={type:'object',additionalProperties:false,required:['bullets','focus'],properties:{cards:cardSpeechLinksSchema,
  bullets:{type:'array',maxItems:3,items:{type:'object',additionalProperties:false,required:['anchorId','bulletIndex','text'],properties:{anchorId:anchorReference,bulletIndex:{type:'integer',minimum:0,maximum:2},text:{type:'string',minLength:1,maxLength:64}}}},
  focus:{type:'array',maxItems:24,items:{type:'object',additionalProperties:false,required:['anchorId','visualIndex','artifactId','x','y','zoom','emphasize'],properties:{anchorId:anchorReference,visualIndex:{type:'integer',minimum:0,maximum:7},artifactId:string,x:{type:'number',minimum:0,maximum:1},y:{type:'number',minimum:0,maximum:1},zoom:{type:'number',minimum:1,maximum:4},emphasize:{type:'boolean'}}}}
 }}

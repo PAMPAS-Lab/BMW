@@ -56,7 +56,7 @@ async function initializeRenderer(key:string,request:{selector:string;index:numb
    const sequence=state.nextSequence++;state.pending++;state.bufferBytes+=event.data.size
    const reader=new FileReader();reader.onload=()=>{if(!state.cancelled){const value=String(reader.result??''),marker=';base64,',at=value.indexOf(marker);if(at<0)state.error='Invalid captured chunk.';else state.ready.set(sequence,value.slice(at+marker.length))}state.pending--};reader.onerror=()=>{state.error='Failed to read captured chunk.';state.pending--};reader.readAsDataURL(event.data)
   }
-  recorder.onerror=()=>{state.error='Browser MediaRecorder failed.';stop('error')};recorder.onstop=()=>{state.done=true;resolveStopped()}
+  recorder.onerror=()=>{state.error='Browser MediaRecorder failed.';stop('error')};recorder.onstop=()=>{if(!state.reason){state.sourceEndSeconds=video.currentTime;state.reason=video.ended?'ended':'unexpected-stop'}state.done=true;resolveStopped()}
   video.addEventListener('ended',ended,{once:true});state.timer=setTimeout(()=>stop('maximum-duration'),request.maxDurationMs) as unknown as number
   const sourceStartSeconds=video.currentTime;recorder.start(500)
   let playTimer:ReturnType<typeof setTimeout>

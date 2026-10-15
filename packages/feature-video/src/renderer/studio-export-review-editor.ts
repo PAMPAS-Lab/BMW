@@ -1,0 +1,55 @@
+import {assertCompositionQuality} from '../../../media-native/src/composition-quality.js'
+import {assertArtifactId,finiteNumber,mediaRecord} from '../../../media-native/src/media-contract.js'
+import type {VideoDraft} from '../studio-contract.js'
+interface ReviewOptions {draft:()=>VideoDraft|undefined;sceneId:()=>string;projectId:()=>string;command:(request:unknown)=>Promise<unknown>;read:(projectId:string,artifactId:string,offset:number,length:number)=>Promise<Uint8Array>;seek:(seconds:number)=>Promise<void>;cancel:()=>Promise<void>;notify:(text:string)=>void}
+/** A phone-width view of decoded MP4 frames; no preview images masquerade as exports. */
+export class StudioExportReviewEditor {
+ private dialog?:HTMLDialogElement;private urls:string[]=[];private working=false;private generation=0;private hostBusy=false;private refreshControls?:()=>void
+ constructor(private options:ReviewOptions){}
+ close():void{if(this.working)throw new Error('请先完成或取消成片审阅。');this.dispose()}
+ dispose():void{this.generation++;this.refreshControls=undefined;this.dialog?.close();this.dialog?.remove();this.dialog=undefined;this.urls.splice(0).forEach(url=>URL.revokeObjectURL(url))}
+ onHostBusy(value:boolean):void{this.hostBusy=value;this.refreshControls?.()}
+ async open():Promise<void>{
+  this.close();const draft=this.options.draft();if(!draft)throw new Error('请先选择视频。');const projectId=this.options.projectId(),sceneId=this.options.sceneId(),revision=draft.revision,generation=this.generation
+  const dialog=document.createElement('dialog');dialog.id='studio-export-review-dialog';dialog.className='material-preview-dialog';dialog.setAttribute('aria-label','手机尺寸成片审片');this.dialog=dialog
+  const heading=document.createElement('h3'),status=document.createElement('p'),assessment=document.createElement('p'),issues=document.createElement('div'),gallery=document.createElement('div'),actions=document.createElement('div'),next=document.createElement('button'),close=document.createElement('button'),cancel=document.createElement('button'),notes=document.createElement('textarea'),pass=document.createElement('button'),fix=document.createElement('button'),film=document.createElement('button'),watched=document.createElement('input'),watchedLabel=document.createElement('label'),declarations=document.createElement('div')
+  heading.textContent='实际成片 · 手机尺寸审片';status.textContent='正在读取当前成片…';status.style.overflowWrap='anywhere';gallery.style.display='grid';gallery.style.gap='16px';gallery.style.maxHeight='55vh';gallery.style.overflowY='auto';issues.style.maxHeight='100px';issues.style.overflowY='auto';actions.className='row';next.textContent='下一组关键状态';close.textContent='关闭';cancel.textContent='停止取帧';let nextOffset:number|null=0
+  const filmFix=document.createElement('button');let fingerprint='';notes.id='export-review-notes';notes.maxLength=600;notes.rows=2;notes.placeholder='记录具体观看结果或需要修改的问题（必填）';notes.setAttribute('aria-label','成片审片意见');pass.id='export-review-scene-pass';pass.textContent='记录：当前镜头已审阅';fix.id='export-review-scene-fix';fix.textContent='记录：当前镜头需修改';film.id='export-review-film-pass';film.textContent='记录：整片通过用户验收';filmFix.id='export-review-film-fix';filmFix.textContent='记录：整片需修改';watched.id='export-review-film-watched';watched.type='checkbox';watchedLabel.append(watched,document.createTextNode('我已观看当前 MP4 整片（包含声音）'));declarations.className='row';declarations.append(pass,fix,film,filmFix)
+  const valid=()=>{const current=this.options.draft();if(generation!==this.generation||this.options.projectId()!==projectId||current?.id!==draft.id||current.revision!==revision)throw new Error('STUDIO_CONFLICT: 视频已变化，请重新打开成片审片。')}
+  const update=()=>{const blocked=this.working||this.hostBusy;next.disabled=blocked||nextOffset===null;close.disabled=blocked;cancel.disabled=!this.working;notes.disabled=blocked;watched.disabled=blocked;pass.disabled=blocked||!fingerprint||nextOffset!==null;fix.disabled=blocked||!fingerprint||!gallery.children.length;film.disabled=blocked||!fingerprint||!watched.checked;filmFix.disabled=blocked||!fingerprint};this.refreshControls=update
+  const showAssessment=(result:Record<string,unknown>)=>{
+   const technical=mediaRecord(result.technical),layout=mediaRecord(result.layout),agent=mediaRecord(result.agent),user=mediaRecord(result.user),label=(status:unknown)=>status==='passed'?'已声明通过':status==='needs-fix'?'需修改':status==='needs-recheck'?'需重新核对':'待审阅'
+   assessment.id='export-review-assessments';assessment.textContent=`技术：${technical.status==='passed'?'通过':'未记录'} · 画面抽检：${layout.status==='no-issues-in-samples'?'未报告问题':String(layout.issueCount)+' 项问题'} · 模型整片：${label(agent.status)} · 用户整片：${label(user.status)}。取帧进度不等于视觉审阅或用户验收。`
+   if(Array.isArray(result.scenes)){const current=result.scenes.map(mediaRecord).find(s=>s.sceneId===sceneId);if(current){const sceneUser=mediaRecord(current.user),sceneAgent=mediaRecord(current.agent);assessment.textContent+=` 当前镜头取帧 ${String(current.generatedCurrentFrames)}/${String(current.totalSamples)}；用户意见：${label(sceneUser.status)}。`;if(typeof sceneUser.notes==='string')assessment.textContent+=' 用户记录：'+sceneUser.notes;if(typeof sceneAgent.notes==='string')assessment.textContent+=' 模型记录：'+sceneAgent.notes}}
+   if(user.status==='needs-recheck'||agent.status==='needs-recheck')assessment.textContent+=' 请补齐当前证据、复查更新后的镜头，并重新确认整片；镜头通过不会恢复旧整片意见。';if(typeof user.notes==='string')assessment.textContent+=' 整片用户记录：'+user.notes;if(typeof agent.notes==='string')assessment.textContent+=' 整片模型记录：'+agent.notes
+   assessment.style.maxHeight='140px';assessment.style.overflowY='auto';assessment.style.overflowWrap='anywhere'
+   const plan=mediaRecord(result.plan),changed=Array.isArray(plan.changedSceneIds)?plan.changedSceneIds:[];if(changed.length)assessment.textContent+=' 优先复查：'+draft.scenes.filter(s=>changed.includes(s.id)).map(s=>s.title).join('、')+'；最终仍需整片验收。'
+  }
+  const readAssessment=async()=>{const result=mediaRecord(await this.options.command({operation:'review-status',draftId:draft.id,expectedRevision:revision}));valid();showAssessment(result)}
+  const record=async(scope:'scene'|'film',verdict:'passed'|'needs-fix')=>{
+   if(this.working)return;valid();if(!notes.value.trim())throw new Error('请先填写具体审片意见。');if(scope==='film'&&verdict==='passed'&&!watched.checked)throw new Error('请先确认已观看当前整片。')
+   this.working=true;update();try{const result=mediaRecord(await this.options.command({operation:'record-export-review',draftId:draft.id,expectedRevision:revision,...(scope==='scene'?{sceneId}:{}),exportReview:{exportFingerprint:fingerprint,scope,status:verdict,notes:notes.value.trim()}}));valid();if(scope==='scene'||verdict==='needs-fix')watched.checked=false;showAssessment(result);this.options.notify('已记录用户审片意见；模型与技术判断分别保留。')}finally{this.working=false;if(generation===this.generation)update()}
+  }
+  const page=async()=>{
+   if(this.working||nextOffset===null)return;valid();this.working=true;update()
+   try{
+    const result=mediaRecord(await this.options.command({operation:'review-export',draftId:draft.id,expectedRevision:revision,sceneId,reviewOffset:nextOffset}));valid();const quality=assertCompositionQuality(result.quality)
+    if(typeof result.exportFingerprint!=='string'||!/^[a-f0-9]{64}$/.test(result.exportFingerprint))throw new Error('Invalid export review identity.');fingerprint=result.exportFingerprint
+    if(!Array.isArray(result.frames)||!result.frames.length||result.frames.length>8)throw new Error('Invalid review images.');nextOffset=result.nextOffset===null?null:finiteNumber(result.nextOffset,'next review page',0,16,true)
+    const sceneIndex=draft.scenes.findIndex(s=>s.id===sceneId);issues.replaceChildren();for(const issue of quality.issues.filter(i=>i.sceneIndex===sceneIndex)){const node=document.createElement('button');node.textContent=issue.message+(issue.text?' '+issue.text:'');node.dataset.severity=issue.severity;node.onclick=()=>void this.options.seek(issue.seconds).catch(error=>this.options.notify(String(error)));issues.append(node)}
+    for(const raw of result.frames){
+     const f=mediaRecord(raw),id=assertArtifactId(f.artifactId),width=finiteNumber(f.width,'phone image width',1,390,true),height=finiteNumber(f.height,'phone image height',1,720,true),size=finiteNumber(f.bytes,'phone image bytes',1,5*1024*1024,true),data=new Uint8Array(size)
+     for(let offset=0;offset<size;offset+=1024*1024){data.set(await this.options.read(projectId,id,offset,Math.min(1024*1024,size-offset)),offset);valid()}
+     const sha=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data)),b=>b.toString(16).padStart(2,'0')).join('');valid();if(sha!==f.sha256)throw new Error('成片审阅图已变化，请重新取帧。')
+     const article=document.createElement('article'),image=document.createElement('img'),label=document.createElement('button'),seconds=finiteNumber(f.seconds,'review time',0,180),actual=finiteNumber(f.actualSeconds,'decoded frame time',0,seconds)
+     const url=URL.createObjectURL(new Blob([new Uint8Array(data)],{type:'image/png'}));this.urls.push(url);image.src=url;image.alt='成片 '+actual.toFixed(2)+' 秒';image.width=width;image.height=height;image.style.maxWidth='100%';image.style.height='auto';article.style.width=width+'px';article.style.maxWidth='100%';article.style.margin='0 auto';label.style.display='block';label.textContent='定位 '+seconds.toFixed(2)+' 秒 · 解码 '+actual.toFixed(2)+' 秒';label.onclick=()=>void this.options.seek(seconds).catch(error=>this.options.notify(String(error)));article.append(label,image);gallery.append(article)
+    }
+    status.textContent=`实际 MP4：${String(result.sourceArtifactId)} · 已显示 ${gallery.children.length}/${String(result.totalSceneSamples)} 个状态。手机宽度 390px；${quality.omittedCandidates} 个候选受抽样预算限制未覆盖，${quality.omittedTextObservations??0} 行文字观察及 ${quality.omittedIssues} 次问题观察超出预算。截图原句、图解含义及事实仍需视觉复查。`
+    await readAssessment()
+   }catch(error){if(generation===this.generation)status.textContent=error instanceof Error?error.message:String(error);throw error}finally{this.working=false;if(generation===this.generation)update()}
+  }
+  next.onclick=()=>void page().catch(error=>this.options.notify(String(error)));close.onclick=()=>this.close();cancel.onclick=()=>void this.options.cancel().catch(error=>this.options.notify(String(error)))
+  watched.onchange=update;pass.onclick=()=>void record('scene','passed').catch(error=>this.options.notify(String(error)));fix.onclick=()=>void record('scene','needs-fix').catch(error=>this.options.notify(String(error)));film.onclick=()=>void record('film','passed').catch(error=>this.options.notify(String(error)));filmFix.onclick=()=>void record('film','needs-fix').catch(error=>this.options.notify(String(error)))
+  dialog.addEventListener('cancel',event=>{event.preventDefault();if(!this.working)this.close()});actions.append(next,cancel,close);dialog.append(heading,status,assessment,actions,notes,watchedLabel,declarations,issues,gallery);document.body.append(dialog);dialog.showModal();await page()
+ }
+}

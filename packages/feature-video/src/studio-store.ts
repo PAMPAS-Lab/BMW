@@ -18,9 +18,14 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import {assertVideoDraft,draftComposition,studioId,studioText,sameStudioDraftContent} from './studio-contract.js'
+import {speechScene} from './studio-speech-contract.js'
 import type {StudioSpeechCandidate,StudioSpeechAnchors} from './studio-speech-contract.js'
 import {remapSourceSpeech,syncSourceCaptionEdits} from './studio-source-speech-contract.js'
 import type {VideoDraft,StudioAsset} from './studio-contract.js'
+
+// Bump when native paint/mix semantics change: an unchanged draft must not
+// reuse a completed file made by an older renderer with different pixels.
+export const STUDIO_EXPORT_RENDERER_VERSION='native-caption-block/2'
 
 /** Project-local editable state. No renderer or model may choose a host path. */
 export class VideoStudioStore {
@@ -122,6 +127,7 @@ export class VideoStudioStore {
       for(const cue of scene.captions??[]){const old=previous?.captions?.find(old=>old.text===cue.text&&old.startSeconds===cue.startSeconds&&old.endSeconds===cue.endSeconds)??previous?.captions?.find(old=>old.text===cue.text);if(cue.translationText!==old?.translationText){if(!trustedCaptions&&old?.translationOrigin==='user-edited')throw new Error('STUDIO_TRANSLATION_EDITED: 保留用户校正的译文。');cue.translationOrigin=trustedCaptions?'user-edited':'agent-edited'}else cue.translationOrigin=old?.translationOrigin}
       scene.speechCandidate=previous?.speechCandidate;scene.speechAnchors=previous?.speechAnchors
       const inputScene=(value.scenes as Record<string,unknown>[]).find(item=>item.id===scene.id)
+      if(!Object.hasOwn(inputScene,'narrationOptions'))scene.narrationOptions=previous?.narrationOptions
       if(!Object.hasOwn(inputScene,'voiceMuted'))scene.voiceMuted=previous?.voiceMuted
       if(!Object.hasOwn(inputScene,'layers'))scene.layers=previous?.layers
       if(!Object.hasOwn(inputScene,'audioTracks'))scene.audioTracks=previous?.audioTracks
@@ -171,10 +177,12 @@ export class VideoStudioStore {
     return this.write(restored,true)
   }
   setSourceSpeech(id:string,revision:number,sceneId:string,change:(scene:VideoDraft['scenes'][number])=>void):VideoDraft{const current=this.read(id);if(current.revision!==revision)throw new Error('STUDIO_CONFLICT: 原声字幕期间草稿变化。');const scene=current.scenes.find(s=>s.id===sceneId);if(!scene)throw new Error('Unknown Studio scene.');const previous=structuredClone(scene);change(scene);syncSourceCaptionEdits(previous,scene);current.revision++;current.updatedAt=new Date().toISOString();return this.write(current)}
-  setSpeech(id:string,expectedRevision:number,sceneId:string,kind:'candidate'|'anchors',record:StudioSpeechCandidate|StudioSpeechAnchors):VideoDraft {
+  commitSourceNarration(id:string,revision:number,candidate:VideoDraft):VideoDraft {const current=this.read(id);if(current.revision!==revision||candidate.id!==id||candidate.revision!==revision||candidate.ownerSessionId!==current.ownerSessionId)throw new Error('STUDIO_CONFLICT: 原声配方需要当前所属草稿。');const next=assertVideoDraft(candidate);this.editGuard?.(current,next);next.exports=current.exports;next.coverExports=current.coverExports;next.referenceRecords=current.referenceRecords;next.reviewItems=current.reviewItems;next.revision++;next.updatedAt=new Date().toISOString();return this.write(next)}
+  setSpeech(id:string,expectedRevision:number,sceneId:string,kind:'candidate'|'anchors',record:StudioSpeechCandidate|StudioSpeechAnchors,cardLinks?:import('./studio-card-speech.js').CardSpeechLink[]):VideoDraft {
     const current=this.read(id);if(current.revision!==expectedRevision)throw new Error('STUDIO_CONFLICT: 语音校正期间草稿已更新。')
     const scene=current.scenes.find(scene=>scene.id===sceneId);if(!scene)throw new Error('Unknown Studio scene.')
     if(kind==='candidate')scene.speechCandidate=record as StudioSpeechCandidate;else{scene.speechAnchors=record as StudioSpeechAnchors;if(scene.speechPlaybackOrigin&&studioSpeechOriginClock(scene)!==scene.speechPlaybackOrigin.clock){delete scene.speechPlaybackOrigin;scene.speechPlaybackOrigin=captureStudioSpeechOrigin(scene)}}
+    if(cardLinks!==undefined){if(kind!=='anchors')throw new Error('Card choices require corrected anchors.');scene.speechLinks={bullets:scene.speechLinks?.bullets??[],focus:scene.speechLinks?.focus??[],cards:cardLinks};speechScene(scene)}
     current.revision++;current.updatedAt=new Date().toISOString();return this.write(current)
   }
   delete(id:string,expectedRevision:number):{deleted:string} {
@@ -203,7 +211,7 @@ export class VideoStudioStore {
       const ids=[...new Set([...compositionAssets(composition),output.artifactId,...(output.verificationArtifactId?[output.verificationArtifactId]:[])])].sort()
       const assets=ids.map(id=>{const stat=fs.lstatSync(path.join(directory,id),{bigint:true});if(!stat.isFile()||stat.isSymbolicLink()||stat.size<1n)throw new Error('Export material unavailable.');return [id,String(stat.size),String(stat.mtimeNs),String(stat.ctimeNs),String(stat.ino)]})
       const canonical=(value:unknown):unknown=>Array.isArray(value)?value.map(canonical):value!==null&&typeof value==='object'?Object.fromEntries(Object.entries(value).filter(([,v])=>v!==undefined).sort(([a],[b])=>a.localeCompare(b)).map(([key,v])=>[key,canonical(v)])):value
-      return crypto.createHash('sha256').update(JSON.stringify(canonical({composition,assets}))).digest('hex')
+      return crypto.createHash('sha256').update(JSON.stringify(canonical({rendererVersion:STUDIO_EXPORT_RENDERER_VERSION,composition,assets}))).digest('hex')
     }catch{return undefined}
   }
   addCoverExport(id:string,expectedRevision:number,result:{artifactId:string;width:number;height:number;actualTimestampSeconds?:number},options:VideoCoverOptions):VideoDraft {
@@ -215,7 +223,10 @@ export class VideoStudioStore {
   assets(projectDirectory:string):StudioAsset[]{
     const expected=path.join(fs.realpathSync(projectDirectory),'artifacts'),directory=fs.realpathSync(expected)
     if(directory!==expected||fs.lstatSync(expected).isSymbolicLink())throw new Error('Assets must stay inside their Project.')
-    return fs.readdirSync(directory).slice(0,1000).flatMap(artifactId=>{
+    // The GUI also resolves saved MP4s and verification reports through this
+    // inventory. Review frames must never hide later referenced artifacts.
+    // Agent discovery uses the separately bounded studioAssetPage projection.
+    return fs.readdirSync(directory).flatMap(artifactId=>{
       const suffix=path.extname(artifactId).toLowerCase(),kind:StudioAsset['kind']|undefined=['.png','.jpg','.jpeg','.webp'].includes(suffix)?'image':['.wav','.mp3','.ogg','.flac','.m4a'].includes(suffix)?'audio':['.mp4','.webm','.mov','.mkv'].includes(suffix)?'video':['.txt','.md','.srt','.vtt','.json'].includes(suffix)?'text':undefined
       if(!kind)return []
       const stat=fs.lstatSync(path.join(directory,artifactId));if(!stat.isFile()||stat.isSymbolicLink())return []

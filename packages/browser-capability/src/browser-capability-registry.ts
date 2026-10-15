@@ -89,13 +89,25 @@ export class BrowserCapabilityRegistry {
       type: 'object',
       properties,
       required: ['action'],
-      additionalProperties: false
+      additionalProperties: false,
+      // Shared field schemas remain at the root; each branch preserves the
+      // owning action's description, required fields and closed field set.
+      oneOf: [...this.actions.values()].map(definition => ({
+        type: 'object',
+        description: definition.description,
+        properties: {
+          ...Object.fromEntries(Object.keys(definition.inputSchema.properties).map(name => [name, {}])),
+          action: { const: definition.action }
+        },
+        required: ['action', ...definition.inputSchema.required],
+        additionalProperties: false
+      }))
     }
   }
 
   toolDefinition(): { name: 'browser'; description: string; inputSchema: BrowserInputSchema } {
     const fragments = (this.product.features || []).map((feature) => feature.browserDescription).filter(Boolean)
-    const base = `The only ${this.product.name} model capability. Search, inspect, navigate, interact with, capture, record, and analyze tabs owned by the active Project, usually in the background. Use media.inspect, media.frames.sample, and media.convert for Project-owned video/audio artifacts; sampled PNGs are returned as images and conversion preserves all supported tracks or fails. Use media.image.inspect to measure Project images, media.image.annotate for screenshot markup, and media.image.draw for diagrams and drawings. These bounded Canvas actions save a new Project PNG and return it as an image; shapes use actual image pixels and preserve the original. No Shell, unrestricted filesystem, or external browser tool is available.`
+    const base = `The only ${this.product.name} model capability. Search, inspect, navigate, interact with, capture, record, and analyze tabs owned by the active Project, usually in the background. Use the schema branch matching action: fields belonging to other actions are not accepted. Use media.inspect, media.frames.sample, and media.convert for Project-owned video/audio artifacts; sampled PNGs are returned as images and conversion preserves all supported tracks or fails. Use media.image.inspect to measure Project images. media.image.draw creates a new canvas and requires width, height and shapes; do not pass artifactId or filename. Example: {"action":"media.image.draw","width":320,"height":180,"shapes":[{"type":"text","x":20,"y":20,"text":"Diagram","color":"#172536"}]}. media.image.annotate marks an existing image and requires artifactId and shapes; do not pass width, height or filename. Example: {"action":"media.image.annotate","artifactId":"existing.png","shapes":[{"type":"rect","x":10,"y":10,"width":50,"height":30}]}. Both save a new Project PNG and return it as an image; shapes use actual image pixels and preserve the original. Parameter validation errors do not mean a primitive is unsupported; correct the named fields before retrying. No Shell, unrestricted filesystem, or external browser tool is available.`
     return {
       name: 'browser',
       description: [base, ...fragments].join(' '),

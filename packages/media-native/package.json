@@ -23,6 +23,7 @@
     "./captions": "./src/caption-export.js",
     "./text-export": "./src/text-export.js",
     "./focus": "./src/focus-contract.js",
+    "./recording-plan": "./src/recording-plan.js",
     "./recording": "./src/recording-contract.js",
     "./visuals": "./src/visual-segments.js",
     "./drawing": "./src/image-drawing-contract.js",
@@ -30,7 +31,10 @@
     "./sources": "./src/source-contract.js",
     "./speech": "./src/speech-contract.js",
     "./visual-effects": "./src/visual-effects.js",
-    "./card-details": "./src/card-details.js"
+    "./card-details": "./src/card-details.js",
+    "./quality": "./src/composition-quality.js",
+    "./card-cues": "./src/card-cues.js",
+    "./speech-range": "./src/speech-range.js"
   },
   "dependencies": {
     "mediabunny": "1.61.0"

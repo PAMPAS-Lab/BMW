@@ -1,4 +1,5 @@
 import {captureStudioSpeechOrigin,studioSpeechOriginClock} from './studio-speech-origin.js'
+import {remapCardSpeechLinks} from './studio-card-speech.js'
 import {partitionSourceSpeech} from './studio-source-speech-contract.js'
 import {speechScene,usesSpeechCaptions,usesStudioSpeech} from './studio-speech-contract.js'
 import {assertVideoDraft} from './studio-contract.js'
@@ -66,6 +67,7 @@ export function splitStudioScene(value:VideoDraft,sceneId:string,cut:number):Stu
   child.captions=cues.flatMap(cue=>{const a=Math.max(from,cue.startSeconds),b=Math.min(to,cue.endSeconds);return b>a+epsilon?[{...cue,startSeconds:a-from,endSeconds:b-from}]:[]})
   if(usesSpeechCaptions(scene))delete child.captions
   if(child.speechLinks)child.speechLinks.focus=child.speechLinks.focus.flatMap(link=>{const visualIndex=target.visualIndices.indexOf(link.visualIndex);return visualIndex<0?[]:[{...link,visualIndex}]})
+  remapCardSpeechLinks(child)
   delete child.voiceTiming
   if(scene.audioArtifactId)child.voiceSegments=voice.flatMap(t=>{
    const a=Math.max(from,t.startSeconds),b=Math.min(to,t.startSeconds+t.durationSeconds)

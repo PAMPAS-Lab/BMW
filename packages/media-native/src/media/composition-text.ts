@@ -4,11 +4,59 @@ import type {CompositionScene,MediaComposition} from '../composition-contract.js
 import {sceneVisuals} from '../visual-segments.js'
 import {cardPaintScene,cardMetricText} from '../card-templates.js'
 export const COMPOSITION_FONT='"PingFang SC", "Microsoft YaHei", sans-serif'
-export interface TextMeasure {font:string;measureText(text:string):{width:number}}
+export interface TextMeasure {font:string;measureText(text:string):{width:number;actualBoundingBoxAscent?:number;actualBoundingBoxDescent?:number}}
+/** Caption backing follows the actual text color in both preview and native export. */
+export function captionBacking(color:string):{box:string;outline:string}{
+ const hex=/^#([0-9a-f]{6})$/i.exec(color)?.[1]
+ if(!hex)return {box:'#000000b3',outline:'#000000'}
+ const values=[0,2,4].map(offset=>{const channel=parseInt(hex.slice(offset,offset+2),16)/255;return channel<=.04045?channel/12.92:((channel+.055)/1.055)**2.4})
+ const dark=.2126*values[0]+.7152*values[1]+.0722*values[2]<.179
+ return dark?{box:'#ffffffb3',outline:'#ffffff'}:{box:'#000000b3',outline:'#000000'}
+}
 export interface TextReviewIssue {code:'text-overflow'|'caption-density'|'text-reading-time'|'text-overlap'|'template-content'|'font-reduced'|'translation-missing';severity:'error'|'warning';message:string;seconds:number}
-export function wrapText(context:TextMeasure,text:string,width:number):string[]{const result:string[]=[];let line='';for(const c of text){if(c==='\r')continue;if(c==='\n'){result.push(line);line='';continue}if(context.measureText(line+c).width>width&&line){const at=line.lastIndexOf(' ');if(at>0&&/[a-zA-Z]/.test(c)&&/[a-zA-Z]$/.test(line)){result.push(line.slice(0,at));line=line.slice(at+1)}else if(/[。，、！？；：,.!?;:%]/.test(c)&&line.length>1){const tail=line.match(/[0-9]+(?:[.,][0-9]+)?$/)?.[0]??line.slice(-1);result.push(line.slice(0,-tail.length));line=tail}else{result.push(line);line=''}}line+=c}if(line)result.push(line);return result}
+export function wrapText(context:TextMeasure,text:string,width:number):string[]{
+ const result:string[]=[];let line='',paragraphStart=0
+ const finish=()=>{
+  if(/^\p{Script=Han}$/u.test(line)&&result.length>paragraphStart){
+   const previous=Array.from(result.at(-1)!)
+   for(const count of [2,1]){
+    const tail=previous.slice(-count).join(''),prefix=previous.slice(0,-count).join('')
+    if(previous.length-count>=2&&/^\p{Script=Han}+$/u.test(tail)&&context.measureText(tail+line).width<=width){result[result.length-1]=prefix;line=tail+line;break}
+   }
+  }
+  result.push(line);line=''
+ }
+ for(const c of text){
+  if(c==='\r')continue
+  if(c==='\n'){finish();paragraphStart=result.length;continue}
+  if(context.measureText(line+c).width>width&&line){
+   const at=line.lastIndexOf(' ')
+   if(at>0&&/[a-zA-Z]/.test(c)&&/[a-zA-Z]$/.test(line)){result.push(line.slice(0,at));line=line.slice(at+1)}
+   else if(/[。，、！？；：,.!?;:%％）)\]】》」』]/.test(c)&&line.length>1){const tail=line.match(/[(（]?[0-9]+(?:[.,][0-9]+)?[%％]?$/)?.[0]??line.slice(-1),prefix=line.slice(0,-tail.length);if(prefix)result.push(prefix);line=tail}
+   else{result.push(line);line=''}
+  }
+  line+=c
+ }
+ if(line)finish()
+ return result
+}
 export function fitText(context:TextMeasure,text:string,width:number,maximumLines:number,size:number,maximumHeight=Infinity):{lines:string[];size:number;overflow:boolean}{
  const original=context.font;try{let rows:string[]=[];for(let current=size;current>=12;current-=1){context.font=`600 ${current}px ${COMPOSITION_FONT}`;rows=wrapText(context,text,width);if(rows.length<=maximumLines&&rows.length*current*1.3<=maximumHeight&&rows.every(line=>context.measureText(line).width<=width))return {lines:rows,size:current,overflow:false}}return {lines:rows,size:12,overflow:true}}finally{context.font=original}
+}
+export interface CaptionLayout {size:number;overflow:boolean;lines:{text:string;x:number;y:number}[];box?:{x:number;y:number;width:number;height:number}}
+/** One block, one backing, shared by preview, export and text preflight. Coordinates
+ * are in the painter's 720-high space; padding is inside the horizontal safe area. */
+export function captionLayout(context:TextMeasure,text:string,W:number,style:CompositionScene['captionStyle'],bilingual=false):CaptionLayout {
+ const margin=W<600?24:48,paddingX=8,paddingY=4,size=style?.fontSize??(W<600?22:28),fit=fitText(context,text,W-margin*2-paddingX*2,style||bilingual?3:2,size),original=context.font
+ try{
+  context.font=`500 ${fit.size}px ${COMPOSITION_FONT}`
+  const lineHeight=style||bilingual?fit.size*1.3:35,metrics=fit.lines.map(line=>context.measureText(line)),ascent=Math.max(fit.size*.8,...metrics.map(m=>m.actualBoundingBoxAscent??fit.size)),descent=Math.max(fit.size*.2,...metrics.map(m=>m.actualBoundingBoxDescent??fit.size*.2)),span=Math.max(0,fit.lines.length-1)*lineHeight
+  const anchor=style?.position==='top'?80:style?.position==='center'?360-span/2:644,baseline=Math.max(56+ascent+paddingY,Math.min(686-span-descent-paddingY,anchor+(style?.offsetPercent??0)*7.2))
+  const rows=fit.lines.map((line,i)=>({text:line,x:style?.align==='left'?margin+paddingX:style?.align==='right'?W-margin-paddingX-metrics[i].width:(W-metrics[i].width)/2,y:baseline+i*lineHeight}))
+  if(!rows.length)return {size:fit.size,overflow:fit.overflow,lines:[]}
+  const left=Math.min(...rows.map(r=>r.x)),right=Math.max(...rows.map((r,i)=>r.x+metrics[i].width))
+  return {size:fit.size,overflow:fit.overflow,lines:rows,box:{x:left-paddingX,y:baseline-ascent-paddingY,width:right-left+paddingX*2,height:span+ascent+descent+paddingY*2}}
+ }finally{context.font=original}
 }
 export function templateBoxes(scene:CompositionScene,W:number,layout?:MediaComposition['cardLayout']):{x:number;y:number;width:number;height:number}[]{
  const margin=W<600?24:48,width=W-margin*2,kind=scene.sceneTemplate?.kind
@@ -43,7 +91,7 @@ export function reviewSceneText(context:TextMeasure,scene:CompositionScene,width
  }
  const visible=scene.captions??estimatedCaptionCues(scene,width,height,narrationDuration)
  for(const [index,cue]of visible.entries()){
-  const text=captionText(cue,scene.captionDisplay),size=scene.captionStyle?.fontSize??(W<600?22:28),fit=fitText(context,text,W-margin*2,scene.captionStyle||cue.translationText?3:2,size)
+  const text=captionText(cue,scene.captionDisplay),size=scene.captionStyle?.fontSize??(W<600?22:28),fit=captionLayout(context,text,W,scene.captionStyle,Boolean(cue.translationText))
   if(fit.overflow)issue('text-overflow',`字幕 ${index+1} 超出显示行数，请拆分或缩短字幕。`,'error',cue.startSeconds)
   else if(fit.size<size)issue('font-reduced',`字幕 ${index+1} 已适配为 ${fit.size} 字号。`,'warning',cue.startSeconds)
   const units=Array.from(text.replace(/\s/g,'')).reduce((sum,c)=>sum+(/[\u3000-\u9fff]/.test(c)?1:.5),0)

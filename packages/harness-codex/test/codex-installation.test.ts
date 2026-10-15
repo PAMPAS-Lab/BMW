@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
-import {findCodexExecutable} from '../src/codex-installation.js'
+import {findCodexExecutable,rememberCodexExecutable} from '../src/codex-installation.js'
 import {CodexBackend} from '../src/codex-backend.js'
 test('Codex public CLI discovery resolves executable files and an explicit missing installation never falls back',t=>{
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-codex-installation-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}))
@@ -12,6 +12,17 @@ test('Codex public CLI discovery resolves executable files and an explicit missi
   assert.equal(findCodexExecutable({env:{PATH:''},installations:[cli]}),fs.realpathSync(cli))
   assert.equal(findCodexExecutable({env:{PATH:root,BMW_CODEX_EXECUTABLE:path.join(root,'missing')},installations:[cli]}),null)
   assert.throws(()=>findCodexExecutable({env:{BMW_CODEX_EXECUTABLE:'relative'},installations:[]}),/absolute/)
+})
+test('Codex retains only an admitted executable across restarts, with explicit recovery and private bounded pins',t=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-codex-pin-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}))
+ const preferred=path.join(root,'preferred'),other=path.join(root,'codex');for(const file of [preferred,other])fs.writeFileSync(file,'fixture',{mode:0o700})
+ rememberCodexExecutable(root,preferred)
+ assert.equal(findCodexExecutable({env:{PATH:root},configDirectory:root}),fs.realpathSync(preferred))
+ assert.equal(findCodexExecutable({env:{PATH:root,BMW_CODEX_EXECUTABLE:other},configDirectory:root}),fs.realpathSync(other))
+ fs.rmSync(preferred);assert.throws(()=>findCodexExecutable({env:{PATH:root},configDirectory:root}),/已不可用/)
+ fs.writeFileSync(path.join(root,'bmw-executable.json'),'{}');assert.throws(()=>findCodexExecutable({env:{PATH:root},configDirectory:root}),/Invalid/)
+ fs.rmSync(path.join(root,'bmw-executable.json'));fs.symlinkSync(other,path.join(root,'bmw-executable.json'));assert.throws(()=>findCodexExecutable({env:{PATH:root},configDirectory:root}),/Invalid/)
+ fs.rmSync(other);assert.throws(()=>findCodexExecutable({env:{PATH:root},configDirectory:root}),/Invalid/,'A broken symlink must not fall through to discovery')
 })
 test('A missing Codex installation keeps BMW settings available and rejects input before opening a connection',async t=>{
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-codex-missing-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}))

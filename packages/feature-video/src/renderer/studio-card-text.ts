@@ -1,5 +1,6 @@
 import {cardDetailsForm} from './studio-card-details.js'
 import type {DetailedCardSpec} from '../../../media-native/src/card-details.js'
+import {CONTEXT_READING} from '../../../media-native/src/card-details.js'
 import type {CompositionVisualBox} from '../../../media-native/src/media/composition-paint.js'
 import {StudioPreview} from './studio-preview.js'
 import {CARD_TEMPLATES,assertCardSpec,cardTemplate} from '../../../media-native/src/card-templates.js'
@@ -230,7 +231,7 @@ export class StudioCardTextEditor {
    const data=await this.options.bytes(visual.artifactId);this.valid(o);const sha256=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data as Uint8Array<ArrayBuffer>)),byte=>byte.toString(16).padStart(2,'0')).join('');this.valid(o)
    const current=s.scene.cardSpec;if(!current||current.version!==2||!['evidence/reading','evidence/highlight','evidence/translation','evidence/person-quote','diagram/image'].includes(current.templateId))throw new Error('请先选择证据阅读、重点、译文、人物引述或图解阅读。')
    const spec=structuredClone(current) as DetailedCardSpec&{reading?:import('../../../media-native/src/card-details.js').CardReading;highlights?:import('../../../media-native/src/card-details.js').CardHighlight[]},pin={artifactId:visual.artifactId,sha256}
-   if(kind==='reading'){const targets=[...(spec.reading?.targets??[]),{source:pin,rect,name:'阅读目标 '+((spec.reading?.targets.length??0)+1)}];spec.reading={mode:targets.length>1?'sequence':spec.reading?.mode??'whole-to-detail',targets,returnToWhole:spec.reading?.returnToWhole??false}}
+   if(kind==='reading'){const targets=[...(spec.reading?.targets??[]),{source:pin,rect,name:'阅读目标 '+((spec.reading?.targets.length??0)+1)}];spec.reading={mode:spec.reading?.mode??CONTEXT_READING.mode,targets,returnToWhole:spec.reading?.returnToWhole??CONTEXT_READING.returnToWhole}}
    else{spec.highlights??=[];if(line!==undefined){const highlight=spec.highlights[line];if(!highlight||highlight.source.artifactId!==pin.artifactId||highlight.source.sha256!==pin.sha256)throw new Error('新行必须属于同一个原始源图。');highlight.rects.push(rect)}else{const duration=s.scene.presentationWindow?.durationSeconds??s.scene.durationSeconds,startSeconds=spec.highlights.at(-1)?.endSeconds??0;if(duration-startSeconds<.1)throw new Error('重点时段已用完，请先调整已有重点结束时间。');spec.highlights.push({source:pin,rects:[rect],name:'重点 '+(spec.highlights.length+1),style:'outline',startSeconds,endSeconds:duration})}}
    this.detailPending={owner:o,spec};await this.flush();this.renderCanvas()
   })}
