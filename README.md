@@ -16,7 +16,7 @@ npm install -g @deepseek-ai/dsh@0.2.1-rc.2
 npm start
 ```
 
-DSH `0.2.1-rc.2` 为官方候选版（npm `next`）；本机已用该版与 `deepseek-flash` 完成 SI 新闻重制，[工程、成片及验证范围](docs/research/DSH_SI_DELIVERY.json)单列，原 Qoder 版本保留。
+DSH `0.2.1-rc.2` 为官方候选版（npm `next`）；本机已用该版与 `deepseek-flash` 完成[SI新闻](docs/research/DSH_SI_DELIVERY.json)及[科普／学术主片重制](docs/research/DSH_SCIENCE_RESEARCH_DELIVERY.json)。预设内使用官方上下文压缩，实际模型、成片、原声复用及验证范围分别登记，原Qoder版本保留。
 
 上面的 DSH 安装只在使用该驱动时需要。`dsh` 必须位于 PATH；BMW 在自己的 `dsh-home` 安装预设，并在首次初始化时从 `DSH_HOME` 或 `~/.dsh` 复制已有普通 CLI 凭据，后续写入不修改原文件。无需先进入 DSH 界面配置模型，可在 BMW 登录框填写 DeepSeek API Key。Codex 通过公共 PATH、应用内 CLI 路径或 `BMW_CODEX_EXECUTABLE` 发现安装；Qoder 的官方 SDK/CLI 随依赖安装。切换 Assistant 驱动会读取认证；缺少凭据时自动打开登录框，可登录或改选其他驱动。DSH 提供 DeepSeek API Key，Codex 提供 ChatGPT 浏览器登录，Qoder CN 使用官方 CLI 浏览器授权。登录后只显示维护的支持名单中由官方目录提供的模型，点击“确认选择”保存；不要求用户发起模型验证或测试对话。Codex API Key 认证可由其独立 CLI 配置识别，BMW 当前没有 API Key 输入表单；未安装时显示安装状态。实际输入前仍自动验证唯一 `browser`。依赖版本由 `package-lock.json` 固定；首次启动自动构建。
 

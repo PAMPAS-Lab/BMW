@@ -2,11 +2,21 @@
 
 核对日期：2026-10-17。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
 
+## DSH 科普与学术重制
+
+两条完整新主片使用隔离 BMW Project／Session、官方 DSH `0.2.1-rc.2` 与 `deepseek-official/deepseek-flash`，实际请求工具恰好一个 `browser`。科普参考量子位S10的实物主体与局部图解；学术参考AK A01的生成流、工具返回和连续KV。保留各八场全文与八段真实Matcha WAV，原生导入、逐字节核对，不重复TTS。原Qoder工程、原素材与全部旧导出保留。实际MP4、来源SHA、完整字幕核对、当前关键状态帧及Agent意见见[交付记录](research/DSH_SCIENCE_RESEARCH_DELIVERY.json)；人工听感、理解和接受单列。
+
+长篇图像历史触发过DSH上下文溢出。BMW预设补入官方Agent内的自动压缩与旧工具结果裁减；正式wire的`append`照常配对调用，只有相邻裁减声明及来源序号吻合的替换才作为历史投影处理，不能替当前工具完成。原始媒体与宿主回执保持。科普同一原生会话实际记录了367项历史／约291939 token的压缩摘要，并继续完成制作；只导出事件类型和序号元数据，不导出私有推理或摘要正文。
+
+两片实测分别为210.859秒和229.248秒、1280×720／24fps、H.264/AAC；当前各192张关键状态PNG、八场与独立全片Agent意见均齐。根侧另实际查看各16张及学术5张定点帧，确认亮底描边、Table6末行和KV两项保留；自动小字／静置提示及少量次要标题／引用上缘裁切保留在交付记录。学术字幕为直接指定的编辑估计时间，未保存句锚；科普句锚另核对文件SHA。两者都不代表声学对齐或人工核听。
+
+两次完整离线回归均为162 passed／0 failed／12 not-run；[后一次完整报告](../.bmw-runtime/classified-tests/2026-10-17-dsh-compaction-events/result.json)冻结于最后的`append`格式补正之前。随后只有`dsh-events.ts`及其测试改变，当前[单元／契约／边界](../.bmw-runtime/classified-tests/2026-10-17-dsh-final-unit/result.json)为94 passed／0 failed，79项在该限定范围外；DSH专项36项、正式append复现前失败／修后通过、官方冷目录与会话控制、构建和check另通过。完整报告的媒体／Studio／视频／旁白／桌面源码保持相同，不将其称为最后两文件补正后重跑的完整基线。预设YAML不在TypeScript源码图中，另核对源码及两份实际安装副本SHA。具体日志、范围与指纹保存在交付记录；真实模型制作不并入离线计数。
+
 ## DSH 0.2.1-rc.2 与 SI 新闻
 
 当前DSH安装与适配基线为官方 `0.2.1-rc.2`（npm `next` 候选版）。新版预设继承全局工具；BMW在官方 `agent/created` 初始化中将该Agent的继承能力限制为唯一 `browser`，预设使用native呈现，Host准入与逐次请求装配检查实际 `wireSchemas`，并核对真实请求header。冷检查覆盖异步MCP就绪后的实际目录、私有凭据设置／清除、无Key时隐藏模型及配置后目录恢复，不发送模型输入。
 
-构建、check、功能／架构发布及[当前分类报告](../.bmw-runtime/classified-tests/2026-10-17T12-12-10-501Z/result.json)通过：**162 passed／0 failed／12 not-run**，含unit／contract／boundary及DSH、desktop、Studio、media、video、speech、本地／Qwen旁白夹具。该报告按明确变更文件选择到完整离线范围，运行期间源码一致；不将其称作一次 `verify:stability --all` 基线更新。最初受限环境启动Electron得到143退出的报告保留，后续在允许原生启动的环境重跑通过，断言未放宽。
+构建、check、功能／架构发布及[SI阶段分类报告](../.bmw-runtime/classified-tests/2026-10-17T12-12-10-501Z/result.json)通过：**162 passed／0 failed／12 not-run**，含unit／contract／boundary及DSH、desktop、Studio、media、video、speech、本地／Qwen旁白夹具。该报告按明确变更文件选择到完整离线范围，运行期间源码一致；不将其称作一次 `verify:stability --all` 基线更新。最初受限环境启动Electron得到143退出的报告保留，后续在允许原生启动的环境重跑通过，断言未放宽。
 
 独立真实制作见[DSH SI交付](research/DSH_SI_DELIVERY.json)：隔离Profile／Home／Workspace，实际请求为 `deepseek-official/deepseek-flash`、唯一browser，官方运行时拥有循环。官方10月17日更新将该路由指向V4.1-Flash-1017，回执只独立证明路由，不声称另行探测服务端checkpoint。新建自有草稿后在同一Session续做，最终revision34／export33，实际MP4为57.664秒、720×1280、24fps、H.264/AAC。六段先前真实Qwen安明远男声WAV逐字节复用，原生记录为imported，不冒充本轮新TTS。原脚本标题误作分段的问题已通过明确停止、纠错续做修复，最终六场script、audioText、文件及native anchor SHA逐项相符；不自动重放未知投递。
 
@@ -20,7 +30,7 @@
 
 中间报告均保留：04-33-08完整断言通过，但修复原生代理回执缺少fps并调整图表期间source-integrity正确失败；04-42-34的中间冻结基线为162 passed／0 failed／12 not-run；04-57-44在多制作窗口并行时出现assistant.application播放头断言失败，且诊断修改导致source-integrity失败。播放头用例随后单独复查通过，原断言未改，未据此认定并发就是根因；随后在所有付费制作窗口退出后复查。第一次收尾报告`2026-10-17-p1-ak-final`为161 passed／1 failed／12 not-run，source-integrity通过；在制作窗口全部退出后仍复现同一播放头问题，排除了先前将其直接归因于并行窗口的解释。现已捕获操作前逻辑时间，串行持有对象选择／保存／预览事务并禁用准备期间主轨操作；脚本等待真实操作完成后仍保留原1秒断言，专项通过。这些中间结果不作为最终源码覆盖，不将多轮通过数相加。新增精确quoteSpans和只读cover候选入口均进入最终构建。 renderer10的首轮完整报告`2026-10-17-p1-ak-complete`为161 passed／1 failed／12 not-run，source-integrity及assistant.application通过，仅Studio未保存输入冲突用例失败。该用例此前只等待任一属性可用，现等待确切对象与选择／预览事务完成；独立复查保留原冲突、输入保留、音轨CAS和播放头断言并全部通过。测试准备期间曾把DOM数值0.5误写为.5，导致前置等待失败；已纠正，未作为产品失败或通过证据。renderer10的后续`2026-10-17-p1-ak-v2-final`仍为161 passed／1 failed／12 not-run，源码一致性通过，失败位于重做后立即选择右旁白片段。随后核对发现主轨控件在预览准备时仍显示可点，但选择逻辑已拒绝；现已在准备开始和重绘时同步禁用真实主轨控件，准备清理完成后恢复。GUI测试统一等待确切时间轴目标可操作及保存／预览事务结束，再执行一次点击；原版本、输入、音轨、像素和播放头断言不变。该版本独立Studio复查通过；最新完整报告仍以实际结果为准。
 
-用户已明确授权本次BMW已配置的Qoder CN账号。真实视频使用官方目录`dfmodel`／DeepSeek-Flash，初始化有效工具仅`browser`，官方运行时拥有循环。开发侧入口`scripts/qoder-production-case.ts`提供明确任务、隔离Project和本次授权鉴权；临时鉴权在退出时清理，原生产Project未改动。当前三条完整主片为：Musk SI新闻V4 57.792秒、机器人科普V2 215.0827秒、HybridAgent学术V2 229.4827秒，均为24fps、renderer10；当前抽样与逐场／全片Agent意见、SHA和可编辑工程见[交付清单](research/P1_AK_DELIVERY.json)。新闻V4使用用户提供的“牧语手记”写作技能重写，保留已认可的引用尺寸，当前六段真实Qwen安明远男声旁白合计51.52秒；字幕与图层按新音长调整。初稿“少了一个字母”经根审阅发现后已改为“只换一个字母”，仅重配hook，其余五段保留身份与SHA。科普只替换第5场18.4322秒旁白、保留其余七段；只读影响计划的真实两页结果确认七段keep／一段rebuild及句锚rebind。字幕时间仍为编辑估计，不冒充声学对齐或模型核听。
+用户已明确授权本次BMW已配置的Qoder CN账号。真实视频使用官方目录`dfmodel`／DeepSeek-Flash，初始化有效工具仅`browser`，官方运行时拥有循环。开发侧入口`scripts/qoder-production-case.ts`提供明确任务、隔离Project和本次授权鉴权；临时鉴权在退出时清理，原生产Project未改动。Qoder阶段的三条完整主片为：Musk SI新闻V4 57.792秒、机器人科普V2 215.0827秒、HybridAgent学术V2 229.4827秒，均为24fps、renderer10；当前抽样与逐场／全片Agent意见、SHA和可编辑工程见[交付清单](research/P1_AK_DELIVERY.json)。新闻V4使用用户提供的“牧语手记”写作技能重写，保留已认可的引用尺寸，当前六段真实Qwen安明远男声旁白合计51.52秒；字幕与图层按新音长调整。初稿“少了一个字母”经根审阅发现后已改为“只换一个字母”，仅重配hook，其余五段保留身份与SHA。科普只替换第5场18.4322秒旁白、保留其余七段；只读影响计划的真实两页结果确认七段keep／一段rebuild及句锚rebind。字幕时间仍为编辑估计，不冒充声学对齐或模型核听。
 
 另四条历史技术／换题证据为AK组合27.072秒、韦布新闻50.4107秒、吸管科普44.736秒、WEDGE学术56.1493秒，renderer9下实际抽样31／95／72／72张及Agent意见保留，不冒充renderer10当前复用；后两条短片只证明换题迁移。所有旧版文件、重制前草稿快照、中断及失败证据保留。部分小字／停读与来源采集缺口继续记录，科普结尾的原素材人类持吸尘器引入不作为机器人实验证据。用户观看过V1并否定形式，随后肯定新闻V2的引用尺寸与节奏，否定其声音和通用点评；新闻V3针对重做后，用户表示许言初音色可暂用；V4再按用户新要求试写并换安明远男声。最新版本的专项听感、复述、预测和接受仍待确认，Agent视觉passed不关闭内容验收。
 

@@ -1,0 +1,2607 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-17T13:56:09.200Z",
+  "driver": "dsh",
+  "harness": {
+    "version": "0.2.1-rc.2",
+    "releaseChannel": "official-next-release-candidate"
+  },
+  "model": {
+    "provider": "deepseek-official",
+    "route": "deepseek-flash",
+    "officialDatedMapping": "DeepSeek-V4.1-Flash-1017",
+    "mappingSource": "https://api-docs.deepseek.com/zh-cn/updates/",
+    "mappingScope": "Official announcement; runtime verifies the stable route, not an independently detected server checkpoint."
+  },
+  "effectiveTools": [
+    "browser"
+  ],
+  "profile": "disposable",
+  "films": [
+    {
+      "nativeCompaction": {
+        "metadataReceipt": ".bmw-runtime/dsh-remakes/science-compaction.json",
+        "sha256": "ff0bc8e4433075ea7cae97904e9f62ed4e221d14ab851ca46dd2a341e3405029",
+        "createdAt": "2026-10-17T13:53:55.246Z",
+        "scope": "Read-only native official event type/sequence metadata; no private reasoning or summary text exported.",
+        "kind": "science",
+        "results": [
+          {
+            "file": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/profile/dsh-home/sessions/--Users-zz-Documents-ChatGPT-BMW-.bmw-runtime-dsh-science-2026-10-17T12-53-23-337Z-workspace--/session-2bc5d292-ecc2-498e-942e-327c150e228c/session.v4.jsonl.zstd",
+            "lines": 1718,
+            "invalidLines": 0,
+            "exitCode": 0,
+            "types": {
+              "session": 1,
+              "permission/preset": 1,
+              "sandbox/mode": 1,
+              "approval/policy": 1,
+              "model/selection": 4,
+              "agent/inbox/spliced": 8,
+              "turn/start": 4,
+              "step/start": 255,
+              "system/message": 1,
+              "user/message": 14,
+              "request/header": 4,
+              "request/context": 1,
+              "session/title": 4,
+              "session-log-deepseek/delivery-accepted": 255,
+              "assistant/message": 254,
+              "tool/call": 320,
+              "tool/result": 322,
+              "step/end": 255,
+              "turn/end": 4,
+              "session/end-seed": 3,
+              "assistant/attempt": 1,
+              "compaction/prune": 2,
+              "compaction/start": 1,
+              "compaction/summary": 1,
+              "compaction/end": 1
+            },
+            "decisions": [
+              {
+                "type": "compaction/prune",
+                "seq": 1305,
+                "shadowedSeqCount": 1,
+                "shadowedTokenCount": 6228
+              },
+              {
+                "type": "compaction/prune",
+                "seq": 1307,
+                "shadowedSeqCount": 1,
+                "shadowedTokenCount": 3058
+              },
+              {
+                "type": "compaction/start",
+                "seq": 1309
+              },
+              {
+                "type": "compaction/summary",
+                "seq": 1311,
+                "shadowedSeqCount": 367,
+                "shadowedTokenCount": 291939
+              },
+              {
+                "type": "compaction/end",
+                "seq": 1313
+              }
+            ]
+          }
+        ]
+      },
+      "captionCoverage": [
+        {
+          "sceneId": "s1-question",
+          "cues": 8,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        },
+        {
+          "sceneId": "s2-demo",
+          "cues": 7,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        },
+        {
+          "sceneId": "s3-source",
+          "cues": 8,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        },
+        {
+          "sceneId": "s4-loop",
+          "cues": 12,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        },
+        {
+          "sceneId": "s5-execution",
+          "cues": 8,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        },
+        {
+          "sceneId": "s6-conditions",
+          "cues": 10,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        },
+        {
+          "sceneId": "s7-diagnosis",
+          "cues": 12,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        },
+        {
+          "sceneId": "s8-answer",
+          "cues": 11,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        }
+      ],
+      "continuations": [
+        {
+          "receipt": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/result-2026-10-17T13-20-03-125Z.json",
+          "sha256": "1f404ecf30c534a4d6ad485791489aed5684de9408f1fc74c6c5a4b763a57be2",
+          "startedAt": "2026-10-17T12:53:23.421Z",
+          "finishedAt": "2026-10-17T13:20:03.125Z",
+          "completed": true,
+          "lastEvent": {
+            "type": "turn.completed",
+            "outcome": "success",
+            "message": ""
+          }
+        },
+        {
+          "receipt": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/result-2026-10-17T13-24-32-581Z.json",
+          "sha256": "354fc922b349695a3fd7bb90dfdd113cb88cb880165faa8bf3e1e7b40582021c",
+          "startedAt": "2026-10-17T13:21:28.347Z",
+          "finishedAt": "2026-10-17T13:24:32.581Z",
+          "completed": false,
+          "error": "Expected values to be strictly equal:\n\n'failed' !== 'idle'\n",
+          "lastEvent": {
+            "type": "turn.completed",
+            "outcome": "failed",
+            "message": "This model's maximum context length is 1048576 tokens. However, you requested 1057460 tokens (801460 in the messages, 256000 in the completion). Please reduce the length of the messages or completion. (request_id: 5986e571-5960-40a5-9ab3-287b15ea1d9a)"
+          }
+        },
+        {
+          "receipt": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/result-2026-10-17T13-32-54-511Z.json",
+          "sha256": "c9b4440a276183456a59dfffce2619003d3f4261393a2390d1a6c523441cc299",
+          "startedAt": "2026-10-17T13:29:31.641Z",
+          "finishedAt": "2026-10-17T13:32:54.511Z",
+          "completed": true,
+          "lastEvent": {
+            "type": "turn.completed",
+            "outcome": "success",
+            "message": ""
+          }
+        },
+        {
+          "receipt": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/result-2026-10-17T13-37-45-088Z.json",
+          "sha256": "04f5957cb1f6c36a8a9b7f525c9373ad9c3a9f9e5f1f36d471120534533d2306",
+          "startedAt": "2026-10-17T13:34:21.607Z",
+          "finishedAt": "2026-10-17T13:37:45.088Z",
+          "completed": true,
+          "lastEvent": {
+            "type": "turn.completed",
+            "outcome": "success",
+            "message": ""
+          }
+        }
+      ],
+      "kind": "science",
+      "title": "机器人会做家务，离可靠还差什么？",
+      "caseRoot": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z",
+      "bmwSessionId": "c34821c2-cf65-43f3-9455-b95bb3dadaba",
+      "draftId": "42510ed6-242e-4d3e-9f4a-9d03acca9413",
+      "revision": 75,
+      "editableDocument": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/video-studio/42510ed6-242e-4d3e-9f4a-9d03acca9413.json",
+      "documentSha256": "08416a4d694542fa967affba3736d450583d3845a05057a99c957072b8eb61a5",
+      "mp4": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-d27c9875-19ae-41db-b851-ee8c1f733b55-converted.mp4",
+      "mp4Sha256": "4f583979fb8aeab6451b5642773bc2463f406602a14fb31395899edc54ad271a",
+      "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+      "exportRevision": 74,
+      "actualDurationSeconds": 210.85866666666666,
+      "timelineDurationSeconds": 210.79166666666669,
+      "width": 1280,
+      "height": 720,
+      "fps": 24,
+      "music": false,
+      "watermark": false,
+      "styleReference": "量子位 S10：实物主体、局部机制图解、单词强调",
+      "visualObjects": {
+        "independentLayers": 55,
+        "animatedLayers": 38
+      },
+      "narration": {
+        "mode": "All eight prior real Matcha files imported byte-for-byte; no new TTS call, truncation or speed change.",
+        "provider": "local-matcha",
+        "voice": "local-zh-en",
+        "ratePercent": 0,
+        "totalAudioSeconds": 202.55531249999999,
+        "files": [
+          {
+            "sceneId": "s1-question",
+            "audioArtifactId": "narration-3e7b2936-70a2-4188-af70-7a2dbf604581.wav",
+            "sha256": "d271a03ee755de08027eeedaf14d5badea9110b81f77e7d3fc098af4f6b27d81",
+            "durationSeconds": 21.127,
+            "sentenceAnchors": {
+              "status": "sha-bound",
+              "audioSha256": "d271a03ee755de08027eeedaf14d5badea9110b81f77e7d3fc098af4f6b27d81",
+              "timingProvenance": {
+                "basis": "editorial-estimate"
+              }
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-3e7b2936-70a2-4188-af70-7a2dbf604581.wav"
+          },
+          {
+            "sceneId": "s2-demo",
+            "audioArtifactId": "narration-99b23c48-bb07-46a0-963c-54c8c3218666.wav",
+            "sha256": "75d25c81732eb272b3a6dd0b7978908aabaef10262213e787f5628bf24d02aae",
+            "durationSeconds": 22.167125,
+            "sentenceAnchors": {
+              "status": "sha-bound",
+              "audioSha256": "75d25c81732eb272b3a6dd0b7978908aabaef10262213e787f5628bf24d02aae",
+              "timingProvenance": {
+                "basis": "editorial-estimate"
+              }
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-99b23c48-bb07-46a0-963c-54c8c3218666.wav"
+          },
+          {
+            "sceneId": "s3-source",
+            "audioArtifactId": "narration-d510dcd6-7e03-402c-a4a9-7842a6274a6a.wav",
+            "sha256": "fc560f2e693c86927c99384ae3aae7c941d18ec18a1a021739848da5e073ff65",
+            "durationSeconds": 22.5314375,
+            "sentenceAnchors": {
+              "status": "sha-bound",
+              "audioSha256": "fc560f2e693c86927c99384ae3aae7c941d18ec18a1a021739848da5e073ff65",
+              "timingProvenance": {
+                "basis": "editorial-estimate"
+              }
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-d510dcd6-7e03-402c-a4a9-7842a6274a6a.wav"
+          },
+          {
+            "sceneId": "s4-loop",
+            "audioArtifactId": "narration-450d221e-e63e-4c2d-b33b-bc4334ad28cf.wav",
+            "sha256": "73824475c6b175b2bfcecbc66587a26e43ddde94501a84995a06bf00ab7fbbcb",
+            "durationSeconds": 31.6645,
+            "sentenceAnchors": {
+              "status": "sha-bound",
+              "audioSha256": "73824475c6b175b2bfcecbc66587a26e43ddde94501a84995a06bf00ab7fbbcb",
+              "timingProvenance": {
+                "basis": "editorial-estimate"
+              }
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-450d221e-e63e-4c2d-b33b-bc4334ad28cf.wav"
+          },
+          {
+            "sceneId": "s5-execution",
+            "audioArtifactId": "narration-83c0c8b1-ca6f-4e85-b6e6-3f6fdbf74b13.wav",
+            "sha256": "2e21c9d11554a9b46d1887e37fc80b578361440ff9ebb90dbf409933706cfc68",
+            "durationSeconds": 18.4321875,
+            "sentenceAnchors": {
+              "status": "sha-bound",
+              "audioSha256": "2e21c9d11554a9b46d1887e37fc80b578361440ff9ebb90dbf409933706cfc68",
+              "timingProvenance": {
+                "basis": "editorial-estimate"
+              }
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-83c0c8b1-ca6f-4e85-b6e6-3f6fdbf74b13.wav"
+          },
+          {
+            "sceneId": "s6-conditions",
+            "audioArtifactId": "narration-810f9117-ef33-4475-801b-cd4f942cc5b1.wav",
+            "sha256": "8bd3b551a5450f03887419313c43c3acb3acfcd5ef08a9295163a65d45577b54",
+            "durationSeconds": 28.62675,
+            "sentenceAnchors": {
+              "status": "sha-bound",
+              "audioSha256": "8bd3b551a5450f03887419313c43c3acb3acfcd5ef08a9295163a65d45577b54",
+              "timingProvenance": {
+                "basis": "editorial-estimate"
+              }
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-810f9117-ef33-4475-801b-cd4f942cc5b1.wav"
+          },
+          {
+            "sceneId": "s7-diagnosis",
+            "audioArtifactId": "narration-d7d4d57d-1e92-4350-a693-c46fd135499b.wav",
+            "sha256": "3f4f2c8c313675513fe44d2ecfa9de1fddbd8d520bd9c1025425755e451127b7",
+            "durationSeconds": 26.5854375,
+            "sentenceAnchors": {
+              "status": "sha-bound",
+              "audioSha256": "3f4f2c8c313675513fe44d2ecfa9de1fddbd8d520bd9c1025425755e451127b7",
+              "timingProvenance": {
+                "basis": "editorial-estimate"
+              }
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-d7d4d57d-1e92-4350-a693-c46fd135499b.wav"
+          },
+          {
+            "sceneId": "s8-answer",
+            "audioArtifactId": "narration-13cddc94-afa9-462a-99e7-357616f9f2d1.wav",
+            "sha256": "4031a76437af03ae6185ffbd885379bfbef9224cd54aa17795ec71e43aa70c66",
+            "durationSeconds": 31.420875,
+            "sentenceAnchors": {
+              "status": "sha-bound",
+              "audioSha256": "4031a76437af03ae6185ffbd885379bfbef9224cd54aa17795ec71e43aa70c66",
+              "timingProvenance": {
+                "basis": "editorial-estimate"
+              }
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-13cddc94-afa9-462a-99e7-357616f9f2d1.wav"
+          }
+        ]
+      },
+      "sources": [
+        {
+          "artifactId": "robot-demo.mp4",
+          "sha256": "c371e831bf3fb9c46a4eae604c091ce069f31ae48fe8c72f000b2da318419686",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/robot-demo.mp4",
+          "bytes": 7863657
+        },
+        {
+          "artifactId": "robot-context.png",
+          "sha256": "e443d0fef21883e744b5ee2457d9214080145bfdf6fbeed63361c4cbd4903020",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/robot-context.png",
+          "bytes": 190908
+        },
+        {
+          "artifactId": "robot-kitchen.png",
+          "sha256": "2442b49bf13a9cf5244364f87f6443cb20e0ad10ab7b77d406b79c4a72ea919b",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/robot-kitchen.png",
+          "bytes": 207009
+        },
+        {
+          "artifactId": "robot-pointcloud.png",
+          "sha256": "6cd4594fa583713655263052aadf0647ac87f5cf34a1f9c75b5a00eb3aa0045a",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/robot-pointcloud.png",
+          "bytes": 191661
+        },
+        {
+          "artifactId": "1792211530486-robot-source-weibo.png",
+          "sha256": "526c172e5079fbfee52741e5f650b7b720316982490c52763332dbaa7894c9cd",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/1792211530486-robot-source-weibo.png",
+          "bytes": 168689
+        },
+        {
+          "artifactId": "source-d6df0ea2-d6fb-4df7-8a04-7e6d629a76c4.txt",
+          "sha256": "c826a61d5ad6a0717f25882d4f6cfb0c761f554e52ae2433d65560cc245199cc",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/source-d6df0ea2-d6fb-4df7-8a04-7e6d629a76c4.txt",
+          "bytes": 593
+        },
+        {
+          "artifactId": "narration-3e7b2936-70a2-4188-af70-7a2dbf604581.wav",
+          "sha256": "d271a03ee755de08027eeedaf14d5badea9110b81f77e7d3fc098af4f6b27d81",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-3e7b2936-70a2-4188-af70-7a2dbf604581.wav",
+          "bytes": 676108
+        },
+        {
+          "artifactId": "narration-99b23c48-bb07-46a0-963c-54c8c3218666.wav",
+          "sha256": "75d25c81732eb272b3a6dd0b7978908aabaef10262213e787f5628bf24d02aae",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-99b23c48-bb07-46a0-963c-54c8c3218666.wav",
+          "bytes": 709392
+        },
+        {
+          "artifactId": "narration-d510dcd6-7e03-402c-a4a9-7842a6274a6a.wav",
+          "sha256": "fc560f2e693c86927c99384ae3aae7c941d18ec18a1a021739848da5e073ff65",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-d510dcd6-7e03-402c-a4a9-7842a6274a6a.wav",
+          "bytes": 721050
+        },
+        {
+          "artifactId": "narration-450d221e-e63e-4c2d-b33b-bc4334ad28cf.wav",
+          "sha256": "73824475c6b175b2bfcecbc66587a26e43ddde94501a84995a06bf00ab7fbbcb",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-450d221e-e63e-4c2d-b33b-bc4334ad28cf.wav",
+          "bytes": 1013308
+        },
+        {
+          "artifactId": "narration-83c0c8b1-ca6f-4e85-b6e6-3f6fdbf74b13.wav",
+          "sha256": "2e21c9d11554a9b46d1887e37fc80b578361440ff9ebb90dbf409933706cfc68",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-83c0c8b1-ca6f-4e85-b6e6-3f6fdbf74b13.wav",
+          "bytes": 589874
+        },
+        {
+          "artifactId": "narration-810f9117-ef33-4475-801b-cd4f942cc5b1.wav",
+          "sha256": "8bd3b551a5450f03887419313c43c3acb3acfcd5ef08a9295163a65d45577b54",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-810f9117-ef33-4475-801b-cd4f942cc5b1.wav",
+          "bytes": 916100
+        },
+        {
+          "artifactId": "narration-d7d4d57d-1e92-4350-a693-c46fd135499b.wav",
+          "sha256": "3f4f2c8c313675513fe44d2ecfa9de1fddbd8d520bd9c1025425755e451127b7",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-d7d4d57d-1e92-4350-a693-c46fd135499b.wav",
+          "bytes": 850778
+        },
+        {
+          "artifactId": "narration-13cddc94-afa9-462a-99e7-357616f9f2d1.wav",
+          "sha256": "4031a76437af03ae6185ffbd885379bfbef9224cd54aa17795ec71e43aa70c66",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/narration-13cddc94-afa9-462a-99e7-357616f9f2d1.wav",
+          "bytes": 1005512
+        },
+        {
+          "artifactId": "style-reference-qbit-S10.mp4",
+          "sha256": "a948b21cf995d43cda4aadffe4755fba0b727eae1dc5d96ce84b386b0b1105ec",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/qbit-stage4-samples/2026-10-16T13-57-34-100Z/project/artifacts/S10.mp4",
+          "bytes": 16045327
+        },
+        {
+          "artifactId": "style-reference-qbit-S10-sheet.jpg",
+          "sha256": "068ecaf2676b45b9a4bd11381e59b51fdf25aea180f689c8e304fced965f9c37",
+          "sourcePath": "/Users/zz/.codex/visualizations/2026/10/16/01a142fe-3b28-71d0-917d-ed14d3cb89ed/qbit-bmw/full-analysis/S10-dense-sheet-8.jpg",
+          "bytes": 566436
+        },
+        {
+          "artifactId": "source-notes.txt",
+          "sha256": "e9548c406da15c2061b6ff02564647e0bc74a0c459c8868c675700c8cfb0cf87",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-remakes/science-source-notes.txt",
+          "bytes": 4884
+        },
+        {
+          "artifactId": "scene-map.txt",
+          "sha256": "d329e91eb01878bde9a18ed2d8ddf11811c7e6a08ecc186632aecc2e0b974028",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-remakes/science-scene-map.txt",
+          "bytes": 6069
+        }
+      ],
+      "technical": {
+        "report": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/video-aa27a293-b425-474f-8fa2-e754023aecc8.json",
+        "sha256": "5c842f40d69eec25120a122c809ed8676e8654f332088577fdf452fdf402e4ae",
+        "status": "passed",
+        "codecs": [
+          {
+            "type": "video",
+            "codec": "avc",
+            "canDecode": true
+          },
+          {
+            "type": "audio",
+            "codec": "aac",
+            "canDecode": true
+          }
+        ],
+        "qualityWarnings": [
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 0,
+            "seconds": 0,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "量子位微博"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 1,
+            "seconds": 22.166666666666668,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "量子位微博"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 1,
+            "seconds": 22.583333333333332,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "进入陌生厨房"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 1,
+            "seconds": 29.375,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "能确认：移动 · 观察 · 执行"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 1,
+            "seconds": 34.166666666666664,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "不能确认：完全自主 · 泛化 · 失败率"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 1,
+            "seconds": 38.958333333333336,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "第 15 秒界面只是线索"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 1,
+            "seconds": 40.583333333333336,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "推不出具体重建算法"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 2,
+            "seconds": 47.166666666666664,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "原句出自发布者视频 · 量子位微博"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 3,
+            "seconds": 68.91666666666667,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "机制示意 · 看见 / 定位 / 接近抓取 / 修正"
+          },
+          {
+            "code": "long-static-hold",
+            "severity": "warning",
+            "sceneIndex": 3,
+            "seconds": 78.41666666666667,
+            "message": "抽样的主要画面区域连续八秒变化很少，请检查讲解节奏；这不证明中间每帧静止。"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 4,
+            "seconds": 101.625,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "量子位微博"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 4,
+            "seconds": 102.04166666666667,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "执行阶段"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 5,
+            "seconds": 121.04166666666667,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "机制示意 · 换位置 / 形状 / 环境"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 5,
+            "seconds": 136.25,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "成功 ___ · 总次数 ___"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 5,
+            "seconds": 136.25,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "耗时 ___ · 接管 ___"
+          },
+          {
+            "code": "long-static-hold",
+            "severity": "warning",
+            "sceneIndex": 5,
+            "seconds": 150.625,
+            "message": "抽样的主要画面区域连续八秒变化很少，请检查讲解节奏；这不证明中间每帧静止。"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 150.70833333333334,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "机制示意 · 感知 / 接触 / 规划"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 178.33333333333334,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "量子位微博"
+          }
+        ]
+      },
+      "agentVisualReview": {
+        "journal": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/video-studio/export-reviews/42510ed6-242e-4d3e-9f4a-9d03acca9413.json",
+        "sha256": "552c77f79ce25b3ed11ae0b3320b630776b503d347c78ba7a9310c4fe666de16",
+        "totalGeneratedCriticalFrames": 192,
+        "scenes": [
+          {
+            "sceneId": "s1-question",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "本指纹三页 24 帧均取回看过（0/0.04/0.25/0.29/0.33/0.79/4.54/4.58/9.46/9.50/9.54/10.17/10.21/10.25/10.38/10.42/10.46/11.08/15.75/15.79/15.83/19.08/22.13）。本轮黑描边已生效：4.58s/9.54s “先看证据边界”黄字在厨房亮底上有硬边；15.79/15.83s “做成一次 → 稳定做成？”白字压在浅紫点云上已清楚可读（原缺陷点）；右上来标识 3px 描边在顶部亮带上也稳。图层位置/时长/字号未变，未裁字，末尾仍为暗底收束。",
+              "createdAt": "2026-10-17T13:36:00.292Z",
+              "sequence": 1
+            }
+          },
+          {
+            "sceneId": "s2-demo",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "本指纹三页 24 帧均取回看过（22.17/22.21/22.38/22.58/22.63/22.67/22.71/22.96/29.17/29.25/29.38/29.46/33.79/33.96/34.17/38.75/38.88/38.96/39.08/40.38/40.58/43.88/44.46/45.33）。短词已加黑描边：0.42s “进入陌生厨房”、7.29s “能确认…”与“不能确认…”、16.79–18.42s “第 15 秒界面只是线索”在厨房亮副与白底文章页上均可辨认；未遮住字幕、未改位置与时长；末尾仍为暗底收束。残留：仅 390px 预览仍报小字（46px 级别），与描边无关。",
+              "createdAt": "2026-10-17T13:36:15.022Z",
+              "sequence": 2
+            }
+          },
+          {
+            "sceneId": "s3-source",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "本指纹三页 24 帧均取回看过（45.38/45.42/45.83/45.88/45.92/46.17/46.54/46.96/47.08/47.17/47.29/56.38/56.67/56.79/56.96/57.17/62.96/63.17/63.29/63.46/67.79/68.38/68.67/68.88）。灰来源行“原句出自发布者视频 · 量子位微博”已加 3px 黑描边，在亮厨房底上清楚（原缺陷点）；“支持一次尝试 · 不支持自主/成功率/泛化”与“陌生，对谁？”加 4px 黑边后对比更强，旧白底文章页帧上仍可读；cue 时间、字体、位置均未变，无裁字。",
+              "createdAt": "2026-10-17T13:36:29.964Z",
+              "sequence": 3
+            }
+          },
+          {
+            "sceneId": "s4-loop",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "本指纹三页 24 帧均取回看过（68.92/68.96/69.71/73.33/73.63/78.42/81.92/85.25/85.33/88.21/88.42/88.83/89.33/89.50/91.33/91.83/91.92/92.42/93.33/93.83/94.00/94.50/95.71/101.54）。本场本轮未改（无 kind:text 叠字，仅机制图例与字幕），与上一指纹一致：杯子/夹爪/观察框/障碍四阶段变化清楚，末尾回静构图。两条已知抽样提示（图例小字、9.5s 静置段）已核对，无新增缺陷。",
+              "createdAt": "2026-10-17T13:37:04.523Z",
+              "sequence": 6
+            }
+          },
+          {
+            "sceneId": "s5-execution",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "本指纹三页 24 帧均取回看过（101.63/102.00/102.04/102.08/102.13/102.17/102.38/103.42/104.75/104.79/105.50/105.58/105.67/105.79/107.00/107.17/108.38/108.58/109.79/110.00/111.33/114.58/114.79/121.00）。四条空记录项（尝试次数/总耗时/失败类型/人工接管）与“1 次 ≠ 成功率”均已加 4px 黑描边，在冰箱与点云亮底上清楚可读（原缺陷点），无裁字、未遮字幕；末尾源页过渡为已知状态，本轮不改。残留：390px 预览仍报 46px 偏小；署名 3px 描边保留。",
+              "createdAt": "2026-10-17T13:36:42.468Z",
+              "sequence": 4
+            }
+          },
+          {
+            "sceneId": "s6-conditions",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "本指纹三页 24 帧均取回看过（121.04/121.08/121.50/121.54/121.58/121.83/123.25/124.63/124.83/125.63/127.46/128.63/129.83/132.83/132.96/133.13/135.88/136.13/136.25/136.33/136.46/137.83/150.63/150.67）。本场本轮未改：换位置（左→右）、换形状（变大）、加障碍逐项可见，末尾出现“成功/总次数/耗时/接管”空记录表且未填任何数字；三条已知抽样提示（图例与记录表小字、29.6s 静置）已核对，无新增缺陷。",
+              "createdAt": "2026-10-17T13:37:14.081Z",
+              "sequence": 7
+            }
+          },
+          {
+            "sceneId": "s7-diagnosis",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "本指纹三页 24 帧均取回看过（150.71/150.75/151.50/154.92/155.13/155.29/156.71/157.13/159.13/159.50/159.92/160.13/161.71/161.92/162.92/163.50/164.29/164.54/164.79/165.13/165.71/166.92/167.71/178.29）。本场本轮未改图层：三种失败（观察框与杯错位 / 接触打滑 / 障碍挡路）与“感知·接触·规划”图例正常，字幕仍为已修正的“目标就在眼前却抓滑，”；仅图例 46px 在 390px 预览被报偏小。",
+              "createdAt": "2026-10-17T13:37:21.182Z",
+              "sequence": 8
+            }
+          },
+          {
+            "sceneId": "s8-answer",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "本指纹三页 24 帧均取回看过（178.33/178.38/179.13/187.92/188.13/193.92/194.04/194.13/194.25/194.58/195.33/195.54/196.75/196.92/197.92/198.54/199.33/199.54/205.13/205.33/205.63/206.75/206.92/210.75）。“不能支持：完全自主 · 100% 成功”与三行“待测”已加 4px 黑描边，在厨房亮副与白底文章页上均能读清；后续淡出到暗底、“会一次 → 可重复/可恢复”、“才接近可靠”均正常，未裁字、未移位。",
+              "createdAt": "2026-10-17T13:36:56.007Z",
+              "sequence": 5
+            }
+          }
+        ],
+        "film": {
+          "status": "passed",
+          "notes": "整片判断（当前指纹 28eb0a8c…，192 抽样全覆盖，八场均已有 passed 声明）：210.79 秒八场结构完整，本轮只做可读性修正——s1/s2/s3/s5/s8 共 27 个独立 kind:text 图层补黑描边（灰来源行 3px、白/黄字 4px），位置、分段时间、fontSize、sourceCrop、关键帧、script、captions 与 8 段音频 SHA 均未变，也未新增图层或遮罩。已直接抽样 15.79s（s1 白字压点云）、48.38s（s3 灰来源行）、106.96s / 114.75s（s5 四项记录）四处亮底，均清楚可读且未裁字。限制：审阅为关键状态抽样（192 帧）而非逐帧穷尽；模型未听音频，不对旁白音质判断；18 条告警仍为 16 条 390px 小字与 2 条 long-static-hold（静置讲解段，含描边后仍报小字属尺寸而非对比度）。",
+          "createdAt": "2026-10-17T13:37:25.842Z",
+          "sequence": 9
+        },
+        "rootActualFrameSamples": [
+          {
+            "sceneId": "s1-question",
+            "sceneIndex": 0,
+            "phase": 0.25,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 8,
+              "artifactId": "media-5dff0fa8-657f-46b2-b867-0f8125bcdff1-frame-1.png",
+              "sha256": "603b6c7e54e1491607c1036127eeb4e071621af1e6247b1064405befdb38e6d3",
+              "seconds": 4.625,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-5dff0fa8-657f-46b2-b867-0f8125bcdff1-frame-1.png",
+              "localSeconds": 4.625
+            }
+          },
+          {
+            "sceneId": "s1-question",
+            "sceneIndex": 0,
+            "phase": 0.75,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 21,
+              "artifactId": "media-b4364f19-4c48-4595-8fbf-874835c6b228-frame-6.png",
+              "sha256": "32cff3662a52400fd017e9378df6c253208cc473b1a153b90dd1eaf36c07f1b4",
+              "seconds": 15.833333333333334,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-b4364f19-4c48-4595-8fbf-874835c6b228-frame-6.png",
+              "localSeconds": 15.833333333333334
+            }
+          },
+          {
+            "sceneId": "s2-demo",
+            "sceneIndex": 1,
+            "phase": 0.25,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 8,
+              "artifactId": "media-979fa93d-36aa-44aa-9d88-d7ba45af8451-frame-1.png",
+              "sha256": "0256212d234941155468c7eb19f9b6134bb29a80165fe81194c41670390aea45",
+              "seconds": 29.166666666666668,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-979fa93d-36aa-44aa-9d88-d7ba45af8451-frame-1.png",
+              "localSeconds": 7
+            }
+          },
+          {
+            "sceneId": "s2-demo",
+            "sceneIndex": 1,
+            "phase": 0.75,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 18,
+              "artifactId": "media-bcfd7187-1b83-4cb3-bf17-31c6874b4480-frame-3.png",
+              "sha256": "e9d40acea19eaeb7508e3d0d7c550ea34b8987ae3cd5044c975f106c56928d2d",
+              "seconds": 39.083333333333336,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-bcfd7187-1b83-4cb3-bf17-31c6874b4480-frame-3.png",
+              "localSeconds": 16.916666666666668
+            }
+          },
+          {
+            "sceneId": "s3-source",
+            "sceneIndex": 2,
+            "phase": 0.25,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 10,
+              "artifactId": "media-f5c534fb-6e1e-4791-bd0c-d913dd4204a9-frame-3.png",
+              "sha256": "2073c666652c37ad4ea351ca26ecd3999d1538fc7142b3eae5637601d7345b23",
+              "seconds": 47.291666666666664,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-f5c534fb-6e1e-4791-bd0c-d913dd4204a9-frame-3.png",
+              "localSeconds": 1.9166666666666643
+            }
+          },
+          {
+            "sceneId": "s3-source",
+            "sceneIndex": 2,
+            "phase": 0.75,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 16,
+              "artifactId": "media-6572bf90-99ee-475c-bd80-c6b22343559e-frame-1.png",
+              "sha256": "2424f534dbe880710c5501a93f07729012015dfe773616ea838b837ebeddc818",
+              "seconds": 62.958333333333336,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-6572bf90-99ee-475c-bd80-c6b22343559e-frame-1.png",
+              "localSeconds": 17.583333333333336
+            }
+          },
+          {
+            "sceneId": "s4-loop",
+            "sceneIndex": 3,
+            "phase": 0.25,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 5,
+              "artifactId": "media-692bcaa6-aa43-4359-874e-87cd87a117bb-frame-6.png",
+              "sha256": "d6b91a42f5a97a86fe5e3047910aeead232dd5604d9ae07d4709291fbc393a6c",
+              "seconds": 78.41666666666667,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-692bcaa6-aa43-4359-874e-87cd87a117bb-frame-6.png",
+              "localSeconds": 9.5
+            }
+          },
+          {
+            "sceneId": "s4-loop",
+            "sceneIndex": 3,
+            "phase": 0.75,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 18,
+              "artifactId": "media-27465390-97a3-4840-b2e6-e66bd28f1387-frame-3.png",
+              "sha256": "fcfd6d622f27ca9ee46452305de282e2c9a7f4c638da1530f3f06710e060bf37",
+              "seconds": 93.33333333333333,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-27465390-97a3-4840-b2e6-e66bd28f1387-frame-3.png",
+              "localSeconds": 24.416666666666657
+            }
+          },
+          {
+            "sceneId": "s5-execution",
+            "sceneIndex": 4,
+            "phase": 0.25,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 14,
+              "artifactId": "media-336f437c-099a-4249-b2f6-c6942a5221a7-frame-7.png",
+              "sha256": "46743200d81b502b5fa7f1ce1fe7b2c06789a148169658fe53a332805cb05a34",
+              "seconds": 107,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-336f437c-099a-4249-b2f6-c6942a5221a7-frame-7.png",
+              "localSeconds": 5.375
+            }
+          },
+          {
+            "sceneId": "s5-execution",
+            "sceneIndex": 4,
+            "phase": 0.75,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 22,
+              "artifactId": "media-ecc03034-7717-4cef-8815-308a6d04c1db-frame-7.png",
+              "sha256": "6377e7c37b4322e048914f7a04c517463655cc32b7017885e54d947acd8f609d",
+              "seconds": 114.79166666666667,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-ecc03034-7717-4cef-8815-308a6d04c1db-frame-7.png",
+              "localSeconds": 13.166666666666671
+            }
+          },
+          {
+            "sceneId": "s6-conditions",
+            "sceneIndex": 5,
+            "phase": 0.25,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 11,
+              "artifactId": "media-3ffe03e7-272c-4e68-80ea-ce0857096ce8-frame-4.png",
+              "sha256": "e97e6e24acb60bd84a4769918a7210070ca83ce4163176a7a475eadfbd438535",
+              "seconds": 128.625,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-3ffe03e7-272c-4e68-80ea-ce0857096ce8-frame-4.png",
+              "localSeconds": 7.583333333333329
+            }
+          },
+          {
+            "sceneId": "s6-conditions",
+            "sceneIndex": 5,
+            "phase": 0.75,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 21,
+              "artifactId": "media-85fb49a5-7d47-4e4a-96e2-c2b35c1e7879-frame-6.png",
+              "sha256": "6eda9da015d0430d0474747acbaf7c9c3fa60576bd376d2dcfc3601b0a65ff1b",
+              "seconds": 137.83333333333334,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-85fb49a5-7d47-4e4a-96e2-c2b35c1e7879-frame-6.png",
+              "localSeconds": 16.79166666666667
+            }
+          },
+          {
+            "sceneId": "s7-diagnosis",
+            "sceneIndex": 6,
+            "phase": 0.25,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 7,
+              "artifactId": "media-d699335f-c31b-4673-ae04-b7f9c4c2627e-frame-8.png",
+              "sha256": "02143ba52252aaa4d3c1b511fcd3800b65f86a84727b40e9955ee63dd1998d43",
+              "seconds": 157.125,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-d699335f-c31b-4673-ae04-b7f9c4c2627e-frame-8.png",
+              "localSeconds": 6.416666666666657
+            }
+          },
+          {
+            "sceneId": "s7-diagnosis",
+            "sceneIndex": 6,
+            "phase": 0.75,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 22,
+              "artifactId": "media-c9bcb28b-05bf-4411-b881-8438df4aab67-frame-7.png",
+              "sha256": "25eec02aca60887a6c178f053f3fb54f07ac7ee1b9b93a80d1d073affd1a8dd5",
+              "seconds": 167.70833333333334,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-c9bcb28b-05bf-4411-b881-8438df4aab67-frame-7.png",
+              "localSeconds": 17
+            }
+          },
+          {
+            "sceneId": "s8-answer",
+            "sceneIndex": 7,
+            "phase": 0.25,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 3,
+              "artifactId": "media-2dfe5a18-04e4-4d67-a3c3-2cbfbab40e9b-frame-4.png",
+              "sha256": "983ce183b37d0c29782bc11db5cbd120e773af62f7a03fff8ceb221575ccfcb2",
+              "seconds": 187.91666666666666,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-2dfe5a18-04e4-4d67-a3c3-2cbfbab40e9b-frame-4.png",
+              "localSeconds": 9.583333333333314
+            }
+          },
+          {
+            "sceneId": "s8-answer",
+            "sceneIndex": 7,
+            "phase": 0.75,
+            "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+            "frame": {
+              "index": 18,
+              "artifactId": "media-039b5408-39d5-421b-a6c1-2e62fb1abcfc-frame-3.png",
+              "sha256": "b765f62b41fd3a82818127bb5e92ecab285e77038dfaf001cf767a508bca9aa3",
+              "seconds": 205.125,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/workspace/artifacts/media-039b5408-39d5-421b-a6c1-2e62fb1abcfc-frame-3.png",
+              "localSeconds": 26.791666666666657
+            }
+          }
+        ],
+        "rootReview": {
+          "reviewedAt": "2026-10-17T13:39:57.420Z",
+          "exportFingerprint": "28eb0a8c181be489e9a1791b359841524a2ae619ce95d02c52c89d8f4c08db49",
+          "viewedSamples": 16,
+          "scope": "Root agent actually viewed two current decoded MP4 PNGs per scene at phone width, in addition to the DSH paginated review.",
+          "notes": [
+            "Large actual kitchen footage alternates with cup/gripper/obstacle illustrations; no reference chemistry footage used as robot evidence.",
+            "Before/after samples show cup position, observation bracket and gripper movement; mechanism labels identify explanatory illustrations.",
+            "Four blank record fields remain blank; no invented success rates.",
+            "Black strokes improve the question, source label and four blank record labels on bright kitchen/point-cloud backgrounds.",
+            "Subtitles are separate, legible at the sampled phone size, and match all eight script texts after the 抓滑 typo correction.",
+            "The saved source-page PIP and some source labels remain small at phone width; two static-hold warnings remain. Critical-state sampling does not prove every frame or audio quality."
+          ],
+          "status": "reviewed-with-stated-limitations"
+        }
+      },
+      "humanListening": "not-performed",
+      "humanAcceptance": "pending",
+      "timing": "editorial-estimate; not ASR/acoustic alignment",
+      "productionReceipt": {
+        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/result.json",
+        "sha256": "04f5957cb1f6c36a8a9b7f525c9373ad9c3a9f9e5f1f36d471120534533d2306"
+      },
+      "previousVersionsPreserved": true
+    },
+    {
+      "nativeCompaction": {
+        "metadataReceipt": ".bmw-runtime/dsh-remakes/research-compaction.json",
+        "sha256": "8a990fa58933bfff1f2091e7e9ae70bc541476aa9d77ebd0d14f5dbbd2bee053",
+        "createdAt": "2026-10-17T13:53:55.248Z",
+        "scope": "Read-only native official event type/sequence metadata; no private reasoning or summary text exported.",
+        "kind": "research",
+        "results": [
+          {
+            "file": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/profile/dsh-home/sessions/--Users-zz-Documents-ChatGPT-BMW-.bmw-runtime-dsh-research-2026-10-17T12-53-26-148Z-workspace--/session-24f943aa-0ce6-4224-8477-cc4a1e9754a8/session.v4.jsonl.zstd",
+            "lines": 1421,
+            "invalidLines": 0,
+            "exitCode": 0,
+            "types": {
+              "session": 1,
+              "permission/preset": 1,
+              "sandbox/mode": 1,
+              "approval/policy": 1,
+              "model/selection": 6,
+              "agent/inbox/spliced": 12,
+              "turn/start": 6,
+              "step/start": 218,
+              "system/message": 1,
+              "user/message": 15,
+              "request/header": 7,
+              "request/context": 1,
+              "session/title": 6,
+              "session-log-deepseek/delivery-accepted": 218,
+              "assistant/message": 216,
+              "tool/call": 235,
+              "tool/result": 238,
+              "step/end": 218,
+              "assistant/attempt": 1,
+              "turn/end": 6,
+              "session/end-seed": 5,
+              "compaction/prune": 3,
+              "compaction/start": 2,
+              "compaction/summary": 1,
+              "compaction/end": 1,
+              "workspace/changes": 1
+            },
+            "decisions": [
+              {
+                "type": "compaction/prune",
+                "seq": 1216,
+                "shadowedSeqCount": 1,
+                "shadowedTokenCount": 6228
+              },
+              {
+                "type": "compaction/prune",
+                "seq": 1218,
+                "shadowedSeqCount": 1,
+                "shadowedTokenCount": 3058
+              },
+              {
+                "type": "compaction/prune",
+                "seq": 1220,
+                "shadowedSeqCount": 1,
+                "shadowedTokenCount": 2062
+              },
+              {
+                "type": "compaction/start",
+                "seq": 1243
+              },
+              {
+                "type": "compaction/start",
+                "seq": 1251
+              },
+              {
+                "type": "compaction/summary",
+                "seq": 1253,
+                "shadowedSeqCount": 310,
+                "shadowedTokenCount": 218902
+              },
+              {
+                "type": "compaction/end",
+                "seq": 1255
+              }
+            ]
+          }
+        ]
+      },
+      "captionCoverage": [
+        {
+          "sceneId": "s1-question",
+          "cues": 10,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        },
+        {
+          "sceneId": "s2-baselines",
+          "cues": 13,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        },
+        {
+          "sceneId": "s3-example",
+          "cues": 13,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        },
+        {
+          "sceneId": "s4-hybridlink",
+          "cues": 12,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        },
+        {
+          "sceneId": "s5-memory",
+          "cues": 14,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        },
+        {
+          "sceneId": "s6-training",
+          "cues": 15,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        },
+        {
+          "sceneId": "s7-results",
+          "cues": 16,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        },
+        {
+          "sceneId": "s8-boundaries",
+          "cues": 17,
+          "scriptTextMatchesIgnoringPunctuationAndWhitespace": true
+        }
+      ],
+      "continuations": [
+        {
+          "receipt": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/result-2026-10-17T13-08-08-778Z.json",
+          "sha256": "350e34deb7d77762cb51619af7ca926371016ce4b0cafc5ee216bfadd7966e39",
+          "startedAt": "2026-10-17T12:53:26.268Z",
+          "finishedAt": "2026-10-17T13:08:08.778Z",
+          "completed": false,
+          "error": "Expected values to be strictly equal:\n\n'failed' !== 'idle'\n",
+          "lastEvent": {
+            "type": "turn.completed",
+            "outcome": "failed",
+            "message": "DeepSeek Messages stream: tool input is invalid JSON"
+          }
+        },
+        {
+          "receipt": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/result-2026-10-17T13-20-56-357Z.json",
+          "sha256": "24e5d092c88a062ae60367bb3aa494ff12a464efceb814eefbf95e6e2824c525",
+          "startedAt": "2026-10-17T13:17:28.125Z",
+          "finishedAt": "2026-10-17T13:20:56.357Z",
+          "completed": false,
+          "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'interrupted'\n- 'idle'\n",
+          "lastEvent": {
+            "type": "turn.completed",
+            "outcome": "interrupted",
+            "message": "DSH turn cancelled"
+          }
+        },
+        {
+          "receipt": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/result-2026-10-17T13-27-53-915Z.json",
+          "sha256": "e4d975084cb602a41056f4e0bb8511c2a0fdffc257a7d10c96905e007ca1e801",
+          "startedAt": "2026-10-17T13:21:25.246Z",
+          "finishedAt": "2026-10-17T13:27:53.915Z",
+          "completed": false,
+          "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'interrupted'\n- 'idle'\n",
+          "lastEvent": {
+            "type": "turn.completed",
+            "outcome": "interrupted",
+            "message": "DSH turn cancelled"
+          }
+        },
+        {
+          "receipt": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/result-2026-10-17T13-33-25-490Z.json",
+          "sha256": "ea9f4bfabbbad0d77e8602efd89e0e507195025b01864b2684e7feb769d80de1",
+          "startedAt": "2026-10-17T13:31:52.287Z",
+          "finishedAt": "2026-10-17T13:33:25.490Z",
+          "completed": false,
+          "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'disconnected'\n- 'idle'\n",
+          "lastEvent": {
+            "type": "turn.disconnected",
+            "message": "DSH browser result has no running call"
+          }
+        },
+        {
+          "receipt": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/result-2026-10-17T13-40-06-197Z.json",
+          "sha256": "dd03486a2163019ccdc8bccba75f432a91862ea5b264eb51ebfaebd08eb0762a",
+          "startedAt": "2026-10-17T13:39:37.582Z",
+          "finishedAt": "2026-10-17T13:40:06.197Z",
+          "completed": false,
+          "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'disconnected'\n- 'idle'\n",
+          "lastEvent": {
+            "type": "turn.disconnected",
+            "message": "Invalid Agent value"
+          }
+        },
+        {
+          "receipt": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/result-2026-10-17T13-52-39-413Z.json",
+          "sha256": "a6da49a04b8a648ebdb4da28900764bfb846a2867bbdecd785035895ce90dc6e",
+          "startedAt": "2026-10-17T13:49:39.860Z",
+          "finishedAt": "2026-10-17T13:52:39.413Z",
+          "completed": true,
+          "lastEvent": {
+            "type": "turn.completed",
+            "outcome": "success",
+            "message": ""
+          }
+        }
+      ],
+      "kind": "research",
+      "title": "HybridAgent：潜推理如何接上工具",
+      "caseRoot": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z",
+      "bmwSessionId": "c53e9397-b159-4305-bc3b-9818956885f2",
+      "draftId": "37bb5c71-c529-4045-b5f0-04293b3481c0",
+      "revision": 50,
+      "editableDocument": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/video-studio/37bb5c71-c529-4045-b5f0-04293b3481c0.json",
+      "documentSha256": "e573c388781f7c9246c883d661ddb8086a3f244f06fee958eb1b496be62fa00a",
+      "mp4": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-cf7b2c6e-98db-4209-8274-7f84e4fa0ec3-converted.mp4",
+      "mp4Sha256": "a04b0941f193c72b27592c1168d287335d3009ed187686c19ac6c025478a5180",
+      "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+      "exportRevision": 49,
+      "actualDurationSeconds": 229.248,
+      "timelineDurationSeconds": 229.16666666666669,
+      "width": 1280,
+      "height": 720,
+      "fps": 24,
+      "music": false,
+      "watermark": false,
+      "styleReference": "AK A01 Hybrid Reasoning Agents：同一生成流、工具返回与连续KV",
+      "visualObjects": {
+        "independentLayers": 60,
+        "animatedLayers": 42
+      },
+      "narration": {
+        "mode": "All eight prior real Matcha files imported byte-for-byte; no new TTS call, truncation or speed change.",
+        "provider": "local-matcha",
+        "voice": "local-zh-en",
+        "ratePercent": 0,
+        "totalAudioSeconds": 220.95056250000002,
+        "files": [
+          {
+            "sceneId": "s1-question",
+            "audioArtifactId": "narration-8f611687-9152-40d6-a142-2ff63d3c40d8.wav",
+            "sha256": "43a4d2776d26b1e3eeed75f3b9627c377b23413ba1a3a7b812c960372109cd33",
+            "durationSeconds": 22.461875,
+            "sentenceAnchors": {
+              "status": "not-recorded",
+              "captionTiming": "manual-editorial"
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-8f611687-9152-40d6-a142-2ff63d3c40d8.wav"
+          },
+          {
+            "sceneId": "s2-baselines",
+            "audioArtifactId": "narration-b6930abb-7eec-4fec-9dc2-c99b377d84a7.wav",
+            "sha256": "b2003657ccc6da9831069a6a68bffe6de2d14f530f312667d3ed6eb046763bea",
+            "durationSeconds": 25.7860625,
+            "sentenceAnchors": {
+              "status": "not-recorded",
+              "captionTiming": "manual-editorial"
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-b6930abb-7eec-4fec-9dc2-c99b377d84a7.wav"
+          },
+          {
+            "sceneId": "s3-example",
+            "audioArtifactId": "narration-05a44563-f7d5-4df7-a111-27788ad6d671.wav",
+            "sha256": "2d18171cf87d389ddb744b6f1bf97ee7a52c06347a21275c481eb06b437f80af",
+            "durationSeconds": 26.860625,
+            "sentenceAnchors": {
+              "status": "not-recorded",
+              "captionTiming": "manual-editorial"
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-05a44563-f7d5-4df7-a111-27788ad6d671.wav"
+          },
+          {
+            "sceneId": "s4-hybridlink",
+            "audioArtifactId": "narration-a20ffa89-0429-45bf-9121-be3837221768.wav",
+            "sha256": "14dd3dc9e66511c12ae2d81d2e9343fa4e1ec2d3ef267e406cfba8d6fe5b0d23",
+            "durationSeconds": 25.3366875,
+            "sentenceAnchors": {
+              "status": "not-recorded",
+              "captionTiming": "manual-editorial"
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-a20ffa89-0429-45bf-9121-be3837221768.wav"
+          },
+          {
+            "sceneId": "s5-memory",
+            "audioArtifactId": "narration-f114984f-d64c-4655-9b25-0d541a50bbf4.wav",
+            "sha256": "8ace8aed5b17212c16ec2fa3572e797364421e68205e47176e1a7b8502523d12",
+            "durationSeconds": 29.8805625,
+            "sentenceAnchors": {
+              "status": "not-recorded",
+              "captionTiming": "manual-editorial"
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-f114984f-d64c-4655-9b25-0d541a50bbf4.wav"
+          },
+          {
+            "sceneId": "s6-training",
+            "audioArtifactId": "narration-2c4512b3-ad94-4fbc-9eb8-02447ef4d4d7.wav",
+            "sha256": "74616c8826176675868331e226d1e77a1480e0587a4e4c3012fba3436cfab9e7",
+            "durationSeconds": 27.282875,
+            "sentenceAnchors": {
+              "status": "not-recorded",
+              "captionTiming": "manual-editorial"
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-2c4512b3-ad94-4fbc-9eb8-02447ef4d4d7.wav"
+          },
+          {
+            "sceneId": "s7-results",
+            "audioArtifactId": "narration-41813bea-d9a1-4dea-9f74-552896b5742b.wav",
+            "sha256": "3e3b38d5d30306efc5fedc36760293e306d19d0f6e0cb09c3dd3669933b432c0",
+            "durationSeconds": 31.9231875,
+            "sentenceAnchors": {
+              "status": "not-recorded",
+              "captionTiming": "manual-editorial"
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-41813bea-d9a1-4dea-9f74-552896b5742b.wav"
+          },
+          {
+            "sceneId": "s8-boundaries",
+            "audioArtifactId": "narration-ba1c7a2d-5187-4afd-89c7-b91b6fd642a6.wav",
+            "sha256": "f3c35beca36bf6f71a3ce70d4c1617c3006ac8d7c01fd0f27922f187d4c64064",
+            "durationSeconds": 31.4186875,
+            "sentenceAnchors": {
+              "status": "not-recorded",
+              "captionTiming": "manual-editorial"
+            },
+            "originalGeneration": {
+              "kind": "tts",
+              "options": {
+                "provider": "local-matcha",
+                "voice": "local-zh-en",
+                "ratePercent": 0
+              }
+            },
+            "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-ba1c7a2d-5187-4afd-89c7-b91b6fd642a6.wav"
+          }
+        ]
+      },
+      "sources": [
+        {
+          "artifactId": "hybrid-reference.mp4",
+          "sha256": "7e1ff499f4541b9849a5c0264c6a04bb56114a035db3f8084841a7a7bc3eaff1",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/hybrid-reference.mp4",
+          "bytes": 16435979
+        },
+        {
+          "artifactId": "1792218612528-github-readme-demo-block.png",
+          "sha256": "3aad8b8e2fb3b266cbc72a526248ec9bd9afc12b96ec07d4c18c36c6f67160f7",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/1792218612528-github-readme-demo-block.png",
+          "bytes": 254
+        },
+        {
+          "artifactId": "1792218616770-github-readme-demo-pre3.png",
+          "sha256": "c6ddbdeeb55ef390db04c42a754ef0ca21f5853a899d0b470c84f5a633285ace",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/1792218616770-github-readme-demo-pre3.png",
+          "bytes": 83958
+        },
+        {
+          "artifactId": "1792218625855-github-readme-demo-retina.png",
+          "sha256": "66a437742d41e8021ec7552c0f2e887e25276fc28524bd3d0a83cf37c9254ea6",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/1792218625855-github-readme-demo-retina.png",
+          "bytes": 179471
+        },
+        {
+          "artifactId": "1792218654383-arxiv-table6.png",
+          "sha256": "ee8b774d1ea70f9b7aa7d5670fe04245178b5465c664a83bc8657dac3cb47f4b",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/1792218654383-arxiv-table6.png",
+          "bytes": 27477
+        },
+        {
+          "artifactId": "1792218660098-arxiv-table6-retina.png",
+          "sha256": "79de5dfe15706789b2ff636be8ac6db5425666025bd1a3434fa5ca36b638b7cf",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/1792218660098-arxiv-table6-retina.png",
+          "bytes": 65990
+        },
+        {
+          "artifactId": "1792218718933-github-hybridlink-code.png",
+          "sha256": "3bace4d396985f92115e23b054cd0526787ed665ba1418e87a7fbeee485ae607",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/1792218718933-github-hybridlink-code.png",
+          "bytes": 184853
+        },
+        {
+          "artifactId": "source-93f1ed9b-09a7-4691-a247-5d89dc71973f.txt",
+          "sha256": "99d564dde532e4ccfb27771f53b9c35da9baf8b718ab62c93251702f7a2eb5ae",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/source-93f1ed9b-09a7-4691-a247-5d89dc71973f.txt",
+          "bytes": 50402
+        },
+        {
+          "artifactId": "source-fdeb3e44-2d04-40df-93ad-78e6da17c7cb.txt",
+          "sha256": "38b8da78087110ea3b09d44621db6c7cf131efa2eb58ba700ddcbe0528b3d267",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/source-fdeb3e44-2d04-40df-93ad-78e6da17c7cb.txt",
+          "bytes": 6048
+        },
+        {
+          "artifactId": "narration-8f611687-9152-40d6-a142-2ff63d3c40d8.wav",
+          "sha256": "43a4d2776d26b1e3eeed75f3b9627c377b23413ba1a3a7b812c960372109cd33",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-8f611687-9152-40d6-a142-2ff63d3c40d8.wav",
+          "bytes": 718824
+        },
+        {
+          "artifactId": "narration-b6930abb-7eec-4fec-9dc2-c99b377d84a7.wav",
+          "sha256": "b2003657ccc6da9831069a6a68bffe6de2d14f530f312667d3ed6eb046763bea",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-b6930abb-7eec-4fec-9dc2-c99b377d84a7.wav",
+          "bytes": 825198
+        },
+        {
+          "artifactId": "narration-05a44563-f7d5-4df7-a111-27788ad6d671.wav",
+          "sha256": "2d18171cf87d389ddb744b6f1bf97ee7a52c06347a21275c481eb06b437f80af",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-05a44563-f7d5-4df7-a111-27788ad6d671.wav",
+          "bytes": 859584
+        },
+        {
+          "artifactId": "narration-a20ffa89-0429-45bf-9121-be3837221768.wav",
+          "sha256": "14dd3dc9e66511c12ae2d81d2e9343fa4e1ec2d3ef267e406cfba8d6fe5b0d23",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-a20ffa89-0429-45bf-9121-be3837221768.wav",
+          "bytes": 810818
+        },
+        {
+          "artifactId": "narration-f114984f-d64c-4655-9b25-0d541a50bbf4.wav",
+          "sha256": "8ace8aed5b17212c16ec2fa3572e797364421e68205e47176e1a7b8502523d12",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-f114984f-d64c-4655-9b25-0d541a50bbf4.wav",
+          "bytes": 956222
+        },
+        {
+          "artifactId": "narration-2c4512b3-ad94-4fbc-9eb8-02447ef4d4d7.wav",
+          "sha256": "74616c8826176675868331e226d1e77a1480e0587a4e4c3012fba3436cfab9e7",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-2c4512b3-ad94-4fbc-9eb8-02447ef4d4d7.wav",
+          "bytes": 873096
+        },
+        {
+          "artifactId": "narration-41813bea-d9a1-4dea-9f74-552896b5742b.wav",
+          "sha256": "3e3b38d5d30306efc5fedc36760293e306d19d0f6e0cb09c3dd3669933b432c0",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-41813bea-d9a1-4dea-9f74-552896b5742b.wav",
+          "bytes": 1021586
+        },
+        {
+          "artifactId": "narration-ba1c7a2d-5187-4afd-89c7-b91b6fd642a6.wav",
+          "sha256": "f3c35beca36bf6f71a3ce70d4c1617c3006ac8d7c01fd0f27922f187d4c64064",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/narration-ba1c7a2d-5187-4afd-89c7-b91b6fd642a6.wav",
+          "bytes": 1005442
+        },
+        {
+          "artifactId": "style-reference-AK-A01-sheet.jpg",
+          "sha256": "5ca86b43f7cc5737c6b898bc3fef4c0b938e2e3a6f92b65c07bb8437fe7f751c",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/akhaliq-analysis/A01/sheet-02.jpg",
+          "bytes": 382671
+        },
+        {
+          "artifactId": "source-notes.txt",
+          "sha256": "97882afbf4d22c034aea49b5fb6db3cb4d06fc291c91dbda52dcd57160ca51fe",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-remakes/research-source-notes.txt",
+          "bytes": 6591
+        },
+        {
+          "artifactId": "scene-map.txt",
+          "sha256": "5b06aec9b82a1ccb57636c82d59c0bf164d55cc7043b72242d133eb708e3ef09",
+          "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-remakes/research-scene-map.txt",
+          "bytes": 6322
+        }
+      ],
+      "technical": {
+        "report": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/video-17fad916-97fc-46bb-af12-c0fef84609a0.json",
+        "sha256": "e50acc1efa5a649f0039109cee4253d30885b5cc2e551d8f275b858bbe67f879",
+        "status": "passed",
+        "codecs": [
+          {
+            "type": "video",
+            "codec": "avc",
+            "canDecode": true
+          },
+          {
+            "type": "audio",
+            "codec": "aac",
+            "canDecode": true
+          }
+        ],
+        "qualityWarnings": [
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 0,
+            "seconds": 0,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "arXiv:2610.18861v1 · HybridAgent"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 0,
+            "seconds": 5.291666666666667,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "结构示意｜非本次复现"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 0,
+            "seconds": 5.291666666666667,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "TEXT"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 0,
+            "seconds": 5.291666666666667,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "LATENT"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 0,
+            "seconds": 5.291666666666667,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "TOOL"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 0,
+            "seconds": 5.291666666666667,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "ANSWER"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 0,
+            "seconds": 5.291666666666667,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "连续 h"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 0,
+            "seconds": 5.291666666666667,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "search"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 0,
+            "seconds": 5.291666666666667,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "python"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 0,
+            "seconds": 11.5,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "h → h′"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 0,
+            "seconds": 16,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "343 m/s"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 0,
+            "seconds": 16,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "29 s"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 1,
+            "seconds": 23.5,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "结构示意｜不给无源费用数据"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 1,
+            "seconds": 23.5,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "Plan"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 1,
+            "seconds": 23.5,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "回喂 h"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 1,
+            "seconds": 23.5,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "工具：原生入口"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 1,
+            "seconds": 23.5,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "工具：无入口"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 1,
+            "seconds": 23.5,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "两条基线 · 同一生成过程"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 1,
+            "seconds": 33.416666666666664,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "Plan · calc"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 1,
+            "seconds": 36.916666666666664,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "h → h → h"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 2,
+            "seconds": 51.083333333333336,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "20 °C → 10 km"
+          },
+          {
+            "code": "long-static-hold",
+            "severity": "warning",
+            "sceneIndex": 2,
+            "seconds": 67.5,
+            "message": "抽样的主要画面区域连续八秒变化很少，请检查讲解节奏；这不证明中间每帧静止。"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 3,
+            "seconds": 78.16666666666667,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "HybridLink"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 3,
+            "seconds": 85.45833333333333,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "W1 → W2：两层残差投影"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 3,
+            "seconds": 89.08333333333333,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "旁路：h 原样相加后进 e"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 3,
+            "seconds": 94.16666666666667,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "→ 文字 → tool 观察"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 4,
+            "seconds": 107.54166666666667,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "不是把潜推理重新写成文字"
+          },
+          {
+            "code": "long-static-hold",
+            "severity": "warning",
+            "sceneIndex": 4,
+            "seconds": 113.75,
+            "message": "抽样的主要画面区域连续八秒变化很少，请检查讲解节奏；这不证明中间每帧静止。"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 4,
+            "seconds": 127.33333333333333,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "29.15 s"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 4,
+            "seconds": 131.54166666666666,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "示意：非容量测量"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 5,
+            "seconds": 135.45833333333334,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "HybridSFT → HybridRL"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 5,
+            "seconds": 138.875,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "① SFT：入口 → 出口"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 5,
+            "seconds": 143.375,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "② 自条件：自己的 h 回灌"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 5,
+            "seconds": 149.625,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "③ RL：轨迹重放"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 5,
+            "seconds": 163.70833333333334,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "方法示意：本片未训练，也未部署"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 163.75,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "Identity · 准确率%"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 163.75,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "2-Layer+Res. · 准确率%"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 163.75,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "0"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 163.75,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "50"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 163.75,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "100"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 163.75,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "linear · 准确率%"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 163.75,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "MATH500"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 163.75,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "MedQA"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 163.75,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "MuSiQue"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 163.75,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "数据集 · linear"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 163.75,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "Table 6 · 14B · 准确率（%）"
+          },
+          {
+            "code": "painted-text-overlap",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 164.20833333333334,
+            "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+            "text": "同骨干，同条件对照 / Table 6 · 14B"
+          },
+          {
+            "code": "long-static-hold",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 180.25,
+            "message": "抽样的主要画面区域连续八秒变化很少，请检查讲解节奏；这不证明中间每帧静止。"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 186.25,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "纵轴 0–100，单位：准确率 %"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 190.66666666666666,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "作者报告的结果 · 非本片复现"
+          },
+          {
+            "code": "painted-text-overlap",
+            "severity": "warning",
+            "sceneIndex": 6,
+            "seconds": 190.66666666666666,
+            "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+            "text": "纵轴 0–100，单位：准确率 % / 作者报告的结果 · 非本片复现"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 196.70833333333334,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "边界 · arXiv:2610.18861v1"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 203.29166666666666,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "可读伪文本"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 203.29166666666666,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "每个 h 都解释？"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 203.29166666666666,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "连续 h 状态"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 207.5,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "硬件 / 数据 / 任务一变"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 211,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "不，只是入口"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 211.41666666666666,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "可审计入口 ≠ 已复现"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 216.125,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "假设示意｜未做丢上下文实验"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 216.125,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "KV1 文字"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 216.125,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "KV2 潜 h"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 216.125,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "KV3 观察"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 216.125,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "？"
+          },
+          {
+            "code": "painted-text-overlap",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 216.125,
+            "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+            "text": "可读 ≠ 完全解释（示意） / 若第二轮丢掉连续 KV"
+          },
+          {
+            "code": "painted-text-overlap",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 216.125,
+            "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+            "text": "可读伪文本 / KV1 文字"
+          },
+          {
+            "code": "painted-text-overlap",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 216.125,
+            "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+            "text": "不，只是入口 / KV2 潜 h"
+          },
+          {
+            "code": "painted-text-overlap",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 216.125,
+            "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+            "text": "不，只是入口 / KV3 观察"
+          },
+          {
+            "code": "painted-text-overlap",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 216.125,
+            "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+            "text": "连续 h 状态 / ？"
+          },
+          {
+            "code": "phone-small-text",
+            "severity": "warning",
+            "sceneIndex": 7,
+            "seconds": 229.125,
+            "message": "文字在 390px 宽手机预览中小于 12px，请放大或节选。",
+            "text": "？ 需对照"
+          }
+        ]
+      },
+      "agentVisualReview": {
+        "journal": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/video-studio/export-reviews/37bb5c71-c529-4045-b5f0-04293b3481c0.json",
+        "sha256": "23dfd37f4c47c131919d23bb058bc494e4e90825d6a0f4107f181fd480560818",
+        "totalGeneratedCriticalFrames": 192,
+        "scenes": [
+          {
+            "sceneId": "s1-question",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "已看当前指纹 s1 全部 3 页 24 张：0–4.9s 引用截屏+问题行不裁字；5–17s 模式条 TEXT/LATENT/TOOL/ANSWER 与连续 h/search/python 逐段高亮，h 小包随模式移动（在 ANSWER 行仍有轻微压字但可读）；17.5–23.5s 收束到「状态，怎么接上工具？」。字幕全程单行底部、未遮内容。",
+              "createdAt": "2026-10-17T13:50:17.446Z",
+              "sequence": 1
+            }
+          },
+          {
+            "sceneId": "s2-baselines",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "已看当前指纹 s2 全部 3 页 24 张：0–9s 两栏对照（Plan/回喂 h，工具：原生入口/无入口）与「结构示意｜不给无源费用数据」标注；9.9–19.9s 第1列切 Plan·calc 与绿色入口高亮、第2列变 h→h→h，指标不输出无源数字；20–26.7s 两行文字切换（潜=连续隐藏向量→不是压缩后的中文→更不等于会用工具）。无裁切、无遮挡。",
+              "createdAt": "2026-10-17T13:50:17.520Z",
+              "sequence": 2
+            }
+          },
+          {
+            "sceneId": "s3-example",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "已看当前指纹 s3 全部 3 页 24 张：0–7s README 两行（search 行 + Page 1 行）完整可读不再裁字，傍附 20 °C → 10 km；7–10s 343 m/s 绿色条从左滑入计算器屏幕；10–12s 屏幕 10000 ÷ 343；12–14s 29.15 s；14–17.5s 转暗黄 29 s；17.6–27.9s 回到同一 README 块作为伪文本证据（缓慢推近）。计算器实体、键盘与结果全程可辨认，字幕底部不遮内容。",
+              "createdAt": "2026-10-17T13:50:21.842Z",
+              "sequence": 3
+            }
+          },
+          {
+            "sceneId": "s4-hybridlink",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "已看当前指纹 s4 全部 3 页 24 张：空间路径（h 末层 → 错位槽× → W1/W2 → e 嵌入槽）与旁路回环全程可见；h 点阵大包 1.8s 出现于 h 槽、5.6s 落入错位槽（× 仍可见）、7.6s 退回、9.2s 进 W1、11.4s 进 W2、14.6s 到 e 后 18.2s 淡出；顶部两行阶段标签（W1→W2 两层残差投影 / 旁路叠加后进 e）与 16s 的 → 文字 → tool 观察 依次出现。h 包经 W1/W2 时短暂压过小字「投影」属预期。19.5s 后 verdict 行横过图形下缘但与任何标签文字不重叠。",
+              "createdAt": "2026-10-17T13:50:44.549Z",
+              "sequence": 4
+            }
+          },
+          {
+            "sceneId": "s5-memory",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "已看当前指纹 s5 全部 3 页 24 张：左侧计算器实体 + 右侧 KV 托盘（KV 标题、3 个槽、彩色发端标记）全程在位；16.2s 343 m/s 绿条从左入场，18.4s 落入第 1 槽并保留到结尾（132–135s 仍在）；22.8s 计算器屏幕亮起 29.15 s；24.4s 黄色 29.15 s 条从计算器旁出发，26s 落入第 2 槽，之后两槽同存、首槽未消失；26.6s 出现「示意：非容量测量」。托盘未重新变空，无裁切。",
+              "createdAt": "2026-10-17T13:51:02.844Z",
+              "sequence": 5
+            }
+          },
+          {
+            "sceneId": "s6-training",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "已看当前指纹 s6 全部 3 页 24 张：三站（SFT 入口/出口、RL 轨迹 + 轨迹重放三小格）与橙色自条件回流箭头常驻；h 点阵大包 3.4s 出现在入口、7.2s 到出口、9.4s 下走回流路径（短暂压过「自条件回流」小字）、10.6s 回到入口、13.8s 再出、16.4s 到 RL，21.4s 淡出；①②③ 三个短标逐段出现在左下，最后换成「方法示意：本片未训练，也未部署」。h 包在站内会遮住部分站名（SFT 入口/出口），但同段字幕与左侧短标 ①/②/③ 仍完整说明，无数据错误。",
+              "createdAt": "2026-10-17T13:51:23.379Z",
+              "sequence": 6
+            }
+          },
+          {
+            "sceneId": "s7-results",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "已看当前指纹 s7 全部 3 页 24 张：0–22s 分组柱状图（Identity 灰 vs 2-Layer+Res. 蓝）在 MATH500/MedQA/MuSiQue 三集，纵轴 0–50–100 零基线、图例与「准确率%」单位完整，与旁白顺序一致（71.4/73.7/24.5 → 88.2/81.7/34.5）；22.3–27.3s 切到 Table 6 原表截图，Identity (No Alignment) 71.4/73.7/24.5 与 2-Layer+Res. (ours) 88.2/81.7/34.5 一行不少，附「纵轴 0–100，单位：准确率 %」；26.8s 起出现「作者报告的结果 · 非本片复现」。两处非阻塞小瑕疵：顶部灰字 kicker 与图表标题重复、上缘被画幅切去一截；27.2s 两行说明交叉淡入淡出约 0.4s 重叠。数据、单位、末行均无误。",
+              "createdAt": "2026-10-17T13:52:00.409Z",
+              "sequence": 7
+            }
+          },
+          {
+            "sceneId": "s8-boundaries",
+            "frames": 24,
+            "totalSamples": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "已看当前指纹 s8 全部 3 页 24 张：0–9s 引用 GitHub 代码截图（HybridLink 定义行与 R(h)=h+W2σ(W1 h)）+「边界 · arXiv:2610.18861v1」kicker；9–16s 面板「可读 ≠ 完全解释（示意）」，三枚 chip 可读伪文本 / 每个 h 都解释？→不，只是入口 / 连续 h 状态，footer 可审计入口 ≠ 已复现；19–32s 切到「若第二轮丢掉连续 KV」KV1/KV2/KV3 + ? 需对照，footer 假设示意｜未做丢上下文实验。小瑕疵：代码截图上缘第一行（HybridLink: a lightweight residual adapter…）上沿被裁去一截，后两行与公式完整；无数据错。",
+              "createdAt": "2026-10-17T13:52:23.445Z",
+              "sequence": 8
+            }
+          }
+        ],
+        "film": {
+          "status": "passed",
+          "notes": "全片 Agent 意见（基于当前指纹 c9eb9988… 的 8×24=192 张实际导出帧，逐场看过）：结构上 0–23.5s 问题与三介质，23.5–50.3s 两条基线，50.3–78.2s README 演示（大计算器 343→10000÷343→29.15s→29s，伪文本回证），78.2–104.5s HybridLink 空间路径（h 错位槽→W1/W2→e，旁路回加），104.5–135.5s KV 两轮（343 存第1格、29.15 进第2格、首格不消失），135.5–163.8s SFT→自条件回流→RL，163.8–196.7s Table 6（71.4/73.7/24.5 vs 88.2/81.7/34.5，零基线 0–100，准确率%，末行完整，作者报告非复现），196.7–229.2s 边界与可检验预测。字幕全程底部、逐句覆盖、未遮内容。遗留非阻塞瑕疵（已在单场注明）：s7 顶部灰字 kicker 上缘被画幅切去且与图表标题重复、27.2s 两行说明短暂重叠；s8 代码引用首行上沿被裁。局限：技术报告仅证明编码/时长，布局告警为 390px 小字抽样；未试听音频（Matcha 原 8 段复用），字幕时间为 editorial-estimate，非 ASR 也不是人听结论；用户听感/复述/预测/接受仍未做。",
+          "createdAt": "2026-10-17T13:52:28.674Z",
+          "sequence": 9
+        },
+        "rootActualFrameSamples": [
+          {
+            "sceneId": "s1-question",
+            "sceneIndex": 0,
+            "phase": 0.25,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 11,
+              "artifactId": "media-babb04fa-37b8-45b5-b2e2-65a30f3af6a0-frame-4.png",
+              "sha256": "a3f4689b93c767d84fd9b280018043a2ac22f7fc65cb58ed65b2ee9902404e33",
+              "seconds": 5.5,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-babb04fa-37b8-45b5-b2e2-65a30f3af6a0-frame-4.png",
+              "localSeconds": 5.5
+            }
+          },
+          {
+            "sceneId": "s1-question",
+            "sceneIndex": 0,
+            "phase": 0.75,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 20,
+              "artifactId": "media-96a2a6b9-5115-4503-8485-a64a4183d853-frame-5.png",
+              "sha256": "7e50a5e30a9c16327128743ac0fa7326b1af33e55a70596036d7232cf0a16bb4",
+              "seconds": 17.5,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-96a2a6b9-5115-4503-8485-a64a4183d853-frame-5.png",
+              "localSeconds": 17.5
+            }
+          },
+          {
+            "sceneId": "s2-baselines",
+            "sceneIndex": 1,
+            "phase": 0.25,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 8,
+              "artifactId": "media-f7a94f1f-380d-4ed5-88ee-fd3f7b17705e-frame-1.png",
+              "sha256": "2bf56890dfa8fb3a9d7bbaa6f6674a8c290ad0adcc9ed9a517c76cd7121f8d54",
+              "seconds": 33.416666666666664,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-f7a94f1f-380d-4ed5-88ee-fd3f7b17705e-frame-1.png",
+              "localSeconds": 9.916666666666664
+            }
+          },
+          {
+            "sceneId": "s2-baselines",
+            "sceneIndex": 1,
+            "phase": 0.75,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 15,
+              "artifactId": "media-f7a94f1f-380d-4ed5-88ee-fd3f7b17705e-frame-8.png",
+              "sha256": "262239403b0e35198d9f51005623109216fed85e5b6c99f6d2ef5f47697478b8",
+              "seconds": 43.416666666666664,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-f7a94f1f-380d-4ed5-88ee-fd3f7b17705e-frame-8.png",
+              "localSeconds": 19.916666666666664
+            }
+          },
+          {
+            "sceneId": "s3-example",
+            "sceneIndex": 2,
+            "phase": 0.25,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 4,
+              "artifactId": "media-396d4173-0ce7-4e8a-874e-f6081c2f5ca0-frame-5.png",
+              "sha256": "ef8ba531d4fe66616ae641548fa55b1b4b592b15a07b7cec2d2e38d9af46623e",
+              "seconds": 57.208333333333336,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-396d4173-0ce7-4e8a-874e-f6081c2f5ca0-frame-5.png",
+              "localSeconds": 6.875
+            }
+          },
+          {
+            "sceneId": "s3-example",
+            "sceneIndex": 2,
+            "phase": 0.75,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 22,
+              "artifactId": "media-8dff5cb7-9bc5-4a2d-b701-90b44d9c59a0-frame-7.png",
+              "sha256": "fb683137af7fa0a1b2e01ecf3645bb20bb903e9d7bebb29bfe5a2b9fd3e20167",
+              "seconds": 68.29166666666667,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-8dff5cb7-9bc5-4a2d-b701-90b44d9c59a0-frame-7.png",
+              "localSeconds": 17.958333333333336
+            }
+          },
+          {
+            "sceneId": "s4-hybridlink",
+            "sceneIndex": 3,
+            "phase": 0.25,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 7,
+              "artifactId": "media-4fea1de3-80a7-4fad-ae5d-3240175401af-frame-8.png",
+              "sha256": "a8deb92b1fddd2f9941cdfaa270360229ce9f1fab29f5bdea439003276285404",
+              "seconds": 84.95833333333333,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-4fea1de3-80a7-4fad-ae5d-3240175401af-frame-8.png",
+              "localSeconds": 6.791666666666657
+            }
+          },
+          {
+            "sceneId": "s4-hybridlink",
+            "sceneIndex": 3,
+            "phase": 0.75,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 22,
+              "artifactId": "media-ba8a0ee8-4c2f-43f7-92e0-0ac83361f0d0-frame-7.png",
+              "sha256": "53ed989e69893c687d353cf587fc695bb55d61a8e2949c3a816e3813ba5411c8",
+              "seconds": 94.75,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-ba8a0ee8-4c2f-43f7-92e0-0ac83361f0d0-frame-7.png",
+              "localSeconds": 16.58333333333333
+            }
+          },
+          {
+            "sceneId": "s5-memory",
+            "sceneIndex": 4,
+            "phase": 0.25,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 6,
+              "artifactId": "media-19467c33-edcc-434c-a573-6e4d6f70655d-frame-7.png",
+              "sha256": "6d97f4faaf520cf339bc7e77b05574975acf134505e8ce255f127866e9ea5407",
+              "seconds": 113.75,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-19467c33-edcc-434c-a573-6e4d6f70655d-frame-7.png",
+              "localSeconds": 9.208333333333329
+            }
+          },
+          {
+            "sceneId": "s5-memory",
+            "sceneIndex": 4,
+            "phase": 0.75,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 13,
+              "artifactId": "media-6daa8c7b-c246-41b1-8840-4f8ba7b125df-frame-6.png",
+              "sha256": "47a1616ff5bc044c536622408faab4c1e036b79a4ca4fa843298c8f278642df9",
+              "seconds": 127.33333333333333,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-6daa8c7b-c246-41b1-8840-4f8ba7b125df-frame-6.png",
+              "localSeconds": 22.791666666666657
+            }
+          },
+          {
+            "sceneId": "s6-training",
+            "sceneIndex": 5,
+            "phase": 0.25,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 8,
+              "artifactId": "media-75904e89-1e02-401d-9dd5-8676fc8ec127-frame-1.png",
+              "sha256": "07ae7e485e9a53a7cffcb0add16f4927cadb8ae21678884ba8b99e78d3d9f271",
+              "seconds": 142.66666666666666,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-75904e89-1e02-401d-9dd5-8676fc8ec127-frame-1.png",
+              "localSeconds": 7.208333333333314
+            }
+          },
+          {
+            "sceneId": "s6-training",
+            "sceneIndex": 5,
+            "phase": 0.75,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 22,
+              "artifactId": "media-e8b459e1-6890-469a-94c4-f70ca3dbe8e2-frame-7.png",
+              "sha256": "d78d3c66d742d81e88d45446716699dc69c6432934044220dd626137d464d8aa",
+              "seconds": 156.66666666666666,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-e8b459e1-6890-469a-94c4-f70ca3dbe8e2-frame-7.png",
+              "localSeconds": 21.208333333333314
+            }
+          },
+          {
+            "sceneId": "s7-results",
+            "sceneIndex": 6,
+            "phase": 0.25,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 13,
+              "artifactId": "media-ee4499b9-5a9b-449b-a74f-fa62d21cbda8-frame-6.png",
+              "sha256": "c5eec701b253d59122073667b1ebbc2359ef12ccb497374260c23c045bd2674c",
+              "seconds": 168.08333333333334,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-ee4499b9-5a9b-449b-a74f-fa62d21cbda8-frame-6.png",
+              "localSeconds": 4.333333333333343
+            }
+          },
+          {
+            "sceneId": "s7-results",
+            "sceneIndex": 6,
+            "phase": 0.75,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 18,
+              "artifactId": "media-93435fca-b856-4be5-9ae5-7b0c314de557-frame-3.png",
+              "sha256": "e7cdc5d3f105b128a6583395dddf194fda73de6bf3adc7ee0a0c25debd8d7dc7",
+              "seconds": 186.45833333333334,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-93435fca-b856-4be5-9ae5-7b0c314de557-frame-3.png",
+              "localSeconds": 22.708333333333343
+            }
+          },
+          {
+            "sceneId": "s8-boundaries",
+            "sceneIndex": 7,
+            "phase": 0.25,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 7,
+              "artifactId": "media-73db5259-5d6c-4347-bd2f-fd1193016615-frame-8.png",
+              "sha256": "47f7abd4f670ee82a9a23b00cc1dda065588bccaff917ac9f5d929d89dd22fda",
+              "seconds": 205,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-73db5259-5d6c-4347-bd2f-fd1193016615-frame-8.png",
+              "localSeconds": 8.291666666666657
+            }
+          },
+          {
+            "sceneId": "s8-boundaries",
+            "sceneIndex": 7,
+            "phase": 0.75,
+            "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+            "frame": {
+              "index": 22,
+              "artifactId": "media-7663fd64-3e32-4be3-8822-2c9445898aa8-frame-7.png",
+              "sha256": "23eff6073aa804599444c9e96cbafd7cccc02a6fa5fe53ca52ea057be35d5289",
+              "seconds": 216.5,
+              "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-7663fd64-3e32-4be3-8822-2c9445898aa8-frame-7.png",
+              "localSeconds": 19.791666666666657
+            }
+          }
+        ],
+        "rootReview": {
+          "reviewedAt": "2026-10-17T13:53:54.867Z",
+          "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+          "viewedSamples": 16,
+          "additionalViewedSamples": 5,
+          "additionalFrames": [
+            {
+              "sceneId": "s1-question",
+              "requestedLocalSeconds": 18.4,
+              "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+              "frame": {
+                "index": 21,
+                "artifactId": "media-96a2a6b9-5115-4503-8485-a64a4183d853-frame-6.png",
+                "sha256": "feee32fb5bec22513f26ea4c6ae5679fed16e7e8757a515e54657811e5768326",
+                "seconds": 17.916666666666668,
+                "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-96a2a6b9-5115-4503-8485-a64a4183d853-frame-6.png",
+                "localSeconds": 17.916666666666668
+              }
+            },
+            {
+              "sceneId": "s2-baselines",
+              "requestedLocalSeconds": 21,
+              "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+              "frame": {
+                "index": 16,
+                "artifactId": "media-2a2b2f3e-580f-446c-a476-ba70e30a45d9-frame-1.png",
+                "sha256": "1c66f2995df66a17a6c0d7b1a44f4851db2676eebb8c14152fed21c941fd8280",
+                "seconds": 43.708333333333336,
+                "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-2a2b2f3e-580f-446c-a476-ba70e30a45d9-frame-1.png",
+                "localSeconds": 20.208333333333336
+              }
+            },
+            {
+              "sceneId": "s3-example",
+              "requestedLocalSeconds": 15,
+              "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+              "frame": {
+                "index": 18,
+                "artifactId": "media-8dff5cb7-9bc5-4a2d-b701-90b44d9c59a0-frame-3.png",
+                "sha256": "3dc87c80f6bbb4263a43f623f6400d0236cb891d8340d784eb766f3ce4b32fb4",
+                "seconds": 64.58333333333333,
+                "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-8dff5cb7-9bc5-4a2d-b701-90b44d9c59a0-frame-3.png",
+                "localSeconds": 14.249999999999993
+              }
+            },
+            {
+              "sceneId": "s3-example",
+              "requestedLocalSeconds": 25.5,
+              "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+              "frame": {
+                "index": 23,
+                "artifactId": "media-8dff5cb7-9bc5-4a2d-b701-90b44d9c59a0-frame-8.png",
+                "sha256": "79d06f3265b62389243ccd54fd6d14fbc2c1a9851e6eafd9427c266a1555d46c",
+                "seconds": 78.125,
+                "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-8dff5cb7-9bc5-4a2d-b701-90b44d9c59a0-frame-8.png",
+                "localSeconds": 27.791666666666664
+              }
+            },
+            {
+              "sceneId": "s5-memory",
+              "requestedLocalSeconds": 27.5,
+              "exportFingerprint": "c9eb9988741d73113fd61e94a1d330ede36ad2c8a10cbfea668099f7d44f12b6",
+              "frame": {
+                "index": 20,
+                "artifactId": "media-40b62958-2e27-495d-a6da-417cc2578770-frame-5.png",
+                "sha256": "5ff7cf9f5b1a744485f1c722d4df40825a7c632b432fc0728f577bcebc23a14a",
+                "seconds": 132.125,
+                "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/workspace/artifacts/media-40b62958-2e27-495d-a6da-417cc2578770-frame-5.png",
+                "localSeconds": 27.58333333333333
+              }
+            }
+          ],
+          "scope": "Root agent actually viewed two current decoded MP4 PNGs per scene plus five targeted steady-state / final-memory frames; DSH separately viewed the complete paginated critical-state samples.",
+          "notes": [
+            "The main mechanism scenes now use a recognizable calculator, large h packet, projection paths, KV tray and training return path.",
+            "The dim s1/s2 selected frames were inside fades. Additional actual frames after those fades show white question / latent-vector text clearly.",
+            "The calculator steady frame shows rounded 29s. Late s5 actual frame retains 343m/s in slot one while 29.15s occupies slot two.",
+            "Table6 screenshot includes the full last row and the six stated same-14B numbers. Native chart uses 0–100 accuracy baseline.",
+            "Some small source labels and secondary diagram text remain difficult at phone width. h temporarily overlaps station labels; s7 duplicate kicker and s8 top code line have minor clipping.",
+            "The end of s3 briefly holds a small source strip without an illustration. These remain stated visual limitations; sampling does not prove every frame or audio quality."
+          ],
+          "status": "reviewed-with-stated-limitations"
+        }
+      },
+      "humanListening": "not-performed",
+      "humanAcceptance": "pending",
+      "timing": "editorial-estimate; not ASR/acoustic alignment",
+      "productionReceipt": {
+        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/result.json",
+        "sha256": "a6da49a04b8a648ebdb4da28900764bfb846a2867bbdecd785035895ce90dc6e"
+      },
+      "previousVersionsPreserved": true
+    }
+  ],
+  "verification": {
+    "createdAt": "2026-10-17T13:55:19.962Z",
+    "pushedBaseCommit": "91902ec",
+    "buildAndCheck": "passed",
+    "buildReceipt": ".bmw-runtime/build-receipt.json",
+    "buildReceiptSha256": "805756f3d91d2da8b1c3101883ba66bd6785d53e8f9148afc261737256ba3aa9",
+    "finalAuthoredSourceHashes": {
+      "scripts/dsh-production-case.ts": "24bd503300e538d87600530ba0b725b5e2df6d71ea6b18b68866770e5f59e9dd",
+      "packages/harness-dsh/src/dsh-events.ts": "ad1274546cffd7b5cd355725080fd3e7d8e02fd99aabba2a136ba20e70b9302c",
+      "packages/harness-dsh/test/dsh-events.test.ts": "41d98ceb260e8dfe686d74d942090e14c7ee101d6bce3cce541344666cb6b6fb"
+    },
+    "preset": {
+      "source": "packages/harness-dsh/dsh/preset/base/agent.cordis.yml",
+      "sha256": "aa1085880c566e8c063cc01dcd9fb370063e32cad23ebd9b17a9ce5139214d37",
+      "installedPresets": [
+        {
+          "kind": "science",
+          "path": ".bmw-runtime/dsh-science/2026-10-17T12-53-23-337Z/profile/dsh-home/.agent-presets/bmw/agent.cordis.yml",
+          "sha256": "aa1085880c566e8c063cc01dcd9fb370063e32cad23ebd9b17a9ce5139214d37"
+        },
+        {
+          "kind": "research",
+          "path": ".bmw-runtime/dsh-research/2026-10-17T12-53-26-148Z/profile/dsh-home/.agent-presets/bmw/agent.cordis.yml",
+          "sha256": "aa1085880c566e8c063cc01dcd9fb370063e32cad23ebd9b17a9ce5139214d37"
+        }
+      ],
+      "scope": "Preset YAML is separately hashed because the classified TypeScript source graph does not inventory YAML."
+    },
+    "fullRegression": {
+      "report": ".bmw-runtime/classified-tests/2026-10-17-dsh-compaction-events/result.json",
+      "sha256": "b28de25e6952403b8228965af310a35a03fb974bc9dd0491808bfda53da87000",
+      "counts": {
+        "not-run": 12,
+        "passed": 162
+      },
+      "currentNonMarkdownDifferences": [
+        "packages/harness-dsh/src/dsh-events.ts",
+        "packages/harness-dsh/test/dsh-events.test.ts"
+      ],
+      "scope": "Complete source-bound regression before the final append-wire correction. All renderer/media/UI and boundary sources remain identical; it is not claimed as a final all-source baseline."
+    },
+    "finalUnitContractBoundary": {
+      "report": ".bmw-runtime/classified-tests/2026-10-17-dsh-final-unit/result.json",
+      "sha256": "c41a7ffb5dab794d465a877debbca21271efc99157165565fe9f1685d754407f",
+      "counts": {
+        "not-run": 79,
+        "passed": 94
+      },
+      "nonMarkdownSourceDifferences": []
+    },
+    "finalDshUnit": {
+      "passed": 36,
+      "failed": 0,
+      "log": ".bmw-runtime/dsh-remakes/final-dsh-unit.log",
+      "sha256": "3b5ba1aa7c7cc2091426fcbd2d4d4f81b7e4086433040fd253ab46043b027c7e"
+    },
+    "finalColdDsh": {
+      "passed": true,
+      "noModelInput": true,
+      "disposableHome": true,
+      "log": ".bmw-runtime/dsh-remakes/final-dsh-cold.log",
+      "sha256": "a653c9e4416561b211fef80268d0c7047791a9b47b75524a000f826ed0ac054f"
+    },
+    "appendWireRegression": {
+      "before": {
+        "log": ".bmw-runtime/dsh-remakes/append-before.log",
+        "sha256": "54eab1165a4a0018817259af006b575baafa566c262c61467dd89136c7036049",
+        "result": "reproduced failure"
+      },
+      "after": {
+        "log": ".bmw-runtime/dsh-remakes/append-after.log",
+        "sha256": "17567e9d11b73307c62c69945a080e3e0b9cde88624b110380e39911943aa97f",
+        "result": "passed"
+      }
+    },
+    "finalCheck": {
+      "log": ".bmw-runtime/dsh-remakes/final-check.log",
+      "sha256": "abc0d1ac7d6be9d4b03146e4cee19780176395928b5cebc30c6ed80209286ff5"
+    },
+    "paidProduction": "Separate actual DSH/Flash cases; not part of offline fixture counts.",
+    "documentationCheck": {
+      "status": "passed",
+      "log": ".bmw-runtime/dsh-remakes/final-doc-check.log",
+      "sha256": "abc0d1ac7d6be9d4b03146e4cee19780176395928b5cebc30c6ed80209286ff5"
+    },
+    "receipt": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-remakes/verification.json",
+    "sha256": "5f13d61a5726526a2e5629777462045f6f007e6cbd106a936979930394d9bae7"
+  },
+  "sourceLimitations": [
+    "Science uses the saved edited public robot demonstration, not a complete trial log or independent experiment. Mechanism/perturbation objects are explanatory illustrations.",
+    "Academic uses saved arXiv:2610.18861v1 and togethercomputer/HybridAgent sources; Table6 numbers are author-reported under paper conditions. README calculator sequence is an illustration, not model execution or reproduction.",
+    "量子位 and AK are visual-format references, not additional evidence for either topic.",
+    "No new Qwen synthesis, ASR alignment, human listening, retelling, prediction or acceptance is claimed."
+  ],
+  "comparison": "Prior Qoder full films remain in P1_AK_DELIVERY.json; prior accepted DSH SI remains in DSH_SI_DELIVERY.json."
+}

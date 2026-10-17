@@ -15,6 +15,7 @@
 | 模块、公开接口和测试映射 | [ARCHITECTURE.md](ARCHITECTURE.md) | 从模块与测试目录生成，不手改生成表 |
 | 如何验证、证据覆盖到哪里 | [VERIFICATION.md](VERIFICATION.md) | 当前检查结果、历史基线索引和覆盖边界 |
 | DSH 最新候选版制作 SI 新闻 | [DSH SI交付](research/DSH_SI_DELIVERY.json) | 独立工程、57.664秒MP4、模型路由、男声复用及实际审阅范围 |
+| DSH 科普与学术重制 | [两条完整主片交付](research/DSH_SCIENCE_RESEARCH_DELIVERY.json) | 量子位／AK形式参考、原声复用、实际MP4与审阅、原生压缩及验证范围 |
 
 ## 当前专题规范
 

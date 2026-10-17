@@ -34,6 +34,8 @@ Browser is boundary, media is native, web is runtime.
 
 驱动装配点为 `apps/bmw/product.ts`，具体创建逻辑在 `agent-assembly.ts`。所有驱动必须遵循相同归属契约，不能把 BMW 页面/媒体所有权、权限或任务队列转交给模型。现行设计见 [AGENT_DRIVER_DESIGN.md](AGENT_DRIVER_DESIGN.md)，阶段验收见 [历史实施记录](history/agent-drivers/IMPLEMENTATION.md)，未完成项见 [下一步设计](plans/NEXT_STEPS.md)。
 
+DSH 预设装配官方 `compaction-basic` 与 `compaction-tool-result-pruner`，由每个官方 Agent 在上下文压力与溢出时生成摘要、裁减旧工具结果并持久记录；长篇抽帧审阅可在同一 BMW Session 和原生 resume anchor 下继续。工具结果裁减门限为8192字符，保留前4096及后1024字符；原始 Project 媒体、Studio 草稿和宿主审阅回执保持原文件。驱动核对相邻 `compaction/prune`、单个旧序号、`surfaceOp:replace` 和 `sourceEventSeqs` 后将替换回执视为历史投影；不生成新工具完成事件、不关闭当前工具占用。孤立／错配／冒充当前调用的替换拒绝。有效目录仍须恰好一个 `browser`，压缩不引入模型工具或 Host 推理循环。
+
 ## 类型制作与 AK 增量（Video Document 2.10）
 
 `preparation.production`（规范文档 `content.brief.production`）是可选的闭合版本1工作表，固定 `profileId/profileVersion`，支持 `news-brief`、`science-explainer`、`research-explainer`。保存受众、主问题、目标时长意图、段落角色／目标／观察任务、稳定镜头引用与材料角色；实际时间仍只有现有时间线。`production-profiles` 读取版本化类型指导及六种有限配方；不改变模型目录、权限或预算，不安装外部 skill。`propose-type` 给保留／填充列表和候选 VideoEdit，`adopt-type` 要求同一 revision 与精确提案指纹；重新读取实际来源／设置，拒绝过期提案。配方仅填空画面说明及符合条件的空卡片槽，已有 GUI 编辑不被覆盖；测量配方明确要求填写真实数据。`production-read` 对工作表各部分按至多20项／32KiB分页（句目标省略Host绑定原文），`production-review` 给当前版本的缺口、人工量表、当前内容／MP4指纹及独立 assessmentRevision。`record-production-review` 记录五项类型检查、试听状态、观众复述／条件预测和说明；actor 由Host决定，Agent不能声明人工试听、观众回答或通过人工必需的check-5。GUI提供显式人工记录；只有当前指纹下的用户五项通过、实际试听声明、复述（T2/T3另需条件预测）且结构无缺口，才显示“已验收”。这是用户声明，不是Host科学或听感认证。Host记录保存在Project内version1类型审阅账本，固定Project／Session／draft，独立CAS，至多40项／256KiB，保留最近用户与Agent记录；普通文档更新不写此账本。内容、源文件、实际MP4或渲染版本改变后旧结论失效，技术可制作、Agent意见、人工试听、观众复述分开。
@@ -1058,6 +1060,8 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 - `DSH pre-input admission uses the exact scoped model catalog and immutable Project identity`
 - `DSH durable events retain tool IDs and text without leaking image bytes or thinking`
+- `DSH official prune replacements do not complete or duplicate live browser calls`
+- `DSH rejects orphan, mismatched and live-call prune replacements`
 
 #### `packages/harness-dsh/test/dsh-migration.test.ts`
 

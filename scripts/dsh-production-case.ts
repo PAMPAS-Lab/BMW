@@ -13,17 +13,18 @@ import {ProjectStore} from '../packages/platform/src/project-store.js'
 import {LayoutStore} from '../packages/platform/src/layout-store.js'
 import {bmwProduct} from '../packages/product-bmw/index.js'
 
-const task=process.env.BMW_DSH_TASK_FILE,sourceHome=process.env.BMW_DSH_SOURCE_HOME
+const task=process.env.BMW_DSH_TASK_FILE,sourceHome=process.env.BMW_DSH_SOURCE_HOME,caseKind=process.env.BMW_DSH_CASE_KIND??'si'
+if(!['si','science','research'].includes(caseKind))throw new Error('Unsupported bounded DSH production case kind.')
 if(!task||!sourceHome||!path.isAbsolute(task)||!path.isAbsolute(sourceHome))throw new Error('Explicit authorized BMW_DSH_TASK_FILE and BMW_DSH_SOURCE_HOME required.')
 const text=fs.readFileSync(task,'utf8');if(!text.trim()||text.length>60000)throw new Error('Invalid bounded production prompt.')
-const resume=process.env.BMW_DSH_RESUME_ROOT,root=resume?fs.realpathSync(resume):path.resolve('.bmw-runtime/dsh-si',new Date().toISOString().replace(/[:.]/g,'-')),profile=path.join(root,'profile')
+const resume=process.env.BMW_DSH_RESUME_ROOT,root=resume?fs.realpathSync(resume):path.resolve('.bmw-runtime/dsh-'+caseKind,new Date().toISOString().replace(/[:.]/g,'-')),profile=path.join(root,'profile')
 fs.mkdirSync(root,{recursive:true});process.env.BMW_USER_DATA_DIR=profile;requireCurrentAgentData(profile)
 const projects=new ProjectStore({filePath:path.join(profile,'projects.json'),projectsDirectory:path.join(root,'projects'),initialWorkspacePath:path.join(root,'workspace'),onState:undefined})
-if(!resume)projects.completeInitialSetup({name:'SI news / DSH Flash',homeUrl:''})
+if(!resume)projects.completeInitialSetup({name:caseKind==='science'?'科普重制 / DSH Flash':caseKind==='research'?'学术重制 / DSH Flash':'SI news / DSH Flash',homeUrl:''})
 const inputs=process.env.BMW_DSH_INPUT_INDEX
 if(inputs){const index:unknown=JSON.parse(fs.readFileSync(inputs,'utf8'));if(!Array.isArray(index)||index.length>32)throw new Error('Bounded explicit input index required.');const directory=path.join(projects.active().directory,'artifacts');fs.mkdirSync(directory,{recursive:true});for(const raw of index){const row=agentRecord(raw);if(typeof row.path!=='string'||!path.isAbsolute(row.path)||typeof row.artifactId!=='string'||!/^[A-Za-z0-9_.-]{1,200}$/.test(row.artifactId))throw new Error('Invalid source.');const stat=fs.lstatSync(row.path);if(!stat.isFile()||stat.isSymbolicLink()||stat.size>512*1024*1024)throw new Error('Invalid source file.');fs.copyFileSync(row.path,path.join(directory,row.artifactId),fs.constants.COPYFILE_EXCL)}}
 new LayoutStore({filePath:path.join(profile,'layout-settings.json'),onState:undefined}).update({configured:true,mode:'sidebar'})
-const evidence:Record<string,unknown>={root,driver:'dsh',harness:execFileSync('dsh',['--version'],{encoding:'utf8'}).trim(),requestedModel:['deepseek-official','deepseek-flash'],paidInference:true,profile:'disposable',startedAt:new Date().toISOString()}
+const evidence:Record<string,unknown>={root,caseKind,driver:'dsh',harness:execFileSync('dsh',['--version'],{encoding:'utf8'}).trim(),requestedModel:['deepseek-official','deepseek-flash'],paidInference:true,profile:'disposable',startedAt:new Date().toISOString()}
 const seen=new Set<string>(),headers:Record<string,unknown>[]=[],calls:{name:string;input:Record<string,unknown>}[]=[]
 createBmwApplication(bmwProduct,{pagePath:assistantPagePath,preloadPath:assistantPreloadPath,defaultDriverId:'dsh',createBackends(config){return [new DshBackend({userDataDirectory:config.userDataDirectory,sourceDshHome:sourceHome,connection:config.connection,controlConnection:config.controlConnection,getModel:()=>config.model('dsh'),setModel:id=>config.setModel('dsh',id),settingsProject:()=>projects.active(),project:id=>projects.get(id),runtimeFactory:options=>new class extends DshRuntime{
  override async call(method:string,payload:Record<string,unknown>={},options:{signal?:AbortSignal}={}):Promise<Awaited<ReturnType<DshRuntime['call']>>>{
