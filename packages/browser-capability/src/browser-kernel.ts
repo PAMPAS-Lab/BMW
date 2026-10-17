@@ -8,10 +8,11 @@ import { readScreenshotPhase } from './screenshot-read.js'
 import { SessionOperations } from './session-operations.js'
 import fs from 'node:fs'
 import path from 'node:path'
-import { nativeImage, WebContentsView } from 'electron'
+import { nativeImage, WebContentsView, net } from 'electron'
 import { assertBrowserRequest, BROWSER_ACTIONS, targetTabId } from './browser-schema.js'
 import { agentTabsToClose, reusableTab } from './tab-policy.js'
 import { downloadMediaArtifact } from './media-artifact.js'
+import { createMediaSessionFetch } from './media-session-fetch.js'
 
 const PROJECT_BLANK_URL = 'about:blank'
 const SEMANTIC_CLASS_STATES = Object.freeze([
@@ -226,7 +227,7 @@ export class BrowserKernel {
           if (method === 'Network.responseReceived') {
             const resourceType = String(params?.type || '')
             const mimeType = String(params?.response?.mimeType || '')
-            if (['Image', 'Media'].includes(resourceType) || /^(?:image|video|audio)\//i.test(mimeType)) {
+            if (['Image', 'Media'].includes(resourceType) || /^(?:image|video|audio)\//i.test(mimeType)||/mpegurl/i.test(mimeType)||/\.m3u8(?:\?|$)/i.test(String(params?.response?.url??''))) {
               this.#addDiagnostic(tab.id, 'media', {
                 url: params?.response?.url || '',
                 mimeType,
@@ -394,13 +395,22 @@ export class BrowserKernel {
   private readonly operations = new SessionOperations()
   get busy():boolean { return this.operations.busy }
 
+  /** Native Shell work shares FIFO and Project exclusion, without a model action. */
+  async runUserMediaTask<T>(projectId:string,operation:()=>Promise<T>,signal?:AbortSignal):Promise<T>{
+    return this.operations.run(()=>{
+      signal?.throwIfAborted()
+      if(this.projectStore.active().id!==projectId)throw new Error('试听所属 Project 已改变，请重试。')
+      if(this.recordingController.isCaptureActive())throw new Error('请等待当前媒体任务完成后再试听。')
+    },operation)
+  }
+
   async execute(rawRequest, { actor = 'agent', signal, sessionOwner }: { actor?: string; signal?: AbortSignal; sessionOwner?:import('./browser-host.js').BrowserSessionOwner } = {}) {
     const owner=sessionOwner?{projectId:sessionOwner.projectId,sessionId:sessionOwner.sessionId}:undefined
     return this.operations.run(() => { signal?.throwIfAborted() }, () => this.executeAction(rawRequest, { actor, signal, sessionOwner:owner }))
   }
 
   private async executeAction(rawRequest, { actor = 'agent', signal, sessionOwner }: { actor?: string; signal?: AbortSignal; sessionOwner?:import('./browser-host.js').BrowserSessionOwner } = {}) {
-    const request = assertBrowserRequest(rawRequest, this.allowedActions)
+    const request = this.capabilityRegistry?this.capabilityRegistry.assertRequest(rawRequest):assertBrowserRequest(rawRequest, this.allowedActions)
     if (!this.permissionStore.hasAgentControl() && request.action !== 'status') {
       const error = new Error('BMW agent control has not been granted. Ask the user to click “Enable agent control” once in the product toolbar.')
       ;(error as Error & { code?: string }).code = 'PERMISSION_REQUIRED'
@@ -409,6 +419,7 @@ export class BrowserKernel {
 
     if (request.action === 'status') return this.state()
     if (request.action === 'tabs.list') return this.state()
+    if (request.action === 'help') return this.capabilityRegistry?this.capabilityRegistry.help(request.forAction,{forOperation:request.forOperation,forSubOperation:request.forSubOperation}):{actions:this.allowedActions}
     const contributed = await this.capabilityRegistry?.execute(request.action, { browserKernel: this, actor, signal, sessionOwner }, request)
     if (contributed?.handled) return contributed.value
     if (request.action === 'project.context') {
@@ -466,7 +477,11 @@ export class BrowserKernel {
     if (request.action === 'tabs.show') return this.showTab(targetTabId(request))
     if (request.action === 'tabs.close') return this.closeTab(targetTabId(request))
 
-    if (['media.inspect', 'media.frames.sample', 'media.convert','media.image.inspect','media.image.annotate','media.image.draw'].includes(request.action)) {
+    if(request.action==='media.audio.preview'){
+      if(!this.projectStore.active()?.directory||this.recordingController.isCaptureActive())throw new Error('Audio preview requires an idle active Project.')
+      return this.recordingController.previewAudio(request,signal)
+    }
+    if (['media.inspect', 'media.frames.sample','media.capture.frames.sample', 'media.convert','media.image.inspect','media.image.annotate','media.image.draw','media.audio.sample'].includes(request.action)) {
       if (!this.projectStore.active()?.directory) throw new Error('Media processing requires an active BMW Project.')
       return this.recordingController.processArtifact(request, signal)
     }
@@ -505,7 +520,15 @@ export class BrowserKernel {
     if (request.action === 'type') return this.type(tab, request)
     if (request.action === 'media.screenshot') return this.screenshot(tab, request, signal)
     if (request.action === 'media.download') return this.downloadMedia(tab, request, signal)
-    if (request.action === 'media.video.capture') return this.recordingController.captureVideo(tab, request, signal)
+    if(request.action==='media.preserve'){
+      const project=this.projectStore.active(),pageUrl=tab.url
+      if(!project?.directory)throw new Error('Media preservation requires an active Project.')
+      const observed=await this.listMedia(tab,{maxItems:200},signal)
+      if(!observed.items.some((item:{url?:string})=>item.url===request.url))throw new Error('Preservation URL must be observed on this Project page with page.media.list.')
+      const guard=async()=>{signal?.throwIfAborted();if(this.projectStore.active()?.id!==project.id||!this.tabs.has(tab.id)||tab.url!==pageUrl)throw new Error('Media preservation page or Project changed.')}
+      return {...await this.recordingController.preserveMedia({url:String(request.url),pageUrl,fetchImpl:await this.mediaFetchForTab(tab.id,signal),signal,guard}),tab:this.serializeTab(tab),association:'observed-page-resource; verify selected resource against the target video'}
+    }
+    if (request.action === 'media.video.capture') return this.captureSelectedVideo(tab, request, signal)
     if (request.action === 'media.record.start') {
       const source=await new PageRecordingEvents(tab.view.webContents,()=>{void this.recordingController.stop().catch(()=>{})},()=>tab.view.getBounds()).prepare()
       tab.recordingEvents=source
@@ -655,9 +678,19 @@ export class BrowserKernel {
     if(address.href!==request.pageUrl)throw new Error('Source page changed; return to the observed page before acquiring media.')
     return this.downloadMedia(tab,{url:request.url,filename:request.filename},signal)
   }
+  private async captureSelectedVideo(tab,request,signal?:AbortSignal){
+    // Chromium does not deliver presentation callbacks to a detached tab view.
+    // Admit only the existing Project page, temporarily display it, then restore
+    // the user's selected page after the native job has fully drained.
+    const previous=this.activeTabId,promoted=previous!==tab.id&&typeof tab.view.setVisible==='function'
+    if(promoted)this.showTab(tab.id)
+    try{return await this.recordingController.captureVideo(tab,request,signal)}finally{
+      if(promoted&&this.activeTabId===tab.id&&previous&&this.tabs.has(previous)&&!this.recordingController.isCaptureActive())this.showTab(previous)
+    }
+  }
   async captureSource(request:{sourceGuard:import('@bmw-agent/media-native/sources').SourceCaptureGuard;videoSelector:string;videoIndex?:number;maxDurationMs?:number;filename:string;tabId?:string},signal?:AbortSignal){
     const tab=this.requireTab(request.tabId)
-    return this.recordingController.captureVideo(tab,{selector:request.videoSelector,index:request.videoIndex??0,filename:request.filename,fromStart:true,maxDurationMs:request.maxDurationMs,sourceGuard:request.sourceGuard},signal)
+    return this.captureSelectedVideo(tab,{selector:request.videoSelector,index:request.videoIndex??0,filename:request.filename,fromStart:true,maxDurationMs:request.maxDurationMs,sourceGuard:request.sourceGuard},signal)
   }
   async collectSource(request:SourceCollection,signal?:AbortSignal){
     const tab=this.requireTab(request.tabId)
@@ -756,12 +789,20 @@ export class BrowserKernel {
     }
   }
 
+  async mediaFetchForTab(tabId: string, signal?: AbortSignal) {
+    const tab = this.tabs.get(tabId)
+    if (!tab) throw new Error('Media source tab is unavailable.')
+    const pageUrl = tab.url
+    const policy: unknown = await readRendererPhase(tab.view.webContents,'media.fetch','referrer-policy',()=>tab.view.webContents.executeJavaScript('document.referrerPolicy'),signal)
+    return createMediaSessionFetch(this.session,pageUrl,policy,net.request)
+  }
+
   async downloadMedia(tab, request, signal?:AbortSignal) {
     if (typeof request.url !== 'string' || !request.url.trim()) throw new Error('media.download requires a media URL.')
     const project = this.projectStore?.active()
     if (!project?.directory) throw new Error('media.download requires an active BMW Project.')
     const artifact = await downloadMediaArtifact({
-      fetchImpl: this.session.fetch.bind(this.session),
+      fetchImpl: await this.mediaFetchForTab(tab.id,signal),
       projectDirectory: project.directory,
       url: request.url,
       filename: typeof request.filename === 'string' ? request.filename : undefined,

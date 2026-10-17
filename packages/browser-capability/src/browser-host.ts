@@ -6,10 +6,11 @@ import type {BrowserRequest} from './browser-schema.js'
 export interface ActiveProject {id: string; name: string; directory: string}
 export interface ActiveProjectProvider {active(): ActiveProject}
 export interface VideoSettingsPort {
-  snapshot(): {videoPreferences?: unknown; edgeNarrationEnabled?: boolean}
+  snapshot(): {videoPreferences?: unknown; edgeNarrationEnabled?: boolean; qwenNarrationEnabled?: boolean}
   update(input: {videoPreferences: unknown}): unknown
 }
 export interface BrowserSessionOwner {projectId:string; sessionId:string}
+export interface BrowserStudioProgress {draftId:string;revision:number;operation:'narrate-pending';phase:'started'|'scene-completed'|'completed'|'failed';currentSceneId?:string;completedSceneIds:string[];pendingSceneIds:string[];updatedAt:number}
 export interface BrowserExecutionOptions {actor?: 'agent' | 'user'; signal?: AbortSignal; sessionOwner?:BrowserSessionOwner}
 export interface BrowserFeatureHost {
   projectStore: ActiveProjectProvider
@@ -23,7 +24,7 @@ export interface BrowserFeatureHost {
   execute(request: unknown, options?: BrowserExecutionOptions): Promise<unknown>
   videoStudioOpen?: (owner:BrowserSessionOwner) => Promise<unknown>
   videoStudioContext?: (owner?:BrowserSessionOwner) => unknown
-  videoStudioChanged?: (owner?:BrowserSessionOwner) => void
+  videoStudioChanged?: (owner?:BrowserSessionOwner,progress?:BrowserStudioProgress) => void
 }
 export interface BrowserActionContext {
   browserKernel: BrowserFeatureHost

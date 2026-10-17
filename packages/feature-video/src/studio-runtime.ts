@@ -1,5 +1,6 @@
 import {requireSimpleVideo} from './studio-compatibility.js'
 import {studioAssistantRequest,studioAssistantPrompt} from './studio-assistant.js'
+import {assertStudioRecoveryRequest,canPrepareStudioRecovery,studioRecoveryPrompt} from './studio-production-progress.js'
 import type {FeatureRuntime,FeatureHost,FeatureStudioRegion} from '@bmw-agent/platform/feature-contract'
 import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
@@ -55,7 +56,7 @@ export class VideoStudioRuntime implements FeatureRuntime {
   }
   private cancellation?:AbortController
   private inputs=new Map<string,Promise<ArtifactJobIO>>()
-  configure(config:Configuration):void {this.config=config;config.browserKernel.videoStudioOpen=owner=>{if(owner.sessionId!==config.getCurrentSessionId?.())throw new Error('Only the selected Session may open Studio.');return this.openPanel('video-studio')};config.browserKernel.videoStudioContext=owner=>this.currentContext(owner);config.browserKernel.videoStudioChanged=owner=>{if(owner)this.views.get(this.key(owner.projectId,owner.sessionId))?.webContents.send('video-studio-change',{projectId:owner.projectId});else for(const view of this.views.values())view.webContents.send('video-studio-change',{settingsChanged:true});this.publishContext()}}
+  configure(config:Configuration):void {this.config=config;config.browserKernel.videoStudioOpen=owner=>{if(owner.sessionId!==config.getCurrentSessionId?.())throw new Error('Only the selected Session may open Studio.');return this.openPanel('video-studio')};config.browserKernel.videoStudioContext=owner=>this.currentContext(owner);config.browserKernel.videoStudioChanged=(owner,productionProgress)=>{if(owner){const view=this.views.get(this.key(owner.projectId,owner.sessionId));if(view&&!view.webContents.isDestroyed())view.webContents.send('video-studio-change',{projectId:owner.projectId,...(productionProgress?{productionProgress}:{})})}else for(const view of this.views.values())if(!view.webContents.isDestroyed())view.webContents.send('video-studio-change',{settingsChanged:true});this.publishContext()}}
   async openPanel(id:string):Promise<{opened:boolean}> {
     if(this.stopping)throw new Error('Studio 已停止，不能重新打开。')
     if(id!=='video-studio'||!this.config||this.config.isProjectChanging())throw new Error('Unknown product panel.')
@@ -177,6 +178,16 @@ export class VideoStudioRuntime implements FeatureRuntime {
       if(selection&&draft)assertStudioSelection(selection,draft)
       const target=selection&&draft?{projectId:owner.projectId,sessionId:owner.sessionId,draftId:draft.id,kind:selection.layer||selection.voiceSegmentId||selection.visualSegmentId?'object':selection.sceneId?'scene':'film',...(selection.sceneId?{sceneId:selection.sceneId}:{}),...(selection.objectKind?{objectKind:selection.objectKind}:{}),...(selection.layer?{layer:selection.layer}:{}),...(selection.voiceSegmentId?{voiceSegmentId:selection.voiceSegmentId}:{}),...(selection.visualSegmentId?{visualSegmentId:selection.visualSegmentId}:{})}:undefined
       config.sendToAgent?.('bmw-assistant-prefill',{projectId:owner.projectId,sessionId:owner.sessionId,text:raw,target,targetLabel:studioSelectedObject(draft,selection)?.title??draft?.scenes.find(scene=>scene.id===selection?.sceneId)?.title??draft?.title});return {prepared:true}
+    })
+    ipc.handle('video-studio-recovery', (event,raw:unknown)=>{
+      const config=this.authorize(event),owner=this.scope(),request=assertStudioRecoveryRequest(raw),store=new VideoStudioStore(config.projectStore.active().directory,owner.sessionId),draft=store.read(request.draftId),activity=this.activity()
+      if(draft.revision!==request.expectedRevision)throw new Error('STUDIO_CONFLICT: 请先读取最新制作进度。')
+      if(this.cancellation||!canPrepareStudioRecovery(activity,draft))throw new Error('STUDIO_RECOVERY_NOT_READY: 当前任务或资源清理尚未结束；断线和投递不确定的请求不会自动重发。')
+      if(!config.sendToAgent)throw new Error('Studio Assistant composer is unavailable.')
+      const text=studioRecoveryPrompt(draft,store.reusableExport(draft)?.artifactId??null)
+      this.authorize(event);if(store.read(draft.id).revision!==request.expectedRevision)throw new Error('STUDIO_CONFLICT: 草稿已变化，请重新准备续做说明。')
+      this.revealChat();config.sendToAgent('bmw-assistant-prefill',{projectId:owner.projectId,sessionId:owner.sessionId,text,target:{...owner,draftId:draft.id,kind:'film'},targetLabel:draft.title})
+      return {prepared:true,draftId:draft.id,revision:draft.revision,automaticReplay:false,submitted:false}
     })
     ipc.handle('video-studio-task-cancel',async event=>{
       const config=this.authorize(event),owner=this.scope(),activity=this.activity()

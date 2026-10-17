@@ -18,6 +18,7 @@ export function studioTimeline(draft:VideoDraft):{duration:number;clips:StudioTi
     try{projected=speechScene(scene)}catch{/* Keep independent content; invalid references have no invented times. */}
     const origin=scene.speechAnchors?.origin==='user-edited'?'用户编辑':scene.speechAnchors?.origin==='agent-edited'?'Agent 编辑':undefined
     for(const [i,time]of (projected.bulletRevealSeconds??[]).entries())if(scene.speechLinks?.bullets.some(b=>b.bulletIndex===i))clips.push({kind:'reveal',sceneId:scene.id,sceneIndex,start:start+time,end,label:scene.bullets[i],origin})
+    for(const cue of projected.cardCues??[]){const offset=scene.presentationWindow?.startSeconds??0,a=Math.max(0,cue.startSeconds-offset),b=Math.min(scene.durationSeconds,(cue.kind==='diagram'||cue.kind==='keyword'?offset+scene.durationSeconds:cue.endSeconds)-offset);if(b>a)clips.push({kind:'reveal',sceneId:scene.id,sceneIndex,start:start+a,end:start+b,label:({reading:'阅读',highlight:'原句重点',diagram:'图解揭示',metric:'数字',keyword:'关键词'}[cue.kind])+' '+(cue.index+1),origin})}
     let segmentStart=start
     for(const [index,segment] of sceneVisuals(projected).entries()){
       const segmentEnd=Math.min(end,segmentStart+segment.durationSeconds)

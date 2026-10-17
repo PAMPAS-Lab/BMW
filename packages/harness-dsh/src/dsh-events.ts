@@ -13,6 +13,7 @@ export function dshBrowserCatalog(raw: unknown, sessionId: string, directory: st
 export class DshEvents {
   private cursor=-1
   private readonly tools=new Set<string>()
+  private prune:{sequence:number;target:number}|undefined
   constructor(private readonly runId:string){}
   async receive(raw:unknown,emit:(event:AgentDriverEvent)=>Promise<void>):Promise<AgentRunResult|null>{
     const event=agentRecord(raw),seq=Number(event.seq)
@@ -20,6 +21,14 @@ export class DshEvents {
     if(seq<=this.cursor)return null
     this.cursor=seq
     const data=agentRecord(event.data)
+    const prune=this.prune
+    this.prune=undefined
+    if(prune&&(event.type!=='tool/result'||seq!==prune.sequence+1))throw new Error('DSH prune has no adjacent tool-result replacement')
+    if(event.type==='compaction/prune'){
+      const range=agentRecord(data.shadowedRange),target=Number(range.start)
+      if(!Number.isSafeInteger(target)||target<0||target>=seq||range.start!==target||range.end!==target||!Array.isArray(data.shadowedSeqs)||data.shadowedSeqs.length!==1||data.shadowedSeqs[0]!==target||typeof data.shadowedTokenCount!=='number'||!Number.isFinite(data.shadowedTokenCount)||data.shadowedTokenCount<0)throw new Error('Invalid DSH tool-result prune provenance')
+      this.prune={sequence:seq,target};return null
+    }
     if(event.type==='request/header'){
       const header=agentRecord(data.header)
       if(!Array.isArray(header.tools)||header.tools.length!==1||agentRecord(header.tools[0]).name!=='browser')throw new Error('DSH request changed its browser-only model catalog')
@@ -38,6 +47,12 @@ export class DshEvents {
       const message=agentRecord(data.message),source=agentRecord(message.source)
       const nativeCallId=agentIdentifier(message.toolCallId),callId=this.runId+':'+nativeCallId
       if(source.kind!=='tool'||source.callId!==nativeCallId)throw new Error('DSH tool result source changed its call identity')
+      if(prune||(event.surfaceOp!==undefined&&event.surfaceOp!=='append')){
+        const operation=event.surfaceOp&&typeof event.surfaceOp==='object'&&!Array.isArray(event.surfaceOp)?agentRecord(event.surfaceOp):{}
+        if(!prune||operation.op!=='replace'||operation.startSeq!==prune.target||operation.endSeq!==prune.target||!Array.isArray(event.sourceEventSeqs)||event.sourceEventSeqs.length!==1||event.sourceEventSeqs[0]!==prune.target||this.tools.has(callId))throw new Error('Invalid DSH pruned tool-result replacement')
+        // Official pruning replaces an old display result; it executes no tool.
+        return null
+      }
       if(!this.tools.delete(callId))throw new Error('DSH browser result has no running call')
       await emit({type:'tool.completed',callId,success:message.isError!==true,message:dshMessageText(message.content).slice(0,16384)})
     }

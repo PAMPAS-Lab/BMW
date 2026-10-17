@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('bmwStudio',{
   onChat:(listener:(value:unknown)=>void)=>ipcRenderer.on('video-studio-chat-view',(_event:unknown,value:unknown)=>listener(value)),
   view:(value:unknown)=>ipcRenderer.invoke('video-studio-view',value),
   prefill:(text:string)=>ipcRenderer.invoke('video-studio-prefill',text),
+  prepareRecovery:(value:unknown)=>ipcRenderer.invoke('video-studio-recovery',value),
   cancelTask:()=>ipcRenderer.invoke('video-studio-task-cancel'),
   onTask:(listener:(value:unknown)=>void)=>ipcRenderer.on('video-studio-task',(_event:unknown,value:unknown)=>listener(value)),
   leave:()=>ipcRenderer.invoke('video-studio-leave'),

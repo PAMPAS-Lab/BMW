@@ -122,12 +122,12 @@ function showArtifact(command) {
   } else if (command.mimeType?.startsWith('video/')) {
     content = document.createElement('video')
     content.controls = true
-    content.autoplay = true
+    content.autoplay = command.autoplay !== false
     content.src = command.dataUrl
   } else if (command.mimeType?.startsWith('audio/')) {
     content = document.createElement('audio')
     content.controls = true
-    content.autoplay = true
+    content.autoplay = command.autoplay !== false
     content.src = command.dataUrl
   } else {
     content = document.createElement('pre')

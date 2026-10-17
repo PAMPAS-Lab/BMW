@@ -23,7 +23,7 @@ export interface DshBackendOptions {
 }
 interface Prepared {request:AgentRunRequest;externalSessionId:string;stopping:boolean;rpcId:string|null;cancelPromise?:Promise<boolean>;controlUrl:string;token:string}
 export class DshBackend implements AgentBackend {
-  readonly description:AgentDriverDescription={id:'dsh',label:'DSH',baseline:'0.2.0-rc.2 / official scoped catalog',capabilities:{streaming:false,images:true,interrupt:true,steer:false,fork:false,approvals:false,nativeOpen:false,browserOnly:false}}
+  readonly description:AgentDriverDescription={id:'dsh',label:'DSH',baseline:'0.2.1-rc.2 / official scoped catalog',capabilities:{streaming:false,images:true,interrupt:true,steer:false,fork:false,approvals:false,nativeOpen:false,browserOnly:false}}
   private runtime:DshRuntime|undefined
   private startPromise:Promise<string>|undefined
   private prepared:Prepared|undefined

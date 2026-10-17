@@ -57,7 +57,7 @@ let runtime: DshRuntime | undefined
 let activeCase = 0
 const captures: { case: number; path: string; width: number; height: number }[] = []
 const cases: Record<string, unknown>[] = []
-const report: Record<string, unknown> = { date: new Date().toISOString(), requestedModel: 'deepseek-flash', provider: 'deepseek-official', harness: '0.2.0-rc.2', scope: 'Synthetic canvas -> BMW screenshot -> authenticated Bridge -> official MCP image handling -> DSH -> real DeepSeek; fresh Session per case', cases }
+const report: Record<string, unknown> = { date: new Date().toISOString(), requestedModel: 'deepseek-flash', provider: 'deepseek-official', harness: '0.2.1-rc.2', scope: 'Synthetic canvas -> BMW screenshot -> authenticated Bridge -> official MCP image handling -> DSH -> real DeepSeek; fresh Session per case', cases }
 let exitCode = 0
 
 async function run(): Promise<void> {

@@ -33,7 +33,7 @@ export class MediaProcessor {
     }
     try {
       if(request.action!=='media.encode.check')io = await ArtifactJobIO.open(directory,request.action==='media.decode.check'?{action:'media.inspect',artifactId:request.artifactId}:request)
-      if(request.action==='media.speech.normalize')sourceSha256=await io!.fingerprint(signal)
+      if(request.action==='media.speech.normalize'||request.action==='media.audio.sample')sourceSha256=await io!.fingerprint(signal)
       if((request.action==='media.image.inspect'||request.action==='media.image.annotate')&&io!.bytes>32*1024*1024)throw new Error('Image exceeds 32 MiB.')
       signal?.throwIfAborted()
       const token = crypto.randomUUID()
@@ -83,8 +83,12 @@ export class MediaProcessor {
       mediaWindow.webContents.send('bmw-media-process', { token, bytes: io?.bytes??0, request })
       const result = await pending
       signal?.throwIfAborted()
-      if(request.action==='media.speech.normalize'&&await io!.fingerprint(signal)!==sourceSha256)throw new Error('Speech source changed during normalization.')
-      const artifacts = io?await io.finish(result.kind === 'frames' ? result.frames.length : result.kind === 'conversion'||result.kind==='drawing'||result.kind==='speech-pcm' ? 1 : 0,result.kind==='drawing'?result:undefined):[]
+      if((request.action==='media.speech.normalize'||request.action==='media.audio.sample')&&await io!.fingerprint(signal)!==sourceSha256)throw new Error('Audio source changed during decoding.')
+      const artifacts = io?await io.finish(result.kind === 'frames' ? result.frames.length : result.kind === 'conversion'||result.kind==='drawing'||result.kind==='speech-pcm'||result.kind==='audio-evidence' ? 1 : 0,result.kind==='drawing'?result:undefined):[]
+      if(result.kind==='audio-evidence'){
+        const artifact=artifacts[0]!,wav=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:artifact.artifactId})
+        try{const header=Buffer.from(await wav.read(0,44));if(artifact.bytes!==44+result.info.frames*result.info.channels*2||header.readUInt32LE(24)!==result.info.sampleRate||header.readUInt16LE(22)!==result.info.channels)throw new Error('Audition PCM format disagrees with its receipt.');return {...artifact,sourceArtifactId:'artifactId' in request?request.artifactId:undefined,sourceSha256,sha256:await wav.fingerprint(signal),type:'audio',contentType:'audio/wav',evidence:result.info,perceptualReview:{status:'not-performed',reason:'A playable PCM sample and signal measurements do not establish that the active model received or heard audio.'},next:{action:'media.audio.preview',artifactId:artifact.artifactId}}}catch(error){await fs.rm(artifact.path,{force:true});throw error}finally{await wav.close()}
+      }
       if(result.kind==='speech-pcm'){if(artifacts[0].bytes!==44+result.info.frames*2){await fs.rm(artifacts[0].path,{force:true});throw new Error('Speech WAV sample count disagrees with normalization.')}return {...artifacts[0],sourceArtifactId:request.action==='media.speech.normalize'?request.artifactId:undefined,sourceSha256,normalization:result.info,contentType:'audio/wav',type:'audio'}}
       if(result.kind==='encoding')return result.info
       const base = { sourceArtifactId: 'artifactId' in request?request.artifactId:undefined, sourceBytes: io?.bytes??0, engine: 'mediabunny-webcodecs' }

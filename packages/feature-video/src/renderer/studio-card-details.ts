@@ -1,6 +1,7 @@
 import type {CardSpec,CardMotion} from '../../../media-native/src/card-templates.js'
 import {cardTemplate} from '../../../media-native/src/card-templates.js'
 import type {DetailedCardSpec,CardHighlight,CardReading} from '../../../media-native/src/card-details.js'
+import {CONTEXT_READING,readingTargetLimit} from '../../../media-native/src/card-details.js'
 interface DetailsOptions {images:{artifactId:string;name:string}[];change(spec:CardSpec):void;pick(kind:'reading'|'highlight',line?:number):void;save():void}
 /** Only the selected variant's bounded slots. No JSON editor and no independent hidden layers. */
 export function cardDetailsForm(spec:DetailedCardSpec,options:DetailsOptions):HTMLElement {
@@ -17,6 +18,13 @@ export function cardDetailsForm(spec:DetailedCardSpec,options:DetailsOptions):HT
  if(next.templateId==='diagram/to-target'){
   next.objects.forEach((n,i)=>{field('对象 '+(i+1),n.label,32,v=>{n.label=v});image('对象 '+(i+1)+' 图片（可选）',n.imageArtifactId??'',v=>{if(v.trim())n.imageArtifactId=v;else delete n.imageArtifactId})});field('共同目标',next.target.label,32,v=>{next.target.label=v});image('目标图片（可选）',next.target.imageArtifactId??'',v=>{if(v.trim())next.target.imageArtifactId=v;else delete next.target.imageArtifactId});field('关系',next.relation,24,v=>{next.relation=v});button(next.objects.length===2?'＋ 第三个对象':'删除第三个对象',()=>{if(next.objects.length===2)next.objects.push({label:''});else next.objects.pop();options.change(next);options.save()})
  }
+ if(next.templateId==='diagram/sequence'){
+  select('图解结构',next.shape,[['steps','顺序步骤'],['funnel','漏斗 · 非比例']],v=>{next.shape=v as 'steps'|'funnel'})
+  next.nodes.forEach((n,i)=>field('顺序节点 '+(i+1),n.label,32,v=>{n.label=v}))
+  field('图解口径 / 脚注',next.footnote,100,v=>{next.footnote=v})
+  if(next.nodes.length<4)button('＋ 顺序节点',()=>{next.nodes.push({label:''});options.change(next);options.save()})
+  if(next.nodes.length>2)button('删除最后节点',()=>{next.nodes.pop();options.change(next);options.save()})
+ }
  if(next.templateId==='diagram/range'){
   select('范围模式',next.range.mode,[['symbolic','符号示意 · 非比例'],['numeric','真实数值 · 按比例']],v=>{next.range=v==='numeric'?{mode:'numeric',axisLabel:next.range.axisLabel,minimum:0,maximum:1,start:0,end:.5,thresholds:[],unit:'',condition:next.range.condition}:{mode:'symbolic',axisLabel:next.range.axisLabel,regionLabel:'',thresholdLabels:[],condition:next.range.condition};options.change(next);options.save()})
   const r=next.range;field('轴含义',r.axisLabel,48,v=>{r.axisLabel=v});field('条件 / 限定',r.condition,100,v=>{r.condition=v})
@@ -27,14 +35,15 @@ export function cardDetailsForm(spec:DetailedCardSpec,options:DetailsOptions):HT
  if(['evidence/reading','evidence/highlight','evidence/translation','evidence/person-quote','diagram/image'].includes(next.templateId)){
   const evidence=next as DetailedCardSpec&{reading?:CardReading;highlights?:CardHighlight[]},details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='阅读与重点 · 源图坐标';details.append(summary);root.append(details)
   const max='quote'in next?1:3
-  if(evidence.reading){const r=evidence.reading;select('阅读方式',r.mode,[['whole-to-detail','整页到重点'],['detail-to-whole','局部到全貌'],['sequence','依次阅读']],v=>{r.mode=v as CardReading['mode']},details);select('结束画面',String(r.returnToWhole),[['false','停在重点'],['true','回到全貌']],v=>{r.returnToWhole=v==='true'},details)
-   r.targets.forEach((t,i)=>{field('阅读目标 '+(i+1),t.name,32,v=>{t.name=v},details);const p=document.createElement('small');p.textContent=t.source.artifactId+' · '+t.source.sha256.slice(0,8);details.append(p);button('删除阅读目标 '+(i+1),()=>{r.targets.splice(i,1);if(!r.targets.length)delete evidence.reading;options.change(next);options.save()},details);if(i>0)button('上移目标 '+(i+1),()=>{[r.targets[i-1],r.targets[i]]=[r.targets[i],r.targets[i-1]];options.change(next);options.save()},details)})
+  if(evidence.reading){const r=evidence.reading;select('阅读方式',r.mode,[['whole-to-detail','全貌 → 框选 → 放大停读'],['detail-to-whole','局部到全貌'],['sequence','依次横向阅读']],v=>{r.mode=v as CardReading['mode']},details);select('结束画面',String(r.returnToWhole),[['false','停在重点'],['true','回到全貌']],v=>{r.returnToWhole=v==='true'},details)
+   if(r.targets.length===1)button('应用推荐：全貌 → 框选 → 放大停读 → 返回',()=>{r.mode=CONTEXT_READING.mode;r.returnToWhole=CONTEXT_READING.returnToWhole;options.change(next);options.save()},details)
+   r.targets.forEach((t,i)=>{field('阅读目标 '+(i+1),t.name,32,v=>{t.name=v},details);numeric('目标 '+(i+1)+' 实际行数（0 关闭手机适配）',t.lineCount??0,v=>{if(v===0)delete t.lineCount;else t.lineCount=v},details);const p=document.createElement('small');p.textContent=t.source.artifactId+' · '+t.source.sha256.slice(0,8);details.append(p);button('删除阅读目标 '+(i+1),()=>{r.targets.splice(i,1);if(!r.targets.length)delete evidence.reading;options.change(next);options.save()},details);if(i>0)button('上移目标 '+(i+1),()=>{[r.targets[i-1],r.targets[i]]=[r.targets[i],r.targets[i-1]];options.change(next);options.save()},details)})
    button('取消阅读配方',()=>{delete evidence.reading;options.change(next);options.save()},details)
   }
-  if((evidence.reading?.targets.length??0)<max)button('＋ 在预览框选阅读目标',()=>options.pick('reading'),details)
+  if((evidence.reading?.targets.length??0)<readingTargetLimit(evidence.reading?.mode??CONTEXT_READING.mode,max))button('＋ 在预览框选阅读目标',()=>options.pick('reading'),details)
   evidence.highlights?.forEach((h,i)=>{field('重点 '+(i+1),h.name,32,v=>{h.name=v},details);select('重点 '+(i+1)+' 样式',h.style,[['outline','框线'],['fill','底色'],['invert','原像素反白']],v=>{h.style=v as CardHighlight['style']},details);numeric('重点 '+(i+1)+' 开始秒',h.startSeconds,v=>{h.startSeconds=v},details);numeric('重点 '+(i+1)+' 结束秒',h.endSeconds,v=>{h.endSeconds=v},details);const p=document.createElement('small');p.textContent=h.source.artifactId+' · '+h.source.sha256.slice(0,8)+' · '+h.rects.length+' 行';details.append(p);if(h.rects.length<3)button('＋ 框选此重点下一行',()=>options.pick('highlight',i),details);button('删除重点 '+(i+1),()=>{evidence.highlights!.splice(i,1);options.change(next);options.save()},details);if(i>0)button('上移重点 '+(i+1),()=>{const previous=evidence.highlights![i-1],current=evidence.highlights![i];[previous.startSeconds,current.startSeconds]=[current.startSeconds,previous.startSeconds];[previous.endSeconds,current.endSeconds]=[current.endSeconds,previous.endSeconds];[evidence.highlights![i-1],evidence.highlights![i]]=[current,previous];options.change(next);options.save()},details)})
   if((evidence.highlights?.length??0)<max)button('＋ 在预览框选原句重点',()=>options.pick('highlight'),details)
-  const note=document.createElement('small');note.textContent='时序由模板估算，可按秒校正；未声称语音逐词对齐。换源需删除旧目标后重新框选。';details.append(note)
+  const note=document.createElement('small');note.textContent='推荐：全貌 → 框选 → 放大停读 → 返回。框选短而完整的原句并核填实际行数（1–8）以启用；保持源图像素、不重排、不横移。绑定足够长的句区间，逐阶段审阅手机画面。长静止段按语义分卡或改成句级图解；不要用来回缩放代替阅读。时序可校正，未声称逐词对齐。换源需重新框选。';details.append(note)
  }
  button('保存专用内容',options.save)
  return root

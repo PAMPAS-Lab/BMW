@@ -3,10 +3,15 @@ import { spawn } from 'node:child_process'
 import path from 'node:path'
 import readline from 'node:readline'
 import test from 'node:test'
+import fs from 'node:fs/promises'
+import os from 'node:os'
+import crypto from 'node:crypto'
+import {Ajv} from 'ajv'
 import product from '../../../apps/bmw/product.js'
 import { BrowserCapabilityRegistry } from '../src/browser-capability-registry.js'
 import { browserToolCatalog } from '../src/tool-catalog.js'
 import { createBridgeServer } from '../src/bridge-server.js'
+import {assertStudioRequest} from '../../feature-video/src/studio-contract.js'
 
 test('BMW MCP discovers exactly browser from the authenticated product catalog', async (t) => {
   const registry = new BrowserCapabilityRegistry(product)
@@ -73,4 +78,66 @@ test('MCP catalog admission rejects extra tools and malformed action boundaries'
   assert.throws(() => browserToolCatalog({ ...tool, name: 'shell' }), /exactly browser/)
   assert.throws(() => browserToolCatalog({ ...tool, inputSchema: { ...tool.inputSchema, additionalProperties: true } }), /input schema/)
   assert.throws(() => browserToolCatalog({ ...tool, inputSchema: { ...tool.inputSchema, properties: { action: { type: 'string', enum: [7] } } } }), /action enum/)
+})
+
+test('Authenticated browser help describes contributed and core actions without a second tool or permissive aliases',()=>{
+  const registry=new BrowserCapabilityRegistry(product)
+  const index=registry.help() as {tool:string;actions:{action:string}[]}
+  assert.equal(index.tool,'browser');assert.deepEqual(index.actions.map(row=>row.action),registry.allowedActions)
+  for(const action of ['observe','media.video.capture','video.studio']){
+    const help=registry.help(action) as {action:string;inputSchema:{properties:Record<string,unknown>;required:string[];additionalProperties:boolean}}
+    assert.equal(help.action,action);assert.equal(help.inputSchema.additionalProperties,false);assert.ok(help.inputSchema.required.includes('action'));assert.deepEqual(Object.keys(help.inputSchema.properties),['action',...Object.keys(registry.definition(action)!.inputSchema.properties)])
+  }
+  assert.throws(()=>registry.help('page.read'),/supportedActions/)
+  assert.throws(()=>registry.assertRequest({action:'video.studio',operation:'assets'}),/acceptedFields/)
+  assert.match(registry.toolDefinition().description,/"action":"help"/)
+})
+
+test('Published browser schema separates canvas drawing, annotation and Studio arguments by action', () => {
+  const registry=new BrowserCapabilityRegistry(product),schema=registry.inputSchema()
+  const validate=new Ajv({strict:false}).compile(schema)
+  const shapes=[{type:'text',x:20,y:20,text:'Diagram',color:'#172536'}]
+  for(const input of [
+    {action:'status'},
+    {action:'media.image.draw',width:320,height:180,shapes},
+    {action:'media.image.annotate',artifactId:'existing.png',shapes},
+    {action:'video.studio',studioRequest:{operation:'narrate-pending',draftId:'draft',expectedRevision:2}}
+  ])assert.equal(validate(input),true,JSON.stringify(validate.errors))
+  for(const input of [
+    {action:'media.image.draw',artifactId:'existing.png',shapes},
+    {action:'media.image.draw',width:320,height:180,filename:'overwrite.png',shapes},
+    {action:'media.image.draw',width:320,shapes},
+    {action:'media.image.annotate',width:320,height:180,shapes},
+    {action:'media.image.annotate',artifactId:'existing.png',width:320,shapes},
+    {action:'status',artifactId:'existing.png'},
+    {action:'video.studio',operation:'narrate-pending',draftId:'draft',expectedRevision:'2'},
+    {action:'video.studio',studioRequest:{operation:'narrate-pending',draftId:'draft',expectedRevision:'2'}}
+  ])assert.equal(validate(input),false,JSON.stringify(input))
+  const branches=schema.oneOf as {description:string;properties:{action:{const:string}}}[]
+  assert.deepEqual(branches.map(branch=>branch.properties.action.const),registry.allowedActions)
+  assert.match(branches.find(branch=>branch.properties.action.const==='media.image.draw')!.description,/Requires width\/height/)
+  assert.match(registry.toolDefinition().description,/do not pass artifactId or filename/)
+})
+
+test('Studio operation and source suboperation discovery stays bounded and recovers opaque source enums without human contracts',()=>{
+ const registry=new BrowserCapabilityRegistry(product),root=registry.help('video.studio') as {operations:string[]}
+ assert.ok(JSON.stringify(root).length<6000);assert.ok(root.operations.includes('source'))
+ for(const op of root.operations)assert.ok(JSON.stringify(registry.help('video.studio',{forOperation:op})).length<10000,op)
+ const help=registry.help('video.studio',{forOperation:'source',forSubOperation:'collect'}) as {inputSchema:unknown}
+ const validate=new Ajv({strict:false}).compile(help.inputSchema)
+ assert.equal(validate({action:'video.studio',studioRequest:{operation:'source',sourceRequest:{operation:'collect',expectedRevision:0,bodySelector:'article'}}}),true)
+ assert.equal(validate({action:'video.studio',studioRequest:{operation:'source',sourceRequest:{operation:'collect',expectedRevision:0,bodySelector:'article',method:'capture'}}}),false)
+ assert.throws(()=>assertStudioRequest({operation:'source',sourceRequest:{operation:'capture'}}),error=>{const e=JSON.parse((error as Error).message) as {executed:boolean;supportedSubOperations:string[];recovery:Record<string,string>};assert.equal(e.executed,false);assert.ok(e.supportedSubOperations.includes('acquire'));assert.deepEqual(e.recovery,{action:'help',forAction:'video.studio',forOperation:'source'});return true})
+ assert.throws(()=>assertStudioRequest({operation:'source',sourceRequest:{operation:'list',url:'https://example.com'}}),/acceptedFields/)
+ assert.throws(()=>registry.help('video.studio',{forOperation:'source',forSubOperation:'capture'}),/supportedSubOperations/)
+ assert.deepEqual(registry.toolDefinition().name,'browser')
+})
+
+test('Source-frame model image admission rechecks the native PNG hash after service completion',async t=>{
+ const root=await fs.mkdtemp(path.join(os.tmpdir(),'bmw-source-image-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));await fs.mkdir(path.join(root,'artifacts'))
+ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64'),file=path.join(root,'artifacts','tail.png'),sha256=crypto.createHash('sha256').update(png).digest('hex');await fs.writeFile(file,png)
+ let tamper=false
+ const registry=new BrowserCapabilityRegistry(product),bridge=await createBridgeServer({async execute(){if(tamper)await fs.appendFile(file,'changed');return {frames:[{artifactId:'tail.png',path:file,type:'screenshot',sha256}]}}},{toolDefinition:registry.toolDefinition(),resolveProject:()=>({id:'source-project',directory:root}),activeProjectId:()=> 'source-project'})
+ t.after(()=>bridge.close());const binding=bridge.registerSession('source-session',root),invoke=async()=>{const response=await fetch(bridge.url+'/execute',{method:'POST',headers:{authorization:'Bearer '+bridge.token,'content-type':'application/json'},body:JSON.stringify({binding,arguments:{action:'media.capture.frames.sample',artifactId:'video.webm',sourceTimestampsSeconds:[59.99]}})});return response.json() as Promise<{ok:boolean;images?:unknown[];error?:string}>}
+ assert.equal((await invoke()).images?.length,1);tamper=true;const rejected=await invoke();assert.equal(rejected.ok,false);assert.match(rejected.error!,/PNG changed before image admission/)
 })

@@ -9,7 +9,7 @@ interface Agent {
 }
 interface Context {
   agents: { get(id: string): Agent | undefined }
-  tools: { schemas(scope: Agent): { name: string; [key: string]: unknown }[] }
+  tools: { wireSchemas(scope: Agent): {schemas:{ name: string; [key: string]: unknown }[]} }
   effect(callback: () => () => Promise<void>, label: string): unknown
 }
 export const inject = ['agents', 'tools']
@@ -28,7 +28,7 @@ export async function apply(ctx: Context): Promise<void> {
     const agent = ctx.agents.get(id)
     if (!agent) { response.writeHead(503); response.end('{}'); return }
     try {
-      if(url.pathname==='/catalog')response.end(JSON.stringify({ sessionId: agent.session.header.id, directory: agent.session.header.cwd, tools: ctx.tools.schemas(agent) }))
+      if(url.pathname==='/catalog')response.end(JSON.stringify({ sessionId: agent.session.header.id, directory: agent.session.header.cwd, tools: ctx.tools.wireSchemas(agent).schemas }))
       else{
         let removed=false
         if(url.pathname==='/cancel'){

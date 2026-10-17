@@ -1,4 +1,7 @@
 import {cardImageAssets} from './card-details.js'
+import {COMPOSITION_LIMITS} from './composition-limits.js'
+export {COMPOSITION_LIMITS} from './composition-limits.js'
+import {assertCardCues,assertCardCueTargets} from './card-cues.js'
 import {assertCardSpec,assertCardContent,cardSpecSchema} from './card-templates.js'
 import type {CardSpec} from './card-templates.js'
 import {assertVisualEffects,visualEffectsSchema} from './visual-effects.js'
@@ -24,6 +27,7 @@ import { assertArtifactId, finiteNumber, mediaRecord } from './media-contract.js
 
 /** Closed, seekable composition: no model HTML, script, network URL or host path. */
 export interface CompositionScene extends LayerContainer {
+  cardCues?:import('./card-cues.js').CardCue[]
   cardSpec?:CardSpec
   effects?:VisualEffects
   presentationWindow?:ScenePlaybackWindow
@@ -77,14 +81,14 @@ function keys(value: Record<string, unknown>, allowed: string[]): void {
 export function assertComposition(raw: unknown): MediaComposition {
   const value = mediaRecord(raw)
   keys(value, ['cardLayout','narrationPacing','title','width','height','fps','music','style','watermark','templateName','tts','scenes','layers','audioTracks'])
-  if (!Array.isArray(value.scenes) || !value.scenes.length || value.scenes.length > 24) throw new TypeError('A composition needs 1 to 24 scenes.')
+  if (!Array.isArray(value.scenes) || !value.scenes.length || value.scenes.length > COMPOSITION_LIMITS.scenes) throw new TypeError('A composition needs 1 to 96 scenes.')
   if (value.music !== undefined && typeof value.music !== 'boolean') throw new TypeError('music must be boolean.')
   const result: MediaComposition = {
     title: text(value.title, 'title', 80), width: finiteNumber(value.width ?? 1280, 'width', 320, 1920, true),
     height: finiteNumber(value.height ?? 720, 'height', 180, 1920, true), fps: finiteNumber(value.fps ?? 24, 'fps', 12, 30, true),
     music: value.music === undefined ? true : value.music as boolean, scenes: value.scenes.map((rawScene: unknown) => {
       const scene = mediaRecord(rawScene)
-      keys(scene,['cardSpec','durationSeconds','title','label','narration','videoArtifactId','imageArtifactId','audioArtifactId','effects','layout','voiceVolume','voiceMuted','voiceTiming','voiceSegments','captions','sourceStartSeconds','zoom','playbackRate','crop','bullets','keepSourceAudio','sourceVolume','captionStyle','visualSegments','focusIntervals','bulletRevealSeconds','showSceneNumber','sceneTemplate','captionDisplay','layers','audioTracks','presentationWindow'])
+      keys(scene,['cardCues','cardSpec','durationSeconds','title','label','narration','videoArtifactId','imageArtifactId','audioArtifactId','effects','layout','voiceVolume','voiceMuted','voiceTiming','voiceSegments','captions','sourceStartSeconds','zoom','playbackRate','crop','bullets','keepSourceAudio','sourceVolume','captionStyle','visualSegments','focusIntervals','bulletRevealSeconds','showSceneNumber','sceneTemplate','captionDisplay','layers','audioTracks','presentationWindow'])
       if (!Array.isArray(scene.bullets ?? []) || (scene.bullets as unknown[] | undefined)?.length > 3) throw new TypeError('At most three scene bullets.')
       const parsed: CompositionScene = {
         durationSeconds: finiteNumber(scene.durationSeconds, 'scene duration', 1, 60),
@@ -92,6 +96,7 @@ export function assertComposition(raw: unknown): MediaComposition {
         narration: text(scene.narration ?? '', 'narration', 1000), sourceStartSeconds: finiteNumber(scene.sourceStartSeconds ?? 0, 'source start', 0, 1800),
         zoom: finiteNumber(scene.zoom ?? 1, 'zoom', 1, 1.5), playbackRate: finiteNumber(scene.playbackRate ?? 1,'playbackRate',.25,2), bullets: ((scene.bullets ?? []) as unknown[]).map(item => text(item, 'bullet', 64))
       }
+      if(scene.cardCues!==undefined)parsed.cardCues=assertCardCues(scene.cardCues)
       if(scene.effects!==undefined)parsed.effects=assertVisualEffects(scene.effects)
       if(scene.presentationWindow!==undefined)parsed.presentationWindow=assertScenePlaybackWindow(scene.presentationWindow,parsed.durationSeconds)
       if(scene.crop!==undefined){
@@ -132,6 +137,7 @@ export function assertComposition(raw: unknown): MediaComposition {
       if(scene.layers!==undefined)parsed.layers=assertVisualLayers(scene.layers)
       if(scene.audioTracks!==undefined)parsed.audioTracks=assertAudioLayers(scene.audioTracks)
       if(scene.cardSpec!==undefined){parsed.cardSpec=assertCardSpec(scene.cardSpec);assertCardContent(parsed,parsed.cardSpec)}
+      assertCardCueTargets(parsed.cardSpec,parsed.cardCues,parsed.presentationWindow?.durationSeconds??parsed.durationSeconds)
       return parsed
     })
   }
@@ -146,7 +152,7 @@ export function assertComposition(raw: unknown): MediaComposition {
   result.tts=assertNarrationOptions(value.tts??{})
   result.watermark=assertWatermark(value.watermark??{})
   if(value.templateName!==undefined)result.templateName=templateName(value.templateName)
-  if (compositionDuration(result) > 180) throw new TypeError('Composition exceeds three minutes.')
+  if (compositionDuration(result) > COMPOSITION_LIMITS.seconds) throw new TypeError('Composition exceeds twelve minutes.')
   return result
 }
 export function compositionDuration(value: MediaComposition): number { return value.scenes.reduce((total, scene) => total + scene.durationSeconds, 0) }

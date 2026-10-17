@@ -95,7 +95,7 @@ export async function downloadMediaArtifact({
       headers: { accept: 'image/*,video/*,audio/*,application/octet-stream,*/*;q=0.8' }
     })
     cancellation.throwIfAborted()
-    if (!response.ok) throw new Error(`Media download returned HTTP ${response.status}.`)
+    if (response.status !== 200) throw new Error(`Media download requires a full HTTP 200 response, got HTTP ${response.status}.`)
     if (!response.body) throw new Error('Media download returned an empty response body.')
 
     const declaredBytes = Number(response.headers.get('content-length') || 0)
@@ -119,6 +119,7 @@ export async function downloadMediaArtifact({
     try {
       await pipeline(Readable.fromWeb(response.body as any), limiter, output, {signal:cancellation})
       cancellation.throwIfAborted()
+      if (!bytes || (declaredBytes > 0 && !response.headers.get('content-encoding') && bytes !== declaredBytes)) throw new Error('Media download is empty or does not match Content-Length.')
       const probe = bytes < 64 * 1024 ? fs.readFileSync(filePath) : Buffer.alloc(0)
       if (probe.length && isIsoBmffInitializationSegment(probe, contentType)) {
         throw new Error('Media URL returned a DASH initialization segment, not a complete playable file. Use media.video.capture on the page video element.')

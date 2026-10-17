@@ -1,5 +1,6 @@
-import { CanvasSink } from 'mediabunny'
-import type { CanvasSinkOptions, InputVideoTrack, WrappedCanvas } from 'mediabunny'
+import { CanvasSink,MP4,QTFF } from 'mediabunny'
+import type { CanvasSinkOptions, Input, InputVideoTrack, WrappedCanvas } from 'mediabunny'
+export async function indexedFrameStart(input:Input,time:number):Promise<number|undefined>{const format=await input.getFormat();return format===MP4||format===QTFF?time:undefined}
 /** Match Chromium's BT.601 fallback for unlabelled VP8 while preserving explicit metadata. */
 export async function normalizeBrowserVideoColor(track: InputVideoTrack): Promise<void> {
   if(await track.getCodec()!=='vp8')return
@@ -20,7 +21,10 @@ export class LinearFrameReader {
   private next: WrappedCanvas | undefined
   private initialized = false
   private lastTime = -Infinity
-  constructor(track: InputVideoTrack, options: CanvasSinkOptions = {}) { this.iterator = new CanvasSink(track, { ...options, poolSize: 2 }).canvases() }
+  // Only callers with a verified indexed container may choose a starting time.
+  // CanvasSink includes the presentation frame held at that time, decoding from
+  // its preceding key packet. Unindexed recordings keep the from-start path.
+  constructor(track: InputVideoTrack, options: CanvasSinkOptions = {}, startTimestamp?: number) { this.iterator = new CanvasSink(track, { ...options, poolSize: 2 }).canvases(startTimestamp) }
   async get(timestamp: number): Promise<WrappedCanvas | null> {
     if(timestamp < this.lastTime)throw new Error('Linear frame reader requires monotonic timestamps.')
     this.lastTime = timestamp

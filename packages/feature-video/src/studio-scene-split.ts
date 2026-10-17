@@ -1,4 +1,6 @@
+import {COMPOSITION_LIMITS} from '../../media-native/src/composition-contract.js'
 import {captureStudioSpeechOrigin,studioSpeechOriginClock} from './studio-speech-origin.js'
+import {remapCardSpeechLinks} from './studio-card-speech.js'
 import {partitionSourceSpeech} from './studio-source-speech-contract.js'
 import {speechScene,usesSpeechCaptions,usesStudioSpeech} from './studio-speech-contract.js'
 import {assertVideoDraft} from './studio-contract.js'
@@ -19,7 +21,7 @@ export function splitStudioScene(value:VideoDraft,sceneId:string,cut:number):Stu
  const next=structuredClone(value),index=next.scenes.findIndex(s=>s.id===sceneId),scene=next.scenes[index]
  if(!scene)throw new Error('镜头已删除，请重新选择。')
  if(!Number.isFinite(cut)||cut<1||scene.durationSeconds-cut<1)throw new Error('整镜头分割需要两侧各保留至少 1 秒。')
- if(next.scenes.length>=24)throw new Error('视频最多二十四个镜头。')
+ if(next.scenes.length>=COMPOSITION_LIMITS.scenes)throw new Error('视频最多九十六个镜头。')
  if(usesStudioSpeech(scene))speechScene(scene)
  if(scene.audioArtifactId&&scene.audioDurationSeconds===undefined)throw new Error('请先检查并测量旁白，再分割整镜头。')
  const bounds=[...layerProblems(scene,scene.durationSeconds),...layerProblems(next,next.scenes.reduce((sum,s)=>sum+s.durationSeconds,0))]
@@ -66,6 +68,7 @@ export function splitStudioScene(value:VideoDraft,sceneId:string,cut:number):Stu
   child.captions=cues.flatMap(cue=>{const a=Math.max(from,cue.startSeconds),b=Math.min(to,cue.endSeconds);return b>a+epsilon?[{...cue,startSeconds:a-from,endSeconds:b-from}]:[]})
   if(usesSpeechCaptions(scene))delete child.captions
   if(child.speechLinks)child.speechLinks.focus=child.speechLinks.focus.flatMap(link=>{const visualIndex=target.visualIndices.indexOf(link.visualIndex);return visualIndex<0?[]:[{...link,visualIndex}]})
+  remapCardSpeechLinks(child)
   delete child.voiceTiming
   if(scene.audioArtifactId)child.voiceSegments=voice.flatMap(t=>{
    const a=Math.max(from,t.startSeconds),b=Math.min(to,t.startSeconds+t.durationSeconds)

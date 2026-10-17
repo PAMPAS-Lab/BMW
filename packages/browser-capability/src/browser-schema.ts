@@ -14,7 +14,9 @@ export interface BrowserActionDefinition {
   readonly description: string
   readonly inputSchema: BrowserInputSchema
   readonly execute?: (context: BrowserActionContext, input: BrowserRequest) => unknown | Promise<unknown>
+  readonly help?: (query: BrowserHelpQuery) => unknown
 }
+export interface BrowserHelpQuery {forOperation?:string;forSubOperation?:string}
 
 export interface BrowserRequest extends Record<string, unknown> {
   action: string
@@ -51,6 +53,11 @@ const drawingShapes:JsonSchema={type:'array',minItems:1,maxItems:128,description
 
 export const BROWSER_CORE_ACTION_DEFINITIONS: readonly BrowserActionDefinition[] = Object.freeze([
   action('status', 'Inspect the active Project and browser state.'),
+  action('help', 'Discover the current authenticated browser action catalog. With forAction, return that exact action description and closed input schema; without it, return the action index. Use after an unknown action or parameter error, then correct the request instead of guessing aliases.', {
+    forAction: { type: 'string', maxLength: 200, description: 'Exact action name from the current catalog, for example media.video.capture.' },
+    forOperation:{type:'string',maxLength:100,description:'An exact feature operation returned by its help index.'},
+    forSubOperation:{type:'string',maxLength:100,description:'An exact nested operation returned by the selected operation help.'}
+  }),
   action('tabs.list', 'List tabs owned by the active Project.'),
   action('tabs.open', 'Open or reuse an Agent-owned browser tab.', {
     url: { type: 'string' },
@@ -110,22 +117,30 @@ export const BROWSER_CORE_ACTION_DEFINITIONS: readonly BrowserActionDefinition[]
     url: { type: 'string' },
     filename: { type: 'string', description: 'Optional Project artifact filename.' }
   }, ['url']),
-  action('media.video.capture', 'Record a selected HTML video stream as browser-native WebM with MediaRecorder. The complete flag is true only when playback ends; reaching the duration limit produces a truncated capture.', {
+  action('media.preserve','Preserve an observed page HTTP media file or complete unencrypted HLS VOD. Discover URLs with page.media.list (without selector includes observed network manifests). Saves original delivery manifests/segments with SHA256, plus a packet-copy MP4 verified against original encoded payloads and PTS; never claims author upload/master provenance. Highest-bandwidth variant is selected and reported; separate audio retained. Unsupported encryption/live/ranges/alternate tracks fail and roll back. Bounded to 512 MiB, 30 minutes, 2000 segments, two minutes. Network candidates belong to the page, so verify the selected clip visually; use media.frames.sample on delivery file PTS, not capture source time.',{url:{type:'string'}},['url']),
+  action('media.video.capture', 'Capture a selected HTML video as WebM: native source frames -> WebCodecs -> verified muxed file PTS, retaining audio. complete only at ended. Adaptive source sizes are contained within the initial output canvas with black letterboxing, never claimed as original resolution/lossless; per-frame source dimensions remain in captureTimeline. captureTimeline maps captured source frames to file PTS, including pauses/rate changes; sample with media.capture.frames.sample. Optional playbackPlan applies bounded pause/rate steps at observed source times, without seeking. Original player state is restored.', {
     selector: { type: 'string' },
     index: { type: 'number', description: 'Zero-based match when selector identifies multiple page elements.' },
     filename: { type: 'string', description: 'Optional Project artifact filename.' },
     fromStart: { type: 'boolean', description: 'Restart finite media at time zero before capture. Defaults to true.' },
-    maxDurationMs: { type: 'number', description: 'Safety limit from 1 second to 30 minutes. Defaults to 15 minutes.' }
+    maxDurationMs: { type: 'number', description: 'Safety limit from 1 second to 30 minutes. Defaults to 15 minutes.' },
+    playbackPlan:{type:'array',maxItems:16,description:'Optional strictly increasing source-time steps. Apply pauseMs and/or rate at the first observed frame reaching sourceSeconds. No seeking; final receipt records actual play/pause/rate events.',items:{type:'object',additionalProperties:false,required:['sourceSeconds'],properties:{sourceSeconds:{type:'number',minimum:0,maximum:86400},pauseMs:{type:'integer',minimum:1,maximum:10000},rate:{type:'number',minimum:.25,maximum:4}}}}
   }, ['selector']),
-  action('media.inspect', 'Read duration, container, video/audio tracks, transparency metadata and decode support of a current Project artifact. No tab, file path or URL is needed.', {
+  action('media.inspect', 'Read duration, container, video/audio tracks, transparency and decode support of a Project artifact. captureTimeline, when available, provides indexed source-PTS ranges and a media.capture.frames.sample request. durationSeconds and media.frames.sample use the recording-file clock, never source time. No tab, path or URL needed.', {
     artifactId: { type: 'string', description: 'Existing filename ID in the current Project artifact store; never a host path or URL.' }
   }, ['artifactId']),
+  action('media.audio.sample','Save a 0.001–10 second Project audio interval as playable PCM16 WAV, retaining native sample rate and channels without gain/resampling. Returns input/output SHA256, file-PTS range, RMS/peak/clipping/missing sample metrics and 100ms windows. Requires exactly one decodable audio track. Technical analysis is not listening: listeningStatus stays not-performed; text/image-only runtimes must not claim to hear it. Use media.audio.preview for user playback controls; speech transcription is separate.',{artifactId:{type:'string',description:'Existing filename ID in the current Project artifact store; never a host path or URL.'},startSeconds:{type:'number',minimum:0,maximum:1800},endSeconds:{type:'number',minimum:.001,maximum:1800}},['artifactId','startSeconds','endSeconds']),
+  action('media.audio.preview','Open a bounded Project WAV audition in BMW native media viewer with user playback controls and no autoplay. This does not feed audio to the model or certify a human listened. Requires an idle media controller.',{artifactId:{type:'string',description:'Existing filename ID in the current Project artifact store; never a host path or URL.'}},['artifactId']),
   action('media.frames.sample', 'Extract 1 to 8 PNG frames from a Project video artifact and return them as model images with actual presentation timestamps. Opaque finite local files up to 512 MiB/30 minutes; thumbnails up to 1280x720.', {
     artifactId: { type: 'string', description: 'Existing filename ID in the current Project artifact store; never a host path or URL.' },
     timestampsSeconds: { type: 'array', minItems: 1, maxItems: 8, items: { type: 'number', minimum: 0, maximum: 1800 }, description: 'Requested media timestamps in seconds, within the video track. Actual frame timestamps are returned.' },
     maxWidth: { type: 'integer', minimum: 16, maximum: 1280 },
     maxHeight: { type: 'integer', minimum: 16, maximum: 720 }
   }, ['artifactId', 'timestampsSeconds']),
+  action('media.capture.frames.sample','Sample 1 to 8 source times from a Project capture. Version 2 uses a SHA-bound per-frame source-to-file PTS map, decodes the actual recording and verifies returned file PTS; arbitrary captured middle/tail supported through pauses and speed changes. Returns actual source PTS, decoded file PTS, delta and PNG hash. Legacy v1 remains first/tail PNG only. Never interpolate by duration; outside-range or changed artifacts fail.',{
+    artifactId:{type:'string',description:'Existing filename ID in the current Project artifact store; never a host path or URL.'},
+    sourceTimestampsSeconds:{type:'array',minItems:1,maxItems:8,items:{type:'number',minimum:0,maximum:86400},description:'Requested source media seconds within the indexed ranges. Selects the preceding captured source frame, returns its actual source PTS and verified recording-file PTS (v2); legacy v1 reports file PTS null.'}
+  },['artifactId','sourceTimestampsSeconds']),
   action('media.convert', 'Export an opaque Project artifact or timestamp trim to MP4 (H.264/AAC) or WebM (VP9/Opus), optionally resizing. Browser-native WebCodecs capability is checked; unsupported or discarded tracks fail instead of silently losing audio. Finite files up to 512 MiB/30 minutes, two-minute job deadline. Exports are reparsed to return actual duration and tracks; frame boundaries and audio encoder padding may affect duration. Exports do not prove the source capture is complete.', {
     artifactId: { type: 'string', description: 'Existing filename ID in the current Project artifact store; never a host path or URL.' },
     outputFormat: { type: 'string', enum: ['mp4', 'webm'] },
@@ -179,13 +194,37 @@ export const BROWSER_CORE_ACTION_DEFINITIONS: readonly BrowserActionDefinition[]
 export const BROWSER_CORE_ACTIONS = Object.freeze(BROWSER_CORE_ACTION_DEFINITIONS.map((definition) => definition.action))
 export const BROWSER_ACTIONS = BROWSER_CORE_ACTIONS
 
-export function assertBrowserRequest(value: unknown, allowedActions: readonly string[] = BROWSER_CORE_ACTIONS): BrowserRequest {
+function requestError(message:string,allowedActions:readonly string[],definition?:BrowserActionDefinition,fields?:string[]):TypeError {
+  return new TypeError(JSON.stringify({code:definition?'BMW_BROWSER_ARGUMENTS_INVALID':'BMW_BROWSER_ACTION_UNSUPPORTED',message,stage:'validation',executed:false,
+    ...(fields?{fields:fields.slice(0,16).map(field=>field.slice(0,80))}:{}),
+    ...(definition?{action:definition.action,requiredFields:definition.inputSchema.required,acceptedFields:['action',...Object.keys(definition.inputSchema.properties)]}:{supportedActions:allowedActions.slice(0,128)}),
+    ...(allowedActions.includes('help')?{recovery:{action:'help',...(definition?{forAction:definition.action}:{})}}:{})}))
+}
+
+export function assertBrowserRequest(value: unknown, allowedActions: readonly string[] = BROWSER_CORE_ACTIONS, definitions:readonly BrowserActionDefinition[]=BROWSER_CORE_ACTION_DEFINITIONS): BrowserRequest {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new TypeError('Browser request must be an object.')
   }
   const request = value as Record<string, unknown>
   if (typeof request.action !== 'string' || !allowedActions.includes(request.action)) {
-    throw new TypeError(`Unsupported browser action: ${String(request.action)}`)
+    throw requestError('Unsupported browser action. Use an exact action from supportedActions.',allowedActions)
+  }
+  const definition=definitions.find(definition=>definition.action===request.action)
+  if(definition){
+    const unknown=Object.keys(request).filter(key=>key!=='action'&&!Object.hasOwn(definition.inputSchema.properties,key))
+    if(unknown.length)throw requestError('Unknown fields for this action; no operation was executed.',allowedActions,definition,unknown)
+    const missing=definition.inputSchema.required.filter(key=>request[key]===undefined)
+    if(missing.length)throw requestError('Required fields are missing; no operation was executed.',allowedActions,definition,missing)
+    const invalid=Object.entries(definition.inputSchema.properties).filter(([key,schema])=>{
+      const value=request[key];if(value===undefined)return false
+      if(schema.type==='string')return typeof value!=='string'||typeof schema.maxLength==='number'&&value.length>schema.maxLength
+      if(schema.type==='number')return typeof value!=='number'||!Number.isFinite(value)
+      if(schema.type==='boolean')return typeof value!=='boolean'
+      if(schema.type==='array')return !Array.isArray(value)
+      if(schema.type==='object')return !value||typeof value!=='object'||Array.isArray(value)
+      return false
+    }).map(([key])=>key)
+    if(invalid.length)throw requestError('Fields have invalid types or bounds; request help for the exact input schema.',allowedActions,definition,invalid)
   }
   if(request.action==='observe'||request.action==='page.media.list')assertPageScope(request)
   return request as BrowserRequest

@@ -1,0 +1,1318 @@
+{
+  "schemaVersion": 1,
+  "sourceSha256": "3aebc736680dcb564a1a16b77adf58ffb64f145f99d3703221a05993ae46fc16",
+  "historicalAudit": {
+    "date": "2026-10-16",
+    "productIntegrated": true,
+    "downloaded": 11,
+    "failed": 1,
+    "wholeVideo2fpsVisualAnalysed": 11,
+    "audioAuditioned": 0,
+    "fullEofDecodeClaim": false,
+    "sourceProjectRecovered": false,
+    "totals": {
+      "base": 4268,
+      "dense": 8655,
+      "seconds": 2130.86,
+      "uniquePts": 10757
+    },
+    "method": "0.5-second requested grid over actual video track; identified transitions/authored motion reviewed at 0.125 seconds; contact-sheet visual review by assistant. Native BMW components with task-side orchestration; not a new batch browser capability.",
+    "limits": [
+      "No claim of exhaustive sub-125ms transitions or frame-exact edit boundaries",
+      "Compressed platform delivery files, not upload masters",
+      "S10/S12 identified via account video list and visual/title/duration; individual stable post permalink unresolved",
+      "No full audio audition, transcript or mix/SFX quality assessment",
+      "Eleven sampled video tracks cover their full available duration; no assertion of full-packet EOF decode for all eleven"
+    ],
+    "failure": {
+      "sampleId": "S04",
+      "title": "工业AI的落地密码：从工厂现场到产业生态",
+      "pageUrl": "https://weibo.com/tv/show/1034:5348856070864899",
+      "status": "rejected-no-lower-quality",
+      "pageDuration": 5085.541995,
+      "artifactId": null,
+      "bytes": null,
+      "quality": "1080P only observed; expanded quality UI exposed no smaller alternative",
+      "reason": "Actual response length exceeds 536870912 bytes (512 MiB). Not HTTP 403. Page duration also exceeds 1800-second native processing limit.",
+      "visualAnalysisComplete": false,
+      "baseFrames": 0,
+      "denseFrames": 0
+    },
+    "samples": [
+      {
+        "sampleId": "S01",
+        "title": "A社最新研究警告： AI蠕虫“生命迹象”出现了",
+        "pageUrl": "https://weibo.com/tv/show/1034:5354263476371476",
+        "artifactId": "1792128963971-qbit-v2-S01.mp4",
+        "sha256": "a81dd8c153758c48901eafc012cfb9ba03580e864577e877e9c7d1e76133e173",
+        "bytes": 9519368,
+        "width": 1080,
+        "height": 1920,
+        "videoStart": 0,
+        "videoEnd": 138.36,
+        "mediaDuration": 138.390998,
+        "base": {
+          "requested": 277,
+          "extracted": 277,
+          "viewed": 277,
+          "sheets": 12,
+          "maxRequestedGap": 0.5,
+          "lastRequested": 138,
+          "tailSeconds": 0.36000000000001364,
+          "maxPtsError": 0.020000000000010232
+        },
+        "dense": {
+          "requested": 919,
+          "extracted": 919,
+          "viewed": 919,
+          "sheets": 39,
+          "requestedInterval": 0.125,
+          "intervals": [
+            [
+              0,
+              5.5
+            ],
+            [
+              10.5,
+              15
+            ],
+            [
+              17,
+              29
+            ],
+            [
+              30,
+              46
+            ],
+            [
+              48,
+              69
+            ],
+            [
+              73,
+              90
+            ],
+            [
+              95,
+              115
+            ],
+            [
+              119,
+              127
+            ],
+            [
+              127.5,
+              138.36
+            ]
+          ]
+        },
+        "uniquePts": 966,
+        "method": "BMW production downloadMediaArtifact + createMediaSessionFetch/net.request; task execution in ephemeral Session; no production browser Profile/cookies"
+      },
+      {
+        "sampleId": "S02",
+        "title": "AI版Adobe全家桶来了！",
+        "pageUrl": "https://weibo.com/tv/show/1034:5354338982232083",
+        "artifactId": "1792128964686-qbit-v2-S02.mp4",
+        "sha256": "a8da46517819259b61b6a25a85e671aaef13e0a810c3c5c8ae03ed9da09db7f2",
+        "bytes": 7772259,
+        "width": 1080,
+        "height": 1920,
+        "videoStart": 0,
+        "videoEnd": 90.26666666666667,
+        "mediaDuration": 90.326009,
+        "base": {
+          "requested": 181,
+          "extracted": 181,
+          "viewed": 181,
+          "sheets": 8,
+          "maxRequestedGap": 0.5,
+          "lastRequested": 90,
+          "tailSeconds": 0.2666666666666657,
+          "maxPtsError": 0
+        },
+        "dense": {
+          "requested": 368,
+          "extracted": 368,
+          "viewed": 368,
+          "sheets": 16,
+          "requestedInterval": 0.125,
+          "intervals": [
+            [
+              0,
+              8
+            ],
+            [
+              12,
+              14
+            ],
+            [
+              16,
+              26
+            ],
+            [
+              30,
+              37.5
+            ],
+            [
+              44,
+              46
+            ],
+            [
+              49,
+              50.5
+            ],
+            [
+              53,
+              56
+            ],
+            [
+              67,
+              79
+            ]
+          ]
+        },
+        "uniquePts": 457,
+        "method": "BMW production downloadMediaArtifact + createMediaSessionFetch/net.request; task execution in ephemeral Session; no production browser Profile/cookies"
+      },
+      {
+        "sampleId": "S03",
+        "title": "天体物理学家联手Claude，制作出第一张完整的紫外全天图",
+        "pageUrl": "https://weibo.com/tv/show/1034:5354227736969246",
+        "artifactId": "1792128965234-qbit-v2-S03.mp4",
+        "sha256": "78cf99506b909333646b4ce8091eb622e821aa49bc5fc7a12a41f23739aa23fb",
+        "bytes": 9158332,
+        "width": 1080,
+        "height": 1920,
+        "videoStart": 0,
+        "videoEnd": 125.28,
+        "mediaDuration": 125.318005,
+        "base": {
+          "requested": 251,
+          "extracted": 251,
+          "viewed": 251,
+          "sheets": 11,
+          "maxRequestedGap": 0.5,
+          "lastRequested": 125,
+          "tailSeconds": 0.28000000000000114,
+          "maxPtsError": 0.020000000000003126
+        },
+        "dense": {
+          "requested": 520,
+          "extracted": 520,
+          "viewed": 520,
+          "sheets": 22,
+          "requestedInterval": 0.125,
+          "intervals": [
+            [
+              0,
+              5.5
+            ],
+            [
+              14,
+              22
+            ],
+            [
+              25,
+              29
+            ],
+            [
+              35,
+              39
+            ],
+            [
+              56,
+              69
+            ],
+            [
+              75,
+              82
+            ],
+            [
+              82.5,
+              94
+            ],
+            [
+              95,
+              107
+            ]
+          ]
+        },
+        "uniquePts": 641,
+        "method": "BMW production downloadMediaArtifact + createMediaSessionFetch/net.request; task execution in ephemeral Session; no production browser Profile/cookies"
+      },
+      {
+        "sampleId": "S05",
+        "title": "学术界大地震！AI科学家横空出世，一篇顶会论文只需100块",
+        "pageUrl": "https://weibo.com/tv/show/1034:5070114165293119",
+        "artifactId": "1792128967193-qbit-v2-S05.mp4",
+        "sha256": "66fcdf0bbfbb445914ec833b9d9808e87c99145209b717dfd1143e832e61b931",
+        "bytes": 7908193,
+        "width": 1080,
+        "height": 1920,
+        "videoStart": 0,
+        "videoEnd": 77.8,
+        "mediaDuration": 77.88,
+        "base": {
+          "requested": 156,
+          "extracted": 156,
+          "viewed": 156,
+          "sheets": 7,
+          "maxRequestedGap": 0.5,
+          "lastRequested": 77.5,
+          "tailSeconds": 0.29999999999999716,
+          "maxPtsError": 0
+        },
+        "dense": {
+          "requested": 479,
+          "extracted": 479,
+          "viewed": 479,
+          "sheets": 20,
+          "requestedInterval": 0.125,
+          "intervals": [
+            [
+              0,
+              5.5
+            ],
+            [
+              6,
+              13
+            ],
+            [
+              17,
+              20
+            ],
+            [
+              21,
+              39
+            ],
+            [
+              45,
+              51
+            ],
+            [
+              56,
+              60.5
+            ],
+            [
+              62,
+              78
+            ]
+          ]
+        },
+        "uniquePts": 515,
+        "method": "BMW production downloadMediaArtifact + createMediaSessionFetch/net.request; task execution in ephemeral Session; no production browser Profile/cookies"
+      },
+      {
+        "sampleId": "S06",
+        "title": "给宇树机器人装上Astra 它自己把家务干了",
+        "pageUrl": "https://weibo.com/tv/show/1034:5348445171417139",
+        "artifactId": "1792128967899-qbit-v2-S06.mp4",
+        "sha256": "c371e831bf3fb9c46a4eae604c091ce069f31ae48fe8c72f000b2da318419686",
+        "bytes": 7863657,
+        "width": 1080,
+        "height": 1920,
+        "videoStart": 0,
+        "videoEnd": 78.04,
+        "mediaDuration": 78.111995,
+        "base": {
+          "requested": 157,
+          "extracted": 157,
+          "viewed": 157,
+          "sheets": 7,
+          "maxRequestedGap": 0.5,
+          "lastRequested": 78,
+          "tailSeconds": 0.04000000000000625,
+          "maxPtsError": 0.020000000000003126
+        },
+        "dense": {
+          "requested": 336,
+          "extracted": 336,
+          "viewed": 336,
+          "sheets": 14,
+          "requestedInterval": 0.125,
+          "intervals": [
+            [
+              0,
+              1
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              14,
+              15
+            ],
+            [
+              16,
+              17
+            ],
+            [
+              30,
+              40
+            ],
+            [
+              44,
+              47
+            ],
+            [
+              50,
+              68
+            ],
+            [
+              69,
+              70
+            ],
+            [
+              72,
+              78
+            ]
+          ]
+        },
+        "uniquePts": 409,
+        "method": "BMW production downloadMediaArtifact + createMediaSessionFetch/net.request; task execution in ephemeral Session; no production browser Profile/cookies"
+      },
+      {
+        "sampleId": "S07",
+        "title": "博士生如何用龙虾做知识管理？",
+        "pageUrl": "https://weibo.com/tv/show/1034:5280800896385144",
+        "artifactId": "1792128968415-qbit-v2-S07.mp4",
+        "sha256": "01ab55c8a127bc199c5eef941287d7b86352cd5a2c2b26c57311e077b727f7f2",
+        "bytes": 11514842,
+        "width": 1080,
+        "height": 1920,
+        "videoStart": 0,
+        "videoEnd": 216.1,
+        "mediaDuration": 216.131995,
+        "base": {
+          "requested": 433,
+          "extracted": 433,
+          "viewed": 433,
+          "sheets": 19,
+          "maxRequestedGap": 0.5,
+          "lastRequested": 216,
+          "tailSeconds": 0.09999999999999432,
+          "maxPtsError": 0
+        },
+        "dense": {
+          "requested": 88,
+          "extracted": 88,
+          "viewed": 88,
+          "sheets": 4,
+          "requestedInterval": 0.125,
+          "intervals": [
+            [
+              0,
+              1
+            ],
+            [
+              13,
+              18
+            ],
+            [
+              155,
+              156.5
+            ],
+            [
+              162,
+              163.5
+            ],
+            [
+              211,
+              213
+            ]
+          ]
+        },
+        "uniquePts": 499,
+        "method": "BMW production downloadMediaArtifact + createMediaSessionFetch/net.request; task execution in ephemeral Session; no production browser Profile/cookies"
+      },
+      {
+        "sampleId": "S08",
+        "title": "OpenClaw失控删光邮件！Meta高管控诉引800万围观",
+        "pageUrl": "https://weibo.com/tv/show/1034:5270232139497515",
+        "artifactId": "1792128969803-qbit-v2-S08.mp4",
+        "sha256": "ca7515673d16cef90d958561faa475d2e7a996f05ef7bb7013db207b791b0c2e",
+        "bytes": 9195034,
+        "width": 1080,
+        "height": 1920,
+        "videoStart": 0,
+        "videoEnd": 110.32,
+        "mediaDuration": 110.388005,
+        "base": {
+          "requested": 221,
+          "extracted": 221,
+          "viewed": 221,
+          "sheets": 10,
+          "maxRequestedGap": 0.5,
+          "lastRequested": 110,
+          "tailSeconds": 0.3199999999999932,
+          "maxPtsError": 0.020000000000003126
+        },
+        "dense": {
+          "requested": 663,
+          "extracted": 663,
+          "viewed": 663,
+          "sheets": 28,
+          "requestedInterval": 0.125,
+          "intervals": [
+            [
+              0,
+              5.5
+            ],
+            [
+              6,
+              15.5
+            ],
+            [
+              23,
+              36
+            ],
+            [
+              37,
+              54
+            ],
+            [
+              59,
+              70
+            ],
+            [
+              80,
+              104.5
+            ],
+            [
+              108,
+              110.32
+            ]
+          ]
+        },
+        "uniquePts": 718,
+        "method": "BMW production downloadMediaArtifact + createMediaSessionFetch/net.request; task execution in ephemeral Session; no production browser Profile/cookies"
+      },
+      {
+        "sampleId": "S09",
+        "title": "人类重启挖穿地壳计划：苏联之后，中美接力",
+        "pageUrl": "https://weibo.com/tv/show/1034:5160000633372693",
+        "artifactId": "preserved-0be09f35-41f3-4ba5-94f5-8c7e9ee9d469-0-delivery.mp4",
+        "sha256": "c051491c3c412ddacdca7d0b211128959c4e662d60023323d8e18a53765b5f2b",
+        "bytes": 182052806,
+        "width": 1920,
+        "height": 1080,
+        "videoStart": 0,
+        "videoEnd": 661.6,
+        "base": {
+          "requested": 1324,
+          "extracted": 1324,
+          "viewed": 1324,
+          "sheets": 56,
+          "maxRequestedGap": 0.5,
+          "lastRequested": 661.5,
+          "tailSeconds": 0.10000000000002274,
+          "maxPtsError": 0
+        },
+        "dense": {
+          "requested": 2781,
+          "extracted": 2781,
+          "viewed": 2781,
+          "sheets": 116,
+          "requestedInterval": 0.125,
+          "intervals": [
+            [
+              0,
+              14
+            ],
+            [
+              20,
+              22
+            ],
+            [
+              24,
+              28
+            ],
+            [
+              44,
+              51
+            ],
+            [
+              63,
+              81
+            ],
+            [
+              90,
+              95
+            ],
+            [
+              101,
+              104
+            ],
+            [
+              122,
+              135
+            ],
+            [
+              136,
+              147
+            ],
+            [
+              154,
+              155
+            ],
+            [
+              162,
+              168
+            ],
+            [
+              176,
+              190
+            ],
+            [
+              199,
+              206
+            ],
+            [
+              220,
+              248
+            ],
+            [
+              262,
+              272
+            ],
+            [
+              278,
+              320
+            ],
+            [
+              326,
+              328
+            ],
+            [
+              334,
+              337
+            ],
+            [
+              340,
+              343
+            ],
+            [
+              346,
+              351
+            ],
+            [
+              352,
+              364
+            ],
+            [
+              371,
+              378
+            ],
+            [
+              389,
+              400
+            ],
+            [
+              407,
+              412
+            ],
+            [
+              421,
+              432
+            ],
+            [
+              433,
+              435
+            ],
+            [
+              439,
+              447
+            ],
+            [
+              454,
+              456
+            ],
+            [
+              460,
+              470
+            ],
+            [
+              472.5,
+              473.5
+            ],
+            [
+              476,
+              477
+            ],
+            [
+              482.5,
+              483.5
+            ],
+            [
+              496,
+              500
+            ],
+            [
+              517,
+              520
+            ],
+            [
+              521,
+              542
+            ],
+            [
+              552,
+              566
+            ],
+            [
+              572,
+              574
+            ],
+            [
+              578,
+              579
+            ],
+            [
+              587,
+              590.5
+            ],
+            [
+              593,
+              600
+            ],
+            [
+              605,
+              608
+            ],
+            [
+              610,
+              611
+            ],
+            [
+              624.5,
+              633.5
+            ],
+            [
+              643.5,
+              644.5
+            ],
+            [
+              650,
+              652
+            ],
+            [
+              654.5,
+              661.6
+            ]
+          ]
+        },
+        "uniquePts": 3409,
+        "method": "BMW media.preserve production component; ephemeral Session; 120s budget"
+      },
+      {
+        "sampleId": "S10",
+        "title": "（画面内标题）2026年诺贝尔化学奖",
+        "pageUrl": "https://m.weibo.cn/u/6105753431#&video",
+        "artifactId": "1792129030672-qbit-v2-S10.mp4",
+        "sha256": "a948b21cf995d43cda4aadffe4755fba0b727eae1dc5d96ce84b386b0b1105ec",
+        "bytes": 16045327,
+        "width": 852,
+        "height": 480,
+        "videoStart": 0,
+        "videoEnd": 402.04,
+        "mediaDuration": 402.1,
+        "base": {
+          "requested": 805,
+          "extracted": 805,
+          "viewed": 805,
+          "sheets": 34,
+          "maxRequestedGap": 0.5,
+          "lastRequested": 402,
+          "tailSeconds": 0.040000000000020464,
+          "maxPtsError": 0.020000000000010232
+        },
+        "dense": {
+          "requested": 1449,
+          "extracted": 1449,
+          "viewed": 1449,
+          "sheets": 61,
+          "requestedInterval": 0.125,
+          "intervals": [
+            [
+              0,
+              3
+            ],
+            [
+              8,
+              9
+            ],
+            [
+              11,
+              16.5
+            ],
+            [
+              19,
+              20
+            ],
+            [
+              23,
+              24
+            ],
+            [
+              39,
+              46
+            ],
+            [
+              49.5,
+              55
+            ],
+            [
+              57,
+              58
+            ],
+            [
+              59,
+              63
+            ],
+            [
+              64.5,
+              68.5
+            ],
+            [
+              74,
+              75
+            ],
+            [
+              80,
+              81
+            ],
+            [
+              92.5,
+              95
+            ],
+            [
+              100.5,
+              103
+            ],
+            [
+              108,
+              109
+            ],
+            [
+              112.5,
+              113.5
+            ],
+            [
+              114,
+              117
+            ],
+            [
+              120,
+              123.5
+            ],
+            [
+              124.5,
+              125.5
+            ],
+            [
+              131,
+              138.5
+            ],
+            [
+              140,
+              141
+            ],
+            [
+              142.5,
+              143.5
+            ],
+            [
+              146.5,
+              148
+            ],
+            [
+              149.5,
+              150.5
+            ],
+            [
+              152.5,
+              177
+            ],
+            [
+              184.5,
+              190.5
+            ],
+            [
+              193.5,
+              202.5
+            ],
+            [
+              207,
+              220
+            ],
+            [
+              221,
+              222
+            ],
+            [
+              237.5,
+              241.5
+            ],
+            [
+              249.5,
+              253.5
+            ],
+            [
+              259,
+              260.5
+            ],
+            [
+              265.5,
+              266.5
+            ],
+            [
+              280,
+              299.5
+            ],
+            [
+              301.5,
+              307.5
+            ],
+            [
+              315,
+              318.5
+            ],
+            [
+              321,
+              322
+            ],
+            [
+              324.5,
+              325.5
+            ],
+            [
+              329,
+              333
+            ],
+            [
+              341.5,
+              342.5
+            ],
+            [
+              346,
+              347
+            ],
+            [
+              353.5,
+              355
+            ],
+            [
+              358.5,
+              359.5
+            ],
+            [
+              362,
+              363
+            ],
+            [
+              364,
+              365
+            ],
+            [
+              366.5,
+              367.5
+            ],
+            [
+              378,
+              379
+            ],
+            [
+              385,
+              386
+            ],
+            [
+              388.5,
+              389.5
+            ],
+            [
+              392,
+              402.04
+            ]
+          ]
+        },
+        "uniquePts": 1891,
+        "method": "BMW production downloadMediaArtifact + createMediaSessionFetch/net.request; task execution in ephemeral Session; no production browser Profile/cookies"
+      },
+      {
+        "sampleId": "S11",
+        "title": "初代AI应用顶流破产 巅峰估值曾传炒超50亿美元",
+        "pageUrl": "https://weibo.com/tv/show/1034:5353972609777714",
+        "artifactId": "1792129336957-qbit-v2-S11.mp4",
+        "sha256": "731ec459862f049f82651c9fc9d68f5683decfda994a3a19768ae797fefec85c",
+        "bytes": 9347830,
+        "width": 1080,
+        "height": 1920,
+        "videoStart": 0,
+        "videoEnd": 98.92,
+        "base": {
+          "requested": 198,
+          "extracted": 198,
+          "viewed": 198,
+          "sheets": 9,
+          "maxRequestedGap": 0.5,
+          "lastRequested": 98.5,
+          "tailSeconds": 0.4200000000000017,
+          "maxPtsError": 0.020000000000003126
+        },
+        "dense": {
+          "requested": 424,
+          "extracted": 424,
+          "viewed": 424,
+          "sheets": 18,
+          "requestedInterval": 0.125,
+          "intervals": [
+            [
+              0,
+              1
+            ],
+            [
+              2,
+              3.5
+            ],
+            [
+              6,
+              9
+            ],
+            [
+              10,
+              13
+            ],
+            [
+              16,
+              17.5
+            ],
+            [
+              21,
+              22.5
+            ],
+            [
+              23.5,
+              24.5
+            ],
+            [
+              28.5,
+              29.5
+            ],
+            [
+              30.5,
+              35
+            ],
+            [
+              37,
+              41.5
+            ],
+            [
+              42,
+              43
+            ],
+            [
+              44.5,
+              51.5
+            ],
+            [
+              53.5,
+              58.5
+            ],
+            [
+              61,
+              62.5
+            ],
+            [
+              66,
+              68.5
+            ],
+            [
+              75,
+              76
+            ],
+            [
+              77,
+              78
+            ],
+            [
+              79.5,
+              85.5
+            ],
+            [
+              87,
+              89.5
+            ],
+            [
+              90.5,
+              91.5
+            ],
+            [
+              96.5,
+              98.5
+            ]
+          ]
+        },
+        "uniquePts": 516,
+        "method": "BMW正式browser media.download动作 + media.inspect"
+      },
+      {
+        "sampleId": "S12",
+        "title": "（画面内标题）OpenAI公开722篇数学论文！黎曼霍奇BSD全上阵",
+        "pageUrl": "https://m.weibo.cn/u/6105753431#&video",
+        "artifactId": "1792129031923-qbit-v2-S12.mp4",
+        "sha256": "730ad8eb535115b2f26c676d079993c1520698323e57d1998f5d4c29115a760d",
+        "bytes": 5694984,
+        "width": 540,
+        "height": 960,
+        "videoStart": 0,
+        "videoEnd": 132.13333333333333,
+        "mediaDuration": 132.190998,
+        "base": {
+          "requested": 265,
+          "extracted": 265,
+          "viewed": 265,
+          "sheets": 12,
+          "maxRequestedGap": 0.5,
+          "lastRequested": 132,
+          "tailSeconds": 0.13333333333332575,
+          "maxPtsError": 0
+        },
+        "dense": {
+          "requested": 628,
+          "extracted": 628,
+          "viewed": 628,
+          "sheets": 27,
+          "requestedInterval": 0.125,
+          "intervals": [
+            [
+              0,
+              1
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              7,
+              13.5
+            ],
+            [
+              15.5,
+              17.5
+            ],
+            [
+              20,
+              23
+            ],
+            [
+              26.5,
+              32.5
+            ],
+            [
+              33,
+              35
+            ],
+            [
+              36,
+              37
+            ],
+            [
+              39,
+              43
+            ],
+            [
+              44,
+              45
+            ],
+            [
+              47,
+              48
+            ],
+            [
+              49.5,
+              50.5
+            ],
+            [
+              51,
+              53
+            ],
+            [
+              54,
+              55
+            ],
+            [
+              57,
+              59
+            ],
+            [
+              62,
+              63.5
+            ],
+            [
+              66,
+              72.5
+            ],
+            [
+              76.5,
+              79
+            ],
+            [
+              80,
+              81
+            ],
+            [
+              81.5,
+              82.5
+            ],
+            [
+              83.5,
+              84.5
+            ],
+            [
+              85,
+              88
+            ],
+            [
+              89,
+              92
+            ],
+            [
+              93,
+              94
+            ],
+            [
+              94.5,
+              99
+            ],
+            [
+              101.5,
+              105
+            ],
+            [
+              107.5,
+              110
+            ],
+            [
+              113.5,
+              118
+            ],
+            [
+              121,
+              123
+            ],
+            [
+              124.5,
+              127
+            ],
+            [
+              128,
+              130
+            ]
+          ]
+        },
+        "uniquePts": 736,
+        "method": "BMW production downloadMediaArtifact + createMediaSessionFetch/net.request; task execution in ephemeral Session; no production browser Profile/cookies"
+      }
+    ]
+  },
+  "observations": {
+    "S01": [
+      "0s独立开场题卡，0.5s起收缩为固定顶部标题+中部素材窗+底字幕",
+      "2–5.5s论文橙色高亮/中文译文叠层；6–10s家电快切；10.5–15s蓝色联网素材连续动效",
+      "17–22s设备节点分批出现、连线与15×55数字说明；24.5–29s性能数字/词块逐步出现",
+      "30–34.5s设备节点矩阵增加；35–39.5s表格局部放大/突出色块；40–46s流程图逐节点/连线构建",
+      "48–54s论文背景虚化+小图放大/横向组合；56–62s段落高亮逐条出现；63–68s折线图放大再拉远",
+      "73–76s线描锁头打开；78.5–83.5s红色界面字符变化；84–89s散点与趋势线揭示",
+      "95–99s网络节点逐渐变红；99.5–106.5s网络素材/云图/中文词叠入；107–112sDAY1–6树形生长",
+      "112.5–114.5s折线逐段绘制；119.5–122s环形百分比递增；123–127s设备矩阵/删除线；127.5–136.5s论文叠译/表情贴纸；137s动画片段收尾"
+    ],
+    "S02": [
+      "1.5–4.5s Artcraft标志/背景素材拼贴连续入场；6.5–8s品牌图标横向展开",
+      "12–14s A/Adobe O/Office文字分行出现；16.5s人物贴纸弹入；18.5s旋转/旋涡模糊转到Effectcraft软件录屏",
+      "20–26s软件界面多次局部重构与拉近；27s反对表情贴纸；28–30s照片；30.5–36.5s上下两张调色对比",
+      "37.5–43.5s同照片软件UI对照，44–52.5sPPT导出流程录屏与49.5s文件名特写；53–55.5s叠加报错与乱码窗口",
+      "56–60s GitHub评论；60.5–66.5s截图中的网纹样例；67–70s代码行黄色反白；71–78.5s多张评论卡叠放/高亮",
+      "79–84s三维流水线素材；85–90s绿幕/成片/剪辑时间线/人物素材快切"
+    ],
+    "S03": [
+      "0.5–4s原文反白+青色中文描边，4.5s横向模糊转星图；14.5–22s推文卡倾斜、青色边缘与叠译逐句出现",
+      "25–28.5s全天图可见光/紫外光对比；35.5–38.5s表格缩放/白闪模糊转场到缺口星图",
+      "56–67.5s引述卡推入、背景虚化、分行文字强调；68.5s转星图；75–77s可见光/红外/无线电三图卡依次出现；80–81.5s图像缺口渐补",
+      "82.5–93.5s多句引述/横条高亮逐行出现；95–102s缺口区域特写和引述叠层；102.5–106.5s区域补全对比",
+      "110–125s科研人员、设施、观测站、工作场景和星空素材依叙事切换"
+    ],
+    "S05": [
+      "0.5–5s推文原文高亮/黄色大字逐字出现；2.5s放射状缩放模糊转论文列表",
+      "6–12.5s研究步骤卡、代码窗快切与蓝色描边步骤词；13–20s代码动态素材+黄色15美元≈108元文字逐段出现",
+      "21–27.5s稿件背景放大/AI审稿人及改进意见大字；28–34s多篇论文卡倾斜叠放切换；35–38s中文题目分行出现",
+      "45–50.5s论文引文逐条强调；51–54s垃圾桶表情图；56.5–60s作者人物+论文图叠卡；62.5–65.5sGitHub局部放大与评论叠入；67.5–77.5s段落反白/中文逐行强调"
+    ],
+    "S06": [
+      "0–6s厨房任务HUD/点云空间画面/机器人素材快切，点云是引入素材不能据此断言编辑器重建三维",
+      "9.5–30s长厨房演示素材，14.5–16.5s点云插段；画面有原始英文条与中文底字幕",
+      "30.5–38.5s新闻页滑入、绿色横条高亮与叠译逐行出现；39–44.5s四分屏机器人任务素材；45–46.5s系统结构图",
+      "47–50s人物表情段；50.5–52s动画片段；52–67.5s文章段落强调/图表和任务缩略图组合；68–69s动画；69.5–72s四分屏",
+      "72.5–76.5sHomeBody图文卡，77s进入来源/BGM文字署名页"
+    ],
+    "S07": [
+      "0s紫绿栏目开场；0.5–13s讲师视频PIP+表格/插画与字幕固定版式",
+      "13.5–17s紫色对话气泡题卡弹入/透视翻面/换字/缩小回顶部栏目头",
+      "17–155s主体为白底聊天/知识文档大窗+讲师PIP+身份条+中文句字幕；翻页/滚动跟随讲解，未见密集花式转场",
+      "155.5–162s知识库网页网格视图；162.5s回聊天界面；173–191s原文鼠标选区/蓝色反白和滚动",
+      "199–210s卡片知识内容选区；212–216s回知识库网页网格；主体基本布局贯穿全片"
+    ],
+    "S08": [
+      "0.5–2s标题出现条纹/位移抖动效果，背景模糊；3–5s推文作者局部拉近及中文身份标签",
+      "6–14.5s推文截图平移/缩放、原文反白与中文逐句叠译；15.5–23s第二张推文素材；23.5–35s引述卡移动、英文反白、译文逐行出现",
+      "37–53s聊天截图从上到下多次裁切聚焦/白底黑字中文嵌译；54–58s回推文；59.5–69.5s长英文截图分段强调",
+      "70.5–80s软件网页截图与原源圈注；80.5–86s科技脑素材+标题淡入；87–104s安全文档滚动/重点反白、逐句中文翻译；104.5–108.5s科技动画素材；109s来源/BGM文字页"
+    ],
+    "S09": [
+      "0–6s井盖三维/实拍材质动画与地狱之井题字；6.5–13s地图路径飞行/推近定位；13.5–20s实拍厂址与多语言地名条；20.5s闪光漏光转老资料",
+      "25–27s深度数字/字形描边揭示；33–44s钻井/工厂素材；44.5–50s栏目Logo与大字题卡",
+      "54.5–63s实拍电厂+地点标签；63.5–80s饼图扇区、分层电厂示意、箭头/标签分步出现；81–101s地球与大小圆对照/数字标注",
+      "102–123s实拍/旧资料溶解和横向模糊转场；124–134.5s地球剖面展开/放大镜示意；137–146s涡轮和地球内部剖面图/连线/数值标签",
+      "147–154s学术截图缩放与叠化到岩浆/旧影像；162.5–167.5s旧钻井船素材加紫色题条/莫霍剖面资料",
+      "168–176s老资料素材与译名，177–189s海/陆地壳剖面对照与垂直下钻尺度动画；200–205s地图跨区飞行/定位标牌；221–232s旧照片倾斜叠加、虚化和图注逐行出现；233–246s深度时间轴向下移动、年代/深度/照片同步揭示；247s漏光过渡",
+      "252–263s黑白旧资料剪辑/滑移模糊；263.5–271.5s钻井断裂及5km损失示意；272–278s钻头三维动画素材；278.5–319s钻进/磨损/提升/分支路径/温度标注连续二维示意；327s漏光回资料素材；335s照片叠放",
+      "336–419.5s资料照片/机械局限性紫色强调；束流钻井剖面、10m胶囊示意；熔球实验与黄油/地壳双标签；论文叠卡；三维岩壁破碎与反应堆素材；回旋管照片/剖面动画与译注。",
+      "420–447s波束/金属管导引连续示意，实拍实验叠1000×微波炉图标，地下管剖面、发射波束、钻进尺度数字；447–459s厂区/实验室资料剪辑。",
+      "460–470s放射缩放模糊进入3D地形剖面/镜头下移，机械钻头与微波钻头标签；496–506s论文卡与紫色逐句引文叠实拍实验背景。",
+      "521–541s水平井/裂隙与冷热水流路线连续图解，切三维换热器；552–565.5s地层3D/二维热传递箭头与30Days至20Years数字演变；572–578s双语网页截屏移入。",
+      "587–599.5s文字重点、钻头剖面转相图：坐标/虚线/临界点/超临界色块依次出现；605.5–610.5s新闻页缩放；625–633s钻井深度/日期数字破碎揭示和连续向下平移。",
+      "644s漏光；650.5–654.5s论文卡；655–661.5s参考资料/扫描线/故障块/标志片尾。"
+    ],
+    "S10": [
+      "0–8.5s出镜口播转新闻稿，黄色译文题条逐字出现，8.5s垂直模糊切发布会；11.5–16s教材截图纵移/叠化；16–19.5s海底资料。",
+      "23.5–49.5s镜前手掌与实体分子模型实拍，39.5–44.5s黑色笔刷词条打字/替换，45s红色圈注绘制；50–57s分子图卡滑入叠植物素材。",
+      "59.5–67.5s化学图卡/药盒叠DNA背景；80.5–93s访谈素材带身份标签和双语字幕；93–108s论文/网页模糊切换与黄色译文。",
+      "114.5–123s实拍烧杯/红白球，加笔刷词条与百分比移动运算；131.5–140.5s大字与坐标网格淡入、红线逐段绘制。",
+      "153–184.5s分子图标阵列与百分比计数、正/负非线性曲线逐点生长、曲线对比；185–210s分子从两组重排成配对、分类聚集/中心M符号、淡化及勾叉。",
+      "210–215.5s饼图扇区分离/比例变换；216–221s论文区块放大与原文反白/叠译；238s旋涡模糊到论文，238.5–259s译文逐行构建与段落替换。",
+      "259.5–280s分子群示意切精细数字比例条；280.5–291s滴管/液面升降/1至3轮实验示意；291.5–299s数字计数×1到×630000、环形比例趋近单色。",
+      "302–321s37个实验方块依次出现、按S/R重排并计数19/18，两条分子路径向上下拉开；321.5–341.5s新闻/照片/杂志截图，329.5s旋涡切换，黄色双语引文逐行。",
+      "342–366.5s发布会/采访/骑车实拍与网页采访，354s垂直模糊；367s倾斜镜头转口播；378.5–392s蜗牛/火焰/地貌素材；392.5–402s资料与glitch栏目片尾。"
+    ],
+    "S11": [
+      "0s封面转固定顶部标题与灰纹背景，0.5–3.5s手机演示/声明网页；3.5–6s角色宣传动画素材。",
+      "6–9s推文逐句反白/叠译；10–13.5s两位创始人姓名绿条依次出现；16–17s人物旁手绘火柴人动画贴纸。",
+      "17.5–21s网站界面滚动；21.5s垂直模糊入新闻稿；24–24.5s绿色重点反白；25–28.5sApp宣传素材。",
+      "29–42s长文逐句高亮/滚动、新闻标题叠译/人物表情贴纸；44.5–48.5s猫鼠动画上三个问题标签随角色移动（后期跟随/手动关键帧，不能单凭成片证明自动跟踪）。",
+      "49–58.5s新闻/法庭文件裁切与绿条/中文逐行强调；59–61.5sApp聊天宣传素材及模糊离场。",
+      "62–66.5s猫鼠动画素材上C.ai标签；66.5–70s网页原文逐条强调；70.5–75s动画素材硬切。",
+      "75.5–79.5s产品官网与图卡网格；80–90.5s声明长图/新闻截图移动及叠译；91–97.5s人物/动画素材（圆形收口可为动画原片自带）；98–98.5s来源/BGM文字。"
+    ],
+    "S12": [
+      "0s封面，0.5–3s科技球/书本碎片宣传视觉素材（生成方式未证实）；3.5–5.5s大号722篇数字与列表背景；6–13s论文页面纵移及千禧难题题字。",
+      "13.5–16.5s说明/Readme/GitHub快切；17–20s读论文人物素材；20.5–27s研究目录长图上下平移。",
+      "27.5–36sOpenAI公告/中文叠译与反白逐句出现；36.5–44s论文列表转π分数示意，图卡后拉/题字，44.5–51s回论文范围段落。",
+      "51.5–57s黎曼图解放大/移动；57.5–62s霍奇/BSD概念图卡叠入；62.5–72.5s顾问名单/原文重点逐项反白、图文纵移。",
+      "73–77s人物在论文流水线中的合成/生成视觉素材（生产路径未知，作为外部素材需求）；77.5–89sReadme逐行强调/叠译。",
+      "89.5–95s机械环形门/722数字与数学家人物视觉素材；95.5–101.5s推文切入与逐行黑底反白/中文译文；102–113.5sAGM AI报告截图重点段落聚焦。",
+      "114–121.5s人物剪影/姓名条叠长文、原文逐句强调；122–132s数学文档与呼吁段落滚动/高亮后结束，无独立片尾署名页。"
+    ]
+  },
+  "note": "Historical visual observations; original required fields excluded because their 180-second limit is obsolete. No audio audition or all-file EOF claim."
+}

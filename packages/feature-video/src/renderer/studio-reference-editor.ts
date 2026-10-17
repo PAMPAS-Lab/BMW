@@ -1,3 +1,4 @@
+import {SourceAnalysisPanel} from './source-analysis-panel.js'
 import {assertReferenceRecords,referenceNotes} from '../studio-reference-contract.js'
 import type {StudioReferenceRecord} from '../studio-reference-contract.js'
 import type {StudioAsset,VideoDraft} from '../studio-contract.js'
@@ -14,10 +15,10 @@ function referenceError(error:unknown):string {
 }
 /** Contextual resource dialog; no model loop, alternate chat or optimistic draft. */
 export class StudioReferenceEditor {
- private dialog?:HTMLDialogElement;private key='';private urls:string[]=[];private working=false;private stopRequested=false;private record?:StudioReferenceRecord;private ready=false
+ private analysisPanel?:SourceAnalysisPanel;private dialog?:HTMLDialogElement;private key='';private urls:string[]=[];private working=false;private stopRequested=false;private record?:StudioReferenceRecord;private ready=false
  constructor(private options:ReferenceOptions){}
- close():void{if(this.working)throw new Error('请先完成或取消参考素材作业。');this.key='';this.dialog?.close();this.dialog?.remove();this.dialog=undefined;this.urls.splice(0).forEach(u=>URL.revokeObjectURL(u));this.record=undefined;this.ready=false}
- suspend():void{this.key='';this.dialog?.close();this.dialog?.remove();this.dialog=undefined;this.urls.splice(0).forEach(u=>URL.revokeObjectURL(u));this.record=undefined;this.ready=false}
+ close():void{if(this.working)throw new Error('请先完成或取消参考素材作业。');this.analysisPanel?.dispose();this.analysisPanel=undefined;this.key='';this.dialog?.close();this.dialog?.remove();this.dialog=undefined;this.urls.splice(0).forEach(u=>URL.revokeObjectURL(u));this.record=undefined;this.ready=false}
+ suspend():void{this.analysisPanel?.dispose();this.analysisPanel=undefined;this.key='';this.dialog?.close();this.dialog?.remove();this.dialog=undefined;this.urls.splice(0).forEach(u=>URL.revokeObjectURL(u));this.record=undefined;this.ready=false}
  async open(asset:StudioAsset):Promise<void>{
   const s=this.options.state();if(!s||s.disabled||!['image','video'].includes(asset.kind))throw new Error('请先选择可用的图片或视频。');this.close();this.key=[s.projectId,s.sessionId,s.draft.id,asset.artifactId].join('/');const key=this.key
   const dialog=document.createElement('dialog');dialog.id='studio-reference-dialog';dialog.className='material-preview-dialog';dialog.setAttribute('aria-label','参考素材分析');this.dialog=dialog
@@ -49,7 +50,8 @@ export class StudioReferenceEditor {
    update()
   }
   const run=async(fields:Record<string,unknown>)=>{if(this.working||key!==this.key)throw new Error('请等待当前参考作业。');const current=this.options.state();if(!current||current.disabled||[current.projectId,current.sessionId,current.draft.id,asset.artifactId].join('/')!==key)throw new Error('参考所属视频已变化。');const owner={projectId:current.projectId,sessionId:current.sessionId,draftId:current.draft.id};this.working=true;this.stopRequested=false;update();status.textContent='正在处理参考素材…';try{const result=await this.options.command({...fields,draftId:owner.draftId,expectedRevision:current.draft.revision},owner);if(key!==this.key)return;if(result.removedReferenceId===this.record?.id){this.record=undefined;this.ready=false}if(result.reference){this.record=assertReferenceRecords([result.reference])[0];this.ready=true}await display()}catch(e){this.ready=false;if(key===this.key)status.textContent=this.stopRequested?'参考作业已停止，已保存的分析与素材保留。':referenceError(e);if(!this.stopRequested)throw new Error(referenceError(e),{cause:e})}finally{this.working=false;if(key===this.key)update()}}
-  dialog.append(heading,note,status,custom,gallery,analysis,manager,actions);document.body.append(dialog);dialog.addEventListener('cancel',event=>{event.preventDefault();if(!this.working)this.close()});dialog.showModal()
+  if(asset.kind==='video'){this.analysisPanel=new SourceAnalysisPanel({artifactId:asset.artifactId,active:()=>key===this.key,stopped:()=>this.stopRequested,bytes:this.options.bytes,notify:this.options.notify,busy:value=>{this.working=value;if(value)this.stopRequested=false;if(key===this.key)update()},command:async analysisRequest=>{const current=this.options.state();if(!current||[current.projectId,current.sessionId,current.draft.id,asset.artifactId].join('/')!==key)throw new Error('分析所属视频已变化。');return this.options.command({operation:'analysis',draftId:current.draft.id,expectedRevision:current.draft.revision,analysisRequest},{projectId:current.projectId,sessionId:current.sessionId,draftId:current.draft.id})}})}
+  dialog.append(heading,note,status,custom,gallery,analysis,manager,...(this.analysisPanel?[this.analysisPanel.element]:[]),actions);document.body.append(dialog);dialog.addEventListener('cancel',event=>{event.preventDefault();if(!this.working)this.close()});dialog.showModal()
   const existing=[...(s.draft.referenceRecords??[])].reverse().find(r=>r.sourceArtifactId===asset.artifactId);if(existing){this.record=existing;await run({operation:'read-reference',referenceId:existing.id})}else await display()
  }
 }

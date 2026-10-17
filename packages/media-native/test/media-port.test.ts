@@ -7,9 +7,13 @@ test('Native media reply admission rejects host paths, fabricated durations and 
   assert.equal(assertMediaArtifactReceipt(receipt),receipt)
   for(const artifactId of ['/tmp/voice.wav','../voice.wav','https://example.com/audio'])assert.throws(()=>assertMediaArtifactReceipt({...receipt,artifactId}),/artifactId/)
   for(const durationSeconds of [NaN,Infinity,-1,181,'2'])assert.throws(()=>assertMediaArtifactReceipt({...receipt,durationSeconds}),/duration/)
+  assert.equal(assertMediaArtifactReceipt({...receipt,artifactId:'film.mp4',durationSeconds:720},'composition').durationSeconds,720)
+  for(const durationSeconds of [721,NaN,Infinity,'720'])assert.throws(()=>assertMediaArtifactReceipt({...receipt,durationSeconds},'composition'),/duration/)
   for(const extra of [{width:NaN},{height:-1},{width:'320'},{hasAlphaData:'yes'}])assert.throws(()=>assertMediaInspection({durationSeconds:3,tracks:[{type:'video',canDecode:true,...extra}]}))
   assert.equal(assertMediaInspection({durationSeconds:3,tracks:[{type:'audio',canDecode:true}]}).tracks[0].type,'audio')
   for(const tracks of [[],[{type:'shell',canDecode:true}],[{type:'audio',canDecode:'yes'}]])assert.throws(()=>assertMediaInspection({durationSeconds:3,tracks}),/inspection/)
 })
 
-test('Inspected video track range is finite and lies inside measured media, allowing an AAC tail without extending video',()=>{const valid={durationSeconds:2.07,tracks:[{type:'video',canDecode:true,width:640,height:360,startSeconds:0,endSeconds:2}]};assert.equal(assertMediaInspection(valid).tracks[0].endSeconds,2);for(const track of [{...valid.tracks[0],endSeconds:3},{...valid.tracks[0],startSeconds:undefined},{...valid.tracks[0],endSeconds:Infinity},{...valid.tracks[0],type:'audio'},{...valid.tracks[0],startSeconds:2,endSeconds:1}])assert.throws(()=>assertMediaInspection({...valid,tracks:[track]}))})
+test('Inspected video track range is finite and lies inside measured media, allowing an AAC tail without extending video',()=>{const valid={durationSeconds:2.07,tracks:[{type:'video',canDecode:true,width:640,height:360,startSeconds:0,endSeconds:2}]};assert.equal(assertMediaInspection(valid).tracks[0].endSeconds,2);for(const track of [{...valid.tracks[0],endSeconds:3},{...valid.tracks[0],startSeconds:undefined},{...valid.tracks[0],endSeconds:Infinity},{...valid.tracks[0],startSeconds:2,endSeconds:1}])assert.throws(()=>assertMediaInspection({...valid,tracks:[track]}))})
+
+test('audio endpoints use the same finite source-clock validation as video',()=>{const valid={durationSeconds:4,tracks:[{type:'audio',canDecode:true,startSeconds:.1,endSeconds:3.9}]};assert.equal(assertMediaInspection(valid).tracks[0].startSeconds,.1);for(const extra of [{endSeconds:5},{endSeconds:undefined},{startSeconds:4},{startSeconds:NaN}])assert.throws(()=>assertMediaInspection({...valid,tracks:[{...valid.tracks[0],...extra}]}))})

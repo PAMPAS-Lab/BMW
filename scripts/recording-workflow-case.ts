@@ -15,6 +15,7 @@ import {focusFraming,visibleFocusIntervals} from '../packages/media-native/src/f
 import type {FocusInterval} from '../packages/media-native/src/focus-contract.js'
 import {newStudioScene} from '../packages/feature-video/src/studio-contract.js'
 import type {VideoDraft} from '../packages/feature-video/src/studio-contract.js'
+import {VideoStudioStore} from '../packages/feature-video/src/studio-store.js'
 import {VideoStudioRuntime} from '../packages/feature-video/src/studio-runtime.js'
 import {ipcMain} from 'electron'
 import {captureRendererEvidence} from './renderer-evidence.js'
@@ -68,12 +69,12 @@ export async function runRecordingWorkflowCase(options:{window:BrowserWindow;ses
   assert.equal(jobs.length,1);assert.deepEqual(jobs[0],{id:'1',width:1280,height:720,voice:'local-zh-en'})
   const trace=assertRecordingEvents(JSON.parse(fs.readFileSync(path.join(artifacts,recorded.eventsArtifactId),'utf8')),recorded.artifactId),events=trace.events.filter(e=>e.kind==='click');assert.equal(events.length,3);assert.ok(events.every(e=>e.source==='page-event'&&e.timing==='measured-frame'));assert.ok(trace.events.some(e=>e.kind==='scroll'&&e.scrollY>300));assert.ok(trace.events.some(e=>e.kind==='navigation'&&e.url===base+'/jobs/1'));assert.equal(trace.truncated,false)
   const sourceHash=crypto.createHash('sha256').update(fs.readFileSync(path.join(artifacts,recorded.artifactId))).digest('hex')
-  let draft=await call<VideoDraft>({action:'video.studio',studioRequest:{operation:'create',title:'三步网站操作与结果'}})
+  const created=await call<{id:string;projection:string}>({action:'video.studio',studioRequest:{operation:'create',title:'三步网站操作与结果'}});assert.equal(created.projection,'summary');const store=new VideoStudioStore(project.directory,'recording-workflow');let draft=store.read(created.id)
   const narration='先选择横屏模板，确认画面尺寸。再选择本地中文旁白。最后提交配置，进入任务结果页，查看交付清单。'
   draft.width=960;draft.height=540;draft.fps=12;draft.music=false;draft.scenes=[{...newStudioScene('workflow-scene','三步网站操作'),narration,durationSeconds:Math.ceil(trace.durationSeconds),endPolicy:'hold'}]
-  draft=await call<VideoDraft>({action:'video.studio',studioRequest:{operation:'update',draftId:draft.id,expectedRevision:draft.revision,draft}})
-  draft=await call<VideoDraft>({action:'video.studio',studioRequest:{operation:'attach',draftId:draft.id,expectedRevision:draft.revision,sceneId:'workflow-scene',artifactId:recorded.artifactId,assetKind:'video'}})
-  draft=(await call<{draft:VideoDraft}>({action:'video.studio',studioRequest:{operation:'narrate',draftId:draft.id,expectedRevision:draft.revision,sceneId:'workflow-scene',provider:'local-matcha',voice:'local-zh-en',ratePercent:0}})).draft
+  await call({action:'video.studio',studioRequest:{operation:'update',draftId:draft.id,expectedRevision:draft.revision,draft}});draft=store.read(draft.id)
+  await call({action:'video.studio',studioRequest:{operation:'attach',draftId:draft.id,expectedRevision:draft.revision,sceneId:'workflow-scene',artifactId:recorded.artifactId,assetKind:'video'}});draft=store.read(draft.id)
+  await call({action:'video.studio',studioRequest:{operation:'narrate',draftId:draft.id,expectedRevision:draft.revision,sceneId:'workflow-scene',provider:'local-matcha',voice:'local-zh-en',ratePercent:0}});draft=store.read(draft.id)
   const voiceBinding=structuredClone({id:draft.scenes[0].audioArtifactId,text:draft.scenes[0].audioText,generation:draft.scenes[0].audioGeneration})
   const suggestions=await call<{focusIntervals:FocusInterval[]}>({action:'video.studio',studioRequest:{operation:'suggest-focus',draftId:draft.id,expectedRevision:draft.revision,sceneId:'workflow-scene'}});assert.equal(suggestions.focusIntervals.length,3)
   const trim=.2,rate=1.25,scene=draft.scenes[0];scene.sourceStartSeconds=trim;scene.playbackRate=rate;scene.durationSeconds=Math.ceil(Math.max((trace.durationSeconds-trim)/rate,(scene.audioDurationSeconds??0)+1)*12)/12
@@ -81,7 +82,7 @@ export async function runRecordingWorkflowCase(options:{window:BrowserWindow;ses
   scene.focusIntervals=suggestions.focusIntervals.map(f=>({...f,zoom:1.08}))
   const last=scene.focusIntervals.at(-1)!,manualStart=last.endSeconds+.15;assert.ok(trace.durationSeconds-manualStart>.4)
   scene.focusIntervals.push({startSeconds:manualStart,endSeconds:trace.durationSeconds-.05,x:.5,y:.5,zoom:1.08,emphasize:false})
-  draft=await call<VideoDraft>({action:'video.studio',studioRequest:{operation:'update',draftId:draft.id,expectedRevision:draft.revision,draft}})
+  await call({action:'video.studio',studioRequest:{operation:'update',draftId:draft.id,expectedRevision:draft.revision,draft}});draft=store.read(draft.id)
   assert.deepEqual({id:draft.scenes[0].audioArtifactId,text:draft.scenes[0].audioText,generation:draft.scenes[0].audioGeneration},voiceBinding,'Focus/trim/rate retain narration')
   const times=events.map(e=>Math.ceil(((e.seconds+.65-trim)/rate)*4)/4);times.push(Math.ceil(((manualStart+.25-trim)/rate)*4)/4)
   const framing=times.map((time,index)=>{const crop=focusFraming(draft.scenes[0],time).crop
@@ -96,7 +97,7 @@ export async function runRecordingWorkflowCase(options:{window:BrowserWindow;ses
   const preview:number[][]=[]
   for(const time of times){await studio.executeJavaScript(`document.getElementById('seek').value=${time};document.getElementById('seek').dispatchEvent(new Event('input',{bubbles:true}))`,true);await wait(()=>studio!.executeJavaScript(`Math.abs(parseFloat(document.getElementById('timeline-playhead').style.left.match(/([0-9.]+)%/)[1])/100-${time/draft.scenes[0].durationSeconds})<.000001`),'Studio seek finished '+time);fs.writeFileSync(path.join(proof,'preview-'+(preview.length+1)+'.png'),Buffer.from(await studio.executeJavaScript("document.getElementById('preview').toDataURL().split(',')[1]") as string,'base64'));preview.push(await studio.executeJavaScript("(()=>{const c=document.getElementById('preview');return [...c.getContext('2d').getImageData(0,0,c.width,c.height).data]})()") as number[])}
   fs.writeFileSync(path.join(proof,'studio-workflow.png'),(await captureRendererEvidence(studio)).toPNG())
-  const rendered=await call<{draft:VideoDraft;export:{artifactId:string;verificationArtifactId:string}}>({action:'video.studio',studioRequest:{operation:'render',draftId:draft.id,expectedRevision:draft.revision}});draft=rendered.draft
+  const rendered=await call<{draft:VideoDraft;export:{artifactId:string;verificationArtifactId:string}}>({action:'video.studio',studioRequest:{operation:'render',draftId:draft.id,expectedRevision:draft.revision}});draft=store.read(draft.id)
   for(const id of [recorded.artifactId,recorded.eventsArtifactId,draft.scenes[0].audioArtifactId!,rendered.export.artifactId,rendered.export.verificationArtifactId])fs.copyFileSync(path.join(artifacts,id),path.join(proof,id))
   fs.writeFileSync(path.join(proof,'workflow-before-comparison.json'),JSON.stringify({steps,trace,times,framing,draft},null,2)+'\n')
   const output=await media.processArtifact({action:'media.frames.sample',artifactId:rendered.export.artifactId,timestampsSeconds:times,maxWidth:960,maxHeight:540});assert.ok('frames' in output);const errors:number[]=[]

@@ -10,11 +10,15 @@
     "./composition": "./src/composition-contract.js",
     "./cards": "./src/card-templates.js",
     "./layers": "./src/composition-layers.js",
+    "./science": "./src/science-spec.js",
+    "./packaging": "./src/layer-packaging.js",
+    "./text-treatment": "./src/layer-text-treatment.js",
     "./rendering/layers": "./src/media/composition-layers-paint.js",
     "./narration": "./src/narration-contract.js",
     "./video-options": "./src/video-options.js",
     "./video-options-form": "./src/video-options-form.js",
     "./artifact-io": "./src/artifact-job-io.js",
+    "./preservation": "./src/media-preservation.js",
     "./rendering/audio": "./src/media/composition-audio.js",
     "./rendering/paint": "./src/media/composition-paint.js",
     "./rendering/frames": "./src/media/linear-frames.js",
@@ -23,6 +27,7 @@
     "./captions": "./src/caption-export.js",
     "./text-export": "./src/text-export.js",
     "./focus": "./src/focus-contract.js",
+    "./recording-plan": "./src/recording-plan.js",
     "./recording": "./src/recording-contract.js",
     "./visuals": "./src/visual-segments.js",
     "./drawing": "./src/image-drawing-contract.js",
@@ -30,7 +35,12 @@
     "./sources": "./src/source-contract.js",
     "./speech": "./src/speech-contract.js",
     "./visual-effects": "./src/visual-effects.js",
-    "./card-details": "./src/card-details.js"
+    "./card-details": "./src/card-details.js",
+    "./quality": "./src/composition-quality.js",
+    "./card-cues": "./src/card-cues.js",
+    "./speech-range": "./src/speech-range.js",
+    "./research-diagrams": "./src/research-diagrams.js",
+    "./precomposition": "./src/precomposition-contract.js"
   },
   "dependencies": {
     "mediabunny": "1.61.0"

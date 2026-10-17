@@ -1,4 +1,5 @@
 import {VideoStudioService} from '../packages/feature-video/src/studio-service.js'
+import {MaterialIndexService} from '../packages/feature-video/src/material-index-service.js'
 import {VideoStudioStore} from '../packages/feature-video/src/studio-store.js'
 import {newStudioScene} from '../packages/feature-video/src/studio-contract.js'
 import type {VideoDraft} from '../packages/feature-video/src/studio-contract.js'
@@ -10,7 +11,7 @@ import crypto from 'node:crypto'
 import {app,session} from 'electron'
 import {MediaController} from '../packages/media-native/src/media-controller.js'
 import {MediaProcessor} from '../packages/media-native/src/media-processor.js'
-import {assertSpeechEvidence} from '../packages/media-native/src/speech-contract.js'
+import {assertSpeechEvidence,speechSourceSegments} from '../packages/media-native/src/speech-contract.js'
 import {mediaRecord} from '../packages/media-native/src/media-contract.js'
 const root=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'bmw-speech-runtime-'))),artifacts=path.join(root,'project','artifacts'),profile=path.join(root,'profile')
 app.on('window-all-closed',()=>{})
@@ -19,7 +20,7 @@ const proofDirectory=path.resolve('.bmw-runtime/p0-speech',new Date().toISOStrin
 const hash=(data:Uint8Array)=>crypto.createHash('sha256').update(data).digest('hex')
 let cancelStage:string|undefined,controller:AbortController|undefined,code=0
 const timer=setTimeout(()=>{process.stderr.write('Speech runtime exceeded four minutes.\n');app.exit(1)},240000)
-function tone(channels:number){const frames=48000,data=Buffer.alloc(44+frames*channels*2);data.write('RIFF',0);data.writeUInt32LE(data.length-8,4);data.write('WAVEfmt ',8);data.writeUInt32LE(16,16);data.writeUInt16LE(1,20);data.writeUInt16LE(channels,22);data.writeUInt32LE(48000,24);data.writeUInt32LE(48000*channels*2,28);data.writeUInt16LE(channels*2,32);data.writeUInt16LE(16,34);data.write('data',36);data.writeUInt32LE(frames*channels*2,40);for(let sample=0;sample<frames;sample++)for(let channel=0;channel<channels;channel++)data.writeInt16LE(Math.round(Math.sin(sample/48000*440*2*Math.PI)*.25*32767*(channel===1?-1:1)),44+(sample*channels+channel)*2);return data}
+function tone(channels:number,seconds=1){const frames=48000*seconds,data=Buffer.alloc(44+frames*channels*2);data.write('RIFF',0);data.writeUInt32LE(data.length-8,4);data.write('WAVEfmt ',8);data.writeUInt32LE(16,16);data.writeUInt16LE(1,20);data.writeUInt16LE(channels,22);data.writeUInt32LE(48000,24);data.writeUInt32LE(48000*channels*2,28);data.writeUInt16LE(channels*2,32);data.writeUInt16LE(16,34);data.write('data',36);data.writeUInt32LE(frames*channels*2,40);for(let sample=0;sample<frames;sample++)for(let channel=0;channel<channels;channel++)data.writeInt16LE(Math.round(Math.sin(sample/48000*440*2*Math.PI)*.25*32767*(channel===1?-1:1)),44+(sample*channels+channel)*2);return data}
 async function run(){
  try{
   await app.whenReady();const isolated=session.fromPartition('bmw-speech-runtime-'+process.pid),options={session:isolated,pagePath:path.resolve('packages/media-native/src/media/processing.html'),preloadPath:path.resolve('packages/media-native/src/preload/processing-preload.cjs')},processor=new MediaProcessor(options)
@@ -31,9 +32,17 @@ async function run(){
    if(channels===1){assert.ok(peak>7900&&peak<8500);for(const index of [500,2000,7000])assert.ok(Math.abs(samples[index]-Math.round(Math.sin(index/16000*440*2*Math.PI)*.25*32767))<400)}else assert.ok(peak<3,'Opposite stereo channels must downmix to silence, without invented gain.')
    console.log('PASS native normalization '+channels+' channel, actual 16000 samples, bounded waveform and original hash')
   }
+  fs.writeFileSync(path.join(artifacts,'long-tone.wav'),tone(1,182))
+  const range={startSeconds:180,endSeconds:181},interval=mediaRecord(await processor.process({action:'media.speech.normalize',artifactId:'long-tone.wav',sourceRange:range},artifacts)),intervalInfo=mediaRecord(interval.normalization)
+  assert.deepEqual(intervalInfo.sourceRange,range);assert.equal(intervalInfo.sourceDurationSeconds,182);assert.equal(intervalInfo.frames,16000);assert.equal(fs.readFileSync(String(interval.path)).length,32044)
+  await assert.rejects(processor.process({action:'media.speech.normalize',artifactId:'long-tone.wav'},artifacts),/180|interval/)
+  console.log('PASS bounded late interval of a 182-second actual WAV; source origin and PCM sample count measured, implicit full decode rejected')
   const media=new MediaController({session:isolated,pagePath:path.resolve('packages/media-native/src/media/media.html'),preloadPath:path.resolve('packages/media-native/src/preload/media-preload.cjs'),artifactsDirectory:artifacts,resolveArtifactsDirectory:()=>artifacts,onStatus:(status:{action?:string;stage?:string})=>{if(status.action==='media.speech.align'&&status.stage==='recognizing'&&cancelStage==='inflight')setTimeout(()=>controller?.abort(new Error('runtime cancel inflight')),300);if(status.action==='media.speech.align'&&status.stage===cancelStage)controller?.abort(new Error('runtime cancel '+cancelStage))}})
-  const narration=mediaRecord(await media.narrate({text:'先打开项目，再选择视频。这里有三个步骤，结果需要核对。',provider:'local-matcha',voice:'local-zh-en',ratePercent:0})),sourceArtifactId=String(narration.artifactId),original=fs.readFileSync(path.join(artifacts,sourceArtifactId))
+  const narration=process.env.BMW_SPEECH_FIXTURE?await (async()=>{const fixture=fs.realpathSync(process.env.BMW_SPEECH_FIXTURE!),allowed=path.resolve('.bmw-runtime/p0-speech')+path.sep;if(!fixture.startsWith(allowed)||path.extname(fixture)!=='.wav')throw new Error('Speech fixture must be a saved isolated p0-speech WAV.');fs.copyFileSync(fixture,path.join(artifacts,'saved-isolated-speech.wav'));const info=mediaRecord(await media.processArtifact({action:'media.inspect',artifactId:'saved-isolated-speech.wav'}));console.log('Using saved isolated speech fixture; new TTS generation is not covered by this run.');return {artifactId:'saved-isolated-speech.wav',durationSeconds:info.durationSeconds}})():mediaRecord(await media.narrate({text:'先打开项目，再选择视频。这里有三个步骤，结果需要核对。',provider:'local-matcha',voice:'local-zh-en',ratePercent:0})),sourceArtifactId=String(narration.artifactId),original=fs.readFileSync(path.join(artifacts,sourceArtifactId))
   const result=assertSpeechEvidence(await media.processArtifact({action:'media.speech.align',artifactId:sourceArtifactId,model:'base'}));assert.equal(result.sourceSha256,hash(original));assert.equal(result.automaticTimingApproved,false);assert.equal(result.wordTimingAvailable,false);assert.ok(result.segments.length>0)
+  const selectedEnd=Math.min(result.durationSeconds,7),intervalSpeech=assertSpeechEvidence(await media.processArtifact({action:'media.speech.align',artifactId:sourceArtifactId,model:'base',sourceRange:{startSeconds:1,endSeconds:selectedEnd}}))
+  assert.equal(intervalSpeech.timeDomain,'normalized-interval-seconds');assert.equal(intervalSpeech.sourceSha256,result.sourceSha256);assert.equal(intervalSpeech.normalization.sourceRange!.startSeconds,1);assert.ok(speechSourceSegments(intervalSpeech).every(s=>s.startSeconds>=1));assert.ok(Math.abs(intervalSpeech.durationSeconds-(selectedEnd-1))<=1/16000)
+  console.log('PASS actual local interval ASR: unchanged original SHA, raw normalized times and explicit original source projection')
   for(const [artifactId,expected] of [[result.rawArtifactId,result.rawSha256],[result.normalizedArtifactId,result.normalizedSha256],[result.logArtifactId,result.logSha256]]){const bytes=fs.readFileSync(path.join(artifacts,artifactId));assert.equal(hash(bytes),expected)}
   const raw=JSON.parse(fs.readFileSync(path.join(artifacts,result.rawArtifactId),'utf8'));assert.equal(raw.params.model,'model.bin');assert.equal(raw.params.language,'zh')
   fs.writeFileSync(path.join(proofDirectory,'evidence.json'),JSON.stringify(result,null,2));for(const name of [sourceArtifactId,result.rawArtifactId,result.normalizedArtifactId,result.logArtifactId])fs.copyFileSync(path.join(artifacts,name),path.join(proofDirectory,name))
@@ -55,6 +64,10 @@ async function run(){
   fs.writeFileSync(path.join(proofDirectory,'studio-draft.json'),JSON.stringify(draft,null,2)+'\n');fs.writeFileSync(path.join(proofDirectory,'studio-read-speech.json'),JSON.stringify(read,null,2)+'\n')
   for(const id of [draft.scenes[0].speechCandidate!.evidenceArtifactId,String(captions.artifactId),String(captions.provenanceArtifactId)])fs.copyFileSync(path.join(artifacts,id),path.join(proofDirectory,id))
   console.log('PASS Studio actual base ASR/read evidence, actual audio/script SHA, Agent edit provenance, corrected spans preserved and VTT receipt')
+  const materialService=new MaterialIndexService(service.kernel,owner,'user'),indexed=mediaRecord(await materialService.execute({operation:'index',artifactId:sourceArtifactId,expectedRevision:0,maxChunks:1})),indexedRecord=mediaRecord(indexed.record),part=mediaRecord((indexedRecord.parts as unknown[])[0]),indexedEvidence=assertSpeechEvidence(JSON.parse(fs.readFileSync(path.join(artifacts,String(part.evidenceArtifactId)),'utf8'))),query=indexedEvidence.segments[0].text.slice(0,2)
+  const found=mediaRecord(await materialService.execute({operation:'search',query}));assert.ok(Array.isArray(found.results)&&found.results.some(raw=>mediaRecord(raw).match==='transcript'&&mediaRecord(raw).availability==='verified'));assert.equal(indexedEvidence.automaticTimingApproved,false)
+  fs.writeFileSync(path.join(proofDirectory,'material-index-acceptance.json'),JSON.stringify({indexed,found,scope:'Actual native interval ASR on isolated fixture, no semantic or acoustic accuracy approval'},null,2)+'\n');fs.copyFileSync(path.join(artifacts,String(part.evidenceArtifactId)),path.join(proofDirectory,'material-index-evidence.json'))
+  console.log('PASS actual Project material interval indexing, immutable speech evidence and source-time transcript search')
   fs.writeFileSync(path.join(proofDirectory,'result.json'),JSON.stringify({status:'passed' ,profile:'disposable',realAudio:true,humanReferenceComplete:false,automaticTimingApproved:false,proofDirectory,normalizationChannels:[1,2],cancellationStages:['normalizing','recognizing','inflight'],evidence:result},null,2))
  }catch(error){code=1;console.error(error);fs.writeFileSync(path.join(proofDirectory,'result.json'),JSON.stringify({status:'failed',error:error instanceof Error?error.stack:String(error)},null,2))}
  finally{clearTimeout(timer);fs.rmSync(root,{recursive:true,force:true});app.exit(code)}

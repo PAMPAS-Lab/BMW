@@ -65,7 +65,7 @@ export class StudioMainEditor {
   })
   this.pending=undefined;this.render();await this.options.refreshPreview()})
  }
- async choose(ref:StudioMainSelection):Promise<void>{const generation=++this.selectionGeneration;this.options.pause();await this.flush();if(generation!==this.selectionGeneration)return;const s=this.options.state();if(!s||s.disabled)throw new Error('正在处理，请等待。');studioMainSpan(s.draft,ref);this.selection=structuredClone(ref);await this.options.select(ref);if(generation!==this.selectionGeneration)return;this.render();await this.options.refreshPreview()}
+ async choose(ref:StudioMainSelection):Promise<void>{const generation=++this.selectionGeneration;this.options.pause();const time=this.options.state()?.time;await this.flush();if(generation!==this.selectionGeneration)return;const s=this.options.state();if(!s||s.disabled)throw new Error('正在处理，请等待。');studioMainSpan(s.draft,ref);await this.transaction(async()=>{this.selection=structuredClone(ref);await this.options.select(ref,time);if(generation!==this.selectionGeneration)return;this.render();await this.options.refreshPreview()})}
  async split():Promise<void>{
   this.options.pause();await this.flush();const s=this.options.state(),ref=this.selection
   if(!s||!ref)throw new Error('先选择镜头、画面、旁白、图层、音轨或字幕片段。')
@@ -74,10 +74,12 @@ export class StudioMainEditor {
   await this.transaction(async()=>{const result=await this.options.splitScene(owner,ref.sceneId,cut);this.selection=result.selection;await this.options.select(this.selection,s.time);this.render();await this.options.refreshPreview()})
  }
  private async change(owner:Owner,change:(draft:VideoDraft)=>StudioMainResult):Promise<void>{
+  // Preview preparation clears its media clock; keep the logical playhead across save/select.
+  const time=this.options.state()?.time
   await this.transaction(async()=>{
    let result:StudioMainResult|undefined
    await this.options.commit(owner,draft=>{result=change(draft);return result.draft})
-   this.selection=result!.selection;await this.options.select(this.selection);this.render();await this.options.refreshPreview()
+   this.selection=result!.selection;await this.options.select(this.selection,time);this.render();await this.options.refreshPreview()
   })
  }
  render():void{

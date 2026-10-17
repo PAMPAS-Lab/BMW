@@ -10,6 +10,8 @@ BMW 保持一个应用、唯一 `browser` 工具，以及 DSH、Codex、Qoder CN
 
 Shell 的全部 invoke 共用 sender、主框架和固定本地 URL 准入，在应用逻辑执行前拒绝其他 Renderer、子框架及已导航页面。Project、设置、计划任务、权限、布局、登录保持配置和加密快照在启动时预读；损坏、读取或解密失败提供重试/退出，后台写入不能替换不可读原文件。
 
+Qwen TTS 的凭据由 Platform 的 `QwenCredentialsStore` 使用系统 safeStorage 加密保存，与普通全局设置、Project 内容及 Agent 驱动认证分开；受信 Shell 只取得保存状态和 Workspace ID，Key 通过宿主私有回调交给 media-native。模型 `browser` 目录没有凭据读写或设置试听入口。设置内试听通过 BrowserKernel 的宿主 FIFO 固定 Project，复用原生合成、解码和文件清理，再向 Shell 返回有界音频数据；取消／关闭等待实际资源清理，期间排除 Project 切换。详细约束见[功能规格](FUNCTIONAL_SPEC.md#qwen-tts-配置安全保存与试听)。
+
 Studio 的中立 AssistantStudioTarget 扩展为可选的闭合 layer {id,kind}；Feature 负责本地/全片容器存在性，Agent UI 负责第一笔输入固定范围和已有输入保护，Host FIFO 保存不可变请求上下文。对象元数据仅包含名称、类型及时间，不增加模型工具、宿主权限或核心到具体 harness 的依赖。浮框与停靠属于平台布局：实测属性列和时间轴边界限制 Native View；小窗强制停靠是临时有效布局，不覆盖用户原偏好。
 
 ## 直接接口保障与实现保障
@@ -56,7 +58,7 @@ npm run test:affected
 
 未知路径、删除、共享构建配置、产品组合、选择器自身或验证代码中无法证明范围的动态模块导入会保守升级为完整离线集。生产计算式导入在架构检查时直接拒绝。运行时测试入口按显式行为/实现范围选择；未选中的入口不会仅因初始化时动态加载外部依赖就扩大其他模块的覆盖。直接修改这些入口，或影响共享测试库中的动态导入，仍保守升级。重命名同时处理旧、新路径；未追踪源文件纳入 Git 范围。新增测试未分类、接口没有保障测试、文档清单过期会直接失败。显式 `--files` 是调用者声明的范围；默认命令对比最后完整通过的哈希基线，能发现全部尚未验证的改动。没有基线时回退到 Git HEAD。
 
-`--layer` 只验证所选类别，不声明完整改动覆盖，不能与文件范围混用。完整验证只有全部自动测试通过且运行期间源码未改变才更新 `.bmw-runtime/test-baseline.json`；局部通过不会覆盖完整基线。报告记录 selected/excluded 及原因、通过/失败/未执行、依赖版本、源码哈希和日志。桌面 Project 组包含独立重启，原生焦点失败仍是失败。生产 Profile、钥匙串与真实桌面体验保留人工验收；离线成功不代表付费模型或外部服务通过。
+`--layer` 只验证所选类别，不声明完整改动覆盖，不能与文件范围混用。完整验证排除显式 opt-in（包括专用本地素材夹具及外部服务），只有全部所选自动测试通过且运行期间源码未改变才更新 `.bmw-runtime/test-baseline.json`；局部通过不会覆盖完整基线。报告记录 selected/excluded 及原因、通过/失败/未执行、依赖版本、源码哈希和日志。桌面 Project 组包含独立重启，原生焦点失败仍是失败。生产 Profile、钥匙串与真实桌面体验保留人工验收；离线成功不代表付费模型或外部服务通过。
 
 <!-- BEGIN GENERATED MODULE CONTRACTS -->
 
@@ -87,8 +89,8 @@ npm run test:affected
 | feature-lifecycle | platform → feature-video, product-bmw | Named activation/configure/layout/context/shutdown hooks; malformed runtime hooks fail before wiring; no extra model tools. | platform.feature-contract, api.types, desktop.workspace |
 | browser-feature-host | browser-capability → platform, feature-video | Minimum Project/settings/media ports, actor enum, cancellation signal; validated action dispatch remains the only execution entry. | browser.host-contract, api.types, video.boundary, driver |
 | browser-model | browser-capability → platform, feature-video | Exactly browser; bounded closed requests, authenticated Project/Session admission, FIFO, cancellation and image admission. | browser.sources, browser.schema, browser.catalog, browser.operations, browser.shutdown, browser.deadline, platform.boundaries, driver |
-| native-media | media-native → browser-capability, platform, feature-video | Artifact IDs rather than caller paths; bounded request/reply admission; actual duration/track checks; bounded local/global layers, explicit keyframes and streamed independent audio share preview/export; cancellation drains output before rollback. | speech, media.speech, platform.sources, video.sources, sources, media.port-contract, api.types, media.controller, media.processing, media.production, media.processing-runtime, video, studio, localNarration |
-| project-storage | platform → browser-capability, feature-video, application | BMW Project identity/documents/page state without native mappings, preserved unreadable Project/settings/tasks/permissions/layout/login state and encrypted snapshots, only missing-file initialization; no production Profile in tests. | platform.sources, platform.projects, platform.state, platform.permission-store, platform.continuity-state, platform.driver-binding, startup-recovery, startup-exit, startup.permissions.retry, startup.permissions.exit, startup.layout.retry, startup.layout.exit, startup.continuity-config.retry, startup.continuity-config.exit, startup.continuity-snapshot.retry, startup.continuity-snapshot.exit, desktop.projects |
+| native-media | media-native → browser-capability, platform, feature-video | Artifact IDs rather than caller paths; bounded request/reply admission; actual duration/track checks; bounded local/global layers, explicit keyframes and streamed independent audio share preview/export; cancellation drains output before rollback. | media.research-video, media.precomposition, media.research-diagrams, studio.production, speech, media.speech, platform.sources, video.sources, sources, media.port-contract, api.types, media.controller, media.processing, media.production, media.processing-runtime, video, studio, localNarration, qwenNarration |
+| project-storage | platform → browser-capability, feature-video, application | BMW Project identity/documents/page state without native mappings, preserved unreadable Project/settings/tasks/permissions/layout/login state and encrypted snapshots, only missing-file initialization; no production Profile in tests. | platform.qwen-credentials, platform.sources, platform.projects, platform.state, platform.permission-store, platform.continuity-state, platform.driver-binding, startup-recovery, startup-exit, startup.permissions.retry, startup.permissions.exit, startup.layout.retry, startup.layout.exit, startup.continuity-config.retry, startup.continuity-config.exit, startup.continuity-snapshot.retry, startup.continuity-snapshot.exit, desktop.projects |
 | studio-draft | feature-video → platform, browser-capability | Canonical Video Document 2.0, lossless v1 migration, reversible simple subset, content-derived advanced guard, typed CAS edits; Project-owned drafts/artifacts, revision conflicts, actual narration provenance and stale export rejection; independent caption/visual edits. | video.schema, studio.schema, video.sources, video.studio, video.settings, video.boundary, studio, desktop.workspace |
 | sandbox-io | media-native → feature-video, platform | Pinned Project artifacts, token/sender/offset bounds, isolated browser workers; no shell, cookies or unrestricted filesystem exposure. | media.processing, media.controller, media.capture, video, studio |
 
@@ -116,7 +118,7 @@ npm run test:affected
 
 - agent-contract: `packages/agent-contract/index.ts`
 - agent-ui: `packages/agent-ui/index.ts`
-- media-native: `packages/media-native/src/media-controller.ts`, `packages/media-native/src/media-port.ts`, `packages/media-native/src/media-contract.ts`, `packages/media-native/src/composition-contract.ts`, `packages/media-native/src/card-templates.ts`, `packages/media-native/src/composition-layers.ts`, `packages/media-native/src/media/composition-layers-paint.ts`, `packages/media-native/src/narration-contract.ts`, `packages/media-native/src/video-options.ts`, `packages/media-native/src/video-options-form.ts`, `packages/media-native/src/artifact-job-io.ts`, `packages/media-native/src/media/composition-audio.ts`, `packages/media-native/src/media/composition-paint.ts`, `packages/media-native/src/media/linear-frames.ts`, `packages/media-native/src/image-contract.ts`, `packages/media-native/src/media/image-decoder.ts`, `packages/media-native/src/caption-export.ts`, `packages/media-native/src/text-export.ts`, `packages/media-native/src/focus-contract.ts`, `packages/media-native/src/recording-contract.ts`, `packages/media-native/src/visual-segments.ts`, `packages/media-native/src/image-drawing-contract.ts`, `packages/media-native/src/media/processing.cover-contract.ts`, `packages/media-native/src/source-contract.ts`, `packages/media-native/src/speech-contract.ts`, `packages/media-native/src/visual-effects.ts`, `packages/media-native/src/card-details.ts`
+- media-native: `packages/media-native/src/media-controller.ts`, `packages/media-native/src/media-port.ts`, `packages/media-native/src/media-contract.ts`, `packages/media-native/src/composition-contract.ts`, `packages/media-native/src/card-templates.ts`, `packages/media-native/src/composition-layers.ts`, `packages/media-native/src/science-spec.ts`, `packages/media-native/src/layer-packaging.ts`, `packages/media-native/src/layer-text-treatment.ts`, `packages/media-native/src/media/composition-layers-paint.ts`, `packages/media-native/src/narration-contract.ts`, `packages/media-native/src/video-options.ts`, `packages/media-native/src/video-options-form.ts`, `packages/media-native/src/artifact-job-io.ts`, `packages/media-native/src/media-preservation.ts`, `packages/media-native/src/media/composition-audio.ts`, `packages/media-native/src/media/composition-paint.ts`, `packages/media-native/src/media/linear-frames.ts`, `packages/media-native/src/image-contract.ts`, `packages/media-native/src/media/image-decoder.ts`, `packages/media-native/src/caption-export.ts`, `packages/media-native/src/text-export.ts`, `packages/media-native/src/focus-contract.ts`, `packages/media-native/src/recording-plan.ts`, `packages/media-native/src/recording-contract.ts`, `packages/media-native/src/visual-segments.ts`, `packages/media-native/src/image-drawing-contract.ts`, `packages/media-native/src/media/processing.cover-contract.ts`, `packages/media-native/src/source-contract.ts`, `packages/media-native/src/speech-contract.ts`, `packages/media-native/src/visual-effects.ts`, `packages/media-native/src/card-details.ts`, `packages/media-native/src/composition-quality.ts`, `packages/media-native/src/card-cues.ts`, `packages/media-native/src/speech-range.ts`, `packages/media-native/src/research-diagrams.ts`, `packages/media-native/src/precomposition-contract.ts`
 - browser-capability: `packages/browser-capability/src/browser-schema.ts`, `packages/browser-capability/src/bridge-server.ts`, `packages/browser-capability/src/browser-kernel.ts`, `packages/browser-capability/src/browser-capability-registry.ts`, `packages/browser-capability/src/browser-host.ts`
 - platform: `packages/platform/src/product-definition.ts`, `packages/platform/src/main.ts`, `packages/platform/src/assistant-service.ts`, `packages/platform/src/feature-contract.ts`, `packages/platform/src/agent-data-schema.ts`
 - feature-video: `packages/feature-video/index.ts`
@@ -129,6 +131,36 @@ npm run test:affected
 
 | ID | 分类 | 归属 | 入口 | 配置／分支 |
 |---|---|---|---|---|
+| platform.qwen-credentials | unit | platform | packages/platform/test/qwen-credentials-store.test.ts | 默认 |
+| browser.media-session-fetch | contract | browser-capability | packages/browser-capability/test/media-session-fetch.test.ts | 默认 |
+| browser.media-download-runtime | integration | browser-capability, media-native | scripts/media-download-smoke.ts | 默认 |
+| video.production-assessment | contract | feature-video | packages/feature-video/test/production-assessment.test.ts | 默认 |
+| video.production | contract | feature-video | packages/feature-video/test/production.test.ts | 默认 |
+| external.production.qoder-deepseek-flash | external (opt-in) | harness-qoder, platform, feature-video, media-native | scripts/qoder-production-case.ts | opt-in: BMW_QODER_TASK_FILE + BMW_QODER_AUTH_DIRECTORY explicitly authorized; optional BMW_QODER_INPUT_INDEX |
+| media.research-video | media | media-native, feature-video | scripts/research-video-smoke.ts | 默认 |
+| media.precomposition | contract | media-native | packages/media-native/test/precomposition.test.ts | 默认 |
+| media.research-diagrams | contract | media-native | packages/media-native/test/research-diagrams.test.ts | 默认 |
+| media.science-spec | contract | media-native | packages/media-native/test/science-spec.test.ts | 默认 |
+| media.video-capture | contract | media-native | packages/media-native/test/video-element-capture.test.ts | 默认 |
+| media.capture-source-index | contract | media-native | packages/media-native/test/capture-source-index.test.ts | 默认 |
+| media.preservation | contract | media-native | packages/media-native/test/media-preservation.test.ts | 默认 |
+| video.material-index | contract | feature-video | packages/feature-video/test/material-index.test.ts | 默认 |
+| video.source-analysis | contract | feature-video | packages/feature-video/test/source-analysis.test.ts | 默认 |
+| media.source-analysis-case | media (opt-in) | feature-video, media-native, browser-capability | scripts/source-analysis-case.ts | opt-in: BMW_ANALYSIS_SOURCE_INDEX=<explicit local copied-source fixture list> |
+| media.frame-sampling-case | media (opt-in) | media-native | scripts/frame-sampling-case.ts | opt-in: BMW_FRAME_SAMPLING_SOURCE=<explicit local MP4 fixture> |
+| media.long-composition-case | media (opt-in) | media-native, feature-video, browser-capability | scripts/long-composition-case.ts | opt-in: BMW_LONG_SOURCE_INDEX=<explicit local public-source fixture list> |
+| studio.production | desktop | feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_PRODUCTION_CASE=1 |
+| studio.science | desktop | media-native, feature-video, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_SCIENCE_CASE=1 |
+| studio.layer-packaging | desktop | media-native, feature-video, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_PACKAGING_CASE=1 |
+| studio.text-treatment | desktop | media-native, feature-video, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_TEXT_CASE=1 |
+| video.qbit-playback | media (opt-in) | media-native | scripts/qbit-playback-audit.ts | opt-in: Explicit local sample playback review |
+| video.qbit-stage4-samples | media (opt-in) | media-native, feature-video, browser-capability | scripts/qbit-stage4-samples.ts | opt-in: BMW_QBIT_SOURCE_INDEX=<explicit authorized local public-video index> |
+| video.qbit-stage3-samples | media (opt-in) | media-native, feature-video, browser-capability | scripts/qbit-stage3-samples.ts | opt-in: BMW_QBIT_SOURCE_INDEX=<explicit authorized local public-video index> |
+| media.science-diagrams | media | media-native, feature-video | scripts/science-diagram-smoke.ts | 默认 |
+| media.layer-packaging | media | media-native, feature-video | scripts/layer-packaging-smoke.ts | 默认 |
+| media.text-treatment | media | media-native, feature-video | scripts/text-treatment-smoke.ts | 默认 |
+| media.audio-windows | media | media-native, feature-video | scripts/audio-window-smoke.ts | 默认 |
+| studio.export-review | desktop | feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_EXPORT_REVIEW_CASE=1 |
 | agent.context | contract | agent-contract | packages/agent-contract/test/context-sync.test.ts | 默认 |
 | agent.conversation | contract | agent-contract | packages/agent-contract/test/conversation.test.ts | 默认 |
 | bmw.agent-assembly | contract | application, agent-ui, harness-dsh, harness-codex, harness-qoder | scripts/agent-assembly.test.ts | 默认 |
@@ -237,6 +269,7 @@ npm run test:affected
 | desktop.native | desktop | platform, harness-dsh, browser-capability, feature-video | scripts/desktop-smoke.ts | group=native |
 | studio.next | integration | feature-video, media-native | scripts/studio-next-smoke.ts | 默认 |
 | studio.schema | desktop | platform, feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_SCHEMA_CASE=1 |
+| studio.long-film | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_LONG_CASE=1 |
 | studio.workflow-entry | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_WORKFLOW_ENTRY_CASE=1 |
 | studio.materials-entry | desktop | platform, feature-video, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_MATERIALS_ENTRY_CASE=1 |
 | studio.visual-effects | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_VISUAL_EFFECTS_CASE=1 |
@@ -260,6 +293,7 @@ npm run test:affected
 | media.processing-runtime | media | media-native | scripts/media-processing-smoke.ts | 默认 |
 | video | media | media-native, feature-video | scripts/video-production-smoke.ts | 默认 |
 | speech | media | media-native | scripts/speech-alignment-smoke.ts | 默认 |
+| qwenNarration | media | media-native, feature-video | scripts/narration-smoke.ts | BMW_TTS_TEST_PROVIDER=qwen-fixture |
 | localNarration | media | media-native | scripts/narration-smoke.ts | BMW_TTS_TEST_PROVIDER=local-matcha |
 | external.assistant.qoder-cn | external (opt-in) | agent-ui, platform, browser-capability, feature-video, harness-qoder, harness-codex, harness-dsh | scripts/native-assistant-case.ts | BMW_NATIVE_DRIVER=qoder-cn; opt-in: BMW_NATIVE_DRIVER=qoder-cn |
 | external.assistant.codex | external (opt-in) | agent-ui, platform, browser-capability, feature-video, harness-qoder, harness-codex, harness-dsh | scripts/native-assistant-case.ts | BMW_NATIVE_DRIVER=codex; opt-in: BMW_NATIVE_DRIVER=codex |

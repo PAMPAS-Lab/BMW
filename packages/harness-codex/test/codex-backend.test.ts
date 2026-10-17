@@ -45,8 +45,9 @@ test('GPT-6 uses the exact admitted startup catalog when resuming its native Ses
     assert.ok(verified);assert.equal(modelCatalogPath,catalog);return f.rpc
   },connection:async()=>({definition,async execute(){assert.fail('No tool before input')}})})
   await backend.prepare(f.request)
-  const resumed=f.calls.find(row=>row.method==='thread/resume')?.params as {threadId:string;model:string}
+  const resumed=f.calls.find(row=>row.method==='thread/resume')?.params as {threadId:string;model:string;excludeTurns:boolean}
   assert.equal(resumed.threadId,'provider');assert.equal(resumed.model,model)
+  assert.equal(resumed.excludeTurns,true,'Resume must not hydrate accumulated tool image history into an oversized transport response')
   assert.equal(f.calls.some(row=>row.method==='turn/start'),false);await backend.close();assert.ok(f.ended()>0)
 })
 test('GPT-6 never starts a native runtime without its admitted startup catalog',async t=>{
@@ -73,7 +74,19 @@ test('Codex admits input after catalog verification, resumes the same provider a
   assert.equal((await running).outcome, 'success'); assert.ok(f.ended() > 0)
   assert.deepEqual(events.map(row => row.type), ['session.bound', 'input.accepted', 'tool.started', 'tool.completed', 'message.delta', 'message.completed', 'turn.completed'])
   assert.deepEqual(events[1], { type: 'input.accepted', receiptId: 'turn' })
+  assert.deepEqual(events[3], {type:'tool.completed',callId:'run:call',success:true,message:'{"token":"BMW"}'})
+  assert.ok(!JSON.stringify(events[3]).includes('aGVsbG8='),'History retains the JSON receipt without image base64')
   await backend.close()
+})
+test('Codex large escaped success receipts stay valid and bounded without truncating model output',async t=>{
+ const f=fixture();t.after(()=>fs.rmSync(f.root,{recursive:true,force:true}))
+ const result={text:'\u0001'.repeat(20000),artifactId:'fixture.png'}
+ const backend=new CodexBackend({executable:'/disposable/codex',configDirectory:f.root,model:'gpt-5.4',catalogGate:{async verify(){}},rpcFactory:()=>f.rpc,connection:async()=>({definition,async execute(){return {result}}})})
+ await backend.prepare(f.request);const events:AgentDriverEvent[]=[];const running=backend.run(f.request,async event=>{events.push(event)});await new Promise(resolve=>setImmediate(resolve))
+ const output=await f.tool({threadId:'provider',turnId:'turn',callId:'large',tool:'browser',namespace:null,arguments:{action:'status'}}) as {contentItems:{text:string}[]}
+ assert.equal(output.contentItems[0].text,JSON.stringify(result))
+ const receipt=events.find(event=>event.type==='tool.completed');assert.ok(receipt?.type==='tool.completed');assert.ok(receipt.success);assert.ok(receipt.message.length<=16384);assert.equal((JSON.parse(receipt.message) as {resultTruncated:boolean}).resultTruncated,true)
+ f.event('turn/completed',{threadId:'provider',turn:{id:'turn',status:'completed'}});await running;await backend.close()
 })
 test('Codex rechecks live authentication and model membership before creating or resuming a native Session',async t=>{
   for(const [authenticated,available]of [[false,true],[true,false]]){

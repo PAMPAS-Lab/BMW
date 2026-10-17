@@ -1,11 +1,25 @@
+import {assertScienceSpec,scienceSpecSchema} from './science-spec.js'
+import type {ScienceSpec} from './science-spec.js'
+import {assertLayerPackaging,layerPackagingSchema} from './layer-packaging.js'
+import type {LayerPackaging} from './layer-packaging.js'
+import {assertLayerTextTreatment,layerTextTreatmentSchema} from './layer-text-treatment.js'
+import type {LayerTextTreatment} from './layer-text-treatment.js'
 import {assertArtifactId,finiteNumber,mediaRecord} from './media-contract.js'
+import {COMPOSITION_LIMITS} from './composition-limits.js'
 import {assertVisualEffects,visualEffectsSchema} from './visual-effects.js'
 import type {VisualEffects} from './visual-effects.js'
 /** Original elapsed fade clock; no arbitrary curves or executable fields. */
 export interface LayerFadeWindow {originId:string;startSeconds:number;durationSeconds:number}
 export interface LayerFadeClock {durationSeconds:number;fadeInSeconds:number;fadeOutSeconds:number;fadeWindow?:LayerFadeWindow}
 export interface LayerFrame {timeSeconds:number;x:number;y:number;width:number;height:number;opacity:number;easing:'linear'|'ease-in-out';easingRange?:[number,number]}
-export interface VisualLayer {effects?:VisualEffects;id:string;title:string;kind:'text'|'rectangle'|'image'|'video';startSeconds:number;durationSeconds:number;x:number;y:number;width:number;height:number;opacity:number;zIndex:number;hidden:boolean;locked:boolean;color:string;text?:string;fontSize?:number;artifactId?:string;sourceStartSeconds?:number;playbackRate?:number;fadeInSeconds:number;fadeOutSeconds:number;fadeWindow?:LayerFadeWindow;keyframes?:LayerFrame[]}
+export interface LayerSourceCrop {x:number;y:number;width:number;height:number}
+export const DEFAULT_LAYER_SOURCE_CROP:Readonly<LayerSourceCrop>={x:0,y:0,width:1,height:1}
+export const layerSourceCropSchema={type:'object',additionalProperties:false,required:['x','y','width','height'],properties:{x:{type:'number',minimum:0,maximum:.95},y:{type:'number',minimum:0,maximum:.95},width:{type:'number',minimum:.05,maximum:1},height:{type:'number',minimum:.05,maximum:1}}}
+export function assertLayerSourceCrop(raw:unknown):LayerSourceCrop {
+ const v=mediaRecord(raw);closed(v,['x','y','width','height']);const crop={x:finiteNumber(v.x,'layer crop x',0,.95),y:finiteNumber(v.y,'layer crop y',0,.95),width:finiteNumber(v.width,'layer crop width',.05,1),height:finiteNumber(v.height,'layer crop height',.05,1)}
+ if(crop.x+crop.width>1.000001||crop.y+crop.height>1.000001)throw new TypeError('Layer source crop must fit inside the actual source.');return crop
+}
+export interface VisualLayer {science?:ScienceSpec;sourceCrop?:LayerSourceCrop;packaging?:LayerPackaging;effects?:VisualEffects;id:string;title:string;kind:'text'|'rectangle'|'image'|'video'|'diagram';startSeconds:number;durationSeconds:number;x:number;y:number;width:number;height:number;opacity:number;zIndex:number;hidden:boolean;locked:boolean;color:string;text?:string;fontSize?:number;textTreatment?:LayerTextTreatment;artifactId?:string;sourceStartSeconds?:number;playbackRate?:number;fadeInSeconds:number;fadeOutSeconds:number;fadeWindow?:LayerFadeWindow;keyframes?:LayerFrame[]}
 export interface AudioLayer {id:string;title:string;artifactId:string;startSeconds:number;durationSeconds:number;sourceStartSeconds:number;playbackRate:number;volume:number;muted:boolean;locked:boolean;fadeInSeconds:number;fadeOutSeconds:number;fadeWindow?:LayerFadeWindow;ducking:boolean}
 export interface LayerContainer {layers?:VisualLayer[];audioTracks?:AudioLayer[]}
 export const layerId=(raw:unknown):string=>{if(typeof raw!=='string'||!/^[a-zA-Z0-9-]{1,80}$/.test(raw))throw new TypeError('Invalid layer ID.');return raw}
@@ -18,15 +32,15 @@ function box(v:Record<string,unknown>):Pick<VisualLayer,'x'|'y'|'width'|'height'
 }
 export function assertLayerFadeWindow(raw:unknown):LayerFadeWindow {
  const v=mediaRecord(raw);closed(v,['originId','startSeconds','durationSeconds'])
- const durationSeconds=finiteNumber(v.durationSeconds,'original fade duration',.1,180),startSeconds=finiteNumber(v.startSeconds,'original fade offset',0,180)
+ const durationSeconds=finiteNumber(v.durationSeconds,'original fade duration',.1,COMPOSITION_LIMITS.seconds),startSeconds=finiteNumber(v.startSeconds,'original fade offset',0,COMPOSITION_LIMITS.seconds)
  if(startSeconds>=durationSeconds)throw new TypeError('Fade offset must be inside the original duration.')
  return {originId:layerId(v.originId),startSeconds,durationSeconds}
 }
 function timing(v:Record<string,unknown>){
- const durationSeconds=finiteNumber(v.durationSeconds,'layer duration',.1,180),fadeWindow=v.fadeWindow===undefined?undefined:assertLayerFadeWindow(v.fadeWindow)
+ const durationSeconds=finiteNumber(v.durationSeconds,'layer duration',.1,COMPOSITION_LIMITS.seconds),fadeWindow=v.fadeWindow===undefined?undefined:assertLayerFadeWindow(v.fadeWindow)
  if(fadeWindow&&fadeWindow.startSeconds+durationSeconds>fadeWindow.durationSeconds+.000001)throw new TypeError('片段超过保留的原淡入淡出时间；请先明确重设效果。')
  const fadeLimit=Math.min(2,(fadeWindow?.durationSeconds??durationSeconds)/2)
- return {id:layerId(v.id),title:text(v.title,80),startSeconds:finiteNumber(v.startSeconds,'layer start',0,180),durationSeconds,fadeInSeconds:finiteNumber(v.fadeInSeconds??0,'fade in',0,fadeLimit),fadeOutSeconds:finiteNumber(v.fadeOutSeconds??0,'fade out',0,fadeLimit),...(fadeWindow?{fadeWindow}:{})}
+ return {id:layerId(v.id),title:text(v.title,80),startSeconds:finiteNumber(v.startSeconds,'layer start',0,COMPOSITION_LIMITS.seconds),durationSeconds,fadeInSeconds:finiteNumber(v.fadeInSeconds??0,'fade in',0,fadeLimit),fadeOutSeconds:finiteNumber(v.fadeOutSeconds??0,'fade out',0,fadeLimit),...(fadeWindow?{fadeWindow}:{})}
 }
 /** The same closed linear envelope drives visual opacity and streamed audio gain. */
 export function layerFadeGain(layer:LayerFadeClock,local:number):number {
@@ -36,11 +50,15 @@ export function layerFadeGain(layer:LayerFadeClock,local:number):number {
 }
 export function assertVisualLayers(raw:unknown):VisualLayer[]{
  if(!Array.isArray(raw)||raw.length>8)throw new TypeError('At most eight visual layers per time container.')
- const result=raw.map(raw=>{const v=mediaRecord(raw);closed(v,['id','title','kind','startSeconds','durationSeconds','x','y','width','height','opacity','zIndex','hidden','locked','color','text','fontSize','artifactId','sourceStartSeconds','playbackRate','fadeInSeconds','fadeOutSeconds','fadeWindow','keyframes','effects'])
- if(typeof v.kind!=='string'||!['text','rectangle','image','video'].includes(v.kind))throw new TypeError('Unsupported visual layer.')
+ const result=raw.map(raw=>{const v=mediaRecord(raw);closed(v,['id','title','kind','startSeconds','durationSeconds','x','y','width','height','opacity','zIndex','hidden','locked','color','text','fontSize','textTreatment','artifactId','sourceStartSeconds','playbackRate','fadeInSeconds','fadeOutSeconds','fadeWindow','keyframes','effects','packaging','sourceCrop','science'])
+ if(typeof v.kind!=='string'||!['text','rectangle','image','video','diagram'].includes(v.kind))throw new TypeError('Unsupported visual layer.')
  if(typeof v.color!=='string'||!/^#[a-fA-F0-9]{6}$/.test(v.color))throw new TypeError('Layer color requires opaque hex.')
  const r:VisualLayer={...timing(v),...box(v),kind:v.kind as VisualLayer['kind'],color:v.color,zIndex:finiteNumber(v.zIndex??0,'layer order',0,31,true),hidden:bool(v.hidden),locked:bool(v.locked)}
+ if(r.kind==='diagram')r.science=assertScienceSpec(v.science);else if(v.science!==undefined)throw new TypeError('Science data requires a diagram layer.')
+ if(v.sourceCrop!==undefined){if(r.kind!=='image'&&r.kind!=='video')throw new TypeError('Source crop requires a media layer.');r.sourceCrop=assertLayerSourceCrop(v.sourceCrop)}
+ if(v.packaging!==undefined)r.packaging=assertLayerPackaging(v.packaging)
  if(v.effects!==undefined)r.effects=assertVisualEffects(v.effects)
+ if(v.textTreatment!==undefined){if(r.kind!=='text')throw new TypeError('Text treatment requires a text layer.');r.textTreatment=assertLayerTextTreatment(v.textTreatment)}
  if(r.kind==='text'){r.text=text(v.text,200);r.fontSize=finiteNumber(v.fontSize??32,'layer font size',12,96)}else if(v.text!==undefined||v.fontSize!==undefined)throw new TypeError('Text fields require a text layer.')
  if(r.kind==='image'||r.kind==='video')r.artifactId=assertArtifactId(v.artifactId);else if(v.artifactId!==undefined)throw new TypeError('Only media layers reference artifacts.')
  if(r.kind==='video'){r.sourceStartSeconds=finiteNumber(v.sourceStartSeconds??0,'layer source start',0,1800);r.playbackRate=finiteNumber(v.playbackRate??1,'layer speed',.25,2)}else if(v.sourceStartSeconds!==undefined||v.playbackRate!==undefined)throw new TypeError('Source time fields require video.')
@@ -55,7 +73,7 @@ function unique(values:{id:string}[]):void{if(new Set(values.map(v=>v.id)).size!
 export function layerAssets(container:LayerContainer):string[]{return [...(container.layers??[]).flatMap(l=>l.artifactId?[l.artifactId]:[]),...(container.audioTracks??[]).map(l=>l.artifactId)]}
 export function layerProblems(container:LayerContainer,duration:number):string[]{return [...(container.layers??[]),...(container.audioTracks??[])].filter(l=>l.startSeconds+l.durationSeconds>duration+.00001).map(l=>`${l.title}：对象超过所属时间范围，请调整原有时间。`)}
 export function assertLayerIdentities(value:LayerContainer&{scenes:LayerContainer[]}):void{
- const all=[...(value.layers??[]),...(value.audioTracks??[]),...value.scenes.flatMap(s=>[...(s.layers??[]),...(s.audioTracks??[])])];unique(all);if(all.length>64)throw new TypeError('At most sixty-four independent objects per composition.')
+ const all=[...(value.layers??[]),...(value.audioTracks??[]),...value.scenes.flatMap(s=>[...(s.layers??[]),...(s.audioTracks??[])])];unique(all);if(all.length>COMPOSITION_LIMITS.independentObjects)throw new TypeError('At most sixty-four independent objects per composition.')
 }
 export function assertLayerComposition(value:LayerContainer&{scenes:(LayerContainer&{durationSeconds:number})[]}):void{
  assertLayerIdentities(value)
@@ -78,7 +96,7 @@ export function visualLayerBox(layer:VisualLayer,local:number):Pick<VisualLayer,
  r.opacity*=layerFadeGain(layer,local);return {x:r.x,y:r.y,width:r.width,height:r.height,opacity:r.opacity}
 }
 export function activeVisualLayers(global:LayerContainer,scene:LayerContainer,time:number,local:number):{layer:VisualLayer;local:number}[]{return [...(scene.layers??[]).map(layer=>({layer,local:local-layer.startSeconds})),...(global.layers??[]).map(layer=>({layer,local:time-layer.startSeconds}))].filter(item=>!item.layer.hidden&&item.local>=0&&item.local<item.layer.durationSeconds).sort((a,b)=>a.layer.zIndex-b.layer.zIndex)}
-export const layerFadeWindowSchema={type:'object',additionalProperties:false,required:['originId','startSeconds','durationSeconds'],properties:{originId:{type:'string',pattern:'^[a-zA-Z0-9-]{1,80}$'},startSeconds:{type:'number',minimum:0,maximum:180},durationSeconds:{type:'number',minimum:.1,maximum:180}}}
-const number={type:'number'},boolean={type:'boolean'},string={type:'string'},id={type:'string',pattern:'^[a-zA-Z0-9-]{1,80}$'},color={type:'string',pattern:'^#[a-fA-F0-9]{6}$'},base={id,title:{type:'string',maxLength:80},startSeconds:number,durationSeconds:number,fadeInSeconds:number,fadeOutSeconds:number,fadeWindow:layerFadeWindowSchema}
-export const visualLayersSchema={type:'array',maxItems:8,items:{type:'object',additionalProperties:false,required:['id','title','kind','startSeconds','durationSeconds','x','y','width','height','color'],properties:{...base,effects:visualEffectsSchema,kind:{enum:['text','rectangle','image','video']},x:number,y:number,width:number,height:number,opacity:number,zIndex:{type:'integer'},hidden:boolean,locked:boolean,color,text:{type:'string',maxLength:200},fontSize:number,artifactId:string,sourceStartSeconds:number,playbackRate:number,keyframes:{type:'array',minItems:2,maxItems:12,items:{type:'object',additionalProperties:false,required:['timeSeconds','x','y','width','height','opacity','easing'],properties:{timeSeconds:number,x:number,y:number,width:number,height:number,opacity:number,easing:{enum:['linear','ease-in-out']},easingRange:{type:'array',minItems:2,maxItems:2,items:{type:'number',minimum:0,maximum:1}}}}}}}}
+export const layerFadeWindowSchema={type:'object',additionalProperties:false,required:['originId','startSeconds','durationSeconds'],properties:{originId:{type:'string',pattern:'^[a-zA-Z0-9-]{1,80}$'},startSeconds:{type:'number',minimum:0,maximum:COMPOSITION_LIMITS.seconds},durationSeconds:{type:'number',minimum:.1,maximum:COMPOSITION_LIMITS.seconds}}}
+const number={type:'number'},boolean={type:'boolean'},string={type:'string'},id={type:'string',pattern:'^[a-zA-Z0-9-]{1,80}$'},color={type:'string',pattern:'^#[a-fA-F0-9]{6}$'},base={id,title:{type:'string',maxLength:80},startSeconds:{type:'number',minimum:0,maximum:COMPOSITION_LIMITS.seconds},durationSeconds:{type:'number',minimum:.1,maximum:COMPOSITION_LIMITS.seconds},fadeInSeconds:number,fadeOutSeconds:number,fadeWindow:layerFadeWindowSchema}
+export const visualLayersSchema={type:'array',maxItems:8,items:{type:'object',additionalProperties:false,required:['id','title','kind','startSeconds','durationSeconds','x','y','width','height','color'],allOf:[{if:{properties:{kind:{const:'diagram'}},required:['kind']},then:{required:['science']},else:{properties:{science:false}}}],properties:{...base,science:scienceSpecSchema,sourceCrop:layerSourceCropSchema,packaging:layerPackagingSchema,effects:visualEffectsSchema,kind:{enum:['text','rectangle','image','video','diagram']},x:number,y:number,width:number,height:number,opacity:number,zIndex:{type:'integer'},hidden:boolean,locked:boolean,color,text:{type:'string',maxLength:200},fontSize:number,textTreatment:layerTextTreatmentSchema,artifactId:string,sourceStartSeconds:number,playbackRate:number,keyframes:{type:'array',minItems:2,maxItems:12,items:{type:'object',additionalProperties:false,required:['timeSeconds','x','y','width','height','opacity','easing'],properties:{timeSeconds:number,x:number,y:number,width:number,height:number,opacity:number,easing:{enum:['linear','ease-in-out']},easingRange:{type:'array',minItems:2,maxItems:2,items:{type:'number',minimum:0,maximum:1}}}}}}}}
 export const audioLayersSchema={type:'array',maxItems:8,items:{type:'object',additionalProperties:false,required:['id','title','artifactId','startSeconds','durationSeconds'],properties:{...base,artifactId:string,sourceStartSeconds:number,playbackRate:number,volume:number,muted:boolean,locked:boolean,ducking:boolean}}}

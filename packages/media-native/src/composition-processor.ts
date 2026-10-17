@@ -6,10 +6,13 @@ import type { Session, IpcMainInvokeEvent } from 'electron'
 import { ArtifactJobIO } from './artifact-job-io.js'
 import { assertNarrationReceipt,assertComposition, compositionAssets, compositionDuration } from './composition-contract.js'
 import { finiteNumber, mediaRecord } from './media-contract.js'
+import {assertCompositionQuality,compositionQualityPlan} from './composition-quality.js'
 
 /** Bounded multi-asset browser job. Renderer receives only pinned Project handles. */
 export class CompositionProcessor {
   private active = false
+  private failedCleanup:(()=>Promise<void>)|undefined
+  async recoverCleanup():Promise<void>{if(this.failedCleanup){await this.failedCleanup();this.failedCleanup=undefined;this.active=false}}
   constructor(private options: { session: Session; pagePath: string; preloadPath: string; onStatus?: (value: Record<string, unknown>) => void }) {}
   get busy(): boolean { return this.active }
   async compose(raw: unknown, directory: string, signal?: AbortSignal) {
@@ -66,6 +69,8 @@ export class CompositionProcessor {
               if (result.frames !== Math.ceil(compositionDuration(composition) * composition.fps) || result.durationSeconds !== compositionDuration(composition) || result.width !== composition.width || result.height !== composition.height) throw new Error('Composition result does not match its manifest.')
               finiteNumber(result.audioPeak, 'audio peak', 0, 1)
               assertNarrationReceipt(composition.scenes,result.narrationDurations)
+              const quality=assertCompositionQuality(result.quality),plan=compositionQualityPlan(composition,result.narrationDurations as number[])
+              if(JSON.stringify(quality.samples)!==JSON.stringify(plan.samples)||quality.omittedCandidates!==plan.omittedCandidates)throw new Error('Composition quality coverage does not match its manifest.')
               resolve(result)
             }
           } catch (error) { if (event.sender === jobWindow.webContents) reject(error) }
@@ -92,10 +97,14 @@ export class CompositionProcessor {
       if (abort) signal?.removeEventListener('abort', abort)
       if (listener) ipcMain.removeListener('bmw-composition-reply', listener)
       if (registered) { ipcMain.removeHandler('bmw-composition-read'); ipcMain.removeHandler('bmw-composition-write') }
-      window?.destroy()
-      await ioTail
-      await Promise.allSettled([...inputs.map(input => input.close()), output?.close()])
-      this.active = false
+      const cleanup=async()=>{
+        window?.destroy();if(window&&!window.isDestroyed())throw new Error('Composition worker did not stop.')
+        await ioTail
+        const results=await Promise.allSettled([...inputs.map(input=>input.close()),...(output?[output.close()]:[])])
+        if(results.some(r=>r.status==='rejected'))throw new Error('Composition IO cleanup failed.')
+      }
+      try{await cleanup();this.active=false}
+      catch{this.failedCleanup=async()=>{await cleanup();if(completedPath)await fs.rm(completedPath,{force:true})};throw new Error('Composition cleanup failed; media remains quarantined until media.record.stop succeeds.')}
       this.options.onStatus?.({ active: false, kind: 'processing', action: 'video.compose' })
     }
   }

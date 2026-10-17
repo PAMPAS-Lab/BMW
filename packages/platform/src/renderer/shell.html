@@ -223,6 +223,19 @@
           </section>
           <section class="settings-section hidden" data-settings-section="media">
             <div class="settings-section-title"><strong>Video narration</strong><span>Choose whether BMW can create online Chinese voiceovers.</span></div>
+            <label class="settings-check"><input id="settings-qwen-narration" type="checkbox" /> Allow Qwen online narration</label>
+            <p class="settings-note">Qwen 将旁白文本发送到阿里云百炼（北京）。API Key 和 Workspace ID 使用系统安全存储加密保存在此 BMW 配置中，保存后立即生效。</p>
+            <div class="settings-grid">
+              <label>Workspace ID（北京）<input id="settings-qwen-workspace" maxlength="63" autocomplete="off" spellcheck="false" placeholder="百炼业务空间 ID"></label>
+              <label>API Key<input id="settings-qwen-key" type="password" maxlength="4096" autocomplete="off" spellcheck="false" placeholder="输入 API Key"></label>
+            </div>
+            <div class="video-template-actions"><button id="settings-qwen-save" type="button">保存 Qwen 配置</button><button id="settings-qwen-clear" type="button">清除 Qwen 配置</button></div>
+            <p id="settings-qwen-status" class="settings-note" role="status" aria-live="polite"></p>
+            <label>试听音色<select id="settings-qwen-voice"><option value="wenhuaizhi_v3.1">闻怀之 · 新闻推荐</option><option value="xuyanchu_v3.1">许言初 · 沉稳、磁性</option><option value="xuyuyuan_v3.1">许玉远 · 知性、成熟</option><option value="anmingyuan_v3.1">安明远 · 男声、清亮自然</option></select></label>
+            <p class="settings-note">试听文本：“这里是新闻速递，为你播报今日要闻。”试听会发送这段文本并消耗少量百炼额度。更改试听音色不会修改视频默认设置。</p>
+            <div class="video-template-actions"><button id="settings-qwen-preview" type="button">生成并试听</button><button id="settings-qwen-cancel" type="button" disabled>取消试听</button></div>
+            <audio id="settings-qwen-audio" controls preload="none" hidden aria-label="Qwen 音色试听"></audio>
+            <p id="settings-qwen-preview-status" class="settings-note" role="status" aria-live="polite"></p>
             <label class="settings-check"><input id="settings-edge-narration" type="checkbox" /> Allow experimental Edge online narration</label>
             <p class="settings-note">When enabled, narration text is sent to Microsoft's speech.platform.bing.com service and returned as a Project MP3. This replaceable consumer-service adapter may be unavailable. Enabled by default. Disable it to block Edge requests; select local TTS in 视频制作 for offline narration.</p>
           </section>

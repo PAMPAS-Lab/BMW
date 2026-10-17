@@ -46,10 +46,6 @@ macOS 默认 Profile 通常为 `~/Library/Application Support/BMW`；若设置�
 
 隔离测试验证稳定身份/归档导入、显示历史及 Studio/media 保留、严格 v2 加载、备份/回滚、并发保护和 Host 锁。完整离线回归另覆盖三驱动设置、唯一 browser、MCP 租约、桌面、重启、Studio、媒体、视频及本地旁白。具体执行结果见 [VERIFICATION.md](VERIFICATION.md)，历史付费模型结果与本次数据迁移分开记录。
 
-## 本机执行记录（2026-10-05）
+## 历史执行记录
 
-真实 BMW Profile 已完成这次明确授权的迁移：10 个 Project；28 个原有会话的 ID、历史、输入回执、选择、模型偏好和原生恢复锚点全部保留，再导入 4 个 DSH 会话，共 32 个；9 个 Studio 草稿及 848 个 Project 文件保持原字节。DSH Home 的 1,135 个原文件保持原字节，仅新增 harness 私有映射。38 个元数据文件已提交为 v2，重复预检报告 alreadyCurrent、零改动、零警告。
-
-元数据备份位于 `~/Library/Application Support/BMW-agent-data-backup-1791209775488`，manifest 状态为 complete，备份原字节与迁移后哈希均已复核。完整离线报告为 109 项检查与 5 个检查门通过；真实数据迁移审计另存于 `.bmw-runtime/agent-data-closure/2026-10-05/`。本次未发起付费模型推理。
-
-迁移后 BMW 已正常启动，恢复原 Project、Qoder CN 选择、会话历史和网页；Assistant 状态就绪，Studio 按当前会话显示，随后恢复浏览器工作区。启动后的复核仍确认原会话、偏好、历史回执和 9 个草稿保持不变，没有发送模型消息。
+2026-10-05 的已授权本机迁移与保全记录见 [归档](history/agent-drivers/MIGRATION.md)，不属于当前操作步骤或本轮验证。

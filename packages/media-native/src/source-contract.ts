@@ -59,7 +59,7 @@ export function assertSourceObservation(raw:unknown):SourceObservation{
 }
 export function assertSourceRequest(raw:unknown):SourceRequest {
  const v=mediaRecord(raw),operation=choice(v.operation,['list','read','collect','confirm','acquire'])
- const allowed={list:['operation'],read:['operation','sourceId','acquisitionId'],collect:['operation','expectedRevision','tabId','bodySelector','index','excludeSelectors','mediaSelector','mediaIndex','mediaExcludeSelectors','authorSelector','publishedSelector','accessSelector'],confirm:['operation','expectedRevision','sourceId','acquisitionId','candidateIds','eventAt'],acquire:['operation','expectedRevision','sourceId','acquisitionId','candidateId','method','tabId','videoSelector','videoIndex','maxDurationMs']}[operation];closed(v,allowed)
+ const spec=sourceOperationContracts[operation];closed(v,['operation',...spec.required,...spec.optional])
  const r={operation} as Record<string,unknown>
  if(operation==='list')return r as unknown as SourceRequest
  if(operation!=='read')r.expectedRevision=finiteNumber(v.expectedRevision,'source revision',0,1000000,true)
@@ -108,6 +108,12 @@ export function assertSourceCatalog(raw:unknown):SourceCatalog {
 const sourceIdentitySchema={type:'string',pattern:'^[a-zA-Z0-9-]{1,80}$'}
 const selectorSchema={type:'string',minLength:1,maxLength:500}
 const exclusionSchema={type:'array',maxItems:16,items:selectorSchema}
+export const sourceOperationContracts={
+ list:{required:[],optional:[]},read:{required:['sourceId','acquisitionId'],optional:[]},
+ collect:{required:['expectedRevision','bodySelector'],optional:['tabId','index','excludeSelectors','mediaSelector','mediaIndex','mediaExcludeSelectors','authorSelector','publishedSelector','accessSelector']},
+ confirm:{required:['expectedRevision','sourceId','acquisitionId','candidateIds'],optional:['eventAt']},
+ acquire:{required:['expectedRevision','sourceId','acquisitionId','candidateId','method'],optional:['tabId','videoSelector','videoIndex','maxDurationMs']}
+} satisfies Record<SourceRequest['operation'],{required:string[];optional:string[]}>
 export const sourceRequestSchema={type:'object',additionalProperties:false,required:['operation'],properties:{
  operation:{type:'string',enum:['list','read','collect','confirm','acquire']},expectedRevision:{type:'integer',minimum:0,maximum:1000000},sourceId:sourceIdentitySchema,acquisitionId:sourceIdentitySchema,tabId:sourceIdentitySchema,
  bodySelector:selectorSchema,index:{type:'integer',minimum:0,maximum:10000},excludeSelectors:exclusionSchema,mediaSelector:selectorSchema,mediaIndex:{type:'integer',minimum:0,maximum:10000},mediaExcludeSelectors:exclusionSchema,authorSelector:selectorSchema,publishedSelector:selectorSchema,accessSelector:selectorSchema,candidateId:sourceIdentitySchema,method:{type:'string',enum:['download','capture']},videoSelector:selectorSchema,videoIndex:{type:'integer',minimum:0,maximum:10000},maxDurationMs:{type:'integer',minimum:1000,maximum:1800000},candidateIds:{type:'array',maxItems:80,uniqueItems:true,items:sourceIdentitySchema},eventAt:{type:['string','null'],maxLength:80}

@@ -4,7 +4,7 @@ import type {ActiveProject, ActiveProjectProvider, BrowserFeatureHost} from '@bm
 
 export interface FeatureActivationOptions {session: Session; projectStore: ActiveProjectProvider}
 /** Read-only projection of the owned Assistant; no provider protocol or extra loop. */
-export interface FeatureAssistantActivity {projectId:string;sessionId:string|null;status:string;runId:string|null;action?:string;message?:string}
+export interface FeatureAssistantActivity {projectId:string;sessionId:string|null;status:string;runId:string|null;action?:string;message?:string;toolRunning?:boolean;toolStartedAt?:number;lastEventAt?:number;lastEventType?:string;lastToolAction?:string;lastToolCompletedAt?:number;lastToolSucceeded?:boolean;dispatchBlocked?:boolean}
 export interface FeatureStudioRegion {top:number;bottom:number;floatBottom?:number;propertyWidth:number;resourceWidth?:number;avoid?:{x:number;y:number;width:number;height:number};obscured?:boolean}
 export interface FeatureStudioPresentation {immersive:boolean;chatOpen:boolean;position?:{x:number;y:number};docked?:boolean;region?:FeatureStudioRegion;floatHeight?:number}
 export interface FeatureHost {

@@ -1,4 +1,6 @@
 import {sceneVisuals} from '../../../media-native/src/visual-segments.js'
+import {cardSpeechTargets} from '../studio-card-speech.js'
+import {narrationSceneRanges} from '../../../media-native/src/composition-contract.js'
 import {speechScene,speechBindingStale,assertStudioSpeechLinks} from '../studio-speech-contract.js'
 import type {StudioSpeechLinks,SpeechFocusLink} from '../studio-speech-contract.js'
 import type {StudioScene,VideoDraft} from '../studio-contract.js'
@@ -17,14 +19,14 @@ export class StudioSpeechLinksEditor {
  private modify(id:string,fn:(links:StudioSpeechLinks)=>void):void{const c=this.context();if(!c||c.disabled)return;this.pending??=structuredClone(c.scene.speechLinks??{bullets:[],focus:[]});this.scope={projectId:c.projectId,draftId:c.draft.id,sceneId:c.scene.id};fn(this.pending);this.field(id)}
  private button(text:string,fn:()=>Promise<void>|void,disabled=false):HTMLButtonElement{const b=document.createElement('button');b.textContent=text;b.disabled=disabled;b.onclick=()=>this.run(fn);return b}
  private anchors(scene:StudioScene,value:string,id:string,disabled:boolean,change:(id:string)=>void):HTMLSelectElement{const select=document.createElement('select');select.id=id;select.disabled=disabled;select.append(new Option('不引用句锚点',''))
-  for(const anchor of scene.speechAnchors?.anchors??[])select.append(new Option(`${scene.narration.slice(anchor.scriptStart,anchor.scriptEnd)} · ${(.5+anchor.startSeconds).toFixed(2)}–${(.5+anchor.endSeconds).toFixed(2)}s`,anchor.id))
+  for(const anchor of scene.speechAnchors?.anchors??[]){const ranges=narrationSceneRanges(scene,anchor.startSeconds,anchor.endSeconds),label=ranges.length?ranges.map(r=>r.start.toFixed(2)+'–'+r.end.toFixed(2)+'s').join(' / '):'当前片段外 · 原音频 '+anchor.startSeconds.toFixed(2)+'–'+anchor.endSeconds.toFixed(2)+'s';select.append(new Option(`${scene.narration.slice(anchor.scriptStart,anchor.scriptEnd)} · ${label}`,anchor.id))}
   if(value&&![...select.options].some(o=>o.value===value))select.append(new Option('已失效 · '+value,value));select.value=value;select.onchange=()=>{change(select.value);this.run(()=>this.flush())};return select
  }
  render():void{const context=this.context();if(this.pending){for(const n of this.root.querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('input,select,button'))n.disabled=context?.disabled??true;return}const open=this.details?.open??false;this.root.replaceChildren();if(!context)return
   const {scene,draft,disabled}=context,links=scene.speechLinks??{bullets:[],focus:[]},visuals=sceneVisuals(scene)
   this.details=document.createElement('details');this.details.open=open;this.details.className='speech-links advanced';const summary=document.createElement('summary');summary.textContent='按句同步 · 画面强调与板书揭示';this.details.append(summary);this.root.append(this.details)
   const note=document.createElement('p');note.className='muted';const binding=scene.speechAnchors,stale=speechBindingStale(scene,binding)||sceneCoverage(scene,draft.tts).audioStale
-  note.textContent=binding?`${stale?'句锚点已过期':'句锚点来源：'+(binding.origin==='user-edited'?'用户编辑':'Agent 编辑')}。选项时间为分镜时间，包含旁白 .5s 起点；画面速度只影响源视频映射。`:'先在旁白面板试听并保存句锚点，再绑定画面强调或板书。';this.details.append(note)
+  note.textContent=binding?`${stale?'句锚点已过期':'句锚点来源：'+(binding.origin==='user-edited'?'用户编辑':'Agent 编辑')}。选项按当前旁白播放区间映射到分镜；紧凑节奏、裁剪与分割使用同一时钟。`:'先在旁白面板试听并保存句锚点，再绑定画面强调或板书。';this.details.append(note)
   try{speechScene(scene)}catch(error){const issue=document.createElement('p');issue.className='production-issue';issue.dataset.severity='error';issue.textContent=error instanceof Error?error.message:String(error);this.details.append(issue)}
   const heading=document.createElement('h4');heading.textContent='标题卡板书 · 随句开始揭示';this.details.append(heading)
   if(visuals.length){const p=document.createElement('p');p.className='muted';p.textContent='板书揭示用于无画面素材的标题卡。已有失效引用可解除；画面素材使用下方强调。';this.details.append(p)}
@@ -47,6 +49,13 @@ export class StudioSpeechLinksEditor {
    const label=document.createElement('label');label.className='checkbox';const emphasis=document.createElement('input');emphasis.id='speech-focus-emphasize-'+index;emphasis.type='checkbox';emphasis.checked=link.emphasize;emphasis.disabled=disabled;emphasis.onchange=()=>{set('emphasize',emphasis.checked,emphasis.id);this.run(()=>this.flush())};label.append(emphasis,'显示强调圈');row.append(label,this.button('移除此强调',async()=>{await this.flush();await this.edit(s=>{s.speechLinks!.focus.splice(index,1)})},disabled));this.details.append(row)
   }
   this.details.append(this.button('添加按句强调',async()=>{await this.flush();await this.edit(s=>{const v=sceneVisuals(s)[0],anchor=s.speechAnchors?.anchors.find(a=>!s.speechLinks?.focus.some(f=>f.visualIndex===0&&f.anchorId===a.id));if(!anchor||!v)throw new Error('先保存句锚点并匹配画面。');const crop=v.crop??{x:0,y:0,width:1,height:1};s.speechLinks??={bullets:[],focus:[]};s.speechLinks.focus.push({anchorId:anchor.id,visualIndex:0,artifactId:(v.imageArtifactId??v.videoArtifactId)!,x:crop.x+crop.width/2,y:crop.y+crop.height/2,zoom:2,emphasize:true})})},disabled||stale||!binding?.anchors.length||!visuals.length||links.focus.length>=24))
-  if(links.bullets.length||links.focus.length)this.details.append(this.button('解除全部句锚点引用',async()=>{await this.flush();await this.edit(s=>{delete s.speechLinks})},disabled))
+  const targets=cardSpeechTargets(scene)
+  if(targets.length||links.cards?.length){
+   const heading=document.createElement('h4');heading.textContent='卡片表现 · 按句阅读与揭示';this.details.append(heading)
+   const note=document.createElement('p');note.textContent='阅读需绑定全部目标；重点和数字使用整句区间，关键词和图解从句开始揭示。修改目标、换图或换旁白后需重新确认。';this.details.append(note)
+   for(const target of targets){const row=document.createElement('label');row.textContent=target.label;const old=links.cards?.find(c=>c.kind===target.kind&&c.index===target.index),id='speech-card-'+target.kind+'-'+target.index,choice=this.anchors(scene,old?.anchorId??'',id,disabled,anchorId=>this.modify(id,value=>{value.cards=(value.cards??[]).filter(c=>c.kind!==target.kind||c.index!==target.index);if(anchorId){const {label,...identity}=target;value.cards.push({...identity,anchorId})}}));choice.setAttribute('aria-label','卡片按句同步 '+target.label);row.append(choice);if(old&&(old.target!==target.target||old.templateId!==target.templateId)){const warning=document.createElement('span');warning.textContent='目标已变化，请重新选择';row.append(warning)}this.details.append(row)}
+   for(const old of links.cards??[])if(!targets.some(t=>t.kind===old.kind&&t.index===old.index)){const row=document.createElement('p');row.textContent='已移除的卡片目标 · '+old.kind+' '+old.index;row.append(this.button('解除此卡片引用',async()=>{await this.flush();await this.edit(s=>{s.speechLinks!.cards=s.speechLinks!.cards!.filter(c=>c.kind!==old.kind||c.index!==old.index)})},disabled));this.details.append(row)}
+  }
+  if(links.bullets.length||links.focus.length||links.cards?.length)this.details.append(this.button('解除全部句锚点引用',async()=>{await this.flush();await this.edit(s=>{delete s.speechLinks})},disabled))
  }
 }

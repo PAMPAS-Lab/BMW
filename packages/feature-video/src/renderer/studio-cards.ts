@@ -1,3 +1,4 @@
+import {COMPOSITION_LIMITS} from '../../../media-native/src/composition-contract.js'
 import type {StudioState,VideoDraft} from '../studio-contract.js'
 import {sceneCoverage} from '../studio-contract.js'
 import {sceneVisuals} from '../../../media-native/src/visual-segments.js'
@@ -152,7 +153,7 @@ export class StudioCards {
     if(!editing){if(this.detail)this.restoreDetail();return}
     node('scene-strip').hidden=true
     node('cards-summary').textContent=`${c.draft!.scenes.length} 个镜头 · ${c.draft!.scenes.reduce((n,s)=>n+s.durationSeconds,0).toFixed(1)} 秒`
-    node<HTMLButtonElement>('cards-add').disabled=c.disabled||c.draft!.scenes.length>=24
+    node<HTMLButtonElement>('cards-add').disabled=c.disabled||c.draft!.scenes.length>=COMPOSITION_LIMITS.scenes
     node<HTMLButtonElement>('cards-materials').disabled=c.disabled
     const list=node('card-list');list.replaceChildren()
     for(const [index,scene]of c.draft!.scenes.entries()){

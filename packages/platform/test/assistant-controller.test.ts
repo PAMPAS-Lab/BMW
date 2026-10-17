@@ -9,6 +9,17 @@ import { AgentHistoryStore } from '../src/agent-history-store.js'
 import { ConversationStore } from '../src/conversation-store.js'
 import { AssistantController } from '../src/assistant-controller.js'
 import { AgentPreferenceStore } from '../src/agent-preference-store.js'
+import {assistantActivity} from '../src/assistant-activity.js'
+import type {AgentEvent} from '@bmw-agent/agent-contract'
+test('Feature activity exposes owned runtime event facts, clears completed tools and blocks dispatch until actual cleanup is released',()=>{
+ const row=(sequence:number,event:AgentEvent['event'],sessionId='s',runId='run'):AgentEvent=>({sequence,event,sessionId,runId,createdAt:1000+sequence}),state:Parameters<typeof assistantActivity>[0]={project:{id:'p'},selectedSessionId:'s',sessions:[{sessionId:'s',status:'running'}],events:[row(1,{type:'input.accepted',receiptId:'receipt'}),row(2,{type:'tool.started',callId:'tool-one',name:'browser',action:'video.studio'}),row(3,{type:'tool.started',callId:'foreign',name:'browser',action:'tabs.open'},'other','foreign-run')],activeRunId:'run',busy:true,resourcesDisconnected:false}
+ let facts=assistantActivity(state);assert.equal(facts.action,'video.studio');assert.equal(facts.toolRunning,true);assert.equal(facts.lastEventAt,1002);assert.equal(facts.dispatchBlocked,true)
+ state.events=[...state.events,row(4,{type:'tool.completed',callId:'tool-one',success:true,message:'controlled receipt'})];facts=assistantActivity(state);assert.equal(facts.toolRunning,false);assert.equal(facts.action,undefined);assert.equal(facts.lastToolAction,'video.studio');assert.equal(facts.lastToolCompletedAt,1004);assert.equal(facts.lastToolSucceeded,true)
+ state.events=[...state.events,row(5,{type:'tool.started',callId:'tool-two',name:'browser',action:'media.inspect'}),row(6,{type:'turn.completed',outcome:'failed',message:'Runtime failed'})];state.sessions=[{sessionId:'s',status:'failed'}];facts=assistantActivity(state);assert.equal(facts.toolRunning,false);assert.equal(facts.dispatchBlocked,true,'Terminal event alone does not establish released native resources')
+ state.busy=false;state.activeRunId=null;facts=assistantActivity(state);assert.equal(facts.dispatchBlocked,false);assert.equal(facts.message,'Runtime failed');assert.equal(facts.lastEventAt,1006)
+ state.resourcesDisconnected=true;facts=assistantActivity(state);assert.equal(facts.status,'disconnected');assert.equal(facts.dispatchBlocked,true)
+ state.resourcesDisconnected=false;state.sessions=[{sessionId:'s',status:'queued'}];state.events=[];facts=assistantActivity(state);assert.equal(facts.lastEventAt,undefined);assert.equal(facts.runId,null);assert.equal(facts.dispatchBlocked,true)
+})
 test('Assistant controls persist per-Project driver selection, reject foreign Sessions and exclude transitions during a turn', async t => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-assistant-controller-'))
   const conversations = new ConversationStore(path.join(root, 'sessions.json')), history = new AgentHistoryStore(path.join(root, 'history'),sessionId=>conversations.get(sessionId))

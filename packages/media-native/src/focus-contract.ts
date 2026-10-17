@@ -1,15 +1,15 @@
 import {finiteNumber,mediaRecord} from './media-contract.js'
 /** Source-frame normalized centers; intervals use original video seconds, before trim/rate.
  * Images use elapsed visual seconds. No arbitrary keyframes or additional tracks. */
-export interface FocusInterval {startSeconds:number;endSeconds:number;x:number;y:number;zoom:number;emphasize:boolean}
-export const focusIntervalsSchema={type:'array',maxItems:24,items:{type:'object',additionalProperties:false,required:['startSeconds','endSeconds','x','y','zoom','emphasize'],properties:{startSeconds:{type:'number',minimum:0,maximum:1800},endSeconds:{type:'number',minimum:0,maximum:1800},x:{type:'number',minimum:0,maximum:1},y:{type:'number',minimum:0,maximum:1},zoom:{type:'number',minimum:1,maximum:4},emphasize:{type:'boolean'}}}}
+export interface FocusInterval {startSeconds:number;endSeconds:number;x:number;y:number;zoom:number;emphasize:boolean;mode?:'zoom'|'loupe';loupeCorner?:'top-left'|'top-right'|'bottom-left'|'bottom-right'}
+export const focusIntervalsSchema={type:'array',maxItems:24,items:{type:'object',additionalProperties:false,required:['startSeconds','endSeconds','x','y','zoom','emphasize'],allOf:[{if:{required:['loupeCorner']},then:{required:['mode'],properties:{mode:{const:'loupe'}}}}],properties:{mode:{enum:['zoom','loupe']},loupeCorner:{enum:['top-left','top-right','bottom-left','bottom-right']},startSeconds:{type:'number',minimum:0,maximum:1800},endSeconds:{type:'number',minimum:0,maximum:1800},x:{type:'number',minimum:0,maximum:1},y:{type:'number',minimum:0,maximum:1},zoom:{type:'number',minimum:1,maximum:4},emphasize:{type:'boolean'}}}}
 export function assertFocusIntervals(raw:unknown):FocusInterval[]{
   if(!Array.isArray(raw)||raw.length>24)throw new TypeError('At most 24 focus intervals per visual.')
   return raw.map((item,index)=>{const value=mediaRecord(item)
-    if(Object.keys(value).some(key=>!['startSeconds','endSeconds','x','y','zoom','emphasize'].includes(key))||typeof value.emphasize!=='boolean')throw new TypeError('Invalid focus interval.')
+    if(Object.keys(value).some(key=>!['startSeconds','endSeconds','x','y','zoom','emphasize','mode','loupeCorner'].includes(key))||typeof value.emphasize!=='boolean'||value.mode!==undefined&&!['zoom','loupe'].includes(String(value.mode))||value.loupeCorner!==undefined&&(value.mode!=='loupe'||!['top-left','top-right','bottom-left','bottom-right'].includes(String(value.loupeCorner))))throw new TypeError('Invalid focus interval.')
     const result={startSeconds:finiteNumber(value.startSeconds,'focus start',0,1800),endSeconds:finiteNumber(value.endSeconds,'focus end',0,1800),x:finiteNumber(value.x,'focus center x',0,1),y:finiteNumber(value.y,'focus center y',0,1),zoom:finiteNumber(value.zoom,'focus zoom',1,4),emphasize:value.emphasize}
     if(result.endSeconds-result.startSeconds<.1||index>0&&result.startSeconds<(raw[index-1] as FocusInterval).endSeconds)throw new TypeError('Focus intervals must be ordered, nonoverlapping and at least 100ms long.')
-    return result
+    return {...result,...(value.mode===undefined?{}:{mode:value.mode as FocusInterval['mode']}),...(value.loupeCorner===undefined?{}:{loupeCorner:value.loupeCorner as FocusInterval['loupeCorner']})}
   })
 }
 /** Original elapsed effect clock retained by a content split; no expressions. */
@@ -32,6 +32,7 @@ export function focusFraming(visual:FocusVisual,localSeconds:number):{crop:NonNu
   const base=visual.crop??{x:0,y:0,width:1,height:1},time=focusSourceTime(visual,localSeconds),focus=visual.focusIntervals?.find(item=>time>=item.startSeconds&&time<item.endSeconds)
   if(!focus)return {crop:base,strength:0}
   const ramp=Math.min(.3,(focus.endSeconds-focus.startSeconds)/3),linear=Math.max(0,Math.min(1,(time-focus.startSeconds)/ramp,(focus.endSeconds-time)/ramp)),strength=linear*linear*(3-2*linear),zoom=1+(focus.zoom-1)*strength
+  if(focus.mode==='loupe')return {crop:base,focus,strength}
   const width=base.width/zoom,height=base.height/zoom,centerX=base.x+base.width/2+(focus.x-base.x-base.width/2)*strength,centerY=base.y+base.height/2+(focus.y-base.y-base.height/2)*strength
   return {crop:{x:Math.max(base.x,Math.min(base.x+base.width-width,centerX-width/2)),y:Math.max(base.y,Math.min(base.y+base.height-height,centerY-height/2)),width,height},focus,strength}
 }

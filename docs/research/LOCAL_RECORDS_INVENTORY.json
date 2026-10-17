@@ -1,0 +1,3529 @@
+{
+  "schemaVersion": 1,
+  "auditedAt": "2026-10-17",
+  "scope": "BMW runtime record families, relevant local visualization/download reports, Project memories and canonical Studio metadata; read-only, no production execution",
+  "baseCommit": "410e9cd25dc719462cad5a11b19ce4be110c2f23",
+  "roots": {
+    "runtime": ".bmw-runtime",
+    "projects": "$BMW_PROJECTS = ~/Library/Application Support/BMW/projects",
+    "visualizations": "~/.codex/visualizations/2026/10/16/01a142fe-3b28-71d0-917d-ed14d3cb89ed/qbit-bmw"
+  },
+  "groups": [
+    {
+      "directory": ".bmw-runtime/akhaliq-analysis",
+      "classification": "research-and-validation",
+      "fileCount": 1373,
+      "recordCount": 15,
+      "records": [
+        {
+          "path": ".bmw-runtime/akhaliq-analysis/result.json",
+          "bytes": 2228555,
+          "sha256": "d6094a75b3d819938c91dc980452dc4174f37c398bec5b99c1668a9cb397b95f"
+        },
+        {
+          "path": ".bmw-runtime/akhaliq-analysis/review-ledger.json",
+          "bytes": 9423,
+          "sha256": "36765f7b60025281029ec937695dd4d335dc7d1bf0457a872a65271cb3ebea43"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/analysis-unit-build",
+      "classification": "generated-cache",
+      "fileCount": 401,
+      "recordCount": 11,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/assistant-display-fix",
+      "classification": "validation-and-fixtures",
+      "fileCount": 1,
+      "recordCount": 0,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/bmw-contract-fixes",
+      "classification": "validation-and-fixtures",
+      "fileCount": 130,
+      "recordCount": 8,
+      "records": [
+        {
+          "path": ".bmw-runtime/bmw-contract-fixes/desktop/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/bmw-contract-fixes/desktop/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/bmw-contract-fixes/desktop/result.json",
+          "bytes": 779,
+          "sha256": "19457adaaab4a1f9e90896b572107370b19d524f1d136d4c5747c02bd4e9b333"
+        },
+        {
+          "path": ".bmw-runtime/bmw-contract-fixes/desktop/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/bmw-contract-fixes/desktop/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/bmw-contract-fixes/verification.json",
+          "bytes": 1054,
+          "sha256": "6d31d08aa78d4b78856fbd366ba68baa1275414f1d6e8520b352db92ee0117f2"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/bmw-video-fixes",
+      "classification": "validation-and-fixtures",
+      "fileCount": 332,
+      "recordCount": 30,
+      "records": [
+        {
+          "path": ".bmw-runtime/bmw-video-fixes/desktop/native/result.json",
+          "bytes": 127,
+          "sha256": "50b8e120051b0d2c0ee4dbcdc6ba5194a79a23064640463c0687747babf9182c"
+        },
+        {
+          "path": ".bmw-runtime/bmw-video-fixes/desktop/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/bmw-video-fixes/desktop/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/bmw-video-fixes/desktop/result.json",
+          "bytes": 919,
+          "sha256": "ea03362a8f35326efa3594631315ca5098925436744f4cd8992470c188e714d1"
+        },
+        {
+          "path": ".bmw-runtime/bmw-video-fixes/desktop/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/bmw-video-fixes/desktop/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/bmw-video-fixes/verification.json",
+          "bytes": 1812,
+          "sha256": "a18c91bb888a972e507e7e98a84b7986b67f5891a53e52206a7642d98bd8bd8d"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/card-blog-sample",
+      "classification": "delivery-and-iteration",
+      "fileCount": 346,
+      "recordCount": 56,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/card-speech-export-review",
+      "classification": "validation-and-fixtures",
+      "fileCount": 6,
+      "recordCount": 1,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/card-template-validation",
+      "classification": "validation-and-fixtures",
+      "fileCount": 86,
+      "recordCount": 23,
+      "records": [
+        {
+          "path": ".bmw-runtime/card-template-validation/2026-10-09-unlocked/desktop/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/card-template-validation/2026-10-09-unlocked/desktop/result.json",
+          "bytes": 283,
+          "sha256": "bc19f02dd8c7108ee9b1553dcf3da9963280608ec0de1f16c8fd26d9f42a137a"
+        },
+        {
+          "path": ".bmw-runtime/card-template-validation/2026-10-09-unlocked/summary.json",
+          "bytes": 1149,
+          "sha256": "0d2cc55b4839d07c1c01c8b1e2f7b03048a7c9b71be0820c18ad7c627a64b4e7"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/classified-tests",
+      "classification": "validation-and-fixtures",
+      "fileCount": 17247,
+      "recordCount": 2152,
+      "records": [
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-20-57-680Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-20-57-680Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-20-57-680Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-20-57-680Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "676e812aeaba91f1f77177a31aa558a9aad7569acba174d7bebf9f55759b3e98"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-20-57-680Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-20-57-680Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-20-57-680Z/result.json",
+          "bytes": 156920,
+          "sha256": "6831df8a468f52c3da17ebf2e05c4c2a2d85f4feb2eefa78a1c3796d6f95acc2"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-20-57-680Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "f98aceeebcfeff21eb91840dd5b7b56a87c90d9484e9ca21723beda4717ff306"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-20-57-680Z/studio.next/verification.json",
+          "bytes": 7983,
+          "sha256": "5d6f0a1b3c9aba9ccf929f3a0173cfa73d7642c9b8151ab13ba7e5427d36ec70"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-28-51-031Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "50b8e120051b0d2c0ee4dbcdc6ba5194a79a23064640463c0687747babf9182c"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-28-51-031Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-28-51-031Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-28-51-031Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "70f54a257af9c7ec952afae989b5d4796f74c13391cee3d008ae24f523bd99c8"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-28-51-031Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-28-51-031Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-28-51-031Z/result.json",
+          "bytes": 156926,
+          "sha256": "8b6cccec3136523c8bb36c6d668541a62bafad615abab65679b2e4f58dbeb159"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-28-51-031Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "1554a113cc9c328da0f710f7706edd950926b879c32bacb72d7259e25e18d643"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-28-51-031Z/studio.next/verification.json",
+          "bytes": 7983,
+          "sha256": "fe56aec2c37de2f768a727aa9a13c9271be20835f9aac1a5fd714f0777f151e5"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T07-38-08-184Z/result.json",
+          "bytes": 107092,
+          "sha256": "b08db95f918d0c074d97ea0a98ffdd9cf9ca075034dce5d68f92273d9b414e69"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T10-33-31-333Z/desktop-suite/result.json",
+          "bytes": 1141,
+          "sha256": "8789e9140f8f72c8ef9255d40b3b2f538c12cd20d975b652428d4fb7792fe6c4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T10-33-31-333Z/result.json",
+          "bytes": 156972,
+          "sha256": "ccac962cdd55f77d198ad0df7c5bd526b9a037ce732b02f6630a490030efe0e2"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T10-36-20-417Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T10-36-20-417Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T10-36-20-417Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T10-36-20-417Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "0c9a27f87f2f3b0a362fb49652a86fd8ef0e2c403ebbe7d2b1cd2e61c24d030e"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T10-36-20-417Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T10-36-20-417Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T10-36-20-417Z/result.json",
+          "bytes": 156919,
+          "sha256": "05eab5a86fe1af9c1187ff931ddc47095826ffe4e9e733fde638ce7c69d91cd4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T10-36-20-417Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "a31863082364f5c854b238bba1a4b8a8a7c58bb400c4dc4ed239c4c1d41e60d9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T10-36-20-417Z/studio.next/verification.json",
+          "bytes": 7989,
+          "sha256": "65763856ce149c04c77599497c0871c7f6010b6fe42fcb280ed00e17f82b20b9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-05-12-763Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-05-12-763Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-05-12-763Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-05-12-763Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "c27f297ca9d5e6cfe3996fc20054ef8d793449df4d8689657a5e86f573f08b1c"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-05-12-763Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-05-12-763Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-05-12-763Z/result.json",
+          "bytes": 156958,
+          "sha256": "69ceccc9329dad8b2b9f6daa05baa12c33e22fda2bd0bd5328a31e25be1046d0"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-05-12-763Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "3972cbd09ec07c24fa465a6ab0ee7512f02c6450e05e1605364d91e1ac596c18"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-05-12-763Z/studio.next/verification.json",
+          "bytes": 7983,
+          "sha256": "48e0d7c71edf7b8d8cb37cc761b55f9974084f343f2d08c3fa1f58a5244feccf"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-39-45-263Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-39-45-263Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-39-45-263Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-39-45-263Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "0d96f61fb3b4cfba0b6cc255fb8a8ee5b986ba87a01267dce281e3028576213b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-39-45-263Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-39-45-263Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-39-45-263Z/result.json",
+          "bytes": 156953,
+          "sha256": "d5d8737b4d8f6d6ab87ddbd7e2309bb8ada883420625c3ccaad6bb7226253baf"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-39-45-263Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "8870fd28e8776c1536aa9f53e3aa528ba5655f476006d20b6d523f9b9888f19d"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T11-39-45-263Z/studio.next/verification.json",
+          "bytes": 7983,
+          "sha256": "3bc256b54bf54b9d9c4e5641028b121f98e7c40f5910d7efedcf05d9865dc026"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T14-09-21-384Z/result.json",
+          "bytes": 84435,
+          "sha256": "37d1a0793ff7bddbe8b8507bb627aca611ad5306d0e6da7fd943e429ebff402f"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T14-10-21-213Z/result.json",
+          "bytes": 78950,
+          "sha256": "b61c1db3ced4c27392566101464e7a5b8405aa04bc0bb2b03adc4318204ead29"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T14-13-52-202Z/result.json",
+          "bytes": 97947,
+          "sha256": "e4d1caf2baa49efebdc8ea47cffc5faabf99f2ac07336c7805f750a627bfd55a"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T14-35-57-682Z/result.json",
+          "bytes": 107371,
+          "sha256": "c0e9104b65a55627ffc9a9b3d5475a3d94c19a78ed13f4abc16078983bd49eba"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T14-43-35-315Z/result.json",
+          "bytes": 107468,
+          "sha256": "9ab9f6c5e7c295cd7e94cf1e86397ea43c6be6b0325a31307bc4ca1af63a94e6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T15-19-16-526Z/result.json",
+          "bytes": 107459,
+          "sha256": "bd8ea30be012fc77e0c8693bdea5fcd723b07601d81b287368dd2283f85b3d48"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T15-28-36-162Z/result.json",
+          "bytes": 107704,
+          "sha256": "5f84a68da51057ff5c0f2c1f0f9fdbda450f703345258d6ef3a6e375e42b288e"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T15-58-53-870Z/result.json",
+          "bytes": 85193,
+          "sha256": "3831bc18603b49c647b3ecc88cfcf82c68132ad5f900dcba768459195a4f1854"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T15-58-53-870Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "ef28d46afec26d045521d71ca9d150b748bad03256dd4806ce1399e3530c5e5a"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T15-59-10-127Z/result.json",
+          "bytes": 107812,
+          "sha256": "2cb95870d03ba33ad69b28e7ea3c26a1843427ae4f7066f85834af78e9a1a08a"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-08T16-08-35-501Z/result.json",
+          "bytes": 107802,
+          "sha256": "385b08d3b728cf4f6f1eae4bbd2a4818c0465d158c87d6f74c5320b0b200589d"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-09T02-46-37-233Z/result.json",
+          "bytes": 108191,
+          "sha256": "1021a32cd1a1a62ddd47f589fea4e2f9962d7018ab9ad6316291231c17f50215"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-09T02-55-31-971Z/result.json",
+          "bytes": 108201,
+          "sha256": "dcf541144b337559ed704666c91c036133b31c703269eb4d75d5650378efb04f"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-09T02-55-36-317Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-09T02-55-36-317Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-09T02-55-36-317Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-09T02-55-36-317Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "d0174eb3f71121db61222f0cb9549674996830655b4ce8fa30afc5273719ee23"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-09T02-55-36-317Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-09T02-55-36-317Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-09T02-55-36-317Z/result.json",
+          "bytes": 128451,
+          "sha256": "3bf7057dd8e69654a2c2ebbd8ffb0d8c997b8af500aed922ba5c7660b67b375c"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-09T02-55-36-317Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "b762edab3ca80717c8c51eddb04a685dd43ad9b03256898e5dd891d504a52e9f"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-09T02-55-36-317Z/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "e2b0e5dd7e6fc9699bfaa0822c12957985e99c3276d59c8a815bf2bb11e841ee"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-09T03-07-20-395Z/result.json",
+          "bytes": 108117,
+          "sha256": "704ff83de085d95acc1a8e13b0873f4007c3bf818f6f8fbbf08aa463c427c4a3"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-09T07-12-16-715Z/result.json",
+          "bytes": 108325,
+          "sha256": "c406243872c3b12f64c75930361220765f9d046ad704a9335972b4242583e42d"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-12T00-58-14-625Z/result.json",
+          "bytes": 108319,
+          "sha256": "6431366db7e5d7269c8798980c8845785003431a24a67ed0655e209d3d6aba92"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-12T01-00-54-192Z/result.json",
+          "bytes": 108326,
+          "sha256": "5596ee15f88bf56f9f649dcd6678ccfa7540744f8ece5610d2b96732921f076b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-12T01-13-19-726Z/result.json",
+          "bytes": 108316,
+          "sha256": "34e705e90527f7df69adb6914430058061259e2eb7550553b134a8b9f654f093"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-12T02-18-21-653Z/result.json",
+          "bytes": 108321,
+          "sha256": "73cdb0a653c9a5ea2da761576946e1f0e2f34bc3bac514164810b3cc736b6ea8"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-12T02-20-58-539Z/result.json",
+          "bytes": 108319,
+          "sha256": "6a51c50b8625fde8088ad243405059a8561ff22bc75d8a504f3766037f19c0f4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T00-54-40-052Z/result.json",
+          "bytes": 109152,
+          "sha256": "412013d2c5600dc3475e0e9a4fd3c08cfed9c7fef4bc9e4e87f540018b272f8c"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T00-54-48-987Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T00-54-48-987Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T00-54-48-987Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T00-54-48-987Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "2dba41dafc75475c5b30423df223d264d57255041dd01cd71d1d39df287fb90e"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T00-54-48-987Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T00-54-48-987Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T00-54-48-987Z/result.json",
+          "bytes": 128347,
+          "sha256": "7fa0a23f30acdffdef1bf6113fd632a610c920841381f1dfc9e7a26de1d93890"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T00-54-48-987Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "b21926ccef07770e15aff4dfc251efbff418ad815d8d5808442bcb92e5acf547"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T00-54-48-987Z/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "9329a459fcf89de409cf0d4873477b00c0145a51047a0cc773b55d0044b7e158"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-01-51-407Z/result.json",
+          "bytes": 112325,
+          "sha256": "aa3a0d28108cbb02b30e2eadd1ade0f376db89b26f3b2e5301c045fac323f9e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-08-39-361Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-08-39-361Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-08-39-361Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-08-39-361Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "2b7fa73c312ec61ac186d9bf504db261de52bd3641d72c080c7b561054a57f7b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-08-39-361Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-08-39-361Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-08-39-361Z/result.json",
+          "bytes": 163787,
+          "sha256": "4576eff325d5233aca4146d53817e6e971dda342e9736e996ac928dd68572e0a"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-08-39-361Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "08b2549455aa19930218215236774e7dc023f414bdfa7b956a555e51c92c5c3c"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-08-39-361Z/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "f7a2e01263cb09b397aaccaf5f9f060606a42d847cae2f7f40593cd81bf646c0"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-18-13-318Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "50b8e120051b0d2c0ee4dbcdc6ba5194a79a23064640463c0687747babf9182c"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-18-13-318Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-18-13-318Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-18-13-318Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "3ba3b3b5a52b7b865dee7d29d0bfeb856d359ad6c3db80dfa5c6a5db01aa78d0"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-18-13-318Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-18-13-318Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-18-13-318Z/result.json",
+          "bytes": 163234,
+          "sha256": "f43b07b09e9b73b1ab6f20be349e833bf3bd9c7d102ff772e099879d03f35dad"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-18-13-318Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "20128a623000f6798411ac44cc376bc496c08977fb6da7472d2cdcf6ee7003cd"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-18-13-318Z/studio.next/verification.json",
+          "bytes": 7979,
+          "sha256": "0801aeec3aec6240fd40007f7453a789cff5396418e0722f10ba8e88a260ea90"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-29-33-184Z/result.json",
+          "bytes": 112305,
+          "sha256": "5de807eea98b6048136a64357b67088a90978087f9fbf9db441d528999633ef8"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-35-50-383Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "50b8e120051b0d2c0ee4dbcdc6ba5194a79a23064640463c0687747babf9182c"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-35-50-383Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-35-50-383Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-35-50-383Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "09a4cb4546fb6d4c6592d6417bc5069604f1719b68d3fa5052b83c556208821c"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-35-50-383Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-35-50-383Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-35-50-383Z/result.json",
+          "bytes": 163232,
+          "sha256": "3a35f329563d2dfd54a1ee0dbd59c04990b56b08fad2a3af124e967d9bb98a4c"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-35-50-383Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "393f8871122533cbfe236f056290af70b631bc1ad840384bc8304e0a4b24c3e4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T03-35-50-383Z/studio.next/verification.json",
+          "bytes": 7974,
+          "sha256": "de3bd7f21d342b7067f0618a38ab79e85002edfc36151ac7afe6938220112866"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T04-17-32-104Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T04-17-32-104Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T04-17-32-104Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T04-17-32-104Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "133920d89b42014bbc0fb5f5e278c31bef47c655cb8ab877195e6c0f6b1a0075"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T04-17-32-104Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T04-17-32-104Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T04-17-32-104Z/result.json",
+          "bytes": 163240,
+          "sha256": "27b17b5b684d396dbf659d6fea908bcad198253b3ff92033cca8e1c12b212271"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T04-17-32-104Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "067ada80ab380b81583d9b70f1e3fd978281242c122078ca42056b408a0918e3"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T04-17-32-104Z/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "a2e54e850b2de90cb2873d315d8149783a59d6365a93126c8d1717ed36b9bfe0"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T06-37-21-533Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T06-37-21-533Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T06-37-21-533Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T06-37-21-533Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "f5b0d02b1a4b83e7633d2a69bd6eb25eac836cf4b76b4f054541a6b2fd2203f8"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T06-37-21-533Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T06-37-21-533Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T06-37-21-533Z/result.json",
+          "bytes": 163492,
+          "sha256": "3a1996834e97c5786798851f74533ef6c22ec0996f05925ae7938f61980adbdd"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T06-37-21-533Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "9e748e1a39ce901eed091345a4b680eb12e63a45b1f501ccaf263809281be04e"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T06-37-21-533Z/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "f3492bed98a1a501ea941eeb0a3303fc66e046a9890cd1bd56578effe04c7aaa"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T08-53-42-671Z/desktop-suite/result.json",
+          "bytes": 1141,
+          "sha256": "387e7045da5b81888b693b8a4325a5759cc9af2604583d6f63255bfc7868a26b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T08-53-42-671Z/result.json",
+          "bytes": 163532,
+          "sha256": "c0156f7d55913ea671b664e26f56045c580d73880eda1737566a79f14dc08f84"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T08-56-28-401Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T08-56-28-401Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T08-56-28-401Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T08-56-28-401Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "cb0ec2475f71844870e4b10d03c793b49bc27292957647930eded9888b8791bb"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T08-56-28-401Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T08-56-28-401Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T08-56-28-401Z/result.json",
+          "bytes": 163481,
+          "sha256": "2f911c92cb7293a39884731f529afc1f2bdb4df88ff890ffb0f003b0e49094dd"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T08-56-28-401Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "b4698448f5a30df5e1bcaf102f8c3a61c2eb519199fc50381938230f2c20542c"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T08-56-28-401Z/studio.next/verification.json",
+          "bytes": 7988,
+          "sha256": "b9ae8a707d9cf29f567058e69440d48f2f14630d7dec776a396db32e14d6c515"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-22-40-643Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-22-40-643Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-22-40-643Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-22-40-643Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "93e6c9c4cc6653176f402c94f51be3c6af768767b62278ad5b3e129f8cafc0fa"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-22-40-643Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-22-40-643Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-22-40-643Z/result.json",
+          "bytes": 163721,
+          "sha256": "9bf36a3c6215bcea5fc4744b7c4a90d8073cce8e8c01fbd606db51bbcf94849f"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-22-40-643Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "98a9e94c3c6a0f10899e1b17d5c1237b8f97f31028775c4778e9be631702a9a0"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-22-40-643Z/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "b9bc7a9af5ce6ab03ca1fdb1d035fcc0950d20bccddedfb4c8ee57d2892e147d"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-31-25-324Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-31-25-324Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-31-25-324Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-31-25-324Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "4a4cbdd7f9c7a8fe518a7c5745f27b9702cf87a15afa62f0a1fa96af46a22cbc"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-31-25-324Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-31-25-324Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-31-25-324Z/result.json",
+          "bytes": 163497,
+          "sha256": "2adac1ae5ccb00a1bc922df89f561b05adaf04c20928a64c6f19cd4603377dd2"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-31-25-324Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "4690874d42f548f661b70c19ea05ef401ddbade26b021018f599c32358114a8b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T10-31-25-324Z/studio.next/verification.json",
+          "bytes": 7988,
+          "sha256": "e4b7003fea310f5d416cb4260a4f762929bd0fe251e86d45c735a8267696d4ee"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-20-21-424Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-20-21-424Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-20-21-424Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-20-21-424Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "c1990f86610dddab406507c89df9b2115ff2b3507f7668b04d98777b77f6da3e"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-20-21-424Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-20-21-424Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-20-21-424Z/result.json",
+          "bytes": 163496,
+          "sha256": "9dca235426c07191eb911c501446b17dbf68a194b0eeecf06740fcb858e7e7a7"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-20-21-424Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "229d83beeecc0880ab5ebb0da4fbad2e7c445785912460c220a1c4189161075f"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-20-21-424Z/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "76f888d380ce95e1a3697b840fb181d0c89c6fedddd5bd587a2c31832b980250"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-52-20-420Z/result.json",
+          "bytes": 159181,
+          "sha256": "a58cc0092874980d75f47499b5e6d9ca97894de7b5525ee74c282e8654b25760"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-52-20-420Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "0bc537b55fea66f0353728c09a12f51257a26648553546d7b69dcbfabac69abf"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-52-20-420Z/studio.next/verification.json",
+          "bytes": 7974,
+          "sha256": "4938aac8a8c2bba4d85dbcc0d23dbdce07fdae6068c82e39e54b69b7c74fd764"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-58-28-544Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-58-28-544Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-58-28-544Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-58-28-544Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "ba46e71b62b9cbe4727d57ef624baec4d79288a9bc8340192b69f75fcf3787f4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-58-28-544Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-58-28-544Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-58-28-544Z/result.json",
+          "bytes": 163495,
+          "sha256": "285162e88dc87c309d648fdbe89128f80615845ce3fae37124e9267f572c1153"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-58-28-544Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "0f85920fddd7885d1e7de488cc6729c4681aa5b30ab39fcd3b97504fb8e91bf8"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-14T11-58-28-544Z/studio.next/verification.json",
+          "bytes": 7981,
+          "sha256": "efa75e6fdea380592aac2672ce9624d526fa0b8bbc13ee448c7c8c67a7264c01"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-47-28-079Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-47-28-079Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-47-28-079Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-47-28-079Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "13b362c70db8c2bbc75b4dea89b1e64406f3e82d3f73410696c04d0396058c59"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-47-28-079Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "0eb8b62bf06f753577319a79f7a0163cd3d372390e30ca31c3c77fc7dfae199d"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-47-28-079Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-47-28-079Z/result.json",
+          "bytes": 166298,
+          "sha256": "40d2ed93eb6a096972dac292761d380c41f2a91e506e349eb1e9b9e99e4d8966"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-47-28-079Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "435f676362c2948615844b9b9c897211344e703600500f8610625abdb0e4d6d9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-47-28-079Z/studio.next/verification.json",
+          "bytes": 7988,
+          "sha256": "ca90b36a181c625392607bf229feeb56d9d5cd229435c01424de44f24d4c83f1"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-57-57-655Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-57-57-655Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-57-57-655Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-57-57-655Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "4aa012b4478b7ff492bb8ad456e60e5242ef5d06c131db83c8e11789b898c0e6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-57-57-655Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-57-57-655Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-57-57-655Z/result.json",
+          "bytes": 166113,
+          "sha256": "473a820f95c065cb3e23335d05a29a58c44a0d7395d7144275faebb697603508"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-57-57-655Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "fceab027ffb7f12a83b56f93976d7107977e4da364370e07879252b3fe542e9e"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T10-57-57-655Z/studio.next/verification.json",
+          "bytes": 7988,
+          "sha256": "af3354ca58b1e4c70725969edcde686a23f267fabf9acc455f0bb0d8ed9dd8e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T11-44-33-824Z/result.json",
+          "bytes": 160400,
+          "sha256": "2d4c3ab5477db8e2a337163dd96c7780b709cbe0d318c978085e7d5ac689641e"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T11-54-36-446Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T11-54-36-446Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T11-54-36-446Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T11-54-36-446Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "c60619e303dd12c8d40988fcc265563b46eb77d793d90a0c27f206f39bfcd970"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T11-54-36-446Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T11-54-36-446Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T11-54-36-446Z/result.json",
+          "bytes": 167192,
+          "sha256": "bf5283a97e6a0cc48c182b6b8ff0d3aa7cd9417b9683101ae9e762a6fa0a61a4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T11-54-36-446Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "d79610e56a63d748799f739ce0647df882646905c196345311efbc2d115a6021"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T11-54-36-446Z/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "39617bbedefc63a87843768232d78f28c3602d202b0e273d8e1dc42f83e06668"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T12-20-35-339Z/result.json",
+          "bytes": 162396,
+          "sha256": "4d281d36cc17fe6d3f7bc2d1b24cda59e50713636d89450abcaba5a7d5a24863"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T12-20-35-339Z/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "3fe96bdcfaca5a51609707b8aab9345f65dcf00acacc736961ef5eca1b43e6a7"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T12-25-00-623Z/result.json",
+          "bytes": 153362,
+          "sha256": "9af5b235c801509e3da9640d3149baea6d28067496a5484e57c878795f979d30"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T12-26-45-364Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T12-26-45-364Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T12-26-45-364Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T12-26-45-364Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "4229aa7f4556193cf2d4ce40e28fc4a2a4a6a8ff1d4f26767a0be1e7c521d1d0"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T12-26-45-364Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T12-26-45-364Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T12-26-45-364Z/result.json",
+          "bytes": 167551,
+          "sha256": "7902eac71177d7306669573204ff20565edc2c66e65ca2d9a749a1eb76ce1232"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T12-26-45-364Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "211b40230b2768bf2a0fd19eac67f1f49f91be5778ff58048256b26991d552a4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T12-26-45-364Z/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "38351b2598610ba8c3d81291e64a48627cb088eab58a7e19a0bc8de502967e5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T13-59-54-239Z/result.json",
+          "bytes": 163237,
+          "sha256": "cdda691c35483e6a0bd2cd6ab81c44d017544c060a5b79d6d1f5be1515d58dc1"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T13-59-54-239Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "3791a3fbb570c1f6978af5dcc29f52f49a597905d1ac807a01ed98807e6d8f65"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T14-06-49-153Z/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T14-06-49-153Z/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T14-06-49-153Z/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T14-06-49-153Z/desktop-suite/result.json",
+          "bytes": 1239,
+          "sha256": "1c5dad985ec67b490a1ca184ad6193346d64edd96af1e93bdc6a9a1eb87b2332"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T14-06-49-153Z/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T14-06-49-153Z/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T14-06-49-153Z/result.json",
+          "bytes": 168675,
+          "sha256": "ad892b2845cdac8fc72a46125c3b4187b3282d5d9245f289d1526ade30cfbd0b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T14-06-49-153Z/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "2b367e4d1368a3b459feba6f21eca3e233f41f627faba3ceb8a32d25561fe592"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-15T14-06-49-153Z/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "9a4c98f1cc8e35bc8d5f9759149527efafd35f2ad02392c6fcb689f260da867e"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-16T05-29-19-094Z/result.json",
+          "bytes": 118215,
+          "sha256": "4f94e0e0473dad0de51d1592aec3a4e3a70dbe5244a3cd1ca057ec492ad01712"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-16T05-31-23-661Z/result.json",
+          "bytes": 118012,
+          "sha256": "041d3e405f8674db5cbb040ec69d92d916bbfbc8102842f399c8ea695a49ae4e"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-16T10-15-57-926Z/result.json",
+          "bytes": 119281,
+          "sha256": "450883148359a6b1cfe003ab79c722401f03aca155402d9722872e118f17a06d"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-16T11-04-36-953Z/result.json",
+          "bytes": 120024,
+          "sha256": "ca596d69c1e637a5bc8c4bae6a4f17d3e3549e88b004a49faab77cd752aa856f"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-16T11-21-18-804Z/result.json",
+          "bytes": 120343,
+          "sha256": "6daf193d77089b8d199af9b3e5d9484785602b07a2f1113ced0d83be5e345af8"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-16T11-41-28-228Z/result.json",
+          "bytes": 121087,
+          "sha256": "d8f040a283f4c4cb3891597d1d9e251058848db0ba748a1da815c859c3771624"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-16T11-53-23-349Z/result.json",
+          "bytes": 121064,
+          "sha256": "150cb800f31d3c5586f72cc5b19627c238ec3cf50587083bc6ccd088a5690443"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-16T11-58-07-466Z/result.json",
+          "bytes": 121065,
+          "sha256": "89281604340e0331283834f61767eca29ffce8c516c604c098a9cc024a9e648a"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-16T12-10-11-606Z/result.json",
+          "bytes": 121773,
+          "sha256": "84288619d9d3d60cb564a457d4f02feeea2a276cb73e605ecf5dc4d8a2c9ad70"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-16T12-11-51-738Z/result.json",
+          "bytes": 121781,
+          "sha256": "fb51ed755b65bb0d6f239858f855dd805f071a00f84df3090e8513543f89840f"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-16T12-25-40-941Z/result.json",
+          "bytes": 122637,
+          "sha256": "242601fff3665e2da4764d0710e936b652cf4417ba9f7d439ec48a361df8611b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-16T12-38-36-401Z/result.json",
+          "bytes": 122643,
+          "sha256": "9130d7de30753090b879663483ffdf80158ba20c0c38f664610187edad3087e5"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-16T12-48-58-993Z/result.json",
+          "bytes": 122991,
+          "sha256": "4327c465b1e3b069b6b2ace24ea6b124fe9d2130fe204d980bc1ebc6396df874"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-16T13-49-20-432Z/result.json",
+          "bytes": 124694,
+          "sha256": "a620e82a16309e21451e8fcb93fd7cdc716569cb3a08721027aac1c0930c6fd6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-16T14-08-57-756Z/result.json",
+          "bytes": 125051,
+          "sha256": "267ef39c64c6ac4303321bbb6137fe8d9630c4ab98a82c0196a51d20597895ed"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-final/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-final/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-final/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-final/desktop-suite/result.json",
+          "bytes": 1249,
+          "sha256": "70b2c7b808ebd6d6ba5f21349fcabe7635c213815856ab79bb01cb9e82b65665"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-final/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-final/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-final/result.json",
+          "bytes": 183857,
+          "sha256": "60f7a85dd5bfb409dacbe2809e465255433fa11ecaac2f14624988ec6d475178"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-final/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "de4fcee95782c1e1415cfd8ef243796d737b3de8872b3bf8a97e5d9e89b093a4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-final/studio.layer-packaging/result.json",
+          "bytes": 58663,
+          "sha256": "5b20bf37b450a956ddd6a9fa7d5f5fbffb174648b745e65cf03b9a38613c8628"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-final/studio.long-film/result.json",
+          "bytes": 476,
+          "sha256": "b9e4f81bcbfa0403e9d02496ec3308205a44d7b1c29713c7c3c639db46030632"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-final/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "067366b5b13ee3f0f6d06ee61cebe72d8c1ffa91382062dee39aabc17fc0fae0"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-final/studio.science/result.json",
+          "bytes": 25071,
+          "sha256": "4fbb39a37b2881e566fe3e289fb7a3d9c5d794a5e267a7df53857e6269b2e84e"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-final/studio.text-treatment/result.json",
+          "bytes": 21204,
+          "sha256": "cd6ca11e42cc9a728d8ad914580b70afb908173e329765dfd3f9ad1e1aa3475a"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-full/desktop-suite/result.json",
+          "bytes": 1145,
+          "sha256": "250deaedbb6a332050499e9b32de0d2f65abb567f14dafb415d2b19cd50d957f"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-full/result.json",
+          "bytes": 183639,
+          "sha256": "3f0215c5c0c1a87d80d02e82923101b6ca72af967ebca12b510f34e02cdc6617"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-verified/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-verified/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-verified/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-verified/desktop-suite/result.json",
+          "bytes": 1264,
+          "sha256": "5954527fe7ea043a2172771d1e475f42d5ee6db3b9f4ce6fb65574258cac0aa4"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-verified/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-verified/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-verified/result.json",
+          "bytes": 184184,
+          "sha256": "813b86dcf0600612d6097d1ee86a3021f32207d26548286235dd0122fa1c218d"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-verified/studio.layer-packaging/result.json",
+          "bytes": 58663,
+          "sha256": "6d85cfd57325a52f43e17264eb1d2db6fcaac70ec9e7f36647e0afaddf534a7c"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-verified/studio.long-film/result.json",
+          "bytes": 476,
+          "sha256": "b9e4f81bcbfa0403e9d02496ec3308205a44d7b1c29713c7c3c639db46030632"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-verified/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "af44b817beef622c194b2bb04a51b4ae105ac40714e040a7e73f9d31ec08596a"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-verified/studio.science/result.json",
+          "bytes": 25071,
+          "sha256": "196054eb6ef4a5c5b1e61dac3f0fe862f69f7b1765f5bb218ff1d51d3d8e6a7a"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17-alignment-verified/studio.text-treatment/result.json",
+          "bytes": 21204,
+          "sha256": "1df239597c8a5e1b5f638a5f9c564f41d3d5f943f1a4ae48d8f2e61fb8f17e10"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17T00-20-32-592Z/result.json",
+          "bytes": 125423,
+          "sha256": "e47b41e726906a342164757095a6e24732ab12a13cc705d7dd88f6d0ed68ef89"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17T00-24-56-601Z/result.json",
+          "bytes": 125393,
+          "sha256": "e16b85de158753492cf481fe92f30f3a6958cee084d33a518ee131394d83a5fc"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17T01-06-02-522Z/result.json",
+          "bytes": 125391,
+          "sha256": "56925f05f1711105990d4d38d5918a3f43b6de5214086be1a27f9260fe965823"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17T01-07-21-925Z/result.json",
+          "bytes": 94407,
+          "sha256": "9ae4db0f7c0345bf3e2b4292df14cbcbb5c8043ff5e5bce3c83d768a1b677851"
+        },
+        {
+          "path": ".bmw-runtime/classified-tests/2026-10-17T02-05-12-745Z/result.json",
+          "bytes": 125525,
+          "sha256": "42ee31c9b826b5423ce9b329e23eddf682a295dbc05663fd9a189e4f290d0904"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/codex-comparison",
+      "classification": "delivery-and-iteration",
+      "fileCount": 8,
+      "recordCount": 6,
+      "records": [
+        {
+          "path": ".bmw-runtime/codex-comparison/comparison.json",
+          "bytes": 18463,
+          "sha256": "1cf3d941f09104a2c8785aed42422af960029c1f2f18cd99c7312ad4c2c1ad63"
+        },
+        {
+          "path": ".bmw-runtime/codex-comparison/review.json",
+          "bytes": 71729,
+          "sha256": "05663478b4d3c46bcba60e6fd7403a89eb29eee429bdea428f9a378afba4f07c"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/codex-runtime",
+      "classification": "generated-cache",
+      "fileCount": 49,
+      "recordCount": 1,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/context-reading",
+      "classification": "delivery-and-iteration",
+      "fileCount": 15,
+      "recordCount": 2,
+      "records": [
+        {
+          "path": ".bmw-runtime/context-reading/review.json",
+          "bytes": 23225,
+          "sha256": "9cc465b2bd26d0edbf6058ffbdaecd3c88fe5ef6aff46ac80274f5aa1f977aed"
+        },
+        {
+          "path": ".bmw-runtime/context-reading/verification.json",
+          "bytes": 278,
+          "sha256": "2f563c176779d766ccacd80b25fc0541965b0e0ef2c46ed2166f29f25c811eb8"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/context-sol",
+      "classification": "delivery-and-iteration",
+      "fileCount": 91,
+      "recordCount": 9,
+      "records": [
+        {
+          "path": ".bmw-runtime/context-sol/comparison.json",
+          "bytes": 2222,
+          "sha256": "4ed3709f2dc487e67a66b8e71d052bcdeea415cf0ddfae8f36d0948a49181476"
+        },
+        {
+          "path": ".bmw-runtime/context-sol/extra/review.json",
+          "bytes": 39057,
+          "sha256": "80ae60bf7883310a584b1f616241395e1d3563baf5df1ab67d6a1f71384b2bea"
+        },
+        {
+          "path": ".bmw-runtime/context-sol/final/review.json",
+          "bytes": 37619,
+          "sha256": "9d4d0d5afd364eeed11c5c49a765185c75c48b7d420da5e929a2490668c88786"
+        },
+        {
+          "path": ".bmw-runtime/context-sol/first/review.json",
+          "bytes": 37619,
+          "sha256": "9d46997bf94f4a735aa094e038bc9e42d95803b8cb8f6090e9cb2f5d9fc80f32"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/cover-validation",
+      "classification": "validation-and-fixtures",
+      "fileCount": 2,
+      "recordCount": 0,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/dense-card-validation",
+      "classification": "validation-and-fixtures",
+      "fileCount": 65,
+      "recordCount": 2,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/desktop-projects",
+      "classification": "validation-and-fixtures",
+      "fileCount": 1,
+      "recordCount": 1,
+      "records": [
+        {
+          "path": ".bmw-runtime/desktop-projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/desktop-suite",
+      "classification": "validation-and-fixtures",
+      "fileCount": 150,
+      "recordCount": 40,
+      "records": [
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-08T16-02-01-280Z/result.json",
+          "bytes": 542,
+          "sha256": "4a1cf952f17642de156c87e274b4cd154a1244c68aa41077a5191b5e038d378b"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-08T16-02-01-280Z/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-08T16-02-01-280Z/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-08T16-06-39-590Z/native/result.json",
+          "bytes": 127,
+          "sha256": "50b8e120051b0d2c0ee4dbcdc6ba5194a79a23064640463c0687747babf9182c"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-08T16-06-39-590Z/result.json",
+          "bytes": 333,
+          "sha256": "999826a908717e07c364febc5f34cabf709f340514323a1df361ea5c59e28a3e"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T05-30-21-145Z/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T05-30-21-145Z/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T05-30-21-145Z/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T05-30-21-145Z/result.json",
+          "bytes": 1154,
+          "sha256": "a451b084caeb021ffab5b1835aa389fbdf58a3441dde150207667b513273339c"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T05-30-21-145Z/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T05-30-21-145Z/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T10-20-22-451Z/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T10-20-22-451Z/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T10-20-22-451Z/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T10-20-22-451Z/result.json",
+          "bytes": 1154,
+          "sha256": "cc9045041c1c9535c17d4757bb2c1cf6d7da43feef98d3b43783d6df5ae87b35"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T10-20-22-451Z/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T10-20-22-451Z/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T11-58-05-913Z/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T11-58-05-913Z/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T11-58-05-913Z/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T11-58-05-913Z/result.json",
+          "bytes": 1154,
+          "sha256": "4ddbecf97024a5c78cc6f0e3f38552722c21348faa6fc7b07da39991334f3f56"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T11-58-05-913Z/settings/result.json",
+          "bytes": 70,
+          "sha256": "0eb8b62bf06f753577319a79f7a0163cd3d372390e30ca31c3c77fc7dfae199d"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T11-58-05-913Z/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T12-00-28-737Z/result.json",
+          "bytes": 337,
+          "sha256": "11e0466bfc8e4645f8eb863b088d6405a2e54f16e7040f82f5edd1445a89c1c2"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T12-00-28-737Z/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T12-44-54-989Z/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T12-44-54-989Z/result.json",
+          "bytes": 538,
+          "sha256": "ed82d1c726334bbaad699916cd6fb0bf94d2be4bcd90bbf9e7b3d1bc8efb617f"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T12-44-54-989Z/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T14-10-04-815Z/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T14-10-04-815Z/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T14-10-04-815Z/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T14-10-04-815Z/result.json",
+          "bytes": 1154,
+          "sha256": "3a9d3c1527ac6e5d8ce68392c52ed7ea7d0b02705fb4bdcafd97994af6fc68b5"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T14-10-04-815Z/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/desktop-suite/2026-10-16T14-10-04-815Z/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/dsh-comparison",
+      "classification": "delivery-and-iteration",
+      "fileCount": 6,
+      "recordCount": 6,
+      "records": [
+        {
+          "path": ".bmw-runtime/dsh-comparison/comparison.json",
+          "bytes": 3637,
+          "sha256": "c1f1566c7d7876d26d80c355b351a8810315813b22a541ee953415e32426301f"
+        },
+        {
+          "path": ".bmw-runtime/dsh-comparison/review.json",
+          "bytes": 82620,
+          "sha256": "a74b0ad95ecba5b782a88e9521ce11621afe8e2633c1501a1abdf7b5c38770f9"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/image-drawing-validation",
+      "classification": "validation-and-fixtures",
+      "fileCount": 2,
+      "recordCount": 0,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/layer-packaging",
+      "classification": "validation-and-fixtures",
+      "fileCount": 121,
+      "recordCount": 20,
+      "records": [
+        {
+          "path": ".bmw-runtime/layer-packaging/2026-10-16T12-23-59-225Z/result.json",
+          "bytes": 58519,
+          "sha256": "aaf24eb2dfe39a32c1578c38f9cfd3b8df08f81c17659f9cc9dcd693d242ce56"
+        },
+        {
+          "path": ".bmw-runtime/layer-packaging/2026-10-16T12-25-41-325Z/result.json",
+          "bytes": 58519,
+          "sha256": "4b0dc717b8384e370cd8139547aaf27b33efd48227b2411b40c5031900b846d9"
+        },
+        {
+          "path": ".bmw-runtime/layer-packaging/2026-10-16T12-33-09-433Z/result.json",
+          "bytes": 59131,
+          "sha256": "c4a2475ef90891ee20ede90c22936fdf9deb08f233599c7808e7a99b2301d63e"
+        },
+        {
+          "path": ".bmw-runtime/layer-packaging/2026-10-17T01-26-34-961Z/result.json",
+          "bytes": 63466,
+          "sha256": "b94368a94dca6cf1a87ff3323169de196a046db1eb7a9f8991d7584823b0ca61"
+        },
+        {
+          "path": ".bmw-runtime/layer-packaging/2026-10-17T01-38-09-211Z/result.json",
+          "bytes": 63466,
+          "sha256": "51b1e1f82648031e25652c1a4c3e5ebd9c2cf4e7cc84388863c606cb79f9255e"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/local-asr",
+      "classification": "generated-cache",
+      "fileCount": 4,
+      "recordCount": 2,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/local-tts",
+      "classification": "generated-cache",
+      "fileCount": 6,
+      "recordCount": 1,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/long-composition",
+      "classification": "validation-and-fixtures",
+      "fileCount": 225,
+      "recordCount": 24,
+      "records": [
+        {
+          "path": ".bmw-runtime/long-composition/2026-10-16T11-32-45-397Z/result.json",
+          "bytes": 410,
+          "sha256": "467f91117403b309cef4aadbd6ad010a01f283fe30245eac90b7742d52e8d1d9"
+        },
+        {
+          "path": ".bmw-runtime/long-composition/2026-10-16T11-37-31-965Z/result.json",
+          "bytes": 66095,
+          "sha256": "b4f365efdcd08eba86b6c04daf591ad7cfce97a1d03728c89de9c57463a1e9f2"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/media-preservation-validation",
+      "classification": "validation-and-fixtures",
+      "fileCount": 1,
+      "recordCount": 1,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/musk-daily-production",
+      "classification": "delivery-and-iteration",
+      "fileCount": 246,
+      "recordCount": 76,
+      "records": [
+        {
+          "path": ".bmw-runtime/musk-daily-production/delivery-receipt.json",
+          "bytes": 42626,
+          "sha256": "505a75705d4b4a45ff2664d9802ce3d03ab931a4b6887e135f841667e901cb97"
+        },
+        {
+          "path": ".bmw-runtime/musk-daily-production/gap-analysis.json",
+          "bytes": 7011,
+          "sha256": "778f5fdfbc9f9839f9777b7eacbc154756dd68fa8ae0b4144e9d2e5a4385c925"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/p0-sources",
+      "classification": "validation-and-fixtures",
+      "fileCount": 113,
+      "recordCount": 68,
+      "records": [
+        {
+          "path": ".bmw-runtime/p0-sources/verification.json",
+          "bytes": 1215,
+          "sha256": "3efe0ab35d65b3a138f38f523d96f33a3e90a77712bca02d6e0ca6b3e172f4e9"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/p0-speech",
+      "classification": "validation-and-fixtures",
+      "fileCount": 422,
+      "recordCount": 320,
+      "records": [
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-08T03-02-32.683Z/result.json",
+          "bytes": 2526,
+          "sha256": "72efcf5923c073a8119d98b4fcc23eccdadb5847288ab9448a313ccf5f51b951"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-08T03-09-45.476Z/result.json",
+          "bytes": 2511,
+          "sha256": "dae60a410ef07a347bb00e8a4aa98fd0bcab646aed4560469e03ff6aa55d5d90"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-08T07-26-16.441Z/result.json",
+          "bytes": 2512,
+          "sha256": "bb0d9ea368bf4de03976473f644cceff56ad5985b446fcd9059bf59e47688437"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-08T07-34-33.139Z/result.json",
+          "bytes": 2518,
+          "sha256": "851d9de4fa5ee3235002b17bf7c99e8c5fb7c10763760d11a7026692454f8c97"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-08T10-41-41.716Z/result.json",
+          "bytes": 2516,
+          "sha256": "2854c55d0522316ccac829d846bf4f17d2cada5408adc874146d3679ec901d7d"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-08T11-11-22.380Z/result.json",
+          "bytes": 2518,
+          "sha256": "bc47c4c113b3a0b328744f9d1dd1c5633ce803f3be7b00ea2c86423e69eca9de"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-08T11-45-55.341Z/result.json",
+          "bytes": 2525,
+          "sha256": "1119785d8de25bdc44f4e5a00d98a84351019d0230760ad3dd2815ea49e987b3"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-08T16-00-09.147Z/result.json",
+          "bytes": 2506,
+          "sha256": "dd91523933f76823c992158cc640a711ee8ef6c43d8a2ace3b7b382b7d914501"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-09T03-01-37.410Z/result.json",
+          "bytes": 2506,
+          "sha256": "be5c89d7220a6bbaf86fbef40dd4ebe42bf3708993f724b89b722301e3f6ac0f"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T01-00-03.192Z/result.json",
+          "bytes": 2515,
+          "sha256": "806f94c627de56cf26c14be81694b4f16158904370d55a4ef43fd5dc0c8eb4b4"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T02-02-53.145Z/result.json",
+          "bytes": 324,
+          "sha256": "507701dfba4f7a67a78ef0eb68d202dda737bf56d0be6bd6073f7cd01391c1bc"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T02-17-25.300Z/result.json",
+          "bytes": 487,
+          "sha256": "1a8860c7ca80b673515136873955f2aaf74e2d258c5d21ed26a38ade941868bc"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T02-20-12.066Z/result.json",
+          "bytes": 2488,
+          "sha256": "0d266ab31f72b67716b0eb9ddba75cb12c95d1191b7963cea452645dd4970280"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T02-23-03.188Z/result.json",
+          "bytes": 2481,
+          "sha256": "42f4b9bb1fd39a1b05c82db11c623bac2901c2df7b1d86ebbf76cceecf314556"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T03-15-03.860Z/result.json",
+          "bytes": 2503,
+          "sha256": "a4fc9de652107efc2a6142c67c557dd38a3836c1077e6b15973fcdc31420f09b"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T03-26-02.392Z/result.json",
+          "bytes": 2522,
+          "sha256": "c1ebdc98351ac8be4eba8d979ba30f77b5946ad911bc887b3738e327fe56812d"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T03-43-23.245Z/result.json",
+          "bytes": 2508,
+          "sha256": "de40144fd3e3389d1d566c882a1222b11c21e728bc600f12d407f83cea8ba5b3"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T04-23-47.627Z/result.json",
+          "bytes": 2514,
+          "sha256": "260984dba5c17c6113ea9ade4656e755a81a146fe30c8e5a979c07646b46054b"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T06-43-41.777Z/result.json",
+          "bytes": 2517,
+          "sha256": "65517584b04d28116a2a1c4a4fe172bb1be8607b7c6c6cc8f4cbd6ffe26c3b46"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T09-02-52.806Z/result.json",
+          "bytes": 2513,
+          "sha256": "b0dce0eefe9d9b21fcb908d5ff0f4910f36f9ed3f8c02dfaad9d5510daa64285"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T10-28-59.046Z/result.json",
+          "bytes": 2513,
+          "sha256": "521a423ac0584525792a9e5d71e615ae2e41b4bc9b3587cedf822415e988fc19"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T10-37-49.709Z/result.json",
+          "bytes": 2525,
+          "sha256": "0fee189b9bc9c3379f8b574f65a263d337deee802a772a4ba7cdb6c1883b1078"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T11-27-00.680Z/result.json",
+          "bytes": 2516,
+          "sha256": "055caed81c961b60a4dc8bb7dba82d3ce8f54305db75bc6ef849d162e5beed07"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T12-04-55.585Z/result.json",
+          "bytes": 2514,
+          "sha256": "0c29a9e2a3b8f3f12c7da2ca2df802a3569858dd2d0c2323aa134e4fef5609e3"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T15-28-34.666Z/result.json",
+          "bytes": 2518,
+          "sha256": "3cac095ffe219a09b46be71253229e31522ba139082f85127ed3e96ed19bef61"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-14T22-29-18.103Z/result.json",
+          "bytes": 2506,
+          "sha256": "84f9ddabdc3f7d1fd5805ed1cdf73d1db3d7719c4389d05dd60d5a0d526e01ba"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-15T01-14-05.928Z/result.json",
+          "bytes": 2520,
+          "sha256": "04a577ebcc43b11acda75e940e7d68f745fae2dbdcb496427c38d7149855b37d"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-15T01-28-36.912Z/result.json",
+          "bytes": 2518,
+          "sha256": "d5c73b53a519054a6d71613f939f0a0f4d379d096b79ef97ee395c9f1411045c"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-15T03-08-48.265Z/result.json",
+          "bytes": 2525,
+          "sha256": "1fd11bf0aa5eb7d869b75e7efc975246474ae7e735cf1e280423af546eeeddcb"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-15T10-54-36.674Z/result.json",
+          "bytes": 2526,
+          "sha256": "33865be5d43b30ffa07ca34478c0603230463027365e3a99baa474ab2909245f"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-15T11-04-37.586Z/result.json",
+          "bytes": 2525,
+          "sha256": "c4873e1f72efc8e772beedb685281aee5c65afc202540d8e7ffaab55cac24b7d"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-15T12-00-52.754Z/result.json",
+          "bytes": 2507,
+          "sha256": "328829199f75ce6e90d51f426effe7f37b2d79e13d1b2094b3fd18448869aa52"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-15T12-33-14.100Z/result.json",
+          "bytes": 2519,
+          "sha256": "c9676f46b14e7caebf010fad848843390549e1fa861ab516813d3a2c163fc74b"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-15T14-13-14.931Z/result.json",
+          "bytes": 2526,
+          "sha256": "ca836e2cd575b0122c081e5ab78d4bbc550aa0e1e258a3ab20f0d53414d12f83"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-17T01-34-09.580Z/result.json",
+          "bytes": 2512,
+          "sha256": "ec7fe5db26cb7024477849d0f54e6b36bc0f4d7e6de363dacbe038a359ec5bef"
+        },
+        {
+          "path": ".bmw-runtime/p0-speech/2026-10-17T01-45-05.474Z/result.json",
+          "bytes": 2523,
+          "sha256": "de13cf86e54351296db7d1bc7c74003fb473ea40f3c94090a169827846399350"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/pelican-comparison",
+      "classification": "research-and-validation",
+      "fileCount": 98,
+      "recordCount": 39,
+      "records": [
+        {
+          "path": ".bmw-runtime/pelican-comparison/research-report.txt",
+          "bytes": 36400,
+          "sha256": "5f19f5345eacfc1aeedd5bc310bb8f7b519b880658000311df77f33e5455b30d"
+        },
+        {
+          "path": ".bmw-runtime/pelican-comparison/verification-summary.json",
+          "bytes": 11844,
+          "sha256": "db9cc909ce14bc747af36a22e68077cdff7d44596cdfe3300862dcee955db758"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/pelican-followup",
+      "classification": "research-and-validation",
+      "fileCount": 40,
+      "recordCount": 13,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/pelican-mapping",
+      "classification": "research-and-validation",
+      "fileCount": 52,
+      "recordCount": 9,
+      "records": [
+        {
+          "path": ".bmw-runtime/pelican-mapping/verification-summary.json",
+          "bytes": 2269,
+          "sha256": "e491c1e93a67cada4ff543c611b40cbaae3e5f9986883919d02d2900817e7ff5"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/pelican-p0",
+      "classification": "research-and-validation",
+      "fileCount": 54,
+      "recordCount": 6,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/pelican-p1",
+      "classification": "research-and-validation",
+      "fileCount": 151,
+      "recordCount": 42,
+      "records": [
+        {
+          "path": ".bmw-runtime/pelican-p1/research-report.txt",
+          "bytes": 17287,
+          "sha256": "ad25f75c9f77936cd251bbc90398f3567761ec37c9a146e078fca3cc66810bbf"
+        },
+        {
+          "path": ".bmw-runtime/pelican-p1/verification-summary.json",
+          "bytes": 25080,
+          "sha256": "60f76a6b7ce74a5b9545aed0fcf0b0cf17f981c2e6a29c475ae540dabfdf39cd"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/pelican-study",
+      "classification": "research-and-validation",
+      "fileCount": 63,
+      "recordCount": 3,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/phone-improvements",
+      "classification": "delivery-and-iteration",
+      "fileCount": 119,
+      "recordCount": 13,
+      "records": [
+        {
+          "path": ".bmw-runtime/phone-improvements/final-verification.json",
+          "bytes": 222,
+          "sha256": "87707b337d13f3aea8aed9af7786c929456f25ddc3288cf3524ee2aac1ef3f5c"
+        },
+        {
+          "path": ".bmw-runtime/phone-improvements/live/comparison.json",
+          "bytes": 13879,
+          "sha256": "8b709295adb5ab5cddb961ece37f9e64145da9d171e127de27bc2b7dcba1fc18"
+        },
+        {
+          "path": ".bmw-runtime/phone-improvements/live/delivered/review.json",
+          "bytes": 33514,
+          "sha256": "60e744696e3ecc87399f0962aff406e70973aaa9952163ca9ffd7210ac756262"
+        },
+        {
+          "path": ".bmw-runtime/phone-improvements/live/final/review.json",
+          "bytes": 33614,
+          "sha256": "83a0ee10ecca7102c57077a0e94b4667a43dc3e8cd897872692cba547f5ce40a"
+        },
+        {
+          "path": ".bmw-runtime/phone-improvements/live/first/review.json",
+          "bytes": 27972,
+          "sha256": "08aae4f7c708c8792f7bea48e1991f305ea7a9cac800d7ac5f486a66ce286443"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/phone-reading-sequence",
+      "classification": "delivery-and-iteration",
+      "fileCount": 394,
+      "recordCount": 1,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/production-reliability",
+      "classification": "delivery-and-iteration",
+      "fileCount": 4000,
+      "recordCount": 406,
+      "records": [
+        {
+          "path": ".bmw-runtime/production-reliability/current-unit-contract-boundary/result.json",
+          "bytes": 115312,
+          "sha256": "4a2b927a4ea3034b22e3a9c1c30bce9eeb14c8212c8a7d616d2d685ebdf95ae6"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-final-inventory-2026-10-15/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "50b8e120051b0d2c0ee4dbcdc6ba5194a79a23064640463c0687747babf9182c"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-final-inventory-2026-10-15/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-final-inventory-2026-10-15/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-final-inventory-2026-10-15/desktop-suite/result.json",
+          "bytes": 1304,
+          "sha256": "bdcbdb5a2830c653edc3c7085f5867080a0fa2cc459e71ce6f8b427e66eb3d01"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-final-inventory-2026-10-15/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-final-inventory-2026-10-15/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-final-inventory-2026-10-15/result.json",
+          "bytes": 167042,
+          "sha256": "8d15b457c25153ec743880bf6314d4ea8895273984346e308e7d449cf22f9a4d"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-final-inventory-2026-10-15/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "799e8e4fddec4abe313f7258ccd691221bcab0f1f3a798fe554c821a7a9f5c6d"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-final-inventory-2026-10-15/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "59969e780b530eddd6e5a13566c3bbbd93fb421db60d8eb293201efafece95c6"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-inventory-2026-10-15/desktop-suite/result.json",
+          "bytes": 1169,
+          "sha256": "b4582ae40faec11739840512b6b296a7842fefc75f49796c706d39b059c80a89"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-inventory-2026-10-15/result.json",
+          "bytes": 166278,
+          "sha256": "cdec4826dc81c394da48691ac801a7b8ae589249726c4f476249bd3c2e3a377c"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-inventory-native-2026-10-15/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-inventory-native-2026-10-15/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-inventory-native-2026-10-15/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-inventory-native-2026-10-15/desktop-suite/result.json",
+          "bytes": 1309,
+          "sha256": "76e9cddf6056ac7aa05b6cd453d2cccf2d702778a2a61ad1afaa2c9e2fc7dd8c"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-inventory-native-2026-10-15/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-inventory-native-2026-10-15/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-inventory-native-2026-10-15/result.json",
+          "bytes": 167179,
+          "sha256": "39d89441ea53b7dd4b98d86890bff7fce11f4c48c3992afa3d393e4482251fd2"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-inventory-native-2026-10-15/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "df4c4e681162e439468b1066360925258cbde1a811b145ce67a8a3ae96262617"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-inventory-native-2026-10-15/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "3aa25de6ad74948ddcefa38a3930acdbac2e5505e879c800ba52c7f7a6e412ea"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-regression/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "50b8e120051b0d2c0ee4dbcdc6ba5194a79a23064640463c0687747babf9182c"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-regression/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-regression/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-regression/desktop-suite/result.json",
+          "bytes": 1224,
+          "sha256": "eee5c9edf3cb8765e8e1e701e43a405e144f4871cbed836bf7b65f3d37b6e0b5"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-regression/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-regression/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-regression/result.json",
+          "bytes": 164859,
+          "sha256": "5355e481effb45de8ae4ab0bc2db6ab9e1b98522d38f60921827bba67b240b50"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-regression/studio.next/verification.json",
+          "bytes": 7981,
+          "sha256": "71052e0b92076cf320e96ac47c8911c957590aa94917d8c3d336d855ce51f4e2"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-2026-10-15/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-2026-10-15/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-2026-10-15/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-2026-10-15/desktop-suite/result.json",
+          "bytes": 1269,
+          "sha256": "aa6f17a05df71cd6c32ebc4aabf8601e1dc353ec6684e11a1d55e2e1aaa68a63"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-2026-10-15/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-2026-10-15/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-2026-10-15/result.json",
+          "bytes": 166094,
+          "sha256": "bfcc09f28145d136568f5ab212742bb83ee7eb86b6af12729d8d2e0e577051ce"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-2026-10-15/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "7f3ff5f6f267aa22e47ad23bb77231c13a65d6236683598bc5b0cbcf558744f9"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-2026-10-15/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "44a6eb9835f0aae434491191b6ee820a8bfeffaee2a5c68df741d79ad86e6752"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-inventory-final-2026-10-15/desktop-suite/native/result.json",
+          "bytes": 127,
+          "sha256": "1e16828263403ddb5b3fa95b980dd3f869c69d741e0f469e3040227df068ce5b"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-inventory-final-2026-10-15/desktop-suite/projects/result.json",
+          "bytes": 70,
+          "sha256": "7b1084169a4960a36a46a68154a293577aaa00d6ba8cdbac007ff7ae0a03fdf4"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-inventory-final-2026-10-15/desktop-suite/restore/result.json",
+          "bytes": 77,
+          "sha256": "7b9808d8bc06bac09e9ce3c7836536ebc537d8165cfc228359bc462b4cf214e9"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-inventory-final-2026-10-15/desktop-suite/result.json",
+          "bytes": 1349,
+          "sha256": "536faec5f45c3e7eff8fe0652c64a03ffabd99c5bad1f74e23c20110511f464f"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-inventory-final-2026-10-15/desktop-suite/settings/result.json",
+          "bytes": 70,
+          "sha256": "339992fbdc7ce4bf53c690d69277639998a410c6f16218141bce767970d80559"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-inventory-final-2026-10-15/desktop-suite/workspace/result.json",
+          "bytes": 140,
+          "sha256": "4d1200c3dabfe994ba79ebea304f542305ba0e603a333b024a6df482a4c0c8b6"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-inventory-final-2026-10-15/result.json",
+          "bytes": 168272,
+          "sha256": "7ade2a4f9419aad40f86f265d66393cc5c92fcd82d50e6138eb150120b686a59"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-inventory-final-2026-10-15/sources/verification.json",
+          "bytes": 1215,
+          "sha256": "2ea965127bb62c29feeac7ff7ff8cdc2ad96d3572b7da6abe1b4157c6e04f25f"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/full-unlocked-inventory-final-2026-10-15/studio.next/verification.json",
+          "bytes": 7982,
+          "sha256": "2a945e07f92fee11a46418dc18e180ae5a8a8329af5382663ef4ce10d384820c"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/live/codex/review-d49cca9b2f6b26b6/review.json",
+          "bytes": 200606,
+          "sha256": "e775aa1a51ab479659d8e57b0c51e7aecb703f48cf11eb61d6286b69dc8a9266"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/live/qoder-cn/review-1da00b4afd94fc10/review.json",
+          "bytes": 204026,
+          "sha256": "9b32b5ab5570f75b872fa0bc50ab9d687340c88c75de383228779d991610d066"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/live/qoder-cn/review-6721dffce8237f31/review.json",
+          "bytes": 215646,
+          "sha256": "b7e893c0ddfbace098142ccad552fc0d5cb709acb4357a4037f740a7b2241c46"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/live/qoder-cn/review-cfda5597877e3011/review.json",
+          "bytes": 215646,
+          "sha256": "53da6a93b51a729ad386dfa25a09509086faeb9bfcf0e79f48b35563673d2e1d"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/requirements.json",
+          "bytes": 22457,
+          "sha256": "6eb9e0552eb184cc3ba6d9c7cf2980f9fa1119f5591ccf0da2cb9a9b44ae7cde"
+        },
+        {
+          "path": ".bmw-runtime/production-reliability/review-order-core/result.json",
+          "bytes": 114258,
+          "sha256": "0d0e6f0d888dac964b32a5ba62fca152e1d42efb526437de6d2986a892b88e6b"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/qbit-final-report",
+      "classification": "research-and-validation",
+      "fileCount": 13,
+      "recordCount": 4,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/qbit-playback-review",
+      "classification": "research-and-validation",
+      "fileCount": 15,
+      "recordCount": 12,
+      "records": [
+        {
+          "path": ".bmw-runtime/qbit-playback-review/2026-10-17T00-10-31-869Z/result.json",
+          "bytes": 52373,
+          "sha256": "d0b71e838119d9bd49d14c99b84475aa23cabdb937d6fbce6364066d6a1c1df5"
+        },
+        {
+          "path": ".bmw-runtime/qbit-playback-review/2026-10-17T00-25-43-893Z/result.json",
+          "bytes": 68646,
+          "sha256": "62b82f17c32125e85a2c583e469eaa0979e383940910737bcb9a5627a4e426ce"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/qbit-stage3-samples",
+      "classification": "research-and-validation",
+      "fileCount": 774,
+      "recordCount": 60,
+      "records": [
+        {
+          "path": ".bmw-runtime/qbit-stage3-samples/2026-10-16T12-44-55-401Z/result.json",
+          "bytes": 115999,
+          "sha256": "7ca1b9938e97fdd15a9a02bc70513b037f8c3ad024c8c009ee78d0ff1cc653de"
+        },
+        {
+          "path": ".bmw-runtime/qbit-stage3-samples/2026-10-17-playback-repair/result.json",
+          "bytes": 112802,
+          "sha256": "9c0bb126263f7dfc74c60b241d57c925d28acf0f8412326e41c09cc3c863085f"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/qbit-stage4-samples",
+      "classification": "research-and-validation",
+      "fileCount": 285,
+      "recordCount": 37,
+      "records": [
+        {
+          "path": ".bmw-runtime/qbit-stage4-samples/2026-10-16T13-57-34-100Z/result.json",
+          "bytes": 107598,
+          "sha256": "51f78cbc94216752c83c4b6537ef4c898b6ac6b4093b24d6ab3b97ea6ebd8a14"
+        },
+        {
+          "path": ".bmw-runtime/qbit-stage4-samples/2026-10-17-playback-repair/result.json",
+          "bytes": 109661,
+          "sha256": "1e4ee6e0a0e8d872618d16b19aec4113c400f11d9d0448c448cdb6cea6cb4083"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/qoder-contract-remake",
+      "classification": "delivery-and-iteration",
+      "fileCount": 9,
+      "recordCount": 8,
+      "records": [
+        {
+          "path": ".bmw-runtime/qoder-contract-remake/review.json",
+          "bytes": 29339,
+          "sha256": "4052c959d003d7768c744dabc1bbd864fa4c088be7fadd57b922446d84c71361"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/qoder-reading",
+      "classification": "delivery-and-iteration",
+      "fileCount": 78,
+      "recordCount": 10,
+      "records": [
+        {
+          "path": ".bmw-runtime/qoder-reading/comparison.json",
+          "bytes": 4043,
+          "sha256": "f1f89a49789f29a96b325cbd291f8c0537dac8a22ea6180d096e5c75224aa5ab"
+        },
+        {
+          "path": ".bmw-runtime/qoder-reading/extra/review.json",
+          "bytes": 25983,
+          "sha256": "7080b5a40b7b97b709f830b1bb8b393bfc4c0ea8b709253e90841e7aaf452eaa"
+        },
+        {
+          "path": ".bmw-runtime/qoder-reading/final/review.json",
+          "bytes": 45608,
+          "sha256": "f3edb73ad746b6ca7d1029c5a430af5846a8cb70d61182d50de7f406da80a220"
+        },
+        {
+          "path": ".bmw-runtime/qoder-reading/first/review.json",
+          "bytes": 45621,
+          "sha256": "84e401a0767fed1940f3ad7c77b98a1bd2cdd2a25ba5a30a06bea941d37a4bfc"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/qoder-remake",
+      "classification": "delivery-and-iteration",
+      "fileCount": 7,
+      "recordCount": 6,
+      "records": [
+        {
+          "path": ".bmw-runtime/qoder-remake/review.json",
+          "bytes": 15515,
+          "sha256": "a563001df4aa7545eb4bf0947b92f90e59bd25802afa1286d9e0cf83070b8ddd"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/recording-workflow",
+      "classification": "validation-and-fixtures",
+      "fileCount": 44,
+      "recordCount": 14,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/rhythm-sol",
+      "classification": "delivery-and-iteration",
+      "fileCount": 42,
+      "recordCount": 7,
+      "records": [
+        {
+          "path": ".bmw-runtime/rhythm-sol/comparison.json",
+          "bytes": 2347,
+          "sha256": "962fcca2c0ffc7bdee0ecc04cff0661cd38f06231a3c5006392072e0145ba3af"
+        },
+        {
+          "path": ".bmw-runtime/rhythm-sol/first/review.json",
+          "bytes": 45295,
+          "sha256": "663b543b8b41875446a101955d6c9fb437c5bf4b3a3f13964d1c800504bad0c6"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/science-diagrams",
+      "classification": "validation-and-fixtures",
+      "fileCount": 140,
+      "recordCount": 15,
+      "records": [
+        {
+          "path": ".bmw-runtime/science-diagrams/2026-10-16T13-36-44-895Z/result.json",
+          "bytes": 99438,
+          "sha256": "3404c6d6f8766c1fb14b918f66561cbcd2ad9fbb778aa29f36dea619a934b4b8"
+        },
+        {
+          "path": ".bmw-runtime/science-diagrams/2026-10-16T13-49-24-819Z/result.json",
+          "bytes": 99504,
+          "sha256": "e68f463a4a8b6dd2c11956d746abb54c99af2d4974462bc93870cd8cef27f207"
+        },
+        {
+          "path": ".bmw-runtime/science-diagrams/2026-10-16T14-08-56-002Z/result.json",
+          "bytes": 99504,
+          "sha256": "bf595cffe7c8c3e45eaa2d82ad35a5c6461b5254fb8abf3d19e4e2ebe4f7be53"
+        },
+        {
+          "path": ".bmw-runtime/science-diagrams/2026-10-17T01-26-29-584Z/result.json",
+          "bytes": 99504,
+          "sha256": "1e0a56e1450720fca6c8585ffa0603c3f907274cd36583356964567a715b8347"
+        },
+        {
+          "path": ".bmw-runtime/science-diagrams/2026-10-17T01-38-03-731Z/result.json",
+          "bytes": 99504,
+          "sha256": "642f3e9985fff8680e22a9ed45b91bb39102fdab160bf0b22fe48b5c2304e381"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/simon-pelicans",
+      "classification": "research-and-validation",
+      "fileCount": 749,
+      "recordCount": 87,
+      "records": [
+        {
+          "path": ".bmw-runtime/simon-pelicans/research-report.txt",
+          "bytes": 54435,
+          "sha256": "22a8f8d2f01e75e7cadc21b67c8d89f48f121ed162164b2190aecf45a534f12a"
+        },
+        {
+          "path": ".bmw-runtime/simon-pelicans/verification-summary.json",
+          "bytes": 30909,
+          "sha256": "30deb37386f3fabbd3298144718ac2a667bce10d8f7910f3f409207429c2c1e9"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/simon-pelicans-v2",
+      "classification": "research-and-validation",
+      "fileCount": 336,
+      "recordCount": 12,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/sol-remake",
+      "classification": "delivery-and-iteration",
+      "fileCount": 108,
+      "recordCount": 9,
+      "records": [
+        {
+          "path": ".bmw-runtime/sol-remake/comparison.json",
+          "bytes": 55122,
+          "sha256": "2e6ca688bcc18d9e34ed4b38a1d7e33c6e7491878aa9d866414615e678e093fe"
+        },
+        {
+          "path": ".bmw-runtime/sol-remake/first/review.json",
+          "bytes": 19617,
+          "sha256": "7580dfee6b4b2d843c2e9b1315cf0d11d964575f80210fe8e14b1556decce179"
+        },
+        {
+          "path": ".bmw-runtime/sol-remake/latest/review.json",
+          "bytes": 42071,
+          "sha256": "e60060362a532bfc4222bf94caa16aca3f53b0c8d7095049ee9ff249d77fc517"
+        },
+        {
+          "path": ".bmw-runtime/sol-remake/old/review.json",
+          "bytes": 21463,
+          "sha256": "8be16e8d44d714593e6eb52f27ef7ba4ea53c56d9a3189862c299df505c89f93"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/source-analysis",
+      "classification": "research-and-validation",
+      "fileCount": 4549,
+      "recordCount": 44,
+      "records": [
+        {
+          "path": ".bmw-runtime/source-analysis/2026-10-16T10-18-53-203Z/result.json",
+          "bytes": 26521,
+          "sha256": "93643332dd5a9a63f61f039ac344709a72b56bfab5d4945dc55f13c6723e0170"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/studio-layer-packaging",
+      "classification": "validation-and-fixtures",
+      "fileCount": 2,
+      "recordCount": 1,
+      "records": [
+        {
+          "path": ".bmw-runtime/studio-layer-packaging/result.json",
+          "bytes": 58663,
+          "sha256": "0cb3ccfcf015db8a9979d001ba4f083fbb85b957355a16363891e486345ba25a"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/studio-long-debug",
+      "classification": "validation-and-fixtures",
+      "fileCount": 3,
+      "recordCount": 1,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/studio-long-film",
+      "classification": "validation-and-fixtures",
+      "fileCount": 2,
+      "recordCount": 1,
+      "records": [
+        {
+          "path": ".bmw-runtime/studio-long-film/result.json",
+          "bytes": 281,
+          "sha256": "a847f38005642b002578923897c190ca6debb26e42b8bfa5e9d37ba410a44238"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/studio-next",
+      "classification": "validation-and-fixtures",
+      "fileCount": 17,
+      "recordCount": 3,
+      "records": [
+        {
+          "path": ".bmw-runtime/studio-next/verification.json",
+          "bytes": 7982,
+          "sha256": "3ae4f6621492b6de2ea5526e445a3e416520dfb4797132ec443c9f9594fba768"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/studio-science",
+      "classification": "validation-and-fixtures",
+      "fileCount": 2,
+      "recordCount": 1,
+      "records": [
+        {
+          "path": ".bmw-runtime/studio-science/result.json",
+          "bytes": 25071,
+          "sha256": "baadf44648c5386291f2f387295fc6b25e00af4219ad240052e60e8387c8f78f"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/studio-text-treatment",
+      "classification": "validation-and-fixtures",
+      "fileCount": 2,
+      "recordCount": 1,
+      "records": [
+        {
+          "path": ".bmw-runtime/studio-text-treatment/result.json",
+          "bytes": 20425,
+          "sha256": "a9ade2c7afb0943ecb51b007ef05b86a4c910e30a03a4e8c6402931e179927ce"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/studio-validation",
+      "classification": "validation-and-fixtures",
+      "fileCount": 77,
+      "recordCount": 17,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/text-treatment",
+      "classification": "validation-and-fixtures",
+      "fileCount": 68,
+      "recordCount": 12,
+      "records": [
+        {
+          "path": ".bmw-runtime/text-treatment/2026-10-16T12-08-37-541Z/result.json",
+          "bytes": 18410,
+          "sha256": "e4f1aea27606bd7f158684492aaf867c8a88f9561cd7f41d9fc53fb6f1a237c7"
+        },
+        {
+          "path": ".bmw-runtime/text-treatment/2026-10-16T12-38-44-238Z/result.json",
+          "bytes": 20062,
+          "sha256": "c620ac21d0d74c019272c62a35eddfe9821e3cb580509dde9642c022e7776f91"
+        },
+        {
+          "path": ".bmw-runtime/text-treatment/2026-10-17T01-26-39-703Z/result.json",
+          "bytes": 20062,
+          "sha256": "5292ca8cd47b4e0f641b247ca90b4b101bf1db9a1914d11c16c462b557fb20b4"
+        },
+        {
+          "path": ".bmw-runtime/text-treatment/2026-10-17T01-38-14-519Z/result.json",
+          "bytes": 20062,
+          "sha256": "832ddb5442cb120ce2e90fd24af2b06cbb7cf478394dc80ace5b0c9b0c2e47d6"
+        }
+      ]
+    },
+    {
+      "directory": ".bmw-runtime/video-capture-eof",
+      "classification": "validation-and-fixtures",
+      "fileCount": 2,
+      "recordCount": 1,
+      "records": []
+    },
+    {
+      "directory": ".bmw-runtime/video-improvements",
+      "classification": "validation-and-fixtures",
+      "fileCount": 32,
+      "recordCount": 6,
+      "records": [
+        {
+          "path": ".bmw-runtime/video-improvements/final-verification.json",
+          "bytes": 58952,
+          "sha256": "dae6e19469f755635a83cee0e6ff7999d015bc46aedbc3bf2719e5968cdceea9"
+        }
+      ]
+    }
+  ],
+  "projectMemories": [
+    {
+      "path": "$BMW_PROJECTS/152f3f79-777d-46fc-bd7a-086f0e2650ba/MEMORY.md",
+      "sha256": "d349bfc57e7388bc4404e956ab90ba4e86a70990834d5297ef0d7e6f90096866"
+    },
+    {
+      "path": "$BMW_PROJECTS/1fa6080c-1cfd-4fc5-a877-bb8e1c693d88/MEMORY.md",
+      "sha256": "6f82cd36cbabf9dbb3a7817ae783c843aefd167c2377ca8e3c4b94c09a70389c"
+    },
+    {
+      "path": "$BMW_PROJECTS/2b920d15-075c-478e-b5fc-2513a27c7594/MEMORY.md",
+      "sha256": "93dac05e94101391361690871e98446419e3c81e4e7cb9d99a28802e73bfac83"
+    },
+    {
+      "path": "$BMW_PROJECTS/54f0d40a-75fe-49d7-b47c-aa4d179eaae5/MEMORY.md",
+      "sha256": "c61259b0a5c64f190817c6fab25ec2427cc1f065d231cf76f24329cc622a36b0"
+    },
+    {
+      "path": "$BMW_PROJECTS/5ddef0fd-d019-4dbd-963a-53532be71ca2/MEMORY.md",
+      "sha256": "6b245803995633f003188c4a92b3a93afe10411cf30144dacda89e9b1e3c29f2"
+    },
+    {
+      "path": "$BMW_PROJECTS/75f2071c-4968-4c3a-a756-fc7f9c0b9dee/MEMORY.md",
+      "sha256": "468ea762962dc4f6a1094dadb66217e3a2518aaa6e94b3fcc8f72705c89ca326"
+    },
+    {
+      "path": "$BMW_PROJECTS/77a52161-9bd1-4f78-8f52-3bbbdc22fd9a/MEMORY.md",
+      "sha256": "f661dfeb86f00429ef0dbd78ad8b4ebb88bc4ccb884b0628f6b17fddd13bd214"
+    },
+    {
+      "path": "$BMW_PROJECTS/7fd6b331-725f-40b4-9208-a534afde3526/MEMORY.md",
+      "sha256": "ddea4da6e614922d89752fecbc855334028fc1e08c22677264ffb256de3d8976"
+    },
+    {
+      "path": "$BMW_PROJECTS/8f09bf73-8db9-4a90-bdb9-1a1fa3f29066/MEMORY.md",
+      "sha256": "49a4f91e3eaa8a7807931a46fe2bbeb10717955dc6a7e0b1585e3855083962ac"
+    },
+    {
+      "path": "$BMW_PROJECTS/9f19df7d-c74c-4fee-b1ec-6ac2610433b8/MEMORY.md",
+      "sha256": "039cfcd40a0a7fac0854ad5fba8a1281907311c64a858bb063e88529b4a9cbb3"
+    },
+    {
+      "path": "$BMW_PROJECTS/abac0ec3-94a9-4bbc-8493-38902712bd5c/MEMORY.md",
+      "sha256": "fde708480285a646d66d938b37c8e22a3eb9ceb4895dfa58b1e19f635af0a859"
+    },
+    {
+      "path": "$BMW_PROJECTS/b4043d7d-3ab2-411a-9008-244f166dc11b/MEMORY.md",
+      "sha256": "460e5512d30007fdf25241784a0c5262a1c8ad1342a3da7ae85187f91334adc1"
+    },
+    {
+      "path": "$BMW_PROJECTS/b5604740-9ef4-4461-9608-f83c6ef9ead7/MEMORY.md",
+      "sha256": "f057d9fa86cc7d87e338479d80eed5b5a64b82746f219e118b6786e8986862a7"
+    },
+    {
+      "path": "$BMW_PROJECTS/c887d74f-a76c-4e8e-b760-f6af68a5ef6d/MEMORY.md",
+      "sha256": "44362abb1072f5a5cf40d3b8b6760a27dde2ce6d9d16e439acca9197496f5dd9"
+    },
+    {
+      "path": "$BMW_PROJECTS/e733ec6d-875b-449a-b6f4-bbe96f1fecc5/MEMORY.md",
+      "sha256": "d58a4bd24f19d65a6641aa5302d165f17cd8221dae17b3ee90a6fcbd65179cf1"
+    },
+    {
+      "path": "$BMW_PROJECTS/f38fbe88-ab9b-463d-a802-a41a021a7246/MEMORY.md",
+      "sha256": "0cd4ac95ced62ca13851c6662b9f5db0fc4d5a3ad5343623be1cd05d46848de2"
+    },
+    {
+      "path": "$BMW_PROJECTS/f6256900-aac8-425b-a381-f64af4890ce5/MEMORY.md",
+      "sha256": "2e5fc9e17582837bf5880787a21eacdb96383d1e8528c671682de60a4319fc5c"
+    },
+    {
+      "path": "$BMW_PROJECTS/f7bb60ce-7bac-43c0-be8e-d33b4d8655ca/MEMORY.md",
+      "sha256": "69b53024dd616ac268ccf6a29a42d6ecbf1cab2a413f7e282e1282c471f9bdf9"
+    }
+  ],
+  "studioDocuments": [
+    {
+      "path": "$BMW_PROJECTS/1fa6080c-1cfd-4fc5-a877-bb8e1c693d88/video-studio/d176d0d0-8a65-431d-9bc0-4c1aca6775dc.json",
+      "sha256": "8dbff39859cd8a1f546299abb9da8cea754dc5c9cf20a75bcfa0d386b657f3b9",
+      "id": "d176d0d0-8a65-431d-9bc0-4c1aca6775dc",
+      "revision": 5,
+      "title": "AK 最近十条视频收集清单 (A01-A10)",
+      "brief": {
+        "notesCharacters": 1934,
+        "outlineCharacters": 5110
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/2b920d15-075c-478e-b5fc-2513a27c7594/video-studio/04a7af76-3123-4226-b362-759150806deb.json",
+      "sha256": "b19d50c3fe7e2f00c8bee9df3b985dc72421add7c654f5a80a73152c24765730",
+      "id": "04a7af76-3123-4226-b362-759150806deb",
+      "revision": 18,
+      "title": "Karpathy：AI 认知漏斗 · Codex 重制版",
+      "brief": {
+        "notesCharacters": 459,
+        "outlineCharacters": 32
+      },
+      "exportCount": 3
+    },
+    {
+      "path": "$BMW_PROJECTS/2b920d15-075c-478e-b5fc-2513a27c7594/video-studio/26928d8d-24d5-4f21-ad2f-9a1c12331172.json",
+      "sha256": "f316b0a1999fc158ff6918f2e4c84263e03d988f0af06cdee27e5a8f6d22a0dc",
+      "id": "26928d8d-24d5-4f21-ad2f-9a1c12331172",
+      "revision": 21,
+      "title": "Karpathy：认知漏斗 · Qoder CN 证据阅读版",
+      "brief": {
+        "notesCharacters": 405,
+        "outlineCharacters": 72
+      },
+      "exportCount": 2
+    },
+    {
+      "path": "$BMW_PROJECTS/2b920d15-075c-478e-b5fc-2513a27c7594/video-studio/29d44af1-1913-445d-97ca-88566b05df5b.json",
+      "sha256": "3e0caf81abe235f89c549bb0624213de73aad7574f4730dbab0d963aba80ebad",
+      "id": "29d44af1-1913-445d-97ca-88566b05df5b",
+      "revision": 13,
+      "title": "Karpathy：AI 认知漏斗 · 改进版",
+      "brief": {
+        "notesCharacters": 519,
+        "outlineCharacters": 131
+      },
+      "exportCount": 1
+    },
+    {
+      "path": "$BMW_PROJECTS/2b920d15-075c-478e-b5fc-2513a27c7594/video-studio/2a0b9e02-91a0-400a-b229-43459d8c4350.json",
+      "sha256": "b0038dab18f61015b5c98e8f53c0141dcbf1f18e2c3a25c9ad18fa25260c7773",
+      "id": "2a0b9e02-91a0-400a-b229-43459d8c4350",
+      "revision": 47,
+      "title": "Qoder CN · 可靠性验收：Karpathy 原帖证据独立复核",
+      "brief": {
+        "notesCharacters": 191,
+        "outlineCharacters": 205
+      },
+      "exportCount": 3
+    },
+    {
+      "path": "$BMW_PROJECTS/2b920d15-075c-478e-b5fc-2513a27c7594/video-studio/3c417e90-6598-403e-987c-af47da6db938.json",
+      "sha256": "58589785af75d0330efe2a406d88b7fd139efb69587c3d3e09611f736ee70bdf",
+      "id": "3c417e90-6598-403e-987c-af47da6db938",
+      "revision": 9,
+      "title": "PROBE 版式校准（临时）",
+      "brief": {
+        "notesCharacters": 7,
+        "outlineCharacters": 0
+      },
+      "exportCount": 3
+    },
+    {
+      "path": "$BMW_PROJECTS/2b920d15-075c-478e-b5fc-2513a27c7594/video-studio/5024343e-fb77-4f26-a8e6-da18f45726f2.json",
+      "sha256": "d89ec7464e95ab40a7971e2bbb893fda5fc1a88be4b0ecc0644524870b875af9",
+      "id": "5024343e-fb77-4f26-a8e6-da18f45726f2",
+      "revision": 38,
+      "title": "Karpathy：认知漏斗 · 手机阅读与句级图解版",
+      "brief": {
+        "notesCharacters": 116,
+        "outlineCharacters": 33
+      },
+      "exportCount": 6
+    },
+    {
+      "path": "$BMW_PROJECTS/2b920d15-075c-478e-b5fc-2513a27c7594/video-studio/8a27ceb0-c6e9-418c-ae69-4bc28b3437de.json",
+      "sha256": "0b12ce0237047d1f92a5e1a845ca24dfec4bb41439502a16bab8db40e30e5a26",
+      "id": "8a27ceb0-c6e9-418c-ae69-4bc28b3437de",
+      "revision": 22,
+      "title": "Karpathy：AI 认知漏斗 · DSH 重制版",
+      "brief": {
+        "notesCharacters": 923,
+        "outlineCharacters": 88
+      },
+      "exportCount": 4
+    },
+    {
+      "path": "$BMW_PROJECTS/2b920d15-075c-478e-b5fc-2513a27c7594/video-studio/8df70548-85d3-41e8-b5a8-7202a96f894d.json",
+      "sha256": "142a5ac9c519d758d87386cb7f7a3ef884259640625dc5f62073f7ffbb789690",
+      "id": "8df70548-85d3-41e8-b5a8-7202a96f894d",
+      "revision": 35,
+      "title": "Karpathy：AI 认知漏斗 · Sol 新能力版",
+      "brief": {
+        "notesCharacters": 123,
+        "outlineCharacters": 20
+      },
+      "exportCount": 5
+    },
+    {
+      "path": "$BMW_PROJECTS/2b920d15-075c-478e-b5fc-2513a27c7594/video-studio/c2a6b8f5-0aa2-40fe-af27-4d974aa56719.json",
+      "sha256": "58501cf6cfc2f060c933ed1689bf6f283bb6260a92627c63adcd74b0b4ca8a7d",
+      "id": "c2a6b8f5-0aa2-40fe-af27-4d974aa56719",
+      "revision": 18,
+      "title": "Karpathy：认知漏斗 · 全貌定位与局部阅读版",
+      "brief": {
+        "notesCharacters": 244,
+        "outlineCharacters": 34
+      },
+      "exportCount": 2
+    },
+    {
+      "path": "$BMW_PROJECTS/2b920d15-075c-478e-b5fc-2513a27c7594/video-studio/e287f049-701c-497d-9ddd-ae96b0cca0c2.json",
+      "sha256": "0087714b6da51a6ef69e0ec07eccdb603bed53f82e1a1c4862598bbb68b508e4",
+      "id": "e287f049-701c-497d-9ddd-ae96b0cca0c2",
+      "revision": 17,
+      "title": "Karpathy：认知漏斗 · 证据阅读与节奏优化版",
+      "brief": {
+        "notesCharacters": 215,
+        "outlineCharacters": 36
+      },
+      "exportCount": 1
+    },
+    {
+      "path": "$BMW_PROJECTS/2b920d15-075c-478e-b5fc-2513a27c7594/video-studio/e9ff039a-3c35-43cb-988a-9308387b86cb.json",
+      "sha256": "aa7e83dfcb92141335c93c270cd410bd5fca64e1a68d525a0166fcf58e3ce47b",
+      "id": "e9ff039a-3c35-43cb-988a-9308387b86cb",
+      "revision": 15,
+      "title": "Karpathy：AI 认知漏斗 · 契约修复重制版",
+      "brief": {
+        "notesCharacters": 443,
+        "outlineCharacters": 80
+      },
+      "exportCount": 2
+    },
+    {
+      "path": "$BMW_PROJECTS/2b920d15-075c-478e-b5fc-2513a27c7594/video-studio/f06c507f-97f4-4ca0-961b-de4607b000ee.json",
+      "sha256": "476df647885cfe044b72266d40972eb247bce31957781c3acdf199065a64cdf1",
+      "id": "f06c507f-97f4-4ca0-961b-de4607b000ee",
+      "revision": 23,
+      "title": "Codex / GPT-6.1-Sol · Karpathy认知漏斗 · 可靠性验收",
+      "brief": {
+        "notesCharacters": 112,
+        "outlineCharacters": 41
+      },
+      "exportCount": 1
+    },
+    {
+      "path": "$BMW_PROJECTS/2b920d15-075c-478e-b5fc-2513a27c7594/video-studio/f649baa3-a381-42e5-981b-24d1b296cc85.json",
+      "sha256": "aceb8be6c961411771cb10a1197ee56ffba8999fb79730299e80256638ae618c",
+      "id": "f649baa3-a381-42e5-981b-24d1b296cc85",
+      "revision": 11,
+      "title": "Karpathy：AI 认知漏斗",
+      "brief": {
+        "notesCharacters": 344,
+        "outlineCharacters": 98
+      },
+      "exportCount": 2
+    },
+    {
+      "path": "$BMW_PROJECTS/5ddef0fd-d019-4dbd-963a-53532be71ca2/video-studio/73b9d936-a293-485b-9e60-47b92a2008fd.json",
+      "sha256": "b96b6970ed0cb96020c623a697043d53f5440f10dbae8148e60737e7a19ef085",
+      "id": "73b9d936-a293-485b-9e60-47b92a2008fd",
+      "revision": 11,
+      "title": "Karpathy：LLM 输出的四种格式（16:9 横屏版）",
+      "brief": {
+        "notesCharacters": 0,
+        "outlineCharacters": 0
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/5ddef0fd-d019-4dbd-963a-53532be71ca2/video-studio/75b91121-84ab-4a1e-be7d-c31e4e6f623e.json",
+      "sha256": "874a72dff877c8634ddf5515a5d1f67a23436a3a7bd621e7c49f08dfe8156eab",
+      "id": "75b91121-84ab-4a1e-be7d-c31e4e6f623e",
+      "revision": 21,
+      "title": "Karpathy：LLM 输出的四种格式",
+      "brief": {
+        "notesCharacters": 0,
+        "outlineCharacters": 0
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/5ddef0fd-d019-4dbd-963a-53532be71ca2/video-studio/fb201b3b-9192-456d-b679-a3972e5a9db8.json",
+      "sha256": "efc90707d6c1747707a70e77725b7da74c03f19688e7f98cb621bad17efd7d65",
+      "id": "fb201b3b-9192-456d-b679-a3972e5a9db8",
+      "revision": 46,
+      "title": "Karpathy：LLM 输出的四种格式（9:16 整图+红框+字幕）",
+      "brief": {
+        "notesCharacters": 0,
+        "outlineCharacters": 0
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/75f2071c-4968-4c3a-a756-fc7f9c0b9dee/video-studio/2cea588d-384f-45da-ac28-daf1e1070363.json",
+      "sha256": "dff70c888d57d28b4eb81b48cd245740863f7233bf1d9dfdb2a916765268e9bc",
+      "id": "2cea588d-384f-45da-ac28-daf1e1070363",
+      "revision": 2,
+      "title": "Studio子动作帮助与源时间定位中文验收报告",
+      "brief": {
+        "notesCharacters": 7395,
+        "outlineCharacters": 0
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/77a52161-9bd1-4f78-8f52-3bbbdc22fd9a/video-studio/54a07170-3296-41e2-ac58-ef429be2e944.json",
+      "sha256": "10158effa8b9eb402b9d702a2637fdf4dda539ff1606d5e9ce32d74c9f8aa8ef",
+      "id": "54a07170-3296-41e2-ac58-ef429be2e944",
+      "revision": 8,
+      "title": "GPT-6 与 Intelligent UI — 官方博客解读 · 横版",
+      "brief": {
+        "notesCharacters": 428,
+        "outlineCharacters": 0
+      },
+      "exportCount": 3
+    },
+    {
+      "path": "$BMW_PROJECTS/77a52161-9bd1-4f78-8f52-3bbbdc22fd9a/video-studio/91884d85-6bb4-4ed5-b55e-f6a15e94d1f5.json",
+      "sha256": "3ee2854e34b6461f37e31b5e2d095b4f9932b500bd8ec92e4d495b7d316763aa",
+      "id": "91884d85-6bb4-4ed5-b55e-f6a15e94d1f5",
+      "revision": 8,
+      "title": "ChatGPT 青少年版：学习工具与大学申请规划",
+      "brief": {
+        "notesCharacters": 458,
+        "outlineCharacters": 0
+      },
+      "exportCount": 2
+    },
+    {
+      "path": "$BMW_PROJECTS/77a52161-9bd1-4f78-8f52-3bbbdc22fd9a/video-studio/a9ba8516-0a69-48ba-9539-37a24abb7d7a.json",
+      "sha256": "d68686793eaf83ef68811e50873dc09382ff040000c06b1bacb8b4b455f56e5d",
+      "id": "a9ba8516-0a69-48ba-9539-37a24abb7d7a",
+      "revision": 34,
+      "title": "GPT-6 与 Intelligent UI\nOpenAI 官方博客解读",
+      "brief": {
+        "notesCharacters": 296,
+        "outlineCharacters": 0
+      },
+      "exportCount": 7
+    },
+    {
+      "path": "$BMW_PROJECTS/7fd6b331-725f-40b4-9208-a534afde3526/video-studio/6d829019-9f8d-4555-a0e7-29f7c5edf04a.json",
+      "sha256": "f3bcd255205d0e4fe21f37ad6fa3dd7070380ece17edccf3f87189caef0ab5c3",
+      "id": "6d829019-9f8d-4555-a0e7-29f7c5edf04a",
+      "revision": 43,
+      "title": "Simon 鹈鹕骑车作品研究与比较｜2026-10-16 独立任务",
+      "brief": {
+        "notesCharacters": 19660,
+        "outlineCharacters": 7443
+      },
+      "exportCount": 4
+    },
+    {
+      "path": "$BMW_PROJECTS/7fd6b331-725f-40b4-9208-a534afde3526/video-studio/6d84ebba-9ae9-4336-bf18-e7712b40c93c.json",
+      "sha256": "e893a8cd2dd130db9bbce34930e2e18c80460befa00287be152c496cac0393c9",
+      "id": "6d84ebba-9ae9-4336-bf18-e7712b40c93c",
+      "revision": 37,
+      "title": "这只鹈鹕，真的会骑车吗？｜V2",
+      "brief": {
+        "notesCharacters": 2076,
+        "outlineCharacters": 3056
+      },
+      "exportCount": 2
+    },
+    {
+      "path": "$BMW_PROJECTS/7fd6b331-725f-40b4-9208-a534afde3526/video-studio/75c1aa7f-30ac-4605-9603-d6fdea8ff6b2.json",
+      "sha256": "b64cdaa5f6050915923bc21034fd7a6a525c44450e043fa5194f5db57832f7cc",
+      "id": "75c1aa7f-30ac-4605-9603-d6fdea8ff6b2",
+      "revision": 5,
+      "title": "最终中文报告 R1｜Simon 鹈鹕骑车·2024—2025总表",
+      "brief": {
+        "notesCharacters": 13845,
+        "outlineCharacters": 2029
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/7fd6b331-725f-40b4-9208-a534afde3526/video-studio/98f16526-84df-43d6-8b5c-03d229c7e644.json",
+      "sha256": "57185991e1d9ce4bd128e16b0cde36d1669e0e666a9e2dad71a90ae9fbeebcf2",
+      "id": "98f16526-84df-43d6-8b5c-03d229c7e644",
+      "revision": 4,
+      "title": "鹈鹕骑车视频对比研究｜2026-10-15 重跑（仅研究笔记）",
+      "brief": {
+        "notesCharacters": 14016,
+        "outlineCharacters": 7312
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/7fd6b331-725f-40b4-9208-a534afde3526/video-studio/a3125c32-8d8e-4248-a3a9-129a3c923900.json",
+      "sha256": "8fbe885f1963e39647ddfa95a466a79e99c2a2aef61f70ba3f42f50f9c4ce594",
+      "id": "a3125c32-8d8e-4248-a3a9-129a3c923900",
+      "revision": 4,
+      "title": "本轮媒体P1中文验收报告 2026-10-15",
+      "brief": {
+        "notesCharacters": 4993,
+        "outlineCharacters": 4479
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/7fd6b331-725f-40b4-9208-a534afde3526/video-studio/d4112ffb-bc0e-4e14-bece-beba549ce0dc.json",
+      "sha256": "b6d188d9c0b81688ee744f2f8fb6d4715f175349d7eb9932ed9483ce70c0c155",
+      "id": "d4112ffb-bc0e-4e14-bece-beba549ce0dc",
+      "revision": 3,
+      "title": "最终中文报告 R2｜2026总表·候选边界·来源素材索引",
+      "brief": {
+        "notesCharacters": 13276,
+        "outlineCharacters": 6981
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/8f09bf73-8db9-4a90-bdb9-1a1fa3f29066/video-studio/63645780-841f-4d9e-9d57-c95f6e9643ff.json",
+      "sha256": "40e2562754a356739d23a7f67d8ef24bc4f124c2c4178e4128e03c1936103b22",
+      "id": "63645780-841f-4d9e-9d57-c95f6e9643ff",
+      "revision": 22,
+      "title": "BMW 项目介绍（GitHub PAMPAS-Lab/BMW）",
+      "brief": {
+        "notesCharacters": 0,
+        "outlineCharacters": 0
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/8f09bf73-8db9-4a90-bdb9-1a1fa3f29066/video-studio/864c5c88-823f-4b03-9ad4-ff3f40bc8b5a.json",
+      "sha256": "d7a6eae8468e93fcaf2d44da1e9fad44fba7113ddc0697a6cc959a05c9371f7b",
+      "id": "864c5c88-823f-4b03-9ad4-ff3f40bc8b5a",
+      "revision": 2,
+      "title": "BMW 产品完整介绍",
+      "brief": {
+        "notesCharacters": 0,
+        "outlineCharacters": 0
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/8f09bf73-8db9-4a90-bdb9-1a1fa3f29066/video-studio/9be0f177-66c8-4e64-95a0-0a6f9e57dad8.json",
+      "sha256": "6e9e5e107572c217a432923e9cc1b7b1290219a1453d9dd8c0b5ca6d97eaa68a",
+      "id": "9be0f177-66c8-4e64-95a0-0a6f9e57dad8",
+      "revision": 3,
+      "title": "BMW 横屏测试",
+      "brief": {
+        "notesCharacters": 0,
+        "outlineCharacters": 0
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/8f09bf73-8db9-4a90-bdb9-1a1fa3f29066/video-studio/a4a21c19-6704-4a97-8719-8a7be0bffa03.json",
+      "sha256": "1a131c29ed01afb732bd9d60b2d740c2c11645da794efb0f804961978651ae60",
+      "id": "a4a21c19-6704-4a97-8719-8a7be0bffa03",
+      "revision": 1,
+      "title": "新视频",
+      "brief": {
+        "notesCharacters": 0,
+        "outlineCharacters": 0
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/8f09bf73-8db9-4a90-bdb9-1a1fa3f29066/video-studio/e2a033a4-36a8-4e5e-80c5-9e1e907d13c0.json",
+      "sha256": "1e63e43bf004c982061f58cab43d5c0f65cdef0c3c8ba696629c8cfaad71503b",
+      "id": "e2a033a4-36a8-4e5e-80c5-9e1e907d13c0",
+      "revision": 1,
+      "title": "BMW：以浏览器为边界的桌面 Agent 工作区",
+      "brief": {
+        "notesCharacters": 0,
+        "outlineCharacters": 0
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/8f09bf73-8db9-4a90-bdb9-1a1fa3f29066/video-studio/f07af881-617c-43e6-8c26-2957c2aefa42.json",
+      "sha256": "cc0c39bc9cd3488f86ad6b92550ed143ccea7dc45102c7b4d0cf0e15c8239254",
+      "id": "f07af881-617c-43e6-8c26-2957c2aefa42",
+      "revision": 6,
+      "title": "BMW｜从网页到视频",
+      "brief": {
+        "notesCharacters": 63,
+        "outlineCharacters": 0
+      },
+      "exportCount": 1
+    },
+    {
+      "path": "$BMW_PROJECTS/9f19df7d-c74c-4fee-b1ec-6ac2610433b8/video-studio/c940779b-1fe9-4b9f-b8e8-716a698913e7.json",
+      "sha256": "f3175955b1412614878e3f5fd411b01f5353113db62b606ee99529738bc6244f",
+      "id": "c940779b-1fe9-4b9f-b8e8-716a698913e7",
+      "revision": 9,
+      "title": "ZZ probe video pipeline",
+      "brief": {
+        "notesCharacters": 0,
+        "outlineCharacters": 0
+      },
+      "exportCount": 3
+    },
+    {
+      "path": "$BMW_PROJECTS/9f19df7d-c74c-4fee-b1ec-6ac2610433b8/video-studio/d96f8262-763b-4bcd-9aba-406c5a31eed5.json",
+      "sha256": "a6ac2f063219f48e34ca96e15a693515a640afe0774449fce4da35f7602c9a3d",
+      "id": "d96f8262-763b-4bcd-9aba-406c5a31eed5",
+      "revision": 38,
+      "title": "马斯克 X · 一日速览",
+      "brief": {
+        "notesCharacters": 0,
+        "outlineCharacters": 0
+      },
+      "exportCount": 5
+    },
+    {
+      "path": "$BMW_PROJECTS/b5604740-9ef4-4461-9608-f83c6ef9ead7/video-studio/1a38f274-1160-4499-a8f3-cb5ed8dd949f.json",
+      "sha256": "7b42ea04c3c4cc2e26a0227605ca3ef53ed3dcbcf4d84b0ed3760112d8582a13",
+      "id": "1a38f274-1160-4499-a8f3-cb5ed8dd949f",
+      "revision": 1,
+      "title": "新视频",
+      "brief": {
+        "notesCharacters": 0,
+        "outlineCharacters": 0
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/b5604740-9ef4-4461-9608-f83c6ef9ead7/video-studio/2d0e9f1c-79a4-4074-b050-04996df58ffb.json",
+      "sha256": "fd80d8c51dd04f9293c84620338474c1d10ed7b1bad4f460ee5b49d6c4a47781",
+      "id": "2d0e9f1c-79a4-4074-b050-04996df58ffb",
+      "revision": 64,
+      "title": "马斯克要把AI改叫SI",
+      "brief": {
+        "notesCharacters": 0,
+        "outlineCharacters": 0
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/b5604740-9ef4-4461-9608-f83c6ef9ead7/video-studio/4515e646-02e2-4471-acca-34eadcc4dc7d.json",
+      "sha256": "85916f71a5cf5ae2b5b82a1b63d225ca90c4f5abe3696fe14758d3fe64523ae1",
+      "id": "4515e646-02e2-4471-acca-34eadcc4dc7d",
+      "revision": 12,
+      "title": "AI改名SI：Trump引爆的命名链路",
+      "brief": {
+        "notesCharacters": 0,
+        "outlineCharacters": 0
+      },
+      "exportCount": 0
+    },
+    {
+      "path": "$BMW_PROJECTS/f6256900-aac8-425b-a381-f64af4890ce5/video-studio/34fb7c60-2acd-4cdb-8d71-36ac74973f27.json",
+      "sha256": "bbb8a7088fb862f4cc1d69e8677ec71554db0cbcd8e53b8b599f696f6b1aa64a",
+      "id": "34fb7c60-2acd-4cdb-8d71-36ac74973f27",
+      "revision": 25,
+      "title": "量子位微博视频制作能力差距调研报告",
+      "brief": {
+        "notesCharacters": 6242,
+        "outlineCharacters": 428
+      },
+      "exportCount": 0
+    }
+  ],
+  "externalRecords": [
+    {
+      "path": "~/.codex/visualizations/2026/10/16/01a142fe-3b28-71d0-917d-ed14d3cb89ed/qbit-bmw/bmw-research-draft.json",
+      "sha256": "ae3cb73033c4e83d49e1bc80a5b694c92f63386cc5824db661b651ec0391d114"
+    },
+    {
+      "path": "~/.codex/visualizations/2026/10/16/01a142fe-3b28-71d0-917d-ed14d3cb89ed/qbit-bmw/download-research.json",
+      "sha256": "49bdb3d7b0a2e9500494dbbd32b4d67aae5499bb96464b46936682059e6cc70c"
+    },
+    {
+      "path": "~/.codex/visualizations/2026/10/16/01a142fe-3b28-71d0-917d-ed14d3cb89ed/qbit-bmw/samples.json",
+      "sha256": "1c0aada78c680cd0a4d0ad7c4e82262126fbf7a0965ba024c2153fec6ea9e039"
+    },
+    {
+      "path": "~/.codex/visualizations/2026/10/16/01a142fe-3b28-71d0-917d-ed14d3cb89ed/qbit-bmw/sampling-audit.json",
+      "sha256": "3aebc736680dcb564a1a16b77adf58ffb64f145f99d3703221a05993ae46fc16"
+    },
+    {
+      "path": "/tmp/bmw-download-research/decode-result.json",
+      "sha256": "9f26ee8db682df780044607ad3a58809ca4a01206884076f54ae8a14e13f3d12"
+    },
+    {
+      "path": "/tmp/bmw-download-research/inspect-result.json",
+      "sha256": "27c4539257a181a327311b8541e08c5ca5c282f4d0f00e7c58c83063109807d3"
+    },
+    {
+      "path": "/tmp/bmw-download-research/live-probe-result.json",
+      "sha256": "42ee6065bca6307da4978aa1138441c12bafef563ef3d8e233d0a6f2ddb1d83c"
+    },
+    {
+      "path": "/tmp/bmw-download-research/observations.json",
+      "sha256": "13685c2e69c65dddcaec5219295e482e754b1bb64a18d481979e4bf79c1a25dd"
+    },
+    {
+      "path": "/tmp/bmw-download-research/referrer-probe-result.json",
+      "sha256": "d89da1e89710e8e442f16f6ceefe4390eb9429e187508924495e7b938ddf6912"
+    }
+  ],
+  "exclusions": [
+    "Media binaries and screenshots are not copied",
+    "No raw Agent history, credentials, cookies or signed CDN URLs published",
+    "Generated caches are counted but not treated as independent research",
+    "Historical videos not rewatched or listened to in this audit"
+  ],
+  "rootRecords": [
+    {
+      "path": ".bmw-runtime/blog-project-delivery.json",
+      "sha256": "5b85110030f1950bebd59318c9a317cf11eb5dd095974320c4fc55b49a119130"
+    },
+    {
+      "path": ".bmw-runtime/build-receipt.json",
+      "sha256": "9e36f8bcce271697756454f135f727e7d95632e61ce1268b6429a9f563450922"
+    },
+    {
+      "path": ".bmw-runtime/qbit-development-continuation.md",
+      "sha256": "8bb47084c4e3bb13cfc08edfa61affe5b1f7fbddcdc8cc74ccae9bd4ed6ee558"
+    },
+    {
+      "path": ".bmw-runtime/test-baseline.json",
+      "sha256": "c4bdeec87aef0538873a6bd6d6014dd69747a6061c87337969385e327408d48a"
+    }
+  ],
+  "snapshotNote": "Inventory collected before the current verification run; repeat-run directories created later are recorded separately in VERIFICATION.md. Root build receipt refreshed after build."
+}

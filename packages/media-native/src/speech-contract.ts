@@ -1,13 +1,16 @@
+import {COMPOSITION_LIMITS} from './composition-limits.js'
 import {assertArtifactId,finiteNumber,mediaRecord} from './media-contract.js'
+import {assertSpeechSourceRange,assertSpeechRangeEvidence} from './speech-range.js'
+import type {SpeechSourceRange} from './speech-range.js'
 import {LOCAL_ASR_ENGINE_VERSION,LOCAL_ASR_MODEL_REVISION,LOCAL_ASR_MODELS} from './local-asr-assets.js'
 export const SPEECH_LIMITS=Object.freeze({durationSeconds:180,rawBytes:4*1024*1024,logBytes:1024*1024,segments:400,tokens:16000,jobTimeoutMs:600_000,pcmBytes:44+180*16000*2})
 export type SpeechModel='base'|'small'
-export interface SpeechRequest {action:'media.speech.align';artifactId:string;model:SpeechModel;language?:'zh'|'en'|'auto'}
+export interface SpeechRequest {action:'media.speech.align';artifactId:string;model:SpeechModel;language?:'zh'|'en'|'auto';sourceRange?:SpeechSourceRange}
 export function assertSpeechRequest(raw:unknown):SpeechRequest {
  const value=mediaRecord(raw)
- if(value.action!=='media.speech.align'||Object.keys(value).some(key=>!['action','artifactId','model','language'].includes(key))||(value.model!==undefined&&value.model!=='base'&&value.model!=='small'))throw new TypeError('Speech alignment accepts a Project audio artifact and a fixed model only.')
+ if(value.action!=='media.speech.align'||Object.keys(value).some(key=>!['action','artifactId','model','language','sourceRange'].includes(key))||(value.model!==undefined&&value.model!=='base'&&value.model!=='small'))throw new TypeError('Speech alignment accepts a Project audio artifact and a fixed model only.')
  if(value.language!==undefined&&!['zh','en','auto'].includes(String(value.language)))throw new TypeError('Unsupported speech language.')
- return {...(value.language===undefined?{}:{language:value.language as 'zh'|'en'|'auto'}),action:'media.speech.align',artifactId:assertArtifactId(value.artifactId),model:value.model==='base'?'base':'small'}
+ return {...(value.language===undefined?{}:{language:value.language as 'zh'|'en'|'auto'}),...(value.sourceRange===undefined?{}:{sourceRange:assertSpeechSourceRange(value.sourceRange)}),action:'media.speech.align',artifactId:assertArtifactId(value.artifactId),model:value.model==='base'?'base':'small'}
 }
 export interface SpeechSegment {id:string;text:string;startSeconds:number;endSeconds:number;tokenMeanProbability:number|null;usable:boolean;warnings:('outside-audio'|'overlap'|'low-confidence')[]}
 export interface SpeechEvidence {
@@ -15,10 +18,10 @@ export interface SpeechEvidence {
  kind:'speech-evidence';provider:'whisper.cpp';engineVersion:string;model:SpeechModel;modelRevision:string;modelSha256:string;engineSha256:string
  sourceArtifactId:string;sourceSha256:string;normalizedArtifactId:string;normalizedSha256:string;rawArtifactId:string;rawSha256:string;logArtifactId:string;logSha256:string
  sampleRate:16000;channels:1;sampleType:'pcm-s16le';downmix:'channel-mean';normalization:SpeechNormalization
- timeDomain:'audio-file-seconds';durationSeconds:number;elapsedSeconds:number;createdAt:string;segments:SpeechSegment[]
+ timeDomain:'audio-file-seconds'|'normalized-interval-seconds';durationSeconds:number;elapsedSeconds:number;createdAt:string;segments:SpeechSegment[]
  automaticTimingApproved:false;wordTimingAvailable:false
 }
-export interface SpeechNormalization {kind:'speech-pcm';sampleRate:16000;channels:1;sampleType:'pcm-s16le';frames:number;durationSeconds:number;inputSampleRate:number;inputChannels:number;decodedStartSeconds:number;decodedEndSeconds:number;clippedSamples:number;downmix:'channel-mean';discardedTailFrames?:number}
+export interface SpeechNormalization {kind:'speech-pcm';sampleRate:16000;channels:1;sampleType:'pcm-s16le';frames:number;durationSeconds:number;inputSampleRate:number;inputChannels:number;decodedStartSeconds:number;decodedEndSeconds:number;clippedSamples:number;downmix:'channel-mean';discardedTailFrames?:number;sourceRange?:SpeechSourceRange;sourceDurationSeconds?:number}
 function closed(value:Record<string,unknown>,keys:readonly string[]){if(Object.keys(value).some(key=>!keys.includes(key)))throw new TypeError('Unsupported speech evidence property.')}
 export function speechSha(value:unknown):string {if(typeof value!=='string'||!/^[a-f0-9]{64}$/.test(value))throw new TypeError('Invalid speech SHA-256.');return value}
 /** Preserve actual segment boundaries. Tokens are BPE units, never Chinese words/characters. */
@@ -48,7 +51,7 @@ export function whisperSegments(raw:unknown,durationSeconds:number,model:SpeechM
 export function assertSpeechEvidence(raw:unknown):SpeechEvidence {
  const value=mediaRecord(raw)
  closed(value,['kind','provider','engineVersion','model','modelRevision','modelSha256','engineSha256','sourceArtifactId','sourceSha256','normalizedArtifactId','normalizedSha256','rawArtifactId','rawSha256','logArtifactId','logSha256','sampleRate','channels','sampleType','downmix','normalization','timeDomain','durationSeconds','elapsedSeconds','createdAt','segments','automaticTimingApproved','wordTimingAvailable','language'])
- if(value.kind!=='speech-evidence'||value.provider!=='whisper.cpp'||value.engineVersion!==LOCAL_ASR_ENGINE_VERSION||value.modelRevision!==LOCAL_ASR_MODEL_REVISION||!['base','small'].includes(String(value.model))||value.modelSha256!==LOCAL_ASR_MODELS[value.model as SpeechModel].sha256||value.sampleRate!==16000||value.channels!==1||value.sampleType!=='pcm-s16le'||value.downmix!=='channel-mean'||value.timeDomain!=='audio-file-seconds'||value.automaticTimingApproved!==false||value.wordTimingAvailable!==false)throw new TypeError('Unapproved speech provider, time domain or automatic timing gate.')
+ if(value.kind!=='speech-evidence'||value.provider!=='whisper.cpp'||value.engineVersion!==LOCAL_ASR_ENGINE_VERSION||value.modelRevision!==LOCAL_ASR_MODEL_REVISION||!['base','small'].includes(String(value.model))||value.modelSha256!==LOCAL_ASR_MODELS[value.model as SpeechModel].sha256||value.sampleRate!==16000||value.channels!==1||value.sampleType!=='pcm-s16le'||value.downmix!=='channel-mean'||!['audio-file-seconds','normalized-interval-seconds'].includes(String(value.timeDomain))||value.automaticTimingApproved!==false||value.wordTimingAvailable!==false)throw new TypeError('Unapproved speech provider, time domain or automatic timing gate.')
  for(const key of ['sourceArtifactId','normalizedArtifactId','rawArtifactId','logArtifactId'] as const)assertArtifactId(value[key])
  for(const key of ['sourceSha256','normalizedSha256','rawSha256','logSha256','engineSha256'] as const)speechSha(value[key])
  if(value.language!==undefined&&!['zh','en','auto'].includes(String(value.language)))throw new TypeError('Invalid speech evidence language.')
@@ -56,7 +59,9 @@ export function assertSpeechEvidence(raw:unknown):SpeechEvidence {
  finiteNumber(value.elapsedSeconds,'ASR elapsed',0,SPEECH_LIMITS.jobTimeoutMs/1000)
  if(typeof value.createdAt!=='string'||!/^\d{4}-\d\d-\d\dT/.test(value.createdAt)||!Number.isFinite(Date.parse(value.createdAt)))throw new TypeError('Invalid speech capture time.')
  const normalization=mediaRecord(value.normalization)
- closed(normalization,['kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix','discardedTailFrames'])
+ closed(normalization,['kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix','discardedTailFrames','sourceRange','sourceDurationSeconds'])
+ assertSpeechRangeEvidence(normalization)
+ if(value.timeDomain!==(normalization.sourceRange===undefined?'audio-file-seconds':'normalized-interval-seconds'))throw new TypeError('Speech interval uses the wrong time domain.')
  if(normalization.kind!=='speech-pcm'||normalization.sampleRate!==16000||normalization.channels!==1||normalization.sampleType!=='pcm-s16le'||normalization.downmix!=='channel-mean'||normalization.durationSeconds!==duration)throw new TypeError('Invalid speech normalization provenance.')
  finiteNumber(normalization.inputSampleRate,'input sample rate',8000,96000,true);finiteNumber(normalization.inputChannels,'input channels',1,8,true)
  const frames=finiteNumber(normalization.frames,'normalized frames',160,180*16000,true)
@@ -76,10 +81,13 @@ export function assertSpeechEvidence(raw:unknown):SpeechEvidence {
  }
  return value as unknown as SpeechEvidence
 }
+/** Preserve raw interval timestamps; add only the measured normalization origin
+ * when locating the original video. No segment is stretched or silently clipped. */
+export function speechSourceSegments(evidence:SpeechEvidence):SpeechSegment[]{const offset=evidence.normalization.sourceRange?.startSeconds??0;return evidence.segments.map(segment=>({...segment,startSeconds:segment.startSeconds+offset,endSeconds:segment.endSeconds+offset}))}
 /** One source clock maps to scene and film clocks; out-of-trim anchors are explicitly unavailable. */
 export function speechTimelineRange(startSeconds:number,endSeconds:number,options:{sourceStartSeconds:number;playbackRate:number;sceneOffsetSeconds:number;sceneDurationSeconds:number;filmStartSeconds:number}):{sceneStartSeconds:number;sceneEndSeconds:number;filmStartSeconds:number;filmEndSeconds:number}|null {
  finiteNumber(startSeconds,'anchor start',0,180);finiteNumber(endSeconds,'anchor end',startSeconds+.000001,180)
- const source=finiteNumber(options.sourceStartSeconds,'source start',0,180),rate=finiteNumber(options.playbackRate,'playback rate',.25,4),offset=finiteNumber(options.sceneOffsetSeconds,'scene offset',0,60),duration=finiteNumber(options.sceneDurationSeconds,'scene duration',1,60),film=finiteNumber(options.filmStartSeconds,'film start',0,180)
+ const source=finiteNumber(options.sourceStartSeconds,'source start',0,180),rate=finiteNumber(options.playbackRate,'playback rate',.25,4),offset=finiteNumber(options.sceneOffsetSeconds,'scene offset',0,60),duration=finiteNumber(options.sceneDurationSeconds,'scene duration',1,60),film=finiteNumber(options.filmStartSeconds,'film start',0,COMPOSITION_LIMITS.seconds)
  const start=offset+(startSeconds-source)/rate,end=offset+(endSeconds-source)/rate
  if(start<offset||end>duration)return null
  return {sceneStartSeconds:start,sceneEndSeconds:end,filmStartSeconds:film+start,filmEndSeconds:film+end}

@@ -13,8 +13,9 @@ export type ImageDrawingRequest=
   | {action:'media.image.annotate';artifactId:string;shapes:DrawingShape[]}
   | {action:'media.image.draw';width:number;height:number;background:string;shapes:DrawingShape[]}
 export interface DrawingResult {kind:'drawing';width:number;height:number;shapeCount:number}
-function keys(value:Record<string,unknown>,allowed:readonly string[]):void {
-  if(Object.keys(value).some(key=>!allowed.includes(key)))throw new TypeError('Unsupported image drawing property.')
+function keys(value:Record<string,unknown>,allowed:readonly string[],location='drawing result',hint=''):void {
+  const unknown=Object.keys(value).filter(key=>!allowed.includes(key))
+  if(unknown.length)throw new TypeError(`Unsupported image drawing property at ${location}: ${unknown.slice(0,8).map(key=>JSON.stringify(key.slice(0,80))).join(', ')}. Allowed fields: ${allowed.join(', ')}.${hint?' '+hint:''}`)
 }
 function color(value:unknown,fallback:string,allowNone=false):string {
   if(value===undefined)return fallback
@@ -24,33 +25,35 @@ function color(value:unknown,fallback:string,allowNone=false):string {
 export function assertImageDrawingRequest(raw:unknown):ImageDrawingRequest {
   const value=mediaRecord(raw),annotate=value.action==='media.image.annotate'
   if(!annotate&&value.action!=='media.image.draw')throw new TypeError('Unsupported image drawing action.')
-  keys(value,annotate?['action','artifactId','shapes','tabId']:['action','width','height','background','shapes','tabId'])
+  keys(value,annotate?['action','artifactId','shapes','tabId']:['action','width','height','background','shapes','tabId'],'request',annotate?'media.image.annotate requires artifactId and shapes; use media.image.draw with width/height to create a new canvas.':'media.image.draw requires width, height and shapes; use media.image.annotate with artifactId to mark an existing image.')
+  if(!annotate&&(value.width===undefined||value.height===undefined))throw new TypeError('media.image.draw requires width and height (integer pixels, 32..4096); it creates a new canvas. Use media.image.annotate with artifactId for an existing image.')
   if(value.tabId!==undefined&&typeof value.tabId!=='string')throw new TypeError('tabId must be a string.')
   if(!Array.isArray(value.shapes)||value.shapes.length<1||value.shapes.length>DRAWING_LIMITS.shapes)throw new TypeError('Image drawing requires 1 to 128 shapes.')
   let points=0,characters=0
-  const shapes:DrawingShape[]=value.shapes.map(raw=>{
+  const shapes:DrawingShape[]=value.shapes.map((raw,index)=>{
     const item=mediaRecord(raw),type=item.type,common=['type','color','fill','lineWidth','opacity']
+    const shapeKeys=(allowed:readonly string[])=>keys(item,allowed,`shapes[${index}]`)
     const style:DrawingStyle={color:color(item.color,type==='redact'?'#000000':'#ff3b30'),fill:color(item.fill,'none',true),lineWidth:finiteNumber(item.lineWidth??4,'lineWidth',1,64),opacity:finiteNumber(item.opacity??1,'opacity',.05,1)}
     const coordinate=(name:string)=>finiteNumber(item[name],name,0,DRAWING_LIMITS.maxDimension)
     if(type==='rect'||type==='ellipse'||type==='redact'){
-      keys(item,[...common,'x','y','width','height'])
+      shapeKeys([...common,'x','y','width','height'])
       if(type==='redact'&&(style.opacity!==1||!/^#[0-9a-f]{6}$/i.test(style.color)||style.fill!=='none'))throw new TypeError('Redaction requires an opaque six-digit color with no fill override.')
       return {...style,type,x:coordinate('x'),y:coordinate('y'),width:finiteNumber(item.width,'shape width',1,DRAWING_LIMITS.maxDimension),height:finiteNumber(item.height,'shape height',1,DRAWING_LIMITS.maxDimension)}
     }
     if(type==='line'||type==='arrow'){
-      keys(item,[...common,'x1','y1','x2','y2'])
+      shapeKeys([...common,'x1','y1','x2','y2'])
       const x1=coordinate('x1'),y1=coordinate('y1'),x2=coordinate('x2'),y2=coordinate('y2')
       if(x1===x2&&y1===y2)throw new TypeError('Line endpoints must differ.')
       return {...style,type,x1,y1,x2,y2}
     }
     if(type==='path'){
-      keys(item,[...common,'points'])
+      shapeKeys([...common,'points'])
       if(!Array.isArray(item.points)||item.points.length<2||item.points.length>DRAWING_LIMITS.pathPoints)throw new TypeError('A path requires 2 to 256 points.')
       points+=item.points.length;if(points>DRAWING_LIMITS.points)throw new TypeError('Image drawing exceeds its shared point budget.')
-      return {...style,type,points:item.points.map(raw=>{const p=mediaRecord(raw);keys(p,['x','y']);return {x:finiteNumber(p.x,'point x',0,DRAWING_LIMITS.maxDimension),y:finiteNumber(p.y,'point y',0,DRAWING_LIMITS.maxDimension)}})}
+      return {...style,type,points:item.points.map((raw,pointIndex)=>{const p=mediaRecord(raw);keys(p,['x','y'],`shapes[${index}].points[${pointIndex}]`);return {x:finiteNumber(p.x,'point x',0,DRAWING_LIMITS.maxDimension),y:finiteNumber(p.y,'point y',0,DRAWING_LIMITS.maxDimension)}})}
     }
     if(type==='text'){
-      keys(item,[...common,'x','y','text','fontSize','bold','maxWidth','background'])
+      shapeKeys([...common,'x','y','text','fontSize','bold','maxWidth','background'])
       if(typeof item.text!=='string'||!item.text.trim()||item.text.length>512||/[\u0000-\u0008\u000b-\u001f]/.test(item.text)||item.text.split('\n').length>16)throw new TypeError('Text requires 1 to 512 characters and at most 16 lines.')
       characters+=item.text.length;if(characters>DRAWING_LIMITS.textCharacters)throw new TypeError('Image drawing exceeds its shared text budget.')
       if(item.bold!==undefined&&typeof item.bold!=='boolean')throw new TypeError('bold must be boolean.')

@@ -1,4 +1,4 @@
-import {speechDecodedRange} from '../src/speech-contract.js'
+import {speechDecodedRange,speechSourceSegments} from '../src/speech-contract.js'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import fs from 'node:fs/promises'
@@ -12,6 +12,13 @@ import {LOCAL_ASR_MODELS,LOCAL_ASR_MODEL_REVISION} from '../src/local-asr-assets
 const segment=(from=0,to=1000,p=.9,text='中文。')=>({offsets:{from,to},text,tokens:[{text:'[_BEG_]',p:.1},{text:'中文',p},{text:'。',p}]})
 const raw=(segments=[segment()])=>({model:{type:'small',multilingual:true},params:{language:'zh',translate:false},result:{language:'zh'},transcription:segments})
 const normalization={kind:'speech-pcm' as const,sampleRate:16000 as const,channels:1 as const,sampleType:'pcm-s16le' as const,downmix:'channel-mean' as const,frames:32000,durationSeconds:2,inputSampleRate:48000,inputChannels:2,decodedStartSeconds:0,decodedEndSeconds:2,clippedSamples:0}
+test('interval speech preserves normalized and original source clocks and rejects unmeasured or oversized ranges',()=>{
+ const range={startSeconds:300,endSeconds:302},request=assertSpeechRequest({action:'media.speech.align',artifactId:'long.mp4',model:'base',sourceRange:range});assert.deepEqual(request.sourceRange,range)
+ const value=evidence(),proof=assertSpeechEvidence({...value,timeDomain:'normalized-interval-seconds',normalization:{...value.normalization,sourceRange:range,sourceDurationSeconds:600}});assert.equal(speechSourceSegments(proof)[0].startSeconds,300);assert.equal(proof.segments[0].startSeconds,0)
+ for(const sourceRange of [{startSeconds:0,endSeconds:181},{startSeconds:3,endSeconds:2},{startSeconds:1799,endSeconds:1801},{startSeconds:NaN,endSeconds:2},{startSeconds:0,endSeconds:1,path:'/tmp/audio'}])assert.throws(()=>assertSpeechRequest({action:'media.speech.align',artifactId:'long.mp4',sourceRange}))
+ assert.throws(()=>assertSpeechEvidence({...value,timeDomain:'normalized-interval-seconds'}));assert.throws(()=>assertSpeechEvidence({...value,normalization:{...value.normalization,sourceRange:range,sourceDurationSeconds:600}}));assert.throws(()=>assertSpeechEvidence({...value,timeDomain:'normalized-interval-seconds',normalization:{...value.normalization,sourceRange:{startSeconds:300,endSeconds:303},sourceDurationSeconds:600}}));assert.throws(()=>assertSpeechEvidence({...value,timeDomain:'normalized-interval-seconds',normalization:{...value.normalization,sourceRange:range,sourceDurationSeconds:301}}))
+ assert.doesNotThrow(()=>assertNativeProcessingRequest({action:'media.speech.normalize',artifactId:'long.mp4',sourceRange:range}));assert.throws(()=>assertMediaProcessRequest({action:'media.speech.normalize',artifactId:'long.mp4',sourceRange:range}))
+})
 const evidence=()=>({kind:'speech-evidence',provider:'whisper.cpp',engineVersion:'1.9.1',model:'small',modelRevision:LOCAL_ASR_MODEL_REVISION,modelSha256:LOCAL_ASR_MODELS.small.sha256,engineSha256:'a'.repeat(64),sourceArtifactId:'speech.wav',sourceSha256:'b'.repeat(64),normalizedArtifactId:'normalized.wav',normalizedSha256:'c'.repeat(64),rawArtifactId:'raw.json',rawSha256:'d'.repeat(64),logArtifactId:'log.json',logSha256:'e'.repeat(64),sampleRate:16000,channels:1,sampleType:'pcm-s16le',downmix:'channel-mean',normalization,timeDomain:'audio-file-seconds',durationSeconds:2,elapsedSeconds:1,createdAt:'2026-10-04T00:00:00.000Z',segments:whisperSegments(raw(),2,'small'),automaticTimingApproved:false,wordTimingAvailable:false})
 test('Speech requests admit fixed models and Project artifacts, never executable, cache, prompt or CLI options',()=>{
  assert.equal(assertSpeechRequest({action:'media.speech.align',artifactId:'voice.wav'}).model,'small')

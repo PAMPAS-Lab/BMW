@@ -1,6 +1,8 @@
 import {assertImageDrawingRequest,assertDrawingResult} from './image-drawing-contract.js'
 import type {ImageDrawingRequest,DrawingResult} from './image-drawing-contract.js'
 import {assertImageInspection} from './image-contract.js'
+import {assertAudioEvidence} from './audio-evidence-contract.js'
+import type {AudioEvidence} from './audio-evidence-contract.js'
 /** Public, browser-native media contracts. No host path or codec choice is model-controlled. */
 export const MEDIA_LIMITS = Object.freeze({
   inputBytes: 512 * 1024 * 1024, outputBytes: 512 * 1024 * 1024,
@@ -11,12 +13,15 @@ export type MediaProcessRequest =
   | ImageDrawingRequest
   | {action:'media.image.inspect';artifactId:string}
   | { action: 'media.inspect'; artifactId: string }
+  | {action:'media.audio.sample';artifactId:string;startSeconds:number;endSeconds:number}
   | { action: 'media.frames.sample'; artifactId: string; timestampsSeconds: number[]; maxWidth: number; maxHeight: number }
   | { action: 'media.convert'; artifactId: string; outputFormat: 'mp4' | 'webm'; trimStartSeconds?: number; trimEndSeconds?: number; outputWidth?: number; outputHeight?: number }
-export type NativeProcessingRequest=MediaProcessRequest|{action:'media.speech.normalize';artifactId:string}|{action:'media.decode.check';artifactId:string}|{action:'media.encode.check';width:number;height:number;fps:number}
+import {assertSpeechSourceRange,assertSpeechRangeEvidence} from './speech-range.js'
+import type {SpeechSourceRange} from './speech-range.js'
+export type NativeProcessingRequest=MediaProcessRequest|{action:'media.speech.normalize';artifactId:string;sourceRange?:SpeechSourceRange}|{action:'media.decode.check';artifactId:string}|{action:'media.encode.check';width:number;height:number;fps:number}
 export function assertNativeProcessingRequest(raw:unknown):NativeProcessingRequest {
   const value=mediaRecord(raw)
-  if(value.action==='media.speech.normalize'){if(Object.keys(value).some(key=>!['action','artifactId'].includes(key)))throw new TypeError('Unsupported speech normalization property.');return {action:value.action,artifactId:assertArtifactId(value.artifactId)}}
+  if(value.action==='media.speech.normalize'){if(Object.keys(value).some(key=>!['action','artifactId','sourceRange'].includes(key)))throw new TypeError('Unsupported speech normalization property.');return {action:value.action,artifactId:assertArtifactId(value.artifactId),...(value.sourceRange===undefined?{}:{sourceRange:assertSpeechSourceRange(value.sourceRange)})}}
   if(value.action==='media.decode.check'){if(Object.keys(value).some(key=>!['action','artifactId'].includes(key)))throw new TypeError('Unsupported full decode property.');return {action:'media.decode.check',artifactId:assertArtifactId(value.artifactId)}}
   if(value.action==='media.encode.check'){
     if(Object.keys(value).some(key=>!['action','width','height','fps'].includes(key)))throw new TypeError('Unsupported encoding property.')
@@ -52,9 +57,11 @@ export function assertFullMediaDecode(raw:unknown):FullMediaDecode {
  return value as unknown as FullMediaDecode
 }
 export interface SampledFrame {
+  lumaSignature?:number[]
   outputIndex: number; requestedTimestampSeconds: number; timestampSeconds: number; durationSeconds: number; width: number; height: number
 }
 export type MediaWorkerResult =
+  | {kind:'audio-evidence';info:AudioEvidence}
   | {kind:'speech-pcm';info:import('./speech-contract.js').SpeechNormalization}
   | DrawingResult
   | {kind:'image';info:import('./image-contract.js').ImageInspection}
@@ -94,9 +101,10 @@ export function assertMediaProcessRequest(value: unknown): MediaProcessRequest {
   if (input.tabId !== undefined && typeof input.tabId !== 'string') throw new TypeError('tabId must be a string.')
   const allowed = (input.action === 'media.inspect'||input.action==='media.image.inspect') ? common : input.action === 'media.frames.sample'
     ? [...common, 'timestampsSeconds', 'maxWidth', 'maxHeight']
-    : input.action === 'media.convert' ? [...common, 'outputFormat', 'trimStartSeconds', 'trimEndSeconds', 'outputWidth', 'outputHeight'] : []
+    : input.action==='media.audio.sample'?[...common,'startSeconds','endSeconds']:input.action === 'media.convert' ? [...common, 'outputFormat', 'trimStartSeconds', 'trimEndSeconds', 'outputWidth', 'outputHeight'] : []
   if (!allowed.length || Object.keys(input).some((key) => !allowed.includes(key))) throw new TypeError('Unsupported media action or property.')
   if (input.action === 'media.inspect'||input.action==='media.image.inspect') return { action: input.action, artifactId }
+  if(input.action==='media.audio.sample'){const startSeconds=finiteNumber(input.startSeconds,'audio start',0,1800),endSeconds=finiteNumber(input.endSeconds,'audio end',startSeconds+.001,Math.min(1800,startSeconds+10));return {action:input.action,artifactId,startSeconds,endSeconds}}
   if (input.action === 'media.frames.sample') {
     if (!Array.isArray(input.timestampsSeconds) || input.timestampsSeconds.length < 1 || input.timestampsSeconds.length > MEDIA_LIMITS.frames) throw new TypeError('Request 1 to 8 frame timestamps.')
     return { action: input.action, artifactId,
@@ -122,10 +130,12 @@ export function assertMediaProcessRequest(value: unknown): MediaProcessRequest {
 export function assertMediaWorkerResult(value: unknown, request: NativeProcessingRequest): MediaWorkerResult {
   const result = mediaRecord(value)
   if(request.action==='media.image.annotate'||request.action==='media.image.draw'){assertDrawingResult(result,request)}
+  else if(request.action==='media.audio.sample'&&result.kind==='audio-evidence')assertAudioEvidence(result.info,request.startSeconds,request.endSeconds)
   else if(request.action==='media.speech.normalize'&&result.kind==='speech-pcm'){
     const info=mediaRecord(result.info),frames=finiteNumber(info.frames,'speech samples',160,180*16000,true)
-    if(Object.keys(info).some(key=>!['kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix','discardedTailFrames'].includes(key)))throw new TypeError('Unsupported speech normalization evidence.')
+    if(Object.keys(info).some(key=>!['kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix','discardedTailFrames','sourceRange','sourceDurationSeconds'].includes(key)))throw new TypeError('Unsupported speech normalization evidence.')
     if(info.kind!=='speech-pcm'||info.sampleRate!==16000||info.channels!==1||info.sampleType!=='pcm-s16le'||info.downmix!=='channel-mean'||info.durationSeconds!==frames/16000)throw new TypeError('Invalid normalized speech metadata.')
+    assertSpeechRangeEvidence(info,request.sourceRange);if(!request.sourceRange&&info.sourceRange!==undefined)throw new TypeError('Unrequested speech source interval.');
     finiteNumber(info.clippedSamples,'PCM saturation samples',0,frames,true)
     if(info.discardedTailFrames!==undefined)finiteNumber(info.discardedTailFrames,'discarded Opus padding frames',0,Math.ceil(Number(info.inputSampleRate)*.12)+2,true)
     finiteNumber(info.inputSampleRate,'speech input rate',8000,96000,true);finiteNumber(info.inputChannels,'speech input channels',1,8,true)
@@ -148,7 +158,7 @@ export function assertMediaWorkerResult(value: unknown, request: NativeProcessin
       finiteNumber(track.id, 'track id', 0, Number.MAX_SAFE_INTEGER, true)
       if (!['video', 'audio', 'subtitle'].includes(String(track.type)) || (track.codec !== null && typeof track.codec !== 'string') || typeof track.canDecode !== 'boolean') throw new TypeError('Invalid media track.')
       for (const key of ['width','height','sampleRate','channels'] as const) if (track[key] !== undefined) finiteNumber(track[key], key, 1, Number.MAX_SAFE_INTEGER, true)
-      if(track.startSeconds!==undefined||track.endSeconds!==undefined){const start=finiteNumber(track.startSeconds,'video track start',-Number.MAX_SAFE_INTEGER,Number.MAX_SAFE_INTEGER),end=finiteNumber(track.endSeconds,'video track end',start,Number.MAX_SAFE_INTEGER);if(track.type!=='video'||end>Number(info.durationSeconds))throw new TypeError('Invalid inspected video track range.')}
+      if(track.startSeconds!==undefined||track.endSeconds!==undefined){const start=finiteNumber(track.startSeconds,'video track start',-Number.MAX_SAFE_INTEGER,Number.MAX_SAFE_INTEGER),end=finiteNumber(track.endSeconds,'video track end',start,Number.MAX_SAFE_INTEGER);if(!['video','audio'].includes(String(track.type))||end>Number(info.durationSeconds))throw new TypeError('Invalid inspected media track range.')}
       if(track.hasAlphaData!==undefined&&typeof track.hasAlphaData!=='boolean')throw new TypeError('Invalid alpha packet metadata.')
       if (track.canBeTransparent !== undefined && typeof track.canBeTransparent !== 'boolean') throw new TypeError('Invalid transparency metadata.')
       if (track.rotation !== undefined) finiteNumber(track.rotation, 'rotation', 0, 360)
@@ -159,6 +169,7 @@ export function assertMediaWorkerResult(value: unknown, request: NativeProcessin
       const frame = mediaRecord(item)
       if (frame.outputIndex !== index || frame.requestedTimestampSeconds !== request.timestampsSeconds[index]) throw new TypeError('Frame identity mismatch.')
       finiteNumber(frame.timestampSeconds, 'frame timestamp', 0, request.timestampsSeconds[index])
+      if(frame.lumaSignature!==undefined){if(!Array.isArray(frame.lumaSignature)||frame.lumaSignature.length!==64)throw new TypeError('Invalid frame luma signature.');for(const v of frame.lumaSignature)finiteNumber(v,'frame luma',0,255,true)}
       finiteNumber(frame.durationSeconds, 'frame duration', 0, MEDIA_LIMITS.durationSeconds)
       finiteNumber(frame.width, 'frame width', 1, request.maxWidth, true)
       finiteNumber(frame.height, 'frame height', 1, request.maxHeight, true)
