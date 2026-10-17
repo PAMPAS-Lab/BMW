@@ -130,11 +130,13 @@ Simon 的两册研究、98个记录组与V1/V2详见[原记录](history/2026-10-
 | npm run test:media-e2e | 后台页面、采集、处理；不含全部视频／语音分支 |
 | npm run test:video-e2e | 原生视频 smoke；实际混音、H.264/AAC、轨道／时长与验证回执 |
 | npm run test:tts-e2e | 默认 local-matcha 本地旁白；Edge 需显式 opt-in |
-| npm run test:affected -- --files … | AST 依赖、行为 watch 与接口保障选择并执行；未知／删除／共享配置保守升级 |
+| npm run test:affected -- --files … | AST 依赖、行为 watch 与接口保障选择并执行；未知／删除／共享配置（含 workspace manifest）保守升级 |
 | npm run verify:stability | 一次fresh build后串行全部非opt-in分类，包括各Studio环境分支；专用素材夹具和external单列未运行 |
 | npm run docs:features / docs:architecture | 刷新源码生成清单；刷新本身不是测试通过 |
 
 所有含构建的命令顺序执行。资源受限时使用 GOMEMLIMIT=32MiB GOGC=1 GOMAXPROCS=1。直接调用 test-runner 必须匹配最新 build receipt；源码在验证中变化使 source-integrity 失败。完整通过时才更新 test-baseline.json；失败保留旧完整基线和本次失败日志。
+
+`studio.export-review` 等包含真实本地旁白合成的分支需要本地 TTS 模型；缺失时先执行 `npm run setup:local-tts`，网络环境需要时配置代理。资源缺失应在报告中与代码回归区分，未成功执行仍记录失败或未运行；不得以桩替代宣称真实本地合成覆盖。
 
 ## 证据边界
 

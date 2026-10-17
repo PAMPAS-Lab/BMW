@@ -138,3 +138,60 @@ test('Every Studio smoke environment branch is admitted by a classified runtime 
  assert.ok(switches.length>=13,'Keep the dedicated editing/recovery branches covered')
  for(const key of switches)assert.equal(tests.some(test=>test.file==='scripts/video-studio-smoke.ts'&&test.env?.[key]==='1'),true,key)
 })
+
+test('Media audio evidence changes select the native processor that invokes media.audio.sample',()=>{
+ const graph=readSourceGraph(process.cwd())
+ for(const file of ['packages/media-native/src/audio-evidence-contract.ts','packages/media-native/src/media/audio-evidence.ts']){
+  const selection=selectTests(graph,[file]),ids=selection.selected.map(item=>item.test.id)
+  assert.equal(selection.full,false,file)
+  assert.ok(ids.includes('media.processing-runtime'),file)
+  assert.equal(ids.includes('studio'),false,file)
+ }
+})
+
+test('Studio shared timeline, renderer and codecs retain dedicated branch and schema publication guarantees',()=>{
+ const graph=readSourceGraph(process.cwd())
+ const cases:[string,string[]][]=[
+  ['packages/feature-video/src/studio-timeline.ts',['studio','studio.long-film','studio.schema','studio.reference-analysis','studio.review-adoption']],
+  ...['studio.ts','studio.html','studio.css'].map((name):[string,string[]]=>['packages/feature-video/src/renderer/'+name,['studio','studio.long-film','studio.workflow-entry','studio.materials-entry','studio.visual-effects','studio.main-mute','studio.track-menu','studio.export-review','studio.reference-analysis','studio.review-adoption']]),
+  ...['video-time.ts','video-document-version.ts'].map((name):[string,string[]]=>['packages/feature-video/src/'+name,['video.schema-publication','video.schema','studio.long-film']])
+ ]
+ for(const [file,expected]of cases){
+  const selection=selectTests(graph,[file]),ids=selection.selected.map(item=>item.test.id)
+  assert.equal(selection.full,false,file)
+  for(const id of expected)assert.ok(ids.includes(id),file+' must select '+id)
+ }
+})
+
+test('Dedicated Studio editors and the current Assistant preload retain their runtime checks',()=>{
+ const graph=readSourceGraph(process.cwd())
+ for(const [file,id]of [
+  ['packages/feature-video/src/renderer/studio-type-review-editor.ts','studio.production'],
+  ['packages/feature-video/src/renderer/research-diagram-editor.ts','studio.science'],
+  ['packages/agent-ui/src/preload/assistant-preload.cts','desktop.native']
+ ]){
+  const selection=selectTests(graph,[file])
+  assert.equal(selection.full,false,file)
+  assert.ok(selection.selected.some(item=>item.test.id===id),file+' must select '+id)
+ }
+})
+
+test('Every product source has functional test ownership and every exact watch path exists',()=>{
+ const graph=readSourceGraph(process.cwd())
+ for(const file of graph.files.filter(file=>/^(apps|packages)\//.test(file)&&/\.(ts|cts|html|css)$/.test(file)&&!file.includes('/test/')&&!file.endsWith('.d.ts'))){
+  const relevant=selectTests(graph,[file]).selected.filter(item=>!['boundary','type'].includes(item.test.layer))
+  assert.ok(relevant.length>0,'No functional test ownership: '+file)
+ }
+ for(const test of tests)for(const watch of test.watch??[])if(/\.(ts|cts|html|css)$/.test(watch))assert.ok(graph.files.includes(watch),test.id+' watches missing file '+watch)
+})
+
+test('Workspace manifest changes stay on the conservative full-coverage path',()=>{
+ const graph=readSourceGraph(process.cwd())
+ for(const file of ['packages/feature-video/package.json','packages/harness-codex/package.json','apps/bmw/package.json']){
+  const selection=selectTests(graph,[file])
+  assert.equal(selection.full,true,file)
+  assert.ok(selection.fallbackReasons.includes('Shared configuration/composition/selection changed: '+file),file)
+  assert.ok(selection.selected.some(item=>item.test.id==='studio'),file)
+  assert.equal(selection.selected.some(item=>item.test.optIn),false,file)
+ }
+})

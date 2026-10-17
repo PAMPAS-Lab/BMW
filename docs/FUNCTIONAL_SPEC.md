@@ -1493,6 +1493,11 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Studio cover changes remain affected-only while retaining native/runtime and safety checks`
 - `Studio effects, mute and object-state implementation changes retain their native GUI/export guarantors`
 - `Every Studio smoke environment branch is admitted by a classified runtime entry`
+- `Media audio evidence changes select the native processor that invokes media.audio.sample`
+- `Studio shared timeline, renderer and codecs retain dedicated branch and schema publication guarantees`
+- `Dedicated Studio editors and the current Assistant preload retain their runtime checks`
+- `Every product source has functional test ownership and every exact watch path exists`
+- `Workspace manifest changes stay on the conservative full-coverage path`
 
 <!-- END GENERATED CAPABILITY AND TEST INVENTORY -->
 

@@ -11,7 +11,7 @@ export function selectTests(graph: SourceGraph, changedInput: readonly string[])
   if(changed.some(file=>file.startsWith('../')||path.posix.isAbsolute(file)))throw new Error('Changed files must be repository-relative paths.')
   const fallbackReasons: string[]=[],known=new Set(graph.files)
   for(const file of changed){
-    if(['package.json','package-lock.json','tsconfig.json','AGENTS.md','apps/bmw/product.ts','scripts/module-catalog.ts','scripts/test-catalog.ts','scripts/source-graph.ts','scripts/test-selection.ts','scripts/test-runner.ts','scripts/run-electron-script.ts'].includes(file))fallbackReasons.push('Shared configuration/composition/selection changed: '+file)
+    if(['package.json','package-lock.json','tsconfig.json','AGENTS.md','apps/bmw/product.ts','scripts/module-catalog.ts','scripts/test-catalog.ts','scripts/source-graph.ts','scripts/test-selection.ts','scripts/test-runner.ts','scripts/run-electron-script.ts'].includes(file)||file.endsWith('/package.json'))fallbackReasons.push('Shared configuration/composition/selection changed: '+file)
     else if(!known.has(file)&&!/^docs\/|^(README|handoff|agent)\.md$/.test(file))fallbackReasons.push('Unknown/deleted source requires conservative coverage: '+file)
   }
   const touched=new Map(changed.map(file=>[file,'changed '+file]))
