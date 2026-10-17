@@ -32,10 +32,12 @@
 | 分类 | 内容 | 状态 |
 |---|---|---|
 | 研究 | [内容创作研究](research/CONTENT_CREATION.md) | Simon 案例与 Hypit／Anatomy 固定版本观察；未重验外部项目 |
+| 研究 | [AK 的 X 帖子视频](research/AK_X_VIDEOS.md) | 十条固定样本、逐条画面观察、代码／测试映射与可移植证据；未核听、未完成逐条复刻 |
 | 研究 | [微博参考片观察](research/WEIBO_REFERENCE.md) | 原始来源哈希、2fps 抽样和观察边界；不是当前能力清单 |
 | 研究 | [文档与代码审计](research/DOCUMENTATION_AUDIT.md) | 本轮盘点、漂移、源码证据和组织决策 |
 | 规划 | [下一步设计](plans/NEXT_STEPS.md) | 全局优先级、依赖、最小交付与退出条件的唯一总表 |
 | 规划 | [内容创作增量](plans/CONTENT_CREATION.md) | CONTENT-01–08 的具体范围与样片验收；未实施 |
+| 规划 | [AK 视频能力增量](plans/AK_VIDEO_CAPABILITIES.md) | AK-01–05：事件联动、图表、预合成及后续条件依赖；未实施 |
 | 历史 | [归档索引](history/README.md) | 旧 P0、卡片设计、驱动验收、量子位已完成阶段及旧验证记录 |
 | 证据附件 | [design/README.md](design/README.md) | 保留原抽样脚本／清单／联系表和样片记录的稳定路径 |
 
