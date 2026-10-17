@@ -7,7 +7,10 @@
 
 | 能力 | 代码入口 | 分类测试 ID |
 |---|---|---|
-| Video Document 2.0–2.9、无损迁移、简洁可逆子集与类型命令 | [video-document.ts](../packages/feature-video/src/video-document.ts)、[video-edit.ts](../packages/feature-video/src/video-edit.ts)、[studio-compatibility.ts](../packages/feature-video/src/studio-compatibility.ts) | video.schema、studio.schema |
+| Video Document 2.0–2.10、无损迁移、简洁可逆子集与类型命令 | [video-document.ts](../packages/feature-video/src/video-document.ts)、[video-edit.ts](../packages/feature-video/src/video-edit.ts)、[studio-compatibility.ts](../packages/feature-video/src/studio-compatibility.ts) | video.schema、studio.schema、video.production |
+| 三类工作表／有限配方、来源关系、句目标与只读改稿影响 | [production-contract.ts](../packages/feature-video/src/production-contract.ts)、[production-types.ts](../packages/feature-video/src/production-types.ts)、[production-impact.ts](../packages/feature-video/src/production-impact.ts) | video.production、studio.production |
+| 独立类型审阅与人工试听／复述声明 | [production-assessment.ts](../packages/feature-video/src/production-assessment.ts)、[studio-production-editor.ts](../packages/feature-video/src/renderer/studio-production-editor.ts) | video.production-assessment、studio.production |
+| AK事件／独立测量、代码／聊天／分组与方阵预合成 | [research-diagrams.ts](../packages/media-native/src/research-diagrams.ts)、[precomposition.ts](../packages/media-native/src/precomposition.ts) | media.research-diagrams、media.precomposition、media.research-video |
 | 卡片内脚本／画面与固定预览、拖动调序 | [renderer/studio-cards.ts](../packages/feature-video/src/renderer/studio-cards.ts)、[studio.ts](../packages/feature-video/src/renderer/studio.ts) | studio.card-pair、studio |
 | 空草稿、后台初稿、成片与竖屏交付 | [renderer/studio-workflow.ts](../packages/feature-video/src/renderer/studio-workflow.ts)、[studio.ts](../packages/feature-video/src/renderer/studio.ts) | studio.workflow-entry |
 | 零分镜素材准备与真实网页采集 | [studio-assistant.ts](../packages/feature-video/src/studio-assistant.ts)、[studio-runtime.ts](../packages/feature-video/src/studio-runtime.ts) | studio.materials-entry、driver |

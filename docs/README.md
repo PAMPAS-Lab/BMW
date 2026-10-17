@@ -14,6 +14,7 @@
 | 已实现行为、权限和字段 | [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) | 唯一功能总规范；人工正文与生成目录分开 |
 | 模块、公开接口和测试映射 | [ARCHITECTURE.md](ARCHITECTURE.md) | 从模块与测试目录生成，不手改生成表 |
 | 如何验证、证据覆盖到哪里 | [VERIFICATION.md](VERIFICATION.md) | 当前检查结果、历史基线索引和覆盖边界 |
+| 当前源码的逐项离线回归 | [可移植验证摘要](verification/CURRENT.json) | 完整范围、逐项结果、未运行项及源码SHA；本机原始日志另存，不代表远程CI |
 | DSH 最新候选版制作 SI 新闻 | [DSH SI交付](research/DSH_SI_DELIVERY.json) | 独立工程、57.664秒MP4、模型路由、男声复用及实际审阅范围 |
 | DSH 科普与学术重制 | [两条完整主片交付](research/DSH_SCIENCE_RESEARCH_DELIVERY.json) | 量子位／AK形式参考、原声复用、实际MP4与审阅、原生压缩及验证范围 |
 
@@ -24,7 +25,7 @@
 | [AGENT_DRIVER_DESIGN.md](AGENT_DRIVER_DESIGN.md) | 已采纳的三官方驱动架构，仍是现行设计；不是未完成的多 Agent 开发计划 |
 | [QODER_BMW.md](QODER_BMW.md) | Qoder 专用适配说明；包内 qoder-bmw/SKILL.md 是随实现发布的指导，不归入外部研究 |
 | [AGENT_DATA_MIGRATION.md](AGENT_DATA_MIGRATION.md) | 显式迁移操作说明；正常启动不做历史迁移 |
-| [VIDEO_DOCUMENT_V2.md](VIDEO_DOCUMENT_V2.md) | 2.0–2.9 文档、时间权威、权限、预算与迁移 |
+| [VIDEO_DOCUMENT_V2.md](VIDEO_DOCUMENT_V2.md) | 2.0–2.10 文档、时间权威、类型工作表、权限、预算与迁移 |
 | [AGENT_VIDEO_EDITING.md](AGENT_VIDEO_EDITING.md) | 唯一 browser 下的发现、分页和类型编辑调用 |
 | [VIDEO_STUDIO_SCOPE.md](VIDEO_STUDIO_SCOPE.md) | 已实现能力与测试 ID 的专题映射 |
 | [schemas/](schemas/) | 两份生成 Schema 和三个示例；由运行时代码生成 |
@@ -38,10 +39,10 @@
 | 研究 | [AK 的 X 帖子视频](research/AK_X_VIDEOS.md) | 十条固定样本、逐条画面观察、代码／测试映射与可移植证据；未核听、未完成逐条复刻 |
 | 研究 | [微博参考片观察](research/WEIBO_REFERENCE.md) | 原始来源哈希、2fps 抽样和观察边界；不是当前能力清单 |
 | 研究 | [文档与代码审计](research/DOCUMENTATION_AUDIT.md) | 本轮盘点、漂移、源码证据和组织决策 |
-| 规划 | [三类视频制作方案](plans/VIDEO_TYPES.md)与[文案模板](plans/VIDEO_TYPE_TEMPLATES.md) | 新的考核目标、SI 样稿、类型机制与分阶段验收；仅设计 |
+| 规划／实施状态 | [三类视频制作方案](plans/VIDEO_TYPES.md)与[文案模板](plans/VIDEO_TYPE_TEMPLATES.md) | 类型机制已实现，DSH三主片已制作；示例稿与实际成片分别登记，人工验收保持开放 |
 | 规划 | [下一步设计](plans/NEXT_STEPS.md) | 全局优先级、依赖、最小交付与退出条件的唯一总表 |
-| 规划 | [内容创作增量](plans/CONTENT_CREATION.md) | CONTENT-01–08 的具体范围与样片验收；未实施 |
-| 规划 | [AK 视频能力增量](plans/AK_VIDEO_CAPABILITIES.md) | AK-01–05：事件联动、图表、预合成及后续条件依赖；未实施 |
+| 规划／实施状态 | [内容创作增量](plans/CONTENT_CREATION.md) | 三类指导、改稿影响与句目标已实现；图文长篇、外部指导和自由批注等缺口另列 |
+| 规划／实施状态 | [AK 视频能力增量](plans/AK_VIDEO_CAPABILITIES.md) | AK-01–05原生功能已实现；外部生成服务与人工内容验收单列 |
 | 历史 | [归档索引](history/README.md) | 旧 P0、卡片设计、驱动验收、量子位已完成阶段及旧验证记录 |
 | 证据附件 | [design/README.md](design/README.md) | 保留原抽样脚本／清单／联系表和样片记录的稳定路径 |
 

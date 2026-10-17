@@ -2535,7 +2535,7 @@
           "sha256": "aa1085880c566e8c063cc01dcd9fb370063e32cad23ebd9b17a9ce5139214d37"
         }
       ],
-      "scope": "Preset YAML is separately hashed because the classified TypeScript source graph does not inventory YAML."
+      "scope": "Preset YAML is inventoried by the classified source graph and build receipt. Installed preset copies are separately hashed to bind the actual production configuration. This wording corrects the earlier inventory description; the recorded hashes and production evidence are unchanged."
     },
     "fullRegression": {
       "report": ".bmw-runtime/classified-tests/2026-10-17-dsh-compaction-events/result.json",

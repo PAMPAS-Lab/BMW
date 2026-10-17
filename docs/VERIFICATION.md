@@ -2,6 +2,21 @@
 
 核对日期：2026-10-17。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
 
+## 当前源码完整离线基线
+
+2026-10-17对提交 `86f239d` 的当前实现重新清洁构建，构建后分别运行 `npm run check` 和 `node scripts/test-runner.js --all`；全部通过。完整报告为[本机原始结果](../.bmw-runtime/classified-tests/2026-10-17-current-state/result.json)，[可移植逐项摘要与源码SHA](verification/CURRENT.json)随仓库保存：**162 passed／0 failed／12 not-run**。157个分类项及5个门禁／桌面汇总合计162，不将汇总当作额外独立保障，也不叠加历史专项次数。
+
+覆盖unit／contract／boundary／type及DSH、Assistant／计划任务、desktop四组与Project重启、Studio各专用分支、媒体采集／处理、视频／语音、本地Matcha和Qwen HTTP旁白夹具。DSH官方冷检查验证唯一browser、身份保留、会话控制及配置，无模型输入。最后的普通`surfaceOp: append`修正和历史裁减投影处理均已进入这次完整范围，不再依赖此前两文件的增量补证。
+
+运行期间459个受测源码／配置／文档SHA保持不变，包含DSH预设`.yml`、HTML／CSS／JSON及随包SKILL.md；清洁构建收据覆盖453个作者源码／配置和423个生成输出。文档回填后另逐项核对全部453个构建输入、423个输出及报告绑定；只是说明文档更新。此前“源码图不包含YAML”的描述有误，已更正；真实制作时安装副本的独立SHA仍保留。
+
+十二个未运行项按实际条件区分：
+
+- 本地素材夹具六项：`media.source-analysis-case`、`media.frame-sampling-case`、`media.long-composition-case`、`video.qbit-playback`、`video.qbit-stage4-samples`、`video.qbit-stage3-samples`。
+- 外部入口六项：`external.production.qoder-deepseek-flash`、`external.assistant.dsh`、`external.assistant.codex`、`external.assistant.qoder-cn`、`external.vision`、`external.edge`。runner统一写“External opt-in required”，不代表上面六个本地素材夹具属于外部服务。
+
+本轮使用一次性Profile／Home／Workspace和模拟钥匙串，不访问生产Profile或系统凭据提示，不新增付费模型、在线配音或外部生成调用。424份TypeScript中的6个历史测试替身类型例外仍冻结。`npm ls --depth=0`退出0；本机额外安装的外部Codex CLI `0.160.1`被npm列为extraneous，不属于lockfile依赖；本轮未重装依赖，不声称全新`npm ci`环境覆盖。仓库没有GitHub Actions工作流，本摘要是本机结果，不代表远程CI。真实三主片继续引用各自交付证据，新科普／学术的人工听感、复述与条件预测仍待反馈。
+
 ## DSH 科普与学术重制
 
 两条完整新主片使用隔离 BMW Project／Session、官方 DSH `0.2.1-rc.2` 与 `deepseek-official/deepseek-flash`，实际请求工具恰好一个 `browser`。科普参考量子位S10的实物主体与局部图解；学术参考AK A01的生成流、工具返回和连续KV。保留各八场全文与八段真实Matcha WAV，原生导入、逐字节核对，不重复TTS。原Qoder工程、原素材与全部旧导出保留。实际MP4、来源SHA、完整字幕核对、当前关键状态帧及Agent意见见[交付记录](research/DSH_SCIENCE_RESEARCH_DELIVERY.json)；人工听感、理解和接受单列。
@@ -10,7 +25,7 @@
 
 两片实测分别为210.859秒和229.248秒、1280×720／24fps、H.264/AAC；当前各192张关键状态PNG、八场与独立全片Agent意见均齐。根侧另实际查看各16张及学术5张定点帧，确认亮底描边、Table6末行和KV两项保留；自动小字／静置提示及少量次要标题／引用上缘裁切保留在交付记录。学术字幕为直接指定的编辑估计时间，未保存句锚；科普句锚另核对文件SHA。两者都不代表声学对齐或人工核听。
 
-两次完整离线回归均为162 passed／0 failed／12 not-run；[后一次完整报告](../.bmw-runtime/classified-tests/2026-10-17-dsh-compaction-events/result.json)冻结于最后的`append`格式补正之前。随后只有`dsh-events.ts`及其测试改变，当前[单元／契约／边界](../.bmw-runtime/classified-tests/2026-10-17-dsh-final-unit/result.json)为94 passed／0 failed，79项在该限定范围外；DSH专项36项、正式append复现前失败／修后通过、官方冷目录与会话控制、构建和check另通过。完整报告的媒体／Studio／视频／旁白／桌面源码保持相同，不将其称为最后两文件补正后重跑的完整基线。预设YAML不在TypeScript源码图中，另核对源码及两份实际安装副本SHA。具体日志、范围与指纹保存在交付记录；真实模型制作不并入离线计数。
+制作阶段的两次完整离线回归均为162 passed／0 failed／12 not-run；[后一次阶段报告](../.bmw-runtime/classified-tests/2026-10-17-dsh-compaction-events/result.json)冻结于最后`append`格式补正之前，随后两文件另通过94项单元／契约／边界、36项DSH专项与官方冷检查。它们保留各自源码范围，当前补正后的完整基线以上方新报告为准。预设YAML已纳入源码图，另核对两份实际安装副本SHA。制作日志、指纹及中断证据保存在交付记录；真实模型制作不并入离线计数。
 
 ## DSH 0.2.1-rc.2 与 SI 新闻
 

@@ -33,7 +33,7 @@ BMW 仍只有一个经过验证的模型工具 `browser`。视频编辑通过 `v
 
 | 命令 | 参数与语义 |
 | --- | --- |
-| `brief.set` | patch 仅含 notes、outline、artifactIds、sourceIds，复用准备资料校验。 |
+| `brief.set` | patch 仅含 production、notes、outline、artifactIds、sourceIds，复用准备资料校验。production 为2.10闭合工作表，不能伪造Host绑定和审阅证据。 |
 | `scene.add` | scene 的 id/title 与闭合内容字段；可用 afterSceneId 指定插入位置，不接受宿主证据。 |
 | `captions.set` | sceneId，mode=manual/sentences/off；manual 提供 cues，沿用人工翻译保护及时间验证。 |
 | `card.set / card.bind` | 设置闭合 cardSpec／links 或仅更改句引用；来源和目标身份须有效。 |
@@ -49,6 +49,14 @@ BMW 仍只有一个经过验证的模型工具 `browser`。视频编辑通过 `v
 一般时间为微秒；例如全片 1.5 秒是 `{ "ticks": 1500000 }`。clip 的时间域见文档，命令 time 始终是全片时间。显式字幕端点没有另一套 duration；字幕 ID 或旧匿名片段 ID 在结构编辑后可能变化，必须重读。
 
 旧 `read/update/attach/narrate/split-scene` 和字幕/语音专用操作继续可用，但 read/update 是共享文档的 v1 运行时投影。新编辑优先使用类型命令，避免全量快照覆盖。新增镜头可用 scene.add，配音仍使用既有已校验的接口；当前命令没有宣传全功能 NLE 或 AI 素材生成。
+
+## 类型制作、改稿与预合成
+
+`production-profiles` 读取三类版本化指导与六种有限配方；`propose-type` 返回候选编辑与指纹，`adopt-type` 仅在相同 revision、指纹与实际来源仍匹配时显式采用，保留既有 GUI 编辑。`production-read` 分页读取工作表，`production-review` 返回当前缺口与独立 assessmentRevision；`record-production-review` 按可信 actor 记录意见，Agent不能填写人工试听、观众复述或人工必需项的通过。
+
+改稿前可用 `plan-impact` 只读试算既有 VideoEdit 或闭合 cover 候选，读取 keep/rebuild/rebind/review 与理由；结果绑定 revision、素材 SHA、设置和 renderer，消费前须重查，不预约任务或代替执行权限。句目标与既有 card/focus 句绑定共用时间，换音频或目标后需明确重绑。
+
+`precompose` 以闭合 gridRecipe 将当前 Project 的1／4／16路素材分块预合成，保持最多四个同时解码器及既有预算；`precomposition-status` 读取当前草稿报告并重核 SHA。代理内部对象不能直接编辑，需按原配方显式重建。参数仍通过 `describe-schema`／操作帮助发现；完整边界见[功能规格](FUNCTIONAL_SPEC.md#类型制作与-ak-增量video-document-210)。
 
 ## 权限、冲突与失败
 

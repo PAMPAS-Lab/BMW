@@ -101,7 +101,9 @@ npm run test:video-e2e
 npm run test:tts-e2e
 ```
 
-局部改动默认先用下方 `test:plan` / `test:affected -- --files ...` 查看并执行本次范围；既有未提交工作不应混入本次文件列表。`verify:stability` 显式使用 `--all`，执行全部非 opt-in 分类；六项专用本地素材夹具和五项外部服务／模型测试仍需单独启用，不计为通过。完整串行验证：`npm run verify:stability`。该入口构建一次，再执行检查、单元/边界及运行时回归；记录源码哈希、依赖版本和通过/失败/未执行结果。桌面工作区测试分为工作区、Project/会话（含实际重启）、设置、原生焦点/键盘四组；Studio 各专用环境分支另由分类目录逐项执行，单组失败不阻止其余组运行。新证据在 `.bmw-runtime/classified-tests/`，既有证据保留。
+当前源码完整离线回归为 **162 passed／0 failed／12 not-run**（2026-10-17），构建和 `npm run check` 通过；[可移植逐项摘要](docs/verification/CURRENT.json)保存源码指纹、环境、范围和未运行项，[验证说明](docs/VERIFICATION.md#当前源码完整离线基线)解释限制。这是本机隔离验证，真实模型制作和人工验收另记。
+
+局部改动默认先用下方 `test:plan` / `test:affected -- --files ...` 查看并执行本次范围；既有未提交工作不应混入本次文件列表。`verify:stability` 显式使用 `--all`，执行全部非 opt-in 分类；六项专用本地素材夹具和六项外部服务／模型测试仍需单独启用，不计为通过。完整串行验证：`npm run verify:stability`，并单独执行 `npm run check` 检查完整编译／Schema与生成文档一致性。完整入口构建一次，再执行源码／清单门禁、单元/边界及运行时回归；记录源码哈希、依赖版本和通过/失败/未执行结果。桌面工作区测试分为工作区、Project/会话（含实际重启）、设置、原生焦点/键盘四组；Studio 各专用环境分支另由分类目录逐项执行，单组失败不阻止其余组运行。新证据在 `.bmw-runtime/classified-tests/`，既有证据保留。
 
 标准测试使用临时 Profile，不调用付费模型。含 build 的命令顺序执行；测试和 Action 变更后运行 `npm run docs:features`。
 

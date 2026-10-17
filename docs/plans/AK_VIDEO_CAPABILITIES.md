@@ -1,6 +1,6 @@
 # AK 参考视频的能力增量设计
 
-状态：2026-10-17，AK-01～05 的原生功能已实施：事件／测量图表、有限分组与代码／聊天、方阵分块预合成和外部素材版本记录。BMW＋Qoder CN／DeepSeek-Flash 已导出27秒组合验证片并完成当前31张抽样、逐场及独立全片 Agent 视觉意见；人工听审仍待执行。依据为 [AK 十条视频研究](../research/AK_X_VIDEOS.md)，全局优先级统一维护在 [NEXT_STEPS](NEXT_STEPS.md)。实际契约见 FUNCTIONAL_SPEC 和2.10 Schema；本页保留参考切片与退出条件，不宣称已复刻十条视频或调用外部生成服务。
+状态：2026-10-17，AK-01～05 的原生功能已实施：事件／测量图表、有限分组与代码／聊天、方阵分块预合成和外部素材版本记录。原Qoder 27秒组合验证片与技术范围见[阶段交付](../research/P1_AK_DELIVERY.json)；当前DSH／官方deepseek-flash学术主片229.248秒，按A01重做计算器、h状态包、KV与训练路径，见[最新交付](../research/DSH_SCIENCE_RESEARCH_DELIVERY.json)。人工听审、复述与条件预测仍待执行。依据为 [AK 十条视频研究](../research/AK_X_VIDEOS.md)，全局优先级统一维护在 [NEXT_STEPS](NEXT_STEPS.md)。实际契约见 FUNCTIONAL_SPEC 和2.10 Schema；本页保留参考切片与退出条件，不宣称已复刻十条视频或调用外部生成服务。
 
 ## 随三类考核调整的实施依赖
 
