@@ -16,3 +16,7 @@
 | [2026-10-17-documentation/VERIFICATION.md](2026-10-17-documentation/VERIFICATION.md) | 本次整理前混合在验证页中的历次证据 | 保留失败、阶段范围及 Simon／双驱动案例；142 项是历史完整快照 |
 
 Markdown 相对链接在本轮迁移的记录中已重定位；正文中的代码样式路径保留原上下文。旧冻结快照不重写。媒体、用户 Profile、模型缓存、原始报告与测试基线均不随文档归档移动或删除。
+
+## 补收的本机记录
+
+[交付与迭代账本](local-deliveries/README.md)保存博客、Musk、多驱动和阅读节奏试验；[早期 Project](local-deliveries/LEGACY_PROJECTS.md)保留未完成／失败范围。完整来源分类见[补收审计](../research/LOCAL_RECORDS_AUDIT.md)。

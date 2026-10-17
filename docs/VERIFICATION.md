@@ -71,3 +71,7 @@ Electron 使用临时 Profile／Project，DSH 使用临时 Home／Workspace；ma
 ## 维护当前基线
 
 VERIFY-01已按上述范围完成并[归档](history/2026-10-17-alignment/README.md)。下一次实现或测试改动按AGENTS重新验证；不得把旧142项、阶段89项和当前154条记录相加。当前优先级见[下一步设计](plans/NEXT_STEPS.md)。本机运行产物被Git忽略，换机需单独保留；路径存在不代表完整内容已审阅。
+
+## 本机记录补收验证（2026-10-17）
+
+[补收审计](research/LOCAL_RECORDS_AUDIT.md)仅改变文档、规划及证据索引。npm run build、npm run check、单元／契约／边界 89 项全部通过，75 项不在本次选择范围；[可移植回执](history/local-deliveries/verification.json)保存结果和源码身份，本机完整报告为 `.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/result.json`。430 份源文件与此前完整隔离基线一致；不把本次 89 项称为重新执行完整 154 项。链接无新增缺失、21 个既有规范锚点通过；两份历史驱动日志缺失保持原标注。未新增或移动测试，不需改写测试生成清单。

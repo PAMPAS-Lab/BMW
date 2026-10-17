@@ -61,3 +61,7 @@ DSH 提供 DeepSeek API Key，Codex 提供 ChatGPT 浏览器登录，Qoder CN �
 ## 文档入口
 
 [文档导航](README.md)区分当前规范、研究、规划、附件和历史。功能总契约仍是 FUNCTIONAL_SPEC，架构／测试映射仍由源码生成。迁移归档 ../Agent in Browser 与独立 BMWDev 不属于当前 BMW 的权威来源。
+
+## 本机调研与交付记录
+
+[补收审计](research/LOCAL_RECORDS_AUDIT.md)已补齐量子位、下载实验、Musk／博客／多驱动迭代及早期实验的入口。当前增量设计为 DELIVERY-01 可编辑交付包与 MEDIA-04 有界获取恢复，统一进入[下一步](plans/NEXT_STEPS.md)；历史交付不等于当前功能或内容验收通过。

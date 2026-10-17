@@ -29,3 +29,7 @@ BMW 已能通过官方 Codex + GPT-6.1-Sol、唯一 `browser` 工具完成公开
 - Hypit 的 [Studio 评论](https://github.com/hypit-ai/hypit/blob/dc2b7a8f31b1ef1443a79ca448548d69e3ceb6a0/packages/studio/README.md)以 Run、秒数和文字定位，Agent 自动通知仍为规划；[语音定位](https://github.com/hypit-ai/hypit/blob/dc2b7a8f31b1ef1443a79ca448548d69e3ceb6a0/packages/narrative-speech-alignment/src/locate.ts)会插值补齐缺失时间，不能据此放开 BMW 自动词／字精度。
 - Anatomy 的 [创作规则](https://github.com/wheresryan22/anatomy/blob/e9488296a44211c42701ff71705b7901470ec78f/SKILL.md)、[波纹状态与读数模型](https://github.com/wheresryan22/anatomy/blob/e9488296a44211c42701ff71705b7901470ec78f/examples/ripple-tank/model.mjs)、[运动规则](https://github.com/wheresryan22/anatomy/blob/e9488296a44211c42701ff71705b7901470ec78f/references/motion.md)、[验证规则](https://github.com/wheresryan22/anatomy/blob/e9488296a44211c42701ff71705b7901470ec78f/references/verify.md)。吸收状态同源、关键状态检查，不把密集零件、固定等距风格或禁止箭头／标签变成 BMW 通用要求。
 - 复用代码前单独评估 [Hypit 附加限制许可证](https://github.com/hypit-ai/hypit/blob/dc2b7a8f31b1ef1443a79ca448548d69e3ceb6a0/LICENSE)与 [Anatomy MIT 许可证](https://github.com/wheresryan22/anatomy/blob/e9488296a44211c42701ff71705b7901470ec78f/LICENSE)。研究结论不构成嵌入授权；BMW 不依赖另一产品仓库的运行时代码，也不直接开放其本地脚本能力。
+
+## 补收的创作证据
+
+[创作案例](PRODUCTION_CASES.md)补充早期 Karpathy 四格式研究、Musk 九项问题的当前状态、博客卡片和多驱动比较限制；[交付账本](../history/local-deliveries/README.md)保留中间版本，不把技术指标替代用户理解评价。

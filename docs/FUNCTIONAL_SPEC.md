@@ -1421,3 +1421,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Every Studio smoke environment branch is admitted by a classified runtime entry`
 
 <!-- END GENERATED CAPABILITY AND TEST INVENTORY -->
+
+## 制作条件覆盖字段的解释
+
+StudioReadiness.scenes 的 availableSeconds／gapSeconds 来自 sceneCoverage，表示画面素材覆盖，不是音频解码或静音检测。纯文字卡片不能仅凭 gapSeconds 判定缺少旁白；旁白状态通过 narration-stale、audio-duration 等检查，实际听感仍需独立核听。实现见 feature-video/src/studio-contract.ts 的 sceneCoverage／draftReadiness。

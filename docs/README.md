@@ -50,3 +50,10 @@
 3. 实现进入功能规格、专题规范和生成清单；阶段报告归档，尚未解决的部分按稳定 ID 留在总计划，不能随整篇归档消失。
 4. 验收分别记录技术、来源、视觉、音频、Agent 和用户结论。每次引用报告说明源码范围、环境、失败／未执行项；本机 `.bmw-runtime` 路径不等于可移植证据。
 5. 修改文档时检查相对链接、版本和预算，运行仓库规定的检查。新增／移动／改名／删除测试才刷新 `docs:features`；生成内容不靠手工计数维护。
+
+## 本机记录补收入口
+
+- [完整补收审计与机器清单](research/LOCAL_RECORDS_AUDIT.md)：目录范围、漏收项、证据限制。
+- [量子位十二候选视频](research/QBIT_VIDEOS.md)、[创作案例复核](research/PRODUCTION_CASES.md)、[Pelican 来源链](research/PELICAN_COMPARISON.md)。
+- [本机交付及早期实验归档](history/local-deliveries/README.md)。
+- [可编辑交付与有界获取设计](plans/DELIVERY_AND_ACQUISITION.md)：尚未实现的 DELIVERY-01／MEDIA-04。
