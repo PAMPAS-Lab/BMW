@@ -1,6 +1,8 @@
+import {assertResearchDiagram,researchDiagramSchemas,eventState,defaultResearchDiagram} from './research-diagrams.js'
+import type {ResearchDiagram,EventElement,MeasurementDiagram} from './research-diagrams.js'
 import {finiteNumber,mediaRecord} from './media-contract.js'
 
-export type ScienceKind='curve'|'ratio'|'flow'|'array'
+export type ScienceKind='curve'|'ratio'|'flow'|'array'|'events'|'measurement'
 export interface SciencePoint {x:number;y:number}
 interface ScienceBase {version:1;title:string;unit:string;note:string;theme:'dark'|'light';durationSeconds:number;delaySeconds:number;offsetSeconds:number}
 export interface ScienceCurve extends ScienceBase {kind:'curve';points:SciencePoint[];xDomain:[number,number];yDomain:[number,number];xUnit:string;color:string;showDot:boolean}
@@ -9,7 +11,7 @@ export interface ScienceRatio extends ScienceBase {kind:'ratio';mode:'bar'|'pie'
 export interface ScienceFlow extends ScienceBase {kind:'flow';mode:'drill'|'flow';path:SciencePoint[];dots:number;cycles:number;valueStart:number;valueEnd:number;color:string}
 export interface ScienceGroup {label:string;count:number;color:string}
 export interface ScienceArray extends ScienceBase {kind:'array';groups:ScienceGroup[]}
-export type ScienceSpec=ScienceCurve|ScienceRatio|ScienceFlow|ScienceArray
+export type ScienceSpec=ScienceCurve|ScienceRatio|ScienceFlow|ScienceArray|ResearchDiagram
 const commonFields=['version','kind','title','unit','note','theme','durationSeconds','delaySeconds','offsetSeconds']
 const closed=(v:Record<string,unknown>,fields:readonly string[])=>{if(Object.keys(v).some(k=>!fields.includes(k)))throw new TypeError('Unsupported scientific diagram field.')}
 function text(raw:unknown,max:number,label:string):string{if(typeof raw!=='string'||raw.length>max||/[\u0000-\u001f\u007f]/.test(raw))throw new TypeError('Invalid '+label+'.');return raw}
@@ -23,6 +25,7 @@ function points(raw:unknown,max:number,normalized=false):SciencePoint[]{
 /** Data only. No expression, formatter callback, arbitrary layout program or URL. */
 export function assertScienceSpec(raw:unknown):ScienceSpec {
  const v=mediaRecord(raw)
+ if(v.version===2)return assertResearchDiagram(v)
  if(v.version!==1||!['curve','ratio','flow','array'].includes(String(v.kind)))throw new TypeError('Unsupported scientific diagram version/kind.')
  const theme=v.theme===undefined?'dark':v.theme;if(theme!=='dark'&&theme!=='light')throw new TypeError('Unknown diagram theme.')
  const base:ScienceBase={version:1,title:text(v.title,40,'diagram title'),unit:text(v.unit,12,'diagram unit'),note:text(v.note===undefined?'':v.note,80,'diagram note'),theme,durationSeconds:finiteNumber(v.durationSeconds,'diagram animation duration',.1,720),delaySeconds:finiteNumber(v.delaySeconds===undefined?0:v.delaySeconds,'diagram delay',0,720),offsetSeconds:finiteNumber(v.offsetSeconds===undefined?0:v.offsetSeconds,'diagram original clock',0,720)}
@@ -54,7 +57,7 @@ type Schema=Record<string,unknown>
 const numeric=(min:number,max:number,integer=false):Schema=>({type:integer?'integer':'number',minimum:min,maximum:max}),string=(max:number):Schema=>({type:'string',maxLength:max,pattern:'^[^\\u0000-\\u001f\\u007f]*$'}),rgb={type:'string',pattern:'^#[a-fA-F0-9]{6}$'},object=(properties:Record<string,unknown>,required=Object.keys(properties)):Schema=>({type:'object',additionalProperties:false,properties,required}),list=(items:Schema,minItems:number,maxItems:number):Schema=>({type:'array',items,minItems,maxItems})
 const dataNumber=numeric(-1e9,1e9),dataPoint=object({x:dataNumber,y:dataNumber}),normalizedPoint=object({x:numeric(0,1),y:numeric(0,1)}),dataDomain=list(dataNumber,2,2),common={version:{const:1},title:string(40),unit:string(12),note:string(80),theme:{enum:['dark','light']},durationSeconds:numeric(.1,720),delaySeconds:numeric(0,720),offsetSeconds:numeric(0,720)}
 const required=['version','kind','title','unit','durationSeconds']
-export const scienceSpecSchema={oneOf:[object({...common,kind:{const:'curve'},points:list(dataPoint,2,64),xDomain:dataDomain,yDomain:dataDomain,xUnit:string(12),color:rgb,showDot:{type:'boolean'}},[...required,'points','xDomain','yDomain','xUnit','color']),object({...common,kind:{const:'ratio'},mode:{enum:['bar','pie','ring']},parts:list(object({label:string(24),value:numeric(0,1e9),color:rgb}),1,8)},[...required,'mode','parts']),object({...common,kind:{const:'flow'},mode:{enum:['drill','flow']},path:list(normalizedPoint,2,32),dots:numeric(1,24,true),cycles:numeric(1,8,true),valueStart:dataNumber,valueEnd:dataNumber,color:rgb},[...required,'mode','path','dots','valueStart','valueEnd','color']),object({...common,kind:{const:'array'},groups:list(object({label:string(24),count:numeric(0,64,true),color:rgb}),1,8)},[...required,'groups'])]}
+export const scienceSpecSchema={oneOf:[...researchDiagramSchemas,object({...common,kind:{const:'curve'},points:list(dataPoint,2,64),xDomain:dataDomain,yDomain:dataDomain,xUnit:string(12),color:rgb,showDot:{type:'boolean'}},[...required,'points','xDomain','yDomain','xUnit','color']),object({...common,kind:{const:'ratio'},mode:{enum:['bar','pie','ring']},parts:list(object({label:string(24),value:numeric(0,1e9),color:rgb}),1,8)},[...required,'mode','parts']),object({...common,kind:{const:'flow'},mode:{enum:['drill','flow']},path:list(normalizedPoint,2,32),dots:numeric(1,24,true),cycles:numeric(1,8,true),valueStart:dataNumber,valueEnd:dataNumber,color:rgb},[...required,'mode','path','dots','valueStart','valueEnd','color']),object({...common,kind:{const:'array'},groups:list(object({label:string(24),count:numeric(0,64,true),color:rgb}),1,8)},[...required,'groups'])]}
 /** Animation is a pure function of the retained source clock, including reverse seeks. */
 export function scienceProgress(spec:ScienceSpec,local:number):number {
  if(!Number.isFinite(local))throw new TypeError('Invalid scientific diagram time.')
@@ -71,12 +74,16 @@ function prefixAt(values:readonly SciencePoint[],progress:number,byX=false):{poi
 }
 export interface ScienceArrayBox {x:number;y:number;width:number;height:number}
 export type ScienceState=
+ |{kind:'events';progress:number;elements:EventElement[]}
+ |{kind:'measurement';progress:number;series:MeasurementDiagram['series']}
  |{kind:'curve';progress:number;points:SciencePoint[];tip:SciencePoint}
  |{kind:'ratio';progress:number;total:number;currentTotal:number;parts:(SciencePart&{targetValue:number;fraction:number;start:number;end:number})[]}
  |{kind:'flow';progress:number;points:SciencePoint[];tip:SciencePoint;dots:SciencePoint[];value:number}
  |{kind:'array';progress:number;total:number;groups:(ScienceGroup&ScienceArrayBox)[];items:(ScienceArrayBox&{id:number;group:number;color:string})[]}
 export function scienceState(spec:ScienceSpec,local:number):ScienceState {
  const progress=scienceProgress(spec,local)
+ if(spec.kind==='events')return {kind:'events',progress,elements:eventState(spec,local)}
+ if(spec.kind==='measurement')return {kind:'measurement',progress,series:spec.series}
  if(spec.kind==='curve')return {kind:'curve',progress,...prefixAt(spec.points,progress,true)}
  if(spec.kind==='ratio'){
   const total=spec.parts.reduce((n,p)=>n+p.value,0);let start=0
@@ -95,6 +102,7 @@ export function scienceState(spec:ScienceSpec,local:number):ScienceState {
  return {kind:'array',progress,total,groups,items}
 }
 export function defaultScienceSpec(kind:ScienceKind):ScienceSpec {
+ if(kind==='events'||kind==='measurement')return defaultResearchDiagram(kind)
  const common={version:1 as const,title:'',unit:'',note:'示意数据，非原片实验读数',theme:'dark' as const,durationSeconds:3,delaySeconds:0,offsetSeconds:0}
  if(kind==='curve')return {...common,kind,title:'曲线生长与沿线点',unit:'示意值',xUnit:'阶段',xDomain:[0,1],yDomain:[0,1],points:[{x:0,y:0},{x:.2,y:.15},{x:.5,y:.65},{x:.8,y:.82},{x:1,y:1}],color:'#70d5ff',showDot:true}
  if(kind==='ratio')return {...common,kind,title:'动态比例',unit:'个',mode:'ring',parts:[{label:'甲',value:45,color:'#70d5ff'},{label:'乙',value:35,color:'#75e2b7'},{label:'丙',value:20,color:'#ffc56b'}]}

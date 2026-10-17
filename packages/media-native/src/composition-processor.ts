@@ -11,6 +11,8 @@ import {assertCompositionQuality,compositionQualityPlan} from './composition-qua
 /** Bounded multi-asset browser job. Renderer receives only pinned Project handles. */
 export class CompositionProcessor {
   private active = false
+  private failedCleanup:(()=>Promise<void>)|undefined
+  async recoverCleanup():Promise<void>{if(this.failedCleanup){await this.failedCleanup();this.failedCleanup=undefined;this.active=false}}
   constructor(private options: { session: Session; pagePath: string; preloadPath: string; onStatus?: (value: Record<string, unknown>) => void }) {}
   get busy(): boolean { return this.active }
   async compose(raw: unknown, directory: string, signal?: AbortSignal) {
@@ -95,10 +97,14 @@ export class CompositionProcessor {
       if (abort) signal?.removeEventListener('abort', abort)
       if (listener) ipcMain.removeListener('bmw-composition-reply', listener)
       if (registered) { ipcMain.removeHandler('bmw-composition-read'); ipcMain.removeHandler('bmw-composition-write') }
-      window?.destroy()
-      await ioTail
-      await Promise.allSettled([...inputs.map(input => input.close()), output?.close()])
-      this.active = false
+      const cleanup=async()=>{
+        window?.destroy();if(window&&!window.isDestroyed())throw new Error('Composition worker did not stop.')
+        await ioTail
+        const results=await Promise.allSettled([...inputs.map(input=>input.close()),...(output?[output.close()]:[])])
+        if(results.some(r=>r.status==='rejected'))throw new Error('Composition IO cleanup failed.')
+      }
+      try{await cleanup();this.active=false}
+      catch{this.failedCleanup=async()=>{await cleanup();if(completedPath)await fs.rm(completedPath,{force:true})};throw new Error('Composition cleanup failed; media remains quarantined until media.record.stop succeeds.')}
       this.options.onStatus?.({ active: false, kind: 'processing', action: 'video.compose' })
     }
   }

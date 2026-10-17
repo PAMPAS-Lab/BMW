@@ -6,15 +6,17 @@ BMW 是以浏览器为能力边界、以媒体为原生数据的桌面 Agent 工
 
 ## 运行
 
-需要 Node.js 24+。BMW Assistant 可选择 DSH、Codex 或 Qoder CN；各引擎使用官方运行时和独立认证配置。默认入口已装配三驱动；新 Profile 默认选择 DSH，之后按 Project 保存所选驱动。当前状态见 [PROJECT_STATUS.md](docs/PROJECT_STATUS.md)，分阶段验收和真实模型证据见 [实施记录](docs/history/agent-drivers/IMPLEMENTATION.md)。DSH 适配基线为 `0.2.0-rc.2`，Electron 为 `44.5.1`，Mediabunny 为 `1.61.0`。
+需要 Node.js 24+。BMW Assistant 可选择 DSH、Codex 或 Qoder CN；各引擎使用官方运行时和独立认证配置。默认入口已装配三驱动；新 Profile 默认选择 DSH，之后按 Project 保存所选驱动。当前状态见 [PROJECT_STATUS.md](docs/PROJECT_STATUS.md)，分阶段验收和真实模型证据见 [实施记录](docs/history/agent-drivers/IMPLEMENTATION.md)。DSH 适配基线为 `0.2.1-rc.2`，Electron 为 `44.5.1`，Mediabunny 为 `1.61.0`。
 
 ```bash
 git clone https://github.com/pampas-lab/BMW.git
 cd BMW
 npm ci
-npm install -g @deepseek-ai/dsh@0.2.0-rc.2
+npm install -g @deepseek-ai/dsh@0.2.1-rc.2
 npm start
 ```
+
+DSH `0.2.1-rc.2` 为官方候选版（npm `next`）；本机已用该版与 `deepseek-flash` 完成 SI 新闻重制，[工程、成片及验证范围](docs/research/DSH_SI_DELIVERY.json)单列，原 Qoder 版本保留。
 
 上面的 DSH 安装只在使用该驱动时需要。`dsh` 必须位于 PATH；BMW 在自己的 `dsh-home` 安装预设，并在首次初始化时从 `DSH_HOME` 或 `~/.dsh` 复制已有普通 CLI 凭据，后续写入不修改原文件。无需先进入 DSH 界面配置模型，可在 BMW 登录框填写 DeepSeek API Key。Codex 通过公共 PATH、应用内 CLI 路径或 `BMW_CODEX_EXECUTABLE` 发现安装；Qoder 的官方 SDK/CLI 随依赖安装。切换 Assistant 驱动会读取认证；缺少凭据时自动打开登录框，可登录或改选其他驱动。DSH 提供 DeepSeek API Key，Codex 提供 ChatGPT 浏览器登录，Qoder CN 使用官方 CLI 浏览器授权。登录后只显示维护的支持名单中由官方目录提供的模型，点击“确认选择”保存；不要求用户发起模型验证或测试对话。Codex API Key 认证可由其独立 CLI 配置识别，BMW 当前没有 API Key 输入表单；未安装时显示安装状态。实际输入前仍自动验证唯一 `browser`。依赖版本由 `package-lock.json` 固定；首次启动自动构建。
 
@@ -38,10 +40,11 @@ BMW_USER_DATA_DIR=/tmp/bmw-disposable npm start
 - Video Studio 在主窗口中切换工作区：素材收集、全局与分镜脚本、真实旁白、画面匹配、预览编辑和导出。
 - 草稿强绑定所属会话：一个会话可有多个草稿，共享 Project 素材；切换会话切换可见草稿，无草稿显示空状态。支持删除草稿并保留素材与可恢复记录。
 - 素材准备、匹配、工作台、封面和画面片段均支持真实图片／视频缩略图、放大预览与列表／图标切换；支持拖拽绑定、使用关系分组与时间轴定位。
-- Video Studio 默认把镜头卡片、脚本与预览放在一个工作台；高级编辑主动开启，使用全窗口资源／画布／属性／多轨，同一 Assistant 转为小浮框或停靠。两种视图共享 Video Document 2.0–2.9、保存与撤销；简洁编辑是可逆子集，独立图层／音轨／自由关键帧要求高级编辑，移除或撤销后可恢复简洁模式。支持主轨和独立图层／音轨、有限关键帧、整镜头分割、基础颜色／模糊和静音；参考抽样与逐项审阅按需使用，审阅标为可选测试功能。
+- 类型制作提供新闻速递、综合科普、学术解释三类版本化指导，分段工作表、配方预览／显式采用和类型审阅表。来源作品／版本关系、句目标与原生改稿影响查询保存到2.10文档；重套模板保留既有编辑。新增事件联动、独立测量柱图／对数散点、有限分组和16格受限预合成；外部素材保留显式版本链。技术验证、三类样片、人工试听和观众理解分别验收，状态见[下一步计划](docs/plans/NEXT_STEPS.md)。
+- Video Studio 默认把镜头卡片、脚本与预览放在一个工作台；高级编辑主动开启，使用全窗口资源／画布／属性／多轨，同一 Assistant 转为小浮框或停靠。两种视图共享 Video Document 2.0–2.10、保存与撤销；简洁编辑是可逆子集，独立图层／音轨／自由关键帧要求高级编辑，移除或撤销后可恢复简洁模式。支持主轨和独立图层／音轨、有限关键帧、整镜头分割、基础颜色／模糊和静音；参考抽样与逐项审阅按需使用，审阅标为可选测试功能。
 - 已有 MP4 可直接查看、另存；视频内容和源素材未变时自动复用新版成片，支持明确重新制作。封面编辑不要求重新编码视频。
 - 比例、分辨率、帧率、画面风格、水印、配乐及 TTS 设置与命名模板。显式参数优先于模板，模板优先于默认值。
-- 默认 Edge 云希男声、0% 语速，在线旁白默认开启；支持关闭在线旁白、选择 Edge 晓晓女声或本地 Matcha 中英语音。改变音色须重新生成已有音频。
+- 旁白支持 Edge、Qwen TTS 和本地 Matcha。全局初始默认仍为 Edge 云希男声、0% 语速；Qwen 默认音色为新闻推荐的闻怀之，提供设置内加密保存凭据与试听。改变音色须重新生成已有音频。
 - 页面录制事件与可编辑焦点、限定正文来源、准确原文引用、候选确认和有限下载／播放器采集；来源与冲突状态可导出核对。
 - 固定 whisper.cpp base/small 语音证据、句／段校正与字幕、强调、板书共享锚点；自动句／词／字声学准确率未获批准。
 
@@ -52,6 +55,17 @@ NODE_USE_ENV_PROXY=1 npm run setup:local-tts
 ```
 
 本地合成使用固定 Sherpa-ONNX WASM 与模型缓存，合成期间禁止网络。Edge 将旁白文本发送至固定 Microsoft 服务，可能因服务或网络不可用而失败。
+
+### Qwen 配置与试听
+
+1. 打开 BMW 的 **More → Settings → Media → Video narration**，勾选 **Allow Qwen online narration**。
+2. 填写阿里云百炼北京地域的 **Workspace ID** 和 **API Key**，点击 **保存 Qwen 配置**。保存后立即生效，无需环境变量或重启。
+3. 选择试听音色，点击 **生成并试听**。固定示例文本为“这里是新闻速递，为你播报今日要闻。”；生成期间可取消，完成后可反复播放；关闭设置会中止生成并释放试听音频。试听会消耗少量百炼额度。
+4. 在 **Settings → 视频制作 → 旁白音色** 中选择 Qwen 并保存全局设置，或在 Studio 的视频设置中为当前草稿选择。试听选择不会修改视频默认音色，已有录音需重新生成才会改变。
+
+固定模型为 `qwen-audio-3.1-tts-flash`，Qwen 默认 **闻怀之 `wenhuaizhi_v3.1`**、0% 语速，适合作为新闻速递的起始选择；另可选女声许言初 `xuyanchu_v3.1`、许玉远 `xuyuyuan_v3.1`，或清亮自然的男声安明远 `anmingyuan_v3.1`。Qwen 在线开关默认关闭，已有 Edge／本地设置和草稿保留；服务失败不会自动切换提供方。[音色与接口边界](docs/FUNCTIONAL_SPEC.md#qwen-tts-配置安全保存与试听)及[验证范围](docs/VERIFICATION.md#qwen-tts-验证范围)分别说明实现和验收限制。
+
+API Key 与 Workspace ID 使用系统安全存储加密保存在当前 BMW Profile，Key 保存后不回显；再次保存时留空保留原 Key。系统安全存储不可用时拒绝保存，已有密文无法读取时保留原文件；可主动点击 **清除 Qwen 配置** 删除旧配置并关闭 Qwen。凭据只由原生配音层使用，不写入视频模板、Project 文档或模型上下文。
 
 ## 包边界
 

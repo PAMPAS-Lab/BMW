@@ -3,14 +3,24 @@ import path from 'node:path'
 import crypto from 'node:crypto'
 import { BrowserWindow, ipcMain, session, protocol } from 'electron'
 import type { IpcMainInvokeEvent, Session } from 'electron'
+import { synthesizeQwenNarration } from './qwen-narration.js'
+import type {QwenNarrationCredentials} from './narration-contract.js'
 import { assertNarration } from './narration-contract.js'
 import { LOCAL_TTS_ASSETS, LOCAL_TTS_VERSION } from './local-tts-assets.js'
 import { mediaRecord } from './media-contract.js'
 protocol.registerSchemesAsPrivileged([{ scheme: 'bmw-tts', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true } }])
 export class NarrationProcessor {
   private active = false
-  constructor(private options: { pagePath: string; preloadPath: string; onStatus?: (value: Record<string, unknown>) => void }) {}
+  private cleanupSession?:Session
+  constructor(private options: { pagePath: string; preloadPath: string; onStatus?: (value: Record<string, unknown>) => void; getQwenCredentials?:()=>QwenNarrationCredentials }) {}
   get busy(): boolean { return this.active }
+  /** Explicit media.record.stop recovery; failed cleanup retains media admission. */
+  async recoverCleanup():Promise<void> {
+    if(!this.cleanupSession)return
+    await this.cleanupSession.closeAllConnections()
+    this.cleanupSession=undefined;this.active=false
+    this.options.onStatus?.({active:false,kind:'processing',action:'video.narrate'})
+  }
   async narrate(raw: unknown, directory: string, signal?: AbortSignal) {
     const request = assertNarration(raw)
     signal?.throwIfAborted()
@@ -24,6 +34,21 @@ export class NarrationProcessor {
       const root = await fs.realpath(directory), token = crypto.randomUUID()
       // Separate nonpersistent Session; never alter the user's browsing headers/cookies.
       const isolated = isolatedSession = session.fromPartition(`bmw-narration-${token}`)
+      if(request.provider==='qwen-tts'){
+        // Credentials stay native; the sandbox renderer never receives them.
+        if(process.env.HTTPS_PROXY)await isolated.setProxy({proxyRules:process.env.HTTPS_PROXY})
+        const deadline=new AbortController()
+        timer=setTimeout(()=>deadline.abort(new Error('Qwen narration exceeded its processing deadline.')),60_000)
+        const jobSignal=signal?AbortSignal.any([signal,deadline.signal]):deadline.signal
+        this.options.onStatus?.({active:true,kind:'processing',action:'video.narrate',progress:0})
+        let data:Uint8Array
+        try{data=await synthesizeQwenNarration(request,(url,init)=>isolated.fetch(url,init),jobSignal,this.options.getQwenCredentials?.())}
+        catch{jobSignal.throwIfAborted();throw new Error('Qwen narration failed. 请检查 BMW 设置中的北京地域 Qwen 凭据、模型权限、额度和网络。 No audio was saved.')}
+        jobSignal.throwIfAborted()
+        const artifactId=`narration-${token}.wav`;outputPath=path.join(root,artifactId)
+        await fs.writeFile(outputPath,data,{flag:'wx',mode:0o600});jobSignal.throwIfAborted()
+        return {artifactId,path:outputPath,bytes:data.length,type:'audio',contentType:'audio/wav',...request}
+      }
       const local = request.provider === 'local-matcha'
       if (local) {
         const modelDirectory = path.resolve(import.meta.dirname, '../../../.bmw-runtime/local-tts', LOCAL_TTS_VERSION)
@@ -88,6 +113,11 @@ export class NarrationProcessor {
       if (isolatedSession && await isolatedSession.protocol.isProtocolHandled('bmw-tts')) isolatedSession.protocol.unhandle('bmw-tts')
       isolatedSession?.webRequest.onBeforeRequest(null)
       isolatedSession?.webRequest.onBeforeSendHeaders(null)
+      if(request.provider==='qwen-tts'&&isolatedSession){
+        this.cleanupSession=isolatedSession
+        try{await this.recoverCleanup()}
+        catch{if(outputPath)await fs.rm(outputPath,{force:true});throw new Error('Qwen narration cleanup failed; media remains quarantined. Use media.record.stop to retry cleanup.')}
+      }
       this.active = false; this.options.onStatus?.({ active: false, kind: 'processing', action: 'video.narrate' })
     }
   }

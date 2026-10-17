@@ -490,3 +490,54 @@ test('loupe keeps base framing while its source clock follows trims and rate cha
 test('quality observation bounds memory while preserving every actual paint and restoring the native method',async()=>{
  let draws=0,measured=0;const original=()=>{draws++},context={fillText:original,globalAlpha:1,font:'20px sans-serif',measureText:()=>{measured++;return {width:100,actualBoundingBoxLeft:0,actualBoundingBoxRight:100,actualBoundingBoxAscent:20,actualBoundingBoxDescent:2}},getTransform:()=>({a:1,b:0,c:0,d:1,e:0,f:0})} as unknown as CanvasRenderingContext2D,observed=await traceCanvasText(context,async()=>{for(let i=0;i<300;i++)context.fillText('Label '+i,0,20)});assert.equal(draws,300);assert.equal(measured,256);assert.equal(observed.texts.length,256);assert.equal(observed.omittedTexts,44);assert.equal(context.fillText,original);await assert.rejects(traceCanvasText(context,async()=>{throw new Error('paint failed')}),/paint failed/);assert.equal(context.fillText,original)
 })
+
+test('Qwen narration uses its news voice and rejects cross-provider choices and model controls',()=>{
+  assert.deepEqual(assertNarration({text:'新闻速递',provider:'qwen-tts'}),{text:'新闻速递',provider:'qwen-tts',voice:'wenhuaizhi_v3.1',ratePercent:0})
+  assert.equal(assertNarration({text:'新闻',voice:'xuyanchu_v3.1'}).provider,'qwen-tts')
+  assert.equal(assertNarration({text:'科技新闻',voice:'anmingyuan_v3.1'}).provider,'qwen-tts')
+  for(const patch of [{provider:'qwen-tts',voice:'zh-CN-YunxiNeural'},{provider:'edge-readaloud',voice:'wenhuaizhi_v3.1'},{provider:'edge-readaloud',voice:'anmingyuan_v3.1'},{provider:'qwen-tts',model:'other'},{provider:'qwen-tts',apiKey:'secret'},{provider:'qwen-tts',workspace:'other'}])assert.throws(()=>assertNarration({text:'新闻',...patch}))
+})
+
+import {qwenNarrationConfiguration,qwenAudioUrl,synthesizeQwenNarration} from '../src/qwen-narration.js'
+const qwenFixtureEnvironment={apiKey:'fixture-native-secret',workspaceId:'workspace-fixture'}
+function qwenWavFixture():Uint8Array {
+  const bytes=new Uint8Array(1024);bytes.set(new TextEncoder().encode('RIFF'),0);bytes.set(new TextEncoder().encode('WAVE'),8);return bytes
+}
+function qwenOutput(url='http://dashscope-result-bj.oss-cn-beijing.aliyuncs.com/pre/audio.wav?signature=fixture'):Response{return Response.json({output:{finish_reason:'stop',audio:{url}}})}
+test('Qwen native adapter sends the fixed Beijing model and rate, retrieves bounded WAV without credentials or redirects',async()=>{
+  const calls:{url:string;init:RequestInit}[]=[]
+  const data=await synthesizeQwenNarration({text:'今日新闻。',provider:'qwen-tts',ratePercent:15},async(url,init)=>{calls.push({url,init});return calls.length===1?qwenOutput():new Response(qwenWavFixture() as Uint8Array<ArrayBuffer>)},new AbortController().signal,qwenFixtureEnvironment)
+  assert.deepEqual(data,qwenWavFixture());assert.equal(calls.length,2)
+  assert.equal(calls[0].url,'https://workspace-fixture.cn-beijing.maas.aliyuncs.com/api/v1/services/audio/tts/SpeechSynthesizer')
+  assert.deepEqual(JSON.parse(String(calls[0].init.body)),{model:'qwen-audio-3.1-tts-flash',input:{text:'今日新闻。',voice:'wenhuaizhi_v3.1',format:'wav',sample_rate:24000,rate:1.15,language_hints:['zh'],enable_ssml:false}})
+  assert.equal((calls[0].init.headers as Record<string,string>).Authorization,'Bearer fixture-native-secret')
+  assert.equal(calls[1].init.headers,undefined);assert.ok(calls[1].url.startsWith('https:'))
+  for(const call of calls){assert.equal(call.init.redirect,'error');assert.equal(call.init.credentials,'omit')}
+})
+test('Qwen rejects untrusted download origins, missing credentials, provider errors, excessive bytes and invalid WAV without retries',async()=>{
+  for(const url of ['https://evil.test/a','https://dashscope-result-bj.oss-cn-beijing.aliyuncs.com.evil.test/a','https://u:p@dashscope-result-bj.oss-cn-beijing.aliyuncs.com/a','file:///tmp/a','https://dashscope-result-bj.oss-cn-beijing.aliyuncs.com:444/a'])assert.throws(()=>qwenAudioUrl(url))
+  for(const env of [{},{...qwenFixtureEnvironment,apiKey:'bad\r\nkey'},{...qwenFixtureEnvironment,workspaceId:'user@evil.test'}])assert.throws(()=>qwenNarrationConfiguration(env))
+  for(const responses of [
+    [new Response('fixture-native-secret',{status:401})],
+    [Response.json({code:'InvalidParameter',message:'fixture-native-secret'})],
+    [qwenOutput('https://127.0.0.1/audio')],
+    [qwenOutput(),new Response('bad wav')],
+    [qwenOutput(),new Response('oversize',{headers:{'content-length':String(8*1024*1024+1)}})],
+    [qwenOutput(),new Response(new Uint8Array(8*1024*1024+1))],
+    [new Response('{invalid')],
+    [Response.json({output:{finish_reason:null,audio:{}}})]
+  ]){
+    let calls=0
+    await assert.rejects(synthesizeQwenNarration({text:'新闻',provider:'qwen-tts'},async()=>{const response=responses[calls++];assert.ok(response,'No automatic retry');return response},new AbortController().signal,qwenFixtureEnvironment),error=>error instanceof Error&&!error.message.includes('fixture-native-secret'))
+    assert.equal(calls,responses.length)
+  }
+})
+test('Qwen cancellation cancels an in-flight audio body and does not retry synthesis',async()=>{
+  const abort=new AbortController();let calls=0,cancelled=false
+  await assert.rejects(synthesizeQwenNarration({text:'新闻',provider:'qwen-tts'},async()=>{
+    calls++;if(calls===1)return qwenOutput()
+    return new Response(new ReadableStream<Uint8Array>({pull(controller){controller.enqueue(new Uint8Array(32));abort.abort(new Error('Cancel Qwen fixture'))},cancel(){cancelled=true}}))
+  },abort.signal,qwenFixtureEnvironment),/Cancel Qwen fixture/)
+  assert.equal(calls,2);assert.equal(cancelled,true)
+  await assert.rejects(synthesizeQwenNarration({text:'新闻',provider:'qwen-tts'},async()=>{throw new Error('Must not fetch')},abort.signal,qwenFixtureEnvironment),/Cancel Qwen fixture/)
+})

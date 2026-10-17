@@ -675,9 +675,11 @@ try {
   const voiceContext=await waitFor(async()=>{const ctx=agentRecord(await assistant.executeJavaScript('window.bmwAssistant.composerContext()')),selection=agentRecord(ctx.selection);return typeof selection.voiceSegmentId==='string'?ctx:null},'exact voice piece context')
   const voiceSelection=agentRecord(voiceContext.selection),voiceObject=agentRecord(voiceContext.object),voiceTarget={projectId:initial.project.id,sessionId:initial.selectedSessionId,draftId:voiceDraft.id,kind:'object',sceneId:'scope-voice',objectKind:'voice',voiceSegmentId:voiceSelection.voiceSegmentId}
   assert.equal(voiceObject.id,voiceTarget.voiceSegmentId);assert.equal(voiceObject.category,'audio');assert.equal(voiceObject.durationSeconds,.5)
+  await waitFor(async()=>await videoView.executeJavaScript("Number(document.getElementById('seek').value)===1&&!document.getElementById('seek').disabled&&!document.getElementById('timeline-split').disabled&&!document.getElementById('main-voice-start').disabled")?true:null,'voice split finishes preview at the original playhead')
   await assistant.executeJavaScript("document.getElementById('input').value='hold';document.getElementById('input').dispatchEvent(new Event('input'));true")
   const voiceLabel=await assistant.executeJavaScript("document.getElementById('studio-scope').textContent");assert.match(String(voiceLabel),/旁白.*片段 2.*已固定/)
   await videoView.executeJavaScript("document.querySelector('#timeline-voice [data-voice-segment-id]').click();true")
+  await waitFor(async()=>await videoView.executeJavaScript("Number(document.getElementById('main-voice-start').value)===.5&&!document.getElementById('main-voice-start').disabled&&!document.getElementById('seek').disabled&&!document.getElementById('timeline-split').disabled")?true:null,'voice first-piece selection and preview complete')
   assert.equal(await assistant.executeJavaScript("document.getElementById('studio-scope').textContent"),voiceLabel)
   assert.equal(await videoView.executeJavaScript("Number(document.getElementById('seek').value)"),1,'Voice piece selection does not seek the playhead')
   await videoView.executeJavaScript("document.getElementById('view-toggle').click();true")

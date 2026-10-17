@@ -1,0 +1,298 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-17T12:28:01.515Z",
+  "title": "马斯克把AI改叫SI：只换一个字母，预期升了一档",
+  "driver": "dsh",
+  "harness": {
+    "version": "0.2.1-rc.2",
+    "releaseChannel": "official-next-release-candidate",
+    "previousVersion": "0.2.0-rc.2",
+    "installedPackage": "@deepseek-ai/dsh@0.2.1-rc.2"
+  },
+  "model": {
+    "provider": "deepseek-official",
+    "route": "deepseek-flash",
+    "officialDatedMapping": "DeepSeek-V4.1-Flash-1017",
+    "mappingSource": "https://api-docs.deepseek.com/updates/",
+    "mappingScope": "Official announcement; runtime verifies stable route, not a separate checkpoint identifier."
+  },
+  "effectiveTools": [
+    "browser"
+  ],
+  "profile": "disposable",
+  "caseRoot": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z",
+  "bmwSessionId": "a5182dbe-c133-4311-8514-46dc14cfcc21",
+  "draftId": "c6c3eda1-45df-4098-b96b-56f7b211b1cd",
+  "revision": 34,
+  "editableDocument": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/video-studio/c6c3eda1-45df-4098-b96b-56f7b211b1cd.json",
+  "documentSha256": "3442069ef00b434cbf876c70498dc7d951a0b0c067d71b33fe5d765cc04eb125",
+  "mp4": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-fce1a369-9684-4f66-9ea5-2074a42f7996-converted.mp4",
+  "mp4Sha256": "9ad62b0aff8ece2ab36e4ae68c867bdf9f3c68e23f546ef3d75cda9ec03bf8ee",
+  "exportFingerprint": "b88fb04af048c74079c671069cf25e68d3c5058bc66da70bb946d91b4932ff65",
+  "exportRevision": 33,
+  "actualDurationSeconds": 57.664,
+  "timelineDurationSeconds": 57.583333333333336,
+  "width": 720,
+  "height": 1280,
+  "fps": 24,
+  "music": false,
+  "watermark": false,
+  "narration": {
+    "provider": "qwen-tts",
+    "model": "qwen-audio-3.1-tts-flash",
+    "voice": "anmingyuan_v3.1",
+    "displayName": "安明远",
+    "ratePercent": 0,
+    "mode": "Reuse six prior real male WAVs byte-for-byte, imported through native attach; no new TTS service calls in this DSH case.",
+    "totalAudioSeconds": 51.519999999999996,
+    "files": [
+      {
+        "sceneId": "s1-swap",
+        "audioArtifactId": "narration-03caa79a-93a6-4995-ba67-f4ff9bbd0892.wav",
+        "sha256": "66cccbe4afbe5ceab258aa42770ef979989b34c7ce7c70fdfd46acf30d4e8011",
+        "durationSeconds": 6.16,
+        "origin": "imported-existing-Qwen-male",
+        "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-03caa79a-93a6-4995-ba67-f4ff9bbd0892.wav"
+      },
+      {
+        "sceneId": "s2-post",
+        "audioArtifactId": "narration-c60de46c-2061-4dd3-a534-68a9ed9c23fa.wav",
+        "sha256": "a78f4f246ebc80349e0e2ac82448f0c53e034186d599fab462f446a55cb42ca8",
+        "durationSeconds": 10,
+        "origin": "imported-existing-Qwen-male",
+        "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-c60de46c-2061-4dd3-a534-68a9ed9c23fa.wav"
+      },
+      {
+        "sceneId": "s3-book",
+        "audioArtifactId": "narration-cda46d54-7719-47a2-86e4-fc4dece0424c.wav",
+        "sha256": "d8d163e7bc195a77454f6123eb8b46036e2516cfe8cdd6e5856518da0291b13c",
+        "durationSeconds": 7.6,
+        "origin": "imported-existing-Qwen-male",
+        "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-cda46d54-7719-47a2-86e4-fc4dece0424c.wav"
+      },
+      {
+        "sceneId": "s4-qa",
+        "audioArtifactId": "narration-014174bd-4dc3-46c3-948e-c157e1832a91.wav",
+        "sha256": "a5d3bf5470b095bcba4601969177df2484f787ada27febe0ba62a6084aeee6a7",
+        "durationSeconds": 9.52,
+        "origin": "imported-existing-Qwen-male",
+        "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-014174bd-4dc3-46c3-948e-c157e1832a91.wav"
+      },
+      {
+        "sceneId": "s5-limit",
+        "audioArtifactId": "narration-facbec51-ca13-4987-8256-7f0fc0a86c88.wav",
+        "sha256": "4d2f3a367cf3432aca19738e09d9993e89f788af075f03d96ac503636ab12957",
+        "durationSeconds": 7.04,
+        "origin": "imported-existing-Qwen-male",
+        "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-facbec51-ca13-4987-8256-7f0fc0a86c88.wav"
+      },
+      {
+        "sceneId": "s6-close",
+        "audioArtifactId": "narration-2060ebcc-eacf-40f4-958b-affb5584a747.wav",
+        "sha256": "710174062edb0e80dc0d8b53ac6e6c79271f56d2d624611508e7aa942c2b5d9d",
+        "durationSeconds": 11.2,
+        "origin": "imported-existing-Qwen-male",
+        "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-2060ebcc-eacf-40f4-958b-affb5584a747.wav"
+      }
+    ]
+  },
+  "technical": {
+    "report": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/video-7ad47eed-6c9e-4fc0-91ef-195ee4e02ab6.json",
+    "sha256": "7cc30d5c9cebd7aab6a94c24b6731814afd2dc110dc5b57b300ddb059f03f968",
+    "status": "passed"
+  },
+  "agentVisualReview": {
+    "journal": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/video-studio/export-reviews/c6c3eda1-45df-4098-b96b-56f7b211b1cd.json",
+    "sha256": "62ded7e36a2d1aa15cfc9a73f094e90a123eb4955c421916cfef45b49e76d152",
+    "totalGeneratedCriticalFrames": 144,
+    "scenes": [
+      {
+        "sceneId": "s1-swap",
+        "frames": 24,
+        "totalSamples": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "已看全部 24 个采样帧（新指纹）：AI 逐字出现后被红色粗横线划掉，SI 黄色逐字出现；只换一个字母、预期大了一截与红色下划线均在安全区，未与底部字幕重叠；无裁字、无遮挡。",
+          "createdAt": "2026-10-17T12:25:53.349Z",
+          "sequence": 2
+        }
+      },
+      {
+        "sceneId": "s2-post",
+        "frames": 24,
+        "totalSamples": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "已看全部 24 个采样帧（新指纹）：原帖卡占宽 92%，作者、@elonmusk、三行原文、4:40 PM · Oct 4, 2026、10.9M Views 均完整可读，未裁字；卡下黄色“不叫AI了，SI更好”与白色“人工 → 超级，不是同一档”不与字幕相撞；读字期间静止不缩放。",
+          "createdAt": "2026-10-17T12:25:56.338Z",
+          "sequence": 3
+        }
+      },
+      {
+        "sceneId": "s3-book",
+        "frames": 24,
+        "totalSamples": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "已看全部 24 个采样帧（新指纹）：书封大图宽 72%，It always was 与 NICK BOSTROM/SUPERINTELLIGENCE 书封完整，卡底动作数未裁断；4.4s 起黄色“名字换短了，书倒挺厚”在卡片下方，不与字幕重叠；无裁字、无遮挡。",
+          "createdAt": "2026-10-17T12:25:59.235Z",
+          "sequence": 4
+        }
+      },
+      {
+        "sceneId": "s4-qa",
+        "frames": 24,
+        "totalSamples": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "已看全部 24 个采样帧（新指纹）：提问行（659K 完整）与“要不要改叫 SpaceXSI？”，5.25s 回复行淡入（1.6M 完整）+“是的，会改。”，8.3s“命名方案都递上来了”与“问答为同上下文截图，未独立采集”小字；两步揭示清楚，无重叠、无裁字。",
+          "createdAt": "2026-10-17T12:26:04.640Z",
+          "sequence": 5
+        }
+      },
+      {
+        "sceneId": "s5-limit",
+        "frames": 24,
+        "totalSamples": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "已看全部 24 个采样帧（新指纹）：边界逐句出现，1.7–2.3s 红线长满，“改哪里、什么时候”与“不能替他往下编”行距正常不贴字，5.4–6.0s 第二条红线完成；底部字幕独立一行，未与正文重叠；无裁字、无遮挡。",
+          "createdAt": "2026-10-17T12:26:08.129Z",
+          "sequence": 6
+        }
+      },
+      {
+        "sceneId": "s6-close",
+        "frames": 24,
+        "totalSamples": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "重点核对 local 8.5833s（sceneIndex 5，总时间 53.958s）：红色竖条已移到最右侧窄边（x .945 / width .02），问句“SpaceXSI 真会挂出来？”的问号与红条之间有明确留白，不再接触。已看全部 24 个采样帧：0.6s “人工”、1.2s “超级”字号落差、3.2–4.8s 红条从底部窄条升到全高、3.4s “想象先升一档”、6.8s 问句、8.6s “可以留意”；红条与文字、字幕均不重叠，无裁字。",
+          "createdAt": "2026-10-17T12:25:49.510Z",
+          "sequence": 1
+        }
+      }
+    ],
+    "film": {
+      "status": "passed",
+      "notes": "整片 57.58s / 720x1280 / 24fps，新指纹下六场共 144 个采样帧已全部逐页取回并实际查看。本次唯一改动为 s6 结尾红色竖条（base 与 3.2/4.8s 关键帧均 x .945、width .02），local 8.58s 帧确认问号与红条已有明确留白，其余五场构图与上一版一致。限制：未做人工听审（没有听审声明），未做 ASR，语音/字幕时序仍为 editorial-estimate；样本为关键状态采样，非逐帧穷尽；用户接受由用户自行判定。",
+      "createdAt": "2026-10-17T12:26:12.291Z",
+      "sequence": 7
+    },
+    "rootActualFrameSamples": [
+      {
+        "sceneId": "s1-swap",
+        "exportFingerprint": "b88fb04af048c74079c671069cf25e68d3c5058bc66da70bb946d91b4932ff65",
+        "frame": {
+          "index": 18,
+          "artifactId": "media-a72fa9b0-6f5b-404a-ad13-b6a973433fe4-frame-3.png",
+          "sha256": "25f35be21381ffba7d425eb48c63188beab2ed91c264607bb7b068ec096a8d85",
+          "seconds": 3.7083333333333335,
+          "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-a72fa9b0-6f5b-404a-ad13-b6a973433fe4-frame-3.png",
+          "localSeconds": 3.7083333333333335
+        }
+      },
+      {
+        "sceneId": "s2-post",
+        "exportFingerprint": "b88fb04af048c74079c671069cf25e68d3c5058bc66da70bb946d91b4932ff65",
+        "frame": {
+          "index": 20,
+          "artifactId": "media-192eec9a-1767-4035-8db0-08f507a4d3de-frame-5.png",
+          "sha256": "718386ed3c38b261629680aa06f8c3d29a5d0e230bcf8a01cf7e327850d35dc9",
+          "seconds": 12.666666666666666,
+          "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-192eec9a-1767-4035-8db0-08f507a4d3de-frame-5.png",
+          "localSeconds": 5.499999999999999
+        }
+      },
+      {
+        "sceneId": "s3-book",
+        "exportFingerprint": "b88fb04af048c74079c671069cf25e68d3c5058bc66da70bb946d91b4932ff65",
+        "frame": {
+          "index": 17,
+          "artifactId": "media-cba2eb58-8c07-40fb-91fd-29968ad9c82a-frame-2.png",
+          "sha256": "b277ac9968f3e453783b6ba40ccb70252bc0dbe52e85dd4c2c7beebd64bc60cb",
+          "seconds": 22.583333333333332,
+          "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-cba2eb58-8c07-40fb-91fd-29968ad9c82a-frame-2.png",
+          "localSeconds": 4.416666666666664
+        }
+      },
+      {
+        "sceneId": "s4-qa",
+        "exportFingerprint": "b88fb04af048c74079c671069cf25e68d3c5058bc66da70bb946d91b4932ff65",
+        "frame": {
+          "index": 20,
+          "artifactId": "media-3f02f6cc-0497-4241-9666-c7a6f70b7bac-frame-5.png",
+          "sha256": "8c9edcf4cdc50f45db6440ba6cb9f785d25c2471d72641237368f50000e21673",
+          "seconds": 35.083333333333336,
+          "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-3f02f6cc-0497-4241-9666-c7a6f70b7bac-frame-5.png",
+          "localSeconds": 8.291666666666668
+        }
+      },
+      {
+        "sceneId": "s5-limit",
+        "exportFingerprint": "b88fb04af048c74079c671069cf25e68d3c5058bc66da70bb946d91b4932ff65",
+        "frame": {
+          "index": 17,
+          "artifactId": "media-65ec3a7a-0ebd-4b57-b624-26e9cb963a2a-frame-2.png",
+          "sha256": "59bbfa151802899f743d2997d355f4d24d91ae8a142786f8726defe9e9eb3393",
+          "seconds": 41.375,
+          "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-65ec3a7a-0ebd-4b57-b624-26e9cb963a2a-frame-2.png",
+          "localSeconds": 4.041666666666664
+        }
+      },
+      {
+        "sceneId": "s6-close",
+        "exportFingerprint": "b88fb04af048c74079c671069cf25e68d3c5058bc66da70bb946d91b4932ff65",
+        "frame": {
+          "index": 21,
+          "artifactId": "media-154a297e-4154-4526-b7f3-82b08f6565a2-frame-6.png",
+          "sha256": "13a8ceace348e68fb9cc48eb4c40b2f29b1eb5d7727f8dfff631c6ffb71ca277",
+          "seconds": 53.958333333333336,
+          "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-154a297e-4154-4526-b7f3-82b08f6565a2-frame-6.png",
+          "localSeconds": 8.583333333333336
+        }
+      }
+    ]
+  },
+  "humanListening": "not-performed",
+  "humanAcceptance": "basic-satisfaction-declared-in-chat",
+  "userFeedback": {
+    "source": "user-message-in-this-chat",
+    "quote": "基本满意，比之前qoder CN要好多了，先提交一次代码吧",
+    "appliesToExportFingerprint": "b88fb04af048c74079c671069cf25e68d3c5058bc66da70bb946d91b4932ff65",
+    "scope": "Basic satisfaction and a qualitative comparison with the prior Qoder CN version; no separate listening, retelling or prediction assessment was supplied. Native Studio user assessment records remain unchanged."
+  },
+  "timing": "editorial-estimate, not ASR/acoustic alignment",
+  "verification": {
+    "report": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T12-12-10-501Z/result.json",
+    "sha256": "e319ccdd1e8526d4a438b9d34adc736ab427d0bd72dfe6d3cb8041bbaa35a2c6",
+    "counts": {
+      "not-run": 12,
+      "passed": 162
+    },
+    "nonMarkdownSourceChanges": []
+  },
+  "productionReceipt": {
+    "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/result.json",
+    "sha256": "f3f8ac846b3b9c692ec1b5255a717867fdca732a17342afdf1ae0aa5423d345f"
+  },
+  "sources": [
+    {
+      "artifactId": "musk-si-post.png",
+      "sha256": "9d2774bb7fb61b30e0423eaf54daea2e808bac7882100f411a8ca4cd1a95a973",
+      "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/musk-si-post.png"
+    },
+    {
+      "artifactId": "musk-si-context.png",
+      "sha256": "586777585c063003f5a4d97394999cd956adf72e1937a46b202a28f63bc559bd",
+      "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/musk-si-context.png"
+    }
+  ],
+  "sourceLimitations": [
+    "Historical saved October 4 screenshots; no new independent X acquisition in this DSH case.",
+    "Q&A is from the same saved context screenshot; missing quoteSpans not invented.",
+    "A reply about a proposed name is not evidence that a corporate rename has completed."
+  ],
+  "previousVersionsPreserved": true,
+  "comparison": "Prior Qoder CN V4 remains in docs/research/P1_AK_DELIVERY.json; this is a separate DSH remake."
+}

@@ -395,6 +395,15 @@ export class BrowserKernel {
   private readonly operations = new SessionOperations()
   get busy():boolean { return this.operations.busy }
 
+  /** Native Shell work shares FIFO and Project exclusion, without a model action. */
+  async runUserMediaTask<T>(projectId:string,operation:()=>Promise<T>,signal?:AbortSignal):Promise<T>{
+    return this.operations.run(()=>{
+      signal?.throwIfAborted()
+      if(this.projectStore.active().id!==projectId)throw new Error('试听所属 Project 已改变，请重试。')
+      if(this.recordingController.isCaptureActive())throw new Error('请等待当前媒体任务完成后再试听。')
+    },operation)
+  }
+
   async execute(rawRequest, { actor = 'agent', signal, sessionOwner }: { actor?: string; signal?: AbortSignal; sessionOwner?:import('./browser-host.js').BrowserSessionOwner } = {}) {
     const owner=sessionOwner?{projectId:sessionOwner.projectId,sessionId:sessionOwner.sessionId}:undefined
     return this.operations.run(() => { signal?.throwIfAborted() }, () => this.executeAction(rawRequest, { actor, signal, sessionOwner:owner }))

@@ -2,9 +2,33 @@
 
 核对日期：2026-10-17。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
 
-## 当前三方对齐基线
+## DSH 0.2.1-rc.2 与 SI 新闻
 
-文档、实现、测试和生成清单已对齐。具体修复及失败过程见[本次验收归档](history/2026-10-17-alignment/README.md)，可移植的[逐项摘要与源码指纹](history/2026-10-17-alignment/verification.json)随仓库保存。
+当前DSH安装与适配基线为官方 `0.2.1-rc.2`（npm `next` 候选版）。新版预设继承全局工具；BMW在官方 `agent/created` 初始化中将该Agent的继承能力限制为唯一 `browser`，预设使用native呈现，Host准入与逐次请求装配检查实际 `wireSchemas`，并核对真实请求header。冷检查覆盖异步MCP就绪后的实际目录、私有凭据设置／清除、无Key时隐藏模型及配置后目录恢复，不发送模型输入。
+
+构建、check、功能／架构发布及[当前分类报告](../.bmw-runtime/classified-tests/2026-10-17T12-12-10-501Z/result.json)通过：**162 passed／0 failed／12 not-run**，含unit／contract／boundary及DSH、desktop、Studio、media、video、speech、本地／Qwen旁白夹具。该报告按明确变更文件选择到完整离线范围，运行期间源码一致；不将其称作一次 `verify:stability --all` 基线更新。最初受限环境启动Electron得到143退出的报告保留，后续在允许原生启动的环境重跑通过，断言未放宽。
+
+独立真实制作见[DSH SI交付](research/DSH_SI_DELIVERY.json)：隔离Profile／Home／Workspace，实际请求为 `deepseek-official/deepseek-flash`、唯一browser，官方运行时拥有循环。官方10月17日更新将该路由指向V4.1-Flash-1017，回执只独立证明路由，不声称另行探测服务端checkpoint。新建自有草稿后在同一Session续做，最终revision34／export33，实际MP4为57.664秒、720×1280、24fps、H.264/AAC。六段先前真实Qwen安明远男声WAV逐字节复用，原生记录为imported，不冒充本轮新TTS。原脚本标题误作分段的问题已通过明确停止、纠错续做修复，最终六场script、audioText、文件及native anchor SHA逐项相符；不自动重放未知投递。
+
+最终指纹 `b88fb04af048c74079c671069cf25e68d3c5058bc66da70bb946d91b4932ff65` 的144个关键状态PNG均有原文件SHA及六场Agent声明，另有较晚的独立film声明；开发侧另查看最终六场实际帧，确认结尾问句与右侧红条分开。用户随后在对话中表示“基本满意，比之前qoder CN要好多了”，反馈已绑定该指纹保存在交付记录；不据此补造专项核听、ASR、观众复述或Studio人工验收。原Qoder V4、所有中间导出与来源保留；既有P1交付清单继续指向其原有版本。
+
+## 2.10 类型与 AK 增量
+
+新增 production、production-assessment、research-diagrams、precomposition 专项共14项已通过；覆盖版本往返、显式类型采用、源文件变化、影响矩阵、句目标重绑、来源环、六版外部结果身份、审阅来源与CAS，以及预合成取消／隔离／晚回执回滚。原生专项实际检查事件／双序列测量／对数散点／代码行和聊天分组，逆序与剪切 Canvas 像素差为0，实际MP4抽样帧相同；16格代理完整解码，并通过 MediaController → Studio 的真实回执入库。技术夹具使用重复源，不冒充16份独立实验。原生报告在 `.bmw-runtime/p1-ak/native/2026-10-17T06-00-27-797Z/result.json`。
+
+当前Schema／功能／架构生成及check通过；[最终冻结完整报告](../.bmw-runtime/classified-tests/2026-10-17-p1-ak-frozen/result.json)为 **162 passed／0 failed／12 not-run**，逐项结果和source-integrity以该报告为准；[可移植交付清单](research/P1_AK_DELIVERY.json)保存计数与458个受测文件的源码指纹。覆盖unit／contract／boundary及DSH、desktop、Studio、media、video、speech、local narration、Qwen夹具；157分类项加5门禁／桌面汇总不重复计数。十二个opt-in未运行项包括六个专用本地素材夹具和六个外部入口；Qoder真实制作是单独显式执行，不将其算进离线项。冻结后的视频内容修订仅修改隔离Project；451个非Markdown受测文件的SHA保持一致。最后清洁构建与输出比较结果单列于交付清单。
+
+中间报告均保留：04-33-08完整断言通过，但修复原生代理回执缺少fps并调整图表期间source-integrity正确失败；04-42-34的中间冻结基线为162 passed／0 failed／12 not-run；04-57-44在多制作窗口并行时出现assistant.application播放头断言失败，且诊断修改导致source-integrity失败。播放头用例随后单独复查通过，原断言未改，未据此认定并发就是根因；随后在所有付费制作窗口退出后复查。第一次收尾报告`2026-10-17-p1-ak-final`为161 passed／1 failed／12 not-run，source-integrity通过；在制作窗口全部退出后仍复现同一播放头问题，排除了先前将其直接归因于并行窗口的解释。现已捕获操作前逻辑时间，串行持有对象选择／保存／预览事务并禁用准备期间主轨操作；脚本等待真实操作完成后仍保留原1秒断言，专项通过。这些中间结果不作为最终源码覆盖，不将多轮通过数相加。新增精确quoteSpans和只读cover候选入口均进入最终构建。 renderer10的首轮完整报告`2026-10-17-p1-ak-complete`为161 passed／1 failed／12 not-run，source-integrity及assistant.application通过，仅Studio未保存输入冲突用例失败。该用例此前只等待任一属性可用，现等待确切对象与选择／预览事务完成；独立复查保留原冲突、输入保留、音轨CAS和播放头断言并全部通过。测试准备期间曾把DOM数值0.5误写为.5，导致前置等待失败；已纠正，未作为产品失败或通过证据。renderer10的后续`2026-10-17-p1-ak-v2-final`仍为161 passed／1 failed／12 not-run，源码一致性通过，失败位于重做后立即选择右旁白片段。随后核对发现主轨控件在预览准备时仍显示可点，但选择逻辑已拒绝；现已在准备开始和重绘时同步禁用真实主轨控件，准备清理完成后恢复。GUI测试统一等待确切时间轴目标可操作及保存／预览事务结束，再执行一次点击；原版本、输入、音轨、像素和播放头断言不变。该版本独立Studio复查通过；最新完整报告仍以实际结果为准。
+
+用户已明确授权本次BMW已配置的Qoder CN账号。真实视频使用官方目录`dfmodel`／DeepSeek-Flash，初始化有效工具仅`browser`，官方运行时拥有循环。开发侧入口`scripts/qoder-production-case.ts`提供明确任务、隔离Project和本次授权鉴权；临时鉴权在退出时清理，原生产Project未改动。当前三条完整主片为：Musk SI新闻V4 57.792秒、机器人科普V2 215.0827秒、HybridAgent学术V2 229.4827秒，均为24fps、renderer10；当前抽样与逐场／全片Agent意见、SHA和可编辑工程见[交付清单](research/P1_AK_DELIVERY.json)。新闻V4使用用户提供的“牧语手记”写作技能重写，保留已认可的引用尺寸，当前六段真实Qwen安明远男声旁白合计51.52秒；字幕与图层按新音长调整。初稿“少了一个字母”经根审阅发现后已改为“只换一个字母”，仅重配hook，其余五段保留身份与SHA。科普只替换第5场18.4322秒旁白、保留其余七段；只读影响计划的真实两页结果确认七段keep／一段rebuild及句锚rebind。字幕时间仍为编辑估计，不冒充声学对齐或模型核听。
+
+另四条历史技术／换题证据为AK组合27.072秒、韦布新闻50.4107秒、吸管科普44.736秒、WEDGE学术56.1493秒，renderer9下实际抽样31／95／72／72张及Agent意见保留，不冒充renderer10当前复用；后两条短片只证明换题迁移。所有旧版文件、重制前草稿快照、中断及失败证据保留。部分小字／停读与来源采集缺口继续记录，科普结尾的原素材人类持吸尘器引入不作为机器人实验证据。用户观看过V1并否定形式，随后肯定新闻V2的引用尺寸与节奏，否定其声音和通用点评；新闻V3针对重做后，用户表示许言初音色可暂用；V4再按用户新要求试写并换安明远男声。最新版本的专项听感、复述、预测和接受仍待确认，Agent视觉passed不关闭内容验收。
+
+真实调用曾发现cover-only影响试算缺少公开输入，现已补齐可选`cover`闭合候选；新增服务级不写入／不编码检查及Qoder实际5次browser调用证明cover rebuild／video keep、32个场景项keep、revision41和原MP4不变。AK三份16格代理使用A03同一源的16区域，完成360p／720p和输入改变重建；A04通过显式2x再1.5x映射，未放宽单字段2x上限。A06/A08/A09导入保留实际文件SHA，但外部生成服务未调用，六轮链为契约夹具。此前24秒试片及45分钟中断均保留，后续使用新明确输入核对已存状态，只完成缺失工作；不将旧导出或中断轮次冒充最终版本。人工听审、复述／预测均未执行；[音频准入矩阵](research/AGENT_AUDIO_ADMISSION.md)仍无三个驱动已核听的证据。
+
+## 既有三方对齐完整基线
+
+该完整基线早于 Qwen TTS 接入，适用于归档所绑定的源码。具体修复及失败过程见[验收归档](history/2026-10-17-alignment/README.md)，可移植的[逐项摘要与源码指纹](history/2026-10-17-alignment/verification.json)随仓库保存；Qwen 的增量范围单列如下。
 
 | 本次执行 | 结果与范围 |
 |---|---|
@@ -17,6 +41,31 @@
 六个未运行项依赖显式本地素材：media.source-analysis-case、media.frame-sampling-case、media.long-composition-case、video.qbit-playback、video.qbit-stage4-samples、video.qbit-stage3-samples。另五项为external.assistant.dsh/codex/qoder-cn、external.vision和external.edge。runner的统一原因文字不代表六个素材夹具属于外部服务。
 
 Electron使用一次性数据和模拟钥匙串。首次受沙箱启动限制及之后定位到的三项失败均留档；不是重试掩盖失败。正式基线绑定修复后源码；完成后仅回填说明文档，受测代码／配置／Schema的430个SHA保持一致。原始日志、截图和媒体留在本机，GitHub仅保存摘要及指纹，不宣称远程CI已运行。
+
+## Qwen TTS 验证范围
+
+Qwen 增量已通过构建、`npm run check`、单元／契约／边界，以及相关 DSH、桌面设置、Studio 资讯设置、媒体处理、视频导出、本地旁白和 Qwen 旁白夹具。分类报告为 `.bmw-runtime/classified-tests/2026-10-17T03-15-55-791Z/result.json`，90 passed、0 failed，选择范围是 unit／contract／boundary；后续 Shell 调整另通过检查及最终桌面设置回归，不将这些结果称为一次新的完整 `--all` 基线。
+
+| 检查入口 | 已验证内容 |
+|---|---|
+| platform.qwen-credentials | 密文持久化、0600 权限、重新读取、空 Key 保留、配置投影不含 Key；弱加密／解密失败／损坏或链接文件拒绝覆盖，显式清除 |
+| media.production、video.settings、video.boundary | 固定模型／音色／地域／语速、模板及 Studio 参数、独立在线许可；下载来源、大小和 WAV 校验；不携带 Key 下载、不重试、不接受模型凭据参数 |
+| qwenNarration | 固定 HTTP 响应下的原生 WAV 保存与真实解码时长、试听回传、失败／取消清理、清理失败隔离及显式恢复 |
+| desktop.settings | mock keychain 下从真实 Shell 表单保存／重读／留空保留 Key，Key 不回显；设置内实际解码与播放器播放、未保存修改阻止试听、错误脱敏、取消／关闭清理、Project 切换排他及清除配置 |
+| 相关 DSH／Studio／媒体／视频／本地旁白 | 既有驱动和编辑入口、实际媒体编解码与导出、本地禁网络配音及取消回滚的回归范围 |
+
+构建后可单独复现 Qwen 夹具与桌面设置检查：
+
+```bash
+BMW_TTS_TEST_PROVIDER=qwen-fixture node scripts/run-electron-script.js scripts/narration-smoke.js
+node scripts/desktop-suite.js --groups settings
+```
+
+这里的 `BMW_TTS_TEST_PROVIDER` 只选择测试分支，不是用户凭据配置；正式配音从 BMW 设置读取凭据。检查始终使用一次性 Profile／Project 和模拟凭据，不读取生产配置。桌面证据保存在 `.bmw-runtime/desktop-suite/`，包含 `qwen-settings-audition.png`；本机原始日志不随提交上传。
+
+安明远男声音色增量的相关检查为 **76 passed／0 failed／98 not-run**（71 个选中分类项及 5 个门禁／汇总），报告 `.bmw-runtime/classified-tests/2026-10-17-news-muyu-male-native/result.json`。覆盖封闭音色枚举与跨提供方拒绝、实际 Shell 男声试听、Studio 参数持久化、原生 Qwen 男声请求及 WAV 解码、取消／隔离恢复和相关媒体／视频／边界回归。此前受限环境下原生进程启动即退出的报告另行保留；原生运行环境补跑全部选中项成功。该增量报告不替代此前 162 项完整基线，也不计入真实服务调用或人工听感。
+
+上述自动回归不证明真实百炼 API Key 有效、账号有额度、模型权限已开通或实际合成音质合格；正弦音频夹具的播放不等于中文音色核听。另行真实制作已执行：用户在本次一次性 BMW 的 [Qwen 设置](../README.md#qwen-配置与试听)表单填写凭据，原生加密保存与固定短试听成功；BMW＋官方 Qoder CN／DeepSeek-Flash通过唯一 `browser` 生成闻怀之／许言初／许玉远三份同文样本（5.28／4.32／5.52秒），再生成六段许言初旁白，合计46.88秒。V4另生成六段安明远男声旁白，并为开头事实修正重配一段；最终六段口播合计51.52秒。十六个 Project WAV（含保留的旧hook）均由原生 `media.inspect` 或视频合成层验证可解码，音色与音频身份见[交付清单](research/P1_AK_DELIVERY.json)。此记录证明本次真实服务调用成功，不计入自动回归项；未覆盖生产 Profile，主观听感、发音和用户接受仍待人工确认。
 
 ## 已有证据与适用范围
 

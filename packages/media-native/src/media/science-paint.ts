@@ -1,3 +1,4 @@
+import {paintResearchDiagram} from './research-diagram-paint.js'
 import {scienceNumber,scienceState} from '../science-spec.js'
 import type {ScienceSpec,SciencePoint} from '../science-spec.js'
 import {COMPOSITION_FONT,fitText} from './composition-text.js'
@@ -5,6 +6,7 @@ import {COMPOSITION_FONT,fitText} from './composition-text.js'
 interface Rect {x:number;y:number;width:number;height:number}
 /** One finite diagram renderer shared by native export and Studio playback. */
 export function paintScience(context:CanvasRenderingContext2D,spec:ScienceSpec,local:number,box:Rect,frameWidth:number,frameHeight:number):void {
+ if(spec.version===2){paintResearchDiagram(context,spec,local,box,frameWidth,frameHeight);return}
  const state=scienceState(spec,local),scale=frameHeight/720,font=Math.max(12,16*scale,14*frameWidth/390),small=Math.max(12,12*scale,12*frameWidth/390),pad=font,ink=spec.theme==='dark'?'#edf5ff':'#14283c',muted=spec.theme==='dark'?'#b7c9df':'#41556a',background=spec.theme==='dark'?'#122039':'#f5f8fc',grid=spec.theme==='dark'?'#354860':'#c6d3e2'
  const fail=(detail='')=>{throw new Error('STUDIO_DIAGRAM_LAYOUT: '+spec.title+'：图解范围太小或标签过长；请放大对象、缩短标签或减少分项。'+(detail?' '+detail:''))}
  if(box.width<font*10||box.height<font*9)fail()

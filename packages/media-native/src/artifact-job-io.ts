@@ -96,11 +96,11 @@ export class ArtifactJobIO {
   }
   async close(remove = true): Promise<void> {
     if (this.closed) return
-    this.closed = true
     await this.input?.close()
     for (const output of this.outputs.values()) {
       await output.handle.close()
       if (remove) await fs.rm(output.path, { force: true })
     }
+    this.closed = true
   }
 }

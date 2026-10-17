@@ -77,10 +77,18 @@ test('TTS resolves Edge male defaults named snapshots and explicit overrides whi
     const execution=await registry.execute('video.narrate',host,{action:'video.narrate',narrationRequest:{text:'默认'}})
     assert.equal(execution.handled,true);const request=execution.value as {voice:string}
     assert.equal(request.voice,'zh-CN-YunxiNeural');assert.equal(registry.toolDefinition().name,'browser')
+    await videoSettingsAction.execute(context,{action:'video.settings',settingsRequest:{operation:'save-template',name:'新闻速递',options:{tts:{provider:'qwen-tts'}}}})
+    assert.equal(resolvedNarration({text:'新闻',templateName:'新闻速递'},store.snapshot().videoPreferences).voice,'wenhuaizhi_v3.1')
+    await assert.rejects(registry.execute('video.narrate',host,{action:'video.narrate',narrationRequest:{text:'新闻',templateName:'新闻速递'}}),/disabled/)
     store.update({edgeNarrationEnabled:false})
     await assert.rejects(registry.execute('video.narrate',host,{action:'video.narrate',narrationRequest:{text:'禁止'}}),/disabled/);assert.equal(calls,1)
     await registry.execute('video.narrate',host,{action:'video.narrate',narrationRequest:{text:'离线',templateName:'离线'}});assert.equal(calls,2)
+    store.update({qwenNarrationEnabled:true})
+    const qwen=await registry.execute('video.narrate',host,{action:'video.narrate',narrationRequest:{text:'新闻',templateName:'新闻速递'}})
+    assert.equal((qwen.value as {voice:string}).voice,'wenhuaizhi_v3.1');assert.equal(calls,3)
     const restored=new GlobalSettingsStore({filePath:path.join(dir,'settings.json'),onState:undefined});assert.equal(restored.snapshot().edgeNarrationEnabled,false)
+    assert.equal(restored.snapshot().qwenNarrationEnabled,true)
+    assert.equal(resolvedNarration({text:'新闻',templateName:'新闻速递'},restored.snapshot().videoPreferences).provider,'qwen-tts')
     assert.equal(resolvedNarration({text:'恢复',templateName:'离线'},restored.snapshot().videoPreferences).ratePercent,-5)
   }finally{fs.rmSync(dir,{recursive:true,force:true})}
 })
@@ -102,6 +110,13 @@ test('Studio narration uses configurable TTS rather than fixed local speech and 
     const {tts:omitted,...legacyUpdate}=local.draft;assert.equal(omitted.provider,'local-matcha')
     const updated=await service.execute({operation:'update',draftId:local.draft.id,expectedRevision:local.draft.revision,draft:legacyUpdate}) as VideoDraft
     assert.equal(updated.tts.provider,'local-matcha');assert.equal(updated.scenes[0].audioArtifactId,'local.wav')
+    const qwenRequest={operation:'narrate',draftId:updated.id,sceneId:updated.scenes[0].id,expectedRevision:updated.revision,provider:'qwen-tts'}
+    await assert.rejects(service.execute(qwenRequest),/disabled/);assert.equal(calls.length,2)
+    settingsStore.update({qwenNarrationEnabled:true})
+    const qwen=await service.execute(qwenRequest) as {draft:VideoDraft}
+    assert.equal(calls[2].provider,'qwen-tts');assert.equal(calls[2].voice,'wenhuaizhi_v3.1')
+    assert.equal(qwen.draft.tts.voice,'wenhuaizhi_v3.1');assert.deepEqual(qwen.draft.scenes[0].audioGeneration?.kind,'tts')
+    assert.equal(qwen.draft.scenes[0].audioDurationSeconds,2.5)
   }finally{fs.rmSync(dir,{recursive:true,force:true})}
 })
 

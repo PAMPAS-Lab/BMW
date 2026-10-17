@@ -1,3 +1,9 @@
+import {assertProductionAssessment,assessmentRevision} from './production-assessment-contract.js'
+import type {ProductionAssessment} from './production-assessment-contract.js'
+import {assertGridRecipe} from '../../media-native/src/precomposition-contract.js'
+import type {GridRecipe} from '../../media-native/src/precomposition-contract.js'
+import {productionType,assertProductionBrief} from './production-contract.js'
+import type {ProductionBrief} from './production-contract.js'
 import {COMPOSITION_LIMITS} from '../../media-native/src/composition-contract.js'
 import {assertAnalysisRequest} from './source-analysis-contract.js'
 import type {AnalysisRequest} from './source-analysis-contract.js'
@@ -79,7 +85,7 @@ export function studioDraftContentKey(draft:VideoDraft):string {
   return JSON.stringify(ordered(content))
 }
 export function sameStudioDraftContent(previous:VideoDraft,next:VideoDraft):boolean{return studioDraftContentKey(previous)===studioDraftContentKey(next)}
-export interface StudioPreparation {notes:string;outline:string;artifactIds:string[];sourceIds?:string[]}
+export interface StudioPreparation {production?:ProductionBrief;notes:string;outline:string;artifactIds:string[];sourceIds?:string[]}
 export interface StudioAsset {artifactId: string; bytes: number; kind: 'video'|'audio'|'image'|'text'; modifiedAt: string}
 export interface StudioState {project: {id:string;name:string}; sessionId?:string; drafts: VideoDraft[]; assets: StudioAsset[]; theme:'light'|'dark';videoPreferences?:VideoPreferences;reusableExports?:Record<string,string>;snapshotProofs?:Record<string,string>}
 import {assertSourceNarrationRecipe} from './source-narration-recipe.js'
@@ -88,6 +94,10 @@ import type {MaterialIndexRequest} from './material-index-contract.js'
 import {assertExportReviewVerdict} from './export-review-contract.js'
 import {assertAssetQuery,SCENE_SECTIONS} from './studio-read-contract.js'
 export interface StudioRequest {
+  assessment?:ProductionAssessment;expectedAssessmentRevision?:number
+  gridRecipe?:GridRecipe
+  productionType?:import('./production-contract.js').ProductionType;recipeId?:string;baseFingerprint?:string;productionSection?:'brief'|'sections'|'works'|'relations'|'claims'|'goals'|'assetVersions'
+
   analysisRequest?:AnalysisRequest
   timingSection?:'overview'|'sentences'|'issues'
   timingBasis?:import('./studio-speech-provenance.js').TimingBasis
@@ -109,7 +119,7 @@ export interface StudioRequest {
   speechModel?:'base'|'small'; anchors?:SentenceAnchor[];cardLinks?:CardSpeechChoice[]
   snapshotProof?:string
   splitSeconds?:number
-  operation:'analysis'|'diagnose-timing'|'review-status'|'record-export-review'|'read-scene'|'read-preparation'|'describe-edit'|'guide'|'estimate-speech'|'suggest-recording-plan'|'apply-recording-plan'|'narrate-local'|'apply-source-narration'|'validate-source-narration'|'materials'|'describe-template'|'describe-schema'|'read-document'|'compatibility'|'validate-edit'|'apply-edit'|'migrate-document'|'remove-reference'|'prepare-reference'|'read-reference'|'set-reference-analysis'|'apply-reference-notes'|'propose-review'|'adopt-review'|'dismiss-review'|'undo-review'|'split-scene'|'restore'|'recognize-source'|'read-source-speech'|'apply-source-captions'|'detach-source-captions'|'set-caption-translations'|'align-speech'|'read-speech'|'correct-speech'|'source'|'export-citations'|'list'|'create'|'read'|'delete'|'update'|'narrate'|'narrate-pending'|'check'|'export-captions'|'export-cover'|'read-material'|'suggest-focus'|'review-export'|'render'|'assets'|'inspect'|'attach'|'open'|'context'|'configure'|'save-template'
+  operation:'record-production-review'|'precomposition-status'|'precompose'|'production-profiles'|'propose-type'|'adopt-type'|'production-read'|'production-review'|'plan-impact'|'analysis'|'diagnose-timing'|'review-status'|'record-export-review'|'read-scene'|'read-preparation'|'describe-edit'|'guide'|'estimate-speech'|'suggest-recording-plan'|'apply-recording-plan'|'narrate-local'|'apply-source-narration'|'validate-source-narration'|'materials'|'describe-template'|'describe-schema'|'read-document'|'compatibility'|'validate-edit'|'apply-edit'|'migrate-document'|'remove-reference'|'prepare-reference'|'read-reference'|'set-reference-analysis'|'apply-reference-notes'|'propose-review'|'adopt-review'|'dismiss-review'|'undo-review'|'split-scene'|'restore'|'recognize-source'|'read-source-speech'|'apply-source-captions'|'detach-source-captions'|'set-caption-translations'|'align-speech'|'read-speech'|'correct-speech'|'source'|'export-citations'|'list'|'create'|'read'|'delete'|'update'|'narrate'|'narrate-pending'|'check'|'export-captions'|'export-cover'|'read-material'|'suggest-focus'|'review-export'|'render'|'assets'|'inspect'|'attach'|'open'|'context'|'configure'|'save-template'
   templateName?:string; options?:VideoOptionOverrides
   draftId?: string; expectedRevision?: number; draft?: unknown; title?: string
   cover?:VideoCoverOptions
@@ -138,9 +148,25 @@ export function assertStudioRequest(raw:unknown):StudioRequest {
 }
 function parseStudioRequest(raw:unknown):StudioRequest {
   const value=mediaRecord(raw)
-  closed(value,['analysisRequest','timingSection','timingBasis','exportReview','briefSection','assetQuery','pageOffset','pageLimit','section','sourceSection','editOperation','cardLinks','recordingPlan','recordingSourceSha256','recordingEventsSha256','sourceNarrationRecipe','materialRequest','cardTemplateId','edit','operation','draftId','expectedRevision','draft','title','sceneId','artifactId','assetKind','ratePercent','templateName','options','provider','voice','captionFormat','segmentIndex','cover','forceRender','reviewOffset','sourceRequest','speechModel','anchors','speechLanguage','sourceRange','sourceCues','translations','snapshotProof','splitSeconds','reviewProposal','reviewId','referenceId','referenceAnalysis','timestampsSeconds','beforeNotes'])
-  if(!['analysis','diagnose-timing','review-status','record-export-review','read-scene','read-preparation','describe-edit','guide','estimate-speech','suggest-recording-plan','apply-recording-plan','narrate-local','apply-source-narration','validate-source-narration','materials','describe-template','describe-schema','read-document','compatibility','validate-edit','apply-edit','migrate-document','remove-reference','prepare-reference','read-reference','set-reference-analysis','apply-reference-notes','propose-review','adopt-review','dismiss-review','undo-review','split-scene','restore','recognize-source','read-source-speech','apply-source-captions','detach-source-captions','set-caption-translations','align-speech','read-speech','correct-speech','source','export-citations','list','create','read','delete','update','narrate','narrate-pending','check','export-captions','export-cover','read-material','suggest-focus','review-export','render','assets','inspect','attach','open','context','configure','save-template'].includes(String(value.operation)))throw new TypeError('Unknown Studio operation. Use video.studio / studioRequest.operation="guide"; actual MP4 review is review-export.')
+  closed(value,['assessment','expectedAssessmentRevision','gridRecipe','productionType','recipeId','baseFingerprint','productionSection','analysisRequest','timingSection','timingBasis','exportReview','briefSection','assetQuery','pageOffset','pageLimit','section','sourceSection','editOperation','cardLinks','recordingPlan','recordingSourceSha256','recordingEventsSha256','sourceNarrationRecipe','materialRequest','cardTemplateId','edit','operation','draftId','expectedRevision','draft','title','sceneId','artifactId','assetKind','ratePercent','templateName','options','provider','voice','captionFormat','segmentIndex','cover','forceRender','reviewOffset','sourceRequest','speechModel','anchors','speechLanguage','sourceRange','sourceCues','translations','snapshotProof','splitSeconds','reviewProposal','reviewId','referenceId','referenceAnalysis','timestampsSeconds','beforeNotes'])
+  if(!['record-production-review','precomposition-status','precompose','production-profiles','propose-type','adopt-type','production-read','production-review','plan-impact','analysis','diagnose-timing','review-status','record-export-review','read-scene','read-preparation','describe-edit','guide','estimate-speech','suggest-recording-plan','apply-recording-plan','narrate-local','apply-source-narration','validate-source-narration','materials','describe-template','describe-schema','read-document','compatibility','validate-edit','apply-edit','migrate-document','remove-reference','prepare-reference','read-reference','set-reference-analysis','apply-reference-notes','propose-review','adopt-review','dismiss-review','undo-review','split-scene','restore','recognize-source','read-source-speech','apply-source-captions','detach-source-captions','set-caption-translations','align-speech','read-speech','correct-speech','source','export-citations','list','create','read','delete','update','narrate','narrate-pending','check','export-captions','export-cover','read-material','suggest-focus','review-export','render','assets','inspect','attach','open','context','configure','save-template'].includes(String(value.operation)))throw new TypeError('Unknown Studio operation. Use video.studio / studioRequest.operation="guide"; actual MP4 review is review-export.')
   const result:StudioRequest={operation:value.operation as StudioRequest['operation']}
+  if(result.operation==='record-production-review'){if(typeof value.baseFingerprint!=='string'||!/^[a-f0-9]{64}$/.test(value.baseFingerprint))throw new TypeError('Current type review fingerprint is required.');return {...result,draftId:studioId(value.draftId),expectedRevision:finiteNumber(value.expectedRevision,'revision',1,1000000,true),baseFingerprint:value.baseFingerprint,expectedAssessmentRevision:assessmentRevision(value.expectedAssessmentRevision),assessment:assertProductionAssessment(value.assessment)}}
+  if(result.operation==='precomposition-status')return {...result,draftId:studioId(value.draftId),expectedRevision:finiteNumber(value.expectedRevision,'revision',1,1000000,true),artifactId:assertArtifactId(value.artifactId)}
+  if(result.operation==='precompose')return {...result,draftId:studioId(value.draftId),expectedRevision:finiteNumber(value.expectedRevision,'revision',1,1000000,true),gridRecipe:assertGridRecipe(value.gridRecipe)}
+  if(result.operation==='production-profiles')return result
+  if(['propose-type','adopt-type','production-read','production-review','plan-impact'].includes(result.operation)){
+    const base={...result,draftId:studioId(value.draftId),expectedRevision:finiteNumber(value.expectedRevision,'revision',1,1000000,true)}
+    if(value.baseFingerprint!==undefined&&(typeof value.baseFingerprint!=='string'||! /^[a-f0-9]{64}$/.test(value.baseFingerprint)))throw new TypeError('Expected production fingerprint.')
+    if(result.operation==='propose-type'||result.operation==='adopt-type'){
+      if(value.recipeId!==undefined&&(typeof value.recipeId!=='string'||! /^[a-z-]{1,80}$/.test(value.recipeId)))throw new TypeError('Invalid recipe identity.')
+      if(result.operation==='adopt-type'&&value.baseFingerprint===undefined)throw new TypeError('Explicit adoption requires the reviewed fingerprint.')
+      return {...base,productionType:productionType(value.productionType),...(value.recipeId===undefined?{}:{recipeId:value.recipeId as string}),...(value.sceneId===undefined?{}:{sceneId:studioId(value.sceneId)}),...(value.baseFingerprint===undefined?{}:{baseFingerprint:value.baseFingerprint as string})}
+    }
+    if(result.operation==='production-review')return base
+    if(value.productionSection!==undefined&&!['brief','sections','works','relations','claims','goals','assetVersions'].includes(String(value.productionSection)))throw new TypeError('Unknown production section.')
+    return {...base,...(value.productionSection===undefined?{}:{productionSection:value.productionSection as StudioRequest['productionSection']}),...(value.edit===undefined?{}:{edit:assertVideoEdit(value.edit)}),...(value.cover===undefined?{}:{cover:assertCoverOptions(value.cover)}),...(value.baseFingerprint===undefined?{}:{baseFingerprint:value.baseFingerprint as string}),pageOffset:finiteNumber(value.pageOffset??0,'page offset',0,1000,true),pageLimit:finiteNumber(value.pageLimit??20,'page limit',1,20,true)}
+  }
   if(result.operation==='analysis'){closed(value,['operation','draftId','expectedRevision','analysisRequest']);return {operation:'analysis',draftId:studioId(value.draftId),expectedRevision:finiteNumber(value.expectedRevision,'revision',1,1000000,true),analysisRequest:assertAnalysisRequest(value.analysisRequest)}}
   if(value.analysisRequest!==undefined)throw new TypeError('analysisRequest requires analysis.');
   if(result.operation==='diagnose-timing'){
@@ -266,12 +292,12 @@ function parseStudioRequest(raw:unknown):StudioRequest {
 const sceneKeys=['narrationOptions','cardSpec','id','title','label','narration','visualBrief','sources','durationSeconds','videoArtifactId','imageArtifactId','audioArtifactId','audioText','audioGeneration','audioDurationSeconds','sourceDurationSeconds','sourceStartSeconds','zoom','playbackRate','crop','bullets','endPolicy','effects','layout','voiceVolume','voiceMuted','voiceTiming','voiceSegments','captions','keepSourceAudio','sourceVolume','captionStyle','visualSegments','focusIntervals','citations','speechCandidate','speechAnchors','speechCaptions','speechLinks','showSceneNumber','sceneTemplate','captionDisplay','sourceSpeech','sourceCaptionBinding','layers','audioTracks','presentationWindow','speechPlaybackOrigin'] as const
 export function newStudioScene(id:string,title='新分镜'):StudioScene{return assertStudioScene({id,title,label:'',narration:'',visualBrief:'',sources:[],durationSeconds:8,sourceStartSeconds:0,zoom:1,playbackRate:1,bullets:[],endPolicy:'require-footage'})}
 export function assertPreparation(raw:unknown,scenes:StudioScene[]):StudioPreparation{
-  const legacy=raw===undefined,value=mediaRecord(raw??{});closed(value,['notes','outline','artifactIds','sourceIds'])
+  const legacy=raw===undefined,value=mediaRecord(raw??{});closed(value,['production','notes','outline','artifactIds','sourceIds'])
   const artifacts=value.artifactIds??[];if(!Array.isArray(artifacts)||artifacts.length>1000)throw new TypeError('At most one thousand preparation artifacts.')
   const references=scenes.flatMap(scene=>[...sceneVisuals(scene).flatMap(segment=>[segment.imageArtifactId,segment.videoArtifactId]),...(legacy?[scene.audioArtifactId]:[])].filter((id):id is string=>Boolean(id)))
   const artifactIds=[...new Set([...artifacts.map(assertArtifactId),...references])];if(artifactIds.length>1000)throw new TypeError('At most one thousand preparation artifacts.')
   const sources=value.sourceIds??[];if(!Array.isArray(sources)||sources.length>200)throw new TypeError('At most two hundred preparation sources.');const sourceIds=[...new Set(sources.map(sourceId))]
-  return {...(value.sourceIds===undefined?{}:{sourceIds}),notes:studioText(value.notes??'','preparation notes',20000),outline:studioText(value.outline??'','preparation outline',10000),artifactIds}
+  return {...(value.production===undefined?{}:{production:assertProductionBrief(value.production)}),...(value.sourceIds===undefined?{}:{sourceIds}),notes:studioText(value.notes??'','preparation notes',20000),outline:studioText(value.outline??'','preparation outline',10000),artifactIds}
 }
 export function assertStudioScene(raw:unknown):StudioScene {
   const value=mediaRecord(raw);closed(value,sceneKeys)
@@ -285,7 +311,7 @@ export function assertStudioScene(raw:unknown):StudioScene {
   try{scene=assertComposition({title:'Draft',music:false,scenes:[compositionScene]}).scenes[0]}catch(error){throw new TypeError('STUDIO_SCENE '+sceneId+': '+(error instanceof Error?error.message:String(error)),{cause:error})}
   if(!Array.isArray(value.sources??[])||(value.sources as unknown[]|undefined)?.length>12)throw new TypeError('At most twelve source links per scene.')
   const sources=((value.sources??[]) as unknown[]).map(raw=>{
-    const text=studioText(raw,'source URL',2048),url=new URL(text)
+    const text=studioText(raw,'source URL',2048);let url:URL;try{url=new URL(text)}catch{throw new TypeError('STUDIO_SOURCE_URL '+sceneId+': sources accepts only HTTP(S) URLs; put notes in visualBrief or preparation.notes, and artifacts in preparation.artifactIds.')}
     if(!['https:','http:'].includes(url.protocol)||url.username||url.password)throw new TypeError('Sources require public HTTP(S) URLs without credentials.')
     return url.toString()
   })
@@ -344,7 +370,7 @@ export function audioGenerationLabel(scene:StudioScene):string {
   if(!scene.audioArtifactId)return '尚未生成'
   if(!generation||generation.kind==='legacy')return '参数未记录'
   if(generation.kind==='imported')return '导入/手动绑定音频'
-  const labels:Record<string,string>={'zh-CN-YunxiNeural':'Edge 男声·云希','zh-CN-XiaoxiaoNeural':'Edge 女声·晓晓','local-zh-en':'本地中文/英文'}
+  const labels:Record<string,string>={'zh-CN-YunxiNeural':'Edge 男声·云希','zh-CN-XiaoxiaoNeural':'Edge 女声·晓晓','local-zh-en':'本地中文/英文','wenhuaizhi_v3.1':'Qwen 女声·闻怀之','xuyanchu_v3.1':'Qwen 女声·许言初','xuyuyuan_v3.1':'Qwen 女声·许玉远','anmingyuan_v3.1':'Qwen 男声·安明远'}
   return `${labels[generation.options.voice]} · ${generation.options.ratePercent}%语速`
 }
 export function sceneCoverage(scene:StudioScene,tts?:NarrationOptions):{required:number;available:number;gap:number;measured:boolean;audioStale:boolean} {

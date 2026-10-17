@@ -13,6 +13,7 @@ import { createBridgeServer } from '../packages/browser-capability/src/bridge-se
 import { BrowserCapabilityRegistry } from '../packages/browser-capability/src/browser-capability-registry.js'
 import {readDshMigrationSessions} from '../packages/harness-dsh/migration/index.js'
 import {DshSettings} from '../packages/harness-dsh/src/dsh-settings.js'
+import {dshBrowserCatalog} from '../packages/harness-dsh/src/dsh-events.js'
 
 const root = path.resolve(import.meta.dirname, '..')
 const temporary = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-dsh-compatibility-')))
@@ -40,7 +41,8 @@ try {
     const workspace = path.join(temporary, product.id, 'workspace')
     fs.mkdirSync(workspace, { recursive: true })
     const bridge = await createBridgeServer({ async execute() { return {} } }, { toolDefinition: new BrowserCapabilityRegistry(product).toolDefinition(), resolveProject: (directory) => directory === workspace ? { id: 'smoke', directory } : undefined, activeProjectId: () => 'smoke' })
-    const runtime = new DshRuntime({ ...product, productId: product.id, presetId: product.id,
+    const controlFilePath=path.join(temporary,product.id,'control.json')
+    const runtime = new DshRuntime({ ...product, productId: product.id, presetId: product.id,controlFilePath,
       dshHome: path.join(temporary, product.id, 'home'), sourceDshHome: path.join(temporary, 'empty-source-home'),
       workspacePath: workspace, workspaceTitle: 'Compatibility smoke',
       mcpServerPath: path.join(root, 'packages/browser-capability/src/browser-mcp-server.js'),
@@ -59,6 +61,20 @@ try {
       assert.equal((await runtime.call('session.list',{})).items instanceof Array,true)
       assert.equal((await runtime.activateWorkspace(project)).sessionId, sessionId)
       await runtime.call('session.rename', { sessionId, title: 'Smoke renamed' })
+      const control:unknown=JSON.parse(fs.readFileSync(controlFilePath,'utf8'))
+      assert.ok(control&&typeof control==='object'&&'url' in control&&typeof control.url==='string')
+      let effective:unknown
+      const catalogDeadline=Date.now()+30000
+      do{
+        const catalog=await fetch(new URL('/catalog?sessionId='+encodeURIComponent(String(sessionId)),control.url),{headers:{authorization:'Bearer '+bridge.token}})
+        assert.equal(catalog.status,200);effective=await catalog.json()
+        if(effective&&typeof effective==='object'&&'tools' in effective&&Array.isArray(effective.tools)&&effective.tools.length)break
+        await new Promise<void>(resolve=>setTimeout(resolve,100))
+      }while(Date.now()<catalogDeadline)
+      assert.ok(effective&&typeof effective==='object'&&'tools' in effective&&Array.isArray(effective.tools))
+      assert.deepEqual(effective.tools.map((tool:unknown)=>tool&&typeof tool==='object'&&'name' in tool?tool.name:null),['browser'])
+      dshBrowserCatalog(effective,String(sessionId),fs.realpathSync(workspace))
+      console.log('PASS installed official DSH effective wire catalog contains exactly BMW browser before input')
       const list = await runtime.listProjectSessions(project, 'Smoke')
       assert.equal(list.items[0].title, 'Smoke renamed')
       const history = await runtime.call('session.history', { sessionId })
@@ -86,13 +102,13 @@ try {
   const settingsController=new AbortController(),settingsTimeout=setTimeout(()=>settingsController.abort(),120000),settingsContext={signal:settingsController.signal,openExternal:async()=>assert.fail('DSH settings do not open OAuth')}
   try{
     const cold=await settings.execute({action:'refresh'},settingsContext);await settings.drain()
-    assert.ok(cold.models.length>0);assert.ok(cold.loginMethods.some(method=>method.id==='credential:DEEPSEEK_API_KEY'))
+    assert.equal(cold.models.length,0);assert.ok(cold.loginMethods.some(method=>method.id==='credential:DEEPSEEK_API_KEY'))
     const configured=await settings.execute({action:'auth.login',methodId:'credential:DEEPSEEK_API_KEY',values:{apiKey:'BMW-disposable-settings-fixture'}},settingsContext);await settings.drain()
-    assert.equal(configured.authentication.state,'ready');assert.equal(JSON.stringify(configured).includes('BMW-disposable-settings-fixture'),false)
+    assert.equal(configured.authentication.state,'ready');assert.ok(configured.models.length>0);assert.equal(JSON.stringify(configured).includes('BMW-disposable-settings-fixture'),false)
     assert.equal(fs.lstatSync(path.join(productHome,'.credentials.yaml')).isSymbolicLink(),false)
     assert.equal(fs.existsSync(path.join(sourceHome,'.credentials.yaml')),false)
-    const selected=await settings.execute({action:'model.select',modelId:cold.models[0].id},settingsContext);await settings.drain();assert.equal(selected.selectedModel,cold.models[0].id)
-    const cleared=await settings.execute({action:'auth.logout'},settingsContext);await settings.drain();assert.equal(cleared.canLogout,false);assert.equal(browserExecutions,0)
+    const selected=await settings.execute({action:'model.select',modelId:configured.models[0].id},settingsContext);await settings.drain();assert.equal(selected.selectedModel,configured.models[0].id)
+    const cleared=await settings.execute({action:'auth.logout'},settingsContext);await settings.drain();assert.equal(cleared.canLogout,false);assert.equal(cleared.models.length,0);assert.equal(browserExecutions,0)
     console.log('PASS installed official DSH cold settings: model catalog, credential set/unset void acknowledgements, private provider file and zero Agent/browser input')
   }finally{clearTimeout(settingsTimeout);settingsController.abort();await settings.drain();await bridge.close()}
 } finally { fs.rmSync(temporary, { recursive: true, force: true }) }

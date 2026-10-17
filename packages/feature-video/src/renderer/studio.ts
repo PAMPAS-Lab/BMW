@@ -1,3 +1,4 @@
+import {StudioProductionEditor} from './studio-production-editor.js'
 import {COMPOSITION_LIMITS} from '../../../media-native/src/composition-contract.js'
 import {StudioTimingEditor} from './studio-timing-editor.js'
 import {assertStudioProductionProgress} from '../studio-production-progress.js'
@@ -68,6 +69,8 @@ let saveFailure:string|undefined
 let stateRefresh:Promise<void>=Promise.resolve()
 const workbench=new StudioWorkbench()
 const workflow=new StudioWorkflow()
+const productionEditor=new StudioProductionEditor(()=>({draft,disabled:busy||invalidProject||viewChanging||Boolean(savePending)||simpleReadOnly()}),async request=>{await flushEdits();const result=await command(request);if(mediaRecord(request).operation==='adopt-type'){await refresh();render()}return result},async fn=>{await flushEdits();editable();if(!draft?.preparation.production)return;history();fn(draft.preparation.production);render();await save(false)},message)
+
 let materialAssistantPending=false
 function renderMaterialAssistant():void{
  const own=workflow.activity?.projectId===state?.project.id&&workflow.activity?.sessionId===state?.sessionId?workflow.activity:undefined
@@ -184,7 +187,7 @@ const mainEditor=new StudioMainEditor({
   undo.push(previous);undo=undo.slice(-40);redo=[];restorePending=undefined;draft=next;dirty=false;previewDirty=true;workflow.result='draft';await refresh(true,false);render();
   return {draft:next,selection:{kind:'scene',sceneId:selection.sceneId}};
  },
- state:()=>state&&draft?{projectId:state.project.id,draft,sceneId:draft.scenes[sceneIndex]?.id,advanced:workflow.view.mode==='advanced'&&stage===4,disabled:busy||invalidProject||viewChanging||Boolean(savePending),blocked:Boolean(pendingField||pendingOutput||layerEditor.hasPending()),mode:workbench.mode,time:Number(input('seek').value)}:undefined,
+ state:()=>state&&draft?{projectId:state.project.id,draft,sceneId:draft.scenes[sceneIndex]?.id,advanced:workflow.view.mode==='advanced'&&stage===4,disabled:busy||invalidProject||viewChanging||Boolean(savePending)||previewPreparing||Boolean(previewPreparation),blocked:Boolean(pendingField||pendingOutput||layerEditor.hasPending()),mode:workbench.mode,time:Number(input('seek').value)}:undefined,
  commit:async(owner,change)=>{if(invalidProject||state.project.id!==owner.projectId||draft?.id!==owner.draftId||draft.revision!==owner.revision)throw new Error('STUDIO_CONFLICT: 时间轴所属草稿或版本已变化；原输入保留。');await flushEdits(true,false,true,true,true,false);editable();if(draft!.revision!==owner.revision)throw new Error('STUDIO_CONFLICT: 保存期间版本变化。');const next=assertVideoDraft(change(clone(draft!)));history();draft=next;render();await save(false)},
  select:async(ref,seconds)=>{editable();const index=draft!.scenes.findIndex(s=>s.id===ref.sceneId);if(index<0)throw new Error('镜头已删除。');layerEditor.selection=undefined;sceneIndex=index;stage=4;workbench.mode=ref.kind==='voice'?'voice':ref.kind==='caption'?'captions':'visual';workflow.result='draft';if(seconds!==undefined)input('seek').value=String(seconds);render();await publishSelection()},
  refreshPreview:async()=>{if(draft?.scenes.length){const time=Number(input('seek').value);await prepare();await preview.seek(Math.min(time,Math.max(0,preview.duration-1/draft.fps)))}},pause:()=>preview.pause(),notify:message,changed:()=>setBusy(busy),
@@ -254,6 +257,9 @@ async function prepare():Promise<void>{
   if(!draft.scenes.length)throw new Error('请先创建分镜，再预览视频。')
   const current=draft,resume=workspaceResume?.draftId===current.id&&workspaceResume.revision===current.revision?workspaceResume:undefined,position=resume?resume.seconds:preview.duration?Number(input('seek').value):current.scenes.slice(0,sceneIndex).reduce((sum,scene)=>sum+scene.durationSeconds,0);workspaceResume=undefined;previewPreparing=true
   for(const id of ['play','seek','timeline-split'])element<HTMLButtonElement>(id).disabled=true
+  // Main selection rejects preparation; expose the same admission in its actual controls.
+  for(const clip of document.querySelectorAll('#timeline-dock [data-main-kind]') as HTMLButtonElement[])clip.disabled=true
+  mainEditor.render()
   const pending=(async()=>{message('正在准备预览…');const ready=await preview.prepare(clone(current),position);if(!ready||draft!==current)return;previewDirty=false;if(stage===4&&workbench.mode!=='cover')render();input('seek').max=String(preview.duration);element('preview-empty').hidden=true;if(!pendingField&&!pendingOutput&&!cardText.hasPending()&&!mainEditor.hasPending()&&!layerEditor.hasPending())message(dirty?'有未保存修改':'已保存 · v'+draft.revision)})()
   previewPreparation=pending
   try{await pending}finally{if(previewPreparation===pending)previewPreparation=undefined;previewPreparing=false;renderStage();for(const id of ['play','seek'])element<HTMLButtonElement>(id).disabled=busy||invalidProject||viewChanging||Boolean(savePending)||Boolean(previewPreparation)||mainEditor.isApplying()||!draft?.scenes.length}
@@ -284,7 +290,7 @@ async function refresh(preserve=true,renderView=true):Promise<boolean>{
   return pending
 }
 
-function hasLocalInput():boolean{return dirty||materialIndexEditor.hasPending()||Boolean(pendingField||pendingOutput)||cardText.hasPending()||originalSpeechEditor.hasPending()||layerEditor.hasPending()||mainEditor.hasPending()}
+function hasLocalInput():boolean{return productionEditor.hasPending()||dirty||materialIndexEditor.hasPending()||Boolean(pendingField||pendingOutput)||cardText.hasPending()||originalSpeechEditor.hasPending()||layerEditor.hasPending()||mainEditor.hasPending()}
 async function reconcileExternal(previousAssets:StudioAsset[]):Promise<void>{
   const latest=draft?state.drafts.find(value=>value.id===draft!.id):state.drafts[0]
   if(hasLocalInput()){
@@ -410,6 +416,7 @@ function renderScript():void{
   raw.disabled=disabled;element<HTMLButtonElement>('script-bind-audio').disabled=disabled
 }
 function renderStage():void{
+ productionEditor.render()
   renderMaterialAssistant()
   const compatibility=draft?studioCompatibility(draft):undefined
   const toggle=element<HTMLButtonElement>('view-toggle');toggle.title=compatibility&&!compatibility.simpleEditable?[...new Set(compatibility.blockingReasons.map(r=>r.message))].join(' ')+' 撤销或移除后可返回卡片。':'';toggle.setAttribute('aria-label',workflow.view.mode==='advanced'&&!compatibility?.simpleEditable&&draft?'返回卡片不可用：'+toggle.title:workflow.view.mode==='advanced'?'返回卡片':'高级编辑')
@@ -480,13 +487,14 @@ function renderStage():void{
   if(stage>=3&&hasScene){const choice=select('segment-asset');materials.renderPicker(element('segment-source-picker'),state.assets.filter(asset=>asset.kind==='image'||asset.kind==='video'),choice.value,asset=>{choice.value=asset.artifactId;choice.dispatchEvent(new Event('change',{bubbles:true}));renderStage()});for(const row of (document.querySelectorAll('[data-segment-preview]') as HTMLElement[])){const asset=state.assets.find(asset=>asset.artifactId===row.dataset.segmentPreview);if(asset)materials.renderPicker(row,[asset],asset.artifactId)}}
   workflow.render(state,draft,stage,workbench.mode,disabled);workbench.layoutTimeline(JSON.stringify([state.project.id,state.sessionId,draft?.id]),workflow.view.mode==='advanced'&&stage===4&&hasScene&&!['cover','delivery'].includes(workbench.mode),disabled);cards.render();cardText.render();layerEditor.render();mainEditor.render();panels.render()
   if(workflow.result==='completed'&&stage===4&&workbench.mode!=='cover'&&draft.exports.length){const latest=draft.exports.at(-1)!;if(shownOutput!==latest.artifactId)guarded(()=>showExport(latest.artifactId,latest.verificationArtifactId))()}
-  for(const clip of (document.querySelectorAll('#timeline-dock .timeline-clip,#timeline-independent [data-track-menu]') as HTMLButtonElement[]))clip.disabled=disabled
+  for(const clip of (document.querySelectorAll('#timeline-dock .timeline-clip,#timeline-independent [data-track-menu]') as HTMLButtonElement[]))clip.disabled=disabled||Boolean(clip.dataset.mainKind)&&(previewPreparing||Boolean(previewPreparation))
   element<HTMLButtonElement>('timeline-split').disabled=disabled||previewPreparing||Boolean(previewPreparation)||!hasScene||layerEditor.selectionLocked()
 }
 function setBusy(value:boolean):void{busy=value||productionActive;const cancel=element<HTMLButtonElement>('cancel');cancel.hidden=!value||!['remove-reference','prepare-reference','read-reference','set-reference-analysis','apply-reference-notes','recognize-source','read-source-speech','apply-source-captions','align-speech','read-speech','correct-speech','diagnose-timing','source','export-citations','render','narrate','narrate-pending','export-cover','export-captions','check'].includes(currentOperation??'');cancel.disabled=cancellationRequested||invalidProject;cancel.textContent=cancellationRequested?'正在停止…':'取消作业';element('job-status').textContent=value?(cancellationRequested?'正在停止并清理…':currentOperation==='update'?'正在保存…':currentOperation==='narrate-pending'?'正在更新旁白…':currentOperation==='render'?'正在检查并制作成片…':'作业处理中…'):'';for(const node of document.querySelectorAll('input,textarea,select,#save,#export,#new-draft,#delete-draft,#add-scene,#duplicate,#remove-scene,#move-up,#move-down,#undo,#redo,#studio-output-apply,#studio-output-template-save,#scene-list button') as (HTMLInputElement|HTMLButtonElement)[])node.disabled=busy||invalidProject||viewChanging||Boolean(savePending)||mainEditor.isApplying();exportReviewEditor.onHostBusy(busy);renderStage();if(!busy&&externalRequested)queueMicrotask(requestExternalRefresh)}
 async function command(request:unknown,productionStep=false):Promise<unknown>{if(productionStep){if(!productionActive||invalidProject||savePending||currentOperation)throw new Error('视频制作上下文已变化，请重新检查。')}else editable();commandEpoch++;cancellationRequested=false;currentOperation=String(mediaRecord(request).operation??'');setBusy(true);try{return await api.command(state.project.id,request)}finally{currentOperation=undefined;cancellationRequested=false;setBusy(false)}}
 let savePending:Promise<void>|undefined
 async function flushEdits(withSpeech=true,persist=true,withSource=true,withLayers=true,withOutput=true,withMain=true,withCardText=true):Promise<void>{
+  await productionEditor.flush()
   materialIndexEditor.flush()
   if(withCardText)await cardText.flush()
   if(withMain)await mainEditor.flush()
@@ -640,7 +648,7 @@ element('voice-muted').addEventListener('change',guarded(async()=>{if(pendingFie
 for(const id of ['keep-source-audio','source-volume'])element(id).addEventListener('input',()=>{pendingField=id})
 for(const id of ['keep-source-audio','source-volume'])element(id).addEventListener('change',guarded(async()=>{pendingField=undefined;const keep=input('keep-source-audio').checked,volume=Number(input('source-volume').value);await alterScene(value=>{value.keepSourceAudio=keep;value.sourceVolume=volume})}))
 
-element('leave').onclick=guarded(async()=>{await flushEdits();referenceEditor.close();exportReviewEditor.close();timingEditor.close();materialIndexEditor.close();sourceNarrationEditor.close();recordingPlanEditor.close();materials.suspend();previewDirty=true;await preview.dispose();await api.leave()});window.bmwStudioFlush=async()=>{await flushEdits();await publishSelection()};element('save').onclick=guarded(async()=>{await flushEdits();await save();undo=[];redo=[];render()});element('export').onclick=guarded(produceVideo);element('export-remake').onclick=guarded(()=>operation('render',{forceRender:true}));element('export-existing').onclick=guarded(async()=>{await flushEdits();const latest=draft?.exports.at(-1);if(latest){await showExport(latest.artifactId,latest.verificationArtifactId);message('已打开已有成片，可直接另存 MP4。')}});element('cancel').onclick=guarded(cancelOperation);element('play').onclick=guarded(async()=>{workflow.result='draft';renderStage();await prepare();await preview.play()});input('seek').oninput=guarded(()=>seekTo(Number(input('seek').value)));input('timeline-position').oninput=guarded(()=>seekTo(Number(input('timeline-position').value)));element('reload').onclick=guarded(async()=>{if(hasLocalInput()&&!confirm('重新加载会放弃此页未保存修改，是否继续？'))return;cardText.discard();pendingOutput=undefined;layerEditor.clear();mainEditor.discard();if(workbench.mode==='layer')workbench.mode='visual';await refresh(false)});element('assistant').onclick=guarded(async()=>{await api.assistant()})
+element('leave').onclick=guarded(async()=>{await flushEdits();referenceEditor.close();exportReviewEditor.close();timingEditor.close();materialIndexEditor.close();sourceNarrationEditor.close();recordingPlanEditor.close();materials.suspend();previewDirty=true;await preview.dispose();await api.leave()});window.bmwStudioFlush=async()=>{await flushEdits();await publishSelection()};element('save').onclick=guarded(async()=>{await flushEdits();await save();undo=[];redo=[];render()});element('export').onclick=guarded(produceVideo);element('export-remake').onclick=guarded(()=>operation('render',{forceRender:true}));element('export-existing').onclick=guarded(async()=>{await flushEdits();const latest=draft?.exports.at(-1);if(latest){await showExport(latest.artifactId,latest.verificationArtifactId);message('已打开已有成片，可直接另存 MP4。')}});element('cancel').onclick=guarded(cancelOperation);element('play').onclick=guarded(async()=>{workflow.result='draft';renderStage();await prepare();await preview.play()});input('seek').oninput=guarded(()=>seekTo(Number(input('seek').value)));input('timeline-position').oninput=guarded(()=>seekTo(Number(input('timeline-position').value)));element('reload').onclick=guarded(async()=>{if(hasLocalInput()&&!confirm('重新加载会放弃此页未保存修改，是否继续？'))return;productionEditor.discard();cardText.discard();pendingOutput=undefined;layerEditor.clear();mainEditor.discard();if(workbench.mode==='layer')workbench.mode='visual';await refresh(false)});element('assistant').onclick=guarded(async()=>{await api.assistant()})
 select('studio-output-template').onchange=guarded(()=>{const preset=state.videoPreferences?.templates.find(item=>item.name===select('studio-output-template').value);if(preset){outputForm.fill(preset.options);outputEdited()}})
 async function applyOutput():Promise<void>{
   if(outputSaving)return outputSaving

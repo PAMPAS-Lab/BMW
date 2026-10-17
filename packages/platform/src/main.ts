@@ -19,6 +19,7 @@ import type { MenuItemConstructorOptions, IpcMainEvent } from 'electron'
 import { BrowserKernel } from '@bmw-agent/browser-capability/kernel'
 import { createBridgeServer } from '@bmw-agent/browser-capability/bridge'
 import type { AgentProject, AgentProjectContext } from '@bmw-agent/agent-contract'
+import {QwenCredentialsStore} from './qwen-credentials-store.js'
 import { GlobalSettingsStore } from './global-settings-store.js'
 import { LayoutStore } from './layout-store.js'
 import { isOverlayAtDockCorner } from './layout-docking.js'
@@ -107,6 +108,12 @@ let permissionStore
 let sessionContinuity
 let projectStore
 let layoutStore
+let qwenCredentialsStore:QwenCredentialsStore
+let qwenAudition:{controller:AbortController;pending:Promise<unknown>}|undefined
+async function cancelQwenAudition():Promise<void>{
+  const job=qwenAudition
+  if(job){job.controller.abort(new Error('Qwen 试听已取消。'));await job.pending.catch(()=>{})}
+}
 let settingsStore
 let agentVisible = true
 let agentWidth = 460
@@ -146,6 +153,7 @@ async function selectedAgentTurnIsRunning():Promise<boolean>{return assistantSer
 function stopApplicationServices(): Promise<void> {
   if (shutdownPromise) return shutdownPromise
   shutdownPromise = (async () => {
+    await cancelQwenAudition()
     scheduledTaskManager?.stop()
     if(assistantPublishTimer)clearTimeout(assistantPublishTimer)
     const tasks: Promise<unknown>[] = []
@@ -688,7 +696,8 @@ function installIpc() {
     return settings
   })
   shellHandle('global-settings', () => settingsStore.snapshot())
-  shellHandle('global-settings-panel', (_event, visible) => {
+  shellHandle('global-settings-panel', async (_event, visible) => {
+    if(!visible)await cancelQwenAudition()
     settingsPanelVisible = Boolean(visible)
     if (settingsPanelVisible) {
       projectPanelVisible = false
@@ -711,6 +720,26 @@ function installIpc() {
     }
     sendToShell('global-settings-state', settings)
     return settings
+  })
+  shellHandle('qwen-tts-status',()=>qwenCredentialsStore.status())
+  shellHandle('qwen-tts-save',(_event,raw:unknown)=>{
+    if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new TypeError('Invalid Qwen settings.')
+    const {enabled,...credentials}=raw as Record<string,unknown>
+    if(typeof enabled!=='boolean')throw new TypeError('Qwen narration choice must be boolean.')
+    if(qwenAudition)throw new Error('请先取消试听，再修改 Qwen 配置。')
+    const status=qwenCredentialsStore.save(credentials)
+    settingsStore.update({qwenNarrationEnabled:enabled});return status
+  })
+  shellHandle('qwen-tts-clear',async()=>{await cancelQwenAudition();const status=qwenCredentialsStore.clear();settingsStore.update({qwenNarrationEnabled:false});return status})
+  shellHandle('qwen-tts-cancel',()=>cancelQwenAudition())
+  shellHandle('qwen-tts-audition',async(_event,voice:unknown)=>{
+    if(qwenAudition)throw new Error('Qwen 试听正在生成中。')
+    if(bridge?.changingProject)throw new Error('Project 正在切换，请稍后试听。')
+    if(settingsStore.snapshot().qwenNarrationEnabled!==true)throw new Error('请开启 Qwen 在线配音并保存配置后再试听。')
+    const projectId:string=projectStore.active().id,controller=new AbortController()
+    const pending=browserKernel.runUserMediaTask(projectId,()=>mediaController.auditionQwen(voice,controller.signal),controller.signal)
+    qwenAudition={controller,pending}
+    try{return await pending}finally{qwenAudition=undefined}
   })
   shellHandle('application-restart', () => requestApplicationRestart())
   shellHandle('agent-advanced-settings-open', () => openAgentAdvancedSettings())
@@ -907,6 +936,7 @@ async function createApp() {
   bmwSession = persistentSession
   const stores = await loadStartupStores()
   if (!stores || appQuitting) return
+  qwenCredentialsStore=new QwenCredentialsStore(path.join(app.getPath('userData'),'qwen-tts-credentials.enc'),safeStorage)
   settingsStore = stores.settings
   projectStore = stores.projects
   scheduledTaskStore = stores.tasks
@@ -993,6 +1023,7 @@ async function createApp() {
 
   mediaController = new MediaController({
     session: persistentSession,
+    getQwenCredentials:()=>qwenCredentialsStore.read(),
     preloadPath: path.join(projectDirectory, 'packages/media-native/src/preload/media-preload.cjs'),
     pagePath: path.join(projectDirectory, 'packages/media-native/src/media/media.html'),
     artifactsDirectory: path.join(app.getPath('userData'), 'artifacts'),

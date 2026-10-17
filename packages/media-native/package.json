@@ -38,7 +38,9 @@
     "./card-details": "./src/card-details.js",
     "./quality": "./src/composition-quality.js",
     "./card-cues": "./src/card-cues.js",
-    "./speech-range": "./src/speech-range.js"
+    "./speech-range": "./src/speech-range.js",
+    "./research-diagrams": "./src/research-diagrams.js",
+    "./precomposition": "./src/precomposition-contract.js"
   },
   "dependencies": {
     "mediabunny": "1.61.0"

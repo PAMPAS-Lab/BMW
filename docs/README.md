@@ -7,12 +7,14 @@
 | 要解决的问题 | 入口 | 维护规则 |
 |---|---|---|
 | 安装和使用 | [仓库 README](../README.md) | 产品介绍、运行方法；不积累阶段日志 |
+| 配置 Qwen、保存凭据和试听 | [使用步骤](../README.md#qwen-配置与试听)、[功能契约](FUNCTIONAL_SPEC.md#qwen-tts-配置安全保存与试听)、[验证范围](VERIFICATION.md#qwen-tts-验证范围) | 区分设置、原生配音与付费服务验收；凭据不提供给模型 |
 | 开发约束 | [AGENTS.md](../AGENTS.md)、[应用约束](../apps/bmw/AGENTS.md)、[agent.md](../agent.md) | AGENTS 是编码指导；agent 是短入口 |
 | 现在有什么、还缺什么 | [PROJECT_STATUS.md](PROJECT_STATUS.md) | 当前摘要、证据限制与计划入口 |
 | 接手当前工作 | [handoff.md](../handoff.md) | 当前交接、关键约束、下一步入口 |
 | 已实现行为、权限和字段 | [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) | 唯一功能总规范；人工正文与生成目录分开 |
 | 模块、公开接口和测试映射 | [ARCHITECTURE.md](ARCHITECTURE.md) | 从模块与测试目录生成，不手改生成表 |
 | 如何验证、证据覆盖到哪里 | [VERIFICATION.md](VERIFICATION.md) | 当前检查结果、历史基线索引和覆盖边界 |
+| DSH 最新候选版制作 SI 新闻 | [DSH SI交付](research/DSH_SI_DELIVERY.json) | 独立工程、57.664秒MP4、模型路由、男声复用及实际审阅范围 |
 
 ## 当前专题规范
 

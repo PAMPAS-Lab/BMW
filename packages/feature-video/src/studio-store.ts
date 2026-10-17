@@ -1,3 +1,4 @@
+import {semanticGoalBinding} from './production-types.js'
 import {videoDocumentFromDraft,videoDraftFromDocument} from './video-document.js'
 import type {VideoDocument} from './video-document.js'
 import {assertReferenceRecords} from './studio-reference-contract.js'
@@ -25,7 +26,7 @@ import type {VideoDraft,StudioAsset} from './studio-contract.js'
 
 // Bump when native paint/mix semantics change: an unchanged draft must not
 // reuse a completed file made by an older renderer with different pixels.
-export const STUDIO_EXPORT_RENDERER_VERSION='native-scientific-diagrams/8'
+export const STUDIO_EXPORT_RENDERER_VERSION='native-research-diagrams/10'
 
 /** Project-local editable state. No renderer or model may choose a host path. */
 export class VideoStudioStore {
@@ -103,7 +104,7 @@ export class VideoStudioStore {
     draft.exports=[{...completed,...(fingerprint?{fingerprint}:{}),revision:1,createdAt}]
     return this.write(draft)
   }
-  update(id:unknown,expectedRevision:unknown,raw:unknown,trustedAudio=false,trustedCaptions=false,reviewItems?:StudioReviewItem[],dryRun=false):VideoDraft {
+  update(id:unknown,expectedRevision:unknown,raw:unknown,trustedAudio=false,trustedCaptions=false,reviewItems?:StudioReviewItem[],dryRun=false,trustedProduction=false):VideoDraft {
     const current=this.read(id)
     if(current.revision!==expectedRevision)throw new Error('STUDIO_CONFLICT: 草稿已被其他编辑更新，请重新加载后合并修改。')
     const value=mediaRecord(raw)
@@ -144,6 +145,8 @@ export class VideoStudioStore {
       }else{delete scene.audioGeneration;delete scene.audioText;delete scene.audioDurationSeconds}
       remapSourceSpeech(previous,scene)
     }
+    for(const asset of next.preparation.production?.assetVersions??[]){const previous=current.preparation.production?.assetVersions.find(a=>a.id===asset.id);if(previous){const {fingerprints:_before,...before}=previous,{fingerprints:_after,...after}=asset;if(JSON.stringify(before)!==JSON.stringify(after))throw new Error('EXTERNAL_ASSET_VERSION_IMMUTABLE: Preserve adopted version records; create a new explicit version for changed inputs, parameters or ancestry.')}asset.fingerprints=previous?previous.fingerprints:trustedProduction?asset.fingerprints:undefined}
+    for(const goal of next.preparation.production?.goals??[]){const previous=current.preparation.production?.goals.find(g=>g.id===goal.id);goal.binding=previous?previous.binding:semanticGoalBinding(next,goal)}
     // The export journal belongs to completed jobs, not editable input.
     next.referenceRecords=current.referenceRecords;next.reviewItems=reviewItems===undefined?current.reviewItems:assertStudioReviewItems(reviewItems);next.exports=current.exports;next.coverExports=current.coverExports
     this.editGuard?.(current,next)

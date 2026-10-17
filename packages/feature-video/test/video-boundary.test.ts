@@ -18,6 +18,7 @@ test('video actions remain feature-owned in one browser tool and require trusted
   let calls = 0
   const context = {browserKernel:{projectStore:{active:()=>({id:'p',name:'P',directory:'/project'})},settingsStore:{snapshot:()=>({edgeNarrationEnabled:false}),update:()=>({})},execute:async()=>({}),recordingController:{compose:async()=>({}),processArtifact:async()=>({}),narrate:async()=>{calls++;return {} }}}}
   await assert.rejects(registry.execute('video.narrate',context,{action:'video.narrate',narrationRequest:{text:'你好',provider:'edge-readaloud'}}),/disabled/)
+  await assert.rejects(registry.execute('video.narrate',context,{action:'video.narrate',narrationRequest:{text:'新闻',provider:'qwen-tts'}}),/disabled/)
   assert.equal(calls,0)
 })
 

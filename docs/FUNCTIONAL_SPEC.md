@@ -13,6 +13,7 @@ Browser is boundary, media is native, web is runtime.
 
 研究、规划和历史阶段的入口见 [文档导航](README.md)，不在本说明书发布尚未实现的能力。
 
+
 ## 产品与包边界
 
 | 包 | 责任 |
@@ -29,9 +30,27 @@ Browser is boundary, media is native, web is runtime.
 | media-native | 原生媒体采集、处理、旁白和合成 |
 | feature-video | Project 视频草稿、Studio 手动操作与自然语言操作 |
 
-默认入口装配 DSH `0.2.0-rc.2`、Codex App Server 和 Qoder CN SDK，由各官方运行时拥有 Agent Loop。自有 Assistant、统一设置、显式历史迁移和唯一默认入口已实现。GPT-6 封装时的完整离线快照及三驱动对应型号两轮真实验收通过；后续登录交互完成 32 项局部检查，未重新执行全量或付费模型。各报告的源码与适用范围见 [VERIFICATION.md](VERIFICATION.md)。Codex GPT-6 的独立工具封装与验收见 [实施状态](history/agent-drivers/IMPLEMENTATION.md)。核心只依赖契约，禁止直接依赖具体驱动的 RPC 名、页面存储、DOM 选择器、预设与凭据。DSH 使用官方启动 token/cookie 鉴权，日志脱敏；Workspace 和会话历史通过官方 WebSocket 快照读取，取得快照后取消订阅；修改操作留在驱动内。
+默认入口装配 DSH `0.2.1-rc.2`、Codex App Server 和 Qoder CN SDK，由各官方运行时拥有 Agent Loop。自有 Assistant、统一设置、显式历史迁移和唯一默认入口已实现。GPT-6 封装时的完整离线快照及三驱动对应型号两轮真实验收通过；后续登录交互完成 32 项局部检查，未重新执行全量或付费模型。各报告的源码与适用范围见 [VERIFICATION.md](VERIFICATION.md)。Codex GPT-6 的独立工具封装与验收见 [实施状态](history/agent-drivers/IMPLEMENTATION.md)。核心只依赖契约，禁止直接依赖具体驱动的 RPC 名、页面存储、DOM 选择器、预设与凭据。DSH 使用官方启动 token/cookie 鉴权，日志脱敏；Workspace 和会话历史通过官方 WebSocket 快照读取，取得快照后取消订阅；修改操作留在驱动内。
 
 驱动装配点为 `apps/bmw/product.ts`，具体创建逻辑在 `agent-assembly.ts`。所有驱动必须遵循相同归属契约，不能把 BMW 页面/媒体所有权、权限或任务队列转交给模型。现行设计见 [AGENT_DRIVER_DESIGN.md](AGENT_DRIVER_DESIGN.md)，阶段验收见 [历史实施记录](history/agent-drivers/IMPLEMENTATION.md)，未完成项见 [下一步设计](plans/NEXT_STEPS.md)。
+
+## 类型制作与 AK 增量（Video Document 2.10）
+
+`preparation.production`（规范文档 `content.brief.production`）是可选的闭合版本1工作表，固定 `profileId/profileVersion`，支持 `news-brief`、`science-explainer`、`research-explainer`。保存受众、主问题、目标时长意图、段落角色／目标／观察任务、稳定镜头引用与材料角色；实际时间仍只有现有时间线。`production-profiles` 读取版本化类型指导及六种有限配方；不改变模型目录、权限或预算，不安装外部 skill。`propose-type` 给保留／填充列表和候选 VideoEdit，`adopt-type` 要求同一 revision 与精确提案指纹；重新读取实际来源／设置，拒绝过期提案。配方仅填空画面说明及符合条件的空卡片槽，已有 GUI 编辑不被覆盖；测量配方明确要求填写真实数据。`production-read` 对工作表各部分按至多20项／32KiB分页（句目标省略Host绑定原文），`production-review` 给当前版本的缺口、人工量表、当前内容／MP4指纹及独立 assessmentRevision。`record-production-review` 记录五项类型检查、试听状态、观众复述／条件预测和说明；actor 由Host决定，Agent不能声明人工试听、观众回答或通过人工必需的check-5。GUI提供显式人工记录；只有当前指纹下的用户五项通过、实际试听声明、复述（T2/T3另需条件预测）且结构无缺口，才显示“已验收”。这是用户声明，不是Host科学或听感认证。Host记录保存在Project内version1类型审阅账本，固定Project／Session／draft，独立CAS，至多40项／256KiB，保留最近用户与Agent记录；普通文档更新不写此账本。内容、源文件、实际MP4或渲染版本改变后旧结论失效，技术可制作、Agent意见、人工试听、观众复述分开。
+
+研究来源工作 `works` 明确作品类型、题名、作者、版本及已有 source/acquisition；`relations` 只接受引文、点评、主张、复现、转帖和版本关系，要求明确端点并拒绝版本／转帖环。`claims` 区分 fact、quote、author-claim、reported-result、replication、commentary、inference、limitation，并关联现有镜头与引文槽；服务校验同 Project 原文身份和既有引文，但不认证科学正确性或已独立复现。`goals` 引用段落与已有 card/focus 的句绑定；Host 保存首次明确采用的音频／脚本／句／目标身份，旧 goal ID 的记录不可由普通更新改写。改音频、重复句、删除或更改目标后显示重绑；明确新身份才重新采用，不保存另一套秒数。
+
+六种段落配方当前为v2：原始素材与引用主导画面、短标签、观察→变化→解释节拍，避免把长旁白铺在静态要点卡上；提案返回recipeVersion，指纹包含该版本。它们是创作指导，不是Host自动认证叙事质量或替用户改稿。测量图例在实际可读字号下测量总宽度，足够时横排，否则逐行；不缩小字体以塞入字幕带。原生检查覆盖约84%高图表下方的真实字幕像素，renderer版本10使旧版导出失去当前复用身份，原MP4不删除。
+
+`plan-impact` 是只读派生查询，可试算既有 VideoEdit及可选`cover`候选（沿用export-cover闭合选项，只替换候选封面，不保存、不编码），逐页返回至多20项 keep/rebuild/rebind/review 与原因。基准绑定 revision、内容、实际素材 SHA、来源 acquisition、设置与渲染版本。来源事实读取限256个选定artifact／512MiB，超限明确失败，不截断证据。改一句旁白要求重做该镜头音频及重绑依赖，独立字幕／译文保留；换图保留旁白，相关阅读／聚焦需检查；独立字幕修改要求版式复查和整片重编；只改封面沿既有规则复用已验证 MP4。计划不是权限、队列预约或执行回执，各执行动作继续独立校验 owner/CAS/FIFO/Project 排除和取消清理。
+
+科学图解 `science.version:2` 新增 `events` 与 `measurement`；旧四种 version1 图解继续使用2.9。events 最多32元素／128事件，每事件最多32个有限 active/value/text/highlightLine 变化，稳定ID、目标、时间顺序与预算均校验，状态每次从保留时钟重新派生。node/phase/memory/code/chat/group 支持节点、阶段、记忆条、代码行和聊天面板；code可含最多8行、每行80字符的只读codeLines，highlightLine为0（无高亮）或现有行号，事件可改变高亮行但不执行代码。父容器深度最多2；整体变换／裁切沿用所属原生图层，分组可自由布局或有界文字堆叠，超出可读面积拒绝并指出标签尺寸。measurement 支持零基线线性轴的独立绝对值分组柱图，以及线性／对数轴散点；最多4序列／128总点，单位、域、基线、分类与明确来源是同一数据。拒绝非正对数域、越界、空来源和重复分类，不改数或伪造空值。Studio 表格、共享 Canvas 预览和原生导出消费同一契约。
+
+`precompose` 的 `gridRecipe` 是 version1 grid，rows/columns 相等且取1、2或4，输入填满方格（最多16），1–30秒，12–30fps，320–1280宽／180–720高；输出仍只接受既有受限宽高比。输入仅 Project artifact、源起点、速率及可选受限源裁切，音频显式 `mute` 或 `first`。media-native 按2×2分块使用最多4个叠加解码器输出中间片，再组合最多4片代理，不提高全局4解码器／8层／64对象预算。源资产与累计输出各限256MiB，整个任务十分钟；报告保留配方、源／结果SHA、布局／尺寸／帧率／渲染版本、用时、应用进程组每100ms采样峰值RSS、Host进程高水位与磁盘指标。采样峰值覆盖整个BMW实例，Host高水位也不伪称只测此任务。结果与配方报告关联当前草稿；`precomposition-status` 只读取属于该草稿的报告并重核哈希，变化标 stale，无自动缓存复用。代理内部对象不能在最终片直接编辑，可用原配方显式重建。取消或失败等待真实原生任务和IO清理，只移除本次产物；清理失败保留隔离，由 `media.record.stop` 显式恢复。CompositionProcessor 与 ArtifactJobIO 的失败清理允许恢复，不用吞掉关闭错误释放媒体准入。
+
+`assetVersions` 保存至多64个外部结果的显式父链、输入、服务／模型标记、参数、指令、视角、保留区域和来源作品。Host 对首次采用结果及输入记录实际SHA，同次采用去重且限256个身份／512MiB，旧ID不刷新身份；改变文件、输入或父链须显式新版本，当前审阅提示失效。支持保全已有外部研究素材，不表示 BMW 已实现三维生成、外部服务登录或付费服务端到端。实际调用与许可／质量验收另记。
+
+音频准入支持矩阵见 [官方运行时音频准入核验](research/AGENT_AUDIO_ADMISSION.md)。当前三个BMW适配路径均无已验证音频内容准入；WAV、ASR、指标与图像审阅不能被记为模型核听。
 
 ## 自有 Assistant 装配（三官方驱动）
 
@@ -45,7 +64,7 @@ Browser is boundary, media is native, web is runtime.
 - 设置缓存只存经过验证的无秘密显示投影，不持久化或跨 Profile/控制器共享，也不按 Project 重复读取。登录状态参考有效期 5 分钟、模型目录 30 分钟，分开显示最后检查时间与待检查标记；过期仍展示上次结果，不自动轮询、后台启动控制连接或绕过实际任务准入。手动「刷新状态」「刷新模型」均调用现有官方联合读取，成功且实际清理结束后同步更新两个时间。认证/模型修改先使旧投影失效，失败或取消不会恢复旧就绪状态；刷新失败保留旧显示与原时间，首次失败不因反复查看而自动重试。宿主模型偏好或驱动 baseline 变化会丢弃对应缓存。真实任务失败（包括认证/模型准备拒绝和连接失败）保守标记对应 driver 的两部分待检查，不猜测诊断文本、不自动发送/刷新；取消不作为失效事件。外部账号/配置变化不监控磁盘或凭据，仅通过手动刷新或后续官方任务验证发现，重启清空内存缓存。缓存查看不获取 Host 排除；原生读取、登录、模型写入与清理仍保持排除/隔离。
 - 每个适配器维护明确的支持名单，并与官方目录取交集；Codex/Qoder 读取账号状态及原生模型目录，DSH 只检查本地 DeepSeek Key 是否配置并读取官方 Provider 目录，不进行 API Key 有效性或余额验证；未知模型及 Qoder 标记禁用项不显示。Codex 支持 `gpt-6.1-sol`、`gpt-6-astra`、`gpt-6-sol`、`gpt-6-luna`、`gpt-5.5`；DSH 支持 `deepseek-official` 下的 `deepseek-flash`、`deepseek-v4-pro`，认证只使用 `DEEPSEEK_API_KEY`，其他 Provider 凭据不构成就绪条件且退出时保留；Qoder CN 支持 `auto`、`qmodel_38max`、`qfmodel`、`qmodel_latest`、`qmodel`、`q37fmodel`、`dmodel`、`dfmodel`、`gmodel`、`gfmodel`、`gm51model`、`kmodel_latest`、`kmodel`、`mmodel`。设置投影中的 `verified` 表示维护名单支持，不表示用户运行过预检或账号拥有推理额度；Qoder 的真实模型验收目前只覆盖 `auto`。
 - 设置不要求用户执行专项验证。Codex 设置选择不调用工具预检；Qoder 冷控制会话仍内部检查 SDK init 的有效工具目录并禁止任何模型消息，DSH 使用官方 cold 设置／目录控制。三者设置均不发送模型输入。
-- 官方引擎拥有 Agent 循环，Host 只协调输入和资源。输入前有效目录必须只有 `browser`；DSH 每次 request assembly 再检查 scoped catalog，Qoder 禁止继承 plugins/skills/settings，Codex 检查 Responses 及 Lite additional_tools。目录成员不证明账号推理额度或实际请求可用。
+- 官方引擎拥有 Agent 循环，Host 只协调输入和资源。输入前有效目录必须只有 `browser`；DSH 0.2.1 在官方 `agent/created` 初始化中限制该 Agent 的继承工具为 `browser`，预设指定 native 工具呈现，Host 准入及每次 request assembly 检查实际 `wireSchemas`（含呈现方式），并核对请求事件目录。该限制随官方 Agent 作用域清理，不能以提示或执行拒绝代替。未配置 Key 时新版官方目录隐藏模型，配置后才与 BMW 支持名单取交集；冷设置不发送模型输入。Qoder 禁止继承 plugins/skills/settings，Codex 检查 Responses 及 Lite additional_tools。目录成员不证明账号推理额度或实际请求可用。
 - Codex 有效工具目录验证通过后，在独立 CLI Profile 的宿主私有 `bmw-executable.json` 保留已验证执行文件路径。显式 `BMW_CODEX_EXECUTABLE` 优先，否则已保存路径优先于 PATH；不可用或非法记录失败拒绝并提示显式恢复，不退回其他版本。保存路径不代替每轮版本、文件内容及实际工具目录验证。成功工具回执保留 JSON 文本（最多 16384 字符）；大结果保存明确标记的有界预览，模型仍收到完整准入结果，历史不保存图像 base64。
 - 原生卡片预览与导出共用中文换行：自动末行仅剩一个汉字时，在不超宽、不破坏数字／英文单词或显式换行的条件下重新分配上一行。字幕底框和描边根据实际前景色明暗选择白色或黑色，保留用户字体和位置。模板内容契约发布 focus 必需区间、slow-push 与 zoom/focus 互斥、attach 清除旧聚焦及固定逐项展示不代表语音同步的条件。
 - Codex App Server `0.160.0`、`0.160.1` 使用统一的已验证版本白名单，CLI 与官方模型缓存均拒绝未知版本；CLI 错误明确显示实际版本及已支持版本。对 `gpt-6.1-sol`、`gpt-6-astra`、`gpt-6-sol`、`gpt-6-luna` 使用官方启动配置 `model_catalog_json`。从独立 CLI Profile 的官方目录生成内容寻址的只读策略副本，移除强制 code mode/多 Agent 元数据并清空额外实验工具，保留模型 ID、原生 Lite 传输、推理等级、上下文、图像能力和模型指导。不改写官方 cache/config；官方运行时仍可正常刷新其缓存。副本必须是宿主私有的普通文件，缓存版本、模型缺失、路径碰撞/篡改和实际额外工具均失败拒绝。目录预检与实际启动使用同一个副本；目录准入在模型输入前内部执行，用户模型选择不触发预检。GPT-5.5 保持原有路径，未知 GPT-6 型号不自动套用策略。BMW 不增加模型循环、代码执行工具或其他宿主权限。
@@ -142,7 +161,7 @@ Mediabunny `1.61.0` 与浏览器 WebCodecs 为媒体底座；Canvas/WebAudio/Web
 | media.image.annotate | 以原图像素坐标标注截图/图片，保留尺寸和原文件，输出新的 Project PNG 并回传模型图像 |
 | media.image.draw | 有界原生 Canvas 绘制图解：32..4096 整数尺寸、最多 8 MP、白底默认，可选透明背景 |
 | media.convert | 时间区间裁剪、缩放、MP4/WebM 转换，保留可支持轨道并检查编码器 |
-| video.narrate | 真实 Edge MP3 或本地 Matcha WAV，提供测得时长和 TTS 元数据 |
+| video.narrate | 真实 Edge MP3、Qwen WAV 或本地 Matcha WAV，提供测得时长和 TTS 元数据 |
 | video.compose | 有限结构化分镜合成 MP4，标题/列表/字幕、已有画面和旁白、原创配乐及原声混音 |
 
 处理支持进度、期限、取消和部分输出清理，禁止任意 URL、路径、HTML、脚本或 FFmpeg。设备缺少必要编码能力时失败，不伪造成功。实际 alpha 视频允许检查，抽帧/转换拒绝。
@@ -162,9 +181,21 @@ media.video.capture 增加可选 playbackPlan：最多16个严格递增的 sourc
 
 绘图由无网络、无 Node 的隔离媒体 Worker 使用固定 Canvas primitives 执行；拒绝 HTML/SVG/脚本、远程图片、任意输入/输出路径和自选覆盖文件名。新图像成为 Project 素材，可用于 Studio 分镜。传输期限为五分钟（包含排队及输出验收），每个媒体 Worker 保留两分钟期限。
 
+### Qwen TTS 配置、安全保存与试听
+
+Qwen 在线旁白提供方为 `qwen-tts`，固定北京地域 `qwen-audio-3.1-tts-flash`，默认音色 **闻怀之 `wenhuaizhi_v3.1`**（稳重、成熟，官方列为新闻播报适用音色），作为后续新闻速递等中文视频的推荐默认；另可选女声许言初 `xuyanchu_v3.1`、许玉远 `xuyuyuan_v3.1`，以及男声安明远 `anmingyuan_v3.1`（清亮、自然，官方列为旁白适用音色）。四种音色均支持 Settings 试听、视频默认/模板、Studio 与 browser 配音动作。模型与音色不可跨系列混用，参考[官方音色列表](https://help.aliyun.com/zh/model-studio/qwen-audio-tts-voice-list)和[HTTP API](https://help.aliyun.com/zh/model-studio/qwen-audio-tts-http-api)。Settings → Media → Video narration 中单独开启 Qwen（`qwenNarrationEnabled` 默认 false），视频默认/模板及 Studio 的旁白音色选择均支持 Qwen；传入 `provider:qwen-tts` 自动选择闻怀之，语速 0%。已有全局 Edge 默认、模板和草稿不自动改写。
+
+Settings → Media → Video narration 提供北京地域 Workspace ID、密码型 API Key 输入、保存/清除配置和固定短文试听。API Key 留空保留已保存 Key，保存后立即生效，无需重启或环境变量；输入框修改后须先保存，才能使用已保存配置生成试听；不从模型请求接收或在工具结果/全局设置中回传凭据。独立的 `qwen-tts-credentials.enc`（版本 1，权限 0600）使用 Electron safeStorage 加密整个凭据记录；Shell 只读取配置状态及 Workspace ID，Key 不回显，关闭设置/保存成功后清空密码框。系统安全存储不可用（含 Linux basic_text）时拒绝保存和解密；解密、格式或写入失败保留已有密文，不静默覆盖，显式“清除 Qwen 配置”可在无法解密时删除旧密文。Shell 凭据/试听 IPC 只允许受信主框架，模型 browser 不提供凭据操作。
+
+试听使用所选 Qwen 音色、0% 语速和固定文本“这里是新闻速递，为你播报今日要闻。”，提示会发送文本并消耗额度，需已保存凭据并开启 Qwen 在线配音。试听不修改视频默认音色；通过原生配音与真实解码检查后在设置内播放，最多 10 秒/1 MiB。音频是当前 Project 的临时产物，完成、失败或取消后清理，不加入草稿；设置关闭/应用退出可取消生成，FIFO 和 Project 切换排他持续到实际工作清理完成。播放结束可重复收听，关闭设置释放音频。
+
+凭据仅用于原生层向固定 `https://{workspace}.cn-beijing.maas.aliyuncs.com/api/v1/services/audio/tts/SpeechSynthesizer` 发起合成；工作空间值严格限为单个 DNS label，不能传任意端点。语速映射为 `1 + ratePercent/100`，24 kHz WAV，中文语言提示、关闭 SSML。60 秒覆盖合成与下载，JSON 上限 64 KiB，音频上限 8 MiB；只接受北京 DashScope 结果 OSS 的音频链接，HTTP 链接升级 TLS，下载不携带 API Key、cookies，禁止重定向；错误、超时或取消不重试、不回退，取消删除本次产物，等待连接清理后释放占用；清理失败保持隔离，显式 `media.record.stop` 重试清理。生成音频沿用 Project 归属、Studio revision 冲突检查与真实时长测量，不新增模型工具。隔离 fixture 验证不代表百炼付费模型、真实凭据或音质验收。
+
+### Edge 与本地旁白
+
 Edge 默认 `zh-CN-YunxiNeural` 男声、0% 语速，固定 Microsoft 服务，60 秒期限；可选晓晓女声。在线旁白默认打开，关闭后所有 Edge 入口被阻止。本地 `local-matcha/local-zh-en` 使用固定 Sherpa-ONNX WASM，需模型缓存、合成时禁止网络，180 秒期限；不会静默切换提供方或生成无声文件。
 
-直接覆盖：media-native 的 media-controller/media-processing/video-options/video-production；实际 decode/capture/compose/local-speech 在媒体、视频、旁白 smoke 验证。在线 Edge 和付费视觉模型为独立 opt-in，不属于离线检查的成功声明。
+直接覆盖：media-native 的 media-controller/media-processing/video-options/video-production、platform 的 qwen-credentials-store 及桌面设置检查；实际 decode/capture/compose/local-speech 在媒体、视频、旁白 smoke 验证。Qwen 的离线 HTTP 响应夹具不验证真实百炼服务或音质；在线 Edge 和付费视觉模型为独立 opt-in，不属于离线检查的成功声明。
 
 ### Studio 语音候选、句级校正与字幕锚点
 
@@ -275,6 +306,8 @@ Settings 的视频制作项支持比例、分辨率、帧率、内置画面风�
 TTS 设置只是生成参数；已有音频按分镜保存宿主生成记录 `audioGeneration`：`{kind:"tts",options:{provider,voice,ratePercent}}` 表示实际生成参数，`{kind:"imported"}` 表示手动绑定音频，`{kind:"legacy",options:{...}}` 仅保存旧音频编辑前的目标参数基线，不声称实际音色。旧草稿缺字段时保留原音频并显示「参数未记录」；后续改变目标音色/语速会标记旧音频过期。生成音频的脚本、provider、voice 或 ratePercent 改变后需重新生成，预览不混入过期旁白，导出拒绝过期音频。手动绑定音频不受 TTS 设置影响。GUI/Agent 草稿更新不能改写同一音频的真实生成记录、脚本文本及实测时长。字幕内容和样式可独立编辑，不使旁白过期。
 
 ## Video Studio
+
+主轨交互在预览准备开始时禁用实际片段按钮和属性，重绘保持同一准入状态；等待准备／保存／选择事务完成后恢复，防止可见按钮与操作拒绝状态不一致。该约束不改变媒体时钟或导出像素。
 
 Studio 默认使用镜头卡片、脚本与预览的统一工作台；高级编辑为主动开启的全窗口多轨视图，同一 Assistant 转为浮框。两种视图共享草稿、媒体、撤销和归属，没有第二个自然语言输入。用户已要求暂不继续 UI／工作流优化；本轮仅核查一致性。专用 AI 图片／视频素材生成暂缓，素材准备使用现有 Project 文件及浏览器采集能力。
 
@@ -442,7 +475,7 @@ simple.cards/3 是高级模型的可逆子集，继续接受原 simple.cards/1 �
 
 模型浏览器适配层把 create/read/草稿修改返回转换为有界摘要，保留草稿 ID、所属 Session、revision、输出设置、镜头清单、旁白待办和就绪问题计数；摘要不是可写完整草稿。GUI 与直接宿主服务仍读取完整投影。read-scene 要求 draftId/expectedRevision/sceneId，按 content/card/captions/speech/visuals/reviews/timeline/sources 返回所需字段；字幕、句锚、建议、时间轴与来源按 pageOffset/pageLimit 分页，卡片目标仅返回 kind/index/label 和关联选择，不重复宿主身份快照。read-preparation 按 notes/outline/artifacts/sources 分区，文字每页 4000 UTF16 单元，记录每页最多二十项；文字与记录的 nextOffset 各自按对应单位续读。describe-schema 对模型返回能力及命令索引，describe-edit 按 editOperation 返回一个命令契约；卡片具体 Schema 仍由 describe-template 提供。渲染回复保留实际 MP4、完整报告 Artifact 身份与有界质量计数；逐页实际成片审阅保持原有图片准入。read-document 对模型返回摘要并指向逐镜头 timeline 取得稳定 clip ID；试算不重复整份 canonical document。模型 list 分页且只携带本页草稿的证明与兼容性，ASR 读取分页保留置信/警告及时间域，长段落预览明确标记截断，原始证据仍可按 Artifact 读取。
 
-assets 可传闭合 assetQuery {kind,query,includeReviewArtifacts,offset,limit}，默认二十、最多五十项，遍历全部合法文件名后筛选和分页，不在筛选前截取前一千项。默认排除匹配原生审片 PNG／视频报告命名的文件；它是文件名分组，不冒充素材语义或来源认证。目录和条目拒绝 symlink；GUI 未指定 query 的完整服务清单也遍历全部合法素材，确保大量审片帧不会挤掉当前 MP4、验收报告及画面／旁白引用，不能以目录前一千项代替完整 GUI 清单。模型默认使用筛选分页。read-material 按实际 Artifact ID 查找 Project 文本，不受旧列表前一千项限制；模型只收到有明确截断状态的四千字元预览页。网页原文使用 source/list 获取来源与获取记录 ID，再 source/read；模型可选择 text/candidates/media 分区，原文返回精确 UTF16 偏移，候选确认与已获取媒体的当前文件/证明核验结果分开。source 摘要与原文读取保留发布日期、明确声明的事件日期及其来源、采集日期和访问限制；未知日期保持 null，不能把采集日期推定为发布时间。原文读取另保留访问说明与错误，不因正文分页丢失预览/登录限制。source 文本不作为 Agent 指令，不能用 sources 中的原文文件名冒充 artifacts 中的文字素材。
+assets 可传闭合 assetQuery {kind,query,includeReviewArtifacts,offset,limit}，默认二十、最多五十项，遍历全部合法文件名后筛选和分页，不在筛选前截取前一千项。默认排除匹配原生审片 PNG／视频报告命名的文件；它是文件名分组，不冒充素材语义或来源认证。目录和条目拒绝 symlink；GUI 未指定 query 的完整服务清单也遍历全部合法素材，确保大量审片帧不会挤掉当前 MP4、验收报告及画面／旁白引用，不能以目录前一千项代替完整 GUI 清单。模型默认使用筛选分页。read-material 按实际 Artifact ID 查找 Project 文本，不受旧列表前一千项限制；模型只收到有明确截断状态的四千字元预览页。网页原文使用 source/list 获取来源与获取记录 ID，再 source/read；模型可选择 text/candidates/media 分区，原文返回精确 UTF16 偏移及至多32个、每块至多160 UTF16单元的quoteSpans；块不拆代理对，边界精确保留，模型可直接复制区间与原文而不估算长度，分块不认证主张。候选确认与已获取媒体的当前文件/证明核验结果分开。source 摘要与原文读取保留发布日期、明确声明的事件日期及其来源、采集日期和访问限制；未知日期保持 null，不能把采集日期推定为发布时间。原文读取另保留访问说明与错误，不因正文分页丢失预览/登录限制。source 文本不作为 Agent 指令，不能用 sources 中的原文文件名冒充 artifacts 中的文字素材。
 
 字幕布局修正后提升原生导出指纹的渲染版本，旧版排版成片不再作为当前内容可复用的已完成输出；原文件及历史记录保留，需要以新渲染路径重新导出才能验收新效果。
 
@@ -581,7 +614,7 @@ remove-reference 是封闭请求，必须包含 draftId/expectedRevision/referen
 
 卡片预览按当前区域高度适配横/竖画幅，播放和定位控件始终留在预览区，不随卡片滚动，也不要求滚动竖屏画面后才能播放。交付计划只显示待更新旁白数量和制作影响，完整镜头名单保留在默认折叠区；有效旧成片复用时不显示待更新名单。可选测试审阅默认折叠，不成为导出门槛。
 
-预览准备期间，时间轴分割与播放/定位控件一同禁用；真实准备完成后按当前编辑状态恢复，避免使用未完成预览的播放头进行分割。
+预览准备期间，主轨对象选择／手势、时间轴分割与播放/定位控件一同禁用；真实准备完成后按当前编辑状态恢复。对象选择及分割后保存／选择／预览使用同一事务，操作前捕获逻辑播放头并在选择时显式恢复，不从重建期间的临时零值重新取时；检查等待事务完成，避免把选择回执当作预览完成。
 
 
 ### Project 素材索引与区间语音检索
@@ -644,7 +677,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - BMW 核心 Browser Actions（42）：`status`、`help`、`tabs.list`、`tabs.open`、`tabs.show`、`tabs.close`、`navigate`、`back`、`forward`、`reload`、`observe`、`click`、`type`、`wait`、`key`、`hover`、`page.diagnostics`、`page.media.list`、`page.viewport.set`、`media.screenshot`、`media.download`、`media.preserve`、`media.video.capture`、`media.inspect`、`media.audio.sample`、`media.audio.preview`、`media.frames.sample`、`media.capture.frames.sample`、`media.convert`、`media.image.inspect`、`media.image.annotate`、`media.image.draw`、`media.record.start`、`media.record.stop`、`project.context`、`project.memory.append`、`project.tasks.append`、`schedule.list`、`schedule.create`、`schedule.update`、`schedule.remove`、`schedule.run`
 - feature-video Feature Browser Actions（4）：`video.compose`、`video.narrate`、`video.studio`、`video.settings`
 
-- video.studio 操作（64）：`analysis`、`diagnose-timing`、`review-status`、`record-export-review`、`read-scene`、`read-preparation`、`describe-edit`、`guide`、`estimate-speech`、`suggest-recording-plan`、`apply-recording-plan`、`narrate-local`、`apply-source-narration`、`validate-source-narration`、`materials`、`describe-template`、`describe-schema`、`read-document`、`compatibility`、`validate-edit`、`apply-edit`、`migrate-document`、`remove-reference`、`prepare-reference`、`read-reference`、`set-reference-analysis`、`apply-reference-notes`、`propose-review`、`adopt-review`、`dismiss-review`、`undo-review`、`split-scene`、`restore`、`recognize-source`、`read-source-speech`、`apply-source-captions`、`detach-source-captions`、`set-caption-translations`、`align-speech`、`read-speech`、`correct-speech`、`source`、`export-citations`、`list`、`create`、`read`、`delete`、`update`、`narrate`、`narrate-pending`、`check`、`export-captions`、`export-cover`、`read-material`、`suggest-focus`、`review-export`、`render`、`assets`、`inspect`、`attach`、`open`、`context`、`configure`、`save-template`。字段、用户专属操作与归属检查见上方契约。
+- video.studio 操作（73）：`record-production-review`、`precomposition-status`、`precompose`、`production-profiles`、`propose-type`、`adopt-type`、`production-read`、`production-review`、`plan-impact`、`analysis`、`diagnose-timing`、`review-status`、`record-export-review`、`read-scene`、`read-preparation`、`describe-edit`、`guide`、`estimate-speech`、`suggest-recording-plan`、`apply-recording-plan`、`narrate-local`、`apply-source-narration`、`validate-source-narration`、`materials`、`describe-template`、`describe-schema`、`read-document`、`compatibility`、`validate-edit`、`apply-edit`、`migrate-document`、`remove-reference`、`prepare-reference`、`read-reference`、`set-reference-analysis`、`apply-reference-notes`、`propose-review`、`adopt-review`、`dismiss-review`、`undo-review`、`split-scene`、`restore`、`recognize-source`、`read-source-speech`、`apply-source-captions`、`detach-source-captions`、`set-caption-translations`、`align-speech`、`read-speech`、`correct-speech`、`source`、`export-citations`、`list`、`create`、`read`、`delete`、`update`、`narrate`、`narrate-pending`、`check`、`export-captions`、`export-cover`、`read-material`、`suggest-focus`、`review-export`、`render`、`assets`、`inspect`、`attach`、`open`、`context`、`configure`、`save-template`。字段、用户专属操作与归属检查见上方契约。
 
 ### 当前自动化测试清单
 
@@ -757,6 +790,22 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `material index durably chunks long source clocks, searches exact original intervals and reuses validated completed work`
 - `material background chunks reject GUI metadata CAS races, preserve committed parts and clean only new proof outputs`
 - `material index paths, cursors and intervals stay closed and symlink catalogs are never replaced`
+
+#### `packages/feature-video/test/production-assessment.test.ts`
+
+- `Only trusted user-origin type assessments can declare listening and viewer understanding; Agent opinions remain separate`
+- `Type review journals enforce Project/Session ownership, independent CAS, bounded history and no symbolic links`
+- `Content review identity is stable across receipt revisions and changes with actual source bytes or authored questions`
+
+#### `packages/feature-video/test/production.test.ts`
+
+- `Versioned production worksheets and research diagrams require 2.10 and round-trip without losing authored fields`
+- `Type adoption is explicit, rechecks actual source bytes and preserves GUI edits and current revision`
+- `Impact matrix distinguishes voice, visual, captions and cover changes and binds plans to current file hashes`
+- `Source relations never infer authorship from URLs and reject dangling, duplicate and cyclic ancestry`
+- `Semantic goals keep their captured sentence/target identity across regeneration and never silently adopt repeated sentence IDs`
+- `External asset chains retain native SHA snapshots through six versions and flag replacements without rewriting earlier versions`
+- `Late proxy completion reconciles a GUI CAS race and asks native ownership cleanup to remove only its new outputs`
 
 #### `packages/feature-video/test/source-analysis.test.ts`
 
@@ -1118,6 +1167,16 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Drawing output IO has no input, bounds PNG writes and rolls back failed dimensions without changing existing images`
 - `Drawing validation identifies wrong action fields and nested property paths without exposing values`
 
+#### `packages/media-native/test/precomposition.test.ts`
+
+- `Sixteen-cell proxies use sequential four-decoder blocks with explicit source intervals, identity and audio policy`
+- `Proxy cancellation waits for owned native work and removes only intermediate/output artifacts; directory replacement quarantines cleanup`
+
+#### `packages/media-native/test/research-diagrams.test.ts`
+
+- `Event tables remain deterministic across reverse seek and retained-clock cuts; groups and event targets are bounded`
+- `Measured charts use independent values, sourced series and explicit linear/log axes without normalization or clamping`
+
 #### `packages/media-native/test/science-spec.test.ts`
 
 - `Scientific diagrams are bounded data; schema admits defaults and runtime enforces cross-field relations`
@@ -1203,6 +1262,10 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `recording suggestions cover every source frame and reserve wait compression for complete measured events`
 - `loupe keeps base framing while its source clock follows trims and rate changes`
 - `quality observation bounds memory while preserving every actual paint and restoring the native method`
+- `Qwen narration uses its news voice and rejects cross-provider choices and model controls`
+- `Qwen native adapter sends the fixed Beijing model and rate, retrieves bounded WAV without credentials or redirects`
+- `Qwen rejects untrusted download origins, missing credentials, provider errors, excessive bytes and invalid WAV without retries`
+- `Qwen cancellation cancels an in-flight audio body and does not retry synthesis`
 
 #### `packages/platform/test/agent-history-store.test.ts`
 
@@ -1284,6 +1347,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `custom search templates require HTTP(S) and a query placeholder`
 - `proxy settings apply to the persistent BMW browser session`
 - `online narration defaults enabled and retains explicit boolean opt-out`
+- `Qwen online narration is opt-in and validates saved consent`
 
 #### `packages/platform/test/layout-docking.test.ts`
 
@@ -1346,6 +1410,12 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `agent append is limited to memory documents and records provenance time`
 - `tab state keeps only bounded HTTP(S) URLs`
 - `Project persistence contains only BMW ownership and keeps independent documents across reload`
+
+#### `packages/platform/test/qwen-credentials-store.test.ts`
+
+- `Qwen credentials persist encrypted with private permissions and only a Shell status projection`
+- `Qwen refuses weak encryption and preserves existing ciphertext on encryption/decryption failures`
+- `Corrupt or linked Qwen ciphertext remains intact until explicit clear; secrets and arbitrary endpoints are rejected`
 
 #### `packages/platform/test/remote-control-boundary.test.ts`
 

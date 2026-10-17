@@ -35,6 +35,7 @@ const DEFAULTS = Object.freeze({
   customSearchUrl: '',
   newTabPage: 'search',
   theme: 'dark',
+  qwenNarrationEnabled: false,
   edgeNarrationEnabled: true
 })
 
@@ -73,6 +74,7 @@ function normalize(input: Record<string, any> = {}) {
     customSearchUrl,
     newTabPage: input.newTabPage === 'blank' ? 'blank' : 'search',
     theme: ['dark', 'light', 'system'].includes(input.theme) ? input.theme : DEFAULTS.theme,
+    qwenNarrationEnabled: input.qwenNarrationEnabled === true,
     edgeNarrationEnabled: input.edgeNarrationEnabled === undefined ? DEFAULTS.edgeNarrationEnabled : input.edgeNarrationEnabled === true
   }
 }
@@ -86,10 +88,10 @@ function writeAtomically(filePath, state) {
 
 export function parseGlobalSettingsState(raw:unknown) {
       const saved = stateRecord(raw)
-      if(Object.keys(saved).some(key=>!['version','videoPreferences','proxyMode','proxyRules','proxyBypassRules','searchEngine','customSearchUrl','newTabPage','theme','edgeNarrationEnabled'].includes(key)))throw new Error('Unknown global settings field; explicit migration is required.')
+      if(Object.keys(saved).some(key=>!['version','videoPreferences','proxyMode','proxyRules','proxyBypassRules','searchEngine','customSearchUrl','newTabPage','theme','edgeNarrationEnabled','qwenNarrationEnabled'].includes(key)))throw new Error('Unknown global settings field; explicit migration is required.')
       // Existing data must match the current format; use the explicit migration tool for old Profiles.
       if (saved.version !== 2) throw new Error('Unsupported settings version.')
-      for(const key of ['edgeNarrationEnabled'])if(saved[key]!==undefined&&typeof saved[key]!=='boolean')throw new Error('Invalid saved boolean setting: '+key)
+      for(const key of ['edgeNarrationEnabled','qwenNarrationEnabled'])if(saved[key]!==undefined&&typeof saved[key]!=='boolean')throw new Error('Invalid saved boolean setting: '+key)
       for(const key of ['proxyRules','proxyBypassRules','customSearchUrl'])if(saved[key]!==undefined&&typeof saved[key]!=='string')throw new Error('Invalid saved text setting: '+key)
       for(const [key,allowed] of Object.entries({proxyMode:['system','direct','manual'],theme:['dark','light','system'],searchEngine:['google','bing','duckduckgo','baidu','custom'],newTabPage:['search','blank']}))if(saved[key]!==undefined&&!allowed.includes(String(saved[key])))throw new Error('Invalid saved setting: '+key)
       return { saved, state: normalize({ ...DEFAULTS, ...saved }) }

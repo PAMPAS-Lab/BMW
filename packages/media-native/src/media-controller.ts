@@ -1,3 +1,6 @@
+import {GridPrecomposer,inspectGridProxy} from './precomposition.js'
+import {assertNarration} from './narration-contract.js'
+import type {QwenNarrationCredentials} from './narration-contract.js'
 import {ArtifactJobIO} from './artifact-job-io.js'
 import {preserveMedia} from './media-preservation.js'
 import type {PreservationInput} from './media-preservation.js'
@@ -14,7 +17,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { once } from 'node:events'
-import { BrowserWindow } from 'electron'
+import { app,BrowserWindow } from 'electron'
 import { assertArtifactId,assertMediaInfo,assertNativeProcessingRequest, mediaRecord } from './media-contract.js'
 import { NarrationProcessor } from './narration-processor.js'
 import { CompositionProcessor } from './composition-processor.js'
@@ -29,6 +32,7 @@ const ARTIFACT_MIME_TYPES = Object.freeze({
 
 export class MediaController implements NativeMediaPort {
   [key: string]: any
+  private precomposer:GridPrecomposer
   private sourceFramesReading=false
   private preserving=false
   private eventSource?:RecordingEventSource
@@ -49,7 +53,7 @@ export class MediaController implements NativeMediaPort {
   private speechProcessor:SpeechProcessor
   private narrator: NarrationProcessor
 
-  constructor({ session, preloadPath, pagePath, artifactsDirectory, resolveArtifactsDirectory, onStatus }) {
+  constructor({ session, preloadPath, pagePath, artifactsDirectory, resolveArtifactsDirectory, onStatus, getQwenCredentials = ():QwenNarrationCredentials=>{throw new Error('请先在 BMW 设置中保存 Qwen 凭据。')} }) {
     this.session = session
     this.preloadPath = preloadPath
     this.pagePath = pagePath
@@ -63,8 +67,9 @@ export class MediaController implements NativeMediaPort {
     this.metadata = null
     this.elementCapture = null
     this.comparisons = new Map()
-    this.narrator = new NarrationProcessor({ onStatus, pagePath: path.join(path.dirname(pagePath), 'narration.html'), preloadPath: path.join(path.dirname(preloadPath), 'narration-preload.cjs') })
+    this.narrator = new NarrationProcessor({ onStatus, getQwenCredentials, pagePath: path.join(path.dirname(pagePath), 'narration.html'), preloadPath: path.join(path.dirname(preloadPath), 'narration-preload.cjs') })
     this.composer = new CompositionProcessor({ session, onStatus, pagePath: path.join(path.dirname(pagePath), 'composition.html'), preloadPath: path.join(path.dirname(preloadPath), 'composition-preload.cjs') })
+    this.precomposer=new GridPrecomposer((composition,signal)=>this.composeNative(composition,this.resolveArtifactsDirectory?.()||this.artifactsDirectory,signal),()=>app.getAppMetrics().reduce((n,p)=>n+p.memory.workingSetSize*1024,0))
     this.coverProcessor = new CoverProcessor({session,onStatus,pagePath:path.join(path.dirname(pagePath),'processing.cover.html'),preloadPath:path.join(path.dirname(preloadPath),'processing-preload.cjs')})
     this.processor = new MediaProcessor({ session, onStatus,
       pagePath: path.join(path.dirname(pagePath), 'processing.html'),
@@ -89,7 +94,7 @@ export class MediaController implements NativeMediaPort {
   }
 
   isCaptureActive(): boolean {
-    return Boolean(this.preserving || this.sourceFramesReading || this.file || this.elementCapture || this.processor.busy || this.composer.busy || this.narrator.busy || this.coverProcessor.busy || this.speechProcessor.busy)
+    return Boolean(this.precomposer.busy || this.preserving || this.sourceFramesReading || this.file || this.elementCapture || this.processor.busy || this.composer.busy || this.narrator.busy || this.coverProcessor.busy || this.speechProcessor.busy)
   }
 
   async narrate(raw: unknown, signal?: AbortSignal) {
@@ -103,9 +108,26 @@ export class MediaController implements NativeMediaPort {
     } catch (error) { await fs.promises.rm(result.path, {force:true}); throw error }
   }
 
+  /** Fixed short audition through the same Project-owned synthesis and decode path. */
+  async auditionQwen(voice:unknown,signal?:AbortSignal){
+    const request=assertNarration({provider:'qwen-tts',voice,text:'这里是新闻速递，为你播报今日要闻。',ratePercent:0})
+    const result=await this.narrate(request,signal)
+    let io:ArtifactJobIO|undefined
+    try{
+      if(result.durationSeconds>10)throw new Error('Qwen 试听超过十秒，请重试。')
+      io=await ArtifactJobIO.open(path.dirname(result.path),{action:'media.inspect',artifactId:result.artifactId})
+      if(io.bytes>1024*1024)throw new Error('Qwen 试听音频过大。')
+      const bytes=await io.read(0,io.bytes);signal?.throwIfAborted()
+      return {voice:request.voice,durationSeconds:result.durationSeconds,audioDataUrl:'data:audio/wav;base64,'+Buffer.from(bytes).toString('base64')}
+    }finally{try{await io?.close()}finally{await fs.promises.rm(result.path,{force:true})}}
+  }
+
   async compose(raw: unknown, signal?: AbortSignal) {
     if (this.isCaptureActive()) throw new Error('Finish the current recording or processing job before composing.')
     const directory = this.resolveArtifactsDirectory?.() || this.artifactsDirectory
+    return this.composeNative(raw,directory,signal)
+  }
+  private async composeNative(raw:unknown,directory:string,signal?:AbortSignal) {
     const result = await this.composer.compose(raw, directory, signal)
     try {
       const inspection = assertMediaInfo(await this.processor.process({ action: 'media.inspect', artifactId: result.artifactId }, directory, signal))
@@ -119,6 +141,9 @@ export class MediaController implements NativeMediaPort {
   }
 
   async processArtifact(raw: unknown, signal?: AbortSignal) {
+    if(mediaRecord(raw).action==='media.precompose.discard'){const value=mediaRecord(raw);if(Object.keys(value).some(k=>!['action','cacheKey'].includes(k))||typeof value.cacheKey!=='string'||!/^[a-f0-9]{64}$/.test(value.cacheKey))throw new TypeError('Invalid proxy rollback.');await this.precomposer.discard(value.cacheKey);return {discarded:true}}
+    if(mediaRecord(raw).action==='media.precompose.inspect'){if(this.isCaptureActive())throw new Error('Media is busy.');const value=mediaRecord(raw);if(Object.keys(value).some(k=>!['action','artifactId'].includes(k)))throw new TypeError('Invalid proxy inspection.');return inspectGridProxy(this.resolveArtifactsDirectory?.()||this.artifactsDirectory,assertArtifactId(value.artifactId),signal)}
+    if(mediaRecord(raw).action==='media.precompose'){if(this.isCaptureActive())throw new Error('Finish the current media job before precomposing.');const value=mediaRecord(raw);if(Object.keys(value).some(k=>!['action','recipe'].includes(k)))throw new TypeError('Invalid native precomposition request.');return this.precomposer.run(value.recipe,this.resolveArtifactsDirectory?.()||this.artifactsDirectory,signal)}
     if(this.preserving)throw new Error('Finish media preservation before processing artifacts.')
     if(mediaRecord(raw).action==='media.capture.frames.sample'){
       if(this.isCaptureActive())throw new Error('Finish the current media job before reading source frame evidence.')
@@ -264,6 +289,9 @@ export class MediaController implements NativeMediaPort {
   }
 
   async stop(request:{discard?:boolean}={}) {
+    await this.composer.recoverCleanup()
+    await this.precomposer.recoverCleanup()
+    await this.narrator.recoverCleanup()
     if (this.elementCapture) {
       if(request.discard)throw new Error('discard cancels page recordings; selected-video jobs use their cancellation signal.')
       const capture = this.elementCapture

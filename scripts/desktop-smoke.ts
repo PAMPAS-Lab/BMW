@@ -5,11 +5,12 @@ import fs from 'node:fs'
 import http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
-import { app, BrowserWindow, WebContentsView, webContents, ipcMain, Menu } from 'electron'
+import { app, BrowserWindow, WebContentsView, webContents, ipcMain, Menu, safeStorage } from 'electron'
 import type { WebContents } from 'electron'
 import bmw, { createBmwAgentAssembly } from '../apps/bmw/product.js'
 import { createBmwApplication } from '../packages/platform/src/main.js'
 import { ProjectStore } from '../packages/platform/src/project-store.js'
+import {QwenCredentialsStore} from '../packages/platform/src/qwen-credentials-store.js'
 import { LayoutStore } from '../packages/platform/src/layout-store.js'
 
 const group=process.env.BMW_DESKTOP_GROUP??'workspace'
@@ -43,6 +44,28 @@ app.on('web-contents-created', (_event, contents) => {
 const fixture = http.createServer((_request, response) => {
   response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' })
   response.end('<!doctype html><title>BMW popup fixture</title><p>Temporary local fixture.</p>')
+})
+let qwenFixtureMode:'success'|'hold'|'failure'='success',qwenFixtureRequests=0,releaseQwenFixture:(()=>void)|undefined
+if(group==='settings')app.on('session-created',isolated=>{
+  if(isolated.isPersistent())return
+  isolated.protocol.handle('https',async request=>{
+    const url=new URL(request.url)
+    if(url.hostname==='desktop-fixture.cn-beijing.maas.aliyuncs.com'){
+      qwenFixtureRequests++;assert.equal(request.headers.get('authorization'),'Bearer desktop-fixture-private-key')
+      const body=await request.json() as {input:{text:string;voice:string}}
+      assert.equal(body.input.text,'这里是新闻速递，为你播报今日要闻。');assert.ok(['wenhuaizhi_v3.1','xuyanchu_v3.1','xuyuyuan_v3.1','anmingyuan_v3.1'].includes(body.input.voice))
+      if(qwenFixtureMode==='hold')await new Promise<void>(resolve=>{releaseQwenFixture=resolve})
+      if(qwenFixtureMode==='failure')return new Response('desktop-fixture-private-key',{status:401})
+      return Response.json({output:{finish_reason:'stop',audio:{url:'https://dashscope-result-bj.oss-cn-beijing.aliyuncs.com/pre/desktop.wav'}}})
+    }
+    if(url.hostname==='dashscope-result-bj.oss-cn-beijing.aliyuncs.com'){
+      assert.equal(request.headers.get('authorization'),null)
+      const wav=Buffer.alloc(44+96000);wav.write('RIFF',0);wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(24000,24);wav.writeUInt32LE(48000,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(96000,40)
+      for(let index=0;index<48000;index++)wav.writeInt16LE(Math.round(Math.sin(index/24000*2*Math.PI*440)*8000),44+index*2)
+      return new Response(wav,{headers:{'content-type':'audio/wav'}})
+    }
+    throw new Error('Unexpected desktop fixture network origin')
+  })
 })
 createBmwApplication(bmw,createBmwAgentAssembly())
 
@@ -241,13 +264,13 @@ try {
   assert.equal((await shell.executeJavaScript('window.bmw.layoutSettings()')).sidebarWidth, 480)
   await click('[data-settings-category="media"]')
   assert.equal(await shell.executeJavaScript("document.querySelector('[data-settings-section=media]').classList.contains('hidden')"), false)
-  await click('[data-settings-category="media"]');assert.equal(await shell.executeJavaScript("document.getElementById('settings-edge-narration').checked"),true)
+  await click('[data-settings-category="media"]');assert.equal(await shell.executeJavaScript("document.getElementById('settings-edge-narration').checked"),true);assert.equal(await shell.executeJavaScript("document.getElementById('settings-qwen-narration').checked"),false);await click('#settings-qwen-narration')
   await click('[data-settings-category="video"]');assert.equal(await shell.executeJavaScript("document.getElementById('settings-video-tts-voice').value"),'zh-CN-YunxiNeural')
   await shell.executeJavaScript("(()=>{for(const [id,value] of [['ratio','9:16'],['resolution','1080p'],['style','clean-light'],['watermark-text','测试品牌'],['tts-voice','zh-CN-XiaoxiaoNeural'],['tts-rate','10']]){const node=document.getElementById('settings-video-'+id);node.value=value;node.dispatchEvent(new Event('change',{bubbles:true}))}document.getElementById('settings-video-template-name').value='竖屏解读';return true})()")
   await click('#settings-video-template-save');await saveShell('video-settings-template.png');await click('#settings-save')
   await waitFor(async()=>await shell.executeJavaScript("document.querySelector('#settings-message').textContent.startsWith('Saved.')")?true:null);await click('#settings-close')
   const videoSettings=await shell.executeJavaScript('window.bmw.globalSettings()')
-  assert.equal(videoSettings.videoPreferences.defaults.aspectRatio,'9:16');assert.equal(videoSettings.videoPreferences.templates[0].name,'竖屏解读');assert.equal(videoSettings.videoPreferences.templates[0].options.watermark.text,'测试品牌');assert.equal(videoSettings.videoPreferences.templates[0].options.tts.voice,'zh-CN-XiaoxiaoNeural');assert.equal(videoSettings.videoPreferences.templates[0].options.tts.ratePercent,10)
+  assert.equal(videoSettings.qwenNarrationEnabled,true);assert.equal(videoSettings.videoPreferences.defaults.aspectRatio,'9:16');assert.equal(videoSettings.videoPreferences.templates[0].name,'竖屏解读');assert.equal(videoSettings.videoPreferences.templates[0].options.watermark.text,'测试品牌');assert.equal(videoSettings.videoPreferences.templates[0].options.tts.voice,'zh-CN-XiaoxiaoNeural');assert.equal(videoSettings.videoPreferences.templates[0].options.tts.ratePercent,10)
   await click('#more-button');await visible('#more-menu');await click('#settings-button');await visible('#settings-overlay');await click('[data-settings-category="video"]')
   assert.equal(await shell.executeJavaScript("document.getElementById('settings-video-ratio').value"),'9:16')
   await shell.executeJavaScript("document.getElementById('settings-video-fps').value='30';document.getElementById('settings-video-fps').dispatchEvent(new Event('change',{bubbles:true}));true")
@@ -259,7 +282,45 @@ try {
   await click('#settings-video-template-delete');await click('#settings-save')
   await waitFor(async()=>await shell.executeJavaScript("document.querySelector('#settings-message').textContent.startsWith('Saved.')")?true:null);await click('#settings-close')
   assert.equal((await shell.executeJavaScript('window.bmw.globalSettings()')).videoPreferences.templates.length,1)
-  await shell.executeJavaScript('window.bmw.updateGlobalSettings({videoPreferences:{},theme:'+JSON.stringify(initialTheme)+'})')
+  await click('#more-button');await visible('#more-menu');await click('#settings-button');await visible('#settings-overlay');await click('[data-settings-category="media"]')
+  await waitFor(async()=>await shell.executeJavaScript("document.getElementById('settings-qwen-status').textContent.includes('尚未配置')")?true:null)
+  await shell.executeJavaScript("document.getElementById('settings-qwen-workspace').value='desktop-fixture';document.getElementById('settings-qwen-key').value='desktop-fixture-private-key';document.getElementById('settings-qwen-narration').checked=true;true")
+  await click('#settings-qwen-save');await waitFor(async()=>await shell.executeJavaScript("document.getElementById('settings-qwen-status').textContent.includes('加密保存')&&!document.getElementById('settings-qwen-save').disabled")?true:null)
+  assert.equal(await shell.executeJavaScript("document.getElementById('settings-qwen-key').value"),'')
+  const credentialFile=path.join(userData,'qwen-tts-credentials.enc'),ciphertext=fs.readFileSync(credentialFile)
+  assert.equal(ciphertext.includes(Buffer.from('desktop-fixture-private-key')),false);assert.equal(ciphertext.includes(Buffer.from('desktop-fixture')),false)
+  assert.deepEqual(new QwenCredentialsStore(credentialFile,safeStorage).read(),{apiKey:'desktop-fixture-private-key',workspaceId:'desktop-fixture'})
+  assert.equal(JSON.stringify(await shell.executeJavaScript('window.bmw.globalSettings()')).includes('desktop-fixture'),false)
+  assert.equal(Object.hasOwn(await shell.executeJavaScript('window.bmw.qwenTtsStatus()'),'apiKey'),false)
+  await shell.executeJavaScript("document.getElementById('settings-qwen-workspace').dispatchEvent(new Event('input',{bubbles:true}));true");assert.equal(await shell.executeJavaScript("document.getElementById('settings-qwen-preview').disabled"),true)
+  await click('#settings-qwen-save');await waitFor(async()=>await shell.executeJavaScript("!document.getElementById('settings-qwen-save').disabled")?true:null)
+  const currentProject=store.active(),artifactRoot=path.join(currentProject.directory,'artifacts'),artifactsBefore=fs.readdirSync(artifactRoot).sort()
+  const defaultsBefore=await shell.executeJavaScript('window.bmw.globalSettings().then(value=>value.videoPreferences)')
+  await shell.executeJavaScript("document.getElementById('settings-qwen-voice').value='anmingyuan_v3.1';true")
+  await click('#settings-qwen-preview');await waitFor(async()=>await shell.executeJavaScript("!document.getElementById('settings-qwen-audio').hidden&&document.getElementById('settings-qwen-audio').readyState>=2")?true:null)
+  assert.equal(await shell.executeJavaScript("document.getElementById('settings-qwen-audio').duration"),2)
+  await shell.executeJavaScript("document.getElementById('settings-qwen-audio').play().then(()=>true)",true)
+  assert.equal(await shell.executeJavaScript("document.getElementById('settings-qwen-audio').paused"),false)
+  assert.deepEqual(fs.readdirSync(artifactRoot).sort(),artifactsBefore);assert.deepEqual(await shell.executeJavaScript('window.bmw.globalSettings().then(value=>value.videoPreferences)'),defaultsBefore)
+  await saveShell('qwen-settings-audition.png')
+  await waitFor(async()=>await shell.executeJavaScript("!document.getElementById('settings-qwen-preview').disabled")?true:null)
+  qwenFixtureMode='failure';await click('#settings-qwen-preview');await waitFor(async()=>await shell.executeJavaScript("document.getElementById('settings-qwen-preview-status').textContent.includes('Qwen narration failed')")?true:null)
+  assert.equal(await shell.executeJavaScript("document.getElementById('settings-qwen-preview-status').textContent.includes('desktop-fixture-private-key')"),false)
+  qwenFixtureMode='hold';await click('#settings-qwen-preview');await waitFor(async()=>releaseQwenFixture?true:null)
+  await assert.rejects(shell.executeJavaScript('window.bmw.createProject({name:"Forbidden while auditioning"})'),/browser operation/)
+  await click('#settings-qwen-cancel');await waitFor(async()=>await shell.executeJavaScript("document.getElementById('settings-qwen-preview-status').textContent.includes('取消')&&!document.getElementById('settings-qwen-preview').disabled")?true:null)
+  releaseQwenFixture?.();releaseQwenFixture=undefined
+  assert.deepEqual(fs.readdirSync(artifactRoot).sort(),artifactsBefore)
+  await click('#settings-close');assert.equal(await shell.executeJavaScript("document.getElementById('settings-qwen-key').value"),'')
+  qwenFixtureMode='hold';await shell.executeJavaScript("window.__qwenAudition=window.bmw.auditionQwenTts('wenhuaizhi_v3.1').then(()=>false,()=>true);true")
+  await waitFor(async()=>releaseQwenFixture?true:null);await shell.executeJavaScript('window.bmw.globalSettingsPanel(false)')
+  assert.equal(await shell.executeJavaScript('window.__qwenAudition'),true);releaseQwenFixture?.();releaseQwenFixture=undefined
+  assert.deepEqual(fs.readdirSync(artifactRoot).sort(),artifactsBefore)
+  await shell.executeJavaScript('window.bmw.clearQwenTts()');assert.equal(fs.existsSync(credentialFile),false)
+  await assert.rejects(shell.executeJavaScript("window.bmw.auditionQwenTts('wenhuaizhi_v3.1')"),/开启 Qwen/)
+  assert.equal(qwenFixtureRequests,4)
+  console.log('PASS Qwen settings: mock-keychain encrypted save/reload/blank-key retention, hidden Key, native decoded playback, failure/cancel/close cleanup, Project exclusion and explicit clear; no paid API or listening verdict')
+  await shell.executeJavaScript('window.bmw.updateGlobalSettings({qwenNarrationEnabled:false,videoPreferences:{},theme:'+JSON.stringify(initialTheme)+'})')
   await click('#more-button');await visible('#more-menu');await click('#settings-button');await visible('#settings-overlay')
   await click('[data-settings-category="advanced"]')
   assert.equal(await shell.executeJavaScript("document.querySelector('[data-settings-section=advanced]').classList.contains('hidden')"), false)

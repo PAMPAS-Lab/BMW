@@ -7,7 +7,7 @@ import type { Registry } from './registry.js'
 
 interface AssemblyContext {agent?:{session?:{header?:{id?:unknown;cwd?:unknown}}}}
 interface Assembly {contexts?:{name:string;text:string}[];[key:string]:unknown}
-interface PluginContext {on(event:'session/event',listener:(session:object,event:{type:string})=>void):unknown; on(event:'system-prompt/assemble',listener:(assembly:unknown,context:AssemblyContext,next:()=>Promise<Assembly>)=>Promise<Assembly>):unknown; tools: Registry & {schemas(scope:object):{name:string}[]}; effect(callback: () => () => Promise<void>, label: string): unknown; [key: string]: unknown }
+interface PluginContext {on(event:'agent/created',listener:(payload:{agent:{ctx:{tools:{restrict(filter:{allow:string[]}):unknown}}}})=>void):unknown;on(event:'session/event',listener:(session:object,event:{type:string})=>void):unknown; on(event:'system-prompt/assemble',listener:(assembly:unknown,context:AssemblyContext,next:()=>Promise<Assembly>)=>Promise<Assembly>):unknown; tools: Registry & {presentAs(mode:'native'):unknown;wireSchemas(scope:object):{schemas:{name:string}[]}}; effect(callback: () => () => Promise<void>, label: string): unknown; [key: string]: unknown }
 interface McpPlugin { Config: unknown; inject: string[]; apply(ctx: PluginContext, config: unknown): unknown }
 
 // Resolve against the running DSH installation, never a second Harness copy.
@@ -17,6 +17,10 @@ export const Config = upstream.Config
 export const inject = upstream.inject
 
 export async function apply(ctx: PluginContext, config: unknown) {
+  // Restrict at the Agent scope: its inherited capabilities include the
+  // preset's browser as well as global tools. The official scope owns cleanup.
+  ctx.on('agent/created',({agent})=>{agent.ctx.tools.restrict({allow:['browser']})})
+  ctx.tools.presentAs('native')
   const failureGuard = new BrowserFailureGuard()
   ctx.on('session/event', (session, event) => { if (event.type === 'turn/start') failureGuard.reset(session) })
   const bindings = new Map<object, Promise<string>>()
@@ -50,7 +54,7 @@ export async function apply(ctx: PluginContext, config: unknown) {
     if(agent?.session)failureGuard.assertAvailable(agent.session)
     const assembled=await next()
     if(!agent||!header)return assembled
-    const catalog=ctx.tools.schemas(agent)
+    const catalog=ctx.tools.wireSchemas(agent).schemas
     if(catalog.length!==1||catalog[0].name!=='browser')throw new Error('BMW effective DSH model catalog must remain exactly browser before every model request')
     const value=await bridgeRequest('session/context',{binding:await ensureBinding(agent,header)})
     return appendWorkspaceContext(assembled,value.text)

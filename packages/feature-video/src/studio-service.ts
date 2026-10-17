@@ -1,3 +1,6 @@
+import {ProductionAssessmentJournal,productionAssessmentSnapshot,makeProductionAssessment,acceptedProductionAssessment} from './production-assessment.js'
+import {productionProfiles,productionRecipes,productionProposal,productionReview} from './production-types.js'
+import {productionFacts,productionImpact,productionArtifactIds,productionHash} from './production-impact.js'
 import {VIDEO_DOCUMENT_VERSION,VIDEO_DOCUMENT_VERSIONS} from './video-document-version.js'
 import {COMPOSITION_LIMITS} from '../../media-native/src/composition-contract.js'
 import {SourceAnalysisService} from './source-analysis-service.js'
@@ -59,7 +62,7 @@ export class VideoStudioService {
     studioId(owner.sessionId)
     const scope={projectId:owner.projectId,sessionId:owner.sessionId}
     const request=assertStudioRequest(raw),result=await this.perform(request,signal,scope,actor)
-    if(['record-export-review','apply-recording-plan','narrate-local','apply-source-narration','materials','apply-edit','migrate-document','remove-reference','prepare-reference','set-reference-analysis','apply-reference-notes','propose-review','adopt-review','dismiss-review','undo-review','split-scene','restore','recognize-source','apply-source-captions','detach-source-captions','set-caption-translations','align-speech','correct-speech','create','delete','update','attach','narrate','narrate-pending','render','export-cover','configure','save-template'].includes(request.operation))this.kernel.videoStudioChanged?.(scope)
+    if(['record-production-review','precompose','adopt-type','record-export-review','apply-recording-plan','narrate-local','apply-source-narration','materials','apply-edit','migrate-document','remove-reference','prepare-reference','set-reference-analysis','apply-reference-notes','propose-review','adopt-review','dismiss-review','undo-review','split-scene','restore','recognize-source','apply-source-captions','detach-source-captions','set-caption-translations','align-speech','correct-speech','create','delete','update','attach','narrate','narrate-pending','render','export-cover','configure','save-template'].includes(request.operation))this.kernel.videoStudioChanged?.(scope)
     return result
   }
   private async perform(raw:unknown,signal:AbortSignal|undefined,owner:BrowserSessionOwner,actor:'user'|'agent'='agent'):Promise<unknown>{
@@ -67,6 +70,7 @@ export class VideoStudioService {
     if(project.id!==owner.projectId)throw new Error('Studio Project changed during operation.')
     signal?.throwIfAborted()
     const sources=new StudioSources(this.kernel)
+    if(request.operation==='production-profiles')return {profiles:productionProfiles,recipes:productionRecipes,guidanceVersion:1,permissions:'unchanged',externalSkills:false,disable:'Omit production metadata to stop using type guidance; authored scenes remain intact.'}
     if(request.operation==='guide')return studioToolGuide()
     if(request.operation==='describe-edit'){
       const branches=mediaRecord(mediaRecord(videoEditSchema.properties.commands).items).oneOf as unknown[],variants=branches.map(mediaRecord).filter(v=>mediaRecord(mediaRecord(v.properties).op).const===request.editOperation).map(v=>{const properties=mediaRecord(v.properties);return {...v,properties:{...properties,...('cardSpec'in properties?{cardSpec:{type:'object',description:'Use describe-template with the chosen cardTemplateId for its exact cardSpec schema.'}}:{})}}})
@@ -114,20 +118,70 @@ export class VideoStudioService {
       const current=store.read(id);if(current.revision!==request.expectedRevision)throw new Error('STUDIO_CONFLICT: 请使用当前草稿版本。')
       const candidate=request.operation==='update'?request.draft:applyVideoEdit(current,request.edit!,actor==='user'),raw=mediaRecord(candidate),next=assertVideoDraft({...raw,preparation:raw.preparation??current.preparation})
       if(next.preparation.sourceIds?.length){const catalog=sources.port().snapshot();if(next.preparation.sourceIds.some(id=>!catalog.sources.some(source=>source.id===id)))throw new Error('Preparation source does not belong to this Project.')}
+      for(const work of next.preparation.production?.works??[])await sources.port().readBody(work.sourceId,work.acquisitionId,signal)
+      for(const artifactId of productionArtifactIds(next).filter(id=>!productionArtifactIds(current).includes(id))){const input=await ArtifactJobIO.open(path.join(project.directory,'artifacts'),{action:'media.inspect',artifactId});await input.close()}
       for(const scene of next.scenes)for(const citation of scene.citations??[])await sources.citation(citation,signal)
       for(const artifactId of next.preparation.artifactIds.filter(value=>!current.preparation.artifactIds.includes(value))){signal?.throwIfAborted();const input=await ArtifactJobIO.open(path.join(project.directory,'artifacts'),{action:'media.inspect',artifactId});await input.close()}
       if(next.cover?.sourceArtifactId&&next.cover.sourceArtifactId!==current.cover?.sourceArtifactId){const input=await ArtifactJobIO.open(path.join(project.directory,'artifacts'),{action:'media.inspect',artifactId:next.cover.sourceArtifactId});await input.close()}
       for(const artifactId of new Set([...layerAssets(next),...next.scenes.flatMap(layerAssets),...next.scenes.flatMap(s=>cardImageAssets(s.cardSpec?.version===2?s.cardSpec:undefined))])){
         signal?.throwIfAborted();const input=await ArtifactJobIO.open(path.join(project.directory,'artifacts'),{action:'media.inspect',artifactId});await input.close()
       }
+      if(next.preparation.production){
+        const assets=next.preparation.production.assetVersions,assetHashes=new Map<string,string>();let assetBytes=0
+        for(const asset of assets){const old=current.preparation.production?.assetVersions.find(a=>a.id===asset.id);if(old){asset.fingerprints=old.fingerprints;continue}const ids=[asset.artifactId,...asset.inputArtifactIds],hashes:string[]=[];for(const artifactId of ids){signal?.throwIfAborted();let sha256=assetHashes.get(artifactId);if(!sha256){if(assetHashes.size>=256)throw new Error('PRODUCTION_FACTS_BUDGET: At most 256 external asset identities per adoption.');const io=await ArtifactJobIO.open(path.join(project.directory,'artifacts'),{action:'media.inspect',artifactId});try{assetBytes+=io.bytes;if(assetBytes>512*1024*1024)throw new Error('PRODUCTION_FACTS_BUDGET: External asset snapshots exceed 512 MiB.');sha256=await io.fingerprint(signal);assetHashes.set(artifactId,sha256)}finally{await io.close()}}hashes.push(sha256)}asset.fingerprints={output:hashes[0],inputs:asset.inputArtifactIds.map((artifactId,i)=>({artifactId,sha256:hashes[i+1]}))}}
+        raw.preparation=next.preparation
+      }
+      const goalScenes=new Set((next.preparation.production?.goals??[]).filter(g=>!current.preparation.production?.goals.some(old=>old.id===g.id)).map(g=>g.sceneId));if(goalScenes.size)await verifyStudioSpeech({...next,scenes:next.scenes.filter(s=>goalScenes.has(s.id))},path.join(project.directory,'artifacts'),signal)
       if(request.edit){const bound=new Set(request.edit.commands.flatMap(c=>c.op==='card.bind'||c.op==='card.set'&&c.links!==undefined||c.op==='captions.set'&&c.mode==='sentences'?[c.sceneId]:[]));if(bound.size)await verifyStudioSpeech({...next,scenes:next.scenes.filter(s=>bound.has(s.id))},path.join(project.directory,'artifacts'),signal)}
       signal?.throwIfAborted()
       if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Studio Project changed before edit commit.')
-      const updated=store.update(id,request.expectedRevision,candidate,false,actor==='user',undefined,request.operation==='validate-edit')
+      const updated=store.update(id,request.expectedRevision,candidate,false,actor==='user',undefined,request.operation==='validate-edit',true)
       return request.operation==='validate-edit'?{valid:true,draftId:id,revision:current.revision,compatibility:studioCompatibility(updated),document:videoDocumentFromDraft(updated),renderReadiness:draftReadiness(updated)}:updated
     }
     const draft=store.read(id)
     if(draft.revision!==request.expectedRevision)throw new Error('STUDIO_CONFLICT: 请使用当前草稿版本。')
+    if(request.operation==='precomposition-status'){if(!draft.preparation.artifactIds.includes(request.artifactId!))throw new Error('Choose a proxy report belonging to this draft.');const result=await this.kernel.recordingController.processArtifact({action:'media.precompose.inspect',artifactId:request.artifactId},signal);this.assertRevision(store,draft);if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Proxy Project changed.');return result}
+    if(request.operation==='precompose'){
+      const result=mediaRecord(await this.kernel.recordingController.processArtifact({action:'media.precompose',recipe:request.gridRecipe},signal)),artifactId=assertArtifactId(result.artifactId),recipeArtifactId=assertArtifactId(result.recipeArtifactId)
+      try{assertMediaArtifactReceipt(result,'composition');if(typeof result.cacheKey!=='string'||!/^[a-f0-9]{64}$/.test(result.cacheKey)||result.width!==request.gridRecipe!.width||result.height!==request.gridRecipe!.height||result.fps!==request.gridRecipe!.fps||result.durationSeconds!==request.gridRecipe!.durationSeconds||productionHash(mediaRecord(result.metrics).recipe)!==productionHash(request.gridRecipe))throw new Error('Invalid native proxy receipt.');signal?.throwIfAborted();this.assertRevision(store,draft);if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Proxy Project changed.');draft.preparation.artifactIds.push(artifactId,recipeArtifactId);const updated=store.update(id,draft.revision,draft);return {...result,draft:updated,rebuild:'Read recipeArtifactId for the exact inputs, source hashes and explicit audio policy; source changes require a new precompose request.'}}
+      catch(error){await this.kernel.recordingController.processArtifact({action:'media.precompose.discard',cacheKey:result.cacheKey});throw error}
+    }
+    if(request.operation==='production-read'){
+      const production=draft.preparation.production,section=request.productionSection??'brief'
+      if(!production)return {draftId:id,revision:draft.revision,production:null,next:'production-profiles then propose-type'}
+      if(section==='brief'){const {sections,works,relations,claims,goals,assetVersions,...brief}=production;return {draftId:id,revision:draft.revision,brief,counts:{sections:sections.length,works:works.length,relations:relations.length,claims:claims.length,goals:goals.length,assetVersions:assetVersions.length}}}
+      return {draftId:id,revision:draft.revision,section,...studioPage<unknown>(section==='goals'?production.goals.map(({binding,...goal})=>({...goal,bindingCaptured:Boolean(binding)})):production[section],request.pageOffset??0,request.pageLimit??20,32768)}
+    }
+    if(request.operation==='production-review'||request.operation==='record-production-review'){
+      const review=productionReview(draft),sourceFacts=await this.productionSourceFacts(draft,sources,signal),directory=path.join(project.directory,'artifacts'),scope=await productionAssessmentSnapshot(draft,store,directory,sourceFacts,signal),journal=new ProductionAssessmentJournal(project.directory,{...owner,draftId:id})
+      if(draft.preparation.production?.assetVersions.length){const facts=await productionFacts(draft,directory,signal);for(const asset of draft.preparation.production.assetVersions){const expected=asset.fingerprints;if(!expected||facts.facts.find(f=>f.artifactId===asset.artifactId)?.sha256!==expected.output||expected.inputs.some(p=>facts.facts.find(f=>f.artifactId===p.artifactId)?.sha256!==p.sha256)||expected.inputs.map(p=>p.artifactId).join('\n')!==asset.inputArtifactIds.join('\n'))review.issues.push({code:'external-asset-stale',id:asset.id,message:'外部素材输出或输入版本改变，须显式建立新版本。'})}}
+      this.assertRevision(store,draft);if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Production Project changed.')
+      if(request.operation==='record-production-review'){
+        if(!scope.fingerprint||!scope.exportArtifactId||request.baseFingerprint!==scope.fingerprint)throw new Error('PRODUCTION_REVIEW_STALE: Review the current actual MP4 and content before recording.')
+        const record=makeProductionAssessment(draft,request.assessment!,{fingerprint:scope.fingerprint,exportArtifactId:scope.exportArtifactId},actor)
+        const checked=await productionAssessmentSnapshot(draft,store,directory,await this.productionSourceFacts(draft,sources,signal),signal);signal?.throwIfAborted();this.assertRevision(store,draft);if(this.kernel.projectStore.active().id!==owner.projectId||checked.fingerprint!==scope.fingerprint)throw new Error('PRODUCTION_REVIEW_STALE: Content or sources changed during assessment.')
+        journal.append(request.expectedAssessmentRevision!,record)
+      }
+      const saved=journal.read(),current=saved.records.filter(r=>r.fingerprint===scope.fingerprint&&r.profileId===draft.preparation.production?.profileId),user=current.findLast(r=>r.origin==='user'),agent=current.findLast(r=>r.origin==='agent'),accepted=!review.issues.length&&acceptedProductionAssessment(user,draft.preparation.production?.profileId??'')
+      return {...review,state:accepted?'已验收':review.issues.length?'资料待补':scope.exportArtifactId?'成片待审':draftReadiness(draft).ready?'可制作':'稿件待审',contentAccepted:accepted,humanListening:user?.listening??'not-performed',viewerRetelling:user?.retellingAnswer.trim()?'recorded':'not-recorded',fingerprint:scope.fingerprint,exportArtifactId:scope.exportArtifactId,assessmentRevision:saved.revision,assessments:{user:user??null,agent:agent??null},historicalAssessmentCount:saved.records.length-current.length,issues:review.issues.slice(0,20),issueCount:review.issues.length,goals:review.goals?.slice(0,20),goalCount:review.goals?.length??0,checks:review.checklist?.map((c,i)=>({id:'check-'+(i+1),...c,humanRequired:i===4})),assessmentMeaning:'User declarations for the current bytes/content, not Host semantic certification.'}
+    }
+
+    if(request.operation==='propose-type'||request.operation==='adopt-type'||request.operation==='plan-impact'){
+      const directory=path.join(project.directory,'artifacts'),readSourceFacts=()=>this.productionSourceFacts(draft,sources,signal),sourceFacts=await readSourceFacts(),facts=await productionFacts(draft,directory,signal,sourceFacts)
+      this.assertRevision(store,draft);if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Production Project changed.')
+      if(request.operation==='plan-impact'){
+        const candidate=request.edit?applyVideoEdit(draft,request.edit,actor==='user'):draft,next=request.cover?{...candidate,cover:request.cover}:candidate,items=productionImpact(draft,next,store.reusableExport(draft)?.artifactId)
+        for(const fact of facts.facts.filter(f=>f.state==='unavailable'))items.unshift({id:fact.artifactId,kind:'source',decision:'review',reasons:['source-unavailable']})
+        const stale=request.baseFingerprint!==undefined&&request.baseFingerprint!==facts.fingerprint
+        return {draftId:id,revision:draft.revision,baseFingerprint:facts.fingerprint,rendererVersion:facts.rendererVersion,stale,staleReasons:stale?['revision-content-source-or-settings-changed']:[],...studioPage(items,request.pageOffset??0,request.pageLimit??20,12000),execution:'read-only; existing actions recheck owner, CAS, source facts and cleanup; no partial encoding reuse'}
+      }
+      const proposal=productionProposal(draft,request.productionType!,request.recipeId,request.sceneId)
+      const proposalFingerprint=productionHash({base:facts.fingerprint,profile:proposal.profileId,profileVersion:proposal.profileVersion,recipe:proposal.recipeId,recipeVersion:proposal.recipeVersion,sceneId:request.sceneId,edit:proposal.edit})
+      if(request.operation==='propose-type')return {...proposal,draftId:id,revision:draft.revision,baseFingerprint:proposalFingerprint}
+      if(proposalFingerprint!==request.baseFingerprint)throw new Error('PRODUCTION_STALE: Recompute the proposal; revision, sources or settings changed.')
+      const checked=await productionFacts(draft,directory,signal,await readSourceFacts());if(checked.fingerprint!==facts.fingerprint)throw new Error('PRODUCTION_STALE: Sources changed before adoption.')
+      return this.perform({operation:'apply-edit',draftId:id,expectedRevision:draft.revision,edit:proposal.edit},signal,owner,actor)
+    }
     if(request.operation==='analysis')return new SourceAnalysisService(this.kernel,{projectId:project.id,sessionId:owner.sessionId,draftId:draft.id,directory:project.directory},()=>{if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Analysis Project changed.');this.assertRevision(store,draft)},actor).execute(request.analysisRequest!,signal)
     if(['remove-reference','prepare-reference','read-reference','set-reference-analysis','apply-reference-notes'].includes(request.operation))return referenceOperation(this.kernel,store,draft,request,path.join(project.directory,'artifacts'),()=>{if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Reference Project changed.');this.assertRevision(store,draft)},actor,signal)
     if(['propose-review','adopt-review','dismiss-review','undo-review'].includes(request.operation)){
@@ -362,6 +416,10 @@ export class VideoStudioService {
       return store.update(id,draft.revision,draft,true)
     }
     throw new Error('Unhandled Studio operation.')
+  }
+  private async productionSourceFacts(draft:VideoDraft,sources:StudioSources,signal?:AbortSignal){
+    const rows:{sourceId:string;acquisitionId:string;contentId:string|null}[]=[],identities=[...(draft.preparation.production?.works??[]),...draft.scenes.flatMap(s=>s.citations??[])]
+    for(const ref of identities){if(rows.some(r=>r.sourceId===ref.sourceId&&r.acquisitionId===ref.acquisitionId))continue;const body=await sources.port().readBody(ref.sourceId,ref.acquisitionId,signal);rows.push({sourceId:ref.sourceId,acquisitionId:ref.acquisitionId,contentId:body.acquisition.contentId})}return rows
   }
   private assertRevision(store:VideoStudioStore,draft:VideoDraft):void {
     if(store.read(draft.id).revision!==draft.revision)throw new Error('STUDIO_CONFLICT: 检查期间草稿已更新，请重新检查。')

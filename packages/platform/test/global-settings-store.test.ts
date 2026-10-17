@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
-import { GlobalSettingsStore, globalSettingsInternals } from '../src/global-settings-store.js'
+import { GlobalSettingsStore, globalSettingsInternals, parseGlobalSettingsState } from '../src/global-settings-store.js'
 
 test('global settings default to system proxy and Google search', () => {
   const settings = globalSettingsInternals.normalize(globalSettingsInternals.DEFAULTS)
@@ -78,4 +78,11 @@ test('online narration defaults enabled and retains explicit boolean opt-out', (
   assert.equal(globalSettingsInternals.normalize({edgeNarrationEnabled: 'true'}).edgeNarrationEnabled, false)
   assert.equal(globalSettingsInternals.normalize({edgeNarrationEnabled: true}).edgeNarrationEnabled, true)
   assert.equal(globalSettingsInternals.normalize({edgeNarrationEnabled: false}).edgeNarrationEnabled, false)
+})
+
+test('Qwen online narration is opt-in and validates saved consent',()=>{
+  assert.equal(globalSettingsInternals.normalize({}).qwenNarrationEnabled,false)
+  assert.equal(globalSettingsInternals.normalize({qwenNarrationEnabled:true}).qwenNarrationEnabled,true)
+  assert.equal(globalSettingsInternals.normalize({qwenNarrationEnabled:'true'}).qwenNarrationEnabled,false)
+  assert.throws(()=>parseGlobalSettingsState({version:2,qwenNarrationEnabled:'true'}),/boolean/)
 })

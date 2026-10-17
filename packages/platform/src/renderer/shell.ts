@@ -45,6 +45,27 @@ const videoTemplateSelect=document.querySelector('#settings-video-template') as 
 const videoTemplateName=document.querySelector('#settings-video-template-name') as HTMLInputElement
 const videoTemplateNote=document.querySelector('#settings-video-template-note') as HTMLElement
 function renderVideoTemplates():void{const selected=videoTemplateSelect.value;videoTemplateSelect.replaceChildren(new Option('选择模板…',''),...videoPreferencesDraft.templates.map(item=>new Option(item.name,item.name)));videoTemplateSelect.value=selected}
+const qwenWorkspace=document.querySelector('#settings-qwen-workspace') as HTMLInputElement
+const qwenKey=document.querySelector('#settings-qwen-key') as HTMLInputElement
+const qwenVoice=document.querySelector('#settings-qwen-voice') as HTMLSelectElement
+const qwenSave=document.querySelector('#settings-qwen-save') as HTMLButtonElement
+const qwenClear=document.querySelector('#settings-qwen-clear') as HTMLButtonElement
+const qwenPreview=document.querySelector('#settings-qwen-preview') as HTMLButtonElement
+const qwenCancel=document.querySelector('#settings-qwen-cancel') as HTMLButtonElement
+const qwenAudio=document.querySelector('#settings-qwen-audio') as HTMLAudioElement
+const qwenStatus=document.querySelector('#settings-qwen-status') as HTMLElement
+const qwenPreviewStatus=document.querySelector('#settings-qwen-preview-status') as HTMLElement
+let qwenConfigured=false,qwenAvailable=false,qwenBusy=false,qwenGenerating=false,qwenCredentialDirty=false,qwenSettingsGeneration=0
+function clearQwenAudio(){qwenAudio.pause();qwenAudio.removeAttribute('src');qwenAudio.load();qwenAudio.hidden=true}
+function updateQwenControls(){qwenSave.disabled=qwenBusy||!qwenAvailable;qwenClear.disabled=qwenBusy;qwenPreview.disabled=qwenBusy||!qwenAvailable||!qwenConfigured||qwenCredentialDirty;qwenCancel.disabled=!qwenGenerating;qwenKey.disabled=qwenBusy;qwenWorkspace.disabled=qwenBusy;qwenVoice.disabled=qwenBusy}
+function renderQwenStatus(value:{available:boolean;configured:boolean;workspaceId:string;state:string}){
+  qwenCredentialDirty=false;qwenAvailable=value.available;qwenConfigured=value.configured;qwenWorkspace.value=value.workspaceId;qwenKey.value=''
+  qwenKey.placeholder=value.configured?'已安全保存；留空保留原 Key':'输入 API Key'
+  const labels:Record<string,string>={ready:'Qwen 凭据已使用系统安全存储加密保存，API Key 不回显。',empty:'尚未配置 Qwen。填写北京地域凭据后保存。',unavailable:'系统安全存储不可用，无法读取或保存凭据。',unreadable:'已有凭据无法读取，原文件已保留。请恢复系统安全存储，或清除配置后重新保存。'}
+  qwenStatus.textContent=labels[value.state]??'Qwen 配置不可用。';updateQwenControls()
+}
+async function refreshQwenStatus(){const generation=qwenSettingsGeneration;const value=await api.qwenTtsStatus();if(generation===qwenSettingsGeneration)renderQwenStatus(value)}
+const settingsQwenNarration = document.querySelector('#settings-qwen-narration') as HTMLInputElement
 const settingsEdgeNarration = document.querySelector('#settings-edge-narration') as HTMLInputElement
 const settingsRestart = document.querySelector('#settings-restart')
 const sessionOverlay = document.querySelector('#session-overlay')
@@ -326,6 +347,7 @@ function renderGlobalSettings() {
   settingsSearchEngine.value = globalSettings.searchEngine
   settingsCustomSearch.value = globalSettings.customSearchUrl || ''
   settingsNewTab.value = globalSettings.newTabPage
+  settingsQwenNarration.checked = globalSettings.qwenNarrationEnabled === true
   settingsEdgeNarration.checked = globalSettings.edgeNarrationEnabled === true
   settingsProxyManual.classList.toggle('hidden', settingsProxyMode.value !== 'manual')
   settingsCustomSearchRow.classList.toggle('hidden', settingsSearchEngine.value !== 'custom')
@@ -444,17 +466,22 @@ async function closeSessionCenter() {
 async function openGlobalSettings() {
   try {
     videoPreferencesDirty=false
+    qwenSettingsGeneration++;qwenKey.value='';clearQwenAudio();qwenPreviewStatus.textContent=''
     globalSettings = await api.globalSettingsPanel(true)
     settingsMessage.textContent = ''
     settingsMessage.classList.remove('error')
     settingsOverlay.classList.remove('hidden')
     renderGlobalSettings()
+    qwenVoice.value=['wenhuaizhi_v3.1','xuyanchu_v3.1','xuyuyuan_v3.1'].includes(videoPreferencesDraft.defaults.tts.voice)?videoPreferencesDraft.defaults.tts.voice:'wenhuaizhi_v3.1'
+    await refreshQwenStatus()
   } catch (error) {
     status.textContent = error.message
   }
 }
 
+function dismissQwenSettings(){qwenSettingsGeneration++;qwenKey.value='';clearQwenAudio()}
 async function closeGlobalSettings() {
+  dismissQwenSettings()
   settingsOverlay.classList.add('hidden')
   videoPreferencesDirty=false
   await api.globalSettingsPanel(false)
@@ -659,6 +686,7 @@ projectSwitcher.addEventListener('click', async () => {
 })
 layoutButton.addEventListener('click', async () => {
   returnToSettings = true
+  dismissQwenSettings()
   settingsOverlay.classList.add('hidden')
   await api.globalSettingsPanel(false)
   await openLayoutEditor()
@@ -701,7 +729,9 @@ settingsButton.addEventListener('click', async () => { await setToolbarPopup(nul
 document.querySelector('#settings-close').addEventListener('click', closeGlobalSettings)
 document.querySelector('#settings-agent-advanced').addEventListener('click', async () => {
   try {
+    dismissQwenSettings()
     settingsOverlay.classList.add('hidden')
+    await api.globalSettingsPanel(false)
     await api.openAgentAdvancedSettings()
   } catch (error) {
     settingsOverlay.classList.remove('hidden')
@@ -729,6 +759,34 @@ document.querySelector('#settings-video-template-save')!.addEventListener('click
 document.querySelector('#settings-video-template-delete')!.addEventListener('click',()=>{const index=videoPreferencesDraft.templates.findIndex(item=>item.name===videoTemplateSelect.value);if(index<0){videoTemplateNote.textContent='请先选择要删除的模板。';return}videoPreferencesDraft.templates.splice(index,1);videoPreferencesDirty=true;videoTemplateSelect.value='';renderVideoTemplates();videoTemplateNote.textContent='模板已从待保存设置移除，请点击底部保存。'})
 settingsProxyMode.addEventListener('change', () => settingsProxyManual.classList.toggle('hidden', settingsProxyMode.value !== 'manual'))
 settingsSearchEngine.addEventListener('change', () => settingsCustomSearchRow.classList.toggle('hidden', settingsSearchEngine.value !== 'custom'))
+for(const field of [qwenKey,qwenWorkspace])field.addEventListener('input',()=>{qwenCredentialDirty=true;clearQwenAudio();qwenPreviewStatus.textContent='请先保存修改后的配置，再生成试听。';updateQwenControls()})
+qwenSave.addEventListener('click',async()=>{
+  qwenBusy=true;updateQwenControls();qwenStatus.textContent='正在加密保存…'
+  try{renderQwenStatus(await api.saveQwenTts({apiKey:qwenKey.value,workspaceId:qwenWorkspace.value,enabled:settingsQwenNarration.checked}));clearQwenAudio();qwenPreviewStatus.textContent=''}
+  catch(error){qwenStatus.textContent=error instanceof Error?error.message:String(error)}
+  finally{qwenBusy=false;updateQwenControls()}
+})
+qwenClear.addEventListener('click',async()=>{
+  qwenBusy=true;updateQwenControls();clearQwenAudio()
+  try{renderQwenStatus(await api.clearQwenTts());qwenPreviewStatus.textContent=''}
+  catch(error){qwenStatus.textContent=error instanceof Error?error.message:String(error)}
+  finally{qwenBusy=false;updateQwenControls()}
+})
+qwenPreview.addEventListener('click',async()=>{
+  const generation=qwenSettingsGeneration
+  qwenBusy=true;qwenGenerating=true;updateQwenControls();clearQwenAudio();qwenPreviewStatus.textContent='正在生成试听…'
+  try{
+    const result=await api.auditionQwenTts(qwenVoice.value)
+    if(generation!==qwenSettingsGeneration)return
+    if(typeof result.audioDataUrl!=='string'||!/^data:audio\/wav;base64,[A-Za-z0-9+/=]+$/.test(result.audioDataUrl)||result.audioDataUrl.length>1_400_000)throw new Error('无效的试听音频。')
+    qwenAudio.src=result.audioDataUrl;qwenAudio.hidden=false
+    qwenPreviewStatus.textContent='试听已生成，'+Number(result.durationSeconds).toFixed(1)+' 秒。'
+    try{await qwenAudio.play()}catch{qwenPreviewStatus.textContent+=' 点击播放按钮收听。'}
+  }catch(error){if(generation===qwenSettingsGeneration)qwenPreviewStatus.textContent=error instanceof Error?error.message:String(error)}
+  finally{qwenBusy=false;qwenGenerating=false;updateQwenControls()}
+})
+qwenCancel.addEventListener('click',async()=>{qwenCancel.disabled=true;clearQwenAudio();try{await api.cancelQwenTts();qwenPreviewStatus.textContent='试听已取消。'}catch(error){qwenPreviewStatus.textContent=error instanceof Error?error.message:String(error)}})
+qwenVoice.addEventListener('change',()=>{clearQwenAudio();qwenPreviewStatus.textContent=''})
 document.querySelector('#settings-save').addEventListener('click', async () => {
   settingsMessage.textContent = 'Applying…'
   settingsMessage.classList.remove('error')
@@ -742,6 +800,7 @@ document.querySelector('#settings-save').addEventListener('click', async () => {
       customSearchUrl: settingsCustomSearch.value,
       newTabPage: settingsNewTab.value,
       edgeNarrationEnabled: settingsEdgeNarration.checked,
+      qwenNarrationEnabled: settingsQwenNarration.checked,
       ...(videoPreferencesDirty?{videoPreferences:{...videoPreferencesDraft,defaults:videoOptionsForm.read()},videoPreferencesExpected}:{})
     })
 

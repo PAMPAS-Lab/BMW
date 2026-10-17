@@ -18,14 +18,63 @@ async function run():Promise<void>{
  try{
   await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));await app.whenReady()
   const address=server.address();if(!address||typeof address==='string')throw new Error('Probe server failed')
-  const controller=new MediaController({session:session.fromPartition(`bmw-tts-smoke-${process.pid}`),preloadPath:path.resolve('packages/media-native/src/preload/media-preload.cjs'),pagePath:path.resolve('packages/media-native/src/media/media.html'),artifactsDirectory:artifacts,resolveArtifactsDirectory:()=>artifacts,onStatus:(value:{action?:string;active?:boolean})=>{
-    if(value.action==='video.narrate'&&value.active){
+  const controller=new MediaController({getQwenCredentials:()=>({apiKey:'fixture-native-secret',workspaceId:'fixture-workspace'}),session:session.fromPartition(`bmw-tts-smoke-${process.pid}`),preloadPath:path.resolve('packages/media-native/src/preload/media-preload.cjs'),pagePath:path.resolve('packages/media-native/src/media/media.html'),artifactsDirectory:artifacts,resolveArtifactsDirectory:()=>artifacts,onStatus:(value:{action?:string;active?:boolean})=>{
+    if(value.action==='video.narrate'&&value.active&&process.env.BMW_TTS_TEST_PROVIDER!=='qwen-fixture'){
       const window=BrowserWindow.getAllWindows().find(item=>!item.isDestroyed())
       assert.ok(window)
       if(cancel){setTimeout(()=>cancel?.abort(new Error('TTS cancellation')),50);return}
       probe=new Promise(resolve=>window.webContents.once('did-finish-load',()=>{void window.webContents.executeJavaScript(`fetch('http://127.0.0.1:${address.port}/probe').then(()=>({blocked:false})).catch(()=>({blocked:true}))`).then(resolve)}))
     }
   }})
+  if(process.env.BMW_TTS_TEST_PROVIDER==='qwen-fixture'){
+    let synthesis=0,downloads=0,cleanupFail=false,mode:'success'|'failure'|'cancel'='success'
+    const wav=Buffer.alloc(44+24000*2*2)
+    wav.write('RIFF',0);wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(24000,24);wav.writeUInt32LE(48000,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(wav.length-44,40)
+    for(let index=0;index<48000;index++)wav.writeInt16LE(Math.round(Math.sin(index/24000*2*Math.PI*440)*10000),44+index*2)
+    app.on('session-created',isolated=>{
+      if(isolated.isPersistent())return
+      const closeConnections=isolated.closeAllConnections.bind(isolated)
+      isolated.closeAllConnections=async()=>{if(cleanupFail)throw new Error('Fixture cleanup failure');await closeConnections()}
+      isolated.protocol.handle('https',async request=>{
+        const url=new URL(request.url)
+        if(url.hostname==='fixture-workspace.cn-beijing.maas.aliyuncs.com'){
+          synthesis++;assert.equal(request.headers.get('authorization'),'Bearer fixture-native-secret')
+          const body=await request.json() as {model:string;input:{voice:string;rate:number}}
+          assert.equal(body.model,'qwen-audio-3.1-tts-flash');assert.equal(body.input.voice,'anmingyuan_v3.1');assert.equal(body.input.rate,1)
+          if(mode==='failure')return new Response('fixture-native-secret',{status:403})
+          if(mode==='cancel')cancel?.abort(new Error('Qwen fixture cancellation'))
+          return Response.json({output:{finish_reason:'stop',audio:{url:'http://dashscope-result-bj.oss-cn-beijing.aliyuncs.com/pre/fixture.wav'}}})
+        }
+        if(url.hostname==='dashscope-result-bj.oss-cn-beijing.aliyuncs.com'){
+          downloads++;assert.equal(request.headers.get('authorization'),null);assert.equal(request.headers.get('cookie'),null)
+          return new Response(wav,{headers:{'content-type':'audio/wav'}})
+        }
+        throw new Error('Unexpected Qwen fixture network origin')
+      })
+    })
+    const settingsStore=new GlobalSettingsStore({filePath:path.join(temporary,'settings.json'),onState:undefined})
+    settingsStore.update({qwenNarrationEnabled:true})
+    const registry=new BrowserCapabilityRegistry({id:'qwen-fixture',name:'BMW',features:[videoFeature]})
+    const host={browserKernel:{projectStore:{active:()=>({id:'fixture',name:'Fixture',directory:temporary})},settingsStore,recordingController:controller,execute:async()=>({})}}
+    const generated=await registry.execute('video.narrate',host,{action:'video.narrate',narrationRequest:{text:'今日新闻速递。',provider:'qwen-tts',voice:'anmingyuan_v3.1'}})
+    const result=generated.value as {voice:string;contentType:string;durationSeconds:number;path:string}
+    assert.equal(result.voice,'anmingyuan_v3.1');assert.equal(result.contentType,'audio/wav');assert.equal(result.durationSeconds,2);assert.deepEqual(fs.readFileSync(result.path),wav);assert.equal(controller.isCaptureActive(),false)
+    const before=fs.readdirSync(artifacts).sort();mode='failure'
+    await assert.rejects(controller.narrate({text:'失败',provider:'qwen-tts',voice:'anmingyuan_v3.1'}),error=>error instanceof Error&&!error.message.includes('fixture-native-secret'))
+    assert.equal(controller.isCaptureActive(),false);assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
+    mode='cancel';cancel=new AbortController()
+    await assert.rejects(controller.narrate({text:'取消',provider:'qwen-tts',voice:'anmingyuan_v3.1'},cancel.signal),/Qwen fixture cancellation/);cancel=undefined
+    assert.equal(controller.isCaptureActive(),false);assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
+    mode='success';cleanupFail=true
+    await assert.rejects(controller.narrate({text:'清理失败',provider:'qwen-tts',voice:'anmingyuan_v3.1'}),/quarantined/)
+    assert.equal(controller.isCaptureActive(),true);assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
+    await assert.rejects(controller.narrate({text:'不可自动重放',provider:'qwen-tts'}),/Finish the current media job/)
+    await assert.rejects(controller.stop(),/Fixture cleanup failure/);assert.equal(controller.isCaptureActive(),true)
+    cleanupFail=false;await controller.stop();assert.equal(controller.isCaptureActive(),false)
+    const audition=await controller.auditionQwen('anmingyuan_v3.1');assert.equal(audition.durationSeconds,2);assert.ok(audition.audioDataUrl.startsWith('data:audio/wav;base64,'));assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
+    assert.equal(synthesis,5);assert.equal(downloads,3)
+    console.log(JSON.stringify({ok:true,provider:'qwen-tts',voice:result.voice,duration:result.durationSeconds,synthesis,downloads,cancellation:'clean',cleanupRecovery:true,coverage:'isolated HTTP protocol fixtures; no paid model or listening coverage'}));return
+  }
   if(process.env.BMW_TTS_TEST_PROVIDER==='edge'){
     const settingsStore=new GlobalSettingsStore({filePath:path.join(temporary,'settings.json'),onState:undefined}),registry=new BrowserCapabilityRegistry({id:'tts-fixture',name:'BMW',features:[videoFeature]})
     const execution=await registry.execute('video.narrate',{browserKernel:{projectStore:{active:()=>({directory:temporary})},settingsStore,recordingController:controller}},{action:'video.narrate',narrationRequest:{text:'这是 BMW 默认男声配音验证。'}})

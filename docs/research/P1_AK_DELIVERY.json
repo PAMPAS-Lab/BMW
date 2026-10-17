@@ -1,0 +1,2367 @@
+{
+  "version": 1,
+  "date": "2026-10-17",
+  "requestedScope": [
+    "P1 functional implementation",
+    "P2 AK-03/04/05 functional implementation"
+  ],
+  "application": "BMW",
+  "driver": {
+    "id": "qoder-cn",
+    "catalogModelId": "dfmodel",
+    "initializedModel": "DeepSeek-Flash",
+    "effectiveModelTools": [
+      "browser"
+    ],
+    "officialRuntimeOwnsAgentLoop": true,
+    "paidInference": true,
+    "accountUseExplicitlyAuthorized": true,
+    "productionProfileMutated": false
+  },
+  "implementation": {
+    "documentVersion": "2.10",
+    "features": [
+      "Versioned production profiles, structured worksheet, bounded recipe proposal and explicit adoption",
+      "Explicit works, acquisitions, authors, claims, versions and ancestry relations",
+      "Read-only SHA/settings/renderer-bound production impact plan",
+      "Existing sentence-anchor-bound production goals with explicit stale/rebind",
+      "Independent CAS user/Agent assessment journal and Studio form",
+      "Deterministic bounded multi-object events, phase and memory states",
+      "Independent grouped measurement bars and linear/log scatter",
+      "Bounded groups, code-line highlight and chat panels",
+      "Native four-decoder-block 1x1/2x2/4x4 precomposition, crop, recipe and source SHA identity",
+      "Native cancellation cleanup, late-CAS rollback, quarantine and explicit recovery",
+      "Immutable external-asset parameter/version/ancestry chain",
+      "Audio admission research matrix; no unverified audio blocks admitted"
+    ]
+  },
+  "verification": {
+    "finalReport": ".bmw-runtime/classified-tests/2026-10-17-p1-ak-frozen/result.json",
+    "status": "P1-full-baseline-retained; male-voice-affected-regression-passed; news-v4-muyu-and-male-delivered; human-acceptance-pending",
+    "nativeReport": ".bmw-runtime/p1-ak/native/2026-10-17T06-00-27-797Z/result.json",
+    "reverseSeekAndCutCanvasPixelDifference": 0,
+    "nativeDecodedCutFramesEqual": true,
+    "nativeProxyStudioAdmission": true,
+    "coverOnlyPlan": {
+      "paidCaseRoot": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z",
+      "cover": "rebuild",
+      "video": "keep",
+      "sceneItems": "32 keep",
+      "revisionBeforeAndAfter": 41,
+      "actualBrowserCalls": 5,
+      "newArtifacts": 0
+    },
+    "resultCounts": {
+      "passed": 162,
+      "failed": 0,
+      "not-run": 12
+    },
+    "reportSha256": "8c7312b54a04fc4980cdd7292bf3c699b9fbd9de139cd8b98abafd02507cb8b1",
+    "sourceHashes": {
+      "apps/bmw/agent-assembly.ts": "2e2275ced82c104f7963e82d42d675ac9b7029e1e68105a9284a82b324d367a8",
+      "apps/bmw/package.json": "bce3b379bd891c006ccc460ef2a1ca95fa4a54b88f8141191c612afc7f2f20bb",
+      "apps/bmw/product.ts": "88c7c37d75ad22f713ce0f0478ae810be8c0f3fe0788a8b7db69a18181ded7df",
+      "packages/agent-contract/index.ts": "24df4f61360a4e13baab958e7959e1902d2cd8927453026ce5f1f2e09f6251e9",
+      "packages/agent-contract/package.json": "fbf1e3d7223be7d36ef452b83468c097e900db5fe96ac3eb1a17f7fc256814f4",
+      "packages/agent-contract/src/assistant-ui.ts": "68af8cfd8ef7a5900110d2cff5adb133fc713536c2d29770df6e078768a96c4f",
+      "packages/agent-contract/src/context-sync.ts": "3f975deec95bfad0da2d94b7aa50928ef1e29be84c12892fb5914e0a94e932e9",
+      "packages/agent-contract/src/conversation.ts": "0bbfd3834b9e4bdfdc1b33b8ba3abf4e5e515b69dccbb87a2557ec7029dff96e",
+      "packages/agent-contract/src/driver-settings.ts": "dee74c15f0dcfd0de769a4669b4a5357f187defe2a84f3554ee6e7c989931e9e",
+      "packages/agent-contract/test/assistant-ui.test.ts": "202faf9436054357d7173c528e6c3df2e388d8ecedc2b1450db134427d58975c",
+      "packages/agent-contract/test/context-sync.test.ts": "7249434289828f03b2d6d68f87ac0dd711bc449cbddce0b4a2c9292d1b930e85",
+      "packages/agent-contract/test/conversation.test.ts": "82e058f13fa8f5e0de8b439579c8a94b79e34d095da3cd7f3e972a9b888f04c9",
+      "packages/agent-contract/test/driver-settings.test.ts": "0a266c1ad125f5b96e2757f25d073cadccae2e0ddf983b08886dc1b2c5293e95",
+      "packages/agent-contract/test/fixture-preload.cts": "2c2fc601ac60665c75fcb738eb5e19ef85e25e1aa25b6cb8495c193820459fc4",
+      "packages/agent-ui/index.ts": "afd49e8aa66c9e4c1c0dfbb5b1f7ae4649f2556f1405f39ff1493ae932924053",
+      "packages/agent-ui/package.json": "9ec6697541a8792d2dd8a3678b3f4cb56f2633f8ee60164dd06a10ee003d8510",
+      "packages/agent-ui/src/preload/assistant-preload.cts": "ae7cc375e9e4de5ed088eb5fff15b8794160dd42b439c805e372d213df220536",
+      "packages/agent-ui/src/renderer/agent-settings.ts": "c94f6902aeb2d906cc857e9380bd395e0f4869ded8f5f47ea8341450e314891f",
+      "packages/agent-ui/src/renderer/assistant.css": "d32d930adb49a90983af7f26a42b8555b6eacba6fbb999994742daed11393a48",
+      "packages/agent-ui/src/renderer/assistant.html": "2babd55ce62eff9706f3c94ae8572f4cdf3bb4f26ec5cc0e7193391995f80888",
+      "packages/agent-ui/src/renderer/assistant.ts": "40595319035625355eef0768cca9e1e652f1c51e09baaf0aa049415bce1c38ea",
+      "packages/agent-ui/src/renderer/conversation-timeline.ts": "87e8ea202eda0cb92753c836b2123dac13b424082e2b1129390f8acfd2989480",
+      "packages/agent-ui/src/renderer/message-content.ts": "a8fc4466811ac87daec838313522b133ad7ab64a3c418f0324ae2851a43c91ec",
+      "packages/agent-ui/src/renderer/studio-composer-scope.ts": "63b6b59d481d434e107ecf30a0b3a5b6c002392f442afee401b0513d075e6a27",
+      "packages/agent-ui/src/renderer/studio-floating-drag.ts": "13bb9b2c3633cb42ccbe1ce219d5245b14ca6bcc5efb60c23d7e49c07653c3df",
+      "packages/agent-ui/test/studio-composer-scope.test.ts": "134f41724d156e566f2f75b11ad473aafb56e9d25aebe04d7d2d6bdf317f8796",
+      "packages/browser-capability/package.json": "9207abb133a9297d8f91cc01ca4b297c94d838dc7a43249f4d4056c77c8b216d",
+      "packages/browser-capability/src/bridge-server.ts": "69406ac68689199983e5f61b37a76230e6a2d90cfe10cf64bd42f2b29149f6f5",
+      "packages/browser-capability/src/browser-capability-registry.ts": "88d9a505ca9d0f884ad6936b7ca86a3007e1da35c07e53de7f7095dea13bfea8",
+      "packages/browser-capability/src/browser-deadline.ts": "45ac776ebd79619704157b122ee4b0f55c32730e4dce60cf5cffcbc2c58b82c0",
+      "packages/browser-capability/src/browser-host.ts": "a14ec26b79f9a0ff73f9493898b58230d61179c3096e2b42c8c8dd8fd9a548d0",
+      "packages/browser-capability/src/browser-kernel.ts": "1433bd19aeaa08ce867dfa41ff8c0acb47fd055a92a00c36aa36e0ec762a9d03",
+      "packages/browser-capability/src/browser-mcp-server.ts": "d8efa3e9d8c2c6bd1e8437b33adbf5a1e02dbb418afae6deb6764bcdb5df82fc",
+      "packages/browser-capability/src/browser-schema.ts": "4aff1396c70417348da806fd591b249117136eb8eb360e3f54601137921c9aba",
+      "packages/browser-capability/src/collect-page-source.ts": "3df4a5f6b8800ea2d95a238c238bc83efe7bd8d11dfd1c70f7339ee1fc403400",
+      "packages/browser-capability/src/media-artifact.ts": "50de2c64a04f6512bbadfcd568ae9e484e58de833a7dfbd01004a5b540b4c8a1",
+      "packages/browser-capability/src/media-session-fetch.ts": "96cc8cd62ed90362bc687e8c85f18ec4388506e3d55d25190e1f42e4802fae44",
+      "packages/browser-capability/src/page-recording-events.ts": "a1cf3f62d0d6b9e7f45bf63c6b2a07351c7558069a20e8e8d582172dcc34edd3",
+      "packages/browser-capability/src/page-scope.ts": "b33fa4567f27b8f517f56d3fb24e46cc9f353aa6dcf62b3b98d778c643ecbdff",
+      "packages/browser-capability/src/renderer-read.ts": "8e761fd1ab4d513067c4d79a3fe5f882561ddc96630c5800eaa64f28050e7160",
+      "packages/browser-capability/src/screenshot-read.ts": "44fb82814d650c953452a2feebf7a106af1e0d774aa86a9df4dd649c9f4feace",
+      "packages/browser-capability/src/session-operations.ts": "ed7227fa2b88effa014b33597ee6abc301cf1bfdae5f22d12f634f2d86018a08",
+      "packages/browser-capability/src/tab-policy.ts": "c01493af56d70ee706bb47f89510b72328466728c2317d32d22aca055f9e5c6c",
+      "packages/browser-capability/src/tool-catalog.ts": "896062578cc41553dda5a22b30b7c3d2466b64c2b3e702eed3f54b966b35d63f",
+      "packages/browser-capability/test/bridge-shutdown.test.ts": "a2a608eb6a5d6fb80338eff5150b28d092c33e27e5e13a12f80911ee882cc650",
+      "packages/browser-capability/test/browser-deadline.test.ts": "eb9cb9510f723212138b8feda372ec53a1543fa380c056811df59303d4f3c0e3",
+      "packages/browser-capability/test/browser-host.test.ts": "62cf909a6fb736095fc6e5938102172b571b5758823929c31bc8a1f16beb2bf6",
+      "packages/browser-capability/test/browser-schema.test.ts": "6562a5e76530ce0069f8374f671937ce414d5ab3dfa93895aaa2d1334547f677",
+      "packages/browser-capability/test/collect-page-source.test.ts": "359790aa1375bc4cdcdee21515fab099a5849954c93f13275019ab6264ceb3a3",
+      "packages/browser-capability/test/mcp-tool-catalog.test.ts": "f9b1b441e75b3f646c94c23f87289bc5f6460894702b7afcac952748d369a4f0",
+      "packages/browser-capability/test/media-artifact.test.ts": "8e244838f9f47fdf5f935a1f77f6463097cb7c35c1efd32961d4e1638a7989cd",
+      "packages/browser-capability/test/media-session-fetch.test.ts": "ace6d19af739d1b582a02ad66f8745cc3ac1946141835d2c21bbdfd2287c3aed",
+      "packages/browser-capability/test/renderer-read.test.ts": "0dfd1f315b6b8a036c89837578e2b7e93d6210d36fe3082886a67286619aec59",
+      "packages/browser-capability/test/screenshot-read.test.ts": "e025914242f8328a03e65cc44fb42121f14c5f46a8b7e2944f553e698a2fecdb",
+      "packages/browser-capability/test/session-leases.test.ts": "1531eadc5bcc8b016f7823f4799beb4eb3d2c62a98615707da12357ae7f19903",
+      "packages/browser-capability/test/session-operations.test.ts": "e98965b70126bb71dfd9919c817add63ca0b79cf785e19e916700c8f9fb86223",
+      "packages/browser-capability/test/tab-policy.test.ts": "d20ef04b20f0f32861177b641868a200735a3747de084f7d252aaf0b59bb9e9d",
+      "packages/feature-video/index.ts": "604fe0f80ebd0e2038164f0bc69eb1534a99dac3f565cef7cdb4a965e39cc6c9",
+      "packages/feature-video/package.json": "f8ff0f0186cd925fbb45e51f639b28fd93a2111e6430c83a8305fcf98808baf3",
+      "packages/feature-video/src/export-review-contract.ts": "1b331995b2eedd2d0367a964d6e043f499da297037ba30ba4bd47a13c006abce",
+      "packages/feature-video/src/export-review-journal.ts": "afb3e34c8a104c6a5892a11851ccdea27241953e7a5659df04112aa98454eb22",
+      "packages/feature-video/src/material-index-contract.ts": "d4c905db64a5cf96df2e60ea9d6037f8dac6afe48791f7b56152c04778a76e91",
+      "packages/feature-video/src/material-index-service.ts": "f4e9a4b01c3989d5ef9d38f4f31e3c21e15240614ed9972b69981417fd97c707",
+      "packages/feature-video/src/material-index-store.ts": "70797cb2be340e31edce80a403f20ef714a204ed0ae2440253c743025372b88c",
+      "packages/feature-video/src/preload/studio-preload.cts": "0ea612f9391895ea0226433f895d3d5c7959f74233896d7015abab71bcfe3cb7",
+      "packages/feature-video/src/production-assessment-contract.ts": "7a764ddca2446bc8e61e81639fa81fef50ee835dc06334537b32fb83d451fd36",
+      "packages/feature-video/src/production-assessment.ts": "7c8daf29e65ad43a083602c42faafc87cb64ee2121ddf3407512856584a426f7",
+      "packages/feature-video/src/production-contract.ts": "b6189fd80f590517ad98665722a553b6fd7424b5e00430311cec90532627cab4",
+      "packages/feature-video/src/production-impact.ts": "7ca94fb9b1f2b80f97f625af7c51604353a4e1182384829a9eafe576e3e0a189",
+      "packages/feature-video/src/production-types.ts": "862fe751c3a1f98fe216fd87a4a37b605a6eda81769a10179379407b5d40a08e",
+      "packages/feature-video/src/renderer/research-diagram-editor.ts": "521165a82286326cb6da76203b0f3a3796df14c8efd82dea4f57350ac856b34c",
+      "packages/feature-video/src/renderer/science-layer-editor.ts": "980e3267e57c67c60bce358c5df3af1f3b159b7ffccd9dddb40c4f4be2d0a9ef",
+      "packages/feature-video/src/renderer/source-analysis-panel.ts": "bed42b789b90c5dd8f0fb2b0e2e8ee6dbe42bdf1e449e3078980333e0baebf7b",
+      "packages/feature-video/src/renderer/studio-caption-editor.ts": "27f1f81ce74973b34e9670b854e5ba10219deb16c76f09ec6b091ccd9d0e4e32",
+      "packages/feature-video/src/renderer/studio-card-details.ts": "30b6a3584db2819c7b2425a3fbb41d2d31c4a61fec8a4fec200d95f7ed235fdf",
+      "packages/feature-video/src/renderer/studio-card-text.ts": "09f25f7d8b9dc1f67b84f4a0893e4c74c5ea9db38dfdd291a38166a1192b23c0",
+      "packages/feature-video/src/renderer/studio-cards.ts": "484b0b27f812f137b08c3b9ea0ced1978ba77bd663b6d0358762805415d2c81d",
+      "packages/feature-video/src/renderer/studio-cover-editor.ts": "a6696dd488c976994797ad7475facda13a393307db9c13d8d400f32874a46bde",
+      "packages/feature-video/src/renderer/studio-export-review-editor.ts": "2c2025557d94c7402c1c570636008f5bdf6430b45c7c1fd8e9bc23919b292077",
+      "packages/feature-video/src/renderer/studio-focus-editor.ts": "820af29f34626832e40ac56e613768bc92e43e5f149f80454f0a7048a9e8c362",
+      "packages/feature-video/src/renderer/studio-layer-editor.ts": "b4c8a97583cd47f59410722911d69754586d904e1487a5cf4b7da2efd4377169",
+      "packages/feature-video/src/renderer/studio-main-editor.ts": "963329909f524da6a9b6693542455791b72744ab87f51d8ea291b23abafa3cf4",
+      "packages/feature-video/src/renderer/studio-material-index-editor.ts": "065a683732f55f65387a8ab68bea1c2357cd4fd55788581f805917811d7d2c0c",
+      "packages/feature-video/src/renderer/studio-materials-view.ts": "2bd1e31d41764b811d73a23642cd80fef1c5fa033ed416a37aafa009b5fd1ed0",
+      "packages/feature-video/src/renderer/studio-original-speech-editor.ts": "d7e2306de2b8b44841fc9f1a6931ccc4da32d9076c6d1d10fc663009b03b500d",
+      "packages/feature-video/src/renderer/studio-panels.ts": "7307ed1b9d7325ae0db708fd036d9e25f4933902e3674d7cfe954e5125f98130",
+      "packages/feature-video/src/renderer/studio-preview.ts": "3c2ac9ad9bc7d5413de6c3975d62e47660b87302ba4499672032370672c2e409",
+      "packages/feature-video/src/renderer/studio-production-editor.ts": "17d5fac3f9806d4c62d3540f019538b4abc438880141b0c30ebdc7d2410cbad4",
+      "packages/feature-video/src/renderer/studio-recording-plan-editor.ts": "3754b5f260928a58f2c51601d1d39e9a4816b787787570f1f76fcafc88c5bb7b",
+      "packages/feature-video/src/renderer/studio-reference-editor.ts": "56c6b5cd6a8f068b188e3dd0d0a27f33b092f0039f2bd6c7a227f5cd819ea933",
+      "packages/feature-video/src/renderer/studio-source-editor.ts": "1f717ef9d85ef145ffea9f44971310a536bd58327994766c2b5188cee0875cb7",
+      "packages/feature-video/src/renderer/studio-source-narration-editor.ts": "975395c0daffa1256ffc68de72624fcda04f93adda715ad5b9a4cc0e8672daa8",
+      "packages/feature-video/src/renderer/studio-speech-editor.ts": "bcc5fb607f520f262e18f61d96e08f3abb514c9d2e4d119f2e4fb099067f184a",
+      "packages/feature-video/src/renderer/studio-speech-links-editor.ts": "ccdc879ce8838de4ba7b1b7e9f1504cbe89f061b160becbd8555c3957a852461",
+      "packages/feature-video/src/renderer/studio-timing-editor.ts": "dcd16db761cf1fefa0b5fec3253ddbffdb6fe127fbe66d4efe1b98a662f839d7",
+      "packages/feature-video/src/renderer/studio-type-review-editor.ts": "0f67598a0b7df56a85fca143da27d13fd960aec664daac77e3f69885505d29d2",
+      "packages/feature-video/src/renderer/studio-visual-editor.ts": "2ad20f27efb4e15ffaf85c10e655e77303b5b2aa7547dfaf224525d7416679e7",
+      "packages/feature-video/src/renderer/studio-workbench.ts": "cfa149b73d26d20f0658be25726b6ce310839a09e9524a9d3f384f949c37a762",
+      "packages/feature-video/src/renderer/studio-workflow.ts": "6aa8cd67b36c513bd7bb3a3e0ee00a38f0f807426995a0c0dbe68a267402daeb",
+      "packages/feature-video/src/renderer/studio.css": "ea9cafede441ba670b5023c1856569eb32e5bf876572c178e6b66acf1cfcc5fe",
+      "packages/feature-video/src/renderer/studio.html": "93e93f6e4c744d58ad5527094f4c0fcca8b6923cc1a7dec1bc3735fceb5143c5",
+      "packages/feature-video/src/renderer/studio.ts": "584113c3897232272f620928ca0ba1f1a41ad2f7d48d8f51c0fbe82e83652cbf",
+      "packages/feature-video/src/source-analysis-contract.ts": "33f5c51536372c8f1204f77aa6b40239c824ea56b769bf588c5bf0809bdc4d1b",
+      "packages/feature-video/src/source-analysis-service.ts": "0be964945afd9b4cf0f14092fbbd713df3cfbabbc46979da0d88fba539c97c05",
+      "packages/feature-video/src/source-analysis-store.ts": "9f47f6d90e5d7010f873f89213cf78ecf229f5bf7a90eed7444b5b1080f114dd",
+      "packages/feature-video/src/source-narration-recipe.ts": "21a578ce961d095f65781f0df95a6e134f575ce8250f8b726e1f5c6dc6b9dd0f",
+      "packages/feature-video/src/studio-agent-result.ts": "691538e9b2726ed5cb0e29c91ef527beafa3737b82f7d6a5b5a1f8fad94e5c07",
+      "packages/feature-video/src/studio-asset-page.ts": "155a84378aa1b6374df3147f3675e94bd985280f90dd31cff4b96803a6c9680d",
+      "packages/feature-video/src/studio-assistant.ts": "8204e7a3208d7181a448a47355e99f824212824b7da2ca2d2875701af9c723fd",
+      "packages/feature-video/src/studio-card-speech.ts": "8a7a72fb5c3f04ee2c530530498a50a96d3ac0b9f04ee39c86c348b20402b9ce",
+      "packages/feature-video/src/studio-card-templates.ts": "de17e87c77f0ec728d7b20585383374beccd4ff44a8d412f5be0601827452add",
+      "packages/feature-video/src/studio-compatibility.ts": "4064af33cf1f1eefe03b859253a2a4cbaca67c3b22b3be2615e6472458efca3b",
+      "packages/feature-video/src/studio-context.ts": "ea69872a2635643672aa8405593a94f90a25b50e30c4d11a8f9e5d91abe42e81",
+      "packages/feature-video/src/studio-contract.ts": "47d68a2a00b7c1bf2153be81bec92e3d9cca8641b66bac68e653320923ebab00",
+      "packages/feature-video/src/studio-discovery.ts": "fdd61ae98f24f34ed7b0f7ed06a6e971caada3187d239fb04c1e0ef9a5696ed8",
+      "packages/feature-video/src/studio-editorial-timing.ts": "a2cc8fb91e6f5db56b8db2c0cc987d0e8e20e2398c72b6b942bb0ee5a45a7db1",
+      "packages/feature-video/src/studio-export-review-state.ts": "43a7d937f5a56c7479eee3e619b0e07f5bc0fcace0e6fcda7ae5a4c9678c06d0",
+      "packages/feature-video/src/studio-export-review.ts": "780d49b15d2620eaf08d516a01760cba6b43e27942c184b8149a30a36fcae4be",
+      "packages/feature-video/src/studio-layer-edits.ts": "90984585e78a0d2f4fd08416875c79ca4fa58840959db8781604a98bcf0ba8f2",
+      "packages/feature-video/src/studio-main-edits.ts": "32ad0b07cbce2c577e91f7c4d719c089cb47a092c2cefc5842d03f472132cde8",
+      "packages/feature-video/src/studio-materials.ts": "a0879032ec4422809720c30eb0bdc6d6e5758740e3c9d8f8a0066ea7eba125b2",
+      "packages/feature-video/src/studio-production-progress.ts": "eab5851053d735c906fc16a92be9988930def036db99c4b2c60e2165eb8dfa7a",
+      "packages/feature-video/src/studio-read-contract.ts": "44a8f932d842de43b7c90f88fe1a279e794a3083e684e0d87a9df6568f9c4e26",
+      "packages/feature-video/src/studio-recording-plan.ts": "d702e64fc7669ecba4826ecaa1d9044b6ff9e5c033b1dccc6903f57933652a30",
+      "packages/feature-video/src/studio-reference-contract.ts": "e2331aef669972b461d235406e708039ec3a73ac008e442733c6aeb24ec5df03",
+      "packages/feature-video/src/studio-reference.ts": "5f9a047264b257cbe578e29bf6b320c6a8c221936eb593a6feec901d30fccc9e",
+      "packages/feature-video/src/studio-review.ts": "b0634e20d756ebc1c702a4a2cb0e8220a2cb8db4fc79298edc180a637a7fe825",
+      "packages/feature-video/src/studio-runtime.ts": "b48098bf53f8892c928bcdf4371f5ede9f62c62b27e55e0b20ef63a31b66628f",
+      "packages/feature-video/src/studio-scene-split.ts": "17c7f9d6f73ceb95d2cc866caaf204e53fb3f088f38c64fb56166f32d13a12c5",
+      "packages/feature-video/src/studio-schema.ts": "798c364a3258df01e55237846510033a277c935ff5de72c9e62900398aaf9096",
+      "packages/feature-video/src/studio-service.ts": "ffc62f384186b95df41d6942ac6a1aea29882dd02bb83cb2f29b3c48f95a5a9b",
+      "packages/feature-video/src/studio-snapshot-proof.ts": "84de3fde842968a373509d5c628cf78936bddb950c09f54b3f0492ae76751b93",
+      "packages/feature-video/src/studio-source-speech-contract.ts": "090abe6e529921d0e3eb22813cdad17add4ef7876008583cac7c5ed0048d21d8",
+      "packages/feature-video/src/studio-source-speech.ts": "5d9d68389d4fb0aff3093d986d19ee2c45e9a01633f96f4096511759db436aa2",
+      "packages/feature-video/src/studio-sources.ts": "66dbfd7e9ff425ac6100241084ad1c9d660e64b5ebf8959a203cdbcfe65b74b6",
+      "packages/feature-video/src/studio-speech-contract.ts": "9bd36f9bf27b6e1bb2e3d084e8ab4d3f612c8e17547ba7fcb4eadc111d5c213a",
+      "packages/feature-video/src/studio-speech-origin.ts": "83951e06acd6ce501e94883fee24d98054fd0cfb2c5a1b8d13520065ba992e2b",
+      "packages/feature-video/src/studio-speech-provenance.ts": "658fd68ae591e9361c3c307ac36b73f61bf5088df3ad3b304b40cecf7306e85a",
+      "packages/feature-video/src/studio-speech.ts": "37653dda31b450415916e5a8e129653d3808ad7a2504d41a66fd0da78b6d48d5",
+      "packages/feature-video/src/studio-store.ts": "ecfc1092d900a77bfb7bb67cb4799e041f9668d5cc86e37f5d63d6896ec2fa61",
+      "packages/feature-video/src/studio-timeline.ts": "0d3007e9f889f111657a61f823e0b7d88cc3147ce5c6cf4901dc1d1cb5bf7fbb",
+      "packages/feature-video/src/studio-timing-diagnostics.ts": "67d5e238b7816315a6befb31e38fad945df238669d933fd23bc469dc111e0c47",
+      "packages/feature-video/src/studio-timing.ts": "d47dc9f87c115c170c5cbc241738d46543cb605755016558d734982648a69592",
+      "packages/feature-video/src/studio-tool-guide.ts": "a1b1d3f7956c4abbc1b1f4df30caf776030dd83694706a2ab4a86a60484071ae",
+      "packages/feature-video/src/video-document-version.ts": "af7977d001aefbfc79bc9dfdf9407668ed28fe4189388ca8dca86c9df7a354de",
+      "packages/feature-video/src/video-document.ts": "30765e61079bf774d71dbfa7070b8c8a2469f141b9d525b74622110848825647",
+      "packages/feature-video/src/video-edit-contract.ts": "d7106c1413571ca8809370e61f199d6e8d7b316e4eb6523577f21d3aabd3c843",
+      "packages/feature-video/src/video-edit.ts": "b579b8eb9d08bd2074f4fa74a8866804c5f52ff06638ce8e1f29b6990f8b2edb",
+      "packages/feature-video/src/video-settings.ts": "61e240930ad6d471a00be391e65b1245e667227831376232040cf3d1e7ac3ad7",
+      "packages/feature-video/src/video-time.ts": "04ec6971bafe7c8ad9cd29fc0e383c81a1cd1aba2d10736d1c27206d85e7116e",
+      "packages/feature-video/test/material-index.test.ts": "3041673338783ee1b16e63b34b77fa3af7b0a80ffa2fdc2b4953deef04937497",
+      "packages/feature-video/test/production-assessment.test.ts": "b7947d3d1c7247c8bdb1c46846c9c44d3027530f6556481fc43af5689d4e4289",
+      "packages/feature-video/test/production.test.ts": "cbe5ec34456ee9be1c7975f2f90f39972303cc482090abfd75974912622c9b97",
+      "packages/feature-video/test/source-analysis.test.ts": "3c9e67d61903029ee7dd2608ed9d2ec3cfbea86cd11fa14568c13be9c41f9172",
+      "packages/feature-video/test/studio-materials.test.ts": "f9bfb9964cb774c7132320bb93755b0473e2831a44372d4a4f5bf367a59e19b8",
+      "packages/feature-video/test/studio-sources.test.ts": "22617a92a1fe231f542ba05df2643e664257b760a8b335e867a0d10ec25d07a3",
+      "packages/feature-video/test/video-boundary.test.ts": "052dcf05501f83678282dbb6e97e9c64e1115c0ce44007df010f7f8e027ebf48",
+      "packages/feature-video/test/video-document.test.ts": "c1ae1bc320884b7d1677d920585522aa9452698771ebd60d81c726866af302af",
+      "packages/feature-video/test/video-settings.test.ts": "d914ef72c89c2889b64a0d7d1c8954cd8501709a2e68a6f9cfabe01112bb63d5",
+      "packages/feature-video/test/video-studio.test.ts": "e23bb538b6afb29b055fb82560feadd84a5d92380415d663f8a0f343186dc925",
+      "packages/harness-codex/index.ts": "978509eb8bc2a4e818eebe9c8f22a8b6342f0183801d8416701a61fe64b1b853",
+      "packages/harness-codex/package.json": "263650c56a1f6f78b8be445a54197e6ecd0ac4c87414029ddf6144c715930aa1",
+      "packages/harness-codex/src/codex-backend.ts": "72fbb20fd80b2c6a84334f6afb1c643a2150b0731b8beed87ea4d7a9066e7e55",
+      "packages/harness-codex/src/codex-installation.ts": "010c38eb24ba03ed8ec9e55ae446357cf8d15507e507cef5a6b97ed8a2b8f7b7",
+      "packages/harness-codex/src/codex-model-catalog.ts": "200a9a6160891b3d505a2477d5acb3c720c6b3c16a9b22471ef327d2315e8565",
+      "packages/harness-codex/src/codex-policy.ts": "e8f9b7411133c9279b046ab7e50349a7ae996d497ddb459da1b14d7353078333",
+      "packages/harness-codex/src/codex-rpc.ts": "87e81c69d6c98f5b1dd7524bc8719796fdafd1988b192170cc5d9dfa8a127bb9",
+      "packages/harness-codex/src/codex-settings.ts": "9348b255d4a6c0c607237d3899ddd3b33a13d16471d381bbadc3aac5ed850c22",
+      "packages/harness-codex/test/codex-backend.test.ts": "2ac70c9804234e01e0af36e400409a0cda065cf1d29eaee1ae3a6706f56f9739",
+      "packages/harness-codex/test/codex-installation.test.ts": "da087b38b1e8babf737cdefaa5be5dbfcf5738c5f0b49c1e2e9d5446086c7150",
+      "packages/harness-codex/test/codex-policy.test.ts": "7754105a42fef0d08f7f8ce4a0a307d087ab6a13c1b41eab52e6d9c1c7f1c08c",
+      "packages/harness-codex/test/codex-settings.test.ts": "5187fb8d0fc60934c74a83a030bc917a7b76baf333cc9124cf36f50a1d3c64b1",
+      "packages/harness-dsh/dsh/base.patch.yml": "12a79354656574a7854871e268169e7708fb431fcd7efe4d7895bfec1eff36c6",
+      "packages/harness-dsh/dsh/driver-control.ts": "134ec7c05351a4126945b8ae6dee4b212e1160aea98ff5cad43d990ed21233e8",
+      "packages/harness-dsh/dsh/plugins/browser-mcp/failure-guard.ts": "b27457a8515435d6a3786a9c72513299f45f3e2bc4ddc2762cae725c61272e8a",
+      "packages/harness-dsh/dsh/plugins/browser-mcp/index.ts": "ec3c09be9bd917d6df9b415049e2c250327ded9647ba262e5c8dbd635c2b4bb2",
+      "packages/harness-dsh/dsh/plugins/browser-mcp/registry.ts": "ce0d603f4b4e977df098f1ad4a55fba40e243908570e181862c3faded9022b30",
+      "packages/harness-dsh/dsh/plugins/browser-mcp/workspace-context.ts": "428a23a3f2be2404047690947a11dffe70b8ae5238c79b05f5bd3c30e4f8a295",
+      "packages/harness-dsh/dsh/preset/base/agent.cordis.yml": "29b609b5c755fd340d8d857fcde09158f4918c4b9c7094676cd7d76d1d6245cf",
+      "packages/harness-dsh/dsh/preset/base/preset.yml": "bc3c3bbddcd593a0ac304cd2221061173a1475a540a15cedaa2691f6f76e725e",
+      "packages/harness-dsh/index.ts": "c448e919362e20cd221dc16b3ac7467e115b66dd4b50ba6aedd8dc3fa27fba73",
+      "packages/harness-dsh/migration/history.ts": "02dff2fe58c3665720edf045499aec0ada49dd8801408f1e08c6be99930c22f5",
+      "packages/harness-dsh/migration/index.ts": "7ba3208b2fa535cc977699c8d9eb676718ecbd3c4163bead3e91c110d99ae8af",
+      "packages/harness-dsh/migration/profile-reader.ts": "9007deab2da34bd07f3fcb04643d959b837fc8e12c1ab27b5681b2e58ba759c5",
+      "packages/harness-dsh/migration/source.ts": "5d80be59777da75938bd6b163c27bdcc69ba247b38054dd14c9aafcbef19ccb8",
+      "packages/harness-dsh/package.json": "d87452390ed83e1d4e08a052873776e9fcb7f434f98634ab35a7c6da3172031e",
+      "packages/harness-dsh/src/configuration.ts": "8b83a8f301e79e81322e0aca678c98d3b14e73c7cfa026b49cfe642e9407e4da",
+      "packages/harness-dsh/src/dsh-backend.ts": "ca2f966a22942b8352a8b28f486b3f1c5c0d6b9e140a0a5a90d048077f37c759",
+      "packages/harness-dsh/src/dsh-events.ts": "2450a4a50e02c98e4ce23db5fd5c734472815ec44d280d74e87d9aed06a230d0",
+      "packages/harness-dsh/src/dsh-preset.ts": "639e306058659d336e63c982e1eebdbf9fd237e412493baa567cc880c643142c",
+      "packages/harness-dsh/src/dsh-runtime.ts": "d5916466f835f09792c36f9aec365dbbaa9e5f3bdcf15cb7ca204fd77bc817b1",
+      "packages/harness-dsh/src/dsh-settings.ts": "3718fa1de27eef4b6cd0f80da580c541567d32cad263d5c0498bb9980f3d96f1",
+      "packages/harness-dsh/src/dsh-transport.ts": "26784323ef786d9c2002c45e5b33dd204b6c969ce981a8a0dcca3ed207b185f4",
+      "packages/harness-dsh/src/project-bindings.ts": "619b7e31d35927a3b25b1af4be397071b53398b651842547bfb6dd67c18f5ef4",
+      "packages/harness-dsh/test/browser-failure-guard.test.ts": "92b8bf077faee9f82b249db33af24389a43759df58e95cb18b82d1a98874b100",
+      "packages/harness-dsh/test/dsh-backend.test.ts": "ced13857d82cefcb8117c347aec2ab990851c5ce3bc4e07854c21e8eb961b3a0",
+      "packages/harness-dsh/test/dsh-events.test.ts": "9780cc4c06cf418e456930bac2642785c5741e8afd53dd9def8fe2c127f29a88",
+      "packages/harness-dsh/test/dsh-migration.test.ts": "6e4b42459a0f3ed32bf3124c0cc391feb15012dba148be289f6533e3fbea0ea8",
+      "packages/harness-dsh/test/dsh-preset.test.ts": "d5b99e0e0bfcfdfc7f8af6ab0489f0beb8043c1b439ddefd8e1d2ce9051bd5c9",
+      "packages/harness-dsh/test/dsh-runtime.test.ts": "d1bd916f3b8f7dce4a89ad610bbfe2ec2f4417e6e17163ddc833e6e6853b7134",
+      "packages/harness-dsh/test/dsh-settings.test.ts": "d46ef6195750d44e8c2bab3806161e9239067eda240e4e4b0a2ddcc2f9810d3a",
+      "packages/harness-dsh/test/dsh-transport.test.ts": "32ce1654293daa0796c84897e078e8ffca6f3fd5c0e7903127bfa6a2ac695849",
+      "packages/harness-dsh/test/project-bindings.test.ts": "3c3385eccfc3f93da24606589486662beeac88563bc5ff357b2f36088ec68d72",
+      "packages/harness-dsh/test/video-case-log.test.ts": "3ca7c74eeeef6204c1352e3feb6b80e2ece78fa60072a6dbfac4373baab88b41",
+      "packages/harness-dsh/test/workspace-context.test.ts": "fc790af6eb4d07be6024865d3929f9be8a4161469ee332f01fb4b39c75ea5b62",
+      "packages/harness-qoder/index.ts": "1e233280fa7ef2494926936ec8f945a6b23387e863e382c250bbc816dbd1fede",
+      "packages/harness-qoder/package.json": "2e3f63fd78f7f6da7cd570002ed8d56b61ce70ed2d8f3dea4780f5866b3ba7e4",
+      "packages/harness-qoder/qoder-bmw/SKILL.md": "016c05ff154ea5d0d58877526d5f91b0c9e9c7a47cd2aab6e3e0b37cac7a371b",
+      "packages/harness-qoder/src/bmw-guidance.ts": "5f4243aee48b58c58516dff571cda675a20ff12c8ed4f51afaa3b81b38f15b7f",
+      "packages/harness-qoder/src/qoder-backend.ts": "40196695fac855174035fa7ccc89799489e896d68d2896351e177765f7e6d796",
+      "packages/harness-qoder/src/qoder-events.ts": "44f45a559823cbdd5a94554bb3dfc5dea1356f05bc6c817746c0fad5053d033d",
+      "packages/harness-qoder/src/qoder-settings.ts": "72b211bb53a2564ff8ae97f867b46186ff11b0a0518be182e75e2612a30a7c4b",
+      "packages/harness-qoder/test/qoder-backend.test.ts": "2c709b9c89923d76981ec14d2eebab2ef443fb75873f9c58621801f6221d3def",
+      "packages/harness-qoder/test/qoder-events.test.ts": "250ac97d65ebf5f68e776129b86363bb75c6edb0da32adf095aa0e1275964097",
+      "packages/harness-qoder/test/qoder-settings.test.ts": "c466406b4688e2af1e53a01e7bb8c9d7ad61dfd9fd978ce7c3377d6a816947ae",
+      "packages/media-native/package.json": "2e9c8b9eb40999874668883edc7240eaa1af9bfcb64334f557f1e9897e0c2fcc",
+      "packages/media-native/src/artifact-job-io.ts": "34a641b2eac85d1480ca0f57485ad10b2811273e2ce93314ea46243b9ca4011d",
+      "packages/media-native/src/audio-evidence-contract.ts": "2d38dd07b83bb2b3e7310c89011daed5bde0316c2adeeb359e197dfb2f50db16",
+      "packages/media-native/src/caption-export.ts": "3e3dc78888c46eea3732426a4161c188e21ac534a5e623c3436db0d39dc0d34a",
+      "packages/media-native/src/capture-mux.ts": "9885ee066790ddcdd9eb71f28fc84af0f245f2a8563cbee52ec8e51f32cd80c4",
+      "packages/media-native/src/capture-policy.ts": "d4346cbb01c2ca466f8212a292cec24fc6c740935f9cfdf32f9e616dfb9252a4",
+      "packages/media-native/src/capture-source-index.ts": "8f74fb78110e3976a8e699dc4c058a49a15c3c17cdcfe45237976d6fc05618dc",
+      "packages/media-native/src/capture-timeline.ts": "c55190e5431775f927724f6a1b89884e4cccffce41702ced0281b4ebdb7477c8",
+      "packages/media-native/src/card-cues.ts": "d6a3bf48065577a98a3e4155a76c8c63d95eac8369a6e22de104251fe8b43f0a",
+      "packages/media-native/src/card-details.ts": "6a5e1f9085cc370f111552f44212084ac7fe935975404e822b901eb207cc908a",
+      "packages/media-native/src/card-templates.ts": "1a83c7f3c3fb8ae649594239d08ee57543acb0a917d8bf0d151ed74db768d98f",
+      "packages/media-native/src/composition-contract.ts": "6ea9e758555b6e1e63eb6ce6241dfcc80bd2fd91ea55126456933382b26fface",
+      "packages/media-native/src/composition-layers.ts": "1e7455bdfc77517329146e1cfd63378e29e97ff417cd64ad0e7a86378e790e96",
+      "packages/media-native/src/composition-limits.ts": "927d1d458bc0b235a70097bdc8ae758800730066fc8f5b42beca3df8936f1fd0",
+      "packages/media-native/src/composition-processor.ts": "b570862031c55abe89baa9da3bd02ddb6a344d8003f381ab4c1c34419547a65a",
+      "packages/media-native/src/composition-quality.ts": "68c97c420f2dc6a37e5355310561d15b97fd528f16b758f6123d591f308f9c00",
+      "packages/media-native/src/focus-contract.ts": "d7c063fe26cb6679a6bd2f89aeb8cb024f0ff5219b1a229fc90b2281f33231a3",
+      "packages/media-native/src/image-contract.ts": "1be3f5b828993325d358eba7a9e12f72f1ffb5afe6add589b219d0ee844e2989",
+      "packages/media-native/src/image-drawing-contract.ts": "795b37659ff5e79fb9b619882f189d8ceafbda3e1e35f9a6fe45b493fe92ea8c",
+      "packages/media-native/src/layer-packaging.ts": "06e055df9eb5650dafc7acc0b5bd3eeac2fd645f072b5f661a36f9aadd353fba",
+      "packages/media-native/src/layer-text-treatment.ts": "6ed34006e7a9cdaa036f0cb767a3faf9daffe60d81a16b9335e37f66c91afe53",
+      "packages/media-native/src/local-asr-assets.ts": "8623e7b0c4719ab56dec9d2935856ac4fdf33d4fdacd164c7bf9f5e8ea7803ad",
+      "packages/media-native/src/local-tts-assets.ts": "4da4a00d1621d29d96b42a73c3c5e4771ac92094f79d64b92af6c014c9b65ad0",
+      "packages/media-native/src/media-contract.ts": "9fc65af3eced877a7e4cc03afdbcf8dffb9d45741fad4827fd34ac6d54c4be4c",
+      "packages/media-native/src/media-controller.ts": "e966ba1074d64672aac4f4e0c8f9d8537c366242b106176804b8414cc1e72a93",
+      "packages/media-native/src/media-port.ts": "a50e23ab8dcb9b30e820c2e4993809f3309cb0d91c016fbd1a76da2f713aafad",
+      "packages/media-native/src/media-preservation.ts": "9fcd9b17ad84bea652c6f276e0ddeb6b7756d5fba54f45988f43da8425fe02f7",
+      "packages/media-native/src/media-processor.ts": "4053387220c6dc060e6218b27c500581db0b313c1f8c098b057cbb10e2bc81c8",
+      "packages/media-native/src/media/audio-evidence.ts": "b2c0e52e97b0155e6f8f876bc27a82d47d9be2c816815b56fb1683c3fd68d7cc",
+      "packages/media-native/src/media/canvas-paint-role.ts": "d7f0cfbc5f1b9caf64e7728b4015fc581f0a136ebf080583559e5a34280f2afd",
+      "packages/media-native/src/media/canvas-text-trace.ts": "1b4d2ab2be63959ec86d6ed072e92927b25cd2c197d666c833a87ce9617aa41b",
+      "packages/media-native/src/media/card-details-paint.ts": "372c2fc3b48eb013b6544ecc035dea76bbe3440e5146a12112a04e72337be9c6",
+      "packages/media-native/src/media/composition-audio.ts": "bd6fb3c22a495c36bfea0c28bfa2e584354d739e2b00fdc924b32730b1d156c1",
+      "packages/media-native/src/media/composition-layers-paint.ts": "52288654c29fb054fc106c84e30c7f0a7abda270ea1ee85be9c5814e698a3ae8",
+      "packages/media-native/src/media/composition-paint.ts": "a1a5ab7bc665ca66426a7d6a51b513b9ea66cf2edb5716e048354a83fbc69b9f",
+      "packages/media-native/src/media/composition-text.ts": "786be4b95c37374c7d0dc85689dcd02164bbc2cafa89695436e3b1f82ad2c29c",
+      "packages/media-native/src/media/composition.html": "ac5d7dd4380a3b354576cf09a64f5f19d0775266b59cafca532e936b5600f69f",
+      "packages/media-native/src/media/composition.ts": "52651ce98489eaa5ed16639fc6773a595f605b7aeddf7d4939ab640f0b914e1d",
+      "packages/media-native/src/media/image-decoder.ts": "6a0e0b70534947010ac857a6cb6974f61a836dd8dd50bcde0384e5b871984906",
+      "packages/media-native/src/media/image-drawing.ts": "fa3b12c617f6f5728757c62f6f4318d0f100c104ab3e14384a04ee86af44c94b",
+      "packages/media-native/src/media/layer-packaging-paint.ts": "4068a874cfb7d3714f8589386ce03fe4cadc4a8aa7cf67876059d6216353f93d",
+      "packages/media-native/src/media/linear-frames.ts": "1fdcd6d940222a579f88eab36454879f330953e4b96a1143abe4ae0463cccf44",
+      "packages/media-native/src/media/loupe-paint.ts": "2defb7866dcbca239c745dc77d016f6c74f6d6a9635343466b2f0eae0c0cd340",
+      "packages/media-native/src/media/media.html": "74ba8e6f763587909c66e3003cdb7afa1f40780b877cbc8e5d5ec86a794d747d",
+      "packages/media-native/src/media/media.ts": "912def2bfb667c0f4421d533c70bbb207c0366cf92311ba4c80e2b874a755743",
+      "packages/media-native/src/media/narration-local.ts": "f7b7ffb574db2159e8ef766eb8a431ed3c973982f6473b21ab5d9696e3488a85",
+      "packages/media-native/src/media/narration.html": "1d9684eee8f6e229852af0c6019bd9520362b1331424f44c1bf4e5b08e3afc30",
+      "packages/media-native/src/media/narration.ts": "3e87f9eeead5382162f2154039c2e4db10f8c50ac36ca7c048a0f068979578f5",
+      "packages/media-native/src/media/phone-reading.ts": "c72d0b037dcab0eaef04af38de243adce0a76b98e14137b028d2c41d2646f43b",
+      "packages/media-native/src/media/processing.cover-contract.ts": "a7d089738a14ec8fa396bf5a991b505cef9242493fef27c1dd41b81953f943e3",
+      "packages/media-native/src/media/processing.cover-paint.ts": "3561c142da6823d897d5f3fbbe76317cb946f88cdb9ebb8a80b0ad39d2dad2ce",
+      "packages/media-native/src/media/processing.cover.html": "b4c9a9c88b5acfb806215681606f336b7782423fa3bbdb18d9f22a765d5f1d6d",
+      "packages/media-native/src/media/processing.cover.ts": "1d84dc1729583f214f29f00464128de94423ff52718f1672d133efdcbf7a6747",
+      "packages/media-native/src/media/processing.html": "54c571410761b624d7ef7c7dce945bd5818b32611726b71c75eb47c24a984b26",
+      "packages/media-native/src/media/processing.ts": "3845ae546d311372a29cca8fd93ae043b4f988105cafc59794ba41637d495417",
+      "packages/media-native/src/media/research-diagram-paint.ts": "cbc4ae24047f2d7a3e8361b231e802df81e323b3cc6d3341b1436a70a82fee97",
+      "packages/media-native/src/media/science-paint.ts": "21ba806b33c24bee44eb126410038ff12476aeafc19bd75a27b332f38cc42d12",
+      "packages/media-native/src/media/speech-normalize.ts": "96399e2bc66f9b3e45ebfb8a4112ebe81f5be34a527a5eb1614ab3e0156ff2e6",
+      "packages/media-native/src/narration-contract.ts": "09fb644d18363cf336d88b164aa88c2b8f0433248e33163c5f39f7a541c8520d",
+      "packages/media-native/src/narration-processor.ts": "2c40f7e72bafaeef9e3330b3c145e84c405a457d618140adcbbdb2a95c60b701",
+      "packages/media-native/src/narration-timing.ts": "917316b7dbb5a0dbe18291ee56b2d3a4efea14a77c57eee1670b94e7bd0fbd09",
+      "packages/media-native/src/precomposition-contract.ts": "195164b9e32475817856b38aeaac1ebac0140818badedff8e59b79f67b0a8b60",
+      "packages/media-native/src/precomposition.ts": "bb0133a17513f7a26384a9c277bc9de2d5631c87629369e999b4b395a2b42caf",
+      "packages/media-native/src/preload/composition-preload.cts": "6e3f24c483d5fd07a6fb3d5c988598ec3551a3a60cd6d7de1e35c5d2d5714323",
+      "packages/media-native/src/preload/media-preload.cts": "a4db1ceaaf314fa0eb128bbdc12206a19359bd735afda5808c4c8e8a0df866e6",
+      "packages/media-native/src/preload/narration-preload.cts": "b6e29b68b61feabe89f05a521e937a5db51ae9142bd313d9a28f93854c2a22e0",
+      "packages/media-native/src/preload/processing-preload.cts": "dbe5682eac2a0ce862079f7d8835dd300fad0b9124384556e63932aaffef7f1a",
+      "packages/media-native/src/qwen-narration.ts": "096b18e2da3039a38fbcfabe16523b6f6ab68508066df782d511e0850b0c39ac",
+      "packages/media-native/src/recording-contract.ts": "65506b839b19ba298e20ae2584b42309cc8397d42d7af0a0b6af263a2dbdaeb4",
+      "packages/media-native/src/recording-plan.ts": "8eb87ee5822072edf1534481c5745ca5531ba4a6ed5994bd141dc28f553e5842",
+      "packages/media-native/src/research-diagrams.ts": "f070fe1608e9603783aa9970eaf614da46766e2181ee5795a44db64f6ceee4aa",
+      "packages/media-native/src/scene-playback-window.ts": "f087bc2b4edca51a32696fd15caeb385012c3352d44bd78cbcd4ac7a53923a10",
+      "packages/media-native/src/scene-visuals.ts": "9504290e01239b2478eb498b3081f1e6286b2be060a56553b902d6ee71ee1c54",
+      "packages/media-native/src/science-spec.ts": "07517b42aa65bae6c32b4b1eeb735391189486a773efbbc3454e379813606331",
+      "packages/media-native/src/source-audio.ts": "d9142b9beb0b2d6693c401b5ad559d100cac519222af43613e06479e5f7b59f6",
+      "packages/media-native/src/source-contract.ts": "695723f7c2ad16f45bbea656efe4dd74e64fd1d97e9fd8fe1e8e9bbe12a9cb24",
+      "packages/media-native/src/speech-contract.ts": "5e12afb81d551c90b5ea44a5f687b9bd042513cc2dce254637a20e02f7a88f9c",
+      "packages/media-native/src/speech-processor.ts": "52581447dd31b709a7ffc287ad0dc651232893fe1834993db6eba742d7d0b5cf",
+      "packages/media-native/src/speech-range.ts": "0652b09a19bef6e11e3267f9c3da6ac3aaf06c8538434c31a17b0f8a3f803b44",
+      "packages/media-native/src/text-export.ts": "60d87c45a35eef4b0cbb913bda18b20c2b698fc546b80ce49cdd4cb293865332",
+      "packages/media-native/src/video-element-capture.ts": "59ae672af8e206230d3813d06dc9ce2a6efcd0cc50f7e4f9e614ca505e189918",
+      "packages/media-native/src/video-options-form.ts": "239901c373de200b1e1ae92011d0cd38443af6e04b9b98c2d3419826b54830b6",
+      "packages/media-native/src/video-options.ts": "23fbb745ffdd7c07a558674b8c7808b3f3692c33fea8a7a79be37d2152e88d1d",
+      "packages/media-native/src/visual-effects.ts": "cb31f1ea4514c5785d12b619505f1c19af5e068e2cd237775650af4d65766a6b",
+      "packages/media-native/src/visual-segments.ts": "bfefb6a48c4e224e8fd177a276e7eee76f9419487ef86569e0807b8183e74883",
+      "packages/media-native/test/capture-source-index.test.ts": "e9f397b27e06410763c3642c86d08c655c2ad06e81e97d6b1d4f533bf1085f54",
+      "packages/media-native/test/media-controller.test.ts": "130dc627194ecc56800bc2fd4867fbbf5e228947b4f30ec1d426b293322deb09",
+      "packages/media-native/test/media-port.test.ts": "3288946a957ae50ee2505d13ab686b89cdc8217fa8b145b5dda67da5b3cfcfe0",
+      "packages/media-native/test/media-preservation.test.ts": "e8d0bc7db235ce5776b73030799eff98d21c18e2cf7ecdda309b1ce8567bc3db",
+      "packages/media-native/test/media-processing.test.ts": "58491dd81f987e480cea4711b3911e4bb2e3eb486340ae4227c01050958c9c28",
+      "packages/media-native/test/precomposition.test.ts": "5e42e8f5056477cbe95522259892f460111dfd151faf4500e09c9bac9a23763a",
+      "packages/media-native/test/research-diagrams.test.ts": "efc3fd28b0a62eeab7ae73af5f80492ee83a0652bfdaa76e0af3f2481b58009c",
+      "packages/media-native/test/science-spec.test.ts": "5c0085739561533a998b01e987e2ee06345a0be3e57825a59296fe80bba609fb",
+      "packages/media-native/test/speech.test.ts": "0ec7ecf23e8dfae6706d892c47565e61f4013cf843deedbd117f026e20d5ae3e",
+      "packages/media-native/test/video-element-capture.test.ts": "569a87d507304bb9a7bfadb576bd44da7084360a2e2f424a85642d929fe85ef8",
+      "packages/media-native/test/video-options.test.ts": "33701849b3348b2e801ef935e6030961584377efd5f517c8dbe014f6871bda73",
+      "packages/media-native/test/video-production.test.ts": "286353c27257a8e9c6f047393fc513c2d0116d65c483430ddc7aae217071700d",
+      "packages/platform/package.json": "3e35604ce467c303e10bb69d9b934248c6dc25d1b9e1dd513d0b9f4bedb9d700",
+      "packages/platform/src/agent-data-format.ts": "c50426338cb2989c009fe8da84ea1b01ae7c9aa1af3425b85c1379cca3fd1243",
+      "packages/platform/src/agent-data-schema.ts": "006a6a753d7b78a87cde735d666731c653b9cd2085f763513058f35820910842",
+      "packages/platform/src/agent-history-store.ts": "3a31f654947359a1746d720c145adb36d8be6d293608253d7b8d4d15004d769f",
+      "packages/platform/src/agent-host.ts": "88d3ccf85bcd6dc7a86b83e73daa6686cb68cdd6aa321d8fdffc632f922f7672",
+      "packages/platform/src/agent-preference-store.ts": "a9f014a5d66e3cba4204d8d6678a64af2caa7ac72af138a60ede5d1b9a122772",
+      "packages/platform/src/agent-settings-controller.ts": "164d916075b00ae50597978d8866d5668e253f00f39962ffc30bc4afee8cfb90",
+      "packages/platform/src/assistant-activity.ts": "8157c8c16dc56f3f796bce546cb8339f06c23e5739175fb0d0923072d7159665",
+      "packages/platform/src/assistant-controller.ts": "0d438225fef297b7ef9144c0cb7d7b66e1610e30710fc33bfd950ea153c79713",
+      "packages/platform/src/assistant-service.ts": "9d067f710fd21ddf54595a952c82afa1578779aaee76cbf5ef7e46b7b1add8fd",
+      "packages/platform/src/browser-user-agent.ts": "8ca7011c388bbdb1798e154ef31538c898c71117be4a7cbdbd1317c3222bac33",
+      "packages/platform/src/conversation-store.ts": "4ed9393e22b6c5e8a977739868cbc69504dbaffb66c73775908281bea1610551",
+      "packages/platform/src/feature-contract.ts": "78f561d6dadbf3ddf063e91ae2269522413f838fe5d4bbd524c2ba90627a8a91",
+      "packages/platform/src/global-settings-store.ts": "39b2ade809d86bada60c0bc0bc909b6db9c48f357577c9e37beaccaef56ba2df",
+      "packages/platform/src/layout-docking.ts": "c085771084cb7e9beaec664b57f194702f86f9d7df7a3416949508d4d1307104",
+      "packages/platform/src/layout-store.ts": "3a2bd994fd311998312691cdfb628075ad66909be004326a66f1ddb188742c1d",
+      "packages/platform/src/main.ts": "110514e7b0910a0fd8fdefb4dedb47957003102f7e859bc760fa4c063430d707",
+      "packages/platform/src/menu-policy.ts": "e3132203f10f38add2f6f58c56e1d736dca6001d34d9a113136716c0f19d7238",
+      "packages/platform/src/permission-policy.ts": "18b711d47826ac518bf622cc2ad2da263e4049e0e643bda5993469dc272d6ab0",
+      "packages/platform/src/permission-store.ts": "108b35575224eef0e92645d74b41bf4cbc6e73c96d60946423879b33328594d0",
+      "packages/platform/src/preload/shell-preload.cts": "b8a3e0262ed032a00c925859d6ad0d97d48eee6cf53f429f71b751eb5fadbd1f",
+      "packages/platform/src/product-definition.ts": "f5efae6ee8b1b4beb7f6968f513d095118ed74483d2f2e53e1bf46e2b82bdf7a",
+      "packages/platform/src/project-source-store.ts": "9ac2dc8dce268b15b87503debfdcef381dfdf7965304b7e11e0559beccd2d923",
+      "packages/platform/src/project-store.ts": "c60ef16cb96be4a75a2902bac93a34beb5d3f83b15a6321e992559c0d19347da",
+      "packages/platform/src/qwen-credentials-store.ts": "4cabf24a4e86ff7ac88c9932ddac8b2bd9aed26e2f798dc5b5a51234b73d3ab3",
+      "packages/platform/src/renderer/shell.css": "3aa41bb92cf5c3e46d27816d42ac33614235f293e57446be42f935ecbfb0100c",
+      "packages/platform/src/renderer/shell.html": "d3309e40de6255ec376c1f014200309a09bd382b84d3495d3727949dea975a7b",
+      "packages/platform/src/renderer/shell.ts": "72a3e144c55e0e50ba6e5150ad53997188815a8bd2a4f091c1716f411a55e474",
+      "packages/platform/src/restart-policy.ts": "9237863aed9c48209fc5672add4137ce6f6c7553daa325bf0d4cfc0c16e74693",
+      "packages/platform/src/scheduled-task-manager.ts": "ef52d102bb134f978fe5537a0b13d609b0ca2e8cb5ab126cdb856deda8c8a934",
+      "packages/platform/src/scheduled-task-store.ts": "60d884a65247f3231c3b7f3ec4b1c010d1c04ec1455564c5d2753c2e746b51bd",
+      "packages/platform/src/session-continuity.ts": "80fe61ebd3ac65e83e824459a87f1050a4b98e2c93796c8d0fc8934250ee2e36",
+      "packages/platform/src/session-service.ts": "c5dc3b490a1a2f3a36b52265c613de2f85f400dfbb26be3c2f72790622deb27c",
+      "packages/platform/src/shell-ipc.ts": "9cf7085acbc77992d9cf2c36d68540a98a4755e5123d1f40429539ca82aea9e9",
+      "packages/platform/src/state-load.ts": "29f8052e27c40d98c7ea80a0ada62dce366912a2ef5ec91fe3c7bef678d356c7",
+      "packages/platform/src/studio-layout.ts": "c5cbcfc3fdb5f95b68245e7c9ef3a00d0eff48f5aee81ecbd254c7f940582bf0",
+      "packages/platform/test/agent-history-store.test.ts": "1671c7333de9ed066897413ac1a4b78d8a6cee81220c632df3482db3cc64fa47",
+      "packages/platform/test/agent-host.test.ts": "063fccb49cbe0636841f9bb66bdc6cb8ed0a48a0083553544cce5445c650cf6d",
+      "packages/platform/test/agent-settings-controller.test.ts": "ba1b8eeefe1774701aa2a1a640df74767ce1f51eda281fd4807dade3591c1726",
+      "packages/platform/test/assistant-controller.test.ts": "7fec308df9966a2122d1d47027a644485e75b49b986d81d6aaf02e17bc8f7f26",
+      "packages/platform/test/bmw-catalog.test.ts": "11b01adf65d33575c612ce9be08521f129ed94807ef466bbcdf16ab4100682fc",
+      "packages/platform/test/browser-user-agent.test.ts": "43dcc0e1bb674d15ee95f7d82bb8398df0ac813b1571de20ee4cff65685db3b2",
+      "packages/platform/test/continuity-state.test.ts": "296e63eee42f37a6d360a5581265a5eea7756b80f7a8f4254c71eab12960d72c",
+      "packages/platform/test/conversation-store.test.ts": "9afff287277bd3cb36b784bb5b67c55f9f871b94c75b626b7be79cdee873461a",
+      "packages/platform/test/driver-boundary.test.ts": "cb811cc282cde1652b4779c2f94f38a830c179955831bf4049da448252c4a004",
+      "packages/platform/test/feature-contract.test.ts": "c9302e611d800695281c712e1dbd4168f12dd6de5aeaf7e8f97f519e091ff306",
+      "packages/platform/test/global-settings-store.test.ts": "e5da2ee24decf9b1915d57a2bd941c6fd9bbc079c34c4bb1067d815f712c18f2",
+      "packages/platform/test/layout-docking.test.ts": "867c086beca7e45ec3c33b001c108b2c6989411e2375f861c13fe649b8a62f4a",
+      "packages/platform/test/layout-store.test.ts": "093da140f73c9786a72d7834f80fc8652899835ec34bf5cd20bc664506d8ba81",
+      "packages/platform/test/menu-policy.test.ts": "2384844e2958c30049bf906091925859b7a1956853692c884637752af29ceb7c",
+      "packages/platform/test/permission-policy.test.ts": "cc74324920f7c702c27add922f6f1fab2214b1c278f45f1368eff30c82c2e4a9",
+      "packages/platform/test/permission-store.test.ts": "6d07d1ae99e26f320de791231ccc324b34fc6cba9f80ba251d00f98005187615",
+      "packages/platform/test/product-boundaries.test.ts": "ad62496eb502f53457b6c13ff9a24da320d782c4e436f3c13a3c0a0648d62a8a",
+      "packages/platform/test/project-panel-layering.test.ts": "59e058cfad9a733233840489e738fe492dd19b391198da7beae8e193c8f22b58",
+      "packages/platform/test/project-source-store.test.ts": "81d3e3090a7f8f603b2e17943ff4186b3fa196bc67b966b99c5d9ea01bf212c3",
+      "packages/platform/test/project-store.test.ts": "4da3ef72994cb4831c1d320ed48b1fc0023b4a3de95a19acf970f058c1a4d4b9",
+      "packages/platform/test/qwen-credentials-store.test.ts": "9a37f172bd92fd63b386e86e4092b2ecb5b75dfcf5a196b436cb8b471ebb21de",
+      "packages/platform/test/remote-control-boundary.test.ts": "5a3837e538ffe3a8e74863219d342b9f4e74a7dd50282b259393c13ab9d50d1d",
+      "packages/platform/test/restart-policy.test.ts": "4d6c9d54c216a9e34993a158d023721d0a650bca9c7139f544c7c7ce57b038c4",
+      "packages/platform/test/scheduled-task-store.test.ts": "228e16d270228a886292f90abb48fc23c08b5d40aac09f069830da78a29fd5b2",
+      "packages/platform/test/session-continuity.test.ts": "3b514516ac97c6142f1ce37eb06966680dcb9cba03a29c25f37126db827b42b1",
+      "packages/platform/test/shell-ipc.test.ts": "e3ef8cfba93014c18f255405be9d90ccc412f810e390c3dafdcd2eb64c01aec5",
+      "packages/platform/test/state-load.test.ts": "8bec72747cb58aa0d46a4d8a3a9ebde5f035b4847ef239e4f880dbf84d6d04df",
+      "packages/product-bmw/index.ts": "870d9dcf9933d0cb05038c100b2bd7fe149132c1175ee60240022af8705b44b6",
+      "packages/product-bmw/package.json": "87ed9d8a4c74e8bcd261bb73d40469b6e541cb2956ea3646aa873529aecf58d8",
+      "scripts/agent-assembly.test.ts": "d3889077090152e41f6d1e23d25a149c85318b8581b902ed0d468d1e80d3dcfd",
+      "scripts/agent-data-migration.test.ts": "bd713659ec53c18bd8a1bbdedd276a225380ec8ae507cdf8f377b5f529636b14",
+      "scripts/agent-data-migration.ts": "4fefc1d77b0441165ea72fef06539ba504198342af6ccc8552a22d3b0bce28d3",
+      "scripts/agent-driver-smoke.ts": "6d7d778a3bdebb7894f8564a00e0fc9149a9ac1cddd72d8fb0cadd88ab8ee498",
+      "scripts/architecture-document.ts": "d77f70e40d12531ffc0970bcdd4cb716ad6fe644572ae2fc90f8cf2ed522bf4b",
+      "scripts/assistant-application-smoke.ts": "3a29379f396cfb0a2139841904f1aaedfab5e48c4cbff5ebf6111b8095af5fe3",
+      "scripts/assistant-default-case.ts": "37300c62b87141140239514d8ba5349121ee4299ad89f5173522171e27ed6ab1",
+      "scripts/assistant-default-suite.ts": "7029840feb8b8f19e894625566c3d93b21773d04077ff4ab34673f54760aa444",
+      "scripts/audio-window-smoke.ts": "f70a369f809f1075f41e8004c6b423578480aeea2e349573952ac82ce87d9e57",
+      "scripts/browser-background-smoke.ts": "1230a50dc34e349b7e0a02ba17474242ddf9baa16f9d6ac52775651c54c8daad",
+      "scripts/build-receipt.ts": "760b636951d5b5adb2b246888cd4eb862c6dc2ce0f25a227730b6d9ae0777703",
+      "scripts/card-blog-case.ts": "99e9baac7a04956c40ec895dcde578e1ac4c0b100bc5bfdc681fc51ec6865865",
+      "scripts/cdp-eval.ts": "647616bfc0cd629054bfee48fe737bf2f7cc7679fdf81b7523a094a13ff138db",
+      "scripts/check-architecture.ts": "845c5cd1d3b4cb55a290709eb458a8b8edefe97322bc7ba1af932b1ea7580af6",
+      "scripts/check-functional-spec.ts": "78a680f04b447502394a0214ea2bbb10591fc845571c37e6408fa19e451c01c5",
+      "scripts/check-source.ts": "131120e0058eaa6616f524e6bd1ef76828694e8701c50fa1436149fe72705719",
+      "scripts/clean-generated.ts": "0d72cc00c69b7341c7fc25a1dbf8cde8a117ff16299bfd47fd224e899431b2f8",
+      "scripts/desktop-smoke.ts": "6679029b84dad9c4f404b1b27d37ec23681d4a8c128ce29d0219dc0a63d5b31f",
+      "scripts/desktop-suite.ts": "8821ef0eb3754ac435bee4842d4b2723cefee2446e49cb0d9fdd1ad5cecf0da9",
+      "scripts/dsh-compatibility-smoke.ts": "accb1233dbbe418bd524af19cb751aabc23ac42c46b9cf2db16746dbf098c0cc",
+      "scripts/fixture-browser-client.ts": "55f7db6e825a7d2ee7b09d7f10c0953ba65d758000072f4454ebc2540b6e13b2",
+      "scripts/frame-sampling-case.ts": "b531fcb0bd812ccbc964d8bf7943c9bcffdc7244ed6d1294a7216fa16cf1f8bd",
+      "scripts/install-local-asr.ts": "d2c10fbae895ab23075f6ce1c8aec2d88c3c1e76c7fdc6a4a6f6767815137db9",
+      "scripts/install-local-tts.ts": "ec010ae88326283797dbe9cea7fb662f4ac68bb1bd7b35d335b494b69dd21120",
+      "scripts/layer-packaging-smoke.ts": "b4eed06d72d106f4b34640286bbec4ea91cf427aebe2b405a5910e689e72e549",
+      "scripts/long-composition-case.ts": "77aa88009145b0636b86be1bd0e7406e6db188e821947f2e9dabf33862e3fa1c",
+      "scripts/media-capture-smoke.ts": "d8cfd79dc23a2007aa04b3f3ae794ce3db690f74dc45573f166d1affb5144cdd",
+      "scripts/media-download-smoke.ts": "e1d67343bc86579e3e8ed115f5b3d8349f6896f4df0311808ca261e938ba6ad5",
+      "scripts/media-processing-smoke.ts": "96a0a37a3e4aeb48a4427734acdfe06f7fc7aa19cbc044c8e1476787989e2eaf",
+      "scripts/migrate-agent-data.ts": "f6a6bd0763df4bd39202dc28c313a682c1f9f5f8b4f2fe69f761afe3c81cca84",
+      "scripts/module-catalog.ts": "ef4812fcb4c52be3997fe4f33e8e19388df132b49a92011128d1e965c936f2b9",
+      "scripts/musk-video-case.ts": "c338283dd13704a470752553dfb5a37ae0a2f7ff75bf9b325178375b1e989f2e",
+      "scripts/narration-smoke.ts": "fa80beb11969ca7b9afbd1f8627265a3e0530027cea22a53f5a5fe368c656249",
+      "scripts/native-assistant-case.ts": "e0d13225626822a47e7d028343c0ebc5cea79921793e0fa7d3d9e33e97605eb8",
+      "scripts/open-musk-video.ts": "74f5ca23a696cca3ce6e671278bbc699df2baca756f09b67db9b480637d6c68f",
+      "scripts/product-entry.ts": "0e8817e1eadce8f4a8e175ef41a3a0b55ba299b7a9a73b4c578e3cc653245b95",
+      "scripts/qbit-playback-audit.ts": "2211ee0326f8740fddd495f813356fa9ca2128d918a02a644a39330ebef05d86",
+      "scripts/qbit-stage3-samples.ts": "a7ae7b523f009d3cab7cb209046f2ba2ab419f79d99027e17191825412ef0ef9",
+      "scripts/qbit-stage4-samples.ts": "0bd61db330090af573126c2f7c64c1f97fc766d2e54ec57cd3dedb67bf439086",
+      "scripts/qoder-production-case.ts": "fe36a64699a8941a94191f2592a92c5ce3df4951e7c912d445ce2f2e88a763b9",
+      "scripts/recording-workflow-case.ts": "b9a76947cf365049420597f54c988669396ad63e5d757b7aab27ee2688b0aead",
+      "scripts/renderer-evidence.ts": "51490535e0853ff6fe589d5f9808a12f6edae95a6032430c2a11f22cf314d5ae",
+      "scripts/research-video-smoke.ts": "2a4e1c2abdf51040b2ea52cc7fcac068cebf94494ac11d3277f983bb3712f049",
+      "scripts/run-electron-script.ts": "87d363d0446f3d99c568f0b60822daca64406215f88ac5d7dccbd6549ccc00e9",
+      "scripts/scene-clock-smoke.ts": "ab26dbc20ed37d5ea2dd04f138e580dd2b906bf40e52825873812e823b9ac9f7",
+      "scripts/science-diagram-smoke.ts": "2c3a7a8b6d8cb7e4af761e703735f6df3b8f1d2caba9ae0b6e0e2f7f6ce8f83d",
+      "scripts/skills-video-case.ts": "48d3ed43e6ab907dffbc6d40b1fe5a7c52071cf45da3c1eece7862f222d0945c",
+      "scripts/source-analysis-case.ts": "3644a62eef66f0c194e062e7bcaa27b9e4fdb88d6fa46b9928bfc9abcc766590",
+      "scripts/source-graph.ts": "5663269c43f3693ffdebdb4af577116bbc580bcb0373b2ca3f23fdbf123a3cd8",
+      "scripts/source-platform-case.ts": "f1b97baa3e295877d079ba47b8ec8cbe8dfbd7dad1c059fc228c7b2624c602d7",
+      "scripts/source-studio-smoke.ts": "5c214b809c71ae06864cd84f8a90675b6d8fc0dce7c39bfc43a1af5431f689bd",
+      "scripts/speech-alignment-smoke.ts": "3e579ed9e8babdc65c5908f9f419346893e22385f5d2225a66cb1b76a6b95708",
+      "scripts/speech-review-page-case.ts": "c99ce8483d2ebfba6146216c47ca8abe1da78fad4e1798f82129f648c4c4a581",
+      "scripts/speech-study-case.ts": "6ad90cb0e58950a3a8c6b6caa5e02a7b5307f9458d2ab9c56f9e39f9146f5b08",
+      "scripts/start-electron.ts": "e2422c5c7826493d8bb92bf01eccc494219bdc6f50578d7c75311bf38b1074e9",
+      "scripts/state-load-smoke.ts": "ec195be283e42e59a34d28d532095c4f00c16e1e576d64117155be0c6fed50ef",
+      "scripts/studio-next-smoke.ts": "c2633ba4029022b439ce2735c1a08d20b76b9efbf08c1fa10ec2729f6cc1b034",
+      "scripts/test-catalog.ts": "35dc88b25d5e6aa277f42df1a42af8443eb80913eb31ca7924aa81b3f7d0f6bd",
+      "scripts/test-runner.ts": "a08012437ac9e52a4527fd13e1d9c9395509e92a2f3d87bca1452750f28f4ec8",
+      "scripts/test-selection.ts": "4bb79e8eb6fc7cec80ec4a7df5402dfbc92d44980587c297f46699d1b5233731",
+      "scripts/test/module-boundary.test.ts": "e45fa40eaa5b4a62871b722bea7a97a0d5f5473622faba279e9543f5d7459a22",
+      "scripts/test/public-interfaces.type-test.ts": "d41864b40fb53bc94027a8bb9cd378ccc3e8b5741673159a396af65111ab5635",
+      "scripts/test/test-selection.test.ts": "ba8890ca9cf88c98897e092aa8ad591a622636f3c94c960cc1e10c3b6c57d984",
+      "scripts/text-treatment-smoke.ts": "4e7f9b9d6979e3cc7354f51eb162d6c105befc36dc26f87bc9812738112282b8",
+      "scripts/verify-stability.ts": "b7f579c1c658978e9a219492110ce707e0e706f16a3736fb5b48383fa8456ffa",
+      "scripts/video-case-log.ts": "4465a23585ecbde98f8b11cd48959a13671ee41babfff6b99dd0111812bb4199",
+      "scripts/video-production-case.ts": "3eacbc8cbe99210e79682d699f4a4f18ca31eb0be93f7740481cbe5b48646c10",
+      "scripts/video-production-smoke.ts": "066932be1684af85baedb66dffb19c2d711a09ccebdc0c10e8d534113449fe39",
+      "scripts/video-schema-document.ts": "ccb4bfda36e5191488b3825ee8f320c2413ffca18c1148be84d325dfaa2c0523",
+      "scripts/video-studio-smoke.ts": "5492e043887ed396db2458d74b9855a8a306cbc5683b659a3f442aab547b9888",
+      "scripts/vision-model-smoke.ts": "a2672f1748d2f66c348622a2a391e32ab943c3af409fcfcf3fc860de16697ffe",
+      "types/browser-globals.d.ts": "0f1602c29df4598c90c963cf2600c99bfb1a4767e618f719e94db19bd25594b7",
+      "package.json": "86575cefe9645d7e0da1562dd5331a820ada6a1f9197bfaa2ddba74cd2448d79",
+      "package-lock.json": "ae90f5fa01f669fa90167c6b73ea25fc00043bbb4f778a478681908f1ed6e574",
+      "tsconfig.json": "4fdce5aec2d5369ddee6a3ec543cbc1a23601c0057b93b220862e3d1b45bd139",
+      "README.md": "439d5ba9802056d1ba8ad9c02b038aa080d926569c99eed31fdb5aa98d8aa635",
+      "handoff.md": "9983036292960768b22423043b81e7194808c4cde73d4d10f7e06a3d03cfdb71",
+      "AGENTS.md": "7d019a99a4d317e5c7e08759aaeae3f1fd18a131c28f5873a6da96182583a89b",
+      "docs/FUNCTIONAL_SPEC.md": "bf03353ceebdeb6427ecd02dfaaf00dfda6bef9d53be17ad91624d58f4191c1a",
+      "docs/ARCHITECTURE.md": "ae9364feed189679da6b2ee4fad31e5554cdb68905c416d1f07b8fbde0c428cc",
+      "docs/VERIFICATION.md": "c68182ddcd7faa8f8360a1e05921ecbbd7e20db6acf969475d9db8cdf3945d44"
+    },
+    "rendererVersion": "native-research-diagrams/10",
+    "nativeCaptionVisiblePixels": 1092,
+    "finalCleanBuildComparison": {
+      "status": "passed",
+      "path": ".bmw-runtime/p1-ak/final-build-comparison.json",
+      "sha256": "92a1652e378e596d61238ef0e6fe3301c8c6957fa01bf5dd88a24c226ef37546",
+      "checkedAt": "2026-10-17T08:41:33.611Z",
+      "baseline": ".bmw-runtime/p1-ak/current-frozen-build-receipt.json",
+      "cleanReceipt": ".bmw-runtime/build-receipt.json",
+      "sourceDifferences": [],
+      "outputDifferences": [],
+      "outputCount": 422,
+      "nonMarkdownChecked": 451,
+      "nonMarkdownDifferences": [],
+      "markdownAfterFrozen": [
+        "handoff.md",
+        "docs/VERIFICATION.md"
+      ],
+      "cleanBuildLog": ".bmw-runtime/p1-ak/final-clean-build.log",
+      "finalCheckLog": ".bmw-runtime/p1-ak/final-clean-check.log",
+      "finalCheckExitCode": 0,
+      "scope": "452 build inputs and 422 compiled outputs match the frozen receipt; 451 non-Markdown tested inputs match the complete 162/0/12 report. Listed Markdown and delivery metadata changes were made after the frozen run."
+    },
+    "nonMarkdownHashComparison": {
+      "changed": [],
+      "checked": 451
+    },
+    "baselineScope": "The 162-check report and source hashes describe the earlier frozen P1 baseline. Male voice changes have a separate affected regression, not a new full baseline.",
+    "changedNonMarkdownFilesSinceFullBaseline": [
+      "packages/feature-video/index.ts",
+      "packages/feature-video/src/studio-contract.ts",
+      "packages/feature-video/src/video-settings.ts",
+      "packages/media-native/src/narration-contract.ts",
+      "packages/media-native/src/video-options-form.ts",
+      "packages/media-native/test/video-production.test.ts",
+      "packages/platform/src/renderer/shell.html",
+      "scripts/desktop-smoke.ts",
+      "scripts/narration-smoke.ts",
+      "scripts/video-studio-smoke.ts"
+    ],
+    "currentIncrement": {
+      "report": ".bmw-runtime/classified-tests/2026-10-17-news-muyu-male-native/result.json",
+      "reportSha256": "2331f8d5749d2673c3643e9c0c8db4c6059a84dc2c1f0bee5236223352a71934",
+      "selectedClassificationChecks": 71,
+      "passedIncludingGates": 76,
+      "failed": 0,
+      "outsideScopeOrOptInNotRun": 98,
+      "sourceIntegrity": "All current non-Markdown hashes match this increment report."
+    }
+  },
+  "deliverables": [
+    {
+      "kind": "主片／新闻 V4 风格试作",
+      "title": "马斯克把AI改叫SI，预期也跟着升了一档",
+      "caseRoot": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z",
+      "editableDocument": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/video-studio/58ae18b8-2e67-4a70-8b5b-9194c6d0b547.json",
+      "documentSha256": "9003d6123350119cb8c7d79ad41588fe25405fbc53ffbcfa4f1a3f2adb756f21",
+      "draftId": "58ae18b8-2e67-4a70-8b5b-9194c6d0b547",
+      "revision": 103,
+      "ownerSessionId": "5086e758-7ced-4488-812a-7f54547102f5",
+      "profile": "news-brief",
+      "sceneCount": 6,
+      "narrationArtifactCount": 6,
+      "production": {
+        "works": 3,
+        "relations": 2,
+        "claims": 11,
+        "goals": 0,
+        "externalVersions": 0
+      },
+      "mp4": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/media-89fd022b-e440-4bbe-8185-f0d979fedcb7-converted.mp4",
+      "mp4Sha256": "3abf0595cdc5e76ff3f2b4ad2bfbc344764d2ad7d8d03d19895acb55a7d153d6",
+      "bytes": 4008529,
+      "timelineDurationSeconds": 57.70833366666667,
+      "actualDurationSeconds": 57.792,
+      "width": 720,
+      "height": 1280,
+      "fps": 24,
+      "exportFingerprint": "70aaa9e516092c5bbf36817dbc9b9d24c330a59d7af33d0d92fd2d993727f269",
+      "rendererVersion": "native-research-diagrams/10",
+      "verification": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/video-155389a5-392a-4609-94b1-620f5b7ebad4.json",
+      "layoutWarningCount": 9,
+      "agentVisualReview": {
+        "generatedCriticalFrames": 143,
+        "plannedCriticalFrames": 143,
+        "scenes": [
+          {
+            "sceneId": "v2b-hook",
+            "status": "passed",
+            "notes": "0/8/16三页共23个实际帧已查看：标题“只换一个字母”、AI→SI大字和三条短字幕均在安全区，无裁字或证据遮挡；旧根标题告警无可见重叠。",
+            "createdAt": "2026-10-17T11:43:42.135Z",
+            "sequence": 1
+          },
+          {
+            "sceneId": "v2b-post",
+            "status": "passed",
+            "notes": "0/8/16三页共24个实际帧已查看：标题、X原帖证据、脚注与短字幕均在固定裁切内可读，无裁字或遮挡；入场淡入与长静止阅读属可接受范围。",
+            "createdAt": "2026-10-17T11:43:45.431Z",
+            "sequence": 2
+          },
+          {
+            "sceneId": "v2b-book",
+            "status": "passed",
+            "notes": "0/8/16三页共24个实际帧已查看：书封与@elonmusk回复可见，23px脚注及短字幕无冲突或裁字；历史源底部小字受既有裁切属可接受源图限制。",
+            "createdAt": "2026-10-17T11:43:48.034Z",
+            "sequence": 3
+          },
+          {
+            "sceneId": "v2b-qa",
+            "status": "passed",
+            "notes": "0/8/16三页共24个实际帧已查看：提问与回复截图、attribution、accent和全部短字幕均可见，无裁字或证据遮挡；长静止阅读可接受。",
+            "createdAt": "2026-10-17T11:43:50.635Z",
+            "sequence": 4
+          },
+          {
+            "sceneId": "v2b-check",
+            "status": "passed",
+            "notes": "0/8/16三页共24个实际帧已查看：标题、AI→SI/人工→超级图、accent与短字幕分离清楚；37.875s文字重叠告警无可见遮挡，末尾边界正常。",
+            "createdAt": "2026-10-17T11:43:52.929Z",
+            "sequence": 5
+          },
+          {
+            "sceneId": "v2b-close",
+            "status": "passed",
+            "notes": "0/8/16三页共24个实际帧已查看：标题、AI→SI图、灰字与全部短字幕完整，无裁字或遮挡；片尾场景边界正常。",
+            "createdAt": "2026-10-17T11:43:55.071Z",
+            "sequence": 6
+          }
+        ],
+        "film": {
+          "status": "passed",
+          "notes": "六场review-export全部页（0/8/16）的实际采样帧均已逐页查看，六场均frameGenerationComplete：从“只换一个字母”钩子到原帖、书封、SpaceXSI问答、边界与收束完整；未见裁字或证据遮挡。技术报告通过，9条告警为旧根标题/可接受长静止/已核无遮挡的37.875s文本告警。人听感、复述与最终接受仍待用户。",
+          "createdAt": "2026-10-17T11:43:59.735Z",
+          "sequence": 7
+        }
+      },
+      "typeAssessmentJournal": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/video-studio/type-reviews/58ae18b8-2e67-4a70-8b5b-9194c6d0b547.json",
+      "typeAssessmentRecords": [
+        {
+          "checks": [
+            {
+              "id": "check-1",
+              "status": "passed",
+              "notes": "一件事：AI 改称 SI 的公开表态；一个判断：名称变化不等于能力突破。"
+            },
+            {
+              "id": "check-2",
+              "status": "passed",
+              "notes": "事实/作者表态用 author-claim，编辑判断用 commentary，来源缺口用 limitation，未混写。"
+            },
+            {
+              "id": "check-3",
+              "status": "passed",
+              "notes": "原帖可见 @elonmusk 与 2026-10-04 16:40；书封回复和 SpaceXSI 问答可见相对时间；问答页脚明确同一截图、未独立登记来源。"
+            },
+            {
+              "id": "check-4",
+              "status": "passed",
+              "notes": "当前 MP4 实际 48.405s，落在 news-brief 30–60s 范围；未重新编码。"
+            },
+            {
+              "id": "check-5",
+              "status": "needs-fix",
+              "notes": "Human-only check pending; not run."
+            }
+          ],
+          "listening": "not-performed",
+          "retellingAnswer": "",
+          "predictionAnswer": "",
+          "notes": "Agent 可核验：题材为改名表态与能力证据；事实/作者表态与点评/限制已分列；画面可读原帖作者、日期和问答；成片 48.405s 在 30–60s 内。原帖来源正文抽取返回 missing-range，三个作者主张缺原文引文槽位，已在 c-quote-pending 标明。问答仅同一 X 截图、无独立 acquisition。check-5 未执行，保持 pending；Agent 记录不代表用户通过。",
+          "id": "89d1005d-e5a9-4819-aed2-2574b1d3f8e2",
+          "createdAt": "2026-10-17T06:59:57.290Z",
+          "origin": "agent",
+          "profileId": "news-brief",
+          "profileVersion": 1,
+          "fingerprint": "0400309b4b9773b84c433e60970c9b458d0496601044b37ec06c1b7e0d3b8902",
+          "exportArtifactId": "media-e0f7ae4a-20d3-43a0-b5fd-e62fba86ac33-converted.mp4"
+        }
+      ],
+      "humanRecords": 0,
+      "executionEvidence": [
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T04-28-54-947Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T06-06-08-353Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T06-30-09-118Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T06-54-41-222Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T07-01-57-234Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T09-11-41-023Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T09-12-49-716Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T10-02-10-219Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T11-34-27-565Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T11-44-26-040Z.json"
+      ],
+      "caseBrowserCalls": {
+        "cumulativeAllRoundsIncludingV1AndPrototypes": 864,
+        "scope": "Individual immutable result files identify each round."
+      },
+      "acceptance": "muyu-rewrite-and-qwen-male-delivered; human-listening-and-user-review-pending",
+      "rootFrameReview": {
+        "fingerprint": "70aaa9e516092c5bbf36817dbc9b9d24c330a59d7af33d0d92fd2d993727f269",
+        "status": "selected-final-mp4-frames-inspected",
+        "samples": [
+          {
+            "sceneId": "v2b-hook",
+            "seconds": 3.5833333333333335,
+            "artifactId": "media-697e86b8-4e36-4caf-88e0-56e841783b7e-frame-4.png",
+            "observation": "The actual corrected export shows 只换一个字母 in both title and active caption; AI→SI remains visible and the caption is fully readable. This fixes the factual wording of the initial candidate."
+          },
+          {
+            "sceneId": "v2b-post",
+            "seconds": 11.416666666666666,
+            "artifactId": "media-ef1ad1e4-3811-423d-a03d-8b2e13d784d4-frame-5.png",
+            "observation": "The original post occupies the preserved half-canvas evidence window; all three key lines and author remain readable. The active SI更好 caption is fully visible below the attribution."
+          },
+          {
+            "sceneId": "v2b-book",
+            "seconds": 21.083333333333332,
+            "artifactId": "media-347aaaf0-a3ab-4fd2-9b52-d08e3c0297ce-frame-4.png",
+            "observation": "The large book cover, Musk reply and updated source footer remain visible; the single-line《超级智能》caption matches the script and fits completely."
+          },
+          {
+            "sceneId": "v2b-qa",
+            "seconds": 32,
+            "artifactId": "media-a44a7307-f70b-4b94-be01-08e14ca47bbc-frame-5.png",
+            "observation": "Both source strips show the SpaceXSI question and will-make-that-change reply; the large Chinese label attributes the response and does not claim completed renaming. The caption is fully visible."
+          },
+          {
+            "sceneId": "v2b-check",
+            "seconds": 41.708333333333336,
+            "artifactId": "media-b961cbc3-62cf-4c2f-8a06-c99352e5bd3d-frame-4.png",
+            "observation": "The boundary scene shows 人工→超级 and 改哪里？何时改？ separately from the attributed source exchange; the short 具体改哪里 caption fits without clipping."
+          },
+          {
+            "sceneId": "v2b-close",
+            "seconds": 57.666666666666664,
+            "artifactId": "media-e0955708-8672-4b80-a240-8197ae08f98e-frame-8.png",
+            "observation": "The closing 想象先升了一档 and 人工→超级 comparison remain visible through the final frame hold; the SpaceXSI question remains conditional. The caption has cleared after the final voice, without an early blank picture."
+          }
+        ],
+        "scope": "Selected actual export-frame pixels inspected by root; separate Qoder critical-frame and scene/film declarations are recorded in the export journal. No subjective audio listening or user acceptance claimed."
+      },
+      "knownLimits": [
+        "Q&A comes from the same contextual screenshot, with no independent acquisition.",
+        "Source text extraction has missing-range; exact quote offsets were not invented.",
+        "Voice suitability is an editorial selection based on official voice metadata; subjective audio quality, pronunciation and viewer acceptance await user review.",
+        "The stored draft title retains its earlier V2 string; the delivered title and current script identify this V4 trial."
+      ],
+      "storedDocumentTitle": "AI改叫SI｜V2：名字与证据",
+      "narrationProvider": "qwen-tts",
+      "narrationModel": "qwen-audio-3.1-tts-flash",
+      "narrationVoice": "anmingyuan_v3.1",
+      "narrationReceipts": [
+        {
+          "sceneId": "v2b-hook",
+          "artifactId": "narration-03caa79a-93a6-4995-ba67-f4ff9bbd0892.wav",
+          "text": "马斯克把AI改叫SI，只换一个字母，预期倒是大了一截。",
+          "durationSeconds": 6.16,
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "anmingyuan_v3.1",
+            "ratePercent": 0
+          },
+          "sha256": "66cccbe4afbe5ceab258aa42770ef979989b34c7ce7c70fdfd46acf30d4e8011"
+        },
+        {
+          "sceneId": "v2b-post",
+          "artifactId": "narration-c60de46c-2061-4dd3-a534-68a9ed9c23fa.wav",
+          "text": "十月四日，他在X上说，不叫AI了，SI更好。从人工智能换成超级智能，听着就不是同一档。",
+          "durationSeconds": 10,
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "anmingyuan_v3.1",
+            "ratePercent": 0
+          },
+          "sha256": "a78f4f246ebc80349e0e2ac82448f0c53e034186d599fab462f446a55cb42ca8"
+        },
+        {
+          "sceneId": "v2b-book",
+          "artifactId": "narration-cda46d54-7719-47a2-86e4-fc4dece0424c.wav",
+          "text": "接着，他贴出《超级智能》的书封，说一直都是。名字换得很短，配的书倒挺厚。",
+          "durationSeconds": 7.6,
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "anmingyuan_v3.1",
+            "ratePercent": 0
+          },
+          "sha256": "d8d163e7bc195a77454f6123eb8b46036e2516cfe8cdd6e5856518da0291b13c"
+        },
+        {
+          "sceneId": "v2b-qa",
+          "artifactId": "narration-014174bd-4dc3-46c3-948e-c157e1832a91.wav",
+          "text": "网友马上接梗：那要不要叫SpaceXSI？他还真回了一句：是的，会改。评论区把命名方案都递上来了。",
+          "durationSeconds": 9.52,
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "anmingyuan_v3.1",
+            "ratePercent": 0
+          },
+          "sha256": "a5d3bf5470b095bcba4601969177df2484f787ada27febe0ba62a6084aeee6a7"
+        },
+        {
+          "sceneId": "v2b-check",
+          "artifactId": "narration-facbec51-ca13-4987-8256-7f0fc0a86c88.wav",
+          "text": "当然，这里看到的还是帖子里的回应。具体改哪里、什么时候改，不能替他往下编。",
+          "durationSeconds": 7.04,
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "anmingyuan_v3.1",
+            "ratePercent": 0
+          },
+          "sha256": "4d2f3a367cf3432aca19738e09d9993e89f788af075f03d96ac503636ab12957"
+        },
+        {
+          "sceneId": "v2b-close",
+          "artifactId": "narration-2060ebcc-eacf-40f4-958b-affb5584a747.wav",
+          "text": "我觉得这次有意思的，是从人工到超级，名字先把想象拉高了一档。至于SpaceXSI会不会真挂出来，倒是可以留意一下。",
+          "durationSeconds": 11.2,
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "anmingyuan_v3.1",
+            "ratePercent": 0
+          },
+          "sha256": "710174062edb0e80dc0d8b53ac6e6c79271f56d2d624611508e7aa942c2b5d9d"
+        }
+      ],
+      "voiceComparison": ".bmw-runtime/p1-ak/news-v3-qwen-auditions.json",
+      "typeAssessmentScope": "Prior type-assessment records retain their own fingerprints; they do not certify this V4.",
+      "executionCompletedAt": "2026-10-17T11:44:26.040Z",
+      "executionOutcome": {
+        "artifactsAndAllReviewPagesVerified": true,
+        "officialTurnCompleted": true,
+        "termination": "Official turn completed normally."
+      },
+      "voiceComparisonScope": "Historical three female-voice audition files; this V4 uses a newly requested male voice and is not certified by that preference.",
+      "writingSkill": {
+        "sourceArchive": "/Users/zz/Downloads/muyu-writing-style.zip",
+        "sourceSha256": "1624a9e72ceb65557df7f5ff72e41ea63bdc9a695d23fa9f92f2bc6390225386",
+        "skill": ".bmw-runtime/p1-ak/muyu-writing-style/SKILL.md",
+        "reference": ".bmw-runtime/p1-ak/muyu-writing-style/references/style-evidence.md",
+        "script": ".bmw-runtime/p1-ak/news-v4-muyu-script.txt",
+        "scope": "Concrete observation, comparison, restrained humor and bounded judgment; no invented personal experience or copied historical claims."
+      }
+    },
+    {
+      "kind": "主片／科普 V2",
+      "title": "机器人会做家务，离可靠还差什么？",
+      "caseRoot": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z",
+      "editableDocument": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/video-studio/053917b5-3bc1-4c08-82c1-cdfb2e98aac1.json",
+      "documentSha256": "2bd10226b433de992c621853ed7033196ebc706d0c3007c88fc42142bff15025",
+      "draftId": "053917b5-3bc1-4c08-82c1-cdfb2e98aac1",
+      "revision": 100,
+      "ownerSessionId": "72f85842-d183-4a25-8ae8-736a23037400",
+      "profile": "science-explainer",
+      "sceneCount": 8,
+      "narrationArtifactCount": 8,
+      "production": {
+        "works": 1,
+        "relations": 0,
+        "claims": 11,
+        "goals": 1,
+        "externalVersions": 3
+      },
+      "mp4": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/media-df521447-a21c-4c62-b32b-0d9aea78b60c-converted.mp4",
+      "mp4Sha256": "d23b232a2c896981730062fef58b5e59f49375b38516cf9e1527f456682a4f0c",
+      "bytes": 60972519,
+      "timelineDurationSeconds": 215,
+      "actualDurationSeconds": 215.08266666666665,
+      "width": 1280,
+      "height": 720,
+      "fps": 24,
+      "exportFingerprint": "525e9177edfcb3ae81fdb425e6c86a4d347b5a870f531bf42dc0f61b09b31042",
+      "verification": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/video-7afe87d8-72e5-49b2-a357-06ec08e0c30b.json",
+      "layoutWarningCount": 19,
+      "agentVisualReview": {
+        "generatedCriticalFrames": 192,
+        "plannedCriticalFrames": 192,
+        "scenes": [
+          {
+            "sceneId": "s1-question",
+            "status": "passed",
+            "notes": "24/24 current-export frames inspected: kitchen and public-source evidence, Real2Sim frame, complete '一次 ≠ 可靠' title, and bottom-outline captions all render without default-title remnants or caption obstruction. Sampled dark frames at transitions/end are brief non-blocking slates. Phone-width source-label small-text and long-static-hold remain advisories; no edit made.",
+            "createdAt": "2026-10-17T08:31:55.120Z",
+            "sequence": 1
+          },
+          {
+            "sceneId": "s2-demo",
+            "status": "passed",
+            "notes": "24/24 current-export frames inspected: kitchen footage, Real2Sim and deployment views, source-article evidence, and complete '机器人进入一个陌生厨房'/'查看空间，界面标出物品位置'/'不能确认：完全自主与泛化'/'不能推断具体三维重建算法' captions render without obstruction or default-title remnants. Dark frames at 44.833-45.375s are brief scene-end states. Three phone-width label small-text warnings remain non-blocking; no edit made.",
+            "createdAt": "2026-10-17T08:32:40.643Z",
+            "sequence": 2
+          },
+          {
+            "sceneId": "s3-source",
+            "status": "passed",
+            "notes": "24/24 current-export frames inspected: source-page reading, English quote locate/zoom/detail/return, highlights, publisher kitchen attempt, and complete captions render clearly. No black frames, caption obstruction, or default-title remnant. One transient title/quote overlap at 48.917s and several phone-width label small-text warnings remain non-blocking under the current no-minor-redo instruction; no edit made.",
+            "createdAt": "2026-10-17T08:33:38.056Z",
+            "sequence": 3
+          },
+          {
+            "sceneId": "s4-loop",
+            "status": "passed",
+            "notes": "24/24 current-export frames inspected across offsets 0/8/16: title 一次家务的闭环, captions from 把一次家务拆成闭环 through 第四步：执行并修正, and the cup/affordance/planning/gripper diagram render intact. The 看见/定位/规划/反馈 progression and cumulative end state are clear. No black frame, clipped caption, obstruction, or default-title remnant; no edit made.",
+            "createdAt": "2026-10-17T08:34:29.907Z",
+            "sequence": 4
+          },
+          {
+            "sceneId": "s5-execution",
+            "status": "passed",
+            "notes": "24/24 current frames via offsets 0/8/16. .84 mask preserves the caption band; captions 执行阶段最容易被演示掩盖 through 也不能确认失败后如何恢复, question board 总次数？/完整总耗时？/失败与接管？, kitchen/point-cloud/planning visuals and final hold render. Brief dark entrance at local 0–0.083s resolves to kitchen at 0.25s; no mid-scene black. Non-blocking 108s painted-text-overlap warning (执行之后，怎么改 / 总次数？); returned frames show no visible obstruction, so no edit per no-minor-redo.",
+            "createdAt": "2026-10-17T08:35:47.170Z",
+            "sequence": 5
+          },
+          {
+            "sceneId": "s6-conditions",
+            "status": "passed",
+            "notes": "24/24 current-export frames via offsets 0/8/16. Brief dark entrance resolves to the A→B measurement diagram at local 0.54s; captions 要检验可靠性 through 换光照、地面和障碍，看感知规划 and the closing denominator text render fully. Cup position/shape/weight and light/obstacle variants appear; .84 lower band keeps captions clear. Brief dark handoff around local 3.75–3.79s before the cup card at 4.04s, no sustained black. Two non-blocking phone-small-text warnings (① 位置 A→B · 只换位置; ② 形状 / 重量 · 同一杯子); no edit per no-minor-redo.",
+            "createdAt": "2026-10-17T08:37:03.533Z",
+            "sequence": 6
+          },
+          {
+            "sceneId": "s7-diagnosis",
+            "status": "passed",
+            "notes": "24/24 current-export frames via offsets 0/8/16. Title 失败，怎么定位 and 讲解假设·非真实失败记录 render; cup/OBS diagram and captions 失败还要分型 to 抓到了却滑脱：接触或力控问题 fully visible; 夹爪·示意 supports the failure split. Closing card builds 只剩一个成功率 / 短板被平均掉 / 要能解释失败 / 重试 with caption 混成一个成功率. No black, clipping or default-title remnant. Four non-blocking phone-small-text warnings; no edit per no-minor-redo.",
+            "createdAt": "2026-10-17T08:38:08.516Z",
+            "sequence": 7
+          },
+          {
+            "sceneId": "s8-answer",
+            "status": "passed",
+            "notes": "24/24 current-export frames via offsets 0/8/16. Kitchen public-demo footage visible local 0–4.8s incl 183–187s, label 公开演示·一次剪辑, captions 谨慎结论：一次剪辑中的展示 / 陌生厨房里，它探索并执行家务; no black opening. Conclusion 不能证明完全自主·100%成功·独立复现, checklist 离可靠还差三样, closing 会做一次→可重复/可恢复. No clipping or default-title remnant. One non-blocking phone-small-text warning at 183.04s; no edit per no-minor-redo.",
+            "createdAt": "2026-10-17T08:39:17.809Z",
+            "sequence": 8
+          }
+        ],
+        "film": {
+          "status": "passed",
+          "notes": "Whole-film visual review of current 215.08s export from 192/192 sampled PNGs (24 per scene, 8 scenes). Narrative order, titles, captions, evidence cards, diagrams and repaired s8 kitchen footage render; no black opening, clipped caption or default-title remnant seen in samples. Sampling is finite and silent on unsampled frames. Audio listening, retelling, prediction, human acceptance and all user declarations remain pending.",
+          "createdAt": "2026-10-17T08:39:23.289Z",
+          "sequence": 9
+        }
+      },
+      "humanRecords": 0,
+      "executionEvidence": [
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/result-2026-10-17T05-03-57-978Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/result-2026-10-17T05-23-37-609Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/result-2026-10-17T05-33-27-999Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/result-2026-10-17T06-47-17-438Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/result-2026-10-17T07-32-46-539Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/result-2026-10-17T08-17-03-519Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/result-2026-10-17T08-27-32-553Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/result-2026-10-17T08-40-30-975Z.json"
+      ],
+      "executionCompletedAt": "2026-10-17T08:40:30.975Z",
+      "caseBrowserCalls": {
+        "cumulativeAllRoundsIncludingV1AndPrototypes": 1152,
+        "perFinalRound": "See individual task logs; cumulative includes interrupted and superseded work."
+      },
+      "acceptance": "v2-remade; human-listening-retelling-prediction-and-user-review-pending",
+      "rendererVersion": "native-research-diagrams/10",
+      "typeAssessmentJournal": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/video-studio/type-reviews/053917b5-3bc1-4c08-82c1-cdfb2e98aac1.json",
+      "typeAssessmentRecords": [
+        {
+          "checks": [
+            {
+              "id": "check-1",
+              "status": "passed",
+              "notes": "开场与结尾都回到同一问题：一次陌生厨房演示能否证明可靠；没有声称观众已复述或已理解。"
+            },
+            {
+              "id": "check-2",
+              "status": "passed",
+              "notes": "成片中三类材料均有明确解释任务：s2/s5 原演示、s1/s3 来源页面与原句、s4/s6/s7 原生机制/条件/失败分型图解。逐场图像已检查。"
+            },
+            {
+              "id": "check-3",
+              "status": "passed",
+              "notes": "s4 用杯子偏位、抓取打滑、路径受阻把闭环修正机制串到 s5 执行、s6 条件替换与 s7 失败分型，叙事有承接。"
+            },
+            {
+              "id": "check-4",
+              "status": "needs-fix",
+              "notes": "条件变化预测未执行：s6 只提供可检查的测试清单，没有向观众呈现条件变化并记录其预测；这不是成片图像缺陷。"
+            },
+            {
+              "id": "check-5",
+              "status": "needs-fix",
+              "notes": "人工听审与观众复述均未执行，也无用户验收；Agent 视觉检查不能替代这些人工证据。"
+            }
+          ],
+          "listening": "not-performed",
+          "retellingAnswer": "",
+          "predictionAnswer": "",
+          "notes": "Agent-only 评估，非用户验收。当前成片 MP4 实际约 215.08 秒，180–300 秒范围内；三类材料齐备。check-4/5 为未执行的人工环节，不是已发现的成片缺陷。",
+          "id": "4a152b69-0b81-477b-b04f-1f58fd359d90",
+          "createdAt": "2026-10-17T05:03:28.360Z",
+          "origin": "agent",
+          "profileId": "science-explainer",
+          "profileVersion": 1,
+          "fingerprint": "28d4f94b005ebd3064570de36f43b4a805ee53bc52e1d16b1be6216958a9be34",
+          "exportArtifactId": "media-a68858d1-c91c-438e-b653-f332adc0b7c2-converted.mp4"
+        },
+        {
+          "checks": [
+            {
+              "id": "check-1",
+              "status": "passed",
+              "notes": "片头提出陌生厨房中的可靠性问题，片尾以条件和边界回答；当前轮只改s2/s5视觉，旁白与字幕未变。"
+            },
+            {
+              "id": "check-2",
+              "status": "passed",
+              "notes": "三类材料均在片中承担解释用途：s2/s5原始演示、s1/s3来源截图与原句、s4/s6机制与条件图解；未把发布方补充段落当作机器人操作。"
+            },
+            {
+              "id": "check-3",
+              "status": "passed",
+              "notes": "同一厨房演示贯穿观察、执行与失败证据，s4机制图和s5多视角回指同一例子。"
+            },
+            {
+              "id": "check-4",
+              "status": "needs-fix",
+              "notes": "未执行观众条件变化预测；本项待人工，不是已通过。"
+            },
+            {
+              "id": "check-5",
+              "status": "needs-fix",
+              "notes": "人工试听与观众复述均未执行；Agent不代填。"
+            }
+          ],
+          "listening": "not-performed",
+          "retellingAnswer": "",
+          "predictionAnswer": "",
+          "notes": "当前修订仅改s2/s5观察放大与s5末帧静止；旁白、字幕、引用、worksheet与s3句子绑定保持不变。已逐张查看当前导出s2/s5各24张390px取样并记录场景意见；未把旧版其他场景图像当作新版全片通过。原1080×1920视频与首版MP4保留；来源SHA、区间、实测裁剪和“为观察放大，非新实验”见准备区注释。人工听审、观众复述、条件变化预测仍未执行。",
+          "id": "215e379a-104d-4013-b3fa-320197e4697b",
+          "createdAt": "2026-10-17T05:22:52.088Z",
+          "origin": "agent",
+          "profileId": "science-explainer",
+          "profileVersion": 1,
+          "fingerprint": "c3a93fc119415189d1158e45c36c614ebea3580176babc8fbe750f76aa501e1e",
+          "exportArtifactId": "media-3faa931f-307a-466e-8442-0d852423a22c-converted.mp4"
+        }
+      ],
+      "narrationRevisionProof": [
+        {
+          "sceneId": "s1-question",
+          "previousArtifactId": "narration-3e7b2936-70a2-4188-af70-7a2dbf604581.wav",
+          "currentArtifactId": "narration-3e7b2936-70a2-4188-af70-7a2dbf604581.wav",
+          "decision": "preserved",
+          "sha256": "d271a03ee755de08027eeedaf14d5badea9110b81f77e7d3fc098af4f6b27d81",
+          "durationSeconds": 21.127,
+          "timingProvenance": {
+            "basis": "editorial-estimate"
+          }
+        },
+        {
+          "sceneId": "s2-demo",
+          "previousArtifactId": "narration-99b23c48-bb07-46a0-963c-54c8c3218666.wav",
+          "currentArtifactId": "narration-99b23c48-bb07-46a0-963c-54c8c3218666.wav",
+          "decision": "preserved",
+          "sha256": "75d25c81732eb272b3a6dd0b7978908aabaef10262213e787f5628bf24d02aae",
+          "durationSeconds": 22.167125,
+          "timingProvenance": {
+            "basis": "editorial-estimate"
+          }
+        },
+        {
+          "sceneId": "s3-source",
+          "previousArtifactId": "narration-d510dcd6-7e03-402c-a4a9-7842a6274a6a.wav",
+          "currentArtifactId": "narration-d510dcd6-7e03-402c-a4a9-7842a6274a6a.wav",
+          "decision": "preserved",
+          "sha256": "fc560f2e693c86927c99384ae3aae7c941d18ec18a1a021739848da5e073ff65",
+          "durationSeconds": 22.5314375,
+          "timingProvenance": {
+            "basis": "editorial-estimate"
+          }
+        },
+        {
+          "sceneId": "s4-loop",
+          "previousArtifactId": "narration-450d221e-e63e-4c2d-b33b-bc4334ad28cf.wav",
+          "currentArtifactId": "narration-450d221e-e63e-4c2d-b33b-bc4334ad28cf.wav",
+          "decision": "preserved",
+          "sha256": "73824475c6b175b2bfcecbc66587a26e43ddde94501a84995a06bf00ab7fbbcb",
+          "durationSeconds": 31.6645,
+          "timingProvenance": {
+            "basis": "editorial-estimate"
+          }
+        },
+        {
+          "sceneId": "s5-execution",
+          "previousArtifactId": "narration-c728ecb4-6f60-4a08-81b1-4392eeb620f5.wav",
+          "currentArtifactId": "narration-83c0c8b1-ca6f-4e85-b6e6-3f6fdbf74b13.wav",
+          "decision": "replaced",
+          "sha256": "2e21c9d11554a9b46d1887e37fc80b578361440ff9ebb90dbf409933706cfc68",
+          "durationSeconds": 18.4321875,
+          "timingProvenance": {
+            "basis": "editorial-estimate"
+          }
+        },
+        {
+          "sceneId": "s6-conditions",
+          "previousArtifactId": "narration-810f9117-ef33-4475-801b-cd4f942cc5b1.wav",
+          "currentArtifactId": "narration-810f9117-ef33-4475-801b-cd4f942cc5b1.wav",
+          "decision": "preserved",
+          "sha256": "8bd3b551a5450f03887419313c43c3acb3acfcd5ef08a9295163a65d45577b54",
+          "durationSeconds": 28.62675,
+          "timingProvenance": {
+            "basis": "editorial-estimate"
+          }
+        },
+        {
+          "sceneId": "s7-diagnosis",
+          "previousArtifactId": "narration-d7d4d57d-1e92-4350-a693-c46fd135499b.wav",
+          "currentArtifactId": "narration-d7d4d57d-1e92-4350-a693-c46fd135499b.wav",
+          "decision": "preserved",
+          "sha256": "3f4f2c8c313675513fe44d2ecfa9de1fddbd8d520bd9c1025425755e451127b7",
+          "durationSeconds": 26.5854375,
+          "timingProvenance": {
+            "basis": "editorial-estimate"
+          }
+        },
+        {
+          "sceneId": "s8-answer",
+          "previousArtifactId": "narration-13cddc94-afa9-462a-99e7-357616f9f2d1.wav",
+          "currentArtifactId": "narration-13cddc94-afa9-462a-99e7-357616f9f2d1.wav",
+          "decision": "preserved",
+          "sha256": "4031a76437af03ae6185ffbd885379bfbef9224cd54aa17795ec71e43aa70c66",
+          "durationSeconds": 31.420875,
+          "timingProvenance": {
+            "basis": "editorial-estimate"
+          }
+        }
+      ],
+      "typeAssessmentScope": "Raw journal records retain their own fingerprint and export identity. Historical V1 type records do not certify the current V2.",
+      "rootFrameReview": {
+        "fingerprint": "525e9177edfcb3ae81fdb425e6c86a4d347b5a870f531bf42dc0f61b09b31042",
+        "matchesCurrentExport": true,
+        "subtitleMaskBefore": "At global105s the .86 body mask clipped caption tops; the .84 replacement restores full glyphs.",
+        "observedFrames": "media-e9531bd3-af91-4525-92c3-fbe84fca146e-frame-1/3/5/7.png: global103/137.5/185/189s, captions and condition diagram complete; s8 source introduction followed by kitchen without blank opening.",
+        "previousCaptionProof": "At superseded FP715bd7..., media-36316253-e458-44c6-be6c-b2d40f7bf1a8-frame-1/6/7.png at0.8/103/110s confirmed the .84 caption fix; s8 was subsequently repaired at the current fingerprint.",
+        "narrationChange": "Only s5 regenerated; other seven artifact identities preserved; new voice timing is editorial-estimate, not acoustic alignment."
+      },
+      "knownLimits": [
+        "Some small annotations remain small in a 390px-wide preview.",
+        "Cup, gripper, conditions and failure scenes are explanations/hypotheses, not measured robot experiments.",
+        "The original robot-demo itself contains comparison footage and clip clocks; complete trial logs remain unavailable.",
+        "s8 opens with the original source clip introduction showing a person with a vacuum, under the caption about an edited public presentation; the kitchen follows for the robot conclusion. The introduction is not robot experimental evidence.",
+        "Agent did not hear the audio; human listening, retelling and prediction remain unconfirmed."
+      ]
+    },
+    {
+      "kind": "主片／学术 V2",
+      "title": "HybridAgent：潜推理如何接工具",
+      "caseRoot": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z",
+      "editableDocument": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/video-studio/f86c0d80-af64-49c9-8706-ff1657e941fb.json",
+      "documentSha256": "9ad70419573b4e0b8dd7063b1fbe8aa1fc8b4b44457275b1d9776754fab86b6a",
+      "draftId": "f86c0d80-af64-49c9-8706-ff1657e941fb",
+      "revision": 80,
+      "ownerSessionId": "8750af6b-4710-4fc3-ba96-105bbd746da5",
+      "profile": "research-explainer",
+      "sceneCount": 8,
+      "narrationArtifactCount": 8,
+      "production": {
+        "works": 2,
+        "relations": 1,
+        "claims": 14,
+        "goals": 4,
+        "externalVersions": 0
+      },
+      "mp4": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/media-a2a038a8-ccbc-4a84-aa83-93f8ac936522-converted.mp4",
+      "mp4Sha256": "df01962543c2a4759f09d2c6f80cbc23e19c86afc88b4ebf9a28a84a20e4f71c",
+      "bytes": 22253987,
+      "timelineDurationSeconds": 229.41666666666669,
+      "actualDurationSeconds": 229.48266666666666,
+      "width": 1280,
+      "height": 720,
+      "fps": 24,
+      "exportFingerprint": "957befa5cd408a6196c778d07fc80bbc08273547e650695541d400f2b55cc736",
+      "verification": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/video-f3256a48-02f6-4ca0-9268-1b9bf132c734.json",
+      "layoutWarningCount": 36,
+      "agentVisualReview": {
+        "generatedCriticalFrames": 192,
+        "plannedCriticalFrames": 192,
+        "scenes": [
+          {
+            "sceneId": "s1-question",
+            "status": "passed",
+            "notes": "实看当前FP 24/24帧（offset 0/8/16）：暗场起止、标题/来源、V2连续潜状态与token图、TEXT出口/工具调用及343 m/s图均完整，字幕可读、无遮挡关键证据。仅作者行Jiaru Zou等·arXiv:2610.18861v1为手机小字审计提示，不阻断。未改稿。",
+            "createdAt": "2026-10-17T08:13:41.600Z",
+            "sequence": 3
+          },
+          {
+            "sceneId": "s2-baselines",
+            "status": "passed",
+            "notes": "Actual current-FP samples reviewed 24/24 at offsets 0/8/16 (23.5-50.2917s). Title card and TEXT/LATENT contrast, t1 highlight, h_t→h_{t+1} diagram, both callouts, and all subtitles including 先看两条基线/接口清楚/潜推理直接回喂向量/没有原生工具入口/潜状态是连续向量/不等于压缩后的中文/会用工具还要学习 render fully. No blocking occlusion. Only audit advisories: 4 phone-small-text labels and one long-static-hold. Draft unchanged.",
+            "createdAt": "2026-10-17T08:14:37.750Z",
+            "sequence": 4
+          },
+          {
+            "sceneId": "s3-example",
+            "status": "passed",
+            "notes": "已实际查看 review-export 三页 offset 0/8/16 共24/24帧（50.3333–78.2083s）。README演示与“不是复现”标题完整；20°C→10 km、343 m/s、10000÷343=约29.15s、取整29s、右侧“可读伪文本≠模型潜空间”警示面板与全部字幕完整，末帧为正常暗场。仅3条phone-small-text审计提示，无关键证据遮挡。未改稿。",
+            "createdAt": "2026-10-17T08:15:35.730Z",
+            "sequence": 5
+          },
+          {
+            "sceneId": "s4-hybridlink",
+            "status": "passed",
+            "notes": "已实际审看当前FP的0/8/16三页共24/24帧（78.25–104.625s）。HybridLink四段文字→潜推理→工具→回答循环、h隐状态、两层MLP公式、token与工具出口、阶段进度条均清晰；标题、公式脚注、arXiv来源与字幕可读，场景末为正常暗帧。开场约78.958–79.041s有旧标题卡与新四列舞台的短暂原生交叉淡入，未遮挡关键证据，审计无overlap问题；仅有开场五处phone-small-text提示，无long-static-hold或阻断性缺陷。未作任何改动。",
+            "createdAt": "2026-10-17T08:16:45.630Z",
+            "sequence": 6
+          },
+          {
+            "sceneId": "s5-memory",
+            "status": "passed",
+            "notes": "已实看3页/24帧（104.6667–135.5417s）：两轮 SEARCH/CALC、343 m/s→10000÷343=29.15 s→29 s 链路、KV 逐轮追加与等待槽、标题/脚注/字幕完整；约123.875 s 结果卡入栈的瞬时叠合立即消解，不遮关键证据。仅 05/08 小字与121.25 s 静态停留两条警告，无阻断缺陷；本轮未改稿、未重渲染，听审/复述/预测仍待人工。",
+            "createdAt": "2026-10-17T08:18:15.139Z",
+            "sequence": 7
+          },
+          {
+            "sceneId": "s6-training",
+            "status": "passed",
+            "notes": "已实看3页/24帧（135.5833–163.875s）：入口→自条件→轨迹重放主线、HybridSFT/HybridLink/HybridRL 三步、继续潜推理/回到文字及“重放保留潜上下文”、字幕完整，末帧干净收束；步骤切换处有短暂双卡淡入叠影，但不遮关键证据；仅3条手机端小字警告，无阻断缺陷。本轮未改稿、未重渲染，听审/复述/预测仍待人工。",
+            "createdAt": "2026-10-17T08:18:31.655Z",
+            "sequence": 8
+          },
+          {
+            "sceneId": "s7-results",
+            "status": "passed",
+            "notes": "实际检视24帧：0–25.6秒先Identity后双系列，25.6–33秒Table 6原图；191.9167秒(局部28s)及原文阶段左上无“同骨干”半截，由z1全正文矩形遮挡，高度.84不遮字幕。复用第8层未增第9层；原图z7、原生图z30/31、六值与来源保留，字幕完整。仍有36项审计(手机小字及0.04s旧舞台painted-text-overlap)。人工听审/复述/预测pending；非全片通过。",
+            "createdAt": "2026-10-17T08:10:27.657Z",
+            "sequence": 1
+          },
+          {
+            "sceneId": "s8-boundaries",
+            "status": "passed",
+            "notes": "已实际读取 review-export 0/8/16 三页共24/24帧（196.9583–229.375s）。核对：边界主张（训练硬件/数据任务/模型规模变化需重测）；可读伪文本≠逐字原话、≠状态被完全解释；HybridLink代码与开源权重是可审计入口而非本片独立复现；结尾KV缺失的可检验预测及“可审计入口≠已复现”。标题、卡片、代码区与字幕可读，转场短暂重影未遮关键证据。仅3条phone-small-text审计提示（196.9583两处、202.7083“开源≠本片复现”/“丢掉KV会怎样？需对照”），0个omitted issue，属非阻断小字问题。未改画面/配音/原图/背景/标题/来源/采集，未重新render。",
+            "createdAt": "2026-10-17T08:20:13.327Z",
+            "sequence": 9
+          }
+        ],
+        "film": {
+          "status": "passed",
+          "notes": "独立全片意见（当前FP）：八个场景均已按 review-export 0/8/16 实际查看，当前帧覆盖 192/192、各场24/24、无缺失offset。全片叙事从潜推理问题→基线→示例→HybridLink→KV记忆→训练→Table 6结果→边界与可检验预测连贯；Table 6结尾及“不是本片复现”完整，半截旧标题已遮挡。36项layout审计为手机小字、短暂转场叠影/空帧和静态停留类提示，逐场核对未遮关键证据、公式、代码入口、六项数值、来源或字幕，故非阻断。仅代表Agent视觉审片：未进行人工听审，未做观众复述/预测，用户声明保持pending；不声称人工验收或科学复现。",
+          "createdAt": "2026-10-17T08:20:19.500Z",
+          "sequence": 10
+        }
+      },
+      "humanRecords": 0,
+      "executionEvidence": [
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/result-2026-10-17T05-19-13-171Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/result-2026-10-17T05-41-06-150Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/result-2026-10-17T05-44-16-705Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/result-2026-10-17T06-22-33-216Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/result-2026-10-17T06-37-38-121Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/result-2026-10-17T06-40-54-129Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/result-2026-10-17T07-28-00-172Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/result-2026-10-17T08-11-26-536Z.json",
+        ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/result-2026-10-17T08-21-31-315Z.json"
+      ],
+      "executionCompletedAt": "2026-10-17T08:21:31.315Z",
+      "caseBrowserCalls": {
+        "cumulativeAllRoundsIncludingV1AndPrototypes": 1143,
+        "perFinalRound": "See individual task logs; cumulative includes interrupted and superseded work."
+      },
+      "acceptance": "v2-remade; human-listening-retelling-prediction-and-user-review-pending",
+      "rendererVersion": "native-research-diagrams/10",
+      "typeAssessmentJournal": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/video-studio/type-reviews/f86c0d80-af64-49c9-8706-ff1657e941fb.json",
+      "typeAssessmentRecords": [
+        {
+          "checks": [
+            {
+              "id": "check-1",
+              "status": "passed",
+              "notes": "片头与来源标注 arXiv:2610.18861v1（Jiaru Zou 等），论文作者与版本明确。"
+            },
+            {
+              "id": "check-2",
+              "status": "passed",
+              "notes": "README 演示标为‘不是复现’；Table 6 标为14B、作者报告；边界卡明确开源≠本片复现、可读伪文本≠全解释。"
+            },
+            {
+              "id": "check-3",
+              "status": "passed",
+              "notes": "结果场为同骨干同条件对照：Identity（无对齐）对2层+残差，条件、数据集与14B规模明确。"
+            },
+            {
+              "id": "check-4",
+              "status": "passed",
+              "notes": "图表单位‘准确率 %’、0–100轴、零基线、MATH500/MedQA/MuSiQue、两组独立柱及来源行均齐全可读。"
+            },
+            {
+              "id": "check-5",
+              "status": "needs-fix",
+              "notes": "人工试听、观众复述与条件预测均未执行，保持待验；Agent不代填人工通过。"
+            }
+          ],
+          "listening": "not-performed",
+          "retellingAnswer": "",
+          "predictionAnswer": "",
+          "notes": "Agent 对当前导出指纹 bbd246… 的8×24=192帧完成视觉复核，技术通过；内容与边界检查1–4通过。s7外部字幕被全高图表遮挡，属已知图表-only限制；质量告警为手机小字与长静态抽样。人工试听、观众复述与预测待验，故check-5为needs-fix，未声明用户接受。",
+          "id": "83d808f3-db85-46eb-9fc3-e794e0fc7423",
+          "createdAt": "2026-10-17T05:37:40.727Z",
+          "origin": "agent",
+          "profileId": "research-explainer",
+          "profileVersion": 1,
+          "fingerprint": "ef9e4f9751a7ebaab410e88321059a5b0e00e1b61bff5d627eb1c85b1a2ae274",
+          "exportArtifactId": "media-29959842-6e71-44c0-bc7f-c3f340c9aa54-converted.mp4"
+        }
+      ],
+      "typeAssessmentScope": "Raw journal records retain their own fingerprint and export identity. Historical V1 type records do not certify the current V2.",
+      "rootFrameReview": {
+        "fingerprint": "957befa5cd408a6196c778d07fc80bbc08273547e650695541d400f2b55cc736",
+        "actualCurrentFrames": "media-b4cbfa2f-1511-4eb8-8f97-26c8d499a808-frame-2/4.png at global191.9167/196.8167s: no clipped background title; active caption complete, final no-cue hold correctly empty.",
+        "earlierV2MechanismReview": "Calculator, KV objects and native baseline/comparison chart reviewed in earlier V2 exports; final current-fingerprint 192-frame Agent review recorded separately."
+      },
+      "knownLimits": [
+        "Some source, code and legend details remain small in the 390px preview.",
+        "Paper screenshot retains the acquired source crop; Table6 six compared values are readable. No missing source text was invented.",
+        "Results are author-reported under the paper conditions, not an independent reproduction.",
+        "Agent did not hear the audio; human listening, retelling and prediction remain unconfirmed."
+      ]
+    },
+    {
+      "kind": "AK组合验证",
+      "title": "AK原生能力验证",
+      "caseRoot": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-35-34-050Z",
+      "editableDocument": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-35-34-050Z/workspace/video-studio/fd55c48a-9a97-4ab7-9df2-1c6145ffbe91.json",
+      "documentSha256": "21de6d4a1aa2a06f469f18f0b88b332bda74441fc669937e3d382bc9bf3ea688",
+      "draftId": "fd55c48a-9a97-4ab7-9df2-1c6145ffbe91",
+      "revision": 41,
+      "ownerSessionId": "6a78d9b9-b0b7-47ca-a044-fdd47bec8aa7",
+      "profile": "research-explainer",
+      "sceneCount": 6,
+      "narrationArtifactCount": 0,
+      "production": {
+        "works": 3,
+        "claims": 0,
+        "goals": 0,
+        "externalVersions": 3
+      },
+      "mp4": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-35-34-050Z/workspace/artifacts/media-2ac9f3ad-9396-446e-ae2b-23f12708db5a-converted.mp4",
+      "mp4Sha256": "fc44f71ce1d34d16dbca62499f8f1def9c112e54c1ed3be4abe6d318635ee4c9",
+      "bytes": 4323433,
+      "timelineDurationSeconds": 27,
+      "actualDurationSeconds": 27.072,
+      "width": 1280,
+      "height": 720,
+      "fps": 12,
+      "exportFingerprint": "af3ee31a371805a5368676ba217b0090febc4e5785d418838e257d5623b2f760",
+      "verification": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-35-34-050Z/workspace/artifacts/video-ee14b01c-8a23-42ae-a6a8-f895c10c1239.json",
+      "layoutWarningCount": 29,
+      "agentVisualReview": {
+        "generatedCriticalFrames": 31,
+        "plannedCriticalFrames": 31,
+        "scenes": [
+          {
+            "sceneId": "s1-title",
+            "status": "passed",
+            "notes": "0s空白入场；0.833s起标题《AK原生能力验证》与“技术验证，非研究复现”清晰可见，2.917s保持；640×360复核可读。390px下副标题字号偏小但未遮挡；无音频或人物宣称。"
+          },
+          {
+            "sceneId": "s2-a03-proxy",
+            "status": "passed",
+            "notes": "3.000s起16宫格完整可见，标题约3.083s出现；4×4由A03@33s同一帧裁切拼接，约0.83s后源视频自身幻灯片切换导致格内布局变化，属原片内容非拼接错误；底部说明在390px偏小。"
+          },
+          {
+            "sceneId": "s3-a07-fiveway",
+            "status": "passed",
+            "notes": "主画面满幅+4列同时视频叠加对齐，均来自A07 74–77s同一3s裁剪、原声静音；未见静态PNG替代；结构上1主+4叠加成立；硬件解码器计数未由接口暴露，不作实测解码器断言。"
+          },
+          {
+            "sceneId": "s4-a02-events",
+            "status": "passed",
+            "notes": "8.833–12.5s为Round 1（highlight 1、value 0.3、chat Round 1）；14.417–16.917s为Round 2（highlight 2、value 0.8、chat Round 2）；组框按keyframes .99→.97→.99平移回位；注记“机制示意，非作者日志”。8.083s有隐藏标题边界重叠告警，640×360复查看不到字形碰撞。"
+          },
+          {
+            "sceneId": "s5-a04-timebase",
+            "status": "passed",
+            "notes": "左侧代理起播前两帧黑场，0.833s起有画面；右侧2s散点图为log/log、x/y域[1,100]、baseline 1，三点(1,10)(10,50)(100,100)，10位于横轴中点，标题“非论文结果”与系列来源可见；源44–50s/6s→2s等效3×已标注，390px下小字偏紧。"
+          },
+          {
+            "sceneId": "s6-external-import",
+            "status": "passed",
+            "notes": "19s起A06/A08/A09三段真实视频并列可见，标签分别为LIFT/Octrees/EditHero；底部“研究结果已导入，本次未生成3D”及未调用外部生成服务说明可见；旧“06”页码重叠已消失；未虚构作者归属或运行参数。"
+          }
+        ],
+        "film": {
+          "status": "passed",
+          "notes": "六场31帧均为当前指纹实际导出的PNG并逐场查看；s1标题/技术验证标识、s2 16格代理、s3 1主+4同时视频列、s4两轮状态、s5 log映射、s6三段外部片段均成立。残余：390px下多处小字偏紧，s4仅隐藏标题边界重叠告警（640×360未见字形冲突），A07仅有结构1+4而无硬件解码器计数，s2后段含源片幻灯片切换，s5左视频起始黑场。无旁白/音乐；未执行人耳听审或观众复述，用户验收仍为pending。",
+          "createdAt": "2026-10-17T05:10:21.070Z",
+          "sequence": 7
+        }
+      },
+      "humanRecords": 0,
+      "executionEvidence": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-35-34-050Z/result.json",
+      "executionCompletedAt": "2026-10-17T05:13:17.298Z",
+      "caseBrowserCalls": 279,
+      "acceptance": "technical-example-renderer-9",
+      "rendererVersion": "native-research-diagrams/9",
+      "reuseScope": "Historical technical/reuse evidence at renderer9; not certified as reusable by renderer10."
+    },
+    {
+      "kind": "换题／新闻",
+      "title": "韦布首批图像｜2022历史回看",
+      "caseRoot": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-39-22-741Z",
+      "editableDocument": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-39-22-741Z/workspace/video-studio/a54a6e5b-ab5d-4622-9028-383dc23c602a.json",
+      "documentSha256": "fb6f1ff6cee81552ba9097c78aeac1b3ae5de9b6b8310136b3731e73fe9b1447",
+      "draftId": "a54a6e5b-ab5d-4622-9028-383dc23c602a",
+      "revision": 25,
+      "ownerSessionId": "a8e09595-50fb-4e80-8ce5-b90961448e1c",
+      "profile": "news-brief",
+      "sceneCount": 4,
+      "narrationArtifactCount": 4,
+      "production": {
+        "works": 1,
+        "claims": 5,
+        "goals": 1,
+        "externalVersions": 0
+      },
+      "mp4": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-39-22-741Z/workspace/artifacts/media-b1d25f95-7dfe-42d4-b061-ef1aa5fcac22-converted.mp4",
+      "mp4Sha256": "196a6d822f600b41b6466b971880fbbbd4e713f397b8d96b53bc2f7aa0e5f000",
+      "bytes": 5261917,
+      "timelineDurationSeconds": 50.333333333333336,
+      "actualDurationSeconds": 50.410666666666664,
+      "width": 720,
+      "height": 1280,
+      "fps": 12,
+      "exportFingerprint": "791ee226922f17477aeab5226432a81490093beb1dfdcb4633175fcff1b81848",
+      "verification": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-39-22-741Z/workspace/artifacts/video-6313faae-b348-496a-b197-584cdabd8c6e.json",
+      "layoutWarningCount": 2,
+      "agentVisualReview": {
+        "generatedCriticalFrames": 95,
+        "plannedCriticalFrames": 95,
+        "scenes": [
+          {
+            "sceneId": "news-1-lookback",
+            "status": "passed",
+            "notes": "实际查看24/24帧：0秒近黑入场，0.5-0.583秒擦拭标题短暂裁切，0.833秒完整；中段标题与“不是今日新闻”稳定；字幕逐句推进无截断。8.833秒起为标题卡长静态保持且字幕继续变化，属可理解的信息停留，未加装饰运动。"
+          },
+          {
+            "sceneId": "news-2-release",
+            "status": "passed",
+            "notes": "实际查看24/24帧：9:16内原页全貌可辨标题/日期/编号，定位框落在JUL 12, 2022与RELEASE 22-071；放大后细节稳定、可读，再返回全貌。字幕“南环星云”内部有换行，但词义完整；17.25秒有一帧放大转场中的宽页过渡，非缺帧或裁切。"
+          },
+          {
+            "sceneId": "news-3-color",
+            "status": "passed",
+            "notes": "实际查看24/24帧：16:9官方合成图完整置于9:16证据卡内并留黑边，署名“NASA/ESA/CSA/STScI”可读；标题、图像与字幕无遮挡或截断，字幕按“深场—曝光合成—颜色映射—科学可视化—非新物理结论”推进。32.75秒有静态图保持告警，但字幕持续解释，属可理解的证据停留。"
+          },
+          {
+            "sceneId": "news-4-limits",
+            "status": "passed",
+            "notes": "实际查看23/23帧：三条要点依次出现，事实与点评各换行为两行但语义完整，限制条一行可读；无遮挡或裁切。字幕在局部约5.25秒切到点评、约8.08秒切到限制，10.84秒后结束，片尾保留完整要点卡。"
+          }
+        ],
+        "film": {
+          "status": "passed",
+          "notes": "四场共95/95张当前导出样本已逐页查看，场景声明均为passed。整体50.33秒叙事闭合：2022历史回看→原页日期/编号→彩色合成解释→事实/点评/限制。已注意新闻2字幕词内换行、新闻1/3静态证据保持告警；无阻断性遮挡或裁切。音频仅做技术轨道检查，未由模型或真人听审；不构成真人验收。",
+          "createdAt": "2026-10-17T04:59:30.075Z",
+          "sequence": 5
+        }
+      },
+      "humanRecords": 0,
+      "executionEvidence": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-39-22-741Z/result.json",
+      "executionCompletedAt": "2026-10-17T05:43:59.269Z",
+      "caseBrowserCalls": 444,
+      "acceptance": "technical-example-renderer-9",
+      "rendererVersion": "native-research-diagrams/9",
+      "reuseScope": "Historical technical/reuse evidence at renderer9; not certified as reusable by renderer10."
+    },
+    {
+      "kind": "换题／科普",
+      "title": "吸管取水｜气压差原理示意",
+      "caseRoot": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-39-22-741Z",
+      "editableDocument": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-39-22-741Z/workspace/video-studio/41d1fbe2-20c3-496b-88c4-359f8937f820.json",
+      "documentSha256": "2bb59e223d5259a138bb1be5b76838b31a86ccc982da681cb5c0c0de260b38a6",
+      "draftId": "41d1fbe2-20c3-496b-88c4-359f8937f820",
+      "revision": 18,
+      "ownerSessionId": "a8e09595-50fb-4e80-8ce5-b90961448e1c",
+      "profile": "science-explainer",
+      "sceneCount": 3,
+      "narrationArtifactCount": 3,
+      "production": {
+        "works": 1,
+        "claims": 4,
+        "goals": 0,
+        "externalVersions": 0
+      },
+      "mp4": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-39-22-741Z/workspace/artifacts/media-c123e30a-4287-4324-8af1-157f59776061-converted.mp4",
+      "mp4Sha256": "66bbc9698bebf3bc5aedfa162e070dc0e050f1ae70c02311673c230c766080a7",
+      "bytes": 2258130,
+      "timelineDurationSeconds": 44.66666666666667,
+      "actualDurationSeconds": 44.736,
+      "width": 1280,
+      "height": 720,
+      "fps": 12,
+      "exportFingerprint": "a9bad3cb4c1abbfe64b5c30ab7ec99ae0fc0586c43787e045ad0684df0c213f8",
+      "verification": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-39-22-741Z/workspace/artifacts/video-bd27b44d-94f4-437f-96f2-7cab9b0a1dc7.json",
+      "layoutWarningCount": 27,
+      "agentVisualReview": {
+        "generatedCriticalFrames": 72,
+        "plannedCriticalFrames": 72,
+        "scenes": [
+          {
+            "sceneId": "sci-1-question",
+            "status": "passed",
+            "notes": "实际查看本场24/24帧（页0/8/16）：标题“吸管取水：压差”与三节点顺序卡、脚注“原理示意｜同一杯水与吸管，非测量”完整；节点0在句2、节点1在句3依次高亮，结尾清除；字幕底部居中、无裁切或重叠。390px手机预览报告9条phone-small-text（三节点、脚注与各字幕），为预览字号限制，720p成片字形清楚。未进行音频人耳听审。"
+          },
+          {
+            "sceneId": "sci-2-normal",
+            "status": "passed",
+            "notes": "实际查看本场24/24帧（页0/8/16）：标题“正常吸管”和同一张三节点顺序卡保持一致；节点1“正常吸管：压差推水”随句1高亮、语音结束后清除，节点0/2保留为贯穿上下文不高亮；字幕“吸气让管内压力下降”→“杯内液面受更大外部气压”→“水被压差推着上升”→“高度还受重力影响”，结尾帧无残留字幕；无裁切或重叠。390px预览仍有节点/脚注/字幕的phone-small-text警告；720p字形可辨。未进行音频人耳听审。"
+          },
+          {
+            "sceneId": "sci-3-hole",
+            "status": "passed",
+            "notes": "实际查看本场24/24帧（页0/8/16）：标题“开孔之后”和同一张三节点顺序卡一致；节点2“开孔吸管：压差难维持”随句1高亮并持续到语音结束，字幕“管壁开孔，空气会从孔进入”→“管内低压难以维持”→“压差建立不起来，水难上来”→“你可以先预测，再看这个条件”→“孔的位置和水下密封程度”，无裁切/重叠。实际抽样在34.58s提示long-static-hold：后半段预测与限制句主要靠字幕和旁白推进，节点2持续高亮、画面变化少；这是可改进的节奏限制，不作为技术或人工通过。390px预览另有phone-small-text警告；720p字形可辨。未进行音频人耳听审。"
+          }
+        ],
+        "film": {
+          "status": "passed",
+          "notes": "已按当前成片逐场查看三场全部72/72个关键状态帧（每场24帧，页0/8/16）。三场共享同一三节点顺序卡作为贯穿示意，正常与开孔条件分别高亮对应节点，字幕与示意无裁切或相互遮挡；总时长44.736s，符合40–60s复用短段。仍存在的限制：390px手机预览的全部节点/脚注/字幕触发phone-small-text，720p成片字形清楚但小屏字号偏小；sci-3后半段有long-static-hold抽样提示，靠字幕/旁白推进；未发现编造最大高度或把作者报告当成本片实验。音频仅验证为真实本地Matcha音轨，未进行人耳听审；本声明不代替用户验收、观后复述或条件预测回答。",
+          "createdAt": "2026-10-17T05:07:53.234Z",
+          "sequence": 4
+        }
+      },
+      "humanRecords": 0,
+      "executionEvidence": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-39-22-741Z/result.json",
+      "executionCompletedAt": "2026-10-17T05:43:59.269Z",
+      "caseBrowserCalls": 444,
+      "acceptance": "technical-example-renderer-9",
+      "rendererVersion": "native-research-diagrams/9",
+      "reuseScope": "Historical technical/reuse evidence at renderer9; not certified as reusable by renderer10."
+    },
+    {
+      "kind": "换题／学术",
+      "title": "WEDGE：从失败到环境构造｜机制示意",
+      "caseRoot": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-39-22-741Z",
+      "editableDocument": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-39-22-741Z/workspace/video-studio/f9985e01-0ea6-43e8-804a-ced7254ee229.json",
+      "documentSha256": "9f80f8d5cd7c3e5a36f3377ef5eb4f6352a68ab00422174975821417517c66b2",
+      "draftId": "f9985e01-0ea6-43e8-804a-ced7254ee229",
+      "revision": 34,
+      "ownerSessionId": "a8e09595-50fb-4e80-8ce5-b90961448e1c",
+      "profile": "research-explainer",
+      "sceneCount": 3,
+      "narrationArtifactCount": 3,
+      "production": {
+        "works": 1,
+        "claims": 6,
+        "goals": 0,
+        "externalVersions": 0
+      },
+      "mp4": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-39-22-741Z/workspace/artifacts/media-1a82bb68-69f8-4f53-a095-9f07021f6c69-converted.mp4",
+      "mp4Sha256": "996b5e11ec3d6d8e1630078fb58c36a5a9cd883d00b10e49018a3fcd85451511",
+      "bytes": 4200450,
+      "timelineDurationSeconds": 56.08333333333333,
+      "actualDurationSeconds": 56.14933333333333,
+      "width": 1280,
+      "height": 720,
+      "fps": 12,
+      "exportFingerprint": "dbf9ff9a6124fe01bbbdfd3a5c39429330092271c5da570b2f6164747f17ba4d",
+      "verification": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-39-22-741Z/workspace/artifacts/video-de569c23-f992-4a5c-b4b2-c7e7fe5b8f65.json",
+      "layoutWarningCount": 35,
+      "agentVisualReview": {
+        "generatedCriticalFrames": 72,
+        "plannedCriticalFrames": 72,
+        "scenes": [
+          {
+            "sceneId": "wed-1-question",
+            "status": "passed",
+            "notes": "实看当前MP4本场24/24帧：整屏arXiv页面→绿色目标框→推进→标题细节（论文题名、arXiv:2610.19420v1、14 Oct 2026及许可行可辨）→回到整屏；字幕始终在下部带内，无裁切或遮挡。仍有手机宽度小字与8.75s长静置提示，属采样节奏建议。"
+          },
+          {
+            "sceneId": "wed-2-rounds",
+            "status": "passed",
+            "notes": "实看当前MP4本场24/24帧：R1在7.33–7.42s显示“R1 失败检查”、代码高亮第1行、chat“LLM 找弱点”、memory“诊断集验证”；R2自8.42s起改为“R2 环境候选”、高亮第2行、chat“弱点→布局”、memory“生成弱区环境”，采样约早一帧但属同帧边界。脚注“示意，非作者日志”常在，独立字幕位于叠加层下方且无遮挡；末段保持R2。手机小字提示仍在。"
+          },
+          {
+            "sceneId": "wed-3-limits",
+            "status": "passed",
+            "notes": "实看当前MP4本场24/24帧：标题“作者报告与边界”清晰；三条按序出现——作者报告（ProcTHOR优于匹配基线、HM3D部分增益）、限制（仿真评测、未训练复现）、本片“机制示意，非作者日志”声明，三者标签可分辨。字幕随讲述推进并干净结束，17.42s末帧保留三条；无裁切或遮挡。手机小字与50.17s长静置提示仍在。"
+          }
+        ],
+        "film": {
+          "status": "passed",
+          "notes": "已实看当前导出三场共72/72帧：问题（证据阅读）、两轮机制（R1→R2状态与字幕）、作者报告与边界均完整；真实旁白、独立字幕、阅读目标及来源保留，无场间遮挡或内容缺陷。未执行人工试听、复述或预测；user验收留空，Agent声明不等于真人听审。",
+          "createdAt": "2026-10-17T05:41:52.248Z",
+          "sequence": 4
+        }
+      },
+      "humanRecords": 0,
+      "executionEvidence": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-39-22-741Z/result.json",
+      "executionCompletedAt": "2026-10-17T05:43:59.269Z",
+      "caseBrowserCalls": 444,
+      "acceptance": "technical-example-renderer-9",
+      "rendererVersion": "native-research-diagrams/9",
+      "reuseScope": "Historical technical/reuse evidence at renderer9; not certified as reusable by renderer10."
+    }
+  ],
+  "manualAcceptance": {
+    "status": "pending",
+    "modelAudioListening": "not-performed",
+    "humanListening": "not-explicitly-reported",
+    "viewerRetelling": "not-provided",
+    "viewerConditionPrediction": "not-provided",
+    "agentVisualReviewDoesNotConstituteHumanAcceptance": true,
+    "v1ViewingAndVisualFeedback": "User watched all three V1 main films and rejected visual form; this does not establish audio acceptance.",
+    "v2ViewingAndAcceptance": "News V2 citation size and pacing improved; voice and generic commentary rejected. Science/research V2 review remains pending.",
+    "newsV3": "Current voice provisionally acceptable to user; final voice choice deferred. Full-film listening, story acceptance and retelling remain unconfirmed.",
+    "newsV4": "New writing-style and male-voice trial delivered; user review pending."
+  },
+  "limits": [
+    "A03 wall contains 16 cropped regions of one existing source, not 16 independent experiments",
+    "AK 360p/720p proxies are 12fps, 2s; app memory is sampled whole-instance usage, not isolated job peak",
+    "A04 3x effective time mapping uses explicit 2x then 1.5x native stages; single-field rate limit remains 2x",
+    "A06/A08/A09 use existing imported media with Project-byte SHA; no external generation service was called",
+    "Six external versions are a contract fixture, not six paid external generations",
+    "Reuse science/research shorts do not replace full-length CONTENT-01 baselines",
+    "Bounded image samples do not certify every frame or acoustic synchronization",
+    "Source limitations, small-text/read-hold warnings and Agent needs-fix opinions remain in canonical journals",
+    "WEDGE reuse uses a free-layout group to keep captions visible; literal stack is covered separately by native fixtures and the AK composition."
+  ],
+  "preservation": {
+    "originalMediaAndExports": "retained",
+    "existingUserQwenWork": "preserved; no automatic commit",
+    "editableProjects": "isolated persistent case roots under .bmw-runtime/p1-ak/qoder/",
+    "credentials": "not part of delivery",
+    "newsV2Snapshot": ".bmw-runtime/p1-ak/before-news-qwen-rewrite/news-v2.json",
+    "newsQwenAudioBeforeCaptionRepair": ".bmw-runtime/p1-ak/news-v3-before-caption-fix.json"
+  },
+  "snapshotAt": "2026-10-17T11:46:23.475Z",
+  "userFeedback": {
+    "receivedAt": "2026-10-17T06:00:28.782Z",
+    "news": "引用素材偏小，希望约半屏；故事平，不吸引人",
+    "scienceResearch": "内容可能还行；形式太差，过多静态文字；参考量子位和AK重做",
+    "acceptance": "news-v4-muyu-and-qwen-male-delivered; user-review-pending",
+    "newsV2": "引用够大，节奏也有改善；要求重新挑选千问TTS音色，拒绝‘改名一句话，能力要靠结果’的无聊点评。",
+    "newsFollowUp": "Three same-text real Qwen voice samples generated; full V3 uses six newly generated Qwen narration files with revised story and preserved citation geometry.",
+    "newsVoicePreference": {
+      "feedback": "音色现在这个也还行，后续再具体定吧",
+      "voice": "xuyanchu_v3.1",
+      "status": "provisionally-acceptable; final-selection-deferred"
+    },
+    "listening": "voice-only-provisional-feedback; full-film-listening-not-confirmed",
+    "viewerRetelling": "not-provided",
+    "newsV4Request": "请使用这里的技能来重新创作马斯克SI新闻的视频文案试试，同时换一个适合科技新闻的男生音色配音",
+    "newsVoicePreferenceScope": "Prior provisional preference is for V3 xuyanchu only; V4 anmingyuan has no user listening feedback yet."
+  },
+  "supersededMainVersions": {
+    "news": [
+      {
+        "kind": "主片／新闻",
+        "title": "AI 改叫 SI：一次表态，还是能力进展？",
+        "caseRoot": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z",
+        "editableDocument": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/video-studio/c26f9e06-e7b2-4a30-ab48-d621af611d4f.json",
+        "documentSha256": "835dabe60d41df04d50325c2f639e07f6811e0f2198dc7bc0043d8f30c4b9772",
+        "draftId": "c26f9e06-e7b2-4a30-ab48-d621af611d4f",
+        "revision": 24,
+        "ownerSessionId": "5086e758-7ced-4488-812a-7f54547102f5",
+        "profile": "news-brief",
+        "sceneCount": 5,
+        "narrationArtifactCount": 5,
+        "production": {
+          "works": 2,
+          "claims": 9,
+          "goals": 0,
+          "externalVersions": 0
+        },
+        "mp4": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/media-6557ab1f-3508-4969-9b89-e76aa2ed8ebf-converted.mp4",
+        "mp4Sha256": "b056f0ad31c0273f0911f20c385c0455a5f94342277228104dbea3a4aee6a794",
+        "bytes": 4141156,
+        "timelineDurationSeconds": 54.583333333333336,
+        "actualDurationSeconds": 54.656,
+        "width": 720,
+        "height": 1280,
+        "fps": 12,
+        "exportFingerprint": "9673fe2661f0211c37423178319e7e13794899ab78d29764886cd9cf59dbd4da",
+        "verification": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/video-6acba2c5-2323-4b7b-8642-3aaa45105e05.json",
+        "layoutWarningCount": 0,
+        "agentVisualReview": {
+          "generatedCriticalFrames": 105,
+          "plannedCriticalFrames": 105,
+          "scenes": [
+            {
+              "sceneId": "s1-hook",
+              "status": "passed",
+              "notes": "实际检查当前导出19张关键状态抽样：标题“改名，就更强？”、日期与三句字幕在手机宽清晰，无裁切或遮挡；字幕切换及尾部保持正常。无音频试听，抽样非逐帧覆盖。"
+            },
+            {
+              "sceneId": "s2-si-post",
+              "status": "passed",
+              "notes": "全貌可见 Elon Musk、原句与 4:40 PM · Oct 4, 2026；放大后“No more AI / SI / It’s better”手机宽可读，字幕不遮原句。4行细节停留约1.9秒，短于工具4.8秒建议但无截断或错位，属非阻断节奏提示；抽样非逐帧，未听音。"
+            },
+            {
+              "sceneId": "s3-spacex",
+              "status": "passed",
+              "notes": "全貌、定位、放大与返回完整；“SpaceX is a super intelligence company”和 5:10 PM · Oct 4, 2026 在手机宽可读，字幕不遮原句。2行细节停留约1.8秒，短于工具2.4秒建议但无截断或错位，属非阻断节奏提示；抽样非逐帧，未听音。"
+            },
+            {
+              "sceneId": "s4-commentary",
+              "status": "passed",
+              "notes": "上下文全貌和回复定位可辨，细节帧中“Yes, we will make that change”手机宽清晰，字幕不遮证据；前3段字幕换行正常。第4段字幕未落入关键抽样，返回全貌后有尾段静止保持；抽样非逐帧，未听音，视觉通过。"
+            },
+            {
+              "sceneId": "s5-boundary",
+              "status": "passed",
+              "notes": "标题与三条边界要点依次出现，两段字幕均为三行、字号清楚且不遮挡；结尾约0.5秒空白收束，无裁切。抽查14个关键状态，非逐帧覆盖；未听音，视觉通过。"
+            }
+          ],
+          "film": {
+            "status": "passed",
+            "notes": "实际查看五场当前导出抽样：标题、字幕与证据卡无裁切或互相遮挡，关键原句和日期在手机宽可读。s2/s3阅读停留偏短、s4尾段静止且第4句字幕未入关键抽样，均作为非阻断限制记录。105个关键样本、每场39个候选未全渲染；未听音，不能替代真人复听与受众复述。",
+            "createdAt": "2026-10-17T04:28:22.759Z",
+            "sequence": 6
+          }
+        },
+        "humanRecords": 0,
+        "executionEvidence": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result.json",
+        "executionCompletedAt": "2026-10-17T04:28:54.947Z",
+        "caseBrowserCalls": 163,
+        "acceptance": "user-rejected-form-v1; superseded-pending-remake"
+      },
+      {
+        "kind": "主片／新闻 V2",
+        "title": "AI改叫SI｜V2：名字与证据",
+        "caseRoot": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z",
+        "editableDocument": ".bmw-runtime/p1-ak/before-news-qwen-rewrite/news-v2.json",
+        "documentSha256": "cfa3416bacdc580ad492b3a85d74b3e39372668da53f773d05ba8542662f8891",
+        "draftId": "58ae18b8-2e67-4a70-8b5b-9194c6d0b547",
+        "revision": 23,
+        "ownerSessionId": "5086e758-7ced-4488-812a-7f54547102f5",
+        "profile": "news-brief",
+        "sceneCount": 6,
+        "narrationArtifactCount": 6,
+        "production": {
+          "works": 3,
+          "relations": 2,
+          "claims": 8,
+          "goals": 0,
+          "externalVersions": 0
+        },
+        "mp4": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/media-e0f7ae4a-20d3-43a0-b5fd-e62fba86ac33-converted.mp4",
+        "mp4Sha256": "86977971047bb5bd380d92c2ddfa5b1de3253f62b08e7afbd54192ef506e5947",
+        "bytes": 3741240,
+        "timelineDurationSeconds": 48.333332999999996,
+        "actualDurationSeconds": 48.40533333333333,
+        "width": 720,
+        "height": 1280,
+        "fps": 24,
+        "exportFingerprint": "a0588bcfbf5b8498108b99d823a18b2bdac0ecc9182045462e0add1471ed282b",
+        "rendererVersion": "native-research-diagrams/10",
+        "verification": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/video-3f670f67-4076-4545-8dbb-e56243390a9b.json",
+        "layoutWarningCount": 12,
+        "agentVisualReview": {
+          "generatedCriticalFrames": 116,
+          "plannedCriticalFrames": 116,
+          "scenes": [
+            {
+              "sceneId": "v2b-hook",
+              "status": "passed",
+              "notes": "390px actual-export frames 0–3.5s: AI→SI fills the frame; the question wraps to two lines but stays legible. Boxed captions sit only in the bottom strip below the .78 background and do not cover the typography. The 0/0.458s overlap advisories are not visible in the rendered frames (likely hidden/default text geometry). Caption repeats the mandated headline, so it is redundant but not obstructive.",
+              "createdAt": "2026-10-17T06:53:11.670Z",
+              "sequence": 1
+            },
+            {
+              "sceneId": "v2b-post",
+              "status": "passed",
+              "notes": "3.5–13.29s: the white original post fills the .92×.58 evidence window (53.36% of canvas), with 'No more AI / SI / It’s better' clearly readable at 390px. Date/views and the one-line Chinese translation remain visible. The right edge clips 'Views' to 'View'; the full 10.9M metric is repeated in the top label. Boxed captions remain in the bottom strip without covering evidence. The long static hold from ~8s to 13.25s is a deliberate reading hold but is the slowest section; no decorative motion added to mask it.",
+              "createdAt": "2026-10-17T06:53:19.910Z",
+              "sequence": 2
+            },
+            {
+              "sceneId": "v2b-book",
+              "status": "passed",
+              "notes": "13.33–23.33s: a genuinely new object, the real Nick Bostrom Superintelligence cover, fills the .72×.634 window (45.65% of canvas). NICK BOSTROM, the title, subtitle and owl are legible at 390px; 'It always was', the short Chinese translation and attribution remain visible. Boxed captions stay below the cover in the bottom strip. The last ~8s is a static reading hold (long-static-hold advisory); intentional for reading, though it is a pacing limitation rather than an encoding fault.",
+              "createdAt": "2026-10-17T06:53:22.675Z",
+              "sequence": 3
+            },
+            {
+              "sceneId": "v2b-qa",
+              "status": "passed",
+              "notes": "23.33–33.33s: question and reply appear as separate 92%-width evidence strips retaining author/date chrome. At 390px the exact lines 'Any possibility of renaming to SpaceXSI??' and 'Yes, we will make that change' are readable. The 68px red '称将改名' and subline explicitly say promised, not completed. Bottom captions never cover evidence. Limitation: X chrome/metrics make glyphs smaller than the book title; Q&A has no independently registered source and is marked screenshot-only. Mostly static reading hold.",
+              "createdAt": "2026-10-17T06:53:29.453Z",
+              "sequence": 4
+            },
+            {
+              "sceneId": "v2b-check",
+              "status": "passed",
+              "notes": "33.33–41.83s: kicker, the three criteria (task/conditions/repeatability) and the red 'no new test' conclusion are legible at 390px, with captions confined to the bottom strip. No visible occlusion despite the hidden-text overlap advisories. Kicker and first caption nearly echo each other, and the final caption phrases repeatability as a question. The long-static-hold at 41.79s is a real reading hold but the text-only scene stays clear; no extra motion added merely to suppress the warning.",
+              "createdAt": "2026-10-17T06:53:32.752Z",
+              "sequence": 5
+            },
+            {
+              "sceneId": "v2b-close",
+              "status": "passed",
+              "notes": "41.83–48.29s: large white '名字可以换' and red '证据不能省', the body '改名一句话，能力要靠结果。' and gray next-step footer remain unobstructed. Boxed captions run only in the dedicated bottom strip and clear by 47.46s, leaving a clean end frame. The 42.29s overlap advisory is not visible in the actual export. Closing statement is fully legible at 390px.",
+              "createdAt": "2026-10-17T06:53:35.698Z",
+              "sequence": 6
+            }
+          ],
+          "film": {
+            "status": "passed",
+            "notes": "Six current-fingerprint scenes inspected and agent-passed. 48.405s, 720×1280. Distinct objects: AI→SI hook, enlarged post (53.36%), real Bostrom cover (45.65%), Q&A strips with '称将改名', criteria, closing. Captions stay in the bottom strip. Limits: long reading holds in post/book/QA/check; 12 advisories are mostly hidden text overlaps with no visible occlusion; QA glyphs smaller than the book title due to X chrome; post view metric edge-clipped; Q&A screenshot-only, no independent registered source. Audio not auditorily verified; human listening/user acceptance not claimed.",
+            "createdAt": "2026-10-17T06:53:43.561Z",
+            "sequence": 7
+          }
+        },
+        "typeAssessmentJournal": ".bmw-runtime/p1-ak/before-news-qwen-rewrite/news-v2-type-review.json",
+        "typeAssessmentRecords": [
+          {
+            "checks": [
+              {
+                "id": "check-1",
+                "status": "passed",
+                "notes": "一件事：AI 改称 SI 的公开表态；一个判断：名称变化不等于能力突破。"
+              },
+              {
+                "id": "check-2",
+                "status": "passed",
+                "notes": "事实/作者表态用 author-claim，编辑判断用 commentary，来源缺口用 limitation，未混写。"
+              },
+              {
+                "id": "check-3",
+                "status": "passed",
+                "notes": "原帖可见 @elonmusk 与 2026-10-04 16:40；书封回复和 SpaceXSI 问答可见相对时间；问答页脚明确同一截图、未独立登记来源。"
+              },
+              {
+                "id": "check-4",
+                "status": "passed",
+                "notes": "当前 MP4 实际 48.405s，落在 news-brief 30–60s 范围；未重新编码。"
+              },
+              {
+                "id": "check-5",
+                "status": "needs-fix",
+                "notes": "Human-only check pending; not run."
+              }
+            ],
+            "listening": "not-performed",
+            "retellingAnswer": "",
+            "predictionAnswer": "",
+            "notes": "Agent 可核验：题材为改名表态与能力证据；事实/作者表态与点评/限制已分列；画面可读原帖作者、日期和问答；成片 48.405s 在 30–60s 内。原帖来源正文抽取返回 missing-range，三个作者主张缺原文引文槽位，已在 c-quote-pending 标明。问答仅同一 X 截图、无独立 acquisition。check-5 未执行，保持 pending；Agent 记录不代表用户通过。",
+            "id": "89d1005d-e5a9-4819-aed2-2574b1d3f8e2",
+            "createdAt": "2026-10-17T06:59:57.290Z",
+            "origin": "agent",
+            "profileId": "news-brief",
+            "profileVersion": 1,
+            "fingerprint": "0400309b4b9773b84c433e60970c9b458d0496601044b37ec06c1b7e0d3b8902",
+            "exportArtifactId": "media-e0f7ae4a-20d3-43a0-b5fd-e62fba86ac33-converted.mp4"
+          }
+        ],
+        "humanRecords": 0,
+        "executionEvidence": [
+          ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T06-54-41-222Z.json",
+          ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T07-01-57-234Z.json"
+        ],
+        "caseBrowserCalls": {
+          "fullRemake": 118,
+          "metadata": 31
+        },
+        "acceptance": "user-approved-citation-size-and-improved-pacing; voice-and-generic-commentary-rejected; superseded",
+        "rootFrameReview": {
+          "post": "half-canvas quotation readable at 390px",
+          "book": "large actual owl cover, distinct evidence object",
+          "qa": "two original strips; smaller source text than book",
+          "checkAndClose": "short checklist and closing typography"
+        },
+        "knownLimits": [
+          "Q&A is from the same contextual screenshot; no independent acquisition.",
+          "Some relative-time/source text is smaller; Views right edge cropped with 10.9M repeated above.",
+          "Agent did not hear the audio; human listening/retelling pending."
+        ],
+        "exportReviewSnapshot": ".bmw-runtime/p1-ak/before-news-qwen-rewrite/news-v2-export-review.json"
+      },
+      {
+        "kind": "主片／新闻 V3",
+        "title": "AI改叫SI｜V3：字母接龙",
+        "caseRoot": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z",
+        "editableDocument": ".bmw-runtime/p1-ak/before-news-muyu-rewrite/news-v3.json",
+        "documentSha256": "b93b7bc580a50899eafcbfbe527896151fc7aad620f06dcd2919cbff5ca737cd",
+        "draftId": "58ae18b8-2e67-4a70-8b5b-9194c6d0b547",
+        "revision": 58,
+        "ownerSessionId": "5086e758-7ced-4488-812a-7f54547102f5",
+        "profile": "news-brief",
+        "sceneCount": 6,
+        "narrationArtifactCount": 6,
+        "production": {
+          "works": 3,
+          "relations": 2,
+          "claims": 10,
+          "goals": 0,
+          "externalVersions": 0
+        },
+        "mp4": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/media-713930fe-2e7e-46b5-b870-f793d8e0c3b9-converted.mp4",
+        "mp4Sha256": "0277a99f2ba69d607f4d3fdfeb76446a0dcfcaff6e1a7f64c7e329f455f58af2",
+        "bytes": 4121342,
+        "timelineDurationSeconds": 54.916666666666664,
+        "actualDurationSeconds": 54.99733333333333,
+        "width": 720,
+        "height": 1280,
+        "fps": 24,
+        "exportFingerprint": "6ebc54248a3abb06e0059a894735aeadb15ca20c69be8b9d5b213f3bc1386c02",
+        "rendererVersion": "native-research-diagrams/10",
+        "verification": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/video-41f6decd-8743-4797-b3c5-d1c3a7bf383a.json",
+        "layoutWarningCount": 10,
+        "agentVisualReview": {
+          "generatedCriticalFrames": 140,
+          "plannedCriticalFrames": 140,
+          "scenes": [
+            {
+              "sceneId": "v2b-hook",
+              "status": "passed",
+              "notes": "审阅当前导出全部20个实际帧(3页)。开场标题、红色定位线、AI → SI、SpaceX → SpaceXSI与底注完整；两行“网友一看：那 SpaceX 呢？”和单行“也得改名？”均在框内可读，无截断/遮挡；4.958s边界无残留字幕。证据布局未变。已知root-title重叠为误报；无听审。",
+              "createdAt": "2026-10-17T09:58:29.482Z",
+              "sequence": 1
+            },
+            {
+              "sceneId": "v2b-post",
+              "status": "passed",
+              "notes": "审阅当前导出全部24个实际帧(3页)。“十月四日，他发帖”“No more AI／SI”“It's better”“人工智能，”“换成超级智能”“只差一个字母”均单行清晰；40ms边界与尾帧无叠字；证据窗、红轨、脚注完整且未缩小。root-title重叠与13.958s静态停留为已知良性/刻意。无听审。",
+              "createdAt": "2026-10-17T09:58:32.643Z",
+              "sequence": 2
+            },
+            {
+              "sceneId": "v2b-book",
+              "status": "passed",
+              "notes": "审阅当前导出全部24个实际帧(3页)。书名统一为《超级智能》：“他贴出”“《超级智能》”分条单行；“回了一句：”“本来就是”“It always was”等无换行遮挡；书封crop与x/y/w/h未变；注释“@elonmusk 回：It always was”完整。20px注释偏小但未缩图。静态停留为刻意。无听审。",
+              "createdAt": "2026-10-17T09:58:35.297Z",
+              "sequence": 3
+            },
+            {
+              "sceneId": "v2b-qa",
+              "status": "passed",
+              "notes": "审阅当前导出全部24个实际帧(3页)，并补采33.375–37.875s。“网友 XFreeze”“顺势问”“能改成”“SpaceXSI 吗？”“马斯克回：”“会做这个改动”均单行可读；证据条、“称将改名”、边界标签与“未独立采集”来源注完整；角色与意图表述未变。无遮挡/截断。无听审。",
+              "createdAt": "2026-10-17T09:58:38.375Z",
+              "sequence": 4
+            },
+            {
+              "sceneId": "v2b-check",
+              "status": "passed",
+              "notes": "审阅当前导出全部24个实际帧(3页)。长cue已拆：“从AI的缩写”(39.75)单行；39.791667为设计40ms空档；“聊到SpaceX的名字”自39.833s起稳定两行且全可见，旧d627帧的三行遮挡不存在。“网友把这场”“改名游戏”“接到了火箭公司”、A→S注与脚注清晰；证据未缩。无听审。",
+              "createdAt": "2026-10-17T09:58:40.912Z",
+              "sequence": 5
+            },
+            {
+              "sceneId": "v2b-close",
+              "status": "passed",
+              "notes": "审阅当前导出全部24个实际帧(3页)。“AI, SI”“SpaceXSI”“一条三行的帖子”“接成了”“一场字母接龙”均单行可读；“AI → SI”“SpaceX → SpaceXSI”两条关系行与底注完整，47.125s起的字幕无换行/遮挡；8.25s尾帧无残留字幕。场景过渡干净。无听审。",
+              "createdAt": "2026-10-17T09:58:43.449Z",
+              "sequence": 6
+            }
+          ],
+          "film": {
+            "status": "passed",
+            "notes": "最新fingerprint整片审阅：六场140个实际样本(20/24/24/24/24/24)全部翻页检查；证据窗未缩小，Post/Book/QA几何与crop保持，书名字统一为《超级智能》，check长cue二分且两行全可见，40ms空档无叠字。10项布局警告经帧核为误报或刻意静态停留。实际时长54.997s；仅视觉/技术审阅，未听审，用户接受待人。",
+            "createdAt": "2026-10-17T09:58:49.673Z",
+            "sequence": 7
+          }
+        },
+        "typeAssessmentJournal": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/video-studio/type-reviews/58ae18b8-2e67-4a70-8b5b-9194c6d0b547.json",
+        "typeAssessmentRecords": [
+          {
+            "checks": [
+              {
+                "id": "check-1",
+                "status": "passed",
+                "notes": "一件事：AI 改称 SI 的公开表态；一个判断：名称变化不等于能力突破。"
+              },
+              {
+                "id": "check-2",
+                "status": "passed",
+                "notes": "事实/作者表态用 author-claim，编辑判断用 commentary，来源缺口用 limitation，未混写。"
+              },
+              {
+                "id": "check-3",
+                "status": "passed",
+                "notes": "原帖可见 @elonmusk 与 2026-10-04 16:40；书封回复和 SpaceXSI 问答可见相对时间；问答页脚明确同一截图、未独立登记来源。"
+              },
+              {
+                "id": "check-4",
+                "status": "passed",
+                "notes": "当前 MP4 实际 48.405s，落在 news-brief 30–60s 范围；未重新编码。"
+              },
+              {
+                "id": "check-5",
+                "status": "needs-fix",
+                "notes": "Human-only check pending; not run."
+              }
+            ],
+            "listening": "not-performed",
+            "retellingAnswer": "",
+            "predictionAnswer": "",
+            "notes": "Agent 可核验：题材为改名表态与能力证据；事实/作者表态与点评/限制已分列；画面可读原帖作者、日期和问答；成片 48.405s 在 30–60s 内。原帖来源正文抽取返回 missing-range，三个作者主张缺原文引文槽位，已在 c-quote-pending 标明。问答仅同一 X 截图、无独立 acquisition。check-5 未执行，保持 pending；Agent 记录不代表用户通过。",
+            "id": "89d1005d-e5a9-4819-aed2-2574b1d3f8e2",
+            "createdAt": "2026-10-17T06:59:57.290Z",
+            "origin": "agent",
+            "profileId": "news-brief",
+            "profileVersion": 1,
+            "fingerprint": "0400309b4b9773b84c433e60970c9b458d0496601044b37ec06c1b7e0d3b8902",
+            "exportArtifactId": "media-e0f7ae4a-20d3-43a0-b5fd-e62fba86ac33-converted.mp4"
+          }
+        ],
+        "humanRecords": 0,
+        "executionEvidence": [
+          ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T04-28-54-947Z.json",
+          ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T06-06-08-353Z.json",
+          ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T06-30-09-118Z.json",
+          ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T06-54-41-222Z.json",
+          ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T07-01-57-234Z.json",
+          ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T09-11-41-023Z.json",
+          ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T09-12-49-716Z.json",
+          ".bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/result-2026-10-17T10-02-10-219Z.json"
+        ],
+        "caseBrowserCalls": {
+          "cumulativeAllRoundsIncludingV1AndPrototypes": 864,
+          "scope": "Individual immutable result files identify each round."
+        },
+        "acceptance": "voice-provisionally-acceptable; superseded-by-user-requested-muyu-male-rewrite",
+        "rootFrameReview": {
+          "fingerprint": "6ebc54248a3abb06e0059a894735aeadb15ca20c69be8b9d5b213f3bc1386c02",
+          "status": "selected-final-mp4-frames-inspected",
+          "samples": [
+            {
+              "seconds": 10.458333333333334,
+              "artifactId": "media-74e13eb2-e519-4d06-8540-9a87fe1dfdf0-frame-5.png",
+              "observation": "Original three-line post is readable in the preserved half-canvas window; source/date footer remains visible."
+            },
+            {
+              "seconds": 19.708333333333332,
+              "artifactId": "media-c0241d19-2eb6-4cf7-8d6d-0889b8392bcc-frame-3.png",
+              "observation": "The active subtitle《超级智能》fits a single line, matches the narration wording, and does not cover the real book cover or attribution."
+            },
+            {
+              "seconds": 39.75,
+              "artifactId": "media-74940dcd-acf4-495d-83d0-3cbae1084ad7-frame-1.png",
+              "observation": "The repaired short caption从AI的缩写 is fully visible below the .78 background; the former clipped top line is resolved."
+            },
+            {
+              "seconds": 54.875,
+              "artifactId": "media-d2517116-c13b-41e9-847e-24886c47ce2b-frame-8.png",
+              "observation": "Closing AI→SI / SpaceX→SpaceXSI chain remains visible; the final caption has cleared, without an early blank picture or old generic commentary."
+            }
+          ],
+          "scope": "Four selected final-export frames inspected by root; all140 current critical samples and six scene/film Agent declarations are recorded separately. No subjective audio listening claimed."
+        },
+        "knownLimits": [
+          "Q&A comes from the same contextual screenshot, with no independent acquisition.",
+          "Source text extraction has missing-range; exact quote offsets were not invented.",
+          "Stored draft title retains its older V2 string; delivery title identifies the V3 content.",
+          "Agent did not hear audio; subjective voice quality, pronunciation and viewer acceptance remain pending.",
+          "The book footer retains the earlier《超智能》label; active captions and narration use《超级智能》."
+        ],
+        "storedDocumentTitle": "AI改叫SI｜V2：名字与证据",
+        "narrationProvider": "qwen-tts",
+        "narrationModel": "qwen-audio-3.1-tts-flash",
+        "narrationVoice": "xuyanchu_v3.1",
+        "narrationReceipts": [
+          {
+            "sceneId": "v2b-hook",
+            "artifactId": "narration-a719f2b0-b604-4f2a-a51d-ec89efff832d.wav",
+            "text": "马斯克不叫 AI 了。网友一看：那 SpaceX 也得改名？",
+            "durationSeconds": 3.92,
+            "options": {
+              "provider": "qwen-tts",
+              "voice": "xuyanchu_v3.1",
+              "ratePercent": 0
+            },
+            "sha256": "f353ccc667c6a5273960a9f1708873ecdcf364ed8ef716383895ac1350c0c71a"
+          },
+          {
+            "sceneId": "v2b-post",
+            "artifactId": "narration-7b8e7f04-5b16-48ae-a99c-e3aec8fa0f44.wav",
+            "text": "十月四日，他发帖：No more AI，SI，It's better。人工智能，换成超级智能，只差一个字母。",
+            "durationSeconds": 12.16,
+            "options": {
+              "provider": "qwen-tts",
+              "voice": "xuyanchu_v3.1",
+              "ratePercent": 0
+            },
+            "sha256": "409aad2218af2ea3c927763404bd741f48531145f2e732d3b59b29504ba1c6c9"
+          },
+          {
+            "sceneId": "v2b-book",
+            "artifactId": "narration-68e845d2-dec0-41d4-a025-ef6bb31a22d0.wav",
+            "text": "他又贴出博斯特罗姆《超级智能》的书封，回了一句：本来就是。所谓新名字，早就在书架上。",
+            "durationSeconds": 8.48,
+            "options": {
+              "provider": "qwen-tts",
+              "voice": "xuyanchu_v3.1",
+              "ratePercent": 0
+            },
+            "sha256": "8f3fbc28e395e5a50ce739dbab18dfc304e3e008972c7148cd407ca792abe16e"
+          },
+          {
+            "sceneId": "v2b-qa",
+            "artifactId": "narration-a83743a9-43c8-48b2-ae86-2cbe575bf31a.wav",
+            "text": "网友XFreeze顺势问：能改成SpaceXSI吗？马斯克回：会做这个改动。",
+            "durationSeconds": 7.84,
+            "options": {
+              "provider": "qwen-tts",
+              "voice": "xuyanchu_v3.1",
+              "ratePercent": 0
+            },
+            "sha256": "f9d5c01ebf48e2aee65b89f56dc7e0bf5a56b8cca068f6f8defa7c2d24f38eb2"
+          },
+          {
+            "sceneId": "v2b-check",
+            "artifactId": "narration-2ad6e6a4-d6c2-4dfe-a07c-e3d59db33056.wav",
+            "text": "从AI的缩写，聊到了SpaceX的名字。网友把这场改名游戏，接到了火箭公司。",
+            "durationSeconds": 7.2,
+            "options": {
+              "provider": "qwen-tts",
+              "voice": "xuyanchu_v3.1",
+              "ratePercent": 0
+            },
+            "sha256": "03a76e466baf46b8774e264601458e3a889b2e83e2c4c4eabade2fa67f501b76"
+          },
+          {
+            "sceneId": "v2b-close",
+            "artifactId": "narration-3be07771-92ee-4eb5-a882-939e3015feff.wav",
+            "text": "AI，SI，SpaceXSI。一条三行的帖子，接成了一场字母接龙。",
+            "durationSeconds": 7.28,
+            "options": {
+              "provider": "qwen-tts",
+              "voice": "xuyanchu_v3.1",
+              "ratePercent": 0
+            },
+            "sha256": "466b41b6f0c8e9818fb68ba4a404d52ca6e6906f35d5010da2fec5084782d72a"
+          }
+        ],
+        "voiceComparison": ".bmw-runtime/p1-ak/news-v3-qwen-auditions.json",
+        "typeAssessmentScope": "Every raw record retains its own semantic fingerprint and export identity; prior V2 records do not certify this V3.",
+        "executionCompletedAt": "2026-10-17T10:02:10.219Z",
+        "executionOutcome": {
+          "artifactsAndAllReviewPagesVerified": true,
+          "officialTurnCompleted": false,
+          "termination": "Final model response reached the runner deadline after the verified MP4 and all 140 frames / scene and film review declarations had been saved. Native process cleanup completed; no synthesis or export was replayed."
+        },
+        "exportReviewSnapshot": ".bmw-runtime/p1-ak/before-news-muyu-rewrite/export-review.json"
+      }
+    ],
+    "research": [
+      {
+        "kind": "主片／学术",
+        "title": "HybridAgent：潜推理如何接工具",
+        "caseRoot": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z",
+        "editableDocument": ".bmw-runtime/p1-ak/before-user-visual-remake/research-v1.json",
+        "documentSha256": "93063dd1dcd32c5d6f2db3f8bc9d1d0e92caf886d59f4ea904315047b78e7d45",
+        "draftId": "f86c0d80-af64-49c9-8706-ff1657e941fb",
+        "revision": 41,
+        "ownerSessionId": "8750af6b-4710-4fc3-ba96-105bbd746da5",
+        "profile": "research-explainer",
+        "sceneCount": 8,
+        "narrationArtifactCount": 8,
+        "production": {
+          "works": 2,
+          "claims": 14,
+          "goals": 4,
+          "externalVersions": 0
+        },
+        "mp4": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/media-29959842-6e71-44c0-bc7f-c3f340c9aa54-converted.mp4",
+        "mp4Sha256": "8cd0bf9f44e2a57bcf10b90e6034c749dbb0472bdd4016a1db171d7260aafd4e",
+        "bytes": 11900855,
+        "timelineDurationSeconds": 229.41666666666669,
+        "actualDurationSeconds": 229.48266666666666,
+        "width": 1280,
+        "height": 720,
+        "fps": 12,
+        "exportFingerprint": "bbd2469218e8a83be6be832c84dd0425a8bc3a15f62d80d7846b62372c7ff091",
+        "verification": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/workspace/artifacts/video-99e1e38f-68ff-4cb4-9dc4-857531616c80.json",
+        "layoutWarningCount": 89,
+        "agentVisualReview": {
+          "generatedCriticalFrames": 192,
+          "plannedCriticalFrames": 192,
+          "scenes": [
+            {
+              "sceneId": "s1-question",
+              "status": "passed",
+              "notes": "实际检查当前导出24/24帧：0–0.5s淡入较暗，标题、作者与arXiv编号随后完整可读；字幕逐句推进，无遮挡或截断；结尾标题卡干净。质量提示为6条手机小字+1条10.4167s长静态抽样告警，属可读性/节奏提醒，未发现内容错误。"
+            },
+            {
+              "sceneId": "s2-baselines",
+              "status": "passed",
+              "notes": "实际检查24/24帧：两栏对照完整，纯文本逐字成token、纯潜推理连续向量回喂两行均无断词；‘省解码，缺接口’表述清楚，无遮挡或溢出；字幕推进正常。质量提示为手机小字与1条长静态抽样告警，属可读性/节奏提醒，未发现内容错误。"
+            },
+            {
+              "sceneId": "s3-example",
+              "status": "passed",
+              "notes": "实际检查24/24帧：问/搜/算三步依次出现，字幕推进至‘取整29秒’，末帧三步齐全且无字幕；‘README演示，不是复现’边界保持；无遮挡或截断。质量提示为8条手机小字+1条63.833s长静态抽样告警，属提醒，不改变演示性质与内容。"
+            },
+            {
+              "sceneId": "s4-hybridlink",
+              "status": "passed",
+              "notes": "实际检查24/24帧：TEXT→LATENT→TOOL→ANSWER四段依次激活，HybridLink两层残差投影公式与说明完整；字幕逐句推进至‘同刻只有一段在继续’，末帧无字幕；无遮挡。质量页共13条告警（11条手机小字、1条91.5s长静态抽样，另1条省略显示），均为非阻断，实际画面未见裁切或语义错误。"
+            },
+            {
+              "sceneId": "s5-memory",
+              "status": "passed",
+              "notes": "实际检查24/24帧：聊天两轮、代码面板与连续KV记忆条完整；8.5s记忆条展开，16.9s代码激活，20.5s高亮切到第2行，两个代码高亮状态均已看到；注释说明示意性质；末帧干净，无遮挡。质量页为12条手机小字+1条长静态抽样告警，属提醒。"
+            },
+            {
+              "sceneId": "s6-training",
+              "status": "passed",
+              "notes": "实际检查24/24帧：HybridSFT激活+自条件、HybridRL轨迹重放学选择、‘不是改提示词就能获得’依次揭示；字幕推进至轨迹重放句，末帧三行齐全且无字幕；无遮挡或截断。质量页为8条手机小字+1条149.6667s长静态抽样告警，均非阻断。"
+            },
+            {
+              "sceneId": "s7-results",
+              "status": "passed",
+              "notes": "实际检查24/24帧：Table 6、14B、作者报告标识、0–100轴与零基线、MATH500/MedQA/MuSiQue两组独立准确率柱均完整可读；全高图层覆盖外部字幕轨，24帧均未见字幕，属已知图表-only字幕限制，旁白与图内标签承载信息。质量页19条告警（12条手机小字等，7条省略显示），未将图表缩至绘图区下限以下。"
+            },
+            {
+              "sceneId": "s8-boundaries",
+              "status": "passed",
+              "notes": "实际检查24/24帧：三条边界依次出现；字幕推进至‘开源代码和权重提供了审计入口’，末两帧仅保留边界卡且无字幕；‘开源≠本片复现’与KV对照边界清楚；无遮挡或截断。质量页为8条手机小字+1条211.25s长静态抽样告警，均为提醒。"
+            }
+          ],
+          "film": {
+            "status": "passed",
+            "notes": "对当前导出 media-29959842-6e71-44c0-bc7f-c3f340c9aa54-converted.mp4（229.4827s，1280×720/12fps）逐场复核8×24=192个390px手机宽实际帧，八场均已有当前指纹的Agent场景passed声明。标题、两种基线、README演示、HybridLink四段机制、两轮KV与两次代码高亮、训练两法、Table 6独立柱图与边界均清晰且无裁切。布局89条告警均为手机小字/长静态抽样提醒，不构成阻断。s7为全高证据图表，外部字幕轨被遮挡，属已知图表-only字幕限制，旁白与图内标签承载。未做人工试听、观众复述或条件预测；本声明仅Agent视觉复核，非人耳或用户接受。",
+            "createdAt": "2026-10-17T05:37:23.477Z",
+            "sequence": 9
+          }
+        },
+        "humanRecords": 0,
+        "executionEvidence": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-34-05-936Z/result.json",
+        "executionCompletedAt": "2026-10-17T05:44:16.705Z",
+        "caseBrowserCalls": 429,
+        "acceptance": "v1-form-rejected-by-user; superseded"
+      }
+    ],
+    "science": [
+      {
+        "kind": "主片／科普",
+        "title": "机器人会做家务，离可靠还差什么？",
+        "caseRoot": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z",
+        "editableDocument": ".bmw-runtime/p1-ak/before-user-visual-remake/science-v1.json",
+        "documentSha256": "f6e7e3bff60de9012085fd0618b2f2aea325a5aa81272303f9c53ff917fb5075",
+        "draftId": "053917b5-3bc1-4c08-82c1-cdfb2e98aac1",
+        "revision": 45,
+        "ownerSessionId": "72f85842-d183-4a25-8ae8-736a23037400",
+        "profile": "science-explainer",
+        "sceneCount": 8,
+        "narrationArtifactCount": 8,
+        "production": {
+          "works": 1,
+          "claims": 11,
+          "goals": 1,
+          "externalVersions": 3
+        },
+        "mp4": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/media-3faa931f-307a-466e-8442-0d852423a22c-converted.mp4",
+        "mp4Sha256": "b6e8d35eab1414d3ea9d8951c7e8aa98d63b056c0bae2bcc89b9b08211d5da6e",
+        "bytes": 24547386,
+        "timelineDurationSeconds": 215,
+        "actualDurationSeconds": 215.08266666666665,
+        "width": 1280,
+        "height": 720,
+        "fps": 12,
+        "exportFingerprint": "ec2ebca899dbef0494bfd1bb626e5e04a616e51dedeb4aeb6b0455c84135a046",
+        "verification": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/workspace/artifacts/video-0b215212-5668-40ca-9ea7-d34b27f91878.json",
+        "layoutWarningCount": 67,
+        "agentVisualReview": {
+          "generatedCriticalFrames": 192,
+          "plannedCriticalFrames": 192,
+          "scenes": [
+            {
+              "sceneId": "s1-question",
+              "status": "passed",
+              "notes": "逐页查看当前导出24/24张390×219取样：32位截图/视频播放器作为来源总览稳定呈现，顶部标题、来源标签与底部字幕无重叠或裁切；字幕依时切换且可读，末帧无异常。截图内嵌页面文字在390px不可读，但本场只作来源总览，逐字证据在s3；保留7条小字/长静态建议，不据此宣称人工通过。"
+            },
+            {
+              "sceneId": "s2-demo",
+              "status": "passed",
+              "notes": "逐页查看当前导出24/24张390×219取样：独立视频层以616×512显示，去掉原竖屏窄条后，演示内容窗约188px宽（原约81px）；Stage 1/3标签、Real2Sim空间图与英文来源句子均可辨认。首帧为场景切换，随后稳定；字幕黑底可读，未见裁切、遮挡或关键手部/物体丢失。仍保留5条phone-small-text提醒（字幕在390px小于12px），属既有可读性建议，不改变本轮放大修复的通过判断。"
+            },
+            {
+              "sceneId": "s3-source",
+              "status": "passed",
+              "notes": "逐页查看当前导出24/24张390×219取样：原文全貌→定位框→放大原句→原句细节→返回全貌完整；放大阶段英文原句全程可读，中文断句字幕“把 Unitree G1 带进陌生厨房／让 GPT-6 Astra 控制它／这是发布者展示的一次尝试”与标题、绿色阶段标签无重叠或出框；末帧正常。全貌阶段内嵌英文在390px过小，由放大阶段承担逐字阅读；保留本场13条小字建议，不据此宣称人工通过。"
+            },
+            {
+              "sceneId": "s4-loop",
+              "status": "passed",
+              "notes": "逐页查看当前导出24/24张390×219取样：四节点闭环图（看见目标／读出位置／排出步骤／执行修正）全程稳定，标题、节点、脚注与底部字幕无重叠或裁切；高亮依次切换至第二步、第三步和第四步，末帧停在第四步且画面完整。字幕“把一次家务拆成闭环／更容易看清难点／第一步：看见目标”等与节点切换对应。保留本场11条小字建议及1条长静态建议，不据此宣称人工通过。"
+            },
+            {
+              "sceneId": "s5-execution",
+              "status": "passed",
+              "notes": "逐页查看当前导出24/24张390×219取样：616×512放大窗完整呈现多机位画面、机械臂/笔与来源英文页，未见原竖屏窄条再次露出或关键区域裁切。20.92s仍为视频末帧，122.75s(场景21s)起切到同源20.88s静止帧，122.75/122.83/125.08s的画面一致，2.42s定格无动作重复；橙衣客厅段与卡通/文章页均按发布方原始素材呈现，未标注为机器人操作。字幕可读，保留5条既有phone-small-text提醒；开场101.75s有一帧底层卡片到视频层的切换，随后稳定，不构成语义或裁切错误。"
+            },
+            {
+              "sceneId": "s6-conditions",
+              "status": "passed",
+              "notes": "逐页查看当前导出24/24张390×219取样：标题“把条件一个个换掉”与三行条件（换位置：重新找到目标／换物体：抓取是否稳定／换光照/地面：感知与规划）按序出现并保留至末帧，布局、字幕和脚注无重叠或裁切；字幕依次说明检验可靠性需主动换条件，末帧完整。390px下条件小字偏小但可辨，保留本场8条phone-small-text与1条long-static建议，不据此宣称人工通过。"
+            },
+            {
+              "sceneId": "s7-diagnosis",
+              "status": "passed",
+              "notes": "24/24当前导出图已逐张检查（三页8张，时间154.8333–182.4167s）。标题“失败，怎么定位”与两张失败卡“找不到目标→感知/定位”“抓到却滑脱→接触/力控”稳定，字幕依次覆盖失败分型、不同机制、找不到目标、抓取滑脱、撞上障碍；末帧完整无字幕。未发现裁切或卡片/字幕重叠。限制：字幕提到“撞上障碍：规划或避障问题”，但画面仅两张失败卡，没有第三张障碍卡，这一类别只在字幕中说明；不虚构第三卡。保留7条手机小字建议和1条长静止建议（163.4167s）；技术/抽样通过不等于语义或听审通过。"
+            },
+            {
+              "sceneId": "s8-answer",
+              "status": "passed",
+              "notes": "24/24当前导出图已逐张检查（三页8张，时间182.5–214.9167s）。开场182.5s为暗场过渡帧；随后全屏标题“可靠，不是一次成功”与副题“重复试验·记录失败·公开条件”稳定。字幕依次为谨慎结论、陌生厨房探索执行、不能证明完全自主、更不等于100%成功、也不能当作独立复现、离可靠还差三样东西；末帧214.9167s完整且无字幕。未发现裁切或文字重叠。保留7条手机小字建议和1条长静止建议（192.3333s）；该场为全屏结语卡，静止属预期但仍属建议项，技术/抽样通过不等于语义或听审通过。"
+            }
+          ],
+          "film": {
+            "status": "passed",
+            "notes": "全片8场192/192当前导出取样已逐张检查，8场均已在当前指纹下记录Agent场景通过。三类必要材料均在：s2/s5原演示放大窗、s3来源原句阅读、s4机制闭环。保留67条建议（多为390px小字与长静止），未声称已解决。限制：s7第三类失败“撞上障碍”仅在字幕、无第三卡片（已在s7声明记明，不虚构）；s8开场暗场过渡与结语长静止属预期。技术/抽样通过不等于语义或音频认证；人工听审、观众复述、条件变化预测均未执行，用户声明未填，check-5未通过。",
+            "createdAt": "2026-10-17T05:33:02.703Z",
+            "sequence": 9
+          }
+        },
+        "humanRecords": 0,
+        "executionEvidence": ".bmw-runtime/p1-ak/qoder/2026-10-17T04-31-39-799Z/result.json",
+        "executionCompletedAt": "2026-10-17T05:33:27.999Z",
+        "caseBrowserCalls": 405,
+        "acceptance": "v1-form-rejected-by-user; superseded"
+      }
+    ]
+  },
+  "followUpVerification": {
+    "checkedAt": "2026-10-17T11:45:45.053Z",
+    "scope": "Added one bounded Qwen male voice throughout BMW and remade news script/media using the user-supplied writing skill.",
+    "regression": ".bmw-runtime/classified-tests/2026-10-17-news-muyu-male-native/result.json",
+    "selectedChecks": 71,
+    "sourceChangesAfterVerification": [],
+    "fourCitationImageSourcesCropAndGeometryPreserved": true,
+    "originalSourcePixelHashesChecked": 2,
+    "currentCriticalSamples": 143,
+    "currentSceneAgentDeclarations": 6,
+    "currentFilmAgentDeclaration": "passed",
+    "officialTurnOutcome": {
+      "artifactsAndAllReviewPagesVerified": true,
+      "officialTurnCompleted": true,
+      "termination": "Official turn completed normally."
+    },
+    "humanListeningAndAcceptance": "pending",
+    "finalArtifactHashesChecked": 24,
+    "voicePreservation": {
+      "initialVoiceIdentitySnapshot": ".bmw-runtime/p1-ak/news-v4-first-male-voices.json",
+      "fiveNonHookHashBaseline": ".bmw-runtime/p1-ak/news-v4-corrected-hook-voice.json",
+      "fiveNonHookIdentitiesAndHashesPreserved": true,
+      "correctedHookIdentity": "narration-03caa79a-93a6-4995-ba67-f4ff9bbd0892.wav",
+      "finalAllSixNativeAnchorHashesMatchFiles": true,
+      "baselineLimit": "Immediately after TTS, retained speechAnchors still describe the earlier recording until estimate-speech. The early revision67 and revision98 hook anchor hashes are not new-file hash baselines. Non-hook byte preservation uses the already re-estimated five male anchors at correction start; the final hook uses its current native hash and stable new artifact identity.",
+      "realQwenCalls": 7,
+      "scope": "Six initial male recordings plus one intentional new-script hook correction; no uncertain synthesis retry."
+    }
+  }
+}

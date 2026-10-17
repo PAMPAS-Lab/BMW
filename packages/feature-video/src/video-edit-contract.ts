@@ -38,7 +38,7 @@ export function assertVideoEdit(raw:unknown):VideoEdit {
  const e=mediaRecord(raw);closed(e,['version','commands']);if(e.version!==1||!Array.isArray(e.commands)||!e.commands.length||e.commands.length>32)throw new TypeError('VIDEO_EDIT: One to 32 version-1 commands are required.')
  const commands=e.commands.map(raw=>{const c=mediaRecord(raw)
   switch(c.op){
-   case 'brief.set':{closed(c,['op','patch']);const patch=mediaRecord(c.patch);closed(patch,['notes','outline','artifactIds','sourceIds']);if(!Object.keys(patch).length)throw new TypeError('VIDEO_EDIT: Empty brief patch.');return {op:c.op,patch:structuredClone(patch)} as VideoEditCommand}
+   case 'brief.set':{closed(c,['op','patch']);const patch=mediaRecord(c.patch);closed(patch,['production','notes','outline','artifactIds','sourceIds']);if(!Object.keys(patch).length)throw new TypeError('VIDEO_EDIT: Empty brief patch.');return {op:c.op,patch:structuredClone(patch)} as VideoEditCommand}
    case 'scene.add':{closed(c,['op','scene','afterSceneId']);const scene=mediaRecord(c.scene);closed(scene,['id',...sceneFields]);studioId(scene.id);if(typeof scene.title!=='string'||!scene.title.trim())throw new TypeError('VIDEO_EDIT_SCENE: A new scene needs a title.');return {op:c.op,scene:structuredClone(scene),...(c.afterSceneId===undefined?{}:{afterSceneId:studioId(c.afterSceneId)})} as VideoEditCommand}
    case 'captions.set':{
     if(!['manual','sentences','off'].includes(String(c.mode)))throw new TypeError('VIDEO_EDIT_CAPTIONS: Choose manual, sentences or off.')
