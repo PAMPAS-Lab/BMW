@@ -1,7 +1,7 @@
 import {assertBrowserActionContext} from './browser-host.js'
 import type {BrowserActionContext} from './browser-host.js'
-import { BROWSER_CORE_ACTION_DEFINITIONS } from './browser-schema.js'
-import type { BrowserActionDefinition, BrowserInputSchema, BrowserRequest, JsonSchema } from './browser-schema.js'
+import { assertBrowserRequest, BROWSER_CORE_ACTION_DEFINITIONS } from './browser-schema.js'
+import type { BrowserActionDefinition, BrowserInputSchema, BrowserRequest, JsonSchema, BrowserHelpQuery } from './browser-schema.js'
 
 interface ProductFeatureLike {
   readonly id: string
@@ -51,6 +51,7 @@ export class BrowserCapabilityRegistry {
       inputSchema: definition.inputSchema,
       description: String(definition.description || ''),
       ...(typeof definition.execute === 'function' ? { execute: definition.execute } : {})
+      ,...(typeof definition.help==='function'?{help:definition.help}:{})
     }))
   }
 
@@ -60,6 +61,20 @@ export class BrowserCapabilityRegistry {
 
   definition(action: string): RegisteredBrowserAction | null {
     return this.actions.get(action) || null
+  }
+
+  assertRequest(value:unknown):BrowserRequest { return assertBrowserRequest(value,this.allowedActions,[...this.actions.values()]) }
+
+  help(forAction?:string,query:BrowserHelpQuery={}):unknown {
+    if(!forAction&&(query.forOperation!==undefined||query.forSubOperation!==undefined))throw new TypeError('Feature operation help requires forAction.')
+    if(forAction!==undefined){
+      const definition=this.definition(forAction)
+      if(!definition)throw new TypeError(JSON.stringify({code:'BMW_BROWSER_ACTION_UNSUPPORTED',message:'Unknown help target; use an exact action from supportedActions.',stage:'validation',executed:false,supportedActions:this.allowedActions,recovery:{action:'help'}}))
+      if(definition.help)return definition.help(query)
+      if(query.forOperation!==undefined||query.forSubOperation!==undefined)throw new TypeError('This action has no nested operation; use its closed input schema.')
+      return {action:definition.action,description:definition.description,inputSchema:{...definition.inputSchema,properties:{action:{const:definition.action},...definition.inputSchema.properties},required:['action',...definition.inputSchema.required]}}
+    }
+    return {tool:'browser',actions:[...this.actions.values()].map(definition=>({action:definition.action,description:definition.description.slice(0,160),requiredFields:definition.inputSchema.required})),next:{action:'help',forAction:'observe'}}
   }
 
   async execute(action: string, context: unknown, input: BrowserRequest): Promise<{ handled: boolean; value: unknown }> {
@@ -110,7 +125,7 @@ export class BrowserCapabilityRegistry {
     const base = `The only ${this.product.name} model capability. Search, inspect, navigate, interact with, capture, record, and analyze tabs owned by the active Project, usually in the background. Use the schema branch matching action: fields belonging to other actions are not accepted. Use media.inspect, media.frames.sample, and media.convert for Project-owned video/audio artifacts; sampled PNGs are returned as images and conversion preserves all supported tracks or fails. Use media.image.inspect to measure Project images. media.image.draw creates a new canvas and requires width, height and shapes; do not pass artifactId or filename. Example: {"action":"media.image.draw","width":320,"height":180,"shapes":[{"type":"text","x":20,"y":20,"text":"Diagram","color":"#172536"}]}. media.image.annotate marks an existing image and requires artifactId and shapes; do not pass width, height or filename. Example: {"action":"media.image.annotate","artifactId":"existing.png","shapes":[{"type":"rect","x":10,"y":10,"width":50,"height":30}]}. Both save a new Project PNG and return it as an image; shapes use actual image pixels and preserve the original. Parameter validation errors do not mean a primitive is unsupported; correct the named fields before retrying. No Shell, unrestricted filesystem, or external browser tool is available.`
     return {
       name: 'browser',
-      description: [base, ...fragments].join(' '),
+      description: ['Start with {"action":"observe"} to read the current page, or {"action":"tabs.list"} for Project tabs. Discover actions with {"action":"help"}; get exact fields with {"action":"help","forAction":"media.video.capture"}. Only names in the action enum exist. Unknown-action/argument failures return a recovery request and executed:false; inspect that contract and correct fields, never add guessed parameters. Media workflow: page.media.list -> media.preserve for exact HTTP/HLS delivery bytes and packet-copy verification, media.download for a simple HTTP file, or media.video.capture for a selected video/blob -> media.inspect -> media.frames.sample. A duration limit is partial; do not force it to equal the source duration when collecting to ended. media.audio.sample saves bounded playable WAV and technical evidence; media.audio.preview opens user controls with no autoplay. These do not certify that the active model heard audio.',base, ...fragments].join(' '),
       inputSchema: this.inputSchema()
     }
   }

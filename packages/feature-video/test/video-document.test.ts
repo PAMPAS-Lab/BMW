@@ -13,7 +13,9 @@ import {assertVideoEdit,applyVideoEdit,videoEditSchema} from '../src/video-edit.
 import {VideoStudioStore} from '../src/studio-store.js'
 import {VideoStudioService} from '../src/studio-service.js'
 import type {StudioKernel} from '../src/studio-service.js'
-import {addStudioLayer} from '../src/studio-layer-edits.js'
+import {addStudioCardStack,addStudioLayer,sliceStudioLayer,trimStudioLayer,resetStudioLayerFade} from '../src/studio-layer-edits.js'
+import {assertLayerPackaging,layerPackagingState} from '../../media-native/src/layer-packaging.js'
+import {assertLayerTextTreatment,revealedTextLines} from '../../media-native/src/layer-text-treatment.js'
 import {planCardTemplate} from '../src/studio-card-templates.js'
 import {cardMetricText,cardPaintScene} from '../../media-native/src/card-templates.js'
 import type {CardContentContract} from '../../media-native/src/card-templates.js'
@@ -21,6 +23,107 @@ import {studioToolGuide} from '../src/studio-tool-guide.js'
 import {videoFeature} from '../index.js'
 import {studioAgentResult} from '../src/studio-agent-result.js'
 import {studioPage} from '../src/studio-read-contract.js'
+import {assertComposition,compositionDuration,COMPOSITION_LIMITS} from '../../media-native/src/composition-contract.js'
+import {compositionQualityPlan,assertCompositionQuality} from '../../media-native/src/composition-quality.js'
+import {defaultScienceSpec,scienceState} from '../../media-native/src/science-spec.js'
+import {splitStudioScene} from '../src/studio-scene-split.js'
+import {studioPromptContext} from '../src/studio-context.js'
+
+test('Agent context, discovery and published schema advertise the same supported document versions',async()=>{
+ const f=fixture();try{
+  const d=draft(f.store),kernel:StudioKernel={projectStore:{active:()=>({id:owner.projectId,name:'P',directory:f.root})},execute:async()=>({}),recordingController:{processArtifact:async()=>({}),narrate:async()=>({}),compose:async()=>({})}}
+  const service=new VideoStudioService(kernel),prompt=studioPromptContext('studio',undefined,d)
+  type Versions={schemaVersion:string;supportedDocumentVersions:string[]}
+  const context=JSON.parse(prompt.split('\n')[1]) as Versions
+  const described=await service.execute({operation:'describe-schema'},undefined,owner) as Versions
+  const listed=await service.execute({operation:'list'},undefined,owner) as Versions
+  const published=(videoDocumentSchema.properties as {schemaVersion:{enum:string[]}}).schemaVersion.enum
+  assert.equal(described.schemaVersion,'2.9');assert.equal(context.schemaVersion,described.schemaVersion);assert.equal(listed.schemaVersion,described.schemaVersion)
+  assert.deepEqual(context.supportedDocumentVersions,published);assert.deepEqual(described.supportedDocumentVersions,published);assert.deepEqual(listed.supportedDocumentVersions,published)
+  assert.ok(prompt.includes('canonical Video Document '+published.join('/')))
+ }finally{f.close()}
+})
+
+test('Version 2.9 scientific data survives editable commands, saved documents and original-clock scene/object cuts',()=>{
+ const f=fixture();try{
+  let d=applyVideoEdit(draft(f.store),{version:1,commands:[{op:'layer.add',kind:'diagram',sceneId:'one'}]})
+  const document=videoDocumentFromDraft(d),validate=new Ajv2020({strict:false}).compile(videoDocumentSchema),clip=document.content.timeline.tracks.find(t=>t.role==='overlay')!.clips[0]
+  assert.equal(document.schemaVersion,'2.9');assert.equal(validate(document),true,JSON.stringify(validate.errors));same(d,videoDraftFromDocument(document))
+  for(const schemaVersion of ['2.0','2.1','2.2','2.3','2.4','2.5','2.6','2.7','2.8']){assert.equal(validate({...document,schemaVersion}),false);assert.throws(()=>videoDraftFromDocument({...document,schemaVersion}),/2.9/)}
+  const spec=defaultScienceSpec('array');d=applyVideoEdit(d,{version:1,commands:[{op:'layer.set',clipId:clip.id,patch:{science:spec}}]});assert.equal(d.scenes[0].layers![0].science?.kind,'array')
+  const layer=d.scenes[0].layers![0],piece=sliceStudioLayer(sliceStudioLayer(layer,.13,4,'piece'),.24,3,'again')
+  for(const local of [0,.25,1,2.5])assert.deepEqual(scienceState(piece.science!,local),scienceState(spec,local+.37))
+  const split=splitStudioScene(d,'one',2).draft,right=split.scenes[1].layers![0];assert.equal(right.science!.offsetSeconds,2);assert.deepEqual(scienceState(right.science!,0),scienceState(spec,2))
+  d=resetStudioLayerFade(trimStudioLayer(d,{kind:'visual',id:layer.id,sceneId:'one'},'start',.5),{kind:'visual',id:layer.id,sceneId:'one'});assert.equal(d.scenes[0].layers![0].science!.offsetSeconds,.5)
+  assert.throws(()=>applyVideoEdit(d,{version:1,commands:[{op:'layer.set',clipId:clip.id,patch:{science:null}}]}));const corrupt=structuredClone(document),properties=corrupt.content.timeline.tracks.find(t=>t.role==='overlay')!.clips[0].properties;delete properties.science;assert.equal(validate(corrupt),false);assert.throws(()=>videoDraftFromDocument(corrupt))
+  const saved=f.store.update(d.id,d.revision,d);same(saved,new VideoStudioStore(f.root,owner.sessionId).read(d.id))
+ }finally{f.close()}
+})
+
+test('Version 2.8 entry packaging and six editable staggered cards use bounded Agent transactions and retained clocks',()=>{
+ const f=fixture();try{
+  const original=draft(f.store),d=applyVideoEdit(original,{version:1,commands:[{op:'layer.add',kind:'card-stack',sceneId:'one'}]}),layers=d.scenes[0].layers!
+  assert.equal(layers.length,6);assert.deepEqual(layers.filter(l=>l.kind==='rectangle').map(l=>l.startSeconds),[0,.25,.5]);assert.equal(new Set(layers.map(l=>l.id)).size,6)
+  const document=videoDocumentFromDraft(d),validate=new Ajv2020({strict:false}).compile(videoDocumentSchema)
+  assert.equal(document.schemaVersion,'2.8');assert.equal(validate(document),true,JSON.stringify(validate.errors));same(d,videoDraftFromDocument(document))
+  for(const schemaVersion of ['2.0','2.1','2.2','2.3','2.4','2.5','2.6','2.7']){assert.equal(validate({...document,schemaVersion}),false);assert.throws(()=>videoDraftFromDocument({...document,schemaVersion}),/2.8/)}
+  const layer=layers[0],piece=sliceStudioLayer(layer,.13,1.2,'piece'),style=assertLayerPackaging(layer.packaging)
+  for(const t of [.13,.15,.26,.399,.5])assert.deepEqual(layerPackagingState(piece.packaging!,t-.13),layerPackagingState(style,t))
+  const ref={kind:'visual' as const,id:layer.id,sceneId:'one'},trimmed=resetStudioLayerFade(trimStudioLayer(d,ref,'start',.13),ref);assert.equal(trimmed.scenes[0].layers![0].packaging?.offsetSeconds,.13)
+  assert.throws(()=>addStudioCardStack(d,'one'),/六个/);assert.throws(()=>assertVideoEdit({version:1,commands:[{op:'layer.add',kind:'card-stack',artifactId:'unrelated.png'}]}),/source artifact/)
+  const mediaLayer=addStudioLayer(original,undefined,'video','source.mp4').draft;mediaLayer.layers![0].sourceCrop={x:.278,y:.563,width:.44,height:.142};const cropped=videoDocumentFromDraft(mediaLayer);assert.equal(cropped.schemaVersion,'2.8');assert.equal(validate(cropped),true);same(mediaLayer,videoDraftFromDocument(cropped));assert.equal(validate({...cropped,schemaVersion:'2.7'}),false);assert.throws(()=>videoDraftFromDocument({...cropped,schemaVersion:'2.7'}),/2.8/);
+  const croppedClip=cropped.content.timeline.tracks.find(t=>t.role==='overlay')!.clips[0],cleared=applyVideoEdit(mediaLayer,{version:1,commands:[{op:'layer.set',clipId:croppedClip.id,patch:{sourceCrop:null}}]});assert.equal(cleared.layers![0].sourceCrop,undefined);assert.equal(videoDocumentFromDraft(cleared).schemaVersion,'2.0');
+  assert.equal(original.scenes[0].layers,undefined);const saved=f.store.update(d.id,d.revision,d);same(saved,new VideoStudioStore(f.root,owner.sessionId).read(d.id))
+ }finally{f.close()}
+})
+
+test('Version 2.7 text treatment survives Agent edits, persistence and cuts; old document versions reject it',()=>{
+ const f=fixture();try{
+  let d=addStudioLayer(draft(f.store),undefined,'text').draft
+  const initial=videoDocumentFromDraft(d),clip=initial.content.timeline.tracks.find(t=>t.role==='overlay')!.clips[0]
+  d=applyVideoEdit(d,{version:1,commands:[{op:'layer.set',clipId:clip.id,patch:{text:'第一行\nTranslation 👩🏽‍🔬',textTreatment:{reveal:'grapheme',revealSeconds:4,lineStaggerSeconds:.4,strokeWidth:3}}}]})
+  const document=videoDocumentFromDraft(d),validate=new Ajv2020({strict:false}).compile(videoDocumentSchema)
+  assert.equal(document.schemaVersion,'2.7');assert.equal(validate(document),true,JSON.stringify(validate.errors));same(d,videoDraftFromDocument(document))
+  for(const schemaVersion of ['2.0','2.1','2.2','2.3','2.4','2.5','2.6']){assert.equal(validate({...document,schemaVersion}),false);assert.throws(()=>videoDraftFromDocument({...document,schemaVersion}),/2.7/)}
+  const layer=d.layers![0],piece=sliceStudioLayer(layer,1.3,3.9,'piece'),style=assertLayerTextTreatment(layer.textTreatment),lines=['第一行','Translation 👩🏽‍🔬']
+  for(const t of [0,.2,1.1,2.5])assert.deepEqual(revealedTextLines(lines,piece.textTreatment,t),revealedTextLines(lines,style,t+1.3))
+  const ref={kind:'visual' as const,id:layer.id};d=trimStudioLayer(d,ref,'start',1.3);assert.equal(d.layers![0].textTreatment?.offsetSeconds,1.3)
+  d=resetStudioLayerFade(d,ref);assert.equal(d.layers![0].textTreatment?.offsetSeconds,1.3)
+  const saved=f.store.update(d.id,d.revision,d);same(saved,new VideoStudioStore(f.root,owner.sessionId).read(d.id))
+ }finally{f.close()}
+})
+
+test('Version 2.6 admits bounded twelve-minute films and 96 scenes while legacy documents retain their original budgets',()=>{
+ const f=fixture();try{
+  let d=draft(f.store);d.scenes=Array.from({length:96},(_,i)=>({...newStudioScene('part-'+i,'Part '+i),durationSeconds:7.5,bullets:['Verified fixture'],captions:[{startSeconds:0,endSeconds:1,text:'Part '+i}]}))
+  for(let i=0;i<64;i++)d=addStudioLayer(d,i<8?undefined:d.scenes[Math.floor((i-8)/8)].id,'rectangle').draft
+  const parsed=assertVideoDraft(d),document=videoDocumentFromDraft(parsed),validate=new Ajv2020({strict:false}).compile(videoDocumentSchema)
+  assert.equal(document.schemaVersion,'2.6');assert.equal(document.content.timeline.tracks.length,352);assert.equal(videoSeconds(document.content.timeline.duration),720);assert.equal(validate(document),true,JSON.stringify(validate.errors));same(parsed,videoDraftFromDocument(document))
+  for(const schemaVersion of ['2.0','2.1','2.2','2.3','2.4','2.5']){assert.equal(validate({...document,schemaVersion}),false);assert.throws(()=>videoDraftFromDocument({...document,schemaVersion}),/2.6/)}
+  const saved=f.store.update(d.id,d.revision,d);same(saved,new VideoStudioStore(f.root,owner.sessionId).read(d.id))
+  const found:string[]=[];let offset=0
+  do{const page=studioAgentResult({operation:'read',draftId:d.id,pageOffset:offset},saved) as {scenes:{id:string}[];scenePage:{nextOffset:number|null;total:number}};assert.ok(page.scenes.length<=20);assert.equal(page.scenePage.total,96);found.push(...page.scenes.map(s=>s.id));if(page.scenePage.nextOffset===null)break;offset=page.scenePage.nextOffset}while(true)
+  assert.deepEqual(found,d.scenes.map(s=>s.id))
+  const verbose={...saved,scenes:saved.scenes.map((s,i)=>({...s,id:'p'.repeat(70)+i,title:'长'.repeat(44),narration:'待生成。',videoArtifactId:'v'.repeat(110)+'.mp4'}))},listed=studioAgentResult({operation:'list'},{drafts:[verbose]}) as {drafts:{pendingNarrationCount:number;pendingNarrationSceneIds:string[];scenePage:{total:number}}[]}
+  assert.equal(listed.drafts.length,1);assert.ok(Buffer.byteLength(JSON.stringify(listed))<18000);assert.equal(listed.drafts[0].pendingNarrationCount,96);assert.equal(listed.drafts[0].pendingNarrationSceneIds.length,20);assert.equal(listed.drafts[0].scenePage.total,96)
+  assert.throws(()=>assertVideoDraft({...d,scenes:[...d.scenes,{...newStudioScene('overflow'),durationSeconds:1}]}),/ninety-six/)
+  assert.throws(()=>assertVideoDraft({...d,scenes:d.scenes.map((s,i)=>i? s:{...s,durationSeconds:7.6})}),/twelve minutes/)
+  assert.throws(()=>assertVideoDraft({...d,scenes:[{...newStudioScene('too-long'),durationSeconds:61}]}),/scene duration/)
+  assert.throws(()=>assertVideoDraft({...draft(f.store),scenes:[{...newStudioScene('voice-budget'),audioDurationSeconds:181}]}),/audio duration/)
+  assert.equal(new Ajv2020({strict:false}).compile(videoEditSchema)({version:1,commands:[{op:'scene.reorder',sceneIds:d.scenes.map(s=>s.id)}]}),true)
+  const film=assertComposition({title:d.title,width:d.width,height:d.height,fps:d.fps,music:false,scenes:d.scenes.map(s=>({title:s.title,durationSeconds:s.durationSeconds,bullets:s.bullets,captions:s.captions}))}),plan=compositionQualityPlan(film)
+  assert.equal(compositionDuration(film),COMPOSITION_LIMITS.seconds);assert.ok(plan.samples.length<=576);assert.equal(new Set(plan.samples.map(s=>s.sceneIndex)).size,96);assert.ok(plan.omittedCandidates>0)
+  assertCompositionQuality({version:1,kind:'composition-quality',coverage:'critical-state-samples',phoneWidth:390,semanticVerification:'requires-visual-review',...plan,issues:[],omittedIssues:0})
+ }finally{f.close()}
+})
+
+test('Short films with expanded fade or original presentation clocks also require 2.6 and stay reversible',()=>{
+ const f=fixture();try{
+  let d=addStudioLayer(draft(f.store),undefined,'rectangle').draft;d.layers![0].fadeWindow={originId:'long-envelope',startSeconds:0,durationSeconds:600}
+  const validate=new Ajv2020({strict:false}).compile(videoDocumentSchema),document=videoDocumentFromDraft(d);assert.equal(document.schemaVersion,'2.6');assert.equal(validate(document),true,JSON.stringify(validate.errors));same(d,videoDraftFromDocument(document));assert.equal(validate({...document,schemaVersion:'2.5'}),false);assert.throws(()=>videoDraftFromDocument({...document,schemaVersion:'2.5'}),/2.6/)
+  delete d.layers;d.scenes[0].presentationWindow={originId:'numbered',startSeconds:0,durationSeconds:8,musicIndex:96,sceneNumber:96,sceneCount:96};const numbered=videoDocumentFromDraft(d);assert.equal(numbered.schemaVersion,'2.6');assert.equal(validate(numbered),true,JSON.stringify(validate.errors));assert.equal(validate({...numbered,schemaVersion:'2.5'}),false);same(d,videoDraftFromDocument(numbered))
+ }finally{f.close()}
+})
 
 test('Browser model reads and mutations use bounded projections while GUI retains complete drafts and all Host records',async()=>{
  const f=fixture();try{
@@ -40,7 +143,7 @@ test('Browser model reads and mutations use bounded projections while GUI retain
   await assert.rejects(call({operation:'read-scene',draftId:id,expectedRevision:1,sceneId:'opening'}),/STUDIO_CONFLICT/)
   const before=JSON.stringify(f.store.read(id));await assert.rejects(call({operation:'apply-edit',draftId:id,expectedRevision:2,edit:{version:1,commands:[{op:'scene.add',scene:{id:'new',title:'不得部分保存'}},{op:'scene.add',scene:{id:'opening',title:'重复'}}]}}),/Duplicate/);assert.equal(JSON.stringify(f.store.read(id)),before)
   assert.throws(()=>assertVideoEdit({version:1,commands:[{op:'scene.add',scene:{id:'fake',title:'伪造',audioDurationSeconds:10}}]}),/FIELD/)
-  for(const request of [{operation:'read-scene',draftId:id,expectedRevision:2,sceneId:'opening',section:'all'},{operation:'read',draftId:id,pageOffset:1},{operation:'assets',assetQuery:{limit:51}},{operation:'create',briefSection:'notes'}])assert.throws(()=>assertStudioRequest(request))
+  for(const request of [{operation:'read-scene',draftId:id,expectedRevision:2,sceneId:'opening',section:'all'},{operation:'read',draftId:id,pageLimit:21},{operation:'assets',assetQuery:{limit:51}},{operation:'create',briefSection:'notes'}])assert.throws(()=>assertStudioRequest(request))
  }finally{f.close()}
 })
 test('Filtered Project asset pagination discovers materials after thousands of review outputs and rejects links',async()=>{
@@ -209,7 +312,7 @@ test('Canonical persistence and v1 migration preserve originals, owner, exports 
  const f=fixture();try{let d=draft(f.store);d.scenes[0].captions=[{startSeconds:.0000175,endSeconds:1.0000005,text:'精确迁移'}];d=f.store.update(d.id,d.revision,d);const file=path.join(f.store.directory,d.id+'.json');assert.equal(JSON.parse(fs.readFileSync(file,'utf8')).schemaVersion,'2.0');const old=JSON.stringify(d,null,2)+'\n';fs.writeFileSync(file,old);same(d,f.store.read(d.id));assert.equal(fs.readFileSync(file,'utf8'),old);assert.throws(()=>f.store.migrateDocument(d.id,1),/CONFLICT/);assert.throws(()=>new VideoStudioStore(f.root,'foreign').migrateDocument(d.id,d.revision),/MISMATCH/);const result=f.store.migrateDocument(d.id,d.revision);assert.equal(result.migrated,true);same(d,result.draft);assert.equal(f.store.migrateDocument(d.id,d.revision).migrated,false);const backup=fs.readdirSync(path.join(f.store.directory,'schema-backups'));assert.equal(backup.length,1);assert.equal(fs.readFileSync(path.join(f.store.directory,'schema-backups',backup[0]),'utf8'),old);fs.writeFileSync(file,old);d.title='Edit';d=f.store.update(d.id,d.revision,d);assert.equal(fs.readdirSync(path.join(f.store.directory,'schema-backups')).length,1);const invalid=JSON.parse(fs.readFileSync(file,'utf8'));invalid.content.timeline.regions[0].start.ticks=100;fs.writeFileSync(file,JSON.stringify(invalid));const before=fs.readFileSync(file,'utf8');assert.throws(()=>f.store.read(d.id));assert.equal(fs.readFileSync(file,'utf8'),before)}finally{f.close()}
 })
 test('Agent operations enforce trusted scope, current revision, atomic dry runs and actual advanced authorization',async()=>{
- const f=fixture();try{let advanced=false;const kernel:StudioKernel={projectStore:{active:()=>({id:owner.projectId,name:'P',directory:f.root})},videoStudioContext:()=>({view:{mode:advanced?'advanced':'simple'}}),execute:async()=>({}),recordingController:{processArtifact:async()=>({}),narrate:async()=>({}),compose:async()=>({})}};const service=new VideoStudioService(kernel);let d=draft(f.store);d=f.store.update(d.id,d.revision,d);const descriptor=await service.execute({operation:'describe-schema'},undefined,owner) as {schemaVersion:string;commands:string[]};assert.equal(descriptor.schemaVersion,'2.5');assert.ok(descriptor.commands.includes('clip.trim'));const file=path.join(f.store.directory,d.id+'.json'),before=fs.readFileSync(file,'utf8');const edit={version:1,commands:[{op:'scene.set',sceneId:'one',patch:{script:'New script'}}]};const dry=await service.execute({operation:'validate-edit',draftId:d.id,expectedRevision:d.revision,edit},undefined,owner) as {valid:boolean};assert.equal(dry.valid,true);assert.equal(fs.readFileSync(file,'utf8'),before);await assert.rejects(service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:1,edit},undefined,owner),/CONFLICT/);await assert.rejects(service.execute({operation:'read-document',draftId:d.id,expectedRevision:d.revision},undefined,{...owner,sessionId:'foreign'}),/MISMATCH/);const add={version:1,commands:[{op:'layer.add',kind:'text'}]};await assert.rejects(service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit:add},undefined,owner),/ADVANCED_REQUIRED/);assert.equal(fs.readFileSync(file,'utf8'),before);advanced=true;d=await service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit:add},undefined,owner) as VideoDraft;assert.equal(d.layers?.length,1);advanced=false;const current=fs.readFileSync(file,'utf8');const lossy=structuredClone(d);lossy.layers=[];await assert.rejects(service.execute({operation:'update',draftId:d.id,expectedRevision:d.revision,draft:lossy},undefined,owner),/ADVANCED_REQUIRED/);assert.equal(fs.readFileSync(file,'utf8'),current);advanced=true;const clip=f.store.readDocument(d.id).content.timeline.tracks.find(t=>t.role==='overlay')!.clips[0];d=await service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit:{version:1,commands:[{op:'layer.remove',clipId:clip.id}]}},undefined,owner) as VideoDraft;requireSimpleVideo(d);advanced=false;await assert.rejects(service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit,modePolicy:'advanced'},undefined,owner),/Unsupported/);const unchanged=fs.readFileSync(file,'utf8');await assert.rejects(service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit:{version:1,commands:[{op:'scene.set',sceneId:'one',patch:{title:'Must rollback'}},{op:'scene.set',sceneId:'missing',patch:{title:'Fail'}}]}},undefined,owner),/Unknown scene/);assert.equal(fs.readFileSync(file,'utf8'),unchanged)}finally{f.close()}
+ const f=fixture();try{let advanced=false;const kernel:StudioKernel={projectStore:{active:()=>({id:owner.projectId,name:'P',directory:f.root})},videoStudioContext:()=>({view:{mode:advanced?'advanced':'simple'}}),execute:async()=>({}),recordingController:{processArtifact:async()=>({}),narrate:async()=>({}),compose:async()=>({})}};const service=new VideoStudioService(kernel);let d=draft(f.store);d=f.store.update(d.id,d.revision,d);const descriptor=await service.execute({operation:'describe-schema'},undefined,owner) as {schemaVersion:string;commands:string[]};assert.equal(descriptor.schemaVersion,'2.9');assert.ok(descriptor.commands.includes('clip.trim'));const file=path.join(f.store.directory,d.id+'.json'),before=fs.readFileSync(file,'utf8');const edit={version:1,commands:[{op:'scene.set',sceneId:'one',patch:{script:'New script'}}]};const dry=await service.execute({operation:'validate-edit',draftId:d.id,expectedRevision:d.revision,edit},undefined,owner) as {valid:boolean};assert.equal(dry.valid,true);assert.equal(fs.readFileSync(file,'utf8'),before);await assert.rejects(service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:1,edit},undefined,owner),/CONFLICT/);await assert.rejects(service.execute({operation:'read-document',draftId:d.id,expectedRevision:d.revision},undefined,{...owner,sessionId:'foreign'}),/MISMATCH/);const add={version:1,commands:[{op:'layer.add',kind:'text'}]};await assert.rejects(service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit:add},undefined,owner),/ADVANCED_REQUIRED/);assert.equal(fs.readFileSync(file,'utf8'),before);advanced=true;d=await service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit:add},undefined,owner) as VideoDraft;assert.equal(d.layers?.length,1);advanced=false;const current=fs.readFileSync(file,'utf8');const lossy=structuredClone(d);lossy.layers=[];await assert.rejects(service.execute({operation:'update',draftId:d.id,expectedRevision:d.revision,draft:lossy},undefined,owner),/ADVANCED_REQUIRED/);assert.equal(fs.readFileSync(file,'utf8'),current);advanced=true;const clip=f.store.readDocument(d.id).content.timeline.tracks.find(t=>t.role==='overlay')!.clips[0];d=await service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit:{version:1,commands:[{op:'layer.remove',clipId:clip.id}]}},undefined,owner) as VideoDraft;requireSimpleVideo(d);advanced=false;await assert.rejects(service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit,modePolicy:'advanced'},undefined,owner),/Unsupported/);const unchanged=fs.readFileSync(file,'utf8');await assert.rejects(service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit:{version:1,commands:[{op:'scene.set',sceneId:'one',patch:{title:'Must rollback'}},{op:'scene.set',sceneId:'missing',patch:{title:'Fail'}}]}},undefined,owner),/Unknown scene/);assert.equal(fs.readFileSync(file,'utf8'),unchanged)}finally{f.close()}
 })
 
 test('Bounded captions and card edits preserve Host speech records and atomically bind current targets under CAS',async()=>{

@@ -25,7 +25,7 @@ import type {VideoDraft,StudioAsset} from './studio-contract.js'
 
 // Bump when native paint/mix semantics change: an unchanged draft must not
 // reuse a completed file made by an older renderer with different pixels.
-export const STUDIO_EXPORT_RENDERER_VERSION='native-caption-block/2'
+export const STUDIO_EXPORT_RENDERER_VERSION='native-scientific-diagrams/8'
 
 /** Project-local editable state. No renderer or model may choose a host path. */
 export class VideoStudioStore {
@@ -89,7 +89,7 @@ export class VideoStudioStore {
   /** Save a host-completed direct composition without overwriting any existing draft. */
   addComposition(raw:unknown,receipt:unknown):VideoDraft {
     if(!this.ownerSessionId)throw new Error('STUDIO_SESSION_REQUIRED: 成片草稿需要绑定对话。')
-    const composition=assertComposition(raw),output=assertMediaArtifactReceipt(receipt)
+    const composition=assertComposition(raw),output=assertMediaArtifactReceipt(receipt,'composition')
     if(composition.scenes.some(scene=>scene.bulletRevealSeconds!==undefined))throw new Error('Direct bullet reveal timing cannot be imported into editable Studio anchors.')
     if(fs.readdirSync(this.directory).filter(name=>/^[a-zA-Z0-9-]+\.json$/.test(name)).length>=100)throw new Error('A Project supports at most one hundred video drafts.')
     const measured=output.narrationDurations

@@ -1,3 +1,4 @@
+import {COMPOSITION_LIMITS} from '../../media-native/src/composition-contract.js'
 import type {FeatureAssistantActivity} from '@bmw-agent/platform/feature-contract'
 import {draftReadiness,sceneCoverage,studioId} from './studio-contract.js'
 import {finiteNumber,mediaRecord} from '../../media-native/src/media-contract.js'
@@ -9,7 +10,7 @@ export function canPrepareStudioRecovery(activity:FeatureAssistantActivity|null|
 export function assertStudioRecoveryRequest(raw:unknown):{draftId:string;expectedRevision:number}{const v=mediaRecord(raw);if(Object.keys(v).some(k=>!['draftId','expectedRevision'].includes(k)))throw new TypeError('Unsupported Studio recovery field.');return {draftId:studioId(v.draftId),expectedRevision:finiteNumber(v.expectedRevision,'recovery revision',1,1000000,true)}}
 export function assertStudioProductionProgress(raw:unknown):BrowserStudioProgress {
  const v=mediaRecord(raw);if(Object.keys(v).some(k=>!['draftId','revision','operation','phase','currentSceneId','completedSceneIds','pendingSceneIds','updatedAt'].includes(k))||v.operation!=='narrate-pending'||!['started','scene-completed','completed','failed'].includes(String(v.phase)))throw new TypeError('Invalid Studio production progress.')
- const ids=(raw:unknown)=>{if(!Array.isArray(raw)||raw.length>24)throw new TypeError('Invalid production scene count.');const values=raw.map(studioId);if(new Set(values).size!==values.length)throw new TypeError('Duplicate production scene.');return values},completedSceneIds=ids(v.completedSceneIds),pendingSceneIds=ids(v.pendingSceneIds)
+ const ids=(raw:unknown)=>{if(!Array.isArray(raw)||raw.length>COMPOSITION_LIMITS.scenes)throw new TypeError('Invalid production scene count.');const values=raw.map(studioId);if(new Set(values).size!==values.length)throw new TypeError('Duplicate production scene.');return values},completedSceneIds=ids(v.completedSceneIds),pendingSceneIds=ids(v.pendingSceneIds)
  return {draftId:studioId(v.draftId),revision:finiteNumber(v.revision,'production revision',1,1000000,true),operation:'narrate-pending',phase:v.phase as BrowserStudioProgress['phase'],...(v.currentSceneId===undefined?{}:{currentSceneId:studioId(v.currentSceneId)}),completedSceneIds,pendingSceneIds,updatedAt:finiteNumber(v.updatedAt,'production fact time',0,Number.MAX_SAFE_INTEGER,true)}
 }
 /** Counts are saved facts, not a guessed percentage or proof of audible quality. */

@@ -1,3 +1,4 @@
+import {COMPOSITION_LIMITS} from '../../../media-native/src/composition-contract.js'
 import {assertCompositionQuality} from '../../../media-native/src/composition-quality.js'
 import {assertArtifactId,finiteNumber,mediaRecord} from '../../../media-native/src/media-contract.js'
 import type {VideoDraft} from '../studio-contract.js'
@@ -41,7 +42,7 @@ export class StudioExportReviewEditor {
      const f=mediaRecord(raw),id=assertArtifactId(f.artifactId),width=finiteNumber(f.width,'phone image width',1,390,true),height=finiteNumber(f.height,'phone image height',1,720,true),size=finiteNumber(f.bytes,'phone image bytes',1,5*1024*1024,true),data=new Uint8Array(size)
      for(let offset=0;offset<size;offset+=1024*1024){data.set(await this.options.read(projectId,id,offset,Math.min(1024*1024,size-offset)),offset);valid()}
      const sha=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data)),b=>b.toString(16).padStart(2,'0')).join('');valid();if(sha!==f.sha256)throw new Error('成片审阅图已变化，请重新取帧。')
-     const article=document.createElement('article'),image=document.createElement('img'),label=document.createElement('button'),seconds=finiteNumber(f.seconds,'review time',0,180),actual=finiteNumber(f.actualSeconds,'decoded frame time',0,seconds)
+     const article=document.createElement('article'),image=document.createElement('img'),label=document.createElement('button'),seconds=finiteNumber(f.seconds,'review time',0,COMPOSITION_LIMITS.seconds),actual=finiteNumber(f.actualSeconds,'decoded frame time',0,seconds)
      const url=URL.createObjectURL(new Blob([new Uint8Array(data)],{type:'image/png'}));this.urls.push(url);image.src=url;image.alt='成片 '+actual.toFixed(2)+' 秒';image.width=width;image.height=height;image.style.maxWidth='100%';image.style.height='auto';article.style.width=width+'px';article.style.maxWidth='100%';article.style.margin='0 auto';label.style.display='block';label.textContent='定位 '+seconds.toFixed(2)+' 秒 · 解码 '+actual.toFixed(2)+' 秒';label.onclick=()=>void this.options.seek(seconds).catch(error=>this.options.notify(String(error)));article.append(label,image);gallery.append(article)
     }
     status.textContent=`实际 MP4：${String(result.sourceArtifactId)} · 已显示 ${gallery.children.length}/${String(result.totalSceneSamples)} 个状态。手机宽度 390px；${quality.omittedCandidates} 个候选受抽样预算限制未覆盖，${quality.omittedTextObservations??0} 行文字观察及 ${quality.omittedIssues} 次问题观察超出预算。截图原句、图解含义及事实仍需视觉复查。`

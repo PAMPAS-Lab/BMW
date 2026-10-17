@@ -1,4 +1,5 @@
 import {finiteNumber,mediaRecord} from './media-contract.js'
+import {COMPOSITION_LIMITS} from './composition-limits.js'
 import {estimatedCaptionCues} from './composition-contract.js'
 import type {MediaComposition} from './composition-contract.js'
 import {scenePlaybackClock} from './scene-playback-window.js'
@@ -22,7 +23,7 @@ export function compositionQualityPlan(composition:MediaComposition,durations?:n
   const candidates=new Map<number,{reasons:Set<string>;priority:number}>(),duration=scene.durationSeconds,clock=scenePlaybackClock(scene,sceneIndex,composition.scenes.length)
   const add=(local:number,reason:string,priority=1)=>{if(local<0||local>=duration)return;const frame=Math.min(Math.ceil((offset+duration)*composition.fps)-1,Math.max(Math.ceil(offset*composition.fps),Math.round((offset+local)*composition.fps))),time=frame/composition.fps-offset;if(time<0||time>=duration)return;const item=candidates.get(frame)??{reasons:new Set<string>(),priority};item.reasons.add(reason);item.priority=Math.max(item.priority,priority);candidates.set(frame,item)}
   const edge=(local:number,reason:string,priority=2)=>{add(local-1/composition.fps,reason+'-before',priority);add(local,reason,priority);add(local+1/composition.fps,reason+'-after',priority)}
-  add(0,'scene-start',4);add(Math.max(0,duration-1/composition.fps),'scene-end',4);add(duration/2,'scene-middle',3);add(Math.min(.8,duration/2),'entrance-complete',3)
+  add(0,'scene-start',5);add(Math.max(0,duration-1/composition.fps),'scene-end',5);add(duration/2,'scene-middle',3);add(Math.min(.8,duration/2),'entrance-complete',3)
   for(const cue of scene.captions??estimatedCaptionCues(scene,composition.width,composition.height,durations?.[sceneIndex]??duration-1)){edge(cue.startSeconds,'caption-start');edge(cue.endSeconds,'caption-end');add((cue.startSeconds+cue.endSeconds)/2,'caption-middle',2)}
   for(const seconds of scene.bulletRevealSeconds??[])edge(seconds-clock.startSeconds,'bullet-reveal',3)
   for(const cue of scene.cardCues??[]){edge(cue.startSeconds-clock.startSeconds,'card-speech-start',4);edge(cue.endSeconds-clock.startSeconds,'card-speech-end',4);add((cue.startSeconds+cue.endSeconds)/2-clock.startSeconds,'card-speech-middle',4)}
@@ -42,8 +43,22 @@ export function compositionQualityPlan(composition:MediaComposition,durations?:n
    for(const f of visual.focusIntervals??[]){const sourceStart=visual.videoArtifactId?visual.sourceStartSeconds:base,rate=visual.videoArtifactId?visual.playbackRate:1;const start=visualOffset+(f.startSeconds-sourceStart)/rate,end=visualOffset+(f.endSeconds-sourceStart)/rate;edge(start,'focus-start',3);add((start+end)/2,'focus-peak',4);edge(end,'focus-end',3)}
    visualOffset+=visual.durationSeconds
   }
-  for(const [container,base] of [[scene,0],[composition,-offset]] as const)for(const layer of container.layers??[]){if(layer.hidden)continue;edge(layer.startSeconds+base,'layer-start',3);edge(layer.startSeconds+layer.durationSeconds+base,'layer-end',3);for(const key of layer.keyframes??[])add(layer.startSeconds+base+key.timeSeconds,'layer-keyframe',3)}
-  const chosen=[...candidates].sort((a,b)=>b[1].priority-a[1].priority||a[0]-b[0]).slice(0,QUALITY_LIMITS.sceneSamples).sort((a,b)=>a[0]-b[0]);omittedCandidates+=candidates.size-chosen.length
+  for(const [container,base] of [[scene,0],[composition,-offset]] as const)for(const layer of container.layers??[]){
+   if(layer.hidden)continue
+   const start=layer.startSeconds+base,end=start+layer.durationSeconds,inside=(at:number,reason:string,priority=3)=>{if(at>=start&&at<end)add(at,reason,priority)}
+   edge(start,'layer-start',3);edge(end,'layer-end',3);for(const key of layer.keyframes??[])add(start+key.timeSeconds,'layer-keyframe',3)
+   if(layer.science){const s=layer.science,root=start-s.offsetSeconds+s.delaySeconds;inside(root,'science-start');inside(root+s.durationSeconds/2,'science-middle',4);inside(root+s.durationSeconds,'science-complete')}
+   if(layer.packaging){const p=layer.packaging,root=start-p.offsetSeconds;inside(root,'packaging-start');inside(root+p.introSeconds/2,'packaging-middle',4);inside(root+p.introSeconds,'packaging-complete')}
+   if(layer.textTreatment&&layer.textTreatment.reveal!=='none'){
+    const t=layer.textTreatment,root=start-t.offsetSeconds+t.delaySeconds
+    inside(root,'text-reveal-start');inside(root+t.revealSeconds/2,'text-reveal-clock-middle',4);inside(root+t.revealSeconds,'text-reveal-clock-end')
+    // Actual line wrapping belongs to the painter. These explicit-newline
+    // candidates are estimates, not a claim to find every glyph/line boundary.
+    for(let i=1;i<Math.min(16,(layer.text??'').split('\n').length);i++)inside(root+i*t.lineStaggerSeconds,'text-explicit-line-clock')
+   }
+  }
+  const quota=Math.min(QUALITY_LIMITS.sceneSamples,Math.floor(QUALITY_LIMITS.samples/Math.max(1,composition.scenes.length)))
+  const chosen=[...candidates].sort((a,b)=>b[1].priority-a[1].priority||a[0]-b[0]).slice(0,quota).sort((a,b)=>a[0]-b[0]);omittedCandidates+=candidates.size-chosen.length
   samples.push(...chosen.map(([frame,item])=>({sceneIndex,seconds:frame/composition.fps,localSeconds:frame/composition.fps-offset,reasons:[...item.reasons]})));offset+=duration
  }
  return {samples,omittedCandidates}
@@ -75,7 +90,7 @@ export class StaticHoldObserver {
 export function assertCompositionQuality(raw:unknown):CompositionQuality {
  const v=mediaRecord(raw)
  if(Object.keys(v).some(k=>!['version','kind','coverage','phoneWidth','semanticVerification','samples','omittedCandidates','issues','omittedIssues','omittedTextObservations'].includes(k))||v.version!==1||v.kind!=='composition-quality'||v.coverage!=='critical-state-samples'||v.phoneWidth!==390||v.semanticVerification!=='requires-visual-review'||!Array.isArray(v.samples)||v.samples.length>QUALITY_LIMITS.samples||!Array.isArray(v.issues)||v.issues.length>QUALITY_LIMITS.issues)throw new TypeError('Invalid composition quality report.')
- const samples=v.samples.map(raw=>{const s=mediaRecord(raw);if(Object.keys(s).some(k=>!['sceneIndex','seconds','localSeconds','reasons'].includes(k))||!Array.isArray(s.reasons)||!s.reasons.length||s.reasons.length>32||s.reasons.some(r=>typeof r!=='string'||!/^[a-z-]{1,50}$/.test(r)))throw new TypeError('Invalid quality sample.');return {sceneIndex:finiteNumber(s.sceneIndex,'quality scene',0,23,true),seconds:finiteNumber(s.seconds,'quality film time',0,180),localSeconds:finiteNumber(s.localSeconds,'quality local time',0,60),reasons:s.reasons as string[]}})
- const issues=v.issues.map(raw=>{const i=mediaRecord(raw);if(Object.keys(i).some(k=>!['code','severity','sceneIndex','seconds','message','text'].includes(k))||!['text-outside-frame','phone-small-text','painted-text-overlap','long-static-hold','caption-background-overlap','caption-safe-area'].includes(String(i.code))||!['error','warning'].includes(String(i.severity))||typeof i.message!=='string'||i.message.length>500||i.text!==undefined&&(typeof i.text!=='string'||i.text.length>200))throw new TypeError('Invalid quality issue.');return {...i,sceneIndex:finiteNumber(i.sceneIndex,'quality scene',0,23,true),seconds:finiteNumber(i.seconds,'quality issue time',0,180)} as unknown as QualityIssue})
+ const samples=v.samples.map(raw=>{const s=mediaRecord(raw);if(Object.keys(s).some(k=>!['sceneIndex','seconds','localSeconds','reasons'].includes(k))||!Array.isArray(s.reasons)||!s.reasons.length||s.reasons.length>32||s.reasons.some(r=>typeof r!=='string'||!/^[a-z-]{1,50}$/.test(r)))throw new TypeError('Invalid quality sample.');return {sceneIndex:finiteNumber(s.sceneIndex,'quality scene',0,COMPOSITION_LIMITS.scenes-1,true),seconds:finiteNumber(s.seconds,'quality film time',0,COMPOSITION_LIMITS.seconds),localSeconds:finiteNumber(s.localSeconds,'quality local time',0,60),reasons:s.reasons as string[]}})
+ const issues=v.issues.map(raw=>{const i=mediaRecord(raw);if(Object.keys(i).some(k=>!['code','severity','sceneIndex','seconds','message','text'].includes(k))||!['text-outside-frame','phone-small-text','painted-text-overlap','long-static-hold','caption-background-overlap','caption-safe-area'].includes(String(i.code))||!['error','warning'].includes(String(i.severity))||typeof i.message!=='string'||i.message.length>500||i.text!==undefined&&(typeof i.text!=='string'||i.text.length>200))throw new TypeError('Invalid quality issue.');return {...i,sceneIndex:finiteNumber(i.sceneIndex,'quality scene',0,COMPOSITION_LIMITS.scenes-1,true),seconds:finiteNumber(i.seconds,'quality issue time',0,COMPOSITION_LIMITS.seconds)} as unknown as QualityIssue})
  return {version:1,kind:'composition-quality',coverage:'critical-state-samples',phoneWidth:390,semanticVerification:'requires-visual-review',samples,omittedCandidates:finiteNumber(v.omittedCandidates,'omitted candidates',0,100000,true),issues,omittedIssues:finiteNumber(v.omittedIssues,'omitted issues',0,100000000,true),...(v.omittedTextObservations===undefined?{}:{omittedTextObservations:finiteNumber(v.omittedTextObservations,'omitted text observations',0,100000000,true)})}
 }

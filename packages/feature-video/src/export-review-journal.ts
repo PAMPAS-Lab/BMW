@@ -1,3 +1,4 @@
+import {COMPOSITION_LIMITS} from '../../media-native/src/composition-contract.js'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -31,13 +32,13 @@ export class ExportReviewJournal {
   if(Object.keys(v).some(k=>!['version','draftId','ownerSessionId','exports'].includes(k))||(v.version!==1&&v.version!==2)||v.draftId!==this.draftId||v.ownerSessionId!==this.ownerSessionId||!Array.isArray(v.exports)||v.exports.length>8)throw new Error('Invalid or foreign export review journal.')
   const version=v.version
   const seen=new Set<string>(),exports:ExportReviewSnapshot[]=v.exports.map(raw=>{
-   const e=mediaRecord(raw);if(Object.keys(e).some(k=>!['fingerprint','artifactId','createdAt','scenes','agent','user'].includes(k))||!Array.isArray(e.scenes)||e.scenes.length>24||typeof e.createdAt!=='string'||!Number.isFinite(Date.parse(e.createdAt)))throw new Error('Invalid export review snapshot.')
+   const e=mediaRecord(raw);if(Object.keys(e).some(k=>!['fingerprint','artifactId','createdAt','scenes','agent','user'].includes(k))||!Array.isArray(e.scenes)||e.scenes.length>COMPOSITION_LIMITS.scenes||typeof e.createdAt!=='string'||!Number.isFinite(Date.parse(e.createdAt)))throw new Error('Invalid export review snapshot.')
    const fingerprint=hash(e.fingerprint);if(seen.has(fingerprint))throw new Error('Duplicate export review fingerprint.');seen.add(fingerprint)
    const sequences=new Set<number>(),readAssessment=(raw:unknown)=>{const a=assessment(raw,version);if(a?.sequence!==undefined){if(sequences.has(a.sequence))throw new Error('Duplicate export review assessment sequence.');sequences.add(a.sequence)}return a}
    const ids=new Set<string>(),scenes=e.scenes.map(raw=>{
     const s=mediaRecord(raw);if(Object.keys(s).some(k=>!['sceneId','signature','totalSamples','frames','agent','user'].includes(k))||!Array.isArray(s.frames)||s.frames.length>24)throw new Error('Invalid export review scene.')
     const sceneId=studioId(s.sceneId),totalSamples=finiteNumber(s.totalSamples,'review sample count',0,24,true);if(ids.has(sceneId))throw new Error('Duplicate review scene.');ids.add(sceneId)
-    const indices=new Set<number>(),frames=s.frames.map(raw=>{const f=mediaRecord(raw);if(Object.keys(f).some(k=>!['index','artifactId','sha256','seconds'].includes(k)))throw new Error('Invalid review frame proof.');const index=finiteNumber(f.index,'review sample index',0,totalSamples-1,true);if(indices.has(index))throw new Error('Duplicate review sample.');indices.add(index);return {index,artifactId:assertArtifactId(f.artifactId),sha256:hash(f.sha256),seconds:finiteNumber(f.seconds,'review frame time',0,180)}})
+    const indices=new Set<number>(),frames=s.frames.map(raw=>{const f=mediaRecord(raw);if(Object.keys(f).some(k=>!['index','artifactId','sha256','seconds'].includes(k)))throw new Error('Invalid review frame proof.');const index=finiteNumber(f.index,'review sample index',0,totalSamples-1,true);if(indices.has(index))throw new Error('Duplicate review sample.');indices.add(index);return {index,artifactId:assertArtifactId(f.artifactId),sha256:hash(f.sha256),seconds:finiteNumber(f.seconds,'review frame time',0,COMPOSITION_LIMITS.seconds)}})
     return {sceneId,signature:hash(s.signature),totalSamples,frames,...(s.agent===undefined?{}:{agent:readAssessment(s.agent)}),...(s.user===undefined?{}:{user:readAssessment(s.user)})}
    })
    return {fingerprint,artifactId:assertArtifactId(e.artifactId),createdAt:e.createdAt,scenes,...(e.agent===undefined?{}:{agent:readAssessment(e.agent)}),...(e.user===undefined?{}:{user:readAssessment(e.user)})}

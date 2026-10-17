@@ -1,9 +1,11 @@
 import {traceCanvasText} from '../src/media/canvas-text-trace.js'
+import {assertLayerTextTreatment,revealedTextLines,textGraphemes} from '../src/layer-text-treatment.js'
+import {assertLayerPackaging,layerPackagingState,packagingPoint} from '../src/layer-packaging.js'
 import {suggestRecordingPlan} from '../src/recording-plan.js'
 import {Ajv} from 'ajv'
 import {assertVisualEffects,visualEffectFilter} from '../src/visual-effects.js'
 import {scenePlaybackClock} from '../src/scene-playback-window.js'
-import {assertVisualLayers,assertAudioLayers,activeVisualLayers,visualLayerBox,layerFadeGain,assertLayerFadeWindow} from '../src/composition-layers.js'
+import {assertVisualLayers,assertAudioLayers,activeVisualLayers,visualLayerBox,layerFadeGain,assertLayerFadeWindow,assertLayerSourceCrop} from '../src/composition-layers.js'
 import {reviewSceneText,assertCompositionText,wrapText,captionBacking,captionLayout} from '../src/media/composition-text.js'
 import {withCanvasPaintRole,canvasPaintRole} from '../src/media/canvas-paint-role.js'
 import {assertVisualEffectWindow,assertFocusIntervals,focusFraming,visibleFocusIntervals} from '../src/focus-contract.js'
@@ -24,6 +26,34 @@ import test from 'node:test'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+
+test('Finite entry packaging preserves source clocks and bounded perspective under reverse seeks',()=>{
+ const pack=assertLayerPackaging({introSeconds:2,flipDegrees:85,directionalBlurPixels:24,directionalBlurDegrees:90,radialBlur:.15,glitchPixels:12,glitchHertz:24})
+ const first=layerPackagingState(pack,0),middle=layerPackagingState(pack,1),last=layerPackagingState(pack,2)
+ assert.equal(first.strength,1);assert.equal(middle.strength,.5);assert.equal(last.strength,0);assert.equal(last.angle,0);assert.equal(last.glitchShift,0);assert.ok(Math.abs(first.directionX)<1e-8);assert.equal(first.directionY,24)
+ for(const t of [1.75,.75,2.5,1.01])assert.deepEqual(layerPackagingState({...pack,offsetSeconds:.75},t-.75),layerPackagingState(pack,t))
+ for(const flipAxis of ['x','y'] as const)for(const flipDegrees of [-85,0,85])for(const x of [0,500,1000])for(const y of [0,300,600]){
+  const p=packagingPoint(x,y,1000,600,flipAxis,flipDegrees*Math.PI/180);assert.ok(Number.isFinite(p.x)&&Number.isFinite(p.y));if(flipDegrees===0)assert.deepEqual(p,{x,y})
+ }
+ for(const bad of [{flipAxis:'z'},{flipDegrees:90},{directionalBlurPixels:25},{radialBlur:.16},{glitchHertz:25},{introSeconds:0},{offsetSeconds:NaN},{introSeconds:null},{css:'url(secret)'}])assert.throws(()=>assertLayerPackaging(bad))
+ assert.throws(()=>assertLayerTextTreatment({strokeWidth:null}))
+ assert.deepEqual(assertLayerSourceCrop({x:.5,y:.2,width:.5,height:.1}),{x:.5,y:.2,width:.5,height:.1})
+ for(const crop of [{x:.9,y:0,width:.2,height:1},{x:0,y:0,width:.01,height:1},{x:NaN,y:0,width:1,height:1},{x:0,y:0,width:1,height:1,script:'no'}])assert.throws(()=>assertLayerSourceCrop(crop))
+ const layer={id:'pack',title:'Retained clock',kind:'text',text:'文字\nTranslation',color:'#ffffff',x:.1,y:.1,width:.8,height:.4,startSeconds:1,durationSeconds:4,packaging:{introSeconds:2,offsetSeconds:.5,flipDegrees:75},textTreatment:{reveal:'grapheme',delaySeconds:.5,revealSeconds:2,lineStaggerSeconds:.5,offsetSeconds:.5}}
+ const plan=compositionQualityPlan(assertComposition({title:'Clock samples',width:360,height:640,fps:12,music:false,scenes:[{title:'Clock',durationSeconds:6,layers:[layer]}]}))
+ assert.ok(plan.samples.some(s=>s.reasons.includes('packaging-middle')&&s.localSeconds===1.5));assert.ok(plan.samples.some(s=>s.reasons.includes('text-reveal-clock-middle')&&s.localSeconds===2));assert.ok(!plan.samples.some(s=>s.reasons.includes('packaging-start')));assert.ok(plan.samples.length<=24)
+})
+
+test('Text reveal preserves graphemes and full-layout lines under arbitrary seeks and sliced clocks',()=>{
+ const parts=textGraphemes('中👩🏽‍🔬e\u0301');assert.deepEqual(parts,['中','👩🏽‍🔬','e\u0301'])
+ const style=assertLayerTextTreatment({reveal:'grapheme',delaySeconds:1,revealSeconds:3,lineStaggerSeconds:.5,strokeWidth:4,strokeColor:'#000000'}),lines=['中👩🏽‍🔬','e\u0301']
+ assert.deepEqual(revealedTextLines(lines,style,.9),['','']);assert.deepEqual(revealedTextLines(lines,style,2),['中','']);assert.deepEqual(revealedTextLines(lines,style,3),['中👩🏽‍🔬','']);assert.deepEqual(revealedTextLines(lines,style,4.5),lines)
+ for(const t of [3.75,1.25,4.5,2.7,2.01])assert.deepEqual(revealedTextLines(lines,{...style,offsetSeconds:1.25},t-1.25),revealedTextLines(lines,style,t))
+ assert.deepEqual(revealedTextLines(lines,assertLayerTextTreatment({reveal:'line',delaySeconds:1,lineStaggerSeconds:.5}),1.25),[lines[0],''])
+ assert.deepEqual(revealedTextLines(lines,undefined,0),lines)
+ for(const bad of [{reveal:'script'},{strokeColor:'url(secret)'},{strokeWidth:9},{offsetSeconds:-1},{revealSeconds:0},{code:'alert(1)'}])assert.throws(()=>assertLayerTextTreatment(bad))
+ assert.throws(()=>assertVisualLayers([{id:'a',title:'x',kind:'rectangle',color:'#ffffff',startSeconds:0,durationSeconds:3,x:0,y:0,width:.5,height:.5,textTreatment:{}}]),/text layer/i)
+})
 
 test('Phone reading pans the entire pinned source at readable estimated size and stays on the original sentence clock',()=>{
  const source={artifactId:'source.png',sha256:'a'.repeat(64)},base={x:0,y:0,width:1,height:1},area={x:24,y:122,width:357,height:390},reading={mode:'sequence' as const,returnToWhole:false,targets:[{source,rect:{x:.1,y:.2,width:.8,height:.08},name:'原句',lineCount:2}]},cues=[{kind:'reading' as const,index:0,startSeconds:2,endSeconds:8}]
@@ -232,7 +262,7 @@ test('seekable composition validates Project IDs, bounds and real narration asse
   assert.deepEqual(sceneAtTime(composition,10),{index:1,localSeconds:0,startSeconds:10})
   assert.throws(()=>sceneAtTime(composition,30),/outside/)
   for (const changed of [{videoArtifactId:'../outside.webm'},{videoArtifactId:'https://example.com/a'},{durationSeconds:NaN},{durationSeconds:Infinity},{zoom:2},{playbackRate:0},{crop:{x:.7,y:0,width:.6,height:1}},{narration:'假旁白'},{script:'alert(1)'}]) assert.throws(()=>assertComposition({title:'x',scenes:[{...scene,...changed}]}))
-  assert.throws(()=>assertComposition({title:'x',scenes:Array.from({length:4},()=>({...scene,durationSeconds:60}))}),/three minutes/)
+  assert.throws(()=>assertComposition({title:'x',scenes:Array.from({length:13},()=>({...scene,durationSeconds:60}))}),/twelve minutes/)
 })
 test('narration fixes provider and voices and rejects SSML control or arbitrary endpoints', () => {
   assert.equal(assertNarration({text:'你好，世界。'}).voice,'zh-CN-YunxiNeural')
@@ -254,6 +284,11 @@ test('Selected source sound trims, retimes, scales mono and stops at its endpoin
   const output=[new Float32Array(3*48000),new Float32Array(3*48000)];mixSourceAudioChunk(output,chunk,0,1,1,.25,2,.5)
   assert.equal(output[0][47999],0);assert.ok(Math.abs(output[0][48000]-.125)<1e-6);assert.ok(Math.abs(output[0][54000]-.25)<1e-6);assert.equal(output[0][66000],0,'No repeated sound after the available .375 seconds');assert.deepEqual(output[0],output[1])
   const bounded=[new Float32Array(48000)];mixSourceAudioChunk(bounded,chunk,0,0,.2,0,1,1);assert.ok(bounded[0][9500]>.19);assert.equal(bounded[0][9600],0,'No bleed into following scene')
+  const full=[new Float32Array(3*48000)];mixSourceAudioChunk(full,chunk,0,.37,1.13,.13,.75,.6,t=>Math.min(1,t/.11,(1.13-t)/.17))
+  for(const [start,count] of [[0,17000],[17000,40001],[57001,60000],[100001,43999]]){
+    const window=[new Float32Array(count)];mixSourceAudioChunk(window,chunk,0,.37,1.13,.13,.75,.6,t=>Math.min(1,t/.11,(1.13-t)/.17),start)
+    assert.deepEqual(window[0],full[0].slice(start,start+count),'PCM windows preserve the original source, interpolation and fade clocks.')
+  }
 })
 test('Caption and source audio contracts stay closed and captions estimate within scene-local time',()=>{
   const style={fontSize:28,color:'#ffffff',background:'outline',position:'top',align:'left',offsetPercent:0};const raw={title:'Style',durationSeconds:4,narration:'One sentence. Another sentence.',audioArtifactId:'voice.wav',videoArtifactId:'clip.mp4',captionStyle:style,voiceMuted:true,voiceVolume:.4,keepSourceAudio:true,sourceVolume:.5}
@@ -402,7 +437,7 @@ test('Original presentation windows validate root bounds and preserve counters a
  assert.deepEqual(scenePlaybackClock(parsed,2,4),origin)
  const legacy=assertComposition({title:'Legacy',scenes:[scene]}).scenes[0]
  assert.deepEqual(scenePlaybackClock(legacy,2,4),{originId:'unsegmented',startSeconds:0,durationSeconds:10,musicIndex:3,sceneNumber:3,sceneCount:4})
- for(const change of [{originId:'../root'},{originId:['root']},{startSeconds:-1},{startSeconds:2.53},{startSeconds:'2.52'},{durationSeconds:61},{durationSeconds:NaN},{musicIndex:0},{musicIndex:1.5},{sceneNumber:3},{sceneCount:25},{sceneCount:'2'},{url:'https://example.test'},{shell:'run'}])assert.throws(()=>assertComposition({title:'Invalid',scenes:[{...root,presentationWindow:{...origin,...change}}]}))
+ for(const change of [{originId:'../root'},{originId:['root']},{startSeconds:-1},{startSeconds:2.53},{startSeconds:'2.52'},{durationSeconds:61},{durationSeconds:NaN},{musicIndex:0},{musicIndex:1.5},{sceneNumber:3},{sceneCount:97},{sceneCount:'2'},{url:'https://example.test'},{shell:'run'}])assert.throws(()=>assertComposition({title:'Invalid',scenes:[{...root,presentationWindow:{...origin,...change}}]}))
  assert.throws(()=>assertComposition({title:'Invalid',scenes:[{...root,presentationWindow:null}]}))
  assert.throws(()=>assertComposition({title:'Invalid',scenes:[{...root,bulletRevealSeconds:[0,1,4]}]}),/bullet reveal/)
 })

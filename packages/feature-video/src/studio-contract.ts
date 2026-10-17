@@ -1,4 +1,8 @@
+import {COMPOSITION_LIMITS} from '../../media-native/src/composition-contract.js'
+import {assertAnalysisRequest} from './source-analysis-contract.js'
+import type {AnalysisRequest} from './source-analysis-contract.js'
 import {TIMING_BASES} from './studio-speech-provenance.js'
+import {studioRecovery,studioOperationSpec} from './studio-discovery.js'
 import {assertCardSpeechChoices} from './studio-card-speech.js'
 import type {CardSpeechChoice} from './studio-card-speech.js'
 import {assertEditedRecordingPlan} from './studio-recording-plan.js'
@@ -84,6 +88,7 @@ import type {MaterialIndexRequest} from './material-index-contract.js'
 import {assertExportReviewVerdict} from './export-review-contract.js'
 import {assertAssetQuery,SCENE_SECTIONS} from './studio-read-contract.js'
 export interface StudioRequest {
+  analysisRequest?:AnalysisRequest
   timingSection?:'overview'|'sentences'|'issues'
   timingBasis?:import('./studio-speech-provenance.js').TimingBasis
   exportReview?:import('./export-review-contract.js').ExportReviewVerdict
@@ -104,7 +109,7 @@ export interface StudioRequest {
   speechModel?:'base'|'small'; anchors?:SentenceAnchor[];cardLinks?:CardSpeechChoice[]
   snapshotProof?:string
   splitSeconds?:number
-  operation:'diagnose-timing'|'review-status'|'record-export-review'|'read-scene'|'read-preparation'|'describe-edit'|'guide'|'estimate-speech'|'suggest-recording-plan'|'apply-recording-plan'|'narrate-local'|'apply-source-narration'|'validate-source-narration'|'materials'|'describe-template'|'describe-schema'|'read-document'|'compatibility'|'validate-edit'|'apply-edit'|'migrate-document'|'remove-reference'|'prepare-reference'|'read-reference'|'set-reference-analysis'|'apply-reference-notes'|'propose-review'|'adopt-review'|'dismiss-review'|'undo-review'|'split-scene'|'restore'|'recognize-source'|'read-source-speech'|'apply-source-captions'|'detach-source-captions'|'set-caption-translations'|'align-speech'|'read-speech'|'correct-speech'|'source'|'export-citations'|'list'|'create'|'read'|'delete'|'update'|'narrate'|'narrate-pending'|'check'|'export-captions'|'export-cover'|'read-material'|'suggest-focus'|'review-export'|'render'|'assets'|'inspect'|'attach'|'open'|'context'|'configure'|'save-template'
+  operation:'analysis'|'diagnose-timing'|'review-status'|'record-export-review'|'read-scene'|'read-preparation'|'describe-edit'|'guide'|'estimate-speech'|'suggest-recording-plan'|'apply-recording-plan'|'narrate-local'|'apply-source-narration'|'validate-source-narration'|'materials'|'describe-template'|'describe-schema'|'read-document'|'compatibility'|'validate-edit'|'apply-edit'|'migrate-document'|'remove-reference'|'prepare-reference'|'read-reference'|'set-reference-analysis'|'apply-reference-notes'|'propose-review'|'adopt-review'|'dismiss-review'|'undo-review'|'split-scene'|'restore'|'recognize-source'|'read-source-speech'|'apply-source-captions'|'detach-source-captions'|'set-caption-translations'|'align-speech'|'read-speech'|'correct-speech'|'source'|'export-citations'|'list'|'create'|'read'|'delete'|'update'|'narrate'|'narrate-pending'|'check'|'export-captions'|'export-cover'|'read-material'|'suggest-focus'|'review-export'|'render'|'assets'|'inspect'|'attach'|'open'|'context'|'configure'|'save-template'
   templateName?:string; options?:VideoOptionOverrides
   draftId?: string; expectedRevision?: number; draft?: unknown; title?: string
   cover?:VideoCoverOptions
@@ -125,10 +130,19 @@ function closed(value:Record<string,unknown>,keys:readonly string[]):void {
   if(Object.keys(value).some(key=>!keys.includes(key)))throw new TypeError('Unsupported Studio property. Use video.studio / studioRequest.operation="guide" for exact operation fields.')
 }
 export function assertStudioRequest(raw:unknown):StudioRequest {
+  try{
+    const value=mediaRecord(raw),spec=studioOperationSpec(value.operation),parsed=parseStudioRequest(raw)
+    if(spec){closed(value,['operation',...spec.required,...spec.optional]);const missing=spec.required.filter(key=>value[key]===undefined);if(missing.length)throw new TypeError('Studio operation requires '+missing.join(', ')+'.')}
+    return parsed
+  }catch(error){throw studioRecovery(raw,error)}
+}
+function parseStudioRequest(raw:unknown):StudioRequest {
   const value=mediaRecord(raw)
-  closed(value,['timingSection','timingBasis','exportReview','briefSection','assetQuery','pageOffset','pageLimit','section','sourceSection','editOperation','cardLinks','recordingPlan','recordingSourceSha256','recordingEventsSha256','sourceNarrationRecipe','materialRequest','cardTemplateId','edit','operation','draftId','expectedRevision','draft','title','sceneId','artifactId','assetKind','ratePercent','templateName','options','provider','voice','captionFormat','segmentIndex','cover','forceRender','reviewOffset','sourceRequest','speechModel','anchors','speechLanguage','sourceRange','sourceCues','translations','snapshotProof','splitSeconds','reviewProposal','reviewId','referenceId','referenceAnalysis','timestampsSeconds','beforeNotes'])
-  if(!['diagnose-timing','review-status','record-export-review','read-scene','read-preparation','describe-edit','guide','estimate-speech','suggest-recording-plan','apply-recording-plan','narrate-local','apply-source-narration','validate-source-narration','materials','describe-template','describe-schema','read-document','compatibility','validate-edit','apply-edit','migrate-document','remove-reference','prepare-reference','read-reference','set-reference-analysis','apply-reference-notes','propose-review','adopt-review','dismiss-review','undo-review','split-scene','restore','recognize-source','read-source-speech','apply-source-captions','detach-source-captions','set-caption-translations','align-speech','read-speech','correct-speech','source','export-citations','list','create','read','delete','update','narrate','narrate-pending','check','export-captions','export-cover','read-material','suggest-focus','review-export','render','assets','inspect','attach','open','context','configure','save-template'].includes(String(value.operation)))throw new TypeError('Unknown Studio operation. Use video.studio / studioRequest.operation="guide"; actual MP4 review is review-export.')
+  closed(value,['analysisRequest','timingSection','timingBasis','exportReview','briefSection','assetQuery','pageOffset','pageLimit','section','sourceSection','editOperation','cardLinks','recordingPlan','recordingSourceSha256','recordingEventsSha256','sourceNarrationRecipe','materialRequest','cardTemplateId','edit','operation','draftId','expectedRevision','draft','title','sceneId','artifactId','assetKind','ratePercent','templateName','options','provider','voice','captionFormat','segmentIndex','cover','forceRender','reviewOffset','sourceRequest','speechModel','anchors','speechLanguage','sourceRange','sourceCues','translations','snapshotProof','splitSeconds','reviewProposal','reviewId','referenceId','referenceAnalysis','timestampsSeconds','beforeNotes'])
+  if(!['analysis','diagnose-timing','review-status','record-export-review','read-scene','read-preparation','describe-edit','guide','estimate-speech','suggest-recording-plan','apply-recording-plan','narrate-local','apply-source-narration','validate-source-narration','materials','describe-template','describe-schema','read-document','compatibility','validate-edit','apply-edit','migrate-document','remove-reference','prepare-reference','read-reference','set-reference-analysis','apply-reference-notes','propose-review','adopt-review','dismiss-review','undo-review','split-scene','restore','recognize-source','read-source-speech','apply-source-captions','detach-source-captions','set-caption-translations','align-speech','read-speech','correct-speech','source','export-citations','list','create','read','delete','update','narrate','narrate-pending','check','export-captions','export-cover','read-material','suggest-focus','review-export','render','assets','inspect','attach','open','context','configure','save-template'].includes(String(value.operation)))throw new TypeError('Unknown Studio operation. Use video.studio / studioRequest.operation="guide"; actual MP4 review is review-export.')
   const result:StudioRequest={operation:value.operation as StudioRequest['operation']}
+  if(result.operation==='analysis'){closed(value,['operation','draftId','expectedRevision','analysisRequest']);return {operation:'analysis',draftId:studioId(value.draftId),expectedRevision:finiteNumber(value.expectedRevision,'revision',1,1000000,true),analysisRequest:assertAnalysisRequest(value.analysisRequest)}}
+  if(value.analysisRequest!==undefined)throw new TypeError('analysisRequest requires analysis.');
   if(result.operation==='diagnose-timing'){
     closed(value,['operation','draftId','expectedRevision','sceneId','timingSection','pageOffset','pageLimit'])
     if(value.timingSection!==undefined&&!['overview','sentences','issues'].includes(String(value.timingSection)))throw new TypeError('Unknown timing section.')
@@ -139,7 +153,7 @@ export function assertStudioRequest(raw:unknown):StudioRequest {
   if(result.operation==='review-status'||result.operation==='record-export-review'){
     closed(value,['operation','draftId','expectedRevision',...(result.operation==='record-export-review'?['exportReview','sceneId']:['pageOffset','pageLimit'])])
     const scoped={...result,draftId:studioId(value.draftId),expectedRevision:finiteNumber(value.expectedRevision,'revision',1,1000000,true)}
-    if(result.operation==='review-status')return {...scoped,...(value.pageOffset===undefined?{}:{pageOffset:finiteNumber(value.pageOffset,'review scene offset',0,24,true)}),...(value.pageLimit===undefined?{}:{pageLimit:finiteNumber(value.pageLimit,'review scene limit',1,20,true)})}
+    if(result.operation==='review-status')return {...scoped,...(value.pageOffset===undefined?{}:{pageOffset:finiteNumber(value.pageOffset,'review scene offset',0,COMPOSITION_LIMITS.scenes,true)}),...(value.pageLimit===undefined?{}:{pageLimit:finiteNumber(value.pageLimit,'review scene limit',1,20,true)})}
     const exportReview=assertExportReviewVerdict(value.exportReview)
     if(exportReview.scope==='film'&&value.sceneId!==undefined)throw new TypeError('Film review does not take sceneId.')
     return {...scoped,exportReview,...(exportReview.scope==='scene'?{sceneId:studioId(value.sceneId)}:{})}
@@ -148,7 +162,7 @@ export function assertStudioRequest(raw:unknown):StudioRequest {
 
   if(result.operation==='assets'){closed(value,['operation','assetQuery']);return {...result,...(value.assetQuery===undefined?{}:{assetQuery:assertAssetQuery(value.assetQuery)})}}
   if(value.assetQuery!==undefined)throw new TypeError('assetQuery requires assets.')
-  if(['read-scene','read-preparation','list','source','read-material','estimate-speech','read-speech','read-source-speech'].includes(result.operation)){
+  if(['read','read-scene','read-preparation','list','source','read-material','estimate-speech','read-speech','read-source-speech'].includes(result.operation)){
     if(value.pageOffset!==undefined)result.pageOffset=finiteNumber(value.pageOffset,'page offset',0,1000000,true)
     if(value.pageLimit!==undefined)result.pageLimit=finiteNumber(value.pageLimit,'page limit',1,20,true)
   }else if(value.pageOffset!==undefined||value.pageLimit!==undefined)throw new TypeError('Paging requires a bounded read operation.')
@@ -307,12 +321,12 @@ export function assertStudioScene(raw:unknown):StudioScene {
 }
 export function assertVideoDraft(raw:unknown):VideoDraft {
   const value=mediaRecord(raw);closed(value,['cardLayout','narrationPacing','version','id','ownerSessionId','revision','title','width','height','fps','music','style','watermark','templateName','tts','scenes','preparation','updatedAt','exports','cover','coverExports','layers','audioTracks','reviewItems','referenceRecords'])
-  if(value.version!==1||!Array.isArray(value.scenes)||value.scenes.length>24)throw new TypeError('A Studio draft supports zero to twenty-four scenes.')
+  if(value.version!==1||!Array.isArray(value.scenes)||value.scenes.length>COMPOSITION_LIMITS.scenes)throw new TypeError('A Studio draft supports zero to ninety-six scenes.')
   const scenes=value.scenes.map(assertStudioScene)
   if(new Set(scenes.map(scene=>scene.id)).size!==scenes.length)throw new TypeError('Duplicate scene identity.')
   const settings=assertComposition({title:value.title,cardLayout:value.cardLayout,narrationPacing:value.narrationPacing,width:value.width,height:value.height,fps:value.fps,music:value.music,style:value.style,watermark:value.watermark,templateName:value.templateName,scenes:scenes.length?scenes.map(scene=>({title:scene.title,durationSeconds:scene.durationSeconds})):[{title:'Preparation',durationSeconds:1}]})
   if(!Array.isArray(value.exports)||value.exports.length>30)throw new TypeError('Invalid export history.')
-  const exports=value.exports.map(raw=>{const item=mediaRecord(raw);closed(item,['artifactId','revision','createdAt','durationSeconds','verificationArtifactId','fingerprint']);if(item.fingerprint!==undefined&&(typeof item.fingerprint!=='string'||!/^[a-f0-9]{64}$/.test(item.fingerprint)))throw new TypeError('Invalid export fingerprint.');return {artifactId:assertArtifactId(item.artifactId),...(item.fingerprint?{fingerprint:String(item.fingerprint)}:{}),...(item.verificationArtifactId?{verificationArtifactId:assertArtifactId(item.verificationArtifactId)}:{}),revision:finiteNumber(item.revision,'export revision',1,1_000_000,true),createdAt:studioText(item.createdAt,'export date',40),durationSeconds:finiteNumber(item.durationSeconds,'export duration',1,181)}})
+  const exports=value.exports.map(raw=>{const item=mediaRecord(raw);closed(item,['artifactId','revision','createdAt','durationSeconds','verificationArtifactId','fingerprint']);if(item.fingerprint!==undefined&&(typeof item.fingerprint!=='string'||!/^[a-f0-9]{64}$/.test(item.fingerprint)))throw new TypeError('Invalid export fingerprint.');return {artifactId:assertArtifactId(item.artifactId),...(item.fingerprint?{fingerprint:String(item.fingerprint)}:{}),...(item.verificationArtifactId?{verificationArtifactId:assertArtifactId(item.verificationArtifactId)}:{}),revision:finiteNumber(item.revision,'export revision',1,1_000_000,true),createdAt:studioText(item.createdAt,'export date',40),durationSeconds:finiteNumber(item.durationSeconds,'export duration',1,COMPOSITION_LIMITS.seconds+1)}})
   const coverExports=value.coverExports??[]
   if(!Array.isArray(coverExports)||coverExports.length>30)throw new TypeError('Invalid cover export history.')
   const covers:CoverExport[]=coverExports.map(raw=>{const item=mediaRecord(raw);closed(item,['artifactId','width','height','revision','createdAt','options','actualTimestampSeconds']);const width=finiteNumber(item.width,'cover width',320,1920,true),height=finiteNumber(item.height,'cover height',180,1920,true)
@@ -370,7 +384,9 @@ export function draftReadiness(draft:VideoDraft):StudioReadiness {
       if(segment.sourceStartSeconds>=(segment.sourceDurationSeconds??0))issue('source-range',prefix+'素材起点必须早于视频结束；请调整起点或更换素材')
       else if(gap>.05){if(scene.endPolicy==='hold')issue('held-frame',prefix+`已选择末帧定格 ${gap.toFixed(1)} 秒`,'warning');else issue('footage-gap',prefix+`需补录 ${gap.toFixed(1)} 秒或明确选择定格`)}
     }
-    if(!sceneVisuals(scene).length&&!scene.bullets.length&&!scene.cardSpec)issue('missing-visual','需要画面素材或标题卡内容')
+    const painted=(layer:NonNullable<VideoDraft['layers']>[number])=>!layer.hidden&&(layer.opacity>0||layer.keyframes?.some(frame=>frame.opacity>0))&&(layer.kind!=='text'||Boolean(layer.text?.trim()))
+    const sceneEnd=startSeconds+scene.durationSeconds,hasLayer=scene.layers?.some(layer=>painted(layer)&&layer.startSeconds<scene.durationSeconds&&layer.startSeconds+layer.durationSeconds>0)||draft.layers?.some(layer=>painted(layer)&&layer.startSeconds<sceneEnd&&layer.startSeconds+layer.durationSeconds>startSeconds)
+    if(!sceneVisuals(scene).length&&!scene.bullets.length&&!scene.cardSpec&&!hasLayer)issue('missing-visual','需要画面素材、可见独立图层或标题卡内容')
     const endSeconds=startSeconds+scene.durationSeconds
     scenes.push({sceneId:scene.id,startSeconds,endSeconds,availableSeconds:coverage.available,gapSeconds:coverage.gap,measured:coverage.measured});startSeconds=endSeconds
   }

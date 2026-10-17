@@ -50,8 +50,12 @@ export async function initializeCodex(rpc: CodexRpc): Promise<void> {
   rpc.notify('initialized', {})
 }
 export function codexThreadParameters(directory: string, model: string, definition: CodexBrowserDefinition, context: string): Record<string, unknown> {
+  const properties=definition.inputSchema.properties as Record<string,unknown>|undefined
+  const action=properties?.action as {enum?:unknown}|undefined
+  const actions=Array.isArray(action?.enum)?action.enum.filter((value):value is string=>typeof value==='string'):[]
+  const guide=actions.length?' Browser action index (current authenticated catalog): '+actions.join(', ')+'.'+(actions.includes('help')?' Start page research with browser {"action":"observe"}. To discover or recover, call browser {"action":"help"}, or {"action":"help","forAction":"EXACT_ACTION"} for its closed input schema. Do not guess aliases. On a validation failure, follow its recovery contract and correct the request; unknown fields are rejected before execution. Collect finite video to its ended event with a safety limit longer than the source duration; a limit stop is partial.':''):''
   return { cwd: directory, model, config: structuredClone(codexBrowserConfig), environments: [], sandbox: 'read-only', approvalPolicy: 'never',
-    dynamicTools: [definition], developerInstructions: 'You are BMW Assistant. Use browser for Project pages, images, media and Video Studio. BMW owns resource and Session scope. Current Project context:\n' + context }
+    dynamicTools: [definition], developerInstructions: 'You are BMW Assistant. Use browser for Project pages, images, media and Video Studio. BMW owns resource and Session scope.'+guide+' Current Project context:\n' + context }
 }
 export function codexProtocolVersion(output:string):string {
   const value=output.startsWith('codex-cli ')?output.slice('codex-cli '.length):undefined

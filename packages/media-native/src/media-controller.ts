@@ -1,6 +1,9 @@
 import {ArtifactJobIO} from './artifact-job-io.js'
+import {preserveMedia} from './media-preservation.js'
+import type {PreservationInput} from './media-preservation.js'
 import {SpeechProcessor} from './speech-processor.js'
 import {VideoElementCapture} from './video-element-capture.js'
+import {readCaptureIndex,captureIndexSummary,sampleCaptureSourceFrames} from './capture-source-index.js'
 import type {SourceCaptureGuard} from './source-contract.js'
 import type {WebContents} from 'electron'
 import {recordingEvents,assertRecordingFrameClock,RECORDING_EVENT_BYTES} from './recording-contract.js'
@@ -12,7 +15,7 @@ import path from 'node:path'
 import crypto from 'node:crypto'
 import { once } from 'node:events'
 import { BrowserWindow } from 'electron'
-import { assertMediaInfo,assertNativeProcessingRequest, mediaRecord } from './media-contract.js'
+import { assertArtifactId,assertMediaInfo,assertNativeProcessingRequest, mediaRecord } from './media-contract.js'
 import { NarrationProcessor } from './narration-processor.js'
 import { CompositionProcessor } from './composition-processor.js'
 import { MediaProcessor, CoverProcessor } from './media-processor.js'
@@ -26,6 +29,8 @@ const ARTIFACT_MIME_TYPES = Object.freeze({
 
 export class MediaController implements NativeMediaPort {
   [key: string]: any
+  private sourceFramesReading=false
+  private preserving=false
   private eventSource?:RecordingEventSource
   private recordingClock?:RecordingClock
   private recordingBytes=0
@@ -84,7 +89,7 @@ export class MediaController implements NativeMediaPort {
   }
 
   isCaptureActive(): boolean {
-    return Boolean(this.file || this.elementCapture || this.processor.busy || this.composer.busy || this.narrator.busy || this.coverProcessor.busy || this.speechProcessor.busy)
+    return Boolean(this.preserving || this.sourceFramesReading || this.file || this.elementCapture || this.processor.busy || this.composer.busy || this.narrator.busy || this.coverProcessor.busy || this.speechProcessor.busy)
   }
 
   async narrate(raw: unknown, signal?: AbortSignal) {
@@ -114,6 +119,12 @@ export class MediaController implements NativeMediaPort {
   }
 
   async processArtifact(raw: unknown, signal?: AbortSignal) {
+    if(this.preserving)throw new Error('Finish media preservation before processing artifacts.')
+    if(mediaRecord(raw).action==='media.capture.frames.sample'){
+      if(this.isCaptureActive())throw new Error('Finish the current media job before reading source frame evidence.')
+      this.sourceFramesReading=true
+      try{return await sampleCaptureSourceFrames(this.resolveArtifactsDirectory?.()||this.artifactsDirectory,raw,signal,async(request,readSignal)=>{const result=await this.processor.process(request,this.resolveArtifactsDirectory?.()||this.artifactsDirectory,readSignal);if(!('frames' in result))throw new Error('Source frame decoder returned no frames.');return result})}finally{this.sourceFramesReading=false}
+    }
     if(mediaRecord(raw).action==='media.speech.align'){if(this.isCaptureActive())throw new Error('Finish the current media job before speech alignment.');const directory=this.resolveArtifactsDirectory?.()||this.artifactsDirectory;return this.speechProcessor.align(raw,directory,signal)}
     if(mediaRecord(raw).action==='media.speech.normalize')throw new Error('Speech normalization is private to its owning alignment job.')
     if(mediaRecord(raw).action==='video.cover'){
@@ -129,6 +140,10 @@ export class MediaController implements NativeMediaPort {
     const request = assertNativeProcessingRequest(raw)
     const directory = this.resolveArtifactsDirectory?.() || this.artifactsDirectory
     const result = await this.processor.process(request, directory, signal)
+    if(request.action==='media.inspect'){
+      const index=await readCaptureIndex(directory,request.artifactId,signal)
+      return {...result,captureTimeline:index?captureIndexSummary(index):{status:'unavailable',reason:'No capture-time source frame index exists for this artifact. File PTS cannot be treated as source PTS.'}}
+    }
     if((request.action==='media.image.draw'||request.action==='media.image.annotate')&&'artifactId' in result&&'width' in result){
       try{
         const info=await this.processor.process({action:'media.image.inspect',artifactId:result.artifactId},directory,signal)
@@ -151,6 +166,12 @@ export class MediaController implements NativeMediaPort {
       await fs.promises.rm(result.path, { force: true })
       throw error
     }
+  }
+
+  async preserveMedia(request:Omit<PreservationInput,'directory'>){
+    if(this.isCaptureActive())throw new Error('Finish the current media job before preservation.')
+    this.preserving=true
+    try{return await preserveMedia({...request,directory:this.resolveArtifactsDirectory?.()||this.artifactsDirectory})}finally{this.preserving=false}
   }
 
   projectArtifactPath(filename) {
@@ -246,6 +267,7 @@ export class MediaController implements NativeMediaPort {
     if (this.elementCapture) {
       if(request.discard)throw new Error('discard cancels page recordings; selected-video jobs use their cancellation signal.')
       const capture = this.elementCapture
+      if(capture.cleanupFailed){const result=await capture.retryCleanup();if(this.elementCapture===capture)this.elementCapture=null;return result}
       return capture.stop()
     }
     if (!this.file) return { state: 'idle' }
@@ -303,11 +325,11 @@ export class MediaController implements NativeMediaPort {
     finally { await this.eventSource?.dispose();this.eventSource=undefined;this.recordingClock=undefined;stream.removeListener('error',this.captureStreamError);this.stream = null; this.file = null; this.target = null }
   }
 
-  async captureVideo(tab:{id:string;title:string;url:string;view:{webContents:WebContents}},request:{selector?:unknown;index?:unknown;filename?:unknown;fromStart?:unknown;maxDurationMs?:unknown;sourceGuard?:SourceCaptureGuard}={},signal?:AbortSignal){
+  async captureVideo(tab:{id:string;title:string;url:string;view:{webContents:WebContents}},request:{selector?:unknown;index?:unknown;filename?:unknown;fromStart?:unknown;maxDurationMs?:unknown;playbackPlan?:unknown;sourceGuard?:SourceCaptureGuard}={},signal?:AbortSignal){
     signal?.throwIfAborted();if(this.isCaptureActive())throw new Error('A media job is already active.')
     const directory=this.resolveArtifactsDirectory?.(tab)||this.artifactsDirectory;fs.mkdirSync(directory,{recursive:true,mode:0o700})
     const capture=new VideoElementCapture(tab.view.webContents,directory,request,{id:tab.id,title:tab.title,url:tab.url},value=>this.onStatus?.(value));this.elementCapture=capture
-    try{return await capture.run(signal)}finally{if(this.elementCapture===capture)this.elementCapture=null}
+    try{return await capture.run(signal)}finally{if(this.elementCapture===capture&&!capture.cleanupFailed)this.elementCapture=null}
   }
 
   async compareImages(baselinePng, currentPng) {
@@ -329,7 +351,7 @@ export class MediaController implements NativeMediaPort {
     return result
   }
 
-  async showArtifact(filePath, { title = 'BMW Media' } = {}) {
+  async showArtifact(filePath, { title = 'BMW Media',autoplay=true } = {}) {
     const stat = fs.statSync(filePath)
     if (!stat.isFile()) throw new Error('BMW media viewer requires a file.')
     if (stat.size > 50_000_000) throw new Error('BMW media viewer supports evidence up to 50 MB.')
@@ -340,6 +362,7 @@ export class MediaController implements NativeMediaPort {
     this.window.setSize(960, 720)
     this.window.webContents.send('media-command', {
       type: 'view',
+      autoplay,
       title,
       filename: path.basename(filePath),
       mimeType,
@@ -349,6 +372,13 @@ export class MediaController implements NativeMediaPort {
     this.window.show()
     this.window.focus()
     return { opened: true, filename: path.basename(filePath), mimeType, bytes: stat.size }
+  }
+
+  async previewAudio(raw:unknown,signal?:AbortSignal){
+    const value=mediaRecord(raw),artifactId=assertArtifactId(value.artifactId)
+    if(!artifactId.endsWith('.wav'))throw new Error('Audio preview accepts a Project WAV audition artifact.')
+    const directory=this.resolveArtifactsDirectory?.()||this.artifactsDirectory,io=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId})
+    try{if(io.bytes>44+10*96000*8*2)throw new Error('Audition exceeds its ten-second byte budget.');const hash=await io.fingerprint(signal),header=Buffer.from(await io.read(0,44));if(header.toString('ascii',0,4)!=='RIFF'||header.toString('ascii',8,12)!=='WAVE')throw new Error('Audio preview needs a WAV file.');signal?.throwIfAborted();await this.showArtifact(path.join(directory,artifactId),{title:'BMW 音频试听 · 点击播放；模型听审未执行',autoplay:false});signal?.throwIfAborted();return {artifactId,sha256:hash,previewOpened:true,autoplay:false,listeningStatus:'not-performed',note:'Playback controls are available to the user. Opening a player does not establish a model or human listening verdict.'}}finally{await io.close()}
   }
 
   acceptComparison(value) {

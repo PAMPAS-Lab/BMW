@@ -20,7 +20,7 @@ export class StudioWorkflow {
   render(state:StudioState,draft:VideoDraft|undefined,stage:number,mode:string,disabled:boolean):void {
     const own=this.activity?.projectId===state.project.id&&this.activity.sessionId===state.sessionId?this.activity:null
     const compatibility=draft?studioCompatibility(draft):undefined
-    const notice=node('studio-compatibility');notice.hidden=!compatibility||compatibility.simpleEditable;notice.textContent=compatibility?.simpleEditable?'':(advancedText(this.view.mode))+compatibility?.blockingReasons.map(r=>r.message).join(' ')+' 撤销或移除后可返回卡片。'
+    const notice=node('studio-compatibility');notice.hidden=!compatibility||compatibility.simpleEditable;notice.textContent=compatibility?.simpleEditable?'':(advancedText(this.view.mode))+[...new Set(compatibility?.blockingReasons.map(r=>r.message))].join(' ')+' 撤销或移除后可返回卡片。'
     const advanced=this.view.mode==='advanced',editing=stage===4&&Boolean(draft),delivery=editing&&mode==='delivery',completed=editing&&!delivery&&mode!=='cover'&&this.result==='completed'&&Boolean(draft?.exports.length)
     document.body.dataset.result=completed?'completed':'draft';document.body.dataset.view=this.view.mode;document.body.dataset.surface=delivery?'delivery':stage===0?'materials':stage===1||stage===2?'script':'preview'
     node<HTMLButtonElement>('view-toggle').textContent=advanced&&!compatibility?.simpleEditable&&draft?'返回卡片（需先移除高级内容）':advanced?'← 返回卡片':'高级编辑';node('view-toggle').setAttribute('aria-pressed',String(advanced));node<HTMLButtonElement>('view-toggle').disabled=disabled

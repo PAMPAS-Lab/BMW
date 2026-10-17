@@ -1,3 +1,6 @@
+import {VIDEO_DOCUMENT_VERSION,VIDEO_DOCUMENT_VERSIONS} from './video-document-version.js'
+import {COMPOSITION_LIMITS} from '../../media-native/src/composition-contract.js'
+import {SourceAnalysisService} from './source-analysis-service.js'
 import {diagnoseStudioTiming} from './studio-timing.js'
 import {sceneTimingDiagnostics} from './studio-timing-diagnostics.js'
 import {exportReviewState} from './studio-export-review-state.js'
@@ -42,7 +45,7 @@ import { normalizeVideoPreferences, resolveVideoOutput, optionsFromOutput, saveV
 import path from 'node:path'
 import {VideoStudioStore} from './studio-store.js'
 import {assertStudioRequest,assertVideoDraft,draftComposition,draftReadiness,applyNarrationPacing,sceneCoverage,studioId} from './studio-contract.js'
-import {mediaRecord,finiteNumber} from '../../media-native/src/media-contract.js'
+import {mediaRecord,finiteNumber,assertArtifactId} from '../../media-native/src/media-contract.js'
 import {ArtifactJobIO} from '../../media-native/src/artifact-job-io.js'
 import type {VideoDraft,StudioReadiness} from './studio-contract.js'
 export type {BrowserFeatureHost as StudioKernel} from '@bmw-agent/browser-capability/host'
@@ -70,13 +73,13 @@ export class VideoStudioService {
       if(!variants.length)throw new TypeError('VIDEO_EDIT_OPERATION: Unknown command. Use describe-schema for command names.')
       return {editOperation:request.editOperation,version:1,variants,cardSchemaOperation:'describe-template',transaction:'apply-edit with expectedRevision and edit {version:1,commands:[...]}; Host-owned evidence is never writable.'}
     }
-    if(request.operation==='describe-schema')return {schemaVersion:'2.5',supportedDocumentVersions:['2.0','2.1','2.2','2.3','2.4','2.5'],cardTemplates:CARD_TEMPLATES.filter(item=>item.id!=='points/list').map(({id,category,name,purpose})=>({id,category,name,purpose})),documentSchema:videoDocumentSchema,editSchema:videoEditSchema,capabilities:{profile:'simple.cards/3',frameRates:{minimum:12,maximum:30,denominator:1},maxScenes:24,maxDurationSeconds:180,maxVisualSegmentsPerScene:8,maxIndependentObjects:64,sequentialRegions:true,freeTimelineGaps:false,nestedSequences:false,aiAssetGeneration:false},authorization:{projectId:owner.projectId,sessionId:owner.sessionId,advancedEditing:context?.view?.mode==='advanced'},commands:['brief.set','scene.add','captions.set','card.set','card.bind','scene.set','scene.reorder','clip.move','clip.trim','clip.split','clip.effects','clip.mute','layer.add','layer.set','layer.remove']}
+    if(request.operation==='describe-schema')return {schemaVersion:VIDEO_DOCUMENT_VERSION,supportedDocumentVersions:[...VIDEO_DOCUMENT_VERSIONS],cardTemplates:CARD_TEMPLATES.filter(item=>item.id!=='points/list').map(({id,category,name,purpose})=>({id,category,name,purpose})),documentSchema:videoDocumentSchema,editSchema:videoEditSchema,capabilities:{profile:'simple.cards/3',frameRates:{minimum:12,maximum:30,denominator:1},maxScenes:COMPOSITION_LIMITS.scenes,maxDurationSeconds:COMPOSITION_LIMITS.seconds,maxVisualSegmentsPerScene:8,maxIndependentObjects:64,sequentialRegions:true,freeTimelineGaps:false,nestedSequences:false,aiAssetGeneration:false},authorization:{projectId:owner.projectId,sessionId:owner.sessionId,advancedEditing:context?.view?.mode==='advanced'},commands:['brief.set','scene.add','captions.set','card.set','card.bind','scene.set','scene.reorder','clip.move','clip.trim','clip.split','clip.effects','clip.mute','layer.add','layer.set','layer.remove']}
     if(request.operation==='describe-template')return {template:cardTemplate(request.cardTemplateId!),cardSpecSchema:{oneOf:cardSpecSchema.oneOf.filter(branch=>branch.properties.templateId.const===request.cardTemplateId)},contentContracts:cardSpecSchema.oneOf.filter(branch=>branch.properties.templateId.const===request.cardTemplateId).map(branch=>({ ...cardContentContract(request.cardTemplateId!,branch.properties.version.const as 1|2),sceneConstraints:cardSceneConstraints(request.cardTemplateId!,branch.properties.version.const as 1|2)})),visualBindings:{derivedScene:['imageArtifactId','videoArtifactId','visualSegments[].imageArtifactId','visualSegments[].videoArtifactId'],canonicalDocument:'timeline primary clips',sourcePinsAttachVisuals:false},variants:CARD_TEMPLATES.filter(item=>item.category===cardTemplate(request.cardTemplateId!).category).map(({id,name,purpose})=>({id,name,purpose})),defaults:{motion:'none'},supportedAspectRatios:['16:9','9:16'],limits:{title:44,bullet:64,maxVisualSegments:8,maxDurationSeconds:60},guidance:['Fill canonical scene fields named by slots; cardSpec stores bounded dedicated slots. Version 2 cards require document 2.2; source rectangles are pinned to actual artifact SHA-256.','Use real Project artifacts and source URLs; example labels are not factual evidence.','Plan one purpose per card, fetch missing assets, validate the draft, then inspect actual preview.','Do not delete extra bullets to fit a different template; use a list or split the card.','Recording focus is not a measured pointer trajectory.']};
     if(request.operation==='materials')return new MaterialIndexService(this.kernel,owner,actor).execute(request.materialRequest,signal)
     if(request.operation==='source')return sources.execute(request.sourceRequest,signal)
     if(request.operation==='open'){if(!this.kernel.videoStudioOpen)throw new Error('Studio UI is unavailable in this host.');return this.kernel.videoStudioOpen(owner)}
     if(request.operation==='context')return this.kernel.videoStudioContext?.(owner)??{mode:'browser',selection:null}
-    if(request.operation==='list'){const drafts=store.list();return {project:{id:project.id,name:project.name},sessionId:owner.sessionId,drafts,compatibility:Object.fromEntries(drafts.map(d=>[d.id,studioCompatibility(d)])),schemaVersion:'2.5',supportedDocumentVersions:['2.0','2.1','2.2','2.3','2.4','2.5'],snapshotProofs:Object.fromEntries(drafts.map(draft=>[draft.id,this.snapshots.issue(owner,draft)])),reusableExports:Object.fromEntries(drafts.flatMap(draft=>{const output=store.reusableExport(draft);return output?[[draft.id,output.artifactId]]:[]})),videoPreferences:normalizeVideoPreferences(this.kernel.settingsStore?.snapshot().videoPreferences??{})}}
+    if(request.operation==='list'){const drafts=store.list();return {project:{id:project.id,name:project.name},sessionId:owner.sessionId,drafts,compatibility:Object.fromEntries(drafts.map(d=>[d.id,studioCompatibility(d)])),schemaVersion:VIDEO_DOCUMENT_VERSION,supportedDocumentVersions:[...VIDEO_DOCUMENT_VERSIONS],snapshotProofs:Object.fromEntries(drafts.map(draft=>[draft.id,this.snapshots.issue(owner,draft)])),reusableExports:Object.fromEntries(drafts.flatMap(draft=>{const output=store.reusableExport(draft);return output?[[draft.id,output.artifactId]]:[]})),videoPreferences:normalizeVideoPreferences(this.kernel.settingsStore?.snapshot().videoPreferences??{})}}
     if(request.operation==='assets')return request.assetQuery?studioAssetPage(project.directory,request.assetQuery):{assets:store.assets(project.directory)}
     if(request.operation==='create')return store.create(request.title??'新视频',resolveVideoOutput(this.kernel.settingsStore?.snapshot().videoPreferences,request.options??{},request.templateName))
     if(request.operation==='read-material'){
@@ -125,6 +128,7 @@ export class VideoStudioService {
     }
     const draft=store.read(id)
     if(draft.revision!==request.expectedRevision)throw new Error('STUDIO_CONFLICT: 请使用当前草稿版本。')
+    if(request.operation==='analysis')return new SourceAnalysisService(this.kernel,{projectId:project.id,sessionId:owner.sessionId,draftId:draft.id,directory:project.directory},()=>{if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Analysis Project changed.');this.assertRevision(store,draft)},actor).execute(request.analysisRequest!,signal)
     if(['remove-reference','prepare-reference','read-reference','set-reference-analysis','apply-reference-notes'].includes(request.operation))return referenceOperation(this.kernel,store,draft,request,path.join(project.directory,'artifacts'),()=>{if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Reference Project changed.');this.assertRevision(store,draft)},actor,signal)
     if(['propose-review','adopt-review','dismiss-review','undo-review'].includes(request.operation)){
       const items=structuredClone(draft.reviewItems??[])
@@ -243,13 +247,14 @@ export class VideoStudioService {
       signal?.throwIfAborted();this.assertRevision(store,draft)
       const composition=draftComposition(draft)
       const directory=path.join(project.directory,'artifacts'),root=await fs.realpath(directory),rootIdentity=await fs.lstat(directory),before=new Set(await fs.readdir(directory)),created=new Map<string,{dev:number;ino:number}>()
-      const result=assertMediaArtifactReceipt(await this.kernel.recordingController.compose(composition,signal))
+      const received=mediaRecord(await this.kernel.recordingController.compose(composition,signal))
       let committed=false
       try{
-        for(const artifactId of [result.artifactId,...(typeof result.verificationArtifactId==='string'?[result.verificationArtifactId]:[])])if(!before.has(artifactId)){const file=path.join(root,artifactId),stat=await fs.lstat(file).catch(error=>{if(error.code==='ENOENT')return undefined;throw error});if(stat?.isFile()&&!stat.isSymbolicLink())created.set(file,{dev:stat.dev,ino:stat.ino})}
+        for(const id of [received.artifactId,...(typeof received.verificationArtifactId==='string'?[received.verificationArtifactId]:[])]){const artifactId=assertArtifactId(id);if(!before.has(artifactId)){const file=path.join(root,artifactId),stat=await fs.lstat(file).catch(error=>{if(error.code==='ENOENT')return undefined;throw error});if(stat?.isFile()&&!stat.isSymbolicLink())created.set(file,{dev:stat.dev,ino:stat.ino})}}
+        const result=assertMediaArtifactReceipt(received,'composition')
         signal?.throwIfAborted();if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Studio Project changed during export.');this.assertRevision(store,draft)
         await verifyStudioSpeech(draft,directory,signal);await this.verifyCardPins(draft,directory,signal);signal?.throwIfAborted();this.assertRevision(store,draft)
-        const updated=store.addExport(id,draft.revision,{artifactId:String(result.artifactId),durationSeconds:finiteNumber(result.durationSeconds,'duration',1,180),...(result.verificationArtifactId?{verificationArtifactId:String(result.verificationArtifactId)}:{})})
+        const updated=store.addExport(id,draft.revision,{artifactId:String(result.artifactId),durationSeconds:finiteNumber(result.durationSeconds,'duration',1,COMPOSITION_LIMITS.seconds),...(result.verificationArtifactId?{verificationArtifactId:String(result.verificationArtifactId)}:{})})
         committed=true;return {draft:updated,export:result}
       }finally{if(!committed){const current=await fs.lstat(directory);if(current.dev!==rootIdentity.dev||current.ino!==rootIdentity.ino||current.isSymbolicLink()||await fs.realpath(directory)!==root)throw new Error('Export Project changed; cleanup refused.');for(const [file,identity] of created){const stat=await fs.lstat(file).catch(error=>{if(error.code==='ENOENT')return undefined;throw error});if(stat?.dev===identity.dev&&stat.ino===identity.ino&&!stat.isSymbolicLink())await fs.unlink(file)}}}
     }

@@ -56,7 +56,7 @@ npm run test:affected
 
 未知路径、删除、共享构建配置、产品组合、选择器自身或验证代码中无法证明范围的动态模块导入会保守升级为完整离线集。生产计算式导入在架构检查时直接拒绝。运行时测试入口按显式行为/实现范围选择；未选中的入口不会仅因初始化时动态加载外部依赖就扩大其他模块的覆盖。直接修改这些入口，或影响共享测试库中的动态导入，仍保守升级。重命名同时处理旧、新路径；未追踪源文件纳入 Git 范围。新增测试未分类、接口没有保障测试、文档清单过期会直接失败。显式 `--files` 是调用者声明的范围；默认命令对比最后完整通过的哈希基线，能发现全部尚未验证的改动。没有基线时回退到 Git HEAD。
 
-`--layer` 只验证所选类别，不声明完整改动覆盖，不能与文件范围混用。完整验证只有全部自动测试通过且运行期间源码未改变才更新 `.bmw-runtime/test-baseline.json`；局部通过不会覆盖完整基线。报告记录 selected/excluded 及原因、通过/失败/未执行、依赖版本、源码哈希和日志。桌面 Project 组包含独立重启，原生焦点失败仍是失败。生产 Profile、钥匙串与真实桌面体验保留人工验收；离线成功不代表付费模型或外部服务通过。
+`--layer` 只验证所选类别，不声明完整改动覆盖，不能与文件范围混用。完整验证排除显式 opt-in（包括专用本地素材夹具及外部服务），只有全部所选自动测试通过且运行期间源码未改变才更新 `.bmw-runtime/test-baseline.json`；局部通过不会覆盖完整基线。报告记录 selected/excluded 及原因、通过/失败/未执行、依赖版本、源码哈希和日志。桌面 Project 组包含独立重启，原生焦点失败仍是失败。生产 Profile、钥匙串与真实桌面体验保留人工验收；离线成功不代表付费模型或外部服务通过。
 
 <!-- BEGIN GENERATED MODULE CONTRACTS -->
 
@@ -116,7 +116,7 @@ npm run test:affected
 
 - agent-contract: `packages/agent-contract/index.ts`
 - agent-ui: `packages/agent-ui/index.ts`
-- media-native: `packages/media-native/src/media-controller.ts`, `packages/media-native/src/media-port.ts`, `packages/media-native/src/media-contract.ts`, `packages/media-native/src/composition-contract.ts`, `packages/media-native/src/card-templates.ts`, `packages/media-native/src/composition-layers.ts`, `packages/media-native/src/media/composition-layers-paint.ts`, `packages/media-native/src/narration-contract.ts`, `packages/media-native/src/video-options.ts`, `packages/media-native/src/video-options-form.ts`, `packages/media-native/src/artifact-job-io.ts`, `packages/media-native/src/media/composition-audio.ts`, `packages/media-native/src/media/composition-paint.ts`, `packages/media-native/src/media/linear-frames.ts`, `packages/media-native/src/image-contract.ts`, `packages/media-native/src/media/image-decoder.ts`, `packages/media-native/src/caption-export.ts`, `packages/media-native/src/text-export.ts`, `packages/media-native/src/focus-contract.ts`, `packages/media-native/src/recording-plan.ts`, `packages/media-native/src/recording-contract.ts`, `packages/media-native/src/visual-segments.ts`, `packages/media-native/src/image-drawing-contract.ts`, `packages/media-native/src/media/processing.cover-contract.ts`, `packages/media-native/src/source-contract.ts`, `packages/media-native/src/speech-contract.ts`, `packages/media-native/src/visual-effects.ts`, `packages/media-native/src/card-details.ts`, `packages/media-native/src/composition-quality.ts`, `packages/media-native/src/card-cues.ts`, `packages/media-native/src/speech-range.ts`
+- media-native: `packages/media-native/src/media-controller.ts`, `packages/media-native/src/media-port.ts`, `packages/media-native/src/media-contract.ts`, `packages/media-native/src/composition-contract.ts`, `packages/media-native/src/card-templates.ts`, `packages/media-native/src/composition-layers.ts`, `packages/media-native/src/science-spec.ts`, `packages/media-native/src/layer-packaging.ts`, `packages/media-native/src/layer-text-treatment.ts`, `packages/media-native/src/media/composition-layers-paint.ts`, `packages/media-native/src/narration-contract.ts`, `packages/media-native/src/video-options.ts`, `packages/media-native/src/video-options-form.ts`, `packages/media-native/src/artifact-job-io.ts`, `packages/media-native/src/media-preservation.ts`, `packages/media-native/src/media/composition-audio.ts`, `packages/media-native/src/media/composition-paint.ts`, `packages/media-native/src/media/linear-frames.ts`, `packages/media-native/src/image-contract.ts`, `packages/media-native/src/media/image-decoder.ts`, `packages/media-native/src/caption-export.ts`, `packages/media-native/src/text-export.ts`, `packages/media-native/src/focus-contract.ts`, `packages/media-native/src/recording-plan.ts`, `packages/media-native/src/recording-contract.ts`, `packages/media-native/src/visual-segments.ts`, `packages/media-native/src/image-drawing-contract.ts`, `packages/media-native/src/media/processing.cover-contract.ts`, `packages/media-native/src/source-contract.ts`, `packages/media-native/src/speech-contract.ts`, `packages/media-native/src/visual-effects.ts`, `packages/media-native/src/card-details.ts`, `packages/media-native/src/composition-quality.ts`, `packages/media-native/src/card-cues.ts`, `packages/media-native/src/speech-range.ts`
 - browser-capability: `packages/browser-capability/src/browser-schema.ts`, `packages/browser-capability/src/bridge-server.ts`, `packages/browser-capability/src/browser-kernel.ts`, `packages/browser-capability/src/browser-capability-registry.ts`, `packages/browser-capability/src/browser-host.ts`
 - platform: `packages/platform/src/product-definition.ts`, `packages/platform/src/main.ts`, `packages/platform/src/assistant-service.ts`, `packages/platform/src/feature-contract.ts`, `packages/platform/src/agent-data-schema.ts`
 - feature-video: `packages/feature-video/index.ts`
@@ -129,7 +129,27 @@ npm run test:affected
 
 | ID | 分类 | 归属 | 入口 | 配置／分支 |
 |---|---|---|---|---|
+| browser.media-session-fetch | contract | browser-capability | packages/browser-capability/test/media-session-fetch.test.ts | 默认 |
+| browser.media-download-runtime | integration | browser-capability, media-native | scripts/media-download-smoke.ts | 默认 |
+| media.science-spec | contract | media-native | packages/media-native/test/science-spec.test.ts | 默认 |
+| media.video-capture | contract | media-native | packages/media-native/test/video-element-capture.test.ts | 默认 |
+| media.capture-source-index | contract | media-native | packages/media-native/test/capture-source-index.test.ts | 默认 |
+| media.preservation | contract | media-native | packages/media-native/test/media-preservation.test.ts | 默认 |
 | video.material-index | contract | feature-video | packages/feature-video/test/material-index.test.ts | 默认 |
+| video.source-analysis | contract | feature-video | packages/feature-video/test/source-analysis.test.ts | 默认 |
+| media.source-analysis-case | media (opt-in) | feature-video, media-native, browser-capability | scripts/source-analysis-case.ts | opt-in: BMW_ANALYSIS_SOURCE_INDEX=<explicit local copied-source fixture list> |
+| media.frame-sampling-case | media (opt-in) | media-native | scripts/frame-sampling-case.ts | opt-in: BMW_FRAME_SAMPLING_SOURCE=<explicit local MP4 fixture> |
+| media.long-composition-case | media (opt-in) | media-native, feature-video, browser-capability | scripts/long-composition-case.ts | opt-in: BMW_LONG_SOURCE_INDEX=<explicit local public-source fixture list> |
+| studio.science | desktop | media-native, feature-video, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_SCIENCE_CASE=1 |
+| studio.layer-packaging | desktop | media-native, feature-video, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_PACKAGING_CASE=1 |
+| studio.text-treatment | desktop | media-native, feature-video, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_TEXT_CASE=1 |
+| video.qbit-playback | media (opt-in) | media-native | scripts/qbit-playback-audit.ts | opt-in: Explicit local sample playback review |
+| video.qbit-stage4-samples | media (opt-in) | media-native, feature-video, browser-capability | scripts/qbit-stage4-samples.ts | opt-in: BMW_QBIT_SOURCE_INDEX=<explicit authorized local public-video index> |
+| video.qbit-stage3-samples | media (opt-in) | media-native, feature-video, browser-capability | scripts/qbit-stage3-samples.ts | opt-in: BMW_QBIT_SOURCE_INDEX=<explicit authorized local public-video index> |
+| media.science-diagrams | media | media-native, feature-video | scripts/science-diagram-smoke.ts | 默认 |
+| media.layer-packaging | media | media-native, feature-video | scripts/layer-packaging-smoke.ts | 默认 |
+| media.text-treatment | media | media-native, feature-video | scripts/text-treatment-smoke.ts | 默认 |
+| media.audio-windows | media | media-native, feature-video | scripts/audio-window-smoke.ts | 默认 |
 | studio.export-review | desktop | feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_EXPORT_REVIEW_CASE=1 |
 | agent.context | contract | agent-contract | packages/agent-contract/test/context-sync.test.ts | 默认 |
 | agent.conversation | contract | agent-contract | packages/agent-contract/test/conversation.test.ts | 默认 |
@@ -239,6 +259,7 @@ npm run test:affected
 | desktop.native | desktop | platform, harness-dsh, browser-capability, feature-video | scripts/desktop-smoke.ts | group=native |
 | studio.next | integration | feature-video, media-native | scripts/studio-next-smoke.ts | 默认 |
 | studio.schema | desktop | platform, feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_SCHEMA_CASE=1 |
+| studio.long-film | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_LONG_CASE=1 |
 | studio.workflow-entry | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_WORKFLOW_ENTRY_CASE=1 |
 | studio.materials-entry | desktop | platform, feature-video, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_MATERIALS_ENTRY_CASE=1 |
 | studio.visual-effects | desktop | platform, feature-video, media-native | scripts/video-studio-smoke.ts | BMW_STUDIO_VISUAL_EFFECTS_CASE=1 |

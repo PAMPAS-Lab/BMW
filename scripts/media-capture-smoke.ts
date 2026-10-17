@@ -112,6 +112,8 @@ async function run(): Promise<void> {
     diagnostics: new Map([[tab.id, { console: [], network: [], media: [], loadFailures: [] }]]),
     projectStore: { active: () => ({ id: 'media-smoke-project', directory: projectDirectory }) },
     session: smokeSession,
+    tabs: new Map([[tab.id,tab]]),
+    mediaFetchForTab: BrowserKernel.prototype.mediaFetchForTab,
     artifactsDirectory: path.join(projectDirectory, 'artifacts'),
     serializeTab: () => ({ id: tab.id, title: tab.title, url: tab.url }),
     diagnosticsFor: BrowserKernel.prototype.diagnosticsFor

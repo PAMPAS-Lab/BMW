@@ -1,4 +1,5 @@
 import {assertArtifactId, finiteNumber, mediaRecord} from './media-contract.js'
+import {COMPOSITION_LIMITS} from './composition-limits.js'
 export interface MediaInspectionReply {durationSeconds: number; tracks: {type: 'audio' | 'video' | 'subtitle'; canDecode: boolean; width?:number; height?:number; hasAlphaData?:boolean;startSeconds?:number;endSeconds?:number}[]}
 
 /** Host-only port. Unknown payloads are admitted by the native request validators.
@@ -12,11 +13,11 @@ export interface MediaArtifactReceipt extends Record<string, unknown> {
   artifactId: string
   durationSeconds: number
 }
-export function assertMediaArtifactReceipt(raw: unknown): MediaArtifactReceipt {
+export function assertMediaArtifactReceipt(raw: unknown,kind:'narration'|'composition'='narration'): MediaArtifactReceipt {
   const value = mediaRecord(raw)
   assertArtifactId(value.artifactId)
   if(value.verificationArtifactId!==undefined)assertArtifactId(value.verificationArtifactId)
-  finiteNumber(value.durationSeconds, 'artifact duration', .01, 180)
+  finiteNumber(value.durationSeconds, 'artifact duration', .01,kind==='composition'?COMPOSITION_LIMITS.seconds:180)
   return value as MediaArtifactReceipt
 }
 export function assertMediaInspection(raw: unknown): MediaInspectionReply {

@@ -1,4 +1,6 @@
 import {cardImageAssets} from './card-details.js'
+import {COMPOSITION_LIMITS} from './composition-limits.js'
+export {COMPOSITION_LIMITS} from './composition-limits.js'
 import {assertCardCues,assertCardCueTargets} from './card-cues.js'
 import {assertCardSpec,assertCardContent,cardSpecSchema} from './card-templates.js'
 import type {CardSpec} from './card-templates.js'
@@ -79,7 +81,7 @@ function keys(value: Record<string, unknown>, allowed: string[]): void {
 export function assertComposition(raw: unknown): MediaComposition {
   const value = mediaRecord(raw)
   keys(value, ['cardLayout','narrationPacing','title','width','height','fps','music','style','watermark','templateName','tts','scenes','layers','audioTracks'])
-  if (!Array.isArray(value.scenes) || !value.scenes.length || value.scenes.length > 24) throw new TypeError('A composition needs 1 to 24 scenes.')
+  if (!Array.isArray(value.scenes) || !value.scenes.length || value.scenes.length > COMPOSITION_LIMITS.scenes) throw new TypeError('A composition needs 1 to 96 scenes.')
   if (value.music !== undefined && typeof value.music !== 'boolean') throw new TypeError('music must be boolean.')
   const result: MediaComposition = {
     title: text(value.title, 'title', 80), width: finiteNumber(value.width ?? 1280, 'width', 320, 1920, true),
@@ -150,7 +152,7 @@ export function assertComposition(raw: unknown): MediaComposition {
   result.tts=assertNarrationOptions(value.tts??{})
   result.watermark=assertWatermark(value.watermark??{})
   if(value.templateName!==undefined)result.templateName=templateName(value.templateName)
-  if (compositionDuration(result) > 180) throw new TypeError('Composition exceeds three minutes.')
+  if (compositionDuration(result) > COMPOSITION_LIMITS.seconds) throw new TypeError('Composition exceeds twelve minutes.')
   return result
 }
 export function compositionDuration(value: MediaComposition): number { return value.scenes.reduce((total, scene) => total + scene.durationSeconds, 0) }

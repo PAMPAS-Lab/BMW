@@ -9,10 +9,11 @@ import {visualAtTime} from '../../../media-native/src/visual-segments.js'
 import {decodeProjectImage} from '../../../media-native/src/media/image-decoder.js'
 import {ImageDecodeBudget,DECODE_BUDGET} from '../../../media-native/src/image-contract.js'
 import {Input,BlobSource,ALL_FORMATS} from 'mediabunny'
-import {LinearFrameReader,normalizeBrowserVideoColor} from '../../../media-native/src/media/linear-frames.js'
+import {LinearFrameReader,normalizeBrowserVideoColor,indexedFrameStart} from '../../../media-native/src/media/linear-frames.js'
 import {assertCompositionText,paintScene} from '../../../media-native/src/media/composition-paint.js'
 import type {CompositionVisualBox,CompositionTextBox} from '../../../media-native/src/media/composition-paint.js'
-import {mixCompositionAudio} from '../../../media-native/src/media/composition-audio.js'
+import {prepareCompositionAudio} from '../../../media-native/src/media/composition-audio.js'
+import type {CompositionAudioWindows} from '../../../media-native/src/media/composition-audio.js'
 import {compositionDuration,sceneAtTime,compositionAssets,compositionImageIds} from '../../../media-native/src/composition-contract.js'
 import type {MediaComposition} from '../../../media-native/src/composition-contract.js'
 import {speechScene,usesStudioSpeech} from '../studio-speech-contract.js'
@@ -42,8 +43,8 @@ export class StudioPreview {
   private visualRequest=0
   private visualRender?:Promise<void>
   private assets=new Map<string,Asset>();private composition?:MediaComposition
-  private audio?:AudioContext;private mixed?:AudioBuffer;private voiceDurations:number[]=[]
-  private source?:AudioBufferSourceNode;private startedAt=0;private position=0
+  private audio?:AudioContext;private audioPlan?:CompositionAudioWindows;private voiceDurations:number[]=[]
+  private sources=new Set<AudioBufferSourceNode>();private windowPump?:Promise<void>;private startedAt=0;private position=0
   private reader?:LinearFrameReader;private readerScene=-1;private readerTime=-1
   private queue:Promise<void>=Promise.resolve();private playing=false;private generation=0
   private lifecycle:Promise<void>=Promise.resolve()
@@ -98,9 +99,9 @@ export class StudioPreview {
       }
       if(generation!==this.generation)return false
       this.layers=new CompositionLayerPainter(this.assets)
-      this.audio=new AudioContext({sampleRate:48000});const mix=await mixCompositionAudio(composition,this.assets,this.audio)
-      if(generation!==this.generation)return false
-      this.mixed=mix.mixed;this.voiceDurations=mix.narrationDurations;this.canvas.width=draft.width;this.canvas.height=draft.height
+      this.audio=new AudioContext({sampleRate:48000});const mix=await prepareCompositionAudio(composition,this.assets,this.audio,()=>{if(generation!==this.generation)throw new Error('Preview audio preparation cancelled.')})
+      if(generation!==this.generation){await mix.close();return false}
+      this.audioPlan=mix;this.voiceDurations=mix.narrationDurations;this.canvas.width=draft.width;this.canvas.height=draft.height
       assertCompositionText(this.canvas.getContext('2d')!,composition,this.voiceDurations)
       await this.seek(position)
       return generation===this.generation
@@ -142,23 +143,30 @@ export class StudioPreview {
   get duration():number{return this.composition?compositionDuration(this.composition):0}
   pause():void{
     clearTimeout(this.tickTimer);this.tickTimer=undefined;this.playbackGeneration++
-    if(this.playing&&this.audio)this.position=Math.min(this.duration,this.audio.currentTime-this.startedAt)
-    this.playing=false;this.source?.stop();this.source=undefined;this.onTime(this.position,false)
+    if(this.playing&&this.audio)this.position=Math.max(0,Math.min(this.duration,this.audio.currentTime-this.startedAt))
+    this.playing=false;for(const source of this.sources){source.onended=null;source.stop();source.disconnect()}this.sources.clear();this.onTime(this.position,false)
   }
   async play():Promise<void>{
-    if(!this.audio||!this.mixed)return
+    if(!this.audio||!this.audioPlan)return
     if(this.playing){this.pause();return}
     if(this.position>=this.duration-.02)this.position=0
-    const audio=this.audio,playback=++this.playbackGeneration,generation=this.generation
+    const audio=this.audio,plan=this.audioPlan,playback=++this.playbackGeneration,generation=this.generation
     await audio.resume()
     if(playback!==this.playbackGeneration||generation!==this.generation||audio!==this.audio)return
-    this.source=audio.createBufferSource();this.source.buffer=this.mixed;this.source.connect(audio.destination)
-    this.source.start(0,this.position);this.startedAt=audio.currentTime-this.position;this.playing=true
+    const initialPosition=this.position,startFrame=Math.round(this.position*48000)
+    let first:AudioBuffer
+    try{first=await plan.render(startFrame,Math.min(plan.windowFrames,plan.frames-startFrame))}catch(error){if(playback!==this.playbackGeneration||generation!==this.generation||audio!==this.audio)return;throw error}
+    if(playback!==this.playbackGeneration||generation!==this.generation||audio!==this.audio)return
+    this.startedAt=audio.currentTime+.05-initialPosition;this.playing=true
     const current=()=>this.playing&&generation===this.generation&&playback===this.playbackGeneration
-    const failed=(error:unknown)=>{if(current())this.pause();console.error(error)}
+    const failed=(error:unknown)=>{if(current()){this.pause();console.error(error)}}
+    let offset=startFrame+first.length,pumping:Promise<void>|undefined
+    const schedule=(buffer:AudioBuffer,frame:number)=>{if(!current())return;const when=this.startedAt+frame/48000;if(when<audio.currentTime-.02)throw new Error('音频窗口准备未赶上播放时钟，请暂停后重试。');const source=audio.createBufferSource();source.buffer=buffer;source.connect(audio.destination);this.sources.add(source);source.onended=()=>{this.sources.delete(source);source.disconnect();if(current())void pump().catch(failed)};source.start(Math.max(audio.currentTime,when))}
+    const pump=():Promise<void>=>{if(pumping)return pumping;const operation=(async()=>{while(current()&&this.sources.size<2&&offset<plan.frames){const frame=offset,count=Math.min(plan.windowFrames,plan.frames-offset),buffer=await plan.render(frame,count);if(!current())return;schedule(buffer,frame);offset+=count}})();pumping=operation;this.windowPump=operation;void operation.finally(()=>{if(pumping===operation)pumping=undefined;if(this.windowPump===operation)this.windowPump=undefined}).catch(()=>{});return operation}
+    schedule(first,startFrame);void pump().catch(failed)
     const tick=async()=>{
       if(!current())return
-      this.position=Math.min(this.duration,audio.currentTime-this.startedAt)
+      this.position=Math.max(initialPosition,Math.min(this.duration,audio.currentTime-this.startedAt))
       await this.draw(this.position)
       if(!current())return
       this.onTime(this.position,true)
@@ -173,7 +181,7 @@ export class StudioPreview {
     if(!this.composition||generation!==this.generation)return
     const timing=sceneAtTime(this.composition,time),scene=this.composition.scenes[timing.index],visual=visualAtTime(scene,timing.localSeconds),segment=visual?.segment??scene,visualKey=timing.index*8+(visual?.index??0),target=segment.sourceStartSeconds+(visual?.localSeconds??timing.localSeconds)*segment.playbackRate
     if(this.readerScene!==visualKey||target<this.readerTime){await this.reader?.close();this.reader=undefined;this.readerScene=visualKey;this.readerTime=-1}
-    if(segment.videoArtifactId&&!this.reader){const track=await this.assets.get(segment.videoArtifactId)?.input?.getPrimaryVideoTrack();if(!track||!await track.canDecode())throw new Error('Footage cannot be decoded.');if(await track.getDisplayWidth()*await track.getDisplayHeight()>16_777_216)throw new Error('Video exceeds decode limit.');await normalizeBrowserVideoColor(track);this.reader=new LinearFrameReader(track,{width:1600})}
+    if(segment.videoArtifactId&&!this.reader){const input=this.assets.get(segment.videoArtifactId)?.input,track=await input?.getPrimaryVideoTrack();if(!track||!await track.canDecode())throw new Error('Footage cannot be decoded.');if(await track.getDisplayWidth()*await track.getDisplayHeight()>16_777_216)throw new Error('Video exceeds decode limit.');await normalizeBrowserVideoColor(track);this.reader=new LinearFrameReader(track,{width:1600},await indexedFrameStart(input!,target))}
     const frame=segment.imageArtifactId?{canvas:this.assets.get(segment.imageArtifactId)!.image!}:this.reader?await this.reader.get(target):null;this.readerTime=target
     if(generation!==this.generation)return
     this.paintedText=undefined
@@ -197,10 +205,11 @@ export class StudioPreview {
   }
   private async release():Promise<void>{
     await this.queue.catch(()=>{});await this.visualRender?.catch(()=>{})
+    await this.windowPump?.catch(()=>{});await this.audioPlan?.close();this.audioPlan=undefined
     await this.reader?.close();this.reader=undefined;this.readerScene=-1;this.readerTime=-1
     await this.layers?.dispose();this.layers=undefined
     this.assets.forEach(asset=>{asset.input?.dispose();if(asset.image){asset.image.width=0;asset.image.height=0}});this.assets.clear()
-    await this.audio?.close();this.audio=undefined;this.composition=undefined;this.mixed=undefined;this.position=0;this.voiceDurations=[]
+    await this.audio?.close();this.audio=undefined;this.composition=undefined;this.position=0;this.voiceDurations=[]
     this.clearSurface()
   }
 }

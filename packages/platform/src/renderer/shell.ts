@@ -626,7 +626,7 @@ document.querySelector('#address-form').addEventListener('submit', async (event)
 document.querySelector('#back').addEventListener('click', () => api.browser({ action: 'back', tabId: browserState.activeTabId }))
 document.querySelector('#forward').addEventListener('click', () => api.browser({ action: 'forward', tabId: browserState.activeTabId }))
 document.querySelector('#reload').addEventListener('click', () => api.browser({ action: 'reload', tabId: browserState.activeTabId }))
-document.querySelector('#new-tab').addEventListener('click', () => api.browser({ action: 'tabs.open', foreground: true }))
+document.querySelector('#new-tab').addEventListener('click', () => api.browser({ action: 'tabs.open', url: 'about:blank', foreground: true }))
 document.querySelector('#enable-agent').addEventListener('click', () => api.setAgentControl(true))
 agentToggle.addEventListener('click', async () => {
   agentVisible = !agentVisible

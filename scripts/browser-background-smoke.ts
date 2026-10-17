@@ -87,7 +87,7 @@ try {
       const entered=new Promise<void>(resolve=>{enter=resolve}),blockedRead=new Promise<unknown>(resolve=>{finish=resolve})
       wc.executeJavaScript=()=>{enter();return blockedRead}
       const cancel=new AbortController(),before=fs.readdirSync(root)
-      const read=live.execute({action,tabId:background.id,selector:'article'},{signal:cancel.signal})
+      const read=live.execute({action,tabId:background.id,...(action==='page.diagnostics'?{}:{selector:'article'})},{signal:cancel.signal})
       const rejected=assert.rejects(read,/cancelled/),next=live.execute({action:'tabs.list'})
       await entered;cancel.abort(new Error('fixture cancelled'));await rejected;await next
       finish({ok:true,items:[],text:'late'});await pause(0);assert.deepEqual(fs.readdirSync(root),before)

@@ -1,3 +1,5 @@
+import type {VisualLayer} from '../../media-native/src/composition-layers.js'
+import {COMPOSITION_LIMITS} from '../../media-native/src/composition-contract.js'
 import {assertVideoEdit,sceneFields,layerFields} from './video-edit-contract.js'
 import type {VideoEdit} from './video-edit-contract.js'
 export {assertVideoEdit} from './video-edit-contract.js'
@@ -6,7 +8,7 @@ import {assertVideoDraft,newStudioScene} from './studio-contract.js'
 import type {VideoDraft} from './studio-contract.js'
 import {finiteNumber} from '../../media-native/src/media-contract.js'
 import {visualEffectsSchema} from '../../media-native/src/visual-effects.js'
-import {addStudioLayer,editStudioLayer,removeStudioLayer,splitStudioLayer,trimStudioLayer} from './studio-layer-edits.js'
+import {addStudioCardStack,addStudioLayer,editStudioLayer,removeStudioLayer,splitStudioLayer,trimStudioLayer} from './studio-layer-edits.js'
 import type {StudioLayerSelection} from './studio-layer-edits.js'
 import {moveStudioMain,trimStudioMain,splitStudioMain,setStudioMainEffects,setStudioMainMuted} from './studio-main-edits.js'
 import type {StudioMainSelection} from './studio-main-edits.js'
@@ -45,15 +47,15 @@ export function applyVideoEdit(raw:VideoDraft,edit:VideoEdit,trustedCaptions=fal
   }
   if(c.op==='scene.set'){const scene=draft.scenes.find(s=>s.id===c.sceneId);if(!scene)throw new Error('VIDEO_EDIT_SCENE: Unknown scene.');const {script,...patch}=c.patch;Object.assign(scene,patch);if(script!==undefined)scene.narration=script;draft=assertVideoDraft(draft);continue}
   if(c.op==='scene.reorder'){if(c.sceneIds.length!==draft.scenes.length||new Set(c.sceneIds).size!==c.sceneIds.length||c.sceneIds.some(id=>!draft.scenes.some(s=>s.id===id)))throw new Error('VIDEO_EDIT_ORDER: Exact scene permutation required.');draft.scenes=c.sceneIds.map(id=>draft.scenes.find(s=>s.id===id)!);continue}
-  if(c.op==='layer.add'){draft=addStudioLayer(draft,c.sceneId,c.kind,c.artifactId).draft;continue}
+  if(c.op==='layer.add'){draft=(c.kind==='card-stack'?addStudioCardStack(draft,c.sceneId):addStudioLayer(draft,c.sceneId,c.kind,c.artifactId)).draft;continue}
   const doc=videoDocumentFromDraft(draft),track=doc.content.timeline.tracks.find(t=>t.clips.some(p=>p.id===c.clipId)),clip=track?.clips.find(p=>p.id===c.clipId)
   if(!track||!clip)throw new Error('VIDEO_EDIT_CLIP: Unknown clip; read the current revision and IDs.')
   const layer:StudioLayerSelection={id:String(clip.properties.sourceIdentity),kind:track.kind==='audio'?'audio':'visual',...(track.sceneId?{sceneId:track.sceneId}:{})}
   const isLayer=track.role==='overlay'||track.role==='audio'
   if(c.op==='layer.remove'){if(!isLayer)throw new Error('VIDEO_EDIT_KIND: layer.remove requires an independent object.');draft=removeStudioLayer(draft,layer);continue}
-  if(c.op==='layer.set'){if(!isLayer)throw new Error('VIDEO_EDIT_KIND: layer.set requires an independent object.');draft=editStudioLayer(draft,layer,value=>Object.assign(value,c.patch),Object.keys(c.patch).length===1&&c.patch.locked===false);continue}
+  if(c.op==='layer.set'){if(!isLayer)throw new Error('VIDEO_EDIT_KIND: layer.set requires an independent object.');draft=editStudioLayer(draft,layer,value=>{Object.assign(value,c.patch);if(layer.kind==='visual')for(const key of ['textTreatment','packaging','sourceCrop'] as const)if(c.patch[key]===null)delete (value as VisualLayer)[key]},Object.keys(c.patch).length===1&&c.patch.locked===false);continue}
   let offset=0;for(const scene of draft.scenes){if(scene.id===track.sceneId)break;offset+=scene.durationSeconds}
-  const global='time' in c?finiteNumber(videoSeconds(c.time),'global edit time',0,180):0
+  const global='time' in c?finiteNumber(videoSeconds(c.time),'global edit time',0,COMPOSITION_LIMITS.seconds):0
   if(isLayer){
    if(c.op==='clip.effects')throw new Error('VIDEO_EDIT_CAPABILITY: Independent effects are not supported.')
    if(c.op==='clip.mute'){draft=editStudioLayer(draft,layer,value=>{if('muted' in value)value.muted=c.muted;else value.hidden=c.muted});continue}
@@ -76,5 +78,5 @@ const sceneProps=studioDraftSchema.properties.scenes.items.properties
 const scenePatch={minProperties:1,...object({...Object.fromEntries(sceneFields.filter(k=>k!=='script').map(k=>[k,sceneProps[k]])),script:{type:'string',maxLength:1000}},[])}
 const sceneAdd={...scenePatch,required:['id','title'],properties:{...scenePatch.properties,id:sceneId}}
 const briefPatch={minProperties:1,...object(studioDraftSchema.properties.preparation.properties,[])}
-const layerPatch={minProperties:1,...object(Object.fromEntries(layerFields.map(k=>[k,{...visualLayersSchema.items.properties,...audioLayersSchema.items.properties}[k]])),[])}
-export const videoEditSchema={ $schema:'https://json-schema.org/draft/2020-12/schema', $id:'https://bmw.local/schemas/video-edit/1', ...object({version:{const:1},commands:{type:'array',minItems:1,maxItems:32,items:{oneOf:[object({op:{const:'brief.set'},patch:briefPatch}),object({op:{const:'scene.add'},scene:sceneAdd,afterSceneId:sceneId},['op','scene']),object({op:{const:'captions.set'},sceneId,mode:{const:'manual'},cues:sceneProps.captions}),object({op:{const:'captions.set'},sceneId,mode:{enum:['sentences','off']}}),object({op:{const:'card.set'},sceneId,cardSpec:sceneProps.cardSpec,links:cardSpeechChoicesSchema},['op','sceneId','cardSpec']),object({op:{const:'card.bind'},sceneId,links:cardSpeechChoicesSchema}),object({op:{const:'scene.set'},sceneId,patch:scenePatch}),object({op:{const:'scene.reorder'},sceneIds:{type:'array',maxItems:24,uniqueItems:true,items:sceneId}}),...['clip.move','clip.split'].map(op=>object({op:{const:op},clipId:id,time:videoTimeSchema})),object({op:{const:'clip.trim'},clipId:id,edge:{enum:['start','end']},time:videoTimeSchema}),object({op:{const:'clip.effects'},clipId:id,effects:{anyOf:[visualEffectsSchema,{type:'null'}]}}),object({op:{const:'clip.mute'},clipId:id,muted:{type:'boolean'}}),object({op:{const:'layer.remove'},clipId:id}),object({op:{const:'layer.set'},clipId:id,patch:layerPatch}),object({op:{const:'layer.add'},kind:{enum:['text','rectangle','image','video','audio']},sceneId,artifactId:{type:'string'}},['op','kind'])]}}})}
+const layerPatch={minProperties:1,...object(Object.fromEntries(layerFields.map(k=>{const schema={...visualLayersSchema.items.properties,...audioLayersSchema.items.properties}[k];return [k,['textTreatment','packaging','sourceCrop'].includes(k)?{anyOf:[schema,{type:'null'}]}:schema]})),[])}
+export const videoEditSchema={ $schema:'https://json-schema.org/draft/2020-12/schema', $id:'https://bmw.local/schemas/video-edit/1', ...object({version:{const:1},commands:{type:'array',minItems:1,maxItems:32,items:{oneOf:[object({op:{const:'brief.set'},patch:briefPatch}),object({op:{const:'scene.add'},scene:sceneAdd,afterSceneId:sceneId},['op','scene']),object({op:{const:'captions.set'},sceneId,mode:{const:'manual'},cues:sceneProps.captions}),object({op:{const:'captions.set'},sceneId,mode:{enum:['sentences','off']}}),object({op:{const:'card.set'},sceneId,cardSpec:sceneProps.cardSpec,links:cardSpeechChoicesSchema},['op','sceneId','cardSpec']),object({op:{const:'card.bind'},sceneId,links:cardSpeechChoicesSchema}),object({op:{const:'scene.set'},sceneId,patch:scenePatch}),object({op:{const:'scene.reorder'},sceneIds:{type:'array',maxItems:COMPOSITION_LIMITS.scenes,uniqueItems:true,items:sceneId}}),...['clip.move','clip.split'].map(op=>object({op:{const:op},clipId:id,time:videoTimeSchema})),object({op:{const:'clip.trim'},clipId:id,edge:{enum:['start','end']},time:videoTimeSchema}),object({op:{const:'clip.effects'},clipId:id,effects:{anyOf:[visualEffectsSchema,{type:'null'}]}}),object({op:{const:'clip.mute'},clipId:id,muted:{type:'boolean'}}),object({op:{const:'layer.remove'},clipId:id}),object({op:{const:'layer.set'},clipId:id,patch:layerPatch}),object({op:{const:'layer.add'},kind:{enum:['text','rectangle','image','video','audio','diagram']},sceneId,artifactId:{type:'string'}},['op','kind']),object({op:{const:'layer.add'},kind:{const:'card-stack'},sceneId},['op','kind'])]}}})}

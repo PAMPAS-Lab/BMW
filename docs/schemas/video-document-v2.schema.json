@@ -4,6 +4,382 @@
       "if": {
         "properties": {
           "schemaVersion": {
+            "not": {
+              "enum": [
+                "2.9"
+              ]
+            }
+          }
+        },
+        "required": [
+          "schemaVersion"
+        ]
+      },
+      "then": {
+        "properties": {
+          "content": {
+            "properties": {
+              "timeline": {
+                "properties": {
+                  "tracks": {
+                    "items": {
+                      "properties": {
+                        "clips": {
+                          "items": {
+                            "properties": {
+                              "properties": {
+                                "properties": {
+                                  "science": false
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schemaVersion": {
+            "not": {
+              "enum": [
+                "2.8",
+                "2.9"
+              ]
+            }
+          }
+        },
+        "required": [
+          "schemaVersion"
+        ]
+      },
+      "then": {
+        "properties": {
+          "content": {
+            "properties": {
+              "timeline": {
+                "properties": {
+                  "tracks": {
+                    "items": {
+                      "properties": {
+                        "clips": {
+                          "items": {
+                            "properties": {
+                              "properties": {
+                                "properties": {
+                                  "sourceCrop": false
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schemaVersion": {
+            "not": {
+              "enum": [
+                "2.8",
+                "2.9"
+              ]
+            }
+          }
+        },
+        "required": [
+          "schemaVersion"
+        ]
+      },
+      "then": {
+        "properties": {
+          "content": {
+            "properties": {
+              "timeline": {
+                "properties": {
+                  "tracks": {
+                    "items": {
+                      "properties": {
+                        "clips": {
+                          "items": {
+                            "properties": {
+                              "properties": {
+                                "properties": {
+                                  "packaging": false
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schemaVersion": {
+            "not": {
+              "enum": [
+                "2.7",
+                "2.8",
+                "2.9"
+              ]
+            }
+          }
+        },
+        "required": [
+          "schemaVersion"
+        ]
+      },
+      "then": {
+        "properties": {
+          "content": {
+            "properties": {
+              "timeline": {
+                "properties": {
+                  "tracks": {
+                    "items": {
+                      "properties": {
+                        "clips": {
+                          "items": {
+                            "properties": {
+                              "properties": {
+                                "properties": {
+                                  "textTreatment": false
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schemaVersion": {
+            "enum": [
+              "2.0",
+              "2.1",
+              "2.2",
+              "2.3",
+              "2.4",
+              "2.5"
+            ]
+          }
+        },
+        "required": [
+          "schemaVersion"
+        ]
+      },
+      "then": {
+        "properties": {
+          "content": {
+            "properties": {
+              "story": {
+                "properties": {
+                  "scenes": {
+                    "maxItems": 24
+                  }
+                }
+              },
+              "timeline": {
+                "properties": {
+                  "duration": {
+                    "properties": {
+                      "ticks": {
+                        "maximum": 180000000
+                      }
+                    },
+                    "allOf": [
+                      {
+                        "if": {
+                          "properties": {
+                            "ticks": {
+                              "const": 180000000
+                            }
+                          },
+                          "required": [
+                            "ticks"
+                          ]
+                        },
+                        "then": {
+                          "properties": {
+                            "residualSeconds": {
+                              "maximum": 0
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "regions": {
+                    "maxItems": 24
+                  },
+                  "tracks": {
+                    "maxItems": 150,
+                    "items": {
+                      "properties": {
+                        "clips": {
+                          "items": {
+                            "properties": {
+                              "timing": {
+                                "properties": {
+                                  "start": {
+                                    "properties": {
+                                      "ticks": {
+                                        "maximum": 180000000
+                                      }
+                                    },
+                                    "allOf": [
+                                      {
+                                        "if": {
+                                          "properties": {
+                                            "ticks": {
+                                              "const": 180000000
+                                            }
+                                          },
+                                          "required": [
+                                            "ticks"
+                                          ]
+                                        },
+                                        "then": {
+                                          "properties": {
+                                            "residualSeconds": {
+                                              "maximum": 0
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "duration": {
+                                    "properties": {
+                                      "ticks": {
+                                        "maximum": 180000000
+                                      }
+                                    },
+                                    "allOf": [
+                                      {
+                                        "if": {
+                                          "properties": {
+                                            "ticks": {
+                                              "const": 180000000
+                                            }
+                                          },
+                                          "required": [
+                                            "ticks"
+                                          ]
+                                        },
+                                        "then": {
+                                          "properties": {
+                                            "residualSeconds": {
+                                              "maximum": 0
+                                            }
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              },
+                              "properties": {
+                                "properties": {
+                                  "fadeWindow": {
+                                    "properties": {
+                                      "startSeconds": {
+                                        "maximum": 180
+                                      },
+                                      "durationSeconds": {
+                                        "maximum": 180
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "records": {
+            "properties": {
+              "exports": {
+                "items": {
+                  "properties": {
+                    "durationSeconds": {
+                      "maximum": 181
+                    }
+                  }
+                }
+              },
+              "emptyContainers": {
+                "maxItems": 50
+              },
+              "sceneEvidence": {
+                "maxItems": 24,
+                "items": {
+                  "properties": {
+                    "presentationWindow": {
+                      "properties": {
+                        "musicIndex": {
+                          "maximum": 24
+                        },
+                        "sceneNumber": {
+                          "maximum": 24
+                        },
+                        "sceneCount": {
+                          "maximum": 24
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schemaVersion": {
             "enum": [
               "2.0",
               "2.1",
@@ -381,7 +757,7 @@
   ],
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://bmw.local/schemas/video-document/2.0",
-  "title": "BMW Video Document 2.0/2.1/2.2/2.3/2.4/2.5 — supported runtime subset",
+  "title": "BMW Video Document 2.0/2.1/2.2/2.3/2.4/2.5/2.6/2.7/2.8/2.9 — supported runtime subset",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -395,7 +771,11 @@
         "2.2",
         "2.3",
         "2.4",
-        "2.5"
+        "2.5",
+        "2.6",
+        "2.7",
+        "2.8",
+        "2.9"
       ]
     },
     "id": {
@@ -3935,7 +4315,7 @@
                 ]
               },
               "minItems": 0,
-              "maxItems": 24
+              "maxItems": 96
             }
           },
           "required": [
@@ -4026,7 +4406,7 @@
                 ]
               },
               "minItems": 0,
-              "maxItems": 24
+              "maxItems": 96
             },
             "tracks": {
               "type": "array",
@@ -4687,12 +5067,513 @@
                                     "startSeconds": {
                                       "type": "number",
                                       "minimum": 0,
-                                      "maximum": 180
+                                      "maximum": 720
                                     },
                                     "durationSeconds": {
                                       "type": "number",
                                       "minimum": 0.1,
+                                      "maximum": 720
+                                    }
+                                  }
+                                },
+                                "science": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "additionalProperties": false,
+                                      "properties": {
+                                        "version": {
+                                          "const": 1
+                                        },
+                                        "title": {
+                                          "type": "string",
+                                          "maxLength": 40,
+                                          "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                                        },
+                                        "unit": {
+                                          "type": "string",
+                                          "maxLength": 12,
+                                          "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                                        },
+                                        "note": {
+                                          "type": "string",
+                                          "maxLength": 80,
+                                          "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                                        },
+                                        "theme": {
+                                          "enum": [
+                                            "dark",
+                                            "light"
+                                          ]
+                                        },
+                                        "durationSeconds": {
+                                          "type": "number",
+                                          "minimum": 0.1,
+                                          "maximum": 720
+                                        },
+                                        "delaySeconds": {
+                                          "type": "number",
+                                          "minimum": 0,
+                                          "maximum": 720
+                                        },
+                                        "offsetSeconds": {
+                                          "type": "number",
+                                          "minimum": 0,
+                                          "maximum": 720
+                                        },
+                                        "kind": {
+                                          "const": "curve"
+                                        },
+                                        "points": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "additionalProperties": false,
+                                            "properties": {
+                                              "x": {
+                                                "type": "number",
+                                                "minimum": -1000000000,
+                                                "maximum": 1000000000
+                                              },
+                                              "y": {
+                                                "type": "number",
+                                                "minimum": -1000000000,
+                                                "maximum": 1000000000
+                                              }
+                                            },
+                                            "required": [
+                                              "x",
+                                              "y"
+                                            ]
+                                          },
+                                          "minItems": 2,
+                                          "maxItems": 64
+                                        },
+                                        "xDomain": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "number",
+                                            "minimum": -1000000000,
+                                            "maximum": 1000000000
+                                          },
+                                          "minItems": 2,
+                                          "maxItems": 2
+                                        },
+                                        "yDomain": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "number",
+                                            "minimum": -1000000000,
+                                            "maximum": 1000000000
+                                          },
+                                          "minItems": 2,
+                                          "maxItems": 2
+                                        },
+                                        "xUnit": {
+                                          "type": "string",
+                                          "maxLength": 12,
+                                          "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                                        },
+                                        "color": {
+                                          "type": "string",
+                                          "pattern": "^#[a-fA-F0-9]{6}$"
+                                        },
+                                        "showDot": {
+                                          "type": "boolean"
+                                        }
+                                      },
+                                      "required": [
+                                        "version",
+                                        "kind",
+                                        "title",
+                                        "unit",
+                                        "durationSeconds",
+                                        "points",
+                                        "xDomain",
+                                        "yDomain",
+                                        "xUnit",
+                                        "color"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "additionalProperties": false,
+                                      "properties": {
+                                        "version": {
+                                          "const": 1
+                                        },
+                                        "title": {
+                                          "type": "string",
+                                          "maxLength": 40,
+                                          "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                                        },
+                                        "unit": {
+                                          "type": "string",
+                                          "maxLength": 12,
+                                          "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                                        },
+                                        "note": {
+                                          "type": "string",
+                                          "maxLength": 80,
+                                          "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                                        },
+                                        "theme": {
+                                          "enum": [
+                                            "dark",
+                                            "light"
+                                          ]
+                                        },
+                                        "durationSeconds": {
+                                          "type": "number",
+                                          "minimum": 0.1,
+                                          "maximum": 720
+                                        },
+                                        "delaySeconds": {
+                                          "type": "number",
+                                          "minimum": 0,
+                                          "maximum": 720
+                                        },
+                                        "offsetSeconds": {
+                                          "type": "number",
+                                          "minimum": 0,
+                                          "maximum": 720
+                                        },
+                                        "kind": {
+                                          "const": "ratio"
+                                        },
+                                        "mode": {
+                                          "enum": [
+                                            "bar",
+                                            "pie",
+                                            "ring"
+                                          ]
+                                        },
+                                        "parts": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "additionalProperties": false,
+                                            "properties": {
+                                              "label": {
+                                                "type": "string",
+                                                "maxLength": 24,
+                                                "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                                              },
+                                              "value": {
+                                                "type": "number",
+                                                "minimum": 0,
+                                                "maximum": 1000000000
+                                              },
+                                              "color": {
+                                                "type": "string",
+                                                "pattern": "^#[a-fA-F0-9]{6}$"
+                                              }
+                                            },
+                                            "required": [
+                                              "label",
+                                              "value",
+                                              "color"
+                                            ]
+                                          },
+                                          "minItems": 1,
+                                          "maxItems": 8
+                                        }
+                                      },
+                                      "required": [
+                                        "version",
+                                        "kind",
+                                        "title",
+                                        "unit",
+                                        "durationSeconds",
+                                        "mode",
+                                        "parts"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "additionalProperties": false,
+                                      "properties": {
+                                        "version": {
+                                          "const": 1
+                                        },
+                                        "title": {
+                                          "type": "string",
+                                          "maxLength": 40,
+                                          "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                                        },
+                                        "unit": {
+                                          "type": "string",
+                                          "maxLength": 12,
+                                          "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                                        },
+                                        "note": {
+                                          "type": "string",
+                                          "maxLength": 80,
+                                          "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                                        },
+                                        "theme": {
+                                          "enum": [
+                                            "dark",
+                                            "light"
+                                          ]
+                                        },
+                                        "durationSeconds": {
+                                          "type": "number",
+                                          "minimum": 0.1,
+                                          "maximum": 720
+                                        },
+                                        "delaySeconds": {
+                                          "type": "number",
+                                          "minimum": 0,
+                                          "maximum": 720
+                                        },
+                                        "offsetSeconds": {
+                                          "type": "number",
+                                          "minimum": 0,
+                                          "maximum": 720
+                                        },
+                                        "kind": {
+                                          "const": "flow"
+                                        },
+                                        "mode": {
+                                          "enum": [
+                                            "drill",
+                                            "flow"
+                                          ]
+                                        },
+                                        "path": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "additionalProperties": false,
+                                            "properties": {
+                                              "x": {
+                                                "type": "number",
+                                                "minimum": 0,
+                                                "maximum": 1
+                                              },
+                                              "y": {
+                                                "type": "number",
+                                                "minimum": 0,
+                                                "maximum": 1
+                                              }
+                                            },
+                                            "required": [
+                                              "x",
+                                              "y"
+                                            ]
+                                          },
+                                          "minItems": 2,
+                                          "maxItems": 32
+                                        },
+                                        "dots": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 24
+                                        },
+                                        "cycles": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 8
+                                        },
+                                        "valueStart": {
+                                          "type": "number",
+                                          "minimum": -1000000000,
+                                          "maximum": 1000000000
+                                        },
+                                        "valueEnd": {
+                                          "type": "number",
+                                          "minimum": -1000000000,
+                                          "maximum": 1000000000
+                                        },
+                                        "color": {
+                                          "type": "string",
+                                          "pattern": "^#[a-fA-F0-9]{6}$"
+                                        }
+                                      },
+                                      "required": [
+                                        "version",
+                                        "kind",
+                                        "title",
+                                        "unit",
+                                        "durationSeconds",
+                                        "mode",
+                                        "path",
+                                        "dots",
+                                        "valueStart",
+                                        "valueEnd",
+                                        "color"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "additionalProperties": false,
+                                      "properties": {
+                                        "version": {
+                                          "const": 1
+                                        },
+                                        "title": {
+                                          "type": "string",
+                                          "maxLength": 40,
+                                          "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                                        },
+                                        "unit": {
+                                          "type": "string",
+                                          "maxLength": 12,
+                                          "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                                        },
+                                        "note": {
+                                          "type": "string",
+                                          "maxLength": 80,
+                                          "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                                        },
+                                        "theme": {
+                                          "enum": [
+                                            "dark",
+                                            "light"
+                                          ]
+                                        },
+                                        "durationSeconds": {
+                                          "type": "number",
+                                          "minimum": 0.1,
+                                          "maximum": 720
+                                        },
+                                        "delaySeconds": {
+                                          "type": "number",
+                                          "minimum": 0,
+                                          "maximum": 720
+                                        },
+                                        "offsetSeconds": {
+                                          "type": "number",
+                                          "minimum": 0,
+                                          "maximum": 720
+                                        },
+                                        "kind": {
+                                          "const": "array"
+                                        },
+                                        "groups": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "object",
+                                            "additionalProperties": false,
+                                            "properties": {
+                                              "label": {
+                                                "type": "string",
+                                                "maxLength": 24,
+                                                "pattern": "^[^\\u0000-\\u001f\\u007f]*$"
+                                              },
+                                              "count": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "maximum": 64
+                                              },
+                                              "color": {
+                                                "type": "string",
+                                                "pattern": "^#[a-fA-F0-9]{6}$"
+                                              }
+                                            },
+                                            "required": [
+                                              "label",
+                                              "count",
+                                              "color"
+                                            ]
+                                          },
+                                          "minItems": 1,
+                                          "maxItems": 8
+                                        }
+                                      },
+                                      "required": [
+                                        "version",
+                                        "kind",
+                                        "title",
+                                        "unit",
+                                        "durationSeconds",
+                                        "groups"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                "sourceCrop": {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "required": [
+                                    "x",
+                                    "y",
+                                    "width",
+                                    "height"
+                                  ],
+                                  "properties": {
+                                    "x": {
+                                      "type": "number",
+                                      "minimum": 0,
+                                      "maximum": 0.95
+                                    },
+                                    "y": {
+                                      "type": "number",
+                                      "minimum": 0,
+                                      "maximum": 0.95
+                                    },
+                                    "width": {
+                                      "type": "number",
+                                      "minimum": 0.05,
+                                      "maximum": 1
+                                    },
+                                    "height": {
+                                      "type": "number",
+                                      "minimum": 0.05,
+                                      "maximum": 1
+                                    }
+                                  }
+                                },
+                                "packaging": {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "flipAxis": {
+                                      "enum": [
+                                        "x",
+                                        "y"
+                                      ]
+                                    },
+                                    "introSeconds": {
+                                      "type": "number",
+                                      "minimum": 0.05,
+                                      "maximum": 8
+                                    },
+                                    "offsetSeconds": {
+                                      "type": "number",
+                                      "minimum": 0,
+                                      "maximum": 720
+                                    },
+                                    "flipDegrees": {
+                                      "type": "number",
+                                      "minimum": -85,
+                                      "maximum": 85
+                                    },
+                                    "directionalBlurPixels": {
+                                      "type": "number",
+                                      "minimum": 0,
+                                      "maximum": 24
+                                    },
+                                    "directionalBlurDegrees": {
+                                      "type": "number",
+                                      "minimum": -180,
                                       "maximum": 180
+                                    },
+                                    "radialBlur": {
+                                      "type": "number",
+                                      "minimum": 0,
+                                      "maximum": 0.15
+                                    },
+                                    "glitchPixels": {
+                                      "type": "number",
+                                      "minimum": 0,
+                                      "maximum": 12
+                                    },
+                                    "glitchHertz": {
+                                      "type": "number",
+                                      "minimum": 1,
+                                      "maximum": 24
                                     }
                                   }
                                 },
@@ -4727,7 +5608,8 @@
                                     "text",
                                     "rectangle",
                                     "image",
-                                    "video"
+                                    "video",
+                                    "diagram"
                                   ]
                                 },
                                 "x": {
@@ -4764,6 +5646,48 @@
                                 },
                                 "fontSize": {
                                   "type": "number"
+                                },
+                                "textTreatment": {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "properties": {
+                                    "reveal": {
+                                      "enum": [
+                                        "none",
+                                        "grapheme",
+                                        "line"
+                                      ]
+                                    },
+                                    "delaySeconds": {
+                                      "type": "number",
+                                      "minimum": 0,
+                                      "maximum": 720
+                                    },
+                                    "revealSeconds": {
+                                      "type": "number",
+                                      "minimum": 0.01,
+                                      "maximum": 720
+                                    },
+                                    "lineStaggerSeconds": {
+                                      "type": "number",
+                                      "minimum": 0,
+                                      "maximum": 60
+                                    },
+                                    "offsetSeconds": {
+                                      "type": "number",
+                                      "minimum": 0,
+                                      "maximum": 720
+                                    },
+                                    "strokeWidth": {
+                                      "type": "number",
+                                      "minimum": 0,
+                                      "maximum": 8
+                                    },
+                                    "strokeColor": {
+                                      "type": "string",
+                                      "pattern": "^#[a-fA-F0-9]{6}$"
+                                    }
+                                  }
                                 },
                                 "artifactId": {
                                   "type": "string"
@@ -4842,6 +5766,30 @@
                                 "width",
                                 "height",
                                 "color"
+                              ],
+                              "allOf": [
+                                {
+                                  "if": {
+                                    "properties": {
+                                      "kind": {
+                                        "const": "diagram"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind"
+                                    ]
+                                  },
+                                  "then": {
+                                    "required": [
+                                      "science"
+                                    ]
+                                  },
+                                  "else": {
+                                    "properties": {
+                                      "science": false
+                                    }
+                                  }
+                                }
                               ]
                             }
                           },
@@ -4952,12 +5900,12 @@
                                     "startSeconds": {
                                       "type": "number",
                                       "minimum": 0,
-                                      "maximum": 180
+                                      "maximum": 720
                                     },
                                     "durationSeconds": {
                                       "type": "number",
                                       "minimum": 0.1,
-                                      "maximum": 180
+                                      "maximum": 720
                                     }
                                   }
                                 },
@@ -5015,7 +5963,7 @@
                 ]
               },
               "minItems": 0,
-              "maxItems": 150
+              "maxItems": 352
             }
           },
           "required": [
@@ -5674,7 +6622,7 @@
             ]
           },
           "minItems": 1,
-          "maxItems": 50
+          "maxItems": 194
         },
         "sceneEvidence": {
           "type": "array",
@@ -6279,17 +7227,17 @@
                   "musicIndex": {
                     "type": "integer",
                     "minimum": 1,
-                    "maximum": 24
+                    "maximum": 96
                   },
                   "sceneNumber": {
                     "type": "integer",
                     "minimum": 1,
-                    "maximum": 24
+                    "maximum": 96
                   },
                   "sceneCount": {
                     "type": "integer",
                     "minimum": 1,
-                    "maximum": 24
+                    "maximum": 96
                   }
                 }
               }
@@ -6300,7 +7248,7 @@
             ]
           },
           "minItems": 0,
-          "maxItems": 24
+          "maxItems": 96
         }
       },
       "required": [

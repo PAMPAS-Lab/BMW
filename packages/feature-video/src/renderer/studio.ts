@@ -1,3 +1,4 @@
+import {COMPOSITION_LIMITS} from '../../../media-native/src/composition-contract.js'
 import {StudioTimingEditor} from './studio-timing-editor.js'
 import {assertStudioProductionProgress} from '../studio-production-progress.js'
 import {StudioRecordingPlanEditor} from './studio-recording-plan-editor.js'
@@ -60,6 +61,7 @@ let previewPreparation:Promise<void>|undefined,sceneSelection=0,previewPreparing
 let currentOperation:string|undefined
 let productionActive=false,productionStopped=false,cancellationRequested=false,commandEpoch=0
 let workspaceHidden=false,workspaceEpoch=0,externalRequested=false
+let workspaceResume:{draftId:string;revision:number;seconds:number}|undefined
 let externalRefresh:Promise<void>|undefined
 let viewChanging=false
 let saveFailure:string|undefined
@@ -250,7 +252,7 @@ async function prepare():Promise<void>{
   if(previewPreparation)await previewPreparation
   if(!draft||!previewDirty)return
   if(!draft.scenes.length)throw new Error('请先创建分镜，再预览视频。')
-  const current=draft,position=preview.duration?Number(input('seek').value):current.scenes.slice(0,sceneIndex).reduce((sum,scene)=>sum+scene.durationSeconds,0);previewPreparing=true
+  const current=draft,resume=workspaceResume?.draftId===current.id&&workspaceResume.revision===current.revision?workspaceResume:undefined,position=resume?resume.seconds:preview.duration?Number(input('seek').value):current.scenes.slice(0,sceneIndex).reduce((sum,scene)=>sum+scene.durationSeconds,0);workspaceResume=undefined;previewPreparing=true
   for(const id of ['play','seek','timeline-split'])element<HTMLButtonElement>(id).disabled=true
   const pending=(async()=>{message('正在准备预览…');const ready=await preview.prepare(clone(current),position);if(!ready||draft!==current)return;previewDirty=false;if(stage===4&&workbench.mode!=='cover')render();input('seek').max=String(preview.duration);element('preview-empty').hidden=true;if(!pendingField&&!pendingOutput&&!cardText.hasPending()&&!mainEditor.hasPending()&&!layerEditor.hasPending())message(dirty?'有未保存修改':'已保存 · v'+draft.revision)})()
   previewPreparation=pending
@@ -265,7 +267,7 @@ async function selectScene(index:number):Promise<void>{
   if(selection!==sceneSelection||draft!==current||invalidProject)return
   await preview.seek(current.scenes.slice(0,index).reduce((sum,item)=>sum+item.durationSeconds,0))
 }
-function choose(value:VideoDraft|undefined):void{if(pendingOutput&&value?.id!==pendingOutput.draftId)throw new Error('请先应用全片参数，再切换视频。');cardText.discard();saveFailure=undefined;const initialCards=Boolean(value?.scenes.length&&!draft?.scenes.length),newResult=value?.id!==draft?.id||value?.exports.length!==draft?.exports.length;if(value?.id!==draft?.id)advancedInspector='visual';reviewFrames=undefined;originalSpeechEditor.clear();speechEditor.clear();coverEditor.clear();clearExport();element('studio-subtitle-exports').replaceChildren();sceneSelection++;const selectedId=draft?.id===value?.id?draft?.scenes[sceneIndex]?.id:undefined;draft=value?clone(value):undefined;if(newResult||initialCards){if(initialCards)cards.finishPreparation();workflow.result=workflow.view.mode==='simple'&&draft?.exports.length?'completed':'draft';if(draft?.scenes.length&&workflow.view.mode==='simple'){stage=4;workbench.mode='visual'}}sceneIndex=Math.max(0,draft?.scenes.findIndex(scene=>scene.id===selectedId)??0);if(draft&&!draft.scenes.length&&stage===4)stage=0;dirty=false;undo=[];redo=[];restorePending=undefined;previewDirty=true;element('preview-empty').hidden=false;input('seek').max='1';input('seek').value='0';void preview.dispose().catch(error=>message(String(error)));render();message(draft?'草稿已保存':state?.sessionId?'此对话还没有视频草稿':'请先选择对话')}
+function choose(value:VideoDraft|undefined):void{workspaceResume=undefined;if(pendingOutput&&value?.id!==pendingOutput.draftId)throw new Error('请先应用全片参数，再切换视频。');cardText.discard();saveFailure=undefined;const initialCards=Boolean(value?.scenes.length&&!draft?.scenes.length),newResult=value?.id!==draft?.id||value?.exports.length!==draft?.exports.length;if(value?.id!==draft?.id)advancedInspector='visual';reviewFrames=undefined;originalSpeechEditor.clear();speechEditor.clear();coverEditor.clear();clearExport();element('studio-subtitle-exports').replaceChildren();sceneSelection++;const selectedId=draft?.id===value?.id?draft?.scenes[sceneIndex]?.id:undefined;draft=value?clone(value):undefined;if(newResult||initialCards){if(initialCards)cards.finishPreparation();workflow.result=workflow.view.mode==='simple'&&draft?.exports.length?'completed':'draft';if(draft?.scenes.length&&workflow.view.mode==='simple'){stage=4;workbench.mode='visual'}}sceneIndex=Math.max(0,draft?.scenes.findIndex(scene=>scene.id===selectedId)??0);if(draft&&!draft.scenes.length&&stage===4)stage=0;dirty=false;undo=[];redo=[];restorePending=undefined;previewDirty=true;element('preview-empty').hidden=false;input('seek').max='1';input('seek').value='0';void preview.dispose().catch(error=>message(String(error)));render();message(draft?'草稿已保存':state?.sessionId?'此对话还没有视频草稿':'请先选择对话')}
 async function refresh(preserve=true,renderView=true):Promise<boolean>{
   const epoch=workspaceEpoch
   // Every caller waits for its own fresh snapshot after preceding reads. A GUI
@@ -410,7 +412,7 @@ function renderScript():void{
 function renderStage():void{
   renderMaterialAssistant()
   const compatibility=draft?studioCompatibility(draft):undefined
-  const toggle=element<HTMLButtonElement>('view-toggle');toggle.title=compatibility&&!compatibility.simpleEditable?compatibility.blockingReasons.map(r=>r.message).join(' ' )+' 撤销或移除后可返回卡片。':'';toggle.setAttribute('aria-label',workflow.view.mode==='advanced'&&!compatibility?.simpleEditable&&draft?'返回卡片不可用：'+toggle.title:workflow.view.mode==='advanced'?'返回卡片':'高级编辑')
+  const toggle=element<HTMLButtonElement>('view-toggle');toggle.title=compatibility&&!compatibility.simpleEditable?[...new Set(compatibility.blockingReasons.map(r=>r.message))].join(' ')+' 撤销或移除后可返回卡片。':'';toggle.setAttribute('aria-label',workflow.view.mode==='advanced'&&!compatibility?.simpleEditable&&draft?'返回卡片不可用：'+toggle.title:workflow.view.mode==='advanced'?'返回卡片':'高级编辑')
   sourceEditor.render();element<HTMLButtonElement>('studio-export-citations').disabled=busy||invalidProject||viewChanging||Boolean(savePending)||!draft
   const hasScene=Boolean(draft?.scenes.length),disabled=busy||invalidProject||viewChanging||Boolean(savePending)||mainEditor.isApplying()
   element<HTMLButtonElement>('timeline-split').disabled=disabled||previewPreparing||Boolean(previewPreparation)||!hasScene
@@ -519,7 +521,7 @@ async function narrateScene(id:string,operation:'narrate'|'narrate-local'='narra
   draft=assertVideoDraft(result.draft);undo.push(previous);undo=undo.slice(-40);redo=[];dirty=false;previewDirty=true;await refresh();render();message('此段旁白已重新生成，分镜长度已按实测音频更新。')
 }
 async function listenScene(id:string):Promise<void>{await flushEdits();const value=draft?.scenes.find(value=>value.id===id),asset=state.assets.find(asset=>asset.artifactId===value?.audioArtifactId);if(!asset)throw new Error('此段旁白素材不可用，请重新生成。');await materials.open(asset,undefined,true)}
-async function addScene():Promise<void>{await flushEdits();editable();if(!draft)return;if(draft.scenes.length>=24)throw new Error('最多24个分镜。');history();draft.scenes.push(newStudioScene(crypto.randomUUID(),draft.scenes.length?'新分镜':'开场'));sceneIndex=draft.scenes.length-1;if(stage===0)stage=1;render();await save(false)}
+async function addScene():Promise<void>{await flushEdits();editable();if(!draft)return;if(draft.scenes.length>=COMPOSITION_LIMITS.scenes)throw new Error('最多96个分镜。');history();draft.scenes.push(newStudioScene(crypto.randomUUID(),draft.scenes.length?'新分镜':'开场'));sceneIndex=draft.scenes.length-1;if(stage===0)stage=1;render();await save(false)}
 async function save(clearHistory=true):Promise<void>{if(savePending)return savePending;if(!draft||!dirty)return;savePending=persistDraft(clearHistory);try{await savePending;saveFailure=undefined}catch(error){saveFailure=error instanceof Error?error.message:String(error);throw error}finally{savePending=undefined;setBusy(busy);render()}}
 async function persistDraft(clearHistory:boolean):Promise<void>{const snapshot=clone(draft);for(const value of snapshot.scenes){value.audioArtifactId=value.audioArtifactId;value.voiceTiming=value.voiceTiming;value.voiceSegments=value.voiceSegments;value.voiceMuted=value.voiceMuted}const approved=restorePending?.snapshot===draft?restorePending.proof:undefined;const result=await command({operation:approved?'restore':'update',draftId:draft.id,expectedRevision:draft.revision,draft:snapshot,...(approved?{snapshotProof:approved}:{})});draft=assertVideoDraft(result);restorePending=undefined;dirty=false;if(clearHistory){undo=[];redo=[]}await refresh();render();await publishSelection()}
 async function operation(operation:string,fields:Record<string,unknown>={}):Promise<void>{await flushEdits();await save();if(!draft)return;const result=await command({operation,draftId:draft.id,expectedRevision:draft.revision,...fields}),value=mediaRecord(result);draft=assertVideoDraft(value.draft??result);dirty=false;if(operation!=='export-cover')previewDirty=true;if(operation==='render')workbench.mode='delivery';await refresh();render();if(operation==='render'){const output=mediaRecord(value.export);await showExport(String(output.artifactId),output.verificationArtifactId?String(output.verificationArtifactId):undefined);message(value.reused?'已使用已有 MP4，未重新制作。':'MP4 已导出到当前 Project 素材库。')}}
@@ -632,7 +634,7 @@ for(const id of ['preparation-notes','preparation-outline']){
 }
 for(const button of document.querySelectorAll('[data-materials-assistant]') as HTMLButtonElement[])button.onclick=guarded(prepareMaterials)
 element('studio-script-assistant').onclick=guarded(async()=>{await flushEdits();editable();if(!draft)return;await api.assistant({projectId:state.project.id,draftId:draft.id,expectedRevision:draft.revision,intent:'script'});message('脚本辅助任务已交给当前 Project 的 Assistant。')})
-element('outline-to-scenes').onclick=guarded(async()=>{await flushEdits();editable();if(!draft)return;if(draft.scenes.length)throw new Error('已有分镜，请在脚本页继续修改，避免覆盖。');const lines=draft.preparation.outline.split('\n').map(value=>value.trim()).filter(Boolean);if(!lines.length||lines.length>24)throw new Error('请提供1–24行大纲，每行创建一个分镜。');history();draft.scenes=lines.map((line,index)=>({...newStudioScene(crypto.randomUUID(),line.slice(0,44)||'分镜'+(index+1)),visualBrief:line.slice(0,2000)}));sceneIndex=0;stage=1;render();await save(false)})
+element('outline-to-scenes').onclick=guarded(async()=>{await flushEdits();editable();if(!draft)return;if(draft.scenes.length)throw new Error('已有分镜，请在脚本页继续修改，避免覆盖。');const lines=draft.preparation.outline.split('\n').map(value=>value.trim()).filter(Boolean);if(!lines.length||lines.length>COMPOSITION_LIMITS.scenes)throw new Error('请提供1–96行大纲，每行创建一个分镜。');history();draft.scenes=lines.map((line,index)=>({...newStudioScene(crypto.randomUUID(),line.slice(0,44)||'分镜'+(index+1)),visualBrief:line.slice(0,2000)}));sceneIndex=0;stage=1;render();await save(false)})
 element('voice-muted').addEventListener('input',()=>{pendingField='voice-muted'})
 element('voice-muted').addEventListener('change',guarded(async()=>{if(pendingField==='voice-muted')pendingField=undefined;const muted=input('voice-muted').checked;await alterScene(value=>{value.voiceMuted=muted})}))
 for(const id of ['keep-source-audio','source-volume'])element(id).addEventListener('input',()=>{pendingField=id})
@@ -659,7 +661,7 @@ element('new-draft').onclick=guarded(createDraft);select('draft-select').onchang
 async function mutateScene(action:string):Promise<void>{
   await flushEdits();editable();if(!draft?.scenes.length)return
   if(action==='duplicate'){
-    if(draft.scenes.length>=24)throw new Error('最多 24 个分镜。')
+    if(draft.scenes.length>=COMPOSITION_LIMITS.scenes)throw new Error('最多 96 个分镜。')
     history();const copied=clone(scene());copied.id=crypto.randomUUID();for(const layer of [...(copied.layers??[]),...(copied.audioTracks??[])])layer.id=crypto.randomUUID();draft.scenes.splice(sceneIndex+1,0,copied);sceneIndex++
   }else if(action==='remove-scene'){
     history();draft.scenes.splice(sceneIndex,1);sceneIndex=Math.max(0,Math.min(sceneIndex,draft.scenes.length-1));if(!draft.scenes.length)await preview.dispose()
@@ -676,8 +678,8 @@ element('undo').onclick=guarded(async()=>{await flushEdits();editable();if(!undo
 for(const button of (document.querySelectorAll('[data-stage]') as HTMLButtonElement[]))button.onclick=guarded(async()=>{await flushEdits();if(!draft&&button.dataset.stage==='0')await createDraft();stage=Number(button.dataset.stage);if(stage===4)workbench.mode='visual';if(stage!==4){preview.pause();for(const media of document.querySelectorAll('audio,video') as HTMLMediaElement[])media.pause()}document.querySelectorAll('[data-stage]').forEach(item=>item.classList.toggle('active',item===button));renderStage();if(stage===4){if(workbench.mode==='cover')await coverEditor.preview();else await selectScene(sceneIndex)}else void publishSelection()})
 api.onChange(value=>{
   const changed=mediaRecord(value)
-  if(changed.workspaceHidden){workspaceHidden=true;workspaceEpoch++;materials.suspend();previewDirty=true;void preview.dispose();for(const media of document.querySelectorAll('audio,video') as HTMLMediaElement[])media.pause();return}
-  if(changed.projectChanged){workspaceEpoch++;originalSpeechEditor.clear();speechEditor.clear();coverEditor.clear();clearExport();materials.clear();referenceEditor.suspend();exportReviewEditor.dispose();timingEditor.dispose();materialIndexEditor.dispose();sourceNarrationEditor.dispose();recordingPlanEditor.dispose();invalidProject=true;previewDirty=true;setBusy(busy);void preview.dispose();message('Project 已切换，此页保留草稿，请重新打开 Video Studio。');renderStage();return}
+  if(changed.workspaceHidden){if(!workspaceHidden&&draft){preview.pause();workspaceResume={draftId:draft.id,revision:draft.revision,seconds:Number(input('seek').value)}}workspaceHidden=true;workspaceEpoch++;materials.suspend();previewDirty=true;void preview.dispose();for(const media of document.querySelectorAll('audio,video') as HTMLMediaElement[])media.pause();return}
+  if(changed.projectChanged){workspaceResume=undefined;workspaceEpoch++;originalSpeechEditor.clear();speechEditor.clear();coverEditor.clear();clearExport();materials.clear();referenceEditor.suspend();exportReviewEditor.dispose();timingEditor.dispose();materialIndexEditor.dispose();sourceNarrationEditor.dispose();recordingPlanEditor.dispose();invalidProject=true;previewDirty=true;setBusy(busy);void preview.dispose();message('Project 已切换，此页保留草稿，请重新打开 Video Studio。');renderStage();return}
   if(typeof changed.projectId==='string'&&state&&changed.projectId!==state.project.id)return
   if(changed.productionProgress&&draft){try{const fact=assertStudioProductionProgress(changed.productionProgress);if(fact.draftId===draft.id&&fact.revision>=draft.revision){workflow.productionProgress=fact;workflow.renderTask(state,draft,busy||viewChanging||Boolean(savePending));if(busy&&currentOperation==='narrate-pending')element('job-status').textContent=`本次已保存 ${fact.completedSceneIds.length} 段旁白 · ${fact.pendingSceneIds.length} 段待制作`}}catch(error){message(String(error))}}
   if(changed.projectRestored){workspaceEpoch++;workspaceHidden=false;invalidProject=false;previewDirty=true;setBusy(busy)}

@@ -33,6 +33,18 @@ test('Codex browser thread excludes environments, shell, MCP helpers and questio
   assert.deepEqual(config.mcp_servers, {})
 })
 
+test('Codex discovery instructions derive action names from the admitted browser catalog and survive resume parameters',()=>{
+  const definition={name:'browser' as const,description:'Catalog',inputSchema:{type:'object',properties:{action:{type:'string',enum:['status','help','observe','media.video.capture']}}}}
+  const params=codexThreadParameters('/disposable/project','gpt-6.1-sol',definition,'Fresh Project context')
+  assert.match(String(params.developerInstructions),/status, help, observe, media.video.capture/)
+  assert.match(String(params.developerInstructions),/"action":"help","forAction":"EXACT_ACTION"/)
+  assert.match(String(params.developerInstructions),/unknown fields are rejected before execution/)
+  assert.match(String(params.developerInstructions),/limit stop is partial/)
+  delete params.dynamicTools
+  assert.match(String(params.developerInstructions),/Fresh Project context/)
+  assert.ok(!String(codexThreadParameters('/disposable/project','gpt-6.1-sol',{...definition,inputSchema:{properties:{action:{enum:['status']}}}},'').developerInstructions).includes('"action":"help"'))
+})
+
 function officialCatalog(){return {client_version:'0.160.0',identity:{account:'private-account'},models:[
   ...['gpt-6.1-sol','gpt-6-astra','gpt-6-sol','gpt-6-luna'].map(slug=>({slug,tool_mode:'code_mode_only',multi_agent_version:'v2',multi_agent_reasoning_effort:'high',experimental_supported_tools:['clock','send_user_message_async'],use_responses_lite:true,context_window:400000,supported_reasoning_levels:[{effort:'high',description:'Native reasoning'}],input_modalities:['text','image'],model_messages:{instructions:'Native instructions'}})),
   {slug:'gpt-5.5',tool_mode:null,use_responses_lite:false},

@@ -1,3 +1,4 @@
+import {COMPOSITION_LIMITS} from './composition-limits.js'
 import {assertArtifactId,finiteNumber,mediaRecord} from './media-contract.js'
 import {assertSpeechSourceRange,assertSpeechRangeEvidence} from './speech-range.js'
 import type {SpeechSourceRange} from './speech-range.js'
@@ -86,7 +87,7 @@ export function speechSourceSegments(evidence:SpeechEvidence):SpeechSegment[]{co
 /** One source clock maps to scene and film clocks; out-of-trim anchors are explicitly unavailable. */
 export function speechTimelineRange(startSeconds:number,endSeconds:number,options:{sourceStartSeconds:number;playbackRate:number;sceneOffsetSeconds:number;sceneDurationSeconds:number;filmStartSeconds:number}):{sceneStartSeconds:number;sceneEndSeconds:number;filmStartSeconds:number;filmEndSeconds:number}|null {
  finiteNumber(startSeconds,'anchor start',0,180);finiteNumber(endSeconds,'anchor end',startSeconds+.000001,180)
- const source=finiteNumber(options.sourceStartSeconds,'source start',0,180),rate=finiteNumber(options.playbackRate,'playback rate',.25,4),offset=finiteNumber(options.sceneOffsetSeconds,'scene offset',0,60),duration=finiteNumber(options.sceneDurationSeconds,'scene duration',1,60),film=finiteNumber(options.filmStartSeconds,'film start',0,180)
+ const source=finiteNumber(options.sourceStartSeconds,'source start',0,180),rate=finiteNumber(options.playbackRate,'playback rate',.25,4),offset=finiteNumber(options.sceneOffsetSeconds,'scene offset',0,60),duration=finiteNumber(options.sceneDurationSeconds,'scene duration',1,60),film=finiteNumber(options.filmStartSeconds,'film start',0,COMPOSITION_LIMITS.seconds)
  const start=offset+(startSeconds-source)/rate,end=offset+(endSeconds-source)/rate
  if(start<offset||end>duration)return null
  return {sceneStartSeconds:start,sceneEndSeconds:end,filmStartSeconds:film+start,filmEndSeconds:film+end}

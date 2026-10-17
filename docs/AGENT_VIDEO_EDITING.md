@@ -5,8 +5,8 @@ BMW 仍只有一个经过验证的模型工具 `browser`。视频编辑通过 `v
 ## 调用顺序
 
 1. `context` 读取可信 Project、Session、当前模式和选中目标。
-2. `describe-schema` 读取实际 documentSchema、editSchema、capabilities、支持的 commands 与高级编辑是否已授权；不要依据提案猜测尚未实现的字段。
-3. `list` 获取当前对话草稿、revision、兼容性与 Host 签名快照；`read-document` 携带 `draftId/expectedRevision` 获取共享结构及可信 scope。
+2. `describe-schema` 读取能力与命令索引；模型按 `describe-edit` 懒读单个命令，卡片参数用 `describe-template`。GUI／直接宿主响应与模型紧凑响应不同，模型不应假定拿到整份 Schema。
+3. `list` 获取当前对话草稿、revision、兼容性与 Host 签名快照；`read-document` 携带 `draftId/expectedRevision` 获取摘要及可信 scope；模型用 `read-scene` 的 timeline 分区分页读取实际 clipId，准备资料用 `read-preparation`。
 4. 针对读到的 sceneId/clipId 发出 `validate-edit` 试算；真实修改用 `apply-edit`。每次成功修改后重新读取 ID/revision，不把试算当作批准或实际成片。
 5. 用 `check` 检查真实素材，再在用户已授权制作时 `render`；仅实际完成返回的 Project MP4 才是成片。
 
@@ -33,18 +33,22 @@ BMW 仍只有一个经过验证的模型工具 `browser`。视频编辑通过 `v
 
 | 命令 | 参数与语义 |
 | --- | --- |
-| `scene.set` | sceneId + patch：title、script、visualBrief、bullets、layout、captionStyle、captionDisplay、showSceneNumber、sceneTemplate、endPolicy。字段受原生类型及范围检查；不允许改 owner、revision、来源证据和实际音频时长。 |
+| `brief.set` | patch 仅含 notes、outline、artifactIds、sourceIds，复用准备资料校验。 |
+| `scene.add` | scene 的 id/title 与闭合内容字段；可用 afterSceneId 指定插入位置，不接受宿主证据。 |
+| `captions.set` | sceneId，mode=manual/sentences/off；manual 提供 cues，沿用人工翻译保护及时间验证。 |
+| `card.set / card.bind` | 设置闭合 cardSpec／links 或仅更改句引用；来源和目标身份须有效。 |
+| `scene.set` | sceneId + patch：title、script、visualBrief、bullets、layout、captionStyle、captionDisplay、showSceneNumber、sceneTemplate、endPolicy、citations、sources、durationSeconds。字段受原生类型及范围检查；不允许改 owner、revision、来源证据和实际音频时长。 |
 | `scene.reorder` | sceneIds 必须为现有分镜的完整排列，不允许重复、遗漏或插入陌生 ID。 |
 | `clip.move / clip.trim / clip.split` | 当前 clipId 和全片 time `{ticks}`；trim 还需 edge start/end。复用原生编辑规则、最小时长与连续性时钟；不能借此生成任意空隙或跨镜头自由主片段。 |
 | `clip.effects` | 当前主画面 clipId + 闭合 effects 对象或 null。独立图层 effects 暂不开放此命令；现有 GUI 中保存的合法图层效果仍完整保留。 |
 | `clip.mute` | clipId + muted 布尔值。原声画面/显式旁白按现有规则静音；独立音轨或图层需要高级权限。 |
-| `layer.add` | kind=text/rectangle/image/video/audio；可选 sceneId，否则全片。媒体类型需当前 Project artifactId；Host 分配身份。 |
-| `layer.set` | clipId + 闭合 patch：title、位置尺寸、opacity、zIndex、hidden、locked、color、text、fontSize、volume、muted、fadeInSeconds、fadeOutSeconds、ducking、keyframes。字段必须符合对象类型，锁定对象先单独解除 locked；不允许改来源时钟/原始淡入淡出记录/身份。 |
+| `layer.add` | kind=text/rectangle/image/video/audio/diagram/card-stack；可选 sceneId，否则全片。媒体类型需当前 Project artifactId；Host 分配身份；diagram 创建默认曲线，card-stack 原子创建六个独立对象，仍需高级权限与足够预算。 |
+| `layer.set` | clipId + 闭合 patch：title、位置尺寸、opacity、zIndex、hidden、locked、color、text、fontSize、textTreatment、packaging、sourceCrop、science、volume、muted、fadeInSeconds、fadeOutSeconds、ducking、keyframes。字段必须符合对象类型，锁定对象先单独解除 locked；不允许改来源时钟/原始淡入淡出记录/身份。 |
 | `layer.remove` | 当前独立对象 clipId，遵守锁定与当前高级编辑授权。 |
 
 一般时间为微秒；例如全片 1.5 秒是 `{ "ticks": 1500000 }`。clip 的时间域见文档，命令 time 始终是全片时间。显式字幕端点没有另一套 duration；字幕 ID 或旧匿名片段 ID 在结构编辑后可能变化，必须重读。
 
-旧 `read/update/attach/narrate/split-scene` 和字幕/语音专用操作继续可用，但 read/update 是共享文档的 v1 运行时投影。新编辑优先使用类型命令，避免全量快照覆盖。新增镜头和配音仍使用既有已校验的接口；当前命令没有宣传全功能 NLE 或 AI 素材生成。
+旧 `read/update/attach/narrate/split-scene` 和字幕/语音专用操作继续可用，但 read/update 是共享文档的 v1 运行时投影。新编辑优先使用类型命令，避免全量快照覆盖。新增镜头可用 scene.add，配音仍使用既有已校验的接口；当前命令没有宣传全功能 NLE 或 AI 素材生成。
 
 ## 权限、冲突与失败
 

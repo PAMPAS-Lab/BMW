@@ -1,11 +1,12 @@
 import {normalizeSpeech} from './speech-normalize.js'
+import {sampleAudioEvidence} from './audio-evidence.js'
 import {paintDrawing} from './image-drawing.js'
 import {decodeProjectImage} from './image-decoder.js'
 import {ImageDecodeBudget} from '../image-contract.js'
 import { Input, CustomSource, MP4, QTFF, WEBM, MATROSKA, MP3, WAVE, OGG, ADTS, FLAC, MPEG_TS,
   VideoSampleSink,AudioSampleSink, EncodedPacketSink, Output, StreamTarget, Mp4OutputFormat, WebMOutputFormat, Conversion, canEncodeVideo, canEncodeAudio } from 'mediabunny'
 import type { InputTrack, StreamTargetChunk } from 'mediabunny'
-import { LinearFrameReader, normalizeBrowserVideoColor } from './linear-frames.js'
+import { LinearFrameReader, normalizeBrowserVideoColor,indexedFrameStart } from './linear-frames.js'
 import { assertNativeProcessingRequest, assertPreservedMediaTracks, assertProcessableVideoTracks, MEDIA_LIMITS } from '../media-contract.js'
 import type { MediaInfo, MediaTrackInfo, MediaWorkerResult, MediaProcessingBridge, MediaProcessingCommand, SampledFrame,FullMediaDecode } from '../media-contract.js'
 
@@ -90,7 +91,8 @@ async function processMedia(command: MediaProcessingCommand): Promise<void> {
     for (const track of await input.getVideoTracks()) await normalizeBrowserVideoColor(track)
     const metadata = await info(input)
     let result: MediaWorkerResult
-    if(request.action==='media.speech.normalize'){const normalized=await normalizeSpeech(input,request.sourceRange);await write(command.token,0,0,normalized.data);result={kind:'speech-pcm',info:normalized.info}}
+    if(request.action==='media.audio.sample'){const audio=await sampleAudioEvidence(input,request.startSeconds,request.endSeconds);await write(command.token,0,0,audio.data);result={kind:'audio-evidence',info:audio.info}}
+    else if(request.action==='media.speech.normalize'){const normalized=await normalizeSpeech(input,request.sourceRange);await write(command.token,0,0,normalized.data);result={kind:'speech-pcm',info:normalized.info}}
     else if (request.action === 'media.inspect') result = { kind: 'inspection', info: metadata }
     else if(request.action==='media.decode.check'){
       if(!Number.isFinite(metadata.durationSeconds)||metadata.durationSeconds<=0||metadata.durationSeconds>MEDIA_LIMITS.durationSeconds)throw new Error('Full-file decode requires finite media up to thirty minutes.')
@@ -120,7 +122,8 @@ async function processMedia(command: MediaProcessingCommand): Promise<void> {
         const scale = Math.min(1, request.maxWidth / await track.getDisplayWidth(), request.maxHeight / await track.getDisplayHeight())
         const width = Math.max(1, Math.floor(await track.getDisplayWidth() * scale))
         const height = Math.max(1, Math.floor(await track.getDisplayHeight() * scale))
-        const reader = new LinearFrameReader(track, { width, height, fit: 'contain' })
+        const startTimestamp=await indexedFrameStart(input,Math.min(...request.timestampsSeconds))
+        const reader = new LinearFrameReader(track, { width, height, fit: 'contain' }, startTimestamp)
         const frames: SampledFrame[] = new Array(request.timestampsSeconds.length)
         try {
           const order = request.timestampsSeconds.map((time,index)=>({time,index})).sort((a,b)=>a.time-b.time)
@@ -128,7 +131,8 @@ async function processMedia(command: MediaProcessingCommand): Promise<void> {
             const frame = await reader.get(time)
             if (!frame) throw new Error('Requested video frame is unavailable.')
             await write(command.token,index,0,await png(frame.canvas))
-            frames[index]={outputIndex:index,requestedTimestampSeconds:time,timestampSeconds:frame.timestamp,durationSeconds:frame.duration,width,height}
+            const thumbnail=new OffscreenCanvas(8,8),context=thumbnail.getContext('2d')!;context.drawImage(frame.canvas,0,0,8,8);const pixels=context.getImageData(0,0,8,8).data,lumaSignature=Array.from({length:64},(_,i)=>Math.round(.2126*pixels[i*4]+.7152*pixels[i*4+1]+.0722*pixels[i*4+2]))
+            frames[index]={outputIndex:index,requestedTimestampSeconds:time,timestampSeconds:frame.timestamp,durationSeconds:frame.duration,width,height,lumaSignature}
           }
         } finally { await reader.close() }
         result = { kind: 'frames', frames }

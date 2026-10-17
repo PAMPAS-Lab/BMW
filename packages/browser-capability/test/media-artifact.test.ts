@@ -52,6 +52,13 @@ test('artifact filenames remove path syntax and infer media extensions', () => {
   assert.equal(artifactFilename('../../latest:post', 'video/mp4', new URL('https://video.example/stream'), 99), '99-latest-post.mp4')
 })
 
+test('media download rejects partial HTTP responses and removes truncated full responses',async(t)=>{
+  const projectDirectory=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-download-complete-'))
+  t.after(()=>fs.rmSync(projectDirectory,{recursive:true,force:true}))
+  for(const status of [206,200])await assert.rejects(downloadMediaArtifact({projectDirectory,url:'https://video.example/clip.mp4',fetchImpl:async()=>new Response(new Uint8Array([1,2]),{status,headers:{'content-length':'4'}})}),status===206?/full HTTP 200/:/Content-Length/)
+  assert.deepEqual(fs.readdirSync(path.join(projectDirectory,'artifacts')),[])
+})
+
 test('media download rejects and removes DASH initialization fragments', async (t) => {
   const projectDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-media-dash-init-'))
   t.after(() => fs.rmSync(projectDirectory, { recursive: true, force: true }))

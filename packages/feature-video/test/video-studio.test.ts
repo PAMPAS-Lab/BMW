@@ -1,4 +1,6 @@
 import {recordingEvents} from '../../media-native/src/recording-contract.js'
+import {scienceEditorFields,readScienceEditorFields} from '../src/renderer/science-layer-editor.js'
+import {defaultScienceSpec} from '../../media-native/src/science-spec.js'
 import {recordingPlanDraft,assertEditedRecordingPlan} from '../src/studio-recording-plan.js'
 import {videoDraftFromDocument} from '../src/video-document.js'
 import {assertStudioReviewProposal,studioReviewValueLabel} from '../src/studio-review.js'
@@ -67,6 +69,30 @@ test('Production facts and explicit recovery use current owned records, never in
 })
 function sceneDraft(store:VideoStudioStore,title:string){const draft=store.create(title);draft.scenes.push(newStudioScene('first-scene'));return draft}
 function fixture(){const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-studio-test-'));fs.mkdirSync(path.join(root,'artifacts'));return {root,store:new VideoStudioStore(root,'fixture-session'),close:()=>fs.rmSync(root,{recursive:true,force:true})}}
+
+test('Scientific form edits round-trip all datasets, preserve cut clocks and reject invalid cells atomically',()=>{
+ for(const kind of ['curve','ratio','flow','array'] as const){const spec={...defaultScienceSpec(kind),offsetSeconds:.37},fields=scienceEditorFields(spec);assert.deepEqual(readScienceEditorFields(spec,fields),spec);const switched=readScienceEditorFields(spec,{...fields,kind:kind==='curve'?'array':'curve'});assert.equal(switched.offsetSeconds,.37)}
+ const curve=defaultScienceSpec('curve'),curveFields=scienceEditorFields(curve);assert.throws(()=>readScienceEditorFields(curve,{...curveFields,points:'0,0\n,1'}));assert.throws(()=>readScienceEditorFields(curve,{...curveFields,points:'0,0\n1,Infinity'}));const changed=readScienceEditorFields(curve,{...curveFields,points:'0,0\n1,0.5'});assert.equal(changed.kind==='curve'&&changed.points.at(-1)!.y,.5)
+ const array=defaultScienceSpec('array'),fields=scienceEditorFields(array),snapshot=JSON.stringify(array);assert.throws(()=>readScienceEditorFields(array,{...fields,'row-0-count':64}));assert.equal(JSON.stringify(array),snapshot)
+ const ratio=defaultScienceSpec('ratio'),parts=readScienceEditorFields(ratio,{...scienceEditorFields(ratio),rowCount:4});assert.equal(parts.kind==='ratio'&&parts.parts.length,4)
+})
+
+test('Layer-only scenes satisfy visual readiness only when local/global content is visible in that scene',()=>{
+ const f=fixture();try{
+  let d=f.store.create('Independent content');d.scenes=[{...newStudioScene('first'),durationSeconds:2},{...newStudioScene('second'),durationSeconds:2}]
+  const missing=()=>draftReadiness(d).issues.filter(i=>i.code==='missing-visual').map(i=>i.sceneId)
+  assert.deepEqual(missing(),['first','second']);d=addStudioLayer(d,undefined,'rectangle').draft;d.layers![0].durationSeconds=2;assert.deepEqual(missing(),['second'])
+  d=addStudioLayer(d,'second','text').draft;const layer=d.scenes[1].layers![0];layer.text='   ';assert.deepEqual(missing(),['second']);layer.text='可编辑内容';assert.deepEqual(missing(),[])
+  layer.hidden=true;assert.deepEqual(missing(),['second']);layer.hidden=false;layer.opacity=0;assert.deepEqual(missing(),['second'])
+  layer.keyframes=[0,1].map((timeSeconds,i)=>({timeSeconds,x:layer.x,y:layer.y,width:layer.width,height:layer.height,opacity:i,easing:'linear' as const}));assert.deepEqual(missing(),[])
+  d.layers![0].hidden=true;assert.deepEqual(missing(),['first'])
+ }finally{f.close()}
+})
+test('Rejected long-film receipts remove only new native outputs and preserve the current draft and existing files',async()=>{
+ const f=fixture();try{let d=sceneDraft(f.store,'Invalid native receipt');d.scenes[0].bullets=['Fixture content'];d=f.store.update(d.id,d.revision,d);const directory=path.join(f.root,'artifacts');fs.writeFileSync(path.join(directory,'old.mp4'),'preserved');const before=fs.readdirSync(directory).sort(),service=new FixtureVideoStudioService({projectStore:{active:()=>({id:'p',name:'P',directory:f.root})},execute:async()=>({}),recordingController:{narrate:async()=>({}),processArtifact:async()=>({}),compose:async()=>{fs.writeFileSync(path.join(directory,'new.mp4'),'new output');fs.writeFileSync(path.join(directory,'new-report.json'),'new report');return {artifactId:'new.mp4',verificationArtifactId:'new-report.json',durationSeconds:721}}}})
+  await assert.rejects(service.execute({operation:'render',draftId:d.id,expectedRevision:d.revision}),/artifact duration/);assert.deepEqual(fs.readdirSync(directory).sort(),before);assert.equal(f.store.read(d.id).revision,d.revision);assert.equal(f.store.read(d.id).exports.length,0);assert.equal(fs.readFileSync(path.join(directory,'old.mp4'),'utf8'),'preserved')
+ }finally{f.close()}
+})
 test('original-to-narration recipe keeps continuous footage, measured voice, bilingual source text and explicit caption clocks',()=>{
  const f=fixture();try{
   const d=sceneDraft(f.store,'Original then explanation'),scene=d.scenes[0];Object.assign(scene,{videoArtifactId:'source.mp4',sourceStartSeconds:.1,sourceDurationSeconds:20,audioArtifactId:'voice.wav',audioText:'中文解释。',narration:'中文解释。',audioDurationSeconds:4,voiceMuted:true,captions:[{startSeconds:.5,endSeconds:3,text:'Original quote.',translationText:'人工译文',translationOrigin:'user-edited' as const}]});scene.sourceCaptionBinding={sourceArtifactId:'source.mp4',sourceSha256:'a'.repeat(64),segmentIndex:0,clock:sourceCaptionClock(scene,0),origin:'user-edited',sourceCues:[{startSeconds:.6,endSeconds:3.1,text:'Original quote.',translationText:'人工译文',translationOrigin:'user-edited'}],sourceRange:{startSeconds:0,endSeconds:20}}
@@ -409,8 +435,8 @@ test('Narration preserves independent caption endpoints and refuses scene or who
   const generated=await service.execute({operation:'narrate',draftId:draft.id,expectedRevision:draft.revision,sceneId:'first-scene'}) as {draft:VideoDraft};assert.equal(generated.draft.scenes[0].durationSeconds,7.25);assert.deepEqual(generated.draft.scenes[0].captions,draft.scenes[0].captions)
   draft=generated.draft;seconds=60
   await assert.rejects(service.execute({operation:'narrate',draftId:draft.id,expectedRevision:draft.revision,sceneId:'first-scene'}),/scene duration/);assert.equal(value.store.read(draft.id).revision,draft.revision)
-  draft.scenes.push({...newStudioScene('second'),durationSeconds:60},{...newStudioScene('third'),durationSeconds:60},{...newStudioScene('fourth'),durationSeconds:50});draft=value.store.update(draft.id,draft.revision,draft);seconds=20
-  await assert.rejects(service.execute({operation:'narrate',draftId:draft.id,expectedRevision:draft.revision,sceneId:'first-scene'}),/three minutes/);assert.equal(value.store.read(draft.id).scenes[0].audioArtifactId,generated.draft.scenes[0].audioArtifactId)
+  draft.scenes.push(...Array.from({length:11},(_,i)=>({...newStudioScene('fixed-'+i),durationSeconds:60})),{...newStudioScene('last'),durationSeconds:50});draft=value.store.update(draft.id,draft.revision,draft);seconds=20
+  await assert.rejects(service.execute({operation:'narrate',draftId:draft.id,expectedRevision:draft.revision,sceneId:'first-scene'}),/twelve minutes/);assert.equal(value.store.read(draft.id).scenes[0].audioArtifactId,generated.draft.scenes[0].audioArtifactId)
  }finally{value.close()}
 })
 
@@ -620,7 +646,7 @@ test('Completed MP4 reuse survives cover/notes edits but invalidates changed com
     draft=value.store.addExport(draft.id,draft.revision,{artifactId:'first.mp4',durationSeconds:8});assert.ok(value.store.reusableExport(draft))
     fs.rmSync(path.join(value.root,'artifacts','first.mp4'));assert.equal(value.store.reusableExport(draft),undefined)
     assert.throws(()=>assertStudioRequest({operation:'render',forceRender:'yes'}),/boolean/);assert.throws(()=>assertStudioRequest({operation:'read',forceRender:true}),/render/)
-    assert.equal(assertStudioRequest({operation:'render',forceRender:true}).forceRender,true)
+    assert.equal(assertStudioRequest({operation:'render',draftId:'draft',expectedRevision:1,forceRender:true}).forceRender,true)
     await assert.rejects(service.execute({operation:'render',draftId:draft.id,expectedRevision:draft.revision-1}),/STUDIO_CONFLICT/)
   }finally{value.close()}
 })

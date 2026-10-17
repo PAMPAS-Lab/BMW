@@ -60,7 +60,7 @@ export class ArtifactJobIO {
     if (total > maximumBytes) throw new Error('Media output exceeds its byte limit.')
     let output = this.outputs.get(index)
     if (!output) {
-      const suffix = this.request.action==='media.speech.normalize'?'speech.wav':frame ? `frame-${index + 1}.png` : drawing ? 'drawing.png' : this.request.action==='media.convert' ? `converted.${this.request.outputFormat}` : (()=>{throw new Error('Unsupported output request.')})()
+      const suffix = this.request.action==='media.audio.sample'?'audition.wav':this.request.action==='media.speech.normalize'?'speech.wav':frame ? `frame-${index + 1}.png` : drawing ? 'drawing.png' : this.request.action==='media.convert' ? `converted.${this.request.outputFormat}` : (()=>{throw new Error('Unsupported output request.')})()
       const artifactId = `media-${this.token}-${suffix}`
       const file = path.join(this.root, artifactId)
       output = { handle: await fs.open(file, 'wx+', 0o600), artifactId, path: file, bytes: 0 }
@@ -88,6 +88,7 @@ export class ArtifactJobIO {
       if(imageSize&&(header.readUInt32BE(16)!==imageSize.width||header.readUInt32BE(20)!==imageSize.height))throw new Error('Drawing PNG dimensions disagree with its receipt.')
       if (this.request.action === 'media.convert' && (this.request.outputFormat === 'mp4' ? header.toString('ascii', 4, 8) !== 'ftyp' : !header.subarray(0,4).equals(Buffer.from([0x1a,0x45,0xdf,0xa3])))) throw new Error('Invalid converted media container.')
       if(this.request.action==='media.speech.normalize'&&(output.bytes>44+180*32000||header.toString('ascii',0,4)!=='RIFF'||header.toString('ascii',8,16)!=='WAVEfmt '||header.readUInt32LE(16)!==16||header.readUInt16LE(20)!==1||header.readUInt16LE(22)!==1||header.readUInt32LE(24)!==16000||header.readUInt32LE(28)!==32000||header.readUInt16LE(32)!==2||header.readUInt16LE(34)!==16||header.toString('ascii',36,40)!=='data'||header.readUInt32LE(40)!==output.bytes-44||header.readUInt32LE(4)!==output.bytes-8))throw new Error('Invalid normalized speech WAV.')
+      if(this.request.action==='media.audio.sample'&&(output.bytes>44+10*96000*8*2||header.toString('ascii',0,4)!=='RIFF'||header.toString('ascii',8,16)!=='WAVEfmt '||header.readUInt32LE(16)!==16||header.readUInt16LE(20)!==1||header.readUInt16LE(34)!==16||header.toString('ascii',36,40)!=='data'||header.readUInt32LE(40)!==output.bytes-44||header.readUInt32LE(4)!==output.bytes-8))throw new Error('Invalid audition WAV.')
       artifacts.push({ artifactId: output.artifactId, path: output.path, bytes: output.bytes })
     }
     await this.close(false)
