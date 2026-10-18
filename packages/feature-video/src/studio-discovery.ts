@@ -6,6 +6,7 @@ const spec=(required:readonly string[]=[],optional:readonly string[]=[]):Spec=>(
 const draft=['draftId','expectedRevision'],scene=[...draft,'sceneId'],paging=['pageOffset','pageLimit']
 /** Field ownership is shared by discovery and admission; feature code owns all operations. */
 export const studioOperationContracts={
+ 'news-topics':spec(), 'propose-news-topics':spec(['expectedTopicRevision','newsCandidates'],['closeNewsTask']), 'select-news-topic':spec(['expectedTopicRevision','topicId','baseFingerprint'],['options']), 'news-guide':spec(draft),
  'record-production-review':spec([...draft,'baseFingerprint','expectedAssessmentRevision','assessment']), 'precomposition-status':spec([...draft,'artifactId']), precompose:spec([...draft,'gridRecipe']), 'production-profiles':spec(), 'propose-type':spec([...draft,'productionType'],['recipeId','sceneId']), 'adopt-type':spec([...draft,'productionType','baseFingerprint'],['recipeId','sceneId']), 'production-read':spec(draft,['productionSection',...paging]), 'production-review':spec(draft), 'plan-impact':spec(draft,['edit','cover','baseFingerprint',...paging]),
  analysis:spec([...draft,'analysisRequest']),
  guide:spec(),'describe-schema':spec(),'describe-edit':spec(['editOperation']),'describe-template':spec(['cardTemplateId']),

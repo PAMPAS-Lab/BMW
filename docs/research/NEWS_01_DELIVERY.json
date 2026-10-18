@@ -1,0 +1,332 @@
+{
+  "format": "bmw.news-01-acceptance",
+  "version": 1,
+  "updatedAt": "2026-10-18T05:57:35.189Z",
+  "scope": "NEWS-01 only; existing SI film is historical evidence and is not this fresh-news acceptance case.",
+  "technical": {
+    "status": "passed",
+    "fullReport": ".bmw-runtime/classified-tests/2026-10-18-news-01-delivery/result.json",
+    "counts": {
+      "passed": 166,
+      "failed": 0,
+      "notRun": 12
+    },
+    "sourceManifest": "docs/verification/CURRENT.json",
+    "unitCases": 20,
+    "profile": "disposable"
+  },
+  "realTrial": {
+    "previousAttempts": [
+      {
+        "root": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T01-49-05-497Z",
+        "observedRoute": [
+          {
+            "provider": "deepseek-official",
+            "model": "deepseek-flash",
+            "tools": [
+              "browser"
+            ]
+          }
+        ],
+        "paidResearchObserved": true,
+        "tools": 47,
+        "candidates": 0,
+        "drafts": 0,
+        "narrationOrComposition": false,
+        "exitCode": 143,
+        "reason": "Text-only original source lacked a bindable page screenshot; navigation to an inaccessible external site outlived bridge deadlines and blocked FIFO/normal shutdown. Preserved trace; disposable process ended after UI cancel/quit and SIGTERM did not complete.",
+        "fixesVerified": [
+          "Native source-bound original-page screenshot admission",
+          "Bounded navigation stop/close and explicit quarantine recovery"
+        ]
+      },
+      {
+        "root": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-17-39-663Z",
+        "observedRoute": [
+          {
+            "provider": "deepseek-official",
+            "model": "deepseek-flash",
+            "tools": [
+              "browser"
+            ]
+          }
+        ],
+        "paidResearchObserved": true,
+        "tools": 125,
+        "candidates": 0,
+        "drafts": 0,
+        "narrationOrComposition": false,
+        "status": "interrupted-with-clean-native-shutdown",
+        "reason": "Original publisher metadata combines a date with a byline or document number; strict date parsing rejected proposals. User-interface stop completed cleanup and the isolated app exited normally; no forced termination. Added bounded unique complete publication-line extraction; ambiguous or truncated ranges remain rejected."
+      },
+      {
+        "root": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z",
+        "status": "research-passed-user-selection-pending",
+        "observedRoute": [
+          {
+            "provider": "deepseek-official",
+            "model": "deepseek-flash",
+            "tools": [
+              "browser"
+            ]
+          }
+        ],
+        "paidResearchObserved": true,
+        "tools": 110,
+        "candidates": 1,
+        "drafts": 0,
+        "narrationOrComposition": false,
+        "exitCode": 0,
+        "reason": "One eligible original Apple news card rendered in BMW; no selection or production. Closed the isolated app normally to support an unambiguous Release date inside the original publisher navigation label and preserve long-page screenshot detail. Existing Project/Session and media retained."
+      }
+    ],
+    "status": "video-topic-not-accepted-new-research-requested",
+    "requestedDriver": "dsh",
+    "requestedModel": [
+      "deepseek-official",
+      "deepseek-flash"
+    ],
+    "requestedNarration": {
+      "provider": "qwen-tts",
+      "voice": "anmingyuan_v3.1",
+      "ratePercent": 0
+    },
+    "topicWindowHours": 72,
+    "topics": [
+      {
+        "id": "apple-app-review-ai-ncii-1016",
+        "title": "苹果把“AI 生成的私密影像”写进 App Review 禁令",
+        "publishedAt": "2026-10-16",
+        "url": "https://developer.apple.com/news/?id=vvzx6cul",
+        "previewArtifactId": "1792295892141-Strengthening-App-Review-Guidelines-against-nonconsensual-intimate-imagery-and-b.png",
+        "sourceSha256": "0aca24583dcbdf1cbea49d47d8abefa47198ece943a8e51f5847af4b1f9e3416",
+        "previewSha256": "640f916bd9c3bd278f424aea88c07a535c1ddaf4991a750df442f19aa62f410e",
+        "checkedAt": "2026-10-18T04:00:09.739Z"
+      },
+      {
+        "id": "deepseek-v41-flash-1017",
+        "title": "DeepSeek 上线 V4.1-Flash-1017：搜索拉取 API 开放计价、权重开源",
+        "publishedAt": "2026-10-17",
+        "url": "https://api-docs.deepseek.com/news/news261017/",
+        "previewArtifactId": "1792295917167-DeepSeek-V4.1-Flash-1017-Wish-Driven-Programming-Made-Real-DeepSeek-API-Docs.png",
+        "sourceSha256": "80d84dc3f621006d1f2a22243784fd5331b0d3b7888baf82bebbd540908c0cb5",
+        "previewSha256": "604b7192b679437c7dcf222424d0619a87de4c3c2669fff843919e334ab0ca21",
+        "checkedAt": "2026-10-18T04:00:09.867Z"
+      }
+    ],
+    "selection": {
+      "topicId": "deepseek-v41-flash-1017",
+      "draftId": "fa6f003e-ad35-4b5d-bcb3-507e07657e49",
+      "selectedAt": "2026-10-18T04:45:10.712Z",
+      "fingerprint": "9c480e32beedb86b18adb1d3fad5af11ab5bbdebca604e3cf97dd878c37581c5",
+      "dispatch": "sent",
+      "runId": "2eefdace-9bde-4373-97e5-d11bc4803af9"
+    },
+    "production": {
+      "status": "passed",
+      "draftId": "fa6f003e-ad35-4b5d-bcb3-507e07657e49",
+      "revision": 60,
+      "artifactId": "media-a6ab8314-2767-42fc-b6c0-4441e4044000-converted.mp4",
+      "verificationArtifactId": "video-23c149dd-b5bd-4e27-8db1-012c646c9d32.json",
+      "sha256": "e0a94cd40a306a91271678d98462932bafe31366ecad3b416490020e14415b5d",
+      "actualDurationSeconds": 59.648,
+      "width": 720,
+      "height": 1280,
+      "fps": 24,
+      "videoCodec": "avc",
+      "audioCodec": "aac",
+      "selectedFormat": "announcement",
+      "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-a6ab8314-2767-42fc-b6c0-4441e4044000-converted.mp4",
+      "profile": "disposable",
+      "notes": "Created, edited, narrated and rendered by official DSH through BMW browser; no developer-side transfer of intermediate media."
+    },
+    "localEdit": {
+      "status": "passed",
+      "targetSceneId": "s3-open-weights",
+      "beforeRevision": 40,
+      "afterRevision": 45,
+      "retainedArtifacts": 191,
+      "evidence": ".bmw-runtime/news-01/production-and-edit.json",
+      "assertions": [
+        "Only target narration changed; other scene audio identities, narration, media bindings, layers and independent captions retained.",
+        "Every pre-edit artifact and old export remained byte-identical by SHA256.",
+        "Edited draft has a reusable MP4."
+      ]
+    },
+    "agentFilmReview": {
+      "status": "passed",
+      "authority": "agent-declared",
+      "fingerprint": "c95c49917b60211d045b90e00c62c11884d78773037c78415b4f23aca9c4c41e",
+      "scenes": [
+        {
+          "sceneId": "s1-release",
+          "generatedSamples": 15,
+          "totalSamples": 15,
+          "status": "passed"
+        },
+        {
+          "sceneId": "s2-api-pricing",
+          "generatedSamples": 24,
+          "totalSamples": 24,
+          "status": "passed"
+        },
+        {
+          "sceneId": "s3-open-weights",
+          "generatedSamples": 24,
+          "totalSamples": 24,
+          "status": "passed"
+        },
+        {
+          "sceneId": "s4-benchmarks",
+          "generatedSamples": 24,
+          "totalSamples": 24,
+          "status": "passed"
+        },
+        {
+          "sceneId": "s5-judgment",
+          "generatedSamples": 14,
+          "totalSamples": 14,
+          "status": "passed"
+        }
+      ],
+      "ledger": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/video-studio/export-reviews/fa6f003e-ad35-4b5d-bcb3-507e07657e49.json",
+      "scope": "Actual final-export critical-state frames; no claim of audio listening or user acceptance.",
+      "sampleCount": 101,
+      "finalEvidence": ".bmw-runtime/news-01/final-review.json"
+    },
+    "humanListening": "pending",
+    "finalAcceptance": "not-accepted",
+    "root": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z",
+    "profile": "disposable",
+    "appearance": "light for original-page preview readability",
+    "continuingExistingProjectAndSession": true,
+    "sessionId": "23ac9b92-57d2-4f33-a87d-d4dee4ad9a2c",
+    "observedRoute": {
+      "provider": "deepseek-official",
+      "model": "deepseek-flash",
+      "tools": [
+        "browser"
+      ]
+    },
+    "qwenCredentialStatus": {
+      "available": true,
+      "configured": true,
+      "state": "ready"
+    },
+    "historyReadNote": "The resumed benchmark first read 110 historical tool events; these were not executed again. The new explicit continuation issued 27 browser calls.",
+    "researchEvidence": ".bmw-runtime/news-01/live-v4.log",
+    "editorialNotes": [
+      "Apple describes strengthened and clarified existing protections; preserve the nonconsensual qualifier and do not claim a first blanket ban.",
+      "DeepSeek performance figures are vendor claims, with API pricing and temporary server-side free usage kept distinct.",
+      "Candidate source quoteSpans are bounded excerpts, not necessarily complete sentences. Runtime accepts any exact UTF16 source slice; the Agent assertion that only 160-character blocks can pass is incorrect."
+    ],
+    "uiReview": {
+      "status": "passed",
+      "method": "native CUA accessibility and window screenshot after final offline regression",
+      "topicCount": 2,
+      "observations": [
+        "Two eligible source-backed cards visible in BMW with their real image previews.",
+        "Original publication dates, source author/URL, gaps and user-only select buttons visible.",
+        "No video draft, narration or composition before selection."
+      ],
+      "benchmarkCaptureLimit": "The benchmark PNG captured a prepaint frame and is not used as evidence of rendered cards."
+    },
+    "userChoice": {
+      "topicId": "deepseek-v41-flash-1017",
+      "origin": "Human reply selecting the recommended DeepSeek candidate; applied once through native BMW Studio button."
+    },
+    "productionEvidence": [
+      ".bmw-runtime/news-01/live-production.log",
+      ".bmw-runtime/news-01/live-refinement.log",
+      ".bmw-runtime/news-01/live-final-review.log"
+    ],
+    "narrationEvidence": [
+      {
+        "sceneId": "s1-release",
+        "artifactId": "narration-5362e87e-514f-473e-840f-955a080dd136.wav",
+        "sha256": "0d815bb479c614f80fe7c92f7ace0dc7319b7cb6b80554cc72571e4bd4e39140",
+        "existedInPreRefinementEvidence": true
+      },
+      {
+        "sceneId": "s2-api-pricing",
+        "artifactId": "narration-1006f467-25d0-454e-b13f-de3b5d5aa940.wav",
+        "sha256": "b2f6ccc04b7f279bcc3e5e965e445f14e95bc2773b003f60587311dad377ab02",
+        "existedInPreRefinementEvidence": true
+      },
+      {
+        "sceneId": "s3-open-weights",
+        "artifactId": "narration-3192401b-d2b9-4d16-b748-4df48cee4824.wav",
+        "sha256": "394179c2d61ad2ee64d7e31204d8b386a3d45474ad24d4fd70f3879c44428dcd",
+        "existedInPreRefinementEvidence": true
+      },
+      {
+        "sceneId": "s4-benchmarks",
+        "artifactId": "narration-8226f688-4967-4b86-8800-3926bc0d5dfa.wav",
+        "sha256": "2c65fe99552364df47a446b5733e68483e8e4f47b5b191abdbbb605cdcfa6c1c",
+        "existedInPreRefinementEvidence": true
+      },
+      {
+        "sceneId": "s5-judgment",
+        "artifactId": "narration-1c724877-dbc9-4112-ac05-7a64ccc48343.wav",
+        "sha256": "9909ac173890f0b42161e8a483d927fb2c4bc9631f5d948b8681d399119a868f",
+        "existedInPreRefinementEvidence": true
+      }
+    ],
+    "finalFilmEvidence": ".bmw-runtime/news-01/final-film.json",
+    "editorialCorrections": [
+      "Original benchmark table names Claude Opus 5; initial candidate summary and first script said 5.5. Current script, WAV and subtitles corrected; the selected candidate snapshot is retained unchanged as decision evidence.",
+      "Website/App/API are described as live, without claiming mandatory replacement of every old endpoint.",
+      "Free search/fetch tool calls and open-weight self-hosting are independent options.",
+      "Short opening title and source-pixel enlargement improve the 390px review; original full table and publisher attribution remain."
+    ],
+    "remainingConcerns": {
+      "automaticAdvisories": [
+        {
+          "code": "long-static-hold",
+          "severity": "warning",
+          "sceneIndex": 1,
+          "seconds": 16.875,
+          "message": "抽样的主要画面区域连续八秒变化很少，请检查讲解节奏；这不证明中间每帧静止。"
+        },
+        {
+          "code": "long-static-hold",
+          "severity": "warning",
+          "sceneIndex": 4,
+          "seconds": 57.625,
+          "message": "抽样的主要画面区域连续八秒变化很少，请检查讲解节奏；这不证明中间每帧静止。"
+        }
+      ],
+      "editorial": [
+        "Full table still contains small print; source-pixel enlargement emphasizes the two DeepSeek values, with Claude comparison also stated on an attributed text card.",
+        "Sentence timing is editorial-estimate, not acoustic alignment certification.",
+        "Benchmarks are vendor-reported; no independent replication is claimed.",
+        "s4 benchmark evidence is a source-bound screenshot, not an exact textual transcription; s4/s5 have source URLs but no fabricated text citations."
+      ],
+      "human": "User rejected the announcement as a video topic and requested a new moving-news case. Listening and comprehension have no explicit verdict."
+    },
+    "historyProjection": "Resumed sessions project earlier events into logs. Historical calls are not new execution, automatic replay or a second topic selection.",
+    "independentFinalAudit": {
+      "createdAt": "2026-10-18T05:10:27.046Z",
+      "framesVerified": 101,
+      "mp4Unchanged": true,
+      "allFiveVoicesUnchanged": true,
+      "reviewOnlyBrowserCalls": 14,
+      "humanDeclarationsAbsent": true
+    },
+    "humanFeedback": {
+      "receivedAt": "2026-10-18T05:38:16.233355+00:00",
+      "scope": "topic suitability for video; no explicit audio-quality verdict",
+      "comment": "这个内容感觉还是更适合图文，用视频并不特别合适，请再换新闻案例吧，今天的新闻候选只有这些吗？另外一个方案，X上有不少deepseek最新版和opus 5.5比较的3D案例，那些做视频新闻也挺好的",
+      "requestedDirection": "Fresh video-native news, especially original X posts showing DeepSeek versus Opus 5.5 3D outputs; present new verified candidates before production."
+    }
+  },
+  "next": "Preserve this earlier film and its original feedback. NEWS-01 is accepted through the later BMW + Codex 54.61-second film; continue NEWS-02, SCIENCE-01 and RESEARCH-01 in docs/plans/NEXT_STEPS.md.",
+  "latestAcceptedReplacement": {
+    "evidence": "docs/research/CODEX_NEWS_REWORK.json",
+    "artifactId": "media-a6fa3ef8-3ab2-4e48-b6c1-1a8c47779b30-converted.mp4",
+    "sha256": "82828d2de1a5eb5363086462e216f4e63d88fa5d2a5bc9d6a35ae70265d034b7",
+    "seconds": 54.61333333333334,
+    "status": "accepted-by-user",
+    "scope": "This newer Codex film acceptance does not alter this earlier film’s recorded rejection or limitations."
+  }
+}

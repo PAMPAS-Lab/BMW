@@ -29,6 +29,14 @@ BMW 仍只有一个经过验证的模型工具 `browser`。视频编辑通过 `v
 }
 ```
 
+## 新闻选题与制作引导
+
+Studio的“推荐新闻选题”先建立当前Project／Session的研究任务，再投递官方Assistant。Agent使用`news-topics`读取候选revision，以`propose-news-topics {expectedTopicRevision,newsCandidates}`提交至多三项有原始来源和已获取真实预览的候选；`news-guide {draftId,expectedRevision}`读取选定草稿的阶段、逐镜头脚本、来源、素材区间、实际音长与缺口。没有配图的公告先collect正文，再以同一正文selector/index调用`media.screenshot`并携带`sourceBinding {sourceId,acquisitionId,expectedRevision}`；Host核对URL／正文SHA／导航后将实际PNG记为来源已获取素材。使用返回artifactId，不拿Logo或搜索摘要代替原页。字段由操作帮助发现，完整闭合契约见[功能规格](FUNCTIONAL_SPEC.md#news-01-新闻选题与制作)。
+
+`select-news-topic {expectedTopicRevision,topicId,baseFingerprint,options?}`只接受可信Studio用户，Agent调用不能代替点击确认。确认前研究任务限制草稿写入、TTS和合成；确认后由Host创建唯一草稿并投递制作，双击或重启不重复投递，不确定状态不自动重发。默认30–60秒竖屏新闻及Qwen安明远；显式options可覆盖。候选仅日期时保留日精度，最保守时区区间跨出72小时即不可选；日期不明、未来和只有转载标题均不能入选。原始来源或预览失效明确报错，不自动换题。选题账本独立于Video Document 2.10，不增加时间线。
+
+已接受的[新闻案例](research/CODEX_NEWS_REWORK.json)采用龙安朗男声和大幅动态作品对照，结尾回到本次新版的花费／作品变化，金额紧邻“作者本次花费”归因。局部改稿先读当前revision与影响计划，只重新生成受影响镜头旁白；其他声音、字幕、素材与旧MP4保留。核对实际成片的字幕层级及引用重叠，不把素材抽帧当作合成画面。未变镜头审阅复用仍是下一步设计，不跳过当前指纹的检查。
+
 ## 当前可写内容
 
 | 命令 | 参数与语义 |

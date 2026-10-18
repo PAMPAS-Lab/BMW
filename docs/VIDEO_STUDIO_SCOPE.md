@@ -1,12 +1,13 @@
 # Video Studio 当前范围
 
-核对日期：2026-10-17。功能字段与拒绝规则以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，测试分支以 [ARCHITECTURE.md](ARCHITECTURE.md) 生成表为准。
+核对日期：2026-10-18。功能字段与拒绝规则以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，测试分支以 [ARCHITECTURE.md](ARCHITECTURE.md) 生成表为准。
 
 当前范围包含共享视频文档、两种编辑视图、真实素材与旁白，以及关键状态/手机审片、句级卡片引用、Project 素材索引、区间 ASR、原声转解说和录屏整理。专用 AI 图片／视频素材生成暂缓。
 ## 已实现与对应保障
 
 | 能力 | 代码入口 | 分类测试 ID |
 |---|---|---|
+| 新闻选题、可信确认与制作引导 | [news-service.ts](../packages/feature-video/src/news-service.ts)、[news-store.ts](../packages/feature-video/src/news-store.ts)、[studio-news.ts](../packages/feature-video/src/renderer/studio-news.ts) | video.news、studio.news、browser.sources |
 | Video Document 2.0–2.10、无损迁移、简洁可逆子集与类型命令 | [video-document.ts](../packages/feature-video/src/video-document.ts)、[video-edit.ts](../packages/feature-video/src/video-edit.ts)、[studio-compatibility.ts](../packages/feature-video/src/studio-compatibility.ts) | video.schema、studio.schema、video.production |
 | 三类工作表／有限配方、来源关系、句目标与只读改稿影响 | [production-contract.ts](../packages/feature-video/src/production-contract.ts)、[production-types.ts](../packages/feature-video/src/production-types.ts)、[production-impact.ts](../packages/feature-video/src/production-impact.ts) | video.production、studio.production |
 | 独立类型审阅与人工试听／复述声明 | [production-assessment.ts](../packages/feature-video/src/production-assessment.ts)、[studio-production-editor.ts](../packages/feature-video/src/renderer/studio-production-editor.ts) | video.production-assessment、studio.production |

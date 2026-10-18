@@ -1,3 +1,5 @@
+import {NEWS_RESEARCH_PROMPT,newsProductionPrompt} from './news-contract.js'
+import {NewsJournal} from './news-store.js'
 import {requireSimpleVideo} from './studio-compatibility.js'
 import {studioAssistantRequest,studioAssistantPrompt} from './studio-assistant.js'
 import {assertStudioRecoveryRequest,canPrepareStudioRecovery,studioRecoveryPrompt} from './studio-production-progress.js'
@@ -19,6 +21,7 @@ import type {StudioMode,StudioSelection,StudioViewPreferences,StudioChatView} fr
 type Configuration = FeatureHost
 
 export class VideoStudioRuntime implements FeatureRuntime {
+  private newsReads=new Map<AbortController,Promise<unknown>>()
   private stopping=false
   private config?:Configuration
   private view?:WebContentsView
@@ -203,10 +206,22 @@ export class VideoStudioRuntime implements FeatureRuntime {
     })
     ipc.handle('video-studio-command',async(event,projectId:unknown,raw:unknown)=>{
       const config=this.authorize(event,projectId)
+      if(['news-topics','news-guide'].includes(String(mediaRecord(raw).operation))){
+        if(this.newsReads.size>=2)throw new Error('News reads are busy; wait for the current preview.')
+        const controller=new AbortController(),pending=config.browserKernel.execute({action:'video.studio',studioRequest:raw},{actor:'user',signal:controller.signal,sessionOwner:this.scope()})
+        this.newsReads.set(controller,pending)
+        try{return await pending}finally{this.newsReads.delete(controller)}
+      }
       if(this.cancellation)throw new Error('Finish or cancel the current Studio command.')
       const cancellation=new AbortController();this.cancellation=cancellation
       try {
         const result=await config.browserKernel.execute({action:'video.studio',studioRequest:raw},{actor:'user',signal:cancellation.signal,sessionOwner:this.scope()})
+        const request=mediaRecord(raw),owner=this.scope()
+        if(request.operation==='select-news-topic'){
+          const selection=mediaRecord(mediaRecord(result).batch).selection,chosen=mediaRecord(selection),draftId=String(chosen.draftId),journal=new NewsJournal(config.projectStore.active().directory,owner)
+          if(journal.dispatch(draftId,'uncertain')){try{const runId=await config.enqueueAssistant(owner.sessionId,newsProductionPrompt(draftId));journal.dispatch(draftId,'sent',runId)}catch(error){journal.dispatch(draftId,'failed');throw error}}
+          this.revealChat()
+        }
         this.view?.webContents.send('video-studio-change',{projectId:this.ownerId});return result
       } finally {if(this.cancellation===cancellation)this.cancellation=undefined}
     })
@@ -233,6 +248,28 @@ export class VideoStudioRuntime implements FeatureRuntime {
       return {artifactId}
     })
     ipc.handle('video-studio-cancel',event=>{this.authorize(event);this.cancellation?.abort(new Error('Cancelled by the user.'));return {cancelled:true}})
+    ipc.handle('video-studio-news-close',async event=>{
+      const config=this.authorize(event),owner=this.scope()
+      if(this.cancellation)throw new Error('Wait for the current Studio command cleanup.')
+      if(['queued','running','waiting-user','waiting-approval','cancelling'].includes(this.activity()?.status??'')){if(!config.cancelAssistant)throw new Error('News research remains restricted until actual Assistant cleanup can be confirmed.');await config.cancelAssistant(owner.sessionId)}
+      this.authorize(event);const journal=new NewsJournal(config.projectStore.active().directory,owner)
+      return config.browserKernel.execute({action:'video.studio',studioRequest:{operation:'propose-news-topics',expectedTopicRevision:journal.read().revision,newsCandidates:[],closeNewsTask:true}},{actor:'user',sessionOwner:owner})
+    })
+    ipc.handle('video-studio-news-source',async(event,raw:unknown)=>{
+      const config=this.authorize(event),owner=this.scope();if(typeof raw!=='string')throw new Error('Choose a news topic.')
+      const topic=new NewsJournal(config.projectStore.active().directory,owner).read().topics.find(t=>t.candidate.id===raw)
+      if(!topic)throw new Error('Unknown current news topic.')
+      return config.browserKernel.execute({action:'tabs.open',url:topic.facts.url},{actor:'user',sessionOwner:owner})
+    })
+    ipc.handle('video-studio-news',async event=>{
+      const config=this.authorize(event),owner=this.scope()
+      if(this.cancellation||config.isProjectChanging()||['queued','running','waiting-user','waiting-approval','cancelling'].includes(this.activity()?.status??''))throw new Error('Finish current Assistant or Studio work before requesting news.')
+      const cancellation=new AbortController();this.cancellation=cancellation
+      try{const kernel=config.browserKernel,previous=new NewsJournal(config.projectStore.active().directory,owner).read()
+        await kernel.execute({action:'video.studio',studioRequest:{operation:'propose-news-topics',expectedTopicRevision:previous.revision,newsCandidates:[]}},{actor:'user',signal:cancellation.signal,sessionOwner:owner})
+        this.authorize(event);const runId=await config.enqueueAssistant(owner.sessionId,NEWS_RESEARCH_PROMPT);this.revealChat();return {runId}
+      }finally{if(this.cancellation===cancellation)this.cancellation=undefined}
+    })
     ipc.handle('video-studio-assistant',async(event,raw:unknown)=>{
       const config=this.authorize(event)
       if(raw!==undefined){
@@ -283,5 +320,5 @@ export class VideoStudioRuntime implements FeatureRuntime {
   onAgentLoaded():void {this.publishContext();this.onAssistantChanged()}
   onMediaStatus(value:unknown):void {this.view?.webContents.send('video-studio-progress',value)}
   private async closeInputs():Promise<void>{const inputs=[...this.inputs.values()];this.inputs.clear();await Promise.allSettled(inputs.map(async input=>(await input).close()))}
-  async stop():Promise<void>{this.stopping=true;this.cancellation?.abort();for(const view of this.views.values()){const host=this.config?.getMainWindow();if(host&&!host.isDestroyed()&&host.contentView.children.includes(view))host.contentView.removeChildView(view);if(!view.webContents.isDestroyed())view.webContents.close({waitForBeforeUnload:false})}this.views.clear();await this.closeInputs()}
+  async stop():Promise<void>{this.stopping=true;this.cancellation?.abort();for(const controller of this.newsReads.keys())controller.abort();await Promise.allSettled([...this.newsReads.values()]);for(const view of this.views.values()){const host=this.config?.getMainWindow();if(host&&!host.isDestroyed()&&host.contentView.children.includes(view))host.contentView.removeChildView(view);if(!view.webContents.isDestroyed())view.webContents.close({waitForBeforeUnload:false})}this.views.clear();await this.closeInputs()}
 }

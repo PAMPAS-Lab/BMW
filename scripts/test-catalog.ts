@@ -13,6 +13,10 @@ function node(id:string,file:string,layer:TestLayer,module:ModuleId,watch?:reado
 }
 const p='packages/'
 export const tests: readonly TestDefinition[] = [
+  node('video.news',p+'feature-video/test/news.test.ts','contract','feature-video'),
+  node('browser.navigation',p+'browser-capability/test/page-navigation.test.ts','contract','browser-capability'),
+  {id:'studio.news-source-screenshot',file:'scripts/news-source-screenshot-smoke.ts',layer:'integration',modules:['feature-video','browser-capability','platform','media-native'],runner:'electron',watch:['packages/browser-capability/src/source-screenshot.ts','packages/browser-capability/src/page-navigation.ts','packages/browser-capability/src/browser-kernel.ts','packages/platform/src/project-source-store.ts','packages/media-native/src/source-contract.ts']},
+  {id:'studio.news',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['feature-video','media-native','browser-capability'],runner:'electron',env:{BMW_STUDIO_NEWS_CASE:'1'},watch:['packages/feature-video/src/news-','packages/feature-video/src/renderer/studio-news.ts','scripts/studio-news-fixture.ts']},
   node('platform.qwen-credentials',p+'platform/test/qwen-credentials-store.test.ts','unit','platform'),
   node('browser.media-session-fetch',p+'browser-capability/test/media-session-fetch.test.ts','contract','browser-capability'),
   {id:'browser.media-download-runtime',file:'scripts/media-download-smoke.ts',layer:'integration',modules:['browser-capability','media-native'],runner:'electron',watch:['packages/browser-capability/src/media-session-fetch.ts','packages/browser-capability/src/media-artifact.ts','packages/browser-capability/src/browser-kernel.ts']},

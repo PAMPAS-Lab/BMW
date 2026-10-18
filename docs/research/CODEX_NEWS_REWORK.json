@@ -1,0 +1,1334 @@
+{
+  "format": "bmw.codex-news-rework",
+  "version": 1,
+  "createdAt": "2026-10-18T06:42:40.467Z",
+  "status": "accepted-by-user",
+  "userRequest": "Voice sounds unnatural and the news focus is unclear; try BMW + Codex for material research, script and final video.",
+  "scope": "Same Project, independent Codex-owned BMW Session and draft; preserve every DSH draft, asset, voice and export.",
+  "runtime": {
+    "driver": "official-codex",
+    "model": "gpt-6-astra",
+    "cliVersion": "0.160.1",
+    "binary": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/codex-cli-0.160.1/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+    "binarySha256": "09fa44fdc37a5fc70dc1ace31235f90468a2e193d0e85f7552eab068ea2582be",
+    "profile": "disposable",
+    "root": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z",
+    "projectId": "cc788f9f-4cde-406a-abe5-aea1825c619d",
+    "sessionId": "27b49116-f8f8-4227-ba1a-0adf564fb30c",
+    "resumeAnchor": "01a14dbc-b80a-7a23-a5ee-340a3091f3d7",
+    "effectiveCatalog": "Verified by existing BMW catalog gate before input release; observed live function name browser only.",
+    "auth": "Existing BMW native Codex authentication reused only inside the disposable Codex profile; credential content never logged."
+  },
+  "priorTrial": {
+    "evidence": "docs/research/NEWS_01_VIDEO_TOPICS.json",
+    "draftId": "54494630-1c42-4e3d-a4bc-c7d090775f42",
+    "ownerSessionId": "23ac9b92-57d2-4f33-a87d-d4dee4ad9a2c",
+    "finalAcceptance": "not-accepted-rework-requested"
+  },
+  "attempts": [
+    {
+      "stage": "preflight",
+      "status": "rejected-before-model-input",
+      "reason": "PATH resolved official CLI 0.153.4, outside verified 0.160.0/0.160.1 protocols."
+    },
+    {
+      "stage": "preflight",
+      "status": "rejected-before-model-input",
+      "reason": "New supported CLI selected; settings catalog still authored by 0.153.4. Refreshed through official Codex settings."
+    },
+    {
+      "stage": "first-live-turn",
+      "status": "ownership-boundary-correctly-enforced",
+      "reason": "Codex has its own BMW Session; reading the DSH-owned draft correctly failed. No voices, script or movie produced in this turn."
+    }
+  ],
+  "delivery": "Input receipts retained; no uncertain automatic replay. A new explicit input followed each resolved preflight condition.",
+  "voiceTrials": {
+    "status": "three-real-qwen-male-auditions-generated",
+    "requested": [
+      {
+        "name": "霍拙石",
+        "voice": "huozhuoshi_v3.1",
+        "gender": "male"
+      },
+      {
+        "name": "龙安朗",
+        "voice": "longanlang_v3.1",
+        "gender": "male"
+      },
+      {
+        "name": "龙三叔",
+        "voice": "longsanshu_v3.1",
+        "gender": "male"
+      }
+    ],
+    "sameText": true,
+    "ratePercent": 0,
+    "listening": "User selected Longanlang and explicitly approved naturalness of the 50.03-second film, then accepted the revised 54.61-second final film; no separate detailed ending-only pronunciation score was supplied.",
+    "previous": [
+      {
+        "voice": "wenhuaizhi_v3.1",
+        "artifactId": "narration-28e89f5a-b4e9-4333-b280-a9f22fd51ad5.wav",
+        "seconds": 10.64
+      },
+      {
+        "voice": "xuyanchu_v3.1",
+        "artifactId": "narration-407dd6ea-56b2-476c-93cc-70ad3c644f7f.wav",
+        "seconds": 13.2
+      },
+      {
+        "voice": "zh-CN-YunxiNeural",
+        "status": "service-connection-failed-no-artifact"
+      }
+    ],
+    "userPreference": "再听听qwen别的男声；继续找其他男声",
+    "catalogSource": "https://help.aliyun.com/zh/model-studio/qwen-audio-tts-voice-list",
+    "text": "模型更新以后，做出来的作品有什么变化？今天，我们来看一组电机动画，看看作者展示了什么，还有哪些细节需要核对。",
+    "results": [
+      {
+        "name": "霍拙石",
+        "voice": "huozhuoshi_v3.1",
+        "artifactId": "narration-f8393377-c539-496e-99ff-afea32198eb0.wav",
+        "seconds": 10.4,
+        "bytes": 499244,
+        "sha256": "6a32eaf703140fad6a14b4910b3fe1c82d20376f0ac551220d4f9e8636692ed9",
+        "provider": "qwen-tts",
+        "model": "qwen-audio-3.1-tts-flash",
+        "ratePercent": 0,
+        "inspection": "BMW native media.inspect; PCM16 mono 24kHz, canDecode true",
+        "origin": "Official Codex browser video.narrate followed by media.inspect"
+      },
+      {
+        "name": "龙安朗",
+        "voice": "longanlang_v3.1",
+        "artifactId": "narration-c98e3099-9a2f-485f-92ac-60643f0ac1d6.wav",
+        "seconds": 8.96,
+        "bytes": 430124,
+        "sha256": "7e59025e5869d5ce15269d1bf2e61058a67556667b2ebf11af49292db1c2de1e",
+        "provider": "qwen-tts",
+        "model": "qwen-audio-3.1-tts-flash",
+        "ratePercent": 0,
+        "inspection": "BMW native media.inspect; PCM16 mono 24kHz, canDecode true",
+        "origin": "Official Codex browser video.narrate followed by media.inspect"
+      },
+      {
+        "name": "龙三叔",
+        "voice": "longsanshu_v3.1",
+        "artifactId": "narration-36ecadc0-34ef-45ab-8890-16e791f8dcaa.wav",
+        "seconds": 12,
+        "bytes": 576044,
+        "sha256": "be969599ecee5512f1740abb8a06592910bcde691e0eb0b66acb459619424028",
+        "provider": "qwen-tts",
+        "model": "qwen-audio-3.1-tts-flash",
+        "ratePercent": 0,
+        "inspection": "BMW native media.inspect; PCM16 mono 24kHz, canDecode true",
+        "origin": "Official Codex browser video.narrate followed by media.inspect"
+      }
+    ],
+    "selected": {
+      "voice": "longanlang_v3.1",
+      "name": "龙安朗",
+      "authority": "Direct human reply to actual three-male-voice audition question",
+      "scope": "Current Codex news film; global defaults unchanged"
+    }
+  },
+  "editorial": "Codex must establish a source-supported who/when/new-change/why-it-matters claim and a new script; describing colors and ending in a generic caveat is insufficient.",
+  "production": {
+    "artifactId": "media-a6fa3ef8-3ab2-4e48-b6c1-1a8c47779b30-converted.mp4",
+    "fingerprint": "8e4e554a4657cf300076ac05b9d340c1292ddfc4d2330a52716d078b775ca6d0",
+    "verificationArtifactId": "video-bdfea026-42a4-44b4-adf2-3d444097204f.json",
+    "revision": 46,
+    "createdAt": "2026-10-18T07:46:13.337Z",
+    "durationSeconds": 54.541666666666664,
+    "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-a6fa3ef8-3ab2-4e48-b6c1-1a8c47779b30-converted.mp4",
+    "sha256": "82828d2de1a5eb5363086462e216f4e63d88fa5d2a5bc9d6a35ae70265d034b7",
+    "verificationSha256": "066f7dfe5c573d9a4fc2aa33d5dcbe73685a95d672f34ed2a16789db63f04a48",
+    "actualDurationSeconds": 54.61333333333334,
+    "width": 720,
+    "height": 1280,
+    "fps": 24,
+    "tracks": [
+      {
+        "id": 1,
+        "type": "video",
+        "codec": "avc",
+        "canDecode": true,
+        "width": 720,
+        "height": 1280,
+        "rotation": 0,
+        "startSeconds": 0,
+        "endSeconds": 54.541666666666664,
+        "canBeTransparent": false
+      },
+      {
+        "id": 2,
+        "type": "audio",
+        "codec": "aac",
+        "canDecode": true,
+        "channels": 2,
+        "sampleRate": 48000,
+        "startSeconds": 0,
+        "endSeconds": 54.61333333333334
+      }
+    ],
+    "automaticIssues": [
+      {
+        "code": "painted-text-overlap",
+        "severity": "warning",
+        "sceneIndex": 0,
+        "seconds": 0,
+        "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+        "text": "同题3D电机：DeepSeek新 / DeepSeek更新后"
+      },
+      {
+        "code": "painted-text-overlap",
+        "severity": "warning",
+        "sceneIndex": 0,
+        "seconds": 0,
+        "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+        "text": "同题3D电机：DeepSeek新 / 电机动画怎样讲完整"
+      },
+      {
+        "code": "painted-text-overlap",
+        "severity": "warning",
+        "sceneIndex": 1,
+        "seconds": 8.5,
+        "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+        "text": "同题3D电机：DeepSeek新 / DeepSeek更新后"
+      },
+      {
+        "code": "painted-text-overlap",
+        "severity": "warning",
+        "sceneIndex": 1,
+        "seconds": 8.5,
+        "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+        "text": "同题3D电机：DeepSeek新 / 官方强调完整项目"
+      },
+      {
+        "code": "painted-text-overlap",
+        "severity": "warning",
+        "sceneIndex": 2,
+        "seconds": 15.708333333333334,
+        "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+        "text": "同题3D电机：DeepSeek新 / 作者自述：同提示词、同任务"
+      },
+      {
+        "code": "painted-text-overlap",
+        "severity": "warning",
+        "sceneIndex": 2,
+        "seconds": 15.708333333333334,
+        "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+        "text": "同题3D电机：DeepSeek新 / “Same prompt.  Same task.”"
+      },
+      {
+        "code": "painted-text-overlap",
+        "severity": "warning",
+        "sceneIndex": 3,
+        "seconds": 24.708333333333332,
+        "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+        "text": "同题3D电机：DeepSeek新 / 从结构走向作用过程"
+      },
+      {
+        "code": "painted-text-overlap",
+        "severity": "warning",
+        "sceneIndex": 3,
+        "seconds": 24.708333333333332,
+        "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+        "text": "同题3D电机：DeepSeek新 / 磁极环、转速读数与场线"
+      },
+      {
+        "code": "painted-text-overlap",
+        "severity": "warning",
+        "sceneIndex": 4,
+        "seconds": 33.708333333333336,
+        "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+        "text": "同题3D电机：DeepSeek新 / 剖面把过程连起来"
+      },
+      {
+        "code": "painted-text-overlap",
+        "severity": "warning",
+        "sceneIndex": 4,
+        "seconds": 33.708333333333336,
+        "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+        "text": "同题3D电机：DeepSeek新 / 从电流到机械输出"
+      },
+      {
+        "code": "painted-text-overlap",
+        "severity": "warning",
+        "sceneIndex": 5,
+        "seconds": 41.958333333333336,
+        "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+        "text": "同题3D电机：DeepSeek新 / DeepSeek新版：低花费"
+      },
+      {
+        "code": "painted-text-overlap",
+        "severity": "warning",
+        "sceneIndex": 5,
+        "seconds": 41.958333333333336,
+        "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+        "text": "同题3D电机：DeepSeek新 / 也能做精细动画"
+      }
+    ],
+    "draftId": "052f4123-2847-48f6-af77-174a69d38081",
+    "profile": "disposable",
+    "driver": "official-codex",
+    "model": "gpt-6-astra",
+    "voice": "longanlang_v3.1",
+    "narrationProvider": "qwen-tts",
+    "narrationModel": "qwen-audio-3.1-tts-flash",
+    "ratePercent": 0,
+    "noDeveloperIntermediateMediaTransfer": true,
+    "renderedFromRevision": 45
+  },
+  "humanListening": "User explicitly approved Longanlang naturalness on the 50.03-second film and accepted the revised 54.61-second final film; detailed phoneme/timing checks were not separately scored.",
+  "finalAcceptance": "accepted",
+  "next": "NEWS-01 accepted. Next: NEWS-02 strengthen video-worthy topic choice, concrete news conclusions and bounded local-revision/review efficiency; then SCIENCE-01 using Qbit references and RESEARCH-01 using AK references. Preserve all prior drafts and services boundaries.",
+  "newsSelection": {
+    "boardId": "eb39439d-8091-4eb4-8b15-5cfcb8194b7b",
+    "revision": 4,
+    "selection": {
+      "topicId": "deepseek-vs-opus55-3d-motor-codex",
+      "draftId": "052f4123-2847-48f6-af77-174a69d38081",
+      "selectedAt": "2026-10-18T06:43:45.989Z",
+      "fingerprint": "f51eafbb9befb53ad1a2087cef9e58969b433690c2a0fb64d6c73ddaed26a63e",
+      "dispatch": "sent",
+      "runId": "b12ed996-5d46-4e7c-80af-bdd9c4f14771"
+    },
+    "authority": "Prior direct human selection of this same motor event plus latest request to recreate using BMW + Codex; applied once via enabled native Studio button."
+  },
+  "script": {
+    "draftId": "052f4123-2847-48f6-af77-174a69d38081",
+    "revision": 46,
+    "targetSeconds": 55,
+    "sceneCount": 6,
+    "approximateChineseCharacters": 233,
+    "hook": "十月十七日，DeepSeek更新，官方强调从零完成完整项目。次日，作者公开了一段电机技术动画。",
+    "status": "price-focused-ending-narrated-and-exported"
+  },
+  "updatedAt": "2026-10-18T08:43:06.836Z",
+  "visualDraft": {
+    "draftId": "052f4123-2847-48f6-af77-174a69d38081",
+    "revision": 16,
+    "sha256": "ac64e4c847af46c93da327fecc8c3bbb3afbb74bdc69c1f19d6a65e54aae37dc",
+    "seconds": 50,
+    "scenes": [
+      {
+        "id": "motor-hook",
+        "title": "DeepSeek更新后：电机动画怎样讲完整",
+        "script": "十月十七日，DeepSeek更新，官方强调从零完成完整项目。次日，作者公开了一段电机技术动画。",
+        "seconds": 10,
+        "layers": 7,
+        "videoLayers": [
+          {
+            "artifactId": "media-0f032b0c-847d-4b59-b682-f8d1444b0c1c-converted.mp4",
+            "sourceStartSeconds": 0,
+            "startSeconds": 2,
+            "durationSeconds": 4
+          },
+          {
+            "artifactId": "media-ae30a654-ffad-45c7-8e83-890afc1f6d23-converted.mp4",
+            "sourceStartSeconds": 0,
+            "startSeconds": 6,
+            "durationSeconds": 4
+          },
+          {
+            "artifactId": "3ca639b5-184d-48dd-b793-1caa16e33ad3-source-fbbb2ab3-55b5-4a66-8a78-82c15bb724cb.webm",
+            "sourceStartSeconds": 0.027,
+            "startSeconds": 0,
+            "durationSeconds": 2
+          }
+        ]
+      },
+      {
+        "id": "motor-release",
+        "title": "官方声明：从零完成项目",
+        "script": "这次更新覆盖游戏和三维建模。官方称，用带自我反馈的强化学习改进项目开发。",
+        "seconds": 7,
+        "layers": 1,
+        "videoLayers": [],
+        "imageArtifactId": "1792305926874-DeepSeek-V4.1-Flash-1017-Wish-Driven-Programming-Made-Real-DeepSeek-API-Docs.png"
+      },
+      {
+        "id": "motor-author",
+        "title": "同题任务，先交代内部结构",
+        "script": "作者称，两款模型使用相同提示词：解释电机怎么工作。画面先透视外壳，再把零件沿轴线展开。",
+        "seconds": 9,
+        "layers": 6,
+        "videoLayers": [
+          {
+            "artifactId": "media-5994201a-a3cd-4139-9c5d-17fb098759eb-converted.mp4",
+            "sourceStartSeconds": 0,
+            "startSeconds": 0,
+            "durationSeconds": 5
+          },
+          {
+            "artifactId": "media-0f032b0c-847d-4b59-b682-f8d1444b0c1c-converted.mp4",
+            "sourceStartSeconds": 0,
+            "startSeconds": 5,
+            "durationSeconds": 4
+          }
+        ]
+      },
+      {
+        "id": "motor-mechanism",
+        "title": "磁极环与场线，呈现作用过程",
+        "script": "进入电磁段，上方用磁极环和转速读数，下方用场线呈现作用过程。这是作品展示，不是独立实测。",
+        "seconds": 9,
+        "layers": 5,
+        "videoLayers": [
+          {
+            "artifactId": "media-7e5206de-003c-4630-bc24-075ec26728bd-converted.mp4",
+            "sourceStartSeconds": 0,
+            "startSeconds": 0,
+            "durationSeconds": 9
+          }
+        ]
+      },
+      {
+        "id": "motor-flow",
+        "title": "剖面把电流连接到机械输出",
+        "script": "剖面里，两边又把电流、旋转磁场、转矩和机械输出连成流程。技术细节仍需核对。",
+        "seconds": 7,
+        "layers": 5,
+        "videoLayers": [
+          {
+            "artifactId": "media-b2cf7acc-b1e3-4c90-9089-a3dcf3cb5291-converted.mp4",
+            "sourceStartSeconds": 0,
+            "startSeconds": 0,
+            "durationSeconds": 7
+          }
+        ]
+      },
+      {
+        "id": "motor-meaning",
+        "title": "借鉴结构—作用—输出的讲法",
+        "script": "做科普或产品演示时，值得借鉴的是这套组织方式：先看结构，再看作用，最后交代输出。",
+        "seconds": 8,
+        "layers": 7,
+        "videoLayers": [
+          {
+            "artifactId": "media-0f032b0c-847d-4b59-b682-f8d1444b0c1c-converted.mp4",
+            "sourceStartSeconds": 0,
+            "startSeconds": 0,
+            "durationSeconds": 2
+          },
+          {
+            "artifactId": "media-ae30a654-ffad-45c7-8e83-890afc1f6d23-converted.mp4",
+            "sourceStartSeconds": 0,
+            "startSeconds": 2,
+            "durationSeconds": 2
+          },
+          {
+            "artifactId": "media-6eb1866d-7bf1-4fc8-91cd-6202885b9956-converted.mp4",
+            "sourceStartSeconds": 0,
+            "startSeconds": 4,
+            "durationSeconds": 4
+          }
+        ]
+      }
+    ],
+    "voiceCount": 0,
+    "visualReview": "Codex viewed actual source-cut keyframes and official screenshot target pixels; draft composite occlusion/crop/reading animation remains pending after actual narration and export.",
+    "sourceEntryFix": "Selected preview first video frame starts at 0.027s; source layer now uses that measured timestamp.",
+    "noSilentVoiceSelection": true,
+    "rootPreview": {
+      "method": "Native CUA BMW Studio draft preview screenshot",
+      "observedFilmSeconds": [
+        0,
+        5
+      ],
+      "scope": "Two draft UI frames only; not full film review or listening",
+      "observations": [
+        "At 5 seconds both high-resolution motor views are present; title and attribution are outside footage.",
+        "At 0 seconds the lower comparison region is black in the selected source preview; choose a later two-second preview interval before final film.",
+        "Original model/cost labels are small at phone scale; add larger model-name overlays before final film."
+      ],
+      "remaining": "After male voice choice, finish source-preview entry and labels, produce measured narration/captions and actual MP4, then full visual review and human listening."
+    },
+    "status": "superseded-by-reviewed-final-film"
+  },
+  "preservation": {
+    "oldDshFilm": {
+      "artifactId": "media-30a808b0-aed4-49a5-b8b4-39c9b54977b2-converted.mp4",
+      "sha256": "1d82d0cdd579ab039c21840bbab124546855c7ea1b42f3c3882fd38d7091aac8",
+      "unchanged": true
+    },
+    "oldDshDraft": {
+      "id": "54494630-1c42-4e3d-a4bc-c7d090775f42",
+      "revision": 35
+    },
+    "previousEvidence": "bmw.news-01-video-topics",
+    "scope": "Old DSH movie SHA and draft revision checked; no claim that a new Codex-film local-edit preservation test has run."
+  },
+  "offlineVerification": {
+    "evidence": "docs/verification/CURRENT.json",
+    "fullReport": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/result.json",
+    "passed": 166,
+    "failed": 0,
+    "notRun": 12,
+    "scope": "Full isolated offline checks; real Qwen auditions recorded separately; no human acceptance inferred."
+  },
+  "finalScenes": [
+    {
+      "sceneId": "motor-hook",
+      "artifactId": "narration-b3ed0300-f044-476a-9f2a-99214dcb497f.wav",
+      "sha256": "8fc6c75956a9fe3052cb97d02f3382c530520925bf1f0cada72236becc2edca3",
+      "audioSeconds": 8.08,
+      "sceneSeconds": 8.5,
+      "narration": "十月十七日，DeepSeek更新，官方强调从零完成完整项目。次日，作者公开了一段电机技术动画。",
+      "generation": {
+        "kind": "tts",
+        "options": {
+          "provider": "qwen-tts",
+          "voice": "longanlang_v3.1",
+          "ratePercent": 0
+        },
+        "autoTiming": {
+          "startSeconds": 0.08333333333333333,
+          "sourceStartSeconds": 0,
+          "durationSeconds": 8.08,
+          "playbackRate": 1
+        }
+      },
+      "captionCount": 3
+    },
+    {
+      "sceneId": "motor-release",
+      "artifactId": "narration-b008ae87-246a-4bb0-877c-ec2896b5f355.wav",
+      "sha256": "37e2286a3ea9f2ba0341e2db6b744daae034e15d1b6c21162f41fd0d44a6452b",
+      "audioSeconds": 7.04,
+      "sceneSeconds": 7.208333333333333,
+      "narration": "这次更新覆盖游戏和三维建模。官方称，用带自我反馈的强化学习改进项目开发。",
+      "generation": {
+        "kind": "tts",
+        "options": {
+          "provider": "qwen-tts",
+          "voice": "longanlang_v3.1",
+          "ratePercent": 0
+        },
+        "autoTiming": {
+          "startSeconds": 0.08333333333333333,
+          "sourceStartSeconds": 0,
+          "durationSeconds": 7.04,
+          "playbackRate": 1
+        }
+      },
+      "captionCount": 3
+    },
+    {
+      "sceneId": "motor-author",
+      "artifactId": "narration-03f31c5b-1ef7-4142-86ac-a728d0148f11.wav",
+      "sha256": "bbbcf0b9318e91cb595c74b598b2690f83b67947f588f1485c9bbd249e1dc1e9",
+      "audioSeconds": 8.4,
+      "sceneSeconds": 9,
+      "narration": "作者称，两款模型使用相同提示词：解释电机怎么工作。画面先透视外壳，再把零件沿轴线展开。",
+      "generation": {
+        "kind": "tts",
+        "options": {
+          "provider": "qwen-tts",
+          "voice": "longanlang_v3.1",
+          "ratePercent": 0
+        },
+        "autoTiming": {
+          "startSeconds": 0.08333333333333333,
+          "sourceStartSeconds": 0,
+          "durationSeconds": 8.4,
+          "playbackRate": 1
+        }
+      },
+      "captionCount": 4
+    },
+    {
+      "sceneId": "motor-mechanism",
+      "artifactId": "narration-d1330dc8-4cbe-4722-bed8-fabf1e44e69c.wav",
+      "sha256": "3304faf9e29017dca65640e2a4459eea5abcaf774feda4fdaafc0019b63f83f0",
+      "audioSeconds": 8.8,
+      "sceneSeconds": 9,
+      "narration": "进入电磁段，上方用磁极环和转速读数，下方用场线呈现作用过程。这是作品展示，不是独立实测。",
+      "generation": {
+        "kind": "tts",
+        "options": {
+          "provider": "qwen-tts",
+          "voice": "longanlang_v3.1",
+          "ratePercent": 0
+        },
+        "autoTiming": {
+          "startSeconds": 0.08333333333333333,
+          "sourceStartSeconds": 0,
+          "durationSeconds": 8.8,
+          "playbackRate": 1
+        }
+      },
+      "captionCount": 4
+    },
+    {
+      "sceneId": "motor-flow",
+      "artifactId": "narration-75fa5f91-406c-4e27-926b-419ac15b54a9.wav",
+      "sha256": "0cc1dd0008aa8865956eeb2cbd277c09f440f7b66e04375079359ff9272a744b",
+      "audioSeconds": 8.08,
+      "sceneSeconds": 8.25,
+      "narration": "剖面里，两边又把电流、旋转磁场、转矩和机械输出连成流程。技术细节仍需核对。",
+      "generation": {
+        "kind": "tts",
+        "options": {
+          "provider": "qwen-tts",
+          "voice": "longanlang_v3.1",
+          "ratePercent": 0
+        },
+        "autoTiming": {
+          "startSeconds": 0.08333333333333333,
+          "sourceStartSeconds": 0,
+          "durationSeconds": 8.08,
+          "playbackRate": 1
+        }
+      },
+      "captionCount": 3
+    },
+    {
+      "sceneId": "motor-meaning",
+      "artifactId": "narration-f605adcd-886c-41e7-bb06-29d392a9f63a.wav",
+      "sha256": "3325458e0d88ae6db0244a2614e7697e14c5f84c54013efc40a9f4228732bd6e",
+      "audioSeconds": 12.4,
+      "sceneSeconds": 12.583333333333334,
+      "narration": "作者标注，这次DeepSeek花了一点二五美元，Opus是十六点三六美元。花费不到十分之一，也做出了完整、精细的电机动画。这正是DeepSeek新版值得关注的制作能力。",
+      "generation": {
+        "kind": "tts",
+        "options": {
+          "provider": "qwen-tts",
+          "voice": "longanlang_v3.1",
+          "ratePercent": 0
+        },
+        "autoTiming": {
+          "startSeconds": 0.08333333333333333,
+          "sourceStartSeconds": 0,
+          "durationSeconds": 12.4,
+          "playbackRate": 1
+        }
+      },
+      "captionCount": 5
+    }
+  ],
+  "agentReview": {
+    "fingerprint": "8e4e554a4657cf300076ac05b9d340c1292ddfc4d2330a52716d078b775ca6d0",
+    "agent": {
+      "status": "passed",
+      "notes": "独立全片Agent意见：当前54.613秒MP4六镜共136张关键状态帧均重新逐页实际检查，六镜分别已通过Agent视觉审阅，未沿用旧成片意见。故事从官方完整项目/3D更新，推进作者同题动画的结构、电磁、剖面流程，末镜回到作者本次$1.25对$16.36下DeepSeek的完整精细制作表现。金额归因和案例边界明确。第一至第五镜保留原脚本、音频artifact、字幕及来源和图层，本轮仅末镜改稿重配12.4秒龙安朗。当前音视频可解码；12项布局检测警告指向被不透明顶栏遮住的底层旧题名，抽样实际像素无可见冲突。此次是关键状态视觉抽样与技术检查，不是逐帧科学核验、声音试听或声学字幕对齐。上版自然度人工好评仅属上版；新版结尾听感与最终新闻落点接受仍待用户实际记录。",
+      "createdAt": "2026-10-18T07:57:28.827Z",
+      "sequence": 7
+    },
+    "scenes": [
+      {
+        "sceneId": "motor-hook",
+        "totalSamples": 24,
+        "availableFrames": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "已实际检查本次新版MP4全部24张关键帧。开头选题预览上下均有画面，2秒切高清；拆解和磁场运动可见，模型角标、署名与中文字幕分区清楚。顶部旧标题被不透明底遮住，实际像素无检测所报的文字重叠。仅视觉抽样审阅，未认证听感。",
+          "createdAt": "2026-10-18T07:56:29.143Z",
+          "sequence": 1
+        }
+      },
+      {
+        "sceneId": "motor-release",
+        "totalSamples": 24,
+        "availableFrames": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "已检查新版24张关键帧，官方截图全貌、定位框、局部放大、停留和返回完整。关键英文标题清晰，来源与中文字幕分离；旧底层标题实际被顶栏遮盖。官方说法归因清楚；未认证音频听感或逐字声学对齐。",
+          "createdAt": "2026-10-18T07:56:38.046Z",
+          "sequence": 2
+        }
+      },
+      {
+        "sceneId": "motor-author",
+        "totalSamples": 24,
+        "availableFrames": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "新版24张关键帧均已查看。作者同提示词归因明确，上下模型名称和拆解结构可读，字幕与署名互不遮挡，动画持续推进。前五镜保留要求下本镜未改。顶栏遮住底层旧题名；未作人类听感认证。",
+          "createdAt": "2026-10-18T07:56:47.135Z",
+          "sequence": 3
+        }
+      },
+      {
+        "sceneId": "motor-mechanism",
+        "totalSamples": 22,
+        "availableFrames": 22,
+        "agent": {
+          "status": "passed",
+          "notes": "新版22张关键帧已逐页查看。上方磁极环与转速、下方场线均可见；角标不挡主要零件，字幕完整，作者作品与独立测试的界线保留。顶栏没有可见旧题叠字。未监听音轨，不认证物理正确性。",
+          "createdAt": "2026-10-18T07:56:56.172Z",
+          "sequence": 4
+        }
+      },
+      {
+        "sceneId": "motor-flow",
+        "totalSamples": 18,
+        "availableFrames": 18,
+        "agent": {
+          "status": "passed",
+          "notes": "本次MP4全部18张关键帧实际检查：上下剖面、磁场旋转、功率流程及冷却画面连续变化，中文字幕和来源位于独立下方区域。顶部仅显示当前双行标题，未见检测报告的旧题名相交。无听感或逐字对齐认证。",
+          "createdAt": "2026-10-18T07:57:04.966Z",
+          "sequence": 5
+        }
+      },
+      {
+        "sceneId": "motor-meaning",
+        "totalSamples": 24,
+        "availableFrames": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "新版末镜24张关键帧逐页实际查看，原片27–39.583秒原速连续展示两边作品。DeepSeek $1.25、Opus5.5 $16.36和作者本次花费紧邻，署名与非单价说明可读；已修复1.25被断行问题，数字完整，字幕不遮主体。结论落到本案例低花费完成完整精细动画，未宣称总体同质量或统一价格倍数。新旁白仅测得12.4秒及解码成功，未听感认证；上版用户自然度认可不外推新版结尾。",
+          "createdAt": "2026-10-18T07:57:15.848Z",
+          "sequence": 6
+        }
+      }
+    ],
+    "ledgerSha256": "ef09ca29711dda60e0829b6229cd0fde3c22b034f4552fc8e4ce8ef62ceff0b8",
+    "frameSHAsChecked": 136,
+    "scope": "Current revised MP4 critical-state images; no Agent listening claim."
+  },
+  "independentAudit": {
+    "historicalArtifactsSHAUnchanged": 793,
+    "allFirstFiveScenesAndVoicesUnchanged": true,
+    "rootViewedCurrentEndingFrameIds": [
+      "media-cc1c13f6-3c36-43c0-8f22-b927a8b8bbf4-frame-1.png",
+      "media-7f992d1a-1b99-4c36-84fe-7740978ae304-frame-5.png",
+      "media-37496aa3-ff92-4378-be7f-4e850682b148-frame-8.png"
+    ],
+    "scope": "Three current ending samples directly inspected; unchanged first five scenes retain independent data/audio SHA proof and prior visual observations; official Codex reviews the current entire MP4 separately."
+  },
+  "remainingConcerns": [
+    "Subtitle clocks are editorial timing on measured audio, not certified word-level acoustic alignment.",
+    "Fine English technical notes in the original footage remain small; added model labels and main Chinese captions are legible.",
+    "Automatic overlap observations include covered legacy titles; actual sampled pixels were visually reviewed and the raw warnings are preserved.",
+    "Same-prompt and displayed costs are author reports, not independent replication or a general model/cost ranking.",
+    "Official full-page context is intentionally reduced briefly before the readable heading detail; it is not a complete article reading."
+  ],
+  "nativePlayback": {
+    "application": "BMW",
+    "mode": "Latest actual MP4",
+    "verifiedBy": "Native CUA click on Play followed by visible Pause button",
+    "started": true,
+    "scope": "Latest 54.61-second MP4 selected in BMW; native Play click yielded Pause button. No model listening claim.",
+    "artifactId": "media-a6fa3ef8-3ab2-4e48-b6c1-1a8c47779b30-converted.mp4"
+  },
+  "humanFeedback": {
+    "comment": "旁白自然。新闻重点上，不该最后去说这套技术适用于什么，而是要回到deepseek的新版本，可以那么低的价格却完成同样精良的制作",
+    "voiceNaturalness": "passed-by-human",
+    "story": "ending-revision-requested",
+    "scope": "Human heard the 50.03-second Longanlang film; approval applies to narration naturalness, not final acceptance of the editorial ending."
+  },
+  "priceEndingRevision": {
+    "status": "produced-and-agent-reviewed",
+    "baseRevision": 39,
+    "preserveFirstFiveVoices": true,
+    "amounts": {
+      "deepseek": 1.25,
+      "opus": 16.36,
+      "currency": "USD",
+      "basis": "Author-displayed costs for this one motor example, not official per-token prices or an independent multi-run benchmark"
+    },
+    "output": {
+      "artifactId": "media-a6fa3ef8-3ab2-4e48-b6c1-1a8c47779b30-converted.mp4",
+      "fingerprint": "8e4e554a4657cf300076ac05b9d340c1292ddfc4d2330a52716d078b775ca6d0",
+      "verificationArtifactId": "video-bdfea026-42a4-44b4-adf2-3d444097204f.json",
+      "revision": 45,
+      "createdAt": "2026-10-18T07:46:13.337Z",
+      "durationSeconds": 54.541666666666664,
+      "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-a6fa3ef8-3ab2-4e48-b6c1-1a8c47779b30-converted.mp4",
+      "sha256": "82828d2de1a5eb5363086462e216f4e63d88fa5d2a5bc9d6a35ae70265d034b7",
+      "verificationSha256": "066f7dfe5c573d9a4fc2aa33d5dcbe73685a95d672f34ed2a16789db63f04a48",
+      "actualDurationSeconds": 54.61333333333334,
+      "width": 720,
+      "height": 1280,
+      "fps": 24,
+      "tracks": [
+        {
+          "id": 1,
+          "type": "video",
+          "codec": "avc",
+          "canDecode": true,
+          "width": 720,
+          "height": 1280,
+          "rotation": 0,
+          "startSeconds": 0,
+          "endSeconds": 54.541666666666664,
+          "canBeTransparent": false
+        },
+        {
+          "id": 2,
+          "type": "audio",
+          "codec": "aac",
+          "canDecode": true,
+          "channels": 2,
+          "sampleRate": 48000,
+          "startSeconds": 0,
+          "endSeconds": 54.61333333333334
+        }
+      ],
+      "automaticIssues": [
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 0,
+          "seconds": 0,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / DeepSeek更新后"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 0,
+          "seconds": 0,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 电机动画怎样讲完整"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 1,
+          "seconds": 8.5,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / DeepSeek更新后"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 1,
+          "seconds": 8.5,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 官方强调完整项目"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 2,
+          "seconds": 15.708333333333334,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 作者自述：同提示词、同任务"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 2,
+          "seconds": 15.708333333333334,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / “Same prompt.  Same task.”"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 3,
+          "seconds": 24.708333333333332,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 从结构走向作用过程"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 3,
+          "seconds": 24.708333333333332,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 磁极环、转速读数与场线"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 4,
+          "seconds": 33.708333333333336,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 剖面把过程连起来"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 4,
+          "seconds": 33.708333333333336,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 从电流到机械输出"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 5,
+          "seconds": 41.958333333333336,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / DeepSeek新版：低花费"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 5,
+          "seconds": 41.958333333333336,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 也能做精细动画"
+        }
+      ]
+    },
+    "revision": 46,
+    "firstFiveEntireScenesUnchanged": [
+      {
+        "sceneId": "motor-hook",
+        "entireSceneUnchanged": true,
+        "audioArtifactUnchanged": true,
+        "audioSHAUnchanged": true
+      },
+      {
+        "sceneId": "motor-release",
+        "entireSceneUnchanged": true,
+        "audioArtifactUnchanged": true,
+        "audioSHAUnchanged": true
+      },
+      {
+        "sceneId": "motor-author",
+        "entireSceneUnchanged": true,
+        "audioArtifactUnchanged": true,
+        "audioSHAUnchanged": true
+      },
+      {
+        "sceneId": "motor-mechanism",
+        "entireSceneUnchanged": true,
+        "audioArtifactUnchanged": true,
+        "audioSHAUnchanged": true
+      },
+      {
+        "sceneId": "motor-flow",
+        "entireSceneUnchanged": true,
+        "audioArtifactUnchanged": true,
+        "audioSHAUnchanged": true
+      }
+    ],
+    "newEnding": "作者标注，这次DeepSeek花了一点二五美元，Opus是十六点三六美元。花费不到十分之一，也做出了完整、精细的电机动画。这正是DeepSeek新版值得关注的制作能力。",
+    "newEndingAudio": "narration-f605adcd-886c-41e7-bb06-29d392a9f63a.wav",
+    "newEndingAudioSeconds": 12.4,
+    "finalRevision": 46,
+    "retainedHistoricalFiles": 793,
+    "onlyFinalVoiceChanged": true,
+    "finalScene": {
+      "sceneId": "motor-meaning",
+      "title": "DeepSeek新版：低花费，也能做精细动画",
+      "narration": "作者标注，这次DeepSeek花了一点二五美元，Opus是十六点三六美元。花费不到十分之一，也做出了完整、精细的电机动画。这正是DeepSeek新版值得关注的制作能力。",
+      "audioArtifactId": "narration-f605adcd-886c-41e7-bb06-29d392a9f63a.wav",
+      "audioDurationSeconds": 12.4,
+      "sceneSeconds": 12.583333333333334
+    }
+  },
+  "priorCodexVersion": {
+    "finalScenes": [
+      {
+        "sceneId": "motor-hook",
+        "artifactId": "narration-b3ed0300-f044-476a-9f2a-99214dcb497f.wav",
+        "sha256": "8fc6c75956a9fe3052cb97d02f3382c530520925bf1f0cada72236becc2edca3",
+        "audioSeconds": 8.08,
+        "sceneSeconds": 8.5,
+        "narration": "十月十七日，DeepSeek更新，官方强调从零完成完整项目。次日，作者公开了一段电机技术动画。",
+        "generation": {
+          "kind": "tts",
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "longanlang_v3.1",
+            "ratePercent": 0
+          },
+          "autoTiming": {
+            "startSeconds": 0.08333333333333333,
+            "sourceStartSeconds": 0,
+            "durationSeconds": 8.08,
+            "playbackRate": 1
+          }
+        },
+        "captionCount": 3
+      },
+      {
+        "sceneId": "motor-release",
+        "artifactId": "narration-b008ae87-246a-4bb0-877c-ec2896b5f355.wav",
+        "sha256": "37e2286a3ea9f2ba0341e2db6b744daae034e15d1b6c21162f41fd0d44a6452b",
+        "audioSeconds": 7.04,
+        "sceneSeconds": 7.208333333333333,
+        "narration": "这次更新覆盖游戏和三维建模。官方称，用带自我反馈的强化学习改进项目开发。",
+        "generation": {
+          "kind": "tts",
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "longanlang_v3.1",
+            "ratePercent": 0
+          },
+          "autoTiming": {
+            "startSeconds": 0.08333333333333333,
+            "sourceStartSeconds": 0,
+            "durationSeconds": 7.04,
+            "playbackRate": 1
+          }
+        },
+        "captionCount": 3
+      },
+      {
+        "sceneId": "motor-author",
+        "artifactId": "narration-03f31c5b-1ef7-4142-86ac-a728d0148f11.wav",
+        "sha256": "bbbcf0b9318e91cb595c74b598b2690f83b67947f588f1485c9bbd249e1dc1e9",
+        "audioSeconds": 8.4,
+        "sceneSeconds": 9,
+        "narration": "作者称，两款模型使用相同提示词：解释电机怎么工作。画面先透视外壳，再把零件沿轴线展开。",
+        "generation": {
+          "kind": "tts",
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "longanlang_v3.1",
+            "ratePercent": 0
+          },
+          "autoTiming": {
+            "startSeconds": 0.08333333333333333,
+            "sourceStartSeconds": 0,
+            "durationSeconds": 8.4,
+            "playbackRate": 1
+          }
+        },
+        "captionCount": 4
+      },
+      {
+        "sceneId": "motor-mechanism",
+        "artifactId": "narration-d1330dc8-4cbe-4722-bed8-fabf1e44e69c.wav",
+        "sha256": "3304faf9e29017dca65640e2a4459eea5abcaf774feda4fdaafc0019b63f83f0",
+        "audioSeconds": 8.8,
+        "sceneSeconds": 9,
+        "narration": "进入电磁段，上方用磁极环和转速读数，下方用场线呈现作用过程。这是作品展示，不是独立实测。",
+        "generation": {
+          "kind": "tts",
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "longanlang_v3.1",
+            "ratePercent": 0
+          },
+          "autoTiming": {
+            "startSeconds": 0.08333333333333333,
+            "sourceStartSeconds": 0,
+            "durationSeconds": 8.8,
+            "playbackRate": 1
+          }
+        },
+        "captionCount": 4
+      },
+      {
+        "sceneId": "motor-flow",
+        "artifactId": "narration-75fa5f91-406c-4e27-926b-419ac15b54a9.wav",
+        "sha256": "0cc1dd0008aa8865956eeb2cbd277c09f440f7b66e04375079359ff9272a744b",
+        "audioSeconds": 8.08,
+        "sceneSeconds": 8.25,
+        "narration": "剖面里，两边又把电流、旋转磁场、转矩和机械输出连成流程。技术细节仍需核对。",
+        "generation": {
+          "kind": "tts",
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "longanlang_v3.1",
+            "ratePercent": 0
+          },
+          "autoTiming": {
+            "startSeconds": 0.08333333333333333,
+            "sourceStartSeconds": 0,
+            "durationSeconds": 8.08,
+            "playbackRate": 1
+          }
+        },
+        "captionCount": 3
+      },
+      {
+        "sceneId": "motor-meaning",
+        "artifactId": "narration-09a37b50-2176-414d-a784-f2c7977143e9.wav",
+        "sha256": "73df53fc38ab3c8c95c836b1035ceb48283884eeef12c642aaa3e8142cdd3a4f",
+        "audioSeconds": 7.6,
+        "sceneSeconds": 8,
+        "narration": "做科普或产品演示时，值得借鉴的是这套组织方式：先看结构，再看作用，最后交代输出。",
+        "generation": {
+          "kind": "tts",
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "longanlang_v3.1",
+            "ratePercent": 0
+          },
+          "autoTiming": {
+            "startSeconds": 0.08333333333333333,
+            "sourceStartSeconds": 0,
+            "durationSeconds": 7.6,
+            "playbackRate": 1
+          }
+        },
+        "captionCount": 5
+      }
+    ],
+    "production": {
+      "artifactId": "media-3ce131b1-17ed-4b72-9285-82225987cd9e-converted.mp4",
+      "fingerprint": "41ae3ee59cfd45371aec0588db6bd8e566abca5cb46fb8b619af862d6c6190c3",
+      "verificationArtifactId": "video-fb428c2f-dd24-49fa-80fa-2653fa0248ed.json",
+      "revision": 39,
+      "createdAt": "2026-10-18T07:24:35.469Z",
+      "durationSeconds": 49.95833333333333,
+      "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-3ce131b1-17ed-4b72-9285-82225987cd9e-converted.mp4",
+      "sha256": "30d8fd759cfd324ffb64b4199893992e57ac24c9c3a864a70dbd5d3e7ae36397",
+      "verificationSha256": "5396e8b9d59d422a07a331308e8079b0728f9410e87d1cf7f263706744973fc7",
+      "actualDurationSeconds": 50.026666666666664,
+      "width": 720,
+      "height": 1280,
+      "fps": 24,
+      "tracks": [
+        {
+          "id": 1,
+          "type": "video",
+          "codec": "avc",
+          "canDecode": true,
+          "width": 720,
+          "height": 1280,
+          "rotation": 0,
+          "startSeconds": 0,
+          "endSeconds": 49.958333333333336,
+          "canBeTransparent": false
+        },
+        {
+          "id": 2,
+          "type": "audio",
+          "codec": "aac",
+          "canDecode": true,
+          "channels": 2,
+          "sampleRate": 48000,
+          "startSeconds": 0,
+          "endSeconds": 50.026666666666664
+        }
+      ],
+      "automaticIssues": [
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 0,
+          "seconds": 0,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / DeepSeek更新后"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 0,
+          "seconds": 0,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 电机动画怎样讲完整"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 1,
+          "seconds": 8.5,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / DeepSeek更新后"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 1,
+          "seconds": 8.5,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 官方强调完整项目"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 2,
+          "seconds": 15.708333333333334,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 作者自述：同提示词、同任务"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 2,
+          "seconds": 15.708333333333334,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / “Same prompt.  Same task.”"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 3,
+          "seconds": 24.708333333333332,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 从结构走向作用过程"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 3,
+          "seconds": 24.708333333333332,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 磁极环、转速读数与场线"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 4,
+          "seconds": 33.708333333333336,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 剖面把过程连起来"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 4,
+          "seconds": 33.708333333333336,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 从电流到机械输出"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 5,
+          "seconds": 41.958333333333336,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 给科普与产品演示的启发"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 5,
+          "seconds": 41.958333333333336,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "同题3D电机：DeepSeek新 / 把技术过程连续讲清楚"
+        }
+      ],
+      "draftId": "052f4123-2847-48f6-af77-174a69d38081",
+      "profile": "disposable",
+      "driver": "official-codex",
+      "model": "gpt-6-astra",
+      "voice": "longanlang_v3.1",
+      "narrationProvider": "qwen-tts",
+      "narrationModel": "qwen-audio-3.1-tts-flash",
+      "ratePercent": 0,
+      "noDeveloperIntermediateMediaTransfer": true
+    },
+    "agentReview": {
+      "fingerprint": "41ae3ee59cfd45371aec0588db6bd8e566abca5cb46fb8b619af862d6c6190c3",
+      "agent": {
+        "status": "passed",
+        "notes": "独立全片Agent意见：当前MP4六镜全部18页136张关键状态帧已实际看过，六镜均已逐一记录。叙事从10月17日官方完整项目声明，到次日作者作品，再以结构—作用—输出说明科普用途；未推导总体排名或单位价格。开场选题预览两边可见，高清占主要画面；官方原句完成全景/定位/放大/停留/返回。字幕、署名、模型角标未见可见冲突；12项标题告警对应被不透明顶条遮住的旧标题。MP4 H264/AAC均可解码，视频49.958秒、音轨50.027秒。局限：关键状态采样并非逐帧穷尽；原片细小英文不保证手机逐字可读；字幕采用实测音长的编辑定时而非ASR逐字对齐。我未听过音频，不评价自然度，人工听感和最终接受仍待用户记录。",
+        "createdAt": "2026-10-18T07:29:14.624Z",
+        "sequence": 7
+      },
+      "scenes": [
+        {
+          "sceneId": "motor-hook",
+          "totalSamples": 24,
+          "availableFrames": 24,
+          "agent": {
+            "status": "passed",
+            "notes": "已看当前MP4三页24帧：开头所选预览两台电机均可见，2秒切高清拆解，6秒切电磁过程；模型角标、作者与花费非单价归因和底部字幕无相互遮挡。两项标题重叠告警对应被不透明顶部条盖住的旧标题，实际像素只显示新标题。字幕为实测音长上的编辑定时，未认证听感或逐字对齐。",
+            "createdAt": "2026-10-18T07:28:19.902Z",
+            "sequence": 1
+          }
+        },
+        {
+          "sceneId": "motor-release",
+          "totalSamples": 24,
+          "availableFrames": 24,
+          "agent": {
+            "status": "passed",
+            "notes": "已看24帧全部三页，原页全景、定位标题、放大、完整英文短句静止与返回全景均成立。Build complete projects from scratch可读，中文译意及DeepSeek API Docs日期与底部口播字幕分离。正文小字全景不供逐字阅读，关键句已放大。顶部旧题被遮盖，告警不表现为可见文字冲突。未认证音频听感。",
+            "createdAt": "2026-10-18T07:28:27.982Z",
+            "sequence": 2
+          }
+        },
+        {
+          "sceneId": "motor-author",
+          "totalSamples": 24,
+          "availableFrames": 24,
+          "agent": {
+            "status": "passed",
+            "notes": "已看三页24帧，透视外壳到沿轴拆解的动态素材连续呈现，上下模型均保留。Same prompt. Same task.明确归作者自述；标题、署名、中文字幕无可见遮挡。拆解在局部5秒开始，字幕先透视外壳到6.2秒属简短回顾，未作逐字同步认证。顶部两条告警为被遮住的旧标题。",
+            "createdAt": "2026-10-18T07:28:35.315Z",
+            "sequence": 3
+          }
+        },
+        {
+          "sceneId": "motor-mechanism",
+          "totalSamples": 22,
+          "availableFrames": 22,
+          "agent": {
+            "status": "passed",
+            "notes": "已看三页22帧，上方磁极环与转速变化、下方场线实际可见；下方从闭壳转为磁场展示，字幕落场线时已可见。名字角标未挡中心零件，作品展示而非独立实测说明清晰。署名字幕各自分区。告警旧标题被不透明条遮盖。未听音频。",
+            "createdAt": "2026-10-18T07:28:45.552Z",
+            "sequence": 4
+          }
+        },
+        {
+          "sceneId": "motor-flow",
+          "totalSamples": 18,
+          "availableFrames": 18,
+          "agent": {
+            "status": "passed",
+            "notes": "已看全部18帧三页：剖面、相位曲线、能量流程及末段冷却剖面实际出现。上下源标签完整；原片流程英文小字较小，但中文字幕说明其组织关系，不冒充读清所有原片标注。技术细节仍需核对只一句。字幕与署名无覆盖。两项顶部告警为遮盖旧标题，实际新标题清晰。",
+            "createdAt": "2026-10-18T07:28:53.200Z",
+            "sequence": 5
+          }
+        },
+        {
+          "sceneId": "motor-meaning",
+          "totalSamples": 24,
+          "availableFrames": 24,
+          "agent": {
+            "status": "passed",
+            "notes": "三页24帧实际检查：结构拆解后在再看作用字幕切磁极/场线，最后交代输出时切完整转动电机。结尾落实科普及产品演示组织方法；两台机器、名字、署名均保留，字幕无冲突，无长定格。顶部旧题告警不对应可见重叠。未认证听感或声学对齐。",
+            "createdAt": "2026-10-18T07:29:04.252Z",
+            "sequence": 6
+          }
+        }
+      ],
+      "ledgerSha256": "eaa7eebbc557c05b9183ea66616da180fe0d9529577283439f88ee70ac5efe87",
+      "frameSHAsChecked": 136,
+      "scope": "Current actual MP4 critical-state images only; no verified model listening or human acceptance."
+    },
+    "independentAudit": {
+      "historicalArtifactsSHAUnchanged": 610,
+      "oldDshDraftRevision": 35,
+      "rootViewedCurrentFrameIds": [
+        "media-316137ad-6d88-4e25-88ec-a21795e81b15-frame-1.png",
+        "media-3dec4d91-8330-4855-9e80-6a0d05f348e1-frame-5.png",
+        "media-f7d67b49-89e6-4eb8-bda4-b1f9cb73504f-frame-5.png",
+        "media-2b7b250d-e658-49cb-abc1-f79016a6f22b-frame-8.png",
+        "media-7d793052-5087-4157-81b4-41bc074fd378-frame-5.png",
+        "media-08035d8a-ee9f-400e-9572-1ff9937d602a-frame-4.png",
+        "media-000f68c4-2f21-4c4a-bac9-8105842f4d1b-frame-2.png",
+        "media-aab37004-7190-4824-95d2-cf08461eecf4-frame-5.png",
+        "media-96330169-4bdc-45c2-b2e5-2472a02b5550-frame-8.png"
+      ],
+      "scope": "Direct phone-size image inspection of nine current critical frames spanning all six scenes; voice quality and continuous timing not certified.",
+      "visualOnlyRefinement": {
+        "firstExport": {
+          "artifactId": "media-6c28391d-046c-491d-8069-01c63451bb26-converted.mp4",
+          "sha256": "e32c74dd9777d84d62f61beb20f58d8dbdc497c96bda7589a937308545f2512f",
+          "revision": 32
+        },
+        "currentExport": {
+          "artifactId": "media-3ce131b1-17ed-4b72-9285-82225987cd9e-converted.mp4",
+          "sha256": "30d8fd759cfd324ffb64b4199893992e57ac24c9c3a864a70dbd5d3e7ae36397",
+          "revision": 39
+        },
+        "allSixNarrationArtifactsAndSHAUnchanged": true,
+        "firstExportRetained": true,
+        "changes": "Removed subtitle occlusion, separated attribution and captions, recaptured the official chapter and refined typography; no formal narration regenerated."
+      }
+    },
+    "humanFeedback": {
+      "comment": "旁白自然。新闻重点上，不该最后去说这套技术适用于什么，而是要回到deepseek的新版本，可以那么低的价格却完成同样精良的制作",
+      "voiceNaturalness": "passed-by-human",
+      "story": "ending-revision-requested",
+      "scope": "Human heard the 50.03-second Longanlang film; approval applies to narration naturalness, not final acceptance of the editorial ending."
+    }
+  },
+  "humanAcceptance": {
+    "status": "accepted",
+    "comment": "这个版本可以了，先更新相关文档和下一步计划，提交代码并推送到 GitHub。",
+    "source": "Direct user message in this conversation",
+    "acceptedAt": "2026-10-18T08:43:06.835Z",
+    "artifactId": "media-a6fa3ef8-3ab2-4e48-b6c1-1a8c47779b30-converted.mp4",
+    "sha256": "82828d2de1a5eb5363086462e216f4e63d88fa5d2a5bc9d6a35ae70265d034b7",
+    "draftId": "052f4123-2847-48f6-af77-174a69d38081",
+    "revision": 46,
+    "scope": "Acceptance of the 54.61-second price-focused final film. The earlier explicit narration-naturalness approval is retained separately; no additional pronunciation, retelling or acoustic-alignment scores are invented.",
+    "bmwHostHumanReviewJournal": "Not fabricated from repository documentation; this receipt records the direct conversation feedback."
+  }
+}

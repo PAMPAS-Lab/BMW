@@ -1,9 +1,9 @@
 import { finiteNumber, mediaRecord } from './media-contract.js'
 export const NARRATION_PROVIDERS=['edge-readaloud','local-matcha','qwen-tts'] as const
-export const NARRATION_VOICES=['zh-CN-YunxiNeural','zh-CN-XiaoxiaoNeural','local-zh-en','wenhuaizhi_v3.1','xuyanchu_v3.1','xuyuyuan_v3.1','anmingyuan_v3.1'] as const
+export const NARRATION_VOICES=['zh-CN-YunxiNeural','zh-CN-XiaoxiaoNeural','local-zh-en','wenhuaizhi_v3.1','xuyanchu_v3.1','xuyuyuan_v3.1','anmingyuan_v3.1','huozhuoshi_v3.1','longanlang_v3.1','longsanshu_v3.1'] as const
 export const QWEN_NARRATION_MODEL='qwen-audio-3.1-tts-flash'
 export const DEFAULT_QWEN_VOICE='wenhuaizhi_v3.1'
-export const QWEN_NARRATION_VOICES=['wenhuaizhi_v3.1','xuyanchu_v3.1','xuyuyuan_v3.1','anmingyuan_v3.1'] as const
+export const QWEN_NARRATION_VOICES=['wenhuaizhi_v3.1','xuyanchu_v3.1','xuyuyuan_v3.1','anmingyuan_v3.1','huozhuoshi_v3.1','longanlang_v3.1','longsanshu_v3.1'] as const
 export function narrationVoiceProvider(voice:unknown):NarrationOptions['provider'] {
   if(voice==='local-zh-en')return 'local-matcha'
   if(QWEN_NARRATION_VOICES.some(value=>value===voice))return 'qwen-tts'

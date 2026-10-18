@@ -40,7 +40,7 @@ async function run():Promise<void>{
         if(url.hostname==='fixture-workspace.cn-beijing.maas.aliyuncs.com'){
           synthesis++;assert.equal(request.headers.get('authorization'),'Bearer fixture-native-secret')
           const body=await request.json() as {model:string;input:{voice:string;rate:number}}
-          assert.equal(body.model,'qwen-audio-3.1-tts-flash');assert.equal(body.input.voice,'anmingyuan_v3.1');assert.equal(body.input.rate,1)
+          assert.equal(body.model,'qwen-audio-3.1-tts-flash');assert.ok(['anmingyuan_v3.1','huozhuoshi_v3.1','longanlang_v3.1','longsanshu_v3.1'].includes(body.input.voice));assert.equal(body.input.rate,1)
           if(mode==='failure')return new Response('fixture-native-secret',{status:403})
           if(mode==='cancel')cancel?.abort(new Error('Qwen fixture cancellation'))
           return Response.json({output:{finish_reason:'stop',audio:{url:'http://dashscope-result-bj.oss-cn-beijing.aliyuncs.com/pre/fixture.wav'}}})
@@ -59,6 +59,7 @@ async function run():Promise<void>{
     const generated=await registry.execute('video.narrate',host,{action:'video.narrate',narrationRequest:{text:'今日新闻速递。',provider:'qwen-tts',voice:'anmingyuan_v3.1'}})
     const result=generated.value as {voice:string;contentType:string;durationSeconds:number;path:string}
     assert.equal(result.voice,'anmingyuan_v3.1');assert.equal(result.contentType,'audio/wav');assert.equal(result.durationSeconds,2);assert.deepEqual(fs.readFileSync(result.path),wav);assert.equal(controller.isCaptureActive(),false)
+    for(const voice of ['huozhuoshi_v3.1','longanlang_v3.1','longsanshu_v3.1'] as const){const next=await registry.execute('video.narrate',host,{action:'video.narrate',narrationRequest:{text:'今日新闻速递。',provider:'qwen-tts',voice}});assert.equal((next.value as {voice:string}).voice,voice)}
     const before=fs.readdirSync(artifacts).sort();mode='failure'
     await assert.rejects(controller.narrate({text:'失败',provider:'qwen-tts',voice:'anmingyuan_v3.1'}),error=>error instanceof Error&&!error.message.includes('fixture-native-secret'))
     assert.equal(controller.isCaptureActive(),false);assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
@@ -72,7 +73,7 @@ async function run():Promise<void>{
     await assert.rejects(controller.stop(),/Fixture cleanup failure/);assert.equal(controller.isCaptureActive(),true)
     cleanupFail=false;await controller.stop();assert.equal(controller.isCaptureActive(),false)
     const audition=await controller.auditionQwen('anmingyuan_v3.1');assert.equal(audition.durationSeconds,2);assert.ok(audition.audioDataUrl.startsWith('data:audio/wav;base64,'));assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
-    assert.equal(synthesis,5);assert.equal(downloads,3)
+    assert.equal(synthesis,8);assert.equal(downloads,6)
     console.log(JSON.stringify({ok:true,provider:'qwen-tts',voice:result.voice,duration:result.durationSeconds,synthesis,downloads,cancellation:'clean',cleanupRecovery:true,coverage:'isolated HTTP protocol fixtures; no paid model or listening coverage'}));return
   }
   if(process.env.BMW_TTS_TEST_PROVIDER==='edge'){

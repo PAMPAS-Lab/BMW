@@ -32,6 +32,10 @@ BMW_USER_DATA_DIR=/tmp/bmw-disposable npm start
 
 ## 主要能力
 
+新闻速递可在Studio展开“新闻速递 · 选题与制作”，点击“推荐新闻选题”。Assistant核对近72小时的中美及全球AI消息，覆盖个人、公司机构、学术界和非AI人士的重要AI表态；最多推荐三题，不以旧闻凑数。优先推荐能直接观看变化的演示、同题作品对照、采访和演讲，并解释视频表达价值；纯文字公告也可用绑定来源版本的原页截图作为真实预览。查看原始来源与真实素材预览后，点击“选此题并制作”，同一Assistant再完成稿件、证据画面、配音字幕和新闻初稿。默认Qwen安明远男声，需先完成下方Qwen配置；新闻选题记录不等于事实、听感或内容验收。可退出选题，原素材与已有草稿保留。
+
+NEWS-01已用BMW＋官方Codex完成54.61秒最新新闻并获用户接受，显式采用Qwen龙安朗男声；[验收记录](docs/research/CODEX_NEWS_REWORK.json)区分技术检查、Agent画面意见、人工声音反馈和最终接受。后续按新闻、科普、学术顺序改进，见[下一步计划](docs/plans/NEXT_STEPS.md)。
+
 当前已包含手机原图阅读、句级卡片引用、素材索引与区间语音检索、原声转解说及录屏整理。正式全片分析支持2fps分页和选定区间8fps加密；视频支持720秒／96分镜、有界混音、原生文字包装和有限科学图解。专用 AI 图片／视频素材生成暂缓；当前范围见 [Studio 范围](docs/VIDEO_STUDIO_SCOPE.md)。
 
 - 浏览器标签页、语义观察、页面交互、站点权限、后台取材、登录连续性和按 Project 保存的日常任务。
@@ -63,7 +67,7 @@ NODE_USE_ENV_PROXY=1 npm run setup:local-tts
 3. 选择试听音色，点击 **生成并试听**。固定示例文本为“这里是新闻速递，为你播报今日要闻。”；生成期间可取消，完成后可反复播放；关闭设置会中止生成并释放试听音频。试听会消耗少量百炼额度。
 4. 在 **Settings → 视频制作 → 旁白音色** 中选择 Qwen 并保存全局设置，或在 Studio 的视频设置中为当前草稿选择。试听选择不会修改视频默认音色，已有录音需重新生成才会改变。
 
-固定模型为 `qwen-audio-3.1-tts-flash`，Qwen 默认 **闻怀之 `wenhuaizhi_v3.1`**、0% 语速，适合作为新闻速递的起始选择；另可选女声许言初 `xuyanchu_v3.1`、许玉远 `xuyuyuan_v3.1`，或清亮自然的男声安明远 `anmingyuan_v3.1`。Qwen 在线开关默认关闭，已有 Edge／本地设置和草稿保留；服务失败不会自动切换提供方。[音色与接口边界](docs/FUNCTIONAL_SPEC.md#qwen-tts-配置安全保存与试听)及[验证范围](docs/VERIFICATION.md#qwen-tts-验证范围)分别说明实现和验收限制。
+固定模型为 `qwen-audio-3.1-tts-flash`，Qwen 默认 **闻怀之 `wenhuaizhi_v3.1`**、0% 语速，适合作为新闻速递的起始选择；另可选女声许言初 `xuyanchu_v3.1`、许玉远 `xuyuyuan_v3.1`，或男声安明远 `anmingyuan_v3.1`、霍拙石 `huozhuoshi_v3.1`、龙安朗 `longanlang_v3.1`、龙三叔 `longsanshu_v3.1`。Qwen 在线开关默认关闭，已有 Edge／本地设置和草稿保留；服务失败不会自动切换提供方。[音色与接口边界](docs/FUNCTIONAL_SPEC.md#qwen-tts-配置安全保存与试听)及[验证范围](docs/VERIFICATION.md#qwen-tts-验证范围)分别说明实现和验收限制。
 
 API Key 与 Workspace ID 使用系统安全存储加密保存在当前 BMW Profile，Key 保存后不回显；再次保存时留空保留原 Key。系统安全存储不可用时拒绝保存，已有密文无法读取时保留原文件；可主动点击 **清除 Qwen 配置** 删除旧配置并关闭 Qwen。凭据只由原生配音层使用，不写入视频模板、Project 文档或模型上下文。
 
@@ -101,7 +105,7 @@ npm run test:video-e2e
 npm run test:tts-e2e
 ```
 
-当前源码完整离线回归为 **162 passed／0 failed／12 not-run**（2026-10-17），构建和 `npm run check` 通过；[可移植逐项摘要](docs/verification/CURRENT.json)保存源码指纹、环境、范围和未运行项，[验证说明](docs/VERIFICATION.md#当前源码完整离线基线)解释限制。这是本机隔离验证，真实模型制作和人工验收另记。
+当前源码完整离线回归为 **166 passed／0 failed／12 not-run**（2026-10-18），构建和 `npm run check` 通过；[可移植逐项摘要](docs/verification/CURRENT.json)保存源码指纹、环境、范围和未运行项，[验证说明](docs/VERIFICATION.md#当前源码完整离线基线)解释限制。这是本机隔离验证，真实模型制作和人工验收另记。
 
 局部改动默认先用下方 `test:plan` / `test:affected -- --files ...` 查看并执行本次范围；既有未提交工作不应混入本次文件列表。`verify:stability` 显式使用 `--all`，执行全部非 opt-in 分类；六项专用本地素材夹具和六项外部服务／模型测试仍需单独启用，不计为通过。完整串行验证：`npm run verify:stability`，并单独执行 `npm run check` 检查完整编译／Schema与生成文档一致性。完整入口构建一次，再执行源码／清单门禁、单元/边界及运行时回归；记录源码哈希、依赖版本和通过/失败/未执行结果。桌面工作区测试分为工作区、Project/会话（含实际重启）、设置、原生焦点/键盘四组；Studio 各专用环境分支另由分类目录逐项执行，单组失败不阻止其余组运行。新证据在 `.bmw-runtime/classified-tests/`，既有证据保留。
 

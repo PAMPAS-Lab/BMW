@@ -21,6 +21,9 @@ import {sceneCoverage,sameStudioDraftContent} from '../studio-contract.js'
 import type {VideoDraft,StudioAsset} from '../studio-contract.js'
 
 export interface StudioBridge {
+  recommendNews():Promise<unknown>
+  closeNews():Promise<unknown>
+  openNewsSource(topicId:string):Promise<unknown>
   state():Promise<unknown>;command(projectId:string,request:unknown):Promise<unknown>
   read(projectId:string,artifactId:string,offset:number,length:number):Promise<Uint8Array>
   importAsset(projectId:string):Promise<unknown>;cancel():Promise<unknown>;assistant(request?:unknown):Promise<unknown>

@@ -1,7 +1,7 @@
 import {assertSourceCatalog,assertSourceObservation,assertSourceCaptureEvidence,SOURCE_LIMITS,sourceId} from '@bmw-agent/media-native/sources'
-import type {ProjectSourcePort,SourceCatalog,SourceMedia,SourceMediaState,SourceRequest,SourceMediaAvailability,SourceArtifactStatus,SourceCaptureEvidence} from '@bmw-agent/media-native/sources'
+import type {ProjectSourcePort,SourceCatalog,SourceMedia,SourceMediaState,SourceRequest,SourceMediaAvailability,SourceArtifactStatus,SourceCaptureEvidence,SourceScreenshotReceipt} from '@bmw-agent/media-native/sources'
 import {ArtifactJobIO} from '@bmw-agent/media-native/artifact-io'
-import {assertImageInspection} from '@bmw-agent/media-native/image'
+import {assertImageInspection,imageHeader} from '@bmw-agent/media-native/image'
 import {assertFullMediaDecode,assertArtifactId} from '@bmw-agent/media-native/contract'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
@@ -85,6 +85,23 @@ export class ProjectSourceStore implements ProjectSourcePort {
   for(const media of acquisition.media)if(media.artifactId&&!acquisition.confirmedCandidateIds.includes(media.candidateId))acquisition.confirmedCandidateIds.push(media.candidateId)
   if(request.eventAt!==undefined){acquisition.eventAt=request.eventAt;acquisition.eventTimeOrigin=request.eventAt===null?'unknown':'user-declared'}
   return this.commit(catalog,request.expectedRevision)
+ }
+ /** Host-only admission of an actual rendered page image. The browser checked
+  * URL and scoped text on both sides of capture; model requests cannot supply
+  * this receipt, file hash, inspection or original-text evidence. */
+ async recordScreenshot(receipt:SourceScreenshotReceipt,signal?:AbortSignal){
+  signal?.throwIfAborted();const catalog=this.current(receipt.expectedRevision),{source,acquisition}=this.locate(catalog,receipt.sourceId,receipt.acquisitionId),inspection=assertImageInspection(receipt.inspection)
+  if(receipt.pageUrl!==source.url||receipt.bodyContentId!==acquisition.contentId||acquisition.result!=='observed'||acquisition.scope.truncated||JSON.stringify(receipt.scope)!==JSON.stringify(acquisition.scope))throw new Error('SOURCE_SCREENSHOT_STALE: Original page or text identity changed.')
+  await this.readBody(source.id,acquisition.id,signal);const artifactId=assertArtifactId(receipt.artifactId),input=await ArtifactJobIO.open(this.artifacts,{action:'media.inspect',artifactId});let contentId:string,bytes:number
+  try{bytes=input.bytes;if(bytes!==inspection.bytes||bytes>32*1024*1024)throw new Error('Source screenshot exceeds its image budget.');const header=imageHeader(await input.read(0,bytes));if(header.width!==inspection.width||header.height!==inspection.height||header.contentType!=='image/png')throw new Error('Source screenshot container and decode dimensions disagree.');contentId=await input.fingerprint(signal);if(contentId!==receipt.contentId)throw new Error('Source screenshot file changed.')}finally{await input.close()}
+  const candidateId=crypto.randomUUID(),mediaId=crypto.randomUUID();let proofArtifactId:string|undefined
+  try{
+   const proofText=JSON.stringify({version:1,sourceId:source.id,acquisitionId:acquisition.id,candidateId,url:source.url,artifactId,decodedArtifactId:artifactId,contentReused:false,contentId,verification:inspection,sourceScreenshot:{kind:'page-screenshot',pageUrl:source.url,scope:acquisition.scope,bodyContentId:acquisition.contentId,capturedAt:receipt.capturedAt}},null,2)+'\n'
+   proofArtifactId=await this.writeArtifact('json',proofText)
+   acquisition.candidates.push({id:candidateId,kind:'image',url:source.url,durationSeconds:null,role:'body'});acquisition.confirmedCandidateIds.push(candidateId)
+   acquisition.media.push({id:mediaId,candidateId,state:'image-decoded',artifactId,contentId,proofArtifactId,proofContentId:crypto.createHash('sha256').update(proofText).digest('hex'),capture:null,bytes,startSeconds:null,endSeconds:null,expectedDurationSeconds:null,capturedAt:receipt.capturedAt,error:null})
+   signal?.throwIfAborted();const saved=this.commit(catalog,receipt.expectedRevision);return {catalog:saved,sourceId:source.id,acquisitionId:acquisition.id,candidateId,mediaId,artifactId}
+  }catch(error){if(proofArtifactId)this.removeNew(path.join(this.artifacts,proofArtifactId));throw error}
  }
  async recordMedia(sid:string,aid:string,cid:string,receipt:{state:SourceMediaState;artifactId?:string;contentId?:string;startSeconds?:number;endSeconds?:number;proof?:unknown;capture?:SourceCaptureEvidence;error?:string},revision:number,signal?:AbortSignal):Promise<SourceCatalog>{
   signal?.throwIfAborted();const catalog=this.current(revision),{acquisition}=this.locate(catalog,sid,aid),candidate=acquisition.candidates.find(c=>c.id===cid)

@@ -1,0 +1,415 @@
+{
+  "format": "bmw.news-01-video-topics",
+  "version": 1,
+  "createdAt": "2026-10-18T05:57:35.187Z",
+  "status": "human-issues-reported-codex-rework-requested",
+  "userFeedback": {
+    "receivedAt": "2026-10-18T05:38:16.233355+00:00",
+    "scope": "topic suitability for video; no explicit audio-quality verdict",
+    "comment": "这个内容感觉还是更适合图文，用视频并不特别合适，请再换新闻案例吧，今天的新闻候选只有这些吗？另外一个方案，X上有不少deepseek最新版和opus 5.5比较的3D案例，那些做视频新闻也挺好的",
+    "requestedDirection": "Fresh video-native news, especially original X posts showing DeepSeek versus Opus 5.5 3D outputs; present new verified candidates before production."
+  },
+  "scope": "New video-native topic research, not a replacement film or a human audio verdict.",
+  "runtime": {
+    "driver": "official-dsh",
+    "harness": "0.2.1-rc.2",
+    "provider": "deepseek-official",
+    "model": "deepseek-flash",
+    "effectiveTools": [
+      "browser"
+    ],
+    "paidResearch": true,
+    "profile": "disposable",
+    "root": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z",
+    "sessionId": "23ac9b92-57d2-4f33-a87d-d4dee4ad9a2c"
+  },
+  "board": {
+    "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/video-studio/news/23ac9b92-57d2-4f33-a87d-d4dee4ad9a2c.json",
+    "sha256": "8e3a666fb81d3430dd4afa2f539b8a331fb359fef2c0308d37c6d030e8d109a9",
+    "id": "fe601401-3331-42b0-90cf-75d972a069e5",
+    "revision": 12,
+    "selection": null,
+    "topics": [
+      {
+        "candidate": {
+          "id": "deepseek-vs-opus55-3d-motor-1018",
+          "eventKey": "deepseek-v41-vs-opus55-3d-20261018",
+          "subject": "DeepSeek V4.1-Flash-1017 与 Claude Opus 5.5 同题 3D 电机生成对比",
+          "subjectKind": "organization",
+          "category": "technology",
+          "region": "全球（X 公开测试，对比 Claude Opus 5.5）",
+          "title": "同题 3D 电机：DeepSeek 新版与 Opus 5.5 上下对照",
+          "news": "10 月 18 日，X 用户 @rubenssoto_ai 用同一提示词让 Claude Opus 5.5 与 DeepSeek V4.1-Flash-1017 各做一支“电影感 3D 电机动画”，成片上下两屏对照：上屏 DeepSeek V4.1 Flash 1017 标注 $1.25，下屏 Opus 5.5 标注 $16.36。两处金额为作者标注的本次生成花费，不是模型单价或报价；帖子为单一作者的一次公开测试，不是官方评测。",
+          "reason": "已实看取到文件的帧（1/5/9 秒，文件实测 320×406）：画面为上下两屏，上屏 DeepSeek V4.1 Flash 1017（$1.25），下屏 Opus 5.5（$16.36），两边都是永磁同步电机 3D 剖视，与“同题电机”一致；是真实运动画面，不是拿帖子标题或封面图代替。",
+          "angle": "用上下两屏对照讲同一提示词下的 3D 电机动画差异；同时写清 $1.25 / $16.36 是作者本次生成花费，不是单价或模型报价，配置、预算口径与采样次数未公布，不能据此推断便宜倍数或总体胜负。",
+          "format": "post",
+          "novelty": "new-event",
+          "recordedAt": null,
+          "missing": "发布日期仅取完整日期 2026-10-18（页面标签为“1:42 · 2026年10月18日”，不解释该 1:42 的含义，不推算时区或精确时刻）。已检查播放器源片约 40 秒；已取文件预览 9.978 秒、capture 源区间 0–10.0013 秒，文件实测分辨率 320×406。该预览无音轨，但不据此推断完整原片没有声音。提示词全文、预算口径、采样次数、harness 差异均未公布；$1.25/$16.36 与另一帖 $0.23/$6 口径不同，不可混用。",
+          "sourceId": "ab483985df6e1e72095fb1c41327580f8390868df9ed3124021b084bfb25bdf7",
+          "acquisitionId": "12ad719e-412e-4223-855d-f96f63e8846c",
+          "quote": "Opus 5.5 vs DeepSeek V4.1 Flash 1017\n\nSame prompt.  Same task.",
+          "quoteStart": 0,
+          "previewArtifactId": "3ca639b5-184d-48dd-b793-1caa16e33ad3-source-fbbb2ab3-55b5-4a66-8a78-82c15bb724cb.webm",
+          "mode": "video"
+        },
+        "facts": {
+          "url": "https://x.com/rubenssoto_ai/status/2111513156589629941",
+          "author": "@rubenssoto_ai",
+          "publishedAt": "2026-10-18",
+          "contentSha256": "a6236c61be19a03b2daad2ed2858106d387fa020adb43d3984f30d5cf616aaa7",
+          "previewSha256": "f460ef051d09ee551571a558cf291c9dab3c961bdeb0c3789a55af72742a216d",
+          "durationSeconds": 9.978,
+          "sourceRange": {
+            "startSeconds": 0,
+            "endSeconds": 10.0013
+          },
+          "checkedAt": "2026-10-18T05:56:47.440Z"
+        }
+      }
+    ]
+  },
+  "preview": {
+    "width": 320,
+    "height": 406,
+    "durationSeconds": 9.978,
+    "sourceRange": {
+      "startSeconds": 0,
+      "endSeconds": 10.0013
+    },
+    "sourcePlayerDurationSeconds": 39.999999,
+    "videoCodec": "vp9",
+    "audioTracks": 0,
+    "sourcePageOriginalLabel": "1:42 · 2026年10月18日",
+    "datePrecision": "day; conservative UTC−12 through UTC+14 window; no timezone or exact instant inferred",
+    "actualSamples": [
+      {
+        "seconds": 1,
+        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-6f2f0c58-e4e8-479f-823e-caeb8e29e7f9-frame-1.png",
+        "sha256": "b214c19f9762351fe94223dfbee33ee38ce3b234cc4f7d2e25cea2dc6618c6d5"
+      },
+      {
+        "seconds": 5,
+        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-6f2f0c58-e4e8-479f-823e-caeb8e29e7f9-frame-2.png",
+        "sha256": "7911c07b43ee4e3617e8f9d7cf35c3c4c7cc35f917af847f2b0dc94665d40cd9"
+      },
+      {
+        "seconds": 9,
+        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-6f2f0c58-e4e8-479f-823e-caeb8e29e7f9-frame-3.png",
+        "sha256": "8793a6fe6cfbcb872a9fd58040e31ce8b2cb4184efd4afc96fe884a232977e3e"
+      }
+    ],
+    "rootVisualReview": "Directly viewed frame-2: two vertically stacked motor animations, DeepSeek V4.1 Flash 1017 $1.25 above Opus 5.5 $16.36. Original author labels, not independently replicated measurements."
+  },
+  "editorialLimits": [
+    "One author reports same prompt/task; full prompts, configuration, sampling and budget comparability are not established.",
+    "Displayed $1.25/$16.36 are author-reported costs of these runs, not model unit prices or a general cost ratio.",
+    "Preview has no audio track; no conclusion about full original audio.",
+    "The localized clock preceding the date is not treated as source duration.",
+    "Other DeepSeek 3D demonstration posts belong to this event, not separate quota-filling topics.",
+    "Before final production seek higher quality original playback where possible; preview is only 320×406."
+  ],
+  "excludedLeads": [
+    {
+      "subject": "Google DeepMind Minecraft multi-agent research",
+      "url": "https://x.com/GoogleDeepMind/status/2111127991401247033",
+      "research": "https://arxiv.org/abs/2610.22319",
+      "reason": "Primary research and post located, but no actual gameplay video candidate acquired in BMW. Do not substitute poster or source timestamp for footage."
+    },
+    {
+      "subject": "Replit default-model interview",
+      "url": "https://techcrunch.com/2026/10/17/replit-is-no-longer-working-with-anthropic-ceo-says/",
+      "reason": "Captured interview short preview remains, but visible structured timestamp is an update. Original publication is described in footer; current collector did not bind that as original publication metadata, so not eligible. Recording date is separate; do not claim Claude unavailable."
+    }
+  ],
+  "gates": {
+    "selectionAbsent": false,
+    "noNewDraft": false,
+    "noNarrationOrComposition": false,
+    "priorMovieShaUnchanged": true,
+    "oldSelectionArchived": true,
+    "productionOnlyAfterTrustedSelection": true,
+    "scope": "Current selected production state; the original unselected research snapshot above records the pre-confirmation phase."
+  },
+  "researchLogs": [
+    ".bmw-runtime/news-01/video-native-candidates.log",
+    ".bmw-runtime/news-01/video-topic-corrections.log"
+  ],
+  "historyProjection": "Resumed traces include earlier tool events. Historical events are not reexecution or repeated delivery.",
+  "next": "Preserve this earlier film and its original feedback. NEWS-01 is accepted through the later BMW + Codex 54.61-second film; continue NEWS-02, SCIENCE-01 and RESEARCH-01 in docs/plans/NEXT_STEPS.md.",
+  "preservationAudit": {
+    "checkedAt": "2026-10-18T05:59:24.308Z",
+    "preEditHistoricalArtifactsByteIdentical": 191,
+    "priorFinalNarrationFilesByteIdentical": 5,
+    "priorFinalMovieByteIdentical": true
+  },
+  "userChoice": {
+    "topicId": "deepseek-vs-opus55-3d-motor-1018",
+    "origin": "Direct human reply selecting this 3D comparison candidate",
+    "comment": "选这个3D对比案例（推荐）",
+    "recordedAt": "2026-10-18T06:04:37.469Z"
+  },
+  "trustedSelection": {
+    "topicId": "deepseek-vs-opus55-3d-motor-1018",
+    "draftId": "54494630-1c42-4e3d-a4bc-c7d090775f42",
+    "selectedAt": "2026-10-18T06:08:51.472Z",
+    "fingerprint": "cedd557932ecd79c35262b228dec47a3e35dce4847b5f017c576e44ce33d1080",
+    "dispatch": "sent",
+    "runId": "9567f767-a44c-48e5-8aa8-a4650445876f"
+  },
+  "selectionUi": {
+    "method": "Native CUA clicked the enabled Studio button once after explicit human choice",
+    "observed": "选题已确认，任务状态：制作任务已发送",
+    "draftId": "54494630-1c42-4e3d-a4bc-c7d090775f42"
+  },
+  "technical": {
+    "status": "passed",
+    "fullReport": ".bmw-runtime/classified-tests/2026-10-18-news-01-video-topics/result.json",
+    "counts": {
+      "passed": 166,
+      "failed": 0,
+      "notRun": 12
+    },
+    "newsUnitCases": 21,
+    "sourceManifest": "docs/verification/CURRENT.json",
+    "scope": "Offline fixtures and disposable desktop; paid model/narration, human sound quality and acceptance separate"
+  },
+  "localEdit": {
+    "status": "passed",
+    "targetSceneId": "s2-inside",
+    "beforeRevision": 11,
+    "afterRevision": 16,
+    "retainedArtifacts": 446,
+    "evidence": ".bmw-runtime/news-01/3d-production-and-edit.json",
+    "assertions": [
+      "Other scenes retain narration, audio identity, media bindings, layers and independent captions",
+      "Every pre-edit artifact and old export remains byte-identical by SHA256"
+    ]
+  },
+  "humanListening": "issues-reported",
+  "finalAcceptance": "not-accepted-rework-requested",
+  "updatedAt": "2026-10-18T06:23:42.388Z",
+  "production": {
+    "draftId": "54494630-1c42-4e3d-a4bc-c7d090775f42",
+    "revision": 34,
+    "artifactId": "media-30a808b0-aed4-49a5-b8b4-39c9b54977b2-converted.mp4",
+    "fingerprint": "7aef433594c3e9a4b7a6f982363e3200906f2bf08e7c07dce7339aaf5b25265c",
+    "verificationArtifactId": "video-8cc9fa25-7ffa-438d-8dd4-e925e4519d6c.json",
+    "createdAt": "2026-10-18T06:19:54.777Z",
+    "durationSeconds": 36.08333333333333,
+    "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-30a808b0-aed4-49a5-b8b4-39c9b54977b2-converted.mp4",
+    "sha256": "1d82d0cdd579ab039c21840bbab124546855c7ea1b42f3c3882fd38d7091aac8",
+    "verificationSha256": "7416a7fb422a9aaab1a0ac4296dff000e197dea00e8b3f0e02984b12d243b12a",
+    "actualDurationSeconds": 36.16,
+    "width": 720,
+    "height": 1280,
+    "fps": 24,
+    "tracks": [
+      {
+        "id": 1,
+        "type": "video",
+        "codec": "avc",
+        "canDecode": true,
+        "width": 720,
+        "height": 1280,
+        "rotation": 0,
+        "startSeconds": 0,
+        "endSeconds": 36.083333333333336,
+        "canBeTransparent": false
+      },
+      {
+        "id": 2,
+        "type": "audio",
+        "codec": "aac",
+        "canDecode": true,
+        "channels": 2,
+        "sampleRate": 48000,
+        "startSeconds": 0,
+        "endSeconds": 36.16
+      }
+    ],
+    "automaticIssues": [],
+    "profile": "disposable",
+    "noDeveloperIntermediateMediaTransfer": true
+  },
+  "fullSource": {
+    "artifactId": "preserved-5b1fdbb4-215b-4529-bc47-19e768da7e55-delivery.mp4",
+    "sha256": "8ff14b451c26c7aea6daafa26f0b2c4632a8735811b7d73151c733355ca49f7a",
+    "width": 1080,
+    "height": 1376,
+    "durationSeconds": 40,
+    "codec": "avc",
+    "basis": "X platform HLS delivery; packet-copy, complete VOD; uploaded author original unknown",
+    "preservationProofArtifactId": "preserved-5b1fdbb4-215b-4529-bc47-19e768da7e55-16-preservation.json",
+    "proofSha256": "52013709adf741e39b850f9c07bbf9ee2968504a38a3de66f6c6d7cf9ae6bd78"
+  },
+  "finalSceneMedia": [
+    {
+      "sceneId": "s1-twoscreens",
+      "durationSeconds": 13.166666666666666,
+      "videoArtifactId": "3ca639b5-184d-48dd-b793-1caa16e33ad3-source-fbbb2ab3-55b5-4a66-8a78-82c15bb724cb.webm",
+      "audioArtifactId": "narration-e4f849cf-c852-444a-94c8-51ce4733dadc.wav",
+      "audioSha256": "5f1c399bf6674d6760ab9bf751227293bfa58f030ba42d5bf660848d2a0d9ff0",
+      "audioDurationSeconds": 12.96,
+      "narration": "同一句提示词，两台模型各做一支三维电机动画。成片上下两屏：上屏 DeepSeek V4.1 Flash 1017，下屏 Claude Opus 5.5。",
+      "captionCount": 2
+    },
+    {
+      "sceneId": "s2-inside",
+      "durationSeconds": 14.916666666666666,
+      "videoArtifactId": "media-ea4cc5ab-debd-40e1-9a7a-78b169905c2e-converted.mp4",
+      "audioArtifactId": "narration-0786f630-0320-4b45-8284-c5e539926b83.wav",
+      "audioSha256": "0e467385658e4361832478f76a923089a91099094002fabe47f16a86d465db19",
+      "audioDurationSeconds": 13.76,
+      "narration": "镜头一边环绕一边把外壳剖开。上屏露出蓝色与铜色的绕组，接线盒是橙色；下屏筒身带了一圈散热片，外壳更亮也更通透。",
+      "captionCount": 2
+    },
+    {
+      "sceneId": "s3-limits",
+      "durationSeconds": 8,
+      "videoLayers": [
+        {
+          "artifactId": "media-17711161-88b0-45a9-991e-d7cc7378daee-converted.mp4",
+          "x": 0.02,
+          "y": 0.2,
+          "width": 0.96,
+          "height": 0.6
+        }
+      ],
+      "audioArtifactId": "narration-47d3f84e-2e16-44e5-9056-a1c3d5bc58fc.wav",
+      "audioSha256": "acc285b1c49c93e8662d3fc81295987f9c50d3946196a97560fd1f4518dbdabf",
+      "audioDurationSeconds": 4.64,
+      "narration": "两笔金额是作者这两次生成的花费，单次测试，不下结论。",
+      "captionCount": 1
+    }
+  ],
+  "derivedRanges": [
+    {
+      "sceneId": "s2-inside",
+      "artifactId": "media-ea4cc5ab-debd-40e1-9a7a-78b169905c2e-converted.mp4",
+      "sourceRangeSeconds": [
+        12,
+        27
+      ],
+      "width": 720,
+      "height": 918,
+      "sha256": "e64f767b75a7c78b46b9b6f8b693e332e3a03ff4ae4e6332a27290fc3423c88a"
+    },
+    {
+      "sceneId": "s3-limits",
+      "artifactId": "media-17711161-88b0-45a9-991e-d7cc7378daee-converted.mp4",
+      "sourceRangeSeconds": [
+        27,
+        35
+      ],
+      "width": 720,
+      "height": 918,
+      "sha256": "94ce37eedb980437d7a892b46c05a42d3c36acc5f877d00f8214f370aa504304"
+    }
+  ],
+  "agentReview": {
+    "status": "passed",
+    "authority": "agent-declared",
+    "fingerprint": "7aef433594c3e9a4b7a6f982363e3200906f2bf08e7c07dce7339aaf5b25265c",
+    "ledger": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/video-studio/export-reviews/54494630-1c42-4e3d-a4bc-c7d090775f42.json",
+    "ledgerSha256": "7a03c2e5a80f234022aacd162c6561140cb1e7bb51de9ec5e6a0e3fdf3f5c634",
+    "film": {
+      "status": "passed",
+      "notes": "全片 Agent 意见（当前导出 44 个状态在三镜均已实际看过并各自声明 passed，绑定 fingerprint 7aef4335…25265c）：结构为同题两屏 → 剖切内部 → 花费与图景；开场保留已选 320×406 预览，中段换成 1080×1376 原片 12–27s，末段挂 27–35s 大幅运动，三段画面不重复且均有真实运动；模型标签、$1.25/$16.36、作者署名可读；三条中文旁白与字幕对应，字幕不压主体。仍存在的局限：① 首镜源仅 320×406 且尾部 3.2s 末帧定格；② 页内英文小注在 390px 不可读；③ 末镜顶部仍有窄标题条。限制：我无听音能力，未核听任何配音；字幕时间为编辑估算而非 ASR。人工听感与最终接受待用户在 Studio 记录。",
+      "createdAt": "2026-10-18T06:22:14.651Z",
+      "sequence": 4
+    },
+    "scenes": [
+      {
+        "sceneId": "s1-twoscreens",
+        "totalSamples": 16,
+        "generatedCurrentFrames": 16,
+        "agent": {
+          "status": "passed",
+          "notes": "s1 全 16 个状态（offset 0/8）已看：开场即以两屏 3D 电机起步，标题“同题 3D 电机 @rubenssoto_ai”单行、与模型标签不重叠；上屏 DeepSeek V4.1 Flash 1017 / $1.25、下屏 Opus 5.5 / $16.36 均清晰；字幕两句在下部安全区，未压标签与电机。局限：本镜源为 320×406 预览，放大后细节偏软；末段 3.2s 为末帧定格。不声称音频已听。",
+          "createdAt": "2026-10-18T06:21:45.800Z",
+          "sequence": 1
+        }
+      },
+      {
+        "sceneId": "s2-inside",
+        "totalSamples": 16,
+        "generatedCurrentFrames": 16,
+        "agent": {
+          "status": "passed",
+          "notes": "s2 全 16 个状态（offset 0/8）已看：本镜用原片 12–27s 区间（720×918 独立片），画面与开场 0–10s 不重复；可见外壳被拉开、定子与绕组暴露，上屏蓝色/铜色绕组与橙色接线盒、下屏筒身散热片均能看到；两条中文字幕在下部安全区，未遮模型标签与电机主体。局限：片中颜色随镜头变化（下屏后段偏蓝），字幕为概括描述；页面小注小字在 390px 下不可读，不影响主体。不声称音频已听。",
+          "createdAt": "2026-10-18T06:22:01.873Z",
+          "sequence": 2
+        }
+      },
+      {
+        "sceneId": "s3-limits",
+        "totalSamples": 12,
+        "generatedCurrentFrames": 12,
+        "agent": {
+          "status": "passed",
+          "notes": "s3 全 12 个状态（offset 0/8）已看：末段不再是纯文字，28.1–36.0s 为大幅真实运动（原片 27–35s），绕组/液冷与磁体注记可见；模型标签与 $1.25/$16.36 全在画面内；字幕两行在下部安全区，未被视频盖住（此前后 h .66 压字已改 h .60）。局限：片中英文小注在 390px 下不可读；标题卡仍占顶部一窄条。不声称音频已听。",
+          "createdAt": "2026-10-18T06:22:10.518Z",
+          "sequence": 3
+        }
+      }
+    ],
+    "scope": "Current exported film critical-state frames only; no audio listening or human acceptance"
+  },
+  "independentFinalAudit": {
+    "createdAt": "2026-10-18T06:23:42.427Z",
+    "framesShaVerified": 44,
+    "rootActuallyViewedFrameIds": [
+      "media-8e041170-a7cb-4e0b-a37c-b51567b05e74-frame-1.png",
+      "media-ae7b8b02-afee-4328-9822-da05a97d8636-frame-1.png",
+      "media-ae7b8b02-afee-4328-9822-da05a97d8636-frame-8.png",
+      "media-17765a3b-b6d8-4a9f-9571-8d10f9669fde-frame-1.png",
+      "media-9043bbdb-d584-4b5c-9dc0-4494f000f732-frame-1.png",
+      "media-9043bbdb-d584-4b5c-9dc0-4494f000f732-frame-8.png",
+      "media-1995d5ea-dde6-49fa-88ed-88c72edbb5dc-frame-1.png",
+      "media-1995d5ea-dde6-49fa-88ed-88c72edbb5dc-frame-7.png",
+      "media-fac214aa-dab2-442e-bb0b-0ec9d7be8397-frame-4.png"
+    ],
+    "rootReview": "Directly viewed nine current frames spanning start/middle/end of each scene: original source labels retained, later ranges show exploded motor and winding/cooling, final two-line caption unobscured. First-source low resolution, short held tail and tiny original English notes remain.",
+    "historicalFilesByteIdentical": 446,
+    "reviewOnlyBrowserCalls": 12,
+    "reviewTurnDidNotRenderNarrateOrChangeFingerprint": true,
+    "humanDeclarationsAbsent": true
+  },
+  "editorialCorrections": [
+    "Original second-scene wording placed the cooling fins on the upper model; higher quality source showed them on lower Opus body. Corrected that narration and retained the previous WAV.",
+    "Final caveat shortened from a 15-second list to one sentence with 4.64 seconds of actual narration in an eight-second moving scene.",
+    "Video layers are a supported native path for large motion over a title card; the prior Agent claim that card/attach constraints made this impossible was incorrect."
+  ],
+  "remainingConcerns": [
+    "Opening uses the selected 320×406 source-bound preview and holds its last frame for about 3.2 seconds.",
+    "Original English technical notes remain too small at 390px; central motors, model names and main Chinese captions are readable.",
+    "Subtitle timing is editorial-estimate, not certified acoustic alignment.",
+    "Same-prompt and costs are author reports; no independent replication or model-wide superiority claim.",
+    "No verified model audio listening; human listening and final acceptance pending."
+  ],
+  "uiReview": {
+    "status": "passed",
+    "method": "Native CUA after normal isolated-app restart and Assistant-ready state",
+    "observations": [
+      "Current title is the selected 3D motor comparison, draft v35",
+      "Three scenes; saved narration 3/3, zero pending, actual reusable MP4 36.1 seconds shown",
+      "Latest-film player selected; Play clicked and control changed to Pause"
+    ],
+    "startupRecovery": "Opening Studio during initial Session connection returned a stale Project binding. Normal close/restart, wait for Assistant ready, then open Studio restored the same draft; no data modification or model replay.",
+    "scope": "Playback entry and running control verified; no subjective listening claim or human acceptance"
+  },
+  "humanFeedback": {
+    "recordedAt": "2026-10-18T06:34:02.570Z",
+    "comment": "这个声音我听着也不是特别自然，有没有别的声音可选，然后作为新闻要强调的点到底是什么，我觉得也没体现。要不然用BMW+Codex的组合来试试选材、文稿和最后视频效果吧",
+    "scope": "Direct human sound-naturalness and news-focus feedback; requests BMW + Codex rework of research, script and film"
+  },
+  "latestAcceptedReplacement": {
+    "evidence": "docs/research/CODEX_NEWS_REWORK.json",
+    "artifactId": "media-a6fa3ef8-3ab2-4e48-b6c1-1a8c47779b30-converted.mp4",
+    "sha256": "82828d2de1a5eb5363086462e216f4e63d88fa5d2a5bc9d6a35ae70265d034b7",
+    "seconds": 54.61333333333334,
+    "status": "accepted-by-user",
+    "scope": "This newer Codex film acceptance does not alter this earlier film’s recorded rejection or limitations."
+  }
+}

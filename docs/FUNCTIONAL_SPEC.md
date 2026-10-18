@@ -36,6 +36,26 @@ Browser is boundary, media is native, web is runtime.
 
 DSH 预设装配官方 `compaction-basic` 与 `compaction-tool-result-pruner`，由每个官方 Agent 在上下文压力与溢出时生成摘要、裁减旧工具结果并持久记录；长篇抽帧审阅可在同一 BMW Session 和原生 resume anchor 下继续。工具结果裁减门限为8192字符，保留前4096及后1024字符；原始 Project 媒体、Studio 草稿和宿主审阅回执保持原文件。驱动核对相邻 `compaction/prune`、单个旧序号、`surfaceOp:replace` 和 `sourceEventSeqs` 后将替换回执视为历史投影；不生成新工具完成事件、不关闭当前工具占用。孤立／错配／冒充当前调用的替换拒绝。有效目录仍须恰好一个 `browser`，压缩不引入模型工具或 Host 推理循环。
 
+## NEWS-01 新闻选题与制作
+
+Studio提供“推荐新闻选题”，由当前官方Assistant通过唯一browser检索与核对，不使用Host模型循环。默认覆盖中美及全球的重要个人、公司、大学／研究团队、公共机构，以及非AI职业重要人物关于AI的实质消息；名字不使用白名单，不按国籍或身份凑配额。按信息增量、公共影响、原始证据及视频表达价值推荐至多三个不同事件，允许零个。新闻价值、同一事件判断和推荐理由属于Agent编辑判断，Host不认证事实或热度。
+
+NEWS-01推荐的Agent编辑要求：优先寻找动态演示、同题作品对照、采访与演讲，理由需交代观众能从画面直接观察到什么；单纯公告可说明更适合图文，不因易截图而优先。比较案例需实际看预览、核对模型标签和画面布局；作者单次生成花费不能表述为模型单价或总体成本，展示不认证总体胜负。日期前本地时钟不视为片长，媒体参数以实际检查为准。结尾回扣这次消息的新变化与已展示结果，不默认套用通用用途清单、口号或免责声明；需要限定时简短归因，不能用边界说明替代新闻重点。当前54.61秒Codex／龙安朗样片已获用户接受，独立结果见[新闻验收](research/CODEX_NEWS_REWORK.json)，不改变NEWS-01缺省参数或三驱动权限。这些为官方Agent的编辑职责，Host不实现新闻价值模型或自动胜负判定。
+
+`propose-news-topics {expectedTopicRevision,newsCandidates}`保存版本1候选；`news-topics`读取当前卡片及有效性；`select-news-topic {expectedTopicRevision,topicId,baseFingerprint,options?}`仅可信Studio用户可调用；`news-guide {draftId,expectedRevision}`读取当前选定草稿的逐镜头引导。候选是闭合结构，含主体／个人或组织／类别／地区、标题／新闻点／理由／角度、形式（采访／演讲／公告／原帖／图文）／新事件或新发布、录制日期／缺口、同Project的sourceId／acquisitionId、精确UTF16 quote／quoteStart及previewArtifactId／image或video模式。来源必须有完整observed正文、作者、可靠的原始发布时间与精确引用；预览必须属于该次获取、原文件与原生解码证明均可核对。图片至多32MiB；视频预览须实际可解码且至多30秒，显示原片区间。采访／演讲形式必须有真实视频及可解码音轨；只取得图片或静音素材时需要明确提出图文候选，不能把海报当采访或在选定后静默降级。可见`time`元素的`datetime`仅在显式publishedSelector下有界读取，须带时区，其他情况保留可见日期；显式日期范围中混有署名或文号时，仅可提取唯一、完整的发布日期行或明确Release／Original Issue Date标签的日期，保留原始日／时区精度，多日期或截断范围不做提取，不拿抓取时间补发布时间。
+
+纯文字公告／原帖可先source collect，再调用`media.screenshot {selector,index?,sourceBinding:{sourceId,acquisitionId,expectedRevision}}`。selector/index必须等于已收集正文范围。原生层在截图前后核对URL、范围与正文SHA；全程主Frame导航（含in-place）或Renderer丢失即取消，版本冲突不接纳。来源截图保留长页细节，边界为1024像素宽／8192像素高及32MiB／16MP，较长页面不会仅因超过1536像素高被压成窄条；实际PNG按图片预算核对，Host原子加入同一acquisition的已确认image-decoded素材及不可由Agent提交的页面截图来源证明。它是原页渲染截图，不冒充网站原始下载图片；失败只清理本次新PNG／证明，不改变草稿。返回有界IDs和sourceRevision，不返回整份来源目录。
+
+Host按当前UTC检查原始发布时间严格在近72小时，未来／日期不明或歧义的内容拒绝，选择时重新检查；仅有无歧义年月日的来源保留日精度，不伪造午夜或时区，按UTC−12至UTC+14的最保守发布区间核验，区间跨出72小时即拒绝。原始发布日期范围中的`1:42 · 2026年10月18日`一类本地时钟＋完整中文日期，只提取日期，保留同一保守区间；无效时分、多日期、相对日期和未来日期仍拒绝，时钟前缀不成为带时区的精确发布时间。新发布旧采访另标录制日期，旧片转发不能当新消息。相同事件键／获取ID／原始URL或正文SHA不重复入卡，其他语义去重仍由Agent负责。卡片显示原始来源、作者、发布时间、核验时间、真实预览及待补内容；搜索摘要和TTS不能冒充采访。候选资料及网页文字均为不可信内容。模型读取为有界预览，精确原文继续走source/read，不复制截断回包写入证据。
+
+候选及用户选择存于Project内`video-studio/news`的独立version1记录，固定Project／Session、独立revision与指纹、256KiB单记录上限，拒绝损坏／链接文件并保留原件；新任务保留此前已选记录和草稿。确认先持久化Host分配的草稿ID，再创建同Session草稿；重复确认不会重复建稿。默认9:16／720p／24fps、目标45秒、Qwen安明远男声／0%，select的显式options可覆盖；设置开关及凭据仍独立验证，无静默回退。用户点击后通过已有Assistant投递机制继续，先保存uncertain投递状态，返回runId才记sent；失败或重启不自动重发。Agent不能自行确认、改选或关闭用户已选任务。
+
+确认前该Session的Agent仅可研究取材，Studio创建／写稿／配音／合成以及直接video.narrate／video.compose被拒绝。可信用户可“退出新闻选题”：先取消并等待实际任务清理，再关闭等待限制；没有可确认的取消控制器时保留限制并报错，保留来源和记录；对应closeNewsTask仅可信用户可提交。确认后写稿、证据画面、实际旁白与字幕、成片审阅使用已有草稿与时间线，不升级Video Document格式。配音／渲染前重核选中来源，Agent渲染还需保留所选原始预览的可见使用；来源变化明确失败，不静默换题或更换证据形式。新闻只读刷新经Browser FIFO执行、合并重复请求，关闭时等待实际读取清理。技术阶段状态不代表内容、听感或最终用户接受。制作背景默认填可读选题摘要，技术身份保留在独立记录；引导统计有效独立字幕或句锚投影字幕，锚点失效单列问题。标题卡及有效图层按既有就绪检查判断，不把无素材标题卡误报为画面缺口。
+
+尚未开始投递的ready状态可由用户明确点击“继续所选题并制作”恢复，复用同一草稿ID；达到草稿数量上限也不阻止读取已经创建的同一草稿。uncertain／failed状态只查看已有草稿及任务事实，不借此自动重发。配音字幕阶段同时检查旁白有效性与字幕存在，逐镜头显示引用、原片起点和待修问题。
+
+直接保障：video.news契约、browser.sources日期采集及studio.news隔离原生GUI；真实DSH检索、用户选题、Qwen配音和最新新闻成片另验，不并入离线通过数。
+
 ## 类型制作与 AK 增量（Video Document 2.10）
 
 `preparation.production`（规范文档 `content.brief.production`）是可选的闭合版本1工作表，固定 `profileId/profileVersion`，支持 `news-brief`、`science-explainer`、`research-explainer`。保存受众、主问题、目标时长意图、段落角色／目标／观察任务、稳定镜头引用与材料角色；实际时间仍只有现有时间线。`production-profiles` 读取版本化类型指导及六种有限配方；不改变模型目录、权限或预算，不安装外部 skill。`propose-type` 给保留／填充列表和候选 VideoEdit，`adopt-type` 要求同一 revision 与精确提案指纹；重新读取实际来源／设置，拒绝过期提案。配方仅填空画面说明及符合条件的空卡片槽，已有 GUI 编辑不被覆盖；测量配方明确要求填写真实数据。`production-read` 对工作表各部分按至多20项／32KiB分页（句目标省略Host绑定原文），`production-review` 给当前版本的缺口、人工量表、当前内容／MP4指纹及独立 assessmentRevision。`record-production-review` 记录五项类型检查、试听状态、观众复述／条件预测和说明；actor 由Host决定，Agent不能声明人工试听、观众回答或通过人工必需的check-5。GUI提供显式人工记录；只有当前指纹下的用户五项通过、实际试听声明、复述（T2/T3另需条件预测）且结构无缺口，才显示“已验收”。这是用户声明，不是Host科学或听感认证。Host记录保存在Project内version1类型审阅账本，固定Project／Session／draft，独立CAS，至多40项／256KiB，保留最近用户与Agent记录；普通文档更新不写此账本。内容、源文件、实际MP4或渲染版本改变后旧结论失效，技术可制作、Agent意见、人工试听、观众复述分开。
@@ -123,6 +143,8 @@ Feature 可在动作注册中提供自有帮助投影，Core 不导入 Studio �
 | 登录连续性 | 用户主动选择站点后用 OS safeStorage 加密 cookies，并周期性 HEAD；关闭不清除当前登录 |
 | 计划任务 | 固定 Project、BMW Session、driver 与时间/时区，保存 runs、执行/取消/删除；绑定失效报错且不自动换会话，无绑定旧任务暂停并提供手动“绑定当前会话”；排队/运行时禁止重绑，只用 browser |
 
+标签页新建／复用导航和navigate有25秒原生期限并接收取消。取消或超时先stop并等原生loadURL结算；仍未结算时可关闭Agent临时页面并等destroyed，确认实际清理后才释放FIFO；用户页面保留并隔离，需可信用户从BMW明确关闭。关闭失败也隔离浏览器资源，status／tabs.list／help和显式tabs.close恢复入口可用；恢复前不启动其他工作，Project切换仍受排除。
+
 DOM 观察、媒体发现和诊断读取使用统一阶段保护，每阶段最多 15 秒，取消、主 Frame 导航或 Renderer 丢失即停止接纳结果。媒体发现不滚动页面、不等待动画帧；后台素材采集保持前台标签页不变。诊断包含实际 PNG 截图。媒体下载的网络请求和文件流共享取消信号及 60 秒期限，结束流和关闭输出后清理本次部分文件，不删除同名既有 Artifact。只读迟到结果不能恢复文件写入；有副作用的操作不通过遗弃 Promise 释放 FIFO。
 
 Bridge 验证认证、Session、Project 及目录，按 FIFO 执行；Project 变更期间排除模型操作。期限、取消、停止与关闭清理不能释放仍在运行的敏感工作。Bridge 校验图像输出；DSH 官方 MCP Client、Qoder 官方 SDK 和 Codex dynamic tool 结果分别承接本驱动的图像传输，BMW 只接受受限、验证的 PNG 图像结果。多次基础设施失败中止当前 turn，防止无效重试持续运行。
@@ -185,7 +207,7 @@ media.video.capture 增加可选 playbackPlan：最多16个严格递增的 sourc
 
 ### Qwen TTS 配置、安全保存与试听
 
-Qwen 在线旁白提供方为 `qwen-tts`，固定北京地域 `qwen-audio-3.1-tts-flash`，默认音色 **闻怀之 `wenhuaizhi_v3.1`**（稳重、成熟，官方列为新闻播报适用音色），作为后续新闻速递等中文视频的推荐默认；另可选女声许言初 `xuyanchu_v3.1`、许玉远 `xuyuyuan_v3.1`，以及男声安明远 `anmingyuan_v3.1`（清亮、自然，官方列为旁白适用音色）。四种音色均支持 Settings 试听、视频默认/模板、Studio 与 browser 配音动作。模型与音色不可跨系列混用，参考[官方音色列表](https://help.aliyun.com/zh/model-studio/qwen-audio-tts-voice-list)和[HTTP API](https://help.aliyun.com/zh/model-studio/qwen-audio-tts-http-api)。Settings → Media → Video narration 中单独开启 Qwen（`qwenNarrationEnabled` 默认 false），视频默认/模板及 Studio 的旁白音色选择均支持 Qwen；传入 `provider:qwen-tts` 自动选择闻怀之，语速 0%。已有全局 Edge 默认、模板和草稿不自动改写。
+Qwen 在线旁白提供方为 `qwen-tts`，固定北京地域 `qwen-audio-3.1-tts-flash`，默认音色 **闻怀之 `wenhuaizhi_v3.1`**（稳重、成熟，官方列为新闻播报适用音色），作为后续新闻速递等中文视频的推荐默认；另可选女声许言初 `xuyanchu_v3.1`、许玉远 `xuyuyuan_v3.1`，以及男声安明远 `anmingyuan_v3.1`（清亮、自然，官方列为旁白适用音色）。另有男声霍拙石 `huozhuoshi_v3.1`（清亮）、龙安朗 `longanlang_v3.1`（清爽利落）、龙三叔 `longsanshu_v3.1`（沉稳质感）。七种音色均支持 Settings 试听、视频默认/模板、Studio 与 browser 配音动作。模型与音色不可跨系列混用，参考[官方音色列表](https://help.aliyun.com/zh/model-studio/qwen-audio-tts-voice-list)和[HTTP API](https://help.aliyun.com/zh/model-studio/qwen-audio-tts-http-api)。Settings → Media → Video narration 中单独开启 Qwen（`qwenNarrationEnabled` 默认 false），视频默认/模板及 Studio 的旁白音色选择均支持 Qwen；传入 `provider:qwen-tts` 自动选择闻怀之，语速 0%。已有全局 Edge 默认、模板和草稿不自动改写。
 
 Settings → Media → Video narration 提供北京地域 Workspace ID、密码型 API Key 输入、保存/清除配置和固定短文试听。API Key 留空保留已保存 Key，保存后立即生效，无需重启或环境变量；输入框修改后须先保存，才能使用已保存配置生成试听；不从模型请求接收或在工具结果/全局设置中回传凭据。独立的 `qwen-tts-credentials.enc`（版本 1，权限 0600）使用 Electron safeStorage 加密整个凭据记录；Shell 只读取配置状态及 Workspace ID，Key 不回显，关闭设置/保存成功后清空密码框。系统安全存储不可用（含 Linux basic_text）时拒绝保存和解密；解密、格式或写入失败保留已有密文，不静默覆盖，显式“清除 Qwen 配置”可在无法解密时删除旧密文。Shell 凭据/试听 IPC 只允许受信主框架，模型 browser 不提供凭据操作。
 
@@ -283,7 +305,7 @@ MP4/QuickTime采样页由本地容器解析器从页首请求时间前的关键�
 
 来源通过既有 video.studio 的 operation:source 管理，sourceRequest.operation 为 list/read/collect/confirm/acquire。它在同一 browser FIFO 中执行；当前对话必须属于活动 Project。来源证据由 Project 内会话共享，草稿和引用修改仍受 ownerSessionId 与 revision 保护。
 
-collect 必须提供 bodySelector，支持 index/excludeSelectors；可独立提供 mediaSelector/mediaIndex/mediaExcludeSelectors、authorSelector、publishedSelector、accessSelector 和 Project tabId。固定 DOM 脚本读取限定可见正文与 DOM 媒体，不回退整页，也不混入全页网络资源。输入框、编辑区、隐藏节点及显式排除范围不进入原文。导航、缺失范围、失败和截断分别记录；取消不保存迟到结果。作者和发表时间保留实际元素原文，缺失为 null；标题/作者/日期/限制提示超出各自上限时，获取结果记 truncated 并列出被截断的字段；事件时间另由确认操作声明，采集时间由宿主记录，不相互代替。
+collect 必须提供 bodySelector，支持 index/excludeSelectors；可独立提供 mediaSelector/mediaIndex/mediaExcludeSelectors、authorSelector、publishedSelector、accessSelector 和 Project tabId。固定 DOM 脚本读取限定可见正文与 DOM 媒体，不回退整页，也不混入全页网络资源。输入框、编辑区、隐藏节点及显式排除范围不进入原文。导航、缺失范围、失败和截断分别记录；取消不保存迟到结果。作者保留实际元素原文，发表时间保留原站明确时间或唯一完整日期行（允许“发文日期”等标签与邻接署名／文号）；混有第二日期或范围截断时不选取日期，缺失为 null；标题/作者/日期/限制提示超出各自上限时，获取结果记 truncated 并列出被截断的字段；事件时间另由确认操作声明，采集时间由宿主记录，不相互代替。
 
 Project sources/catalog.json 保存 Schema v1 的页面 URL、获取记录、正文/媒体范围、原文 Artifact/SHA-256、观看限制、候选、确认和实际媒体记录。最多 200 个来源、1000 次获取、每次 80 个候选和 40 次媒体尝试；正文 50000 个 UTF16 单元/256 KiB，元数据 4 MiB。同 URL 合并来源，重复原文可共用内容 Artifact，获取记录与多个 URL 关系保留。过时 source expectedRevision 冲突，损坏目录/改变的原文保持原样并报错；拒绝 symlink，失败仅清理本次新文件。
 
@@ -679,7 +701,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - BMW 核心 Browser Actions（42）：`status`、`help`、`tabs.list`、`tabs.open`、`tabs.show`、`tabs.close`、`navigate`、`back`、`forward`、`reload`、`observe`、`click`、`type`、`wait`、`key`、`hover`、`page.diagnostics`、`page.media.list`、`page.viewport.set`、`media.screenshot`、`media.download`、`media.preserve`、`media.video.capture`、`media.inspect`、`media.audio.sample`、`media.audio.preview`、`media.frames.sample`、`media.capture.frames.sample`、`media.convert`、`media.image.inspect`、`media.image.annotate`、`media.image.draw`、`media.record.start`、`media.record.stop`、`project.context`、`project.memory.append`、`project.tasks.append`、`schedule.list`、`schedule.create`、`schedule.update`、`schedule.remove`、`schedule.run`
 - feature-video Feature Browser Actions（4）：`video.compose`、`video.narrate`、`video.studio`、`video.settings`
 
-- video.studio 操作（73）：`record-production-review`、`precomposition-status`、`precompose`、`production-profiles`、`propose-type`、`adopt-type`、`production-read`、`production-review`、`plan-impact`、`analysis`、`diagnose-timing`、`review-status`、`record-export-review`、`read-scene`、`read-preparation`、`describe-edit`、`guide`、`estimate-speech`、`suggest-recording-plan`、`apply-recording-plan`、`narrate-local`、`apply-source-narration`、`validate-source-narration`、`materials`、`describe-template`、`describe-schema`、`read-document`、`compatibility`、`validate-edit`、`apply-edit`、`migrate-document`、`remove-reference`、`prepare-reference`、`read-reference`、`set-reference-analysis`、`apply-reference-notes`、`propose-review`、`adopt-review`、`dismiss-review`、`undo-review`、`split-scene`、`restore`、`recognize-source`、`read-source-speech`、`apply-source-captions`、`detach-source-captions`、`set-caption-translations`、`align-speech`、`read-speech`、`correct-speech`、`source`、`export-citations`、`list`、`create`、`read`、`delete`、`update`、`narrate`、`narrate-pending`、`check`、`export-captions`、`export-cover`、`read-material`、`suggest-focus`、`review-export`、`render`、`assets`、`inspect`、`attach`、`open`、`context`、`configure`、`save-template`。字段、用户专属操作与归属检查见上方契约。
+- video.studio 操作（77）：`news-topics`、`propose-news-topics`、`select-news-topic`、`news-guide`、`record-production-review`、`precomposition-status`、`precompose`、`production-profiles`、`propose-type`、`adopt-type`、`production-read`、`production-review`、`plan-impact`、`analysis`、`diagnose-timing`、`review-status`、`record-export-review`、`read-scene`、`read-preparation`、`describe-edit`、`guide`、`estimate-speech`、`suggest-recording-plan`、`apply-recording-plan`、`narrate-local`、`apply-source-narration`、`validate-source-narration`、`materials`、`describe-template`、`describe-schema`、`read-document`、`compatibility`、`validate-edit`、`apply-edit`、`migrate-document`、`remove-reference`、`prepare-reference`、`read-reference`、`set-reference-analysis`、`apply-reference-notes`、`propose-review`、`adopt-review`、`dismiss-review`、`undo-review`、`split-scene`、`restore`、`recognize-source`、`read-source-speech`、`apply-source-captions`、`detach-source-captions`、`set-caption-translations`、`align-speech`、`read-speech`、`correct-speech`、`source`、`export-citations`、`list`、`create`、`read`、`delete`、`update`、`narrate`、`narrate-pending`、`check`、`export-captions`、`export-cover`、`read-material`、`suggest-focus`、`review-export`、`render`、`assets`、`inspect`、`attach`、`open`、`context`、`configure`、`save-template`。字段、用户专属操作与归属检查见上方契约。
 
 ### 当前自动化测试清单
 
@@ -728,6 +750,8 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `packages/browser-capability/test/collect-page-source.test.ts`
 
+- `Published time reads a bounded timezone-bearing TIME datetime while preserving visible date fallback`
+- `Publication metadata extracts one complete publisher date line beside bylines or document numbers, never ambiguous or truncated dates`
 - `Source collection retains scoped originals, unknown dates and candidate-only roles with no global resource admission`
 - `Missing source range never invokes media fallback; truncation, visible trial evidence and missing explicit media range remain explicit`
 - `Navigation across collection phases yields navigated evidence; cancellation leaves no late candidate admission or listeners`
@@ -756,6 +780,14 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 - `media adapter reduces referrer and strips secrets across bounded redirects`
 - `media adapter honors no-referrer and refuses non-web redirects and redirect loops`
+
+#### `packages/browser-capability/test/page-navigation.test.ts`
+
+- `Navigation deadline stops and drains the real pending operation before the FIFO admits another action`
+- `Cancellation whose stop never settles closes the actual page before returning, with no late continuation`
+- `Failed native close reports quarantine and only a later explicit close with destruction recovers`
+- `A user-owned page is retained after failed stop until explicit close recovery`
+- `Already cancelled navigation never starts native loading and an ordinary load error does not leave listeners`
 
 #### `packages/browser-capability/test/renderer-read.test.ts`
 
@@ -792,6 +824,19 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `material index durably chunks long source clocks, searches exact original intervals and reuses validated completed work`
 - `material background chunks reject GUI metadata CAS races, preserve committed parts and clean only new proof outputs`
 - `material index paths, cursors and intervals stay closed and symlink catalogs are never replaced`
+
+#### `packages/feature-video/test/news.test.ts`
+
+- `Localized post clocks never invent a timezone and retain conservative publication-day boundaries`
+- `Date-only publishers retain precision and qualify only when the entire conservative timezone range is within 72 hours`
+- `Leaving news research is user-only and preserves the board while releasing the Session research restriction`
+- `News candidates accept broad subjects and recording days while rejecting unknown fields, duplicate events and ambiguous dates`
+- `News proposals require original dates, exact quotes and source-owned verified previews; empty results remain pending`
+- `Only a current trusted selection creates one draft and durable dispatch never replays after uncertainty or restart`
+- `Preselection blocks drafting and native narration, and late source changes reject selection or further selected rendering`
+- `News journals preserve corrupt files, reject symlinks and archive previous selected tasks without deleting their drafts`
+- `Native page screenshots bind exact source URL and text, preserve CAS and reject changed pages or files before a news proposal`
+- `News guide recognizes rendered title cards and sentence captions, but reports stale or explicitly disabled captions`
 
 #### `packages/feature-video/test/production-assessment.test.ts`
 

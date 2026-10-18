@@ -494,7 +494,7 @@ test('quality observation bounds memory while preserving every actual paint and 
 test('Qwen narration uses its news voice and rejects cross-provider choices and model controls',()=>{
   assert.deepEqual(assertNarration({text:'新闻速递',provider:'qwen-tts'}),{text:'新闻速递',provider:'qwen-tts',voice:'wenhuaizhi_v3.1',ratePercent:0})
   assert.equal(assertNarration({text:'新闻',voice:'xuyanchu_v3.1'}).provider,'qwen-tts')
-  assert.equal(assertNarration({text:'科技新闻',voice:'anmingyuan_v3.1'}).provider,'qwen-tts')
+  for(const voice of ['anmingyuan_v3.1','huozhuoshi_v3.1','longanlang_v3.1','longsanshu_v3.1']){assert.equal(assertNarration({text:'科技新闻',voice}).provider,'qwen-tts');assert.throws(()=>assertNarration({text:'新闻',provider:'edge-readaloud',voice}))}
   for(const patch of [{provider:'qwen-tts',voice:'zh-CN-YunxiNeural'},{provider:'edge-readaloud',voice:'wenhuaizhi_v3.1'},{provider:'edge-readaloud',voice:'anmingyuan_v3.1'},{provider:'qwen-tts',model:'other'},{provider:'qwen-tts',apiKey:'secret'},{provider:'qwen-tts',workspace:'other'}])assert.throws(()=>assertNarration({text:'新闻',...patch}))
 })
 

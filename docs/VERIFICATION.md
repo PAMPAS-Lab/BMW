@@ -1,21 +1,30 @@
 # BMW 验证说明
 
-核对日期：2026-10-17。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
+核对日期：2026-10-18。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
 
 ## 当前源码完整离线基线
 
-2026-10-17对提交 `86f239d` 的当前实现重新清洁构建，构建后分别运行 `npm run check` 和 `node scripts/test-runner.js --all`；全部通过。完整报告为[本机原始结果](../.bmw-runtime/classified-tests/2026-10-17-current-state/result.json)，[可移植逐项摘要与源码SHA](verification/CURRENT.json)随仓库保存：**162 passed／0 failed／12 not-run**。157个分类项及5个门禁／桌面汇总合计162，不将汇总当作额外独立保障，也不叠加历史专项次数。
+2026-10-18对NEWS-01及Qwen新增男声音色工作树重新清洁构建，执行`npm run check`及完整`node scripts/test-runner.js --all`，全部通过：**166 passed／0 failed／12 not-run**。161个分类项与5个门禁／桌面汇总合计，不将汇总当作额外独立保障，也不叠加历史轮次。[本机原始结果](../.bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/result.json)与[可移植逐项摘要和源码SHA](verification/CURRENT.json)绑定本次实现；逐文件SHA绑定本次提交的受测实现，sourceBaseRevision只记录变更前基底。
 
-覆盖unit／contract／boundary／type及DSH、Assistant／计划任务、desktop四组与Project重启、Studio各专用分支、媒体采集／处理、视频／语音、本地Matcha和Qwen HTTP旁白夹具。DSH官方冷检查验证唯一browser、身份保留、会话控制及配置，无模型输入。最后的普通`surfaceOp: append`修正和历史裁减投影处理均已进入这次完整范围，不再依赖此前两文件的增量补证。
+覆盖unit／contract／boundary／type、官方DSH冷控制、Assistant与计划任务、desktop四组及Project重启、Studio全部非opt-in分支、媒体采集／处理、视频／语音、本地Matcha与Qwen HTTP旁白夹具。NEWS-01的video.news、studio.news和browser.sources进入同一完整范围：广泛个人／组织／地区、72小时边界与日精度、原始引用与真实预览、重复／不足／缺失／过期、可信选择、防伪造、重复点击、独立记录恢复、冲突与取消，以及确认前旧改稿入口／TTS／合成门禁。GUI实际检查任务结束恢复按钮、真实PNG、单次投递、脚本局部保存／独立字幕保留及配音面板跳转。
 
-运行期间459个受测源码／配置／文档SHA保持不变，包含DSH预设`.yml`、HTML／CSS／JSON及随包SKILL.md；清洁构建收据覆盖453个作者源码／配置和423个生成输出。文档回填后另逐项核对全部453个构建输入、423个输出及报告绑定；只是说明文档更新。此前“源码图不包含YAML”的描述有误，已更正；真实制作时安装副本的独立SHA仍保留。
+运行期间469个受测文件SHA保持一致；构建收据含463个输入、433个生成输出，说明文档回填后再逐项核对。6个历史测试替身类型例外未扩大。Video Document未升级；没有新增模型工具或Host模型循环。
 
-十二个未运行项按实际条件区分：
+十二个未运行项为六个专用本地素材夹具（source-analysis、frame-sampling、long-composition与三项量子位样片）和六个外部入口（Qoder制作、三驱动付费Assistant、vision、Edge），逐项ID见摘要。runner统一写“External opt-in required”，不表示本地夹具都是外部服务。本轮完整回归使用一次性Profile／Home／Workspace及模拟钥匙串，不访问生产Profile或系统凭据提示，不证明真实API额度、音质、GitHub CI或人工接受。`npm ls --depth=0`退出0；可选Codex CLI仍由本机另装，未声称全新`npm ci`覆盖。之前162项基线及164项中间轮次各保留自身源码范围。
 
-- 本地素材夹具六项：`media.source-analysis-case`、`media.frame-sampling-case`、`media.long-composition-case`、`video.qbit-playback`、`video.qbit-stage4-samples`、`video.qbit-stage3-samples`。
-- 外部入口六项：`external.production.qoder-deepseek-flash`、`external.assistant.dsh`、`external.assistant.codex`、`external.assistant.qoder-cn`、`external.vision`、`external.edge`。runner统一写“External opt-in required”，不代表上面六个本地素材夹具属于外部服务。
+## NEWS-01 真实新闻验收
 
-本轮使用一次性Profile／Home／Workspace和模拟钥匙串，不访问生产Profile或系统凭据提示，不新增付费模型、在线配音或外部生成调用。424份TypeScript中的6个历史测试替身类型例外仍冻结。`npm ls --depth=0`退出0；本机额外安装的外部Codex CLI `0.160.1`被npm列为extraneous，不属于lockfile依赖；本轮未重装依赖，不声称全新`npm ci`环境覆盖。仓库没有GitHub Actions工作流，本摘要是本机结果，不代表远程CI。真实三主片继续引用各自交付证据，新科普／学术的人工听感、复述与条件预测仍待反馈。
+**当前54.61秒BMW＋官方Codex新闻已获用户接受。** 技术完成、真实检索与制作、局部改稿保留、Agent画面审阅、旁白自然度反馈和最终接受分别保存在[Codex验收记录](research/CODEX_NEWS_REWORK.json)。用户先选定龙安朗并认可旁白自然，再要求结尾回到DeepSeek新版的低花费与精细制作，最后回复“这个版本可以了”。该接受绑定当前导出，不补造逐字发音、声学对齐或观众复述分数，也不反向改写旧片结果。
+
+| 版本 | 实际制作与保留检查 | 用户结果与证据 |
+|---|---|---|
+| DeepSeek公告片，59.648秒 | BMW＋官方DSH／deepseek-official/deepseek-flash，Qwen安明远；可信选择只投递一次，中段局部改稿保留191个既有文件及无关音频／图层／字幕 | 用户认为更适合图文，未接受；[原记录](research/NEWS_01_DELIVERY.json) |
+| 同题3D电机对比，36.16秒 | BMW＋官方DSH，Qwen安明远；保全1080×1376完整40秒平台分发文件，以真实运动区间制作；局部改稿保留446个文件 | 用户认为声音不自然、新闻重点不清楚，要求改用BMW＋Codex；[原记录](research/NEWS_01_VIDEO_TOPICS.json) |
+| 同题对比重做，54.61秒 | BMW＋官方Codex 0.160.1／gpt-6-astra，Qwen龙安朗；720×1280／24fps AVC＋AAC。末镜重配12.4秒，前五镜全部数据、音频身份与SHA不变，793个历史文件保留 | 当前导出136个关键帧、六场及全片Agent意见，开发侧另看末镜三帧；用户已接受，详见上方Codex记录 |
+
+首次真实研究在BMW展示Apple 10月16日规则强化和DeepSeek 10月17日更新两张合格卡片，用户选择后才配音与合成；随后用户明确换为X原作者当天发布的3D对比案例。日期、真实原页预览、可信选择与独立Session所有权均有记录。X中文发布时间可带本地时钟前缀，日期只取日精度并保守检查72小时；新闻专项21个用例通过，已纳入当前完整离线基线。此前静态停留、小字及字幕editorial-estimate等限制仍保留在各片原记录。
+
+最终新闻把作者本次DeepSeek $1.25／Opus 5.5 $16.36花费与作品效果联系起来，金额只代表该作者本次案例，不作为官方单价或总体排名。原高清素材、全部旧声音、草稿及导出保留。真实付费模型、在线Qwen及人工接受不计入166项离线通过数；当前用户反馈不等同模型具备音频准入。
 
 ## DSH 科普与学术重制
 
@@ -68,6 +77,8 @@
 Electron使用一次性数据和模拟钥匙串。首次受沙箱启动限制及之后定位到的三项失败均留档；不是重试掩盖失败。正式基线绑定修复后源码；完成后仅回填说明文档，受测代码／配置／Schema的430个SHA保持一致。原始日志、截图和媒体留在本机，GitHub仅保存摘要及指纹，不宣称远程CI已运行。
 
 ## Qwen TTS 验证范围
+
+BMW＋官方Codex 0.160.1／gpt-6-astra另外通过唯一browser生成三条同文、0%语速的真实Qwen男声试听：霍拙石10.40秒、龙安朗8.96秒、龙三叔12.00秒，均经原生inspect验证24kHz单声道PCM16 WAV可解码。原生HTTP夹具验证三种新增voice经browser入参、固定模型请求及解码路径；desktop验证设置内男声试听。三条实际音频与SHA见[Codex重做记录](research/CODEX_NEWS_REWORK.json)。真实服务成功与离线回归分列；用户已选定龙安朗、认可本片旁白自然，并接受上方54.61秒最终新闻。其他音色不因此被认定为人工音质通过。
 
 Qwen 增量已通过构建、`npm run check`、单元／契约／边界，以及相关 DSH、桌面设置、Studio 资讯设置、媒体处理、视频导出、本地旁白和 Qwen 旁白夹具。分类报告为 `.bmw-runtime/classified-tests/2026-10-17T03-15-55-791Z/result.json`，90 passed、0 failed，选择范围是 unit／contract／boundary；后续 Shell 调整另通过检查及最终桌面设置回归，不将这些结果称为一次新的完整 `--all` 基线。
 

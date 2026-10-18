@@ -1,3 +1,4 @@
+import {NewsService,requireNewsSelection} from './news-service.js'
 import {ProductionAssessmentJournal,productionAssessmentSnapshot,makeProductionAssessment,acceptedProductionAssessment} from './production-assessment.js'
 import {productionProfiles,productionRecipes,productionProposal,productionReview} from './production-types.js'
 import {productionFacts,productionImpact,productionArtifactIds,productionHash} from './production-impact.js'
@@ -50,9 +51,11 @@ import {VideoStudioStore} from './studio-store.js'
 import {assertStudioRequest,assertVideoDraft,draftComposition,draftReadiness,applyNarrationPacing,sceneCoverage,studioId} from './studio-contract.js'
 import {mediaRecord,finiteNumber,assertArtifactId} from '../../media-native/src/media-contract.js'
 import {ArtifactJobIO} from '../../media-native/src/artifact-job-io.js'
-import type {VideoDraft,StudioReadiness} from './studio-contract.js'
+import type {VideoDraft,StudioReadiness,StudioRequest} from './studio-contract.js'
 export type {BrowserFeatureHost as StudioKernel} from '@bmw-agent/browser-capability/host'
 import type {BrowserSessionOwner,BrowserFeatureHost as StudioKernel} from '@bmw-agent/browser-capability/host'
+
+const studioWrites:readonly StudioRequest['operation'][]=['propose-news-topics','select-news-topic','record-production-review','precompose','adopt-type','record-export-review','apply-recording-plan','narrate-local','apply-source-narration','materials','apply-edit','migrate-document','remove-reference','prepare-reference','set-reference-analysis','apply-reference-notes','propose-review','adopt-review','dismiss-review','undo-review','split-scene','restore','recognize-source','apply-source-captions','detach-source-captions','set-caption-translations','align-speech','correct-speech','create','delete','update','attach','narrate','narrate-pending','render','export-cover','configure','save-template']
 
 export class VideoStudioService {
   private readonly snapshots=new StudioSnapshotProof()
@@ -62,14 +65,17 @@ export class VideoStudioService {
     studioId(owner.sessionId)
     const scope={projectId:owner.projectId,sessionId:owner.sessionId}
     const request=assertStudioRequest(raw),result=await this.perform(request,signal,scope,actor)
-    if(['record-production-review','precompose','adopt-type','record-export-review','apply-recording-plan','narrate-local','apply-source-narration','materials','apply-edit','migrate-document','remove-reference','prepare-reference','set-reference-analysis','apply-reference-notes','propose-review','adopt-review','dismiss-review','undo-review','split-scene','restore','recognize-source','apply-source-captions','detach-source-captions','set-caption-translations','align-speech','correct-speech','create','delete','update','attach','narrate','narrate-pending','render','export-cover','configure','save-template'].includes(request.operation))this.kernel.videoStudioChanged?.(scope)
+    if(studioWrites.includes(request.operation))this.kernel.videoStudioChanged?.(scope)
     return result
   }
   private async perform(raw:unknown,signal:AbortSignal|undefined,owner:BrowserSessionOwner,actor:'user'|'agent'='agent'):Promise<unknown>{
     const request=assertStudioRequest(raw),project=this.kernel.projectStore.active(),context=this.kernel.videoStudioContext?.(owner) as {view?:{mode?:string}}|undefined,store=new VideoStudioStore(project.directory,owner.sessionId,(current,next)=>{const live=this.kernel.videoStudioContext?.(owner) as {view?:{mode?:string}}|undefined;if(live?.view?.mode!=='advanced')requireSimpleVideoEdit(current,next)})
     if(project.id!==owner.projectId)throw new Error('Studio Project changed during operation.')
     signal?.throwIfAborted()
-    const sources=new StudioSources(this.kernel)
+    const sources=new StudioSources(this.kernel),news=new NewsService(this.kernel,owner)
+    if(['news-topics','propose-news-topics','select-news-topic','news-guide'].includes(request.operation))return news.execute(request,actor,signal)
+    if(studioWrites.includes(request.operation))requireNewsSelection(this.kernel,owner,actor)
+    if(request.draftId&&['narrate','narrate-pending','narrate-local','render'].includes(request.operation))await news.guardDraft(request.draftId,signal,request.operation==='render'&&actor==='agent')
     if(request.operation==='production-profiles')return {profiles:productionProfiles,recipes:productionRecipes,guidanceVersion:1,permissions:'unchanged',externalSkills:false,disable:'Omit production metadata to stop using type guidance; authored scenes remain intact.'}
     if(request.operation==='guide')return studioToolGuide()
     if(request.operation==='describe-edit'){

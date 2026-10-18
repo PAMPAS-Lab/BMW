@@ -133,6 +133,10 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 
 | ID | 分类 | 归属 | 入口 | 配置／分支 |
 |---|---|---|---|---|
+| video.news | contract | feature-video | packages/feature-video/test/news.test.ts | 默认 |
+| browser.navigation | contract | browser-capability | packages/browser-capability/test/page-navigation.test.ts | 默认 |
+| studio.news-source-screenshot | integration | feature-video, browser-capability, platform, media-native | scripts/news-source-screenshot-smoke.ts | 默认 |
+| studio.news | desktop | feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_NEWS_CASE=1 |
 | platform.qwen-credentials | unit | platform | packages/platform/test/qwen-credentials-store.test.ts | 默认 |
 | browser.media-session-fetch | contract | browser-capability | packages/browser-capability/test/media-session-fetch.test.ts | 默认 |
 | browser.media-download-runtime | integration | browser-capability, media-native | scripts/media-download-smoke.ts | 默认 |

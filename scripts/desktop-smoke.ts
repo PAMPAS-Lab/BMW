@@ -53,7 +53,7 @@ if(group==='settings')app.on('session-created',isolated=>{
     if(url.hostname==='desktop-fixture.cn-beijing.maas.aliyuncs.com'){
       qwenFixtureRequests++;assert.equal(request.headers.get('authorization'),'Bearer desktop-fixture-private-key')
       const body=await request.json() as {input:{text:string;voice:string}}
-      assert.equal(body.input.text,'这里是新闻速递，为你播报今日要闻。');assert.ok(['wenhuaizhi_v3.1','xuyanchu_v3.1','xuyuyuan_v3.1','anmingyuan_v3.1'].includes(body.input.voice))
+      assert.equal(body.input.text,'这里是新闻速递，为你播报今日要闻。');assert.ok(['wenhuaizhi_v3.1','xuyanchu_v3.1','xuyuyuan_v3.1','anmingyuan_v3.1','huozhuoshi_v3.1','longanlang_v3.1','longsanshu_v3.1'].includes(body.input.voice))
       if(qwenFixtureMode==='hold')await new Promise<void>(resolve=>{releaseQwenFixture=resolve})
       if(qwenFixtureMode==='failure')return new Response('desktop-fixture-private-key',{status:401})
       return Response.json({output:{finish_reason:'stop',audio:{url:'https://dashscope-result-bj.oss-cn-beijing.aliyuncs.com/pre/desktop.wav'}}})
@@ -296,7 +296,7 @@ try {
   await click('#settings-qwen-save');await waitFor(async()=>await shell.executeJavaScript("!document.getElementById('settings-qwen-save').disabled")?true:null)
   const currentProject=store.active(),artifactRoot=path.join(currentProject.directory,'artifacts'),artifactsBefore=fs.readdirSync(artifactRoot).sort()
   const defaultsBefore=await shell.executeJavaScript('window.bmw.globalSettings().then(value=>value.videoPreferences)')
-  await shell.executeJavaScript("document.getElementById('settings-qwen-voice').value='anmingyuan_v3.1';true")
+  await shell.executeJavaScript("document.getElementById('settings-qwen-voice').value='longanlang_v3.1';true")
   await click('#settings-qwen-preview');await waitFor(async()=>await shell.executeJavaScript("!document.getElementById('settings-qwen-audio').hidden&&document.getElementById('settings-qwen-audio').readyState>=2")?true:null)
   assert.equal(await shell.executeJavaScript("document.getElementById('settings-qwen-audio').duration"),2)
   await shell.executeJavaScript("document.getElementById('settings-qwen-audio').play().then(()=>true)",true)

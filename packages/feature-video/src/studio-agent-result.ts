@@ -36,6 +36,14 @@ export function studioSceneProjection(d:VideoDraft,request:StudioRequest){
 export function studioAgentResult(request:StudioRequest,raw:unknown):unknown {
  if(!raw||typeof raw!=='object'||Array.isArray(raw))return raw
  const value=mediaRecord(raw)
+ if(request.operation==='news-guide'){
+  const rows=Array.isArray(value.scenes)?value.scenes.map(mediaRecord):[]
+  return {draftId:value.draftId,revision:value.revision,selection:value.selection,stages:value.stages,sourceIssues:value.sourceIssues,actualDurationSeconds:value.actualDurationSeconds,totalScenes:value.totalScenes,scenes:rows.slice(0,8).map(s=>({sceneId:s.sceneId,title:s.title,scriptPreview:String(s.script??'').slice(0,400),visualPreview:String(s.visualBrief??'').slice(0,200),durationSeconds:s.durationSeconds,audioArtifactId:s.audioArtifactId,audioDurationSeconds:s.audioDurationSeconds,captionCount:Array.isArray(s.captions)?s.captions.length:0,coverage:s.coverage,nextRead:'read-scene using current revision; content/timeline/captions/speech/sources are paginated'})),omittedScenes:Math.max(0,rows.length-8),contentAcceptance:value.contentAcceptance,untrustedNewsMaterial:true}
+ }
+ if(request.operation==='news-topics'||request.operation==='propose-news-topics'){
+  const shrink=(v:unknown):unknown=>typeof v==='string'?v.slice(0,600):Array.isArray(v)?v.map(shrink):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,value])=>[k,shrink(value)])):v
+  return {...mediaRecord(shrink(value)),projection:'bounded news-card previews; use source/read for exact original quotes, never copy previews as new evidence',untrustedNewsMaterial:true}
+ }
  if(request.operation==='diagnose-timing'){
   const {sentences,issues,...rest}=value,allIssues=Array.isArray(issues)?issues:[],section=request.timingSection??'overview'
   if(section==='overview')return {...rest,section,issues:allIssues.slice(0,8),issueCount:allIssues.length,omittedIssues:Number(value.omittedIssues??0)+Math.max(0,allIssues.length-8),nextRead:'diagnose-timing with timingSection sentences/issues and pageOffset/pageLimit for complete records.'}

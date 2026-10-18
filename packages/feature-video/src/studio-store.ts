@@ -81,11 +81,12 @@ export class VideoStudioStore {
     if(legacy)this.write(draft)
     return {draft,document:this.readDocument(id),migrated:legacy}
   }
-  create(title:unknown,options?:VideoOptions&{width:number;height:number;templateName?:string}):VideoDraft {
+  create(title:unknown,options?:VideoOptions&{width:number;height:number;templateName?:string},hostId?:string):VideoDraft {
     if(!this.ownerSessionId)throw new Error('STUDIO_SESSION_REQUIRED: 创建草稿需要绑定对话。')
+    if(hostId&&fs.existsSync(this.file(studioId(hostId))))return this.read(hostId)
     if(fs.readdirSync(this.directory).filter(name=>/^[a-zA-Z0-9-]+\.json$/.test(name)).length>=100)throw new Error('A Project supports at most one hundred video drafts.')
     const output=options??resolveVideoOutput({})
-    return this.write({version:1,id:crypto.randomUUID(),ownerSessionId:this.ownerSessionId,revision:1,title:studioText(title,'title',80)||'新视频',width:output.width,height:output.height,fps:output.fps,music:output.music,...(output.cardLayout===undefined?{}:{cardLayout:output.cardLayout}),...(output.narrationPacing===undefined?{}:{narrationPacing:output.narrationPacing}),tts:output.tts,style:output.style,watermark:output.watermark,...(output.templateName?{templateName:output.templateName}:{}),scenes:[],preparation:{notes:'',outline:'',artifactIds:[]},updatedAt:new Date().toISOString(),exports:[]})
+    return this.write({version:1,id:hostId?studioId(hostId):crypto.randomUUID(),ownerSessionId:this.ownerSessionId,revision:1,title:studioText(title,'title',80)||'新视频',width:output.width,height:output.height,fps:output.fps,music:output.music,...(output.cardLayout===undefined?{}:{cardLayout:output.cardLayout}),...(output.narrationPacing===undefined?{}:{narrationPacing:output.narrationPacing}),tts:output.tts,style:output.style,watermark:output.watermark,...(output.templateName?{templateName:output.templateName}:{}),scenes:[],preparation:{notes:'',outline:'',artifactIds:[]},updatedAt:new Date().toISOString(),exports:[]})
   }
   /** Save a host-completed direct composition without overwriting any existing draft. */
   addComposition(raw:unknown,receipt:unknown):VideoDraft {

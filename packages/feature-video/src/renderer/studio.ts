@@ -1,3 +1,4 @@
+import {StudioNews} from './studio-news.js'
 import {StudioProductionEditor} from './studio-production-editor.js'
 import {COMPOSITION_LIMITS} from '../../../media-native/src/composition-contract.js'
 import {StudioTimingEditor} from './studio-timing-editor.js'
@@ -71,6 +72,7 @@ const workbench=new StudioWorkbench()
 const workflow=new StudioWorkflow()
 const productionEditor=new StudioProductionEditor(()=>({draft,disabled:busy||invalidProject||viewChanging||Boolean(savePending)||simpleReadOnly()}),async request=>{await flushEdits();const result=await command(request);if(mediaRecord(request).operation==='adopt-type'){await refresh();render()}return result},async fn=>{await flushEdits();editable();if(!draft?.preparation.production)return;history();fn(draft.preparation.production);render();await save(false)},message)
 
+const newsEditor=new StudioNews(api,()=>state?{projectId:state.project.id,sessionId:state.sessionId,assets:state.assets,draft,disabled:busy||invalidProject||viewChanging||Boolean(savePending)||Boolean(workflow.activity&&['queued','running','waiting-user','waiting-approval','cancelling'].includes(workflow.activity.status))}:undefined,()=>flushEdits(),async id=>{await refresh(false);choose(state.drafts.find(d=>d.id===id))},async(id,kind)=>{await flushEdits();editable();const index=draft?.scenes.findIndex(s=>s.id===id)??-1;if(index<0)throw new Error('镜头已删除，请刷新。');stage=4;workbench.mode=kind==='script'?'visual':kind==='voice'?'voice':kind==='captions'?'captions':'visual';await selectScene(index);render();if(kind==='script'){if(workflow.view.mode==='advanced'){stage=1;render()}area('script-current').focus()}else if(workflow.view.mode==='simple')await cards.open(kind==='voice'?'voice':kind==='captions'?'captions':'visual');await publishSelection()})
 let materialAssistantPending=false
 function renderMaterialAssistant():void{
  const own=workflow.activity?.projectId===state?.project.id&&workflow.activity?.sessionId===state?.sessionId?workflow.activity:undefined
@@ -363,6 +365,7 @@ function visibleCoverage(value:StudioScene):ReturnType<typeof sceneCoverage>{
   return measured?{...base,available:measured.availableSeconds,gap:measured.gapSeconds,measured:measured.measured}:base
 }
 function render():void{
+  newsEditor.render()
   renderSelect();sceneList.replaceChildren();if(!draft){input('draft-title').value='';renderStage();stageContent.replaceChildren();void publishSelection();return}
   if(!pendingOutput)outputForm.fill(optionsFromOutput(draft));element('studio-output-current').textContent=`当前 ${draft.width} × ${draft.height} · ${draft.fps} fps${draft.templateName?' · '+draft.templateName:''}`
   if(!pendingOutput){renderOutputTemplates();select('studio-output-template').value=''}
@@ -685,6 +688,7 @@ for(const id of ['duplicate','remove-scene','move-up','move-down'])element(id).o
 element('undo').onclick=guarded(async()=>{await flushEdits();editable();if(!undo.length||!draft)return;redo.push(captureHistory(draft));const revision=draft.revision;draft=undo.pop()!;const proof=historyProofs.get(draft);restorePending=proof?{snapshot:draft,proof}:undefined;draft.revision=revision;sceneIndex=Math.max(0,Math.min(sceneIndex,draft.scenes.length-1));dirty=true;previewDirty=true;render();await save(false)});element('redo').onclick=guarded(async()=>{await flushEdits();editable();if(!redo.length||!draft)return;undo.push(captureHistory(draft));const revision=draft.revision;draft=redo.pop()!;const proof=historyProofs.get(draft);restorePending=proof?{snapshot:draft,proof}:undefined;draft.revision=revision;sceneIndex=Math.max(0,Math.min(sceneIndex,draft.scenes.length-1));dirty=true;previewDirty=true;render();await save(false)})
 for(const button of (document.querySelectorAll('[data-stage]') as HTMLButtonElement[]))button.onclick=guarded(async()=>{await flushEdits();if(!draft&&button.dataset.stage==='0')await createDraft();stage=Number(button.dataset.stage);if(stage===4)workbench.mode='visual';if(stage!==4){preview.pause();for(const media of document.querySelectorAll('audio,video') as HTMLMediaElement[])media.pause()}document.querySelectorAll('[data-stage]').forEach(item=>item.classList.toggle('active',item===button));renderStage();if(stage===4){if(workbench.mode==='cover')await coverEditor.preview();else await selectScene(sceneIndex)}else void publishSelection()})
 api.onChange(value=>{
+  void newsEditor.load().catch(error=>message(String(error)))
   const changed=mediaRecord(value)
   if(changed.workspaceHidden){if(!workspaceHidden&&draft){preview.pause();workspaceResume={draftId:draft.id,revision:draft.revision,seconds:Number(input('seek').value)}}workspaceHidden=true;workspaceEpoch++;materials.suspend();previewDirty=true;void preview.dispose();for(const media of document.querySelectorAll('audio,video') as HTMLMediaElement[])media.pause();return}
   if(changed.projectChanged){workspaceResume=undefined;workspaceEpoch++;originalSpeechEditor.clear();speechEditor.clear();coverEditor.clear();clearExport();materials.clear();referenceEditor.suspend();exportReviewEditor.dispose();timingEditor.dispose();materialIndexEditor.dispose();sourceNarrationEditor.dispose();recordingPlanEditor.dispose();invalidProject=true;previewDirty=true;setBusy(busy);void preview.dispose();message('Project 已切换，此页保留草稿，请重新打开 Video Studio。');renderStage();return}
@@ -719,7 +723,7 @@ for(const [id,storyboard] of [['script-reading',false],['script-storyboard',true
 element('task-continue').onclick=guarded(async()=>{await flushEdits();editable();if(!draft)return;await api.prepareRecovery({draftId:draft.id,expectedRevision:draft.revision});message('续做说明已填写到当前 Assistant，核对后发送；未重放旧请求。')})
 const taskClock=setInterval(()=>{if(state&&!invalidProject&&!workspaceHidden&&document.visibilityState==='visible')workflow.renderTask(state,draft,busy||viewChanging||Boolean(savePending))},1000);window.addEventListener('unload',()=>clearInterval(taskClock))
 element('task-stop').onclick=guarded(async()=>{element<HTMLButtonElement>('task-stop').disabled=true;try{await api.cancelTask();message('Assistant 已停止并完成清理；请在右侧继续。')}finally{workflow.render(state,draft,stage,workbench.mode,busy||invalidProject||viewChanging||Boolean(savePending))}})
-api.onTask(value=>{workflow.activity=value as FeatureAssistantActivity|null;if(state){workflow.render(state,draft,stage,workbench.mode,busy||invalidProject||viewChanging||Boolean(savePending));renderMaterialAssistant()}})
+api.onTask(value=>{workflow.activity=value as FeatureAssistantActivity|null;newsEditor.render();if(state){workflow.render(state,draft,stage,workbench.mode,busy||invalidProject||viewChanging||Boolean(savePending));renderMaterialAssistant()}})
 element('result-draft').onclick=guarded(async()=>{await flushEdits();stage=4;workbench.mode='visual';workflow.result='draft';renderStage();await publishSelection();await prepare()})
 element('result-completed').onclick=guarded(async()=>{await flushEdits();preview.pause();stage=4;workbench.mode='visual';workflow.result='completed';renderStage();await publishSelection();const latest=draft?.exports.at(-1);if(latest&&shownOutput!==latest.artifactId)await showExport(latest.artifactId,latest.verificationArtifactId)})
 element('delivery-cover').onclick=guarded(async()=>{await changeView('advanced');await openInspector('cover')})

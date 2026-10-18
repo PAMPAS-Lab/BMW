@@ -4,6 +4,25 @@ import {EventEmitter} from 'node:events'
 import type {WebContents} from 'electron'
 import {collectPageSource} from '../src/collect-page-source.js'
 const scope={selector:'article',index:0,excludeSelectors:[],characterUnit:'utf16' as const,extraction:'visible-text-nodes' as const,truncated:false,status:'observed' as const}
+test('Published time reads a bounded timezone-bearing TIME datetime while preserving visible date fallback',async()=>{
+ let n=0;const f=fixture(async()=>({text:++n===1?'Original':'Oct 18, 2026',range:scope,dateTime:n===2?'2026-10-18T01:00:00Z':null})),result=await collectPageSource(f.wc,{bodySelector:'article',publishedSelector:'time'},async()=>({items:[],range:scope,truncated:false}));assert.equal(result.publishedAt,'2026-10-18T01:00:00Z');assert.equal(result.result,'observed')
+ const plain=fixture(async()=>({text:'Oct 18, 2026',range:scope,dateTime:'2026-10-18'})),fallback=await collectPageSource(plain.wc,{bodySelector:'article',publishedSelector:'time'},async()=>({items:[],range:scope,truncated:false}));assert.equal(fallback.publishedAt,'Oct 18, 2026')
+})
+test('Publication metadata extracts one complete publisher date line beside bylines or document numbers, never ambiguous or truncated dates',async()=>{
+ const collect=async(text:string,truncated=false)=>{let n=0;return collectPageSource(fixture(async()=>({text:++n===1?'Original':text,range:{...scope,truncated:n===2&&truncated}})).wc,{bodySelector:'article',publishedSelector:'.published'},async()=>({items:[],range:scope,truncated:false}))}
+ for(const [text,date] of [
+  ['October 16, 2026\nPooja Rao, Research Scientist, Petar Sirkovic, Software Engineer, and Annalisa Pawlosky, Research Scientist, Google','October 16, 2026'],
+  ['【发布单位】安全与管制局\n【发布文号】商务部 科技部2026年第48号\n【发文日期】2026年10月16日','2026年10月16日'],
+  ['来源：商务部新闻办公室\n类型：原创\n2026-10-16 16:00','2026-10-16 16:00'],
+  ['Published: 2026-10-16T16:00:00+08:00\nBy Example','2026-10-16T16:00:00+08:00'],
+  ['DeepSeek-V4.1-Flash-1017 Release 2026/10/17','2026/10/17'],
+  ['Original Issue Date: October 16, 2026','October 16, 2026']
+ ]){const r=await collect(text);assert.equal(r.publishedAt,date);assert.equal(r.result,'observed')}
+ const ambiguous='Published: 2026-10-16\nRecorded: 2026-10-12';assert.equal((await collect(ambiguous)).publishedAt,ambiguous)
+ for(const raw of ['Updated 7:19 PM GMT+8, October 16, 2026','Updated\nOctober 16, 2026','Recorded\n2026-10-16','Release 2026/10/17\nUpdated 2026/10/18'])assert.equal((await collect(raw)).publishedAt,raw)
+ const updatedTime=fixture(async()=>({text:'Updated October 16, 2026',range:scope,dateTime:'2026-10-16T01:00:00Z'}));assert.equal((await collectPageSource(updatedTime.wc,{bodySelector:'article',publishedSelector:'time'},async()=>({items:[],range:scope,truncated:false}))).publishedAt,'Updated October 16, 2026')
+ const clipped=await collect('October 16, 2026\n'+'byline '.repeat(20),true);assert.equal(clipped.result,'truncated');assert.notEqual(clipped.publishedAt,'October 16, 2026');assert.match(clipped.error!,/publishedAt/)
+})
 function fixture(read:(code:string)=>Promise<unknown>){const events=new EventEmitter();Object.assign(events,{getURL:()=> 'https://example.com/article',getTitle:()=> 'Article',isDestroyed:()=>false,executeJavaScript:read});return {events,wc:events as unknown as WebContents}}
 test('Source collection retains scoped originals, unknown dates and candidate-only roles with no global resource admission',async()=>{const f=fixture(async()=>({text:'Original',range:scope}));const result=await collectPageSource(f.wc,{bodySelector:'article',excludeSelectors:['.ad','.avatar']},async request=>{assert.equal(request.selector,'article');assert.deepEqual(request.excludeSelectors,['.ad','.avatar']);return {items:[{kind:'image',url:'https://example.com/body.png'},{kind:'network',url:'https://example.com/avatar.png'},{kind:'poster',url:'https://example.com/cover.png'},{kind:'video',url:'blob:https://example.com/v',duration:30}],range:scope,truncated:false}})
  assert.equal(result.author,null);assert.equal(result.publishedAt,null);assert.equal(result.result,'observed');assert.deepEqual(result.candidates.map(candidate=>candidate.role),['body','cover','video']);assert.equal(f.events.eventNames().length,0)

@@ -1,3 +1,4 @@
+import { QWEN_NARRATION_VOICES } from '../../../media-native/src/narration-contract.js'
 import { VideoOptionsForm } from '../../../media-native/src/video-options-form.js'
 import { normalizeVideoPreferences, saveVideoTemplate } from '../../../media-native/src/video-options.js'
 import type { VideoPreferences } from '../../../media-native/src/video-options.js'
@@ -472,7 +473,7 @@ async function openGlobalSettings() {
     settingsMessage.classList.remove('error')
     settingsOverlay.classList.remove('hidden')
     renderGlobalSettings()
-    qwenVoice.value=['wenhuaizhi_v3.1','xuyanchu_v3.1','xuyuyuan_v3.1'].includes(videoPreferencesDraft.defaults.tts.voice)?videoPreferencesDraft.defaults.tts.voice:'wenhuaizhi_v3.1'
+    qwenVoice.value=QWEN_NARRATION_VOICES.some(voice=>voice===videoPreferencesDraft.defaults.tts.voice)?videoPreferencesDraft.defaults.tts.voice:'wenhuaizhi_v3.1'
     await refreshQwenStatus()
   } catch (error) {
     status.textContent = error.message

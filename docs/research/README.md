@@ -18,6 +18,9 @@
 
 | 资料 | 范围与证据边界 |
 |---|---|
+| [NEWS-01 公告片与用户反馈](NEWS_01_DELIVERY.json) | 原先59.648秒公告片、技术／Agent证据；用户认为更适合图文，未接受该视频案例 |
+| [BMW＋Codex 新闻重做](CODEX_NEWS_REWORK.json) | 独立Codex Session、用户认可龙安朗自然度；54.61秒新版以本次花费与精细动画收尾，前五镜保留；用户已接受最终版本 |
+| [NEWS-01 动态3D新闻交付](NEWS_01_VIDEO_TOPICS.json) | 重新选题、真实运动预览、高清原片保全、36.16秒成片及独立审阅／人工验收状态 |
 | [DSH SI新闻交付](DSH_SI_DELIVERY.json) | 57.664秒主片、来源、旁白复用与实际审阅范围 |
 | [DSH科普／学术交付](DSH_SCIENCE_RESEARCH_DELIVERY.json) | 两条完整主片、原生制作与人工验收限制 |
 | [P1／AK阶段交付](P1_AK_DELIVERY.json) | 原Qoder主片、换题与组合片；阶段范围不扩展为完整用户验收 |

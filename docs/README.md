@@ -15,6 +15,7 @@
 | 模块、公开接口和测试映射 | [ARCHITECTURE.md](ARCHITECTURE.md) | 从模块与测试目录生成，不手改生成表 |
 | 如何验证、证据覆盖到哪里 | [VERIFICATION.md](VERIFICATION.md) | 当前检查结果、历史基线索引和覆盖边界 |
 | 当前源码的逐项离线回归 | [可移植验证摘要](verification/CURRENT.json) | 完整范围、逐项结果、未运行项及源码SHA；本机原始日志另存，不代表远程CI |
+| NEWS-01 新闻选题与制作 | [使用步骤](../README.md#主要能力)、[功能契约](FUNCTIONAL_SPEC.md#news-01-新闻选题与制作)、[Agent接口](AGENT_VIDEO_EDITING.md#新闻选题与制作引导) | 广泛主体、严格72小时、真实预览、可信用户选择；技术与真实制作、人工验收分开 |
 | DSH 最新候选版制作 SI 新闻 | [DSH SI交付](research/DSH_SI_DELIVERY.json) | 独立工程、57.664秒MP4、模型路由、男声复用及实际审阅范围 |
 | DSH 科普与学术重制 | [两条完整主片交付](research/DSH_SCIENCE_RESEARCH_DELIVERY.json) | 量子位／AK形式参考、原声复用、实际MP4与审阅、原生压缩及验证范围 |
 

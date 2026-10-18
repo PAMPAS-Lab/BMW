@@ -1,4 +1,7 @@
 import {assertArtifactId,finiteNumber,mediaRecord} from './media-contract.js'
+import type {ImageInspection} from './image-contract.js'
+export interface SourceScreenshotBinding {sourceId:string;acquisitionId:string;expectedRevision:number}
+export interface SourceScreenshotReceipt extends SourceScreenshotBinding {artifactId:string;contentId:string;inspection:ImageInspection;pageUrl:string;scope:SourceScope;bodyContentId:string;capturedAt:string}
 export const SOURCE_LIMITS=Object.freeze({records:200,acquisitions:1000,candidates:80,attempts:40,textBytes:256*1024,indexBytes:4*1024*1024})
 export interface SourceScope {selector:string;index:number;excludeSelectors:string[];characterUnit:'utf16';extraction:'visible-text-nodes';truncated:boolean;status:'observed'|'element-not-found'|'failed'}
 export interface SourceCaptureGuard {pageUrl:string;candidateUrl:string;scope:SourceScope}
@@ -28,6 +31,7 @@ export type SourceRequest=
  | {operation:'confirm';expectedRevision:number;sourceId:string;acquisitionId:string;candidateIds:string[];eventAt?:string|null}
  | {operation:'acquire';expectedRevision:number;sourceId:string;acquisitionId:string;candidateId:string;method:'download'|'capture';tabId?:string;videoSelector?:string;videoIndex?:number;maxDurationMs?:number}
 export interface ProjectSourcePort {
+ recordScreenshot?:(receipt:SourceScreenshotReceipt,signal?:AbortSignal)=>Promise<{catalog:SourceCatalog;sourceId:string;acquisitionId:string;candidateId:string;mediaId:string;artifactId:string}>
  snapshot():SourceCatalog
  collect(observation:unknown,expectedRevision:number,signal?:AbortSignal):Promise<{catalog:SourceCatalog;sourceId:string;acquisitionId:string}>
  readBody(sourceId:string,acquisitionId:string,signal?:AbortSignal):Promise<{source:ProjectSource;acquisition:SourceAcquisition;text:string;mediaAvailability:SourceMediaAvailability[]}>

@@ -910,7 +910,10 @@
                     "wenhuaizhi_v3.1",
                     "xuyanchu_v3.1",
                     "xuyuyuan_v3.1",
-                    "anmingyuan_v3.1"
+                    "anmingyuan_v3.1",
+                    "huozhuoshi_v3.1",
+                    "longanlang_v3.1",
+                    "longsanshu_v3.1"
                   ]
                 },
                 "ratePercent": {
@@ -1479,7 +1482,10 @@
                               "wenhuaizhi_v3.1",
                               "xuyanchu_v3.1",
                               "xuyuyuan_v3.1",
-                              "anmingyuan_v3.1"
+                              "anmingyuan_v3.1",
+                              "huozhuoshi_v3.1",
+                              "longanlang_v3.1",
+                              "longsanshu_v3.1"
                             ]
                           },
                           "ratePercent": {
@@ -7615,7 +7621,10 @@
                               "wenhuaizhi_v3.1",
                               "xuyanchu_v3.1",
                               "xuyuyuan_v3.1",
-                              "anmingyuan_v3.1"
+                              "anmingyuan_v3.1",
+                              "huozhuoshi_v3.1",
+                              "longanlang_v3.1",
+                              "longsanshu_v3.1"
                             ]
                           },
                           "ratePercent": {

@@ -1,4 +1,6 @@
 import {collectPageSource} from './collect-page-source.js'
+import {prepareSourceScreenshot} from './source-screenshot.js'
+import {navigatePage,closeNavigationPage} from './page-navigation.js'
 import type {SourceCollection,ProjectSourcePort} from '@bmw-agent/media-native/sources'
 import {assertPageScope,pageRangeExpression} from './page-scope.js'
 import crypto from 'node:crypto'
@@ -15,6 +17,7 @@ import { downloadMediaArtifact } from './media-artifact.js'
 import { createMediaSessionFetch } from './media-session-fetch.js'
 
 const PROJECT_BLANK_URL = 'about:blank'
+interface NavigationTab {id:string;projectId:string|null;view:WebContentsView;source?:string}
 const SEMANTIC_CLASS_STATES = Object.freeze([
   'unread',
   'read',
@@ -134,6 +137,7 @@ export class BrowserKernel {
     const wc = tab.view.webContents
     this.diagnostics.set(tab.id, { console: [], network: [], media: [], loadFailures: [] })
     const emit = () => {
+      if(wc.isDestroyed())return
       tab.title = wc.getTitle() || 'New tab'
       tab.url = wc.getURL() || tab.url
       tab.loading = wc.isLoading()
@@ -164,14 +168,26 @@ export class BrowserKernel {
     })
   }
 
-  async openTab({ url, foreground = false, source = 'agent', reuse = true }: { url?: unknown; foreground?: boolean; source?: string; reuse?: boolean } = {}) {
+  private readonly navigationQuarantine=new Set<string>()
+  private dropNavigationTab(tab:NavigationTab):void{
+    if(!this.tabs.has(tab.id))return
+    if(!this.window.isDestroyed()&&this.window.contentView.children.includes(tab.view))this.window.contentView.removeChildView(tab.view)
+    this.tabs.delete(tab.id);this.diagnostics.delete(tab.id);this.navigationQuarantine.delete(tab.id)
+    if(this.activeTabId===tab.id){this.activeTabId=null;const next=[...this.tabs.values()].find((t:NavigationTab)=>t.projectId===tab.projectId&&!t.view.webContents.isDestroyed());if(next)this.showTab(next.id)}
+    this.emitState();this.scheduleTabStateSave()
+  }
+  private async navigateTab(tab:NavigationTab,url:string,signal?:AbortSignal):Promise<void>{
+    try{await navigatePage(tab.view.webContents,url,signal,25000,3000,tab.source==='agent')}catch(error){if(tab.view.webContents.isDestroyed())this.dropNavigationTab(tab);else if(error instanceof Error&&'code'in error&&error.code==='BMW_BROWSER_NAVIGATION_CLEANUP_FAILED')this.navigationQuarantine.add(tab.id);throw error}
+  }
+  async openTab({ url, foreground = false, source = 'agent', reuse = true }: { url?: unknown; foreground?: boolean; source?: string; reuse?: boolean } = {},signal?:AbortSignal) {
+    if(this.navigationQuarantine.size)throw new Error('BMW_BROWSER_NAVIGATION_QUARANTINED: Explicit close recovery is required.')
     const projectId = this.projectStore?.active().id || null
     const targetUrl = normalizeUrl(url, this.settingsStore)
     if (source === 'agent') {
       const reusable = reusableTab([...this.tabs.values()], { projectId, targetUrl, reuse })
       if (reusable) {
         reusable.tab.lastUsedAt = Date.now()
-        if (reusable.navigate) await reusable.tab.view.webContents.loadURL(targetUrl)
+        if (reusable.navigate) await this.navigateTab(reusable.tab,targetUrl,signal)
         if (foreground) this.showTab(reusable.tab.id)
         else this.emitState()
         this.enforceAgentTabLimit(projectId, reusable.tab.id)
@@ -205,7 +221,7 @@ export class BrowserKernel {
     view.setBackgroundColor(this.pageTheme === 'dark' ? '#0a0d12' : '#ffffff')
     if (foreground || !this.activeTabId) this.showTab(id)
     else this.emitState()
-    await view.webContents.loadURL(targetUrl)
+    await this.navigateTab(tab,targetUrl,signal)
     if (source === 'agent') this.enforceAgentTabLimit(projectId, id)
     return { ...this.serializeTab(tab), reused: false }
   }
@@ -283,6 +299,7 @@ export class BrowserKernel {
 
   closeTab(tabId) {
     const tab = this.requireTab(tabId)
+    if(this.navigationQuarantine.has(tab.id))return closeNavigationPage(tab.view.webContents).then(()=>{this.dropNavigationTab(tab);return {closed:tab.id,recovered:true}})
     const wasActive = this.activeTabId === tabId
     this.window.contentView.removeChildView(tab.view)
     tab.view.webContents.close()
@@ -393,12 +410,13 @@ export class BrowserKernel {
   }
 
   private readonly operations = new SessionOperations()
-  get busy():boolean { return this.operations.busy }
+  get busy():boolean { return this.operations.busy||this.navigationQuarantine.size>0 }
 
   /** Native Shell work shares FIFO and Project exclusion, without a model action. */
   async runUserMediaTask<T>(projectId:string,operation:()=>Promise<T>,signal?:AbortSignal):Promise<T>{
     return this.operations.run(()=>{
       signal?.throwIfAborted()
+      if(this.navigationQuarantine.size)throw new Error('BMW_BROWSER_NAVIGATION_QUARANTINED: Explicit close recovery is required.')
       if(this.projectStore.active().id!==projectId)throw new Error('试听所属 Project 已改变，请重试。')
       if(this.recordingController.isCaptureActive())throw new Error('请等待当前媒体任务完成后再试听。')
     },operation)
@@ -411,6 +429,7 @@ export class BrowserKernel {
 
   private async executeAction(rawRequest, { actor = 'agent', signal, sessionOwner }: { actor?: string; signal?: AbortSignal; sessionOwner?:import('./browser-host.js').BrowserSessionOwner } = {}) {
     const request = this.capabilityRegistry?this.capabilityRegistry.assertRequest(rawRequest):assertBrowserRequest(rawRequest, this.allowedActions)
+    if(this.navigationQuarantine.size&&!['status','tabs.list','help','tabs.close'].includes(request.action))throw new Error('BMW_BROWSER_NAVIGATION_QUARANTINED: Explicitly close the failed page before starting more work.')
     if (!this.permissionStore.hasAgentControl() && request.action !== 'status') {
       const error = new Error('BMW agent control has not been granted. Ask the user to click “Enable agent control” once in the product toolbar.')
       ;(error as Error & { code?: string }).code = 'PERMISSION_REQUIRED'
@@ -472,10 +491,10 @@ export class BrowserKernel {
         foreground: request.foreground === true,
         source: actor === 'user' ? 'user' : 'agent',
         reuse: actor === 'agent' ? request.reuse !== false : false
-      })
+      },signal)
     }
     if (request.action === 'tabs.show') return this.showTab(targetTabId(request))
-    if (request.action === 'tabs.close') return this.closeTab(targetTabId(request))
+    if (request.action === 'tabs.close'){const id=targetTabId(request),tab=this.requireTab(id);if(this.navigationQuarantine.has(tab.id)&&tab.source!=='agent'&&actor!=='user')throw new Error('BMW_BROWSER_USER_RECOVERY_REQUIRED: Close the retained user page from BMW before continuing.');return this.closeTab(id)}
 
     if(request.action==='media.audio.preview'){
       if(!this.projectStore.active()?.directory||this.recordingController.isCaptureActive())throw new Error('Audio preview requires an idle active Project.')
@@ -490,7 +509,7 @@ export class BrowserKernel {
     tab.lastUsedAt = Date.now()
     const wc = tab.view.webContents
     if (request.action === 'navigate') {
-      await wc.loadURL(normalizeUrl(request.url, this.settingsStore))
+      await this.navigateTab(tab,normalizeUrl(request.url, this.settingsStore),signal)
       return this.serializeTab(tab)
     }
     if (request.action === 'back') {
@@ -921,6 +940,9 @@ export class BrowserKernel {
 
   async screenshot(tab, request, signal?: AbortSignal) {
     signal?.throwIfAborted()
+    const sourceCapture=await prepareSourceScreenshot(request.sourceBinding===undefined?undefined:this.projectSources?.(),tab.view.webContents,request.sourceBinding,request.selector,request.index,signal)
+    const captureSignal=sourceCapture?.signal??signal
+    try{
     const artifactsDirectory = this.projectStore ? path.join(this.projectStore.active().directory, 'artifacts') : this.artifactsDirectory
     fs.mkdirSync(artifactsDirectory, { recursive: true })
     let image
@@ -942,7 +964,7 @@ export class BrowserKernel {
           width: Math.max(1, rect.width),
           height: Math.max(1, rect.height)
         }
-      })()`, true), signal)
+      })()`, true), captureSignal)
       if (!clip.ok) throw new Error(`Screenshot selector did not resolve to a visible element (${clip.matches || 0} matches).`)
       const wc = tab.view.webContents
       if (!wc.debugger.isAttached()) wc.debugger.attach('1.3')
@@ -950,9 +972,10 @@ export class BrowserKernel {
         format: 'png',
         captureBeyondViewport: true,
         fromSurface: true,
-        clip: { x: clip.x, y: clip.y, width: clip.width, height: clip.height, scale: 1 }
-      }), signal)
-      image = nativeImage.createFromBuffer(Buffer.from(captured.data, 'base64'))
+        clip: { x: clip.x, y: clip.y, width: clip.width, height: clip.height, scale: sourceCapture?Math.min(1,1024/clip.width,8192/clip.height):1 }
+      }), captureSignal)
+      const png=Buffer.from(captured.data,'base64');sourceCapture?.checkPng(png)
+      image = nativeImage.createFromBuffer(png)
     } else if (request.mode === 'fullpage') {
       const wc = tab.view.webContents
       if (!wc.debugger.isAttached()) wc.debugger.attach('1.3')
@@ -968,13 +991,18 @@ export class BrowserKernel {
       const captured = await readScreenshotPhase<{data:string}>(wc, 'capture-viewport', () => wc.debugger.sendCommand('Page.captureScreenshot', {format:'png',captureBeyondViewport:true,fromSurface:true,clip:{...clip,scale:1}}), signal)
       image = nativeImage.createFromBuffer(Buffer.from(captured.data, 'base64'))
     }
-    signal?.throwIfAborted()
+    captureSignal?.throwIfAborted()
     if (image.isEmpty()) throw new Error('BMW_BROWSER_EMPTY_IMAGE: media.screenshot returned an empty PNG')
+    if(sourceCapture)await sourceCapture.verify()
     const requestedName = typeof request.filename === 'string' ? safeFilename(request.filename) : ''
     const filename = `${Date.now()}-${requestedName || safeFilename(tab.title || 'page')}${(requestedName || '').toLowerCase().endsWith('.png') ? '' : '.png'}`
     const filePath = path.join(artifactsDirectory, filename)
-    fs.writeFileSync(filePath, image.toPNG())
+    const png=image.toPNG(),identity=fs.statSync(artifactsDirectory)
+    fs.writeFileSync(filePath,png,sourceCapture?{flag:'wx',mode:0o600}:undefined)
+    let sourceBinding:Awaited<ReturnType<NonNullable<typeof sourceCapture>['record']>>|undefined
+    try{if(sourceCapture)sourceBinding=await sourceCapture.record(filename,png,image.getSize())}catch(error){try{const current=fs.lstatSync(artifactsDirectory);if(!current.isSymbolicLink()&&current.dev===identity.dev&&current.ino===identity.ino)fs.rmSync(filePath,{force:true})}catch{}throw error}
     return {
+      ...(sourceBinding?{sourceBinding}:{ }),
       artifactId: filename,
       type: 'screenshot',
       path: filePath,
@@ -985,5 +1013,6 @@ export class BrowserKernel {
       selector: typeof request.selector === 'string' ? request.selector : null,
       index: typeof request.selector === 'string' ? Math.max(0, Math.floor(Number(request.index) || 0)) : null
     }
+    }finally{sourceCapture?.dispose()}
   }
 }

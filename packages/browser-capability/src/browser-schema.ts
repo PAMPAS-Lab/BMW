@@ -107,11 +107,12 @@ export const BROWSER_CORE_ACTION_DEFINITIONS: readonly BrowserActionDefinition[]
     deviceScaleFactor: { type: 'number' },
     mobile: { type: 'boolean' }
   }),
-  action('media.screenshot', 'Return a PNG image to the model and save its metadata in the Session-owned Project. Capture a Project-owned screenshot artifact.', {
+  action('media.screenshot', 'Return an actual PNG from a Project page. With sourceBinding and the exact collected body selector/index, native URL/text checks bind the page screenshot into that source acquisition as verified image media; no photo or video is required.', {
     mode: { type: 'string', enum: ['viewport', 'fullpage', 'background', 'observe'] },
     selector: { type: 'string' },
     index: { type: 'number', description: 'Zero-based match when selector identifies multiple page elements.' },
-    filename: { type: 'string', description: 'Optional Project artifact filename.' }
+    filename: { type: 'string', description: 'Optional Project artifact filename.' },
+    sourceBinding:{type:'object',additionalProperties:false,required:['sourceId','acquisitionId','expectedRevision'],properties:{sourceId:{type:'string',pattern:'^[a-zA-Z0-9-]{1,80}$'},acquisitionId:{type:'string',pattern:'^[a-zA-Z0-9-]{1,80}$'},expectedRevision:{type:'integer',minimum:0,maximum:1000000}}}
   }),
   action('media.download', 'Download an HTTP(S) media resource with the BMW browser Session into the active Project artifact store.', {
     url: { type: 'string' },
