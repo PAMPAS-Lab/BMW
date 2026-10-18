@@ -1,10 +1,11 @@
 {
   "format": "bmw.current-verification",
   "version": 1,
-  "createdAt": "2026-10-18T08:46:49.259Z",
-  "sourceBaseRevision": "901779c237d397277e68b4767f0194dc4f93eab9",
-  "sourceState": "NEWS-01 and Qwen male voice catalog implementation snapshot included in this change; exact source hashes below bind the tested implementation. sourceBaseRevision identifies only the pre-change base.",
-  "scope": "Full local offline regression; subsequent inventoried edits are documentation only. Paid model, online narration, production Profile, GitHub CI and human acceptance are separate.",
+  "createdAt": "2026-10-18T11:55:22.110Z",
+  "verificationMode": "full-baseline-plus-targeted-supplements",
+  "sourceBaseRevision": "2c98b2535eccba4ba84d9898560d0056913ab492",
+  "sourceState": "NEWS-02 current implementation working tree. The first full run precedes the live-discovered help/capture/date fixes; affected and final date checks below bind those changes. Counts from different runs are not added.",
+  "scope": "Local isolated offline verification only. Paid Codex research, online Qwen, human selection and final content acceptance are separate.",
   "environment": {
     "node": "v24.21.0",
     "platform": "darwin",
@@ -17,89 +18,658 @@
     },
     "profile": "Disposable userData/Home/Workspace; mock keychain; no production Profile"
   },
-  "commands": [
-    {
-      "command": "npm run build --silent",
-      "status": "passed",
-      "path": ".bmw-runtime/news-01/qwen-men-build.log",
-      "sha256": "820cb2fc4ed2c98bfd3539f8b28df8f8ad2c835c7d22fd90c3d51f8a74a473a5"
-    },
-    {
-      "command": "npm run check --silent",
-      "status": "passed",
-      "path": ".bmw-runtime/news-01/qwen-men-check.log",
-      "sha256": "94675f2730c2020c43efea40a8f4ba539b9d9d7aa0569d2a786388862180904e"
-    },
-    {
-      "command": "BMW_VALIDATION_DIR=.bmw-runtime/classified-tests/2026-10-18-codex-qwen-men node scripts/test-runner.js --all",
-      "status": "passed",
-      "path": ".bmw-runtime/news-01/qwen-men-full.log",
-      "sha256": "39b9fce636ebc60b22284738c775a47890f364bef6c15123b647eaee48ec89e7"
-    }
-  ],
   "fullReport": {
-    "path": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/result.json",
-    "sha256": "cf5e3fb89f36801048fab178b97647d5c2ea0a647b0783cab2fcd6497994674d",
+    "path": ".bmw-runtime/classified-tests/2026-10-18-news02/result.json",
+    "sha256": "f745af35f924ec53b2281f1bab6691ba06b3199a1677c3f98eb7df9feaef3f81",
     "all": true,
     "counts": {
       "passed": 166,
       "failed": 0,
       "not-run": 12
     },
-    "byLayer": {
-      "external": {
-        "passed": 0,
-        "failed": 0,
-        "not-run": 6
-      },
-      "media": {
-        "passed": 13,
-        "failed": 0,
-        "not-run": 6
-      },
-      "gate": {
-        "passed": 5,
-        "failed": 0,
-        "not-run": 0
-      },
-      "contract": {
-        "passed": 67,
-        "failed": 0,
-        "not-run": 0
-      },
-      "integration": {
-        "passed": 26,
-        "failed": 0,
-        "not-run": 0
-      },
-      "desktop": {
-        "passed": 29,
-        "failed": 0,
-        "not-run": 0
-      },
-      "unit": {
-        "passed": 20,
-        "failed": 0,
-        "not-run": 0
-      },
-      "boundary": {
-        "passed": 5,
-        "failed": 0,
-        "not-run": 0
-      },
-      "type": {
-        "passed": 1,
-        "failed": 0,
-        "not-run": 0
-      }
-    },
     "selected": 161,
-    "sourceIntegrity": "All inventoried files remained unchanged during the run; every build source and emitted output rechecked after documentation updates.",
-    "baselineUpdated": true
+    "scope": "Full NEWS-02 ten-topic/voice baseline before subsequent live-discovered fixes. Current deltas below are explicitly covered; this is not a second final --all run."
   },
+  "supplements": [
+    {
+      "id": "affected-regression",
+      "path": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/result.json",
+      "sha256": "e5840cd81d2a780ef70f3c0af391e72dea6c0f21d387df6be66d6667739596d6",
+      "all": false,
+      "counts": {
+        "passed": 65,
+        "failed": 0,
+        "not-run": 113
+      },
+      "selected": 60,
+      "scope": "Dependency graph selected 60 cases for full candidate help and current-time original-clip capture; excluded tests retain their reported reasons.",
+      "results": [
+        {
+          "id": "build",
+          "layer": "gate",
+          "status": "passed",
+          "reason": "Fresh compiler receipt verified against every authored source and emitted output"
+        },
+        {
+          "id": "architecture",
+          "layer": "gate",
+          "status": "passed",
+          "reason": "Public module dependencies, interface guarantors and test classification checked"
+        },
+        {
+          "id": "source-policy",
+          "layer": "gate",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 91,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/source-policy.log",
+          "logSha256": "bbf09764ed89ca925a7ac0d9d9b856ffff9c3fbc01602cc7f6d2522ee601ef23"
+        },
+        {
+          "id": "feature-inventory",
+          "layer": "gate",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 119,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/feature-inventory.log",
+          "logSha256": "a57f0dd7610f6a69a1c8f70409c5fd1ad9041ad619e8dcba843343431a3c5d1f"
+        },
+        {
+          "id": "video.news",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 685,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/video.news.log",
+          "logSha256": "bc8947cfaafaf32f2a03967686d51d4b219fc2722af01aeb28415b89cbd21496"
+        },
+        {
+          "id": "studio.news-source-screenshot",
+          "layer": "integration",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 662,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/studio.news-source-screenshot.log",
+          "logSha256": "1fc214c68cbf1f71788708b71a0ed29f4de619ac6651765864c3cd56848c2604"
+        },
+        {
+          "id": "studio.news",
+          "layer": "desktop",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 8819,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/studio.news.log",
+          "logSha256": "bd46599dfa3b5cd9692a4844bfb658be010023d220dd297b729e22103d5d8824"
+        },
+        {
+          "id": "browser.media-download-runtime",
+          "layer": "integration",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 261,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/browser.media-download-runtime.log",
+          "logSha256": "6494d5d2509fd4041fe6b790fb13b2ee0b9f0cfd304f4a075bf897e4276f4f0a"
+        },
+        {
+          "id": "video.production-assessment",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 176,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/video.production-assessment.log",
+          "logSha256": "412fcbc2d2f53a7aaf222c48893de6f428fdbc3ecb120bbf0f56ea579b4d1f41"
+        },
+        {
+          "id": "video.production",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 1548,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/video.production.log",
+          "logSha256": "fc5968c2052fcdf6fdf5a3450edf0c05c44b51d3c097c2425a12217fb262ffbb"
+        },
+        {
+          "id": "media.research-video",
+          "layer": "media",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 7649,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/media.research-video.log",
+          "logSha256": "c7fa0e951e66a02cd576629a9f59ec2d871b97c3654c3bfd8e9fbfd6d5e2aef6"
+        },
+        {
+          "id": "media.precomposition",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 167,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/media.precomposition.log",
+          "logSha256": "6ba5a37542d376a43cab507e810c622ddcbb22167d379962ca686f2fb6453ac0"
+        },
+        {
+          "id": "media.research-diagrams",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 192,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/media.research-diagrams.log",
+          "logSha256": "dff57f4717cb9a32135c78a593fee011d17aabdc5a5bba16a91301e3e82a5b44"
+        },
+        {
+          "id": "media.video-capture",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 181,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/media.video-capture.log",
+          "logSha256": "aae104a4205864e02f77adc2b761eaa0a72f6e353558239a94d1807409171018"
+        },
+        {
+          "id": "video.material-index",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 208,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/video.material-index.log",
+          "logSha256": "6a1320f7322e0f2138a2fb47463b80ac418343e1ba1c040dce3673ef5c81a599"
+        },
+        {
+          "id": "video.source-analysis",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 1208,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/video.source-analysis.log",
+          "logSha256": "3763b7b61845d1d0fae2d2a2c70af40d7e8ff2253e97b009bc20f482411c2571"
+        },
+        {
+          "id": "studio.production",
+          "layer": "desktop",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 2511,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/studio.production.log",
+          "logSha256": "a3ae61bad5996a19a8418954aad9388cddb5ada861ebc1f6c172a6eca1751a59"
+        },
+        {
+          "id": "studio.export-review",
+          "layer": "desktop",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 12966,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/studio.export-review.log",
+          "logSha256": "d5e53b764ddd50a4a08372cf60140f48b94c908735da18ede25d6fdc1e6efaa2"
+        },
+        {
+          "id": "bmw.agent-assembly",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 277,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/bmw.agent-assembly.log",
+          "logSha256": "dde70aa8f753391916e2b7bfd8e3ce9b87f3a84a0a396960a63a88eb14d09ffa"
+        },
+        {
+          "id": "platform.assistant-controller",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 103,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/platform.assistant-controller.log",
+          "logSha256": "0bcee7da26b2d422034156a14ec601e3e496ef4ce5c9f05260ba917b712a5a3b"
+        },
+        {
+          "id": "browser.session-leases",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 338,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/browser.session-leases.log",
+          "logSha256": "ec3f2903b2b470937f42800adce8cdf8e23348774eaa48ba34fe9a39ef7d4cfe"
+        },
+        {
+          "id": "browser.schema",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 87,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/browser.schema.log",
+          "logSha256": "ba0b636c09a2d109a0113c3c2963de06778abc2e536a6612c0e95ba25e2b98f8"
+        },
+        {
+          "id": "browser.catalog",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 1428,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/browser.catalog.log",
+          "logSha256": "6549c763c5a8d40c5c47e4ce6b86c95f0f2288f733364a1abba66af5afc369a4"
+        },
+        {
+          "id": "browser.operations",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 247,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/browser.operations.log",
+          "logSha256": "a5ab92474de6a1a92a4275c82604682ce4e68f3cb1d3bec702158efe3ce6ded7"
+        },
+        {
+          "id": "browser.shutdown",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 115,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/browser.shutdown.log",
+          "logSha256": "b57b9b6e684fd15e34f5c9320b99b1426f90bddc42bb6b4dbb6a1407cccd9903"
+        },
+        {
+          "id": "browser.sources",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 91,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/browser.sources.log",
+          "logSha256": "e992c1050d4b6ba9023e37fcde71def0b4b554e9d2c32892f4fd70cd2449c7ca"
+        },
+        {
+          "id": "platform.sources",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 167,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/platform.sources.log",
+          "logSha256": "7f45226ae4e5372cd4d1113e6b9caaf1b94c761856469c06efb26596d04c8562"
+        },
+        {
+          "id": "video.sources",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 161,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/video.sources.log",
+          "logSha256": "0b9cd20e24662247fb8fd05bbfb0c22fd1de7bcaf93c84c830fda1e18a02b83c"
+        },
+        {
+          "id": "browser.host-contract",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 82,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/browser.host-contract.log",
+          "logSha256": "22e6f6cc0c5ff8c21b8f708cdbeb49e985b262b402a3200e0d0a7a7f78030168"
+        },
+        {
+          "id": "media.controller",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 133,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/media.controller.log",
+          "logSha256": "f63ac63dac98a5a73f05a442be3eecddf5a8d9a9e98be026d4167b71dddaa122"
+        },
+        {
+          "id": "media.processing",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 120,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/media.processing.log",
+          "logSha256": "acd62fd5976adff547419ec176521b1b51210bf37912b5999b33ed5a347ddbcc"
+        },
+        {
+          "id": "media.production",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 326,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/media.production.log",
+          "logSha256": "ff70fd4829dbbfd36983ae7c5126cbe4a0eae71860038313961cf5c2d2d9dee5"
+        },
+        {
+          "id": "media.speech",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 2603,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/media.speech.log",
+          "logSha256": "cffaa0f421b2b597fa71d48a811df78b99f9e9b5f3e735a4b7e7da31a7a649cc"
+        },
+        {
+          "id": "media.port-contract",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 86,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/media.port-contract.log",
+          "logSha256": "5da6f372de1b6ba1157c1b7b3c3cd7d210b16d86b42b807f23a028e8a0914244"
+        },
+        {
+          "id": "platform.docking",
+          "layer": "unit",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 83,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/platform.docking.log",
+          "logSha256": "d706911f183383d40a88477ecb9fe001f9f0893b01ea80b83cb15c27c0e14539"
+        },
+        {
+          "id": "platform.catalog",
+          "layer": "boundary",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 130,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/platform.catalog.log",
+          "logSha256": "352f80e09a6cf1c4749afe7e995ca93d625062e06513fd34d32d36a7fb7f7f33"
+        },
+        {
+          "id": "platform.boundaries",
+          "layer": "boundary",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 269,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/platform.boundaries.log",
+          "logSha256": "c2869d1a767e416856a796314bd2d529de2575b94e6a8f6f20da7c515ba94a89"
+        },
+        {
+          "id": "platform.remote-boundary",
+          "layer": "boundary",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 204,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/platform.remote-boundary.log",
+          "logSha256": "4df108d5e69639ee2fd2f5e015fa4fdc609f4a8b7a38480cef131c6ae71d9cff"
+        },
+        {
+          "id": "platform.feature-contract",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 80,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/platform.feature-contract.log",
+          "logSha256": "2adb199f4a14daa98b20f90bc47aa85e90f4530abf99c82ee21174ec5d5ea1c0"
+        },
+        {
+          "id": "video.schema-publication",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 68,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/video.schema-publication.log",
+          "logSha256": "32bb562c78cd4343648198e3a0cc2a380b6199cf329a88add1dbee5cf85b6fc6"
+        },
+        {
+          "id": "video.schema",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 2874,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/video.schema.log",
+          "logSha256": "adfbbbfa3eea4f603c388f2bd502f273b670f7aca9a65efe672c9b73f644a123"
+        },
+        {
+          "id": "video.materials",
+          "layer": "unit",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 106,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/video.materials.log",
+          "logSha256": "8489e943ed7fefe5f78624a417b6b834c2ced09d184b573d9d6fbcf47097ee5c"
+        },
+        {
+          "id": "video.studio",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 1560,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/video.studio.log",
+          "logSha256": "bd745270315a98b790e878576475413086adf2ec0c2597310f0906937313e4cd"
+        },
+        {
+          "id": "video.settings",
+          "layer": "contract",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 169,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/video.settings.log",
+          "logSha256": "4fc8b99a8b3627c25c382cf5a34bc74f7ef8880e48ba139846a2acae019985d6"
+        },
+        {
+          "id": "video.boundary",
+          "layer": "boundary",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 143,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/video.boundary.log",
+          "logSha256": "715534e51b45bd63ae0206f9fc8d0ea86fcf9807d8d3000aa2014f58e0477fdf"
+        },
+        {
+          "id": "architecture.boundaries",
+          "layer": "boundary",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 11539,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/architecture.boundaries.log",
+          "logSha256": "4804405359ec08e5bed33d07f5e667cbf4282e3816856853dc9b62a27e1bef62"
+        },
+        {
+          "id": "api.types",
+          "layer": "type",
+          "status": "passed",
+          "reason": "Fresh compiler emit checked positive and @ts-expect-error consumers"
+        },
+        {
+          "id": "sources",
+          "layer": "media",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 20395,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/sources.log",
+          "logSha256": "c126c575072f7ecb39f555bef52eeb61ec99a05ef0ff363b25d1a455c57a0a0f"
+        },
+        {
+          "id": "driver",
+          "layer": "integration",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 2486,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/driver.log",
+          "logSha256": "3ff5bf91581c864e5fa49e54ded990014f4696abfbbc9a84e526bf5d07142e77"
+        },
+        {
+          "id": "studio.next",
+          "layer": "integration",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 15601,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/studio.next.log",
+          "logSha256": "accfe26c6bce2f0786fdaa0df4bae9ee9d839124c333e17d3f13b8a437e35f74"
+        },
+        {
+          "id": "studio.schema",
+          "layer": "desktop",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 3273,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/studio.schema.log",
+          "logSha256": "9b29df790fdab1a21202a5f9a06df3c868868f9cbe335271a1560d30c03ee52c"
+        },
+        {
+          "id": "studio.long-film",
+          "layer": "desktop",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 7196,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/studio.long-film.log",
+          "logSha256": "55cd77f5e21575275d2089519567fad98bb8c8cbd0d18254137062332c022fa0"
+        },
+        {
+          "id": "studio.reference-analysis",
+          "layer": "desktop",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 6384,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/studio.reference-analysis.log",
+          "logSha256": "62b733450ab9c2308d2356d04354fd1b768e600022be0938b91427df13df01c2"
+        },
+        {
+          "id": "studio.review-adoption",
+          "layer": "desktop",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 4833,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/studio.review-adoption.log",
+          "logSha256": "385c8245470a915b62bc932abba96f2a7c0fa4d10deeee845f1b2c07b2227e76"
+        },
+        {
+          "id": "studio",
+          "layer": "integration",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 61675,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/studio.log",
+          "logSha256": "a118dbec81c5fb91941f120c7a14864a3141a2c55303873e5ca3c6ea32498b92"
+        },
+        {
+          "id": "browser.background",
+          "layer": "integration",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 2777,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/browser.background.log",
+          "logSha256": "a883236b49cad81fa54f25805f939c7cc3918e48b8f7b3592c4ac0210b1cac90"
+        },
+        {
+          "id": "media.capture",
+          "layer": "media",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 34215,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/media.capture.log",
+          "logSha256": "97206738eda7a55d5c2ee4c6fc0b920f1765a9d6669c843c17b191bc778a9c52"
+        },
+        {
+          "id": "media.processing-runtime",
+          "layer": "media",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 22044,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/media.processing-runtime.log",
+          "logSha256": "98396a32d3488d3d33b500e18cfa75fa81e9c7d7b79fbd69bf44056b4eac9c3b"
+        },
+        {
+          "id": "video",
+          "layer": "media",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 36854,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/video.log",
+          "logSha256": "a106a1592abacaf39e56c3f7a513b73089eacdce0ff0b154eb35df24e27ec9af"
+        },
+        {
+          "id": "speech",
+          "layer": "media",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 18804,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/speech.log",
+          "logSha256": "87b4a338694fb39c9671edfff763b5d98898b9b18361bf8aa2faea9742d3878d"
+        },
+        {
+          "id": "qwenNarration",
+          "layer": "media",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 1149,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/qwenNarration.log",
+          "logSha256": "6c17b9061acb6efb7a13dfd76a48b08880b9eb74a6b52f24aa1ec04902dbe89f"
+        },
+        {
+          "id": "localNarration",
+          "layer": "media",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 3953,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/localNarration.log",
+          "logSha256": "ff48eac9d5a89647f29cd94eb33320efe3a9a0ca514b1e7f87dc43630ef4c467"
+        },
+        {
+          "id": "desktop.workspace",
+          "layer": "desktop",
+          "status": "passed",
+          "reason": "workspace: passed",
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/desktop-suite/workspace/run.log",
+          "logSha256": "a93808ba9e0655ec924314d0e2fd8da1256b50019417598db984a56f4c739423"
+        },
+        {
+          "id": "desktop.projects",
+          "layer": "desktop",
+          "status": "passed",
+          "reason": "projects: passed; projects/restart: passed",
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/desktop-suite/projects/run.log",
+          "logSha256": "57becb026daec7910eade115518b40a590067b9c52f329ddee77a92ee93b0519"
+        },
+        {
+          "id": "desktop-suite",
+          "layer": "gate",
+          "status": "passed",
+          "exitCode": 0,
+          "durationMs": 6892,
+          "log": ".bmw-runtime/classified-tests/2026-10-18-news02-discovery/desktop-suite.log",
+          "logSha256": "043a81806a2473d093b9a144d5976a303a0713f42ca902f1359916c179a65723"
+        }
+      ]
+    },
+    {
+      "id": "final-date-unit",
+      "command": "node --test packages/feature-video/test/news.test.js",
+      "status": "passed",
+      "tests": 12,
+      "path": ".bmw-runtime/news-02/date-unit.log",
+      "sha256": "01aba9facf0614c9d52940d2b2ba3724a0de390f4f39249ab2a3eeba0de942b8"
+    },
+    {
+      "id": "final-date-native",
+      "command": "BMW_STUDIO_NEWS_CASE=1 node scripts/run-electron-script.js scripts/video-studio-smoke.js",
+      "status": "passed",
+      "path": ".bmw-runtime/news-02/date-native.log",
+      "sha256": "ec6f568e29096cdc14f144d346b14993af6c245ba0c4780ae8766087554b1557"
+    },
+    {
+      "id": "official-dsh-cold",
+      "command": "node scripts/dsh-compatibility-smoke.js",
+      "status": "passed",
+      "path": ".bmw-runtime/news-02/discovery-dsh.log",
+      "sha256": "14e1a901520396bd7f74a2e9ebbf955fb9b00bc2897b5973f0dc28f86f79fa05"
+    }
+  ],
+  "commands": [
+    {
+      "id": "final-build",
+      "command": "npm run build --silent",
+      "status": "passed",
+      "path": ".bmw-runtime/news-02/date-build.log",
+      "sha256": "820cb2fc4ed2c98bfd3539f8b28df8f8ad2c835c7d22fd90c3d51f8a74a473a5"
+    },
+    {
+      "id": "final-check",
+      "command": "npm run check --silent",
+      "status": "passed",
+      "path": ".bmw-runtime/news-02/date-check.log",
+      "sha256": "94675f2730c2020c43efea40a8f4ba539b9d9d7aa0569d2a786388862180904e"
+    },
+    {
+      "id": "accepted-news02-documentation-check",
+      "command": "npm run check --silent",
+      "status": "passed",
+      "path": ".bmw-runtime/news-02/acceptance-check.log",
+      "sha256": "94675f2730c2020c43efea40a8f4ba539b9d9d7aa0569d2a786388862180904e",
+      "scope": "Final documentation acceptance update; runtime source/build hashes remain bound to the existing full baseline and supplements."
+    }
+  ],
   "build": {
     "path": ".bmw-runtime/build-receipt.json",
-    "sha256": "9daf4f918bcb67a564748e7ef94b037495051dfa8aee52dd9a1c7356c90d0244",
+    "sha256": "c145610caeca078b65fd72a86cb18ba8e6cc0312a44e44071c23d60143b76bdb",
     "sourceCount": 463,
     "outputCount": 433
   },
@@ -134,8 +704,8 @@
     "packages/browser-capability/src/bridge-server.ts": "69406ac68689199983e5f61b37a76230e6a2d90cfe10cf64bd42f2b29149f6f5",
     "packages/browser-capability/src/browser-capability-registry.ts": "88d9a505ca9d0f884ad6936b7ca86a3007e1da35c07e53de7f7095dea13bfea8",
     "packages/browser-capability/src/browser-deadline.ts": "45ac776ebd79619704157b122ee4b0f55c32730e4dce60cf5cffcbc2c58b82c0",
-    "packages/browser-capability/src/browser-host.ts": "a14ec26b79f9a0ff73f9493898b58230d61179c3096e2b42c8c8dd8fd9a548d0",
-    "packages/browser-capability/src/browser-kernel.ts": "46b96ef94b4e053b92f8e8d6a16d2615067d232ab49a3514afa9d969aff7e292",
+    "packages/browser-capability/src/browser-host.ts": "1a5002dabf2b5127f6e9bdec9b800f48e4d2701c9838d23e17b7ad1ea6f531d2",
+    "packages/browser-capability/src/browser-kernel.ts": "4eb375137434134a3e3702576a0d2f5c6e83efd0e4119c79475753e8de895346",
     "packages/browser-capability/src/browser-mcp-server.ts": "d8efa3e9d8c2c6bd1e8437b33adbf5a1e02dbb418afae6deb6764bcdb5df82fc",
     "packages/browser-capability/src/browser-schema.ts": "b140184572f659921f774608894fc5b457cadc1bae54a5f74293c8c4d5b07b4b",
     "packages/browser-capability/src/collect-page-source.ts": "d06490d9d230c826f132d032095227d0f10c28c3c0268b371f4becdccdc44cb9",
@@ -155,7 +725,7 @@
     "packages/browser-capability/test/browser-host.test.ts": "62cf909a6fb736095fc6e5938102172b571b5758823929c31bc8a1f16beb2bf6",
     "packages/browser-capability/test/browser-schema.test.ts": "6562a5e76530ce0069f8374f671937ce414d5ab3dfa93895aaa2d1334547f677",
     "packages/browser-capability/test/collect-page-source.test.ts": "5d9a46740edfd84e300352dd1865f3d363c6d298e3c647b559875ed5787164bf",
-    "packages/browser-capability/test/mcp-tool-catalog.test.ts": "f9b1b441e75b3f646c94c23f87289bc5f6460894702b7afcac952748d369a4f0",
+    "packages/browser-capability/test/mcp-tool-catalog.test.ts": "694b6eb36ce305e167a256f2ae0c4c48d4b68d64d1e8ddea2106d22651bbf906",
     "packages/browser-capability/test/media-artifact.test.ts": "8e244838f9f47fdf5f935a1f77f6463097cb7c35c1efd32961d4e1638a7989cd",
     "packages/browser-capability/test/media-session-fetch.test.ts": "ace6d19af739d1b582a02ad66f8745cc3ac1946141835d2c21bbdfd2287c3aed",
     "packages/browser-capability/test/page-navigation.test.ts": "f52ef2a752f49e639da8f5f4787d51f49feb8c73df821a73dcdb91621b3c66d4",
@@ -164,14 +734,14 @@
     "packages/browser-capability/test/session-leases.test.ts": "1531eadc5bcc8b016f7823f4799beb4eb3d2c62a98615707da12357ae7f19903",
     "packages/browser-capability/test/session-operations.test.ts": "e98965b70126bb71dfd9919c817add63ca0b79cf785e19e916700c8f9fb86223",
     "packages/browser-capability/test/tab-policy.test.ts": "d20ef04b20f0f32861177b641868a200735a3747de084f7d252aaf0b59bb9e9d",
-    "packages/feature-video/index.ts": "fdbcfc0a6cd55c80815f552de45ec106684b12c3efcb72e5c2fdd2ba5af81293",
+    "packages/feature-video/index.ts": "d02c1938594fbc8c76be45dcef92c55415a735bb94ef68b168149df1728fb6d8",
     "packages/feature-video/package.json": "f8ff0f0186cd925fbb45e51f639b28fd93a2111e6430c83a8305fcf98808baf3",
     "packages/feature-video/src/export-review-contract.ts": "1b331995b2eedd2d0367a964d6e043f499da297037ba30ba4bd47a13c006abce",
     "packages/feature-video/src/export-review-journal.ts": "afb3e34c8a104c6a5892a11851ccdea27241953e7a5659df04112aa98454eb22",
     "packages/feature-video/src/material-index-contract.ts": "d4c905db64a5cf96df2e60ea9d6037f8dac6afe48791f7b56152c04778a76e91",
     "packages/feature-video/src/material-index-service.ts": "f4e9a4b01c3989d5ef9d38f4f31e3c21e15240614ed9972b69981417fd97c707",
     "packages/feature-video/src/material-index-store.ts": "70797cb2be340e31edce80a403f20ef714a204ed0ae2440253c743025372b88c",
-    "packages/feature-video/src/news-contract.ts": "da7b09d5d824fdcf7826c84d3190e90552d840c9ceaf53b6108d23dd660f9790",
+    "packages/feature-video/src/news-contract.ts": "7052363d35caa131bd5b8fbea0f8febb188f4c38fff64ab44610b36d40a28d5f",
     "packages/feature-video/src/news-service.ts": "0ffb069f05844deac767994d89630b266f5212bc26a80405aaacb664731da132",
     "packages/feature-video/src/news-store.ts": "7f261d3e837b38cce1a83024fb4dac809d39cd0843b047710d9a8b3c418a940e",
     "packages/feature-video/src/preload/studio-preload.cts": "5ccad7d1fbad3f54babb4843a7beb750aa05170209d318769b0f3a9281b05fe3",
@@ -194,7 +764,7 @@
     "packages/feature-video/src/renderer/studio-main-editor.ts": "963329909f524da6a9b6693542455791b72744ab87f51d8ea291b23abafa3cf4",
     "packages/feature-video/src/renderer/studio-material-index-editor.ts": "065a683732f55f65387a8ab68bea1c2357cd4fd55788581f805917811d7d2c0c",
     "packages/feature-video/src/renderer/studio-materials-view.ts": "2bd1e31d41764b811d73a23642cd80fef1c5fa033ed416a37aafa009b5fd1ed0",
-    "packages/feature-video/src/renderer/studio-news.ts": "374e65fda1837db90d60fd3ce2f3e9e16d7982082978766202b15a29f869f6e0",
+    "packages/feature-video/src/renderer/studio-news.ts": "920f5fe2a67c59e0c87bf4d162fed711a36b4c5926093a88b616b2f07a96e13f",
     "packages/feature-video/src/renderer/studio-original-speech-editor.ts": "d7e2306de2b8b44841fc9f1a6931ccc4da32d9076c6d1d10fc663009b03b500d",
     "packages/feature-video/src/renderer/studio-panels.ts": "7307ed1b9d7325ae0db708fd036d9e25f4933902e3674d7cfe954e5125f98130",
     "packages/feature-video/src/renderer/studio-preview.ts": "8f934762b64c3a8c32a3c2f302f982d820db8e0ec4d789ffa65c1fc2ac2ee210",
@@ -211,7 +781,7 @@
     "packages/feature-video/src/renderer/studio-workbench.ts": "cfa149b73d26d20f0658be25726b6ce310839a09e9524a9d3f384f949c37a762",
     "packages/feature-video/src/renderer/studio-workflow.ts": "6aa8cd67b36c513bd7bb3a3e0ee00a38f0f807426995a0c0dbe68a267402daeb",
     "packages/feature-video/src/renderer/studio.css": "f92f17f4a69fc7b64bea72b655341f003d6663f02f0f692a71b3051652d279d5",
-    "packages/feature-video/src/renderer/studio.html": "bda14ae5afe9b0172e50ec3ad12d7c20eeab6ca25303b8b5ab7bcaf40c6cb01b",
+    "packages/feature-video/src/renderer/studio.html": "fdc6a3771d6cc192fb0043d8673dbb53cfc7fc45a884914e10c1462e5d8149f3",
     "packages/feature-video/src/renderer/studio.ts": "51fe862ce979bcb6b6f3cfc3d2ef3ea0dc6b44727282238316e22ffe65c58307",
     "packages/feature-video/src/source-analysis-contract.ts": "33f5c51536372c8f1204f77aa6b40239c824ea56b769bf588c5bf0809bdc4d1b",
     "packages/feature-video/src/source-analysis-service.ts": "0be964945afd9b4cf0f14092fbbd713df3cfbabbc46979da0d88fba539c97c05",
@@ -225,7 +795,7 @@
     "packages/feature-video/src/studio-compatibility.ts": "4064af33cf1f1eefe03b859253a2a4cbaca67c3b22b3be2615e6472458efca3b",
     "packages/feature-video/src/studio-context.ts": "ea69872a2635643672aa8405593a94f90a25b50e30c4d11a8f9e5d91abe42e81",
     "packages/feature-video/src/studio-contract.ts": "64ab37bcee9bf19b48ef3103c4273dec38050b4004d0d56f8ec8d38c0df7a624",
-    "packages/feature-video/src/studio-discovery.ts": "c8fd7437e1267207424b761cd1d418ef140f03d40140bf577d9982e0845b4456",
+    "packages/feature-video/src/studio-discovery.ts": "bc173643b6d71e1865076fd4f2d3d70018c1311119615a81027e30ca68a64ff1",
     "packages/feature-video/src/studio-editorial-timing.ts": "a2cc8fb91e6f5db56b8db2c0cc987d0e8e20e2398c72b6b942bb0ee5a45a7db1",
     "packages/feature-video/src/studio-export-review-state.ts": "43a7d937f5a56c7479eee3e619b0e07f5bc0fcace0e6fcda7ae5a4c9678c06d0",
     "packages/feature-video/src/studio-export-review.ts": "780d49b15d2620eaf08d516a01760cba6b43e27942c184b8149a30a36fcae4be",
@@ -245,7 +815,7 @@
     "packages/feature-video/src/studio-snapshot-proof.ts": "84de3fde842968a373509d5c628cf78936bddb950c09f54b3f0492ae76751b93",
     "packages/feature-video/src/studio-source-speech-contract.ts": "090abe6e529921d0e3eb22813cdad17add4ef7876008583cac7c5ed0048d21d8",
     "packages/feature-video/src/studio-source-speech.ts": "5d9d68389d4fb0aff3093d986d19ee2c45e9a01633f96f4096511759db436aa2",
-    "packages/feature-video/src/studio-sources.ts": "66dbfd7e9ff425ac6100241084ad1c9d660e64b5ebf8959a203cdbcfe65b74b6",
+    "packages/feature-video/src/studio-sources.ts": "22aee63995c2e256339f320afdb9d30c12cb44b287b60b84d9c00930e81265a3",
     "packages/feature-video/src/studio-speech-contract.ts": "9bd36f9bf27b6e1bb2e3d084e8ab4d3f612c8e17547ba7fcb4eadc111d5c213a",
     "packages/feature-video/src/studio-speech-origin.ts": "83951e06acd6ce501e94883fee24d98054fd0cfb2c5a1b8d13520065ba992e2b",
     "packages/feature-video/src/studio-speech-provenance.ts": "658fd68ae591e9361c3c307ac36b73f61bf5088df3ad3b304b40cecf7306e85a",
@@ -254,7 +824,7 @@
     "packages/feature-video/src/studio-timeline.ts": "0d3007e9f889f111657a61f823e0b7d88cc3147ce5c6cf4901dc1d1cb5bf7fbb",
     "packages/feature-video/src/studio-timing-diagnostics.ts": "67d5e238b7816315a6befb31e38fad945df238669d933fd23bc469dc111e0c47",
     "packages/feature-video/src/studio-timing.ts": "d47dc9f87c115c170c5cbc241738d46543cb605755016558d734982648a69592",
-    "packages/feature-video/src/studio-tool-guide.ts": "4bde1174a34443088fbfc9c238ca9077e275447a8843c207fd4a63534a3cacde",
+    "packages/feature-video/src/studio-tool-guide.ts": "b07dc9b2565491b5835d470b7ceb143d92f144cb5b72f264268081f60a14aa9e",
     "packages/feature-video/src/video-document-version.ts": "af7977d001aefbfc79bc9dfdf9407668ed28fe4189388ca8dca86c9df7a354de",
     "packages/feature-video/src/video-document.ts": "30765e61079bf774d71dbfa7070b8c8a2469f141b9d525b74622110848825647",
     "packages/feature-video/src/video-edit-contract.ts": "d7106c1413571ca8809370e61f199d6e8d7b316e4eb6523577f21d3aabd3c843",
@@ -262,7 +832,7 @@
     "packages/feature-video/src/video-settings.ts": "59ca1739a9a8bd9edd02b00c27fcc98b17d779ddd6312adfdcc3d88a3f285a3d",
     "packages/feature-video/src/video-time.ts": "04ec6971bafe7c8ad9cd29fc0e383c81a1cd1aba2d10736d1c27206d85e7116e",
     "packages/feature-video/test/material-index.test.ts": "3041673338783ee1b16e63b34b77fa3af7b0a80ffa2fdc2b4953deef04937497",
-    "packages/feature-video/test/news.test.ts": "e2443aa19b8a5c9318684470b25a7ef7e912be9ee21d3cd06fe323e19850fd6f",
+    "packages/feature-video/test/news.test.ts": "4887e421ba3688930383b556944873837ed4d6666da6e6e996973343e32a4459",
     "packages/feature-video/test/production-assessment.test.ts": "b7947d3d1c7247c8bdb1c46846c9c44d3027530f6556481fc43af5689d4e4289",
     "packages/feature-video/test/production.test.ts": "cbe5ec34456ee9be1c7975f2f90f39972303cc482090abfd75974912622c9b97",
     "packages/feature-video/test/source-analysis.test.ts": "3c9e67d61903029ee7dd2608ed9d2ec3cfbea86cd11fa14568c13be9c41f9172",
@@ -402,7 +972,7 @@
     "packages/media-native/src/scene-visuals.ts": "9504290e01239b2478eb498b3081f1e6286b2be060a56553b902d6ee71ee1c54",
     "packages/media-native/src/science-spec.ts": "07517b42aa65bae6c32b4b1eeb735391189486a773efbbc3454e379813606331",
     "packages/media-native/src/source-audio.ts": "d9142b9beb0b2d6693c401b5ad559d100cac519222af43613e06479e5f7b59f6",
-    "packages/media-native/src/source-contract.ts": "b440f9790120d25ffd371b2aa033d032be26dc20b26739b28d68ff7b3867ee59",
+    "packages/media-native/src/source-contract.ts": "1ba4602f54944f43a46f1430ce470182485b02de11987b52dc7b0894d2deeb7d",
     "packages/media-native/src/speech-contract.ts": "5e12afb81d551c90b5ea44a5f687b9bd042513cc2dce254637a20e02f7a88f9c",
     "packages/media-native/src/speech-processor.ts": "52581447dd31b709a7ffc287ad0dc651232893fe1834993db6eba742d7d0b5cf",
     "packages/media-native/src/speech-range.ts": "0652b09a19bef6e11e3267f9c3da6ac3aaf06c8538434c31a17b0f8a3f803b44",
@@ -541,13 +1111,13 @@
     "scripts/source-analysis-case.ts": "3644a62eef66f0c194e062e7bcaa27b9e4fdb88d6fa46b9928bfc9abcc766590",
     "scripts/source-graph.ts": "5663269c43f3693ffdebdb4af577116bbc580bcb0373b2ca3f23fdbf123a3cd8",
     "scripts/source-platform-case.ts": "f1b97baa3e295877d079ba47b8ec8cbe8dfbd7dad1c059fc228c7b2624c602d7",
-    "scripts/source-studio-smoke.ts": "5c214b809c71ae06864cd84f8a90675b6d8fc0dce7c39bfc43a1af5431f689bd",
+    "scripts/source-studio-smoke.ts": "2cbcfeed09ea6181a3817dc99062df8224bcb2e6f60e11d1fc087be5f4c59476",
     "scripts/speech-alignment-smoke.ts": "3e579ed9e8babdc65c5908f9f419346893e22385f5d2225a66cb1b76a6b95708",
     "scripts/speech-review-page-case.ts": "c99ce8483d2ebfba6146216c47ca8abe1da78fad4e1798f82129f648c4c4a581",
     "scripts/speech-study-case.ts": "6ad90cb0e58950a3a8c6b6caa5e02a7b5307f9458d2ab9c56f9e39f9146f5b08",
     "scripts/start-electron.ts": "e2422c5c7826493d8bb92bf01eccc494219bdc6f50578d7c75311bf38b1074e9",
     "scripts/state-load-smoke.ts": "ec195be283e42e59a34d28d532095c4f00c16e1e576d64117155be0c6fed50ef",
-    "scripts/studio-news-fixture.ts": "c9206dd51e6c3d083c0ee393f65a94a33c887769a75a85a3e35e2ad72136678a",
+    "scripts/studio-news-fixture.ts": "a27c73385d9bda6bc414963626cbd5a863ead2a2677921ad9bc2786fef9a4a9f",
     "scripts/studio-next-smoke.ts": "c2633ba4029022b439ce2735c1a08d20b76b9efbf08c1fa10ec2729f6cc1b034",
     "scripts/test-catalog.ts": "986de8fcbaf34245fd7de280f69abc4a5b897cecaac48ceac38cdec2fc8b4893",
     "scripts/test-runner.ts": "a08012437ac9e52a4527fd13e1d9c9395509e92a2f3d87bca1452750f28f4ec8",
@@ -567,19 +1137,110 @@
     "package.json": "86575cefe9645d7e0da1562dd5331a820ada6a1f9197bfaa2ddba74cd2448d79",
     "package-lock.json": "ae90f5fa01f669fa90167c6b73ea25fc00043bbb4f778a478681908f1ed6e574",
     "tsconfig.json": "4fdce5aec2d5369ddee6a3ec543cbc1a23601c0057b93b220862e3d1b45bd139",
-    "README.md": "df982554ea4289358ce7275e535c5c207e0ac2cbded8fa091b06a9a5b5ab3a63",
-    "handoff.md": "65dcda9f0b2f0eae79b68291aede94dacaefae3f38ce39da2b20ff3ea91490dc",
+    "README.md": "23df9216d3afec27aee160daa72341e7cc5327e15f1643ca4e7d3ed953d9b19e",
+    "handoff.md": "fd9330d52b310d83ab1351a372379db274a95db7546a243f5b9b70613283e70e",
     "AGENTS.md": "7d019a99a4d317e5c7e08759aaeae3f1fd18a131c28f5873a6da96182583a89b",
-    "docs/FUNCTIONAL_SPEC.md": "3b4f3e25fef49089ef8ebe58e0fca35642762d07dbe184916898385c7affe6b8",
+    "docs/FUNCTIONAL_SPEC.md": "3b9a5b7750b4147739b65039dc5beae1c00963e6810f7d3fe09906d6687950a0",
     "docs/ARCHITECTURE.md": "384bf12bfcffb3f1e9f0fe1c19adfc547e0caec0ec409a65b2e31d29406696f4",
-    "docs/VERIFICATION.md": "2c2764f5b92789ccb84fd687bc038614e141b721dceb9fca0f93af00dffe3158"
+    "docs/VERIFICATION.md": "3ce12f4a92203989ff72c62ef2c80c46eb03d2f271a4c0174ea2b2a48e19c11b"
   },
-  "inventoriedDocumentationChangesAfterRun": [
-    "README.md",
-    "handoff.md",
-    "docs/FUNCTIONAL_SPEC.md",
-    "docs/VERIFICATION.md"
-  ],
+  "sourceCoverage": {
+    "unchangedRuntimeFiles": "Current hashes matching full sourceHashes retain that run; changed runtime files must match the affected report or the three explicit final date-check files.",
+    "changedAfterFull": [
+      {
+        "path": "packages/browser-capability/src/browser-host.ts",
+        "baselineSha256": "a14ec26b79f9a0ff73f9493898b58230d61179c3096e2b42c8c8dd8fd9a548d0",
+        "currentSha256": "1a5002dabf2b5127f6e9bdec9b800f48e4d2701c9838d23e17b7ad1ea6f531d2",
+        "coveredBy": [
+          "affected-regression"
+        ]
+      },
+      {
+        "path": "packages/browser-capability/src/browser-kernel.ts",
+        "baselineSha256": "46b96ef94b4e053b92f8e8d6a16d2615067d232ab49a3514afa9d969aff7e292",
+        "currentSha256": "4eb375137434134a3e3702576a0d2f5c6e83efd0e4119c79475753e8de895346",
+        "coveredBy": [
+          "affected-regression"
+        ]
+      },
+      {
+        "path": "packages/browser-capability/test/mcp-tool-catalog.test.ts",
+        "baselineSha256": "f9b1b441e75b3f646c94c23f87289bc5f6460894702b7afcac952748d369a4f0",
+        "currentSha256": "694b6eb36ce305e167a256f2ae0c4c48d4b68d64d1e8ddea2106d22651bbf906",
+        "coveredBy": [
+          "affected-regression"
+        ]
+      },
+      {
+        "path": "packages/feature-video/src/news-contract.ts",
+        "baselineSha256": "e026a97c107849003af9bc555dd236adcf0b5366f16728de1830d6ffbdd4528c",
+        "currentSha256": "7052363d35caa131bd5b8fbea0f8febb188f4c38fff64ab44610b36d40a28d5f",
+        "coveredBy": [
+          "final-date-unit",
+          "final-date-native",
+          "final-check"
+        ]
+      },
+      {
+        "path": "packages/feature-video/src/studio-discovery.ts",
+        "baselineSha256": "c8fd7437e1267207424b761cd1d418ef140f03d40140bf577d9982e0845b4456",
+        "currentSha256": "bc173643b6d71e1865076fd4f2d3d70018c1311119615a81027e30ca68a64ff1",
+        "coveredBy": [
+          "affected-regression"
+        ]
+      },
+      {
+        "path": "packages/feature-video/src/studio-sources.ts",
+        "baselineSha256": "66dbfd7e9ff425ac6100241084ad1c9d660e64b5ebf8959a203cdbcfe65b74b6",
+        "currentSha256": "22aee63995c2e256339f320afdb9d30c12cb44b287b60b84d9c00930e81265a3",
+        "coveredBy": [
+          "affected-regression"
+        ]
+      },
+      {
+        "path": "packages/feature-video/test/news.test.ts",
+        "baselineSha256": "229c598350a26732a5edb671128238da81cfa89ba8e154c339e96d592cacf65f",
+        "currentSha256": "4887e421ba3688930383b556944873837ed4d6666da6e6e996973343e32a4459",
+        "coveredBy": [
+          "final-date-unit",
+          "final-date-native",
+          "final-check"
+        ]
+      },
+      {
+        "path": "packages/media-native/src/source-contract.ts",
+        "baselineSha256": "b440f9790120d25ffd371b2aa033d032be26dc20b26739b28d68ff7b3867ee59",
+        "currentSha256": "1ba4602f54944f43a46f1430ce470182485b02de11987b52dc7b0894d2deeb7d",
+        "coveredBy": [
+          "affected-regression"
+        ]
+      },
+      {
+        "path": "scripts/source-studio-smoke.ts",
+        "baselineSha256": "5c214b809c71ae06864cd84f8a90675b6d8fc0dce7c39bfc43a1af5431f689bd",
+        "currentSha256": "2cbcfeed09ea6181a3817dc99062df8224bcb2e6f60e11d1fc087be5f4c59476",
+        "coveredBy": [
+          "affected-regression"
+        ]
+      },
+      {
+        "path": "scripts/studio-news-fixture.ts",
+        "baselineSha256": "65f29cd6bb0df43a3c53cf8903aaaa3b27b8d124ee723c0537e5094c8d8dfa38",
+        "currentSha256": "a27c73385d9bda6bc414963626cbd5a863ead2a2677921ad9bc2786fef9a4a9f",
+        "coveredBy": [
+          "final-date-unit",
+          "final-date-native",
+          "final-check"
+        ]
+      }
+    ],
+    "inventoriedDocumentationChangesAfterRun": [
+      "README.md",
+      "handoff.md",
+      "docs/FUNCTIONAL_SPEC.md",
+      "docs/VERIFICATION.md"
+    ]
+  },
   "results": [
     {
       "id": "external.production.qoder-deepseek-flash",
@@ -670,8 +1331,8 @@
       "layer": "gate",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 108,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/source-policy.log",
+      "durationMs": 89,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/source-policy.log",
       "logSha256": "bbf09764ed89ca925a7ac0d9d9b856ffff9c3fbc01602cc7f6d2522ee601ef23"
     },
     {
@@ -679,8 +1340,8 @@
       "layer": "gate",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 138,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/feature-inventory.log",
+      "durationMs": 115,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/feature-inventory.log",
       "logSha256": "a57f0dd7610f6a69a1c8f70409c5fd1ad9041ad619e8dcba843343431a3c5d1f"
     },
     {
@@ -688,26 +1349,26 @@
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 531,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/video.news.log",
-      "logSha256": "4d5325cd6582599ba298e5ead20df703d0c1dd0a4db7923c002fad6ebab7d5b7"
+      "durationMs": 660,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/video.news.log",
+      "logSha256": "6caa22e8ac1066cfb59b559fb0274ee3a10113a36486f83d792682995dd52f5a"
     },
     {
       "id": "browser.navigation",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 132,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.navigation.log",
-      "logSha256": "320000c10e1864d6363c323c44d9a8c5076302d02fb8fe4f67484bf28b2e5d02"
+      "durationMs": 117,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.navigation.log",
+      "logSha256": "baa02513b72ded5bb46eb680509ebd17bd26da0b4ab0a7a24943e6e3739efd93"
     },
     {
       "id": "studio.news-source-screenshot",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 745,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.news-source-screenshot.log",
+      "durationMs": 698,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.news-source-screenshot.log",
       "logSha256": "1fc214c68cbf1f71788708b71a0ed29f4de619ac6651765864c3cd56848c2604"
     },
     {
@@ -715,35 +1376,35 @@
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3610,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.news.log",
-      "logSha256": "94bd7f363e468fdab08f108ab27deeb8f8d40dd125ef159cb8d57bda3be8e441"
+      "durationMs": 8615,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.news.log",
+      "logSha256": "137909bca27d33d2d490e45705a23c85a88618253c80d609dbd88d1f733b9b60"
     },
     {
       "id": "platform.qwen-credentials",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 200,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.qwen-credentials.log",
-      "logSha256": "948f1c81607bc6f008e5df5cd720ab9a046d8a95393234ff2c82f4b8994ff7bb"
+      "durationMs": 191,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.qwen-credentials.log",
+      "logSha256": "9cb8e355e05ae39e9ffe5d89236d09af3a843297b9356cd6caf36daf123d7825"
     },
     {
       "id": "browser.media-session-fetch",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 126,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.media-session-fetch.log",
-      "logSha256": "502cad7bc8ab23b55ec1564e0f048b319cf1ca14c652aa1ce62ebe9561e0d1e4"
+      "durationMs": 108,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.media-session-fetch.log",
+      "logSha256": "2784c3886961d8deb3513d8f780eb2b4ffeec0eb5b44ca6717008104b71f8213"
     },
     {
       "id": "browser.media-download-runtime",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 345,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.media-download-runtime.log",
+      "durationMs": 265,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.media-download-runtime.log",
       "logSha256": "6494d5d2509fd4041fe6b790fb13b2ee0b9f0cfd304f4a075bf897e4276f4f0a"
     },
     {
@@ -751,720 +1412,720 @@
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 208,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/video.production-assessment.log",
-      "logSha256": "aae44ea61fda5d3c5b25ab0dd3203e2f12dd29a60decb319c730bf157facb959"
+      "durationMs": 179,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/video.production-assessment.log",
+      "logSha256": "e62d380a27cad876ad359b2730fe53aa59e4db3a7dad0b61a9b8dca7a9a5115f"
     },
     {
       "id": "video.production",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1723,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/video.production.log",
-      "logSha256": "c9c2d3f1d6b54ea202eda31c3f5ec84e466c14d2077e1db68b2c6a3e082f156d"
+      "durationMs": 1413,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/video.production.log",
+      "logSha256": "64304037172851ad425ddeed855d408de8521af655ad6393eb9cc983e522c5d2"
     },
     {
       "id": "media.research-video",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 9440,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.research-video.log",
-      "logSha256": "4e4c1ebe74ce0ba74a01cb2d247484426e5968af962d9a4cb4917429a1305349"
+      "durationMs": 7730,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.research-video.log",
+      "logSha256": "ffb49a5dbb4421ff36bd098f63ef0e41579e6c255b1f65c3bca97536baec71aa"
     },
     {
       "id": "media.precomposition",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 187,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.precomposition.log",
-      "logSha256": "f14827da191218e7de0838d0663c8804e5bdd474223147d01ce9629b9ceef8e8"
+      "durationMs": 190,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.precomposition.log",
+      "logSha256": "d1eb7ec480241900c7dbfcf48fe0a23a52c9e29b79d824f996c690b2a10c9f27"
     },
     {
       "id": "media.research-diagrams",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 213,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.research-diagrams.log",
-      "logSha256": "b30cc51d08ece62befad9e378ca802920d2b3ba4b29ddefa549abf1d1eaf9c10"
+      "durationMs": 392,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.research-diagrams.log",
+      "logSha256": "5072b396fdede38a27e8367cf95e06b4acb3bccce0bae30f8035d1e3a53cc93f"
     },
     {
       "id": "media.science-spec",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 165,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.science-spec.log",
-      "logSha256": "4ba64a0c6b9fbc07415d04da0b10892d934169db0dcfb14f5aa93962d7194ec2"
+      "durationMs": 141,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.science-spec.log",
+      "logSha256": "6ece26b1d0185ac885d74e46789bb62ce457051f3d1be493d1df6b4b9efa7e62"
     },
     {
       "id": "media.video-capture",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 196,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.video-capture.log",
-      "logSha256": "332460d56731ac942edf6bf4f8035df31834943b66a7e64dd9c4b1ab4a107473"
+      "durationMs": 180,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.video-capture.log",
+      "logSha256": "fcb567b854c8de22b1edf41ec5d98d55814a574972444b89c004509a4e9ad7e5"
     },
     {
       "id": "media.capture-source-index",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 141,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.capture-source-index.log",
-      "logSha256": "85b455522e4e0bbaf27d1fb92ed168d00be0a0da52bf329202eda6f8be7645b0"
+      "durationMs": 127,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.capture-source-index.log",
+      "logSha256": "0c3a4f1c2e13213dc299f4a945d993c367ef989347f385a556cd986ad165599b"
     },
     {
       "id": "media.preservation",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 181,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.preservation.log",
-      "logSha256": "7c8a5a30d061110b85bf5845d03551356d55921fee48ce0b79e6af5942441a5e"
+      "durationMs": 158,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.preservation.log",
+      "logSha256": "e8c35be5a0d09276e6ab5a344f91c60e3cc1c3fd030fdd65c9a01a654e615193"
     },
     {
       "id": "video.material-index",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 234,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/video.material-index.log",
-      "logSha256": "453ad670543d5ccd41bf8f01fe66ef228ec17b576b00ee110f6e49e1e318586e"
+      "durationMs": 208,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/video.material-index.log",
+      "logSha256": "ac43947f85bd9d16741b81cdc8650bfb64758efbee54fd457552826482cb6e53"
     },
     {
       "id": "video.source-analysis",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1294,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/video.source-analysis.log",
-      "logSha256": "97217ed419f8c72feb678808ad8dc184ced42b9d470bf9d97759fb9168ceedfd"
+      "durationMs": 1210,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/video.source-analysis.log",
+      "logSha256": "bf81a1c0b71401a97bde04b7d3f8431e23916b4491e9834f67608a1a32ab540f"
     },
     {
       "id": "studio.production",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2861,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.production.log",
-      "logSha256": "f3e152079c0a5584cfa31b97d638a54cded18937d8653e3a424c427af1693adb"
+      "durationMs": 2389,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.production.log",
+      "logSha256": "031b01d3ab025730748ac451eba87a460af7e550f791a1d28eb5b855832df1aa"
     },
     {
       "id": "studio.science",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5370,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.science.log",
-      "logSha256": "a6261c3ee5fa4468f4cadaf999c2d79b16bf4b804ff2dc5d64142d05395550ec"
+      "durationMs": 4833,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.science.log",
+      "logSha256": "06298bd87994562ee13774942dd392c9186c2a7d8e008be9661a0298f496fabb"
     },
     {
       "id": "studio.layer-packaging",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 4564,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.layer-packaging.log",
-      "logSha256": "f0a0069ec5602532901a0abd7eb0bac13155592ba23a1325307ef132c6eeabe9"
+      "durationMs": 4016,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.layer-packaging.log",
+      "logSha256": "bcbe606b07e4f4be605e4420f72afa910baa4adefc2a929c466dd064e96d4562"
     },
     {
       "id": "studio.text-treatment",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 4423,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.text-treatment.log",
-      "logSha256": "6ba31aec2a8676c8bbfad003ec15958b41494dce4086c0883722b3a621327388"
+      "durationMs": 3481,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.text-treatment.log",
+      "logSha256": "eb52be526b781274cd276db8948c1f5c2b7ee092301edf368faf344bb6159928"
     },
     {
       "id": "media.science-diagrams",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 6448,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.science-diagrams.log",
-      "logSha256": "fcece1f3aff69eab3094d6341a205de45360f7985d659ba8497cf364395d6817"
+      "durationMs": 5518,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.science-diagrams.log",
+      "logSha256": "355772d7d7375aa5de64c0baf8e881dcb52a298704a513bd92252011ffe4ea37"
     },
     {
       "id": "media.layer-packaging",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5551,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.layer-packaging.log",
-      "logSha256": "6d743d9dca6bd8e0ccecc5fceec4dd9b9f0db6553ca1416ce2456c85e4c828a8"
+      "durationMs": 4784,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.layer-packaging.log",
+      "logSha256": "02015f8ff7be313eae137975e75b1191ea7bcb4ec9689d7aeca2a1522eba5fdd"
     },
     {
       "id": "media.text-treatment",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3097,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.text-treatment.log",
-      "logSha256": "c53efc049841377b0f84e75d683a6494ebf8022dcec2e53f2eb953ba7c4db53e"
+      "durationMs": 2648,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.text-treatment.log",
+      "logSha256": "759dffc36640e89cf49f9f50968b95b70603b3252bd9aae57df49a6c97f9179b"
     },
     {
       "id": "media.audio-windows",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 16845,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.audio-windows.log",
-      "logSha256": "b7ab57e1d273c920da84c7fd0fc8034dbec72e97ffe828acf553514a13ccc56f"
+      "durationMs": 16532,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.audio-windows.log",
+      "logSha256": "c98a9d1f6155fedf92d85ced667c940c930b7b6113be673a528dd99cab55efde"
     },
     {
       "id": "studio.export-review",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 14543,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.export-review.log",
-      "logSha256": "8de5edce60187f3ee0921799f088eeb1b3eb00660a6dead5540cda4c90bd7b10"
+      "durationMs": 12535,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.export-review.log",
+      "logSha256": "f8e4e493cc786e7a11de899d64e8791085aabe8e902c437c9f210e4397046f2b"
     },
     {
       "id": "agent.context",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 142,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/agent.context.log",
-      "logSha256": "7d56804540e1f46fc8d75f0b44ac2ca38faaf13081a4713532323570b5fa3c71"
+      "durationMs": 217,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/agent.context.log",
+      "logSha256": "e3e1a8d31439ffcd7a0123db5b32247d27c375577aef7f0427592fa21b5ac346"
     },
     {
       "id": "agent.conversation",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 104,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/agent.conversation.log",
-      "logSha256": "a78a328684ecf8659806d7feb599fd9ca3f267f664229dc215fd4fd2610eed71"
+      "durationMs": 95,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/agent.conversation.log",
+      "logSha256": "fedcd92408b6012c6cdafb491f65de729050c03e6bccbd0a3651025956243ea7"
     },
     {
       "id": "bmw.agent-assembly",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 258,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/bmw.agent-assembly.log",
-      "logSha256": "f7defaee0688c2776186098d134ac74061c4a83d4c88ecbed2f5db67f0b46590"
+      "durationMs": 234,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/bmw.agent-assembly.log",
+      "logSha256": "f48a9cf369d49dc4504bb3847b859997535853ca16c6e28e4bf28bae5da6c308"
     },
     {
       "id": "agent.data-migration",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 196,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/agent.data-migration.log",
-      "logSha256": "d066730a9e919edc7711a12644c083852f24c39497a8662dce2f7342c065af89"
+      "durationMs": 173,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/agent.data-migration.log",
+      "logSha256": "7a2edc968162fef563867bddcd8f94048dddb3d17e7cabaa77a03bd47f7015a1"
     },
     {
       "id": "dsh.project-bindings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 102,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/dsh.project-bindings.log",
-      "logSha256": "0d31a59bca21272c4dacfa11c21c304f2605e09f1e11077b7bec4d78934510ed"
+      "durationMs": 86,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/dsh.project-bindings.log",
+      "logSha256": "d0d3141f7c22b71993a207e3f147fff1e9afe4f3eb50662796efa09ae4f97133"
     },
     {
       "id": "dsh.migration-history",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 105,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/dsh.migration-history.log",
-      "logSha256": "7fec061fc71b01a95d4a967178408049d27ba87481ebc549c66c2f2a5b1de822"
+      "durationMs": 94,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/dsh.migration-history.log",
+      "logSha256": "521f380ea6354e3104128a8cc931d21f747e59408df9d7455f61c1b0de05b424"
     },
     {
       "id": "agent.studio-composer",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 94,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/agent.studio-composer.log",
-      "logSha256": "9b50401937fd4f9114fdc69ed84131f480caebab5682ede6a74c15dde9074922"
+      "durationMs": 81,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/agent.studio-composer.log",
+      "logSha256": "f18cc0fd42c678c57fefbb0bb132c8b4c4015248a7a82359237f3f5517d2f14d"
     },
     {
       "id": "agent.assistant-ui",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 95,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/agent.assistant-ui.log",
-      "logSha256": "c712d0388043a0af372fabd65819a7ded889bec29896f9226e881f4900001820"
+      "durationMs": 84,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/agent.assistant-ui.log",
+      "logSha256": "cf306a7dcf37ef0ee54185adf48ad0a243bd9bc38c78bc3555ed4681c9076a6e"
     },
     {
       "id": "agent.driver-settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 91,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/agent.driver-settings.log",
-      "logSha256": "835626cbae28e2f26e40923a12cf3f13c448507e44cd43b59f616c26dba9c80c"
+      "durationMs": 82,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/agent.driver-settings.log",
+      "logSha256": "db75996a40594a84f66c674a80c00c82416537004d796d615d413f5c71065ea8"
     },
     {
       "id": "platform.agent-settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 115,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.agent-settings.log",
-      "logSha256": "d3f1d821a44cf5462f779518808c184e5b641cb049e2e25a9173bd4634463951"
+      "durationMs": 101,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.agent-settings.log",
+      "logSha256": "ddff91ee264028a058d7e070a80260a8018b6ee02fa56d7336ffd7cf7f0d2866"
     },
     {
       "id": "codex.settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 119,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/codex.settings.log",
-      "logSha256": "57ea3fa5c8b3d8f1e919f1429201ca0100ea838e224f59f682f55fcc10e7ff21"
+      "durationMs": 100,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/codex.settings.log",
+      "logSha256": "d50f5ddb42fb527c1ac7ce89633a4d03b25d3ebdf2fb41ca3db7fd44cd75306a"
     },
     {
       "id": "codex.installation",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 117,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/codex.installation.log",
-      "logSha256": "29bf102d20b0ee4710b315095b2cce71a60b735588b7c692f5c45048ceebf0ae"
+      "durationMs": 100,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/codex.installation.log",
+      "logSha256": "6fbe9f2a523f071fddfd0a4bb784530d422fbb809f4ddad6df6fed1cdd114f52"
     },
     {
       "id": "qoder.settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 183,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/qoder.settings.log",
-      "logSha256": "0ce022907a441baa2c8d19279f86990646a8909b1d60eb5cafc4ca32748e1816"
+      "durationMs": 156,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/qoder.settings.log",
+      "logSha256": "a7d8d8087b363ae8fb85f5e6750dfcde03a37389358d5254edd31ab2db86d1a7"
     },
     {
       "id": "dsh.settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 122,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/dsh.settings.log",
-      "logSha256": "877605942b703a4c9e9664bd3a5317b7504b597c02526ce39826aa8e919f2bcf"
+      "durationMs": 109,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/dsh.settings.log",
+      "logSha256": "42cbc0050a57eb1dd3b6a71f79a5ec88840183c4af3624c3146b6d85325b46a4"
     },
     {
       "id": "platform.assistant-controller",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 112,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.assistant-controller.log",
-      "logSha256": "5eb25006712e8fd514272a62c9b179645de3eeb02db4cd1cf56dbd0669ec50c3"
+      "durationMs": 98,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.assistant-controller.log",
+      "logSha256": "fe4d39fe98e190e3e2fe92f2e83215fec57ba0a283cdb9d057dd3a013204ef92"
     },
     {
       "id": "platform.conversation-store",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 120,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.conversation-store.log",
-      "logSha256": "ff212dc3c68c3bb5f6594b0bf4c5faa53e9f59f42cd7d96790ecd6d63f8c2e3a"
+      "durationMs": 103,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.conversation-store.log",
+      "logSha256": "5233b572d1686d09ce624a652bbbc4ce0102de1ad33a45f317827ba45d78c487"
     },
     {
       "id": "platform.agent-history",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 108,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.agent-history.log",
-      "logSha256": "9a3f6e490f4b5b8283b2e98e652f05f2b7ee2acb6631c93ebc75283ac373881e"
+      "durationMs": 99,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.agent-history.log",
+      "logSha256": "8aa5b98c9205eb2b38929eb22b93b8aef83e634083f6ac8c015882ddcfe5f870"
     },
     {
       "id": "platform.agent-host",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 179,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.agent-host.log",
-      "logSha256": "ca271ca53987a7136c50169f30ed385103f8dea993521ae47936da170dbeb085"
+      "durationMs": 168,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.agent-host.log",
+      "logSha256": "38bcff870d691415fdf686f1cbe4d8b36f1d38265a3df84cb614f72602e173ca"
     },
     {
       "id": "browser.session-leases",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 380,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.session-leases.log",
-      "logSha256": "f7aab483759a03f10eaf17e52dad8701caf679b16a7cef4c96088c8c27e7bcc9"
+      "durationMs": 467,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.session-leases.log",
+      "logSha256": "18c0863a44e82d1014b14a9aec2fb299b9618830b049071cc3f91a463a47a89b"
     },
     {
       "id": "codex.policy",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 119,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/codex.policy.log",
-      "logSha256": "aee04de48e25b0572e3d0bb8bbf99dbeb561f903f53f0239d2f6419198c3b8ff"
+      "durationMs": 112,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/codex.policy.log",
+      "logSha256": "9802328243af49b87e1e67ad9b202820d71fe35bdcaba2a8096e3cd9cdc4e39d"
     },
     {
       "id": "codex.backend",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 125,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/codex.backend.log",
-      "logSha256": "d335b5664d133fcc79bbaa15e3f53fcf8802eb5daf4abd97a9fecc1b1330b0c7"
+      "durationMs": 113,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/codex.backend.log",
+      "logSha256": "9561babeb7fb1cc6ed76a3ce4d10dac83c235da31bbcd5e81f0d90e47a77d8bd"
     },
     {
       "id": "dsh.events",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 98,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/dsh.events.log",
-      "logSha256": "c48335f7f534c9cf1e09fc9eeaa2dce7bb2266ea77932fe019c9615430b4f7f3"
+      "durationMs": 82,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/dsh.events.log",
+      "logSha256": "2c61b112324775c9390fdf54edfa1a494ce16654ca1c1043eb5303eec1e1634f"
     },
     {
       "id": "dsh.backend",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 120,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/dsh.backend.log",
-      "logSha256": "1b5a074d7f5be1ca6d5cc1e1bbbb07a4690f82e1e2c4235654a9ade060a43098"
+      "durationMs": 108,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/dsh.backend.log",
+      "logSha256": "730f6c1776dc7f26c5254dfc7bbc82f0f29ac849b61d0ae7697e975f7b945014"
     },
     {
       "id": "qoder.events",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 98,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/qoder.events.log",
-      "logSha256": "6ecdffca746c74c90a3f042545e69f746b082a447a86f5115c938c7f3701667c"
+      "durationMs": 83,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/qoder.events.log",
+      "logSha256": "b8a88d952855923f31b7a67f93ef2a03e4110301b5d97cf04e3475c683c23bbb"
     },
     {
       "id": "qoder.backend",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 184,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/qoder.backend.log",
-      "logSha256": "14a27646baff926a6f61a8639054454a5d6f39d8c7eaf3a2144cd8003df22f4a"
+      "durationMs": 154,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/qoder.backend.log",
+      "logSha256": "8e87de67a08cc35d862b59f9d0f3520ca97e07cdd80986ce03f2ea657294067b"
     },
     {
       "id": "browser.schema",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 96,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.schema.log",
-      "logSha256": "0b3164212b4ff271855a2c13a84dbee92b25f88f1ccbcdd0b247d42c751ba822"
+      "durationMs": 80,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.schema.log",
+      "logSha256": "0a2be00d12cf3b8df08eb79b2c8d431bc4da032044cbbbe6650f9bd822d81cac"
     },
     {
       "id": "browser.catalog",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1674,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.catalog.log",
-      "logSha256": "43fb7047d5d87f00b9d05ce8752edf8d1d594e04e8ae51cebf97c8cd429b41a8"
+      "durationMs": 1454,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.catalog.log",
+      "logSha256": "b0e89b3fa1d6f2f9e5f8690cae2c64888f0df2893c683892d78f0eecf1ab8ebd"
     },
     {
       "id": "browser.operations",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 291,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.operations.log",
-      "logSha256": "3bce39f6c22137a3919fa42605f7b5e6cd7d569d94462a657db6fdcd91c16e24"
+      "durationMs": 260,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.operations.log",
+      "logSha256": "7a3d482d27b667191ce323abff86e818ae830726ff88ecb6f9565d759a0b90ff"
     },
     {
       "id": "browser.shutdown",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 131,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.shutdown.log",
-      "logSha256": "9686f52d79d59142aa5048c01878b582903bbcf5df0b40efb4019c8d2f170ef6"
+      "durationMs": 109,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.shutdown.log",
+      "logSha256": "e85a3cf0eac255757cad26e41a7d978f846e39b32e8280d95c4f9b27e12bd637"
     },
     {
       "id": "browser.deadline",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 100,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.deadline.log",
-      "logSha256": "502af24150c7a2e5312a49d54a7f4513f88715032c54ebcd700c4aec4d734e0f"
+      "durationMs": 79,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.deadline.log",
+      "logSha256": "ca37aee2aa84e050e0885002b396400b615464adab0a6575e75fae2b8d22f058"
     },
     {
       "id": "browser.screenshot",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 105,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.screenshot.log",
-      "logSha256": "59f21434dd4a6e0d860f6bb9aa5c7c2bd3b6d996c207b888b565488616c2f18d"
+      "durationMs": 90,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.screenshot.log",
+      "logSha256": "976898e20639fc02b3cc2b6f5c90ae180d8d8c304f242042a10fd6ad965de3ac"
     },
     {
       "id": "browser.renderer-read",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 102,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.renderer-read.log",
-      "logSha256": "1f444bf66a70df738908a404e6658ffcdec1f30b18637bfc4364975623028055"
+      "durationMs": 92,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.renderer-read.log",
+      "logSha256": "400406a25eff843fb89ef874079af63c782e18161b44289d57464bdc89be2b31"
     },
     {
       "id": "browser.download",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 146,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.download.log",
-      "logSha256": "15e2225f89725ba0860a4ac6ad7d17e127f12d78b3325b5f398f531cae70106f"
+      "durationMs": 128,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.download.log",
+      "logSha256": "6ee28b3305f333d08e0e9b5ec254635790bda8221b9dd53699640e4fc16b6ab0"
     },
     {
       "id": "browser.tab-policy",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 95,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.tab-policy.log",
-      "logSha256": "128972ae469c8b2d5109bbb8a1fb66a57f7714c1642a7b22649faa474cc7c476"
+      "durationMs": 82,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.tab-policy.log",
+      "logSha256": "662e6a5a060c24c3ee700f5823230e9954481a6baf1535acbbcaf296705af769"
     },
     {
       "id": "browser.sources",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 104,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.sources.log",
-      "logSha256": "b9c613e477fc8ef6e53040b0b65c53cd057212104545d986007b9a221cde3d08"
+      "durationMs": 86,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.sources.log",
+      "logSha256": "56dfaf4aff7dcdcb4cf7aa34832f063d17910e491bea842aa4fd4d474eea5197"
     },
     {
       "id": "platform.sources",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 190,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.sources.log",
-      "logSha256": "6d2098055228b8e5e986931299adafb280b8781cce1ea07580e35440866e2a4b"
+      "durationMs": 167,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.sources.log",
+      "logSha256": "a421a9e512fcd8a393c7813937a076200dbc81db15ebf8a8b804a45698e80fdb"
     },
     {
       "id": "video.sources",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 186,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/video.sources.log",
-      "logSha256": "10fdbbd4406b4aa88fe294d6f0738393337ea222b170e2e403a5706f9fe0c042"
+      "durationMs": 160,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/video.sources.log",
+      "logSha256": "1c99dd2f598e3cd3478501c93a6a2b18d3be76d40730b5064a2337adaae68b0e"
     },
     {
       "id": "browser.host-contract",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 96,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.host-contract.log",
-      "logSha256": "37e342561384efa086989f5da688c810dde59951b79e0b3329e0d76596b7f68d"
+      "durationMs": 81,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.host-contract.log",
+      "logSha256": "062f2ed4036b57d409648faa8575a91f0f2199a39d0bb7eccee72a1eb4258767"
     },
     {
       "id": "dsh.dsh-runtime",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 124,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/dsh.dsh-runtime.log",
-      "logSha256": "f55469f1251e1cc22eb730679dbaf1e8c9d555119fa2f907f48a7d81f5be45f6"
+      "durationMs": 106,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/dsh.dsh-runtime.log",
+      "logSha256": "1f8d662efcc2963c271e4a19f33e9e92abfc5170ea3c6e0a7cfda75b3e834514"
     },
     {
       "id": "dsh.dsh-transport",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 133,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/dsh.dsh-transport.log",
-      "logSha256": "3e72378c588db2f7c1fedb2873c19b7633df09949f19a9b6c805c017d1d4fa0a"
+      "durationMs": 113,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/dsh.dsh-transport.log",
+      "logSha256": "5e9a7250bc3e738f07f92116549d95bff71136f6661bcd4ad0bec2e6a992822f"
     },
     {
       "id": "dsh.dsh-preset",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 117,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/dsh.dsh-preset.log",
-      "logSha256": "efe4e2eb808a7fede4bba9ab286a22e3fcb2d7352ce4a5346c6f93fa61afb1d5"
+      "durationMs": 100,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/dsh.dsh-preset.log",
+      "logSha256": "c750c9cf01060d850ff6e5b14ed099b61d13d91509d71c9e37986fbaf9908757"
     },
     {
       "id": "dsh.browser-failure-guard",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 94,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/dsh.browser-failure-guard.log",
-      "logSha256": "c4eedb4ce46f57ed5e56b7ec22db0e46b9bd1edd5a5a42e2b02667615585682c"
+      "durationMs": 78,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/dsh.browser-failure-guard.log",
+      "logSha256": "541d70aba3f8124e3b56c459f7c6b5b9f34b7093fd6a3d4e697d1a051d02d8e4"
     },
     {
       "id": "dsh.workspace-context",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 98,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/dsh.workspace-context.log",
-      "logSha256": "fd5c21ee156c63dbf8fdee7827145e157888fd9eed39ff3164f35f5b07bdd91a"
+      "durationMs": 80,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/dsh.workspace-context.log",
+      "logSha256": "f83aaa3ed6ec5d5f1f9ada514903e73c407819e19fbe1b49d74444081361009c"
     },
     {
       "id": "dsh.video-case-log",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 100,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/dsh.video-case-log.log",
-      "logSha256": "a93d0eae02893496b01d027b44c55af6e2ec845bb26110b3fddaf56bfac2df2b"
+      "durationMs": 83,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/dsh.video-case-log.log",
+      "logSha256": "082ded94ca0d5f7696322d360b33cced584c5da0a2e24fdbf682388816e8a44d"
     },
     {
       "id": "media.controller",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 158,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.controller.log",
-      "logSha256": "a9843881bdac4d3d44048f1678bdfd27000f351c08fe3b42aea38f1ee05fa2b0"
+      "durationMs": 121,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.controller.log",
+      "logSha256": "a2ab9ee9fe525fc85d32f9bd2a8dc315bcbb1c2c1a0666c9bb2d62ffd3c37e3d"
     },
     {
       "id": "media.processing",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 133,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.processing.log",
-      "logSha256": "ed5a5b78f4374a65daf1b1bc1a381dff8ea4825a635e535714fc034bf55c1ccb"
+      "durationMs": 122,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.processing.log",
+      "logSha256": "0d04f75eb071a645229139e71e5b342ac809d5e45d79906f458752ef54a38e94"
     },
     {
       "id": "media.production",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 376,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.production.log",
-      "logSha256": "791f22675fcf596b14d77f748f86434c3e89c41148b3e61fd3a2b18099164a39"
+      "durationMs": 333,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.production.log",
+      "logSha256": "335e0e45ee901e58d6e1e0ec68919182805b775d5062f1d100504664e5c7cc38"
     },
     {
       "id": "media.options",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 98,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.options.log",
-      "logSha256": "8c54ecddf6ffd4d17f26e5ce3d48afbecf64cb3ac6dadcf291f6bde79cc02862"
+      "durationMs": 82,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.options.log",
+      "logSha256": "07c3a1d35747790e92dcfad35b01c43da23357679716fba97c7be3b39f013753"
     },
     {
       "id": "media.scene-clock",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3098,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.scene-clock.log",
-      "logSha256": "68aec0ac1b3a6a41af6bea862b6e9dabc6961504ae34f87aebf0804b57e14f2a"
+      "durationMs": 2749,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.scene-clock.log",
+      "logSha256": "8558d6adaef82a5fe27f78fc2ae47e5be6e2582ba90fec429dac3111ce785741"
     },
     {
       "id": "media.speech",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2612,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.speech.log",
-      "logSha256": "8fa4dab55756ea6aa821fd2514b7ce163166e46d3d0616e9c21531d1438f07e6"
+      "durationMs": 2610,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.speech.log",
+      "logSha256": "775dfc7ba88acdede052ec5127fdf5c7f62127888f432f2963a5ce0d52bda23e"
     },
     {
       "id": "media.port-contract",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 99,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.port-contract.log",
-      "logSha256": "382293e6cdc6a6bb42a3cf32d6ef653fdfc05aadcc9e225c0e48a22b759602ac"
+      "durationMs": 85,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.port-contract.log",
+      "logSha256": "794f1def111965ab4aa67ed03ad9914830fedcb7e4fc4cf69b9c5a33e57eef53"
     },
     {
       "id": "platform.projects",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 147,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.projects.log",
-      "logSha256": "d27ce0477ac78281d820e7ac3fed83a0cf3fc17d0d08c86746a5a0ef8a76b6bb"
+      "durationMs": 128,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.projects.log",
+      "logSha256": "5afdfc2e6e1d12b131ac83d7a417ac5494dec33acb37bbea1d7c365b17621296"
     },
     {
       "id": "platform.settings",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 109,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.settings.log",
-      "logSha256": "144af7fada139c3834f97fb55073843e0ec44c20653f0d91b841fb5b05e19a2f"
+      "durationMs": 89,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.settings.log",
+      "logSha256": "d77bb9eda5659a0a07f1dcf7c57382503197bf733ac363fae478b4fccae4f08c"
     },
     {
       "id": "platform.schedules",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 138,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.schedules.log",
-      "logSha256": "0fbf58e810ef3c16f9d58145d81122c13f17f589e0ff3f4623b3f3a3c9ba7d96"
+      "durationMs": 182,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.schedules.log",
+      "logSha256": "221e08bc38aa62812f9db18c3353e032e12dd91381f2297232335dd0278e5b3b"
     },
     {
       "id": "platform.state",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 150,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.state.log",
-      "logSha256": "6d0985bd0f4472713e0765723d36ee8229e4b589d2321fce5a9c6f447a77334e"
+      "durationMs": 160,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.state.log",
+      "logSha256": "0011b582947fbd2d9f311dd51e570eb4eb21274a6fff237c5a05e1e2313d35b3"
     },
     {
       "id": "platform.layout",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 96,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.layout.log",
-      "logSha256": "84f10f1a2a50f125b006dc8b169d1f5882e7457b54ff089cc64a4891f98bd9ab"
+      "durationMs": 118,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.layout.log",
+      "logSha256": "b859ed25c30dbb34a22f0e50ac3042ed915165238818e7a8c561573b375a0a07"
     },
     {
       "id": "platform.docking",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 96,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.docking.log",
-      "logSha256": "fb701e949f6d7fc719aa7710050989a82879245391af782f2d051d18a7110cfb"
+      "durationMs": 112,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.docking.log",
+      "logSha256": "a95fe364dc1d4276836a7b93211e671c4c980664e0d654c656c51568e658a8a7"
     },
     {
       "id": "platform.permissions",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 92,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.permissions.log",
-      "logSha256": "43f3b9914d89ab444e7d34d58e51598f7be6eca3d833ebe2d5076a2df88ffe9b"
+      "durationMs": 100,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.permissions.log",
+      "logSha256": "9f7bc9a78364992a2a2168aa0005addc725ac6f9753649fb69ff1766353843be"
     },
     {
       "id": "platform.menu",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 96,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.menu.log",
-      "logSha256": "0fc595943fea3b56e1767289062089bf92e3ca137668f11ead0a1c8450faa37a"
+      "durationMs": 109,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.menu.log",
+      "logSha256": "1047d802b108b627b0377e23671d3431ff6ff3690025858338955fc5ebe94256"
     },
     {
       "id": "platform.restart",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 93,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.restart.log",
-      "logSha256": "dcf8c9d1b8c4f159e0c0256284d11e081372fe07022f3a16438d170b14b4f761"
+      "durationMs": 106,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.restart.log",
+      "logSha256": "f1fde940365f87e8d2acd5c74dc35fa1d24d1e60b5fc062c9ced7f8543b2202d"
     },
     {
       "id": "platform.continuity",
@@ -1472,106 +2133,106 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 104,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.continuity.log",
-      "logSha256": "297548675a7f6aed100958794bdf288dcadaea041feb310b0604cb4a1cf338b9"
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.continuity.log",
+      "logSha256": "593a151e3e24870cf61cdd045dff7b30a106bf5eef2b655c8979d6df168fa028"
     },
     {
       "id": "platform.user-agent",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 91,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.user-agent.log",
-      "logSha256": "8030200efa3fa4b3f7c1db02ac13a9f8c9b317af7cf42d68281e58fcc787a65e"
+      "durationMs": 96,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.user-agent.log",
+      "logSha256": "7f886a9ba7b178978945eef9387f8619dd629bc0ac8264d1962bed6a21a44130"
     },
     {
       "id": "platform.project-panel",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 94,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.project-panel.log",
-      "logSha256": "9e768046f1cd9d411628f342e4453930f091f95cfc5e9f72e9cbfeb1a75f2f2b"
+      "durationMs": 152,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.project-panel.log",
+      "logSha256": "9de0221aec4a66d1352f2718321b2beb9a914637504ab721d79bce5b294c6fae"
     },
     {
       "id": "platform.driver-binding",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 106,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.driver-binding.log",
-      "logSha256": "0cba1bd343b70d964adb94e5e4f46157b6745ada566816314f902016f77cfb2b"
+      "durationMs": 186,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.driver-binding.log",
+      "logSha256": "62ee49ccf0c6718030bca5e2f60af40ca461073b8807bc88b8da7b08604cd86f"
     },
     {
       "id": "platform.catalog",
       "layer": "boundary",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 144,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.catalog.log",
-      "logSha256": "63b1df1a2023d63bcc2d6b793283e5d28a9689be22a6399340ff89a6cfff3aef"
+      "durationMs": 214,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.catalog.log",
+      "logSha256": "76eadcfc989836e63db1951d9895d31ea6a109146c12791750df289136ad9f38"
     },
     {
       "id": "platform.boundaries",
       "layer": "boundary",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 310,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.boundaries.log",
-      "logSha256": "9226826f54b8c5329622d85f757f82e4660f4525e6a2383a67e750b528f8310c"
+      "durationMs": 309,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.boundaries.log",
+      "logSha256": "5bac6b086839f7fae6fbdd7a537dd3a44edaf31dc42530979b7a8b2c20d42d62"
     },
     {
       "id": "platform.remote-boundary",
       "layer": "boundary",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 244,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.remote-boundary.log",
-      "logSha256": "f6892d819f59cef99ec6cb5ca8dfbe778bfead025ab612a62f137a3db0273a1b"
+      "durationMs": 228,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.remote-boundary.log",
+      "logSha256": "1a3a62b42bceb9dd05f76bc4a0be062f1f0ae292a17b786849f558ce7cd771b5"
     },
     {
       "id": "platform.shell-ipc",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 90,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.shell-ipc.log",
-      "logSha256": "d0795936572a9f3a15e542f3acf5b161935adc6c7ab9e8fdf22f82bdd7f76220"
+      "durationMs": 85,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.shell-ipc.log",
+      "logSha256": "98af8b2b78e6d309beea529d9c5b9f8f0a8ea2350dafab9531d72d059c2bfbcc"
     },
     {
       "id": "platform.permission-store",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 95,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.permission-store.log",
-      "logSha256": "b90d50a8c5c23acbf5443e7ae1e09576820f056a1f4727b4efe1f3ba6dc3c6aa"
+      "durationMs": 89,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.permission-store.log",
+      "logSha256": "df489179794e2848045800faf1b45483f7d6940528010107897e5b6b8dd2edd0"
     },
     {
       "id": "platform.continuity-state",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 109,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.continuity-state.log",
-      "logSha256": "54a52f1819995af0ab4e5ed41e568f07fb88dcba96ab65f89fa661702ed69bdc"
+      "durationMs": 101,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.continuity-state.log",
+      "logSha256": "e96bf21d035efc8ff254e1213026eb5c42f48bec173a65839f44547c70217f80"
     },
     {
       "id": "platform.feature-contract",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 97,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/platform.feature-contract.log",
-      "logSha256": "5cc37c699ac30f31d191806e474df2118aa0abfd481aaf63a3ecf16b6a9c0f3b"
+      "durationMs": 87,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/platform.feature-contract.log",
+      "logSha256": "5b9bfdfc56a338abae11ce7c669a43739109b9ae1b441b094ee56512425d0411"
     },
     {
       "id": "video.schema-publication",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 78,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/video.schema-publication.log",
+      "durationMs": 75,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/video.schema-publication.log",
       "logSha256": "32bb562c78cd4343648198e3a0cc2a380b6199cf329a88add1dbee5cf85b6fc6"
     },
     {
@@ -1579,63 +2240,63 @@
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3952,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/video.schema.log",
-      "logSha256": "25e5b73911aa39f893ca8ab6468f9101d8492a466722419b7ef1c39df6c9ce96"
+      "durationMs": 3423,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/video.schema.log",
+      "logSha256": "9d4ce0b9147ef9a3aece2473cb8176952d7b27c533398bb8598412c0d749367a"
     },
     {
       "id": "video.materials",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 126,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/video.materials.log",
-      "logSha256": "2f5987ffd1dab82b1d695f9753984f5792400e09d86b5e22a0c82da7d56a5f6d"
+      "durationMs": 115,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/video.materials.log",
+      "logSha256": "5567d8595f36b89c9e0e10b90f716d1828c248c4e36260ee5b22f6e8c8217827"
     },
     {
       "id": "video.studio",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1993,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/video.studio.log",
-      "logSha256": "1b6afb7626b699283d319ea20d112d2db48a71f68482c2fb848c0d0d6cadf3fc"
+      "durationMs": 2042,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/video.studio.log",
+      "logSha256": "a96793f5b6bee5b05374f290141fce6ab1837bc054a691a7a9e345b7bf291faa"
     },
     {
       "id": "video.settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 200,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/video.settings.log",
-      "logSha256": "d4fbf10e737adba436c881e72cde6bbffbb101cb21ed53d72eac054baa975d4f"
+      "durationMs": 222,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/video.settings.log",
+      "logSha256": "4deeaac3e2c7cd4c4d6dc424abde79618008609cbc71ad728ed91d0fe0e54297"
     },
     {
       "id": "video.boundary",
       "layer": "boundary",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 169,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/video.boundary.log",
-      "logSha256": "dfe8de77edf9e5aac5e370e02e0bc94ae80a0ae8f473d6438dbdb389ebad98ac"
+      "durationMs": 201,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/video.boundary.log",
+      "logSha256": "5b38405107f7538eed9c8883782369cf714da13c8b77e059567b694f58d4c1e3"
     },
     {
       "id": "architecture.boundaries",
       "layer": "boundary",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 14172,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/architecture.boundaries.log",
-      "logSha256": "96588bbdd64f39b1ac6b732888d49dfea91a987dbf5299d175df2cbc8883dfcc"
+      "durationMs": 12618,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/architecture.boundaries.log",
+      "logSha256": "82fa9a485023de7fa412d3e27c46771ea680688b2cf4031b2d57c97e4a29765c"
     },
     {
       "id": "validation.selection",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 33662,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/validation.selection.log",
-      "logSha256": "ce2c76c83c6114366a5087f464333d9052891e39a1291416a1d794a9b49d64ee"
+      "durationMs": 32929,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/validation.selection.log",
+      "logSha256": "c286289a94603e240ef6369382373e0a88c6b69476095182990958aa27706d0f"
     },
     {
       "id": "api.types",
@@ -1648,171 +2309,171 @@
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 10930,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/sources.log",
-      "logSha256": "5a62557498767bf0cf383b720052331fd86061dbe5c7356819b710c2bd5a716f"
+      "durationMs": 10874,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/sources.log",
+      "logSha256": "90f8972b050accd4bc93245984671982402ae307f41d4a85d8450308fd4f5850"
     },
     {
       "id": "assistant.default",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3569,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/assistant.default.log",
-      "logSha256": "80db7a3e4f31840dee611cf8f6bd8bbeeb497ff07d7bc9bd613fcc12c67ee668"
+      "durationMs": 3596,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/assistant.default.log",
+      "logSha256": "f48273a244d66bb222eedb907e58c13032b05daa969faf2e2641721ae540d3e2"
     },
     {
       "id": "assistant.application",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 8013,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/assistant.application.log",
-      "logSha256": "4e3e20980c06b36652b90eda57d014f19bbc1f28299edfb4e5abbb8274a36345"
+      "durationMs": 7880,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/assistant.application.log",
+      "logSha256": "ba7581dd45009a842c67b8ceda94387a29b1bf98dfbe3e8093fcbfa1639782bd"
     },
     {
       "id": "assistant.schedules",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1219,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/assistant.schedules.log",
-      "logSha256": "ddf3fa921755ee96cb465f3ef7274b6f1095c746e4e1ca5039b6fb6a04bd3896"
+      "durationMs": 1191,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/assistant.schedules.log",
+      "logSha256": "b968917087cea2b503c9c7f8bd304378d85ccac3c70e2e2f1ed97e36fcc9f11b"
     },
     {
       "id": "assistant.startup.conversations.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1448,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/assistant.startup.conversations.retry.log",
-      "logSha256": "7b8deae7907abdfc75a416ba361d6bc2afa1a2cfd86b4a709203993589f1871f"
+      "durationMs": 1083,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/assistant.startup.conversations.retry.log",
+      "logSha256": "9635de20d5d4395f423bd3154e23b317f6d5a3b94aa7ec005f78df1191c4890e"
     },
     {
       "id": "assistant.startup.conversations.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 543,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/assistant.startup.conversations.exit.log",
-      "logSha256": "691892ccc18688a307d1e0a4c2f3f2ccd858f0464e79339d3d7f90d2e0127f72"
+      "durationMs": 442,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/assistant.startup.conversations.exit.log",
+      "logSha256": "ce0addf2cb7e00b15011042a7eda0f65fb5566ccb8d1147f9d64e37048c10ac6"
     },
     {
       "id": "assistant.startup.preferences.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1104,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/assistant.startup.preferences.retry.log",
-      "logSha256": "bc3d3d120943cf2fa049ba2e7a6eab2701ac25ec8553fe7329c109e8066bb1b7"
+      "durationMs": 1070,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/assistant.startup.preferences.retry.log",
+      "logSha256": "cccb44523d34c39697b1eadfdd6c1c89c36b1588c261207afb788bddd391e4d7"
     },
     {
       "id": "assistant.startup.preferences.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 435,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/assistant.startup.preferences.exit.log",
-      "logSha256": "70931c3cc8eccd436dd2c78c0261f6bfcb104749f0303a81e3717430b2fb7651"
+      "durationMs": 406,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/assistant.startup.preferences.exit.log",
+      "logSha256": "667b8d3dc92bd41f5d54d8ef579d4f86336d3305781e6bc83df2fe8e1c7ada39"
     },
     {
       "id": "assistant.startup.history.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1136,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/assistant.startup.history.retry.log",
-      "logSha256": "39651a0ed8ad63b6dd5260b5be333005fa2b1659ecbe671a47a83756b24fc643"
+      "durationMs": 1062,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/assistant.startup.history.retry.log",
+      "logSha256": "988a5574a684861b0e3b8a9b71f93e14e5b2eb47034603edd97f82592aafe44c"
     },
     {
       "id": "assistant.startup.history.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 456,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/assistant.startup.history.exit.log",
-      "logSha256": "2201348493c1f02ff2a14937fa3b04ba8077394346324e4f4628a4d8f71273ba"
+      "durationMs": 412,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/assistant.startup.history.exit.log",
+      "logSha256": "d2fc8eb57162180dd95713f0d297bf10f805de18fced1f67061035d76d8402d4"
     },
     {
       "id": "driver",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2695,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/driver.log",
-      "logSha256": "f5f97dd57392378f54cb1684246c00642220d122d1f8543c24cc6b105d418674"
+      "durationMs": 2593,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/driver.log",
+      "logSha256": "e370cb743465aff5f70f3da4408ff4341633b1d718a2b4ab10f752c338238f32"
     },
     {
       "id": "startup-recovery",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1049,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/startup-recovery.log",
-      "logSha256": "09ac4450f40612a6fb50c6413f3c745249e18a993789716b160b95f164a19cad"
+      "durationMs": 1045,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/startup-recovery.log",
+      "logSha256": "b2cf2353fa79c4380545d0a1d95a0c3f2429f36029c9275b8f0a9871f7827852"
     },
     {
       "id": "startup-exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 442,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/startup-exit.log",
-      "logSha256": "9be836bc47a1ff63e8019944b127d8745480c86542693e605a4069beae048552"
+      "durationMs": 423,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/startup-exit.log",
+      "logSha256": "5669b1696dbf48f2db137e70b5a1777e680c148155fac5f54b4e94af0ec9bfae"
     },
     {
       "id": "startup.permissions.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1002,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/startup.permissions.retry.log",
-      "logSha256": "27c1e6c076c1f5d5dc4a00a086b6c6e76ceffe50892a41ef24dec88790eba240"
+      "durationMs": 1042,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/startup.permissions.retry.log",
+      "logSha256": "7bf4dd9ab679ab7a32f688453e5eccbc955e91c43255e6e5d5adf48264e56363"
     },
     {
       "id": "startup.permissions.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 417,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/startup.permissions.exit.log",
-      "logSha256": "f80c4fba771a549e97028fd3d2ee0a1fc9bf97b56bf63a36f2830fe0a568ada4"
+      "durationMs": 409,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/startup.permissions.exit.log",
+      "logSha256": "62efd5f0bb958b2cbe632fe18d94d1da2dd9740a7c9acc5049519be350d361b4"
     },
     {
       "id": "startup.layout.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1000,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/startup.layout.retry.log",
-      "logSha256": "a99ad61648f21afae520c210ca0e99bb322b5b743fe6b055fb3423fcdfb584b4"
+      "durationMs": 1003,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/startup.layout.retry.log",
+      "logSha256": "54a7be364c8ca3a427b4975a347759fe670f269ba250e09a8c4a8073bfc27325"
     },
     {
       "id": "startup.layout.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 401,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/startup.layout.exit.log",
-      "logSha256": "a891edcb2c977e1bd536687a99469aff89a1839f0dd68ec8b31171525f935f88"
+      "durationMs": 396,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/startup.layout.exit.log",
+      "logSha256": "6cec1e37c0d567674f0db22f180b35537a51c1f4e72e6a8d523f74800a575f16"
     },
     {
       "id": "startup.continuity-config.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 999,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/startup.continuity-config.retry.log",
-      "logSha256": "3577d2e0abd08d66c7cd45cff251dcb89a9a5ed7c7d903ad5185ad45e1187525"
+      "durationMs": 1002,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/startup.continuity-config.retry.log",
+      "logSha256": "41ec78683df273f8006dc92077aca3df005cb1a869dbd2c031e7658399b2c88a"
     },
     {
       "id": "startup.continuity-config.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 397,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/startup.continuity-config.exit.log",
-      "logSha256": "3deb0f2a1ddfae9d01b586d340bff014ef2becf2d51f153f5c75c3b858b82e8f"
+      "durationMs": 423,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/startup.continuity-config.exit.log",
+      "logSha256": "2c67ead3e6f7bb7b3ac572dca0c1b2e1bbdcd31f75330dc4559fa98cc743efa1"
     },
     {
       "id": "startup.continuity-snapshot.retry",
@@ -1820,205 +2481,205 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 1011,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/startup.continuity-snapshot.retry.log",
-      "logSha256": "208507fb11c492f2dc7510a1a840a111f3d56be0668ed87be400038e86f8ee08"
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/startup.continuity-snapshot.retry.log",
+      "logSha256": "5c079a2a21e57512ce73c9689f84c26b13f88fed7a571d8e28b85ed3482ae7bb"
     },
     {
       "id": "startup.continuity-snapshot.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 436,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/startup.continuity-snapshot.exit.log",
-      "logSha256": "4ac97c088a17074a54880363378d1cf3c505a2e13af811caad65d98a95107af6"
+      "durationMs": 411,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/startup.continuity-snapshot.exit.log",
+      "logSha256": "819fbfc68003789749bf5d8d363fd91f11428b5abb408f6640ae1b66e525aced"
     },
     {
       "id": "dsh",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 14451,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/dsh.log",
-      "logSha256": "3e8c6aae34b9a2c579a192f58d85fd4aa445bb116f3aa71d1a419f3e4d1edb0a"
+      "durationMs": 14191,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/dsh.log",
+      "logSha256": "f79636486f4ab49e9f00fda0c44e90a0c268811d4e512e469bc582a640d36ef7"
     },
     {
       "id": "studio.next",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 15004,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.next.log",
-      "logSha256": "6b2e0b32ffae0fee8c66672de85e2206dc16a48a3efdde3473150225954b8ee0"
+      "durationMs": 14878,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.next.log",
+      "logSha256": "7b9311e4d0d96330a6f5971b3e57065d355184d55921e98add32b80eef56604d"
     },
     {
       "id": "studio.schema",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3414,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.schema.log",
-      "logSha256": "2e4536b53f82b5aaaeb6fe39e43f71774dd31ddda5344aa4bd3ae6a5d78c0882"
+      "durationMs": 3104,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.schema.log",
+      "logSha256": "828e813225ded2a6996d3c213b03d930d7b7d12a478ae0a7854278040a8f1386"
     },
     {
       "id": "studio.long-film",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 7411,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.long-film.log",
-      "logSha256": "a834c8d127ec69a5d9e09f8aab1bd4c8555c5e3dd4f73d73312ca48959a44875"
+      "durationMs": 7216,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.long-film.log",
+      "logSha256": "870675f657b3998e83ebed0f6a66c82b33024f586235d2c669f9ab7b4899d24f"
     },
     {
       "id": "studio.workflow-entry",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 6163,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.workflow-entry.log",
-      "logSha256": "a8d0ccc062d53a495d2aa44ad60ba745f5cd46d2a2177d9389dab0ae83d9231e"
+      "durationMs": 5974,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.workflow-entry.log",
+      "logSha256": "8037facd7658544ecfd438014a94e9082734cc4c1a48d4c00a762e9efee3a9bd"
     },
     {
       "id": "studio.materials-entry",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2605,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.materials-entry.log",
-      "logSha256": "e03dbb859985330cf39b3e3265ad4c6fbd8ba4baf1db070a1be320cd4bab30e0"
+      "durationMs": 2666,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.materials-entry.log",
+      "logSha256": "325aa8ef62cdb68acc778a82dcc128d5fc0ed8f41fc8a5c2c25192ad1cb6fca6"
     },
     {
       "id": "studio.visual-effects",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5598,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.visual-effects.log",
-      "logSha256": "b8bf9907a5d85bb816a8ec315d0ec165d684d64d48f1b45e3152bab41169ada3"
+      "durationMs": 5496,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.visual-effects.log",
+      "logSha256": "8e32688b19b45d98df0175abea156292e6631a26c1d46b8d6fcf91252123a0ff"
     },
     {
       "id": "studio.main-mute",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5493,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.main-mute.log",
-      "logSha256": "e7bcccb5a62daab96c3a949a8722627f4cffc1bb2e2fcc285df0ade1be951452"
+      "durationMs": 5572,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.main-mute.log",
+      "logSha256": "00d6a3d520b8db72e0b6ba8eb8fe8014dbabd927971c62bcb5f5550745dcaa35"
     },
     {
       "id": "studio.track-menu",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 8524,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.track-menu.log",
-      "logSha256": "2f630cf1771c3f8c2813c392143beb38a3479f92804ed1e7f279ac174068bd47"
+      "durationMs": 8484,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.track-menu.log",
+      "logSha256": "5a931d625f25f1fb6cb821e42099676c1b619d6d0c15a08d5ce0ffdd57740bd5"
     },
     {
       "id": "studio.card-text",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 11084,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.card-text.log",
-      "logSha256": "b8747179ee528a6cf02718c54acc44dc2b166e5bf42d250f11fdb7a037f602ad"
+      "durationMs": 10690,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.card-text.log",
+      "logSha256": "ad5eb28914cb3db7526ca9c43055257ec4b62aa17c4f5b19a7594c26ff0af5c3"
     },
     {
       "id": "studio.news-options",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1936,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.news-options.log",
-      "logSha256": "918da02f091cc1baa6a254cac3a16efb93a8b287958530a1aa9db6a13e72bf9b"
+      "durationMs": 1798,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.news-options.log",
+      "logSha256": "89eb72a9b9feb50ecf8d5327b427a9c1b7bf4714c103b83587e009926914cebe"
     },
     {
       "id": "studio.card-pair",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 13533,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.card-pair.log",
-      "logSha256": "67f3b849d971dd94d036c9fbca8ce07640bdd4ab35444bd98177d7f9d451ac0b"
+      "durationMs": 13318,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.card-pair.log",
+      "logSha256": "b0f3423da34a592126663bd57217af7a5f9656687cf8d1d36a4829f9497732be"
     },
     {
       "id": "studio.reference-analysis",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 6579,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.reference-analysis.log",
-      "logSha256": "e5f73116c219d0ce7c32002f49a304c1c5d52ea0bf92046f7ccc0735e706e78f"
+      "durationMs": 6452,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.reference-analysis.log",
+      "logSha256": "17177f2e92bb6709b027a628124084de497b2743d362bbda70f972b44fd8c04c"
     },
     {
       "id": "studio.review-adoption",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5390,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.review-adoption.log",
-      "logSha256": "393ea8f3b7eaec1155d10c67fa81ce60d2d0896918b9402ecfcf5cbbac5b9c64"
+      "durationMs": 4975,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.review-adoption.log",
+      "logSha256": "94defd7f50978c58915ed282864bb1b651207ef80f3aba102b3ec29a91cd1cae"
     },
     {
       "id": "studio.production-recovery",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 19254,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.production-recovery.log",
-      "logSha256": "61a7c8d3620434b441ecce8e59b287fd50cd408a6678dbb62b9117a2ed3330a5"
+      "durationMs": 18592,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.production-recovery.log",
+      "logSha256": "fe3fd88444bf92c2f549d7d84b14645d455a9eaba3def7803f08b66e323798be"
     },
     {
       "id": "studio.bound-scene-split",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 25167,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.bound-scene-split.log",
-      "logSha256": "50cc13c91710e7889c2baeb2ba8a2f307c6afcc71c242578f4396f6e20d56bf7"
+      "durationMs": 24221,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.bound-scene-split.log",
+      "logSha256": "9162b79ed277cb1071dbda7ded0f231ab49b45a9d1ea3c7d3127d2d1d63fa1b6"
     },
     {
       "id": "studio.whole-scene-split",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 9443,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.whole-scene-split.log",
-      "logSha256": "6254db944a3233db7fb1038e56ca38b791982811fe9f7333b5879211c0b33664"
+      "durationMs": 9421,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.whole-scene-split.log",
+      "logSha256": "c62632acd3b6dbe74149adf681e2cc215b23fd6a2037633cfb2e3cd24c3fcd4b"
     },
     {
       "id": "studio.approved-history",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 4367,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.approved-history.log",
-      "logSha256": "91ea85d016fabfab666aaa1d0af8ee89792620191d2d09bef0e45c6af45a8d0f"
+      "durationMs": 4474,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.approved-history.log",
+      "logSha256": "ad172daeb7923dd002674745016884371389fe15962c7f4e2ed5d389c4d17ea4"
     },
     {
       "id": "studio.source-caption-rebind",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5367,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.source-caption-rebind.log",
-      "logSha256": "afdc55940479489cd3a3a2a83613cf8a665e291e5fbf3b803dd4fafc0a91c3e1"
+      "durationMs": 5034,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.source-caption-rebind.log",
+      "logSha256": "56a27288a68754cab9a7be2d7baacef074b28a0e01a7745f26dde6a981ec1f25"
     },
     {
       "id": "studio.layer-fade-continuity",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5514,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.layer-fade-continuity.log",
-      "logSha256": "ac30b9102d97755decb0e7a4db0498e4b45fcf915860b0159a7a70762e8b874a"
+      "durationMs": 5473,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.layer-fade-continuity.log",
+      "logSha256": "d56a7b66abec2dadfd4029a363c878f851e4167b1dc89123f4fcce7356421e9c"
     },
     {
       "id": "studio.workspace-resume",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1685,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.workspace-resume.log",
+      "durationMs": 1703,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.workspace-resume.log",
       "logSha256": "fa968c01b172b6c28fcaba0b3824fadf2e060f457298df39f6a4fa732619c0a5"
     },
     {
@@ -2026,17 +2687,17 @@
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 64486,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/studio.log",
-      "logSha256": "baa15ef02d3fb4723512402294678ff0910d322085efcb6e2655e2bce7e41c9d"
+      "durationMs": 61554,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/studio.log",
+      "logSha256": "3fefa854e6aff86e518324189cc1fe642945e9af2cf965a84dbe78c58e9e9951"
     },
     {
       "id": "browser.background",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2745,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/browser.background.log",
+      "durationMs": 2735,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/browser.background.log",
       "logSha256": "a883236b49cad81fa54f25805f939c7cc3918e48b8f7b3592c4ac0210b1cac90"
     },
     {
@@ -2044,35 +2705,35 @@
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 35155,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.capture.log",
-      "logSha256": "7609c3bfa4bc59dbe449eb8c5a1a26acf5f8d54211084a880ec9ec76c441a32f"
+      "durationMs": 34868,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.capture.log",
+      "logSha256": "0a861a331603fd13924d72de19a0fcd8cc9b09f2f583f03820250a28b9d1f3cc"
     },
     {
       "id": "media.processing-runtime",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 22444,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/media.processing-runtime.log",
-      "logSha256": "477fdf83f226416218a5674a4c8ea5858b978faf0a1143b368fd6a18cb3d288e"
+      "durationMs": 21671,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/media.processing-runtime.log",
+      "logSha256": "a5607ba765e3ea026c1934f5c966c14e4e884c5066b47d36371091439d16bce1"
     },
     {
       "id": "video",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 38465,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/video.log",
-      "logSha256": "7caead00f1460d7f18d09228c96a9be5482e6ad1357d2a426fe1ad82598d9b8d"
+      "durationMs": 37229,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/video.log",
+      "logSha256": "c9f515250f8472ca53a722bb97c9d6fce73e9447909688abd9e8641a6d04743b"
     },
     {
       "id": "speech",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 18497,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/speech.log",
+      "durationMs": 18268,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/speech.log",
       "logSha256": "d2cbdc88c491eaca183406ea47d7b690477ad6cc1a2c2e1fc4346f3f5ae2c36f"
     },
     {
@@ -2080,8 +2741,8 @@
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1120,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/qwenNarration.log",
+      "durationMs": 1060,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/qwenNarration.log",
       "logSha256": "6c17b9061acb6efb7a13dfd76a48b08880b9eb74a6b52f24aa1ec04902dbe89f"
     },
     {
@@ -2089,59 +2750,52 @@
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3569,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/localNarration.log",
-      "logSha256": "b29cfaa86b5c7ff7aa5830f35024aecf2cb8ce28c548a0ff37690b1d4e37a79a"
+      "durationMs": 3499,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/localNarration.log",
+      "logSha256": "8c8d8296f4ebe3930051a0a1dfd3472293d6b2e99aff443a143dbab23d6b0b59"
     },
     {
       "id": "desktop.workspace",
       "layer": "desktop",
       "status": "passed",
       "reason": "workspace: passed",
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/desktop-suite/workspace/run.log",
-      "logSha256": "20555cd21c66875eb36da7f61fe600c67867131c3973a42461a3600120841918"
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/desktop-suite/workspace/run.log",
+      "logSha256": "a38d9f66bcc745b7715fde5588044e9b1c9b750fc8eff9ec69aff0c3890040d8"
     },
     {
       "id": "desktop.projects",
       "layer": "desktop",
       "status": "passed",
       "reason": "projects: passed; projects/restart: passed",
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/desktop-suite/projects/run.log",
-      "logSha256": "00adcb0a29eb8a16b927a1769b5c38ed411a8c3b7cad9c9aadb4ca14a4b87788"
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/desktop-suite/projects/run.log",
+      "logSha256": "923db2dc5ab1cdecc2722623d8bd309092d041cad58df0f365ead457834ad5f1"
     },
     {
       "id": "desktop.settings",
       "layer": "desktop",
       "status": "passed",
       "reason": "settings: passed",
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/desktop-suite/settings/run.log",
-      "logSha256": "8a82b411155b032187f798aada17d24656ea81b67b72def004f599d83010ac32"
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/desktop-suite/settings/run.log",
+      "logSha256": "6ffb73ae0cc62a6e894e56a241f11ea2f9a4357d2db6ab4c4780c28b5fbea1d7"
     },
     {
       "id": "desktop.native",
       "layer": "desktop",
       "status": "passed",
       "reason": "native: passed",
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/desktop-suite/native/run.log",
-      "logSha256": "88215f52dcc154c7a82edacd32ac6e43198e0f4466aeb63c31d37b670a131554"
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/desktop-suite/native/run.log",
+      "logSha256": "5b3fa616480eede91fd2ca85b20349742a39e3da50c42b3c27c9413663e7e4fb"
     },
     {
       "id": "desktop-suite",
       "layer": "gate",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 20168,
-      "log": ".bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/desktop-suite.log",
-      "logSha256": "22aaaa9ea51d5197d2ad641d5509b755177770501a379c234b8705ae3cd08030"
+      "durationMs": 20236,
+      "log": ".bmw-runtime/classified-tests/2026-10-18-news02/desktop-suite.log",
+      "logSha256": "ed00aadade7d970f7dce631677c52a9408bb7a5281e13fd861e7186333acdbdb"
     }
   ],
-  "dependencyAudit": {
-    "command": "npm ls --depth=0 --json",
-    "exitCode": 0,
-    "path": ".bmw-runtime/news-01/dependencies.json",
-    "sha256": "1cc711b43346ecbe9f700563905feae7a54163b29115d88a17d3c0a350ae70aa",
-    "note": "Optional external Codex CLI is installed separately, reported extraneous, and not a lockfile dependency; no clean npm ci installation was performed."
-  },
   "notRunScope": {
     "localSourceFixtures": [
       "media.source-analysis-case",
@@ -2161,26 +2815,10 @@
     ]
   },
   "limits": [
-    "NEWS-01 topics and dates are structurally verified; semantic news value, novelty and cross-source event equivalence remain official Agent editorial judgments.",
-    "Offline tests do not prove real service credentials, quotas or subjective narration quality.",
-    "The six legacy typecheck exceptions remain frozen.",
-    "Prior DSH films and NEWS-01 real news acceptance retain independent evidence; human listening and final acceptance cannot be filled by Agent review.",
-    "No production Profile or OS credential prompts used; no GitHub Actions coverage claimed."
-  ],
-  "postDocumentationChecks": {
-    "checkedAt": "2026-10-18T08:47:48.148Z",
-    "check": {
-      "command": "npm run check --silent",
-      "status": "passed",
-      "path": ".bmw-runtime/news-01/news-accepted-final-check.log",
-      "sha256": "94675f2730c2020c43efea40a8f4ba539b9d9d7aa0569d2a786388862180904e"
-    },
-    "localMarkdownLinks": {
-      "files": 13,
-      "checked": 292,
-      "broken": 0
-    },
-    "diffWhitespace": "passed",
-    "acceptedFilmSha256": "82828d2de1a5eb5363086462e216f4e63d88fa5d2a5bc9d6a35ae70265d034b7"
-  }
+    "Six legacy typecheck exceptions remain frozen.",
+    "Source dates and previews have structural checks; novelty, speaker authenticity and news value remain editorial verification tasks.",
+    "No production Profile/keychain prompts or remote GitHub CI coverage claimed.",
+    "A decoded audio track does not establish model listening or human acceptance.",
+    "Final date-only normalization keeps the conservative 72-hour window; relative/ambiguous/future labels remain ineligible."
+  ]
 }

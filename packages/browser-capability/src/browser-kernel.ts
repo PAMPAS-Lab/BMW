@@ -707,9 +707,9 @@ export class BrowserKernel {
       if(promoted&&this.activeTabId===tab.id&&previous&&this.tabs.has(previous)&&!this.recordingController.isCaptureActive())this.showTab(previous)
     }
   }
-  async captureSource(request:{sourceGuard:import('@bmw-agent/media-native/sources').SourceCaptureGuard;videoSelector:string;videoIndex?:number;maxDurationMs?:number;filename:string;tabId?:string},signal?:AbortSignal){
+  async captureSource(request:{sourceGuard:import('@bmw-agent/media-native/sources').SourceCaptureGuard;videoSelector:string;videoIndex?:number;fromStart?:boolean;maxDurationMs?:number;filename:string;tabId?:string},signal?:AbortSignal){
     const tab=this.requireTab(request.tabId)
-    return this.captureSelectedVideo(tab,{selector:request.videoSelector,index:request.videoIndex??0,filename:request.filename,fromStart:true,maxDurationMs:request.maxDurationMs,sourceGuard:request.sourceGuard},signal)
+    return this.captureSelectedVideo(tab,{selector:request.videoSelector,index:request.videoIndex??0,filename:request.filename,fromStart:request.fromStart??true,maxDurationMs:request.maxDurationMs,sourceGuard:request.sourceGuard},signal)
   }
   async collectSource(request:SourceCollection,signal?:AbortSignal){
     const tab=this.requireTab(request.tabId)

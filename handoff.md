@@ -1,5 +1,7 @@
 # BMW current handoff
 
+NEWS-02当前43.03秒Chuck Lorre新闻已获用户接受，用户要求同步文档、提交并推送。BMW＋官方Codex／Qwen龙安朗制作，四镜头、两段采访原声说明其担忧为何超过编剧失业；最后接受版本加大英文／中文字幕，完整复用9.76秒和3.84秒旁白及原声区间。73张当前关键帧、逐镜／全片Agent意见、历史文件保留SHA及接受绑定见[成片证据](docs/research/NEWS_02_LORRE_DELIVERY.json)。十题契约／发现／GUI、本次音色覆盖、按需预览、当前位置原片采集与直播日期兼容已实现；本轮实际只提供两张合格卡，[选题记录](docs/research/NEWS_02_TOPICS.json)保留未入选原因。研究覆盖、署名日期格式兼容与有约束的未变镜头审阅复用尚未完成，不因样片接受关闭。后续主线SCIENCE-01→RESEARCH-01；NEWS-01接受记录保持。用户接受不代填专项发音、复述或原生Studio人工表单；付费模型与在线配音不计入离线回归。
+
 核对日期：2026-10-18。**NEWS-01已完成技术实现、真实制作及用户验收。** 最新接受版本为BMW＋官方Codex 0.160.1／gpt-6-astra制作的54.61秒竖屏新闻，使用Qwen龙安朗男声。用户先认可旁白自然，再要求结尾回到DeepSeek新版低花费也能完成精细制作，最后明确回复“这个版本可以了”，并要求更新文档、提交和推送。接受记录、草稿／导出身份及SHA见[Codex新闻证据](docs/research/CODEX_NEWS_REWORK.json)。
 
 结尾使用原作者本次DeepSeek $1.25／Opus 5.5 $16.36的作品花费对照，不作为官方单价或总体模型排名。局部改稿仅重配末镜12.4秒；前五镜全部数据、音频身份与SHA不变，793个历史文件保留。当前实际MP4的136个关键帧、六场及全片Agent意见与用户反馈分别登记；用户接受不补造专项发音、复述或声学对齐分数。早期[公告片](docs/research/NEWS_01_DELIVERY.json)和[36.16秒DSH动态片](docs/research/NEWS_01_VIDEO_TOPICS.json)保留未接受结果与改进原因。
@@ -8,13 +10,13 @@
 
 先读[仓库约束](AGENTS.md)、[文档导航](docs/README.md)、[当前状态](docs/PROJECT_STATUS.md)和权威[功能规格](docs/FUNCTIONAL_SPEC.md)。BMW是唯一应用，DSH、Codex和Qoder CN各自拥有官方Agent循环；有效目录验证通过后才释放输入，模型工具恰好一个`browser`。Host不实现模型循环，不以提示词替代工具边界。
 
-NEWS-01提供严格近72小时、广泛个人／组织主体、最多三个不同事件的真实素材选题卡，用户可信选择后建立所属Session的唯一草稿并单次投递，串联选题、稿件、证据画面、配音字幕、成片审阅。确认前不TTS或合成。默认30–60秒、9:16、Qwen安明远；本片显式覆盖为龙安朗，不修改产品默认。版本1选题记录独立保存在Project中，Video Document仍为2.0–2.10。
+NEWS-01提供严格近72小时、广泛个人／组织主体、最多十个不同事件的真实素材选题卡，用户可信选择后建立所属Session的唯一草稿并单次投递，串联选题、稿件、证据画面、配音字幕、成片审阅。确认前不TTS或合成。默认30–60秒、9:16、Qwen安明远；本片显式覆盖为龙安朗，不修改产品默认。版本1选题记录独立保存在Project中，Video Document仍为2.0–2.10。
 
 全局顺序只维护在[下一步计划](docs/plans/NEXT_STEPS.md)：
 
-1. NEWS-02：固化适合视频的选材、明确新闻主张和回扣本次变化的结尾，优化局部修订效率；用另一类近72小时事件验证，优先具备采访／演讲原声的材料。有约束的未变镜头审阅复用仍待设计实现，当前继续按既有规则审阅新导出。
-2. SCIENCE-01：参考量子位，用一个对象贯穿现象、机制和条件变化，先验20–30秒关键段，再做完整科普。
-3. RESEARCH-01：参考AK，以具体例子贯穿研究问题、机制与结果图；核对论文／仓库版本，未实际执行不能写已复现。
+1. SCIENCE-01：参考量子位，用一个对象贯穿现象、机制和条件变化，先验20–30秒关键段，再做完整科普；沿用BMW＋Codex，声音按本次明确设置，不重配无关素材。
+2. RESEARCH-01：参考AK，以具体例子贯穿研究问题、机制与结果图；核对论文／仓库版本，未实际执行不能写已复现。
+3. NEWS-02后续：提高合格原声选题覆盖与预检效率，补署名日期格式兼容，合并关联修订后统一导出；有约束的未变镜头审阅复用需另行设计实现，当前继续既有新导出审阅规则。
 
 三类分别验收；新闻接受不关闭科普／学术的人工听感、理解和条件预测。已有类型工作表、来源关系、改稿影响、句目标、独立人／Agent审阅、事件／测量／分组／预合成及外部版本链均已实现，不重复开发。参考[制作方案](docs/plans/VIDEO_TYPES.md)与[模板工作表](docs/plans/VIDEO_TYPE_TEMPLATES.md)。MEDIA-01音频准入和MEDIA-02音频时钟问题继续保留自身范围，不能用帧审阅代替核听。
 
@@ -33,7 +35,7 @@ NEWS-01提供严格近72小时、广泛个人／组织主体、最多三个不�
 
 ## 验证与本机交付
 
-完整离线报告为`.bmw-runtime/classified-tests/2026-10-18-codex-qwen-men/result.json`：**166 passed／0 failed／12 not-run**。469个受测文件在运行期间SHA一致；文档回填后再次核对463个构建输入、433个输出。仓库保存[逐项源码摘要](docs/verification/CURRENT.json)及[验证范围](docs/VERIFICATION.md#当前源码完整离线基线)，逐文件SHA绑定受测实现，`sourceBaseRevision`只记录变更前基底。六个冻结类型例外未扩大。
+NEWS-02首轮完整离线报告为`.bmw-runtime/classified-tests/2026-10-18-news02/result.json`：**166 passed／0 failed／12 not-run**。469个受测文件在运行期间SHA一致；后续补正另按受影响回归和最后日期专项核对，最终463个构建输入、433个输出与当前代码一致，不把历史完整运行冒充最后补正后的新--all。仓库保存[逐项源码摘要](docs/verification/CURRENT.json)及[验证范围](docs/VERIFICATION.md#当前源码完整离线基线)，逐文件SHA绑定受测实现，`sourceBaseRevision`只记录变更前基底。六个冻结类型例外未扩大。
 
 覆盖unit／contract／boundary、官方DSH冷检查、desktop、Studio、media、video及narration；六个专用本地素材夹具和六个外部入口未在完整回归中启用。真实付费模型、在线Qwen调用与用户接受另有交付证据，不计入离线通过数。测试使用一次性Profile／Home／Workspace及mock keychain，没有生产Profile或系统凭据提示覆盖。GitHub尚无Actions，不宣称远程CI已运行；可选Codex CLI另行发现安装，本机成功不代表全新`npm ci`自带它。
 

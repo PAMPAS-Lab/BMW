@@ -1,0 +1,346 @@
+{
+  "format": "bmw.news-02-topics",
+  "version": 1,
+  "updatedAt": "2026-10-18T11:53:59.663Z",
+  "status": "selected-film-user-accepted",
+  "scope": "Research, trusted human choice, BMW plus official Codex production and human acceptance of the selected enlarged-subtitle movie are recorded separately. Research yield, publication label compatibility and bounded review reuse remain NEWS-02 follow-ups.",
+  "runtime": {
+    "driver": "official-codex",
+    "model": "gpt-6-astra",
+    "cliVersion": "0.160.1",
+    "effectiveCatalog": "BMW browser only, verified before input release; live observed calls use browser.",
+    "profile": "Existing user-authorized disposable BMW profile with mock keychain",
+    "projectId": "d208122e-9b1d-40b6-9ed3-f9e2dc5296ee",
+    "sessionId": "54366ab9-173c-405d-adf9-4234751fe13b",
+    "resumeAnchor": "01a14e45-3907-7fa0-b176-181834b60492"
+  },
+  "request": {
+    "maxTopics": 10,
+    "windowHours": 72,
+    "priority": "Original interviews and speeches with actual decodable audio/video; diverse people and organizations, no closed whitelist or quotas.",
+    "futureNarration": {
+      "provider": "qwen-tts",
+      "voice": "longanlang_v3.1",
+      "ratePercent": 0
+    },
+    "selection": "chuck-lorre-ai-risk",
+    "production": "user-accepted"
+  },
+  "implementation": {
+    "topicBudget": 10,
+    "journalVersion": 1,
+    "videoDocument": "2.0–2.10 unchanged",
+    "onDemandPreviews": "First three load automatically; remaining previews load on explicit request.",
+    "voice": "Trusted Studio selection sends explicit Qwen options; global defaults and existing audio remain unchanged.",
+    "editorial": "A concrete source-supported news claim and ending returning to the event; reuse discovered action fields and preserve unrelated assets during local edits.",
+    "reviewReuse": "Not implemented; existing current-export review rules still apply."
+  },
+  "verification": {
+    "receipt": "../verification/CURRENT.json",
+    "mode": "full-baseline-plus-targeted-supplements",
+    "fullBaseline": {
+      "passed": 166,
+      "failed": 0,
+      "not-run": 12
+    },
+    "supplements": [
+      {
+        "id": "affected-regression",
+        "counts": {
+          "passed": 65,
+          "failed": 0,
+          "not-run": 113
+        }
+      },
+      {
+        "id": "final-date-unit",
+        "tests": 12,
+        "status": "passed"
+      },
+      {
+        "id": "final-date-native",
+        "status": "passed"
+      },
+      {
+        "id": "official-dsh-cold",
+        "status": "passed"
+      }
+    ],
+    "scope": "Local isolated offline verification only. Paid Codex research, online Qwen, human selection and final content acceptance are separate."
+  },
+  "research": {
+    "revision": 5,
+    "journalSha256": "25a36e0fa9404fa7aa24b3f41d68e975ffd19749b79fe5c5cf182ef4dcda3495",
+    "models": [
+      "gpt-6-astra"
+    ],
+    "effectiveToolNames": [
+      "browser"
+    ],
+    "operations": {
+      "video.studio.news-topics": 9,
+      "help": 23,
+      "observe": 165,
+      "video.studio.guide": 1,
+      "navigate": 81,
+      "page.viewport.set": 2,
+      "video.studio.source": 59,
+      "page.media.list": 15,
+      "click": 85,
+      "media.inspect": 8,
+      "media.capture.frames.sample": 6,
+      "video.studio.describe-schema": 1,
+      "video.studio.propose-news-topics": 7,
+      "project.memory.append": 1,
+      "media.screenshot": 3,
+      "tabs.open": 1,
+      "media.frames.sample": 2,
+      "key": 2
+    },
+    "topics": [
+      {
+        "candidate": {
+          "id": "imf-ai-one-leg",
+          "eventKey": "imfc-20261017-ai-growth",
+          "subject": "Kristalina Georgieva / IMF",
+          "subjectKind": "person",
+          "category": "public-institution",
+          "region": "国际机构／泰国曼谷",
+          "title": "IMF总裁警告：依赖AI单一增长动力，如同“单腿站立”",
+          "news": "10月17日IMFC发布会上，格奥尔基耶娃称AI繁荣为经济提供主要支撑，但依赖单一增长驱动也构成风险；她同时指出AI价值链之外的脆弱经济体可能进一步落后。",
+          "reason": "把AI投资热与全球经济韧性联系起来，具有超出科技行业的公共影响。实际预览可直接看到她在发布会现场说出风险判断的表情、手势及姓名牌；“单腿站立”的比喻有清晰的视频表达价值。",
+          "angle": "聚焦AI繁荣为何既是支撑也是集中风险，保留她的原声判断与上下文，不把宏观警告改写成市场崩盘预测。预览原片09:01.000—09:14.933，实测13.979秒、854×480、Opus双声道。",
+          "format": "speech",
+          "novelty": "new-event",
+          "recordedAt": "2026-10-17",
+          "missing": "已核对实际人物画面与可解码音轨；未作听觉验收。页面转录含时间标记，正式制作前仍须逐句听校。",
+          "sourceId": "a2fc40d344c42270053734fdec1b43ec4c3dc135c03c6fca7796c1410b7d481b",
+          "acquisitionId": "3d666db9-d550-4ee7-933c-c22f81c6a496",
+          "quoteStart": 5786,
+          "previewArtifactId": "b5bdcd8d-0905-45e5-bcac-aeea90108fa2-source-588423e3-e066-4bad-ab75-ba74ddd4b031.webm",
+          "mode": "video"
+        },
+        "quoteEvidence": {
+          "sha256": "303eaac6aabc2993ffb60d712b63911a668fb2a647bb872c6bc131b24768a2fc",
+          "utf16Start": 5786,
+          "utf16Length": 128,
+          "storage": "Exact source quotation remains in the Project-owned source and topic journal; portable receipt does not republish it."
+        },
+        "facts": {
+          "url": "https://www.youtube.com/watch?v=rVBmFCOcjCc&t=300s",
+          "author": "IMF",
+          "publishedAt": "2026-10-17",
+          "contentSha256": "bb1ac77fc2f0a32d8e8a0b99c585ecc0b6e6c0f65d9610a50505c6d27916b104",
+          "previewSha256": "ff8bc575cae2e6ecc7fcbc4f1abae2f92422b816fd2715f24d13c8d0fcd885e4",
+          "durationSeconds": 13.979,
+          "sourceRange": {
+            "startSeconds": 541,
+            "endSeconds": 554.933
+          },
+          "checkedAt": "2026-10-18T10:00:44.660Z"
+        },
+        "eligibleAtReceipt": true,
+        "preview": {
+          "artifactId": "b5bdcd8d-0905-45e5-bcac-aeea90108fa2-source-588423e3-e066-4bad-ab75-ba74ddd4b031.webm",
+          "bytes": 5108577,
+          "sha256": "ff8bc575cae2e6ecc7fcbc4f1abae2f92422b816fd2715f24d13c8d0fcd885e4",
+          "sourceReceiptSha256": "4b1c15ba03a4a22435cec9403750be6de8dde70e691ce4ea230f4bf35cf349c4",
+          "sourceStartSeconds": 541,
+          "sourceEndSeconds": 554.933,
+          "sourceDurationSeconds": 2005.061,
+          "status": "indexed",
+          "basis": "native-source-frame+encoded-packet+demuxed-PTS",
+          "frameCount": 418
+        }
+      },
+      {
+        "candidate": {
+          "id": "chuck-lorre-ai-risk",
+          "eventKey": "reuters-lorre-20261018",
+          "subject": "Chuck Lorre / Reuters",
+          "subjectKind": "person",
+          "category": "non-ai-public-figure",
+          "region": "美国",
+          "title": "《生活大爆炸》主创谈AI：担心的不只是编剧失业",
+          "news": "Reuters新发布的Chuck Lorre访谈短片中，这位电视编剧、制作人表示，AI对文明的潜在威胁比情景喜剧岗位流失更令他担忧，并以超过人类的“顶级捕食者”作比喻。这是他的风险观点，不是已获证实的技术预测。",
+          "reason": "来自非AI行业重要创作者的实质表态，将讨论从职业替代转向更广泛的社会风险。预览直接呈现Lorre的表情和说话姿态，上半屏采访与下半屏说明画面、原版字幕同在，适合保留原声呈现其判断及语气。",
+          "angle": "以“编剧为何更担心岗位之外的风险”为切口。Reuters官方YouTube原页发布日为2026-10-18，与发现页10月17日不同，采用原页日期。预览原片00:00—00:17.943，实测17.979秒、360×640、Opus双声道；原片实测47.341秒。",
+          "format": "interview",
+          "novelty": "new-release",
+          "recordedAt": null,
+          "missing": "录制日未披露；不称当日新录。完整访谈Reuters网页未返回正文，已以Reuters官方短片原文与自动转录核验。播放器显示英语（US）原始音轨，已检查实际人物帧及可解码音轨，未作听觉验收；转录含重复词和音乐标记，正式制作需听校。",
+          "sourceId": "b3c6a905c84830be670d742dbad7ca47f3ee60722521cd60aff87f62d327ab51",
+          "acquisitionId": "144f1cbb-6aef-46ae-8b95-a37a4772facb",
+          "quoteStart": 9,
+          "previewArtifactId": "480481b7-fa09-414a-ae0f-fe1879d091a2-source-c8fdcf59-c567-4771-91c8-a449fe74cfb6.webm",
+          "mode": "video"
+        },
+        "quoteEvidence": {
+          "sha256": "8cc39b359737b76b00f502cfd30374d33bbe34c7961b6b5cf448b61f00810266",
+          "utf16Start": 9,
+          "utf16Length": 228,
+          "storage": "Exact source quotation remains in the Project-owned source and topic journal; portable receipt does not republish it."
+        },
+        "facts": {
+          "url": "https://www.youtube.com/watch?v=6blaHYDQFmY",
+          "author": "Reuters",
+          "publishedAt": "2026-10-18",
+          "contentSha256": "aaac0affd2c48affb9c623da646b6a79e96507cba1050f7414bf4c872f8b430f",
+          "previewSha256": "9511db234bc3c7301d750d673cb6d223f7086322edbb9466793dea8b5a0bf9c9",
+          "durationSeconds": 17.979,
+          "sourceRange": {
+            "startSeconds": 0,
+            "endSeconds": 17.942961
+          },
+          "checkedAt": "2026-10-18T10:00:44.954Z"
+        },
+        "eligibleAtReceipt": true,
+        "preview": {
+          "artifactId": "480481b7-fa09-414a-ae0f-fe1879d091a2-source-c8fdcf59-c567-4771-91c8-a449fe74cfb6.webm",
+          "bytes": 6073625,
+          "sha256": "9511db234bc3c7301d750d673cb6d223f7086322edbb9466793dea8b5a0bf9c9",
+          "sourceReceiptSha256": "11b0bf1a10a95dff16f36232347845747063f00ba9ef9df626fade3d1fadef75",
+          "sourceStartSeconds": 0,
+          "sourceEndSeconds": 17.942961,
+          "sourceDurationSeconds": 47.341,
+          "status": "indexed",
+          "basis": "native-source-frame+encoded-packet+demuxed-PTS",
+          "frameCount": 538
+        }
+      }
+    ],
+    "heldLeads": [
+      {
+        "url": "https://elorian.ai/blog/introducing-glimpse",
+        "status": "not-in-board",
+        "reason": "Actual dynamic comparison preview was acquired and decoded. Narrow publication metadata combined the byline with a leading middle dot before 16 October 2026; current date parsing rejected it. This is a product compatibility gap, not evidence that the publisher lacks a date. Both models completed the example; task-specific amounts cannot establish overall cost or ranking. By the final research check, its day-only October 16 date also failed the conservative freshness window."
+      },
+      {
+        "url": "https://x.com/maxencefaldor/status/2111023397106770026",
+        "status": "no-dynamic-preview",
+        "reason": "Original post and associated paper checked, but only an image was obtained. Single Easy-difficulty Mineflayer/pathfinding-assisted experiment; not screen-only human play or a stable success rate."
+      },
+      {
+        "url": "https://www.youtube.com/watch?v=rXfXa8nLLVA",
+        "status": "old-republication",
+        "reason": "October 16 Russian upload links to the October 1 English original."
+      },
+      {
+        "url": "https://www.youtube.com/watch?v=wxO8ETP1mhw",
+        "status": "incomplete-source-binding",
+        "reason": "Separate New Frontier interview. Relevant visible transcript could not be bound to the collected body; not admitted as a verified quote."
+      },
+      {
+        "url": "https://techcrunch.com/2026/10/17/replit-is-no-longer-working-with-anthropic-ceo-says/",
+        "status": "no-key-interview-preview",
+        "reason": "Correction says OpenAI becomes the default while Claude remains available. Do not report complete termination of Anthropic use."
+      },
+      {
+        "url": "https://shenzhen2026.gosim.org/zh/",
+        "status": "agenda-only",
+        "reason": "Current event agenda found; no corresponding fresh original speech was acquired. Older promotional footage is not a speech preview."
+      },
+      {
+        "url": "https://cips-cl.org/static/CCL2026/cclProgram/forum/index.html",
+        "status": "agenda-only",
+        "reason": "Program found but no qualified current original speech acquired."
+      },
+      {
+        "url": "https://terrytao.wordpress.com/2026/10/17/some-of-my-recent-talks-and-interviews/",
+        "status": "date-window-unresolved",
+        "reason": "Numberphile original showed October 15 only, without the explicit timestamp needed to establish the strict conservative 72-hour window."
+      },
+      {
+        "url": "https://www.microsoft.com/en-us/research/video/breaking-the-language-barrier-how-ai-speech-translation-is-rewriting-our-digital-lives/",
+        "status": "older-publication-lead",
+        "reason": "October 16 video preview was acquired; an older podcast date was found, so novelty is unresolved."
+      },
+      {
+        "url": "https://www.youtube.com/watch?v=54bzwzQxizs",
+        "status": "weak-news-increment",
+        "reason": "Original DisrupTV 453 interview found, but inspected content was primarily forecasts and unverified project teasers."
+      },
+      {
+        "url": "https://www.nationthailand.com/live/vdo/30381350",
+        "status": "old-republication",
+        "reason": "October 17 webpage links to the same official YouTube interview published October 14; the webpage date cannot refresh the interview."
+      },
+      {
+        "url": "https://reflection.ai/blog/beam-is-available",
+        "status": "no-qualifying-original-clip-acquired",
+        "reason": "October 16 release of weights, license and integrations is distinct from the October 5 model introduction. Inspected official media were GIF animations and an image-led post; no qualifying interview or video preview was acquired."
+      },
+      {
+        "url": "https://www.youtube.com/watch?v=ujNW2LN-lPc",
+        "status": "expired-day-precision",
+        "reason": "Previously qualified 03:50–04:04.978 preview retained. October 16 day-only publication ceased to satisfy the conservative 72-hour window at October 18 10:00 UTC. Bloomberg original also exposed no precise publication instant; removed from selectable board."
+      }
+    ],
+    "selection": null,
+    "production": "not-started",
+    "humanListening": "not-performed",
+    "selectionRechecksFreshness": true,
+    "shortfall": {
+      "requestedMaximum": 10,
+      "qualified": 2,
+      "explanation": "Ten-topic capacity is implemented and tested; this live run delivered only two eligible original-audio topics. Source freshness, old republishing, unavailable key footage, weak news increment and a publication parser compatibility gap all limited yield. This is not evidence that only two AI news events exist."
+    },
+    "trustedUi": {
+      "checkedAt": "2026-10-18T10:05:03.454Z",
+      "board": "Two eligible cards; trusted Select controls enabled; neither clicked.",
+      "voice": "Qwen 男声 · 龙安朗",
+      "formVoicePersistence": "Current view only. Recheck this explicit field before selection after reopening the Studio view.",
+      "previewPlayback": [
+        {
+          "topicId": "imf-ai-one-leg",
+          "pausedAtSeconds": 10.2013
+        },
+        {
+          "topicId": "chuck-lorre-ai-risk",
+          "pausedAtSeconds": 12.43851
+        }
+      ],
+      "method": "Native accessibility controls: muted playback visibly advanced, then paused and restored unmuted. Background research player paused. No model listening or human acceptance claimed."
+    }
+  },
+  "next": "Preserve the accepted movie, prior exports and voices. Continue with SCIENCE-01, then RESEARCH-01. Track research coverage, publication metadata compatibility, consolidated revision inputs and bounded review reuse as explicit NEWS-02 follow-ups; do not repeat this movie’s acceptance or claim those mechanisms are implemented.",
+  "operationalLimit": "Two task-created isolated BMW processes required explicit termination after trusted Agent cancellation because normal application exit hung. State was preserved; normal paid-runtime shutdown is not claimed as verified.",
+  "selection": {
+    "topicId": "chuck-lorre-ai-risk",
+    "draftId": "9632d9df-006b-4aa4-8c27-2a691263dba8",
+    "selectedAt": "2026-10-18T10:53:24.206Z",
+    "fingerprint": "e932d4288bb86a350b6fecb61ee88ef59099e88302e66b52304da32ba8ea7a0f",
+    "dispatch": "sent",
+    "runId": "f06f6570-2aa4-4876-a44d-de1d3716f6a6",
+    "actor": "trusted-studio-user",
+    "authorization": "The human explicitly chose the second Chuck Lorre interview and requested an explanation of why his concern exceeds sitcom writing jobs.",
+    "journalRevision": 8
+  },
+  "production": {
+    "receipt": "NEWS_02_LORRE_DELIVERY.json",
+    "draftId": "9632d9df-006b-4aa4-8c27-2a691263dba8",
+    "revision": 28,
+    "artifactId": "media-3f5d2183-303b-45d6-84d5-4e01bb83dfe8-converted.mp4",
+    "actualDurationSeconds": 43.029333333333334,
+    "voice": "longanlang_v3.1",
+    "acceptance": {
+      "technical": "passed-native-export-verification",
+      "agentVisual": "passed-current-export",
+      "humanListening": "not-separately-scored",
+      "viewerUnderstanding": "not-separately-assessed",
+      "finalAcceptance": "accepted",
+      "userFeedback": {
+        "date": "2026-10-18",
+        "recordedAt": "2026-10-18T11:53:59.663Z",
+        "channel": "human-user-message-in-current-chat",
+        "quote": "这个版本可以了，先更新 NEWS-02 的相关文档和下一步计划，提交代码并推送到 GitHub。",
+        "artifactId": "media-3f5d2183-303b-45d6-84d5-4e01bb83dfe8-converted.mp4",
+        "exportFingerprint": "e1d963e4da21bac98bcdd8e10866280da8f57ca5964bf6feedb30ca5229e5bfc",
+        "exportSha256": "2935f8bc3868ff5ba9030b0dd997bf331edfc6b98484485b1ad71bbcedb7fa68",
+        "draftId": "9632d9df-006b-4aa4-8c27-2a691263dba8",
+        "draftRevision": 28,
+        "scope": "Accepts the enlarged bilingual subtitle version shown immediately before this reply. No separate pronunciation score, acoustic alignment assessment or comprehension retelling was provided. Recorded from chat, not a forged Studio user-review entry."
+      }
+    }
+  }
+}

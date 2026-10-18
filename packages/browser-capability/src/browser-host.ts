@@ -18,7 +18,7 @@ export interface BrowserFeatureHost {
   recordingController: NativeMediaPort
   projectSources?:()=>ProjectSourcePort
   sourcePages?:()=>{id:string;url:string;title:string}[]
-  captureSource?:(request:{sourceGuard:SourceCaptureGuard;videoSelector:string;videoIndex?:number;maxDurationMs?:number;filename:string;tabId?:string},signal?:AbortSignal)=>Promise<unknown>
+  captureSource?:(request:{sourceGuard:SourceCaptureGuard;videoSelector:string;videoIndex?:number;fromStart?:boolean;maxDurationMs?:number;filename:string;tabId?:string},signal?:AbortSignal)=>Promise<unknown>
   downloadSource?:(request:{url:string;pageUrl:string;filename:string;tabId?:string},signal?:AbortSignal)=>Promise<unknown>
   collectSource?:(request:SourceCollection,signal?:AbortSignal)=>Promise<SourceObservation>
   execute(request: unknown, options?: BrowserExecutionOptions): Promise<unknown>

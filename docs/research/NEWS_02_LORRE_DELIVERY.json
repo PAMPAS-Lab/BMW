@@ -1,0 +1,586 @@
+{
+  "format": "bmw.news-02-lorre-delivery",
+  "version": 1,
+  "updatedAt": "2026-10-18T11:53:59.663Z",
+  "status": "user-accepted-current-export",
+  "scope": "BMW native Video Studio plus official Codex; all model tools browser only. No external publication.",
+  "runtime": {
+    "driver": "official-codex",
+    "model": "gpt-6-astra",
+    "cliVersion": "0.160.1",
+    "projectId": "d208122e-9b1d-40b6-9ed3-f9e2dc5296ee",
+    "sessionId": "54366ab9-173c-405d-adf9-4234751fe13b",
+    "profile": "User-authorized disposable BMW profile with mock keychain"
+  },
+  "selection": {
+    "topicId": "chuck-lorre-ai-risk",
+    "draftId": "9632d9df-006b-4aa4-8c27-2a691263dba8",
+    "selectedAt": "2026-10-18T10:53:24.206Z",
+    "fingerprint": "e932d4288bb86a350b6fecb61ee88ef59099e88302e66b52304da32ba8ea7a0f",
+    "dispatch": "sent",
+    "runId": "f06f6570-2aa4-4876-a44d-de1d3716f6a6"
+  },
+  "request": {
+    "focus": "Explain why Chuck Lorre fears more than sitcom writing jobs: the risk of creating intelligence far beyond humans, and his apex-predator/insect analogy.",
+    "narration": {
+      "provider": "qwen-tts",
+      "voice": "longanlang_v3.1",
+      "ratePercent": 0
+    },
+    "aspectRatio": "9:16",
+    "targetSeconds": [
+      30,
+      60
+    ]
+  },
+  "source": {
+    "publisher": "Reuters",
+    "url": "https://www.youtube.com/watch?v=6blaHYDQFmY",
+    "publishedAt": "2026-10-18",
+    "precision": "day",
+    "recordedAt": null,
+    "recordingDateLimit": "Newly published official short; not described as filmed that day.",
+    "capture": {
+      "artifactId": "441b09ee-ebcb-4ea5-a982-9e793b0da0e6-captured-video.webm",
+      "sha256": "f255e362a2e836399e57f8250b331ed8885f2fe6c28b644710c4e3fc29f2c017",
+      "bytes": 16134534
+    },
+    "receipt": {
+      "artifactId": "441b09ee-ebcb-4ea5-a982-9e793b0da0e6-captured-video.webm.source.json",
+      "sha256": "155ce01e6902fdcb97b7d2d9610f3b17552748217484bb64ff0dc8bc3656daef",
+      "bytes": 298398,
+      "basis": "native-source-frame+encoded-packet+demuxed-PTS",
+      "status": "indexed",
+      "sourceStartSeconds": 0,
+      "sourceEndSeconds": 47.341,
+      "sourceDurationSeconds": 47.341,
+      "frameCount": 1418
+    },
+    "editorial": "Lorre’s personal risk judgment and analogy, not a verified technical prediction. No additional policy or scientific argument attributed to him."
+  },
+  "draft": {
+    "id": "9632d9df-006b-4aa4-8c27-2a691263dba8",
+    "revision": 28,
+    "documentPath": ".bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/d208122e-9b1d-40b6-9ed3-f9e2dc5296ee/video-studio/9632d9df-006b-4aa4-8c27-2a691263dba8.json",
+    "sha256": "418f94a7a11bae65a6c65e0617af39ae42fb7168754d62e37f0a41a2418b06e7",
+    "scenes": [
+      {
+        "id": "news-intro",
+        "title": "中文旁白｜Chuck Lorre",
+        "narration": "十月十八日，路透社发布《生活大爆炸》主创查克·洛里的采访。谈到人工智能，他把担忧从编剧岗位，指向了更大的风险。",
+        "durationSeconds": 9.958333333333334,
+        "videoArtifactId": "441b09ee-ebcb-4ea5-a982-9e793b0da0e6-captured-video.webm",
+        "sourceStartSeconds": 0.098,
+        "keepSourceAudio": false,
+        "audio": {
+          "artifactId": "narration-64f4d62d-a627-4e9d-8ad2-8adafafae0e4.wav",
+          "sha256": "fa28400aaf60aa07faf13fe0d83fd4bc5c18d0d3770c95c3ac9f6de781a2094e",
+          "bytes": 468524,
+          "durationSeconds": 9.76,
+          "options": {
+            "kind": "tts",
+            "options": {
+              "provider": "qwen-tts",
+              "voice": "longanlang_v3.1",
+              "ratePercent": 0
+            },
+            "autoTiming": {
+              "startSeconds": 0.08333333333333333,
+              "sourceStartSeconds": 0,
+              "durationSeconds": 9.76,
+              "playbackRate": 1
+            }
+          }
+        },
+        "sourceUrls": [
+          "https://www.youtube.com/watch?v=6blaHYDQFmY"
+        ],
+        "citationCount": 1
+      },
+      {
+        "id": "original-interview",
+        "title": "他的判断｜原声节选①",
+        "narration": "",
+        "durationSeconds": 6.8,
+        "videoArtifactId": "480481b7-fa09-414a-ae0f-fe1879d091a2-source-c8fdcf59-c567-4771-91c8-a449fe74cfb6.webm",
+        "sourceStartSeconds": 0.093,
+        "keepSourceAudio": true,
+        "sourceUrls": [
+          "https://www.youtube.com/watch?v=6blaHYDQFmY"
+        ],
+        "citationCount": 1,
+        "captionStyle": {
+          "fontSize": 26,
+          "color": "#FFFFFF",
+          "background": "box",
+          "position": "bottom",
+          "align": "center",
+          "offsetPercent": -20
+        },
+        "captionDisplay": "bilingual",
+        "captions": [
+          {
+            "startSeconds": 0,
+            "endSeconds": 2.7,
+            "characters": 24,
+            "textSha256": "bef4fe564bd345750cb6b761ab0be6dc662d9d31c8bbee356c159e0635f99f04",
+            "translationCharacters": 11,
+            "translationSha256": "d5ce722a17b7f21765008dc152afc4120449610b86a6d9b5dbcfdbb08ad5e2b5"
+          },
+          {
+            "startSeconds": 2.7,
+            "endSeconds": 6.8,
+            "characters": 37,
+            "textSha256": "02dd5b617316398c4c69c2e8f12657b626d864f99b28bd6711ef7c0e259d58bf",
+            "translationCharacters": 9,
+            "translationSha256": "c16ca5808aecbc0d351139c431af182db021dbbd6894e8ee13da0d1a53727661"
+          }
+        ]
+      },
+      {
+        "id": "a126c381-6f5f-4c35-a61a-80b72c107cdb",
+        "title": "他的理由｜原声节选②",
+        "narration": "",
+        "durationSeconds": 22.15,
+        "sourceStartSeconds": 0.098,
+        "keepSourceAudio": true,
+        "sourceUrls": [
+          "https://www.youtube.com/watch?v=6blaHYDQFmY"
+        ],
+        "citationCount": 1,
+        "captionStyle": {
+          "fontSize": 26,
+          "color": "#FFFFFF",
+          "background": "box",
+          "position": "bottom",
+          "align": "center",
+          "offsetPercent": -20
+        },
+        "captionDisplay": "bilingual",
+        "captions": [
+          {
+            "startSeconds": 0,
+            "endSeconds": 2.7,
+            "characters": 24,
+            "textSha256": "55bd841b4b56e2c5989c92ffab05aec05435d4aa2aff8b6771ad9909ded1993a",
+            "translationCharacters": 6,
+            "translationSha256": "ca6b5aa5289b8fc8a6296085f13d52bfe4ccd87f535d2afbe91eec98f026fc6b"
+          },
+          {
+            "startSeconds": 2.7,
+            "endSeconds": 5.5,
+            "characters": 27,
+            "textSha256": "cd03463e09eb8d4b73ab281b6719bf3e08552f3d5f4cb4e666bc4c2a75dadc86",
+            "translationCharacters": 5,
+            "translationSha256": "40ec5fa0c09731cf2b6d10f4b2812be35eb00c04ab075790cadf22c39885436d"
+          },
+          {
+            "startSeconds": 5.5,
+            "endSeconds": 6.4,
+            "characters": 18,
+            "textSha256": "622d7c04efb2b67a68bbf67d23ba8d8e14a0fbcd1c88df53ef753e5fffe5ec6d",
+            "translationCharacters": 4,
+            "translationSha256": "d878c3132631eb469b95509f8a4ac6aba29fcab017301c868e66a0612ded55c4"
+          },
+          {
+            "startSeconds": 6.4,
+            "endSeconds": 8.6,
+            "characters": 32,
+            "textSha256": "424a309cf3ed9ac110f5516a5bcd66f6e39f4608616c1a2c14e70a47dbb1eb81",
+            "translationCharacters": 9,
+            "translationSha256": "6c54c525b1da3adf088789057d8481bab2f32d6cc6c96dda292535eba42631e0"
+          },
+          {
+            "startSeconds": 8.6,
+            "endSeconds": 10.2,
+            "characters": 24,
+            "textSha256": "4cb9d429aa80f07697556e81792bf8f7331c17acea44282283c17e599176b804",
+            "translationCharacters": 9,
+            "translationSha256": "07c5bf159874b7abeba58b3496d2fad08369c049913d777913c48a0a0a18ab9d"
+          },
+          {
+            "startSeconds": 10.2,
+            "endSeconds": 13.1,
+            "characters": 36,
+            "textSha256": "9e24c950605470d4304e5c453e654cd00a03c402a2a0118f4b4d21f49ae1bcb4",
+            "translationCharacters": 11,
+            "translationSha256": "5853e9321269afe60f78739655147152cb6767d486d0d7f51cb38afe64d0e445"
+          },
+          {
+            "startSeconds": 13.1,
+            "endSeconds": 15,
+            "characters": 25,
+            "textSha256": "2b23b1c85f14ee194faa4d2247b9c9c30541c1957cf3a1ede9b352d52a4e5daa",
+            "translationCharacters": 9,
+            "translationSha256": "30c668a1833bd58ee39a394fae4f1b0ca167d285d661ff8796b622ecf8789837"
+          },
+          {
+            "startSeconds": 15,
+            "endSeconds": 18.4,
+            "characters": 34,
+            "textSha256": "1292e11a71e8ec649d81ea9eb53a37e75c4844aa8363dc4f75c804d969fa8ee1",
+            "translationCharacters": 11,
+            "translationSha256": "516ee8e4ba021492a7681fabfafb8fba71a9436dbba195cb4e14739480a5992f"
+          },
+          {
+            "startSeconds": 18.4,
+            "endSeconds": 19.8,
+            "characters": 26,
+            "textSha256": "4aa38d5aefcc0cdfc54697bfe0f11a8068b9943bc173ff3783d97b7f5c9d3a47",
+            "translationCharacters": 5,
+            "translationSha256": "6a2b55dabb92b2af90cf6cacbfef5172822680cde0a7eed80290433d71c85411"
+          },
+          {
+            "startSeconds": 19.8,
+            "endSeconds": 22.15,
+            "characters": 36,
+            "textSha256": "ebe8017a83529dd03cb6320bc7b609006ffb64516fdafa58173d1c0cc7031aaa",
+            "translationCharacters": 11,
+            "translationSha256": "bd520119c174f6f4727e7000c41cdf9e1027ece76c1db8e8dc12b099eca8b754"
+          }
+        ]
+      },
+      {
+        "id": "news-close",
+        "title": "中文解读｜Chuck Lorre的担忧",
+        "narration": "他更担心的是：更强的智能，会怎样对待人类？",
+        "durationSeconds": 4.041666666666667,
+        "videoArtifactId": "441b09ee-ebcb-4ea5-a982-9e793b0da0e6-captured-video.webm",
+        "sourceStartSeconds": 0.098,
+        "keepSourceAudio": false,
+        "audio": {
+          "artifactId": "narration-dde80445-9e8a-4a74-a9f3-56c4a30c6f9f.wav",
+          "sha256": "18e2b5a9bf7ae07db29bd9fb5791007bd654d37857f37bd8b27fba4dbf30e73e",
+          "bytes": 184364,
+          "durationSeconds": 3.84,
+          "options": {
+            "kind": "tts",
+            "options": {
+              "provider": "qwen-tts",
+              "voice": "longanlang_v3.1",
+              "ratePercent": 0
+            },
+            "autoTiming": {
+              "startSeconds": 0.08333333333333333,
+              "sourceStartSeconds": 0,
+              "durationSeconds": 3.84,
+              "playbackRate": 1
+            }
+          }
+        },
+        "sourceUrls": [
+          "https://www.youtube.com/watch?v=6blaHYDQFmY"
+        ],
+        "citationCount": 1
+      }
+    ]
+  },
+  "output": {
+    "artifactId": "media-3f5d2183-303b-45d6-84d5-4e01bb83dfe8-converted.mp4",
+    "sha256": "2935f8bc3868ff5ba9030b0dd997bf331edfc6b98484485b1ad71bbcedb7fa68",
+    "bytes": 25782279,
+    "path": ".bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/d208122e-9b1d-40b6-9ed3-f9e2dc5296ee/artifacts/media-3f5d2183-303b-45d6-84d5-4e01bb83dfe8-converted.mp4",
+    "fingerprint": "e1d963e4da21bac98bcdd8e10866280da8f57ca5964bf6feedb30ca5229e5bfc",
+    "exportRevision": 27,
+    "plannedDurationSeconds": 42.949999999999996,
+    "actualDurationSeconds": 43.029333333333334,
+    "width": 720,
+    "height": 1280,
+    "fps": 24,
+    "tracks": [
+      {
+        "id": 1,
+        "type": "video",
+        "codec": "avc",
+        "canDecode": true,
+        "width": 720,
+        "height": 1280,
+        "rotation": 0,
+        "startSeconds": 0,
+        "endSeconds": 42.958333333333336,
+        "canBeTransparent": false
+      },
+      {
+        "id": 2,
+        "type": "audio",
+        "codec": "aac",
+        "canDecode": true,
+        "channels": 2,
+        "sampleRate": 48000,
+        "startSeconds": 0,
+        "endSeconds": 43.029333333333334
+      }
+    ],
+    "frames": 1031,
+    "audioPeak": 0.94,
+    "verification": {
+      "artifactId": "video-dbffe6ac-db54-4fe6-a0b4-ac0475b11ff8.json",
+      "sha256": "b38b8cf537d899dea78c4e228316d55c6526f7d4987dbe7f3e0d42451c430db1",
+      "bytes": 15377
+    },
+    "quality": {
+      "coverage": "critical-state-samples",
+      "sampleCount": 73,
+      "issues": [],
+      "semanticVerification": "requires-visual-review"
+    }
+  },
+  "review": {
+    "journalSha256": "e2fbe2f661cf65b6754d0cec281233bcc0f4499f9b5816db81daf5597054e227",
+    "exportFingerprint": "e1d963e4da21bac98bcdd8e10866280da8f57ca5964bf6feedb30ca5229e5bfc",
+    "scenes": [
+      {
+        "sceneId": "news-intro",
+        "totalSamples": 24,
+        "verifiedFrameHashes": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "已查看当前导出24张390宽关键状态图。缩短后的标题单行完整，无孤字；中文旁白字幕可读，不遮人物，动态原片保留。原片烧录小英文仍可见，与中文旁白不是逐句翻译，顶部中文旁白标签区分。保留这一已知限制；仅画面审阅，未听音，不代表人工接受。",
+          "createdAt": "2026-10-18T11:43:41.856Z",
+          "sequence": 1
+        }
+      },
+      {
+        "sceneId": "original-interview",
+        "totalSamples": 10,
+        "verifiedFrameHashes": 10,
+        "agent": {
+          "status": "passed",
+          "notes": "已查看当前导出全部10张手机宽关键图。26号双语白字黑框明显大于原烧录小字，英文1至2行加中文1行，无越界；Lorre面部与人物署名保留，绑定预览可见。黑框并非完全不透明，仍透见少量原烧录字迹但新字幕清楚。两cue为原句分段，标题标原声节选①。未听音，不能认证声学精确同步或人工听感。",
+          "createdAt": "2026-10-18T11:43:56.745Z",
+          "sequence": 2
+        }
+      },
+      {
+        "sceneId": "a126c381-6f5f-4c35-a61a-80b72c107cdb",
+        "totalSamples": 24,
+        "verifiedFrameHashes": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "查看全部24张当前关键帧并额外采样30.8/32/33.5/35.2/36/37/38秒七张，覆盖后半段各双语cue。26号字、bottom offset -20，长英文两行加中文一行，无裁字越界，Lorre脸保留。人类智能、风险、顶级捕食者及昆虫类比按原句呈现，标题标他的理由和节选②。黑框内少量烧录英文仍透见，未自然消除但新字可读；源画面360p清晰度有限。仅视觉与文本审阅，未听音，不认证逐词声学对齐。",
+          "createdAt": "2026-10-18T11:44:24.094Z",
+          "sequence": 3
+        }
+      },
+      {
+        "sceneId": "news-close",
+        "totalSamples": 15,
+        "verifiedFrameHashes": 15,
+        "agent": {
+          "status": "passed",
+          "notes": "查看当前导出15张关键状态图。结尾中文两cue完整可读，无越界；中文解读署名两行显示，原片动态画面和人物保留。旧烧录小英文仍显示，和中文解读不是翻译对应，已用标签区分；保持用户要求的现有结尾内容及音频。媒体检查现有旁白3.84秒可解码，未实际听音。仅画面审阅通过，人工听感和接受待用户。",
+          "createdAt": "2026-10-18T11:44:48.130Z",
+          "sequence": 4
+        }
+      }
+    ],
+    "agent": {
+      "status": "passed",
+      "notes": "本次新导出已完成4镜头全部73张390宽关键状态图的实际视觉审阅，另查后半段7张补充帧；全部镜头已独立记录。双语26号白字黑框明显放大，最多英文2行中文1行，无溢出，Lorre面部和身份保留；开场标题单行。故事保持他的文明风险判断与捕食者/昆虫类比，节选①②明确。技术报告通过、H264/AAC可解码，视频42.958秒、音轨43.029秒。已知限制：原烧录小英文在黑框中少量透见，旁白段仍可见；源360p画质有限，采样非逐帧，未听音及未认证声学精确同步。原声和两段现有旁白全部复用，无TTS。此为Agent画面意见，不代表人工听感或最终接受。",
+      "createdAt": "2026-10-18T11:45:08.630Z",
+      "sequence": 5
+    },
+    "rootVisualInspection": {
+      "at": "2026-10-18T11:46:09.707Z",
+      "method": "Viewed actual current-export phone PNGs through view_image; no audio listening inferred.",
+      "phoneWidth": 390,
+      "frames": [
+        {
+          "artifactId": "media-ebced8e6-9fb4-4156-a706-6e6b98beeec0-frame-2.png",
+          "seconds": 10,
+          "sha256": "bc7ff161fced06856346829768d130f16a59425d78abfc1ff7ee37a673b8a443"
+        },
+        {
+          "artifactId": "media-ebced8e6-9fb4-4156-a706-6e6b98beeec0-frame-8.png",
+          "seconds": 13.375,
+          "sha256": "993ba0be40d60d40942e891efbfdc1418451fb366ac01a20678721f6fa8124a6"
+        },
+        {
+          "artifactId": "media-16e9f7e4-4250-4f44-8f6b-12bccda29e13-frame-7.png",
+          "seconds": 20.875,
+          "sha256": "17bd9944fa81aba0a771ac1d760b0d79914abb4f19af5aa90bbd56825ae8e86d"
+        },
+        {
+          "artifactId": "media-e4979c80-0d15-40a1-b3e5-ef4567b2e5b5-frame-3.png",
+          "seconds": 5,
+          "sha256": "6e268f2f9cf1c62e5cd0f078b3352823a1c8336e337ab1fd49cfce62dc76c0d0"
+        },
+        {
+          "artifactId": "media-43edc7b5-0851-4f94-a9f3-f9df46eb8392-frame-8.png",
+          "seconds": 38.875,
+          "sha256": "437d6a6f2af4962ae63d79534447c6cfce52adf9a5021476f4f7d26e2dcf9e00"
+        },
+        {
+          "artifactId": "media-d279d4dc-92bd-41ec-aeeb-0e600a37c13b-frame-7.png",
+          "seconds": 40.916666666666664,
+          "sha256": "137ddb5a978136f4d26ae1c2d8b02c2baab10b63b3c09f5f51425fc1f7705f7d"
+        }
+      ],
+      "findings": [
+        "Interview English/Chinese overlay visibly larger and readable, at most three lines in inspected frames.",
+        "Face and source byline remain visible where present in original footage.",
+        "Semitransparent backing largely covers original small English; faint burned-in lettering remains behind it.",
+        "Chinese narration scenes retain the smaller source English in their muted video background; the large editable English is used for original-speech interview scenes.",
+        "Opening title shortened to remove the earlier orphaned final character; closing title still wraps to two lines."
+      ],
+      "audioListening": "pending-human"
+    },
+    "nativePlayback": {
+      "at": "2026-10-18T11:48:27.274Z",
+      "draftRevision": 28,
+      "exportRevision": 27,
+      "observedIn": "BMW Video Studio recent movie",
+      "evidence": "Native screenshot showed 0:10/0:43; paused after progress reached 0:21, AX value 21.2032. Player mute used only for verification and then restored.",
+      "audioListening": "not-claimed"
+    }
+  },
+  "localRevision": {
+    "firstDraftRevision": 11,
+    "initialExportsRetained": 1,
+    "finalExports": [
+      {
+        "artifactId": "media-fcb7cc42-9d5f-4a59-bdb7-faf0444fccf9-converted.mp4",
+        "fingerprint": "c765475f86ada238f1560090c1544536a3ac5a757959299768531a10a8c1c2d9",
+        "verificationArtifactId": "video-de5505fd-a93a-417d-9992-6cc8117ba843.json",
+        "revision": 9,
+        "createdAt": "2026-10-18T10:56:54.168Z",
+        "durationSeconds": 40.33833333333333
+      },
+      {
+        "artifactId": "media-6f3b49b2-4712-41a0-99f4-0cec53e4ed7d-converted.mp4",
+        "fingerprint": "36bd3fbfc048238be34c425ee56e9c6912451e77b18106d7f046937dfbcded8b",
+        "verificationArtifactId": "video-f787b0cf-2be3-4f7f-aa67-b035c3fd9e0a.json",
+        "revision": 11,
+        "createdAt": "2026-10-18T10:57:23.198Z",
+        "durationSeconds": 40.33833333333333
+      },
+      {
+        "artifactId": "media-dc9a7622-9910-4ff2-b12e-d55fa2ceef9e-converted.mp4",
+        "fingerprint": "62ac528e7cf44ad9fe0cb81b2106bd91de7aec922aec41733877d5c515298dac",
+        "verificationArtifactId": "video-6bff46fe-ed7e-4184-ae30-ce475afb92c6.json",
+        "revision": 13,
+        "createdAt": "2026-10-18T10:58:25.967Z",
+        "durationSeconds": 39.50833333333333
+      },
+      {
+        "artifactId": "media-4ba50794-be14-4ffc-8be3-92f4dd902700-converted.mp4",
+        "fingerprint": "9cbacea8a9a634ccbd6ffd265c306cffc31fcce63cee4aa526d280f1610adbf3",
+        "verificationArtifactId": "video-10383cdf-c97e-4290-8464-cc0843b0f678.json",
+        "revision": 19,
+        "createdAt": "2026-10-18T11:13:32.521Z",
+        "durationSeconds": 58.233333333333334
+      },
+      {
+        "artifactId": "media-466f5dcf-d688-49b6-ad7d-3fd6d48565af-converted.mp4",
+        "fingerprint": "93523897386c9f4c8fe0a5f14cc6b23b2c5fff847627b4cd2b987497b664b38f",
+        "verificationArtifactId": "video-8808a977-7101-4675-b8c8-f9a84152cab8.json",
+        "revision": 25,
+        "createdAt": "2026-10-18T11:23:08.087Z",
+        "durationSeconds": 42.949999999999996
+      },
+      {
+        "artifactId": "media-3f5d2183-303b-45d6-84d5-4e01bb83dfe8-converted.mp4",
+        "fingerprint": "e1d963e4da21bac98bcdd8e10866280da8f57ca5964bf6feedb30ca5229e5bfc",
+        "verificationArtifactId": "video-dbffe6ac-db54-4fe6-a0b4-ac0475b11ff8.json",
+        "revision": 27,
+        "createdAt": "2026-10-18T11:38:35.292Z",
+        "durationSeconds": 42.949999999999996
+      }
+    ],
+    "preservedResearchArtifacts": 60,
+    "preservedInitialProductionArtifacts": 72,
+    "unrelatedIntroductionVoicePreserved": {
+      "artifactId": "narration-64f4d62d-a627-4e9d-8ad2-8adafafae0e4.wav",
+      "sha256": "fa28400aaf60aa07faf13fe0d83fd4bc5c18d0d3770c95c3ac9f6de781a2094e",
+      "bytes": 468524
+    },
+    "fontRevisionClosingVoicePreserved": {
+      "artifactId": "narration-dde80445-9e8a-4a74-a9f3-56c4a30c6f9f.wav",
+      "sha256": "18e2b5a9bf7ae07db29bd9fb5791007bd654d37857f37bd8b27fba4dbf30e73e",
+      "bytes": 184364
+    },
+    "humanFeedback": {
+      "originalPreviewSeconds": 43.02933333333333,
+      "request": "Asked whether English captions were part of the original and requested larger type.",
+      "originalEnglish": "Burned into Reuters original footage.",
+      "response": "Add larger editable English/Chinese captions while retaining all narration, original interview audio and timing."
+    },
+    "changes": "Extended the selected interview with its original explanation and translated captions; shortened the close, replaced long stills with the same original video, and revised only the closing narration. Then enlarged English/Chinese subtitles in response to user feedback, preserving both ready narration files and all original audio windows. Earlier outputs and audio remain stored.",
+    "subtitleOnlyAudit": {
+      "at": "2026-10-18T11:37:39.226Z",
+      "mutationBatches": 1,
+      "commands": [
+        {
+          "op": "scene.set",
+          "patchKeys": [
+            "title",
+            "citations"
+          ]
+        },
+        {
+          "op": "scene.set",
+          "patchKeys": [
+            "captionDisplay",
+            "captionStyle",
+            "citations"
+          ]
+        },
+        {
+          "op": "captions.set",
+          "scene": "original-interview"
+        },
+        {
+          "op": "scene.set",
+          "patchKeys": [
+            "captionDisplay",
+            "captionStyle",
+            "citations"
+          ]
+        },
+        {
+          "op": "captions.set",
+          "scene": "a126c381-6f5f-4c35-a61a-80b72c107cdb"
+        },
+        {
+          "op": "scene.set",
+          "patchKeys": [
+            "citations"
+          ]
+        }
+      ],
+      "narrationUnchanged": "Verified by allowed fields in actual public browser mutation batch; pre-font baseline did not retain narration text.",
+      "audioAndTiming": "All four scene media IDs/source offsets/source-audio flags/timings and both narration SHA-256 values match the pre-font baseline."
+    }
+  },
+  "acceptance": {
+    "technical": "passed-native-export-verification",
+    "agentVisual": "passed-current-export",
+    "humanListening": "not-separately-scored",
+    "viewerUnderstanding": "not-separately-assessed",
+    "finalAcceptance": "accepted",
+    "userFeedback": {
+      "date": "2026-10-18",
+      "recordedAt": "2026-10-18T11:53:59.663Z",
+      "channel": "human-user-message-in-current-chat",
+      "quote": "这个版本可以了，先更新 NEWS-02 的相关文档和下一步计划，提交代码并推送到 GitHub。",
+      "artifactId": "media-3f5d2183-303b-45d6-84d5-4e01bb83dfe8-converted.mp4",
+      "exportFingerprint": "e1d963e4da21bac98bcdd8e10866280da8f57ca5964bf6feedb30ca5229e5bfc",
+      "exportSha256": "2935f8bc3868ff5ba9030b0dd997bf331edfc6b98484485b1ad71bbcedb7fa68",
+      "draftId": "9632d9df-006b-4aa4-8c27-2a691263dba8",
+      "draftRevision": 28,
+      "scope": "Accepts the enlarged bilingual subtitle version shown immediately before this reply. No separate pronunciation score, acoustic alignment assessment or comprehension retelling was provided. Recorded from chat, not a forged Studio user-review entry."
+    }
+  },
+  "limits": [
+    "The user accepted this current export in chat. Model audio admission, a separate pronunciation score and a comprehension retelling are not claimed.",
+    "Translated original-speech cues are editorial timing based on the source transcript and visible captions; precise audio synchronization needs human listening.",
+    "Original English is burned into the source; the editable bilingual overlay does not remove original pixels.",
+    "NEWS-02 bounded unchanged-scene review reuse remains unimplemented; each new export received the existing current-fingerprint review."
+  ],
+  "documentationCheck": {
+    "command": "npm run check --silent",
+    "status": "passed",
+    "log": ".bmw-runtime/news-02/acceptance-check.log",
+    "logSha256": "94675f2730c2020c43efea40a8f4ba539b9d9d7aa0569d2a786388862180904e"
+  }
+}

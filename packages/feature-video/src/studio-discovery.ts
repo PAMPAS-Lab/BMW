@@ -56,7 +56,7 @@ export function studioHelp(schema:JsonSchema,query:BrowserHelpQuery):unknown {
   let item=properties[key]
   if(key==='operation')item=operation?{const:sub??operation}:{type:'string',enum:Object.keys(studioOperationContracts)}
   if(!sub&&operation==='source'&&key==='sourceRequest'){omitted.push(key);item={type:'object',required:['operation'],additionalProperties:false,properties:{operation:sourceRequestSchema.properties.operation},description:'Select forSubOperation in browser help to get the complete closed sourceRequest fields.'}}
-  else if(JSON.stringify(item).length>1500){omitted.push(key);item={type:item.type??'object',description:'Nested contract omitted from this projection. Use the feature discovery request in next.'}}
+  else if(JSON.stringify(item).length>1500&&!(operation==='propose-news-topics'&&key==='newsCandidates')){omitted.push(key);item={type:item.type??'object',description:'Nested contract omitted from this projection. Use the feature discovery request in next.'}}
   return [key,item]
  }))
  const requestSchema={type:'object',additionalProperties:false,required:['operation',...(selected?.required??[])],properties:selectedProperties}
