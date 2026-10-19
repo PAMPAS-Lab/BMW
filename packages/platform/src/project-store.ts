@@ -2,6 +2,7 @@ import {readStateFile,stateRecord} from './state-load.js'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
+import {normalizeProjectTabState} from '@bmw-agent/browser-capability/tabs'
 
 const DOCUMENTS = Object.freeze({
   instructions: 'AGENTS.md',
@@ -80,6 +81,7 @@ export function parseProjectState(raw:unknown) {
         cleanName(project.name); cleanHomeUrl(project.homeUrl)
         // Validate every migration before any Project documents or state are written.
         validateProjectMetadata(project)
+        if(project.tabState!==undefined)normalizeProjectTabState(project.tabState)
         ids.add(project.id)
       }
       if (value.activeProjectId !== null && typeof value.activeProjectId !== 'string') throw new Error('Invalid active Project identity.')
@@ -287,10 +289,7 @@ export class ProjectStore {
   updateTabState(id, tabState) {
     const project = this.get(id)
     if (!project) return
-    project.tabState = {
-      urls: [...new Set((tabState.urls || []).filter((url) => /^https?:/i.test(url)))].slice(0, 20),
-      activeUrl: /^https?:/i.test(tabState.activeUrl || '') ? tabState.activeUrl : null
-    }
+    project.tabState = normalizeProjectTabState(tabState)
     project.updatedAt = new Date().toISOString()
     this.save()
   }

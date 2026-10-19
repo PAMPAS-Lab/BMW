@@ -1,0 +1,884 @@
+{
+  "format": "bmw.news-replit-dual-delivery",
+  "version": 1,
+  "updatedAt": "2026-10-19T01:51:41.278Z",
+  "projectId": "2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967",
+  "humanChoice": "Replit 采访，两种运行时各做一版（推荐）",
+  "status": "interview-audio-restored-and-watermark-updated; assisted-production; human-acceptance-pending",
+  "editions": [
+    {
+      "driver": "dsh",
+      "sessionId": "585058c3-a13d-455b-b22e-f417a1239b62",
+      "route": "deepseek-official/deepseek-flash",
+      "label": "DeepSeek · DeepSeek-V4.1-Flash",
+      "checkpoint": "Current official catalog label at execution",
+      "toolNames": [
+        "browser"
+      ],
+      "selection": {
+        "topicId": "replit-masad-disrupt-interview-1018",
+        "draftId": "ff4a38f3-12d1-49ba-87ca-937cb3ee65da",
+        "selectedAt": "2026-10-19T00:03:33.421Z",
+        "fingerprint": "98ef6dc9e402b558d15f84c5817a5a1e224d2d41baac79f43c66fb510ce25cfb",
+        "dispatch": "sent",
+        "runId": "4219bde8-200f-4832-ba84-0d8ae6652e2d"
+      },
+      "selectionJournalSha256": "9422447e400c0e7171dd3070f5aecc6900b66337216dc6c5b3500cad2c275e8f",
+      "draft": {
+        "id": "ff4a38f3-12d1-49ba-87ca-937cb3ee65da",
+        "revision": 36,
+        "sha256": "3e2c39deb827549bbd23a19370a76faf7a8f8f63cd464318384621d3ca2c4201",
+        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967/video-studio/ff4a38f3-12d1-49ba-87ca-937cb3ee65da.json",
+        "title": "Replit换了默认模型",
+        "tts": {
+          "provider": "qwen-tts",
+          "voice": "longanlang_v3.1",
+          "ratePercent": 0
+        },
+        "sceneCount": 4
+      },
+      "latestExport": {
+        "artifactId": "media-5a7735f4-2831-4f5a-ad0f-a4ec65043676-converted.mp4",
+        "fingerprint": "a139b1275b4f0564eb2dd94cdd1ebfb4fe62a887159f18372d5a80eec5a1085e",
+        "verificationArtifactId": "video-783d36bc-7348-42c6-bbce-d04d3512f919.json",
+        "revision": 35,
+        "createdAt": "2026-10-19T01:04:33.675Z",
+        "durationSeconds": 48.7,
+        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967/artifacts/media-5a7735f4-2831-4f5a-ad0f-a4ec65043676-converted.mp4",
+        "sha256": "c076fb65e3e338c9377bd87978a95191403fd311f64c620fab37afdfbdf73230",
+        "bytes": 19334502,
+        "verificationSha256": "de077b7667bb045f9addd2c2cb950f80da12218cebb59b732a526628fba2941d",
+        "technical": {
+          "status": "passed",
+          "actualDurationSeconds": 48.768,
+          "tracks": [
+            {
+              "id": 1,
+              "type": "video",
+              "codec": "avc",
+              "canDecode": true,
+              "width": 720,
+              "height": 1280,
+              "rotation": 0,
+              "startSeconds": 0,
+              "endSeconds": 48.708333333333336,
+              "canBeTransparent": false
+            },
+            {
+              "id": 2,
+              "type": "audio",
+              "codec": "aac",
+              "canDecode": true,
+              "channels": 2,
+              "sampleRate": 48000,
+              "startSeconds": 0,
+              "endSeconds": 48.768
+            }
+          ],
+          "criticalStateSamples": 79,
+          "qualityIssues": []
+        }
+      },
+      "narration": [
+        {
+          "sceneId": "s1-context",
+          "artifactId": "narration-76f24016-bc87-4919-8b95-f7865907090f.wav",
+          "sha256": "88a234e39a9bd245cbbd289188036c7f0e44d45afe27fe05d9518bef2ea7e48f"
+        },
+        {
+          "sceneId": "s3-scope",
+          "artifactId": "narration-3a1e8a99-e922-4a04-9172-8e80a892655f.wav",
+          "sha256": "3bffe83c53ddb34251db6a132e1b3da9e67e1e7fcc457d70c7fe41c631ca4e77"
+        },
+        {
+          "sceneId": "s4-close",
+          "artifactId": "narration-c47f82b2-efab-46fd-b827-2551f70f439f.wav",
+          "sha256": "32e8655e9f860f2b6d7b3b5b2bf079b867160dadcf3a1ff7746ebbeeb5962812"
+        }
+      ],
+      "sourceSpeech": [
+        {
+          "sceneId": "s2-clip",
+          "sourceArtifactId": "f6bbc7e1-6b9f-4cda-9e95-d84d17ed2a42-source-8e77b575-31a6-43e0-abc2-5ac3576e11ed.webm",
+          "sourceSha256": "0b4f8a906e92a48efcbef07572130569369659c119decfa39db84c36f22f095a",
+          "evidenceArtifactId": "video-1181a7f9-04b2-4786-9691-9f451b9e0a0d.json",
+          "evidenceSha256": "9007603a5ab38a4aaefed7ff0d0d015c31564d1ff14dc6060e1e118c9e7e8ded",
+          "durationSeconds": 27.967,
+          "segmentIndex": 0,
+          "createdAt": "2026-10-19T00:08:08.057Z"
+        }
+      ],
+      "review": {
+        "journalSha256": "b722a4b4a80c67b201ace2b9ce69a72e267457cc580084e439d02f3e29c25eda",
+        "fingerprint": "a139b1275b4f0564eb2dd94cdd1ebfb4fe62a887159f18372d5a80eec5a1085e",
+        "film": null,
+        "scenes": [
+          {
+            "sceneId": "s1-context",
+            "totalSamples": 14,
+            "acquiredFrames": 0,
+            "agent": null
+          },
+          {
+            "sceneId": "s2-clip",
+            "totalSamples": 24,
+            "acquiredFrames": 8,
+            "agent": null
+          },
+          {
+            "sceneId": "s3-scope",
+            "totalSamples": 22,
+            "acquiredFrames": 0,
+            "agent": null
+          },
+          {
+            "sceneId": "s4-close",
+            "totalSamples": 19,
+            "acquiredFrames": 0,
+            "agent": null
+          }
+        ]
+      },
+      "receipts": [
+        {
+          "runId": "4ca16423-c287-4b0f-97a3-3d6c7fc0ec3b",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "6e1e9a11-4eff-4081-b2a5-bbf4e763b60c",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "ab42d8e0-e077-4ddf-8ade-81922be3b9aa",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "47af7db5-ffd4-4de7-bf2a-e33bcc5cf29a",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "3223c479-3723-48fb-ad2c-d105c54d6d86",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "4219bde8-200f-4832-ba84-0d8ae6652e2d",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "ef0b3ccd-fb37-4418-9139-b65b9288f466",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "12caaaa8-3c4a-489c-9a7d-36057025fec4",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "a8d29ccf-1657-4c05-b210-2d5cc417471a",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "fe3a1dc5-147d-4d93-bcbc-cca93fe695ce",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "65081189-58de-4fc4-a20e-670cae4ffd0d",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "cc19759d-304a-4847-a413-3435bc9c038d",
+          "state": "finished",
+          "outcome": "success"
+        }
+      ],
+      "acceptance": {
+        "technical": "passed",
+        "agentReview": "Current export scope only; no current whole-film pass asserted",
+        "humanListening": "User reported previous export silent; repaired export awaits listening",
+        "finalAcceptance": "pending"
+      },
+      "supersededExportBeforeAudioRepair": {
+        "artifactId": "media-4f290155-5cac-4d70-9b2f-a8f55454586b-converted.mp4",
+        "fingerprint": "b89bd94c0fbcd6fefd78b2c85ca4237ca57df3894927eaa8bd4fce85df3b7e26",
+        "verificationArtifactId": "video-a5bc6748-9dbf-49de-9479-02424ef5f83a.json",
+        "revision": 32,
+        "createdAt": "2026-10-19T00:14:04.900Z",
+        "durationSeconds": 48.7,
+        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967/artifacts/media-4f290155-5cac-4d70-9b2f-a8f55454586b-converted.mp4",
+        "sha256": "74100b9d904885197d56ef1936d17cb000840c67c73fa1d53ec642b9e6821659",
+        "bytes": 19216965,
+        "verificationSha256": "1c40cd4ac68ccccb31579e788b0d1e2a50d7034b6386b84ac410f7fe406cdf39",
+        "technical": {
+          "status": "passed",
+          "actualDurationSeconds": 48.768,
+          "tracks": [
+            {
+              "id": 1,
+              "type": "video",
+              "codec": "avc",
+              "canDecode": true,
+              "width": 720,
+              "height": 1280,
+              "rotation": 0,
+              "startSeconds": 0,
+              "endSeconds": 48.708333333333336,
+              "canBeTransparent": false
+            },
+            {
+              "id": 2,
+              "type": "audio",
+              "codec": "aac",
+              "canDecode": true,
+              "channels": 2,
+              "sampleRate": 48000,
+              "startSeconds": 0,
+              "endSeconds": 48.768
+            }
+          ],
+          "criticalStateSamples": 79,
+          "qualityIssues": []
+        }
+      },
+      "audioRepair": {
+        "reason": "User reported silent interview; primary visual clip omitted keepSourceAudio. The source was audible but original exports mixed only background music in the interview interval.",
+        "primaryClipId": "visual-7-s2-clip-0",
+        "keepSourceAudio": true,
+        "sourceVolume": 1,
+        "watermark": {
+          "enabled": true,
+          "text": "AIpardonSI News",
+          "position": "bottom-left",
+          "opacity": 1,
+          "size": 14
+        },
+        "samples": [
+          {
+            "artifactId": "media-4888c982-b88b-4b92-aa0d-0a623a140936-audition.wav",
+            "sourceArtifactId": "media-4f290155-5cac-4d70-9b2f-a8f55454586b-converted.mp4",
+            "sha256": "20e31e34910654ba39fcb7aeb16b3c3b4e7880b347d6959809e65f2fc47219a8",
+            "startSeconds": 10,
+            "endSeconds": 18,
+            "sampleRate": 48000,
+            "channels": 2,
+            "frames": 384000,
+            "peak": 0.017989635467529297,
+            "rms": 0.007346190549028389,
+            "clippedSamples": 0,
+            "missingFrames": 0,
+            "listeningStatus": "not-performed",
+            "processing": "native-rate-and-channels; PCM16 quantization; no gain/resampling",
+            "timebase": "input-file-PTS"
+          },
+          {
+            "artifactId": "media-fbee6ddd-458d-41fb-a86c-ee908269aee8-audition.wav",
+            "sourceArtifactId": "media-4f290155-5cac-4d70-9b2f-a8f55454586b-converted.mp4",
+            "sha256": "e4358a8ac4e3e796eeb41c4be2954bf41f264d8e98a6e9ab1b548e2c04aacc2c",
+            "startSeconds": 1.5,
+            "endSeconds": 4.5,
+            "sampleRate": 48000,
+            "channels": 2,
+            "frames": 144000,
+            "peak": 0.6424545049667358,
+            "rms": 0.08998919738695055,
+            "clippedSamples": 0,
+            "missingFrames": 0,
+            "listeningStatus": "not-performed",
+            "processing": "native-rate-and-channels; PCM16 quantization; no gain/resampling",
+            "timebase": "input-file-PTS"
+          },
+          {
+            "artifactId": "media-a7b5f764-c3b1-4345-9d95-ad6e23458531-audition.wav",
+            "sourceArtifactId": "media-4f290155-5cac-4d70-9b2f-a8f55454586b-converted.mp4",
+            "sha256": "20e31e34910654ba39fcb7aeb16b3c3b4e7880b347d6959809e65f2fc47219a8",
+            "startSeconds": 10,
+            "endSeconds": 18,
+            "sampleRate": 48000,
+            "channels": 2,
+            "frames": 384000,
+            "peak": 0.017989635467529297,
+            "rms": 0.007346190549028389,
+            "clippedSamples": 0,
+            "missingFrames": 0,
+            "listeningStatus": "not-performed",
+            "processing": "native-rate-and-channels; PCM16 quantization; no gain/resampling",
+            "timebase": "input-file-PTS"
+          },
+          {
+            "artifactId": "media-88f317d9-3a2e-4cb1-be42-3aeb2c8f99cb-audition.wav",
+            "sourceArtifactId": "media-5a7735f4-2831-4f5a-ad0f-a4ec65043676-converted.mp4",
+            "sha256": "80b49007f944ed971ad58adb39ea792d1cd5aaecb4b029b31db84a2c2af8e654",
+            "startSeconds": 10,
+            "endSeconds": 18,
+            "sampleRate": 48000,
+            "channels": 2,
+            "frames": 384000,
+            "peak": 0.4712255299091339,
+            "rms": 0.05937193167834524,
+            "clippedSamples": 0,
+            "missingFrames": 0,
+            "listeningStatus": "not-performed",
+            "processing": "native-rate-and-channels; PCM16 quantization; no gain/resampling",
+            "timebase": "input-file-PTS"
+          }
+        ],
+        "exportedAudioSpeechEvidence": [
+          {
+            "artifactId": "video-5f00f101-e6b2-4355-889e-118397f500f2.json",
+            "sha256": "9457b390986269588a751398491dd9a26b0ed269314adcd0e250e2961edb332c",
+            "sourceArtifactId": "media-88f317d9-3a2e-4cb1-be42-3aeb2c8f99cb-audition.wav",
+            "segments": [
+              {
+                "id": "segment-1",
+                "text": "The internal benchmark calls live bench, we publish a public benchmark as well, and consistently",
+                "startSeconds": 0,
+                "endSeconds": 5.94,
+                "tokenMeanProbability": 0.6512344588235294,
+                "usable": false,
+                "warnings": [
+                  "low-confidence"
+                ]
+              },
+              {
+                "id": "segment-2",
+                "text": "Sol and Astra perform better.",
+                "startSeconds": 5.94,
+                "endSeconds": 8.04,
+                "tokenMeanProbability": 0.7290753333333333,
+                "usable": false,
+                "warnings": [
+                  "outside-audio",
+                  "low-confidence"
+                ]
+              }
+            ]
+          }
+        ],
+        "narrationPreserved": true
+      }
+    },
+    {
+      "driver": "qoder-cn",
+      "sessionId": "9c940adf-35c7-4a0b-86a4-bf4c5379558c",
+      "route": "dfmodel",
+      "label": "DeepSeek-Flash",
+      "checkpoint": "Undisclosed by official catalog; not asserted identical to DSH",
+      "toolNames": [
+        "browser"
+      ],
+      "selection": {
+        "topicId": "replit-openai-default-anthropic-2026-10-17",
+        "draftId": "7e37f2cc-bfe8-41af-9a54-ba13471cb7e4",
+        "selectedAt": "2026-10-18T23:40:52.333Z",
+        "fingerprint": "8f583a08cd6f69a21a500e868f83b4d84d79eb53259021d9672b1e904937e575",
+        "dispatch": "sent",
+        "runId": "8ef495a9-39dc-4a0f-a968-8298bd3011c2"
+      },
+      "selectionJournalSha256": "8167336dd2cdf52e7593891765cba778592be5f3e2a63d657810216054b28868",
+      "draft": {
+        "id": "7e37f2cc-bfe8-41af-9a54-ba13471cb7e4",
+        "revision": 57,
+        "sha256": "a3c1053feb82d20c11e7b32c2b77b431acbef07b43e545e28a42066e1845004d",
+        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967/video-studio/7e37f2cc-bfe8-41af-9a54-ba13471cb7e4.json",
+        "title": "Replit换了默认模型",
+        "tts": {
+          "provider": "qwen-tts",
+          "voice": "longanlang_v3.1",
+          "ratePercent": 0
+        },
+        "sceneCount": 6
+      },
+      "latestExport": {
+        "artifactId": "media-f49beee4-e4f3-4057-8e38-3c8021b65966-converted.mp4",
+        "fingerprint": "0539c1480e8f4942eb3158872283ba94e9e5af83fa3cf9f782eb738ea291dee2",
+        "verificationArtifactId": "video-1b8979b7-c585-41f3-86de-e2ff0b8ecf72.json",
+        "revision": 55,
+        "createdAt": "2026-10-19T01:06:27.512Z",
+        "durationSeconds": 54.575,
+        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967/artifacts/media-f49beee4-e4f3-4057-8e38-3c8021b65966-converted.mp4",
+        "sha256": "dc438ede1aa24952d766827578c6cf01930ff06a18001dec4071d3aa5ab8624d",
+        "bytes": 20417918,
+        "verificationSha256": "66967b13dc2f93b663b9cb68867b1d75d8cc52581d89bc4c21ffe02fdde092d0",
+        "technical": {
+          "status": "passed",
+          "actualDurationSeconds": 54.656,
+          "tracks": [
+            {
+              "id": 1,
+              "type": "video",
+              "codec": "avc",
+              "canDecode": true,
+              "width": 720,
+              "height": 1280,
+              "rotation": 0,
+              "startSeconds": 0,
+              "endSeconds": 54.583333333333336,
+              "canBeTransparent": false
+            },
+            {
+              "id": 2,
+              "type": "audio",
+              "codec": "aac",
+              "canDecode": true,
+              "channels": 2,
+              "sampleRate": 48000,
+              "startSeconds": 0,
+              "endSeconds": 54.656
+            }
+          ],
+          "criticalStateSamples": 69,
+          "qualityIssues": []
+        }
+      },
+      "narration": [
+        {
+          "sceneId": "s1-default-switch",
+          "artifactId": "narration-86039190-8352-4f4f-99da-a09bc5c868e6.wav",
+          "sha256": "7195d9b7fa7d4956fa48962d38f8414ce4ad1c1917f0541d83c7207f36ac6b16"
+        },
+        {
+          "sceneId": "s3-tc-quote",
+          "artifactId": "narration-142b42b1-b893-49de-acf2-845f3cb0f280.wav",
+          "sha256": "b81b8e834b9abfdeec23a8fce60be4bd4aa3e02ad0d621b94ba353eaf4b1c53d"
+        },
+        {
+          "sceneId": "s4-default-choice",
+          "artifactId": "narration-86a0d9fc-779f-484e-aa44-44a61413cfba.wav",
+          "sha256": "999d60d9c443964cde1f305d5a70c35f37360bf0f4b92d5c38e44992fc9597b0"
+        },
+        {
+          "sceneId": "s5-dispute",
+          "artifactId": "narration-69b04184-c8f7-4c05-8edf-b9d0818482db.wav",
+          "sha256": "c3e79eba7b83c01dd2902c7305878c9ce805c2a68ab1054ace983d229ca814f6"
+        },
+        {
+          "sceneId": "s6-default-entry",
+          "artifactId": "narration-60dd6cf2-1a3a-4ad9-9f51-17cf22dcac9f.wav",
+          "sha256": "3f0097dc68bbc3538d6584a366c75363ed49e467d15453be0e23477495111821"
+        }
+      ],
+      "sourceSpeech": [
+        {
+          "sceneId": "s2-stage-audio",
+          "sourceRange": {
+            "startSeconds": 4.652,
+            "endSeconds": 12.652
+          },
+          "sourceArtifactId": "f6bbc7e1-6b9f-4cda-9e95-d84d17ed2a42-source-8e77b575-31a6-43e0-abc2-5ac3576e11ed.webm",
+          "sourceSha256": "0b4f8a906e92a48efcbef07572130569369659c119decfa39db84c36f22f095a",
+          "evidenceArtifactId": "video-33e8d0e9-cbe2-4a50-9a51-81591f4c26e1.json",
+          "evidenceSha256": "ede547b55edaf9ea3ab3e894f272ac05922550a6189444b0514fdb4ec227f620",
+          "durationSeconds": 27.967,
+          "segmentIndex": 0,
+          "createdAt": "2026-10-19T01:06:54.367Z"
+        }
+      ],
+      "review": {
+        "journalSha256": "45ad631a7b9968c1b94fc856c4cc3b167f5557dce03ee8280f3a4b0a914acdbe",
+        "fingerprint": "0539c1480e8f4942eb3158872283ba94e9e5af83fa3cf9f782eb738ea291dee2",
+        "film": null,
+        "scenes": [
+          {
+            "sceneId": "s1-default-switch",
+            "totalSamples": 10,
+            "acquiredFrames": 0,
+            "agent": null
+          },
+          {
+            "sceneId": "s2-stage-audio",
+            "totalSamples": 24,
+            "acquiredFrames": 24,
+            "agent": {
+              "status": "passed",
+              "notes": "Inspected 24/24 current-export S2 samples (film 5.375–32.542s). Exact watermark text AIpardonSI News is visible top-left. Primary interview footage, both overlay layers, and all six bilingual cues are preserved; captions legible with no clipping/overlap; scene quality 0 issues. A native rounded lower-card slot is empty above some later captions but does not cover text. Audio not auditioned; signal metrics and ASR are separate evidence.",
+              "createdAt": "2026-10-19T01:09:28.657Z",
+              "sequence": 1
+            }
+          },
+          {
+            "sceneId": "s3-tc-quote",
+            "totalSamples": 7,
+            "acquiredFrames": 0,
+            "agent": null
+          },
+          {
+            "sceneId": "s4-default-choice",
+            "totalSamples": 9,
+            "acquiredFrames": 0,
+            "agent": null
+          },
+          {
+            "sceneId": "s5-dispute",
+            "totalSamples": 10,
+            "acquiredFrames": 0,
+            "agent": null
+          },
+          {
+            "sceneId": "s6-default-entry",
+            "totalSamples": 9,
+            "acquiredFrames": 0,
+            "agent": null
+          }
+        ]
+      },
+      "receipts": [
+        {
+          "runId": "98b3da41-70ac-4a68-9efc-89855890eb3e",
+          "state": "finished",
+          "outcome": "interrupted"
+        },
+        {
+          "runId": "b0b54561-faa2-4cd4-8dce-75be0f994c71",
+          "state": "finished",
+          "outcome": "interrupted"
+        },
+        {
+          "runId": "440ede84-32af-4801-a227-a530ee5284b5",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "dda16862-3c05-4302-8ba0-ce4cd10ba95e",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "8ef495a9-39dc-4a0f-a968-8298bd3011c2",
+          "state": "finished",
+          "outcome": "interrupted"
+        },
+        {
+          "runId": "7769a58a-4908-48e8-9bd6-62ef2e06c8fe",
+          "state": "finished",
+          "outcome": "interrupted"
+        },
+        {
+          "runId": "ea5b611d-b0b7-4851-ae2b-da712cfce79f",
+          "state": "finished",
+          "outcome": "interrupted"
+        },
+        {
+          "runId": "4562bde0-c878-4f41-a182-0ed5a0dca790",
+          "state": "finished",
+          "outcome": "interrupted"
+        },
+        {
+          "runId": "d4a38809-86d9-4ad3-a8ff-725039a3e5e8",
+          "state": "finished",
+          "outcome": "interrupted"
+        },
+        {
+          "runId": "c031814a-dc69-44f8-9499-fa5416ac1d35",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "9ddf4ef0-734b-4e44-ad01-0e15dbcf9cb6",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "790c0d82-f2ba-49a1-9469-c7b4714870d5",
+          "state": "finished",
+          "outcome": "success"
+        },
+        {
+          "runId": "4fdc7bf8-09af-4d56-a798-4d18b8e93954",
+          "state": "finished",
+          "outcome": "success"
+        }
+      ],
+      "acceptance": {
+        "technical": "passed",
+        "agentReview": "Current export scope only; no current whole-film pass asserted",
+        "humanListening": "User reported previous export silent; repaired export awaits listening",
+        "finalAcceptance": "pending"
+      },
+      "supersededExportBeforeAudioRepair": {
+        "artifactId": "media-69a130e6-d5e5-43b5-b7e4-346433cfc5b9-converted.mp4",
+        "fingerprint": "12cdbccd507339e7feddcecd895bee6cff2f21bef8bd2f34bf3da6a839dc9e2b",
+        "verificationArtifactId": "video-4ceede78-ea26-4907-88fd-6818f51d17d4.json",
+        "revision": 52,
+        "createdAt": "2026-10-19T00:49:09.468Z",
+        "durationSeconds": 54.575,
+        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967/artifacts/media-69a130e6-d5e5-43b5-b7e4-346433cfc5b9-converted.mp4",
+        "sha256": "cc494c6a53fdf3a7d95fe100be90dfbc8dca5fbf86408e94a9f8429bfc63810e",
+        "bytes": 20277694,
+        "verificationSha256": "da6fc7c75ec1df5b3873d8fcb93facdff26ba6f731998be468b6b09c5c76f613",
+        "technical": {
+          "status": "passed",
+          "actualDurationSeconds": 54.656,
+          "tracks": [
+            {
+              "id": 1,
+              "type": "video",
+              "codec": "avc",
+              "canDecode": true,
+              "width": 720,
+              "height": 1280,
+              "rotation": 0,
+              "startSeconds": 0,
+              "endSeconds": 54.583333333333336,
+              "canBeTransparent": false
+            },
+            {
+              "id": 2,
+              "type": "audio",
+              "codec": "aac",
+              "canDecode": true,
+              "channels": 2,
+              "sampleRate": 48000,
+              "startSeconds": 0,
+              "endSeconds": 54.656
+            }
+          ],
+          "criticalStateSamples": 69,
+          "qualityIssues": []
+        }
+      },
+      "audioRepair": {
+        "reason": "User reported silent interview; primary visual clip omitted keepSourceAudio. The source was audible but original exports mixed only background music in the interview interval.",
+        "primaryClipId": "visual-14-s2-stage-audio-0",
+        "keepSourceAudio": true,
+        "sourceVolume": 1,
+        "watermark": {
+          "enabled": true,
+          "text": "AIpardonSI News",
+          "position": "bottom-left",
+          "opacity": 1,
+          "size": 14
+        },
+        "samples": [
+          {
+            "artifactId": "media-595d1a67-da8f-41c3-b377-e16433841805-audition.wav",
+            "sourceArtifactId": "media-69a130e6-d5e5-43b5-b7e4-346433cfc5b9-converted.mp4",
+            "sha256": "20e31e34910654ba39fcb7aeb16b3c3b4e7880b347d6959809e65f2fc47219a8",
+            "startSeconds": 10,
+            "endSeconds": 18,
+            "sampleRate": 48000,
+            "channels": 2,
+            "frames": 384000,
+            "peak": 0.017989635467529297,
+            "rms": 0.007346190549028389,
+            "clippedSamples": 0,
+            "missingFrames": 0,
+            "listeningStatus": "not-performed",
+            "processing": "native-rate-and-channels; PCM16 quantization; no gain/resampling",
+            "timebase": "input-file-PTS"
+          },
+          {
+            "artifactId": "media-0eafc517-b378-44ae-803e-b99e83317be6-audition.wav",
+            "sourceArtifactId": "media-f49beee4-e4f3-4057-8e38-3c8021b65966-converted.mp4",
+            "sha256": "09f47b10670f61067dc8d255a22a16c8465aca900a891e60c26182313b49ce17",
+            "startSeconds": 10,
+            "endSeconds": 18,
+            "sampleRate": 48000,
+            "channels": 2,
+            "frames": 384000,
+            "peak": 0.47765257954597473,
+            "rms": 0.05987939535705704,
+            "clippedSamples": 0,
+            "missingFrames": 0,
+            "listeningStatus": "not-performed",
+            "processing": "native-rate-and-channels; PCM16 quantization; no gain/resampling",
+            "timebase": "input-file-PTS"
+          }
+        ],
+        "exportedAudioSpeechEvidence": [
+          {
+            "artifactId": "video-879e62c0-e3b9-46f4-9d9f-ee7511f9f29a.json",
+            "sha256": "fbb4ba3173f6886ed10543cb571b470a0ff22d009f1c6862a02ef8ea064b6b5e",
+            "sourceArtifactId": "media-0eafc517-b378-44ae-803e-b99e83317be6-audition.wav",
+            "segments": [
+              {
+                "id": "segment-1",
+                "text": "internal benchmark called Bybench, we publish a public benchmark as well, and consistently",
+                "startSeconds": 0,
+                "endSeconds": 4.96,
+                "tokenMeanProbability": 0.7221590625,
+                "usable": false,
+                "warnings": [
+                  "low-confidence"
+                ]
+              },
+              {
+                "id": "segment-2",
+                "text": "Sol and Astra perform better on building.",
+                "startSeconds": 4.96,
+                "endSeconds": 8.04,
+                "tokenMeanProbability": 0.7066368749999999,
+                "usable": false,
+                "warnings": [
+                  "outside-audio",
+                  "low-confidence"
+                ]
+              }
+            ]
+          }
+        ],
+        "narrationPreserved": true
+      }
+    }
+  ],
+  "source": {
+    "url": "https://www.youtube.com/watch?v=grkRhVKcxiE",
+    "publisher": "TechCrunch",
+    "publishedDate": "2026-10-17",
+    "recordedAt": null,
+    "acquisitionId": "e5ccc7c9-9844-4c67-a4e8-6c0d92adb0ed",
+    "artifactId": "f6bbc7e1-6b9f-4cda-9e95-d84d17ed2a42-source-8e77b575-31a6-43e0-abc2-5ac3576e11ed.webm",
+    "sha256": "0b4f8a906e92a48efcbef07572130569369659c119decfa39db84c36f22f095a",
+    "sourceRangeSeconds": [
+      991.6,
+      1019.558866
+    ],
+    "rate": 1,
+    "method": "Bounded 28s native capture, followed by decode and source-speech verification; not lossless original download"
+  },
+  "factBoundaries": [
+    "Default model changed to OpenAI; Claude remains selectable.",
+    "Cost, partnership, performance and benchmark claims attributed to Masad, not independently proven model superiority.",
+    "Reported end of partnership disputed and later clarified; not asserted as established fact.",
+    "Article originally published October 16 14:22 PT; October 17 11:48 PDT is update."
+  ],
+  "assistance": [
+    "Codex operated trusted BMW UI to execute the user-confirmed topic, reveal the original date and provide editorial/visual corrections.",
+    "Both official runtimes own their Agent loops and use BMW browser only. Same Project source reused through native actions; no manual intermediate media transfer.",
+    "Source-run isolated user-authorized BMW profile; not production-profile testing or an unattended benchmark.",
+    "For Qoder, Codex used native GUI to set selected-preview layer sourceStartSeconds0.1 and durationSeconds3.5 after repeated Agent trim/split errors; original selected footage retained visibly, new key interview is the main evidence."
+  ],
+  "acceptance": {
+    "technical": "Native export validation plus interval-specific PCM/ASR evidence; see each edition",
+    "agentReview": "Review scope belongs to current export fingerprint only",
+    "humanListening": "Previous export rejected for missing interview audio; repaired versions await listening",
+    "finalAcceptance": "pending"
+  },
+  "openIssues": [
+    "YouTube description expansion needed native UI assistance.",
+    "Generic YouTube/DASH no-playback acquisition remains unavailable; native HTTP/clear finite HLS preservation is separate.",
+    "Known offline two-speed EOF timing/pixel failure remains open; new one-speed seek capture success does not close it."
+  ],
+  "publishing": "not requested",
+  "git": "No commit or push requested for this delivery",
+  "narrationPreservation": {
+    "unchangedScriptScenes": [
+      {
+        "sceneId": "s1-default-switch",
+        "artifactId": "narration-86039190-8352-4f4f-99da-a09bc5c868e6.wav",
+        "sha256": "7195d9b7fa7d4956fa48962d38f8414ce4ad1c1917f0541d83c7207f36ac6b16",
+        "unchanged": true
+      },
+      {
+        "sceneId": "s3-tc-quote",
+        "artifactId": "narration-142b42b1-b893-49de-acf2-845f3cb0f280.wav",
+        "sha256": "b81b8e834b9abfdeec23a8fce60be4bd4aa3e02ad0d621b94ba353eaf4b1c53d",
+        "unchanged": true
+      },
+      {
+        "sceneId": "s5-dispute",
+        "artifactId": "narration-69b04184-c8f7-4c05-8edf-b9d0818482db.wav",
+        "sha256": "c3e79eba7b83c01dd2902c7305878c9ce805c2a68ab1054ace983d229ca814f6",
+        "unchanged": true
+      }
+    ],
+    "allFivePreservedDuringFinalLayout": [
+      {
+        "sceneId": "s1-default-switch",
+        "artifactId": "narration-86039190-8352-4f4f-99da-a09bc5c868e6.wav",
+        "sha256": "7195d9b7fa7d4956fa48962d38f8414ce4ad1c1917f0541d83c7207f36ac6b16",
+        "unchanged": true
+      },
+      {
+        "sceneId": "s3-tc-quote",
+        "artifactId": "narration-142b42b1-b893-49de-acf2-845f3cb0f280.wav",
+        "sha256": "b81b8e834b9abfdeec23a8fce60be4bd4aa3e02ad0d621b94ba353eaf4b1c53d",
+        "unchanged": true
+      },
+      {
+        "sceneId": "s4-default-choice",
+        "artifactId": "narration-86a0d9fc-779f-484e-aa44-44a61413cfba.wav",
+        "sha256": "999d60d9c443964cde1f305d5a70c35f37360bf0f4b92d5c38e44992fc9597b0",
+        "unchanged": true
+      },
+      {
+        "sceneId": "s5-dispute",
+        "artifactId": "narration-69b04184-c8f7-4c05-8edf-b9d0818482db.wav",
+        "sha256": "c3e79eba7b83c01dd2902c7305878c9ce805c2a68ab1054ace983d229ca814f6",
+        "unchanged": true
+      },
+      {
+        "sceneId": "s6-default-entry",
+        "artifactId": "narration-60dd6cf2-1a3a-4ad9-9f51-17cf22dcac9f.wav",
+        "sha256": "3f0097dc68bbc3538d6584a366c75363ed49e467d15453be0e23477495111821",
+        "unchanged": true
+      }
+    ]
+  },
+  "acceptedNews02Preservation": [
+    {
+      "path": ".bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/d208122e-9b1d-40b6-9ed3-f9e2dc5296ee/video-studio/9632d9df-006b-4aa4-8c27-2a691263dba8.json",
+      "sha256": "418f94a7a11bae65a6c65e0617af39ae42fb7168754d62e37f0a41a2418b06e7",
+      "unchanged": true
+    },
+    {
+      "path": ".bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/d208122e-9b1d-40b6-9ed3-f9e2dc5296ee/artifacts/media-3f5d2183-303b-45d6-84d5-4e01bb83dfe8-converted.mp4",
+      "sha256": "2935f8bc3868ff5ba9030b0dd997bf331edfc6b98484485b1ad71bbcedb7fa68",
+      "unchanged": true
+    }
+  ],
+  "operatorVisualReview": {
+    "method": "Native exported frame artifacts opened and inspected, not audio listening",
+    "dsh": {
+      "frames": [
+        "media-1c1133b9-cd9e-44a6-b162-22702deaf7e8-frame-5.png",
+        "media-1a40cdf7-dee2-42c4-b694-e70b08487719-frame-8.png",
+        "media-806655ed-1fdf-49d3-ad99-bf9c0a9e6af3-frame-4.png",
+        "media-10af65b5-b446-4cb5-ae36-02ccae29fe40-frame-2.png"
+      ],
+      "observations": [
+        "Key interview fills approximately63% of portrait height; head stays inside frame; Chinese translation is below the video.",
+        "Original card border remains visible below the enlarged video; opening includes interviewer camera while Masad speech starts.",
+        "Current export context/scope/closing frames checked: short title, readable distinction between default and optional, cost/performance attributed to Masad."
+      ]
+    },
+    "qoder": {
+      "priorExport": "8066145805cd18111822a85630ab51f4e10be488794016cbd6be3a15af772524",
+      "frames": [
+        "media-665e37ea-046d-4fa2-a85f-076fd0eca5d6-frame-5.png",
+        "media-2fd04be8-269f-4799-9cfb-3af5faea46d0-frame-5.png",
+        "media-8c5bd07d-979f-4bef-bb05-1107c98d852d-frame-5.png"
+      ],
+      "observations": [
+        "Large bilingual source subtitles and portrait crop are visible; original selected preview remains an inset.",
+        "Closing title no longer splits the Chinese word for choice. Later S1/S3 correction has separate current native review.",
+        "Current S1 caption keeps OpenAI, Claude and the Chinese word for disappear intact; current S3 attribution is readable after shortening. Article screenshot remains small/cropped background, not intended for word-by-word reading."
+      ],
+      "currentExport": "12cdbccd507339e7feddcecd895bee6cff2f21bef8bd2f34bf3da6a839dc9e2b",
+      "currentFrames": [
+        "media-8904f475-d0d1-43a0-8f3f-93054bdccc90-frame-6.png",
+        "media-6e3e9046-5c0f-40ec-beb8-abf7f8a13946-frame-4.png"
+      ]
+    }
+  },
+  "offlineVerification": "../verification/CURRENT.json",
+  "reviewScope": {
+    "dsh": "Current fingerprint: 79/79 frames, four scene Agent passes and separate film pass, with original s2 layout limitations retained.",
+    "qoder": "Previous corrected export: all69 frames reviewed; latest cosmetic revision: S1/S3 17/17 frames with Agent passes. Other four scenes unchanged but not reacquired for latest fingerprint; no current whole-film pass claimed.",
+    "audio": "Real Qwen and original speech, technical track checks and ASR verified; no Agent listening or human acceptance inferred."
+  },
+  "newsBrand": "AIpardonSI News",
+  "userFeedback": {
+    "reportedAt": "2026-10-19",
+    "text": "截取采访片段没有声音；水印采用 AIpardonSI News；重新选择新闻题材",
+    "newTopicSelection": "User selected Jack Clark IMF lecture; see NEWS_IMF_CLARK_DUAL_DELIVERY.json. Replit artifacts preserved."
+  }
+}

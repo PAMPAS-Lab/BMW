@@ -36,8 +36,8 @@ async function initializeRenderer(key:string,request:{selector:string;index:numb
  admission()
  const captureStream=(video as HTMLVideoElement&{captureStream?:()=>MediaStream}).captureStream
  if(typeof captureStream!=='function'||typeof VideoEncoder!=='function'||typeof video.requestVideoFrameCallback!=='function')return {ok:false,reason:'Native capture requires captureStream, requestVideoFrameCallback and WebCodecs VideoEncoder.'}
- const initial={currentTime:video.currentTime,paused:video.paused,loop:video.loop,playbackRate:video.playbackRate}
- const state={cancelled:false,restored:false,audioReady:new Map<number,string>(),videoReady:new Map<number,CaptureEncodedPacket>(),nextAudio:0,pullAudio:0,nextVideo:0,pullVideo:0,pending:0,bufferBytes:0,done:false,error:'',reason:'',recorder:undefined as MediaRecorder|undefined,encoder:undefined as VideoEncoder|undefined,stream:undefined as MediaStream|undefined,timer:0,frameRequest:0,sourceEndSeconds:0,lastSourceSeconds:0,started:false,sourceDurationSeconds:null as number|null,startedAt:0,held:undefined as PendingFrame,encoded:new Map<number,CaptureFrameMapping>(),events:[] as CapturePlaybackEvent[],width:0,height:0,frames:0,lastKeySeconds:-10,planIndex:0,resumeTimer:0,readers:new Set<FileReader>()}
+ const initial={currentTime:video.currentTime,loop:video.loop,playbackRate:video.playbackRate}
+ const state={cancelled:false,restored:false,audioReady:new Map<number,string>(),videoReady:new Map<number,CaptureEncodedPacket>(),nextAudio:0,pullAudio:0,nextVideo:0,pullVideo:0,pending:0,bufferBytes:0,done:false,error:'',reason:'',recorder:undefined as MediaRecorder|undefined,encoder:undefined as VideoEncoder|undefined,stream:undefined as MediaStream|undefined,timer:0,frameRequest:0,sourceStartSeconds:0,sourceEndSeconds:0,lastSourceSeconds:0,started:false,sourceDurationSeconds:null as number|null,startedAt:0,held:undefined as PendingFrame,encoded:new Map<number,CaptureFrameMapping>(),events:[] as CapturePlaybackEvent[],width:0,height:0,frames:0,lastKeySeconds:-10,planIndex:0,resumeTimer:0,readers:new Set<FileReader>()}
  let resolveCancelled:()=>void;const cancelled=new Promise<void>(resolve=>resolveCancelled=resolve)
  let resolveStopped:()=>void;const stopped=new Promise<void>(resolve=>resolveStopped=resolve)
  let audioStopped:Promise<void>=Promise.resolve(),resolveAudio:()=>void=()=>{}
@@ -79,7 +79,9 @@ async function initializeRenderer(key:string,request:{selector:string;index:numb
  let resized:OffscreenCanvas|undefined
  const frame=(_now:number,metadata:VideoFrameCallbackMetadata)=>{
   if(state.restored||state.reason)return
-  try{if(state.started&&Number.isFinite(metadata.mediaTime)){
+  // A paused player can present a cached pre-seek frame before its first new
+  // frame. It cannot belong to this admitted source interval.
+  try{if(state.started&&Number.isFinite(metadata.mediaTime)&&metadata.mediaTime>=state.sourceStartSeconds){
    state.lastSourceSeconds=Math.max(state.lastSourceSeconds,metadata.mediaTime)
    const time=Math.round(metadata.mediaTime*1e6)/1e6
    const sourceWidth=video.videoWidth,sourceHeight=video.videoHeight
@@ -104,7 +106,7 @@ async function initializeRenderer(key:string,request:{selector:string;index:numb
   }
   if(!state.reason)state.frameRequest=video.requestVideoFrameCallback(frame)
  }
- const restore=()=>{if(state.restored)return;state.restored=true;clearTimeout(state.timer);clearTimeout(state.resumeTimer);if(state.frameRequest)video.cancelVideoFrameCallback(state.frameRequest);state.held?.frame.close();state.held=undefined;if(state.encoder?.state!=='closed')state.encoder?.close();video.removeEventListener('ended',ended,true);video.removeEventListener('timeupdate',observeTime,true);video.removeEventListener('seeking',seeking,true);for(const kind of ['play','pause','ratechange'])video.removeEventListener(kind,playback,true);for(const track of state.stream?.getTracks()??[])track.stop();video.loop=initial.loop;video.playbackRate=initial.playbackRate;try{video.currentTime=initial.currentTime}catch{}if(initial.paused)video.pause();else void video.play().catch(()=>{});if(globals[key]===session)delete globals[key]}
+ const restore=()=>{if(state.restored)return;state.restored=true;clearTimeout(state.timer);clearTimeout(state.resumeTimer);if(state.frameRequest)video.cancelVideoFrameCallback(state.frameRequest);state.held?.frame.close();state.held=undefined;if(state.encoder?.state!=='closed')state.encoder?.close();video.removeEventListener('ended',ended,true);video.removeEventListener('timeupdate',observeTime,true);video.removeEventListener('seeking',seeking,true);for(const kind of ['play','pause','ratechange'])video.removeEventListener(kind,playback,true);for(const track of state.stream?.getTracks()??[])track.stop();video.loop=initial.loop;video.playbackRate=initial.playbackRate;try{video.currentTime=initial.currentTime}catch{}video.pause();if(globals[key]===session)delete globals[key]}
  const session:RendererSession={stop,pull:()=>{
   if(!state.cancelled)admission()
   const chunks:string[]=[],videoPackets:CaptureEncodedPacket[]=[]
@@ -117,6 +119,7 @@ async function initializeRenderer(key:string,request:{selector:string;index:numb
  const wait=async(event:string,ms:number)=>{let listener:()=>void,timer:ReturnType<typeof setTimeout>;const eventOrTime=new Promise<void>(resolve=>{listener=resolve;video.addEventListener(event,listener,{once:true});timer=setTimeout(resolve,ms)});try{await Promise.race([eventOrTime,cancelled]);check()}finally{video.removeEventListener(event,listener!);clearTimeout(timer!)}}
  try{
   if(video.readyState<2)await wait('loadeddata',8000)
+  if(video.seeking){await wait('seeked',3000);if(video.seeking)throw new Error('Video seek did not settle before capture.')}
   check();video.pause();video.loop=false;video.playbackRate=1
   if(request.fromStart&&Number.isFinite(video.duration)&&video.duration>0&&(video.currentTime>0||video.ended)){video.currentTime=0;await wait('seeked',3000);if(video.seeking||video.currentTime>.001)throw new Error('Video could not seek to its start.')}
   check();state.stream=captureStream.call(video);if(state.stream.getVideoTracks().length!==1||state.stream.getAudioTracks().length>1)throw new Error('Video capture requires one video and at most one audio track.')
@@ -139,7 +142,7 @@ async function initializeRenderer(key:string,request:{selector:string;index:numb
    recorder.onerror=()=>{state.error='Browser audio MediaRecorder failed.';stop('error')};recorder.onstop=()=>resolveAudio()
   }
   video.addEventListener('ended',ended,true);video.addEventListener('timeupdate',observeTime,true);video.addEventListener('seeking',seeking,true);for(const kind of ['play','pause','ratechange'])video.addEventListener(kind,playback,true)
-  const sourceStartSeconds=video.currentTime;state.lastSourceSeconds=sourceStartSeconds;state.startedAt=performance.now();state.started=true;state.recorder?.start(500)
+  const sourceStartSeconds=video.currentTime;state.sourceStartSeconds=sourceStartSeconds;state.lastSourceSeconds=sourceStartSeconds;state.startedAt=performance.now();state.started=true;state.recorder?.start(500)
   state.timer=setTimeout(()=>stop('maximum-duration'),request.maxDurationMs) as unknown as number
   state.frameRequest=video.requestVideoFrameCallback(frame)
   let playTimer:ReturnType<typeof setTimeout>;try{await Promise.race([video.play(),cancelled,new Promise<never>((_resolve,reject)=>{playTimer=setTimeout(()=>reject(new Error('Video playback did not start within 8s.')),8000)})]);check()}finally{clearTimeout(playTimer!)}

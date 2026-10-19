@@ -2,17 +2,11 @@
 
 核对日期：2026-10-18。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
 
-## 当前源码完整离线基线
+## 当前源码离线验证
 
-2026-10-18对NEWS-02十题扩容、本次Qwen音色覆盖及既有NEWS-01工作树重新清洁构建，执行`npm run check`及完整`node scripts/test-runner.js --all`，全部通过：**166 passed／0 failed／12 not-run**。161个分类项与5个门禁／桌面汇总合计，不将汇总当作额外独立保障，也不叠加历史轮次。[本机原始结果](../.bmw-runtime/classified-tests/2026-10-18-news02/result.json)与[可移植逐项摘要和源码SHA](verification/CURRENT.json)保存首轮完整基线；sourceBaseRevision只记录变更前基底。
+当前源码绑定与检查结果统一见[CURRENT](verification/CURRENT.json)。本轮完整离线为166 passed／1 failed／12 not-run，唯一失败是两倍速有限采集尾帧时序断言；随后保留原时间／像素断言的独立媒体复测通过，并将旧的采集后续播测试预期改为保持暂停，另保存原片、采集片和源帧索引诊断。该偶发项尚未归因，继续追踪，不把复测与原报告合并为一次全绿。完整运行后另修正真实YouTube子Frame导航拒绝脚本时错误中断启动的问题；browser-kernel／page-playback、tab专项与媒体测试的最后差异单列绑定，已通过原生tab／跨域／失败静音与恢复、来源短预览、媒体处理、workspace／Project及真实重启专项。真实BMW再次启动成功，彭博页播放后切至Tesla再返回保持暂停；日常DSH／龙安朗入口已恢复。这些补充不改写原完整报告。本次维护覆盖前后台tab／Project／Studio的原生静音与暂停、真实跨域iframe重播拦截、采集成功／错误／取消后暂停、HTTP／HLS无播放保全与来源完整解码、全部本次资源取消回滚。新增真实媒体断言复用tab生命周期与来源Studio专项；媒体处理专项另验证HLS无重编码包校验。完整离线与专项各保留对应源码SHA，不将断言数相加为额外覆盖。
 
-覆盖unit／contract／boundary／type、官方DSH冷控制、Assistant与计划任务、desktop四组及Project重启、Studio全部非opt-in分支、媒体采集／处理、视频／语音、本地Matcha与Qwen HTTP旁白夹具。NEWS-01的video.news、studio.news和browser.sources进入同一完整范围：广泛个人／组织／地区、72小时边界与日精度、原始引用与真实预览、重复／不足／缺失／过期、可信选择、防伪造、重复点击、独立记录恢复、冲突与取消，以及确认前旧改稿入口／TTS／合成门禁。GUI实际检查十张不同事件卡、第十张真实预览按需读取、显式龙安朗、任务结束恢复按钮、单次投递、脚本局部保存／独立字幕保留及配音面板跳转。契约另验证十题重启读取、第十一题拒绝、第十题重复选择唯一草稿、确认前不配音或合成。NEWS-02本轮真实研究另取得两张合格原声卡（IMF总裁／Reuters的Chuck Lorre采访），未达十题；日期解析兼容、原片缺失与旧片重发等限制见[独立选题记录](research/NEWS_02_TOPICS.json)。用户选择后已用BMW＋Codex及在线Qwen龙安朗完成43.03秒Chuck Lorre新闻；实际原片、当前导出／全部关键状态帧、保留开场配音的局部修订见[独立制作证据](research/NEWS_02_LORRE_DELIVERY.json)。本轮制作不改运行时实现，不将付费模型／在线配音计入离线通过数；用户要求增大英文字幕后，已明确接受43.03秒大字幕新版；接受绑定该导出指纹与SHA，不补造专项发音、声学同步或观众复述结果。
-
-真实研究随后暴露了候选帮助被裁剪、长访谈从头录制及YouTube直播日期标签不兼容的问题。完整候选契约、source acquire显式fromStart=false与状态恢复通过依赖图选择的60个分类项及门禁／桌面汇总，共**65 passed／0 failed**；113项因范围或opt-in排除，不叠加到完整基线。最后仅直播日期兼容再通过12个新闻契约用例、真实Studio十卡／第十题预览／龙安朗／单次投递流程及check。CURRENT以完整基线、受影响回归和最后日期专项分别绑定当前SHA，不宣称最后补正后又跑过一轮完整--all。原始日期标签与日精度保留，相对／未来／歧义日期仍拒绝。
-
-首轮完整运行期间469个受测文件SHA保持一致；构建收据含463个输入、433个生成输出，最后补正后的构建输入／输出及文档回填范围另逐项核对。6个历史测试替身类型例外未扩大。Video Document未升级；没有新增模型工具或Host模型循环。
-
-十二个未运行项为六个专用本地素材夹具（source-analysis、frame-sampling、long-composition与三项量子位样片）和六个外部入口（Qoder制作、三驱动付费Assistant、vision、Edge），逐项ID见摘要。runner统一写“External opt-in required”，不表示本地夹具都是外部服务。本轮完整回归使用一次性Profile／Home／Workspace及模拟钥匙串，不访问生产Profile或系统凭据提示，不证明真实API额度、音质、GitHub CI或人工接受。`npm ls --depth=0`退出0；可选Codex CLI仍由本机另装，未声称全新`npm ci`覆盖。之前162项基线及164项中间轮次各保留自身源码范围。
+此前日常维护完整基线为167 passed／0 failed／12 not-run，见[阶段报告](../.bmw-runtime/classified-tests/2026-10-18-news-daily-final/result.json)；来源展示收尾曾另验五个文件。该旧报告不单独代表新播放策略覆盖。当前六个冻结类型例外未增加；所有Electron／DSH检查使用一次性Profile／Home／Workspace与mock keychain。真实官方DSH只读三次browser连通另记[就绪记录](research/NEWS_DAILY_READINESS.json)，不冒充本轮付费新闻制作、在线配音或人工声音验收。
 
 ## NEWS-01 真实新闻验收
 

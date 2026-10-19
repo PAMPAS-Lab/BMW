@@ -70,13 +70,13 @@ export async function preserveMedia(input:PreservationInput){
    await verifyOriginals()
    const proof={version:1,basis:'HTTP-delivery-bytes',uploadedOriginal:'unknown',pageUrl:input.pageUrl,requestedUrl:input.url,selectedVariant,resources,assembledTrackArtifactIds:sources,playlistDurations,remux:{...remux,kind:'packet-copy',reencoded:false},capturedAt:new Date().toISOString()}
    const proofData=Buffer.from(JSON.stringify(proof,null,2)+'\n');if(proofData.length>1024*1024)throw new Error('Preservation evidence exceeds 1 MiB.');const evidence=await save(proofData,'preservation.json');await guard();success=true
-   return {...remux,type:'video',contentType:'video/mp4',preservation:{basis:proof.basis,uploadedOriginal:'unknown',reencoded:false,completeVod:true,resources,assembledTrackArtifactIds:sources,selectedVariant,playlistDurations,proofArtifactId:evidence.artifactId,proofSha256:evidence.sha256},timebase:'delivery-file-PTS; not inferred player source time'}
+   return {...remux,ownedArtifactIds:created.map(file=>path.basename(file)),type:'video',contentType:'video/mp4',preservation:{basis:proof.basis,uploadedOriginal:'unknown',reencoded:false,completeVod:true,resources,assembledTrackArtifactIds:sources,selectedVariant,playlistDurations,proofArtifactId:evidence.artifactId,proofSha256:evidence.sha256},timebase:'delivery-file-PTS; not inferred player source time'}
   }
   if(!/^(video|audio)\//.test(first.mime))throw new Error('Direct preservation requires a video/audio response or complete HLS VOD.')
   const suffix=/webm/.test(first.mime)?'delivery.webm':/mp4/.test(first.mime)?'delivery.mp4':'delivery.bin',saved=await save(first.data,suffix);resources.push({...saved,url:first.url,role:'file'})
   await verifyOriginals()
   const proof={version:1,basis:'HTTP-delivery-bytes',uploadedOriginal:'unknown',pageUrl:input.pageUrl,resources,capturedAt:new Date().toISOString()},evidence=await save(Buffer.from(JSON.stringify(proof,null,2)+'\n'),'preservation.json');await guard();success=true
-  return {...saved,type:first.mime.startsWith('audio/')?'audio':'video',contentType:first.mime,preservation:{basis:proof.basis,uploadedOriginal:'unknown',reencoded:false,completeVod:false,completeHttpResponse:true,resources,proofArtifactId:evidence.artifactId,proofSha256:evidence.sha256},timebase:'delivery-file-PTS; full media range requires decode verification'}
+  return {...saved,ownedArtifactIds:created.map(file=>path.basename(file)),type:first.mime.startsWith('audio/')?'audio':'video',contentType:first.mime,preservation:{basis:proof.basis,uploadedOriginal:'unknown',reencoded:false,completeVod:false,completeHttpResponse:true,resources,proofArtifactId:evidence.artifactId,proofSha256:evidence.sha256},timebase:'delivery-file-PTS; full media range requires decode verification'}
  }finally{controller.abort();if(!success){const stat=await fs.lstat(root);if(stat.dev===identity.dev&&stat.ino===identity.ino&&!stat.isSymbolicLink())for(const file of created)await fs.rm(file,{force:true})}}
 }
 async function remuxPreserved(directory:string,ids:string[],artifactId:string,guard:()=>Promise<void>,created:string[]){

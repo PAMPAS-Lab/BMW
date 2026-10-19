@@ -9,6 +9,10 @@ const nonPublication=/\b(?:updated|modified|recorded|retrieved|accessed|reposted
  * contain a byline or document number too; never choose between two dates. */
 function publicationLine(value:{text:string;scope:SourceScope}):string|null{
  if(value.scope.status!=='observed'||value.scope.truncated||nonPublication.test(value.text))return null
+ // Publishers may paint year, month/day and a local clock in separate nodes.
+ // This narrow region proves the civil day, never its timezone or instant.
+ const split=value.text.trim().match(/^(\d{4})\s*\n\s*(\d{1,2})\/(\d{1,2})(?:\s*\n\s*(?:[01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d)?)?$/)
+ if(split){const year=Number(split[1]),month=Number(split[2]),day=Number(split[3]);if(month>=1&&month<=12&&day>=1&&day<=new Date(Date.UTC(year,month,0)).getUTCDate())return split[1]+'-'+split[2].padStart(2,'0')+'-'+split[3].padStart(2,'0')}
  const date='(?:\\d{4}[-年/.]\\d{1,2}[-月/.]\\d{1,2}日?|[A-Za-z]+\\s+\\d{1,2},?\\s+\\d{4}|\\d{1,2}\\s+[A-Za-z]+\\s+\\d{4})'
  if((value.text.match(new RegExp(date,'g'))??[]).length!==1)return null
  const label=/^(?:【(?:发布日期|发布时间|发文日期)】|(?:Published(?: on)?|Press release issued|Original issue date|发布日期|发布时间|发文日期)\s*[:：]?)\s*/i

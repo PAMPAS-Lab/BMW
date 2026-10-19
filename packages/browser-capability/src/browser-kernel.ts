@@ -12,9 +12,11 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { nativeImage, WebContentsView, net } from 'electron'
 import { assertBrowserRequest, BROWSER_ACTIONS, targetTabId } from './browser-schema.js'
-import { agentTabsToClose, reusableTab } from './tab-policy.js'
+import { agentTabsToClose, reusableTab, projectTabsToRestore, MAX_AGENT_TABS_PER_PROJECT } from './tab-policy.js'
+import type {ProjectTabState} from './tab-policy.js'
 import { downloadMediaArtifact } from './media-artifact.js'
 import { createMediaSessionFetch } from './media-session-fetch.js'
+import {PagePlayback} from './page-playback.js'
 
 const PROJECT_BLANK_URL = 'about:blank'
 interface NavigationTab {id:string;projectId:string|null;view:WebContentsView;source?:string}
@@ -48,10 +50,6 @@ function normalizeUrl(input, settingsStore) {
 
 function safeFilename(value) {
   return value.replace(/[^a-zA-Z0-9._-]+/g, '-').slice(0, 80)
-}
-
-function projectStartUrl(project) {
-  return project?.tabState?.activeUrl || project?.homeUrl || PROJECT_BLANK_URL
 }
 
 export class BrowserKernel {
@@ -95,19 +93,34 @@ export class BrowserKernel {
   }
 
   private restoringTabState = false
+  private readonly suspendedResearchProjects=new Set<string>()
+  private readonly playback=new PagePlayback()
+  private browserVisible=true
+  private capturePlaybackTabId:string|null=null
+  private playbackAllowed(tab:NavigationTab):boolean{return tab.id===this.capturePlaybackTabId||this.browserVisible&&!this.restoringTabState&&!this.suspendedResearchProjects.has(tab.projectId??'')&&tab.id===this.activeTabId&&(!this.projectStore||tab.projectId===this.projectStore.active().id)}
+  private async applyPlayback(tab:NavigationTab,allowed:boolean,forcePause=false):Promise<void>{
+    try{await this.playback.update(tab.view.webContents,allowed,forcePause)}catch(error){this.#addDiagnostic(tab.id,'media',{message:'Playback policy remains muted; retry on frame load: '+String(error),at:Date.now()})}
+  }
+  private refreshPlayback(tab:NavigationTab):Promise<void>{return this.applyPlayback(tab,this.playbackAllowed(tab))}
+  setBrowserVisible(visible:boolean):void{
+    if(this.browserVisible===visible)return
+    this.browserVisible=visible
+    for(const tab of this.tabs.values())void this.refreshPlayback(tab).catch(error=>this.#addDiagnostic(tab.id,'media',{message:String(error),at:Date.now()}))
+  }
 
-  private async restoreProjectTabs(project: { id: string; homeUrl?: string; tabState?: { urls?: string[]; activeUrl?: string | null } }) {
+  private async restoreProjectTabs(project: { id: string; homeUrl?: string; tabState?: ProjectTabState }) {
     // Snapshot before loading: browser events must not persist a partially restored set.
-    const urls = [...new Set(project.tabState?.urls || [])]
-    const activeUrl = projectStartUrl(project)
-    if (!urls.length || !urls.includes(activeUrl)) urls.push(activeUrl)
+    const saved=projectTabsToRestore(project.tabState),entries=saved.tabs
+    const activeUrl = saved.activeUrl || project.homeUrl || PROJECT_BLANK_URL
+    if (!entries.length || !entries.some(t=>t.url===activeUrl)) entries.push({url:activeUrl,source:'user'})
     const failures: string[] = []
     clearTimeout(this.tabStateTimer)
     this.restoringTabState = true
     try {
-      for (const url of urls) {
+      for (const {url,source} of entries) {
+        if([...this.tabs.values()].some(tab=>tab.projectId===project.id&&tab.url===url))continue
         try {
-          await this.openTab({ url, foreground: false, source: 'user', reuse: false })
+          await this.openTab({ url, foreground: false, source, reuse: false })
         } catch (error) {
           // Retain the requested URL even when an offline page cannot load.
           const tab = [...this.tabs.values()].filter(value => value.projectId === project.id).at(-1)
@@ -120,10 +133,12 @@ export class BrowserKernel {
       }
       const owned = [...this.tabs.values()].filter(tab => tab.projectId === project.id)
       const active = owned.find(tab => tab.url === activeUrl) || owned.at(-1)
-      this.showTab(active.id)
+      await this.showTab(active.id)
+      this.suspendedResearchProjects.delete(project.id)
       return { ...this.serializeTab(active), ...(failures.length ? { loadError: failures.join('; ') } : {}) }
     } finally {
       this.restoringTabState = false
+      await Promise.all([...this.tabs.values()].map(tab=>this.refreshPlayback(tab)))
       this.emitState()
     }
   }
@@ -149,6 +164,10 @@ export class BrowserKernel {
     wc.on('did-navigate', emit)
     wc.on('did-navigate-in-page', emit)
     wc.on('did-navigate', () => { void this.#applyPageTheme(tab) })
+    wc.setAudioMuted(true)
+    const enforcePlayback=()=>{void this.refreshPlayback(tab).catch(error=>this.#addDiagnostic(tab.id,'media',{message:String(error),at:Date.now()}))}
+    wc.on('did-frame-finish-load',enforcePlayback)
+    wc.on('media-started-playing',enforcePlayback)
     wc.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
       this.#addDiagnostic(tab.id, 'loadFailures', { errorCode, errorDescription, url: validatedURL, isMainFrame, at: Date.now() })
     })
@@ -163,7 +182,9 @@ export class BrowserKernel {
       })
     })
     wc.setWindowOpenHandler(({ url }) => {
-      void this.openTab({ url, foreground: true, source: 'page' })
+      // Popups opened by research pages share their disposable ownership and FIFO.
+      // A page event must not create unbounded, falsely user-owned renderers.
+      void this.operations.run(()=>{if(this.projectStore&&this.projectStore.active().id!==tab.projectId)throw new Error('Popup Project changed.')},()=>this.openTab({url,foreground:true,source:tab.source==='agent'?'agent':'page',reuse:false})).catch(error=>this.#addDiagnostic(tab.id,'loadFailures',{message:error instanceof Error?error.message:String(error),at:Date.now()}))
       return { action: 'deny' }
     })
   }
@@ -173,7 +194,7 @@ export class BrowserKernel {
     if(!this.tabs.has(tab.id))return
     if(!this.window.isDestroyed()&&this.window.contentView.children.includes(tab.view))this.window.contentView.removeChildView(tab.view)
     this.tabs.delete(tab.id);this.diagnostics.delete(tab.id);this.navigationQuarantine.delete(tab.id)
-    if(this.activeTabId===tab.id){this.activeTabId=null;const next=[...this.tabs.values()].find((t:NavigationTab)=>t.projectId===tab.projectId&&!t.view.webContents.isDestroyed());if(next)this.showTab(next.id)}
+    if(this.activeTabId===tab.id){this.activeTabId=null;const next=[...this.tabs.values()].find((t:NavigationTab)=>t.projectId===tab.projectId&&!t.view.webContents.isDestroyed());if(next)void this.showTab(next.id).catch(error=>this.#addDiagnostic(next.id,'media',{message:String(error),at:Date.now()}))}
     this.emitState();this.scheduleTabStateSave()
   }
   private async navigateTab(tab:NavigationTab,url:string,signal?:AbortSignal):Promise<void>{
@@ -188,12 +209,13 @@ export class BrowserKernel {
       if (reusable) {
         reusable.tab.lastUsedAt = Date.now()
         if (reusable.navigate) await this.navigateTab(reusable.tab,targetUrl,signal)
-        if (foreground) this.showTab(reusable.tab.id)
+        if (foreground) await this.showTab(reusable.tab.id)
         else this.emitState()
-        this.enforceAgentTabLimit(projectId, reusable.tab.id)
+        await this.enforceAgentTabLimit(projectId, reusable.tab.id)
         return { ...this.serializeTab(reusable.tab), reused: true, reuseReason: reusable.reason }
       }
     }
+    if(source==='agent'&&this.recordingController?.isCaptureActive?.()&&[...this.tabs.values()].filter(tab=>tab.projectId===projectId&&tab.source==='agent').length>=MAX_AGENT_TABS_PER_PROJECT)throw new Error('Finish the current media job before reclaiming research tabs.')
     const id = crypto.randomUUID()
     const view = new WebContentsView({
       webPreferences: {
@@ -219,10 +241,11 @@ export class BrowserKernel {
     this.tabs.set(id, tab)
     this.#wireTab(tab)
     view.setBackgroundColor(this.pageTheme === 'dark' ? '#0a0d12' : '#ffffff')
-    if (foreground || !this.activeTabId) this.showTab(id)
+    if (foreground || !this.activeTabId) await this.showTab(id)
     else this.emitState()
+    // Admission is bounded even if the next page fails its native load.
+    if (source === 'agent') await this.enforceAgentTabLimit(projectId, id)
     await this.navigateTab(tab,targetUrl,signal)
-    if (source === 'agent') this.enforceAgentTabLimit(projectId, id)
     return { ...this.serializeTab(tab), reused: false }
   }
 
@@ -275,48 +298,54 @@ export class BrowserKernel {
     return { theme: this.pageTheme, tabs: this.tabs.size }
   }
 
-  enforceAgentTabLimit(projectId, keepTabId) {
+  async enforceAgentTabLimit(projectId, keepTabId) {
     const stale = agentTabsToClose([...this.tabs.values()], {
       projectId,
       activeTabId: this.activeTabId,
       keepTabId
     })
-    for (const tab of stale) this.closeTab(tab.id)
+    for (const tab of stale) await this.closeTab(tab.id)
   }
 
-  showTab(tabId) {
+  async showTab(tabId) {
     const tab = this.requireTab(tabId)
     const previous = this.tabs.get(this.activeTabId)
-    if (previous && previous.id !== tab.id) this.window.contentView.removeChildView(previous.view)
+    if (previous && previous.id !== tab.id){this.activeTabId=tab.id;await this.applyPlayback(previous,false);this.window.contentView.removeChildView(previous.view)}
     if (!this.window.contentView.children.includes(tab.view)) this.window.contentView.addChildView(tab.view)
     tab.view.setBounds(this.browserBounds)
     tab.view.setVisible(true)
     this.activeTabId = tab.id
+    await this.refreshPlayback(tab)
     tab.lastUsedAt = Date.now()
     this.emitState()
     return this.serializeTab(tab)
   }
 
-  closeTab(tabId) {
+  private async destroyTab(tab:NavigationTab):Promise<void>{
+    try{await closeNavigationPage(tab.view.webContents)}catch(error){this.navigationQuarantine.add(tab.id);throw error}
+    if(!this.window.isDestroyed()&&this.window.contentView.children.includes(tab.view))this.window.contentView.removeChildView(tab.view)
+    this.tabs.delete(tab.id);this.diagnostics.delete(tab.id);this.navigationQuarantine.delete(tab.id)
+    if(this.activeTabId===tab.id)this.activeTabId=null
+  }
+
+  async closeTab(tabId) {
     const tab = this.requireTab(tabId)
-    if(this.navigationQuarantine.has(tab.id))return closeNavigationPage(tab.view.webContents).then(()=>{this.dropNavigationTab(tab);return {closed:tab.id,recovered:true}})
+    if(this.recordingController?.isCaptureActive?.())throw new Error('Finish the current media job before closing a page.')
+    const recovered=this.navigationQuarantine.has(tab.id)
     const wasActive = this.activeTabId === tabId
-    this.window.contentView.removeChildView(tab.view)
-    tab.view.webContents.close()
-    this.tabs.delete(tabId)
-    this.diagnostics.delete(tabId)
+    await this.destroyTab(tab)
     if (wasActive) {
       this.activeTabId = null
       const projectId = this.projectStore?.active().id
       const next = [...this.tabs.values()]
         .filter((candidate) => !projectId || candidate.projectId === projectId)
         .sort((left, right) => Number(right.lastUsedAt || right.createdAt || 0) - Number(left.lastUsedAt || left.createdAt || 0))[0]
-      if (next) this.showTab(next.id)
-      else void this.openTab({ url: projectStartUrl(this.projectStore?.active()), foreground: true, source: 'user' })
+      if (next) await this.showTab(next.id)
+      else await this.openTab({ url: PROJECT_BLANK_URL, foreground: true, source: 'user' })
     }
     this.emitState()
     this.scheduleTabStateSave()
-    return { closed: tabId }
+    return { closed: tabId,...(recovered?{recovered:true}:{}) }
   }
 
   requireTab(tabId) {
@@ -394,18 +423,28 @@ export class BrowserKernel {
     const active = this.tabs.get(this.activeTabId)
     this.projectStore.updateTabState(projectId, {
       urls: tabs.map((tab) => tab.url),
+      tabs:tabs.filter(tab=>/^https?:\/\//i.test(tab.url)).map(tab=>({url:tab.url,source:tab.source})),
       activeUrl: active?.projectId === projectId ? active.url : null
     })
   }
 
+  /** Called under the Host Project-transition lock, before changing the active owner.
+   * Save URLs/ownership first; only Agent renderers are released. User pages remain live. */
+  async releaseProjectResearchTabs():Promise<void>{
+    if(this.recordingController?.isCaptureActive?.())throw new Error('Finish the current media job before changing Projects.')
+    const projectId=this.projectStore?.active().id
+    if(!projectId)return
+    this.saveTabState(projectId);clearTimeout(this.tabStateTimer);this.restoringTabState=true
+    try{for(const tab of [...this.tabs.values()].filter(tab=>tab.projectId===projectId))await this.applyPlayback(tab,false);for(const tab of [...this.tabs.values()].filter(tab=>tab.projectId===projectId&&tab.source==='agent'))await this.destroyTab(tab);this.suspendedResearchProjects.add(projectId)}
+    catch(error){this.onState?.(this.state());throw error}
+    finally{this.restoringTabState=false}
+  }
+
   async switchProject(project) {
     const previous = this.tabs.get(this.activeTabId)
-    if (previous) this.saveTabState(previous.projectId)
-    if (previous) this.window.contentView.removeChildView(previous.view)
+    if (previous&&!this.suspendedResearchProjects.has(previous.projectId)) this.saveTabState(previous.projectId)
+    if (previous){await this.applyPlayback(previous,false);this.window.contentView.removeChildView(previous.view)}
     this.activeTabId = null
-    const owned = [...this.tabs.values()].filter((tab) => tab.projectId === project.id)
-    const existing = owned.find(tab=>tab.url===project.tabState?.activeUrl) || owned.at(-1)
-    if (existing) return this.showTab(existing.id)
     return this.restoreProjectTabs(project)
   }
 
@@ -697,14 +736,28 @@ export class BrowserKernel {
     if(address.href!==request.pageUrl)throw new Error('Source page changed; return to the observed page before acquiring media.')
     return this.downloadMedia(tab,{url:request.url,filename:request.filename},signal)
   }
+  async preserveSource(request:{url:string;pageUrl:string;tabId?:string},signal?:AbortSignal):Promise<unknown>{
+    const tab=this.requireTab(request.tabId),project=this.projectStore.active(),address=new URL(tab.view.webContents.getURL());address.hash=''
+    if(address.href!==request.pageUrl)throw new Error('Source page changed; return to the observed page before preserving media.')
+    const guard=async()=>{signal?.throwIfAborted();if(this.projectStore.active().id!==project.id||!this.tabs.has(tab.id)||tab.view.webContents.isDestroyed()||new URL(tab.view.webContents.getURL()).href.split('#')[0]!==request.pageUrl)throw new Error('Source preservation page or Project changed.')}
+    return this.recordingController.preserveMedia({url:request.url,pageUrl:request.pageUrl,fetchImpl:await this.mediaFetchForTab(tab.id,signal),guard,signal})
+  }
   private async captureSelectedVideo(tab,request,signal?:AbortSignal){
     // Chromium does not deliver presentation callbacks to a detached tab view.
     // Admit only the existing Project page, temporarily display it, then restore
     // the user's selected page after the native job has fully drained.
     const previous=this.activeTabId,promoted=previous!==tab.id&&typeof tab.view.setVisible==='function'
-    if(promoted)this.showTab(tab.id)
-    try{return await this.recordingController.captureVideo(tab,request,signal)}finally{
-      if(promoted&&this.activeTabId===tab.id&&previous&&this.tabs.has(previous)&&!this.recordingController.isCaptureActive())this.showTab(previous)
+    this.capturePlaybackTabId=tab.id
+    try{
+      if(promoted)await this.showTab(tab.id)
+      else await this.refreshPlayback(tab)
+      return await this.recordingController.captureVideo(tab,request,signal)
+    }finally{
+      this.capturePlaybackTabId=null
+      // Native capture cleanup has already drained. Unrelated frame policy
+      // failures retain muting/diagnostics without masking the capture outcome.
+      await this.applyPlayback(tab,this.playbackAllowed(tab),true)
+      if(promoted&&this.activeTabId===tab.id&&previous&&this.tabs.has(previous)&&!this.recordingController.isCaptureActive())await this.showTab(previous)
     }
   }
   async captureSource(request:{sourceGuard:import('@bmw-agent/media-native/sources').SourceCaptureGuard;videoSelector:string;videoIndex?:number;fromStart?:boolean;maxDurationMs?:number;filename:string;tabId?:string},signal?:AbortSignal){

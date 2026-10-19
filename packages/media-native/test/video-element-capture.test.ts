@@ -43,15 +43,16 @@ class Encoder {
 }
 class Reader {result='data:video/vp9;base64,AQIDBA==';onload?:()=>void;readAsDataURL(){this.onload?.()}}
 interface RendererState {pull():{sourceEndSeconds:number;reason:string;done:boolean;error:string};cancel():Promise<void>}
-async function initialize(video:Video,maxDurationMs=10000){
+async function initialize(video:Video,maxDurationMs=10000,fromStart=true){
+  const expectedStart=fromStart?0:video.currentTime
   const context=vm.createContext({document:{querySelectorAll:()=>[video]},HTMLVideoElement:Video,MediaRecorder:Recorder,VideoFrame:NativeFrame,VideoEncoder:Encoder,FileReader:Reader,Blob,MediaStream:class {},performance:{now:()=>video.position*1000},URL,location:{href:'https://example.com'},setTimeout,clearTimeout})
-  const result=await vm.runInContext('('+videoElementCaptureInternals.initializeRenderer.toString()+')("fixture",'+JSON.stringify({selector:'video',index:0,fromStart:true,maxDurationMs,playbackPlan:[]})+')',context) as {ok:boolean;sourceStartSeconds:number}
+  const result=await vm.runInContext('('+videoElementCaptureInternals.initializeRenderer.toString()+')("fixture",'+JSON.stringify({selector:'video',index:0,fromStart,maxDurationMs,playbackPlan:[]})+')',context) as {ok:boolean;sourceStartSeconds:number}
   const state=context.fixture as RendererState
-  assert.equal(result.ok,true);assert.equal(result.sourceStartSeconds,0);assert.equal(video.paused,false)
+  assert.equal(result.ok,true);assert.equal(result.sourceStartSeconds,expectedStart);assert.equal(video.paused,false)
   return {state,result,context}
 }
 
-test('Video EOF evidence survives prior page replay handlers at 8, 15, 30 and 60 second endpoints and restores playback',async()=>{
+test('Video EOF evidence survives prior page replay handlers at 8, 15, 30 and 60 second endpoints and restores position with playback paused',async()=>{
   for(const duration of [8,15,30,60.046801]){
     const video=new Video(duration)
     video.addEventListener('ended',()=>{video.currentTime=0;void video.play()})
@@ -59,7 +60,7 @@ test('Video EOF evidence survives prior page replay handlers at 8, 15, 30 and 60
     video.advance(duration-.033);video.ended=true;video.emit('ended');await new Promise(resolve=>setTimeout(resolve,0))
     assert.equal(video.currentTime,0,'The page really reset its playback position')
     assert.deepEqual(JSON.parse(JSON.stringify(state.pull())),{chunks:[],videoPackets:[],pending:0,done:true,error:'',reason:'ended',sourceEndSeconds:duration,sourceDurationSeconds:duration,playbackEvents:[]})
-    await state.cancel();assert.equal(context.fixture,undefined);assert.equal(video.currentTime,.03);assert.equal(video.paused,false);assert.equal(video.loop,true);assert.equal(video.playbackRate,.75);assert.equal(video.stopped,true);assert.equal(video.frames.size,0)
+    await state.cancel();assert.equal(context.fixture,undefined);assert.equal(video.currentTime,.03);assert.equal(video.paused,true);assert.equal(video.loop,true);assert.equal(video.playbackRate,.75);assert.equal(video.stopped,true);assert.equal(video.frames.size,0)
     assert.equal(video.listeners.get('ended')!.length,1);assert.equal(video.listeners.get('timeupdate')!.length,0);assert.equal(video.listeners.get('seeking')!.length,0)
   }
 })
@@ -67,14 +68,14 @@ test('Video EOF evidence survives prior page replay handlers at 8, 15, 30 and 60
 test('Synthetic EOF and premature trusted EOF cannot claim completion; limited captures retain measured progress',async()=>{
   const video=new Video(8),{state}=await initialize(video,20)
   video.advance(.7);video.emit('ended',false);assert.equal(state.pull().reason,'')
-  await new Promise(resolve=>setTimeout(resolve,30));assert.equal(state.pull().reason,'maximum-duration');assert.equal(state.pull().sourceEndSeconds,.7);await state.cancel()
+  await new Promise(resolve=>setTimeout(resolve,30));assert.equal(state.pull().reason,'maximum-duration');assert.equal(state.pull().sourceEndSeconds,.7);await state.cancel();assert.equal(video.paused,true)
   const early=new Video(8),initialized=await initialize(early)
-  early.advance(.7);early.ended=true;early.emit('ended');await new Promise(resolve=>setTimeout(resolve,0));assert.match(initialized.state.pull().error,/without observed progress/);assert.equal(initialized.state.pull().reason,'error');await initialized.state.cancel()
+  early.advance(.7);early.ended=true;early.emit('ended');await new Promise(resolve=>setTimeout(resolve,0));assert.match(initialized.state.pull().error,/without observed progress/);assert.equal(initialized.state.pull().reason,'error');await initialized.state.cancel();assert.equal(early.paused,true)
 })
 
 test('Seeking during capture fails instead of claiming continuous whole-video coverage',async()=>{
   const video=new Video(8),{state}=await initialize(video)
-  video.advance(1);video.currentTime=7;await new Promise(resolve=>setTimeout(resolve,0));assert.match(state.pull().error,/position changed/);assert.equal(state.pull().reason,'error');await state.cancel()
+  video.advance(1);video.currentTime=7;await new Promise(resolve=>setTimeout(resolve,0));assert.match(state.pull().error,/position changed/);assert.equal(state.pull().reason,'error');await state.cancel();assert.equal(video.paused,true)
 })
 
 test('Native source frames bind encoded file PTS, freeze updated duration and close every frame',async()=>{
@@ -98,4 +99,18 @@ test('Pre-initialization scope rejection drains without quarantining an inactive
  const page=new Page(),capture=new VideoElementCapture(page as unknown as ConstructorParameters<typeof VideoElementCapture>[0],root,{selector:'video'},{id:'fixture',title:'fixture',url:'https://example.com'})
  await assert.rejects(capture.run(),/Confirmed source range changed/)
  assert.equal(capture.cleanupFailed,false);assert.deepEqual(await fs.readdir(root),[])
+})
+
+test('A capture from a seeked position excludes cached frames before its admitted source interval',async()=>{
+ NativeFrame.instances=[]
+ const video=new Video(8);video.position=4.25
+ const {state,result}=await initialize(video,10000,false)
+ const tick=(mediaTime:number,counter:number)=>{const [id,callback]=[...video.frames][0]!;video.frames.delete(id);video.position=Math.max(video.position,mediaTime);(callback as (now:number,metadata:{mediaTime:number;presentedFrames:number})=>void)(0,{mediaTime,presentedFrames:counter})}
+ tick(0,1);tick(4.2,2)
+ assert.equal(NativeFrame.instances.length,0,'Cached frames before the source start must never be encoded')
+ tick(4.26,3);tick(4.3,4)
+ const packets=(state.pull() as unknown as {videoPackets:{sourceTimestampSeconds:number;endSourceSeconds:number}[]}).videoPackets
+ assert.equal(packets.length,1);assert.equal(packets[0]!.sourceTimestampSeconds,4.26);assert.equal(packets[0]!.endSourceSeconds,4.3)
+ assert.ok(packets.every(row=>row.sourceTimestampSeconds>=result.sourceStartSeconds))
+ await state.cancel();assert.equal(video.currentTime,4.25);assert.equal(video.paused,true);assert.ok(NativeFrame.instances.every(frame=>frame.closed));assert.equal(video.frames.size,0)
 })

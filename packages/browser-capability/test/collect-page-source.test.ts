@@ -18,6 +18,9 @@ test('Publication metadata extracts one complete publisher date line beside byli
   ['DeepSeek-V4.1-Flash-1017 Release 2026/10/17','2026/10/17'],
   ['Original Issue Date: October 16, 2026','October 16, 2026']
  ]){const r=await collect(text);assert.equal(r.publishedAt,date);assert.equal(r.result,'observed')}
+ for(const text of ['2026\n10/18\n22:04:56','2026\n10/18','2028\n2/29\n00:00'])assert.equal((await collect(text)).publishedAt,text.startsWith('2028')?'2028-02-29':'2026-10-18')
+ for(const text of ['2026\n10/18\n2026\n10/19','Updated\n2026\n10/18','2026\n10/18\n25:04:56','2026\\n10/18\\n22:04:56','2026\n2/29','2026\n13/18','2026\n10/18\nBy Someone'])assert.equal((await collect(text)).publishedAt,text)
+ const splitClipped=await collect('2026\n10/18\n22:04:56',true);assert.equal(splitClipped.result,'truncated');assert.notEqual(splitClipped.publishedAt,'2026-10-18')
  const ambiguous='Published: 2026-10-16\nRecorded: 2026-10-12';assert.equal((await collect(ambiguous)).publishedAt,ambiguous)
  for(const raw of ['Updated 7:19 PM GMT+8, October 16, 2026','Updated\nOctober 16, 2026','Recorded\n2026-10-16','Release 2026/10/17\nUpdated 2026/10/18'])assert.equal((await collect(raw)).publishedAt,raw)
  const updatedTime=fixture(async()=>({text:'Updated October 16, 2026',range:scope,dateTime:'2026-10-16T01:00:00Z'}));assert.equal((await collectPageSource(updatedTime.wc,{bodySelector:'article',publishedSelector:'time'},async()=>({items:[],range:scope,truncated:false}))).publishedAt,'Updated October 16, 2026')

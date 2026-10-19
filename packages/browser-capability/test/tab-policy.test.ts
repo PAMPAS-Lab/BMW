@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { agentTabsToClose, MAX_AGENT_TABS_PER_PROJECT, reusableTab } from '../src/tab-policy.js'
+import { agentTabsToClose, MAX_AGENT_TABS_PER_PROJECT, reusableTab, normalizeProjectTabState, projectTabsToRestore } from '../src/tab-policy.js'
 
 function tab(id, { projectId = 'project-1', source = 'agent', url = `https://example.com/${id}`, lastUsedAt = 1 } = {}) {
   return { id, projectId, source, url, lastUsedAt, createdAt: lastUsedAt }
@@ -41,4 +41,12 @@ test('Agent tab cap closes only least-recent background Agent tabs', () => {
   assert.deepEqual(close.map(({ id }) => id), ['agent-1', 'agent-2'])
   assert.equal(close.some(({ id }) => id === 'user'), false)
   assert.equal(close.some(({ id }) => id === 'agent-0'), false)
+})
+
+test('Saved research ownership survives restore, bounds Agent pages and preserves the visible page',()=>{
+ const tabs=Array.from({length:9},(_,n)=>({url:`https://example.org/${n}`,source:'agent' as const})),state=normalizeProjectTabState({urls:tabs.map(t=>t.url),tabs,activeUrl:tabs[0].url}),restored=projectTabsToRestore(state)
+ assert.equal(restored.tabs.length,MAX_AGENT_TABS_PER_PROJECT);assert.ok(restored.tabs.some(t=>t.url===tabs[0].url));assert.ok(restored.tabs.every(t=>t.source==='agent'))
+ const legacy=projectTabsToRestore({urls:['https://example.org/old'],activeUrl:'https://example.org/old'});assert.equal(legacy.tabs[0].source,'user')
+ const many=Array.from({length:25},(_,n)=>({url:`https://example.org/user/${n}`,source:'user' as const})),bounded=normalizeProjectTabState({urls:many.map(t=>t.url),tabs:many,activeUrl:many[24].url});assert.equal(bounded.urls.length,20);assert.ok(bounded.urls.includes(many[24].url))
+ assert.throws(()=>normalizeProjectTabState({urls:[],tabs:[{url:'https://example.org',source:'guessed'}]}),/ownership/)
 })

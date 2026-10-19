@@ -1171,7 +1171,7 @@ async function run():Promise<void>{try{
   await script("(()=>{window.__audioContexts=[];window.__frameTicks=0;const Audio=window.AudioContext;window.AudioContext=class extends Audio{constructor(...args){super(...args);window.__audioContexts.push(this)}};const frame=()=>{window.__frameTicks++;requestAnimationFrame(frame)};requestAnimationFrame(frame)})()");
   const errors:string[]=[];studio.on('console-message',details=>{if(details.level==='error')errors.push(details.message)})
   await waitFor(()=>script("document.getElementById('scene-title').value==='开场'"),'Studio draft loading')
-  if(process.env.BMW_STUDIO_NEWS_CASE==='1'){await verifyNewsStudio(project,store,kernel,studio,studioExecute,assistantPrompts,status=>{activity={...activity,status};runtime.onAssistantChanged()});return}
+  if(process.env.BMW_STUDIO_NEWS_CASE==='1'){await verifyNewsStudio(project,store,kernel,studio,studioExecute,assistantPrompts,status=>{activity={...activity,status};runtime.onAssistantChanged()},()=>runtime.openPanel('video-studio'),()=>mode);return}
   if(process.env.BMW_STUDIO_PRODUCTION_CASE==='1'){await verifyProductionEditor(store,studioExecute);return}
   if(process.env.BMW_STUDIO_SCHEMA_CASE==='1'||process.env.BMW_STUDIO_TEXT_CASE==='1'||process.env.BMW_STUDIO_PACKAGING_CASE==='1'||process.env.BMW_STUDIO_SCIENCE_CASE==='1'){await verifyVideoSchema(store,studioExecute,kernel);return}
   if(process.env.BMW_STUDIO_LONG_CASE==='1'){await verifyLongFilm(store);return}

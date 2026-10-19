@@ -13,6 +13,7 @@ function node(id:string,file:string,layer:TestLayer,module:ModuleId,watch?:reado
 }
 const p='packages/'
 export const tests: readonly TestDefinition[] = [
+  {id:'browser.tab-lifecycle',file:'scripts/browser-tab-lifecycle-smoke.ts',layer:'integration',modules:['browser-capability','platform'],runner:'electron',watch:['packages/browser-capability/src/page-playback.ts','packages/browser-capability/src/tab-policy.ts','packages/browser-capability/src/browser-kernel.ts','packages/browser-capability/src/page-navigation.ts','packages/platform/src/project-store.ts','packages/platform/src/main.ts']},
   node('video.news',p+'feature-video/test/news.test.ts','contract','feature-video'),
   node('browser.navigation',p+'browser-capability/test/page-navigation.test.ts','contract','browser-capability'),
   {id:'studio.news-source-screenshot',file:'scripts/news-source-screenshot-smoke.ts',layer:'integration',modules:['feature-video','browser-capability','platform','media-native'],runner:'electron',watch:['packages/browser-capability/src/source-screenshot.ts','packages/browser-capability/src/page-navigation.ts','packages/browser-capability/src/browser-kernel.ts','packages/platform/src/project-source-store.ts','packages/media-native/src/source-contract.ts']},

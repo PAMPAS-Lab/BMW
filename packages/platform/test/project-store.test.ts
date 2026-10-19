@@ -121,3 +121,11 @@ test('Project persistence contains only BMW ownership and keeps independent docu
  assert.equal(restored.readDocument(first.id,'memory').content,'First facts\n')
  assert.equal(restored.readDocument(second.id,'memory').content,'Second facts\n')
 })
+
+test('Project tab ownership persists without reclassifying research pages as user pages',t=>{
+ const {store,root}=createStore(t),id=store.active().id,tabs=[{url:'https://example.org/user',source:'user'},{url:'https://example.org/research',source:'agent'}]
+ store.updateTabState(id,{urls:tabs.map(t=>t.url),tabs,activeUrl:tabs[1].url})
+ const restored=new ProjectStore({filePath:store.filePath,projectsDirectory:path.join(root,'projects'),initialWorkspacePath:path.join(root,'workspace')})
+ assert.deepEqual(restored.active().tabState.tabs,tabs);assert.equal(restored.active().tabState.activeUrl,tabs[1].url)
+ assert.throws(()=>store.updateTabState(id,{urls:[],tabs:[{url:'https://example.org',source:'bad'}]}),/ownership/)
+})

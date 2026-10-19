@@ -1,4 +1,4 @@
-import {NewsService,requireNewsSelection} from './news-service.js'
+import {NewsService,requireNewsSelection,newsResearchPending} from './news-service.js'
 import {ProductionAssessmentJournal,productionAssessmentSnapshot,makeProductionAssessment,acceptedProductionAssessment} from './production-assessment.js'
 import {productionProfiles,productionRecipes,productionProposal,productionReview} from './production-types.js'
 import {productionFacts,productionImpact,productionArtifactIds,productionHash} from './production-impact.js'
@@ -20,6 +20,7 @@ import {videoDocumentSchema,videoDocumentFromDraft} from './video-document.js'
 import {applyVideoEdit,videoEditSchema} from './video-edit.js'
 import {studioCompatibility,requireSimpleVideoEdit,requireSimpleVideo} from './studio-compatibility.js'
 import {MaterialIndexService} from './material-index-service.js'
+import {assertMaterialIndexRequest} from './material-index-contract.js'
 import {sourceNarrationDraft} from './source-narration-recipe.js'
 import {reviewStudioExport} from './studio-export-review.js'
 import {referenceOperation} from './studio-reference.js'
@@ -74,6 +75,11 @@ export class VideoStudioService {
     signal?.throwIfAborted()
     const sources=new StudioSources(this.kernel),news=new NewsService(this.kernel,owner)
     if(['news-topics','propose-news-topics','select-news-topic','news-guide'].includes(request.operation))return news.execute(request,actor,signal)
+    if(request.operation==='materials'){
+      const material=assertMaterialIndexRequest(request.materialRequest)
+      if(material.operation==='set-metadata')requireNewsSelection(this.kernel,owner,actor)
+      return new MaterialIndexService(this.kernel,owner,actor,newsResearchPending(this.kernel,owner,actor)).execute(material,signal)
+    }
     if(studioWrites.includes(request.operation))requireNewsSelection(this.kernel,owner,actor)
     if(request.draftId&&['narrate','narrate-pending','narrate-local','render'].includes(request.operation))await news.guardDraft(request.draftId,signal,request.operation==='render'&&actor==='agent')
     if(request.operation==='production-profiles')return {profiles:productionProfiles,recipes:productionRecipes,guidanceVersion:1,permissions:'unchanged',externalSkills:false,disable:'Omit production metadata to stop using type guidance; authored scenes remain intact.'}
@@ -85,7 +91,6 @@ export class VideoStudioService {
     }
     if(request.operation==='describe-schema')return {schemaVersion:VIDEO_DOCUMENT_VERSION,supportedDocumentVersions:[...VIDEO_DOCUMENT_VERSIONS],cardTemplates:CARD_TEMPLATES.filter(item=>item.id!=='points/list').map(({id,category,name,purpose})=>({id,category,name,purpose})),documentSchema:videoDocumentSchema,editSchema:videoEditSchema,capabilities:{profile:'simple.cards/3',frameRates:{minimum:12,maximum:30,denominator:1},maxScenes:COMPOSITION_LIMITS.scenes,maxDurationSeconds:COMPOSITION_LIMITS.seconds,maxVisualSegmentsPerScene:8,maxIndependentObjects:64,sequentialRegions:true,freeTimelineGaps:false,nestedSequences:false,aiAssetGeneration:false},authorization:{projectId:owner.projectId,sessionId:owner.sessionId,advancedEditing:context?.view?.mode==='advanced'},commands:['brief.set','scene.add','captions.set','card.set','card.bind','scene.set','scene.reorder','clip.move','clip.trim','clip.split','clip.effects','clip.mute','layer.add','layer.set','layer.remove']}
     if(request.operation==='describe-template')return {template:cardTemplate(request.cardTemplateId!),cardSpecSchema:{oneOf:cardSpecSchema.oneOf.filter(branch=>branch.properties.templateId.const===request.cardTemplateId)},contentContracts:cardSpecSchema.oneOf.filter(branch=>branch.properties.templateId.const===request.cardTemplateId).map(branch=>({ ...cardContentContract(request.cardTemplateId!,branch.properties.version.const as 1|2),sceneConstraints:cardSceneConstraints(request.cardTemplateId!,branch.properties.version.const as 1|2)})),visualBindings:{derivedScene:['imageArtifactId','videoArtifactId','visualSegments[].imageArtifactId','visualSegments[].videoArtifactId'],canonicalDocument:'timeline primary clips',sourcePinsAttachVisuals:false},variants:CARD_TEMPLATES.filter(item=>item.category===cardTemplate(request.cardTemplateId!).category).map(({id,name,purpose})=>({id,name,purpose})),defaults:{motion:'none'},supportedAspectRatios:['16:9','9:16'],limits:{title:44,bullet:64,maxVisualSegments:8,maxDurationSeconds:60},guidance:['Fill canonical scene fields named by slots; cardSpec stores bounded dedicated slots. Version 2 cards require document 2.2; source rectangles are pinned to actual artifact SHA-256.','Use real Project artifacts and source URLs; example labels are not factual evidence.','Plan one purpose per card, fetch missing assets, validate the draft, then inspect actual preview.','Do not delete extra bullets to fit a different template; use a list or split the card.','Recording focus is not a measured pointer trajectory.']};
-    if(request.operation==='materials')return new MaterialIndexService(this.kernel,owner,actor).execute(request.materialRequest,signal)
     if(request.operation==='source')return sources.execute(request.sourceRequest,signal)
     if(request.operation==='open'){if(!this.kernel.videoStudioOpen)throw new Error('Studio UI is unavailable in this host.');return this.kernel.videoStudioOpen(owner)}
     if(request.operation==='context')return this.kernel.videoStudioContext?.(owner)??{mode:'browser',selection:null}

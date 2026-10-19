@@ -20,6 +20,7 @@ export interface BrowserFeatureHost {
   sourcePages?:()=>{id:string;url:string;title:string}[]
   captureSource?:(request:{sourceGuard:SourceCaptureGuard;videoSelector:string;videoIndex?:number;fromStart?:boolean;maxDurationMs?:number;filename:string;tabId?:string},signal?:AbortSignal)=>Promise<unknown>
   downloadSource?:(request:{url:string;pageUrl:string;filename:string;tabId?:string},signal?:AbortSignal)=>Promise<unknown>
+  preserveSource?:(request:{url:string;pageUrl:string;tabId?:string},signal?:AbortSignal)=>Promise<unknown>
   collectSource?:(request:SourceCollection,signal?:AbortSignal)=>Promise<SourceObservation>
   execute(request: unknown, options?: BrowserExecutionOptions): Promise<unknown>
   videoStudioOpen?: (owner:BrowserSessionOwner) => Promise<unknown>
@@ -42,7 +43,7 @@ export function assertBrowserFeatureHost(raw: unknown): BrowserFeatureHost {
   }
   const project = value.projectStore.active()
   if (!project || typeof project.id !== 'string' || !project.id || typeof project.name !== 'string' || !project.name || typeof project.directory !== 'string' || !/^(?:\/|[a-zA-Z]:[\\/]|\\\\)/.test(project.directory)) throw new TypeError('Invalid active Project host reply.')
-  for (const hook of ['videoStudioOpen','videoStudioContext','videoStudioChanged','projectSources','sourcePages','collectSource','downloadSource','captureSource'] as const) if (value[hook] !== undefined && typeof value[hook] !== 'function') throw new TypeError('Invalid browser Feature hook: '+hook)
+  for (const hook of ['videoStudioOpen','videoStudioContext','videoStudioChanged','projectSources','sourcePages','collectSource','downloadSource','preserveSource','captureSource'] as const) if (value[hook] !== undefined && typeof value[hook] !== 'function') throw new TypeError('Invalid browser Feature hook: '+hook)
   if (value.settingsStore && (typeof value.settingsStore.snapshot !== 'function' || typeof value.settingsStore.update !== 'function')) throw new TypeError('Invalid settings host port.')
   return value as BrowserFeatureHost
 }

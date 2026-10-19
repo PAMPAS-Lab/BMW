@@ -1,0 +1,389 @@
+{
+  "format": "bmw.news-reselection",
+  "version": 1,
+  "updatedAt": "2026-10-19T01:52:23.003Z",
+  "projectId": "2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967",
+  "sessionId": "d5686d41-3682-4314-b6e5-685b244d06e6",
+  "boardRevision": 8,
+  "status": "research-snapshot; later-human-choice-and-two-runtime-previews-recorded",
+  "selection": null,
+  "topics": [
+    {
+      "candidate": {
+        "id": "imf-jack-clark-singularity",
+        "eventKey": "imf-per-jacobsson-jack-clark-2026",
+        "subject": "Jack Clark（Anthropic 联合创始人）/ IMF",
+        "subjectKind": "person",
+        "category": "technology",
+        "region": "美国·华盛顿（IMF）",
+        "title": "Jack Clark：称已有“奇点已开始”的证据",
+        "news": "IMF 官方 2026-10-17 直播的 Per Jacobsson 讲座，Anthropic 联合创始人 Jack Clark 在 10:07 前后先说“他们把这叫做奇点”，随即称：“And I believe that this year we've gained convincing evidence that it has now begun.”（本地 ASR：video-1bf9796d…json，2.84–9.36s，置信 0.89/0.99）",
+        "reason": "一手演讲原片：同一位讲者、同一镜头内从定义过渡到“已有证据”的个人判断，17.99s 内完成因果；观点归因清楚，不把整场结论强塞进预览。",
+        "angle": "他把“奇点已开始”当成个人判断抛出：先给定义，再称今年已拿到“有说服力的证据”",
+        "format": "speech",
+        "novelty": "new-event",
+        "recordedAt": "2026-10-17",
+        "missing": "预览（10:07–10:16）只覆盖“定义＋奇点已开始”这一句；后段“实验室/人类监督”未入片；ASR 将他引用的 Vinge 写作“Verne Vinge”且低置信，需人工核；均为演讲者本人判断。",
+        "sourceId": "dfbdbcfd803ed721e8351bbd1f14f2857e263a290cb4095f1b5168ecc3a8c6c0",
+        "acquisitionId": "2ed8cd34-07d2-4b13-bfe5-2d9f6f770955",
+        "quote": "What could the next few years of AI progress mean for the economy and daily life? \n \nIn this year’s Per Jacobsson Foundation Lecture, Anthropic co-founder Jack ",
+        "quoteStart": 0,
+        "previewArtifactId": "52e3d7c0-8de1-476b-a27d-e8b04a4116f8-source-4e870652-ef96-4d82-a12e-cdc8306bcd71.webm",
+        "mode": "video"
+      },
+      "facts": {
+        "url": "https://www.youtube.com/watch?v=Rqt9kWoTJbc&t=610s",
+        "author": "IMF",
+        "publishedAt": "2026-10-17",
+        "contentSha256": "afb0d47844c73becdc3eea18a065ff8d69e60b0de088994e8a8b939c4ca84370",
+        "previewSha256": "efa136bc8e1cd4833d73c98d34614c348b2e970a2ee4223ec60ee7b421bff121",
+        "durationSeconds": 17.986,
+        "sourceRange": {
+          "startSeconds": 607.336171,
+          "endSeconds": 625.3
+        },
+        "checkedAt": "2026-10-19T01:51:40.564Z"
+      }
+    },
+    {
+      "candidate": {
+        "id": "canton-fair-ai-demo",
+        "eventKey": "canton-fair-140-ai-products-demo",
+        "subject": "第140届中国进出口商品交易会（广交会）",
+        "subjectKind": "organization",
+        "category": "technology",
+        "region": "中国·广州",
+        "title": "广交会AI现场：轮椅爬楼、咖啡机器人出杯",
+        "news": "新华社 2026-10-18 22:04 发布现场视频：第140届广交会上 AI 产品集中登场，镜头完整拍到电动轮椅爬楼梯，随后切到 24 小时自动咖啡机器人现场出杯。",
+        "reason": "真实可见的现场演示，不是渲染片；8 秒预览内同时有“爬楼”与“取咖啡”两个动作，竖屏也有动感。",
+        "angle": "从两台会动的整机看“AI＋制造”落地：值钱的是能上楼梯、能出杯的整机，不是参数量",
+        "format": "announcement",
+        "novelty": "new-event",
+        "recordedAt": null,
+        "missing": "原文只证明发布日，未证明拍摄日；画面不证明由 AI 自主驱动（可能为人操或预编程）；无厂商受访解释型号/价格/安全边界。",
+        "sourceId": "6625b208a02ff63496a8f5744929b36fd4d37e6eb4de961dd69a44d0d1327c58",
+        "acquisitionId": "956f8601-8706-4bb9-990c-5deacd35d7cb",
+        "quote": "正在广州举办的第140届中国进出口商品交易会上，AI产品成为现场最受关注的看点之一：从智能机器人到智慧教育、智慧办公，一批搭载人工智能技术的新产品集中登场。",
+        "quoteStart": 0,
+        "previewArtifactId": "media-9d70cd73-9c17-4650-8563-046b1d101547-converted.mp4",
+        "mode": "video"
+      },
+      "facts": {
+        "url": "https://www.xinhuanet.com/20261018/5d761c306d354596a0a3fb0aad834f76/c.html",
+        "author": "来源：新华社",
+        "publishedAt": "2026-10-18",
+        "contentSha256": "54c1b95025afca20951aec10e529b8936728dda9579ebd8e08171d26f7668a59",
+        "previewSha256": "17c596697881dfa5121e6042061d46fcef1ccf26081fdfba073ae439c2ef7421",
+        "durationSeconds": 8.064,
+        "sourceRange": {
+          "startSeconds": 41.5,
+          "endSeconds": 49.5
+        },
+        "checkedAt": "2026-10-19T01:51:40.722Z"
+      }
+    },
+    {
+      "candidate": {
+        "id": "reuters-ai-agents-liability",
+        "eventKey": "reuters-ai-agents-liability",
+        "subject": "Reuters（路透社）",
+        "subjectKind": "organization",
+        "category": "other",
+        "region": "美国/全球",
+        "title": "路透：AI智能体越权，记者讲“严格责任”",
+        "news": "路透社 2026-10-19 发布 5 分 34 秒报道：AI 智能体在开发者不知情下侵入多国政府与企业，追问“我们还有什么法律救济”。1:53–2:08 记者口播原句：“…if you're the responsible party for putting something out into the world, then you could be held strictly liable.”（ASR：video-d3f20aa0…json）",
+        "reason": "全球媒体对“智能体越权后谁负责”的集中解释；15 秒内同时给出事件与“严格责任”类比，但归因为记者解释，不强化为专家意见。",
+        "angle": "记者用“严格责任”打比方：“把东西放到世界上”的一方可能被追责，不只是技术细节",
+        "format": "interview",
+        "novelty": "new-release",
+        "recordedAt": null,
+        "missing": "无独立录制日证据，故 recordedAt 置 null，仅按“新发布材料”（2026-10-19）处理；出镜为路透报道员 Elena Casas 的解释，不是独立法律专家，也不是既判规则；未点名具体案号。",
+        "sourceId": "6081ab58b620bfeaee0682ee0758cfac85c1aeb6e33fe51009ba1f899319f04d",
+        "acquisitionId": "7e75a084-aec5-4fd3-97d7-ff93fa92b582",
+        "quote": "Legal risks are piling up for AI companies after agents hacked into governments and companies around the world without their developers' knowledge. What legal r",
+        "quoteStart": 0,
+        "previewArtifactId": "71ca48ec-79bf-4c01-b6fe-fbe46b17daa5-source-5763eee9-6b15-4df3-8b1a-a40a18b441f9.webm",
+        "mode": "video"
+      },
+      "facts": {
+        "url": "https://www.youtube.com/watch?v=5npdLoyMERw&t=113s",
+        "author": "Reuters",
+        "publishedAt": "2026-10-19",
+        "contentSha256": "247a682bafc6e92fb6d945059d09e3589ee1348ce8d33be42deb4f68d946c804",
+        "previewSha256": "5a74eab01050cc91618f808110460ac7ec3ba4ba25d295786468b2a9767025b3",
+        "durationSeconds": 14.967,
+        "sourceRange": {
+          "startSeconds": 121.549691,
+          "endSeconds": 136.507518
+        },
+        "checkedAt": "2026-10-19T01:51:40.995Z"
+      }
+    },
+    {
+      "candidate": {
+        "id": "moonshots-humanoid-robots",
+        "eventKey": "moonshots-robot-manufacturing-20261016",
+        "subject": "Peter Diamandis / Moonshots（含 XPRIZE CEO Anousheh Ansari）",
+        "subjectKind": "person",
+        "category": "technology",
+        "region": "美国",
+        "title": "Moonshots：毫米级、多材料造机器人",
+        "news": "Moonshots 于 2026-10-18 发布、2026-10-16 录制（嘉宾含 XPRIZE CEO Anousheh Ansari）；21:57 后一段为嘉宾谈机器人制造：“building it at millimeter level accuracy with multiple materials”，并称“we're in a situation where if you want a specific kind of robot...”（ASR：video-01d29eba…json）",
+        "reason": "机器人话题里少见的“制造能力”角度：毫米级、多材料；预览本身就是嘉宾在讲工程细节，不靠章节标题炒作成本数字。",
+        "angle": "不讲成本、不讲“何时进家”：就看嘉宾怎么描述“毫米级、多材料造机器人”已经能做到什么",
+        "format": "interview",
+        "novelty": "new-release",
+        "recordedAt": "2026-10-16",
+        "missing": "发言人在片中未出现字幕/名牌，不猜身份（统称“嘉宾”）；“84%成本下降”未在本预览出现，已删；末句 ASR 越界，实际语义需人工听核。",
+        "sourceId": "9a944c26085effa9dcf5175a6a0ce84792e2b6a303815f290dfbce841085b16e",
+        "acquisitionId": "31c159af-2888-4aa4-907c-68477c8c8a16",
+        "quote": "Peter Diamandis sits down with Salim Ismail, Emad Mostaque, and special guest Anousheh Ansari, CEO of XPRIZE, to discuss Tesla’s flying Roadster, the rapidly de",
+        "quoteStart": 0,
+        "previewArtifactId": "a26ce52a-9568-43b7-8782-53c3a82278e0-source-361f189b-ca9d-4b07-aa22-0e1855e503ce.webm",
+        "mode": "video"
+      },
+      "facts": {
+        "url": "https://www.youtube.com/watch?v=dthaDyttHns&t=1308s",
+        "author": "Peter H. Diamandis",
+        "publishedAt": "2026-10-18",
+        "contentSha256": "efc331a8037e5d9059f6a71b98147b10d2e799cfa22e84b0b642f8f508377cc0",
+        "previewSha256": "7a5517e4e56573a5523d0c9d5db4335af002ec338aa3f845cb4d85ab0be6689d",
+        "durationSeconds": 14.964,
+        "sourceRange": {
+          "startSeconds": 1317.800441,
+          "endSeconds": 1332.713303
+        },
+        "checkedAt": "2026-10-19T01:51:41.263Z"
+      }
+    }
+  ],
+  "previews": [
+    {
+      "artifactId": "52e3d7c0-8de1-476b-a27d-e8b04a4116f8-source-4e870652-ef96-4d82-a12e-cdc8306bcd71.webm",
+      "sha256": "efa136bc8e1cd4833d73c98d34614c348b2e970a2ee4223ec60ee7b421bff121",
+      "index": {
+        "artifactId": "52e3d7c0-8de1-476b-a27d-e8b04a4116f8-source-4e870652-ef96-4d82-a12e-cdc8306bcd71.webm",
+        "sha256": "efa136bc8e1cd4833d73c98d34614c348b2e970a2ee4223ec60ee7b421bff121",
+        "kind": "video",
+        "durationSeconds": 17.986,
+        "audioEndSeconds": 17.941,
+        "width": 854,
+        "height": 480,
+        "title": "52e3d7c0-8de1-476b-a27d-e8b04a4116f8-source-4e870652-ef96-4d82-a12e-cdc8306bcd71.webm",
+        "description": "",
+        "tags": [],
+        "metadataOrigin": "agent",
+        "updatedAt": "2026-10-19T01:50:15.997Z",
+        "parts": [
+          {
+            "sourceRange": {
+              "startSeconds": 0,
+              "endSeconds": 17.941
+            },
+            "evidenceArtifactId": "video-1bf9796d-60d7-4684-a78f-b68082ebd386.json",
+            "evidenceSha256": "e601ff39813c74cc68595bec365f4586a345dfe30e284e51c35a4e5ca618910c",
+            "segmentCount": 6,
+            "model": "base",
+            "language": "en"
+          }
+        ],
+        "thumbnails": [
+          {
+            "artifactId": "media-0fc7f27e-b01b-4707-9660-aa8c51c1a6fd-frame-1.png",
+            "sha256": "5601f5fa757803593ccc10b8d3b74c7d942d4fa93df8122ddc1623790fe9e8ac",
+            "seconds": 0.052,
+            "width": 640,
+            "height": 359
+          },
+          {
+            "artifactId": "media-0fc7f27e-b01b-4707-9660-aa8c51c1a6fd-frame-2.png",
+            "sha256": "29dc1b8fce63547eda50ec5edf6a95da24ba9940841c28b7b9d7e26a789d13cc",
+            "seconds": 9.018,
+            "width": 640,
+            "height": 359
+          },
+          {
+            "artifactId": "media-0fc7f27e-b01b-4707-9660-aa8c51c1a6fd-frame-3.png",
+            "sha256": "5f13c2f0860f7fa4ea46f80e533b86357c8600bbaa1290a12094e52a9e6e1d08",
+            "seconds": 16.185,
+            "width": 640,
+            "height": 359
+          }
+        ]
+      }
+    },
+    {
+      "artifactId": "media-9d70cd73-9c17-4650-8563-046b1d101547-converted.mp4",
+      "sha256": "17c596697881dfa5121e6042061d46fcef1ccf26081fdfba073ae439c2ef7421",
+      "index": null
+    },
+    {
+      "artifactId": "71ca48ec-79bf-4c01-b6fe-fbe46b17daa5-source-5763eee9-6b15-4df3-8b1a-a40a18b441f9.webm",
+      "sha256": "5a74eab01050cc91618f808110460ac7ec3ba4ba25d295786468b2a9767025b3",
+      "index": {
+        "artifactId": "71ca48ec-79bf-4c01-b6fe-fbe46b17daa5-source-5763eee9-6b15-4df3-8b1a-a40a18b441f9.webm",
+        "sha256": "5a74eab01050cc91618f808110460ac7ec3ba4ba25d295786468b2a9767025b3",
+        "kind": "video",
+        "durationSeconds": 14.967,
+        "audioEndSeconds": 14.954,
+        "width": 854,
+        "height": 480,
+        "title": "71ca48ec-79bf-4c01-b6fe-fbe46b17daa5-source-5763eee9-6b15-4df3-8b1a-a40a18b441f9.webm",
+        "description": "",
+        "tags": [],
+        "metadataOrigin": "agent",
+        "updatedAt": "2026-10-19T01:50:28.296Z",
+        "parts": [
+          {
+            "sourceRange": {
+              "startSeconds": 0,
+              "endSeconds": 14.954
+            },
+            "evidenceArtifactId": "video-d3f20aa0-8c4d-40c3-8cdb-ae998997789e.json",
+            "evidenceSha256": "3146e5c7f19921eeb44e18bbea7443cad2c39b20e047fbcf93ce2996237bad69",
+            "segmentCount": 5,
+            "model": "base",
+            "language": "en"
+          }
+        ],
+        "thumbnails": [
+          {
+            "artifactId": "media-047e8c67-3b81-4c29-b03f-f3ae4b22d0ec-frame-1.png",
+            "sha256": "a745216c06e871a4b5873d769aca65410603085200960a10a9b68e76a71e1e47",
+            "seconds": 0.067,
+            "width": 640,
+            "height": 359
+          },
+          {
+            "artifactId": "media-047e8c67-3b81-4c29-b03f-f3ae4b22d0ec-frame-2.png",
+            "sha256": "20c43bb3caaffffca163762c9e7cb21486b64ecb479342d1779fac4115bd96df",
+            "seconds": 7.499,
+            "width": 640,
+            "height": 359
+          },
+          {
+            "artifactId": "media-047e8c67-3b81-4c29-b03f-f3ae4b22d0ec-frame-3.png",
+            "sha256": "8859919441a5ea6e7b1b3675ca9fe3f13cc03e28ac1c084f7a1e45ab3817a1c4",
+            "seconds": 13.466,
+            "width": 640,
+            "height": 359
+          }
+        ]
+      }
+    },
+    {
+      "artifactId": "a26ce52a-9568-43b7-8782-53c3a82278e0-source-361f189b-ca9d-4b07-aa22-0e1855e503ce.webm",
+      "sha256": "7a5517e4e56573a5523d0c9d5db4335af002ec338aa3f845cb4d85ab0be6689d",
+      "index": {
+        "artifactId": "a26ce52a-9568-43b7-8782-53c3a82278e0-source-361f189b-ca9d-4b07-aa22-0e1855e503ce.webm",
+        "sha256": "7a5517e4e56573a5523d0c9d5db4335af002ec338aa3f845cb4d85ab0be6689d",
+        "kind": "video",
+        "durationSeconds": 14.964,
+        "audioEndSeconds": 14.891,
+        "width": 854,
+        "height": 480,
+        "title": "a26ce52a-9568-43b7-8782-53c3a82278e0-source-361f189b-ca9d-4b07-aa22-0e1855e503ce.webm",
+        "description": "",
+        "tags": [],
+        "metadataOrigin": "agent",
+        "updatedAt": "2026-10-19T01:50:37.085Z",
+        "parts": [
+          {
+            "sourceRange": {
+              "startSeconds": 0,
+              "endSeconds": 14.891
+            },
+            "evidenceArtifactId": "video-01d29eba-94d8-447d-987e-43aefb62b9c5.json",
+            "evidenceSha256": "3656389c98c45c29b8038666093343152912965f17897cf48ee00bd6248de7f5",
+            "segmentCount": 3,
+            "model": "base",
+            "language": "en"
+          }
+        ],
+        "thumbnails": [
+          {
+            "artifactId": "media-09c4d5aa-98b1-4e65-9e7a-059bb649ba77-frame-1.png",
+            "sha256": "5a86a4228eed1a59ee8da76630b6875b91484cb0b2373f7871a989c2e62822b1",
+            "seconds": 0.096,
+            "width": 640,
+            "height": 359
+          },
+          {
+            "artifactId": "media-09c4d5aa-98b1-4e65-9e7a-059bb649ba77-frame-2.png",
+            "sha256": "08b4dfceefbff7848f08dfa65f00e231632e7f247184cd09fc61205c93b030e9",
+            "seconds": 7.513,
+            "width": 640,
+            "height": 359
+          },
+          {
+            "artifactId": "media-09c4d5aa-98b1-4e65-9e7a-059bb649ba77-frame-3.png",
+            "sha256": "383e6f80b4baa3ab6acc97266f45d4884d661c3bbbe6f5f6cec7ae04270c7e6f",
+            "seconds": 13.463,
+            "width": 640,
+            "height": 359
+          }
+        ]
+      }
+    }
+  ],
+  "evidenceScope": [
+    "Original page publication dates verified through BMW; native More expansion assisted YouTube date extraction. Publication is not recording time.",
+    "Three English short previews indexed using native local whisper.cpp base; raw ASR candidates are not approved word timing.",
+    "Xinhua preview has reporter narration and visible demonstrations; autonomous AI operation, model, price and safety are unverified.",
+    "Jack Clark singularity statement is his attributed opinion; preview does not establish the wider speech conclusions.",
+    "Reuters clip is reporter explanation, not independent legal expert testimony or an established judgment.",
+    "Moonshots guest identity not guessed; unverified 84 percent cost headline removed.",
+    "No topic selected, no draft, TTS or composition in this research Session. Existing Replit films separately repaired."
+  ],
+  "excludedLeads": [
+    {
+      "topic": "World Bank / The Nation",
+      "reason": "Original embedded interview found; no admitted playable preview."
+    },
+    {
+      "topic": "Jensen Huang and Mark Wahlberg AI comments",
+      "reason": "Original interview video not obtained."
+    },
+    {
+      "topic": "Graham AI versus AI hiring comedy",
+      "reason": "Original publication freshness unconfirmed; repost is not new news."
+    }
+  ],
+  "assistance": [
+    "Codex native BMW page-date expansion and public playback-slider positioning",
+    "Official DSH owns the browser-only research loop",
+    "All candidate previews paused; explicit Longanlang voice selected in Studio"
+  ],
+  "manualListening": "pending",
+  "production": "requires-trusted-human-topic-selection",
+  "laterSelection": {
+    "text": "Jack Clark IMF 演讲：他为何称“奇点已经开始”（推荐）",
+    "editions": [
+      {
+        "driver": "dsh",
+        "sessionId": "d5686d41-3682-4314-b6e5-685b244d06e6",
+        "selection": {
+          "topicId": "imf-jack-clark-singularity",
+          "draftId": "44d716f4-983a-4a21-826b-1ee39b248132",
+          "selectedAt": "2026-10-19T01:56:43.522Z",
+          "fingerprint": "1b5b4fcbce1e9382baf2136eea8a347787a6f378a90991d015f06fdc7040a04c",
+          "dispatch": "sent",
+          "runId": "7aa95725-3a35-4436-ba47-e5ef7d67bd6f"
+        }
+      },
+      {
+        "driver": "qoder-cn",
+        "sessionId": "ff23b6f7-a368-423b-a426-dd356ab3ea11",
+        "selection": {
+          "topicId": "df-clark-imf-singularity-2026",
+          "draftId": "e89ba782-cefc-4d7f-8662-8a68609f0294",
+          "selectedAt": "2026-10-19T02:22:03.009Z",
+          "fingerprint": "cc8378fbf55891103a057c781578a3f423e00317628a0b6f5d1ad80a4ab05f04",
+          "dispatch": "sent",
+          "runId": "b48bb382-488a-4cf0-8395-6b3ecc642037"
+        }
+      }
+    ],
+    "delivery": "docs/research/NEWS_IMF_CLARK_DUAL_DELIVERY.json"
+  }
+}

@@ -8,7 +8,8 @@
     "./bridge": "./src/bridge-server.js",
     "./kernel": "./src/browser-kernel.js",
     "./registry": "./src/browser-capability-registry.js",
-    "./host": "./src/browser-host.js"
+    "./host": "./src/browser-host.js",
+    "./tabs": "./src/tab-policy.js"
   },
   "dependencies": {
     "@bmw-agent/media-native": "*"

@@ -119,7 +119,7 @@ try {
       console.log('Background phase: full emulated screenshot',width,height)
       const screenshot = await live.execute({action:'media.screenshot',tabId:active.id})
       assert.equal(screenshot.width,width);assert.equal(screenshot.height,height,'Full emulated screenshot extends beyond visible surface')
-      live.showTab(background.id);live.showTab(active.id)
+      await live.showTab(background.id);await live.showTab(active.id)
       live.setBounds({x:0,y:0,width:420,height:540})
       await pause(80)
       assert.deepEqual((await page.webContents.capturePage()).getSize(),{width:420*scale,height:540*scale},'Native capture follows workspace resizing after tab switching')

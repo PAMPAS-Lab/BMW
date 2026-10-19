@@ -105,7 +105,7 @@ npm run test:video-e2e
 npm run test:tts-e2e
 ```
 
-NEWS-02首轮完整离线基线为 **166 passed／0 failed／12 not-run**（2026-10-18）；实际研究补正另通过65项受影响回归，最后直播日期兼容通过12个契约用例和真实Studio流程，构建与 `npm run check` 通过。分阶段范围不合并为一轮完整回归；[可移植逐项摘要](docs/verification/CURRENT.json)保存源码指纹、环境、范围和未运行项，[验证说明](docs/VERIFICATION.md#当前源码完整离线基线)解释限制。这是本机隔离验证，真实模型制作和人工验收另记。NEWS-02的43.03秒Chuck Lorre采访新闻（BMW＋Codex／龙安朗、大号双语字幕）已获用户接受，见[交付与接受记录](docs/research/NEWS_02_LORRE_DELIVERY.json)；下一步先科普、再学术，研究覆盖与审阅复用余项保留。
+日常新闻候选版的完整离线基线为 **167 passed／0 failed／12 not-run**（2026-10-18）；来源页复用收尾另通过单元、Studio、tab生命周期及桌面重启专项，五个收尾文件的源码范围在[CURRENT](docs/verification/CURRENT.json)单列，不合并计数。已准备BMW＋DSH／DeepSeek Flash日常Project并通过实际只读连通；[使用流程](docs/AGENT_VIDEO_EDITING.md#日常新闻使用)与[就绪范围](docs/research/NEWS_DAILY_READINESS.json)明确选题确认、龙安朗和资源边界。已接受的43.03秒Chuck Lorre片保留，下一内容主线仍是科普、再学术。
 
 局部改动默认先用下方 `test:plan` / `test:affected -- --files ...` 查看并执行本次范围；既有未提交工作不应混入本次文件列表。`verify:stability` 显式使用 `--all`，执行全部非 opt-in 分类；六项专用本地素材夹具和六项外部服务／模型测试仍需单独启用，不计为通过。完整串行验证：`npm run verify:stability`，并单独执行 `npm run check` 检查完整编译／Schema与生成文档一致性。完整入口构建一次，再执行源码／清单门禁、单元/边界及运行时回归；记录源码哈希、依赖版本和通过/失败/未执行结果。桌面工作区测试分为工作区、Project/会话（含实际重启）、设置、原生焦点/键盘四组；Studio 各专用环境分支另由分类目录逐项执行，单组失败不阻止其余组运行。新证据在 `.bmw-runtime/classified-tests/`，既有证据保留。
 

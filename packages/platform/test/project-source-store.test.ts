@@ -65,3 +65,11 @@ test('Capture requests require a video selector and measured source evidence can
  const scope=observation().scope,evidence={kind:'video-element',pageUrl:'https://example.com/article',candidateUrl:'blob:https://example.com/clip',scope,selector:'video',index:0,fromStart:true,sourceStartSeconds:0,sourceEndSeconds:1,sourceDurationSeconds:10,stopReason:'maximum-duration',startedAt:'2026-10-04T00:00:00Z',endedAt:'2026-10-04T00:00:01Z'}
  assert.equal(assertSourceCaptureEvidence(evidence).sourceEndSeconds,1);assert.throws(()=>assertSourceCaptureEvidence({...evidence,sourceEndSeconds:11}),/exceeds/);assert.throws(()=>assertSourceCaptureEvidence({...evidence,shell:'curl'}),/Unsupported/);assert.throws(()=>assertSourceCaptureEvidence({...evidence,scope:{...scope,status:'failed'}}),/observed/)
 })
+
+test('Delivery preview is a closed preserve-only interval and cannot claim a capture or exceed the short preview budget',()=>{
+ const acquire={operation:'acquire',sourceId:'s',acquisitionId:'a',candidateId:'c',expectedRevision:0,method:'preserve',preview:{startSeconds:123,endSeconds:143}}
+ assert.deepEqual(assertSourceRequest(acquire),acquire)
+ for(const method of ['download','capture'])assert.throws(()=>assertSourceRequest({...acquire,method,...(method==='capture'?{videoSelector:'video'}:{})}),/preserve/)
+ for(const preview of [{startSeconds:0,endSeconds:30.001},{startSeconds:143,endSeconds:123},{startSeconds:-1,endSeconds:1},{startSeconds:1790,endSeconds:1801},{startSeconds:0,endSeconds:1,shell:'curl'}])assert.throws(()=>assertSourceRequest({...acquire,preview}))
+ assert.throws(()=>assertSourceRequest({...acquire,fromStart:false}),/Capture options/)
+})

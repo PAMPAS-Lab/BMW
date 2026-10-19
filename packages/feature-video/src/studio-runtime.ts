@@ -259,7 +259,14 @@ export class VideoStudioRuntime implements FeatureRuntime {
       const config=this.authorize(event),owner=this.scope();if(typeof raw!=='string')throw new Error('Choose a news topic.')
       const topic=new NewsJournal(config.projectStore.active().directory,owner).read().topics.find(t=>t.candidate.id===raw)
       if(!topic)throw new Error('Unknown current news topic.')
-      return config.browserKernel.execute({action:'tabs.open',url:topic.facts.url},{actor:'user',sessionOwner:owner})
+      if(this.cancellation)throw new Error('Finish the current Studio command before opening a source.')
+      const cancellation=new AbortController();this.cancellation=cancellation
+      try{
+        const state=mediaRecord(await config.browserKernel.execute({action:'tabs.list'},{actor:'user',signal:cancellation.signal,sessionOwner:owner})),tabs=Array.isArray(state.tabs)?state.tabs.map(mediaRecord):[],existing=tabs.find(tab=>tab.projectId===owner.projectId&&tab.url===topic.facts.url&&typeof tab.id==='string')
+        this.authorize(event);cancellation.signal.throwIfAborted()
+        const result=await config.browserKernel.execute(existing?{action:'tabs.show',tabId:existing.id}:{action:'tabs.open',url:topic.facts.url,foreground:true},{actor:'user',signal:cancellation.signal,sessionOwner:owner})
+        this.authorize(event);await this.setMode('browser');return result
+      }finally{if(this.cancellation===cancellation)this.cancellation=undefined}
     })
     ipc.handle('video-studio-news',async event=>{
       const config=this.authorize(event),owner=this.scope()

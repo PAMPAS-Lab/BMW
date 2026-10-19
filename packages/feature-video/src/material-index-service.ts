@@ -27,7 +27,7 @@ export function pendingMaterialRanges(record:MaterialIndexRecord):{startSeconds:
 /** Native media work only. No provider calls, model loop, paths, shell or
  * implicit retry. Each actual completed chunk commits independently by CAS. */
 export class MaterialIndexService {
- constructor(private kernel:StudioKernel,private owner:BrowserSessionOwner,private actor:'user'|'agent'){}
+ constructor(private kernel:StudioKernel,private owner:BrowserSessionOwner,private actor:'user'|'agent',private previewOnly=false){}
  async execute(raw:unknown,signal?:AbortSignal):Promise<unknown>{
   const request=assertMaterialIndexRequest(raw),project=this.kernel.projectStore.active(),directory=path.join(project.directory,'artifacts'),store=new MaterialIndexStore(project),check=()=>{signal?.throwIfAborted();if(this.kernel.projectStore.active().id!==this.owner.projectId)throw new Error('Material index Project changed.')};check()
   const index=await store.snapshot()
@@ -35,6 +35,7 @@ export class MaterialIndexService {
   if(request.expectedRevision!==undefined&&request.expectedRevision!==index.revision)throw new Error('MATERIAL_INDEX_CONFLICT: 请读取最新素材索引。')
   if(request.operation==='search')return this.search(request,index,directory,check,signal)
   if(request.operation==='set-metadata'){const record=index.records.find(r=>r.artifactId===request.artifactId);if(!record)throw new Error('Index this material before editing its metadata.');Object.assign(record,{title:request.title,description:request.description,tags:request.tags,metadataOrigin:this.actor,updatedAt:new Date().toISOString()});return {index:await store.commit(index,index.revision,check)}}
+  if(this.previewOnly&&request.maxChunks>1)throw new Error('NEWS_RESEARCH_PREVIEW_ONLY: At most one local transcript chunk before topic selection.')
   return this.index(request,index,store,directory,check,signal)
  }
  private async index(request:Extract<MaterialIndexRequest,{operation:'index'}>,initial:MaterialIndex,store:MaterialIndexStore,directory:string,check:()=>void,signal?:AbortSignal):Promise<unknown>{
@@ -45,6 +46,7 @@ export class MaterialIndexService {
   const save=async()=>{check();if(await source.fingerprint(signal)!==record!.sha256)throw new Error('MATERIAL_SOURCE_CHANGED: 原素材已变化，索引不能认领新内容。');record!.updatedAt=new Date().toISOString();index=await store.commit(index,index.revision,check);record=index.records.find(r=>r.artifactId===request.artifactId)!;owned.clear()}
   try{
    const sha256=await source.fingerprint(signal);check();if(record&&record.sha256!==sha256)throw new Error('MATERIAL_SOURCE_CHANGED: 已索引原文件被修改，请保留旧证据并导入新的素材。')
+   if(this.previewOnly&&record&&record.durationSeconds>30)throw new Error('NEWS_RESEARCH_PREVIEW_ONLY: Choose an actual preview no longer than thirty seconds.')
    let hasAudio=false
    if(!record){
     if(index.records.length>=MATERIAL_INDEX_LIMITS.records)throw new Error('Material index is limited to two hundred files.')
@@ -52,11 +54,12 @@ export class MaterialIndexService {
     else{
      const info=assertMediaInspection(await this.kernel.recordingController.processArtifact({action:'media.inspect',artifactId:asset.artifactId},signal)),video=info.tracks.find(t=>t.type==='video'&&t.canDecode),audio=info.tracks.find(t=>t.type==='audio'&&t.canDecode);hasAudio=Boolean(audio)
      if(!video&&!audio||info.durationSeconds<=0||info.durationSeconds>1800)throw new Error('Material index requires decodable finite media up to thirty minutes.')
+     if(this.previewOnly&&info.durationSeconds>30)throw new Error('NEWS_RESEARCH_PREVIEW_ONLY: Choose an actual preview no longer than thirty seconds.')
      record={artifactId:asset.artifactId,sha256,kind:video?'video':'audio',durationSeconds:info.durationSeconds,audioEndSeconds:audio?audio.endSeconds??info.durationSeconds:0,...(video?{width:video.width,height:video.height}:{}),title:asset.artifactId.slice(0,120),description:'',tags:[],metadataOrigin:this.actor,updatedAt:new Date().toISOString(),parts:[],thumbnails:[]}
      if(video){const first=Math.max(0,video.startSeconds??0),end=video.endSeconds??info.durationSeconds,times=[first,first+(end-first)*.5,first+(end-first)*.9],sampled=mediaRecord(await this.kernel.recordingController.processArtifact({action:'media.frames.sample',artifactId:asset.artifactId,timestampsSeconds:times,maxWidth:640,maxHeight:360},signal));if(!Array.isArray(sampled.frames)||sampled.frames.length!==3)throw new Error('Invalid material thumbnail collection.');for(const raw of sampled.frames)await claim(assertArtifactId(mediaRecord(raw).artifactId));if(sampled.sourceArtifactId!==asset.artifactId||sampled.type!=='frame-set')throw new Error('Material thumbnails belong to another source.');for(const [i,raw]of sampled.frames.entries()){const frame=mediaRecord(raw);if(frame.requestedTimestampSeconds!==times[i])throw new Error('Material thumbnail clock mismatch.');const id=assertArtifactId(frame.artifactId),io=await ArtifactJobIO.open(root,{action:'media.inspect',artifactId:id});try{record.thumbnails.push({artifactId:id,sha256:await io.fingerprint(signal),seconds:finiteNumber(frame.timestampSeconds,'material thumbnail time',first,times[i]),width:finiteNumber(frame.width,'material thumbnail width',1,640,true),height:finiteNumber(frame.height,'material thumbnail height',1,360,true)})}finally{await io.close()}}}
     }
     index.records.push(record);await save()
-   }else if(record.kind!=='image'){const info=assertMediaInspection(await this.kernel.recordingController.processArtifact({action:'media.inspect',artifactId:record.artifactId},signal));hasAudio=info.tracks.some(t=>t.type==='audio'&&t.canDecode)}
+   }else if(record.kind!=='image'){const info=assertMediaInspection(await this.kernel.recordingController.processArtifact({action:'media.inspect',artifactId:record.artifactId},signal));if(this.previewOnly&&info.durationSeconds>30)throw new Error('NEWS_RESEARCH_PREVIEW_ONLY: Choose an actual preview no longer than thirty seconds.');hasAudio=info.tracks.some(t=>t.type==='audio'&&t.canDecode)}
    if(record.kind==='image'||!hasAudio)return {index,record,pendingRanges:[],transcriptStatus:record.kind==='image'?'not-audio':'no-decodable-audio',chunksCompleted:0}
    const deadline=Date.now()+MATERIAL_INDEX_LIMITS.jobMs,jobSignal=signal?AbortSignal.any([signal,AbortSignal.timeout(MATERIAL_INDEX_LIMITS.jobMs)]):AbortSignal.timeout(MATERIAL_INDEX_LIMITS.jobMs)
    for(;chunks<request.maxChunks;chunks++){

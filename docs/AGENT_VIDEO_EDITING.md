@@ -31,11 +31,29 @@ BMW 仍只有一个经过验证的模型工具 `browser`。视频编辑通过 `v
 
 ## 新闻选题与制作引导
 
-Studio的“推荐新闻选题”先建立当前Project／Session的研究任务，再投递官方Assistant。Agent使用`news-topics`读取候选revision，以`propose-news-topics {expectedTopicRevision,newsCandidates}`提交至多十项有原始来源和已获取真实预览的候选；`news-guide {draftId,expectedRevision}`读取选定草稿的阶段、逐镜头脚本、来源、素材区间、实际音长与缺口。没有配图的公告先collect正文，再以同一正文selector/index调用`media.screenshot`并携带`sourceBinding {sourceId,acquisitionId,expectedRevision}`；Host核对URL／正文SHA／导航后将实际PNG记为来源已获取素材。使用返回artifactId，不拿Logo或搜索摘要代替原页。propose-news-topics帮助直接完整展开候选字段。长采访用原播放器定位关键发言后，source acquire method=capture、fromStart=false从实际当前位置录取短预览，原生证明保存实际源区间并恢复播放器；不把片头当关键引述。字段由操作帮助发现，完整闭合契约见[功能规格](FUNCTIONAL_SPEC.md#news-01-新闻选题与制作)。
+Studio的“推荐新闻选题”先建立当前Project／Session的研究任务，再投递官方Assistant。Agent使用`news-topics`读取候选revision，以`propose-news-topics {expectedTopicRevision,newsCandidates}`提交至多十项有原始来源和已获取真实预览的候选；`news-guide {draftId,expectedRevision}`读取选定草稿的阶段、逐镜头脚本、来源、素材区间、实际音长与缺口。没有配图的公告先collect正文，再以同一正文selector/index调用`media.screenshot`并携带`sourceBinding {sourceId,acquisitionId,expectedRevision}`；Host核对URL／正文SHA／导航后将实际PNG记为来源已获取素材。使用返回artifactId，不拿Logo或搜索摘要代替原页。propose-news-topics帮助直接完整展开候选字段。长采访用原播放器定位关键发言后，source acquire method=capture、fromStart=false从实际当前位置录取短预览，原生证明保存实际源区间，恢复位置／速率后保持暂停；不把片头当关键引述。字段由操作帮助发现，完整闭合契约见[功能规格](FUNCTIONAL_SPEC.md#news-01-新闻选题与制作)。
 
-`select-news-topic {expectedTopicRevision,topicId,baseFingerprint,options?}`只接受可信Studio用户，Agent调用不能代替点击确认。确认前研究任务限制草稿写入、TTS和合成；确认后由Host创建唯一草稿并投递制作，双击或重启不重复投递，不确定状态不自动重发。默认30–60秒竖屏新闻及Qwen安明远；显式options可覆盖。候选仅日期时保留日精度，最保守时区区间跨出72小时即不可选；日期不明、未来和只有转载标题均不能入选。原始来源或预览失效明确报错，不自动换题。选题账本独立于Video Document 2.10，不增加时间线。
+`select-news-topic {expectedTopicRevision,topicId,baseFingerprint,options?}`只接受可信Studio用户，Agent调用不能代替点击确认。确认前研究任务限制草稿写入、TTS和合成；materials list/search可读取，index仅允许实际≤30秒预览的单个本地转写区间（maxChunks≤1），长素材及set-metadata仍拒绝；确认后由Host创建唯一草稿并投递制作，双击或重启不重复投递，不确定状态不自动重发。默认30–60秒竖屏新闻及Qwen安明远；显式options可覆盖。候选仅日期时保留日精度，最保守时区区间跨出72小时即不可选；日期不明、未来和只有转载标题均不能入选。原始来源或预览失效明确报错，不自动换题。选题账本独立于Video Document 2.10，不增加时间线。
 
 已接受的[新闻案例](research/CODEX_NEWS_REWORK.json)采用龙安朗男声和大幅动态作品对照，结尾回到本次新版的花费／作品变化，金额紧邻“作者本次花费”归因。局部改稿先读当前revision与影响计划，只重新生成受影响镜头旁白；其他声音、字幕、素材与旧MP4保留。核对实际成片的字幕层级及引用重叠，不把素材抽帧当作合成画面。未变镜头审阅复用仍是下一步设计，不跳过当前指纹的检查。
+
+### 日常新闻使用
+
+取材先读实际媒体候选：完整HTTP文件用source acquire method=download；明文完整HLS VOD或需保全分发字节的视频用method=preserve。两者无需按原速播放，视频短预览用method=preserve加preview:{startSeconds,endSeconds}（至多30秒），由Host截取、核对原声及登记同一来源；原文件保全与短预览编码分开记录。blob／不支持的分离音视频可显式capture兜底，不自动回退或绕过登录／加密。切走tab、切换Project、进入Studio会暂停浏览器媒体；回到页面不会自动续播，采集完成也保持暂停。
+
+当前新闻品牌偏好为 **AIpardonSI News**；创建、确认选题或配置本系列新稿时显式设置水印，不改通用视频默认值及已接受的历史成片。采访镜头有视频文件不等于原声已进入混音：主素材必须启用 `keepSourceAudio`，类型编辑用实际主画面 clipId 的 `clip.mute {muted:false}`，不能只解除独立画面图层的隐藏。`scene.set` 不接受这项字段。导出后须在采访实际时间窗内 `media.audio.sample` 并用原生语音识别核对讲话；全片有 AAC、峰值非零或字幕齐全均不能证明采访原声存在。音乐床会产生低电平非零信号，必须和源片及修复前后同内容区间比较。模型信号检查与人工听感分别登记。
+
+演讲类新闻先核“具体理由”，再配音：定义加断言不等于解释。图表数字保留指标、基准、时间与归因；例如IMF案例是内部季度人均代码量，不能改成整体效率。已核素材足够时先完成可播放初稿，再集中审阅；工具发现和取景试制过长应明确停止、读取保存状态并显式续做，不能重发不确定投递。
+
+1. 固定一个新闻Project，优先使用DSH与`deepseek-official/deepseek-flash`。Qoder CN可在官方目录提供时显式选择DeepSeek-Flash（`dfmodel`），作为另一套独立会话使用；切换驱动不会迁移原会话的选题、草稿或恢复锚点，也不自动回退。两者均须已登录且有效目录只有BMW `browser`。
+2. Studio展开“新闻速递 · 选题与制作”，在本次旁白中显式选龙安朗，再点击“推荐新闻选题”。每批最多十个独立事件，近72小时、有原始日期及真实素材；不足十个不凑旧闻。采访／演讲先试听原声预览，再决定是否值得做视频。
+3. 点击一次“选此题并制作”，沿用已有分阶段确认设置。先检查讲述重点及本人解释是否完整，再看稿件、原片区间、字幕和实际音长；原声镜头显示“沿用采访原声”，不要求为它另做TTS。默认30–60秒竖屏，旁白与采访原声分时衔接。
+4. 初稿播放后把关联修改合成一条说明。先`plan-impact`，只改相应台词／字幕／素材；保留无关声音，统一导出后按新指纹审阅。烧录英文不能直接调字体，可另做大号可编辑双语字幕，检查底框、人物身份和手机可读性。用户接受与Agent意见分别记录。
+5. 次日点击“推荐新闻选题”开始新批次，旧来源、草稿、声音和成片保留。取消／断线后先确认任务已停止并读取最新保存状态；不确定投递不重发，不重复点击制作。账号、网络或音色不可用时明确恢复，不静默换驱动或提供方。
+
+查看原始来源会先保存GUI改动，复用当前Project相同URL的页面并显示浏览器；没有时才新建，重复点击不累积后台页。来源目录最多200个来源／1000次获取，接近预算时归档并新建下一周期Project，原材料保留。
+
+日常研究的Agent页最多6个，包含其弹窗；重启保留身份继续回收。切换Project释放Agent浏览器实例，返回时恢复地址和身份；原文与媒体已入Project后不依赖页面一直打开。用户手动页面不自动关闭，旧URL-only记录也不会被猜成临时页；需手动关闭旧页面或为日常新闻新建Project。上述流程不创建定时任务或自动对外发布；真实账号制作质量、在线配音与本地离线测试分别验收。
 
 ## 当前可写内容
 

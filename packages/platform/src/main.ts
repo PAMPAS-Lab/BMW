@@ -406,6 +406,7 @@ function layout() {
   const actualAgentWidth = sidebar ? Math.min(Math.max(agentWidth, MIN_AGENT_WIDTH), Math.floor(width * 0.55)) : 0
   const workspaceBounds={x:0,y:top,width:width-actualAgentWidth,height:height-top}
   browserKernel.setBounds(workspaceBounds)
+  browserKernel.setBrowserVisible(workspaceMode==='browser')
   // The opaque Studio View covers browser pages; keep their compositor live for capture.
   productFeatureRuntime?.layout?.(workspaceBounds,workspaceMode==='studio')
   const docked=width<1000||studioPresentation.docked===true
@@ -496,6 +497,7 @@ async function activateProject(projectId, { scheduled = false } = {}) {
   if (scheduledExecutionProjectId && !scheduled && projectStore.active().id !== projectId) assertNoScheduledProjectMutation()
   await productFeatureRuntime?.onSessionWillChange?.()
   return bridge.changeProject(async () => {
+    if(projectId!==projectStore.active().id)await browserKernel.releaseProjectResearchTabs()
     const project = projectStore.switch(projectId)
     await browserKernel.switchProject(project)
     await synchronizeAgentProject(project, { activate: true })
@@ -859,6 +861,7 @@ function installIpc() {
   shellHandle('project-create', async (_event, input) => {
     assertNoScheduledProjectMutation()
     return bridge.changeProject(async () => {
+      await browserKernel.releaseProjectResearchTabs()
       const project = projectStore.needsInitialSetup()
         ? projectStore.completeInitialSetup(input || {})
         : projectStore.create(input || {})
@@ -877,6 +880,7 @@ function installIpc() {
   shellHandle('project-archive', async (_event, projectId) => {
     assertNoScheduledProjectMutation()
     return bridge.changeProject(async () => {
+      if(projectId===projectStore.active().id)await browserKernel.releaseProjectResearchTabs()
       await productFeatureRuntime?.onProjectWillArchive?.(projectId)
       scheduledTaskManager.disableProject(projectId)
       await assistantService.sessions.archiveProject(projectId)
