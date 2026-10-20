@@ -1,12 +1,14 @@
 # BMW 验证说明
 
-核对日期：2026-10-18。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
+核对日期：2026-10-20。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
 
 ## 当前源码离线验证
 
-当前源码绑定与检查结果统一见[CURRENT](verification/CURRENT.json)。本轮完整离线为166 passed／1 failed／12 not-run，唯一失败是两倍速有限采集尾帧时序断言；随后保留原时间／像素断言的独立媒体复测通过，并将旧的采集后续播测试预期改为保持暂停，另保存原片、采集片和源帧索引诊断。该偶发项尚未归因，继续追踪，不把复测与原报告合并为一次全绿。完整运行后另修正真实YouTube子Frame导航拒绝脚本时错误中断启动的问题；browser-kernel／page-playback、tab专项与媒体测试的最后差异单列绑定，已通过原生tab／跨域／失败静音与恢复、来源短预览、媒体处理、workspace／Project及真实重启专项。真实BMW再次启动成功，彭博页播放后切至Tesla再返回保持暂停；日常DSH／龙安朗入口已恢复。这些补充不改写原完整报告。本次维护覆盖前后台tab／Project／Studio的原生静音与暂停、真实跨域iframe重播拦截、采集成功／错误／取消后暂停、HTTP／HLS无播放保全与来源完整解码、全部本次资源取消回滚。新增真实媒体断言复用tab生命周期与来源Studio专项；媒体处理专项另验证HLS无重编码包校验。完整离线与专项各保留对应源码SHA，不将断言数相加为额外覆盖。
+最终完整 `--all` 为 **167 passed／0 failed／12 opt-in not-run**，报告为 `.bmw-runtime/workbuddy-review-final/result.json`，受测提交为 `fc4e5a8`。构建、check、功能与架构清单检查通过；覆盖 unit／contract／boundary、官方 DSH 冷检查、desktop、Studio、media、video、speech、本地旁白与 Qwen HTTP 夹具。逐项结果、464 项非 Markdown 输入的 SHA、依赖版本和报告指纹见 [CURRENT](verification/CURRENT.json)。报告后的说明文档回填不冒充再次完整运行。
 
-此前日常维护完整基线为167 passed／0 failed／12 not-run，见[阶段报告](../.bmw-runtime/classified-tests/2026-10-18-news-daily-final/result.json)；来源展示收尾曾另验五个文件。该旧报告不单独代表新播放策略覆盖。当前六个冻结类型例外未增加；所有Electron／DSH检查使用一次性Profile／Home／Workspace与mock keychain。真实官方DSH只读三次browser连通另记[就绪记录](research/NEWS_DAILY_READINESS.json)，不冒充本轮付费新闻制作、在线配音或人工声音验收。
+首轮报告保留在 `.bmw-runtime/workbuddy-review/result.json`：新闻测试绕过 Host FIFO，引发与 GUI 核验的解码器争用；两项检查缺少隔离工作树的本地 TTS／ASR 公共资源。新闻测试现走真实 browser FIFO，固定资源补齐后完整复验通过。首轮视频用例静态页面未取得前台呈现而停在录制，旧 runner 又把超时后退出零码误记为通过；现已补齐呈现、阶段日志及超时判定，真实子进程回归证明超时退出零码仍失败。最终视频用例在 34.642 秒内实际完成，原始误报不会用作通过证据。
+
+历史两倍速采集尾帧波动本轮未复现，不能据此认定已经归因或永久解决。12 项未运行包括六个专用本地素材夹具及六个外部服务／模型入口；没有调用付费模型、真实在线配音或生产 Profile。Electron／DSH 使用一次性 Profile／Home／Workspace 与 mock keychain，六个冻结类型例外未增加。WorkBuddy 接入暂缓，仍保持 DSH、Codex、Qoder CN 三引擎及输入前唯一 browser 有效目录门槛。
 
 ## NEWS-01 真实新闻验收
 

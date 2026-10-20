@@ -2,15 +2,15 @@
 
 用户从四张近72小时原片候选中选定Jack Clark的IMF演讲。BMW＋官方DSH／deepseek-official/deepseek-flash与BMW＋官方Qoder CN／dfmodel分别交付47.744秒、53.867秒可编辑竖屏预览，均用Qwen龙安朗及AIpardonSI News。两版均完成当前指纹逐镜／全片Agent审阅及最终MP4两段原声PCM／ASR验证；人工听感和最终接受仍待用户。DSH以软件开发原话解释判断，Qoder补核官方原片12:36–13:06的内部季度人均代码量图表（9.3×2025年前基准，讲者称近十倍）；不能写成整个行业或整体效率提升十倍。两版属于有Codex指导、复用研究素材的实际制作，并非盲测。见[本轮交付](docs/research/NEWS_IMF_CLARK_DUAL_DELIVERY.json)。
 
-Replit双版的采访静音已恢复，八条原龙安朗WAV与历史已接受Chuck Lorre作品保持SHA；其[独立证据](docs/research/NEWS_REPLIT_DUAL_DELIVERY.json)不被新题覆盖。日常运行仍需人工协助：新闻Studio媒体争用测试失败保持开放，DSH的首帧／源区间／图层取景恢复暴露反复试错，Qoder准备轮次较长且需显式收束。日期分行解析及研究期≤30秒单chunk转写已有有界验证（单元／契约／边界96通过，相关38通过／1失败）；完整离线旧尾帧失败不以付费模型成片关闭。详见[当前验证](docs/verification/CURRENT.json)与[下一步](docs/plans/NEXT_STEPS.md)。
+Replit双版的采访静音已恢复，八条原龙安朗WAV与历史已接受Chuck Lorre作品保持SHA；其[独立证据](docs/research/NEWS_REPLIT_DUAL_DELIVERY.json)不被新题覆盖。日常运行仍需人工协助：新闻Studio测试已改走Host browser FIFO并通过完整复验，DSH的首帧／源区间／图层取景恢复暴露反复试错，Qoder准备轮次较长且需显式收束。日期分行解析及研究期≤30秒单chunk转写已有有界验证（单元／契约／边界96通过，相关38通过／1失败）；历史尾帧波动本轮未复现，付费模型成片不替代自动回归。详见[当前验证](docs/verification/CURRENT.json)与[下一步](docs/plans/NEXT_STEPS.md)。
 
 NEWS-02当前43.03秒Chuck Lorre新闻已获用户接受，其接受记录和交付基线继续保留。BMW＋官方Codex／Qwen龙安朗制作，四镜头、两段采访原声说明其担忧为何超过编剧失业；最后接受版本加大英文／中文字幕，完整复用9.76秒和3.84秒旁白及原声区间。73张当前关键帧、逐镜／全片Agent意见、历史文件保留SHA及接受绑定见[成片证据](docs/research/NEWS_02_LORRE_DELIVERY.json)。十题契约／发现／GUI、本次音色覆盖、按需预览、当前位置原片采集与直播日期兼容已实现；本轮实际只提供两张合格卡，[选题记录](docs/research/NEWS_02_TOPICS.json)保留未入选原因。研究覆盖、署名日期格式兼容与有约束的未变镜头审阅复用尚未完成，不因样片接受关闭。后续主线SCIENCE-01→RESEARCH-01；NEWS-01接受记录保持。用户接受不代填专项发音、复述或原生Studio人工表单；付费模型与在线配音不计入离线回归。
 
 日常候选版：上述已接受成片保持原SHA。tab重启来源身份、Project研究页释放、失败加载／弹窗预算、等待实际关闭／隔离恢复、来源页重复查看及原声镜头引导均已修复。完整离线167 passed／0 failed／12 not-run，五个来源展示收尾文件另有明确专项。独立“AI 新闻日常 / DSH Flash”Project已通过官方DSH三次只读browser连通，不声称新DSH新闻内容已验收；[就绪记录](docs/research/NEWS_DAILY_READINESS.json)保存范围和余项，[日常操作](docs/AGENT_VIDEO_EDITING.md#日常新闻使用)可直接沿用。旧URL-only用户页保留，接近200来源／1000获取时归档换周期Project。
 
-播放维护：用户指出的声音来自NEWS-02项目彭博YouTube标签页的片前广告，已实际暂停。前后台tab／Project／Studio切换会暂停及静音浏览器媒体，重新激活不续播；临时采集许可在成功、失败和取消后撤销，保持暂停。Studio method=preserve和「无播放保全视频 / HLS」已接入来源链路；HTTP／受支持明文HLS不必等时播放，blob与未支持的DASH／分离流仍显式capture兜底。完整离线166通过／1项两倍速尾帧时序失败，原断言独立复测通过；尾帧波动未归因，不按复测关闭。后续真实重启暴露的YouTube子Frame脚本拒绝已修正，最终原生tab／来源／媒体／workspace／Project重启专项通过；真实BMW切页返回保持暂停，已停在DSH日常新闻入口／龙安朗。当前离线验证见[CURRENT](docs/verification/CURRENT.json)，不沿用旧基线冒充本次源码覆盖。
+播放维护：用户指出的声音来自NEWS-02项目彭博YouTube标签页的片前广告，已实际暂停。前后台tab／Project／Studio切换会暂停及静音浏览器媒体，重新激活不续播；临时采集许可在成功、失败和取消后撤销，保持暂停。Studio method=preserve和「无播放保全视频 / HLS」已接入来源链路；HTTP／受支持明文HLS不必等时播放，blob与未支持的DASH／分离流仍显式capture兜底。当前完整离线167通过／0失败／12项按需未运行；历史尾帧波动本轮未复现，原因仍保留追踪。后续真实重启暴露的YouTube子Frame脚本拒绝已修正，最终原生tab／来源／媒体／workspace／Project重启专项通过；真实BMW切页返回保持暂停，已停在DSH日常新闻入口／龙安朗。当前离线验证见[CURRENT](docs/verification/CURRENT.json)，不沿用旧基线冒充本次源码覆盖。
 
-核对日期：2026-10-18。**NEWS-01已完成技术实现、真实制作及用户验收。** 最新接受版本为BMW＋官方Codex 0.160.1／gpt-6-astra制作的54.61秒竖屏新闻，使用Qwen龙安朗男声。用户先认可旁白自然，再要求结尾回到DeepSeek新版低花费也能完成精细制作，最后明确回复“这个版本可以了”，并要求更新文档、提交和推送。接受记录、草稿／导出身份及SHA见[Codex新闻证据](docs/research/CODEX_NEWS_REWORK.json)。
+核对日期：2026-10-20。**NEWS-01已完成技术实现、真实制作及用户验收。** 最新接受版本为BMW＋官方Codex 0.160.1／gpt-6-astra制作的54.61秒竖屏新闻，使用Qwen龙安朗男声。用户先认可旁白自然，再要求结尾回到DeepSeek新版低花费也能完成精细制作，最后明确回复“这个版本可以了”，并要求更新文档、提交和推送。接受记录、草稿／导出身份及SHA见[Codex新闻证据](docs/research/CODEX_NEWS_REWORK.json)。
 
 结尾使用原作者本次DeepSeek $1.25／Opus 5.5 $16.36的作品花费对照，不作为官方单价或总体模型排名。局部改稿仅重配末镜12.4秒；前五镜全部数据、音频身份与SHA不变，793个历史文件保留。当前实际MP4的136个关键帧、六场及全片Agent意见与用户反馈分别登记；用户接受不补造专项发音、复述或声学对齐分数。早期[公告片](docs/research/NEWS_01_DELIVERY.json)和[36.16秒DSH动态片](docs/research/NEWS_01_VIDEO_TOPICS.json)保留未接受结果与改进原因。
 
@@ -43,7 +43,7 @@ NEWS-01提供严格近72小时、广泛个人／组织主体、最多十个不�
 
 ## 验证与本机交付
 
-NEWS-02首轮完整离线报告为`.bmw-runtime/classified-tests/2026-10-18-news02/result.json`：**166 passed／0 failed／12 not-run**。469个受测文件在运行期间SHA一致；后续补正另按受影响回归和最后日期专项核对，最终463个构建输入、433个输出与当前代码一致，不把历史完整运行冒充最后补正后的新--all。仓库保存[逐项源码摘要](docs/verification/CURRENT.json)及[验证范围](docs/VERIFICATION.md#当前源码完整离线基线)，逐文件SHA绑定受测实现，`sourceBaseRevision`只记录变更前基底。六个冻结类型例外未扩大。
+2026-10-20 当前完整 `--all` 为 **167 passed／0 failed／12 opt-in not-run**，受测提交 `fc4e5a8`。构建、check、功能清单与架构检查通过；逐项结果、源码指纹及首轮失败／超时误报的修正见[CURRENT](docs/verification/CURRENT.json)和[验证范围](docs/VERIFICATION.md#当前源码离线验证)。新闻测试通过真实browser FIFO；runner不会再把超时退出零码记为通过。WorkBuddy适配未纳入，三引擎和六个冻结类型例外保持。
 
 覆盖unit／contract／boundary、官方DSH冷检查、desktop、Studio、media、video及narration；六个专用本地素材夹具和六个外部入口未在完整回归中启用。真实付费模型、在线Qwen调用与用户接受另有交付证据，不计入离线通过数。测试使用一次性Profile／Home／Workspace及mock keychain，没有生产Profile或系统凭据提示覆盖。GitHub尚无Actions，不宣称远程CI已运行；可选Codex CLI另行发现安装，本机成功不代表全新`npm ci`自带它。
 
