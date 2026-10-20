@@ -11,6 +11,11 @@ coverage/
 .bmw-runtime/
 *.tsbuildinfo
 
+# Local deliverables (rendered MP4/PNG) and this machine's WorkBuddy session data:
+# keep the workspace informative without versioning gigabytes of output.
+/outputs/
+/.workbuddy/
+
 # TypeScript is authored in-place. These are disposable tsc runtime outputs.
 /apps/**/*.js
 /apps/**/*.cjs
