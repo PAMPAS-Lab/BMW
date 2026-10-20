@@ -4,17 +4,27 @@
 
 ## 当前源码离线验证
 
-最终完整 `--all` 为 **173 passed／0 failed／12 opt-in not-run**，报告为 `.bmw-runtime/workbuddy-integration-verified/result.json`，受测实现提交 `6bea922`。构建、check、功能与架构清单、unit／contract／boundary、官方 DSH 冷检查、desktop、Studio、media、video、speech、本地旁白与 Qwen HTTP 夹具通过。逐项结果、全部非 Markdown 输入的 SHA、依赖和报告指纹见 [CURRENT](verification/CURRENT.json)。本节与状态说明在报告后回填；受测实现文件指纹逐项复核一致。
+2026-10-20 当前整合后的完整 `--all` 为 **173 passed／0 failed／12 opt-in not-run**，报告为 `.bmw-runtime/news-daily-main-integration/full-final/result.json`，受测输入以本次提交前冻结的源码 SHA 为准。构建、check、功能与架构清单、unit／contract／boundary、官方 DSH 冷检查、desktop、Studio、media、video、speech、本地旁白与 Qwen HTTP 夹具通过。逐项结果、全部非 Markdown 输入的 SHA、依赖和报告指纹见 [CURRENT](verification/CURRENT.json)。本节与状态说明在报告后回填；受测实现文件指纹逐项复核一致。
 
 WorkBuddy 使用官方 CodeBuddy Code 2.169.0，经实际认证 BMW MCP／Bridge 验证三模型的完整 browser schema、两轮工具调用及不可变原生 Session 续聊；探测固定输入只到本机拒绝端点，任务链路使用本机 SSE 模型夹具。另覆盖额外工具／其他命名空间工具、schema／模型／版本漂移、空工具伪证、Project 服务覆盖、准备取消、慢事件写入、失败模型 outcome、原生输入回执、系统加密测试替身、明文／损坏文件保留、进程组清理和失败后仅显式恢复。默认入口验证四个独立空会话、WorkBuddy 缺失 Key 状态与重启归属。WorkBuddy 的 configured／unverified 可选择路径不改变其他引擎的 ready／verified 门槛。
 
-首轮完整报告 `.bmw-runtime/workbuddy-integration-final/result.json` 为 172 passed／1 failed／12 not-run，仅 Studio 的瞬时冲突状态轮询超时；独立复查另暴露撤销后预览尚未清理时点击禁用时间轴的夹具竞态。现等待真实控件就绪，并捕获实际冲突 DOM 更新；播放头／像素、CAS 外部修改保留与本地输入断言保留。独立复查与上述最终完整基线均通过；中间失败没有计为通过，也未用于替代最终源码覆盖。
+此前WorkBuddy接入的首轮完整报告 `.bmw-runtime/workbuddy-integration-final/result.json` 为 172 passed／1 failed／12 not-run，仅 Studio 的瞬时冲突状态轮询超时；独立复查另暴露撤销后预览尚未清理时点击禁用时间轴的夹具竞态。现等待真实控件就绪，并捕获实际冲突 DOM 更新；播放头／像素、CAS 外部修改保留与本地输入断言保留。独立复查与上述最终完整基线均通过；中间失败没有计为通过，也未用于替代最终源码覆盖。
 
 12 项 opt-in 未运行；真实 API Key、服务权限／额度、付费模型、在线配音、生产 Profile 和系统凭据提示均不在本轮覆盖内。Electron／DSH 使用一次性 Profile／Home／Workspace 与 mock keychain。Windows WorkBuddy 进程树清理尚未验证，输入前保持不可用；图像／音频准入和原生桌面历史未宣称支持。六个冻结类型例外未增加。
+
+本轮整合保留两次中间完整报告（均172通过／1失败／12未运行）：首次为新增媒体关闭故障测试的固定次数预期，改为核对每次显式恢复增量与隔离／状态；第二次为Studio分隔条按下已收到但移动未改变高度，输入／合成时序只是推测。夹具现在等待实际捕获和绘制、验证中间真实拖动，再保留最终高度、Escape、持久化与内容不变断言。原生媒体专项及两次独立卡片专项均通过；上述失败不计为通过，最终完整源码以本节基线为准。
 
 ## WorkBuddy 真实 browser 调用
 
 2026-10-20，用户在 BMW 中填写 Key 并授权最小连通验证。官方 WorkBuddy 2.169.0／deepseek-v4.1-flash 完成一次实际任务，Host 记录恰好一次 browser 开始／成功完成、官方输入回执、本轮 success 和清理后的 idle；显式刷新设置后显示当前 Key／模型已通过真实任务验证。验证请求为 browser status，不采集页面正文或创建媒体。脱敏证据见 [WorkBuddy 调用记录](research/WORKBUDDY_BROWSER_DELIVERY.json)。此项使用真实服务，与上方 173 项离线基线分开；不扩大到其他模型、图像／音频、Studio 制作或 Windows。Key、原生转录及 Project 内容均未写入仓库。
+
+## 新闻日常媒体修复与交付
+
+共享媒体worker以至多16项FIFO协调GUI／Agent解码核验，取消等待实际清理。映射采集写显式视频BlockDuration并独立解复用验证终帧；未知时长Opus包保留原值及编码负载。尾部视觉时间与原片视频终点比较，不能混入AAC填充；原有蓝色尾帧、源／文件中间帧像素、音轨、暂停恢复和取消回滚继续核对。来源测试夹具显式请求帧，并保留原片、轨道及帧数诊断。
+
+首轮完整165通过／2失败发现零时长Opus包误拒绝；补正后166通过／1失败发生于来源夹具元数据加载，尚未开始采集。最后补齐首帧生产及预检后，旧分支完整167项通过；历史源码见[新闻验证快照](history/2026-10-20-before-news-daily-integration/NEWS_DAILY_CURRENT.json)，不作为当前主线覆盖。各次原始失败、旧166／1尾帧基线及当时源码保留，不合并通过数；详见[历史快照](history/2026-10-19-news-daily-before-fixes/CURRENT.json)。12项未运行是六个专用素材夹具及六个外部入口；付费模型、在线Qwen、人工听感与内容接受另记。所有离线Electron／DSH使用一次性Profile／Home／Workspace与mock keychain，6个冻结类型例外不变。
+
+真实Qoder／Qwen的AI养老新闻与资料片段修订分别见[交付](research/NEWS_ELDERCARE_DELIVERY.json)和[素材修订](research/NEWS_ELDERCARE_FOOTAGE_UPDATE.json)。历史文件指纹与Agent意见保留，人工听感和最终接受仍待用户；不计入离线基线。
 
 ## NEWS-01 真实新闻验收
 

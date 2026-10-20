@@ -1,23 +1,21 @@
 # BMW 当前实现
 
-用户从四张近72小时原片候选中选定Jack Clark的IMF演讲。BMW＋官方DSH／deepseek-official/deepseek-flash与BMW＋官方Qoder CN／dfmodel分别交付47.744秒、53.867秒可编辑竖屏预览，均用Qwen龙安朗及AIpardonSI News。两版均完成当前指纹逐镜／全片Agent审阅及最终MP4两段原声PCM／ASR验证；人工听感和最终接受仍待用户。DSH以软件开发原话解释判断，Qoder补核官方原片12:36–13:06的内部季度人均代码量图表（9.3×2025年前基准，讲者称近十倍）；不能写成整个行业或整体效率提升十倍。两版属于有Codex指导、复用研究素材的实际制作，并非盲测。见[本轮交付](research/NEWS_IMF_CLARK_DUAL_DELIVERY.json)。
+NEWS-DAILY已修复Studio预览／新闻核验争用共享解码worker，以及映射采集终帧被WebM默认时长压短的问题；末个Opus包未知时长保持原值。来源夹具改为显式绘制／请求首帧并独立核对真实编码轨道，保留加载诊断。这批改动在旧分支的完整离线回归为**167 passed／0 failed／12 opt-in not-run**，466项非Markdown受测输入与437个生成输出另核对；两次先前失败完整报告保留，不合并计数。见[修复证据](research/NEWS_DAILY_FIXES.json)与[当前验证](verification/CURRENT.json)。
 
-Replit双版的采访静音已恢复，八条原龙安朗WAV与历史已接受Chuck Lorre作品保持SHA；其[独立证据](research/NEWS_REPLIT_DUAL_DELIVERY.json)不被新题覆盖。日常运行仍需人工协助：新闻Studio测试已改走Host browser FIFO并通过完整复验，DSH的首帧／源区间／图层取景恢复暴露反复试错，Qoder准备轮次较长且需显式收束。日期分行解析及研究期≤30秒单chunk转写已有有界验证（单元／契约／边界96通过，相关38通过／1失败）；历史尾帧波动本轮未复现，付费模型成片不替代自动回归。详见[当前验证](verification/CURRENT.json)与[下一步](plans/NEXT_STEPS.md)。
+日常系列优先BMW＋官方Qoder CN／DeepSeek-Flash（dfmodel）、Qwen龙安朗及AIpardonSI News；[日常操作手册](NEWS_DAILY.md)说明选题、取材、审片与收工恢复。10月19日有人指导的制作中，用户选定AI养老沙龙，可信Studio入口后完成约49秒图文新闻及逐镜／整片Agent审阅，见[交付证据](research/NEWS_ELDERCARE_DELIVERY.json)。人工听感与最终接受待确认；原始采访未取得，十个研究线索未全部进入候选卡，不表示无人值守或研究覆盖已经验收。
+
+IMF Jack Clark两版继续保留：DSH47.744秒、Qoder53.867秒；用户认为Qoder CN版更清楚。比较清晰度不等于声音、画面或整片最终接受，见[交付与反馈](research/NEWS_IMF_CLARK_DUAL_DELIVERY.json)。Replit原声修复、八条旧龙安朗WAV和已接受Chuck Lorre作品保持原记录，见[保留证据](research/NEWS_REPLIT_DUAL_DELIVERY.json)。
 
 NEWS-01已完成技术实现、真实制作与用户验收。当前接受基准为BMW＋官方Codex 0.160.1／gpt-6-astra制作的54.61秒竖屏新闻，Qwen龙安朗男声；结尾以作者本次DeepSeek $1.25／Opus 5.5 $16.36的作品花费对照，回扣低花费也能完成精细动画。仅重配末镜12.4秒，前五镜全部数据及声音SHA不变，793个历史文件保留；136个当前成片关键帧、逐镜／全片Agent意见与用户“这个版本可以了”分别登记。旧公告片与DSH对比片的未接受状态保留，见[验收证据](research/CODEX_NEWS_REWORK.json)。用户接受不补造逐字声学对齐或专项发音评分。
 
 NEWS-02本轮功能与真实样片已交付，当前43.03秒Chuck Lorre新闻已获用户“这个版本可以了”的接受。候选上限扩至十项，优先采访／演讲原声；Studio支持本次Qwen音色覆盖、前三项自动预览及其余按需加载。本轮研究只取得IMF总裁与Reuters采访两张合格卡，不以旧闻凑数；用户选择Chuck Lorre后，BMW＋官方Codex／Qwen龙安朗完成9:16可编辑新闻，以两段原声解释其对强于人类的智能及捕食者／昆虫类比的担忧。字幕修改为大号可编辑双语，音频和区间保持不变；73张当前关键帧、逐镜／全片Agent意见、60个研究文件及72个初期制作文件的SHA保留检查见[成片与接受证据](research/NEWS_02_LORRE_DELIVERY.json)，[选题与未入选原因](research/NEWS_02_TOPICS.json)单列。用户接受不补造专项发音、声学对齐或复述分数。研究覆盖、署名日期格式兼容与有约束的未变镜头审阅复用仍待后续，现行审阅规则保持；下一主线为SCIENCE-01，再到RESEARCH-01。
-
-日常新闻候选版已修复tab身份恢复、Project切换研究页释放、加载失败／弹窗预算、真实关闭等待与隔离恢复、来源页重复打开及原声镜头引导误报。此前完整离线基线167 passed／0 failed／12 not-run，来源展示收尾另过专项与workspace／Project重启；五个收尾文件的范围单独绑定，不合并计数。已建立独立“AI 新闻日常 / DSH Flash”Project，官方DSH／DeepSeek-V4.1-Flash完成三次只读browser连通检查，无建稿／配音／合成；这不等于新的DSH新闻已验收。见[日常就绪记录](research/NEWS_DAILY_READINESS.json)与[使用流程](AGENT_VIDEO_EDITING.md#日常新闻使用)。
-
-前后台播放维护：已定位NEWS-02旧彭博YouTube页的后台片前广告并暂停。Host新增活动Project／tab／工作区播放约束、跨域Frame暂停与后台重播拦截；原生采集完成保持暂停。真实YouTube子Frame导航失败不再错误中断启动；失败保持静音并记录诊断，加载后重查。已实际验证切至Tesla再返回彭博保持暂停，并恢复DSH日常Studio／龙安朗。Studio来源获取新增preserve，复用HTTP／明文HLS分发资源保全并完整解码，无需原速播放。YouTube／DASH分离流的通用快速获取仍未实现；此前完整回归167通过／0失败／12项按需未运行，历史尾帧波动本轮未复现且仍跟踪；当前验证范围与源码绑定以[CURRENT](verification/CURRENT.json)为准。
 
 核对日期：2026-10-20。当前行为与 Schema 见 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md)，模块／接口／测试分支见 [ARCHITECTURE.md](ARCHITECTURE.md)，报告见 [VERIFICATION.md](VERIFICATION.md)。
 此前三类基准主片均已由 BMW＋DSH 0.2.1-rc.2／官方 deepseek-flash 制作：SI新闻57.664秒、机器人科普210.859秒、HybridAgent学术229.248秒。新闻的基本满意反馈已单独保存；科普与学术按量子位、AK参考重做画面，保留各八段原Matcha旁白，增加大幅厨房实拍、杯／夹爪条件变化、计算器／大h状态包／连续KV动画及论文对照。新片的实际MP4、来源、SHA与当前审阅范围见交付记录，人工听感、观众理解和接受仍待反馈。原Qoder版本和所有素材保留。
 
 | 范围 | 当前实现与边界 |
 |---|---|
-| 桌面与 Agent | 一个 BMW，浏览器／Video Studio／自有 Assistant；DSH、Codex、Qoder CN 各拥有官方循环，唯一 browser 模型工具 |
+| 桌面与 Agent | 一个 BMW，浏览器／Video Studio／自有 Assistant；DSH、Codex、Qoder CN、WorkBuddy 各拥有官方循环，唯一 browser 模型工具 |
 | Project 与 Session | Project 共享页面和媒体；稳定 Session 固定 Project／driver，Studio 草稿固定唯一 owner；CAS、FIFO、取消清理和 unknown 不重发 |
 | 浏览器与媒体 | 页面交互、后台取材、截图、录屏、有限下载、HTTP／明文有限 HLS VOD 分发资源保全、图像检查／标注／绘图、抽帧、裁剪缩放与转换 |
 | 视频采集与源时间 | 修正有限视频结束时范围校验；逐帧保存源时间→录制文件 PTS 映射并核对成品；支持按源时间取中段／尾段帧，尺寸切换按初始画布等比适配留边，保留实际源尺寸 |
@@ -45,9 +43,11 @@ Studio 详细映射见 [VIDEO_STUDIO_SCOPE.md](VIDEO_STUDIO_SCOPE.md)。实现�
 
 DSH三条主片独立保存：[SI新闻](research/DSH_SI_DELIVERY.json)、[科普／学术](research/DSH_SCIENCE_RESEARCH_DELIVERY.json)。新闻获用户基本满意反馈；新两条的八场及全片Agent审阅与人工验收分开记录。DSH官方Agent拥有上下文压缩，宿主只规范化工具回执及历史投影。
 
+
+
 ## 当前代码与验收
 
-2026-10-20 当前完整离线基线为 **173 passed／0 failed／12 opt-in not-run**，受测实现提交 `6bea922`。构建、check、功能／架构及边界检查通过，覆盖四驱动装配、官方 WorkBuddy／本机模型夹具、新闻 FIFO、DSH、desktop、Studio、media、video 和 narration。当前源码与逐项结果见[CURRENT](verification/CURRENT.json)。WorkBuddy 已接入输入前有效目录门禁、系统加密 Key、实际任务鉴权状态、事件串行化、原生续聊及清理隔离；另有用户授权的 WorkBuddy／deepseek-v4.1-flash 单次 browser 实际调用通过，见[脱敏记录](research/WORKBUDDY_BROWSER_DELIVERY.json)，不计入离线通过数；其他模型、额度、完整生产 Profile 和 Windows 进程树未验收，Windows 保持不可用。六个冻结类型例外未增加。
+2026-10-20 当前整合后的完整 `--all` 为 **173 passed／0 failed／12 opt-in not-run**，报告为 `.bmw-runtime/news-daily-main-integration/full-final/result.json`，受测输入以本次提交前冻结的源码 SHA 为准。构建、check、功能／架构及边界检查通过，覆盖四驱动装配、官方 WorkBuddy／本机模型夹具、新闻 FIFO、DSH、desktop、Studio、media、video 和 narration。当前源码与逐项结果见[CURRENT](verification/CURRENT.json)。WorkBuddy 已接入输入前有效目录门禁、系统加密 Key、实际任务鉴权状态、事件串行化、原生续聊及清理隔离；另有用户授权的 WorkBuddy／deepseek-v4.1-flash 单次 browser 实际调用通过，见[脱敏记录](research/WORKBUDDY_BROWSER_DELIVERY.json)，不计入离线通过数；其他模型、额度、完整生产 Profile 和 Windows 进程树未验收，Windows 保持不可用。六个冻结类型例外未增加。
 
 量子位四阶段已完成全片分析、长篇、文字包装及有限科学图解的实现和对应技术验收，记录已[归档](history/qbit/IMPLEMENTATION.md)。10 月 17 日样片副本修订后：新闻时间线 40 秒、PIP 34.666667 秒并改为 1280×720，S10／S09 为 32／24 秒；实际文件时长另有编码尾部。原版、工程和审阅证据保留。S04 未下载／全片分析；长篇只验证了 640×360／12fps，不推断 1080p／30fps 性能。新闻叙事、细字阅读与音频核听仍有缺口。
 

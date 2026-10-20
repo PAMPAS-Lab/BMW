@@ -1,22 +1,14 @@
 # BMW current handoff
 
-用户从四张近72小时原片候选中选定Jack Clark的IMF演讲。BMW＋官方DSH／deepseek-official/deepseek-flash与BMW＋官方Qoder CN／dfmodel分别交付47.744秒、53.867秒可编辑竖屏预览，均用Qwen龙安朗及AIpardonSI News。两版均完成当前指纹逐镜／全片Agent审阅及最终MP4两段原声PCM／ASR验证；人工听感和最终接受仍待用户。DSH以软件开发原话解释判断，Qoder补核官方原片12:36–13:06的内部季度人均代码量图表（9.3×2025年前基准，讲者称近十倍）；不能写成整个行业或整体效率提升十倍。两版属于有Codex指导、复用研究素材的实际制作，并非盲测。见[本轮交付](docs/research/NEWS_IMF_CLARK_DUAL_DELIVERY.json)。
+NEWS-DAILY已修复Studio预览／新闻核验争用共享解码worker，以及映射采集终帧被WebM默认时长压短的问题；末个Opus包未知时长保持原值。来源夹具改为显式绘制／请求首帧并独立核对真实编码轨道，保留加载诊断。最终完整离线回归为**167 passed／0 failed／12 opt-in not-run**，466项非Markdown受测输入与437个生成输出另核对；两次先前失败完整报告保留，不合并计数。见[修复证据](docs/research/NEWS_DAILY_FIXES.json)与[当前验证](docs/verification/CURRENT.json)。
 
-Replit双版的采访静音已恢复，八条原龙安朗WAV与历史已接受Chuck Lorre作品保持SHA；其[独立证据](docs/research/NEWS_REPLIT_DUAL_DELIVERY.json)不被新题覆盖。日常运行仍需人工协助：新闻Studio测试已改走Host browser FIFO并通过完整复验，DSH的首帧／源区间／图层取景恢复暴露反复试错，Qoder准备轮次较长且需显式收束。日期分行解析及研究期≤30秒单chunk转写已有有界验证（单元／契约／边界96通过，相关38通过／1失败）；历史尾帧波动本轮未复现，付费模型成片不替代自动回归。详见[当前验证](docs/verification/CURRENT.json)与[下一步](docs/plans/NEXT_STEPS.md)。
+当前日常流程采用BMW＋官方Qoder CN／DeepSeek-Flash（dfmodel）、Qwen龙安朗与AIpardonSI News；先读[日常手册](docs/NEWS_DAILY.md)。严格近72小时、最多十个独立事件，优先完整原声／动态演示，可信用户选择后才制作。最近记录的新闻会话“新闻速递 / Qoder Flash / 10-19 下午”已完成用户所选AI养老沙龙图文新闻，约49秒，逐镜／整片Agent审阅已记录，原WAV和旧成片完整保留，见[交付证据](docs/research/NEWS_ELDERCARE_DELIVERY.json)。历史交付记录包含暂停状态；嘉宾原声未取得、人工听感与最终接受待确认。扩展十题卡片和日常效率仍待补齐，不重跑既有配音或冒充无人值守验收。
 
-NEWS-02当前43.03秒Chuck Lorre新闻已获用户接受，其接受记录和交付基线继续保留。BMW＋官方Codex／Qwen龙安朗制作，四镜头、两段采访原声说明其担忧为何超过编剧失业；最后接受版本加大英文／中文字幕，完整复用9.76秒和3.84秒旁白及原声区间。73张当前关键帧、逐镜／全片Agent意见、历史文件保留SHA及接受绑定见[成片证据](docs/research/NEWS_02_LORRE_DELIVERY.json)。十题契约／发现／GUI、本次音色覆盖、按需预览、当前位置原片采集与直播日期兼容已实现；本轮实际只提供两张合格卡，[选题记录](docs/research/NEWS_02_TOPICS.json)保留未入选原因。研究覆盖、署名日期格式兼容与有约束的未变镜头审阅复用尚未完成，不因样片接受关闭。后续主线SCIENCE-01→RESEARCH-01；NEWS-01接受记录保持。用户接受不代填专项发音、复述或原生Studio人工表单；付费模型与在线配音不计入离线回归。
-
-日常候选版：上述已接受成片保持原SHA。tab重启来源身份、Project研究页释放、失败加载／弹窗预算、等待实际关闭／隔离恢复、来源页重复查看及原声镜头引导均已修复。此前完整离线167 passed／0 failed／12 not-run，五个来源展示收尾文件另有明确专项。独立“AI 新闻日常 / DSH Flash”Project已通过官方DSH三次只读browser连通，不声称新DSH新闻内容已验收；[就绪记录](docs/research/NEWS_DAILY_READINESS.json)保存范围和余项，[日常操作](docs/AGENT_VIDEO_EDITING.md#日常新闻使用)可直接沿用。旧URL-only用户页保留，接近200来源／1000获取时归档换周期Project。
-
-播放维护：用户指出的声音来自NEWS-02项目彭博YouTube标签页的片前广告，已实际暂停。前后台tab／Project／Studio切换会暂停及静音浏览器媒体，重新激活不续播；临时采集许可在成功、失败和取消后撤销，保持暂停。Studio method=preserve和「无播放保全视频 / HLS」已接入来源链路；HTTP／受支持明文HLS不必等时播放，blob与未支持的DASH／分离流仍显式capture兜底。此前完整离线167通过／0失败／12项按需未运行；历史尾帧波动本轮未复现，原因仍保留追踪。后续真实重启暴露的YouTube子Frame脚本拒绝已修正，最终原生tab／来源／媒体／workspace／Project重启专项通过；真实BMW切页返回保持暂停，已停在DSH日常新闻入口／龙安朗。当前离线验证见[CURRENT](docs/verification/CURRENT.json)，不沿用旧基线冒充本次源码覆盖。
-
-核对日期：2026-10-20。**NEWS-01已完成技术实现、真实制作及用户验收。** 最新接受版本为BMW＋官方Codex 0.160.1／gpt-6-astra制作的54.61秒竖屏新闻，使用Qwen龙安朗男声。用户先认可旁白自然，再要求结尾回到DeepSeek新版低花费也能完成精细制作，最后明确回复“这个版本可以了”，并要求更新文档、提交和推送。接受记录、草稿／导出身份及SHA见[Codex新闻证据](docs/research/CODEX_NEWS_REWORK.json)。
-
-结尾使用原作者本次DeepSeek $1.25／Opus 5.5 $16.36的作品花费对照，不作为官方单价或总体模型排名。局部改稿仅重配末镜12.4秒；前五镜全部数据、音频身份与SHA不变，793个历史文件保留。当前实际MP4的136个关键帧、六场及全片Agent意见与用户反馈分别登记；用户接受不补造专项发音、复述或声学对齐分数。早期[公告片](docs/research/NEWS_01_DELIVERY.json)和[36.16秒DSH动态片](docs/research/NEWS_01_VIDEO_TOPICS.json)保留未接受结果与改进原因。
+NEWS-01的54.61秒DeepSeek对比片与NEWS-02的43.03秒Chuck Lorre片已获用户接受，分别见[NEWS-01](docs/research/CODEX_NEWS_REWORK.json)、[NEWS-02](docs/research/NEWS_02_LORRE_DELIVERY.json)。IMF两版用户仅反馈“Qoder CN版更清楚”，声音／画面／整片接受仍待反馈；[双版记录](docs/research/NEWS_IMF_CLARK_DUAL_DELIVERY.json)与[Replit原声修复](docs/research/NEWS_REPLIT_DUAL_DELIVERY.json)独立保留。
 
 ## 当前产品与下一步
 
-先读[仓库约束](AGENTS.md)、[文档导航](docs/README.md)、[当前状态](docs/PROJECT_STATUS.md)和权威[功能规格](docs/FUNCTIONAL_SPEC.md)。BMW是唯一应用，DSH、Codex和Qoder CN各自拥有官方Agent循环；有效目录验证通过后才释放输入，模型工具恰好一个`browser`。Host不实现模型循环，不以提示词替代工具边界。
+先读[仓库约束](AGENTS.md)、[文档导航](docs/README.md)、[当前状态](docs/PROJECT_STATUS.md)和权威[功能规格](docs/FUNCTIONAL_SPEC.md)。BMW是唯一应用，DSH、Codex、Qoder CN和WorkBuddy各自拥有官方Agent循环；有效目录验证通过后才释放输入，模型工具恰好一个`browser`。Host不实现模型循环，不以提示词替代工具边界。
 
 NEWS-01提供严格近72小时、广泛个人／组织主体、最多十个不同事件的真实素材选题卡，用户可信选择后建立所属Session的唯一草稿并单次投递，串联选题、稿件、证据画面、配音字幕、成片审阅。确认前不TTS或合成。默认30–60秒、9:16、Qwen安明远；本片显式覆盖为龙安朗，不修改产品默认。版本1选题记录独立保存在Project中，Video Document仍为2.0–2.10。
 
@@ -43,10 +35,12 @@ NEWS-01提供严格近72小时、广泛个人／组织主体、最多十个不�
 
 ## 验证与本机交付
 
-2026-10-20 当前完整 `--all` 为 **173 passed／0 failed／12 opt-in not-run**，受测实现提交 `6bea922`。构建、check、功能／架构与边界检查通过；逐项结果和源码指纹见[CURRENT](docs/verification/CURRENT.json)。WorkBuddy 已作为第四驱动接入：固定官方 ACP 实际目录预检、系统加密 API Key、配置／实际任务验证分离、串行事件与原生回执、同一 provider 续聊及失败清理隔离。官方 CLI＋本机模型夹具完成三模型目录和两轮真实 Bridge 调用；离线基线没有真实 Key／付费服务覆盖；其后用户授权的 WorkBuddy／deepseek-v4.1-flash 单次 browser 实际调用成功，见[脱敏记录](docs/research/WORKBUDDY_BROWSER_DELIVERY.json)，不扩大其他模型或制作验收。原工作区未提交改动保留；本次用户已授权在 browser 实际调用成功后推送 main。六个冻结类型例外未增加。
+2026-10-20 当前整合后的完整 `--all` 为 **173 passed／0 failed／12 opt-in not-run**，报告为 `.bmw-runtime/news-daily-main-integration/full-final/result.json`，受测输入以本次提交前冻结的源码 SHA 为准。构建、check、功能／架构与边界检查通过；逐项结果和源码指纹见[CURRENT](docs/verification/CURRENT.json)。WorkBuddy 已作为第四驱动接入：固定官方 ACP 实际目录预检、系统加密 API Key、配置／实际任务验证分离、串行事件与原生回执、同一 provider 续聊及失败清理隔离。官方 CLI＋本机模型夹具完成三模型目录和两轮真实 Bridge 调用；离线基线没有真实 Key／付费服务覆盖；其后用户授权的 WorkBuddy／deepseek-v4.1-flash 单次 browser 实际调用成功，见[脱敏记录](docs/research/WORKBUDDY_BROWSER_DELIVERY.json)，不扩大其他模型或制作验收。六个冻结类型例外未增加。
 
 覆盖unit／contract／boundary、官方DSH冷检查、desktop、Studio、media、video及narration；六个专用本地素材夹具和六个外部入口未在完整回归中启用。真实付费模型、在线Qwen调用与用户接受另有交付证据，不计入离线通过数。测试使用一次性Profile／Home／Workspace及mock keychain，没有生产Profile或系统凭据提示覆盖。GitHub尚无Actions，不宣称远程CI已运行；可选Codex CLI另行发现安装，本机成功不代表全新`npm ci`自带它。
 
 后续运行时改动按AGENTS串行构建并执行check、unit／boundaries与相关原生检查；测试增删后运行`npm run docs:features`。构建清理生成输出，先退出仍使用它们的BMW进程。
 
 历史DSH三主片见[SI新闻](docs/research/DSH_SI_DELIVERY.json)和[科普／学术](docs/research/DSH_SCIENCE_RESEARCH_DELIVERY.json)；原Qoder主片、换题短片和AK组合片见[P1／AK交付](docs/research/P1_AK_DELIVERY.json)。它们保留各自版本及人工验收范围。`.bmw-runtime`媒体、完整日志与凭据配置被Git忽略，不随文档移动或上传；可移植交付记录只保存来源、状态及指纹。
+
+当前AI养老新闻已补入官方《知否》身份资料，草稿v53／导出v52，最终文件为`media-18ad3303-fd8c-4acf-8334-f6ff3fe18f00-converted.mp4`。官方微博经用户登录补查未定位曹翠芬本次隐私原声，不将角色资料当采访；[修订证据](docs/research/NEWS_ELDERCARE_FOOTAGE_UPDATE.json)登记原6WAV／23字幕／主画面和旁白轨道完全保留、新导出138帧逐镜与整片Agent通过、开头声音技术采样及暂停状态。高级编辑已通过GUI开启，三个独立图层仅在开头0–2.6秒显示；保持该模式和原素材，不重跑研究/TTS。人工听感与最终接受仍待用户。

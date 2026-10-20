@@ -1,0 +1,241 @@
+{
+  "format": "bmw.elder-news-delivery",
+  "version": 1,
+  "recordedAt": "2026-10-19T09:22:21.421Z",
+  "projectId": "2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967",
+  "sessionId": "5eeaad9a-2382-4aed-bc81-6e0575021ef3",
+  "draftId": "07079686-6ea3-42d7-9f44-746a69477355",
+  "revision": 39,
+  "title": "“国民祖母”愿让机器人看护，前提是保护隐私",
+  "runtime": {
+    "driver": "qoder-cn",
+    "modelId": "dfmodel",
+    "officialModelLabel": "DeepSeek-Flash",
+    "officialCatalogCheckedAt": "2026-10-19T08:20:23.000Z",
+    "serverCheckpoint": "not independently disclosed",
+    "toolBoundary": "browser only",
+    "assistance": "Codex UI operation and editorial/visual review"
+  },
+  "selection": {
+    "topicId": "news-shell-ai-eldercare-20261017",
+    "trustedStudioClick": true,
+    "selectedAt": "2026-10-19T08:26:21.863Z"
+  },
+  "source": {
+    "url": "https://www.caizhongshe.cn/article-2803794858575281394.html",
+    "author": "徐钱诚",
+    "publishedAtRaw": "2026-10-19 10:22",
+    "eventDate": "2026-10-17",
+    "form": "graphic: real event photos and attributed reported narration; no guest original audio"
+  },
+  "voice": {
+    "provider": "qwen-tts",
+    "voice": "longanlang_v3.1",
+    "ratePercent": 0
+  },
+  "watermark": {
+    "enabled": true,
+    "text": "AIpardonSI News",
+    "position": "bottom-left",
+    "opacity": 1,
+    "size": 14
+  },
+  "export": {
+    "artifactId": "media-f55a8148-a8ff-4711-8c99-34567879b038-converted.mp4",
+    "fingerprint": "1a40f30cf4f5cb634b147c7259ae5f98062777a37b940ec19cab9f8cdfc89a98",
+    "verificationArtifactId": "video-2bad1fa0-d337-4976-9ed1-30e2de3d3aab.json",
+    "revision": 38,
+    "createdAt": "2026-10-19T09:05:13.028Z",
+    "durationSeconds": 49.20833333333333,
+    "bytes": 11401102,
+    "sha256": "3716791b83233f603d9de9bea303e7a3a22b7ba2ad7b1e56505cd656ef9ee174",
+    "actualDurationSeconds": 49.28,
+    "width": 720,
+    "height": 1280,
+    "fps": 24,
+    "audio": "AAC 48kHz stereo"
+  },
+  "preservation": {
+    "voices": [
+      {
+        "sceneId": "hook",
+        "artifactId": "narration-5f249cb5-92a3-4fb2-ba11-cc987ea6def4.wav",
+        "sha256": "046d8904d74d3828d4ea6556c9327cc28e230b3f65a06ad31fd23650d94dfb3e",
+        "fileUnchanged": true,
+        "referenceUnchanged": true
+      },
+      {
+        "sceneId": "caocuifen-quote",
+        "artifactId": "narration-ed772617-b592-4d2c-8d6d-c7e69868c806.wav",
+        "sha256": "92c10bfce93eee1f7351c15849106beab5b2d9f1f6032c21ffc9f823140407ab",
+        "fileUnchanged": true,
+        "referenceUnchanged": true
+      },
+      {
+        "sceneId": "zhangyue",
+        "artifactId": "narration-d39b08c5-ffbd-41ce-89ab-642f17ed7bdc.wav",
+        "sha256": "97a053d6390230d9db522386547a51e77581832c44f959f51d78c1bf7a0da079",
+        "fileUnchanged": true,
+        "referenceUnchanged": true
+      },
+      {
+        "sceneId": "huyong",
+        "artifactId": "narration-4c283824-3ce7-43a8-83fe-7acba6d7bd03.wav",
+        "sha256": "e31151dcee4d9f173259567a8fbaeb00d40962ceb68fa0a13825b996b5b81766",
+        "fileUnchanged": true,
+        "referenceUnchanged": true
+      },
+      {
+        "sceneId": "human-question",
+        "artifactId": "narration-7dbedc01-7a58-447d-9508-dda6693272b4.wav",
+        "sha256": "0e1f1c7b1680db266e195f14deb6ee71f52b93e029eb4fdfbb45eb2503a82b12",
+        "fileUnchanged": true,
+        "referenceUnchanged": true
+      },
+      {
+        "sceneId": "dignity-close",
+        "artifactId": "narration-24646789-05db-4ebe-8aa2-321ef3e54590.wav",
+        "sha256": "ab96d50bbdab9fcccfe753bdb5fb7166533e84bf520d96ce214bda23d91b3285",
+        "fileUnchanged": true,
+        "referenceUnchanged": true
+      }
+    ],
+    "initialSources": [
+      {
+        "artifactId": "source-b85369a4-191e-4f89-a881-e8213d184ad9.txt",
+        "fileUnchanged": true
+      },
+      {
+        "artifactId": "1792398264965-source-9b602b64-48e8-43d3-b837-c4a941ab4ffd.png",
+        "fileUnchanged": true
+      },
+      {
+        "artifactId": "1792398277641-source-a5317b7b-a303-4d93-8ab2-92f0cf4dc5b0.png",
+        "fileUnchanged": true
+      },
+      {
+        "artifactId": "1792398280129-source-0f7d30bf-9ecc-4a37-8900-140cabc5c801.png",
+        "fileUnchanged": true
+      },
+      {
+        "artifactId": "1792398282065-source-1fbb39ef-6976-4cc6-ae46-ea0cf59a043c.png",
+        "fileUnchanged": true
+      }
+    ],
+    "oldExports": [
+      {
+        "artifactId": "media-38be8e28-532c-4e4b-a98a-c623060265df-converted.mp4",
+        "fileUnchanged": true
+      }
+    ],
+    "captionCount": 23
+  },
+  "review": {
+    "authority": "agent-declared",
+    "scenes": [
+      {
+        "sceneId": "hook",
+        "totalSamples": 24,
+        "generatedFrames": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "逐页检查24帧：0–0.79秒完整呈现曹翠芬/张越对谈照片，随后右侧曹翠芬近景约占画面76%高度，保留头顶与视线；标题、水印不遮脸，字幕在底部安全区完整可读，AIpardonSI News清晰；未发现新缺陷。",
+          "createdAt": "2026-10-19T09:08:21.857Z",
+          "sequence": 1
+        }
+      },
+      {
+        "sceneId": "caocuifen-quote",
+        "totalSamples": 24,
+        "generatedFrames": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "逐页检查24帧：曹翠芬与张越双人宽景清晰，人物面部无遮挡；照片为裁切方形宽景约45%画面高度（宽景取舍，非窄横条/无内部黑边），标题、署名、字幕与AIpardonSI News均完整；约6.04秒进入细节取景，双人均在画面内；存在片尾长静态采样提示，无阻断性布局缺陷。",
+          "createdAt": "2026-10-19T09:10:04.549Z",
+          "sequence": 2
+        }
+      },
+      {
+        "sceneId": "zhangyue",
+        "totalSamples": 21,
+        "generatedFrames": 21,
+        "agent": {
+          "status": "passed",
+          "notes": "逐页检查21帧：开场保留双人全景交代同场语境，随后推近至左侧张越近景，约占画面75%高度，面部、话筒和视线完整无遮挡；标题、字幕和AIpardonSI News清晰，末尾无字幕帧干净；唯一小瑕疵为字幕把“发展”拆行，不影响阅读，无阻断性布局缺陷。",
+          "createdAt": "2026-10-19T09:11:38.502Z",
+          "sequence": 3
+        }
+      },
+      {
+        "sceneId": "huyong",
+        "totalSamples": 22,
+        "generatedFrames": 22,
+        "agent": {
+          "status": "passed",
+          "notes": "逐页检查22帧：开场先以舞台全景交代演讲语境，随后推近右侧胡泳竖幅细节，约占卡片高度七成，面部与话筒清晰无遮挡；标题、两行署名“胡泳｜北京大学教授 · 据财中社现场报道”、字幕与AIpardonSI News均完整可读，底部安全区无冲突；右上角仅残留一小段舞台“科技”字样，不遮脸、不影响识别，无阻断性缺陷。",
+          "createdAt": "2026-10-19T09:12:55.864Z",
+          "sequence": 4
+        }
+      },
+      {
+        "sceneId": "human-question",
+        "totalSamples": 23,
+        "generatedFrames": 23,
+        "agent": {
+          "status": "passed",
+          "notes": "逐页检查23帧：社区课堂照片占卡片宽度近满幅、约半屏高度，中央老人与右侧蓝马甲志愿者面部清晰，左侧红衣女士自然入镜；全程无内部黑边，推近后主体仍在画面中央；标题、单行署名、底部字幕与AIpardonSI News均完整可读，字幕未遮脸；片尾无字幕帧干净，无阻断性缺陷。",
+          "createdAt": "2026-10-19T09:14:15.141Z",
+          "sequence": 5
+        }
+      },
+      {
+        "sceneId": "dignity-close",
+        "totalSamples": 24,
+        "generatedFrames": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "逐页检查24帧：前半段以双人全景交代同场语境，约5.4秒后推近为右侧曹翠芬竖幅近景，人物占画面高度过半，头顶、视线和手部完整；标题、单行署名、底部字幕与AIpardonSI News均清晰，不遮脸，片尾无字幕帧干净；仅字幕把“尊严”拆行，属轻微排版取舍，无阻断性缺陷。",
+          "createdAt": "2026-10-19T09:16:08.129Z",
+          "sequence": 6
+        }
+      }
+    ],
+    "wholeFilm": {
+      "status": "passed",
+      "notes": "独立全片判断：138个当前导出关键状态样本覆盖6镜，均已完成并通过逐镜视觉审阅。开场即见曹翠芬真实对谈照，右侧近景保留头顶与视线；双人宽景、左侧张越、胡泳和社区课堂按旁白推进，末镜回到曹翠芬竖幅近景。人物照均以裁切占据卡片主体，无内部黑框、无大字压脸，字幕在底部安全区，AIpardonSI News清晰。保留已知非阻断项：S2片尾长静态采样提示、S3“发展”与S6“尊严”字幕拆行、S4右上残留小块舞台“科技”字样。此为视觉与结构判断，未冒充人工听感，音频另核。",
+      "createdAt": "2026-10-19T09:16:14.637Z",
+      "sequence": 7
+    },
+    "rootSpotCheck": "Actual new MP4 frame at0.5s shows Cao crop immediately; do not treat the scene Agent note about an initial full two-shot as independently verified.",
+    "knownNonblocking": "S2 static interval; S3/S6 word wrapping; S4 small stage lettering at image edge"
+  },
+  "audio": {
+    "scope": "Final MP4 0.5–10.5s technical sample only; no whole-film listening claim",
+    "sampleArtifactId": "media-fdf7f96d-0ca2-422b-bf2c-8d874a374068-audition.wav",
+    "peak": 0.731295108795166,
+    "rms": 0.08566590076571293,
+    "clippedSamples": 0,
+    "missingFrames": 0,
+    "asrArtifactId": "video-ba3716a6-2113-4fdd-b755-9fc2f31c094a.json",
+    "asrLimit": "Low-confidence proper names and title; not evidence of pronunciation correctness"
+  },
+  "cleanup": {
+    "mainProcess": 33961,
+    "oneMainInstanceVerified": true,
+    "latestMovieVisible": true,
+    "playerPausedAtStart": true,
+    "unrelatedPagesRetained": true
+  },
+  "humanListening": "pending",
+  "finalAcceptance": "pending",
+  "externalPublication": false,
+  "scope": "Assisted real production; no unattended daily readiness or broader research coverage acceptance",
+  "footageUpdate": {
+    "path": "NEWS_ELDERCARE_FOOTAGE_UPDATE.json",
+    "sha256": "e7a5005bfa52093f624ff9cd2e66e949360e8ce70271d436a0d7bf7d356d0a79",
+    "draftRevision": 53,
+    "artifactId": "media-18ad3303-fd8c-4acf-8334-f6ff3fe18f00-converted.mp4",
+    "humanListening": "pending",
+    "finalAcceptance": "pending"
+  }
+}

@@ -1,0 +1,380 @@
+{
+  "format": "bmw.eldercare-footage-update",
+  "version": 1,
+  "recordedAt": "2026-10-19T10:29:30.989Z",
+  "projectId": "2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967",
+  "sessionId": "5eeaad9a-2382-4aed-bc81-6e0575021ef3",
+  "draftId": "07079686-6ea3-42d7-9f44-746a69477355",
+  "revision": 53,
+  "title": "“国民祖母”愿让机器人看护，前提是保护隐私",
+  "userAuthorization": "User requested original salon footage, volunteered login, confirmed 已登录, and authorized archival role footage as an identity fallback.",
+  "assistance": "BMW + official Qoder CN dfmodel DeepSeek-Flash; Codex public-source research, trusted GUI operation, bounded edit guidance and actual-frame review. Assisted production; not an unattended runtime benchmark.",
+  "originalFootage": {
+    "caoPrivacySpeech": "Not located in checked official posts and source leads; no claim that it does not exist",
+    "officialPublicProfile": "https://m.weibo.cn/profile/1043325954",
+    "officialEventPost": "https://m.weibo.cn/status/5355672125309804",
+    "observedOfficialEventPostForm": "9 photographs; online livestream announced separately, usable replay not obtained",
+    "debateAsset": "1792402954153-source-4f142871-654f-48d8-a0a3-499b8d8e4f37.mp4",
+    "debateDurationSeconds": 64.57501133786847,
+    "debateMethod": "Native complete decoded-file download, no real-time capture; retained as context source, not used as Cao speech"
+  },
+  "archivalSource": {
+    "publisher": "正午阳光官方频道",
+    "url": "https://www.youtube.com/watch?v=6F5ViP8aIzE",
+    "title": "学到了！盛老太太告诉我们套话要攻其不备，按步骤击破人心",
+    "artifactId": "eebfed2e-3ffe-4ee0-b3e5-a5bcc5306882-zhengwuyang-shenglaotaitai-source-20261019.webm",
+    "sha256": "ad8868f2caef1e3911d4b6db35dbf565986cd44fdc706385e6388a6766e38869",
+    "method": "BMW native media.video.capture of31.221s MSE source; captured decoded file31.328s,480x854 VP9/Opus. Explicitly not a direct file download.",
+    "use": "Only hook identity introduction, source0.5–3.1s, movie0–2.6s, role label visible, no independent audio layer"
+  },
+  "edit": {
+    "advancedEditorEnabledThroughGUI": true,
+    "overlays": [
+      {
+        "id": "track-31173172-95ba-46e8-af68-e21becbd49ad",
+        "kind": "visual",
+        "role": "overlay",
+        "sceneId": "hook",
+        "clips": [
+          {
+            "id": "visual-layer-4-hook-31173172-95ba-46e8-af68-e21becbd49ad",
+            "kind": "visual-layer",
+            "sceneId": "hook",
+            "timing": {
+              "clock": "scene",
+              "start": {
+                "ticks": 0
+              },
+              "duration": {
+                "ticks": 2600000
+              }
+            },
+            "properties": {
+              "title": "画中画",
+              "fadeInSeconds": 0,
+              "fadeOutSeconds": 0,
+              "fadeWindow": {
+                "originId": "ee6a9c64-bec9-4c7f-abb8-21271bb76b99",
+                "startSeconds": 0.5,
+                "durationSeconds": 8.166666666666666
+              },
+              "x": 0.06,
+              "y": 0.17,
+              "width": 0.88,
+              "height": 0.5,
+              "opacity": 1,
+              "kind": "video",
+              "color": "#ffffff",
+              "zIndex": 1,
+              "hidden": false,
+              "locked": false,
+              "sourceCrop": {
+                "x": 0.2,
+                "y": 0.28,
+                "width": 0.6,
+                "height": 0.34
+              },
+              "artifactId": "eebfed2e-3ffe-4ee0-b3e5-a5bcc5306882-zhengwuyang-shenglaotaitai-source-20261019.webm",
+              "sourceStartSeconds": 0.5,
+              "playbackRate": 1,
+              "sourceIdentity": "31173172-95ba-46e8-af68-e21becbd49ad"
+            }
+          }
+        ]
+      },
+      {
+        "id": "track-e84e3f37-e02f-4224-9727-54aa74d70815",
+        "kind": "visual",
+        "role": "overlay",
+        "sceneId": "hook",
+        "clips": [
+          {
+            "id": "visual-layer-4-hook-e84e3f37-e02f-4224-9727-54aa74d70815",
+            "kind": "visual-layer",
+            "sceneId": "hook",
+            "timing": {
+              "clock": "scene",
+              "start": {
+                "ticks": 0
+              },
+              "duration": {
+                "ticks": 2600000
+              }
+            },
+            "properties": {
+              "title": "影视资料",
+              "fadeInSeconds": 0,
+              "fadeOutSeconds": 0,
+              "fadeWindow": {
+                "originId": "a933c0f5-ca1f-4585-afd9-56dac36d7e8b",
+                "startSeconds": 0,
+                "durationSeconds": 8.166666666666666
+              },
+              "x": 0.08,
+              "y": 0.69,
+              "width": 0.84,
+              "height": 0.065,
+              "opacity": 1,
+              "kind": "text",
+              "color": "#E8C97A",
+              "zIndex": 2,
+              "hidden": false,
+              "locked": false,
+              "text": "影视资料｜《知否知否应是绿肥红瘦》",
+              "fontSize": 26,
+              "sourceIdentity": "e84e3f37-e02f-4224-9727-54aa74d70815"
+            }
+          }
+        ]
+      },
+      {
+        "id": "track-f9332282-de3f-4396-ad5b-7e6474a02099",
+        "kind": "visual",
+        "role": "overlay",
+        "sceneId": "hook",
+        "clips": [
+          {
+            "id": "visual-layer-4-hook-f9332282-de3f-4396-ad5b-7e6474a02099",
+            "kind": "visual-layer",
+            "sceneId": "hook",
+            "timing": {
+              "clock": "scene",
+              "start": {
+                "ticks": 0
+              },
+              "duration": {
+                "ticks": 2600000
+              }
+            },
+            "properties": {
+              "title": "矩形",
+              "fadeInSeconds": 0,
+              "fadeOutSeconds": 0,
+              "fadeWindow": {
+                "originId": "bc69c542-5377-4958-8d01-69486068563b",
+                "startSeconds": 0,
+                "durationSeconds": 8.166666666666666
+              },
+              "x": 0.055,
+              "y": 0.15,
+              "width": 0.89,
+              "height": 0.69,
+              "opacity": 0.96,
+              "kind": "rectangle",
+              "color": "#111827",
+              "zIndex": 0,
+              "hidden": false,
+              "locked": false,
+              "sourceIdentity": "f9332282-de3f-4396-ad5b-7e6474a02099"
+            }
+          }
+        ]
+      }
+    ],
+    "body": "Prior two precomposed primary replacements restored to original photographs and reading cards; no template previews used as primary footage"
+  },
+  "export": {
+    "artifactId": "media-18ad3303-fd8c-4acf-8334-f6ff3fe18f00-converted.mp4",
+    "fingerprint": "ac2984937d38dc7c948ddf92c88ce4c5f87ae138b159b9b9cef5ca8752cb35b6",
+    "verificationArtifactId": "video-335353aa-88f1-433d-a389-58efdfdf27be.json",
+    "revision": 52,
+    "createdAt": "2026-10-19T10:20:58.333Z",
+    "durationSeconds": 49.20833333333333,
+    "sha256": "c583f3bf0d7aa36b7e70a5875a3dfd8515f0c8d6a9b36732373e2e49258b4262",
+    "bytes": 11412833,
+    "technicalStatus": "passed",
+    "actualDurationSeconds": 49.28,
+    "width": 720,
+    "height": 1280,
+    "fps": 24,
+    "verificationSha256": "627fcd08a980d6f502a9e97f0e1237399502dec6f5fb6b5aa23c1c9fc96094e1"
+  },
+  "protection": {
+    "scriptsUnchanged": true,
+    "captionsUnchanged": true,
+    "primaryVisualTracksUnchanged": true,
+    "voiceTracksUnchanged": true,
+    "lastFourScenesUnchanged": true,
+    "voiceFiles": [
+      {
+        "sceneId": "hook",
+        "artifactId": "narration-5f249cb5-92a3-4fb2-ba11-cc987ea6def4.wav",
+        "sha256": "046d8904d74d3828d4ea6556c9327cc28e230b3f65a06ad31fd23650d94dfb3e",
+        "unchanged": true
+      },
+      {
+        "sceneId": "caocuifen-quote",
+        "artifactId": "narration-ed772617-b592-4d2c-8d6d-c7e69868c806.wav",
+        "sha256": "92c10bfce93eee1f7351c15849106beab5b2d9f1f6032c21ffc9f823140407ab",
+        "unchanged": true
+      },
+      {
+        "sceneId": "zhangyue",
+        "artifactId": "narration-d39b08c5-ffbd-41ce-89ab-642f17ed7bdc.wav",
+        "sha256": "97a053d6390230d9db522386547a51e77581832c44f959f51d78c1bf7a0da079",
+        "unchanged": true
+      },
+      {
+        "sceneId": "huyong",
+        "artifactId": "narration-4c283824-3ce7-43a8-83fe-7acba6d7bd03.wav",
+        "sha256": "e31151dcee4d9f173259567a8fbaeb00d40962ceb68fa0a13825b996b5b81766",
+        "unchanged": true
+      },
+      {
+        "sceneId": "human-question",
+        "artifactId": "narration-7dbedc01-7a58-447d-9508-dda6693272b4.wav",
+        "sha256": "0e1f1c7b1680db266e195f14deb6ee71f52b93e029eb4fdfbb45eb2503a82b12",
+        "unchanged": true
+      },
+      {
+        "sceneId": "dignity-close",
+        "artifactId": "narration-24646789-05db-4ebe-8aa2-321ef3e54590.wav",
+        "sha256": "ab96d50bbdab9fcccfe753bdb5fb7166533e84bf520d96ce214bda23d91b3285",
+        "unchanged": true
+      }
+    ],
+    "originalSources": [
+      {
+        "artifactId": "source-b85369a4-191e-4f89-a881-e8213d184ad9.txt",
+        "unchanged": true
+      },
+      {
+        "artifactId": "1792398264965-source-9b602b64-48e8-43d3-b837-c4a941ab4ffd.png",
+        "unchanged": true
+      },
+      {
+        "artifactId": "1792398277641-source-a5317b7b-a303-4d93-8ab2-92f0cf4dc5b0.png",
+        "unchanged": true
+      },
+      {
+        "artifactId": "1792398280129-source-0f7d30bf-9ecc-4a37-8900-140cabc5c801.png",
+        "unchanged": true
+      },
+      {
+        "artifactId": "1792398282065-source-1fbb39ef-6976-4cc6-ae46-ea0cf59a043c.png",
+        "unchanged": true
+      }
+    ],
+    "priorMovies": [
+      {
+        "artifactId": "media-38be8e28-532c-4e4b-a98a-c623060265df-converted.mp4",
+        "unchanged": true
+      },
+      {
+        "artifactId": "media-57e106d4-9790-4bb0-a770-143649998d21-converted.mp4",
+        "unchanged": true
+      },
+      {
+        "artifactId": "media-32908a3e-c05c-4c03-b26a-e920c7054f87-converted.mp4",
+        "unchanged": true
+      },
+      {
+        "artifactId": "media-f55a8148-a8ff-4711-8c99-34567879b038-converted.mp4",
+        "unchanged": true
+      }
+    ]
+  },
+  "review": {
+    "scenes": [
+      {
+        "sceneId": "hook",
+        "totalSamples": 24,
+        "sampledFrames": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "实查0–2.6秒：深色底板遮住原现场照身体，红袍曹翠芬完整头脸位于上方，标签置于脸下方不遮挡；约2.58秒干净结束，原现场照恢复至8.125秒，标题/字幕/水印清楚。1.3–2.5秒影视片宽景及自带字幕残片属源内容，不是拼接缺陷。",
+          "createdAt": "2026-10-19T10:28:23.921Z",
+          "sequence": 1
+        }
+      },
+      {
+        "sceneId": "caocuifen-quote",
+        "totalSamples": 24,
+        "sampledFrames": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "实查24个关键帧：现场原照已恢复，曹翠芬与张越双人完整，照片约占半屏以上，无预合成白框/01/01；归因、字幕与AIpardonSI News清楚，末帧干净。存在20.0417秒long-static-hold提示，属抽样节奏告警，画面为持续证据照与渐进推近，不阻塞且本轮不改时间。",
+          "createdAt": "2026-10-19T10:28:27.063Z",
+          "sequence": 2
+        }
+      },
+      {
+        "sceneId": "zhangyue",
+        "totalSamples": 21,
+        "sampledFrames": 21,
+        "agent": {
+          "status": "passed",
+          "notes": "实查21帧：入场首0.08秒为极短渐入空卡体，随后现场照显现；阅读推近集中在张越，人物未裁脸，双行字幕在底部安全区，标题/归因/水印清楚，结尾干净。无遮挡或跳帧缺陷。",
+          "createdAt": "2026-10-19T10:28:29.322Z",
+          "sequence": 3
+        }
+      },
+      {
+        "sceneId": "huyong",
+        "totalSamples": 22,
+        "sampledFrames": 22,
+        "agent": {
+          "status": "passed",
+          "notes": "实查22帧：胡泳全身现场照完整，阅读推近从整图过渡到人物细节，未见裁头或空卡；标题、归因、字幕和AIpardonSI News持续可读，结尾无字幕且画面稳定。无阻断问题。",
+          "createdAt": "2026-10-19T10:28:32.178Z",
+          "sequence": 4
+        }
+      },
+      {
+        "sceneId": "human-question",
+        "totalSamples": 23,
+        "sampledFrames": 23,
+        "agent": {
+          "status": "passed",
+          "notes": "实查23帧：开场整幅社区课堂照含上下留白，约0.79秒内完成阅读推近并填满卡片；蓝背心志愿者与老人均完整，字幕、归因、标题和水印清楚，阅读过渡无明显跳动，末段干净。留白属既定整图入场状态。",
+          "createdAt": "2026-10-19T10:28:34.819Z",
+          "sequence": 5
+        }
+      },
+      {
+        "sceneId": "dignity-close",
+        "totalSamples": 24,
+        "sampledFrames": 24,
+        "agent": {
+          "status": "passed",
+          "notes": "实查24帧：开场双人现场照完整，曹翠芬与张越无裁脸；随后阅读聚焦曹翠芬。整图阶段上下留白属既定卡片呈现，归因、字幕与AIpardonSI News清楚，字幕换行安全，末帧无水印冲突且收尾干净。",
+          "createdAt": "2026-10-19T10:28:37.470Z",
+          "sequence": 6
+        }
+      }
+    ],
+    "wholeFilm": {
+      "status": "passed",
+      "notes": "逐页实查当前导出全部138个关键状态帧（六镜24/24/21/22/23/24），六镜声明均通过。开场身份资料标签与现场照切换干净，人物脸、证据照、字幕、归因及AIpardonSI News无阻断遮挡，阅读转场无空白或跳帧。1项long-static-hold为非阻断节奏提示，1.3–2.5秒影视片宽景及自带字幕残片属源内容。已采样开头0–3秒音轨：峰值0.781、无削波/缺帧；仅技术证据，未做人工听感，用户接受待其确认。",
+      "createdAt": "2026-10-19T10:28:46.843Z",
+      "sequence": 7
+    },
+    "rootActualFrameInspection": "0.5s role close-up has full head, legible archival label, full mask prevents mixed body;2.6667s returns to event photograph. Actual exported frames inspected. At1.5s source cuts to a drama wide shot with Cao and another character; archival label remains. Partial burned-in source subtitles remain a nonblocking source limitation.",
+    "audioSamples": [
+      {
+        "artifactId": "media-af04fcc4-b8ae-40a9-a856-c92f199475cb-audition.wav",
+        "sha256": "5c5d1da4d75db9ff0b3222335be96ad1051624e2e5b6bdfeb531a17c656e8953",
+        "startSeconds": 0,
+        "endSeconds": 3,
+        "rms": 0.08768716833984772,
+        "peak": 0.7811186909675598,
+        "clippedSamples": 0,
+        "missingFrames": 0
+      }
+    ]
+  },
+  "humanListening": "pending",
+  "finalAcceptance": "pending",
+  "externalPublication": false,
+  "cleanup": {
+    "finalRunId": "e9a8075f-7021-4828-8f59-850f9407e9af",
+    "finalRunState": "finished",
+    "finalRunOutcome": "success",
+    "AgentYouTubePageClosed": true,
+    "officialUserProfileRetained": true,
+    "latestExportSelectedThroughGUI": true,
+    "playerPausedAtStart": true,
+    "observation": "Actual BMW screenshot after selecting 最近成片 shows 草稿v52 export,0:00/0:49 and play icon; current editable draftv53.",
+    "checkedAt": "2026-10-19T10:32:00.844Z"
+  }
+}

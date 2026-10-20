@@ -66,6 +66,8 @@ Studio提供本次新闻Qwen音色选择，初始仍为安明远，选择时通�
 
 直接保障：video.news契约、browser.sources日期采集及studio.news隔离原生GUI；真实DSH检索、用户选题、Qwen配音和最新新闻成片另验，不并入离线通过数。
 
+新闻研究引导要求先用news-topics的时效窗口预检日期／原片，再局部读取搜索结果，首条合格候选立即提交并逐批补充至最多十项，不先遍历历史成片／旁白。多个同源查询需显式不复用或串行读取。Qoder转存大结果时只回到原网页局部读取，不开放宿主文件工具。引导要求约每20次调用自查、接近80次仍无卡时收束说明；这是官方Agent任务节奏建议，不是Host强制计数、定时取消或自动重投，用户可明确延长。研究结束暂停并关闭本轮Agent页、等待实际关闭并核对列表，保留用户页与Project文件。用户选题入口与确认门禁保持原契约。
+
 ## 类型制作与 AK 增量（Video Document 2.10）
 
 `preparation.production`（规范文档 `content.brief.production`）是可选的闭合版本1工作表，固定 `profileId/profileVersion`，支持 `news-brief`、`science-explainer`、`research-explainer`。保存受众、主问题、目标时长意图、段落角色／目标／观察任务、稳定镜头引用与材料角色；实际时间仍只有现有时间线。`production-profiles` 读取版本化类型指导及六种有限配方；不改变模型目录、权限或预算，不安装外部 skill。`propose-type` 给保留／填充列表和候选 VideoEdit，`adopt-type` 要求同一 revision 与精确提案指纹；重新读取实际来源／设置，拒绝过期提案。配方仅填空画面说明及符合条件的空卡片槽，已有 GUI 编辑不被覆盖；测量配方明确要求填写真实数据。`production-read` 对工作表各部分按至多20项／32KiB分页（句目标省略Host绑定原文），`production-review` 给当前版本的缺口、人工量表、当前内容／MP4指纹及独立 assessmentRevision。`record-production-review` 记录五项类型检查、试听状态、观众复述／条件预测和说明；actor 由Host决定，Agent不能声明人工试听、观众回答或通过人工必需的check-5。GUI提供显式人工记录；只有当前指纹下的用户五项通过、实际试听声明、复述（T2/T3另需条件预测）且结构无缺口，才显示“已验收”。这是用户声明，不是Host科学或听感认证。Host记录保存在Project内version1类型审阅账本，固定Project／Session／draft，独立CAS，至多40项／256KiB，保留最近用户与Agent记录；普通文档更新不写此账本。内容、源文件、实际MP4或渲染版本改变后旧结论失效，技术可制作、Agent意见、人工试听、观众复述分开。
@@ -193,6 +195,8 @@ Bridge 验证认证、Session、Project 及目录，按 FIFO 执行；Project �
 录制 runtime 验收另包含真实受控网页的三步任务：选择模板、选择旁白、提交到服务器并导航到持久化任务结果页。通过认证 Bridge 录制，原生页面输入产生点击记录；在 Studio 使用可编辑建议与补充静止讲解焦点，裁切 .2 秒/1.25 倍速，检查按钮/结果范围、旁白绑定及四个选定时间点的预览与 MP4。该夹具不是公开网站或真实 DSH 模型制作；实际本地旁白用于保留绑定验证，未证明人工句边界精度。
 
 Mediabunny `1.61.0` 与浏览器 WebCodecs 为媒体底座；Canvas/WebAudio/WebGPU/MediaRecorder 用于画面、混音、处理与采集。采集和导出由受限宿主文件 adapter 写入当前 Project artifacts；模型只看到 Artifact ID。
+
+共享原生解码 worker 使用至多16项（含执行中）的有界 FIFO，Studio 预览核验、新闻候选核验与其他处理不并行占用同一组私有 IPC。请求在入队时固定 Project 目录；排队取消不启动 worker，执行中取消仍等待 worker、IPC 与文件 IO 清理后才释放下一项。清理失败会隔离媒体资源并拒绝尚未启动的排队请求；仅显式media.stop重试清理成功后释放，不重放旧请求。无重试、无不确定投递重放，超预算明确失败。页面采集仍是独立互斥任务。映射采集的 WebM 以原生 VP9／Opus 编码包写入显式视频 BlockDuration，保留最后一帧的实际持有时长，解复用后校验 PTS、帧数及终帧时长；不以1毫秒默认帧长覆盖终帧。MediaRecorder的末个Opus包若时长为0，保留未知时长及原始编码负载，不编造音频时长或拒绝有效包。源时间仍来自实际呈现回调，AAC 等音轨填充造成的原片音画终点差异不得当作画面丢帧，像素核对以原片实际视频帧为准。
 
 | Action 家族 | 输入、行为与限制 |
 |---|---|
@@ -1248,11 +1252,16 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `packages/media-native/test/capture-source-index.test.ts`
 
+- `Capture WebM retains explicit terminal VFR duration without a nominal frame-rate grid`
+- `Capture WebM preserves a terminal Opus packet with unknown duration while rejecting zero-duration video`
 - `Source PTS indexes reject file-clock substitution, unobserved gaps, stale media/PNGs and foreign Projects`
 - `Mapped captures select middle frames through pause and variable rate, verify decoded PTS and roll back failed PNGs`
 
 #### `packages/media-native/test/media-controller.test.ts`
 
+- `Shared decoding FIFO drains active cleanup, skips cancelled previews and survives failed jobs`
+- `Shared decoding cleanup failure quarantines queued work until explicit recovery succeeds`
+- `Shared decoding FIFO bounds admission and preserves queued operation order without replay`
 - `browser-native video capture filenames remain Project-local WebM artifacts`
 - `video chunk decoding ignores commas inside codec parameters`
 - `capture IPC admits only the current media main frame`

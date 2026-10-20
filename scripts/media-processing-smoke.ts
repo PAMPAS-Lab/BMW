@@ -4,6 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { app, BrowserWindow, session } from 'electron'
 import { MediaController } from '../packages/media-native/src/media-controller.js'
+import { ArtifactJobIO } from '../packages/media-native/src/artifact-job-io.js'
 import { BrowserKernel } from '../packages/browser-capability/src/browser-kernel.js'
 import { BrowserCapabilityRegistry } from '../packages/browser-capability/src/browser-capability-registry.js'
 import { createBridgeServer } from '../packages/browser-capability/src/bridge-server.js'
@@ -33,6 +34,7 @@ let cancelOnProgress: AbortController | undefined
 let cancelImage: AbortController | undefined
 let cancelCover: AbortController | undefined
 let cancelDrawing: AbortController | undefined
+let imageInspectActive=false
 let granted = true
 let exitCode = 0
 const timeout = setTimeout(() => { process.stderr.write('Media processing smoke exceeded 150 seconds.\n'); app.exit(1) }, 150_000)
@@ -46,7 +48,7 @@ try {
   const media = new MediaController({ session: browserSession,
     preloadPath: path.resolve('packages/media-native/src/preload/media-preload.cjs'),
     pagePath: path.resolve('packages/media-native/src/media/media.html'), artifactsDirectory: artifacts,
-    resolveArtifactsDirectory: () => artifacts, onStatus: (value: { progress?: number; action?: string; active?: boolean }) => { if(value.active&&value.action==='video.cover')cancelCover?.abort(new Error('Cover cancellation')); if(value.active&&(value.action==='media.image.draw'||value.action==='media.image.annotate'))cancelDrawing?.abort(new Error('Drawing cancellation')); if(value.active&&value.action==='media.image.inspect')cancelImage?.abort(new Error('Image cancellation')); if ((value.progress ?? 0) > 0) cancelOnProgress?.abort(new Error('E2E cancellation')) } })
+    resolveArtifactsDirectory: () => artifacts, onStatus: (value: { progress?: number; action?: string; active?: boolean }) => { if(value.action==='media.image.inspect')imageInspectActive=Boolean(value.active); if(value.active&&value.action==='video.cover')cancelCover?.abort(new Error('Cover cancellation')); if(value.active&&(value.action==='media.image.draw'||value.action==='media.image.annotate'))cancelDrawing?.abort(new Error('Drawing cancellation')); if(value.active&&value.action==='media.image.inspect')cancelImage?.abort(new Error('Image cancellation')); if ((value.progress ?? 0) > 0) cancelOnProgress?.abort(new Error('E2E cancellation')) } })
   const registry = new BrowserCapabilityRegistry(bmwProduct)
   const fixtureCodec = process.env.BMW_MEDIA_FIXTURE_CODEC === 'vp9' ? 'vp9' : 'vp8'
   const kernel = new BrowserKernel({ window: source, session: browserSession, capabilityRegistry: registry,
@@ -361,7 +363,10 @@ try {
       const nativeFrames=(sourceTail.result as {frames:{path:string;sourceTimestampSeconds:number;sourceDistanceSeconds:number;fileTimestampSeconds:number}[]}).frames
       assert.equal(sourceTail.images.length,2)
       const eofProof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/video-capture-eof';fs.mkdirSync(eofProof,{recursive:true});fs.copyFileSync(converted.path,path.join(eofProof,'original-eof.mp4'));fs.copyFileSync(captured.path,path.join(eofProof,'captured-eof.webm'));fs.copyFileSync(path.join(artifacts,captured.artifactId+'.source.json'),path.join(eofProof,'captured-source-index.json'));fs.writeFileSync(path.join(eofProof,'eof-diagnostic.json'),JSON.stringify({duration,exportedInfo,captured,decoded,inspected,nativeFrames},null,2)+'\n')
-      for(const frame of nativeFrames){assert.ok(frame.sourceDistanceSeconds>=0&&frame.sourceDistanceSeconds<.2);assert.ok(frame.sourceTimestampSeconds>duration-.25,JSON.stringify({duration,frame,originalTracks:exportedInfo.tracks}));assert.ok(frame.fileTimestampSeconds>frame.sourceTimestampSeconds+.4)
+      // The source AAC track can outlast its last video frame. Compare visual
+      // recency to the independently demuxed video endpoint, not audio padding.
+      const originalVideoEnd=exportedInfo.tracks.find(track=>track.type==='video')!.endSeconds!
+      for(const frame of nativeFrames){assert.ok(frame.sourceDistanceSeconds>=0&&frame.sourceDistanceSeconds<.2);assert.ok(frame.sourceTimestampSeconds>originalVideoEnd-.25,JSON.stringify({duration,originalVideoEnd,frame,originalTracks:exportedInfo.tracks}));assert.ok(frame.fileTimestampSeconds>frame.sourceTimestampSeconds+.4)
         const pixel=await source!.webContents.executeJavaScript(`(async()=>{const i=new Image();i.src=${JSON.stringify('data:image/png;base64,'+fs.readFileSync(frame.path).toString('base64'))};await i.decode();const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.drawImage(i,0,0);return [...x.getImageData(40,30,1,1).data]})()`) as number[]
         assert.ok(pixel[2]>180&&pixel[0]<30,'Source-tail PNG must be the real terminal blue, despite the recording clock stall: '+pixel)
       }
@@ -374,7 +379,10 @@ try {
         assert.ok(pixels[0]!.slice(0,3).every((value,j)=>Math.abs(value-pixels[1]![j]!)<12),'Mapped middle pixels must match the independently decoded original source: '+JSON.stringify(pixels))
       }
       await assert.rejects(bridgeCall({action:'media.capture.frames.sample',artifactId:captured.artifactId,sourceTimestampsSeconds:[duration+.1]}),/CAPTURE_SOURCE_TIME_UNINDEXED/)
-      const videoTrack=inspected.tracks.find(track=>track.type==='video')!;process.stderr.write('Mapped AV tracks '+JSON.stringify(inspected.tracks)+'\n');const sampled=await bridgeCall({action:'media.frames.sample',artifactId:captured.artifactId,timestampsSeconds:[videoTrack.startSeconds!+.001,videoTrack.endSeconds!-.05]})
+      const videoTrack=inspected.tracks.find(track=>track.type==='video')!
+      const eofPause=inspected.captureTimeline.playbackEvents.filter(e=>e.kind==='pause').at(-1)!
+      assert.ok(videoTrack.endSeconds!>=eofPause.fileSeconds-.002,'The terminal picture must remain through the observed EOF pause, not collapse to a 1ms default duration')
+      process.stderr.write('Mapped AV tracks '+JSON.stringify(inspected.tracks)+'\n');const sampled=await bridgeCall({action:'media.frames.sample',artifactId:captured.artifactId,timestampsSeconds:[videoTrack.startSeconds!+.001,videoTrack.endSeconds!-.05]})
       const frameList=(sampled.result as Frames).frames;assert.equal(frameList.length,2)
       for(const [index,frame]of frameList.entries()){
         const pixel=await source!.webContents.executeJavaScript(`(async()=>{const i=new Image();i.src=${JSON.stringify('data:image/png;base64,'+fs.readFileSync(frame.path).toString('base64'))};await i.decode();const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.drawImage(i,0,0);return [...x.getImageData(40,30,1,1).data]})()`) as number[]
@@ -402,6 +410,24 @@ try {
     assert.equal(media.isCaptureActive(), false)
     assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
     await kernel.execute({ action: 'media.inspect', artifactId })
+  })
+  await stage('processing cleanup failure retains media admission until explicit media.stop recovery',async()=>{
+    const close=ArtifactJobIO.prototype.close;let fail=true,attempts=0
+    ArtifactJobIO.prototype.close=async function(remove=true){attempts++;if(fail)throw new Error('Injected isolated media cleanup failure');await close.call(this,remove)}
+    try{
+      const inspect={action:'media.image.inspect',artifactId:'image.png'}
+      const first=media.processArtifact(inspect),queued=media.processArtifact(inspect)
+      await Promise.all([assert.rejects(first,/quarantined/),assert.rejects(queued,/not started/)])
+      assert.equal(media.isCaptureActive(),true)
+      assert.equal(imageInspectActive,true)
+      await assert.rejects(media.processArtifact(inspect),/media.stop/)
+      const beforeRecovery=attempts
+      await assert.rejects(media.stop(),/Injected isolated media cleanup failure/)
+      assert.equal(attempts,beforeRecovery+1);assert.equal(imageInspectActive,true)
+      assert.equal(media.isCaptureActive(),true);fail=false;await media.stop()
+      assert.equal(media.isCaptureActive(),false);assert.equal(attempts,beforeRecovery+2);assert.equal(imageInspectActive,false)
+      const info=await media.processArtifact(inspect) as {width:number};assert.equal(info.width,320)
+    }finally{fail=false;ArtifactJobIO.prototype.close=close;await media.stop()}
   })
   process.stdout.write(JSON.stringify({ ok: true, engine: 'mediabunny-1.61.0-webcodecs', inputDuration: info.durationSeconds, tracks: info.tracks.map((track) => track.codec), frames: frames.map((frame) => ({ timestamp: frame.timestampSeconds, width: frame.width, height: frame.height })), mp4: { bytes: converted.bytes, duration: exportedInfo.durationSeconds, codecs: exportedInfo.tracks.map((track) => track.codec), playback }, webm: { bytes: webm.bytes, codecs: webmInfo.tracks.map((track) => track.codec) }, cancellation: 'partial outputs removed' }) + '\n')
 } catch (error) {

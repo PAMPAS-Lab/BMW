@@ -39,13 +39,15 @@ Studio的“推荐新闻选题”先建立当前Project／Session的研究任务
 
 ### 日常新闻使用
 
+Qoder提示大结果被转存时，继续用唯一browser在原页面按局部selector／index读取（如逐个article，maxCharacters约1000–2500），不读取SDK宿主临时文件，也不开放额外文件工具。保留多个同源检索页时显式`tabs.open reuse:false`；否则先读完一页再navigate，避免并行打开的查询被同源复用覆盖。检索摘要只用作定位，最终仍collect原始来源。
+
 取材先读实际媒体候选：完整HTTP文件用source acquire method=download；明文完整HLS VOD或需保全分发字节的视频用method=preserve。两者无需按原速播放，视频短预览用method=preserve加preview:{startSeconds,endSeconds}（至多30秒），由Host截取、核对原声及登记同一来源；原文件保全与短预览编码分开记录。blob／不支持的分离音视频可显式capture兜底，不自动回退或绕过登录／加密。切走tab、切换Project、进入Studio会暂停浏览器媒体；回到页面不会自动续播，采集完成也保持暂停。
 
 当前新闻品牌偏好为 **AIpardonSI News**；创建、确认选题或配置本系列新稿时显式设置水印，不改通用视频默认值及已接受的历史成片。采访镜头有视频文件不等于原声已进入混音：主素材必须启用 `keepSourceAudio`，类型编辑用实际主画面 clipId 的 `clip.mute {muted:false}`，不能只解除独立画面图层的隐藏。`scene.set` 不接受这项字段。导出后须在采访实际时间窗内 `media.audio.sample` 并用原生语音识别核对讲话；全片有 AAC、峰值非零或字幕齐全均不能证明采访原声存在。音乐床会产生低电平非零信号，必须和源片及修复前后同内容区间比较。模型信号检查与人工听感分别登记。
 
 演讲类新闻先核“具体理由”，再配音：定义加断言不等于解释。图表数字保留指标、基准、时间与归因；例如IMF案例是内部季度人均代码量，不能改成整体效率。已核素材足够时先完成可播放初稿，再集中审阅；工具发现和取景试制过长应明确停止、读取保存状态并显式续做，不能重发不确定投递。
 
-1. 固定一个新闻Project，优先使用DSH与`deepseek-official/deepseek-flash`。Qoder CN可在官方目录提供时显式选择DeepSeek-Flash（`dfmodel`），作为另一套独立会话使用；切换驱动不会迁移原会话的选题、草稿或恢复锚点，也不自动回退。两者均须已登录且有效目录只有BMW `browser`。
+1. 固定一个新闻Project，本系列当前优先使用BMW＋官方Qoder CN，在官方模型目录显式选择DeepSeek-Flash（`dfmodel`）；龙安朗与AIpardonSI News沿用当前系列偏好。DSH与`deepseek-official/deepseek-flash`保留独立会话使用；切换驱动不会迁移原会话的选题、草稿或恢复锚点，也不自动回退。两者均须已登录且有效目录只有BMW `browser`。完整日常操作见[新闻速递手册](NEWS_DAILY.md)。
 2. Studio展开“新闻速递 · 选题与制作”，在本次旁白中显式选龙安朗，再点击“推荐新闻选题”。每批最多十个独立事件，近72小时、有原始日期及真实素材；不足十个不凑旧闻。采访／演讲先试听原声预览，再决定是否值得做视频。
 3. 点击一次“选此题并制作”，沿用已有分阶段确认设置。先检查讲述重点及本人解释是否完整，再看稿件、原片区间、字幕和实际音长；原声镜头显示“沿用采访原声”，不要求为它另做TTS。默认30–60秒竖屏，旁白与采访原声分时衔接。
 4. 初稿播放后把关联修改合成一条说明。先`plan-impact`，只改相应台词／字幕／素材；保留无关声音，统一导出后按新指纹审阅。烧录英文不能直接调字体，可另做大号可编辑双语字幕，检查底框、人物身份和手机可读性。用户接受与Agent意见分别记录。
@@ -83,6 +85,8 @@ Studio的“推荐新闻选题”先建立当前Project／Session的研究任务
 改稿前可用 `plan-impact` 只读试算既有 VideoEdit 或闭合 cover 候选，读取 keep/rebuild/rebind/review 与理由；结果绑定 revision、素材 SHA、设置和 renderer，消费前须重查，不预约任务或代替执行权限。句目标与既有 card/focus 句绑定共用时间，换音频或目标后需明确重绑。
 
 `precompose` 以闭合 gridRecipe 将当前 Project 的1／4／16路素材分块预合成，保持最多四个同时解码器及既有预算；`precomposition-status` 读取当前草稿报告并重核 SHA。代理内部对象不能直接编辑，需按原配方显式重建。参数仍通过 `describe-schema`／操作帮助发现；完整边界见[功能规格](FUNCTIONAL_SPEC.md#类型制作与-ak-增量video-document-210)。
+
+身份介绍使用影视资料时，先确认人物、作品及原始发布者，并显著标注影视出处；原片不充当本次新闻发言证据。仅补短切口可在高级模式内添加独立 video／text／必要的 rectangle 层，读取实际新增 clipId 后设置裁切和时间，保留原主画面、旁白及字幕。独立视觉视频不自动带入音轨，不能用 `clip.mute` 控制其原声（该操作会隐藏视觉对象）。用覆盖完整底图区域的遮罩避免人物头身拼接；对导出文件实际检查切入、切出及标签。不要把带测试模板外框或场景编号的 `video.compose` 预览替换为正文主素材，也不要用它绕过 `STUDIO_ADVANCED_REQUIRED`。
 
 ## 权限、冲突与失败
 

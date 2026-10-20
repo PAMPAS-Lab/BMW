@@ -1,10 +1,10 @@
 {
   "format": "bmw.news-daily-readiness",
   "version": 1,
-  "updatedAt": "2026-10-19T03:05:41.745Z",
-  "status": "two-assisted-imf-previews; human-acceptance-pending; unattended-readiness-open",
-  "preferredDriver": "dsh",
-  "modelRoute": "deepseek-official/deepseek-flash",
+  "updatedAt": "2026-10-20T15:01:30.278Z",
+  "status": "offline-fixes-passed; daily-guide-prepared; actual-paced-Qoder-research-pending-UI-recovery; not-unattended",
+  "preferredDriver": "qoder-cn",
+  "modelRoute": "dfmodel",
   "narrationPreference": "Qwen longanlang_v3.1, ratePercent 0; select explicitly in Studio per batch.",
   "findings": [
     {
@@ -71,96 +71,127 @@
   "offline": {
     "receipt": "../verification/CURRENT.json",
     "fullCounts": {
-      "passed": 166,
-      "failed": 1,
+      "passed": 167,
+      "failed": 0,
       "not-run": 12
     },
     "fullReport": {
-      "path": ".bmw-runtime/classified-tests/2026-10-18-news-playback-final/result.json",
-      "sha256": "bc00daa7e3c9df5563bbeec0f8773291a4bf542fa8b8f387ab144ff7ee0c4ac9",
-      "all": true,
+      "path": ".bmw-runtime/news-daily-fixes/2026-10-19/full-daily/result.json",
+      "sha256": "50fadb82886e6558b4176e7ad0929922c39477a116a867bc5e95617ebe28d8e6",
       "counts": {
+        "passed": 167,
+        "failed": 0,
+        "not-run": 12
+      },
+      "selected": 162,
+      "all": true
+    },
+    "build": {
+      "path": ".bmw-runtime/build-receipt.json",
+      "sha256": "e721fd8b23496b007248030a9482a5a57f7897e2e99cbff725a2353b95d8ca1a",
+      "sourceCount": 467,
+      "outputCount": 437
+    },
+    "scope": "Complete --all: 167 passed / 0 failed / 12 opt-in not-run. Actual DSH, desktop, Studio, media, video, speech and local/Qwen fixtures included; paid services and human listening separate. Historical news-daily source snapshot; latest integrated source coverage is docs/verification/CURRENT.json.",
+    "repairReceipt": {
+      "path": "docs/research/NEWS_DAILY_FIXES.json",
+      "sha256": "0b25e59c653f4bc7a1a3d3ea7e3341f02ee95bfa61ce3e6f5aec1cb518a48bde"
+    },
+    "historicalDetails": "docs/history/2026-10-19-news-daily-before-fixes/CURRENT.json",
+    "historicalBeforeRepairs": {
+      "receipt": "../verification/CURRENT.json",
+      "fullCounts": {
         "passed": 166,
         "failed": 1,
         "not-run": 12
       },
-      "selected": 162
-    },
-    "supplements": [
-      {
-        "id": "final-tab-playback",
-        "status": "passed"
+      "fullReport": {
+        "path": ".bmw-runtime/classified-tests/2026-10-18-news-playback-final/result.json",
+        "sha256": "bc00daa7e3c9df5563bbeec0f8773291a4bf542fa8b8f387ab144ff7ee0c4ac9",
+        "all": true,
+        "counts": {
+          "passed": 166,
+          "failed": 1,
+          "not-run": 12
+        },
+        "selected": 162
       },
-      {
-        "id": "final-studio-sources",
-        "status": "passed"
-      },
-      {
-        "id": "final-media-processing",
-        "status": "passed"
-      },
-      {
-        "id": "final-desktop",
-        "status": "passed"
-      },
-      {
-        "id": "final-unit",
-        "status": "passed"
-      }
-    ],
-    "build": {
-      "path": ".bmw-runtime/build-receipt.json",
-      "sha256": "bc5c253e8afc88c633a00e504191779132184839f3b7bd244c641a45fba114ad",
-      "sourceCount": 465,
-      "outputCount": 435
-    },
-    "scope": "Historical full 166 passed / 1 failed / 12 not-run retained. Latest seek/cached-frame supplement 12 passed / 1 known two-speed EOF failure / 165 not-run; 6 capture unit tests passed. Real one-speed 28s key-speech capture and both paid-model previews are independent evidence.",
-    "captureOutcomeSupplement": {
-      "path": ".bmw-runtime/classified-tests/2026-10-18T14-16-36-054Z/result.json",
-      "sha256": "5d3311888651ae2b9a2d63f696994859ab2ac26aa603961f1e668157bf86a918",
-      "counts": {
-        "passed": 20,
-        "failed": 0,
-        "not-run": 159
-      },
-      "scope": "Browser kernel affected offline checks, original complete-run failure retained separately",
-      "native": {
-        "path": ".bmw-runtime/news-dual-flash/2026-10-18/capture-policy-native.log",
-        "sha256": "089164e2b73db595a06f220615bbc2603a6e4e3203011f3682c530e95a2f776a",
-        "status": "passed"
-      },
-      "note": "Cross-frame playback policy failure after drained native capture retains native muting/diagnostics and restores selected tab without replacing capture success or its original error. Actual capture cleanup failure still quarantines."
-    },
-    "unitSupplement": {
-      "path": ".bmw-runtime/classified-tests/2026-10-18T14-20-58-369Z/result.json",
-      "sha256": "3196f4c0005e676e2a7dc3447005ae57a821f2581cdd001ffc46144fd9a22ab1",
-      "counts": {
-        "passed": 96,
-        "failed": 0,
-        "not-run": 82
-      },
-      "scope": "Explicit unit, contract and boundary layers; separate from full offline baseline"
-    },
-    "seekCaptureSupplement": {
-      "path": ".bmw-runtime/classified-tests/2026-10-18T23-57-21-353Z/result.json",
-      "sha256": "d4c263b87c81e90eca7525f30aa88eace519af03b556599d0936f13f6cb19107",
-      "counts": {
-        "passed": 12,
-        "failed": 1,
-        "not-run": 165
-      },
-      "failures": [
+      "supplements": [
         {
-          "id": "media.processing-runtime",
-          "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-18T23-57-21-353Z/media.processing-runtime.log"
+          "id": "final-tab-playback",
+          "status": "passed"
+        },
+        {
+          "id": "final-studio-sources",
+          "status": "passed"
+        },
+        {
+          "id": "final-media-processing",
+          "status": "passed"
+        },
+        {
+          "id": "final-desktop",
+          "status": "passed"
+        },
+        {
+          "id": "final-unit",
+          "status": "passed"
         }
       ],
-      "unit": {
-        "path": ".bmw-runtime/news-dual-flash/2026-10-18/seek-capture-unit.log",
-        "sha256": "f9146b3b73d96f39f424adc5585dd3ce9dfa7d068e242d9bda0180b038aba6f2",
-        "passed": 6
+      "build": {
+        "path": ".bmw-runtime/build-receipt.json",
+        "sha256": "bc5c253e8afc88c633a00e504191779132184839f3b7bd244c641a45fba114ad",
+        "sourceCount": 465,
+        "outputCount": 435
       },
-      "scope": "Wait pending seek and exclude pre-start cached frames; original timeline continuity and EOF assertions unchanged. Known media.processing-runtime two-speed EOF frame/pixel issue reproduced; no fix claimed."
+      "scope": "Historical full 166 passed / 1 failed / 12 not-run retained. Latest seek/cached-frame supplement 12 passed / 1 known two-speed EOF failure / 165 not-run; 6 capture unit tests passed. Real one-speed 28s key-speech capture and both paid-model previews are independent evidence.",
+      "captureOutcomeSupplement": {
+        "path": ".bmw-runtime/classified-tests/2026-10-18T14-16-36-054Z/result.json",
+        "sha256": "5d3311888651ae2b9a2d63f696994859ab2ac26aa603961f1e668157bf86a918",
+        "counts": {
+          "passed": 20,
+          "failed": 0,
+          "not-run": 159
+        },
+        "scope": "Browser kernel affected offline checks, original complete-run failure retained separately",
+        "native": {
+          "path": ".bmw-runtime/news-dual-flash/2026-10-18/capture-policy-native.log",
+          "sha256": "089164e2b73db595a06f220615bbc2603a6e4e3203011f3682c530e95a2f776a",
+          "status": "passed"
+        },
+        "note": "Cross-frame playback policy failure after drained native capture retains native muting/diagnostics and restores selected tab without replacing capture success or its original error. Actual capture cleanup failure still quarantines."
+      },
+      "unitSupplement": {
+        "path": ".bmw-runtime/classified-tests/2026-10-18T14-20-58-369Z/result.json",
+        "sha256": "3196f4c0005e676e2a7dc3447005ae57a821f2581cdd001ffc46144fd9a22ab1",
+        "counts": {
+          "passed": 96,
+          "failed": 0,
+          "not-run": 82
+        },
+        "scope": "Explicit unit, contract and boundary layers; separate from full offline baseline"
+      },
+      "seekCaptureSupplement": {
+        "path": ".bmw-runtime/classified-tests/2026-10-18T23-57-21-353Z/result.json",
+        "sha256": "d4c263b87c81e90eca7525f30aa88eace519af03b556599d0936f13f6cb19107",
+        "counts": {
+          "passed": 12,
+          "failed": 1,
+          "not-run": 165
+        },
+        "failures": [
+          {
+            "id": "media.processing-runtime",
+            "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-18T23-57-21-353Z/media.processing-runtime.log"
+          }
+        ],
+        "unit": {
+          "path": ".bmw-runtime/news-dual-flash/2026-10-18/seek-capture-unit.log",
+          "sha256": "f9146b3b73d96f39f424adc5585dd3ce9dfa7d068e242d9bda0180b038aba6f2",
+          "passed": 6
+        },
+        "scope": "Wait pending seek and exclude pre-start cached frames; original timeline continuity and EOF assertions unchanged. Known media.processing-runtime two-speed EOF frame/pixel issue reproduced; no fix claimed."
+      }
     }
   },
   "live": {
@@ -238,10 +269,8 @@
     "Bounded unchanged-scene review reuse and research/production latency remain follow-ups.",
     "Both official runtimes have real playable Replit previews: DSH 48.7s and Qoder CN 54.575s, with Qwen longanlang_v3.1. Exact-export review scope, human listening and acceptance are separate; no automatic runtime fallback.",
     "Unsigned source-run local candidate; no installer/automatic update or scheduled publishing added.",
-    "Full offline run: 166 passed/1 media tail-timing assertion failed/12 not-run; independent native media recheck passed without relaxing time/pixel assertions. High-load two-speed EOF timing remains unassigned and open.",
     "Native fast acquisition covers complete HTTP and supported clear finite HLS. Generic YouTube/DASH separate audio/video fetching and partial segment-range acquisition remain open; no automatic capture fallback or DRM/login bypass.",
     "YouTube description expansion repeatedly returned click success without changing page state; manual BMW UI expansion was required. Investigate bounded trusted native pointer delivery and verify post-click state before declaring unattended interview research ready.",
-    "Native studio.news failed twice with media processor already active during topic verification; investigate GUI preview verification versus proposal admission before unattended daily use.",
     "Bound main-footage crop/seek and title edits; make source start and interval errors actionable for official runtimes.",
     "Reduce official-runtime preparation and repeated schema discovery; preserve explicit cancellation receipts and never replay uncertain delivery."
   ],
@@ -2188,5 +2217,44 @@
       "visualAcceptance": "No specific visual assessment provided",
       "finalAcceptance": "not-declared"
     }
+  },
+  "dailyGuide": "../NEWS_DAILY.md",
+  "knownRepairs": {
+    "receipt": "docs/research/NEWS_DAILY_FIXES.json",
+    "sha256": "0b25e59c653f4bc7a1a3d3ea7e3341f02ee95bfa61ce3e6f5aec1cb518a48bde",
+    "status": "passed-complete-offline"
+  },
+  "currentResearch": {
+    "receipt": "docs/research/NEWS_DAILY_TOPICS_2026_10_19.json",
+    "stage": "CUA-restored; one-selected-graphic-news-produced; human-acceptance-pending",
+    "actualCandidateCount": 1,
+    "reserveMaterialCount": 3,
+    "deliveryReceipt": "docs/research/NEWS_ELDERCARE_DELIVERY.json",
+    "unattendedReadiness": "not established",
+    "footageUpdate": {
+      "path": "NEWS_ELDERCARE_FOOTAGE_UPDATE.json",
+      "sha256": "e7a5005bfa52093f624ff9cd2e66e949360e8ce70271d436a0d7bf7d356d0a79",
+      "draftRevision": 53,
+      "artifactId": "media-18ad3303-fd8c-4acf-8334-f6ff3fe18f00-converted.mp4",
+      "humanListening": "pending",
+      "finalAcceptance": "pending"
+    }
+  },
+  "integration": {
+    "baseline": "9a14aeb",
+    "currentVerification": "docs/verification/CURRENT.json",
+    "historicalNewsVerification": "docs/history/2026-10-20-before-news-daily-integration/NEWS_DAILY_CURRENT.json",
+    "priorWorkBuddyVerification": "docs/history/2026-10-20-before-news-daily-integration/WORKBUDDY_CURRENT.json",
+    "state": "passed-complete-integrated-offline",
+    "counts": {
+      "passed": 173,
+      "failed": 0,
+      "not-run": 12
+    },
+    "fullReport": ".bmw-runtime/news-daily-main-integration/full-final/result.json",
+    "reportSha256": "2c1225e4f502e18a4010528e8363291f44646d5b590b66716f3e46fc14c5fa5c",
+    "runtimeInputs": 485,
+    "generatedOutputs": 454,
+    "cleanupRecovery": "Verified isolated native file-close fault, failed recovery retains admission, explicit successful stop releases it; queued requests never replayed"
   }
 }

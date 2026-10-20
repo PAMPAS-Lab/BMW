@@ -1,0 +1,2017 @@
+{
+  "format": "bmw.current-verification",
+  "version": 1,
+  "createdAt": "2026-10-20T13:46:57.045892+00:00",
+  "verificationMode": "full-non-external-run",
+  "sourceBaseRevision": "6bea922a91489c2aa452a17cf76d92bbfa8ef71b",
+  "sourceState": "Frozen implementation verified in full; only current verification/status documentation updated afterward. Every non-Markdown source hash rechecked unchanged.",
+  "review": {
+    "sourceBranch": "origin/workbuddybmw",
+    "originalAdapterCommit": "e8f86b613d51162f427447c1b6fc7f95c57cf0da",
+    "decision": "Integrate WorkBuddy with effective pre-input browser catalog admission and task-based API Key verification; user authorized publishing main after the successful real browser acceptance.",
+    "originalWorkingTreePreserved": true
+  },
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "darwin",
+    "dependencies": {
+      "node_modules/electron": "44.5.1",
+      "node_modules/mediabunny": "1.61.0",
+      "node_modules/typescript": "7.0.2",
+      "node_modules/ws": "8.21.3"
+    },
+    "workbuddyCli": "2.169.0"
+  },
+  "fullReport": {
+    "path": ".bmw-runtime/workbuddy-integration-verified/result.json",
+    "sha256": "6181d0b7fb9e7ffd82fdbf014e7543592459ae0b86021d7c1822e1ad5f4cca44",
+    "all": true,
+    "counts": {
+      "passed": 173,
+      "failed": 0,
+      "not-run": 12
+    },
+    "selected": 168
+  },
+  "sourceHashes": {
+    "apps/bmw/agent-assembly.ts": "7ecff76d4678a195033e0d54a6b9b2c72f91179999d0ecde480762b3492d3ea5",
+    "apps/bmw/package.json": "8239e4e131c1f7d98da8f2cfe6c8c8bc1b7356a9de4b7d2a3b331324bed096da",
+    "apps/bmw/product.ts": "88c7c37d75ad22f713ce0f0478ae810be8c0f3fe0788a8b7db69a18181ded7df",
+    "packages/agent-contract/index.ts": "24df4f61360a4e13baab958e7959e1902d2cd8927453026ce5f1f2e09f6251e9",
+    "packages/agent-contract/package.json": "fbf1e3d7223be7d36ef452b83468c097e900db5fe96ac3eb1a17f7fc256814f4",
+    "packages/agent-contract/src/assistant-ui.ts": "68af8cfd8ef7a5900110d2cff5adb133fc713536c2d29770df6e078768a96c4f",
+    "packages/agent-contract/src/context-sync.ts": "3f975deec95bfad0da2d94b7aa50928ef1e29be84c12892fb5914e0a94e932e9",
+    "packages/agent-contract/src/conversation.ts": "0bbfd3834b9e4bdfdc1b33b8ba3abf4e5e515b69dccbb87a2557ec7029dff96e",
+    "packages/agent-contract/src/driver-settings.ts": "f7018937516c6ecd9de1b9fe609aba9f0c76ca586b82bde9b183896d16f7ca71",
+    "packages/agent-contract/test/assistant-ui.test.ts": "202faf9436054357d7173c528e6c3df2e388d8ecedc2b1450db134427d58975c",
+    "packages/agent-contract/test/context-sync.test.ts": "7249434289828f03b2d6d68f87ac0dd711bc449cbddce0b4a2c9292d1b930e85",
+    "packages/agent-contract/test/conversation.test.ts": "82e058f13fa8f5e0de8b439579c8a94b79e34d095da3cd7f3e972a9b888f04c9",
+    "packages/agent-contract/test/driver-settings.test.ts": "0a266c1ad125f5b96e2757f25d073cadccae2e0ddf983b08886dc1b2c5293e95",
+    "packages/agent-contract/test/fixture-preload.cts": "2c2fc601ac60665c75fcb738eb5e19ef85e25e1aa25b6cb8495c193820459fc4",
+    "packages/agent-ui/index.ts": "afd49e8aa66c9e4c1c0dfbb5b1f7ae4649f2556f1405f39ff1493ae932924053",
+    "packages/agent-ui/package.json": "9ec6697541a8792d2dd8a3678b3f4cb56f2633f8ee60164dd06a10ee003d8510",
+    "packages/agent-ui/src/preload/assistant-preload.cts": "ae7cc375e9e4de5ed088eb5fff15b8794160dd42b439c805e372d213df220536",
+    "packages/agent-ui/src/renderer/agent-settings.ts": "66bb71197f8a68747b6429ed4eaad7e9117cc8ba7f09e7a2ea7cfdf65f75f816",
+    "packages/agent-ui/src/renderer/assistant.css": "d32d930adb49a90983af7f26a42b8555b6eacba6fbb999994742daed11393a48",
+    "packages/agent-ui/src/renderer/assistant.html": "2babd55ce62eff9706f3c94ae8572f4cdf3bb4f26ec5cc0e7193391995f80888",
+    "packages/agent-ui/src/renderer/assistant.ts": "f81d5c111fdf37fdb07174dfac769d80f6d94574dcbc669991d7b7284bf8ec02",
+    "packages/agent-ui/src/renderer/conversation-timeline.ts": "87e8ea202eda0cb92753c836b2123dac13b424082e2b1129390f8acfd2989480",
+    "packages/agent-ui/src/renderer/message-content.ts": "a8fc4466811ac87daec838313522b133ad7ab64a3c418f0324ae2851a43c91ec",
+    "packages/agent-ui/src/renderer/studio-composer-scope.ts": "63b6b59d481d434e107ecf30a0b3a5b6c002392f442afee401b0513d075e6a27",
+    "packages/agent-ui/src/renderer/studio-floating-drag.ts": "13bb9b2c3633cb42ccbe1ce219d5245b14ca6bcc5efb60c23d7e49c07653c3df",
+    "packages/agent-ui/test/studio-composer-scope.test.ts": "134f41724d156e566f2f75b11ad473aafb56e9d25aebe04d7d2d6bdf317f8796",
+    "packages/browser-capability/package.json": "8c0a2c7e1ab2d2118e2fecef6527582e12b60d818526f11922ddbc1a08e1ee72",
+    "packages/browser-capability/src/bridge-server.ts": "69406ac68689199983e5f61b37a76230e6a2d90cfe10cf64bd42f2b29149f6f5",
+    "packages/browser-capability/src/browser-capability-registry.ts": "88d9a505ca9d0f884ad6936b7ca86a3007e1da35c07e53de7f7095dea13bfea8",
+    "packages/browser-capability/src/browser-deadline.ts": "45ac776ebd79619704157b122ee4b0f55c32730e4dce60cf5cffcbc2c58b82c0",
+    "packages/browser-capability/src/browser-host.ts": "3460be322d199680290c0a0e17983c7a17bf0019a24d4477bd51a9b6ca4cebf5",
+    "packages/browser-capability/src/browser-kernel.ts": "7a2985c9e6cdc051e5e73a6cd5c758905fd81de78332680429db478c67b8715e",
+    "packages/browser-capability/src/browser-mcp-server.ts": "d8efa3e9d8c2c6bd1e8437b33adbf5a1e02dbb418afae6deb6764bcdb5df82fc",
+    "packages/browser-capability/src/browser-schema.ts": "b140184572f659921f774608894fc5b457cadc1bae54a5f74293c8c4d5b07b4b",
+    "packages/browser-capability/src/collect-page-source.ts": "14172c98fff8d879d787a65188bb965896cfd8d2a3ef1cc90b052872b7b00d22",
+    "packages/browser-capability/src/media-artifact.ts": "50de2c64a04f6512bbadfcd568ae9e484e58de833a7dfbd01004a5b540b4c8a1",
+    "packages/browser-capability/src/media-session-fetch.ts": "96cc8cd62ed90362bc687e8c85f18ec4388506e3d55d25190e1f42e4802fae44",
+    "packages/browser-capability/src/page-navigation.ts": "44ed262b21aebe363203958fefa50185a06935dab9d097d4eefe74f7549c3d64",
+    "packages/browser-capability/src/page-playback.ts": "afd09979e978b3a1985e147173d10d05c6c43f888d502f1d8e834f82b264582c",
+    "packages/browser-capability/src/page-recording-events.ts": "a1cf3f62d0d6b9e7f45bf63c6b2a07351c7558069a20e8e8d582172dcc34edd3",
+    "packages/browser-capability/src/page-scope.ts": "b33fa4567f27b8f517f56d3fb24e46cc9f353aa6dcf62b3b98d778c643ecbdff",
+    "packages/browser-capability/src/renderer-read.ts": "8e761fd1ab4d513067c4d79a3fe5f882561ddc96630c5800eaa64f28050e7160",
+    "packages/browser-capability/src/screenshot-read.ts": "44fb82814d650c953452a2feebf7a106af1e0d774aa86a9df4dd649c9f4feace",
+    "packages/browser-capability/src/session-operations.ts": "ed7227fa2b88effa014b33597ee6abc301cf1bfdae5f22d12f634f2d86018a08",
+    "packages/browser-capability/src/source-screenshot.ts": "c37bdcae726f0b37c9bfeb2b594129ee2cc2194fd74c3bd149bda53978d33b13",
+    "packages/browser-capability/src/tab-policy.ts": "4347e9bac38122feefebba4da80111ee71b3641b3b9d8e17a606ad4557c19a62",
+    "packages/browser-capability/src/tool-catalog.ts": "896062578cc41553dda5a22b30b7c3d2466b64c2b3e702eed3f54b966b35d63f",
+    "packages/browser-capability/test/bridge-shutdown.test.ts": "a2a608eb6a5d6fb80338eff5150b28d092c33e27e5e13a12f80911ee882cc650",
+    "packages/browser-capability/test/browser-deadline.test.ts": "eb9cb9510f723212138b8feda372ec53a1543fa380c056811df59303d4f3c0e3",
+    "packages/browser-capability/test/browser-host.test.ts": "62cf909a6fb736095fc6e5938102172b571b5758823929c31bc8a1f16beb2bf6",
+    "packages/browser-capability/test/browser-schema.test.ts": "6562a5e76530ce0069f8374f671937ce414d5ab3dfa93895aaa2d1334547f677",
+    "packages/browser-capability/test/collect-page-source.test.ts": "e3b1c7a43683e06f9c13b9980f6185861bddc2ede5835e905ef84b8449a6ae53",
+    "packages/browser-capability/test/mcp-tool-catalog.test.ts": "694b6eb36ce305e167a256f2ae0c4c48d4b68d64d1e8ddea2106d22651bbf906",
+    "packages/browser-capability/test/media-artifact.test.ts": "8e244838f9f47fdf5f935a1f77f6463097cb7c35c1efd32961d4e1638a7989cd",
+    "packages/browser-capability/test/media-session-fetch.test.ts": "ace6d19af739d1b582a02ad66f8745cc3ac1946141835d2c21bbdfd2287c3aed",
+    "packages/browser-capability/test/page-navigation.test.ts": "f52ef2a752f49e639da8f5f4787d51f49feb8c73df821a73dcdb91621b3c66d4",
+    "packages/browser-capability/test/renderer-read.test.ts": "0dfd1f315b6b8a036c89837578e2b7e93d6210d36fe3082886a67286619aec59",
+    "packages/browser-capability/test/screenshot-read.test.ts": "e025914242f8328a03e65cc44fb42121f14c5f46a8b7e2944f553e698a2fecdb",
+    "packages/browser-capability/test/session-leases.test.ts": "1531eadc5bcc8b016f7823f4799beb4eb3d2c62a98615707da12357ae7f19903",
+    "packages/browser-capability/test/session-operations.test.ts": "e98965b70126bb71dfd9919c817add63ca0b79cf785e19e916700c8f9fb86223",
+    "packages/browser-capability/test/tab-policy.test.ts": "da83897f6047fe92c22ef4700a7013f57956fba9faed4773ce8fe6a2eab77078",
+    "packages/feature-video/index.ts": "d02c1938594fbc8c76be45dcef92c55415a735bb94ef68b168149df1728fb6d8",
+    "packages/feature-video/package.json": "f8ff0f0186cd925fbb45e51f639b28fd93a2111e6430c83a8305fcf98808baf3",
+    "packages/feature-video/src/export-review-contract.ts": "1b331995b2eedd2d0367a964d6e043f499da297037ba30ba4bd47a13c006abce",
+    "packages/feature-video/src/export-review-journal.ts": "afb3e34c8a104c6a5892a11851ccdea27241953e7a5659df04112aa98454eb22",
+    "packages/feature-video/src/material-index-contract.ts": "d4c905db64a5cf96df2e60ea9d6037f8dac6afe48791f7b56152c04778a76e91",
+    "packages/feature-video/src/material-index-service.ts": "5f9d7e7d32650e72906b36cc31177b633417f042f5e2958d5aa2f9569c9d26e0",
+    "packages/feature-video/src/material-index-store.ts": "70797cb2be340e31edce80a403f20ef714a204ed0ae2440253c743025372b88c",
+    "packages/feature-video/src/news-contract.ts": "59f317498c26b1bbb6f33a8f3b7e6c1724c42a16a173b3647094f7a81635a35a",
+    "packages/feature-video/src/news-service.ts": "ea93d1e0df4290258e704dd64adf7669d6a85d63f5af88809cae2c83316ca69c",
+    "packages/feature-video/src/news-store.ts": "7f261d3e837b38cce1a83024fb4dac809d39cd0843b047710d9a8b3c418a940e",
+    "packages/feature-video/src/preload/studio-preload.cts": "5ccad7d1fbad3f54babb4843a7beb750aa05170209d318769b0f3a9281b05fe3",
+    "packages/feature-video/src/production-assessment-contract.ts": "7a764ddca2446bc8e61e81639fa81fef50ee835dc06334537b32fb83d451fd36",
+    "packages/feature-video/src/production-assessment.ts": "7c8daf29e65ad43a083602c42faafc87cb64ee2121ddf3407512856584a426f7",
+    "packages/feature-video/src/production-contract.ts": "b6189fd80f590517ad98665722a553b6fd7424b5e00430311cec90532627cab4",
+    "packages/feature-video/src/production-impact.ts": "7ca94fb9b1f2b80f97f625af7c51604353a4e1182384829a9eafe576e3e0a189",
+    "packages/feature-video/src/production-types.ts": "862fe751c3a1f98fe216fd87a4a37b605a6eda81769a10179379407b5d40a08e",
+    "packages/feature-video/src/renderer/research-diagram-editor.ts": "521165a82286326cb6da76203b0f3a3796df14c8efd82dea4f57350ac856b34c",
+    "packages/feature-video/src/renderer/science-layer-editor.ts": "980e3267e57c67c60bce358c5df3af1f3b159b7ffccd9dddb40c4f4be2d0a9ef",
+    "packages/feature-video/src/renderer/source-analysis-panel.ts": "bed42b789b90c5dd8f0fb2b0e2e8ee6dbe42bdf1e449e3078980333e0baebf7b",
+    "packages/feature-video/src/renderer/studio-caption-editor.ts": "27f1f81ce74973b34e9670b854e5ba10219deb16c76f09ec6b091ccd9d0e4e32",
+    "packages/feature-video/src/renderer/studio-card-details.ts": "30b6a3584db2819c7b2425a3fbb41d2d31c4a61fec8a4fec200d95f7ed235fdf",
+    "packages/feature-video/src/renderer/studio-card-text.ts": "09f25f7d8b9dc1f67b84f4a0893e4c74c5ea9db38dfdd291a38166a1192b23c0",
+    "packages/feature-video/src/renderer/studio-cards.ts": "484b0b27f812f137b08c3b9ea0ced1978ba77bd663b6d0358762805415d2c81d",
+    "packages/feature-video/src/renderer/studio-cover-editor.ts": "a6696dd488c976994797ad7475facda13a393307db9c13d8d400f32874a46bde",
+    "packages/feature-video/src/renderer/studio-export-review-editor.ts": "2c2025557d94c7402c1c570636008f5bdf6430b45c7c1fd8e9bc23919b292077",
+    "packages/feature-video/src/renderer/studio-focus-editor.ts": "820af29f34626832e40ac56e613768bc92e43e5f149f80454f0a7048a9e8c362",
+    "packages/feature-video/src/renderer/studio-layer-editor.ts": "b4c8a97583cd47f59410722911d69754586d904e1487a5cf4b7da2efd4377169",
+    "packages/feature-video/src/renderer/studio-main-editor.ts": "963329909f524da6a9b6693542455791b72744ab87f51d8ea291b23abafa3cf4",
+    "packages/feature-video/src/renderer/studio-material-index-editor.ts": "065a683732f55f65387a8ab68bea1c2357cd4fd55788581f805917811d7d2c0c",
+    "packages/feature-video/src/renderer/studio-materials-view.ts": "2bd1e31d41764b811d73a23642cd80fef1c5fa033ed416a37aafa009b5fd1ed0",
+    "packages/feature-video/src/renderer/studio-news.ts": "c3d0bc0b0731c5c4bc0d6379053fce370b88fc24853df6d35cc2dcf2d5947820",
+    "packages/feature-video/src/renderer/studio-original-speech-editor.ts": "d7e2306de2b8b44841fc9f1a6931ccc4da32d9076c6d1d10fc663009b03b500d",
+    "packages/feature-video/src/renderer/studio-panels.ts": "7307ed1b9d7325ae0db708fd036d9e25f4933902e3674d7cfe954e5125f98130",
+    "packages/feature-video/src/renderer/studio-preview.ts": "8f934762b64c3a8c32a3c2f302f982d820db8e0ec4d789ffa65c1fc2ac2ee210",
+    "packages/feature-video/src/renderer/studio-production-editor.ts": "17d5fac3f9806d4c62d3540f019538b4abc438880141b0c30ebdc7d2410cbad4",
+    "packages/feature-video/src/renderer/studio-recording-plan-editor.ts": "3754b5f260928a58f2c51601d1d39e9a4816b787787570f1f76fcafc88c5bb7b",
+    "packages/feature-video/src/renderer/studio-reference-editor.ts": "56c6b5cd6a8f068b188e3dd0d0a27f33b092f0039f2bd6c7a227f5cd819ea933",
+    "packages/feature-video/src/renderer/studio-source-editor.ts": "77f89ad01eec300c70109f1bca96928b8139496000ff2ffe954213c55b57daa1",
+    "packages/feature-video/src/renderer/studio-source-narration-editor.ts": "975395c0daffa1256ffc68de72624fcda04f93adda715ad5b9a4cc0e8672daa8",
+    "packages/feature-video/src/renderer/studio-speech-editor.ts": "bcc5fb607f520f262e18f61d96e08f3abb514c9d2e4d119f2e4fb099067f184a",
+    "packages/feature-video/src/renderer/studio-speech-links-editor.ts": "ccdc879ce8838de4ba7b1b7e9f1504cbe89f061b160becbd8555c3957a852461",
+    "packages/feature-video/src/renderer/studio-timing-editor.ts": "dcd16db761cf1fefa0b5fec3253ddbffdb6fe127fbe66d4efe1b98a662f839d7",
+    "packages/feature-video/src/renderer/studio-type-review-editor.ts": "0f67598a0b7df56a85fca143da27d13fd960aec664daac77e3f69885505d29d2",
+    "packages/feature-video/src/renderer/studio-visual-editor.ts": "2ad20f27efb4e15ffaf85c10e655e77303b5b2aa7547dfaf224525d7416679e7",
+    "packages/feature-video/src/renderer/studio-workbench.ts": "cfa149b73d26d20f0658be25726b6ce310839a09e9524a9d3f384f949c37a762",
+    "packages/feature-video/src/renderer/studio-workflow.ts": "6aa8cd67b36c513bd7bb3a3e0ee00a38f0f807426995a0c0dbe68a267402daeb",
+    "packages/feature-video/src/renderer/studio.css": "f92f17f4a69fc7b64bea72b655341f003d6663f02f0f692a71b3051652d279d5",
+    "packages/feature-video/src/renderer/studio.html": "fdc6a3771d6cc192fb0043d8673dbb53cfc7fc45a884914e10c1462e5d8149f3",
+    "packages/feature-video/src/renderer/studio.ts": "51fe862ce979bcb6b6f3cfc3d2ef3ea0dc6b44727282238316e22ffe65c58307",
+    "packages/feature-video/src/source-analysis-contract.ts": "33f5c51536372c8f1204f77aa6b40239c824ea56b769bf588c5bf0809bdc4d1b",
+    "packages/feature-video/src/source-analysis-service.ts": "0be964945afd9b4cf0f14092fbbd713df3cfbabbc46979da0d88fba539c97c05",
+    "packages/feature-video/src/source-analysis-store.ts": "9f47f6d90e5d7010f873f89213cf78ecf229f5bf7a90eed7444b5b1080f114dd",
+    "packages/feature-video/src/source-narration-recipe.ts": "21a578ce961d095f65781f0df95a6e134f575ce8250f8b726e1f5c6dc6b9dd0f",
+    "packages/feature-video/src/studio-agent-result.ts": "17f4f2bc6324ce09410120a5427aef88fc07da785e6f47bb6f13a904119b1d8f",
+    "packages/feature-video/src/studio-asset-page.ts": "155a84378aa1b6374df3147f3675e94bd985280f90dd31cff4b96803a6c9680d",
+    "packages/feature-video/src/studio-assistant.ts": "8204e7a3208d7181a448a47355e99f824212824b7da2ca2d2875701af9c723fd",
+    "packages/feature-video/src/studio-card-speech.ts": "8a7a72fb5c3f04ee2c530530498a50a96d3ac0b9f04ee39c86c348b20402b9ce",
+    "packages/feature-video/src/studio-card-templates.ts": "de17e87c77f0ec728d7b20585383374beccd4ff44a8d412f5be0601827452add",
+    "packages/feature-video/src/studio-compatibility.ts": "4064af33cf1f1eefe03b859253a2a4cbaca67c3b22b3be2615e6472458efca3b",
+    "packages/feature-video/src/studio-context.ts": "ea69872a2635643672aa8405593a94f90a25b50e30c4d11a8f9e5d91abe42e81",
+    "packages/feature-video/src/studio-contract.ts": "64ab37bcee9bf19b48ef3103c4273dec38050b4004d0d56f8ec8d38c0df7a624",
+    "packages/feature-video/src/studio-discovery.ts": "bc173643b6d71e1865076fd4f2d3d70018c1311119615a81027e30ca68a64ff1",
+    "packages/feature-video/src/studio-editorial-timing.ts": "a2cc8fb91e6f5db56b8db2c0cc987d0e8e20e2398c72b6b942bb0ee5a45a7db1",
+    "packages/feature-video/src/studio-export-review-state.ts": "43a7d937f5a56c7479eee3e619b0e07f5bc0fcace0e6fcda7ae5a4c9678c06d0",
+    "packages/feature-video/src/studio-export-review.ts": "780d49b15d2620eaf08d516a01760cba6b43e27942c184b8149a30a36fcae4be",
+    "packages/feature-video/src/studio-layer-edits.ts": "90984585e78a0d2f4fd08416875c79ca4fa58840959db8781604a98bcf0ba8f2",
+    "packages/feature-video/src/studio-main-edits.ts": "32ad0b07cbce2c577e91f7c4d719c089cb47a092c2cefc5842d03f472132cde8",
+    "packages/feature-video/src/studio-materials.ts": "a0879032ec4422809720c30eb0bdc6d6e5758740e3c9d8f8a0066ea7eba125b2",
+    "packages/feature-video/src/studio-production-progress.ts": "eab5851053d735c906fc16a92be9988930def036db99c4b2c60e2165eb8dfa7a",
+    "packages/feature-video/src/studio-read-contract.ts": "44a8f932d842de43b7c90f88fe1a279e794a3083e684e0d87a9df6568f9c4e26",
+    "packages/feature-video/src/studio-recording-plan.ts": "d702e64fc7669ecba4826ecaa1d9044b6ff9e5c033b1dccc6903f57933652a30",
+    "packages/feature-video/src/studio-reference-contract.ts": "e2331aef669972b461d235406e708039ec3a73ac008e442733c6aeb24ec5df03",
+    "packages/feature-video/src/studio-reference.ts": "5f9a047264b257cbe578e29bf6b320c6a8c221936eb593a6feec901d30fccc9e",
+    "packages/feature-video/src/studio-review.ts": "b0634e20d756ebc1c702a4a2cb0e8220a2cb8db4fc79298edc180a637a7fe825",
+    "packages/feature-video/src/studio-runtime.ts": "db83fa61369a40a6e13f8b56d109656c461a4e4ff682d91bb88ca9be4ba8c826",
+    "packages/feature-video/src/studio-scene-split.ts": "17c7f9d6f73ceb95d2cc866caaf204e53fb3f088f38c64fb56166f32d13a12c5",
+    "packages/feature-video/src/studio-schema.ts": "798c364a3258df01e55237846510033a277c935ff5de72c9e62900398aaf9096",
+    "packages/feature-video/src/studio-service.ts": "a2e268d7e81d0f4e16626249ed37e8c7f9616eeb62472a44342b289c08c21050",
+    "packages/feature-video/src/studio-snapshot-proof.ts": "84de3fde842968a373509d5c628cf78936bddb950c09f54b3f0492ae76751b93",
+    "packages/feature-video/src/studio-source-speech-contract.ts": "090abe6e529921d0e3eb22813cdad17add4ef7876008583cac7c5ed0048d21d8",
+    "packages/feature-video/src/studio-source-speech.ts": "5d9d68389d4fb0aff3093d986d19ee2c45e9a01633f96f4096511759db436aa2",
+    "packages/feature-video/src/studio-sources.ts": "4e724efd9aaa1e435d5a8011c550d4a42e589d2e8d29c238bc45e6671a8d9c97",
+    "packages/feature-video/src/studio-speech-contract.ts": "9bd36f9bf27b6e1bb2e3d084e8ab4d3f612c8e17547ba7fcb4eadc111d5c213a",
+    "packages/feature-video/src/studio-speech-origin.ts": "83951e06acd6ce501e94883fee24d98054fd0cfb2c5a1b8d13520065ba992e2b",
+    "packages/feature-video/src/studio-speech-provenance.ts": "658fd68ae591e9361c3c307ac36b73f61bf5088df3ad3b304b40cecf7306e85a",
+    "packages/feature-video/src/studio-speech.ts": "37653dda31b450415916e5a8e129653d3808ad7a2504d41a66fd0da78b6d48d5",
+    "packages/feature-video/src/studio-store.ts": "27c7952e658405f1d0c4000a6c25668ab437437e9cec18484d9a6b95dec8b191",
+    "packages/feature-video/src/studio-timeline.ts": "0d3007e9f889f111657a61f823e0b7d88cc3147ce5c6cf4901dc1d1cb5bf7fbb",
+    "packages/feature-video/src/studio-timing-diagnostics.ts": "67d5e238b7816315a6befb31e38fad945df238669d933fd23bc469dc111e0c47",
+    "packages/feature-video/src/studio-timing.ts": "d47dc9f87c115c170c5cbc241738d46543cb605755016558d734982648a69592",
+    "packages/feature-video/src/studio-tool-guide.ts": "329597af489a3e8cc064e6dbeb7f03ed01a1e74276d6dadeeffe2cf10bf8a5f8",
+    "packages/feature-video/src/video-document-version.ts": "af7977d001aefbfc79bc9dfdf9407668ed28fe4189388ca8dca86c9df7a354de",
+    "packages/feature-video/src/video-document.ts": "30765e61079bf774d71dbfa7070b8c8a2469f141b9d525b74622110848825647",
+    "packages/feature-video/src/video-edit-contract.ts": "d7106c1413571ca8809370e61f199d6e8d7b316e4eb6523577f21d3aabd3c843",
+    "packages/feature-video/src/video-edit.ts": "b579b8eb9d08bd2074f4fa74a8866804c5f52ff06638ce8e1f29b6990f8b2edb",
+    "packages/feature-video/src/video-settings.ts": "59ca1739a9a8bd9edd02b00c27fcc98b17d779ddd6312adfdcc3d88a3f285a3d",
+    "packages/feature-video/src/video-time.ts": "04ec6971bafe7c8ad9cd29fc0e383c81a1cd1aba2d10736d1c27206d85e7116e",
+    "packages/feature-video/test/material-index.test.ts": "33251988333d0f9f4a23628378b31a0486becc87c5d52d7d0f1944aa500b84a3",
+    "packages/feature-video/test/news.test.ts": "e2145f486d833b6540f2328ca30095bf9ef2ce68aba4e6032dd82853c563ab21",
+    "packages/feature-video/test/production-assessment.test.ts": "b7947d3d1c7247c8bdb1c46846c9c44d3027530f6556481fc43af5689d4e4289",
+    "packages/feature-video/test/production.test.ts": "cbe5ec34456ee9be1c7975f2f90f39972303cc482090abfd75974912622c9b97",
+    "packages/feature-video/test/source-analysis.test.ts": "3c9e67d61903029ee7dd2608ed9d2ec3cfbea86cd11fa14568c13be9c41f9172",
+    "packages/feature-video/test/studio-materials.test.ts": "f9bfb9964cb774c7132320bb93755b0473e2831a44372d4a4f5bf367a59e19b8",
+    "packages/feature-video/test/studio-sources.test.ts": "22617a92a1fe231f542ba05df2643e664257b760a8b335e867a0d10ec25d07a3",
+    "packages/feature-video/test/video-boundary.test.ts": "052dcf05501f83678282dbb6e97e9c64e1115c0ce44007df010f7f8e027ebf48",
+    "packages/feature-video/test/video-document.test.ts": "c1ae1bc320884b7d1677d920585522aa9452698771ebd60d81c726866af302af",
+    "packages/feature-video/test/video-settings.test.ts": "d914ef72c89c2889b64a0d7d1c8954cd8501709a2e68a6f9cfabe01112bb63d5",
+    "packages/feature-video/test/video-studio.test.ts": "e23bb538b6afb29b055fb82560feadd84a5d92380415d663f8a0f343186dc925",
+    "packages/harness-codex/index.ts": "978509eb8bc2a4e818eebe9c8f22a8b6342f0183801d8416701a61fe64b1b853",
+    "packages/harness-codex/package.json": "263650c56a1f6f78b8be445a54197e6ecd0ac4c87414029ddf6144c715930aa1",
+    "packages/harness-codex/src/codex-backend.ts": "72fbb20fd80b2c6a84334f6afb1c643a2150b0731b8beed87ea4d7a9066e7e55",
+    "packages/harness-codex/src/codex-installation.ts": "010c38eb24ba03ed8ec9e55ae446357cf8d15507e507cef5a6b97ed8a2b8f7b7",
+    "packages/harness-codex/src/codex-model-catalog.ts": "200a9a6160891b3d505a2477d5acb3c720c6b3c16a9b22471ef327d2315e8565",
+    "packages/harness-codex/src/codex-policy.ts": "e8f9b7411133c9279b046ab7e50349a7ae996d497ddb459da1b14d7353078333",
+    "packages/harness-codex/src/codex-rpc.ts": "87e81c69d6c98f5b1dd7524bc8719796fdafd1988b192170cc5d9dfa8a127bb9",
+    "packages/harness-codex/src/codex-settings.ts": "9348b255d4a6c0c607237d3899ddd3b33a13d16471d381bbadc3aac5ed850c22",
+    "packages/harness-codex/test/codex-backend.test.ts": "2ac70c9804234e01e0af36e400409a0cda065cf1d29eaee1ae3a6706f56f9739",
+    "packages/harness-codex/test/codex-installation.test.ts": "da087b38b1e8babf737cdefaa5be5dbfcf5738c5f0b49c1e2e9d5446086c7150",
+    "packages/harness-codex/test/codex-policy.test.ts": "7754105a42fef0d08f7f8ce4a0a307d087ab6a13c1b41eab52e6d9c1c7f1c08c",
+    "packages/harness-codex/test/codex-settings.test.ts": "5187fb8d0fc60934c74a83a030bc917a7b76baf333cc9124cf36f50a1d3c64b1",
+    "packages/harness-dsh/dsh/base.patch.yml": "12a79354656574a7854871e268169e7708fb431fcd7efe4d7895bfec1eff36c6",
+    "packages/harness-dsh/dsh/driver-control.ts": "0e1514ac515aa25b784d63efcf10a8e77fbe3afa430342a098d410e7de894a8a",
+    "packages/harness-dsh/dsh/plugins/browser-mcp/failure-guard.ts": "b27457a8515435d6a3786a9c72513299f45f3e2bc4ddc2762cae725c61272e8a",
+    "packages/harness-dsh/dsh/plugins/browser-mcp/index.ts": "6d19e52fbef9ba447cc42ecf2a09b14e4069fd13f5cb8e0e2f7e1a57e2fcd48e",
+    "packages/harness-dsh/dsh/plugins/browser-mcp/registry.ts": "ce0d603f4b4e977df098f1ad4a55fba40e243908570e181862c3faded9022b30",
+    "packages/harness-dsh/dsh/plugins/browser-mcp/workspace-context.ts": "428a23a3f2be2404047690947a11dffe70b8ae5238c79b05f5bd3c30e4f8a295",
+    "packages/harness-dsh/dsh/preset/base/agent.cordis.yml": "aa1085880c566e8c063cc01dcd9fb370063e32cad23ebd9b17a9ce5139214d37",
+    "packages/harness-dsh/dsh/preset/base/preset.yml": "bc3c3bbddcd593a0ac304cd2221061173a1475a540a15cedaa2691f6f76e725e",
+    "packages/harness-dsh/index.ts": "c448e919362e20cd221dc16b3ac7467e115b66dd4b50ba6aedd8dc3fa27fba73",
+    "packages/harness-dsh/migration/history.ts": "02dff2fe58c3665720edf045499aec0ada49dd8801408f1e08c6be99930c22f5",
+    "packages/harness-dsh/migration/index.ts": "7ba3208b2fa535cc977699c8d9eb676718ecbd3c4163bead3e91c110d99ae8af",
+    "packages/harness-dsh/migration/profile-reader.ts": "9007deab2da34bd07f3fcb04643d959b837fc8e12c1ab27b5681b2e58ba759c5",
+    "packages/harness-dsh/migration/source.ts": "5d80be59777da75938bd6b163c27bdcc69ba247b38054dd14c9aafcbef19ccb8",
+    "packages/harness-dsh/package.json": "d87452390ed83e1d4e08a052873776e9fcb7f434f98634ab35a7c6da3172031e",
+    "packages/harness-dsh/src/configuration.ts": "8b83a8f301e79e81322e0aca678c98d3b14e73c7cfa026b49cfe642e9407e4da",
+    "packages/harness-dsh/src/dsh-backend.ts": "74068df4d90521539548ab7f6dd64a755323d7356ff2b275c628ecd163cece28",
+    "packages/harness-dsh/src/dsh-events.ts": "ad1274546cffd7b5cd355725080fd3e7d8e02fd99aabba2a136ba20e70b9302c",
+    "packages/harness-dsh/src/dsh-preset.ts": "639e306058659d336e63c982e1eebdbf9fd237e412493baa567cc880c643142c",
+    "packages/harness-dsh/src/dsh-runtime.ts": "d5916466f835f09792c36f9aec365dbbaa9e5f3bdcf15cb7ca204fd77bc817b1",
+    "packages/harness-dsh/src/dsh-settings.ts": "3718fa1de27eef4b6cd0f80da580c541567d32cad263d5c0498bb9980f3d96f1",
+    "packages/harness-dsh/src/dsh-transport.ts": "26784323ef786d9c2002c45e5b33dd204b6c969ce981a8a0dcca3ed207b185f4",
+    "packages/harness-dsh/src/project-bindings.ts": "619b7e31d35927a3b25b1af4be397071b53398b651842547bfb6dd67c18f5ef4",
+    "packages/harness-dsh/test/browser-failure-guard.test.ts": "92b8bf077faee9f82b249db33af24389a43759df58e95cb18b82d1a98874b100",
+    "packages/harness-dsh/test/dsh-backend.test.ts": "ced13857d82cefcb8117c347aec2ab990851c5ce3bc4e07854c21e8eb961b3a0",
+    "packages/harness-dsh/test/dsh-events.test.ts": "41d98ceb260e8dfe686d74d942090e14c7ee101d6bce3cce541344666cb6b6fb",
+    "packages/harness-dsh/test/dsh-migration.test.ts": "6e4b42459a0f3ed32bf3124c0cc391feb15012dba148be289f6533e3fbea0ea8",
+    "packages/harness-dsh/test/dsh-preset.test.ts": "d5b99e0e0bfcfdfc7f8af6ab0489f0beb8043c1b439ddefd8e1d2ce9051bd5c9",
+    "packages/harness-dsh/test/dsh-runtime.test.ts": "d1bd916f3b8f7dce4a89ad610bbfe2ec2f4417e6e17163ddc833e6e6853b7134",
+    "packages/harness-dsh/test/dsh-settings.test.ts": "d46ef6195750d44e8c2bab3806161e9239067eda240e4e4b0a2ddcc2f9810d3a",
+    "packages/harness-dsh/test/dsh-transport.test.ts": "32ce1654293daa0796c84897e078e8ffca6f3fd5c0e7903127bfa6a2ac695849",
+    "packages/harness-dsh/test/project-bindings.test.ts": "3c3385eccfc3f93da24606589486662beeac88563bc5ff357b2f36088ec68d72",
+    "packages/harness-dsh/test/video-case-log.test.ts": "3ca7c74eeeef6204c1352e3feb6b80e2ece78fa60072a6dbfac4373baab88b41",
+    "packages/harness-dsh/test/workspace-context.test.ts": "fc790af6eb4d07be6024865d3929f9be8a4161469ee332f01fb4b39c75ea5b62",
+    "packages/harness-qoder/index.ts": "1e233280fa7ef2494926936ec8f945a6b23387e863e382c250bbc816dbd1fede",
+    "packages/harness-qoder/package.json": "2e3f63fd78f7f6da7cd570002ed8d56b61ce70ed2d8f3dea4780f5866b3ba7e4",
+    "packages/harness-qoder/src/bmw-guidance.ts": "5f4243aee48b58c58516dff571cda675a20ff12c8ed4f51afaa3b81b38f15b7f",
+    "packages/harness-qoder/src/qoder-backend.ts": "6916819fcb396ac9e3e6d72931da5d47fde00602c7ddd973f32269b8ae2e85d8",
+    "packages/harness-qoder/src/qoder-events.ts": "44f45a559823cbdd5a94554bb3dfc5dea1356f05bc6c817746c0fad5053d033d",
+    "packages/harness-qoder/src/qoder-settings.ts": "72b211bb53a2564ff8ae97f867b46186ff11b0a0518be182e75e2612a30a7c4b",
+    "packages/harness-qoder/test/qoder-backend.test.ts": "cbc9a542b490b2fe158c55ab1c6c2ac166daf2cb59b9e65425a1fe8ede663d3f",
+    "packages/harness-qoder/test/qoder-events.test.ts": "250ac97d65ebf5f68e776129b86363bb75c6edb0da32adf095aa0e1275964097",
+    "packages/harness-qoder/test/qoder-settings.test.ts": "c466406b4688e2af1e53a01e7bb8c9d7ad61dfd9fd978ce7c3377d6a816947ae",
+    "packages/harness-workbuddy/index.ts": "8d12989da1bbb26e0271d235b2a77d13e3ff9ebfc4094fceb90283124fc1d1e0",
+    "packages/harness-workbuddy/package.json": "de0e44cc85ab650f54402888f5690aa6c060feaa24572538c297140184c5bdbf",
+    "packages/harness-workbuddy/src/workbuddy-acp.ts": "f3a8b928c416e8f055b42a275fbffd21457f25d84702c67f5504e2fc242c9367",
+    "packages/harness-workbuddy/src/workbuddy-backend.ts": "29ce339c400656c87e7eb5bc2f61f07836ff4ea6e7a2c2c35bf0537d580ed736",
+    "packages/harness-workbuddy/src/workbuddy-catalog.ts": "2ce2c0102c42a55a2cf8a0212e1ddfe0e5fe207f05db8add306a5e006dc7e807",
+    "packages/harness-workbuddy/src/workbuddy-credentials.ts": "da03547cc002d38c62c7c49a1e4a176dfede4763bc49101de02539f70cf15c5d",
+    "packages/harness-workbuddy/src/workbuddy-installation.ts": "90354f15cf59a507d027f9a5f94df4357df8d4b5d7e31fb64f553804d643434c",
+    "packages/harness-workbuddy/src/workbuddy-model-catalog.ts": "dea3caa6e6897d4cbead46b9862f41aa1add817a941303f3b5f32ba7f1aa2d09",
+    "packages/harness-workbuddy/src/workbuddy-policy.ts": "587dae7f8dee4b482b9b0a35f13662fb8e201529c91a8eef871cebc316f88b10",
+    "packages/harness-workbuddy/src/workbuddy-settings.ts": "80cfd205b84f82c1eb117961c66e761971cc806d3e64eef3180aaf0caa09017c",
+    "packages/harness-workbuddy/test/workbuddy-acp.test.ts": "934f358ecbd8951dfbe9b971c621d14186fe7b9d65182f8d96fb624878eeae92",
+    "packages/harness-workbuddy/test/workbuddy-backend.test.ts": "a1e5b964390c0db0c0f39dc5fa8b5b1ce2c60849240dd29ebdc547fe7b096554",
+    "packages/harness-workbuddy/test/workbuddy-catalog.test.ts": "c137d12bc63ffc142402bcb6e9fa378b845fcbcdb81cc99ed49dbaf2a3e7863c",
+    "packages/harness-workbuddy/test/workbuddy-fixture.ts": "1377d0d48d512eeb66c7d0fd818a5a327ecaaf3ef90dbe4ccd40999fd89e3741",
+    "packages/harness-workbuddy/test/workbuddy-policy.test.ts": "e0905df141791683d09478faa974d708ef361994e381046523a7ccdbc42b32be",
+    "packages/harness-workbuddy/test/workbuddy-settings.test.ts": "bb180a6e4dda073da61c4000bf17aff70de08894c5518a9cdef557109fdfc741",
+    "packages/harness-workbuddy/test/workbuddy-test-support.ts": "c5d7649c2291459e7da0c8a1d9ea4dbbcb09a4897c614b4da9b42c5977ac5edc",
+    "packages/media-native/package.json": "2e9c8b9eb40999874668883edc7240eaa1af9bfcb64334f557f1e9897e0c2fcc",
+    "packages/media-native/src/artifact-job-io.ts": "34a641b2eac85d1480ca0f57485ad10b2811273e2ce93314ea46243b9ca4011d",
+    "packages/media-native/src/audio-evidence-contract.ts": "2d38dd07b83bb2b3e7310c89011daed5bde0316c2adeeb359e197dfb2f50db16",
+    "packages/media-native/src/caption-export.ts": "3e3dc78888c46eea3732426a4161c188e21ac534a5e623c3436db0d39dc0d34a",
+    "packages/media-native/src/capture-mux.ts": "9885ee066790ddcdd9eb71f28fc84af0f245f2a8563cbee52ec8e51f32cd80c4",
+    "packages/media-native/src/capture-policy.ts": "d4346cbb01c2ca466f8212a292cec24fc6c740935f9cfdf32f9e616dfb9252a4",
+    "packages/media-native/src/capture-source-index.ts": "8f74fb78110e3976a8e699dc4c058a49a15c3c17cdcfe45237976d6fc05618dc",
+    "packages/media-native/src/capture-timeline.ts": "c55190e5431775f927724f6a1b89884e4cccffce41702ced0281b4ebdb7477c8",
+    "packages/media-native/src/card-cues.ts": "d6a3bf48065577a98a3e4155a76c8c63d95eac8369a6e22de104251fe8b43f0a",
+    "packages/media-native/src/card-details.ts": "6a5e1f9085cc370f111552f44212084ac7fe935975404e822b901eb207cc908a",
+    "packages/media-native/src/card-templates.ts": "1a83c7f3c3fb8ae649594239d08ee57543acb0a917d8bf0d151ed74db768d98f",
+    "packages/media-native/src/composition-contract.ts": "6ea9e758555b6e1e63eb6ce6241dfcc80bd2fd91ea55126456933382b26fface",
+    "packages/media-native/src/composition-layers.ts": "1e7455bdfc77517329146e1cfd63378e29e97ff417cd64ad0e7a86378e790e96",
+    "packages/media-native/src/composition-limits.ts": "927d1d458bc0b235a70097bdc8ae758800730066fc8f5b42beca3df8936f1fd0",
+    "packages/media-native/src/composition-processor.ts": "b570862031c55abe89baa9da3bd02ddb6a344d8003f381ab4c1c34419547a65a",
+    "packages/media-native/src/composition-quality.ts": "68c97c420f2dc6a37e5355310561d15b97fd528f16b758f6123d591f308f9c00",
+    "packages/media-native/src/focus-contract.ts": "d7c063fe26cb6679a6bd2f89aeb8cb024f0ff5219b1a229fc90b2281f33231a3",
+    "packages/media-native/src/image-contract.ts": "1be3f5b828993325d358eba7a9e12f72f1ffb5afe6add589b219d0ee844e2989",
+    "packages/media-native/src/image-drawing-contract.ts": "795b37659ff5e79fb9b619882f189d8ceafbda3e1e35f9a6fe45b493fe92ea8c",
+    "packages/media-native/src/layer-packaging.ts": "06e055df9eb5650dafc7acc0b5bd3eeac2fd645f072b5f661a36f9aadd353fba",
+    "packages/media-native/src/layer-text-treatment.ts": "6ed34006e7a9cdaa036f0cb767a3faf9daffe60d81a16b9335e37f66c91afe53",
+    "packages/media-native/src/local-asr-assets.ts": "8623e7b0c4719ab56dec9d2935856ac4fdf33d4fdacd164c7bf9f5e8ea7803ad",
+    "packages/media-native/src/local-tts-assets.ts": "4da4a00d1621d29d96b42a73c3c5e4771ac92094f79d64b92af6c014c9b65ad0",
+    "packages/media-native/src/media-contract.ts": "9fc65af3eced877a7e4cc03afdbcf8dffb9d45741fad4827fd34ac6d54c4be4c",
+    "packages/media-native/src/media-controller.ts": "e966ba1074d64672aac4f4e0c8f9d8537c366242b106176804b8414cc1e72a93",
+    "packages/media-native/src/media-port.ts": "a50e23ab8dcb9b30e820c2e4993809f3309cb0d91c016fbd1a76da2f713aafad",
+    "packages/media-native/src/media-preservation.ts": "0a101c18beb1f5d2870035c1ad347e9a1d1c6af58ab8280f37bf0a906b3c94a9",
+    "packages/media-native/src/media-processor.ts": "4053387220c6dc060e6218b27c500581db0b313c1f8c098b057cbb10e2bc81c8",
+    "packages/media-native/src/media/audio-evidence.ts": "b2c0e52e97b0155e6f8f876bc27a82d47d9be2c816815b56fb1683c3fd68d7cc",
+    "packages/media-native/src/media/canvas-paint-role.ts": "d7f0cfbc5f1b9caf64e7728b4015fc581f0a136ebf080583559e5a34280f2afd",
+    "packages/media-native/src/media/canvas-text-trace.ts": "1b4d2ab2be63959ec86d6ed072e92927b25cd2c197d666c833a87ce9617aa41b",
+    "packages/media-native/src/media/card-details-paint.ts": "372c2fc3b48eb013b6544ecc035dea76bbe3440e5146a12112a04e72337be9c6",
+    "packages/media-native/src/media/composition-audio.ts": "bd6fb3c22a495c36bfea0c28bfa2e584354d739e2b00fdc924b32730b1d156c1",
+    "packages/media-native/src/media/composition-layers-paint.ts": "52288654c29fb054fc106c84e30c7f0a7abda270ea1ee85be9c5814e698a3ae8",
+    "packages/media-native/src/media/composition-paint.ts": "a1a5ab7bc665ca66426a7d6a51b513b9ea66cf2edb5716e048354a83fbc69b9f",
+    "packages/media-native/src/media/composition-text.ts": "786be4b95c37374c7d0dc85689dcd02164bbc2cafa89695436e3b1f82ad2c29c",
+    "packages/media-native/src/media/composition.html": "ac5d7dd4380a3b354576cf09a64f5f19d0775266b59cafca532e936b5600f69f",
+    "packages/media-native/src/media/composition.ts": "52651ce98489eaa5ed16639fc6773a595f605b7aeddf7d4939ab640f0b914e1d",
+    "packages/media-native/src/media/image-decoder.ts": "6a0e0b70534947010ac857a6cb6974f61a836dd8dd50bcde0384e5b871984906",
+    "packages/media-native/src/media/image-drawing.ts": "fa3b12c617f6f5728757c62f6f4318d0f100c104ab3e14384a04ee86af44c94b",
+    "packages/media-native/src/media/layer-packaging-paint.ts": "4068a874cfb7d3714f8589386ce03fe4cadc4a8aa7cf67876059d6216353f93d",
+    "packages/media-native/src/media/linear-frames.ts": "1fdcd6d940222a579f88eab36454879f330953e4b96a1143abe4ae0463cccf44",
+    "packages/media-native/src/media/loupe-paint.ts": "2defb7866dcbca239c745dc77d016f6c74f6d6a9635343466b2f0eae0c0cd340",
+    "packages/media-native/src/media/media.html": "74ba8e6f763587909c66e3003cdb7afa1f40780b877cbc8e5d5ec86a794d747d",
+    "packages/media-native/src/media/media.ts": "912def2bfb667c0f4421d533c70bbb207c0366cf92311ba4c80e2b874a755743",
+    "packages/media-native/src/media/narration-local.ts": "f7b7ffb574db2159e8ef766eb8a431ed3c973982f6473b21ab5d9696e3488a85",
+    "packages/media-native/src/media/narration.html": "1d9684eee8f6e229852af0c6019bd9520362b1331424f44c1bf4e5b08e3afc30",
+    "packages/media-native/src/media/narration.ts": "3e87f9eeead5382162f2154039c2e4db10f8c50ac36ca7c048a0f068979578f5",
+    "packages/media-native/src/media/phone-reading.ts": "c72d0b037dcab0eaef04af38de243adce0a76b98e14137b028d2c41d2646f43b",
+    "packages/media-native/src/media/processing.cover-contract.ts": "a7d089738a14ec8fa396bf5a991b505cef9242493fef27c1dd41b81953f943e3",
+    "packages/media-native/src/media/processing.cover-paint.ts": "3561c142da6823d897d5f3fbbe76317cb946f88cdb9ebb8a80b0ad39d2dad2ce",
+    "packages/media-native/src/media/processing.cover.html": "b4c9a9c88b5acfb806215681606f336b7782423fa3bbdb18d9f22a765d5f1d6d",
+    "packages/media-native/src/media/processing.cover.ts": "1d84dc1729583f214f29f00464128de94423ff52718f1672d133efdcbf7a6747",
+    "packages/media-native/src/media/processing.html": "54c571410761b624d7ef7c7dce945bd5818b32611726b71c75eb47c24a984b26",
+    "packages/media-native/src/media/processing.ts": "3845ae546d311372a29cca8fd93ae043b4f988105cafc59794ba41637d495417",
+    "packages/media-native/src/media/research-diagram-paint.ts": "cbc4ae24047f2d7a3e8361b231e802df81e323b3cc6d3341b1436a70a82fee97",
+    "packages/media-native/src/media/science-paint.ts": "21ba806b33c24bee44eb126410038ff12476aeafc19bd75a27b332f38cc42d12",
+    "packages/media-native/src/media/speech-normalize.ts": "96399e2bc66f9b3e45ebfb8a4112ebe81f5be34a527a5eb1614ab3e0156ff2e6",
+    "packages/media-native/src/narration-contract.ts": "c2b72477bdcc27b97483fd5f59f79ce52da1d75b713fc553062d7f5c2e8392e0",
+    "packages/media-native/src/narration-processor.ts": "2c40f7e72bafaeef9e3330b3c145e84c405a457d618140adcbbdb2a95c60b701",
+    "packages/media-native/src/narration-timing.ts": "917316b7dbb5a0dbe18291ee56b2d3a4efea14a77c57eee1670b94e7bd0fbd09",
+    "packages/media-native/src/precomposition-contract.ts": "195164b9e32475817856b38aeaac1ebac0140818badedff8e59b79f67b0a8b60",
+    "packages/media-native/src/precomposition.ts": "bb0133a17513f7a26384a9c277bc9de2d5631c87629369e999b4b395a2b42caf",
+    "packages/media-native/src/preload/composition-preload.cts": "6e3f24c483d5fd07a6fb3d5c988598ec3551a3a60cd6d7de1e35c5d2d5714323",
+    "packages/media-native/src/preload/media-preload.cts": "a4db1ceaaf314fa0eb128bbdc12206a19359bd735afda5808c4c8e8a0df866e6",
+    "packages/media-native/src/preload/narration-preload.cts": "b6e29b68b61feabe89f05a521e937a5db51ae9142bd313d9a28f93854c2a22e0",
+    "packages/media-native/src/preload/processing-preload.cts": "dbe5682eac2a0ce862079f7d8835dd300fad0b9124384556e63932aaffef7f1a",
+    "packages/media-native/src/qwen-narration.ts": "096b18e2da3039a38fbcfabe16523b6f6ab68508066df782d511e0850b0c39ac",
+    "packages/media-native/src/recording-contract.ts": "65506b839b19ba298e20ae2584b42309cc8397d42d7af0a0b6af263a2dbdaeb4",
+    "packages/media-native/src/recording-plan.ts": "8eb87ee5822072edf1534481c5745ca5531ba4a6ed5994bd141dc28f553e5842",
+    "packages/media-native/src/research-diagrams.ts": "f070fe1608e9603783aa9970eaf614da46766e2181ee5795a44db64f6ceee4aa",
+    "packages/media-native/src/scene-playback-window.ts": "f087bc2b4edca51a32696fd15caeb385012c3352d44bd78cbcd4ac7a53923a10",
+    "packages/media-native/src/scene-visuals.ts": "9504290e01239b2478eb498b3081f1e6286b2be060a56553b902d6ee71ee1c54",
+    "packages/media-native/src/science-spec.ts": "07517b42aa65bae6c32b4b1eeb735391189486a773efbbc3454e379813606331",
+    "packages/media-native/src/source-audio.ts": "d9142b9beb0b2d6693c401b5ad559d100cac519222af43613e06479e5f7b59f6",
+    "packages/media-native/src/source-contract.ts": "043aeb032b65238d1f445c7226375899afae710de814ea91ee4fe123f6a02738",
+    "packages/media-native/src/speech-contract.ts": "5e12afb81d551c90b5ea44a5f687b9bd042513cc2dce254637a20e02f7a88f9c",
+    "packages/media-native/src/speech-processor.ts": "52581447dd31b709a7ffc287ad0dc651232893fe1834993db6eba742d7d0b5cf",
+    "packages/media-native/src/speech-range.ts": "0652b09a19bef6e11e3267f9c3da6ac3aaf06c8538434c31a17b0f8a3f803b44",
+    "packages/media-native/src/text-export.ts": "60d87c45a35eef4b0cbb913bda18b20c2b698fc546b80ce49cdd4cb293865332",
+    "packages/media-native/src/video-element-capture.ts": "f2ebe44df658fabd2e8ef13d2f4f80ed2777325827a382ce676c4ca4c8fd9275",
+    "packages/media-native/src/video-options-form.ts": "f49af8c1c6b8f0cee1eee424f57ec73544ffe71096870da0c10c7070eed58148",
+    "packages/media-native/src/video-options.ts": "23fbb745ffdd7c07a558674b8c7808b3f3692c33fea8a7a79be37d2152e88d1d",
+    "packages/media-native/src/visual-effects.ts": "cb31f1ea4514c5785d12b619505f1c19af5e068e2cd237775650af4d65766a6b",
+    "packages/media-native/src/visual-segments.ts": "bfefb6a48c4e224e8fd177a276e7eee76f9419487ef86569e0807b8183e74883",
+    "packages/media-native/test/capture-source-index.test.ts": "e9f397b27e06410763c3642c86d08c655c2ad06e81e97d6b1d4f533bf1085f54",
+    "packages/media-native/test/media-controller.test.ts": "130dc627194ecc56800bc2fd4867fbbf5e228947b4f30ec1d426b293322deb09",
+    "packages/media-native/test/media-port.test.ts": "3288946a957ae50ee2505d13ab686b89cdc8217fa8b145b5dda67da5b3cfcfe0",
+    "packages/media-native/test/media-preservation.test.ts": "e8d0bc7db235ce5776b73030799eff98d21c18e2cf7ecdda309b1ce8567bc3db",
+    "packages/media-native/test/media-processing.test.ts": "58491dd81f987e480cea4711b3911e4bb2e3eb486340ae4227c01050958c9c28",
+    "packages/media-native/test/precomposition.test.ts": "5e42e8f5056477cbe95522259892f460111dfd151faf4500e09c9bac9a23763a",
+    "packages/media-native/test/research-diagrams.test.ts": "efc3fd28b0a62eeab7ae73af5f80492ee83a0652bfdaa76e0af3f2481b58009c",
+    "packages/media-native/test/science-spec.test.ts": "5c0085739561533a998b01e987e2ee06345a0be3e57825a59296fe80bba609fb",
+    "packages/media-native/test/speech.test.ts": "0ec7ecf23e8dfae6706d892c47565e61f4013cf843deedbd117f026e20d5ae3e",
+    "packages/media-native/test/video-element-capture.test.ts": "805751a93676f33931765202daa71335f77ce07372d447401b41b6d536482f3e",
+    "packages/media-native/test/video-options.test.ts": "33701849b3348b2e801ef935e6030961584377efd5f517c8dbe014f6871bda73",
+    "packages/media-native/test/video-production.test.ts": "13169920e51d2c368aa660178e1e884dfd0e4ceb0b613a880e43e36fb86f7bae",
+    "packages/platform/package.json": "3e35604ce467c303e10bb69d9b934248c6dc25d1b9e1dd513d0b9f4bedb9d700",
+    "packages/platform/src/agent-data-format.ts": "c50426338cb2989c009fe8da84ea1b01ae7c9aa1af3425b85c1379cca3fd1243",
+    "packages/platform/src/agent-data-schema.ts": "006a6a753d7b78a87cde735d666731c653b9cd2085f763513058f35820910842",
+    "packages/platform/src/agent-history-store.ts": "3a31f654947359a1746d720c145adb36d8be6d293608253d7b8d4d15004d769f",
+    "packages/platform/src/agent-host.ts": "88d3ccf85bcd6dc7a86b83e73daa6686cb68cdd6aa321d8fdffc632f922f7672",
+    "packages/platform/src/agent-preference-store.ts": "a9f014a5d66e3cba4204d8d6678a64af2caa7ac72af138a60ede5d1b9a122772",
+    "packages/platform/src/agent-settings-controller.ts": "164d916075b00ae50597978d8866d5668e253f00f39962ffc30bc4afee8cfb90",
+    "packages/platform/src/assistant-activity.ts": "8157c8c16dc56f3f796bce546cb8339f06c23e5739175fb0d0923072d7159665",
+    "packages/platform/src/assistant-controller.ts": "0d438225fef297b7ef9144c0cb7d7b66e1610e30710fc33bfd950ea153c79713",
+    "packages/platform/src/assistant-service.ts": "9d067f710fd21ddf54595a952c82afa1578779aaee76cbf5ef7e46b7b1add8fd",
+    "packages/platform/src/browser-user-agent.ts": "8ca7011c388bbdb1798e154ef31538c898c71117be4a7cbdbd1317c3222bac33",
+    "packages/platform/src/conversation-store.ts": "4ed9393e22b6c5e8a977739868cbc69504dbaffb66c73775908281bea1610551",
+    "packages/platform/src/feature-contract.ts": "78f561d6dadbf3ddf063e91ae2269522413f838fe5d4bbd524c2ba90627a8a91",
+    "packages/platform/src/global-settings-store.ts": "39b2ade809d86bada60c0bc0bc909b6db9c48f357577c9e37beaccaef56ba2df",
+    "packages/platform/src/layout-docking.ts": "c085771084cb7e9beaec664b57f194702f86f9d7df7a3416949508d4d1307104",
+    "packages/platform/src/layout-store.ts": "3a2bd994fd311998312691cdfb628075ad66909be004326a66f1ddb188742c1d",
+    "packages/platform/src/main.ts": "895b3e3b8e9c719370a3d0678cb51fabb417a6e0b4fc959640e2f10194201e44",
+    "packages/platform/src/menu-policy.ts": "e3132203f10f38add2f6f58c56e1d736dca6001d34d9a113136716c0f19d7238",
+    "packages/platform/src/permission-policy.ts": "18b711d47826ac518bf622cc2ad2da263e4049e0e643bda5993469dc272d6ab0",
+    "packages/platform/src/permission-store.ts": "108b35575224eef0e92645d74b41bf4cbc6e73c96d60946423879b33328594d0",
+    "packages/platform/src/preload/shell-preload.cts": "b8a3e0262ed032a00c925859d6ad0d97d48eee6cf53f429f71b751eb5fadbd1f",
+    "packages/platform/src/product-definition.ts": "f5efae6ee8b1b4beb7f6968f513d095118ed74483d2f2e53e1bf46e2b82bdf7a",
+    "packages/platform/src/project-source-store.ts": "c59c2b656a386ca940268d49b47d8aee0b519778a268cb676d4ee1d613dc579d",
+    "packages/platform/src/project-store.ts": "aaff0d88bfad60dc063be7e37ee7cd6f2d0d37f45a3fab57a4880e7783886e37",
+    "packages/platform/src/qwen-credentials-store.ts": "4cabf24a4e86ff7ac88c9932ddac8b2bd9aed26e2f798dc5b5a51234b73d3ab3",
+    "packages/platform/src/renderer/shell.css": "3aa41bb92cf5c3e46d27816d42ac33614235f293e57446be42f935ecbfb0100c",
+    "packages/platform/src/renderer/shell.html": "b68477f0ee492335dde562c6ca9ab3b820a42c7a202071041eb5a9bce1923280",
+    "packages/platform/src/renderer/shell.ts": "c9a6b58240a3436ef33d3631c380b4b462962034a48c04afcf7816a2a5c8a204",
+    "packages/platform/src/restart-policy.ts": "9237863aed9c48209fc5672add4137ce6f6c7553daa325bf0d4cfc0c16e74693",
+    "packages/platform/src/scheduled-task-manager.ts": "ef52d102bb134f978fe5537a0b13d609b0ca2e8cb5ab126cdb856deda8c8a934",
+    "packages/platform/src/scheduled-task-store.ts": "60d884a65247f3231c3b7f3ec4b1c010d1c04ec1455564c5d2753c2e746b51bd",
+    "packages/platform/src/session-continuity.ts": "80fe61ebd3ac65e83e824459a87f1050a4b98e2c93796c8d0fc8934250ee2e36",
+    "packages/platform/src/session-service.ts": "c5dc3b490a1a2f3a36b52265c613de2f85f400dfbb26be3c2f72790622deb27c",
+    "packages/platform/src/shell-ipc.ts": "9cf7085acbc77992d9cf2c36d68540a98a4755e5123d1f40429539ca82aea9e9",
+    "packages/platform/src/state-load.ts": "29f8052e27c40d98c7ea80a0ada62dce366912a2ef5ec91fe3c7bef678d356c7",
+    "packages/platform/src/studio-layout.ts": "c5cbcfc3fdb5f95b68245e7c9ef3a00d0eff48f5aee81ecbd254c7f940582bf0",
+    "packages/platform/test/agent-history-store.test.ts": "1671c7333de9ed066897413ac1a4b78d8a6cee81220c632df3482db3cc64fa47",
+    "packages/platform/test/agent-host.test.ts": "063fccb49cbe0636841f9bb66bdc6cb8ed0a48a0083553544cce5445c650cf6d",
+    "packages/platform/test/agent-settings-controller.test.ts": "ba1b8eeefe1774701aa2a1a640df74767ce1f51eda281fd4807dade3591c1726",
+    "packages/platform/test/assistant-controller.test.ts": "7fec308df9966a2122d1d47027a644485e75b49b986d81d6aaf02e17bc8f7f26",
+    "packages/platform/test/bmw-catalog.test.ts": "11b01adf65d33575c612ce9be08521f129ed94807ef466bbcdf16ab4100682fc",
+    "packages/platform/test/browser-user-agent.test.ts": "43dcc0e1bb674d15ee95f7d82bb8398df0ac813b1571de20ee4cff65685db3b2",
+    "packages/platform/test/continuity-state.test.ts": "296e63eee42f37a6d360a5581265a5eea7756b80f7a8f4254c71eab12960d72c",
+    "packages/platform/test/conversation-store.test.ts": "9afff287277bd3cb36b784bb5b67c55f9f871b94c75b626b7be79cdee873461a",
+    "packages/platform/test/driver-boundary.test.ts": "cb811cc282cde1652b4779c2f94f38a830c179955831bf4049da448252c4a004",
+    "packages/platform/test/feature-contract.test.ts": "c9302e611d800695281c712e1dbd4168f12dd6de5aeaf7e8f97f519e091ff306",
+    "packages/platform/test/global-settings-store.test.ts": "e5da2ee24decf9b1915d57a2bd941c6fd9bbc079c34c4bb1067d815f712c18f2",
+    "packages/platform/test/layout-docking.test.ts": "867c086beca7e45ec3c33b001c108b2c6989411e2375f861c13fe649b8a62f4a",
+    "packages/platform/test/layout-store.test.ts": "093da140f73c9786a72d7834f80fc8652899835ec34bf5cd20bc664506d8ba81",
+    "packages/platform/test/menu-policy.test.ts": "2384844e2958c30049bf906091925859b7a1956853692c884637752af29ceb7c",
+    "packages/platform/test/permission-policy.test.ts": "cc74324920f7c702c27add922f6f1fab2214b1c278f45f1368eff30c82c2e4a9",
+    "packages/platform/test/permission-store.test.ts": "6d07d1ae99e26f320de791231ccc324b34fc6cba9f80ba251d00f98005187615",
+    "packages/platform/test/product-boundaries.test.ts": "ad62496eb502f53457b6c13ff9a24da320d782c4e436f3c13a3c0a0648d62a8a",
+    "packages/platform/test/project-panel-layering.test.ts": "59e058cfad9a733233840489e738fe492dd19b391198da7beae8e193c8f22b58",
+    "packages/platform/test/project-source-store.test.ts": "6df5a8b044667ed52a5af9f0d68b782392b3c148a8d76314e947a4aeafe74b48",
+    "packages/platform/test/project-store.test.ts": "db4c201650b8c0fa79d5c0852287657765d893cf3cd9c3db19bd94cef88cc151",
+    "packages/platform/test/qwen-credentials-store.test.ts": "9a37f172bd92fd63b386e86e4092b2ecb5b75dfcf5a196b436cb8b471ebb21de",
+    "packages/platform/test/remote-control-boundary.test.ts": "5a3837e538ffe3a8e74863219d342b9f4e74a7dd50282b259393c13ab9d50d1d",
+    "packages/platform/test/restart-policy.test.ts": "4d6c9d54c216a9e34993a158d023721d0a650bca9c7139f544c7c7ce57b038c4",
+    "packages/platform/test/scheduled-task-store.test.ts": "228e16d270228a886292f90abb48fc23c08b5d40aac09f069830da78a29fd5b2",
+    "packages/platform/test/session-continuity.test.ts": "3b514516ac97c6142f1ce37eb06966680dcb9cba03a29c25f37126db827b42b1",
+    "packages/platform/test/shell-ipc.test.ts": "e3ef8cfba93014c18f255405be9d90ccc412f810e390c3dafdcd2eb64c01aec5",
+    "packages/platform/test/state-load.test.ts": "8bec72747cb58aa0d46a4d8a3a9ebde5f035b4847ef239e4f880dbf84d6d04df",
+    "packages/product-bmw/index.ts": "870d9dcf9933d0cb05038c100b2bd7fe149132c1175ee60240022af8705b44b6",
+    "packages/product-bmw/package.json": "87ed9d8a4c74e8bcd261bb73d40469b6e541cb2956ea3646aa873529aecf58d8",
+    "scripts/agent-assembly.test.ts": "e4b0bd13be58ca84b88f8d711c3836d10e68bd3f74122fd22355482908e83a61",
+    "scripts/agent-data-migration.test.ts": "bd713659ec53c18bd8a1bbdedd276a225380ec8ae507cdf8f377b5f529636b14",
+    "scripts/agent-data-migration.ts": "4fefc1d77b0441165ea72fef06539ba504198342af6ccc8552a22d3b0bce28d3",
+    "scripts/agent-driver-smoke.ts": "6d7d778a3bdebb7894f8564a00e0fc9149a9ac1cddd72d8fb0cadd88ab8ee498",
+    "scripts/architecture-document.ts": "d77f70e40d12531ffc0970bcdd4cb716ad6fe644572ae2fc90f8cf2ed522bf4b",
+    "scripts/assistant-application-smoke.ts": "c8bc064b0d59e3309825793eeeb70a46e804c2abf4f5ba8657bd01391a586075",
+    "scripts/assistant-default-case.ts": "f24fdda0aa4a9fb47f689dd1a97c50be93b1faca08fb7271ecc5f65be4ebb5db",
+    "scripts/assistant-default-suite.ts": "e965ecbf56510d940e4b552025ab6421a30434c62ace7749d7ca9a23851baacc",
+    "scripts/audio-window-smoke.ts": "f70a369f809f1075f41e8004c6b423578480aeea2e349573952ac82ce87d9e57",
+    "scripts/browser-background-smoke.ts": "0f71248a7366ae37a41259a8ae1b18313f55171db8b407e1eecc2f3c95fde434",
+    "scripts/browser-tab-lifecycle-smoke.ts": "7fbc28e04a27357c0475085e288b72b9936572255a88045bfa3f60028f4b9148",
+    "scripts/build-receipt.ts": "760b636951d5b5adb2b246888cd4eb862c6dc2ce0f25a227730b6d9ae0777703",
+    "scripts/card-blog-case.ts": "99e9baac7a04956c40ec895dcde578e1ac4c0b100bc5bfdc681fc51ec6865865",
+    "scripts/cdp-eval.ts": "647616bfc0cd629054bfee48fe737bf2f7cc7679fdf81b7523a094a13ff138db",
+    "scripts/check-architecture.ts": "845c5cd1d3b4cb55a290709eb458a8b8edefe97322bc7ba1af932b1ea7580af6",
+    "scripts/check-functional-spec.ts": "78a680f04b447502394a0214ea2bbb10591fc845571c37e6408fa19e451c01c5",
+    "scripts/check-source.ts": "131120e0058eaa6616f524e6bd1ef76828694e8701c50fa1436149fe72705719",
+    "scripts/clean-generated.ts": "0d72cc00c69b7341c7fc25a1dbf8cde8a117ff16299bfd47fd224e899431b2f8",
+    "scripts/desktop-smoke.ts": "3c2cea13d77f599ee331d650588724721aaaf111f6a354579b5a08925467be59",
+    "scripts/desktop-suite.ts": "8821ef0eb3754ac435bee4842d4b2723cefee2446e49cb0d9fdd1ad5cecf0da9",
+    "scripts/dsh-compatibility-smoke.ts": "fada08317986c09a626448c64b13e9407d6f662e0764a979cf8e94ceb26c94d7",
+    "scripts/dsh-production-case.ts": "1dd113d84bf452f0a83c3702233a6f3040b30b04c2276f32b8db76ba0d9483eb",
+    "scripts/fixture-browser-client.ts": "55f7db6e825a7d2ee7b09d7f10c0953ba65d758000072f4454ebc2540b6e13b2",
+    "scripts/frame-sampling-case.ts": "b531fcb0bd812ccbc964d8bf7943c9bcffdc7244ed6d1294a7216fa16cf1f8bd",
+    "scripts/install-local-asr.ts": "d2c10fbae895ab23075f6ce1c8aec2d88c3c1e76c7fdc6a4a6f6767815137db9",
+    "scripts/install-local-tts.ts": "ec010ae88326283797dbe9cea7fb662f4ac68bb1bd7b35d335b494b69dd21120",
+    "scripts/layer-packaging-smoke.ts": "b4eed06d72d106f4b34640286bbec4ea91cf427aebe2b405a5910e689e72e549",
+    "scripts/long-composition-case.ts": "77aa88009145b0636b86be1bd0e7406e6db188e821947f2e9dabf33862e3fa1c",
+    "scripts/media-capture-smoke.ts": "d8cfd79dc23a2007aa04b3f3ae794ce3db690f74dc45573f166d1affb5144cdd",
+    "scripts/media-download-smoke.ts": "e1d67343bc86579e3e8ed115f5b3d8349f6896f4df0311808ca261e938ba6ad5",
+    "scripts/media-processing-smoke.ts": "4129c7768fe7f72284e1a65a0d6019b85de1357e983c04f935fdf6decfc6eeb4",
+    "scripts/migrate-agent-data.ts": "f6a6bd0763df4bd39202dc28c313a682c1f9f5f8b4f2fe69f761afe3c81cca84",
+    "scripts/module-catalog.ts": "60d775ef60548267a85c29f42595657e8982bdcd421c3da1d62fd4140bf1f473",
+    "scripts/musk-video-case.ts": "c338283dd13704a470752553dfb5a37ae0a2f7ff75bf9b325178375b1e989f2e",
+    "scripts/narration-smoke.ts": "3c422368ac996841d6dbb1b6dc2988101aefd33b8ec73dcc98e1b91f7411db27",
+    "scripts/native-assistant-case.ts": "e0d13225626822a47e7d028343c0ebc5cea79921793e0fa7d3d9e33e97605eb8",
+    "scripts/news-source-screenshot-smoke.ts": "2e3648709cf5a35bb7037004d6110925dc4bed6745fe2822aa34408e0d8f91d7",
+    "scripts/open-musk-video.ts": "74f5ca23a696cca3ce6e671278bbc699df2baca756f09b67db9b480637d6c68f",
+    "scripts/product-entry.ts": "361b7f0e294eec6c9f17c89a58f2e18941fe060d64c69dc410cb7e00d31cf982",
+    "scripts/qbit-playback-audit.ts": "2211ee0326f8740fddd495f813356fa9ca2128d918a02a644a39330ebef05d86",
+    "scripts/qbit-stage3-samples.ts": "a7ae7b523f009d3cab7cb209046f2ba2ab419f79d99027e17191825412ef0ef9",
+    "scripts/qbit-stage4-samples.ts": "0bd61db330090af573126c2f7c64c1f97fc766d2e54ec57cd3dedb67bf439086",
+    "scripts/qoder-production-case.ts": "fe36a64699a8941a94191f2592a92c5ce3df4951e7c912d445ce2f2e88a763b9",
+    "scripts/recording-workflow-case.ts": "b9a76947cf365049420597f54c988669396ad63e5d757b7aab27ee2688b0aead",
+    "scripts/renderer-evidence.ts": "51490535e0853ff6fe589d5f9808a12f6edae95a6032430c2a11f22cf314d5ae",
+    "scripts/research-video-smoke.ts": "2a4e1c2abdf51040b2ea52cc7fcac068cebf94494ac11d3277f983bb3712f049",
+    "scripts/run-electron-script.ts": "87d363d0446f3d99c568f0b60822daca64406215f88ac5d7dccbd6549ccc00e9",
+    "scripts/scene-clock-smoke.ts": "ab26dbc20ed37d5ea2dd04f138e580dd2b906bf40e52825873812e823b9ac9f7",
+    "scripts/science-diagram-smoke.ts": "2c3a7a8b6d8cb7e4af761e703735f6df3b8f1d2caba9ae0b6e0e2f7f6ce8f83d",
+    "scripts/skills-video-case.ts": "48d3ed43e6ab907dffbc6d40b1fe5a7c52071cf45da3c1eece7862f222d0945c",
+    "scripts/source-analysis-case.ts": "3644a62eef66f0c194e062e7bcaa27b9e4fdb88d6fa46b9928bfc9abcc766590",
+    "scripts/source-graph.ts": "5663269c43f3693ffdebdb4af577116bbc580bcb0373b2ca3f23fdbf123a3cd8",
+    "scripts/source-platform-case.ts": "f1b97baa3e295877d079ba47b8ec8cbe8dfbd7dad1c059fc228c7b2624c602d7",
+    "scripts/source-studio-smoke.ts": "c54dfffe9321d253964c19fcad4ef2095a6b2b20aea5f8c23470705fb7521b18",
+    "scripts/speech-alignment-smoke.ts": "3e579ed9e8babdc65c5908f9f419346893e22385f5d2225a66cb1b76a6b95708",
+    "scripts/speech-review-page-case.ts": "c99ce8483d2ebfba6146216c47ca8abe1da78fad4e1798f82129f648c4c4a581",
+    "scripts/speech-study-case.ts": "6ad90cb0e58950a3a8c6b6caa5e02a7b5307f9458d2ab9c56f9e39f9146f5b08",
+    "scripts/start-electron.ts": "e2422c5c7826493d8bb92bf01eccc494219bdc6f50578d7c75311bf38b1074e9",
+    "scripts/state-load-smoke.ts": "ec195be283e42e59a34d28d532095c4f00c16e1e576d64117155be0c6fed50ef",
+    "scripts/studio-news-fixture.ts": "fc0e9dee66b944354136309130bd4cec902397522d535e88318b1220f2660a34",
+    "scripts/studio-next-smoke.ts": "c2633ba4029022b439ce2735c1a08d20b76b9efbf08c1fa10ec2729f6cc1b034",
+    "scripts/test-catalog.ts": "2a209ed2d07f5edc0c47684f78ff1882824a8d93e83e46dbbd5d593f6b4356c2",
+    "scripts/test-runner.ts": "929877f70602cbcdd325593887f7c29672827741b43bc33b6122b61069e2b9fc",
+    "scripts/test-selection.ts": "01d44670f4935a262ee69941737ebefc45605af187627c04d7a7763e32e30cdb",
+    "scripts/test/module-boundary.test.ts": "e45fa40eaa5b4a62871b722bea7a97a0d5f5473622faba279e9543f5d7459a22",
+    "scripts/test/public-interfaces.type-test.ts": "d41864b40fb53bc94027a8bb9cd378ccc3e8b5741673159a396af65111ab5635",
+    "scripts/test/test-selection.test.ts": "e18391dd785328f9990b633d684f0b6a187d0732dcd4589c8afa0fe79bc073b5",
+    "scripts/text-treatment-smoke.ts": "4e7f9b9d6979e3cc7354f51eb162d6c105befc36dc26f87bc9812738112282b8",
+    "scripts/verify-stability.ts": "b7f579c1c658978e9a219492110ce707e0e706f16a3736fb5b48383fa8456ffa",
+    "scripts/video-case-log.ts": "4465a23585ecbde98f8b11cd48959a13671ee41babfff6b99dd0111812bb4199",
+    "scripts/video-production-case.ts": "3eacbc8cbe99210e79682d699f4a4f18ca31eb0be93f7740481cbe5b48646c10",
+    "scripts/video-production-smoke.ts": "6a7acc7f9972627b9130b604755d9677be8eac48718781e4b06827d0c3c06ecc",
+    "scripts/video-schema-document.ts": "ccb4bfda36e5191488b3825ee8f320c2413ffca18c1148be84d325dfaa2c0523",
+    "scripts/video-studio-smoke.ts": "59256d13b7f24af2350f6332c083036e636717e487d7938fd34459d85344568c",
+    "scripts/vision-model-smoke.ts": "223cd30e0e8de974e8a3498484c1a31e276fe92f045adcfb9aff228d655fdd72",
+    "scripts/workbuddy-runtime.test.ts": "002aca0c7a75efb5213e500b284022fec74ef609df85598ad478bff56a70b084",
+    "types/browser-globals.d.ts": "0f1602c29df4598c90c963cf2600c99bfb1a4767e618f719e94db19bd25594b7",
+    "package.json": "86575cefe9645d7e0da1562dd5331a820ada6a1f9197bfaa2ddba74cd2448d79",
+    "package-lock.json": "c3d05149ff5f719e6122ec92514f5555bfb05a87592b41943eb0bf92d2073c2d",
+    "tsconfig.json": "4fdce5aec2d5369ddee6a3ec543cbc1a23601c0057b93b220862e3d1b45bd139"
+  },
+  "results": [
+    {
+      "id": "external.production.qoder-deepseek-flash",
+      "layer": "external",
+      "status": "not-run",
+      "reason": "External opt-in required"
+    },
+    {
+      "id": "media.source-analysis-case",
+      "layer": "media",
+      "status": "not-run",
+      "reason": "External opt-in required"
+    },
+    {
+      "id": "media.frame-sampling-case",
+      "layer": "media",
+      "status": "not-run",
+      "reason": "External opt-in required"
+    },
+    {
+      "id": "media.long-composition-case",
+      "layer": "media",
+      "status": "not-run",
+      "reason": "External opt-in required"
+    },
+    {
+      "id": "video.qbit-playback",
+      "layer": "media",
+      "status": "not-run",
+      "reason": "External opt-in required"
+    },
+    {
+      "id": "video.qbit-stage4-samples",
+      "layer": "media",
+      "status": "not-run",
+      "reason": "External opt-in required"
+    },
+    {
+      "id": "video.qbit-stage3-samples",
+      "layer": "media",
+      "status": "not-run",
+      "reason": "External opt-in required"
+    },
+    {
+      "id": "external.assistant.qoder-cn",
+      "layer": "external",
+      "status": "not-run",
+      "reason": "External opt-in required"
+    },
+    {
+      "id": "external.assistant.codex",
+      "layer": "external",
+      "status": "not-run",
+      "reason": "External opt-in required"
+    },
+    {
+      "id": "external.assistant.dsh",
+      "layer": "external",
+      "status": "not-run",
+      "reason": "External opt-in required"
+    },
+    {
+      "id": "external.vision",
+      "layer": "external",
+      "status": "not-run",
+      "reason": "External opt-in required"
+    },
+    {
+      "id": "external.edge",
+      "layer": "external",
+      "status": "not-run",
+      "reason": "External opt-in required"
+    },
+    {
+      "id": "build",
+      "layer": "gate",
+      "status": "passed",
+      "reason": "Fresh compiler receipt verified against every authored source and emitted output"
+    },
+    {
+      "id": "architecture",
+      "layer": "gate",
+      "status": "passed",
+      "reason": "Public module dependencies, interface guarantors and test classification checked"
+    },
+    {
+      "id": "source-policy",
+      "layer": "gate",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 104,
+      "log": ".bmw-runtime/workbuddy-integration-verified/source-policy.log"
+    },
+    {
+      "id": "feature-inventory",
+      "layer": "gate",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 137,
+      "log": ".bmw-runtime/workbuddy-integration-verified/feature-inventory.log"
+    },
+    {
+      "id": "browser.tab-lifecycle",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 49666,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.tab-lifecycle.log"
+    },
+    {
+      "id": "video.news",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 858,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.news.log"
+    },
+    {
+      "id": "browser.navigation",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 137,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.navigation.log"
+    },
+    {
+      "id": "studio.news-source-screenshot",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 921,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.news-source-screenshot.log"
+    },
+    {
+      "id": "studio.news",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 18273,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.news.log"
+    },
+    {
+      "id": "platform.qwen-credentials",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 290,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.qwen-credentials.log"
+    },
+    {
+      "id": "browser.media-session-fetch",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 251,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.media-session-fetch.log"
+    },
+    {
+      "id": "browser.media-download-runtime",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 474,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.media-download-runtime.log"
+    },
+    {
+      "id": "video.production-assessment",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 398,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.production-assessment.log"
+    },
+    {
+      "id": "video.production",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 2611,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.production.log"
+    },
+    {
+      "id": "media.research-video",
+      "layer": "media",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 9519,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.research-video.log"
+    },
+    {
+      "id": "media.precomposition",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1475,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.precomposition.log"
+    },
+    {
+      "id": "media.research-diagrams",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 403,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.research-diagrams.log"
+    },
+    {
+      "id": "media.science-spec",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 152,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.science-spec.log"
+    },
+    {
+      "id": "media.video-capture",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 206,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.video-capture.log"
+    },
+    {
+      "id": "media.capture-source-index",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 137,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.capture-source-index.log"
+    },
+    {
+      "id": "media.preservation",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 186,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.preservation.log"
+    },
+    {
+      "id": "video.material-index",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 290,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.material-index.log"
+    },
+    {
+      "id": "video.source-analysis",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1886,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.source-analysis.log"
+    },
+    {
+      "id": "studio.production",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 3074,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.production.log"
+    },
+    {
+      "id": "studio.science",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 5387,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.science.log"
+    },
+    {
+      "id": "studio.layer-packaging",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 4548,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.layer-packaging.log"
+    },
+    {
+      "id": "studio.text-treatment",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 4025,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.text-treatment.log"
+    },
+    {
+      "id": "media.science-diagrams",
+      "layer": "media",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 6176,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.science-diagrams.log"
+    },
+    {
+      "id": "media.layer-packaging",
+      "layer": "media",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 5347,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.layer-packaging.log"
+    },
+    {
+      "id": "media.text-treatment",
+      "layer": "media",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 3023,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.text-treatment.log"
+    },
+    {
+      "id": "media.audio-windows",
+      "layer": "media",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 17076,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.audio-windows.log"
+    },
+    {
+      "id": "studio.export-review",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 20064,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.export-review.log"
+    },
+    {
+      "id": "agent.context",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 204,
+      "log": ".bmw-runtime/workbuddy-integration-verified/agent.context.log"
+    },
+    {
+      "id": "agent.conversation",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 147,
+      "log": ".bmw-runtime/workbuddy-integration-verified/agent.conversation.log"
+    },
+    {
+      "id": "bmw.agent-assembly",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 360,
+      "log": ".bmw-runtime/workbuddy-integration-verified/bmw.agent-assembly.log"
+    },
+    {
+      "id": "agent.data-migration",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 360,
+      "log": ".bmw-runtime/workbuddy-integration-verified/agent.data-migration.log"
+    },
+    {
+      "id": "dsh.project-bindings",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 211,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.project-bindings.log"
+    },
+    {
+      "id": "dsh.migration-history",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 189,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.migration-history.log"
+    },
+    {
+      "id": "agent.studio-composer",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 194,
+      "log": ".bmw-runtime/workbuddy-integration-verified/agent.studio-composer.log"
+    },
+    {
+      "id": "agent.assistant-ui",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 178,
+      "log": ".bmw-runtime/workbuddy-integration-verified/agent.assistant-ui.log"
+    },
+    {
+      "id": "agent.driver-settings",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 182,
+      "log": ".bmw-runtime/workbuddy-integration-verified/agent.driver-settings.log"
+    },
+    {
+      "id": "platform.agent-settings",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 230,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.agent-settings.log"
+    },
+    {
+      "id": "codex.settings",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 244,
+      "log": ".bmw-runtime/workbuddy-integration-verified/codex.settings.log"
+    },
+    {
+      "id": "codex.installation",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 244,
+      "log": ".bmw-runtime/workbuddy-integration-verified/codex.installation.log"
+    },
+    {
+      "id": "qoder.settings",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 377,
+      "log": ".bmw-runtime/workbuddy-integration-verified/qoder.settings.log"
+    },
+    {
+      "id": "dsh.settings",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 290,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.settings.log"
+    },
+    {
+      "id": "platform.assistant-controller",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 226,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.assistant-controller.log"
+    },
+    {
+      "id": "platform.conversation-store",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 239,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.conversation-store.log"
+    },
+    {
+      "id": "platform.agent-history",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 176,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.agent-history.log"
+    },
+    {
+      "id": "platform.agent-host",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 306,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.agent-host.log"
+    },
+    {
+      "id": "browser.session-leases",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 754,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.session-leases.log"
+    },
+    {
+      "id": "codex.policy",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 223,
+      "log": ".bmw-runtime/workbuddy-integration-verified/codex.policy.log"
+    },
+    {
+      "id": "codex.backend",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 237,
+      "log": ".bmw-runtime/workbuddy-integration-verified/codex.backend.log"
+    },
+    {
+      "id": "dsh.events",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 145,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.events.log"
+    },
+    {
+      "id": "dsh.backend",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 176,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.backend.log"
+    },
+    {
+      "id": "qoder.events",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 189,
+      "log": ".bmw-runtime/workbuddy-integration-verified/qoder.events.log"
+    },
+    {
+      "id": "qoder.backend",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 403,
+      "log": ".bmw-runtime/workbuddy-integration-verified/qoder.backend.log"
+    },
+    {
+      "id": "workbuddy.runtime",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 33435,
+      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.runtime.log"
+    },
+    {
+      "id": "workbuddy.catalog",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 3428,
+      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.catalog.log"
+    },
+    {
+      "id": "workbuddy.settings",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 113,
+      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.settings.log"
+    },
+    {
+      "id": "workbuddy.acp",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 3367,
+      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.acp.log"
+    },
+    {
+      "id": "workbuddy.policy",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 98,
+      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.policy.log"
+    },
+    {
+      "id": "workbuddy.backend",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 689,
+      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.backend.log"
+    },
+    {
+      "id": "browser.schema",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 91,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.schema.log"
+    },
+    {
+      "id": "browser.catalog",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1653,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.catalog.log"
+    },
+    {
+      "id": "browser.operations",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 295,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.operations.log"
+    },
+    {
+      "id": "browser.shutdown",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 127,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.shutdown.log"
+    },
+    {
+      "id": "browser.deadline",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 87,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.deadline.log"
+    },
+    {
+      "id": "browser.screenshot",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 117,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.screenshot.log"
+    },
+    {
+      "id": "browser.renderer-read",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 104,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.renderer-read.log"
+    },
+    {
+      "id": "browser.download",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 145,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.download.log"
+    },
+    {
+      "id": "browser.tab-policy",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 98,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.tab-policy.log"
+    },
+    {
+      "id": "browser.sources",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 110,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.sources.log"
+    },
+    {
+      "id": "platform.sources",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 234,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.sources.log"
+    },
+    {
+      "id": "video.sources",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 270,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.sources.log"
+    },
+    {
+      "id": "browser.host-contract",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 112,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.host-contract.log"
+    },
+    {
+      "id": "dsh.dsh-runtime",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 133,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.dsh-runtime.log"
+    },
+    {
+      "id": "dsh.dsh-transport",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 142,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.dsh-transport.log"
+    },
+    {
+      "id": "dsh.dsh-preset",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 133,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.dsh-preset.log"
+    },
+    {
+      "id": "dsh.browser-failure-guard",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 90,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.browser-failure-guard.log"
+    },
+    {
+      "id": "dsh.workspace-context",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 84,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.workspace-context.log"
+    },
+    {
+      "id": "dsh.video-case-log",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 93,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.video-case-log.log"
+    },
+    {
+      "id": "media.controller",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 144,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.controller.log"
+    },
+    {
+      "id": "media.processing",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 123,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.processing.log"
+    },
+    {
+      "id": "media.production",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 364,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.production.log"
+    },
+    {
+      "id": "media.options",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 87,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.options.log"
+    },
+    {
+      "id": "media.scene-clock",
+      "layer": "media",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 3718,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.scene-clock.log"
+    },
+    {
+      "id": "media.speech",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 2634,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.speech.log"
+    },
+    {
+      "id": "media.port-contract",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 88,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.port-contract.log"
+    },
+    {
+      "id": "platform.projects",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 139,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.projects.log"
+    },
+    {
+      "id": "platform.settings",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 94,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.settings.log"
+    },
+    {
+      "id": "platform.schedules",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 126,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.schedules.log"
+    },
+    {
+      "id": "platform.state",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 120,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.state.log"
+    },
+    {
+      "id": "platform.layout",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 87,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.layout.log"
+    },
+    {
+      "id": "platform.docking",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 86,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.docking.log"
+    },
+    {
+      "id": "platform.permissions",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 82,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.permissions.log"
+    },
+    {
+      "id": "platform.menu",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 82,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.menu.log"
+    },
+    {
+      "id": "platform.restart",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 80,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.restart.log"
+    },
+    {
+      "id": "platform.continuity",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 96,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.continuity.log"
+    },
+    {
+      "id": "platform.user-agent",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 81,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.user-agent.log"
+    },
+    {
+      "id": "platform.project-panel",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 82,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.project-panel.log"
+    },
+    {
+      "id": "platform.driver-binding",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 92,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.driver-binding.log"
+    },
+    {
+      "id": "platform.catalog",
+      "layer": "boundary",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 135,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.catalog.log"
+    },
+    {
+      "id": "platform.boundaries",
+      "layer": "boundary",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 321,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.boundaries.log"
+    },
+    {
+      "id": "platform.remote-boundary",
+      "layer": "boundary",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 218,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.remote-boundary.log"
+    },
+    {
+      "id": "platform.shell-ipc",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 85,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.shell-ipc.log"
+    },
+    {
+      "id": "platform.permission-store",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 87,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.permission-store.log"
+    },
+    {
+      "id": "platform.continuity-state",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 105,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.continuity-state.log"
+    },
+    {
+      "id": "platform.feature-contract",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 88,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.feature-contract.log"
+    },
+    {
+      "id": "video.schema-publication",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 74,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.schema-publication.log"
+    },
+    {
+      "id": "video.schema",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 3463,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.schema.log"
+    },
+    {
+      "id": "video.materials",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 123,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.materials.log"
+    },
+    {
+      "id": "video.studio",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1830,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.studio.log"
+    },
+    {
+      "id": "video.settings",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 188,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.settings.log"
+    },
+    {
+      "id": "video.boundary",
+      "layer": "boundary",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 528,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.boundary.log"
+    },
+    {
+      "id": "architecture.boundaries",
+      "layer": "boundary",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 18631,
+      "log": ".bmw-runtime/workbuddy-integration-verified/architecture.boundaries.log"
+    },
+    {
+      "id": "validation.selection",
+      "layer": "unit",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 38843,
+      "log": ".bmw-runtime/workbuddy-integration-verified/validation.selection.log"
+    },
+    {
+      "id": "api.types",
+      "layer": "type",
+      "status": "passed",
+      "reason": "Fresh compiler emit checked positive and @ts-expect-error consumers"
+    },
+    {
+      "id": "sources",
+      "layer": "media",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 17014,
+      "log": ".bmw-runtime/workbuddy-integration-verified/sources.log"
+    },
+    {
+      "id": "assistant.default",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 5665,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.default.log"
+    },
+    {
+      "id": "assistant.application",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 11153,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.application.log"
+    },
+    {
+      "id": "assistant.schedules",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1951,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.schedules.log"
+    },
+    {
+      "id": "assistant.startup.conversations.retry",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1441,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.conversations.retry.log"
+    },
+    {
+      "id": "assistant.startup.conversations.exit",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 565,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.conversations.exit.log"
+    },
+    {
+      "id": "assistant.startup.preferences.retry",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1493,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.preferences.retry.log"
+    },
+    {
+      "id": "assistant.startup.preferences.exit",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 504,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.preferences.exit.log"
+    },
+    {
+      "id": "assistant.startup.history.retry",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1334,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.history.retry.log"
+    },
+    {
+      "id": "assistant.startup.history.exit",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 554,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.history.exit.log"
+    },
+    {
+      "id": "driver",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 3361,
+      "log": ".bmw-runtime/workbuddy-integration-verified/driver.log"
+    },
+    {
+      "id": "startup-recovery",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 2440,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup-recovery.log"
+    },
+    {
+      "id": "startup-exit",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 630,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup-exit.log"
+    },
+    {
+      "id": "startup.permissions.retry",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1426,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.permissions.retry.log"
+    },
+    {
+      "id": "startup.permissions.exit",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 651,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.permissions.exit.log"
+    },
+    {
+      "id": "startup.layout.retry",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1260,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.layout.retry.log"
+    },
+    {
+      "id": "startup.layout.exit",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 524,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.layout.exit.log"
+    },
+    {
+      "id": "startup.continuity-config.retry",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1880,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.continuity-config.retry.log"
+    },
+    {
+      "id": "startup.continuity-config.exit",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 579,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.continuity-config.exit.log"
+    },
+    {
+      "id": "startup.continuity-snapshot.retry",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1173,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.continuity-snapshot.retry.log"
+    },
+    {
+      "id": "startup.continuity-snapshot.exit",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 484,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.continuity-snapshot.exit.log"
+    },
+    {
+      "id": "dsh",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 15139,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.log"
+    },
+    {
+      "id": "studio.next",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 17900,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.next.log"
+    },
+    {
+      "id": "studio.schema",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 3472,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.schema.log"
+    },
+    {
+      "id": "studio.long-film",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 7646,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.long-film.log"
+    },
+    {
+      "id": "studio.workflow-entry",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 6108,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.workflow-entry.log"
+    },
+    {
+      "id": "studio.materials-entry",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 3535,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.materials-entry.log"
+    },
+    {
+      "id": "studio.visual-effects",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 6900,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.visual-effects.log"
+    },
+    {
+      "id": "studio.main-mute",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 6384,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.main-mute.log"
+    },
+    {
+      "id": "studio.track-menu",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 8835,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.track-menu.log"
+    },
+    {
+      "id": "studio.card-text",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 11751,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.card-text.log"
+    },
+    {
+      "id": "studio.news-options",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 2296,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.news-options.log"
+    },
+    {
+      "id": "studio.card-pair",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 13886,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.card-pair.log"
+    },
+    {
+      "id": "studio.reference-analysis",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 8246,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.reference-analysis.log"
+    },
+    {
+      "id": "studio.review-adoption",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 5662,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.review-adoption.log"
+    },
+    {
+      "id": "studio.production-recovery",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 19530,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.production-recovery.log"
+    },
+    {
+      "id": "studio.bound-scene-split",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 25670,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.bound-scene-split.log"
+    },
+    {
+      "id": "studio.whole-scene-split",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 9743,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.whole-scene-split.log"
+    },
+    {
+      "id": "studio.approved-history",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 4693,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.approved-history.log"
+    },
+    {
+      "id": "studio.source-caption-rebind",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 4692,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.source-caption-rebind.log"
+    },
+    {
+      "id": "studio.layer-fade-continuity",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 5120,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.layer-fade-continuity.log"
+    },
+    {
+      "id": "studio.workspace-resume",
+      "layer": "desktop",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 1656,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.workspace-resume.log"
+    },
+    {
+      "id": "studio",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 60218,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.log"
+    },
+    {
+      "id": "browser.background",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 3264,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.background.log"
+    },
+    {
+      "id": "media.capture",
+      "layer": "media",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 34251,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.capture.log"
+    },
+    {
+      "id": "media.processing-runtime",
+      "layer": "media",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 21867,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.processing-runtime.log"
+    },
+    {
+      "id": "video",
+      "layer": "media",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 34945,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.log"
+    },
+    {
+      "id": "speech",
+      "layer": "media",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 26856,
+      "log": ".bmw-runtime/workbuddy-integration-verified/speech.log"
+    },
+    {
+      "id": "qwenNarration",
+      "layer": "media",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 2142,
+      "log": ".bmw-runtime/workbuddy-integration-verified/qwenNarration.log"
+    },
+    {
+      "id": "localNarration",
+      "layer": "media",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 5447,
+      "log": ".bmw-runtime/workbuddy-integration-verified/localNarration.log"
+    },
+    {
+      "id": "desktop.workspace",
+      "layer": "desktop",
+      "status": "passed",
+      "reason": "workspace: passed",
+      "log": ".bmw-runtime/workbuddy-integration-verified/desktop-suite/workspace/run.log"
+    },
+    {
+      "id": "desktop.projects",
+      "layer": "desktop",
+      "status": "passed",
+      "reason": "projects: passed; projects/restart: passed",
+      "log": ".bmw-runtime/workbuddy-integration-verified/desktop-suite/projects/run.log"
+    },
+    {
+      "id": "desktop.settings",
+      "layer": "desktop",
+      "status": "passed",
+      "reason": "settings: passed",
+      "log": ".bmw-runtime/workbuddy-integration-verified/desktop-suite/settings/run.log"
+    },
+    {
+      "id": "desktop.native",
+      "layer": "desktop",
+      "status": "passed",
+      "reason": "native: passed",
+      "log": ".bmw-runtime/workbuddy-integration-verified/desktop-suite/native/run.log"
+    },
+    {
+      "id": "desktop-suite",
+      "layer": "gate",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 24243,
+      "log": ".bmw-runtime/workbuddy-integration-verified/desktop-suite.log"
+    }
+  ],
+  "workbuddy": {
+    "officialRuntime": true,
+    "localModelFixture": true,
+    "realKeyUsed": false,
+    "paidModelCalls": 0,
+    "gatedModels": [
+      "deepseek-v4.1-flash",
+      "glm-5.3",
+      "kimi-k2.8-preview"
+    ],
+    "browserExecutions": 2,
+    "nativeResume": true,
+    "encryptedCredentialTestDouble": true,
+    "cleanupProcessGroupTest": true,
+    "windowsAvailable": false,
+    "imagesVerified": false,
+    "audioVerified": false
+  },
+  "intermediateReports": [
+    {
+      "path": ".bmw-runtime/workbuddy-integration-final/result.json",
+      "counts": {
+        "passed": 172,
+        "failed": 1,
+        "not-run": 12
+      },
+      "failure": "Studio transient conflict status polling; final evidence uses the frozen complete run."
+    }
+  ],
+  "manualAcceptance": [
+    "Production Profile, real service entitlement, paid inference and OS credential prompts not exercised."
+  ],
+  "postRunDocumentation": {
+    "README.md": "53062a3f28cb62c9541da1a148322a5fd1823db147e99656f55c877fdae66cae",
+    "docs/PROJECT_STATUS.md": "6fda7ec9c6cb3622ab7bc6dc2301f6643418ee32fdff2862b78f8716e1449267",
+    "handoff.md": "427cac4c7559c67751b2c497c2b68f8d7281ac52eda090f241bb6fa6b10ec1a0",
+    "docs/VERIFICATION.md": "569de3acf4008b581a7236309e1eedcb3e80dc5c8916b1f6c72a5981b45a04a7",
+    "docs/FUNCTIONAL_SPEC.md": "4eca41dc49dba50c85f4d9daf6221d9a97b592329c01e4eb08397065c557eff9"
+  },
+  "externalAcceptance": {
+    "workbuddyBrowser": {
+      "path": "docs/research/WORKBUDDY_BROWSER_DELIVERY.json",
+      "sha256": "23bdaec096300011c9e2d1909f1721a1b191814c3c2bcb462d7eaf12eee7f728",
+      "separateFromOfflineBaseline": true,
+      "realServiceUsed": true,
+      "model": "deepseek-v4.1-flash",
+      "successfulBrowserCalls": 1
+    }
+  }
+}

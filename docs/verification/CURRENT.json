@@ -1,15 +1,21 @@
 {
   "format": "bmw.current-verification",
   "version": 1,
-  "createdAt": "2026-10-20T13:46:57.045892+00:00",
+  "createdAt": "2026-10-20T15:01:30.272Z",
   "verificationMode": "full-non-external-run",
-  "sourceBaseRevision": "6bea922a91489c2aa452a17cf76d92bbfa8ef71b",
-  "sourceState": "Frozen implementation verified in full; only current verification/status documentation updated afterward. Every non-Markdown source hash rechecked unchanged.",
-  "review": {
-    "sourceBranch": "origin/workbuddybmw",
-    "originalAdapterCommit": "e8f86b613d51162f427447c1b6fc7f95c57cf0da",
-    "decision": "Integrate WorkBuddy with effective pre-input browser catalog admission and task-based API Key verification; user authorized publishing main after the successful real browser acceptance.",
-    "originalWorkingTreePreserved": true
+  "sourceBaseRevision": "9a14aeb2aeb8377efda518fe62bab3be2785449a",
+  "sourceState": "News-daily changes integrated on latest main; full run bound to implementation hashes before commit. Verification/status documentation filled after run; every runtime input and generated output rechecked unchanged.",
+  "integration": {
+    "originalNewsBase": "7d4a294178bf85019cfbab72963df9cf4918f7ac",
+    "decision": "Preserve latest publisher-date parsing, WorkBuddy browser-only gate, authentication/events/cleanup and all existing Studio assertions; integrate pending news/media code and evidence.",
+    "originalChanges": "Recovered from a safety stash and integrated; original accepted Project artifacts/profile untouched.",
+    "changes": [
+      "16-entry native decoding FIFO with queued cancellation and pinned Project directories",
+      "Cleanup failure quarantine, queued requests rejected without replay, explicit media.stop recovery",
+      "Capture-only WebM BlockDuration and terminal unknown-duration Opus preservation",
+      "Independent original-video EOF, pixel correspondence and explicitly requested source-fixture frames",
+      "Incremental browser-only news research guidance and archived assisted-production evidence"
+    ]
   },
   "environment": {
     "node": "v24.21.0",
@@ -23,8 +29,8 @@
     "workbuddyCli": "2.169.0"
   },
   "fullReport": {
-    "path": ".bmw-runtime/workbuddy-integration-verified/result.json",
-    "sha256": "6181d0b7fb9e7ffd82fdbf014e7543592459ae0b86021d7c1822e1ad5f4cca44",
+    "path": ".bmw-runtime/news-daily-main-integration/full-final/result.json",
+    "sha256": "2c1225e4f502e18a4010528e8363291f44646d5b590b66716f3e46fc14c5fa5c",
     "all": true,
     "counts": {
       "passed": 173,
@@ -102,7 +108,7 @@
     "packages/feature-video/src/material-index-contract.ts": "d4c905db64a5cf96df2e60ea9d6037f8dac6afe48791f7b56152c04778a76e91",
     "packages/feature-video/src/material-index-service.ts": "5f9d7e7d32650e72906b36cc31177b633417f042f5e2958d5aa2f9569c9d26e0",
     "packages/feature-video/src/material-index-store.ts": "70797cb2be340e31edce80a403f20ef714a204ed0ae2440253c743025372b88c",
-    "packages/feature-video/src/news-contract.ts": "59f317498c26b1bbb6f33a8f3b7e6c1724c42a16a173b3647094f7a81635a35a",
+    "packages/feature-video/src/news-contract.ts": "06852c0b53753ddc0caaaac0d9c8dd390a39654e29898a20e250e8faf7939ce3",
     "packages/feature-video/src/news-service.ts": "ea93d1e0df4290258e704dd64adf7669d6a85d63f5af88809cae2c83316ca69c",
     "packages/feature-video/src/news-store.ts": "7f261d3e837b38cce1a83024fb4dac809d39cd0843b047710d9a8b3c418a940e",
     "packages/feature-video/src/preload/studio-preload.cts": "5ccad7d1fbad3f54babb4843a7beb750aa05170209d318769b0f3a9281b05fe3",
@@ -250,6 +256,7 @@
     "packages/harness-dsh/test/workspace-context.test.ts": "fc790af6eb4d07be6024865d3929f9be8a4161469ee332f01fb4b39c75ea5b62",
     "packages/harness-qoder/index.ts": "1e233280fa7ef2494926936ec8f945a6b23387e863e382c250bbc816dbd1fede",
     "packages/harness-qoder/package.json": "2e3f63fd78f7f6da7cd570002ed8d56b61ce70ed2d8f3dea4780f5866b3ba7e4",
+    "packages/harness-qoder/qoder-bmw/SKILL.md": "a59d153935fcd951d55417c333752660ca9ea0168dda053a332a1dc696a06027",
     "packages/harness-qoder/src/bmw-guidance.ts": "5f4243aee48b58c58516dff571cda675a20ff12c8ed4f51afaa3b81b38f15b7f",
     "packages/harness-qoder/src/qoder-backend.ts": "6916819fcb396ac9e3e6d72931da5d47fde00602c7ddd973f32269b8ae2e85d8",
     "packages/harness-qoder/src/qoder-events.ts": "44f45a559823cbdd5a94554bb3dfc5dea1356f05bc6c817746c0fad5053d033d",
@@ -278,10 +285,11 @@
     "packages/media-native/src/artifact-job-io.ts": "34a641b2eac85d1480ca0f57485ad10b2811273e2ce93314ea46243b9ca4011d",
     "packages/media-native/src/audio-evidence-contract.ts": "2d38dd07b83bb2b3e7310c89011daed5bde0316c2adeeb359e197dfb2f50db16",
     "packages/media-native/src/caption-export.ts": "3e3dc78888c46eea3732426a4161c188e21ac534a5e623c3436db0d39dc0d34a",
-    "packages/media-native/src/capture-mux.ts": "9885ee066790ddcdd9eb71f28fc84af0f245f2a8563cbee52ec8e51f32cd80c4",
+    "packages/media-native/src/capture-mux.ts": "e50741df23c04832d5484bd8a7a1a83381b829bee5f3fba17975c84b1b81d260",
     "packages/media-native/src/capture-policy.ts": "d4346cbb01c2ca466f8212a292cec24fc6c740935f9cfdf32f9e616dfb9252a4",
     "packages/media-native/src/capture-source-index.ts": "8f74fb78110e3976a8e699dc4c058a49a15c3c17cdcfe45237976d6fc05618dc",
     "packages/media-native/src/capture-timeline.ts": "c55190e5431775f927724f6a1b89884e4cccffce41702ced0281b4ebdb7477c8",
+    "packages/media-native/src/capture-webm.ts": "60ee248fa639b7ff05edb8d34cc1fbff3d7802b954b3a50c52d48314183688f8",
     "packages/media-native/src/card-cues.ts": "d6a3bf48065577a98a3e4155a76c8c63d95eac8369a6e22de104251fe8b43f0a",
     "packages/media-native/src/card-details.ts": "6a5e1f9085cc370f111552f44212084ac7fe935975404e822b901eb207cc908a",
     "packages/media-native/src/card-templates.ts": "1a83c7f3c3fb8ae649594239d08ee57543acb0a917d8bf0d151ed74db768d98f",
@@ -298,10 +306,11 @@
     "packages/media-native/src/local-asr-assets.ts": "8623e7b0c4719ab56dec9d2935856ac4fdf33d4fdacd164c7bf9f5e8ea7803ad",
     "packages/media-native/src/local-tts-assets.ts": "4da4a00d1621d29d96b42a73c3c5e4771ac92094f79d64b92af6c014c9b65ad0",
     "packages/media-native/src/media-contract.ts": "9fc65af3eced877a7e4cc03afdbcf8dffb9d45741fad4827fd34ac6d54c4be4c",
-    "packages/media-native/src/media-controller.ts": "e966ba1074d64672aac4f4e0c8f9d8537c366242b106176804b8414cc1e72a93",
+    "packages/media-native/src/media-controller.ts": "f10e12270da4d57427a44447c1545ce25e7920ee4ca1ee3aa4f0977dcab636a0",
+    "packages/media-native/src/media-job-queue.ts": "af8f3db11e67a8fae47dce67c49d1a7c684d7547e3c7a3ba7012027a9ffdcf56",
     "packages/media-native/src/media-port.ts": "a50e23ab8dcb9b30e820c2e4993809f3309cb0d91c016fbd1a76da2f713aafad",
     "packages/media-native/src/media-preservation.ts": "0a101c18beb1f5d2870035c1ad347e9a1d1c6af58ab8280f37bf0a906b3c94a9",
-    "packages/media-native/src/media-processor.ts": "4053387220c6dc060e6218b27c500581db0b313c1f8c098b057cbb10e2bc81c8",
+    "packages/media-native/src/media-processor.ts": "065915e59a98fa18dfd101a208de13e3f536db38eaf0f8b373d68907ebf8bab6",
     "packages/media-native/src/media/audio-evidence.ts": "b2c0e52e97b0155e6f8f876bc27a82d47d9be2c816815b56fb1683c3fd68d7cc",
     "packages/media-native/src/media/canvas-paint-role.ts": "d7f0cfbc5f1b9caf64e7728b4015fc581f0a136ebf080583559e5a34280f2afd",
     "packages/media-native/src/media/canvas-text-trace.ts": "1b4d2ab2be63959ec86d6ed072e92927b25cd2c197d666c833a87ce9617aa41b",
@@ -359,8 +368,8 @@
     "packages/media-native/src/video-options.ts": "23fbb745ffdd7c07a558674b8c7808b3f3692c33fea8a7a79be37d2152e88d1d",
     "packages/media-native/src/visual-effects.ts": "cb31f1ea4514c5785d12b619505f1c19af5e068e2cd237775650af4d65766a6b",
     "packages/media-native/src/visual-segments.ts": "bfefb6a48c4e224e8fd177a276e7eee76f9419487ef86569e0807b8183e74883",
-    "packages/media-native/test/capture-source-index.test.ts": "e9f397b27e06410763c3642c86d08c655c2ad06e81e97d6b1d4f533bf1085f54",
-    "packages/media-native/test/media-controller.test.ts": "130dc627194ecc56800bc2fd4867fbbf5e228947b4f30ec1d426b293322deb09",
+    "packages/media-native/test/capture-source-index.test.ts": "74f4dc99e93f95a27ba874082f8746179f85c82da0dc540b79a0321ad8072fa2",
+    "packages/media-native/test/media-controller.test.ts": "0b6173447794958cb5682b115140aa71ffefd0b32ccd5cdc9fe2cfe93693433a",
     "packages/media-native/test/media-port.test.ts": "3288946a957ae50ee2505d13ab686b89cdc8217fa8b145b5dda67da5b3cfcfe0",
     "packages/media-native/test/media-preservation.test.ts": "e8d0bc7db235ce5776b73030799eff98d21c18e2cf7ecdda309b1ce8567bc3db",
     "packages/media-native/test/media-processing.test.ts": "58491dd81f987e480cea4711b3911e4bb2e3eb486340ae4227c01050958c9c28",
@@ -466,7 +475,7 @@
     "scripts/long-composition-case.ts": "77aa88009145b0636b86be1bd0e7406e6db188e821947f2e9dabf33862e3fa1c",
     "scripts/media-capture-smoke.ts": "d8cfd79dc23a2007aa04b3f3ae794ce3db690f74dc45573f166d1affb5144cdd",
     "scripts/media-download-smoke.ts": "e1d67343bc86579e3e8ed115f5b3d8349f6896f4df0311808ca261e938ba6ad5",
-    "scripts/media-processing-smoke.ts": "4129c7768fe7f72284e1a65a0d6019b85de1357e983c04f935fdf6decfc6eeb4",
+    "scripts/media-processing-smoke.ts": "10729239c712b7f4cfd9f7514c148337468112f485a8bccf314651836e022816",
     "scripts/migrate-agent-data.ts": "f6a6bd0763df4bd39202dc28c313a682c1f9f5f8b4f2fe69f761afe3c81cca84",
     "scripts/module-catalog.ts": "60d775ef60548267a85c29f42595657e8982bdcd421c3da1d62fd4140bf1f473",
     "scripts/musk-video-case.ts": "c338283dd13704a470752553dfb5a37ae0a2f7ff75bf9b325178375b1e989f2e",
@@ -489,7 +498,7 @@
     "scripts/source-analysis-case.ts": "3644a62eef66f0c194e062e7bcaa27b9e4fdb88d6fa46b9928bfc9abcc766590",
     "scripts/source-graph.ts": "5663269c43f3693ffdebdb4af577116bbc580bcb0373b2ca3f23fdbf123a3cd8",
     "scripts/source-platform-case.ts": "f1b97baa3e295877d079ba47b8ec8cbe8dfbd7dad1c059fc228c7b2624c602d7",
-    "scripts/source-studio-smoke.ts": "c54dfffe9321d253964c19fcad4ef2095a6b2b20aea5f8c23470705fb7521b18",
+    "scripts/source-studio-smoke.ts": "d78abfb04db6379e455fab57b8ced92e7e3c95c6704d5ecc75b5573c1ff87ef4",
     "scripts/speech-alignment-smoke.ts": "3e579ed9e8babdc65c5908f9f419346893e22385f5d2225a66cb1b76a6b95708",
     "scripts/speech-review-page-case.ts": "c99ce8483d2ebfba6146216c47ca8abe1da78fad4e1798f82129f648c4c4a581",
     "scripts/speech-study-case.ts": "6ad90cb0e58950a3a8c6b6caa5e02a7b5307f9458d2ab9c56f9e39f9146f5b08",
@@ -509,13 +518,24 @@
     "scripts/video-production-case.ts": "3eacbc8cbe99210e79682d699f4a4f18ca31eb0be93f7740481cbe5b48646c10",
     "scripts/video-production-smoke.ts": "6a7acc7f9972627b9130b604755d9677be8eac48718781e4b06827d0c3c06ecc",
     "scripts/video-schema-document.ts": "ccb4bfda36e5191488b3825ee8f320c2413ffca18c1148be84d325dfaa2c0523",
-    "scripts/video-studio-smoke.ts": "59256d13b7f24af2350f6332c083036e636717e487d7938fd34459d85344568c",
+    "scripts/video-studio-smoke.ts": "9f25200a870b6eae8f15e4dc727842c2702156f48806570a5a6cdcf3506e93bc",
     "scripts/vision-model-smoke.ts": "223cd30e0e8de974e8a3498484c1a31e276fe92f045adcfb9aff228d655fdd72",
     "scripts/workbuddy-runtime.test.ts": "002aca0c7a75efb5213e500b284022fec74ef609df85598ad478bff56a70b084",
     "types/browser-globals.d.ts": "0f1602c29df4598c90c963cf2600c99bfb1a4767e618f719e94db19bd25594b7",
     "package.json": "86575cefe9645d7e0da1562dd5331a820ada6a1f9197bfaa2ddba74cd2448d79",
     "package-lock.json": "c3d05149ff5f719e6122ec92514f5555bfb05a87592b41943eb0bf92d2073c2d",
     "tsconfig.json": "4fdce5aec2d5369ddee6a3ec543cbc1a23601c0057b93b220862e3d1b45bd139"
+  },
+  "sourceCoverage": {
+    "runtimeInputs": 485,
+    "generatedOutputs": 454,
+    "verifiedUnchanged": true
+  },
+  "buildReceipt": {
+    "path": ".bmw-runtime/build-receipt.json",
+    "sha256": "6d70460e4b1c6a57868cf4276b025658afa1dec6fdd0efe0b9e753d71d7524bd",
+    "sourceCount": 485,
+    "outputCount": 454
   },
   "results": [
     {
@@ -607,784 +627,784 @@
       "layer": "gate",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 104,
-      "log": ".bmw-runtime/workbuddy-integration-verified/source-policy.log"
+      "durationMs": 92,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/source-policy.log"
     },
     {
       "id": "feature-inventory",
       "layer": "gate",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 137,
-      "log": ".bmw-runtime/workbuddy-integration-verified/feature-inventory.log"
+      "durationMs": 117,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/feature-inventory.log"
     },
     {
       "id": "browser.tab-lifecycle",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 49666,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.tab-lifecycle.log"
+      "durationMs": 49215,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.tab-lifecycle.log"
     },
     {
       "id": "video.news",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 858,
-      "log": ".bmw-runtime/workbuddy-integration-verified/video.news.log"
+      "durationMs": 772,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/video.news.log"
     },
     {
       "id": "browser.navigation",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 137,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.navigation.log"
+      "durationMs": 126,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.navigation.log"
     },
     {
       "id": "studio.news-source-screenshot",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 921,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.news-source-screenshot.log"
+      "durationMs": 680,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.news-source-screenshot.log"
     },
     {
       "id": "studio.news",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 18273,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.news.log"
+      "durationMs": 10805,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.news.log"
     },
     {
       "id": "platform.qwen-credentials",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 290,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.qwen-credentials.log"
+      "durationMs": 263,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.qwen-credentials.log"
     },
     {
       "id": "browser.media-session-fetch",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 251,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.media-session-fetch.log"
+      "durationMs": 141,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.media-session-fetch.log"
     },
     {
       "id": "browser.media-download-runtime",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 474,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.media-download-runtime.log"
+      "durationMs": 364,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.media-download-runtime.log"
     },
     {
       "id": "video.production-assessment",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 398,
-      "log": ".bmw-runtime/workbuddy-integration-verified/video.production-assessment.log"
+      "durationMs": 219,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/video.production-assessment.log"
     },
     {
       "id": "video.production",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2611,
-      "log": ".bmw-runtime/workbuddy-integration-verified/video.production.log"
+      "durationMs": 1731,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/video.production.log"
     },
     {
       "id": "media.research-video",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 9519,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.research-video.log"
+      "durationMs": 8229,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.research-video.log"
     },
     {
       "id": "media.precomposition",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1475,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.precomposition.log"
+      "durationMs": 172,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.precomposition.log"
     },
     {
       "id": "media.research-diagrams",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 403,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.research-diagrams.log"
+      "durationMs": 206,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.research-diagrams.log"
     },
     {
       "id": "media.science-spec",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 152,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.science-spec.log"
+      "durationMs": 149,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.science-spec.log"
     },
     {
       "id": "media.video-capture",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 206,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.video-capture.log"
+      "durationMs": 199,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.video-capture.log"
     },
     {
       "id": "media.capture-source-index",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 137,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.capture-source-index.log"
+      "durationMs": 191,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.capture-source-index.log"
     },
     {
       "id": "media.preservation",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 186,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.preservation.log"
+      "durationMs": 172,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.preservation.log"
     },
     {
       "id": "video.material-index",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 290,
-      "log": ".bmw-runtime/workbuddy-integration-verified/video.material-index.log"
+      "durationMs": 270,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/video.material-index.log"
     },
     {
       "id": "video.source-analysis",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1886,
-      "log": ".bmw-runtime/workbuddy-integration-verified/video.source-analysis.log"
+      "durationMs": 1277,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/video.source-analysis.log"
     },
     {
       "id": "studio.production",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3074,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.production.log"
+      "durationMs": 2836,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.production.log"
     },
     {
       "id": "studio.science",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5387,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.science.log"
+      "durationMs": 5689,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.science.log"
     },
     {
       "id": "studio.layer-packaging",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 4548,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.layer-packaging.log"
+      "durationMs": 4336,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.layer-packaging.log"
     },
     {
       "id": "studio.text-treatment",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 4025,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.text-treatment.log"
+      "durationMs": 4150,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.text-treatment.log"
     },
     {
       "id": "media.science-diagrams",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 6176,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.science-diagrams.log"
+      "durationMs": 5966,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.science-diagrams.log"
     },
     {
       "id": "media.layer-packaging",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5347,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.layer-packaging.log"
+      "durationMs": 5082,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.layer-packaging.log"
     },
     {
       "id": "media.text-treatment",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3023,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.text-treatment.log"
+      "durationMs": 2767,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.text-treatment.log"
     },
     {
       "id": "media.audio-windows",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 17076,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.audio-windows.log"
+      "durationMs": 16670,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.audio-windows.log"
     },
     {
       "id": "studio.export-review",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 20064,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.export-review.log"
+      "durationMs": 14630,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.export-review.log"
     },
     {
       "id": "agent.context",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 204,
-      "log": ".bmw-runtime/workbuddy-integration-verified/agent.context.log"
+      "durationMs": 214,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/agent.context.log"
     },
     {
       "id": "agent.conversation",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 147,
-      "log": ".bmw-runtime/workbuddy-integration-verified/agent.conversation.log"
+      "durationMs": 102,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/agent.conversation.log"
     },
     {
       "id": "bmw.agent-assembly",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 360,
-      "log": ".bmw-runtime/workbuddy-integration-verified/bmw.agent-assembly.log"
+      "durationMs": 234,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/bmw.agent-assembly.log"
     },
     {
       "id": "agent.data-migration",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 360,
-      "log": ".bmw-runtime/workbuddy-integration-verified/agent.data-migration.log"
+      "durationMs": 194,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/agent.data-migration.log"
     },
     {
       "id": "dsh.project-bindings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 211,
-      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.project-bindings.log"
+      "durationMs": 91,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/dsh.project-bindings.log"
     },
     {
       "id": "dsh.migration-history",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 189,
-      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.migration-history.log"
+      "durationMs": 96,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/dsh.migration-history.log"
     },
     {
       "id": "agent.studio-composer",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 194,
-      "log": ".bmw-runtime/workbuddy-integration-verified/agent.studio-composer.log"
+      "durationMs": 86,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/agent.studio-composer.log"
     },
     {
       "id": "agent.assistant-ui",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 178,
-      "log": ".bmw-runtime/workbuddy-integration-verified/agent.assistant-ui.log"
+      "durationMs": 87,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/agent.assistant-ui.log"
     },
     {
       "id": "agent.driver-settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 182,
-      "log": ".bmw-runtime/workbuddy-integration-verified/agent.driver-settings.log"
+      "durationMs": 94,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/agent.driver-settings.log"
     },
     {
       "id": "platform.agent-settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 230,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.agent-settings.log"
+      "durationMs": 101,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.agent-settings.log"
     },
     {
       "id": "codex.settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 244,
-      "log": ".bmw-runtime/workbuddy-integration-verified/codex.settings.log"
+      "durationMs": 104,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/codex.settings.log"
     },
     {
       "id": "codex.installation",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 244,
-      "log": ".bmw-runtime/workbuddy-integration-verified/codex.installation.log"
+      "durationMs": 100,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/codex.installation.log"
     },
     {
       "id": "qoder.settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 377,
-      "log": ".bmw-runtime/workbuddy-integration-verified/qoder.settings.log"
+      "durationMs": 172,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/qoder.settings.log"
     },
     {
       "id": "dsh.settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 290,
-      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.settings.log"
+      "durationMs": 108,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/dsh.settings.log"
     },
     {
       "id": "platform.assistant-controller",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 226,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.assistant-controller.log"
+      "durationMs": 99,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.assistant-controller.log"
     },
     {
       "id": "platform.conversation-store",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 239,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.conversation-store.log"
+      "durationMs": 99,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.conversation-store.log"
     },
     {
       "id": "platform.agent-history",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 176,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.agent-history.log"
+      "durationMs": 94,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.agent-history.log"
     },
     {
       "id": "platform.agent-host",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 306,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.agent-host.log"
+      "durationMs": 154,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.agent-host.log"
     },
     {
       "id": "browser.session-leases",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 754,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.session-leases.log"
+      "durationMs": 375,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.session-leases.log"
     },
     {
       "id": "codex.policy",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 223,
-      "log": ".bmw-runtime/workbuddy-integration-verified/codex.policy.log"
+      "durationMs": 106,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/codex.policy.log"
     },
     {
       "id": "codex.backend",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 237,
-      "log": ".bmw-runtime/workbuddy-integration-verified/codex.backend.log"
+      "durationMs": 109,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/codex.backend.log"
     },
     {
       "id": "dsh.events",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 145,
-      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.events.log"
+      "durationMs": 85,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/dsh.events.log"
     },
     {
       "id": "dsh.backend",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 176,
-      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.backend.log"
+      "durationMs": 106,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/dsh.backend.log"
     },
     {
       "id": "qoder.events",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 189,
-      "log": ".bmw-runtime/workbuddy-integration-verified/qoder.events.log"
+      "durationMs": 85,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/qoder.events.log"
     },
     {
       "id": "qoder.backend",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 403,
-      "log": ".bmw-runtime/workbuddy-integration-verified/qoder.backend.log"
+      "durationMs": 159,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/qoder.backend.log"
     },
     {
       "id": "workbuddy.runtime",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 33435,
-      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.runtime.log"
+      "durationMs": 25246,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/workbuddy.runtime.log"
     },
     {
       "id": "workbuddy.catalog",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3428,
-      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.catalog.log"
+      "durationMs": 3122,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/workbuddy.catalog.log"
     },
     {
       "id": "workbuddy.settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 113,
-      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.settings.log"
+      "durationMs": 95,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/workbuddy.settings.log"
     },
     {
       "id": "workbuddy.acp",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3367,
-      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.acp.log"
+      "durationMs": 3356,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/workbuddy.acp.log"
     },
     {
       "id": "workbuddy.policy",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 98,
-      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.policy.log"
+      "durationMs": 88,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/workbuddy.policy.log"
     },
     {
       "id": "workbuddy.backend",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 689,
-      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.backend.log"
+      "durationMs": 650,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/workbuddy.backend.log"
     },
     {
       "id": "browser.schema",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 91,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.schema.log"
+      "durationMs": 83,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.schema.log"
     },
     {
       "id": "browser.catalog",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1653,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.catalog.log"
+      "durationMs": 1465,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.catalog.log"
     },
     {
       "id": "browser.operations",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 295,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.operations.log"
+      "durationMs": 246,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.operations.log"
     },
     {
       "id": "browser.shutdown",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 127,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.shutdown.log"
+      "durationMs": 115,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.shutdown.log"
     },
     {
       "id": "browser.deadline",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 87,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.deadline.log"
+      "durationMs": 80,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.deadline.log"
     },
     {
       "id": "browser.screenshot",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 117,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.screenshot.log"
+      "durationMs": 92,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.screenshot.log"
     },
     {
       "id": "browser.renderer-read",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 104,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.renderer-read.log"
+      "durationMs": 98,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.renderer-read.log"
     },
     {
       "id": "browser.download",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 145,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.download.log"
+      "durationMs": 129,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.download.log"
     },
     {
       "id": "browser.tab-policy",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 98,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.tab-policy.log"
+      "durationMs": 85,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.tab-policy.log"
     },
     {
       "id": "browser.sources",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 110,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.sources.log"
+      "durationMs": 88,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.sources.log"
     },
     {
       "id": "platform.sources",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 234,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.sources.log"
+      "durationMs": 196,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.sources.log"
     },
     {
       "id": "video.sources",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 270,
-      "log": ".bmw-runtime/workbuddy-integration-verified/video.sources.log"
+      "durationMs": 166,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/video.sources.log"
     },
     {
       "id": "browser.host-contract",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 112,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.host-contract.log"
+      "durationMs": 84,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.host-contract.log"
     },
     {
       "id": "dsh.dsh-runtime",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 133,
-      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.dsh-runtime.log"
+      "durationMs": 105,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/dsh.dsh-runtime.log"
     },
     {
       "id": "dsh.dsh-transport",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 142,
-      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.dsh-transport.log"
+      "durationMs": 115,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/dsh.dsh-transport.log"
     },
     {
       "id": "dsh.dsh-preset",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 133,
-      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.dsh-preset.log"
+      "durationMs": 102,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/dsh.dsh-preset.log"
     },
     {
       "id": "dsh.browser-failure-guard",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 90,
-      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.browser-failure-guard.log"
+      "durationMs": 84,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/dsh.browser-failure-guard.log"
     },
     {
       "id": "dsh.workspace-context",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 84,
-      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.workspace-context.log"
+      "durationMs": 83,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/dsh.workspace-context.log"
     },
     {
       "id": "dsh.video-case-log",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 93,
-      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.video-case-log.log"
+      "durationMs": 83,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/dsh.video-case-log.log"
     },
     {
       "id": "media.controller",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 144,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.controller.log"
+      "durationMs": 138,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.controller.log"
     },
     {
       "id": "media.processing",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 123,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.processing.log"
+      "durationMs": 121,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.processing.log"
     },
     {
       "id": "media.production",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 364,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.production.log"
+      "durationMs": 334,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.production.log"
     },
     {
       "id": "media.options",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 87,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.options.log"
+      "durationMs": 84,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.options.log"
     },
     {
       "id": "media.scene-clock",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3718,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.scene-clock.log"
+      "durationMs": 3064,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.scene-clock.log"
     },
     {
       "id": "media.speech",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2634,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.speech.log"
+      "durationMs": 2612,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.speech.log"
     },
     {
       "id": "media.port-contract",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 88,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.port-contract.log"
+      "durationMs": 86,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.port-contract.log"
     },
     {
       "id": "platform.projects",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 139,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.projects.log"
+      "durationMs": 131,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.projects.log"
     },
     {
       "id": "platform.settings",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 94,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.settings.log"
+      "durationMs": 96,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.settings.log"
     },
     {
       "id": "platform.schedules",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 126,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.schedules.log"
+      "durationMs": 122,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.schedules.log"
     },
     {
       "id": "platform.state",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 120,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.state.log"
+      "durationMs": 128,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.state.log"
     },
     {
       "id": "platform.layout",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 87,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.layout.log"
+      "durationMs": 85,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.layout.log"
     },
     {
       "id": "platform.docking",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 86,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.docking.log"
+      "durationMs": 90,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.docking.log"
     },
     {
       "id": "platform.permissions",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 82,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.permissions.log"
+      "durationMs": 84,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.permissions.log"
     },
     {
       "id": "platform.menu",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 82,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.menu.log"
+      "durationMs": 79,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.menu.log"
     },
     {
       "id": "platform.restart",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 80,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.restart.log"
+      "durationMs": 79,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.restart.log"
     },
     {
       "id": "platform.continuity",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 96,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.continuity.log"
+      "durationMs": 93,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.continuity.log"
     },
     {
       "id": "platform.user-agent",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 81,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.user-agent.log"
+      "durationMs": 88,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.user-agent.log"
     },
     {
       "id": "platform.project-panel",
@@ -1392,135 +1412,135 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 82,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.project-panel.log"
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.project-panel.log"
     },
     {
       "id": "platform.driver-binding",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 92,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.driver-binding.log"
+      "durationMs": 97,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.driver-binding.log"
     },
     {
       "id": "platform.catalog",
       "layer": "boundary",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 135,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.catalog.log"
+      "durationMs": 133,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.catalog.log"
     },
     {
       "id": "platform.boundaries",
       "layer": "boundary",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 321,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.boundaries.log"
+      "durationMs": 282,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.boundaries.log"
     },
     {
       "id": "platform.remote-boundary",
       "layer": "boundary",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 218,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.remote-boundary.log"
+      "durationMs": 227,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.remote-boundary.log"
     },
     {
       "id": "platform.shell-ipc",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 85,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.shell-ipc.log"
+      "durationMs": 82,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.shell-ipc.log"
     },
     {
       "id": "platform.permission-store",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 87,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.permission-store.log"
+      "durationMs": 85,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.permission-store.log"
     },
     {
       "id": "platform.continuity-state",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 105,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.continuity-state.log"
+      "durationMs": 102,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.continuity-state.log"
     },
     {
       "id": "platform.feature-contract",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 88,
-      "log": ".bmw-runtime/workbuddy-integration-verified/platform.feature-contract.log"
+      "durationMs": 83,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/platform.feature-contract.log"
     },
     {
       "id": "video.schema-publication",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 74,
-      "log": ".bmw-runtime/workbuddy-integration-verified/video.schema-publication.log"
+      "durationMs": 70,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/video.schema-publication.log"
     },
     {
       "id": "video.schema",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3463,
-      "log": ".bmw-runtime/workbuddy-integration-verified/video.schema.log"
+      "durationMs": 3009,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/video.schema.log"
     },
     {
       "id": "video.materials",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 123,
-      "log": ".bmw-runtime/workbuddy-integration-verified/video.materials.log"
+      "durationMs": 119,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/video.materials.log"
     },
     {
       "id": "video.studio",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1830,
-      "log": ".bmw-runtime/workbuddy-integration-verified/video.studio.log"
+      "durationMs": 1641,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/video.studio.log"
     },
     {
       "id": "video.settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 188,
-      "log": ".bmw-runtime/workbuddy-integration-verified/video.settings.log"
+      "durationMs": 168,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/video.settings.log"
     },
     {
       "id": "video.boundary",
       "layer": "boundary",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 528,
-      "log": ".bmw-runtime/workbuddy-integration-verified/video.boundary.log"
+      "durationMs": 148,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/video.boundary.log"
     },
     {
       "id": "architecture.boundaries",
       "layer": "boundary",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 18631,
-      "log": ".bmw-runtime/workbuddy-integration-verified/architecture.boundaries.log"
+      "durationMs": 12468,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/architecture.boundaries.log"
     },
     {
       "id": "validation.selection",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 38843,
-      "log": ".bmw-runtime/workbuddy-integration-verified/validation.selection.log"
+      "durationMs": 31830,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/validation.selection.log"
     },
     {
       "id": "api.types",
@@ -1533,436 +1553,475 @@
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 17014,
-      "log": ".bmw-runtime/workbuddy-integration-verified/sources.log"
+      "durationMs": 13985,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/sources.log"
     },
     {
       "id": "assistant.default",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5665,
-      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.default.log"
+      "durationMs": 4402,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/assistant.default.log"
     },
     {
       "id": "assistant.application",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 11153,
-      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.application.log"
+      "durationMs": 8167,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/assistant.application.log"
     },
     {
       "id": "assistant.schedules",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1951,
-      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.schedules.log"
+      "durationMs": 1087,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/assistant.schedules.log"
     },
     {
       "id": "assistant.startup.conversations.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1441,
-      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.conversations.retry.log"
+      "durationMs": 1066,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/assistant.startup.conversations.retry.log"
     },
     {
       "id": "assistant.startup.conversations.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 565,
-      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.conversations.exit.log"
+      "durationMs": 420,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/assistant.startup.conversations.exit.log"
     },
     {
       "id": "assistant.startup.preferences.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1493,
-      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.preferences.retry.log"
+      "durationMs": 984,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/assistant.startup.preferences.retry.log"
     },
     {
       "id": "assistant.startup.preferences.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 504,
-      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.preferences.exit.log"
+      "durationMs": 411,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/assistant.startup.preferences.exit.log"
     },
     {
       "id": "assistant.startup.history.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1334,
-      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.history.retry.log"
+      "durationMs": 961,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/assistant.startup.history.retry.log"
     },
     {
       "id": "assistant.startup.history.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 554,
-      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.history.exit.log"
+      "durationMs": 402,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/assistant.startup.history.exit.log"
     },
     {
       "id": "driver",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3361,
-      "log": ".bmw-runtime/workbuddy-integration-verified/driver.log"
+      "durationMs": 2357,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/driver.log"
     },
     {
       "id": "startup-recovery",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2440,
-      "log": ".bmw-runtime/workbuddy-integration-verified/startup-recovery.log"
+      "durationMs": 999,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/startup-recovery.log"
     },
     {
       "id": "startup-exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 630,
-      "log": ".bmw-runtime/workbuddy-integration-verified/startup-exit.log"
+      "durationMs": 410,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/startup-exit.log"
     },
     {
       "id": "startup.permissions.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1426,
-      "log": ".bmw-runtime/workbuddy-integration-verified/startup.permissions.retry.log"
+      "durationMs": 937,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/startup.permissions.retry.log"
     },
     {
       "id": "startup.permissions.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 651,
-      "log": ".bmw-runtime/workbuddy-integration-verified/startup.permissions.exit.log"
+      "durationMs": 396,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/startup.permissions.exit.log"
     },
     {
       "id": "startup.layout.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1260,
-      "log": ".bmw-runtime/workbuddy-integration-verified/startup.layout.retry.log"
+      "durationMs": 856,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/startup.layout.retry.log"
     },
     {
       "id": "startup.layout.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 524,
-      "log": ".bmw-runtime/workbuddy-integration-verified/startup.layout.exit.log"
+      "durationMs": 400,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/startup.layout.exit.log"
     },
     {
       "id": "startup.continuity-config.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1880,
-      "log": ".bmw-runtime/workbuddy-integration-verified/startup.continuity-config.retry.log"
+      "durationMs": 945,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/startup.continuity-config.retry.log"
     },
     {
       "id": "startup.continuity-config.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 579,
-      "log": ".bmw-runtime/workbuddy-integration-verified/startup.continuity-config.exit.log"
+      "durationMs": 397,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/startup.continuity-config.exit.log"
     },
     {
       "id": "startup.continuity-snapshot.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1173,
-      "log": ".bmw-runtime/workbuddy-integration-verified/startup.continuity-snapshot.retry.log"
+      "durationMs": 906,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/startup.continuity-snapshot.retry.log"
     },
     {
       "id": "startup.continuity-snapshot.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 484,
-      "log": ".bmw-runtime/workbuddy-integration-verified/startup.continuity-snapshot.exit.log"
+      "durationMs": 390,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/startup.continuity-snapshot.exit.log"
     },
     {
       "id": "dsh",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 15139,
-      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.log"
+      "durationMs": 13239,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/dsh.log"
     },
     {
       "id": "studio.next",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 17900,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.next.log"
+      "durationMs": 13711,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.next.log"
     },
     {
       "id": "studio.schema",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3472,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.schema.log"
+      "durationMs": 3120,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.schema.log"
     },
     {
       "id": "studio.long-film",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 7646,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.long-film.log"
+      "durationMs": 7636,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.long-film.log"
     },
     {
       "id": "studio.workflow-entry",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 6108,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.workflow-entry.log"
+      "durationMs": 5386,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.workflow-entry.log"
     },
     {
       "id": "studio.materials-entry",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3535,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.materials-entry.log"
+      "durationMs": 2607,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.materials-entry.log"
     },
     {
       "id": "studio.visual-effects",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 6900,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.visual-effects.log"
+      "durationMs": 5053,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.visual-effects.log"
     },
     {
       "id": "studio.main-mute",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 6384,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.main-mute.log"
+      "durationMs": 4984,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.main-mute.log"
     },
     {
       "id": "studio.track-menu",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 8835,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.track-menu.log"
+      "durationMs": 8157,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.track-menu.log"
     },
     {
       "id": "studio.card-text",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 11751,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.card-text.log"
+      "durationMs": 9802,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.card-text.log"
     },
     {
       "id": "studio.news-options",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2296,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.news-options.log"
+      "durationMs": 1663,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.news-options.log"
     },
     {
       "id": "studio.card-pair",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 13886,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.card-pair.log"
+      "durationMs": 12947,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.card-pair.log"
     },
     {
       "id": "studio.reference-analysis",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 8246,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.reference-analysis.log"
+      "durationMs": 6047,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.reference-analysis.log"
     },
     {
       "id": "studio.review-adoption",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5662,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.review-adoption.log"
+      "durationMs": 4592,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.review-adoption.log"
     },
     {
       "id": "studio.production-recovery",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 19530,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.production-recovery.log"
+      "durationMs": 16414,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.production-recovery.log"
     },
     {
       "id": "studio.bound-scene-split",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 25670,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.bound-scene-split.log"
+      "durationMs": 22966,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.bound-scene-split.log"
     },
     {
       "id": "studio.whole-scene-split",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 9743,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.whole-scene-split.log"
+      "durationMs": 8962,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.whole-scene-split.log"
     },
     {
       "id": "studio.approved-history",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 4693,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.approved-history.log"
+      "durationMs": 4757,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.approved-history.log"
     },
     {
       "id": "studio.source-caption-rebind",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 4692,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.source-caption-rebind.log"
+      "durationMs": 4929,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.source-caption-rebind.log"
     },
     {
       "id": "studio.layer-fade-continuity",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5120,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.layer-fade-continuity.log"
+      "durationMs": 5522,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.layer-fade-continuity.log"
     },
     {
       "id": "studio.workspace-resume",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1656,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.workspace-resume.log"
+      "durationMs": 1773,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.workspace-resume.log"
     },
     {
       "id": "studio",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 60218,
-      "log": ".bmw-runtime/workbuddy-integration-verified/studio.log"
+      "durationMs": 61870,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/studio.log"
     },
     {
       "id": "browser.background",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3264,
-      "log": ".bmw-runtime/workbuddy-integration-verified/browser.background.log"
+      "durationMs": 3157,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/browser.background.log"
     },
     {
       "id": "media.capture",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 34251,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.capture.log"
+      "durationMs": 34252,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.capture.log"
     },
     {
       "id": "media.processing-runtime",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 21867,
-      "log": ".bmw-runtime/workbuddy-integration-verified/media.processing-runtime.log"
+      "durationMs": 21010,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/media.processing-runtime.log"
     },
     {
       "id": "video",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 34945,
-      "log": ".bmw-runtime/workbuddy-integration-verified/video.log"
+      "durationMs": 34551,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/video.log"
     },
     {
       "id": "speech",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 26856,
-      "log": ".bmw-runtime/workbuddy-integration-verified/speech.log"
+      "durationMs": 16169,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/speech.log"
     },
     {
       "id": "qwenNarration",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2142,
-      "log": ".bmw-runtime/workbuddy-integration-verified/qwenNarration.log"
+      "durationMs": 972,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/qwenNarration.log"
     },
     {
       "id": "localNarration",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5447,
-      "log": ".bmw-runtime/workbuddy-integration-verified/localNarration.log"
+      "durationMs": 3443,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/localNarration.log"
     },
     {
       "id": "desktop.workspace",
       "layer": "desktop",
       "status": "passed",
       "reason": "workspace: passed",
-      "log": ".bmw-runtime/workbuddy-integration-verified/desktop-suite/workspace/run.log"
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/desktop-suite/workspace/run.log"
     },
     {
       "id": "desktop.projects",
       "layer": "desktop",
       "status": "passed",
       "reason": "projects: passed; projects/restart: passed",
-      "log": ".bmw-runtime/workbuddy-integration-verified/desktop-suite/projects/run.log"
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/desktop-suite/projects/run.log"
     },
     {
       "id": "desktop.settings",
       "layer": "desktop",
       "status": "passed",
       "reason": "settings: passed",
-      "log": ".bmw-runtime/workbuddy-integration-verified/desktop-suite/settings/run.log"
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/desktop-suite/settings/run.log"
     },
     {
       "id": "desktop.native",
       "layer": "desktop",
       "status": "passed",
       "reason": "native: passed",
-      "log": ".bmw-runtime/workbuddy-integration-verified/desktop-suite/native/run.log"
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/desktop-suite/native/run.log"
     },
     {
       "id": "desktop-suite",
       "layer": "gate",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 24243,
-      "log": ".bmw-runtime/workbuddy-integration-verified/desktop-suite.log"
+      "durationMs": 21689,
+      "log": ".bmw-runtime/news-daily-main-integration/full-final/desktop-suite.log"
+    }
+  ],
+  "intermediateReports": [
+    {
+      "path": ".bmw-runtime/news-daily-main-integration/full/result.json",
+      "sha256": "00adf45d19d8209179c3c935123128194bcb54f005935e8f54710698845ad6d7",
+      "counts": {
+        "passed": 172,
+        "failed": 1,
+        "not-run": 12
+      },
+      "failure": "media.processing-runtime fault-injection test incorrectly assumed exactly three close calls. Replaced with per-explicit-recovery increments and retained quarantine/no-replay assertions; successful recovery also publishes inactive processing status."
+    },
+    {
+      "path": ".bmw-runtime/news-daily-main-integration/full-verified/result.json",
+      "sha256": "f4eebc82b4207d7b4e9e67e938d37c83bbbb1f3b334ea38c19973c4df3dce1aa",
+      "counts": {
+        "passed": 172,
+        "failed": 1,
+        "not-run": 12
+      },
+      "failure": "studio.card-pair pointerdown was admitted, but committed divider movement did not change layout. Compositor/input timing is suspected, not independently established. Native fixture now admits pointer capture, waits paint and observes intermediate real drag movement; final height, Escape, layout persistence, pixels, CAS and content assertions remain."
+    }
+  ],
+  "supplementalVerification": [
+    {
+      "path": ".bmw-runtime/news-daily-main-integration/media-recheck.log",
+      "sha256": "61ed65354112c1c10b5bc86fc8ce47ec1e960d7fa75e139bc5873108e9ae284d",
+      "status": "passed"
+    },
+    {
+      "path": ".bmw-runtime/news-daily-main-integration/divider-recheck-1.log",
+      "sha256": "d162d345fe7ff494ced9ba609fff9e281b8c2eebcda6ac13ce4d77d8f4e673ee",
+      "status": "passed"
+    },
+    {
+      "path": ".bmw-runtime/news-daily-main-integration/divider-recheck-2.log",
+      "sha256": "ebba9b1d14c726a223a0dcad5c8149a3782013f53bebd4075fc52bad90dd6483",
+      "status": "passed"
     }
   ],
   "workbuddy": {
@@ -1983,27 +2042,14 @@
     "imagesVerified": false,
     "audioVerified": false
   },
-  "intermediateReports": [
-    {
-      "path": ".bmw-runtime/workbuddy-integration-final/result.json",
-      "counts": {
-        "passed": 172,
-        "failed": 1,
-        "not-run": 12
-      },
-      "failure": "Studio transient conflict status polling; final evidence uses the frozen complete run."
-    }
-  ],
+  "historicalSnapshots": {
+    "workbuddy": "docs/history/2026-10-20-before-news-daily-integration/WORKBUDDY_CURRENT.json",
+    "newsDaily": "docs/history/2026-10-20-before-news-daily-integration/NEWS_DAILY_CURRENT.json",
+    "earlyNewsFailures": "docs/history/2026-10-19-news-daily-before-fixes/CURRENT.json"
+  },
   "manualAcceptance": [
     "Production Profile, real service entitlement, paid inference and OS credential prompts not exercised."
   ],
-  "postRunDocumentation": {
-    "README.md": "53062a3f28cb62c9541da1a148322a5fd1823db147e99656f55c877fdae66cae",
-    "docs/PROJECT_STATUS.md": "6fda7ec9c6cb3622ab7bc6dc2301f6643418ee32fdff2862b78f8716e1449267",
-    "handoff.md": "427cac4c7559c67751b2c497c2b68f8d7281ac52eda090f241bb6fa6b10ec1a0",
-    "docs/VERIFICATION.md": "569de3acf4008b581a7236309e1eedcb3e80dc5c8916b1f6c72a5981b45a04a7",
-    "docs/FUNCTIONAL_SPEC.md": "4eca41dc49dba50c85f4d9daf6221d9a97b592329c01e4eb08397065c557eff9"
-  },
   "externalAcceptance": {
     "workbuddyBrowser": {
       "path": "docs/research/WORKBUDDY_BROWSER_DELIVERY.json",
@@ -2013,5 +2059,27 @@
       "model": "deepseek-v4.1-flash",
       "successfulBrowserCalls": 1
     }
+  },
+  "postRunDocumentation": {
+    "scope": "Only verification/status/guide references updated after the frozen run; check and source/output fingerprint audit run afterward. No new paid-model or human listening coverage.",
+    "check": "passed",
+    "runtimeHashAudit": "passed",
+    "generatedOutputAudit": "passed",
+    "currentHashes": {
+      "README.md": "f3aa9d6cb22d336bb19fca41395d5fc4f736d763cf272f9341eb1a50f80f6d3d",
+      "handoff.md": "024769765cbb0ee38259e937fd5f0a0b3f4acd33a32407ba2f6c26142d4a3503",
+      "AGENTS.md": "72a495d4027f149bef45e2bd3480a91c9e43f33eb952735dca574a6813746835",
+      "docs/FUNCTIONAL_SPEC.md": "3958d5eec5bbbf45b36980444a10ecf2dc2c93f43d5b7309ecdc26ce4de060ba",
+      "docs/ARCHITECTURE.md": "61ed8312deda4f06c9d4cfb91a8739181ce1d704bd083875b186e208f46a732a",
+      "docs/VERIFICATION.md": "68ca7780f60a0c45ec8ea4f96dd96fe95ab064c8ad50c677ea447575ebf27068"
+    }
+  },
+  "testedDocumentationHashes": {
+    "README.md": "f3aa9d6cb22d336bb19fca41395d5fc4f736d763cf272f9341eb1a50f80f6d3d",
+    "handoff.md": "240515ef057fe40d7d0b34c5d98b12b1a0ae89e06f2078d4d94ced132d1b1fe6",
+    "AGENTS.md": "72a495d4027f149bef45e2bd3480a91c9e43f33eb952735dca574a6813746835",
+    "docs/FUNCTIONAL_SPEC.md": "3958d5eec5bbbf45b36980444a10ecf2dc2c93f43d5b7309ecdc26ce4de060ba",
+    "docs/ARCHITECTURE.md": "61ed8312deda4f06c9d4cfb91a8739181ce1d704bd083875b186e208f46a732a",
+    "docs/VERIFICATION.md": "e8b583853d403a35b46be71c2a592560f6775dee4dad48de96774d6bbdee954b"
   }
 }

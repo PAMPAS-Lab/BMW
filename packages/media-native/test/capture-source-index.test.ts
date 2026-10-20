@@ -5,6 +5,26 @@ import os from 'node:os'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import {saveCaptureIndex,readCaptureIndex,sampleCaptureSourceFrames} from '../src/capture-source-index.js'
+import {CaptureWebm} from '../src/capture-webm.js'
+
+test('Capture WebM retains explicit terminal VFR duration without a nominal frame-rate grid',async t=>{
+ const {Input,BufferSource,WEBM,EncodedPacketSink}=await import('mediabunny'),root=await fs.mkdtemp(path.join(os.tmpdir(),'bmw-capture-duration-'));t.after(()=>fs.rm(root,{recursive:true,force:true}))
+ const file=path.join(root,'capture.webm'),output=await fs.open(file,'wx+'),mux=new CaptureWebm(output,async()=>{})
+ try{await mux.start(160,90,undefined,.389);await mux.add({track:1,timestamp:.023,duration:.112,type:'key',data:new Uint8Array([130,73,131,66,0])});await mux.add({track:1,timestamp:.135,duration:.254,type:'key',data:new Uint8Array([130,73,131,66,0])});await assert.rejects(mux.add({track:1,timestamp:-1,duration:1,type:'key',data:new Uint8Array()}),/bounds/)}finally{await output.close()}
+ const input=new Input({source:new BufferSource(await fs.readFile(file)),formats:[WEBM]})
+ try{const track=(await input.getPrimaryVideoTrack())!,packets=[];for await(const packet of new EncodedPacketSink(track).packets(undefined,undefined,{metadataOnly:true}))packets.push(packet)
+  assert.deepEqual(packets.map(p=>[p.timestamp,p.duration]),[[.023,.112],[.135,.254]]);assert.ok(Math.abs(await track.computeDuration()-.389)<.000001)
+ }finally{input.dispose()}
+})
+
+test('Capture WebM preserves a terminal Opus packet with unknown duration while rejecting zero-duration video',async t=>{
+ const {Input,BufferSource,WEBM,EncodedPacketSink}=await import('mediabunny'),root=await fs.mkdtemp(path.join(os.tmpdir(),'bmw-capture-opus-'));t.after(()=>fs.rm(root,{recursive:true,force:true}))
+ const file=path.join(root,'capture.webm'),output=await fs.open(file,'wx+'),mux=new CaptureWebm(output,async()=>{}),header=Buffer.alloc(19);header.write('OpusHead');header[8]=1;header[9]=1;header.writeUInt32LE(48000,12)
+ const payload=new Uint8Array([248,255,254])
+ try{await mux.start(160,90,{codec:'opus',sampleRate:48000,numberOfChannels:1,description:header},.2);await mux.add({track:1,timestamp:0,duration:.2,type:'key',data:new Uint8Array([130,73,131,66,0])});await mux.add({track:2,timestamp:.12,duration:0,type:'key',data:payload});await assert.rejects(mux.add({track:1,timestamp:.2,duration:0,type:'key',data:payload}),/bounds/)}finally{await output.close()}
+ const input=new Input({source:new BufferSource(await fs.readFile(file)),formats:[WEBM]})
+ try{const track=(await input.getPrimaryAudioTrack())!,packets=[];for await(const p of new EncodedPacketSink(track).packets())packets.push(p);assert.equal(packets.length,1);assert.equal(packets[0]!.timestamp,.12);assert.equal(packets[0]!.duration,0);assert.deepEqual(packets[0]!.data,payload)}finally{input.dispose()}
+})
 
 test('Source PTS indexes reject file-clock substitution, unobserved gaps, stale media/PNGs and foreign Projects',async t=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'bmw-source-index-'));t.after(()=>fs.rm(root,{recursive:true,force:true}))

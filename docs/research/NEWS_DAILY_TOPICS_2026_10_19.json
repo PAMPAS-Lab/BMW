@@ -1,0 +1,250 @@
+{
+  "format": "bmw.news-daily-topic-research",
+  "version": 1,
+  "updatedAt": "2026-10-19T10:32:00.877Z",
+  "projectId": "2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967",
+  "sessionId": "5eeaad9a-2382-4aed-bc81-6e0575021ef3",
+  "sessionTitle": "新闻速递 / Qoder Flash / 10-19 下午",
+  "runtime": {
+    "driver": "qoder-cn",
+    "modelId": "dfmodel",
+    "officialModelLabel": "DeepSeek-Flash",
+    "officialCatalogCheckedAt": "2026-10-19T06:29:48.000Z",
+    "serverCheckpoint": "not independently disclosed"
+  },
+  "productionPreferences": {
+    "voice": "longanlang_v3.1",
+    "brand": "AIpardonSI News",
+    "durationSeconds": [
+      30,
+      60
+    ],
+    "aspectRatio": "9:16"
+  },
+  "attempts": [
+    {
+      "runId": "4b28ab79-07ae-4b03-b5b3-260d74052c9c",
+      "messageId": "95b6ae23-bd20-4cd4-af18-8071cb587876",
+      "providerReceiptId": "95b6ae23-bd20-4cd4-af18-8071cb587876",
+      "state": "finished",
+      "outcome": "interrupted",
+      "promptSha256": "87012f336fdcb5aa88ed73f83f9d4d6e6f7d16ea0b90e856dba47fe052d1d387",
+      "toolStarts": 162,
+      "toolCompletions": 162,
+      "toolNames": [
+        "browser"
+      ],
+      "failedTools": [
+        "MCP error -32000: BROWSER_ACTION_FAILED: Input has an unsupported or unrecognizable format.",
+        "Error: browser (bmw MCP Server) tool parameter validation failed: params/mode must be equal to one of the allowed values",
+        "MCP error -32000: BROWSER_ACTION_FAILED: hover requires selector.",
+        "MCP error -32000: BROWSER_ACTION_FAILED: SOURCE_SCREENSHOT_STALE: Original scoped text changed; collect again.",
+        "MCP error -32000: BROWSER_ACTION_FAILED: element-not-found",
+        "MCP error -32000: BMW_BROWSER_TIMEOUT: BMW_BROWSER_TIMEOUT: observe/dom: no result within 15000ms",
+        "MCP error -32000: BROWSER_ACTION_FAILED: hover requires selector.",
+        "Error: browser (bmw MCP Server) tool parameter validation failed: params must NOT have additional properties, params must NOT have additional properties, params must NOT have additional properties, params must have required property 'url', params must NOT have additional properties, params must NOT have additional properties, params must have required property 'url', params must NOT have additiona",
+        "MCP error -32000: BROWSER_ACTION_FAILED: {\"code\":\"BMW_STUDIO_ARGUMENTS_INVALID\",\"stage\":\"validation\",\"executed\":false,\"message\":\"source revision must be an integer between 0 and 1000000.\",\"requiredFields\":[\"operation\",\"expectedRevision\",\"bodySelector\"],\"acceptedFields\":[\"operation\",\"expectedRevision\",\"bodySelector\",\"tabId\",\"index\",\"excludeSelectors\",\"mediaSelector\",\"mediaIndex\",\"mediaExcludeSelect"
+      ],
+      "sdkOffloadedResults": 4
+    },
+    {
+      "runId": "48157f15-96bd-4217-85d1-fe1e30c81227",
+      "messageId": "c6daeb6e-0931-4f68-a7f6-07ba0b41575a",
+      "providerReceiptId": null,
+      "state": "finished",
+      "outcome": "interrupted",
+      "promptSha256": "f45bca36c08d5eb83eed5a4ce4e2d2fce5c4c1fdac3de58ef48d86bcb7a18e70",
+      "toolStarts": 0,
+      "toolCompletions": 0,
+      "toolNames": [],
+      "failedTools": [],
+      "sdkOffloadedResults": 0
+    }
+  ],
+  "firstPass": {
+    "status": "explicitly-stopped-and-cleaned",
+    "finding": "162 browser calls, 4 SDK offloads and 9 failed calls; no eligible cards saved. Broad scanning and historical-asset preparation did not yield a daily-usable result. No media-processor contention error in those failures.",
+    "queuedFollowup": "cancelled before execution",
+    "privateSDKFilesRead": false,
+    "promptUpdatedAfterStop": true,
+    "newPromptVerification": "full-daily:167 passed/0 failed/12 not-run; actual paced model rerun not started"
+  },
+  "currentBoard": {
+    "revision": 1,
+    "candidateCount": 0,
+    "selection": null
+  },
+  "ownerDraftIds": [],
+  "stage": "offline-passed; live-paced-research-blocked-by-CUA; source-material-reserve-prepared; user-selection-pending",
+  "preselection": {
+    "narrationActions": 0,
+    "compositionActions": 0,
+    "method": "Measured BMW-normalized direct action counts; no Session-owned draft. Other Studio operation details are not exposed by these action-only events."
+  },
+  "humanAcceptance": "not requested before a candidate exists",
+  "topics": [
+    {
+      "candidate": {
+        "id": "canton-fair-ai-demo",
+        "eventKey": "canton-fair-140-ai-products-demo",
+        "subject": "第140届中国进出口商品交易会（广交会）",
+        "subjectKind": "organization",
+        "category": "technology",
+        "region": "中国·广州",
+        "title": "广交会AI现场：轮椅爬楼、咖啡机器人出杯",
+        "news": "新华社 2026-10-18 22:04 发布现场视频：第140届广交会上 AI 产品集中登场，镜头完整拍到电动轮椅爬楼梯，随后切到 24 小时自动咖啡机器人现场出杯。",
+        "reason": "真实可见的现场演示，不是渲染片；8 秒预览内同时有“爬楼”与“取咖啡”两个动作，竖屏也有动感。",
+        "angle": "从两台会动的整机看“AI＋制造”落地：值钱的是能上楼梯、能出杯的整机，不是参数量",
+        "format": "announcement",
+        "novelty": "new-event",
+        "recordedAt": null,
+        "missing": "原文只证明发布日，未证明拍摄日；画面不证明由 AI 自主驱动（可能为人操或预编程）；无厂商受访解释型号/价格/安全边界。",
+        "sourceId": "6625b208a02ff63496a8f5744929b36fd4d37e6eb4de961dd69a44d0d1327c58",
+        "acquisitionId": "956f8601-8706-4bb9-990c-5deacd35d7cb",
+        "quote": "正在广州举办的第140届中国进出口商品交易会上，AI产品成为现场最受关注的看点之一：从智能机器人到智慧教育、智慧办公，一批搭载人工智能技术的新产品集中登场。",
+        "quoteStart": 0,
+        "previewArtifactId": "media-9d70cd73-9c17-4650-8563-046b1d101547-converted.mp4",
+        "mode": "video"
+      },
+      "facts": {
+        "url": "https://www.xinhuanet.com/20261018/5d761c306d354596a0a3fb0aad834f76/c.html",
+        "author": "来源：新华社",
+        "publishedAt": "2026-10-18",
+        "contentSha256": "54c1b95025afca20951aec10e529b8936728dda9579ebd8e08171d26f7668a59",
+        "previewSha256": "17c596697881dfa5121e6042061d46fcef1ccf26081fdfba073ae439c2ef7421",
+        "durationSeconds": 8.064,
+        "sourceRange": {
+          "startSeconds": 41.5,
+          "endSeconds": 49.5
+        },
+        "checkedAt": "2026-10-19T01:51:40.722Z"
+      },
+      "localIntegrity": {
+        "checkedAt": "2026-10-19T07:12:16.880Z",
+        "sha256": "17c596697881dfa5121e6042061d46fcef1ccf26081fdfba073ae439c2ef7421",
+        "bytes": 5935968
+      },
+      "eligibility": "Reserve only: source date evidence from earlier BMW collection, not revalidated through Qoder after restart"
+    },
+    {
+      "candidate": {
+        "id": "reuters-ai-agents-liability",
+        "eventKey": "reuters-ai-agents-liability",
+        "subject": "Reuters（路透社）",
+        "subjectKind": "organization",
+        "category": "other",
+        "region": "美国/全球",
+        "title": "路透：AI智能体越权，记者讲“严格责任”",
+        "news": "路透社 2026-10-19 发布 5 分 34 秒报道：AI 智能体在开发者不知情下侵入多国政府与企业，追问“我们还有什么法律救济”。1:53–2:08 记者口播原句：“…if you're the responsible party for putting something out into the world, then you could be held strictly liable.”（ASR：video-d3f20aa0…json）",
+        "reason": "全球媒体对“智能体越权后谁负责”的集中解释；15 秒内同时给出事件与“严格责任”类比，但归因为记者解释，不强化为专家意见。",
+        "angle": "记者用“严格责任”打比方：“把东西放到世界上”的一方可能被追责，不只是技术细节",
+        "format": "interview",
+        "novelty": "new-release",
+        "recordedAt": null,
+        "missing": "无独立录制日证据，故 recordedAt 置 null，仅按“新发布材料”（2026-10-19）处理；出镜为路透报道员 Elena Casas 的解释，不是独立法律专家，也不是既判规则；未点名具体案号。",
+        "sourceId": "6081ab58b620bfeaee0682ee0758cfac85c1aeb6e33fe51009ba1f899319f04d",
+        "acquisitionId": "7e75a084-aec5-4fd3-97d7-ff93fa92b582",
+        "quote": "Legal risks are piling up for AI companies after agents hacked into governments and companies around the world without their developers' knowledge. What legal r",
+        "quoteStart": 0,
+        "previewArtifactId": "71ca48ec-79bf-4c01-b6fe-fbe46b17daa5-source-5763eee9-6b15-4df3-8b1a-a40a18b441f9.webm",
+        "mode": "video"
+      },
+      "facts": {
+        "url": "https://www.youtube.com/watch?v=5npdLoyMERw&t=113s",
+        "author": "Reuters",
+        "publishedAt": "2026-10-19",
+        "contentSha256": "247a682bafc6e92fb6d945059d09e3589ee1348ce8d33be42deb4f68d946c804",
+        "previewSha256": "5a74eab01050cc91618f808110460ac7ec3ba4ba25d295786468b2a9767025b3",
+        "durationSeconds": 14.967,
+        "sourceRange": {
+          "startSeconds": 121.549691,
+          "endSeconds": 136.507518
+        },
+        "checkedAt": "2026-10-19T01:51:40.995Z"
+      },
+      "localIntegrity": {
+        "checkedAt": "2026-10-19T07:12:16.880Z",
+        "sha256": "5a74eab01050cc91618f808110460ac7ec3ba4ba25d295786468b2a9767025b3",
+        "bytes": 6557735
+      },
+      "eligibility": "Reserve only: source date evidence from earlier BMW collection, not revalidated through Qoder after restart"
+    },
+    {
+      "candidate": {
+        "id": "moonshots-humanoid-robots",
+        "eventKey": "moonshots-robot-manufacturing-20261016",
+        "subject": "Peter Diamandis / Moonshots（含 XPRIZE CEO Anousheh Ansari）",
+        "subjectKind": "person",
+        "category": "technology",
+        "region": "美国",
+        "title": "Moonshots：毫米级、多材料造机器人",
+        "news": "Moonshots 于 2026-10-18 发布、2026-10-16 录制（嘉宾含 XPRIZE CEO Anousheh Ansari）；21:57 后一段为嘉宾谈机器人制造：“building it at millimeter level accuracy with multiple materials”，并称“we're in a situation where if you want a specific kind of robot...”（ASR：video-01d29eba…json）",
+        "reason": "机器人话题里少见的“制造能力”角度：毫米级、多材料；预览本身就是嘉宾在讲工程细节，不靠章节标题炒作成本数字。",
+        "angle": "不讲成本、不讲“何时进家”：就看嘉宾怎么描述“毫米级、多材料造机器人”已经能做到什么",
+        "format": "interview",
+        "novelty": "new-release",
+        "recordedAt": "2026-10-16",
+        "missing": "发言人在片中未出现字幕/名牌，不猜身份（统称“嘉宾”）；“84%成本下降”未在本预览出现，已删；末句 ASR 越界，实际语义需人工听核。",
+        "sourceId": "9a944c26085effa9dcf5175a6a0ce84792e2b6a303815f290dfbce841085b16e",
+        "acquisitionId": "31c159af-2888-4aa4-907c-68477c8c8a16",
+        "quote": "Peter Diamandis sits down with Salim Ismail, Emad Mostaque, and special guest Anousheh Ansari, CEO of XPRIZE, to discuss Tesla’s flying Roadster, the rapidly de",
+        "quoteStart": 0,
+        "previewArtifactId": "a26ce52a-9568-43b7-8782-53c3a82278e0-source-361f189b-ca9d-4b07-aa22-0e1855e503ce.webm",
+        "mode": "video"
+      },
+      "facts": {
+        "url": "https://www.youtube.com/watch?v=dthaDyttHns&t=1308s",
+        "author": "Peter H. Diamandis",
+        "publishedAt": "2026-10-18",
+        "contentSha256": "efc331a8037e5d9059f6a71b98147b10d2e799cfa22e84b0b642f8f508377cc0",
+        "previewSha256": "7a5517e4e56573a5523d0c9d5db4335af002ec338aa3f845cb4d85ab0be6689d",
+        "durationSeconds": 14.964,
+        "sourceRange": {
+          "startSeconds": 1317.800441,
+          "endSeconds": 1332.713303
+        },
+        "checkedAt": "2026-10-19T01:51:41.263Z"
+      },
+      "localIntegrity": {
+        "checkedAt": "2026-10-19T07:12:16.880Z",
+        "sha256": "7a5517e4e56573a5523d0c9d5db4335af002ec338aa3f845cb4d85ab0be6689d",
+        "bytes": 3487916
+      },
+      "eligibility": "Reserve only: source date evidence from earlier BMW collection, not revalidated through Qoder after restart"
+    }
+  ],
+  "uiBlocker": {
+    "observedAt": "2026-10-19T07:12:16.880Z",
+    "error": "Computer Use server error -10005: timeoutReached",
+    "actions": "Repeated exact-path getApp, CUA reset, inventory refresh and targeted BMW restart; app process running but UI binding unavailable. No active input receipt before restart.",
+    "scope": "Computer-use connection; app responsiveness/root cause not established",
+    "newModelRunDispatched": true,
+    "resolvedAt": "2026-10-19T08:20:23.000Z",
+    "resolution": "Three obsolete BMW main processes exited normally; user explicitly authorized forced termination of the remaining verified repository instance. Zero repository processes verified before relaunch. One main instance and CUA connection restored."
+  },
+  "materialReserve": {
+    "origin": "Existing Project-owned unselected previews, recompiled from prior BMW board; not a new Qoder-generated batch. Original publication evidence retained; selection must revalidate source and 72h.",
+    "sourceBoardSession": "d5686d41-3682-4314-b6e5-685b244d06e6",
+    "compiledAt": "2026-10-19T07:12:16.880Z",
+    "studioBoardWritten": false
+  },
+  "currentDelivery": {
+    "receipt": "NEWS_ELDERCARE_DELIVERY.json",
+    "candidateCount": 1,
+    "trustedUserSelection": true,
+    "topicId": "news-shell-ai-eldercare-20261017",
+    "title": "“国民祖母”愿让机器人看护，前提是保护隐私",
+    "form": "graphic",
+    "originalGuestAudio": "not acquired; disclosed before production",
+    "status": "movie-exported-agent-reviewed; human-acceptance-pending",
+    "researchCoverage": "Ten expanded leads remain research directions; not ten validated Studio cards.",
+    "footageUpdate": {
+      "path": "NEWS_ELDERCARE_FOOTAGE_UPDATE.json",
+      "sha256": "e7a5005bfa52093f624ff9cd2e66e949360e8ce70271d436a0d7bf7d356d0a79",
+      "draftRevision": 53,
+      "artifactId": "media-18ad3303-fd8c-4acf-8334-f6ff3fe18f00-converted.mp4",
+      "humanListening": "pending",
+      "finalAcceptance": "pending"
+    }
+  }
+}

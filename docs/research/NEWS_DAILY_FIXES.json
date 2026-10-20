@@ -1,0 +1,210 @@
+{
+  "format": "bmw.news-daily-fixes",
+  "version": 1,
+  "updatedAt": "2026-10-19T07:12:16.880Z",
+  "baseRevision": "7d4a294178bf85019cfbab72963df9cf4918f7ac",
+  "changes": [
+    {
+      "id": "studio-news-media-contention",
+      "status": "fixed",
+      "cause": "GUI preview checks and Agent news verification shared a worker/IPC pair with only a fail-fast busy flag.",
+      "behavior": "16-entry FIFO (including running job), pinned Project directory, queued abort skips allocation, active worker and file cleanup drain before next job. No replay."
+    },
+    {
+      "id": "capture-two-speed-EOF-timing",
+      "status": "fixed",
+      "cause": "The old assertion compared visual source PTS to the later AAC endpoint. The WebM mux also collapsed the actual final held frame to a nominal 1ms; old verification silently replaced its duration with that truncated value.",
+      "behavior": "Native capture-only WebM packet mux writes explicit video BlockDuration and checks final duration after independent demux. Source visual recency is measured against original video track end; terminal blue pixels, source/file middle-pixel correspondence and EOF hold remain asserted.",
+      "testChange": "Old failing example: source container 1.578667s, video track 1.5s, preceding source frame 1.31s. Actual video-tail comparison is distinct from audio padding; no source frame timestamps or pixel thresholds are fabricated."
+    },
+    {
+      "id": "terminal-opus-unknown-duration",
+      "status": "fixed",
+      "cause": "First complete run rejected an actual Opus packet at PTS .445s, duration 0, 959 bytes.",
+      "behavior": "Keep unknown-duration Opus metadata and original bytes without inventing a duration. Zero-duration video still rejected; deterministic contract case and actual source/media flows pass."
+    },
+    {
+      "id": "source-fixture-first-frame",
+      "status": "hardened",
+      "cause": "Second complete run timed out before any capture/processing while awaiting fixture metadata; prior failed producer bytes were not retained, so detached-canvas starvation is an inference, not independently established.",
+      "behavior": "Attach and initially paint canvas, explicitly request capture frames, require independently demuxed VP8/Opus tracks, dimensions and >=2 frames before ingestion; retain original fixture/hash/frame count and surface media load errors. Existing source, audio, range and cancellation assertions remain."
+    },
+    {
+      "id": "news-research-pacing",
+      "status": "implemented-offline-verified; live-rerun-pending",
+      "behavior": "Save first valid topic early, incrementally extend up to ten, use scoped observations, avoid SDK offloads/private host files, self-check research cost and close owned research tabs. Guidance only; no Host model loop or replay.",
+      "trigger": "First actual Qoder attempt:162 browser calls,4 SDK offloads,9 failed calls,0 cards; explicitly stopped. New run not dispatched because UI connection timed out."
+    }
+  ],
+  "runs": [
+    {
+      "path": ".bmw-runtime/news-daily-fixes/2026-10-19/full/result.json",
+      "sha256": "b57c46c8af474156994389aa46a771ab90f86385d581bef741071d502b562992",
+      "counts": {
+        "passed": 165,
+        "failed": 2,
+        "not-run": 12
+      },
+      "failed": [
+        "sources",
+        "media.processing-runtime"
+      ]
+    },
+    {
+      "path": ".bmw-runtime/news-daily-fixes/2026-10-19/full-final/result.json",
+      "sha256": "e6390de066ada5972aa79c0b3cc935ce5927d42a5099c55028b88aaaf89ab862",
+      "counts": {
+        "passed": 166,
+        "failed": 1,
+        "not-run": 12
+      },
+      "failed": [
+        "sources"
+      ]
+    },
+    {
+      "path": ".bmw-runtime/news-daily-fixes/2026-10-19/full-stable/result.json",
+      "sha256": "188d7ff945d64c501d4cebe5000b31503b944828914cc83b808a95d3f458239c",
+      "counts": {
+        "passed": 167,
+        "failed": 0,
+        "not-run": 12
+      },
+      "failed": []
+    },
+    {
+      "path": ".bmw-runtime/news-daily-fixes/2026-10-19/full-daily/result.json",
+      "sha256": "50fadb82886e6558b4176e7ad0929922c39477a116a867bc5e95617ebe28d8e6",
+      "counts": {
+        "passed": 167,
+        "failed": 0,
+        "not-run": 12
+      },
+      "failed": []
+    }
+  ],
+  "validation": {
+    "format": "bmw.news-daily-repair-audit",
+    "version": 1,
+    "verifiedAt": "2026-10-19T07:02:18.520Z",
+    "full": {
+      "path": ".bmw-runtime/news-daily-fixes/2026-10-19/full-daily/result.json",
+      "sha256": "50fadb82886e6558b4176e7ad0929922c39477a116a867bc5e95617ebe28d8e6",
+      "counts": {
+        "passed": 167,
+        "failed": 0,
+        "not-run": 12
+      },
+      "selected": 162
+    },
+    "runtimeInputCount": 466,
+    "generatedOutputCount": 437,
+    "buildReceipt": {
+      "path": ".bmw-runtime/build-receipt.json",
+      "sha256": "e721fd8b23496b007248030a9482a5a57f7897e2e99cbff725a2353b95d8ca1a"
+    },
+    "nativeEOF": {
+      "path": ".bmw-runtime/news-daily-fixes/2026-10-19/full-daily/media.processing-runtime/finite-eof.json",
+      "sha256": "697e709f269bc3f7dcd34caaadede6f90218dee7ad75a881795c17ea4c4ce39d",
+      "sourceEndSeconds": 1.578667,
+      "tracks": [
+        {
+          "id": 1,
+          "type": "video",
+          "codec": "vp9",
+          "canDecode": true,
+          "width": 160,
+          "height": 90,
+          "rotation": 0,
+          "startSeconds": 0.012,
+          "endSeconds": 2.951,
+          "canBeTransparent": false
+        },
+        {
+          "id": 2,
+          "type": "audio",
+          "codec": "opus",
+          "canDecode": true,
+          "channels": 2,
+          "sampleRate": 48000,
+          "startSeconds": 0,
+          "endSeconds": 2.816
+        }
+      ],
+      "playbackEvents": [
+        {
+          "kind": "play",
+          "sourceSeconds": 0.001107,
+          "fileSeconds": 0.002,
+          "rate": 1
+        },
+        {
+          "kind": "ratechange",
+          "sourceSeconds": 0.399453,
+          "fileSeconds": 0.482,
+          "rate": 0.5
+        },
+        {
+          "kind": "pause",
+          "sourceSeconds": 0.399453,
+          "fileSeconds": 0.482,
+          "rate": 0.5
+        },
+        {
+          "kind": "play",
+          "sourceSeconds": 0.469333,
+          "fileSeconds": 1.183,
+          "rate": 0.5
+        },
+        {
+          "kind": "ratechange",
+          "sourceSeconds": 1.212441,
+          "fileSeconds": 2.763,
+          "rate": 2
+        },
+        {
+          "kind": "pause",
+          "sourceSeconds": 1.578667,
+          "fileSeconds": 2.949,
+          "rate": 2
+        }
+      ],
+      "restored": {
+        "ended": 1,
+        "loop": true,
+        "rate": 0.75,
+        "paused": true,
+        "globals": []
+      },
+      "scope": "Assertions in the actual native test verify source/file middle pixels, terminal blue pixels and video duration through observed EOF; not human listening"
+    },
+    "sourceFixture": {
+      "path": ".bmw-runtime/news-daily-fixes/2026-10-19/full-daily/sources/source-fixture.json",
+      "sha256": "2cdd86ccdc7e670062915289cb14290cc11af5e234aac90e75eadb505274514c",
+      "bytes": 21037,
+      "frameCount": 30,
+      "videoCodec": "vp8",
+      "audioCodec": "opus",
+      "width": 320,
+      "height": 180,
+      "scope": "Producer metadata only; actual native decode is verified by the source operations below"
+    },
+    "sourceFlow": {
+      "path": ".bmw-runtime/news-daily-fixes/2026-10-19/full-daily/sources/verification.json",
+      "sha256": "d876b972610bfe2caa8dadd6e495e486676fd4b56f0df0938ebbb1950091fea0",
+      "status": "passed"
+    },
+    "external": {
+      "paidModels": "not part of offline run",
+      "onlineNarration": "not part of offline run",
+      "humanListening": "not performed by tests"
+    }
+  },
+  "manual": {
+    "humanListening": "not established by offline checks",
+    "paidModelNews": "separate user workflow",
+    "oldIMFPreference": "User preferred Qoder CN clarity; not full acceptance",
+    "currentResearchReceipt": "NEWS_DAILY_TOPICS_2026_10_19.json"
+  },
+  "dailyGuide": "../NEWS_DAILY.md"
+}

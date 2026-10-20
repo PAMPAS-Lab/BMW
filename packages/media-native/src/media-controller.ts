@@ -289,6 +289,7 @@ export class MediaController implements NativeMediaPort {
   }
 
   async stop(request:{discard?:boolean}={}) {
+    await this.processor.recoverCleanup()
     await this.composer.recoverCleanup()
     await this.precomposer.recoverCleanup()
     await this.narrator.recoverCleanup()

@@ -45,3 +45,5 @@
 日常新闻维护的tab回收、来源页复用、原声引导修正、离线范围及实际DSH只读检查见[日常就绪](NEWS_DAILY_READINESS.json)；Replit选题已获用户确认，DSH与Qoder CN真实模型制作进度、文件身份和独立验收范围见[双版新闻证据](NEWS_REPLIT_DUAL_DELIVERY.json)，不计为无人值守或人工接受。
 
 NEWS-02原片优先研究、两张合格卡与未入选原因见[选题记录](NEWS_02_TOPICS.json)；用户已选择Chuck Lorre，43.03秒BMW＋Codex／龙安朗新闻及局部改稿见[制作证据](NEWS_02_LORRE_DELIVERY.json)。技术、Agent画面审阅及用户对大字幕新版“这个版本可以了”的接受分别登记；未提供专项发音评分或复述，不补造。研究覆盖与审阅复用余项保留，下一主线科普、随后学术。
+
+日常新闻原生媒体争用、VFR终帧时长、未知Opus包及来源夹具首帧的实现与完整回归见[NEWS_DAILY_FIXES](NEWS_DAILY_FIXES.json)；操作入口见[日常新闻手册](../NEWS_DAILY.md)。

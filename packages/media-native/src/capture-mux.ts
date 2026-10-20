@@ -1,9 +1,10 @@
-import {Input,CustomSource,WEBM,EncodedPacketSink,Output,AppendOnlyStreamTarget,WebMOutputFormat,EncodedVideoPacketSource,EncodedAudioPacketSource,EncodedPacket} from 'mediabunny'
+import {Input,CustomSource,WEBM,EncodedPacketSink} from 'mediabunny'
 import type {FileHandle} from 'node:fs/promises'
 import {ArtifactJobIO} from './artifact-job-io.js'
 import {assertFrameMapping,CAPTURE_FRAME_LIMIT} from './capture-timeline.js'
 import type {CaptureFrameMapping} from './capture-timeline.js'
 import {finiteNumber,mediaRecord} from './media-contract.js'
+import {CaptureWebm} from './capture-webm.js'
 function captureInput(io:ArtifactJobIO,guard:()=>Promise<void>){
  return new Input({formats:[WEBM],source:new CustomSource({
   getSize:()=>io.bytes,maxCacheSize:8*1024*1024,prefetchProfile:'none',
@@ -32,28 +33,27 @@ export class CaptureMux {
   if(!this.rows.length)throw new Error('Capture encoder emitted no video frames.')
   const width=finiteNumber(config.width,'encoded width',1,8192,true),height=finiteNumber(config.height,'encoded height',1,8192,true)
   if(config.codec!=='vp09.00.10.08')throw new Error('Unexpected capture codec.')
-  let audioIO:ArtifactJobIO|undefined,input:Input|undefined,position=0
-  const mux=new Output({format:new WebMOutputFormat({appendOnly:true}),target:new AppendOnlyStreamTarget(new WritableStream<Uint8Array>({write:async bytes=>{await guard();if(position+bytes.length>512*1024*1024)throw new Error('Capture output exceeds 512 MiB.');let offset=0;while(offset<bytes.length){const result=await output.write(bytes,offset,bytes.length-offset,position+offset);if(!result.bytesWritten)throw new Error('Capture mux write made no progress.');offset+=result.bytesWritten}position+=bytes.length}}))})
+  let audioIO:ArtifactJobIO|undefined,input:Input|undefined
   try{
-   const video=new EncodedVideoPacketSource('vp9');// WebM uses millisecond timecodes. A 1ms default duration preserves the
-   // chosen integer-ms PTS without snapping VFR frames to a nominal 60Hz grid.
-   mux.addVideoTrack(video,{frameRate:1000})
-   const audios:{source:EncodedAudioPacketSource;sink:EncodedPacketSink;config:AudioDecoderConfig}[]=[]
+   let audioConfig:AudioDecoderConfig|undefined,audioPackets:AsyncIterator<import('mediabunny').EncodedPacket>|undefined,audioEnd=0
    if(audioArtifactId){
-    audioIO=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:audioArtifactId});const pinned=audioIO
-    input=captureInput(pinned,guard)
-    const tracks=await input.getAudioTracks();if(tracks.length!==config.audioTracks|| (await input.getVideoTracks()).length)throw new Error('Capture audio recorder changed its track layout.')
-    for(const track of tracks){if(await track.getCodec()!=='opus')throw new Error('Unexpected captured audio codec.');const decoder=await track.getDecoderConfig();if(!decoder)throw new Error('Captured audio config is missing.');const source=new EncodedAudioPacketSource('opus');mux.addAudioTrack(source);audios.push({source,sink:new EncodedPacketSink(track),config:decoder})}
+    audioIO=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:audioArtifactId});input=captureInput(audioIO,guard)
+    const tracks=await input.getAudioTracks();if(tracks.length!==1||tracks.length!==config.audioTracks||(await input.getVideoTracks()).length)throw new Error('Capture audio recorder changed its track layout.')
+    const track=tracks[0]!;if(await track.getCodec()!=='opus')throw new Error('Unexpected captured audio codec.')
+    audioConfig=await track.getDecoderConfig()??undefined;if(!audioConfig)throw new Error('Captured audio config is missing.');audioEnd=await track.computeDuration()
+    audioPackets=new EncodedPacketSink(track).packets()[Symbol.asyncIterator]()
    }else if(config.audioTracks)throw new Error('Capture lost its audio track.')
-   await mux.start()
-   // Streams are independent. Concurrent producer promises respect mux backpressure.
-   const producers=[
-    (async()=>{for(const row of this.rows){await guard();const bytes=Buffer.alloc(row.bytes);const result=await this.spool.read(bytes,0,bytes.length,row.offset);if(result.bytesRead!==bytes.length)throw new Error('Encoded capture spool was truncated.');await video.add(new EncodedPacket(bytes,row.type,row.fileTimestampSeconds,row.fileDurationSeconds),{decoderConfig:{codec:config.codec,codedWidth:width,codedHeight:height}})}video.close()})(),
-    ...audios.map(async item=>{for await(const packet of item.sink.packets()){await guard();await item.source.add(packet,{decoderConfig:item.config})}item.source.close()})
-   ]
-   try{await Promise.all(producers)}catch(error){await mux.cancel().catch(()=>{});await Promise.allSettled(producers);throw error}
-   await mux.finalize();await output.sync();return {bytes:position,frames:this.rows.map(({offset:_offset,bytes:_bytes,type:_type,...timing})=>timing)}
-  }catch(error){await mux.cancel().catch(()=>{});throw error}finally{input?.dispose();await audioIO?.close()}
+   const mux=new CaptureWebm(output,guard),last=this.rows.at(-1)!
+   await mux.start(width,height,audioConfig,Math.max(audioEnd,last.fileTimestampSeconds+last.fileDurationSeconds))
+   let audio=await audioPackets?.next()
+   for(const row of this.rows){
+    while(audio&&!audio.done&&audio.value.timestamp<=row.fileTimestampSeconds){const p=audio.value;await mux.add({track:2,timestamp:p.timestamp,duration:p.duration,type:p.type,data:p.data});audio=await audioPackets!.next()}
+    await guard();const bytes=Buffer.alloc(row.bytes),result=await this.spool.read(bytes,0,bytes.length,row.offset);if(result.bytesRead!==bytes.length)throw new Error('Encoded capture spool was truncated.')
+    await mux.add({track:1,timestamp:row.fileTimestampSeconds,duration:row.fileDurationSeconds,type:row.type,data:bytes})
+   }
+   while(audio&&!audio.done){const p=audio.value;await mux.add({track:2,timestamp:p.timestamp,duration:p.duration,type:p.type,data:p.data});audio=await audioPackets!.next()}
+   await output.sync();return {bytes:mux.bytes,frames:this.rows.map(({offset:_offset,bytes:_bytes,type:_type,...timing})=>timing)}
+  }finally{input?.dispose();await audioIO?.close()}
  }
 }
 /** Verify actual container PTS, frame count and durations before publishing a mapping. */
@@ -62,7 +62,7 @@ export async function verifyCaptureMux(directory:string,artifactId:string,frames
  const input=captureInput(io,guard)
  try{const track=await input.getPrimaryVideoTrack();if(!track)throw new Error('Muxed capture has no video.');let count=0
   for await(const packet of new EncodedPacketSink(track).packets(undefined,undefined,{metadataOnly:true})){await guard();const row=frames[count++];if(!row||Math.abs(packet.timestamp-row.fileTimestampSeconds)>.000001)throw new Error('Muxed packet PTS does not match its captured source frame: '+JSON.stringify({count,actual:packet.timestamp,expected:row?.fileTimestampSeconds}))}
-  const end=await track.computeDuration();frames.at(-1)!.fileDurationSeconds=end-frames.at(-1)!.fileTimestampSeconds
+  const last=frames.at(-1)!,end=await track.computeDuration();if(Math.abs(end-(last.fileTimestampSeconds+last.fileDurationSeconds))>.0011)throw new Error('Muxed capture lost its terminal frame duration.')
   if(count!==frames.length)throw new Error('Muxed capture frame count mismatch.')
   return await io.fingerprint()
  }finally{input.dispose();await io.close()}

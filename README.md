@@ -34,6 +34,8 @@ BMW_USER_DATA_DIR=/tmp/bmw-disposable npm start
 
 新闻速递可在Studio展开“新闻速递 · 选题与制作”，点击“推荐新闻选题”。Assistant核对近72小时的中美及全球AI消息，覆盖个人、公司机构、学术界和非AI人士的重要AI表态；最多推荐十题，不以旧闻凑数。优先推荐能直接观看变化的演示、同题作品对照、采访和演讲，并解释视频表达价值；纯文字公告也可用绑定来源版本的原页截图作为真实预览。查看原始来源与真实素材预览后，点击“选此题并制作”，同一Assistant再完成稿件、证据画面、配音字幕和新闻初稿。默认Qwen安明远男声，需先完成下方Qwen配置；新闻选题记录不等于事实、听感或内容验收。可退出选题，原素材与已有草稿保留。
 
+本系列日常使用优先BMW＋Qoder CN／DeepSeek-Flash、Qwen龙安朗与AIpardonSI News，按[新闻速递手册](docs/NEWS_DAILY.md)操作；先给候选，用户选题后制作，收工暂停播放器并回收研究页。原生媒体争用与采集终帧修复及完整回归见[验证摘要](docs/verification/CURRENT.json)。
+
 NEWS-01已用BMW＋官方Codex完成54.61秒最新新闻并获用户接受，显式采用Qwen龙安朗男声；[验收记录](docs/research/CODEX_NEWS_REWORK.json)区分技术检查、Agent画面意见、人工声音反馈和最终接受。后续按新闻、科普、学术顺序改进，见[下一步计划](docs/plans/NEXT_STEPS.md)。
 
 当前已包含手机原图阅读、句级卡片引用、素材索引与区间语音检索、原声转解说及录屏整理。正式全片分析支持2fps分页和选定区间8fps加密；视频支持720秒／96分镜、有界混音、原生文字包装和有限科学图解。专用 AI 图片／视频素材生成暂缓；当前范围见 [Studio 范围](docs/VIDEO_STUDIO_SCOPE.md)。

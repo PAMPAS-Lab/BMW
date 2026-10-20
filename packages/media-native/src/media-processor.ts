@@ -6,18 +6,21 @@ import type { IpcMainInvokeEvent, Session } from 'electron'
 import { ArtifactJobIO } from './artifact-job-io.js'
 import { assertNativeProcessingRequest, assertMediaWorkerResult, finiteNumber, mediaRecord, MEDIA_LIMITS } from './media-contract.js'
 import type { MediaWorkerResult } from './media-contract.js'
+import {MediaJobQueue} from './media-job-queue.js'
 
 interface ProcessorOptions { session: Session; pagePath: string; preloadPath: string; onStatus?: (value: Record<string, unknown>) => void }
 /** Browser-only decoding/encoding. The private preload can only access this job's pinned artifacts. */
 export class MediaProcessor {
-  private active = false
+  private queue = new MediaJobQueue()
   constructor(private options: ProcessorOptions) {}
-  get busy(): boolean { return this.active }
-  async process(raw: unknown, directory: string, signal?: AbortSignal) {
+  get busy(): boolean { return this.queue.busy }
+  recoverCleanup():Promise<void>{return this.queue.recoverCleanup()}
+  process(raw: unknown, directory: string, signal?: AbortSignal) {
     const request = assertNativeProcessingRequest(raw)
-    if (this.active) throw new Error('BMW media processing is already active.')
+    return this.queue.run(()=>this.processJob(request,directory,signal),signal)
+  }
+  private async processJob(request:ReturnType<typeof assertNativeProcessingRequest>,directory:string,signal?:AbortSignal){
     signal?.throwIfAborted()
-    this.active = true
     let io: ArtifactJobIO | undefined
     let window: BrowserWindow | undefined
     let timer: NodeJS.Timeout | undefined
@@ -103,9 +106,12 @@ export class MediaProcessor {
       if (abort) signal?.removeEventListener('abort', abort)
       if (reply) ipcMain.removeListener('bmw-media-reply', reply)
       if (registered) { ipcMain.removeHandler('bmw-media-read'); ipcMain.removeHandler('bmw-media-write') }
-      if (window && !window.isDestroyed()) window.destroy()
-      await ioTail
-      try { await io?.close() } finally { this.active = false }
+      const cleanup=async()=>{
+        if (window && !window.isDestroyed()) window.destroy()
+        await ioTail
+        await io?.close()
+      }
+      try{await cleanup()}catch(error){this.queue.quarantineCleanup(async()=>{await cleanup();this.options.onStatus?.({active:false,kind:'processing',action:request.action})});throw new Error('Media processing cleanup failed; media remains quarantined until media.stop succeeds.',{cause:error})}
       this.options.onStatus?.({ active: false, kind: 'processing', action: request.action })
     }
   }
