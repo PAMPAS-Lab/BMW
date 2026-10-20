@@ -4,7 +4,7 @@ export interface AgentModelChoice {id:string;label:string;description:string;ava
 export interface AgentLoginMethod {id:string;label:string;fields:{id:string;label:string;secret:boolean;required:boolean;value?:string}[]}
 /** A display projection, never an account token, credential value or provider config. */
 export interface AgentDriverSettings {
-  authentication:{state:'ready'|'required'|'unknown';label:string}
+  authentication:{state:'ready'|'configured'|'required'|'unknown';label:string}
   models:AgentModelChoice[]
   selectedModel:string|null
   loginMethods:AgentLoginMethod[]
@@ -35,7 +35,7 @@ export function parseAgentSettingsRequest(raw:unknown):AgentSettingsRequest{
 export function parseAgentDriverSettings(raw:unknown):AgentDriverSettings{
   const value=agentRecord(raw);closed(value,['authentication','models','selectedModel','loginMethods','canLogout'])
   const auth=agentRecord(value.authentication);closed(auth,['state','label'])
-  if(auth.state!=='ready'&&auth.state!=='required'&&auth.state!=='unknown')throw new Error('Invalid authentication state')
+  if(auth.state!=='ready'&&auth.state!=='configured'&&auth.state!=='required'&&auth.state!=='unknown')throw new Error('Invalid authentication state')
   if(!Array.isArray(value.models)||value.models.length>1000||!Array.isArray(value.loginMethods)||value.loginMethods.length>20||typeof value.canLogout!=='boolean')throw new Error('Invalid driver settings')
   const modelIds=new Set<string>(),methodIds=new Set<string>()
   const models=value.models.map(rawModel=>{

@@ -84,19 +84,22 @@ Studio提供本次新闻Qwen音色选择，初始仍为安明远，选择时通�
 
 音频准入支持矩阵见 [官方运行时音频准入核验](research/AGENT_AUDIO_ADMISSION.md)。当前三个BMW适配路径均无已验证音频内容准入；WAV、ASR、指标与图像审阅不能被记为模型核听。
 
-## 自有 Assistant 装配（三官方驱动）
+## 自有 Assistant 装配（四官方驱动）
 
 - BMW Session 固定 Project 与 driver，provider Session 是不可替换的原生恢复锚点。空会话先于后端连接出现；切换 driver 选择该驱动的既有活动会话，没有才创建空会话，不复制其他引擎的原生历史。
 - Assistant 保存显示消息、事件和输入回执；显示历史不是模型恢复协议。未知投递不自动重发，重启把未完成回执标为 unknown，并显示断连原因。会话索引、偏好和历史全部读取验证后再执行恢复写入；损坏文件保留，启动提供重试/退出。
 - Agent 相关 Project/Settings/Conversation/History/Preferences/Schedule 文件统一采用 v2，迁移提交标记为 `agent-data-version.json`。日常启动只接受当前格式；历史 Profile 明确拒绝并提示独立命令，不再执行历史导入、自动字段修补或 legacyImportPending 重试。
 - 显式迁移通过 harness-dsh 的独立导出入口，在临时复制的原生 Home 上调用官方 cold session/list、workspace/follow、session/follow/page，冻结 cursor 并完整读取。保留已有 BMW Session ID、原生恢复锚点和显示历史；尚未纳入索引的旧会话按原 ID 导入。已归档且原 Workspace 已移除的 Project 必须由 Session header cwd 证明归属；缺失或跨 Project 身份失败。只导入人类/模型文本，原生 context、私有推理和图片不复制为显示消息，不伪造输入回执。
 - History 保存统一 owner `{projectId, driverId, externalSessionId}`，启动验证与索引完全一致后才执行通用崩溃恢复。DSH Workspace 从 Project 文件迁移至 `dsh-home/bmw-project-bindings.json`，新目录或 Workspace 不得静默替换既有映射。迁移命令备份受影响元数据、检查输入/输出与草稿哈希、最后提交标记；写入失败回滚本事务文件，并保留并发修改。操作及恢复见 [AGENT_DATA_MIGRATION.md](AGENT_DATA_MIGRATION.md)。
-- apps/bmw 的 createBmwAgentAssembly 装配 DSH、Codex、Qoder CN，默认从实际 BMW userData 派生 `agent-drivers/codex`、`agent-drivers/qoder-cn`，保留 DSH 的 `dsh-home`；物理路径别名及父子目录重叠被拒绝。Codex 公共 CLI 安装可通过正常 PATH、固定应用 CLI 路径或明确的 BMW_CODEX_EXECUTABLE 发现，缺失时设置仍可显示安装状态，不启动模型。每个引擎仍需在输入前通过实际目录门槛。默认入口只使用此装配；旧 DSH Client、Runtime port、DOM context poller 和专用 preload 已移除，全部 Shell/Feature 会话操作进入 BMW Session service。最终真实模型复验与目标工作区验收以实施状态中的实际证据为准。
+- apps/bmw 的 createBmwAgentAssembly 装配 DSH、Codex、Qoder CN、WorkBuddy，默认从实际 BMW userData 派生 `agent-drivers/codex`、`agent-drivers/qoder-cn`、`agent-drivers/workbuddy`，保留 DSH 的 `dsh-home`；物理路径别名及父子目录重叠被拒绝。Codex 公共 CLI 安装可通过正常 PATH、固定应用 CLI 路径或明确的 BMW_CODEX_EXECUTABLE 发现，缺失时设置仍可显示安装状态，不启动模型。每个引擎仍需在输入前通过实际目录门槛。默认入口只使用此装配；旧 DSH Client、Runtime port、DOM context poller 和专用 preload 已移除，全部 Shell/Feature 会话操作进入 BMW Session service。最终真实模型复验与目标工作区验收以实施状态中的实际证据为准。
 - 自有 Assistant 设置通过可信闭合 IPC 调用各引擎官方控制 API，不产生模型输入、持久化测试会话或 browser 执行。账号投影与表单 Schema 不含秘密值；密码框在提交、关闭按钮及 Escape 时清空。Codex 浏览器登录、Qoder 官方 CLI 登录、DSH 凭据设置/退出留在适配器内。Qoder CLI 未验证非交互退出，UI 保持该操作禁用。新 Profile 的默认 driver 为 DSH，之后按 Project 保存选择；应用启动不自动发起登录，GUI 首次切换到未读取的 driver 后懒加载登录状态；打开设置只在该 driver 从未尝试读取且 Host 空闲时首次加载，后续查看与切回复用 Profile 内分 driver 内存缓存；缺少凭据时弹出登录方式，登录对话框可切换其他 driver，先取消并等待当前登录实际清理。登录成功后显示可选模型并由用户点选“确认选择”；无需用户发起工具目录验证或模型推理。模型偏好按 driver 保存，认证、支持名单与账号目录匹配并等待原生控制清理完成后才提交；确认后关闭弹窗。状态读取完成后关闭登录框不会反复自动弹出，切回已读取 driver 不重复检查；已读取状态缺少认证或有效模型时禁止发送。同一 Agent 的设置读取在已有设置操作期间合并，不重复启动原生读取；打开设置窗口不与驱动切换再次竞争刷新。认证和模型修改仍保持独占，切换等待取消和实际清理完成；对话状态明确显示设置读取或连接清理，清理隔离时不能合并读取。设置/取消/原生清理持有 Host 排除，清理失败进入隔离，恢复仅重试清理；小窗口保留底部操作，Assistant 跟随 BMW 明暗主题。
 - 设置缓存只存经过验证的无秘密显示投影，不持久化或跨 Profile/控制器共享，也不按 Project 重复读取。登录状态参考有效期 5 分钟、模型目录 30 分钟，分开显示最后检查时间与待检查标记；过期仍展示上次结果，不自动轮询、后台启动控制连接或绕过实际任务准入。手动「刷新状态」「刷新模型」均调用现有官方联合读取，成功且实际清理结束后同步更新两个时间。认证/模型修改先使旧投影失效，失败或取消不会恢复旧就绪状态；刷新失败保留旧显示与原时间，首次失败不因反复查看而自动重试。宿主模型偏好或驱动 baseline 变化会丢弃对应缓存。真实任务失败（包括认证/模型准备拒绝和连接失败）保守标记对应 driver 的两部分待检查，不猜测诊断文本、不自动发送/刷新；取消不作为失效事件。外部账号/配置变化不监控磁盘或凭据，仅通过手动刷新或后续官方任务验证发现，重启清空内存缓存。缓存查看不获取 Host 排除；原生读取、登录、模型写入与清理仍保持排除/隔离。
 - 每个适配器维护明确的支持名单，并与官方目录取交集；Codex/Qoder 读取账号状态及原生模型目录，DSH 只检查本地 DeepSeek Key 是否配置并读取官方 Provider 目录，不进行 API Key 有效性或余额验证；未知模型及 Qoder 标记禁用项不显示。Codex 支持 `gpt-6.1-sol`、`gpt-6-astra`、`gpt-6-sol`、`gpt-6-luna`、`gpt-5.5`；DSH 支持 `deepseek-official` 下的 `deepseek-flash`、`deepseek-v4-pro`，认证只使用 `DEEPSEEK_API_KEY`，其他 Provider 凭据不构成就绪条件且退出时保留；Qoder CN 支持 `auto`、`qmodel_38max`、`qfmodel`、`qmodel_latest`、`qmodel`、`q37fmodel`、`dmodel`、`dfmodel`、`gmodel`、`gfmodel`、`gm51model`、`kmodel_latest`、`kmodel`、`mmodel`。设置投影中的 `verified` 表示维护名单支持，不表示用户运行过预检或账号拥有推理额度；Qoder 的真实模型验收目前只覆盖 `auto`。
 - 设置不要求用户执行专项验证。Codex 设置选择不调用工具预检；Qoder 冷控制会话仍内部检查 SDK init 的有效工具目录并禁止任何模型消息，DSH 使用官方 cold 设置／目录控制。三者设置均不发送模型输入。
 - 官方引擎拥有 Agent 循环，Host 只协调输入和资源。输入前有效目录必须只有 `browser`；DSH 0.2.1 在官方 `agent/created` 初始化中限制该 Agent 的继承工具为 `browser`，预设指定 native 工具呈现，Host 准入及每次 request assembly 检查实际 `wireSchemas`（含呈现方式），并核对请求事件目录。该限制随官方 Agent 作用域清理，不能以提示或执行拒绝代替。未配置 Key 时新版官方目录隐藏模型，配置后才与 BMW 支持名单取交集；冷设置不发送模型输入。Qoder 禁止继承 plugins/skills/settings，Codex 检查 Responses 及 Lite additional_tools。Qoder 对意外非 browser 权限请求返回拒绝但不主动中断当前轮，实际工具目录及后续事件仍执行原有严格准入。内置 BMW 指导遵循当前 Project 设置和可信新闻选题，不写死项目品牌、音色或某台机器的服务故障。目录成员不证明账号推理额度或实际请求可用。
+- WorkBuddy 使用固定官方 `@tencent-ai/codebuddy-code@2.169.0` / ACP v1，每次 prepare 先运行隔离目录探测：禁用所有 settings sources、使用 strict MCP 和 `NoDefer(mcp__bmw__browser)`；catalog-only BMW MCP 从认证 Bridge 读取当前完整 browser，禁止执行。固定探测文本仅发送至本机 HTTP sink，sink 只观察官方实际模型请求并始终返回 503，不转发或生成模型响应，不使用真实 Key。只有请求恰好含一个 `mcp__bmw__browser`，模型、说明和 schema 全部相符才准入；官方仅将顶层 additionalProperties 投影为 true，此已知投影严格匹配，Bridge 仍独立执行原闭合请求校验。无工具的辅助请求不构成证明；额外工具、身份／schema／版本不符、Project 或祖先 `.codebuddy/models.json` 覆盖均失败关闭。实际任务与探测共用固定启动策略；CLI／Node／MCP 文件、模型、区域、凭据密文及原生历史指纹变化拒绝输入，每轮重新检查，不缓存可变 profile 的目录证明。
+- WorkBuddy Key 由桌面 composition 注入系统加密服务，密文原子写入宿主独立 profile，禁止 basic_text 和明文回退；无法解密或旧明文文件保留，须显式退出后重配。设置刷新仅检查本地配置，不发送模型输入、不证明 Key 有效性或额度。通用设置新增 `configured` 表示 Key 已配置；此状态可选兼容的 unverified 模型并发送实际任务，其他驱动 ready 状态仍只允许 verified 模型。当前兼容名单为 `deepseek-v4.1-flash`、`glm-5.3`、`glm-5.3-flash`、`kimi-k2.8-preview`，任务准备再与官方 Session 模型目录取交集并核对当前模型。仅真实任务成功后，当前 Key／区域／模型组合显示已验证；新任务开始前撤销该证明，失败不会误报认证通过。与另外三驱动的 verified 名单语义分别保留，不自动产生付费探测。
+- WorkBuddy 实际运行使用一次性 Home，真实 Key 仅经受控环境传入；关闭并确认官方进程及其 MCP 进程组退出后，仅原子保存该原生 Session 的有界 JSONL 和 BMW Session／Project 归属映射，删除其他临时认证缓存。续聊和目录探测各复制同一个原生历史快照，不能替换恢复锚点；探测不修改原历史。准备、实际任务与清理均持有驱动排除，失败清理保留所有权，显式 drain 只重试清理。当前原生进程树清理验证覆盖 macOS；Windows 在输入前保持不可用。上下文随实际输入注入，事件串行写入；只有官方 prompt response 的 userMessageId 是输入回执，传输写入不冒充送达。模型失败的 ACP outcome 不按 end_turn 成功处理；未知投递不重放。WorkBuddy 尚未验证图像／音频准入、原生桌面可见历史和真实付费服务；官方 CLI＋本机模型夹具验证与另外三引擎已有的真实模型证据分开记录。
 - Codex 有效工具目录验证通过后，在独立 CLI Profile 的宿主私有 `bmw-executable.json` 保留已验证执行文件路径。显式 `BMW_CODEX_EXECUTABLE` 优先，否则已保存路径优先于 PATH；不可用或非法记录失败拒绝并提示显式恢复，不退回其他版本。保存路径不代替每轮版本、文件内容及实际工具目录验证。成功工具回执保留 JSON 文本（最多 16384 字符）；大结果保存明确标记的有界预览，模型仍收到完整准入结果，历史不保存图像 base64。
 - 原生卡片预览与导出共用中文换行：自动末行仅剩一个汉字时，在不超宽、不破坏数字／英文单词或显式换行的条件下重新分配上一行。字幕底框和描边根据实际前景色明暗选择白色或黑色，保留用户字体和位置。模板内容契约发布 focus 必需区间、slow-push 与 zoom/focus 互斥、attach 清除旧聚焦及固定逐项展示不代表语音同步的条件。
 - Codex App Server `0.160.0`、`0.160.1` 使用统一的已验证版本白名单，CLI 与官方模型缓存均拒绝未知版本；CLI 错误明确显示实际版本及已支持版本。对 `gpt-6.1-sol`、`gpt-6-astra`、`gpt-6-sol`、`gpt-6-luna` 使用官方启动配置 `model_catalog_json`。从独立 CLI Profile 的官方目录生成内容寻址的只读策略副本，移除强制 code mode/多 Agent 元数据并清空额外实验工具，保留模型 ID、原生 Lite 传输、推理等级、上下文、图像能力和模型指导。不改写官方 cache/config；官方运行时仍可正常刷新其缓存。副本必须是宿主私有的普通文件，缓存版本、模型缺失、路径碰撞/篡改和实际额外工具均失败拒绝。目录预检与实际启动使用同一个副本；目录准入在模型输入前内部执行，用户模型选择不触发预检。GPT-5.5 保持原有路径，未知 GPT-6 型号不自动套用策略。BMW 不增加模型循环、代码执行工具或其他宿主权限。
@@ -107,7 +110,7 @@ Studio提供本次新闻Qwen音色选择，初始仍为安明远，选择时通�
 
 Shell 运行时徽章从自有 Assistant 状态发布，显示等待、执行和资源断连，不依赖原生桌面页面。
 
-直接覆盖：Conversation/History/Host/Assistant Controller、三个驱动契约与 `agent.data-migration`，`assistant.application`、六项 `assistant.startup.*`，以及显式 opt-in 的三个 `external.assistant.*`。
+直接覆盖：Conversation/History/Host/Assistant Controller、四个驱动契约与 `agent.data-migration`，`assistant.application`、六项 `assistant.startup.*`，以及显式 opt-in 的三个 `external.assistant.*`。
 
 
 
@@ -1206,6 +1209,43 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Qoder preference commit waits for actual cleanup and a failed close retains recovery ownership`
 - `Qoder cold zero-turn login failure exposes login controls; execution results are still rejected`
 
+#### `packages/harness-workbuddy/test/workbuddy-acp.test.ts`
+
+- `WorkBuddy ACP redacts provider errors, rejects pending calls and awaits child close`
+- `WorkBuddy cleanup waits for its owned MCP child process group`
+- `WorkBuddy malformed transport output never echoes raw credential-bearing text`
+
+#### `packages/harness-workbuddy/test/workbuddy-backend.test.ts`
+
+- `WorkBuddy gates before input and cleans its ephemeral credential Home`
+- `WorkBuddy rejects a failed catalog before releasing user input`
+- `WorkBuddy serializes slow host events before terminal completion`
+- `WorkBuddy fails closed on foreign tools and never fabricates a receipt`
+- `WorkBuddy emits paired browser events and rejects reused tool ids`
+- `WorkBuddy reports native model failures as failed and keeps Key configured`
+- `WorkBuddy retains failed cleanup ownership until explicit drain succeeds`
+- `WorkBuddy quarantines a failed preflight cleanup without automatic recovery`
+- `WorkBuddy keeps stable native resume binding and rejects another BMW owner`
+- `WorkBuddy rejects foreign session permissions before granting browser access`
+- `WorkBuddy owns preparation before waiting on the catalog gate`
+- `WorkBuddy cancellation cleanup failure is not retried by outer finalization`
+
+#### `packages/harness-workbuddy/test/workbuddy-catalog.test.ts`
+
+- `WorkBuddy effective catalog gate rejects extra tools, wrong identity/schema/model and zero-tool evidence`
+
+#### `packages/harness-workbuddy/test/workbuddy-policy.test.ts`
+
+- `WorkBuddy isolates launch environment, tool overlay and settings`
+- `WorkBuddy admits only exact BMW tool identities and single permission channel`
+- `WorkBuddy catalog MCP declaration has no executable Session binding`
+- `WorkBuddy native model failure cannot masquerade as end_turn success`
+
+#### `packages/harness-workbuddy/test/workbuddy-settings.test.ts`
+
+- `WorkBuddy encrypts keys, isolates permissions and preserves unreadable credentials`
+- `WorkBuddy settings distinguish configured from real task verification without inference`
+
 #### `packages/media-native/test/capture-source-index.test.ts`
 
 - `Source PTS indexes reject file-clock substitution, unobserved gaps, stale media/PNGs and foreign Projects`
@@ -1534,7 +1574,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `scripts/agent-assembly.test.ts`
 
-- `BMW composes all three official backends through the neutral Host contract without starting them`
+- `BMW composes all four official backends through the neutral Host contract without starting them`
 - `BMW default composition derives profiles from its overridden userData and rejects physical aliases`
 
 #### `scripts/agent-data-migration.test.ts`
@@ -1574,6 +1614,10 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Every product source has functional test ownership and every exact watch path exists`
 - `Workspace manifest changes stay on the conservative full-coverage path`
 - `A timed out test that handles SIGTERM and exits zero cannot be reported as passed`
+
+#### `scripts/workbuddy-runtime.test.ts`
+
+- `WorkBuddy official runtime gates real browser schema, executes browser and resumes the immutable provider Session`
 
 <!-- END GENERATED CAPABILITY AND TEST INVENTORY -->
 

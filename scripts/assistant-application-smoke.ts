@@ -148,7 +148,7 @@ createBmwApplication(bmwProduct, { pagePath: assistantPagePath, preloadPath: ass
         if(request.action==='refresh')loginRefreshes++
         if(request.action==='auth.login'){assert.equal(request.methodId,'fixture-key');assert.equal(request.values.apiKey,'fixture-login-success');authenticated=true}
         if(request.action==='model.select'){assert.ok(authenticated);assert.equal(request.modelId,'login-model');config.setModel('fixture-login',request.modelId)}
-        return {authentication:{state:authenticated?'ready':'required',label:authenticated?'测试账号已登录':'请先登录'},models:[{id:'login-model',label:'Supported login model',description:'No inference',availability:'verified'},{id:'unknown-model',label:'Unknown model',description:'Not admitted',availability:'unverified'},{id:'unavailable-model',label:'Unavailable model',description:'Disabled',availability:'unavailable'}],selectedModel:config.model('fixture-login'),loginMethods:[{id:'fixture-key',label:'测试 API Key',fields:[{id:'apiKey',label:'API Key',secret:true,required:true}]}],canLogout:false}
+        return {authentication:{state:authenticated?'configured':'required',label:authenticated?'Key 已配置，服务权限由实际任务验证':'请先登录'},models:[{id:'login-model',label:'Supported login model',description:'Service access checked by actual task',availability:'unverified'},{id:'unknown-model',label:'Unknown model',description:'Not admitted',availability:'unavailable'},{id:'unavailable-model',label:'Unavailable model',description:'Disabled',availability:'unavailable'}],selectedModel:config.model('fixture-login'),loginMethods:[{id:'fixture-key',label:'测试 API Key',fields:[{id:'apiKey',label:'API Key',secret:true,required:true}]}],canLogout:false}
       }
       return [backend,other]
     }
@@ -300,7 +300,7 @@ try {
     assert.equal(loginRefreshes,1,'Switching back to the login driver reuses its first snapshot')
     await waitFor(async()=>await assistant.executeJavaScript('document.getElementById("agent-settings").open&&document.getElementById("agent-model-section").hidden')?true:null,'driver selector automatically opens missing login')
     await assistant.executeJavaScript('document.querySelector("#agent-login-fields input").value="fixture-login-success";document.getElementById("agent-login").requestSubmit()')
-    await waitFor(async()=>{const state=await snapshot();return state.settings?.phase==='idle'&&state.settings.value?.authentication.state==='ready'&&!state.busy?state:null},'successful login exposes supported models')
+    await waitFor(async()=>{const state=await snapshot();return state.settings?.phase==='idle'&&state.settings.value?.authentication.state==='configured'&&!state.busy?state:null},'configured Key exposes compatible models without claiming service authentication')
     await waitFor(async()=>await assistant.executeJavaScript('!document.getElementById("agent-model-section").hidden&&document.querySelectorAll("#agent-model option").length===2&&document.querySelector("#agent-login-fields input").value===""')?true:null,'only supported models rendered after login')
     assert.equal(await assistant.executeJavaScript('document.getElementById("agent-model").textContent.includes("验证")'),false)
     assert.equal(await assistant.executeJavaScript('document.getElementById("send").disabled'),true)

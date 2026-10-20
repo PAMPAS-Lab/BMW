@@ -49,14 +49,14 @@ async function run():Promise<void>{
   const initial=await waitFor(async()=>{const state=await snapshot();return state.selectedSessionId?state:null},'blank Session')
   const product=agentRecord(await shell.executeJavaScript('window.bmw.productInfo()'))
   assert.equal(agentRecord(product.agent).label,'BMW Assistant')
-  assert.deepEqual(initial.drivers.map(row=>row.id),['dsh','codex','qoder-cn'])
+  assert.deepEqual(initial.drivers.map(row=>row.id),['dsh','codex','qoder-cn','workbuddy'])
   assert.equal(initial.driverId,'dsh');assert.equal(initial.busy,false)
   assert.equal(await assistant.executeJavaScript('typeof window.require'),'undefined')
   const studio=(studioRequest:Record<string,unknown>)=>browser({action:'video.studio',studioRequest})
   if(phase==='restore'){
     const saved=agentRecord(JSON.parse(fs.readFileSync(evidenceFile,'utf8')))
     assert.equal(initial.selectedSessionId,saved.dshSession)
-    for(const key of ['dshSession','qoderSession','codexSession'])assert.ok(initial.sessions.some(row=>row.sessionId===saved[key]&&row.externalSessionId===null))
+    for(const key of ['dshSession','qoderSession','codexSession','workbuddySession'])assert.ok(initial.sessions.some(row=>row.sessionId===saved[key]&&row.externalSessionId===null))
     assert.equal(initial.messages.length,0,'A restart must not submit a prompt or fabricate native history')
     const draft=agentRecord(await studio({operation:'read',draftId:saved.draftId}))
     assert.equal(draft.ownerSessionId,saved.dshSession)
@@ -90,6 +90,14 @@ async function run():Promise<void>{
     const unavailable=await waitFor(async()=>{const state=await snapshot();return state.settings?.driverId==='codex'&&state.settings.phase!=='working'&&!state.busy?state:null},'Codex missing public executable')
     assert.equal(unavailable.settings?.phase,'idle');assert.equal(unavailable.settings?.value?.authentication.state,'unknown')
     assert.deepEqual(unavailable.settings?.value?.models,[])
+    const workbuddy=await invoke({action:'driver.select',driverId:'workbuddy'}),workbuddySession=workbuddy.selectedSessionId!
+    assert.ok(![dshSession,qoderSession,codexSession].includes(workbuddySession))
+    await invoke({action:'settings.run',driverId:'workbuddy',request:{action:'refresh'}})
+    const keyRequired=await waitFor(async()=>{const state=await snapshot();return state.settings?.driverId==='workbuddy'&&state.settings.phase!=='working'&&!state.busy?state:null},'WorkBuddy missing isolated Key')
+    assert.equal(keyRequired.settings?.phase,'idle');assert.equal(keyRequired.settings?.value?.authentication.state,'required')
+    assert.ok(keyRequired.settings?.value?.models.every(row=>row.availability==='unavailable'))
+    assert.equal(keyRequired.messages.length,0);assert.equal(keyRequired.sessions.find(row=>row.sessionId===workbuddySession)?.externalSessionId,null)
+    await assert.rejects(studio({operation:'read',draftId:draft.id}),/STUDIO_SESSION_MISMATCH/)
     const tasks=agentRecord(await shell.executeJavaScript('window.bmw.scheduledTasks()'));assert.ok(Array.isArray(tasks.tasks))
     const pinned=agentRecord(tasks.tasks.find(raw=>agentRecord(raw).id===task.id));assert.equal(pinned.driverId,'dsh');assert.equal(pinned.sessionId,dshSession)
     const sameDsh=await invoke({action:'driver.select',driverId:'dsh'});assert.equal(sameDsh.selectedSessionId,dshSession)
@@ -108,12 +116,12 @@ async function run():Promise<void>{
     await assert.rejects(studio({operation:'read',draftId:draft.id}),/STUDIO_SESSION_MISMATCH/)
     const restartDraft=agentRecord(await studio({operation:'create',title:'Stable restart owner'}))
     assert.equal(restartDraft.ownerSessionId,restoredDsh)
-    for(const driverId of ['qoder-cn','codex','dsh']){
-      const state=await invoke({action:'driver.select',driverId});assert.equal(state.selectedSessionId,driverId==='dsh'?restoredDsh:driverId==='codex'?codexSession:qoderSession)
+    for(const driverId of ['qoder-cn','codex','workbuddy','dsh']){
+      const state=await invoke({action:'driver.select',driverId});assert.equal(state.selectedSessionId,driverId==='dsh'?restoredDsh:driverId==='codex'?codexSession:driverId==='workbuddy'?workbuddySession:qoderSession)
       assert.ok(state.sessions.every(row=>row.externalSessionId===null));assert.equal(state.messages.length,0)
     }
-    fs.writeFileSync(evidenceFile,JSON.stringify({dshSession:restoredDsh,qoderSession,codexSession,archivedSession:dshSession,draftId:restartDraft.id,pageUrl:opened.url,paidInference:false,nativeDesktopProfileUsed:false},null,2)+'\n')
-    console.log('PASS default entry: three independent blank Sessions, shared page, scoped Studio, native auth/install state and invalid schedule rejected before input')
+    fs.writeFileSync(evidenceFile,JSON.stringify({dshSession:restoredDsh,qoderSession,codexSession,workbuddySession,archivedSession:dshSession,draftId:restartDraft.id,pageUrl:opened.url,paidInference:false,nativeDesktopProfileUsed:false},null,2)+'\n')
+    console.log('PASS default entry: four independent blank Sessions, shared page, scoped Studio, native auth/install state and invalid schedule rejected before input')
   }
   app.once('will-quit',()=>{clearTimeout(watchdog);fixture.closeAllConnections();fixture.close();app.exit(0)})
   app.quit()

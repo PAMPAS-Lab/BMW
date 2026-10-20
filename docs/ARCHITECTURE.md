@@ -20,7 +20,7 @@ Studio 的中立 AssistantStudioTarget 扩展为可选的闭合 layer {id,kind}�
 
 接口表的“直接接口保障测试”验证提供方的契约。`browser-model` 和 `agent-driver` 使用不加载 DSH 的 `driver` 夹具：使用 Platform 注入的 Host 私有连接配置，启动 BMW MCP 适配器，以模型侧客户端完成 initialize、唯一工具发现和真实 browser action 调用，并检查 GUI 页面一致性、权限、认证、绑定和 Project 切换。夹具没有 Agent 循环或付费模型。
 
-“具体实现与产品装配保障”分别列出三驱动默认入口、Shell 准入与 DSH 实际装配；三驱动设置和会话契约也有直接保障，付费模型验收仍独立 opt-in。Browser Schema、目录、Bridge 或 MCP 适配器单独改动会选择通用 `driver`，不会自动启动真实 DSH。通用 Agent 契约、DSH 实现或 BMW 产品组装改动会选择 `bmw-dsh-assembly`；混合改动保留两侧保障，完整基线仍执行 DSH。安装版 DSH smoke 主要验证启动、认证、上下文和会话生命周期，不能替代 Browser 直接协议保障。
+“具体实现与产品装配保障”分别列出四驱动默认入口、Shell 准入与 DSH 实际装配；四驱动设置和会话契约也有直接保障，付费模型验收仍独立 opt-in。Browser Schema、目录、Bridge 或 MCP 适配器单独改动会选择通用 `driver`，不会自动启动真实 DSH。通用 Agent 契约、DSH 实现或 BMW 产品组装改动会选择 `bmw-dsh-assembly`；混合改动保留两侧保障，完整基线仍执行 DSH。安装版 DSH smoke 主要验证启动、认证、上下文和会话生命周期，不能替代 Browser 直接协议保障。
 
 ## 测试分类与日常入口
 
@@ -77,16 +77,17 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | harness-dsh | Official DSH Agent process/auth/transport, native Project mappings, effective tool admission and explicit cold migration export. | agent-contract | 无 |
 | harness-qoder | Official Qoder CN SDK/Worker Agent loop, pre-input effective browser catalog admission and normalized stream events. | agent-contract | 无 |
 | harness-codex | Official Codex App Server, isolated effective model catalog preflight, dynamic browser tool transport and normalized receipts/events. | agent-contract | 无 |
+| harness-workbuddy | Official pinned WorkBuddy CodeBuddy CLI over ACP v1, host-owned MCP bridge, browser-only tool admission and API Key credential isolation. | agent-contract | 无 |
 | product-bmw | BMW product composition and enabled Features; no driver selection or application loop. | platform, feature-video | 无 |
-| application | Select BMW and its configured drivers, then enter the platform application. | product-bmw, harness-dsh, harness-qoder, harness-codex, agent-ui, platform | 无 |
-| validation | Development-only verification, fixtures, dependency analysis and test selection; never a model capability. | agent-contract, agent-ui, media-native, browser-capability, platform, feature-video, harness-dsh, harness-qoder, harness-codex, product-bmw, application | 无 |
+| application | Select BMW and its configured drivers, then enter the platform application. | product-bmw, harness-dsh, harness-qoder, harness-codex, harness-workbuddy, agent-ui, platform | 无 |
+| validation | Development-only verification, fixtures, dependency analysis and test selection; never a model capability. | agent-contract, agent-ui, media-native, browser-capability, platform, feature-video, harness-dsh, harness-qoder, harness-codex, harness-workbuddy, product-bmw, application | 无 |
 
 ### 跨模块接口与保障
 
 | 接口 | 提供方 → 消费方 | 保证 | 直接接口保障测试 |
 |---|---|---|---|
-| agent-driver | agent-contract → platform, harness-dsh, harness-qoder, harness-codex, application | Stable BMW Sessions, closed event/capability admission, lifecycle and per-driver provider resume anchors; core owns no provider Agent loop. | agent.context, agent.conversation, api.types, driver |
-| agent-settings | agent-contract → platform, agent-ui, harness-dsh, harness-qoder, harness-codex, application | Closed official-control requests and redacted account/model projections, no echoed secrets or model input; settings and actual native cleanup hold Host exclusion before Project transitions. | agent.driver-settings, agent.assistant-ui, platform.agent-settings, codex.settings, codex.backend, qoder.settings, dsh.settings, assistant.application, dsh |
+| agent-driver | agent-contract → platform, harness-dsh, harness-qoder, harness-codex, harness-workbuddy, application | Stable BMW Sessions, closed event/capability admission, lifecycle and per-driver provider resume anchors; core owns no provider Agent loop. | agent.context, agent.conversation, api.types, driver |
+| agent-settings | agent-contract → platform, agent-ui, harness-dsh, harness-qoder, harness-codex, harness-workbuddy, application | Closed official-control requests and redacted account/model projections, no echoed secrets or model input; settings and actual native cleanup hold Host exclusion before Project transitions. | agent.driver-settings, agent.assistant-ui, platform.agent-settings, codex.settings, codex.backend, workbuddy.settings, workbuddy.backend, qoder.settings, dsh.settings, assistant.application, dsh |
 | agent-conversations | platform → application | Visible blank Sessions, durable submission receipts, Project membership, immutable provider bindings, FIFO until actual resource drain, generic display-history ownership and uncertain-delivery recovery without replay. | platform.conversation-store, platform.agent-history, platform.agent-host, agent.data-migration |
 | feature-lifecycle | platform → feature-video, product-bmw | Named activation/configure/layout/context/shutdown hooks; malformed runtime hooks fail before wiring; no extra model tools. | platform.feature-contract, api.types, desktop.workspace |
 | browser-tabs | browser-capability → platform | Bounded persisted URL/source ownership, conservative legacy restoration and Agent LRU policy; native reclamation awaits actual destruction and retains user pages. | browser.tab-policy, platform.projects, browser.tab-lifecycle, desktop.projects |
@@ -103,7 +104,8 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 
 | 保障 | 归属 | 消费的契约 | 验证内容 | 测试 | 自动选择范围 |
 |---|---|---|---|---|---|
-| bmw-agent-entry | application, platform, agent-ui, harness-dsh, harness-codex, harness-qoder | agent-driver, agent-settings, agent-conversations, studio-draft, project-storage | Production entry owns the Assistant, creates independent blank driver Sessions before input, preserves Project pages and Studio ownership across driver changes/restart, runs schedules on their pinned driver/Session with restored selection, and rejects invalid saved bindings without fallback. | bmw.agent-assembly, assistant.default, assistant.application, assistant.schedules | scripts/product-entry.ts, apps/bmw/, packages/platform/src/assistant-service.ts, packages/platform/src/main.ts |
+| bmw-agent-entry | application, platform, agent-ui, harness-dsh, harness-codex, harness-qoder, harness-workbuddy | agent-driver, agent-settings, agent-conversations, studio-draft, project-storage | Production entry owns the Assistant, creates independent blank driver Sessions before input, preserves Project pages and Studio ownership across driver changes/restart, runs schedules on their pinned driver/Session with restored selection, and rejects invalid saved bindings without fallback. | bmw.agent-assembly, assistant.default, assistant.application, assistant.schedules | scripts/product-entry.ts, apps/bmw/, packages/platform/src/assistant-service.ts, packages/platform/src/main.ts |
+| bmw-workbuddy-admission | harness-workbuddy, application, browser-capability | agent-driver, agent-settings, browser-model, agent-conversations | Pinned official ACP runtime, actual browser-only model request proof before user input, encrypted configured Key distinct from service verification, serialized native receipts/events, immutable resume and cleanup quarantine; local inference fixture only. | workbuddy.policy, workbuddy.catalog, workbuddy.backend, workbuddy.settings, workbuddy.acp, workbuddy.runtime | packages/harness-workbuddy/, packages/browser-capability/, packages/agent-contract/, apps/bmw/, scripts/product-entry.ts |
 | platform-shell-admission | platform | browser-model, project-storage, feature-lifecycle | Every Shell invoke admits only its live trusted main frame before application code; other Renderers, child frames and navigated content are denied. | platform.shell-ipc, driver | packages/platform/src/shell-ipc.ts, packages/platform/src/main.ts, packages/platform/src/preload/shell-preload.cts |
 | bmw-dsh-assembly | harness-dsh, application, platform | agent-driver, browser-model | Actual installed DSH startup/authentication, prompt assembly, native lifecycle, harness-owned immutable Workspace mappings and explicit cold history export. Consumes the generic interfaces; does not define Browser or AgentDriver code dependencies. | dsh, dsh.project-bindings, dsh.migration-history, agent.data-migration | packages/harness-dsh/, packages/agent-contract/, apps/bmw/, packages/product-bmw/ |
 
@@ -128,6 +130,7 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 - harness-dsh: `packages/harness-dsh/index.ts`, `packages/harness-dsh/migration/index.ts`
 - harness-qoder: `packages/harness-qoder/index.ts`
 - harness-codex: `packages/harness-codex/index.ts`
+- harness-workbuddy: `packages/harness-workbuddy/index.ts`
 - product-bmw: `packages/product-bmw/index.ts`
 
 ### 分类测试清单
@@ -171,7 +174,7 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | studio.export-review | desktop | feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_EXPORT_REVIEW_CASE=1 |
 | agent.context | contract | agent-contract | packages/agent-contract/test/context-sync.test.ts | 默认 |
 | agent.conversation | contract | agent-contract | packages/agent-contract/test/conversation.test.ts | 默认 |
-| bmw.agent-assembly | contract | application, agent-ui, harness-dsh, harness-codex, harness-qoder | scripts/agent-assembly.test.ts | 默认 |
+| bmw.agent-assembly | contract | application, agent-ui, harness-dsh, harness-codex, harness-qoder, harness-workbuddy | scripts/agent-assembly.test.ts | 默认 |
 | agent.data-migration | contract | validation, platform, harness-dsh | scripts/agent-data-migration.test.ts | 默认 |
 | dsh.project-bindings | contract | harness-dsh | packages/harness-dsh/test/project-bindings.test.ts | 默认 |
 | dsh.migration-history | contract | harness-dsh | packages/harness-dsh/test/dsh-migration.test.ts | 默认 |
@@ -194,6 +197,12 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | dsh.backend | contract | harness-dsh | packages/harness-dsh/test/dsh-backend.test.ts | 默认 |
 | qoder.events | contract | harness-qoder | packages/harness-qoder/test/qoder-events.test.ts | 默认 |
 | qoder.backend | contract | harness-qoder | packages/harness-qoder/test/qoder-backend.test.ts | 默认 |
+| workbuddy.runtime | integration | harness-workbuddy, browser-capability, application | scripts/workbuddy-runtime.test.ts | 默认 |
+| workbuddy.catalog | contract | harness-workbuddy | packages/harness-workbuddy/test/workbuddy-catalog.test.ts | 默认 |
+| workbuddy.settings | contract | harness-workbuddy | packages/harness-workbuddy/test/workbuddy-settings.test.ts | 默认 |
+| workbuddy.acp | contract | harness-workbuddy | packages/harness-workbuddy/test/workbuddy-acp.test.ts | 默认 |
+| workbuddy.policy | contract | harness-workbuddy | packages/harness-workbuddy/test/workbuddy-policy.test.ts | 默认 |
+| workbuddy.backend | contract | harness-workbuddy | packages/harness-workbuddy/test/workbuddy-backend.test.ts | 默认 |
 | browser.schema | contract | browser-capability | packages/browser-capability/test/browser-schema.test.ts | 默认 |
 | browser.catalog | contract | browser-capability | packages/browser-capability/test/mcp-tool-catalog.test.ts | 默认 |
 | browser.operations | contract | browser-capability | packages/browser-capability/test/session-operations.test.ts | 默认 |
@@ -250,7 +259,7 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | validation.selection | unit | validation | scripts/test/test-selection.test.ts | 默认 |
 | api.types | type | validation, platform, agent-contract, browser-capability, media-native, feature-video | scripts/test/public-interfaces.type-test.ts | 默认 |
 | sources | media | platform, browser-capability, media-native, feature-video | scripts/source-studio-smoke.ts | 默认 |
-| assistant.default | integration | application, platform, agent-contract, agent-ui, harness-dsh, harness-codex, harness-qoder, browser-capability, feature-video | scripts/assistant-default-suite.ts | 默认 |
+| assistant.default | integration | application, platform, agent-contract, agent-ui, harness-dsh, harness-codex, harness-qoder, harness-workbuddy, browser-capability, feature-video | scripts/assistant-default-suite.ts | 默认 |
 | assistant.application | integration | platform, agent-contract, agent-ui, browser-capability, feature-video | scripts/assistant-application-smoke.ts | 默认 |
 | assistant.schedules | integration | platform, agent-contract, agent-ui, browser-capability, feature-video | scripts/assistant-application-smoke.ts | BMW_ASSISTANT_SCHEDULE_CASE=1 |
 | assistant.startup.conversations.retry | integration | platform, agent-contract, agent-ui | scripts/assistant-application-smoke.ts | BMW_ASSISTANT_STARTUP_KIND=conversations; BMW_ASSISTANT_STARTUP_SCENARIO=retry |

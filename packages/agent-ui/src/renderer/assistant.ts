@@ -36,7 +36,7 @@ function render(next: AssistantState): void {
   element('status').textContent = session ? statuses[session.status] : '新建会话后，可以在 BMW 中直接交互'
   if(next.settings?.phase==='working')element('status').textContent=next.settings.message
   else if(next.busy&&!next.activeRunId)element('status').textContent=next.resourcesDisconnected?'Agent 连接清理失败，请先恢复连接清理':'正在清理 Agent 连接，请稍候'
-  if(!next.busy&&!settingsView.canSend())element('status').textContent=next.settings?.value?.authentication.state==='ready'?'请选择模型并确认':'请登录当前 Agent，或切换其他驱动'
+  if(!next.busy&&!settingsView.canSend())element('status').textContent=(next.settings?.value?.authentication.state==='ready'||next.settings?.value?.authentication.state==='configured')?'请选择模型并确认':'请登录当前 Agent，或切换其他驱动'
   const nearBottom = messages.scrollHeight - messages.scrollTop - messages.clientHeight < 80
   messages.replaceChildren()
   if (!next.messages.length) { const empty = document.createElement('p'); empty.className = 'empty'; empty.textContent = '对话、进度和结果显示在 BMW。\nAgent 使用当前 Project 的页面和媒体。'; messages.append(empty) }

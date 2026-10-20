@@ -1,0 +1,11 @@
+{
+  "name": "@bmw-agent/harness-workbuddy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@bmw-agent/agent-contract": "*",
+    "@tencent-ai/codebuddy-code": "2.169.0"
+  },
+  "exports": { ".": "./index.js" }
+}

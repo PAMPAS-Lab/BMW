@@ -6,7 +6,7 @@ BMW 是以浏览器为能力边界、以媒体为原生数据的桌面 Agent 工
 
 ## 运行
 
-需要 Node.js 24+。BMW Assistant 可选择 DSH、Codex 或 Qoder CN；各引擎使用官方运行时和独立认证配置。默认入口已装配三驱动；新 Profile 默认选择 DSH，之后按 Project 保存所选驱动。当前状态见 [PROJECT_STATUS.md](docs/PROJECT_STATUS.md)，分阶段验收和真实模型证据见 [实施记录](docs/history/agent-drivers/IMPLEMENTATION.md)。DSH 适配基线为 `0.2.1-rc.2`，Electron 为 `44.5.1`，Mediabunny 为 `1.61.0`。
+需要 Node.js 24+。BMW Assistant 可选择 DSH、Codex、Qoder CN 或 WorkBuddy；各引擎使用官方运行时和独立认证配置。默认入口已装配四驱动；新 Profile 默认选择 DSH，之后按 Project 保存所选驱动。WorkBuddy 使用系统加密的 API Key，每轮输入前验证实际 browser 目录；配置 Key 不代表服务权限已验证，刷新不产生付费调用。当前状态见 [PROJECT_STATUS.md](docs/PROJECT_STATUS.md)，分阶段验收和真实模型证据见 [实施记录](docs/history/agent-drivers/IMPLEMENTATION.md)。DSH 适配基线为 `0.2.1-rc.2`，Electron 为 `44.5.1`，Mediabunny 为 `1.61.0`。
 
 ```bash
 git clone https://github.com/pampas-lab/BMW.git
@@ -83,7 +83,7 @@ platform ── agent-contract / browser-capability / media-native
 feature-video ── browser-capability / media-native
 ```
 
-`agent-contract` 定义官方后端生命周期、稳定 BMW Session、原生恢复身份、任务回执、设置及 BMW 上下文；三个 harness 各自实现官方协议、认证、目录准入和事件转换。默认入口注入三驱动装配，BMW Host 与自有 Assistant 协调会话和资源，核心不调用具体驱动 RPC 或读取原生桌面私有存储。Project、页面、媒体和 Studio 保持一份。
+`agent-contract` 定义官方后端生命周期、稳定 BMW Session、原生恢复身份、任务回执、设置及 BMW 上下文；四个 harness 各自实现官方协议、认证、目录准入和事件转换。默认入口注入四驱动装配，BMW Host 与自有 Assistant 协调会话和资源，核心不调用具体驱动 RPC 或读取原生桌面私有存储。Project、页面、媒体和 Studio 保持一份。
 
 模型始终只有一个 `browser` 工具。Bridge 验证会话与 Project、串行执行操作，保护 Project 切换，并限制图像和媒体输出。没有聊天软件连接器、模型 shell 或任意本地文件能力。
 

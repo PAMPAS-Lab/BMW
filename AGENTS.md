@@ -7,7 +7,7 @@ Browser is boundary, media is native, web is runtime.
 - This repository ships one application: BMW, id `bmw`, profile `BMW`, Chromium partition `persist:bmw`.
 - BMW owns Projects, pages, media, Video Studio, permissions, settings and scheduled tasks. Pages and artifacts belong to a Project; conversations share that Project's resources.
 - Exactly one model/MCP tool is allowed: `browser`. Add capabilities as validated browser actions. The authenticated Bridge publishes the effective catalog.
-- The accepted product decision is one BMW application with DSH, Codex and Qoder CN adapters. Each official runtime owns its Agent loop. BMW Host coordinates input, Sessions, resources and UI; it must not implement a model loop.
+- The accepted product decision is one BMW application with DSH, Codex, Qoder CN and WorkBuddy adapters. Each official runtime owns its Agent loop. BMW Host coordinates input, Sessions, resources and UI; it must not implement a model loop.
 - `apps/bmw/product.ts` assembles the drivers. Core packages depend on `agent-contract`, never concrete harness packages, provider RPC, client storage, selectors, presets or credential configuration.
 - Provider launch/authentication, transport, tool catalog admission and wire-event normalization stay in their respective harness packages. BMW owns the conversation UI; native desktop history visibility is optional.
 - A driver may release model input only after verifying an effective catalog containing exactly BMW `browser`. Prompt instructions or deny callbacks do not establish this boundary. Unverified runtimes remain unavailable.

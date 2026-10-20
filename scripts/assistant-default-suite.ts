@@ -13,4 +13,4 @@ for(const phase of ['create','restore']){
   assert.equal(result.error,undefined,'Default entry process must terminate: '+phase)
   assert.equal(result.status,0,'Default entry phase failed: '+phase)
 }
-console.log('PASS production entry: independent three-driver Sessions, scoped Studio, missing auth/install, fixed schedule binding and process restart')
+console.log('PASS production entry: independent four-driver Sessions, scoped Studio, missing auth/install, fixed schedule binding and process restart')

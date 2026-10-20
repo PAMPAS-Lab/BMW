@@ -49,12 +49,12 @@ export function createAgentSettingsView(invoke:(command:AssistantCommand)=>Promi
   return {
     open(){if(!dialog.open)dialog.showModal();if(!switching&&!state?.settings&&!state?.busy)void run({action:'ensure'});onLocalStateChange()},
     selectDriver,
-    canSend(){const current=state?.settings?.driverId===state?.driverId?state?.settings:null;return !switching&&(!current||current.phase==='idle'&&current.value?.authentication.state==='ready'&&current.value.models.some(row=>row.availability==='verified'&&row.id===current.value?.selectedModel))},
+    canSend(){const current=state?.settings?.driverId===state?.driverId?state?.settings:null;return !switching&&(!current||current.phase==='idle'&&(current.value?.authentication.state==='ready'||current.value?.authentication.state==='configured')&&current.value.models.some(row=>(row.availability==='verified'||current.value?.authentication.state==='configured'&&row.availability==='unverified')&&row.id===current.value?.selectedModel))},
     render(next){
       if(state?.driverId!==next.driverId){clearFields();fieldIdentity='';model.value='';selection=null}
       state=next
       const current=next.settings?.driverId===next.driverId?next.settings:null,value=current?.value??null,working=current?.phase==='working'
-      const authenticated=value?.authentication.state==='ready',models=value?.models.filter(row=>row.availability==='verified')??[]
+      const authenticated=value?.authentication.state==='ready'||value?.authentication.state==='configured',models=value?.models.filter(row=>row.availability==='verified'||value.authentication.state==='configured'&&row.availability==='unverified')??[]
       element('agent-settings-title').textContent=(next.drivers.find(row=>row.id===next.driverId)?.label??'Agent')+(authenticated?' · 选择模型':' · 登录')
       element('agent-auth-state').textContent=value?.authentication.label??(working?'正在读取登录状态…':'登录状态尚未检查；可点击刷新')
       element('agent-settings-status').textContent=current?.message??''
