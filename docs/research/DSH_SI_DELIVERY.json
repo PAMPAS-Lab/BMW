@@ -20,13 +20,13 @@
     "browser"
   ],
   "profile": "disposable",
-  "caseRoot": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z",
+  "caseRoot": "<workdir>/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z",
   "bmwSessionId": "a5182dbe-c133-4311-8514-46dc14cfcc21",
   "draftId": "c6c3eda1-45df-4098-b96b-56f7b211b1cd",
   "revision": 34,
-  "editableDocument": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/video-studio/c6c3eda1-45df-4098-b96b-56f7b211b1cd.json",
+  "editableDocument": "<workdir>/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/video-studio/c6c3eda1-45df-4098-b96b-56f7b211b1cd.json",
   "documentSha256": "3442069ef00b434cbf876c70498dc7d951a0b0c067d71b33fe5d765cc04eb125",
-  "mp4": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-fce1a369-9684-4f66-9ea5-2074a42f7996-converted.mp4",
+  "mp4": "<workdir>/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-fce1a369-9684-4f66-9ea5-2074a42f7996-converted.mp4",
   "mp4Sha256": "9ad62b0aff8ece2ab36e4ae68c867bdf9f3c68e23f546ef3d75cda9ec03bf8ee",
   "exportFingerprint": "b88fb04af048c74079c671069cf25e68d3c5058bc66da70bb946d91b4932ff65",
   "exportRevision": 33,
@@ -52,7 +52,7 @@
         "sha256": "66cccbe4afbe5ceab258aa42770ef979989b34c7ce7c70fdfd46acf30d4e8011",
         "durationSeconds": 6.16,
         "origin": "imported-existing-Qwen-male",
-        "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-03caa79a-93a6-4995-ba67-f4ff9bbd0892.wav"
+        "originalPath": "<workdir>/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-03caa79a-93a6-4995-ba67-f4ff9bbd0892.wav"
       },
       {
         "sceneId": "s2-post",
@@ -60,7 +60,7 @@
         "sha256": "a78f4f246ebc80349e0e2ac82448f0c53e034186d599fab462f446a55cb42ca8",
         "durationSeconds": 10,
         "origin": "imported-existing-Qwen-male",
-        "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-c60de46c-2061-4dd3-a534-68a9ed9c23fa.wav"
+        "originalPath": "<workdir>/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-c60de46c-2061-4dd3-a534-68a9ed9c23fa.wav"
       },
       {
         "sceneId": "s3-book",
@@ -68,7 +68,7 @@
         "sha256": "d8d163e7bc195a77454f6123eb8b46036e2516cfe8cdd6e5856518da0291b13c",
         "durationSeconds": 7.6,
         "origin": "imported-existing-Qwen-male",
-        "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-cda46d54-7719-47a2-86e4-fc4dece0424c.wav"
+        "originalPath": "<workdir>/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-cda46d54-7719-47a2-86e4-fc4dece0424c.wav"
       },
       {
         "sceneId": "s4-qa",
@@ -76,7 +76,7 @@
         "sha256": "a5d3bf5470b095bcba4601969177df2484f787ada27febe0ba62a6084aeee6a7",
         "durationSeconds": 9.52,
         "origin": "imported-existing-Qwen-male",
-        "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-014174bd-4dc3-46c3-948e-c157e1832a91.wav"
+        "originalPath": "<workdir>/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-014174bd-4dc3-46c3-948e-c157e1832a91.wav"
       },
       {
         "sceneId": "s5-limit",
@@ -84,7 +84,7 @@
         "sha256": "4d2f3a367cf3432aca19738e09d9993e89f788af075f03d96ac503636ab12957",
         "durationSeconds": 7.04,
         "origin": "imported-existing-Qwen-male",
-        "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-facbec51-ca13-4987-8256-7f0fc0a86c88.wav"
+        "originalPath": "<workdir>/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-facbec51-ca13-4987-8256-7f0fc0a86c88.wav"
       },
       {
         "sceneId": "s6-close",
@@ -92,17 +92,17 @@
         "sha256": "710174062edb0e80dc0d8b53ac6e6c79271f56d2d624611508e7aa942c2b5d9d",
         "durationSeconds": 11.2,
         "origin": "imported-existing-Qwen-male",
-        "originalPath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-2060ebcc-eacf-40f4-958b-affb5584a747.wav"
+        "originalPath": "<workdir>/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/narration-2060ebcc-eacf-40f4-958b-affb5584a747.wav"
       }
     ]
   },
   "technical": {
-    "report": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/video-7ad47eed-6c9e-4fc0-91ef-195ee4e02ab6.json",
+    "report": "<workdir>/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/video-7ad47eed-6c9e-4fc0-91ef-195ee4e02ab6.json",
     "sha256": "7cc30d5c9cebd7aab6a94c24b6731814afd2dc110dc5b57b300ddb059f03f968",
     "status": "passed"
   },
   "agentVisualReview": {
-    "journal": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/video-studio/export-reviews/c6c3eda1-45df-4098-b96b-56f7b211b1cd.json",
+    "journal": "<workdir>/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/video-studio/export-reviews/c6c3eda1-45df-4098-b96b-56f7b211b1cd.json",
     "sha256": "62ded7e36a2d1aa15cfc9a73f094e90a123eb4955c421916cfef45b49e76d152",
     "totalGeneratedCriticalFrames": 144,
     "scenes": [
@@ -188,7 +188,7 @@
           "artifactId": "media-a72fa9b0-6f5b-404a-ad13-b6a973433fe4-frame-3.png",
           "sha256": "25f35be21381ffba7d425eb48c63188beab2ed91c264607bb7b068ec096a8d85",
           "seconds": 3.7083333333333335,
-          "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-a72fa9b0-6f5b-404a-ad13-b6a973433fe4-frame-3.png",
+          "path": "<workdir>/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-a72fa9b0-6f5b-404a-ad13-b6a973433fe4-frame-3.png",
           "localSeconds": 3.7083333333333335
         }
       },
@@ -200,7 +200,7 @@
           "artifactId": "media-192eec9a-1767-4035-8db0-08f507a4d3de-frame-5.png",
           "sha256": "718386ed3c38b261629680aa06f8c3d29a5d0e230bcf8a01cf7e327850d35dc9",
           "seconds": 12.666666666666666,
-          "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-192eec9a-1767-4035-8db0-08f507a4d3de-frame-5.png",
+          "path": "<workdir>/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-192eec9a-1767-4035-8db0-08f507a4d3de-frame-5.png",
           "localSeconds": 5.499999999999999
         }
       },
@@ -212,7 +212,7 @@
           "artifactId": "media-cba2eb58-8c07-40fb-91fd-29968ad9c82a-frame-2.png",
           "sha256": "b277ac9968f3e453783b6ba40ccb70252bc0dbe52e85dd4c2c7beebd64bc60cb",
           "seconds": 22.583333333333332,
-          "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-cba2eb58-8c07-40fb-91fd-29968ad9c82a-frame-2.png",
+          "path": "<workdir>/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-cba2eb58-8c07-40fb-91fd-29968ad9c82a-frame-2.png",
           "localSeconds": 4.416666666666664
         }
       },
@@ -224,7 +224,7 @@
           "artifactId": "media-3f02f6cc-0497-4241-9666-c7a6f70b7bac-frame-5.png",
           "sha256": "8c9edcf4cdc50f45db6440ba6cb9f785d25c2471d72641237368f50000e21673",
           "seconds": 35.083333333333336,
-          "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-3f02f6cc-0497-4241-9666-c7a6f70b7bac-frame-5.png",
+          "path": "<workdir>/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-3f02f6cc-0497-4241-9666-c7a6f70b7bac-frame-5.png",
           "localSeconds": 8.291666666666668
         }
       },
@@ -236,7 +236,7 @@
           "artifactId": "media-65ec3a7a-0ebd-4b57-b624-26e9cb963a2a-frame-2.png",
           "sha256": "59bbfa151802899f743d2997d355f4d24d91ae8a142786f8726defe9e9eb3393",
           "seconds": 41.375,
-          "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-65ec3a7a-0ebd-4b57-b624-26e9cb963a2a-frame-2.png",
+          "path": "<workdir>/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-65ec3a7a-0ebd-4b57-b624-26e9cb963a2a-frame-2.png",
           "localSeconds": 4.041666666666664
         }
       },
@@ -248,7 +248,7 @@
           "artifactId": "media-154a297e-4154-4526-b7f3-82b08f6565a2-frame-6.png",
           "sha256": "13a8ceace348e68fb9cc48eb4c40b2f29b1eb5d7727f8dfff631c6ffb71ca277",
           "seconds": 53.958333333333336,
-          "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-154a297e-4154-4526-b7f3-82b08f6565a2-frame-6.png",
+          "path": "<workdir>/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/workspace/artifacts/media-154a297e-4154-4526-b7f3-82b08f6565a2-frame-6.png",
           "localSeconds": 8.583333333333336
         }
       }
@@ -264,7 +264,7 @@
   },
   "timing": "editorial-estimate, not ASR/acoustic alignment",
   "verification": {
-    "report": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T12-12-10-501Z/result.json",
+    "report": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T12-12-10-501Z/result.json",
     "sha256": "e319ccdd1e8526d4a438b9d34adc736ab427d0bd72dfe6d3cb8041bbaa35a2c6",
     "counts": {
       "not-run": 12,
@@ -273,19 +273,19 @@
     "nonMarkdownSourceChanges": []
   },
   "productionReceipt": {
-    "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/result.json",
+    "path": "<workdir>/.bmw-runtime/dsh-si/2026-10-17T12-12-05-481Z/result.json",
     "sha256": "f3f8ac846b3b9c692ec1b5255a717867fdca732a17342afdf1ae0aa5423d345f"
   },
   "sources": [
     {
       "artifactId": "musk-si-post.png",
       "sha256": "9d2774bb7fb61b30e0423eaf54daea2e808bac7882100f411a8ca4cd1a95a973",
-      "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/musk-si-post.png"
+      "sourcePath": "<workdir>/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/musk-si-post.png"
     },
     {
       "artifactId": "musk-si-context.png",
       "sha256": "586777585c063003f5a4d97394999cd956adf72e1937a46b202a28f63bc559bd",
-      "sourcePath": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/musk-si-context.png"
+      "sourcePath": "<workdir>/.bmw-runtime/p1-ak/qoder/2026-10-17T04-11-17-871Z/workspace/artifacts/musk-si-context.png"
     }
   ],
   "sourceLimitations": [

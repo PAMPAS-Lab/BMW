@@ -18,7 +18,7 @@
   "realTrial": {
     "previousAttempts": [
       {
-        "root": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T01-49-05-497Z",
+        "root": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T01-49-05-497Z",
         "observedRoute": [
           {
             "provider": "deepseek-official",
@@ -41,7 +41,7 @@
         ]
       },
       {
-        "root": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-17-39-663Z",
+        "root": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-17-39-663Z",
         "observedRoute": [
           {
             "provider": "deepseek-official",
@@ -60,7 +60,7 @@
         "reason": "Original publisher metadata combines a date with a byline or document number; strict date parsing rejected proposals. User-interface stop completed cleanup and the isolated app exited normally; no forced termination. Added bounded unique complete publication-line extraction; ambiguous or truncated ranges remain rejected."
       },
       {
-        "root": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z",
+        "root": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z",
         "status": "research-passed-user-selection-pending",
         "observedRoute": [
           {
@@ -136,7 +136,7 @@
       "videoCodec": "avc",
       "audioCodec": "aac",
       "selectedFormat": "announcement",
-      "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-a6ab8314-2767-42fc-b6c0-4441e4044000-converted.mp4",
+      "path": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-a6ab8314-2767-42fc-b6c0-4441e4044000-converted.mp4",
       "profile": "disposable",
       "notes": "Created, edited, narrated and rendered by official DSH through BMW browser; no developer-side transfer of intermediate media."
     },
@@ -189,14 +189,14 @@
           "status": "passed"
         }
       ],
-      "ledger": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/video-studio/export-reviews/fa6f003e-ad35-4b5d-bcb3-507e07657e49.json",
+      "ledger": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/video-studio/export-reviews/fa6f003e-ad35-4b5d-bcb3-507e07657e49.json",
       "scope": "Actual final-export critical-state frames; no claim of audio listening or user acceptance.",
       "sampleCount": 101,
       "finalEvidence": ".bmw-runtime/news-01/final-review.json"
     },
     "humanListening": "pending",
     "finalAcceptance": "not-accepted",
-    "root": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z",
+    "root": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z",
     "profile": "disposable",
     "appearance": "light for original-page preview readability",
     "continuingExistingProjectAndSession": true,

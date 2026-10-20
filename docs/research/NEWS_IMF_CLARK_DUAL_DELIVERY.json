@@ -831,7 +831,7 @@
         "revision": 37,
         "createdAt": "2026-10-19T02:15:50.352Z",
         "durationSeconds": 47.666666666666664,
-        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967/artifacts/media-3f5a861b-2cc3-4655-af9b-8d10d4ac0048-converted.mp4",
+        "path": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967/artifacts/media-3f5a861b-2cc3-4655-af9b-8d10d4ac0048-converted.mp4",
         "sha256": "d1ba8f3d47ce32c605464197d7eb14da1b897d4e7c7a05806c40df382804329d",
         "bytes": 13117624,
         "verificationSha256": "b60ea89983a01c782f9d7671bc69806822674e6b09458667ea41fb703a17c8f2",
@@ -2807,7 +2807,7 @@
         "revision": 31,
         "createdAt": "2026-10-19T02:56:01.782Z",
         "durationSeconds": 53.8,
-        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967/artifacts/media-28d31002-1559-40ae-99e7-09846c5eba9d-converted.mp4",
+        "path": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967/artifacts/media-28d31002-1559-40ae-99e7-09846c5eba9d-converted.mp4",
         "sha256": "bbda473364829fa72493e303ab8545b8520652460069b1df097e5b66d1385218",
         "bytes": 13442679,
         "verificationSha256": "cd3a6bdb34e8353105f5c33885ce1ef7e8a4b5b8250b844d11a5dce58cef0c6b",
@@ -4056,14 +4056,14 @@
     },
     {
       "driver": "dsh",
-      "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967/artifacts/media-5a7735f4-2831-4f5a-ad0f-a4ec65043676-converted.mp4",
+      "path": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967/artifacts/media-5a7735f4-2831-4f5a-ad0f-a4ec65043676-converted.mp4",
       "expectedSha256": "c076fb65e3e338c9377bd87978a95191403fd311f64c620fab37afdfbdf73230",
       "currentSha256": "c076fb65e3e338c9377bd87978a95191403fd311f64c620fab37afdfbdf73230",
       "unchanged": true
     },
     {
       "driver": "qoder-cn",
-      "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967/artifacts/media-f49beee4-e4f3-4057-8e38-3c8021b65966-converted.mp4",
+      "path": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/profile/projects/2f4bdf0e-500d-4bd5-9fe6-a7fb7828b967/artifacts/media-f49beee4-e4f3-4057-8e38-3c8021b65966-converted.mp4",
       "expectedSha256": "dc438ede1aa24952d766827578c6cf01930ff06a18001dec4071d3aa5ab8624d",
       "currentSha256": "dc438ede1aa24952d766827578c6cf01930ff06a18001dec4071d3aa5ab8624d",
       "unchanged": true

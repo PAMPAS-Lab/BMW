@@ -919,7 +919,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 93,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/source-policy.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/source-policy.log"
     },
     {
       "id": "feature-inventory",
@@ -927,7 +927,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 127,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/feature-inventory.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/feature-inventory.log"
     },
     {
       "id": "browser.media-session-fetch",
@@ -935,7 +935,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 105,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.media-session-fetch.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.media-session-fetch.log"
     },
     {
       "id": "media.science-spec",
@@ -943,7 +943,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 149,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.science-spec.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.science-spec.log"
     },
     {
       "id": "media.video-capture",
@@ -951,7 +951,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 255,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.video-capture.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.video-capture.log"
     },
     {
       "id": "media.capture-source-index",
@@ -959,7 +959,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 173,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.capture-source-index.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.capture-source-index.log"
     },
     {
       "id": "media.preservation",
@@ -967,7 +967,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 176,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.preservation.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.preservation.log"
     },
     {
       "id": "video.material-index",
@@ -975,7 +975,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 199,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.material-index.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.material-index.log"
     },
     {
       "id": "video.source-analysis",
@@ -983,7 +983,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 1360,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.source-analysis.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.source-analysis.log"
     },
     {
       "id": "agent.context",
@@ -991,7 +991,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 82,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/agent.context.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/agent.context.log"
     },
     {
       "id": "agent.conversation",
@@ -999,7 +999,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 80,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/agent.conversation.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/agent.conversation.log"
     },
     {
       "id": "bmw.agent-assembly",
@@ -1007,7 +1007,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 204,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/bmw.agent-assembly.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/bmw.agent-assembly.log"
     },
     {
       "id": "agent.data-migration",
@@ -1015,7 +1015,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 160,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/agent.data-migration.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/agent.data-migration.log"
     },
     {
       "id": "dsh.project-bindings",
@@ -1023,7 +1023,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 86,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.project-bindings.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.project-bindings.log"
     },
     {
       "id": "dsh.migration-history",
@@ -1031,7 +1031,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 88,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.migration-history.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.migration-history.log"
     },
     {
       "id": "agent.studio-composer",
@@ -1039,7 +1039,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 81,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/agent.studio-composer.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/agent.studio-composer.log"
     },
     {
       "id": "agent.assistant-ui",
@@ -1047,7 +1047,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 82,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/agent.assistant-ui.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/agent.assistant-ui.log"
     },
     {
       "id": "agent.driver-settings",
@@ -1055,7 +1055,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 77,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/agent.driver-settings.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/agent.driver-settings.log"
     },
     {
       "id": "platform.agent-settings",
@@ -1063,7 +1063,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 101,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.agent-settings.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.agent-settings.log"
     },
     {
       "id": "codex.settings",
@@ -1071,7 +1071,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 102,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/codex.settings.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/codex.settings.log"
     },
     {
       "id": "codex.installation",
@@ -1079,7 +1079,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 99,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/codex.installation.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/codex.installation.log"
     },
     {
       "id": "qoder.settings",
@@ -1087,7 +1087,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 152,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/qoder.settings.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/qoder.settings.log"
     },
     {
       "id": "dsh.settings",
@@ -1095,7 +1095,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 104,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.settings.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.settings.log"
     },
     {
       "id": "platform.assistant-controller",
@@ -1103,7 +1103,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 95,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.assistant-controller.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.assistant-controller.log"
     },
     {
       "id": "platform.conversation-store",
@@ -1111,7 +1111,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 97,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.conversation-store.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.conversation-store.log"
     },
     {
       "id": "platform.agent-history",
@@ -1119,7 +1119,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 97,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.agent-history.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.agent-history.log"
     },
     {
       "id": "platform.agent-host",
@@ -1127,7 +1127,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 167,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.agent-host.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.agent-host.log"
     },
     {
       "id": "browser.session-leases",
@@ -1135,7 +1135,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 314,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.session-leases.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.session-leases.log"
     },
     {
       "id": "codex.policy",
@@ -1143,7 +1143,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 99,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/codex.policy.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/codex.policy.log"
     },
     {
       "id": "codex.backend",
@@ -1151,7 +1151,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 103,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/codex.backend.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/codex.backend.log"
     },
     {
       "id": "dsh.events",
@@ -1159,7 +1159,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 83,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.events.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.events.log"
     },
     {
       "id": "dsh.backend",
@@ -1167,7 +1167,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 107,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.backend.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.backend.log"
     },
     {
       "id": "qoder.events",
@@ -1175,7 +1175,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 88,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/qoder.events.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/qoder.events.log"
     },
     {
       "id": "qoder.backend",
@@ -1183,7 +1183,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 156,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/qoder.backend.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/qoder.backend.log"
     },
     {
       "id": "browser.schema",
@@ -1191,7 +1191,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 84,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.schema.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.schema.log"
     },
     {
       "id": "browser.catalog",
@@ -1199,7 +1199,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 1238,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.catalog.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.catalog.log"
     },
     {
       "id": "browser.operations",
@@ -1207,7 +1207,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 241,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.operations.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.operations.log"
     },
     {
       "id": "browser.shutdown",
@@ -1215,7 +1215,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 111,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.shutdown.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.shutdown.log"
     },
     {
       "id": "browser.deadline",
@@ -1223,7 +1223,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 79,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.deadline.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.deadline.log"
     },
     {
       "id": "browser.screenshot",
@@ -1231,7 +1231,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 93,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.screenshot.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.screenshot.log"
     },
     {
       "id": "browser.renderer-read",
@@ -1239,7 +1239,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 93,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.renderer-read.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.renderer-read.log"
     },
     {
       "id": "browser.download",
@@ -1247,7 +1247,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 134,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.download.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.download.log"
     },
     {
       "id": "browser.tab-policy",
@@ -1255,7 +1255,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 82,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.tab-policy.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.tab-policy.log"
     },
     {
       "id": "browser.sources",
@@ -1263,7 +1263,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 84,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.sources.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.sources.log"
     },
     {
       "id": "platform.sources",
@@ -1271,7 +1271,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 163,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.sources.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.sources.log"
     },
     {
       "id": "video.sources",
@@ -1279,7 +1279,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 158,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.sources.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.sources.log"
     },
     {
       "id": "browser.host-contract",
@@ -1287,7 +1287,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 87,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.host-contract.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/browser.host-contract.log"
     },
     {
       "id": "dsh.dsh-runtime",
@@ -1295,7 +1295,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 109,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.dsh-runtime.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.dsh-runtime.log"
     },
     {
       "id": "dsh.dsh-transport",
@@ -1303,7 +1303,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 120,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.dsh-transport.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.dsh-transport.log"
     },
     {
       "id": "dsh.dsh-preset",
@@ -1311,7 +1311,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 107,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.dsh-preset.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.dsh-preset.log"
     },
     {
       "id": "dsh.browser-failure-guard",
@@ -1319,7 +1319,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 84,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.browser-failure-guard.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.browser-failure-guard.log"
     },
     {
       "id": "dsh.workspace-context",
@@ -1327,7 +1327,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 86,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.workspace-context.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.workspace-context.log"
     },
     {
       "id": "dsh.video-case-log",
@@ -1335,7 +1335,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 86,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.video-case-log.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/dsh.video-case-log.log"
     },
     {
       "id": "media.controller",
@@ -1343,7 +1343,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 129,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.controller.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.controller.log"
     },
     {
       "id": "media.processing",
@@ -1351,7 +1351,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 118,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.processing.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.processing.log"
     },
     {
       "id": "media.production",
@@ -1359,7 +1359,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 311,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.production.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.production.log"
     },
     {
       "id": "media.options",
@@ -1367,7 +1367,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 85,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.options.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.options.log"
     },
     {
       "id": "media.speech",
@@ -1375,7 +1375,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 2601,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.speech.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.speech.log"
     },
     {
       "id": "media.port-contract",
@@ -1383,7 +1383,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 83,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.port-contract.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/media.port-contract.log"
     },
     {
       "id": "platform.projects",
@@ -1391,7 +1391,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 125,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.projects.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.projects.log"
     },
     {
       "id": "platform.settings",
@@ -1399,7 +1399,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 90,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.settings.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.settings.log"
     },
     {
       "id": "platform.schedules",
@@ -1407,7 +1407,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 120,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.schedules.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.schedules.log"
     },
     {
       "id": "platform.state",
@@ -1415,7 +1415,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 120,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.state.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.state.log"
     },
     {
       "id": "platform.layout",
@@ -1423,7 +1423,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 85,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.layout.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.layout.log"
     },
     {
       "id": "platform.docking",
@@ -1431,7 +1431,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 86,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.docking.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.docking.log"
     },
     {
       "id": "platform.permissions",
@@ -1439,7 +1439,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 80,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.permissions.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.permissions.log"
     },
     {
       "id": "platform.menu",
@@ -1447,7 +1447,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 82,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.menu.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.menu.log"
     },
     {
       "id": "platform.restart",
@@ -1455,7 +1455,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 84,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.restart.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.restart.log"
     },
     {
       "id": "platform.continuity",
@@ -1463,7 +1463,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 94,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.continuity.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.continuity.log"
     },
     {
       "id": "platform.user-agent",
@@ -1471,7 +1471,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 80,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.user-agent.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.user-agent.log"
     },
     {
       "id": "platform.project-panel",
@@ -1479,7 +1479,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 82,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.project-panel.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.project-panel.log"
     },
     {
       "id": "platform.driver-binding",
@@ -1487,7 +1487,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 91,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.driver-binding.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.driver-binding.log"
     },
     {
       "id": "platform.catalog",
@@ -1495,7 +1495,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 122,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.catalog.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.catalog.log"
     },
     {
       "id": "platform.boundaries",
@@ -1503,7 +1503,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 224,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.boundaries.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.boundaries.log"
     },
     {
       "id": "platform.remote-boundary",
@@ -1511,7 +1511,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 208,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.remote-boundary.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.remote-boundary.log"
     },
     {
       "id": "platform.shell-ipc",
@@ -1519,7 +1519,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 80,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.shell-ipc.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.shell-ipc.log"
     },
     {
       "id": "platform.permission-store",
@@ -1527,7 +1527,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 82,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.permission-store.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.permission-store.log"
     },
     {
       "id": "platform.continuity-state",
@@ -1535,7 +1535,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 95,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.continuity-state.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.continuity-state.log"
     },
     {
       "id": "platform.feature-contract",
@@ -1543,7 +1543,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 79,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.feature-contract.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/platform.feature-contract.log"
     },
     {
       "id": "video.schema-publication",
@@ -1551,7 +1551,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 64,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.schema-publication.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.schema-publication.log"
     },
     {
       "id": "video.schema",
@@ -1559,7 +1559,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 2535,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.schema.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.schema.log"
     },
     {
       "id": "video.materials",
@@ -1567,7 +1567,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 109,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.materials.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.materials.log"
     },
     {
       "id": "video.studio",
@@ -1575,7 +1575,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 1593,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.studio.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.studio.log"
     },
     {
       "id": "video.settings",
@@ -1583,7 +1583,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 153,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.settings.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.settings.log"
     },
     {
       "id": "video.boundary",
@@ -1591,7 +1591,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 138,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.boundary.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/video.boundary.log"
     },
     {
       "id": "architecture.boundaries",
@@ -1599,7 +1599,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 10507,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/architecture.boundaries.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/architecture.boundaries.log"
     },
     {
       "id": "validation.selection",
@@ -1607,7 +1607,7 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 17144,
-      "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/validation.selection.log"
+      "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/validation.selection.log"
     }
   ],
   "notes": [
