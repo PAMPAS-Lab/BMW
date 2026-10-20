@@ -1,49 +1,48 @@
 {
   "format": "bmw.current-verification",
   "version": 1,
-  "createdAt": "2026-10-20T11:43:45.726Z",
+  "createdAt": "2026-10-20T13:46:57.045892+00:00",
   "verificationMode": "full-non-external-run",
-  "sourceBaseRevision": "fc4e5a812041d1f0ef6855bf763e96c2ac14dcae",
-  "sourceState": "Final reviewed code; only current verification and status documentation refreshed after the full run.",
+  "sourceBaseRevision": "6bea922a91489c2aa452a17cf76d92bbfa8ef71b",
+  "sourceState": "Frozen implementation verified in full; only current verification/status documentation updated afterward. Every non-Markdown source hash rechecked unchanged.",
   "review": {
     "sourceBranch": "origin/workbuddybmw",
-    "sourceRevision": "f1bb14828f6fcaa77ac645638e78b137b33e7e36",
-    "deferredCommit": "e8f86b613d51162f427447c1b6fc7f95c57cf0da",
-    "deferredReason": "WorkBuddy retains CLI tools and declares browserOnly without checking an effective browser-only catalog; user chose to defer the entire adapter.",
-    "preservedNewsAncestor": "7d4a294"
+    "originalAdapterCommit": "e8f86b613d51162f427447c1b6fc7f95c57cf0da",
+    "decision": "Integrate WorkBuddy with effective pre-input browser catalog admission and task-based API Key verification; local main merge only, no push.",
+    "originalWorkingTreePreserved": true
   },
   "environment": {
     "node": "v24.21.0",
     "platform": "darwin",
-    "architecture": "arm64",
     "dependencies": {
       "node_modules/electron": "44.5.1",
       "node_modules/mediabunny": "1.61.0",
       "node_modules/typescript": "7.0.2",
       "node_modules/ws": "8.21.3"
-    }
+    },
+    "workbuddyCli": "2.169.0"
   },
   "fullReport": {
-    "path": ".bmw-runtime/workbuddy-review-final/result.json",
-    "sha256": "056b35bfa4dc50286046b53be668bcc448a98db4626fe77a6922a0bb3e2f0c25",
+    "path": ".bmw-runtime/workbuddy-integration-verified/result.json",
+    "sha256": "6181d0b7fb9e7ffd82fdbf014e7543592459ae0b86021d7c1822e1ad5f4cca44",
     "all": true,
     "counts": {
-      "passed": 167,
+      "passed": 173,
       "failed": 0,
       "not-run": 12
     },
-    "selected": 162
+    "selected": 168
   },
   "sourceHashes": {
-    "apps/bmw/agent-assembly.ts": "2e2275ced82c104f7963e82d42d675ac9b7029e1e68105a9284a82b324d367a8",
-    "apps/bmw/package.json": "bce3b379bd891c006ccc460ef2a1ca95fa4a54b88f8141191c612afc7f2f20bb",
+    "apps/bmw/agent-assembly.ts": "7ecff76d4678a195033e0d54a6b9b2c72f91179999d0ecde480762b3492d3ea5",
+    "apps/bmw/package.json": "8239e4e131c1f7d98da8f2cfe6c8c8bc1b7356a9de4b7d2a3b331324bed096da",
     "apps/bmw/product.ts": "88c7c37d75ad22f713ce0f0478ae810be8c0f3fe0788a8b7db69a18181ded7df",
     "packages/agent-contract/index.ts": "24df4f61360a4e13baab958e7959e1902d2cd8927453026ce5f1f2e09f6251e9",
     "packages/agent-contract/package.json": "fbf1e3d7223be7d36ef452b83468c097e900db5fe96ac3eb1a17f7fc256814f4",
     "packages/agent-contract/src/assistant-ui.ts": "68af8cfd8ef7a5900110d2cff5adb133fc713536c2d29770df6e078768a96c4f",
     "packages/agent-contract/src/context-sync.ts": "3f975deec95bfad0da2d94b7aa50928ef1e29be84c12892fb5914e0a94e932e9",
     "packages/agent-contract/src/conversation.ts": "0bbfd3834b9e4bdfdc1b33b8ba3abf4e5e515b69dccbb87a2557ec7029dff96e",
-    "packages/agent-contract/src/driver-settings.ts": "dee74c15f0dcfd0de769a4669b4a5357f187defe2a84f3554ee6e7c989931e9e",
+    "packages/agent-contract/src/driver-settings.ts": "f7018937516c6ecd9de1b9fe609aba9f0c76ca586b82bde9b183896d16f7ca71",
     "packages/agent-contract/test/assistant-ui.test.ts": "202faf9436054357d7173c528e6c3df2e388d8ecedc2b1450db134427d58975c",
     "packages/agent-contract/test/context-sync.test.ts": "7249434289828f03b2d6d68f87ac0dd711bc449cbddce0b4a2c9292d1b930e85",
     "packages/agent-contract/test/conversation.test.ts": "82e058f13fa8f5e0de8b439579c8a94b79e34d095da3cd7f3e972a9b888f04c9",
@@ -52,10 +51,10 @@
     "packages/agent-ui/index.ts": "afd49e8aa66c9e4c1c0dfbb5b1f7ae4649f2556f1405f39ff1493ae932924053",
     "packages/agent-ui/package.json": "9ec6697541a8792d2dd8a3678b3f4cb56f2633f8ee60164dd06a10ee003d8510",
     "packages/agent-ui/src/preload/assistant-preload.cts": "ae7cc375e9e4de5ed088eb5fff15b8794160dd42b439c805e372d213df220536",
-    "packages/agent-ui/src/renderer/agent-settings.ts": "c94f6902aeb2d906cc857e9380bd395e0f4869ded8f5f47ea8341450e314891f",
+    "packages/agent-ui/src/renderer/agent-settings.ts": "66bb71197f8a68747b6429ed4eaad7e9117cc8ba7f09e7a2ea7cfdf65f75f816",
     "packages/agent-ui/src/renderer/assistant.css": "d32d930adb49a90983af7f26a42b8555b6eacba6fbb999994742daed11393a48",
     "packages/agent-ui/src/renderer/assistant.html": "2babd55ce62eff9706f3c94ae8572f4cdf3bb4f26ec5cc0e7193391995f80888",
-    "packages/agent-ui/src/renderer/assistant.ts": "40595319035625355eef0768cca9e1e652f1c51e09baaf0aa049415bce1c38ea",
+    "packages/agent-ui/src/renderer/assistant.ts": "f81d5c111fdf37fdb07174dfac769d80f6d94574dcbc669991d7b7284bf8ec02",
     "packages/agent-ui/src/renderer/conversation-timeline.ts": "87e8ea202eda0cb92753c836b2123dac13b424082e2b1129390f8acfd2989480",
     "packages/agent-ui/src/renderer/message-content.ts": "a8fc4466811ac87daec838313522b133ad7ab64a3c418f0324ae2851a43c91ec",
     "packages/agent-ui/src/renderer/studio-composer-scope.ts": "63b6b59d481d434e107ecf30a0b3a5b6c002392f442afee401b0513d075e6a27",
@@ -251,7 +250,6 @@
     "packages/harness-dsh/test/workspace-context.test.ts": "fc790af6eb4d07be6024865d3929f9be8a4161469ee332f01fb4b39c75ea5b62",
     "packages/harness-qoder/index.ts": "1e233280fa7ef2494926936ec8f945a6b23387e863e382c250bbc816dbd1fede",
     "packages/harness-qoder/package.json": "2e3f63fd78f7f6da7cd570002ed8d56b61ce70ed2d8f3dea4780f5866b3ba7e4",
-    "packages/harness-qoder/qoder-bmw/SKILL.md": "a59d153935fcd951d55417c333752660ca9ea0168dda053a332a1dc696a06027",
     "packages/harness-qoder/src/bmw-guidance.ts": "5f4243aee48b58c58516dff571cda675a20ff12c8ed4f51afaa3b81b38f15b7f",
     "packages/harness-qoder/src/qoder-backend.ts": "6916819fcb396ac9e3e6d72931da5d47fde00602c7ddd973f32269b8ae2e85d8",
     "packages/harness-qoder/src/qoder-events.ts": "44f45a559823cbdd5a94554bb3dfc5dea1356f05bc6c817746c0fad5053d033d",
@@ -259,6 +257,23 @@
     "packages/harness-qoder/test/qoder-backend.test.ts": "cbc9a542b490b2fe158c55ab1c6c2ac166daf2cb59b9e65425a1fe8ede663d3f",
     "packages/harness-qoder/test/qoder-events.test.ts": "250ac97d65ebf5f68e776129b86363bb75c6edb0da32adf095aa0e1275964097",
     "packages/harness-qoder/test/qoder-settings.test.ts": "c466406b4688e2af1e53a01e7bb8c9d7ad61dfd9fd978ce7c3377d6a816947ae",
+    "packages/harness-workbuddy/index.ts": "8d12989da1bbb26e0271d235b2a77d13e3ff9ebfc4094fceb90283124fc1d1e0",
+    "packages/harness-workbuddy/package.json": "de0e44cc85ab650f54402888f5690aa6c060feaa24572538c297140184c5bdbf",
+    "packages/harness-workbuddy/src/workbuddy-acp.ts": "f3a8b928c416e8f055b42a275fbffd21457f25d84702c67f5504e2fc242c9367",
+    "packages/harness-workbuddy/src/workbuddy-backend.ts": "29ce339c400656c87e7eb5bc2f61f07836ff4ea6e7a2c2c35bf0537d580ed736",
+    "packages/harness-workbuddy/src/workbuddy-catalog.ts": "2ce2c0102c42a55a2cf8a0212e1ddfe0e5fe207f05db8add306a5e006dc7e807",
+    "packages/harness-workbuddy/src/workbuddy-credentials.ts": "da03547cc002d38c62c7c49a1e4a176dfede4763bc49101de02539f70cf15c5d",
+    "packages/harness-workbuddy/src/workbuddy-installation.ts": "90354f15cf59a507d027f9a5f94df4357df8d4b5d7e31fb64f553804d643434c",
+    "packages/harness-workbuddy/src/workbuddy-model-catalog.ts": "dea3caa6e6897d4cbead46b9862f41aa1add817a941303f3b5f32ba7f1aa2d09",
+    "packages/harness-workbuddy/src/workbuddy-policy.ts": "587dae7f8dee4b482b9b0a35f13662fb8e201529c91a8eef871cebc316f88b10",
+    "packages/harness-workbuddy/src/workbuddy-settings.ts": "80cfd205b84f82c1eb117961c66e761971cc806d3e64eef3180aaf0caa09017c",
+    "packages/harness-workbuddy/test/workbuddy-acp.test.ts": "934f358ecbd8951dfbe9b971c621d14186fe7b9d65182f8d96fb624878eeae92",
+    "packages/harness-workbuddy/test/workbuddy-backend.test.ts": "a1e5b964390c0db0c0f39dc5fa8b5b1ce2c60849240dd29ebdc547fe7b096554",
+    "packages/harness-workbuddy/test/workbuddy-catalog.test.ts": "c137d12bc63ffc142402bcb6e9fa378b845fcbcdb81cc99ed49dbaf2a3e7863c",
+    "packages/harness-workbuddy/test/workbuddy-fixture.ts": "1377d0d48d512eeb66c7d0fd818a5a327ecaaf3ef90dbe4ccd40999fd89e3741",
+    "packages/harness-workbuddy/test/workbuddy-policy.test.ts": "e0905df141791683d09478faa974d708ef361994e381046523a7ccdbc42b32be",
+    "packages/harness-workbuddy/test/workbuddy-settings.test.ts": "bb180a6e4dda073da61c4000bf17aff70de08894c5518a9cdef557109fdfc741",
+    "packages/harness-workbuddy/test/workbuddy-test-support.ts": "c5d7649c2291459e7da0c8a1d9ea4dbbcb09a4897c614b4da9b42c5977ac5edc",
     "packages/media-native/package.json": "2e9c8b9eb40999874668883edc7240eaa1af9bfcb64334f557f1e9897e0c2fcc",
     "packages/media-native/src/artifact-job-io.ts": "34a641b2eac85d1480ca0f57485ad10b2811273e2ce93314ea46243b9ca4011d",
     "packages/media-native/src/audio-evidence-contract.ts": "2d38dd07b83bb2b3e7310c89011daed5bde0316c2adeeb359e197dfb2f50db16",
@@ -421,14 +436,14 @@
     "packages/platform/test/state-load.test.ts": "8bec72747cb58aa0d46a4d8a3a9ebde5f035b4847ef239e4f880dbf84d6d04df",
     "packages/product-bmw/index.ts": "870d9dcf9933d0cb05038c100b2bd7fe149132c1175ee60240022af8705b44b6",
     "packages/product-bmw/package.json": "87ed9d8a4c74e8bcd261bb73d40469b6e541cb2956ea3646aa873529aecf58d8",
-    "scripts/agent-assembly.test.ts": "d3889077090152e41f6d1e23d25a149c85318b8581b902ed0d468d1e80d3dcfd",
+    "scripts/agent-assembly.test.ts": "e4b0bd13be58ca84b88f8d711c3836d10e68bd3f74122fd22355482908e83a61",
     "scripts/agent-data-migration.test.ts": "bd713659ec53c18bd8a1bbdedd276a225380ec8ae507cdf8f377b5f529636b14",
     "scripts/agent-data-migration.ts": "4fefc1d77b0441165ea72fef06539ba504198342af6ccc8552a22d3b0bce28d3",
     "scripts/agent-driver-smoke.ts": "6d7d778a3bdebb7894f8564a00e0fc9149a9ac1cddd72d8fb0cadd88ab8ee498",
     "scripts/architecture-document.ts": "d77f70e40d12531ffc0970bcdd4cb716ad6fe644572ae2fc90f8cf2ed522bf4b",
-    "scripts/assistant-application-smoke.ts": "3a29379f396cfb0a2139841904f1aaedfab5e48c4cbff5ebf6111b8095af5fe3",
-    "scripts/assistant-default-case.ts": "37300c62b87141140239514d8ba5349121ee4299ad89f5173522171e27ed6ab1",
-    "scripts/assistant-default-suite.ts": "7029840feb8b8f19e894625566c3d93b21773d04077ff4ab34673f54760aa444",
+    "scripts/assistant-application-smoke.ts": "c8bc064b0d59e3309825793eeeb70a46e804c2abf4f5ba8657bd01391a586075",
+    "scripts/assistant-default-case.ts": "f24fdda0aa4a9fb47f689dd1a97c50be93b1faca08fb7271ecc5f65be4ebb5db",
+    "scripts/assistant-default-suite.ts": "e965ecbf56510d940e4b552025ab6421a30434c62ace7749d7ca9a23851baacc",
     "scripts/audio-window-smoke.ts": "f70a369f809f1075f41e8004c6b423578480aeea2e349573952ac82ce87d9e57",
     "scripts/browser-background-smoke.ts": "0f71248a7366ae37a41259a8ae1b18313f55171db8b407e1eecc2f3c95fde434",
     "scripts/browser-tab-lifecycle-smoke.ts": "7fbc28e04a27357c0475085e288b72b9936572255a88045bfa3f60028f4b9148",
@@ -453,13 +468,13 @@
     "scripts/media-download-smoke.ts": "e1d67343bc86579e3e8ed115f5b3d8349f6896f4df0311808ca261e938ba6ad5",
     "scripts/media-processing-smoke.ts": "4129c7768fe7f72284e1a65a0d6019b85de1357e983c04f935fdf6decfc6eeb4",
     "scripts/migrate-agent-data.ts": "f6a6bd0763df4bd39202dc28c313a682c1f9f5f8b4f2fe69f761afe3c81cca84",
-    "scripts/module-catalog.ts": "6ec5630372fdd94a86c6430e4b3c324062aa42d6d3847f38272c70edb5f7e478",
+    "scripts/module-catalog.ts": "60d775ef60548267a85c29f42595657e8982bdcd421c3da1d62fd4140bf1f473",
     "scripts/musk-video-case.ts": "c338283dd13704a470752553dfb5a37ae0a2f7ff75bf9b325178375b1e989f2e",
     "scripts/narration-smoke.ts": "3c422368ac996841d6dbb1b6dc2988101aefd33b8ec73dcc98e1b91f7411db27",
     "scripts/native-assistant-case.ts": "e0d13225626822a47e7d028343c0ebc5cea79921793e0fa7d3d9e33e97605eb8",
     "scripts/news-source-screenshot-smoke.ts": "2e3648709cf5a35bb7037004d6110925dc4bed6745fe2822aa34408e0d8f91d7",
     "scripts/open-musk-video.ts": "74f5ca23a696cca3ce6e671278bbc699df2baca756f09b67db9b480637d6c68f",
-    "scripts/product-entry.ts": "0e8817e1eadce8f4a8e175ef41a3a0b55ba299b7a9a73b4c578e3cc653245b95",
+    "scripts/product-entry.ts": "361b7f0e294eec6c9f17c89a58f2e18941fe060d64c69dc410cb7e00d31cf982",
     "scripts/qbit-playback-audit.ts": "2211ee0326f8740fddd495f813356fa9ca2128d918a02a644a39330ebef05d86",
     "scripts/qbit-stage3-samples.ts": "a7ae7b523f009d3cab7cb209046f2ba2ab419f79d99027e17191825412ef0ef9",
     "scripts/qbit-stage4-samples.ts": "0bd61db330090af573126c2f7c64c1f97fc766d2e54ec57cd3dedb67bf439086",
@@ -482,7 +497,7 @@
     "scripts/state-load-smoke.ts": "ec195be283e42e59a34d28d532095c4f00c16e1e576d64117155be0c6fed50ef",
     "scripts/studio-news-fixture.ts": "fc0e9dee66b944354136309130bd4cec902397522d535e88318b1220f2660a34",
     "scripts/studio-next-smoke.ts": "c2633ba4029022b439ce2735c1a08d20b76b9efbf08c1fa10ec2729f6cc1b034",
-    "scripts/test-catalog.ts": "ff1d29448df2b8c4387d5c45b017018340d52aa21b7e9a61438b2aa7a9788717",
+    "scripts/test-catalog.ts": "2a209ed2d07f5edc0c47684f78ff1882824a8d93e83e46dbbd5d593f6b4356c2",
     "scripts/test-runner.ts": "929877f70602cbcdd325593887f7c29672827741b43bc33b6122b61069e2b9fc",
     "scripts/test-selection.ts": "01d44670f4935a262ee69941737ebefc45605af187627c04d7a7763e32e30cdb",
     "scripts/test/module-boundary.test.ts": "e45fa40eaa5b4a62871b722bea7a97a0d5f5473622faba279e9543f5d7459a22",
@@ -494,18 +509,13 @@
     "scripts/video-production-case.ts": "3eacbc8cbe99210e79682d699f4a4f18ca31eb0be93f7740481cbe5b48646c10",
     "scripts/video-production-smoke.ts": "6a7acc7f9972627b9130b604755d9677be8eac48718781e4b06827d0c3c06ecc",
     "scripts/video-schema-document.ts": "ccb4bfda36e5191488b3825ee8f320c2413ffca18c1148be84d325dfaa2c0523",
-    "scripts/video-studio-smoke.ts": "e5afa829f0151b04e33b1c8338f994ad8d626b90e3992537a2deefd8cc4f4746",
+    "scripts/video-studio-smoke.ts": "59256d13b7f24af2350f6332c083036e636717e487d7938fd34459d85344568c",
     "scripts/vision-model-smoke.ts": "223cd30e0e8de974e8a3498484c1a31e276fe92f045adcfb9aff228d655fdd72",
+    "scripts/workbuddy-runtime.test.ts": "002aca0c7a75efb5213e500b284022fec74ef609df85598ad478bff56a70b084",
     "types/browser-globals.d.ts": "0f1602c29df4598c90c963cf2600c99bfb1a4767e618f719e94db19bd25594b7",
     "package.json": "86575cefe9645d7e0da1562dd5331a820ada6a1f9197bfaa2ddba74cd2448d79",
-    "package-lock.json": "ae90f5fa01f669fa90167c6b73ea25fc00043bbb4f778a478681908f1ed6e574",
-    "tsconfig.json": "4fdce5aec2d5369ddee6a3ec543cbc1a23601c0057b93b220862e3d1b45bd139",
-    "README.md": "7ebfa8d086ed04a35c7cdafde0de12ab2b671dd11d42050452741ad44d08579a",
-    "handoff.md": "d3659dd9b6b06fa3efd0efb12e2c17cc0a8af0a7bdceeae85c04792bd549b319",
-    "AGENTS.md": "7d019a99a4d317e5c7e08759aaeae3f1fd18a131c28f5873a6da96182583a89b",
-    "docs/FUNCTIONAL_SPEC.md": "5510817f299994349caf77572403230233b71079b6a74fb1166a2833adddeae1",
-    "docs/ARCHITECTURE.md": "42d86df03eaea5cf84b0e44bf7a6ca6faff96b82257ff59553b097598f5c58b9",
-    "docs/VERIFICATION.md": "b4276f78f6414d420748a896497ee7ca45f2484a994259daa6651cc140627d19"
+    "package-lock.json": "c3d05149ff5f719e6122ec92514f5555bfb05a87592b41943eb0bf92d2073c2d",
+    "tsconfig.json": "4fdce5aec2d5369ddee6a3ec543cbc1a23601c0057b93b220862e3d1b45bd139"
   },
   "results": [
     {
@@ -597,728 +607,776 @@
       "layer": "gate",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 96,
-      "log": ".bmw-runtime/workbuddy-review-final/source-policy.log"
+      "durationMs": 104,
+      "log": ".bmw-runtime/workbuddy-integration-verified/source-policy.log"
     },
     {
       "id": "feature-inventory",
       "layer": "gate",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 118,
-      "log": ".bmw-runtime/workbuddy-review-final/feature-inventory.log"
+      "durationMs": 137,
+      "log": ".bmw-runtime/workbuddy-integration-verified/feature-inventory.log"
     },
     {
       "id": "browser.tab-lifecycle",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 49027,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.tab-lifecycle.log"
+      "durationMs": 49666,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.tab-lifecycle.log"
     },
     {
       "id": "video.news",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 790,
-      "log": ".bmw-runtime/workbuddy-review-final/video.news.log"
+      "durationMs": 858,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.news.log"
     },
     {
       "id": "browser.navigation",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 125,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.navigation.log"
+      "durationMs": 137,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.navigation.log"
     },
     {
       "id": "studio.news-source-screenshot",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 689,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.news-source-screenshot.log"
+      "durationMs": 921,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.news-source-screenshot.log"
     },
     {
       "id": "studio.news",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 9424,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.news.log"
+      "durationMs": 18273,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.news.log"
     },
     {
       "id": "platform.qwen-credentials",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 252,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.qwen-credentials.log"
+      "durationMs": 290,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.qwen-credentials.log"
     },
     {
       "id": "browser.media-session-fetch",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 122,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.media-session-fetch.log"
+      "durationMs": 251,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.media-session-fetch.log"
     },
     {
       "id": "browser.media-download-runtime",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 310,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.media-download-runtime.log"
+      "durationMs": 474,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.media-download-runtime.log"
     },
     {
       "id": "video.production-assessment",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 191,
-      "log": ".bmw-runtime/workbuddy-review-final/video.production-assessment.log"
+      "durationMs": 398,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.production-assessment.log"
     },
     {
       "id": "video.production",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1562,
-      "log": ".bmw-runtime/workbuddy-review-final/video.production.log"
+      "durationMs": 2611,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.production.log"
     },
     {
       "id": "media.research-video",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 7938,
-      "log": ".bmw-runtime/workbuddy-review-final/media.research-video.log"
+      "durationMs": 9519,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.research-video.log"
     },
     {
       "id": "media.precomposition",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 167,
-      "log": ".bmw-runtime/workbuddy-review-final/media.precomposition.log"
+      "durationMs": 1475,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.precomposition.log"
     },
     {
       "id": "media.research-diagrams",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 190,
-      "log": ".bmw-runtime/workbuddy-review-final/media.research-diagrams.log"
+      "durationMs": 403,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.research-diagrams.log"
     },
     {
       "id": "media.science-spec",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 143,
-      "log": ".bmw-runtime/workbuddy-review-final/media.science-spec.log"
+      "durationMs": 152,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.science-spec.log"
     },
     {
       "id": "media.video-capture",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 201,
-      "log": ".bmw-runtime/workbuddy-review-final/media.video-capture.log"
+      "durationMs": 206,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.video-capture.log"
     },
     {
       "id": "media.capture-source-index",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 129,
-      "log": ".bmw-runtime/workbuddy-review-final/media.capture-source-index.log"
+      "durationMs": 137,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.capture-source-index.log"
     },
     {
       "id": "media.preservation",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 163,
-      "log": ".bmw-runtime/workbuddy-review-final/media.preservation.log"
+      "durationMs": 186,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.preservation.log"
     },
     {
       "id": "video.material-index",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 258,
-      "log": ".bmw-runtime/workbuddy-review-final/video.material-index.log"
+      "durationMs": 290,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.material-index.log"
     },
     {
       "id": "video.source-analysis",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1169,
-      "log": ".bmw-runtime/workbuddy-review-final/video.source-analysis.log"
+      "durationMs": 1886,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.source-analysis.log"
     },
     {
       "id": "studio.production",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2628,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.production.log"
+      "durationMs": 3074,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.production.log"
     },
     {
       "id": "studio.science",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5074,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.science.log"
+      "durationMs": 5387,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.science.log"
     },
     {
       "id": "studio.layer-packaging",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 4657,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.layer-packaging.log"
+      "durationMs": 4548,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.layer-packaging.log"
     },
     {
       "id": "studio.text-treatment",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3707,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.text-treatment.log"
+      "durationMs": 4025,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.text-treatment.log"
     },
     {
       "id": "media.science-diagrams",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5546,
-      "log": ".bmw-runtime/workbuddy-review-final/media.science-diagrams.log"
+      "durationMs": 6176,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.science-diagrams.log"
     },
     {
       "id": "media.layer-packaging",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5094,
-      "log": ".bmw-runtime/workbuddy-review-final/media.layer-packaging.log"
+      "durationMs": 5347,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.layer-packaging.log"
     },
     {
       "id": "media.text-treatment",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2770,
-      "log": ".bmw-runtime/workbuddy-review-final/media.text-treatment.log"
+      "durationMs": 3023,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.text-treatment.log"
     },
     {
       "id": "media.audio-windows",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 16570,
-      "log": ".bmw-runtime/workbuddy-review-final/media.audio-windows.log"
+      "durationMs": 17076,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.audio-windows.log"
     },
     {
       "id": "studio.export-review",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 13363,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.export-review.log"
+      "durationMs": 20064,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.export-review.log"
     },
     {
       "id": "agent.context",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 212,
-      "log": ".bmw-runtime/workbuddy-review-final/agent.context.log"
+      "durationMs": 204,
+      "log": ".bmw-runtime/workbuddy-integration-verified/agent.context.log"
     },
     {
       "id": "agent.conversation",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 120,
-      "log": ".bmw-runtime/workbuddy-review-final/agent.conversation.log"
+      "durationMs": 147,
+      "log": ".bmw-runtime/workbuddy-integration-verified/agent.conversation.log"
     },
     {
       "id": "bmw.agent-assembly",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 249,
-      "log": ".bmw-runtime/workbuddy-review-final/bmw.agent-assembly.log"
+      "durationMs": 360,
+      "log": ".bmw-runtime/workbuddy-integration-verified/bmw.agent-assembly.log"
     },
     {
       "id": "agent.data-migration",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 222,
-      "log": ".bmw-runtime/workbuddy-review-final/agent.data-migration.log"
+      "durationMs": 360,
+      "log": ".bmw-runtime/workbuddy-integration-verified/agent.data-migration.log"
     },
     {
       "id": "dsh.project-bindings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 91,
-      "log": ".bmw-runtime/workbuddy-review-final/dsh.project-bindings.log"
+      "durationMs": 211,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.project-bindings.log"
     },
     {
       "id": "dsh.migration-history",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 89,
-      "log": ".bmw-runtime/workbuddy-review-final/dsh.migration-history.log"
+      "durationMs": 189,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.migration-history.log"
     },
     {
       "id": "agent.studio-composer",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 89,
-      "log": ".bmw-runtime/workbuddy-review-final/agent.studio-composer.log"
+      "durationMs": 194,
+      "log": ".bmw-runtime/workbuddy-integration-verified/agent.studio-composer.log"
     },
     {
       "id": "agent.assistant-ui",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 85,
-      "log": ".bmw-runtime/workbuddy-review-final/agent.assistant-ui.log"
+      "durationMs": 178,
+      "log": ".bmw-runtime/workbuddy-integration-verified/agent.assistant-ui.log"
     },
     {
       "id": "agent.driver-settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 86,
-      "log": ".bmw-runtime/workbuddy-review-final/agent.driver-settings.log"
+      "durationMs": 182,
+      "log": ".bmw-runtime/workbuddy-integration-verified/agent.driver-settings.log"
     },
     {
       "id": "platform.agent-settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 102,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.agent-settings.log"
+      "durationMs": 230,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.agent-settings.log"
     },
     {
       "id": "codex.settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 103,
-      "log": ".bmw-runtime/workbuddy-review-final/codex.settings.log"
+      "durationMs": 244,
+      "log": ".bmw-runtime/workbuddy-integration-verified/codex.settings.log"
     },
     {
       "id": "codex.installation",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 102,
-      "log": ".bmw-runtime/workbuddy-review-final/codex.installation.log"
+      "durationMs": 244,
+      "log": ".bmw-runtime/workbuddy-integration-verified/codex.installation.log"
     },
     {
       "id": "qoder.settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 163,
-      "log": ".bmw-runtime/workbuddy-review-final/qoder.settings.log"
+      "durationMs": 377,
+      "log": ".bmw-runtime/workbuddy-integration-verified/qoder.settings.log"
     },
     {
       "id": "dsh.settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 105,
-      "log": ".bmw-runtime/workbuddy-review-final/dsh.settings.log"
+      "durationMs": 290,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.settings.log"
     },
     {
       "id": "platform.assistant-controller",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 99,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.assistant-controller.log"
+      "durationMs": 226,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.assistant-controller.log"
     },
     {
       "id": "platform.conversation-store",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 98,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.conversation-store.log"
+      "durationMs": 239,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.conversation-store.log"
     },
     {
       "id": "platform.agent-history",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 93,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.agent-history.log"
+      "durationMs": 176,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.agent-history.log"
     },
     {
       "id": "platform.agent-host",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 150,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.agent-host.log"
+      "durationMs": 306,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.agent-host.log"
     },
     {
       "id": "browser.session-leases",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 328,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.session-leases.log"
+      "durationMs": 754,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.session-leases.log"
     },
     {
       "id": "codex.policy",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 101,
-      "log": ".bmw-runtime/workbuddy-review-final/codex.policy.log"
+      "durationMs": 223,
+      "log": ".bmw-runtime/workbuddy-integration-verified/codex.policy.log"
     },
     {
       "id": "codex.backend",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 106,
-      "log": ".bmw-runtime/workbuddy-review-final/codex.backend.log"
+      "durationMs": 237,
+      "log": ".bmw-runtime/workbuddy-integration-verified/codex.backend.log"
     },
     {
       "id": "dsh.events",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 87,
-      "log": ".bmw-runtime/workbuddy-review-final/dsh.events.log"
+      "durationMs": 145,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.events.log"
     },
     {
       "id": "dsh.backend",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 109,
-      "log": ".bmw-runtime/workbuddy-review-final/dsh.backend.log"
+      "durationMs": 176,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.backend.log"
     },
     {
       "id": "qoder.events",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 87,
-      "log": ".bmw-runtime/workbuddy-review-final/qoder.events.log"
+      "durationMs": 189,
+      "log": ".bmw-runtime/workbuddy-integration-verified/qoder.events.log"
     },
     {
       "id": "qoder.backend",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 168,
-      "log": ".bmw-runtime/workbuddy-review-final/qoder.backend.log"
+      "durationMs": 403,
+      "log": ".bmw-runtime/workbuddy-integration-verified/qoder.backend.log"
+    },
+    {
+      "id": "workbuddy.runtime",
+      "layer": "integration",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 33435,
+      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.runtime.log"
+    },
+    {
+      "id": "workbuddy.catalog",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 3428,
+      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.catalog.log"
+    },
+    {
+      "id": "workbuddy.settings",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 113,
+      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.settings.log"
+    },
+    {
+      "id": "workbuddy.acp",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 3367,
+      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.acp.log"
+    },
+    {
+      "id": "workbuddy.policy",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 98,
+      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.policy.log"
+    },
+    {
+      "id": "workbuddy.backend",
+      "layer": "contract",
+      "status": "passed",
+      "exitCode": 0,
+      "durationMs": 689,
+      "log": ".bmw-runtime/workbuddy-integration-verified/workbuddy.backend.log"
     },
     {
       "id": "browser.schema",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 87,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.schema.log"
+      "durationMs": 91,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.schema.log"
     },
     {
       "id": "browser.catalog",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1501,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.catalog.log"
+      "durationMs": 1653,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.catalog.log"
     },
     {
       "id": "browser.operations",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 262,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.operations.log"
+      "durationMs": 295,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.operations.log"
     },
     {
       "id": "browser.shutdown",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 113,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.shutdown.log"
+      "durationMs": 127,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.shutdown.log"
     },
     {
       "id": "browser.deadline",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 157,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.deadline.log"
+      "durationMs": 87,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.deadline.log"
     },
     {
       "id": "browser.screenshot",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 93,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.screenshot.log"
+      "durationMs": 117,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.screenshot.log"
     },
     {
       "id": "browser.renderer-read",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 96,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.renderer-read.log"
+      "durationMs": 104,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.renderer-read.log"
     },
     {
       "id": "browser.download",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 134,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.download.log"
+      "durationMs": 145,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.download.log"
     },
     {
       "id": "browser.tab-policy",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 85,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.tab-policy.log"
+      "durationMs": 98,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.tab-policy.log"
     },
     {
       "id": "browser.sources",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 89,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.sources.log"
+      "durationMs": 110,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.sources.log"
     },
     {
       "id": "platform.sources",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 185,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.sources.log"
+      "durationMs": 234,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.sources.log"
     },
     {
       "id": "video.sources",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 168,
-      "log": ".bmw-runtime/workbuddy-review-final/video.sources.log"
+      "durationMs": 270,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.sources.log"
     },
     {
       "id": "browser.host-contract",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 91,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.host-contract.log"
+      "durationMs": 112,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.host-contract.log"
     },
     {
       "id": "dsh.dsh-runtime",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 109,
-      "log": ".bmw-runtime/workbuddy-review-final/dsh.dsh-runtime.log"
+      "durationMs": 133,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.dsh-runtime.log"
     },
     {
       "id": "dsh.dsh-transport",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 121,
-      "log": ".bmw-runtime/workbuddy-review-final/dsh.dsh-transport.log"
+      "durationMs": 142,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.dsh-transport.log"
     },
     {
       "id": "dsh.dsh-preset",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 100,
-      "log": ".bmw-runtime/workbuddy-review-final/dsh.dsh-preset.log"
+      "durationMs": 133,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.dsh-preset.log"
     },
     {
       "id": "dsh.browser-failure-guard",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 79,
-      "log": ".bmw-runtime/workbuddy-review-final/dsh.browser-failure-guard.log"
+      "durationMs": 90,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.browser-failure-guard.log"
     },
     {
       "id": "dsh.workspace-context",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 79,
-      "log": ".bmw-runtime/workbuddy-review-final/dsh.workspace-context.log"
+      "durationMs": 84,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.workspace-context.log"
     },
     {
       "id": "dsh.video-case-log",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 83,
-      "log": ".bmw-runtime/workbuddy-review-final/dsh.video-case-log.log"
+      "durationMs": 93,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.video-case-log.log"
     },
     {
       "id": "media.controller",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 136,
-      "log": ".bmw-runtime/workbuddy-review-final/media.controller.log"
+      "durationMs": 144,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.controller.log"
     },
     {
       "id": "media.processing",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 120,
-      "log": ".bmw-runtime/workbuddy-review-final/media.processing.log"
+      "durationMs": 123,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.processing.log"
     },
     {
       "id": "media.production",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 325,
-      "log": ".bmw-runtime/workbuddy-review-final/media.production.log"
+      "durationMs": 364,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.production.log"
     },
     {
       "id": "media.options",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 83,
-      "log": ".bmw-runtime/workbuddy-review-final/media.options.log"
+      "durationMs": 87,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.options.log"
     },
     {
       "id": "media.scene-clock",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2786,
-      "log": ".bmw-runtime/workbuddy-review-final/media.scene-clock.log"
+      "durationMs": 3718,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.scene-clock.log"
     },
     {
       "id": "media.speech",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2617,
-      "log": ".bmw-runtime/workbuddy-review-final/media.speech.log"
+      "durationMs": 2634,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.speech.log"
     },
     {
       "id": "media.port-contract",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 85,
-      "log": ".bmw-runtime/workbuddy-review-final/media.port-contract.log"
+      "durationMs": 88,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.port-contract.log"
     },
     {
       "id": "platform.projects",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 129,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.projects.log"
+      "durationMs": 139,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.projects.log"
     },
     {
       "id": "platform.settings",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 88,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.settings.log"
+      "durationMs": 94,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.settings.log"
     },
     {
       "id": "platform.schedules",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 120,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.schedules.log"
+      "durationMs": 126,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.schedules.log"
     },
     {
       "id": "platform.state",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 119,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.state.log"
+      "durationMs": 120,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.state.log"
     },
     {
       "id": "platform.layout",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 81,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.layout.log"
+      "durationMs": 87,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.layout.log"
     },
     {
       "id": "platform.docking",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 84,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.docking.log"
+      "durationMs": 86,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.docking.log"
     },
     {
       "id": "platform.permissions",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 81,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.permissions.log"
+      "durationMs": 82,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.permissions.log"
     },
     {
       "id": "platform.menu",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 80,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.menu.log"
+      "durationMs": 82,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.menu.log"
     },
     {
       "id": "platform.restart",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 82,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.restart.log"
+      "durationMs": 80,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.restart.log"
     },
     {
       "id": "platform.continuity",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 90,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.continuity.log"
+      "durationMs": 96,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.continuity.log"
     },
     {
       "id": "platform.user-agent",
@@ -1326,143 +1384,143 @@
       "status": "passed",
       "exitCode": 0,
       "durationMs": 81,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.user-agent.log"
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.user-agent.log"
     },
     {
       "id": "platform.project-panel",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 80,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.project-panel.log"
+      "durationMs": 82,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.project-panel.log"
     },
     {
       "id": "platform.driver-binding",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 91,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.driver-binding.log"
+      "durationMs": 92,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.driver-binding.log"
     },
     {
       "id": "platform.catalog",
       "layer": "boundary",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 130,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.catalog.log"
+      "durationMs": 135,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.catalog.log"
     },
     {
       "id": "platform.boundaries",
       "layer": "boundary",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 265,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.boundaries.log"
+      "durationMs": 321,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.boundaries.log"
     },
     {
       "id": "platform.remote-boundary",
       "layer": "boundary",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 209,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.remote-boundary.log"
+      "durationMs": 218,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.remote-boundary.log"
     },
     {
       "id": "platform.shell-ipc",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 79,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.shell-ipc.log"
+      "durationMs": 85,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.shell-ipc.log"
     },
     {
       "id": "platform.permission-store",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 81,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.permission-store.log"
+      "durationMs": 87,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.permission-store.log"
     },
     {
       "id": "platform.continuity-state",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 96,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.continuity-state.log"
+      "durationMs": 105,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.continuity-state.log"
     },
     {
       "id": "platform.feature-contract",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 81,
-      "log": ".bmw-runtime/workbuddy-review-final/platform.feature-contract.log"
+      "durationMs": 88,
+      "log": ".bmw-runtime/workbuddy-integration-verified/platform.feature-contract.log"
     },
     {
       "id": "video.schema-publication",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 68,
-      "log": ".bmw-runtime/workbuddy-review-final/video.schema-publication.log"
+      "durationMs": 74,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.schema-publication.log"
     },
     {
       "id": "video.schema",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2919,
-      "log": ".bmw-runtime/workbuddy-review-final/video.schema.log"
+      "durationMs": 3463,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.schema.log"
     },
     {
       "id": "video.materials",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 113,
-      "log": ".bmw-runtime/workbuddy-review-final/video.materials.log"
+      "durationMs": 123,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.materials.log"
     },
     {
       "id": "video.studio",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1642,
-      "log": ".bmw-runtime/workbuddy-review-final/video.studio.log"
+      "durationMs": 1830,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.studio.log"
     },
     {
       "id": "video.settings",
       "layer": "contract",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 173,
-      "log": ".bmw-runtime/workbuddy-review-final/video.settings.log"
+      "durationMs": 188,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.settings.log"
     },
     {
       "id": "video.boundary",
       "layer": "boundary",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 144,
-      "log": ".bmw-runtime/workbuddy-review-final/video.boundary.log"
+      "durationMs": 528,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.boundary.log"
     },
     {
       "id": "architecture.boundaries",
       "layer": "boundary",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 11431,
-      "log": ".bmw-runtime/workbuddy-review-final/architecture.boundaries.log"
+      "durationMs": 18631,
+      "log": ".bmw-runtime/workbuddy-integration-verified/architecture.boundaries.log"
     },
     {
       "id": "validation.selection",
       "layer": "unit",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 30563,
-      "log": ".bmw-runtime/workbuddy-review-final/validation.selection.log"
+      "durationMs": 38843,
+      "log": ".bmw-runtime/workbuddy-integration-verified/validation.selection.log"
     },
     {
       "id": "api.types",
@@ -1475,481 +1533,474 @@
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 13939,
-      "log": ".bmw-runtime/workbuddy-review-final/sources.log"
+      "durationMs": 17014,
+      "log": ".bmw-runtime/workbuddy-integration-verified/sources.log"
     },
     {
       "id": "assistant.default",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3933,
-      "log": ".bmw-runtime/workbuddy-review-final/assistant.default.log"
+      "durationMs": 5665,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.default.log"
     },
     {
       "id": "assistant.application",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 7748,
-      "log": ".bmw-runtime/workbuddy-review-final/assistant.application.log"
+      "durationMs": 11153,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.application.log"
     },
     {
       "id": "assistant.schedules",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1249,
-      "log": ".bmw-runtime/workbuddy-review-final/assistant.schedules.log"
+      "durationMs": 1951,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.schedules.log"
     },
     {
       "id": "assistant.startup.conversations.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1081,
-      "log": ".bmw-runtime/workbuddy-review-final/assistant.startup.conversations.retry.log"
+      "durationMs": 1441,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.conversations.retry.log"
     },
     {
       "id": "assistant.startup.conversations.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 411,
-      "log": ".bmw-runtime/workbuddy-review-final/assistant.startup.conversations.exit.log"
+      "durationMs": 565,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.conversations.exit.log"
     },
     {
       "id": "assistant.startup.preferences.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1006,
-      "log": ".bmw-runtime/workbuddy-review-final/assistant.startup.preferences.retry.log"
+      "durationMs": 1493,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.preferences.retry.log"
     },
     {
       "id": "assistant.startup.preferences.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 392,
-      "log": ".bmw-runtime/workbuddy-review-final/assistant.startup.preferences.exit.log"
+      "durationMs": 504,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.preferences.exit.log"
     },
     {
       "id": "assistant.startup.history.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1005,
-      "log": ".bmw-runtime/workbuddy-review-final/assistant.startup.history.retry.log"
+      "durationMs": 1334,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.history.retry.log"
     },
     {
       "id": "assistant.startup.history.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 399,
-      "log": ".bmw-runtime/workbuddy-review-final/assistant.startup.history.exit.log"
+      "durationMs": 554,
+      "log": ".bmw-runtime/workbuddy-integration-verified/assistant.startup.history.exit.log"
     },
     {
       "id": "driver",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2300,
-      "log": ".bmw-runtime/workbuddy-review-final/driver.log"
+      "durationMs": 3361,
+      "log": ".bmw-runtime/workbuddy-integration-verified/driver.log"
     },
     {
       "id": "startup-recovery",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1042,
-      "log": ".bmw-runtime/workbuddy-review-final/startup-recovery.log"
+      "durationMs": 2440,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup-recovery.log"
     },
     {
       "id": "startup-exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 429,
-      "log": ".bmw-runtime/workbuddy-review-final/startup-exit.log"
+      "durationMs": 630,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup-exit.log"
     },
     {
       "id": "startup.permissions.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 919,
-      "log": ".bmw-runtime/workbuddy-review-final/startup.permissions.retry.log"
+      "durationMs": 1426,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.permissions.retry.log"
     },
     {
       "id": "startup.permissions.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 418,
-      "log": ".bmw-runtime/workbuddy-review-final/startup.permissions.exit.log"
+      "durationMs": 651,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.permissions.exit.log"
     },
     {
       "id": "startup.layout.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 962,
-      "log": ".bmw-runtime/workbuddy-review-final/startup.layout.retry.log"
+      "durationMs": 1260,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.layout.retry.log"
     },
     {
       "id": "startup.layout.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 395,
-      "log": ".bmw-runtime/workbuddy-review-final/startup.layout.exit.log"
+      "durationMs": 524,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.layout.exit.log"
     },
     {
       "id": "startup.continuity-config.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 845,
-      "log": ".bmw-runtime/workbuddy-review-final/startup.continuity-config.retry.log"
+      "durationMs": 1880,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.continuity-config.retry.log"
     },
     {
       "id": "startup.continuity-config.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 384,
-      "log": ".bmw-runtime/workbuddy-review-final/startup.continuity-config.exit.log"
+      "durationMs": 579,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.continuity-config.exit.log"
     },
     {
       "id": "startup.continuity-snapshot.retry",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 920,
-      "log": ".bmw-runtime/workbuddy-review-final/startup.continuity-snapshot.retry.log"
+      "durationMs": 1173,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.continuity-snapshot.retry.log"
     },
     {
       "id": "startup.continuity-snapshot.exit",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 400,
-      "log": ".bmw-runtime/workbuddy-review-final/startup.continuity-snapshot.exit.log"
+      "durationMs": 484,
+      "log": ".bmw-runtime/workbuddy-integration-verified/startup.continuity-snapshot.exit.log"
     },
     {
       "id": "dsh",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 12461,
-      "log": ".bmw-runtime/workbuddy-review-final/dsh.log"
+      "durationMs": 15139,
+      "log": ".bmw-runtime/workbuddy-integration-verified/dsh.log"
     },
     {
       "id": "studio.next",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 14367,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.next.log"
+      "durationMs": 17900,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.next.log"
     },
     {
       "id": "studio.schema",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3612,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.schema.log"
+      "durationMs": 3472,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.schema.log"
     },
     {
       "id": "studio.long-film",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 7391,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.long-film.log"
+      "durationMs": 7646,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.long-film.log"
     },
     {
       "id": "studio.workflow-entry",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5664,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.workflow-entry.log"
+      "durationMs": 6108,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.workflow-entry.log"
     },
     {
       "id": "studio.materials-entry",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 2705,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.materials-entry.log"
+      "durationMs": 3535,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.materials-entry.log"
     },
     {
       "id": "studio.visual-effects",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5204,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.visual-effects.log"
+      "durationMs": 6900,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.visual-effects.log"
     },
     {
       "id": "studio.main-mute",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5101,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.main-mute.log"
+      "durationMs": 6384,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.main-mute.log"
     },
     {
       "id": "studio.track-menu",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 8095,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.track-menu.log"
+      "durationMs": 8835,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.track-menu.log"
     },
     {
       "id": "studio.card-text",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 10029,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.card-text.log"
+      "durationMs": 11751,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.card-text.log"
     },
     {
       "id": "studio.news-options",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1845,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.news-options.log"
+      "durationMs": 2296,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.news-options.log"
     },
     {
       "id": "studio.card-pair",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 12811,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.card-pair.log"
+      "durationMs": 13886,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.card-pair.log"
     },
     {
       "id": "studio.reference-analysis",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 6290,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.reference-analysis.log"
+      "durationMs": 8246,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.reference-analysis.log"
     },
     {
       "id": "studio.review-adoption",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 4853,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.review-adoption.log"
+      "durationMs": 5662,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.review-adoption.log"
     },
     {
       "id": "studio.production-recovery",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 16927,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.production-recovery.log"
+      "durationMs": 19530,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.production-recovery.log"
     },
     {
       "id": "studio.bound-scene-split",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 22305,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.bound-scene-split.log"
+      "durationMs": 25670,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.bound-scene-split.log"
     },
     {
       "id": "studio.whole-scene-split",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 8537,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.whole-scene-split.log"
+      "durationMs": 9743,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.whole-scene-split.log"
     },
     {
       "id": "studio.approved-history",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 4082,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.approved-history.log"
+      "durationMs": 4693,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.approved-history.log"
     },
     {
       "id": "studio.source-caption-rebind",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 4707,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.source-caption-rebind.log"
+      "durationMs": 4692,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.source-caption-rebind.log"
     },
     {
       "id": "studio.layer-fade-continuity",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 5280,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.layer-fade-continuity.log"
+      "durationMs": 5120,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.layer-fade-continuity.log"
     },
     {
       "id": "studio.workspace-resume",
       "layer": "desktop",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 1791,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.workspace-resume.log"
+      "durationMs": 1656,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.workspace-resume.log"
     },
     {
       "id": "studio",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 58412,
-      "log": ".bmw-runtime/workbuddy-review-final/studio.log"
+      "durationMs": 60218,
+      "log": ".bmw-runtime/workbuddy-integration-verified/studio.log"
     },
     {
       "id": "browser.background",
       "layer": "integration",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3889,
-      "log": ".bmw-runtime/workbuddy-review-final/browser.background.log"
+      "durationMs": 3264,
+      "log": ".bmw-runtime/workbuddy-integration-verified/browser.background.log"
     },
     {
       "id": "media.capture",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 33740,
-      "log": ".bmw-runtime/workbuddy-review-final/media.capture.log"
+      "durationMs": 34251,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.capture.log"
     },
     {
       "id": "media.processing-runtime",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 21668,
-      "log": ".bmw-runtime/workbuddy-review-final/media.processing-runtime.log"
+      "durationMs": 21867,
+      "log": ".bmw-runtime/workbuddy-integration-verified/media.processing-runtime.log"
     },
     {
       "id": "video",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 34642,
-      "log": ".bmw-runtime/workbuddy-review-final/video.log"
+      "durationMs": 34945,
+      "log": ".bmw-runtime/workbuddy-integration-verified/video.log"
     },
     {
       "id": "speech",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 16857,
-      "log": ".bmw-runtime/workbuddy-review-final/speech.log"
+      "durationMs": 26856,
+      "log": ".bmw-runtime/workbuddy-integration-verified/speech.log"
     },
     {
       "id": "qwenNarration",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 993,
-      "log": ".bmw-runtime/workbuddy-review-final/qwenNarration.log"
+      "durationMs": 2142,
+      "log": ".bmw-runtime/workbuddy-integration-verified/qwenNarration.log"
     },
     {
       "id": "localNarration",
       "layer": "media",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 3652,
-      "log": ".bmw-runtime/workbuddy-review-final/localNarration.log"
+      "durationMs": 5447,
+      "log": ".bmw-runtime/workbuddy-integration-verified/localNarration.log"
     },
     {
       "id": "desktop.workspace",
       "layer": "desktop",
       "status": "passed",
       "reason": "workspace: passed",
-      "log": ".bmw-runtime/workbuddy-review-final/desktop-suite/workspace/run.log"
+      "log": ".bmw-runtime/workbuddy-integration-verified/desktop-suite/workspace/run.log"
     },
     {
       "id": "desktop.projects",
       "layer": "desktop",
       "status": "passed",
       "reason": "projects: passed; projects/restart: passed",
-      "log": ".bmw-runtime/workbuddy-review-final/desktop-suite/projects/run.log"
+      "log": ".bmw-runtime/workbuddy-integration-verified/desktop-suite/projects/run.log"
     },
     {
       "id": "desktop.settings",
       "layer": "desktop",
       "status": "passed",
       "reason": "settings: passed",
-      "log": ".bmw-runtime/workbuddy-review-final/desktop-suite/settings/run.log"
+      "log": ".bmw-runtime/workbuddy-integration-verified/desktop-suite/settings/run.log"
     },
     {
       "id": "desktop.native",
       "layer": "desktop",
       "status": "passed",
       "reason": "native: passed",
-      "log": ".bmw-runtime/workbuddy-review-final/desktop-suite/native/run.log"
+      "log": ".bmw-runtime/workbuddy-integration-verified/desktop-suite/native/run.log"
     },
     {
       "id": "desktop-suite",
       "layer": "gate",
       "status": "passed",
       "exitCode": 0,
-      "durationMs": 23159,
-      "log": ".bmw-runtime/workbuddy-review-final/desktop-suite.log"
+      "durationMs": 24243,
+      "log": ".bmw-runtime/workbuddy-integration-verified/desktop-suite.log"
     }
   ],
-  "initialRun": {
-    "path": ".bmw-runtime/workbuddy-review/result.json",
-    "sha256": "1bf0927587c1979c56ad3fec214f0b42dd7f6c3300d73b9e55968f7389ea58df",
-    "reportedCounts": {
-      "not-run": 12,
-      "passed": 164,
-      "failed": 3
-    },
-    "failed": [
-      "studio.news",
-      "studio.export-review",
-      "studio.next"
+  "workbuddy": {
+    "officialRuntime": true,
+    "localModelFixture": true,
+    "realKeyUsed": false,
+    "paidModelCalls": 0,
+    "gatedModels": [
+      "deepseek-v4.1-flash",
+      "glm-5.3",
+      "kimi-k2.8-preview"
     ],
-    "invalidPassedResult": {
-      "id": "video",
-      "reportedDurationMs": 300181,
-      "reason": "Old runner accepted exit zero after the 300000ms timeout; no completed-video evidence. Excluded from successful coverage."
-    },
-    "resolution": "Real browser FIFO in the news fixture; fixed local TTS/ASR resources; foreground presentation for static capture; deadline failures independent of exit code. All repeated in final full run."
+    "browserExecutions": 2,
+    "nativeResume": true,
+    "encryptedCredentialTestDouble": true,
+    "cleanupProcessGroupTest": true,
+    "windowsAvailable": false,
+    "imagesVerified": false,
+    "audioVerified": false
   },
-  "coverage": {
-    "paidModels": "not-run",
-    "realOnlineNarration": "not-run",
-    "productionProfile": "not-run",
-    "humanListening": "not-run",
-    "remoteCI": "not-run",
-    "localFixtureOptIns": 6,
-    "externalOptIns": 6,
-    "knownHistoricalTailTiming": "Not reproduced in this full run; no claim of root-cause resolution"
-  },
-  "previousVerification": {
-    "gitRevision": "fc4e5a812041d1f0ef6855bf763e96c2ac14dcae",
-    "path": "docs/verification/CURRENT.json"
-  },
-  "documentationRefresh": {
-    "changedFromFullReport": [
-      "README.md",
-      "handoff.md",
-      "docs/VERIFICATION.md"
-    ],
-    "implementationHashesUnchanged": true,
-    "check": "passed",
-    "diffCheck": "passed",
-    "fullRunRepeatedAfterDocumentation": false
+  "intermediateReports": [
+    {
+      "path": ".bmw-runtime/workbuddy-integration-final/result.json",
+      "counts": {
+        "passed": 172,
+        "failed": 1,
+        "not-run": 12
+      },
+      "failure": "Studio transient conflict status polling; final evidence uses the frozen complete run."
+    }
+  ],
+  "manualAcceptance": [
+    "Production Profile, real service entitlement, paid inference and OS credential prompts not exercised."
+  ],
+  "postRunDocumentation": {
+    "README.md": "53062a3f28cb62c9541da1a148322a5fd1823db147e99656f55c877fdae66cae",
+    "docs/PROJECT_STATUS.md": "0ce1b20d1796512b18716152c1c0271c7fd9e242f8b52b59aabc4df98a07fb37",
+    "handoff.md": "529a413b19df4b6bf7f242d38bc4c8c6a2a57df04d2bc3922aec571f7260eb5c",
+    "docs/VERIFICATION.md": "ef656d72fbefefd559c1ef6d6143720ef5af7d4e12600373ee32e0eb2c2d73da"
   }
 }

@@ -4,11 +4,13 @@
 
 ## 当前源码离线验证
 
-最终完整 `--all` 为 **167 passed／0 failed／12 opt-in not-run**，报告为 `.bmw-runtime/workbuddy-review-final/result.json`，受测提交为 `fc4e5a8`。构建、check、功能与架构清单检查通过；覆盖 unit／contract／boundary、官方 DSH 冷检查、desktop、Studio、media、video、speech、本地旁白与 Qwen HTTP 夹具。逐项结果、464 项非 Markdown 输入的 SHA、依赖版本和报告指纹见 [CURRENT](verification/CURRENT.json)。报告后的说明文档回填不冒充再次完整运行。
+最终完整 `--all` 为 **173 passed／0 failed／12 opt-in not-run**，报告为 `.bmw-runtime/workbuddy-integration-verified/result.json`，受测实现提交 `6bea922`。构建、check、功能与架构清单、unit／contract／boundary、官方 DSH 冷检查、desktop、Studio、media、video、speech、本地旁白与 Qwen HTTP 夹具通过。逐项结果、全部非 Markdown 输入的 SHA、依赖和报告指纹见 [CURRENT](verification/CURRENT.json)。本节与状态说明在报告后回填；受测实现文件指纹逐项复核一致。
 
-首轮报告保留在 `.bmw-runtime/workbuddy-review/result.json`：新闻测试绕过 Host FIFO，引发与 GUI 核验的解码器争用；两项检查缺少隔离工作树的本地 TTS／ASR 公共资源。新闻测试现走真实 browser FIFO，固定资源补齐后完整复验通过。首轮视频用例静态页面未取得前台呈现而停在录制，旧 runner 又把超时后退出零码误记为通过；现已补齐呈现、阶段日志及超时判定，真实子进程回归证明超时退出零码仍失败。最终视频用例在 34.642 秒内实际完成，原始误报不会用作通过证据。
+WorkBuddy 使用官方 CodeBuddy Code 2.169.0，经实际认证 BMW MCP／Bridge 验证三模型的完整 browser schema、两轮工具调用及不可变原生 Session 续聊；探测固定输入只到本机拒绝端点，任务链路使用本机 SSE 模型夹具。另覆盖额外工具／其他命名空间工具、schema／模型／版本漂移、空工具伪证、Project 服务覆盖、准备取消、慢事件写入、失败模型 outcome、原生输入回执、系统加密测试替身、明文／损坏文件保留、进程组清理和失败后仅显式恢复。默认入口验证四个独立空会话、WorkBuddy 缺失 Key 状态与重启归属。WorkBuddy 的 configured／unverified 可选择路径不改变其他引擎的 ready／verified 门槛。
 
-历史两倍速采集尾帧波动本轮未复现，不能据此认定已经归因或永久解决。12 项未运行包括六个专用本地素材夹具及六个外部服务／模型入口；没有调用付费模型、真实在线配音或生产 Profile。Electron／DSH 使用一次性 Profile／Home／Workspace 与 mock keychain，六个冻结类型例外未增加。WorkBuddy 接入暂缓，仍保持 DSH、Codex、Qoder CN 三引擎及输入前唯一 browser 有效目录门槛。
+首轮完整报告 `.bmw-runtime/workbuddy-integration-final/result.json` 为 172 passed／1 failed／12 not-run，仅 Studio 的瞬时冲突状态轮询超时；独立复查另暴露撤销后预览尚未清理时点击禁用时间轴的夹具竞态。现等待真实控件就绪，并捕获实际冲突 DOM 更新；播放头／像素、CAS 外部修改保留与本地输入断言保留。独立复查与上述最终完整基线均通过；中间失败没有计为通过，也未用于替代最终源码覆盖。
+
+12 项 opt-in 未运行；真实 API Key、服务权限／额度、付费模型、在线配音、生产 Profile 和系统凭据提示均不在本轮覆盖内。Electron／DSH 使用一次性 Profile／Home／Workspace 与 mock keychain。Windows WorkBuddy 进程树清理尚未验证，输入前保持不可用；图像／音频准入和原生桌面历史未宣称支持。六个冻结类型例外未增加。
 
 ## NEWS-01 真实新闻验收
 
