@@ -49,7 +49,7 @@ async function run():Promise<void>{
   const initial=await waitFor(async()=>{const state=await snapshot();return state.selectedSessionId?state:null},'blank Session')
   const product=agentRecord(await shell.executeJavaScript('window.bmw.productInfo()'))
   assert.equal(agentRecord(product.agent).label,'BMW Assistant')
-  assert.deepEqual(initial.drivers.map(row=>row.id),['dsh','codex','qoder-cn'])
+  assert.deepEqual(initial.drivers.map(row=>row.id),['dsh','codex','qoder-cn','workbuddy'])
   assert.equal(initial.driverId,'dsh');assert.equal(initial.busy,false)
   assert.equal(await assistant.executeJavaScript('typeof window.require'),'undefined')
   const studio=(studioRequest:Record<string,unknown>)=>browser({action:'video.studio',studioRequest})

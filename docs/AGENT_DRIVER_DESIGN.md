@@ -2,9 +2,11 @@
 
 ## 产品形态
 
-保留一个 BMW 应用和一套 Project、浏览器、媒体及 Video Studio。BMW 提供自己的 Assistant 对话面板，DSH、Codex、Qoder CN 是可选择的执行引擎。用户在 BMW 新建会话、发送消息、查看回复和工具进度、停止与续聊，不依赖 SDK 会话出现在原生桌面侧边栏。
+保留一个 BMW 应用和一套 Project、浏览器、媒体及 Video Studio。BMW 提供自己的 Assistant 对话面板，DSH、Codex、Qoder CN、WorkBuddy 是可选择的执行引擎。用户在 BMW 新建会话、发送消息、查看回复和工具进度、停止与续聊，不依赖 SDK 会话出现在原生桌面侧边栏。
 
-Qoder SDK / Codex App Server 的会话与它们桌面应用的对话列表分开验证。原生桌面打开/同步只在有公开接口并通过实际验收时启用，不作为 BMW 的运行条件。WorkBuddy 暂不纳入。
+Qoder SDK / Codex App Server 的会话与它们桌面应用的对话列表分开验证。原生桌面打开/同步只在有公开接口并通过实际验收时启用，不作为 BMW 的运行条件。
+
+WorkBuddy 通过官方固定版本 CLI 的 ACP v1 接入，认证只使用官方 API Key（`CODEBUDDY_API_KEY`），凭据保存在 BMW 自己的 Profile 中，不读取 WorkBuddy 桌面应用的私有通道。工具边界由 `--tools ""`、`--setting-sources user`、不声明 fs/terminal 客户端能力以及会话内唯一的宿主自有 `bmw` stdio MCP server 共同构成；越界工具调用立即终止本轮。
 
 ```mermaid
 flowchart TB
