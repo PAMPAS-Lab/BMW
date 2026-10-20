@@ -20,11 +20,11 @@
     ],
     "paidResearch": true,
     "profile": "disposable",
-    "root": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z",
+    "root": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z",
     "sessionId": "23ac9b92-57d2-4f33-a87d-d4dee4ad9a2c"
   },
   "board": {
-    "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/video-studio/news/23ac9b92-57d2-4f33-a87d-d4dee4ad9a2c.json",
+    "path": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/video-studio/news/23ac9b92-57d2-4f33-a87d-d4dee4ad9a2c.json",
     "sha256": "8e3a666fb81d3430dd4afa2f539b8a331fb359fef2c0308d37c6d030e8d109a9",
     "id": "fe601401-3331-42b0-90cf-75d972a069e5",
     "revision": 12,
@@ -85,17 +85,17 @@
     "actualSamples": [
       {
         "seconds": 1,
-        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-6f2f0c58-e4e8-479f-823e-caeb8e29e7f9-frame-1.png",
+        "path": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-6f2f0c58-e4e8-479f-823e-caeb8e29e7f9-frame-1.png",
         "sha256": "b214c19f9762351fe94223dfbee33ee38ce3b234cc4f7d2e25cea2dc6618c6d5"
       },
       {
         "seconds": 5,
-        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-6f2f0c58-e4e8-479f-823e-caeb8e29e7f9-frame-2.png",
+        "path": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-6f2f0c58-e4e8-479f-823e-caeb8e29e7f9-frame-2.png",
         "sha256": "7911c07b43ee4e3617e8f9d7cf35c3c4c7cc35f917af847f2b0dc94665d40cd9"
       },
       {
         "seconds": 9,
-        "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-6f2f0c58-e4e8-479f-823e-caeb8e29e7f9-frame-3.png",
+        "path": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-6f2f0c58-e4e8-479f-823e-caeb8e29e7f9-frame-3.png",
         "sha256": "8793a6fe6cfbcb872a9fd58040e31ce8b2cb4184efd4afc96fe884a232977e3e"
       }
     ],
@@ -197,7 +197,7 @@
     "verificationArtifactId": "video-8cc9fa25-7ffa-438d-8dd4-e925e4519d6c.json",
     "createdAt": "2026-10-18T06:19:54.777Z",
     "durationSeconds": 36.08333333333333,
-    "path": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-30a808b0-aed4-49a5-b8b4-39c9b54977b2-converted.mp4",
+    "path": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/artifacts/media-30a808b0-aed4-49a5-b8b4-39c9b54977b2-converted.mp4",
     "sha256": "1d82d0cdd579ab039c21840bbab124546855c7ea1b42f3c3882fd38d7091aac8",
     "verificationSha256": "7416a7fb422a9aaab1a0ac4296dff000e197dea00e8b3f0e02984b12d243b12a",
     "actualDurationSeconds": 36.16,
@@ -311,7 +311,7 @@
     "status": "passed",
     "authority": "agent-declared",
     "fingerprint": "7aef433594c3e9a4b7a6f982363e3200906f2bf08e7c07dce7339aaf5b25265c",
-    "ledger": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/video-studio/export-reviews/54494630-1c42-4e3d-a4bc-c7d090775f42.json",
+    "ledger": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z/workspace/video-studio/export-reviews/54494630-1c42-4e3d-a4bc-c7d090775f42.json",
     "ledgerSha256": "7a03c2e5a80f234022aacd162c6561140cb1e7bb51de9ec5e6a0e3fdf3f5c634",
     "film": {
       "status": "passed",

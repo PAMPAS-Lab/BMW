@@ -754,7 +754,7 @@
     "failures": [
       {
         "id": "media.processing-runtime",
-        "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-18T23-57-21-353Z/media.processing-runtime.log"
+        "log": "<workdir>/.bmw-runtime/classified-tests/2026-10-18T23-57-21-353Z/media.processing-runtime.log"
       }
     ],
     "unit": {

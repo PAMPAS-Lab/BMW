@@ -851,7 +851,7 @@
       },
       "voiceComparisonScope": "Historical three female-voice audition files; this V4 uses a newly requested male voice and is not certified by that preference.",
       "writingSkill": {
-        "sourceArchive": "/Users/zz/Downloads/muyu-writing-style.zip",
+        "sourceArchive": "<home>/Downloads/muyu-writing-style.zip",
         "sourceSha256": "1624a9e72ceb65557df7f5ff72e41ea63bdc9a695d23fa9f92f2bc6390225386",
         "skill": ".bmw-runtime/p1-ak/muyu-writing-style/SKILL.md",
         "reference": ".bmw-runtime/p1-ak/muyu-writing-style/references/style-evidence.md",
