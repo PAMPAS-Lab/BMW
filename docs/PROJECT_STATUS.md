@@ -47,7 +47,7 @@ DSH三条主片独立保存：[SI新闻](research/DSH_SI_DELIVERY.json)、[科�
 
 ## 当前代码与验收
 
-2026-10-20 当前完整离线基线为 **173 passed／0 failed／12 opt-in not-run**，受测实现提交 `6bea922`。构建、check、功能／架构及边界检查通过，覆盖四驱动装配、官方 WorkBuddy／本机模型夹具、新闻 FIFO、DSH、desktop、Studio、media、video 和 narration。当前源码与逐项结果见[CURRENT](verification/CURRENT.json)。WorkBuddy 已接入输入前有效目录门禁、系统加密 Key、实际任务鉴权状态、事件串行化、原生续聊及清理隔离；真实 Key、服务额度、付费模型、生产 Profile 和 Windows 进程树未验证，后者保持不可用。六个冻结类型例外未增加。
+2026-10-20 当前完整离线基线为 **173 passed／0 failed／12 opt-in not-run**，受测实现提交 `6bea922`。构建、check、功能／架构及边界检查通过，覆盖四驱动装配、官方 WorkBuddy／本机模型夹具、新闻 FIFO、DSH、desktop、Studio、media、video 和 narration。当前源码与逐项结果见[CURRENT](verification/CURRENT.json)。WorkBuddy 已接入输入前有效目录门禁、系统加密 Key、实际任务鉴权状态、事件串行化、原生续聊及清理隔离；另有用户授权的 WorkBuddy／deepseek-v4.1-flash 单次 browser 实际调用通过，见[脱敏记录](research/WORKBUDDY_BROWSER_DELIVERY.json)，不计入离线通过数；其他模型、额度、完整生产 Profile 和 Windows 进程树未验收，Windows 保持不可用。六个冻结类型例外未增加。
 
 量子位四阶段已完成全片分析、长篇、文字包装及有限科学图解的实现和对应技术验收，记录已[归档](history/qbit/IMPLEMENTATION.md)。10 月 17 日样片副本修订后：新闻时间线 40 秒、PIP 34.666667 秒并改为 1280×720，S10／S09 为 32／24 秒；实际文件时长另有编码尾部。原版、工程和审阅证据保留。S04 未下载／全片分析；长篇只验证了 640×360／12fps，不推断 1080p／30fps 性能。新闻叙事、细字阅读与音频核听仍有缺口。
 

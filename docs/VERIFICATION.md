@@ -12,6 +12,10 @@ WorkBuddy 使用官方 CodeBuddy Code 2.169.0，经实际认证 BMW MCP／Bridge
 
 12 项 opt-in 未运行；真实 API Key、服务权限／额度、付费模型、在线配音、生产 Profile 和系统凭据提示均不在本轮覆盖内。Electron／DSH 使用一次性 Profile／Home／Workspace 与 mock keychain。Windows WorkBuddy 进程树清理尚未验证，输入前保持不可用；图像／音频准入和原生桌面历史未宣称支持。六个冻结类型例外未增加。
 
+## WorkBuddy 真实 browser 调用
+
+2026-10-20，用户在 BMW 中填写 Key 并授权最小连通验证。官方 WorkBuddy 2.169.0／deepseek-v4.1-flash 完成一次实际任务，Host 记录恰好一次 browser 开始／成功完成、官方输入回执、本轮 success 和清理后的 idle；显式刷新设置后显示当前 Key／模型已通过真实任务验证。验证请求为 browser status，不采集页面正文或创建媒体。脱敏证据见 [WorkBuddy 调用记录](research/WORKBUDDY_BROWSER_DELIVERY.json)。此项使用真实服务，与上方 173 项离线基线分开；不扩大到其他模型、图像／音频、Studio 制作或 Windows。Key、原生转录及 Project 内容均未写入仓库。
+
 ## NEWS-01 真实新闻验收
 
 **当前54.61秒BMW＋官方Codex新闻已获用户接受。** 技术完成、真实检索与制作、局部改稿保留、Agent画面审阅、旁白自然度反馈和最终接受分别保存在[Codex验收记录](research/CODEX_NEWS_REWORK.json)。用户先选定龙安朗并认可旁白自然，再要求结尾回到DeepSeek新版的低花费与精细制作，最后回复“这个版本可以了”。该接受绑定当前导出，不补造逐字发音、声学对齐或观众复述分数，也不反向改写旧片结果。

@@ -1,0 +1,56 @@
+{
+  "format": "bmw.workbuddy-browser-delivery",
+  "version": 1,
+  "verifiedAt": "2026-10-20T22:10:57.443000+08:00",
+  "implementationRevision": "6bea922a91489c2aa452a17cf76d92bbfa8ef71b",
+  "applicationRevision": "03d95f9e42d6ec7c362c04ab66de195fafb6a451",
+  "authorization": "User entered the API Key in BMW and explicitly requested a real browser verification before pushing local main.",
+  "runtime": {
+    "driver": "workbuddy",
+    "cli": "@tencent-ai/codebuddy-code@2.169.0",
+    "protocol": "ACP v1",
+    "selectedModel": "deepseek-v4.1-flash",
+    "realServiceUsed": true,
+    "localModelFixture": false
+  },
+  "scope": {
+    "actualTasks": 1,
+    "requestedTool": "browser",
+    "requestedAction": "status",
+    "browserInvocations": 1,
+    "successfulBrowserCompletions": 1,
+    "nativeInputReceiptPresent": true,
+    "receiptState": "finished",
+    "outcome": "success",
+    "hostStatusAfterCleanup": "idle",
+    "settingsAfterExplicitRefresh": "Current Key and model verified by an actual task"
+  },
+  "evidence": {
+    "hostEventCounts": {
+      "session.bound": 1,
+      "tool.started": 1,
+      "tool.completed": 1,
+      "message.delta": 164,
+      "input.accepted": 1,
+      "message.completed": 1,
+      "turn.completed": 1
+    },
+    "toolStartSequence": 2,
+    "toolCompletionSequence": 3,
+    "nativeReceiptSha256": "6e3b2153ea1201570f69815e3e3f422ba9b28ed9d9d3d0140d45dd2dcb1ce9a7",
+    "resumeAnchorPresent": true,
+    "browserResultObserved": "Current Project browser status and tab information returned; page content, URLs and titles omitted from this public record."
+  },
+  "privacy": {
+    "apiKeyReadByVerifier": false,
+    "apiKeyIncluded": false,
+    "credentialFileIncluded": false,
+    "rawNativeTranscriptIncluded": false,
+    "projectIdentityIncluded": false
+  },
+  "limits": [
+    "This is a single user-authorized real service acceptance, separate from the 173-item disposable-profile offline baseline.",
+    "No image/audio admission, other models, Windows cleanup, Studio production or native desktop history acceptance is inferred.",
+    "No additional task or automatic retry was sent."
+  ]
+}

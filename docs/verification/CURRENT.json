@@ -8,7 +8,7 @@
   "review": {
     "sourceBranch": "origin/workbuddybmw",
     "originalAdapterCommit": "e8f86b613d51162f427447c1b6fc7f95c57cf0da",
-    "decision": "Integrate WorkBuddy with effective pre-input browser catalog admission and task-based API Key verification; local main merge only, no push.",
+    "decision": "Integrate WorkBuddy with effective pre-input browser catalog admission and task-based API Key verification; user authorized publishing main after the successful real browser acceptance.",
     "originalWorkingTreePreserved": true
   },
   "environment": {
@@ -1999,8 +1999,19 @@
   ],
   "postRunDocumentation": {
     "README.md": "53062a3f28cb62c9541da1a148322a5fd1823db147e99656f55c877fdae66cae",
-    "docs/PROJECT_STATUS.md": "0ce1b20d1796512b18716152c1c0271c7fd9e242f8b52b59aabc4df98a07fb37",
-    "handoff.md": "529a413b19df4b6bf7f242d38bc4c8c6a2a57df04d2bc3922aec571f7260eb5c",
-    "docs/VERIFICATION.md": "ef656d72fbefefd559c1ef6d6143720ef5af7d4e12600373ee32e0eb2c2d73da"
+    "docs/PROJECT_STATUS.md": "6fda7ec9c6cb3622ab7bc6dc2301f6643418ee32fdff2862b78f8716e1449267",
+    "handoff.md": "427cac4c7559c67751b2c497c2b68f8d7281ac52eda090f241bb6fa6b10ec1a0",
+    "docs/VERIFICATION.md": "569de3acf4008b581a7236309e1eedcb3e80dc5c8916b1f6c72a5981b45a04a7",
+    "docs/FUNCTIONAL_SPEC.md": "4eca41dc49dba50c85f4d9daf6221d9a97b592329c01e4eb08397065c557eff9"
+  },
+  "externalAcceptance": {
+    "workbuddyBrowser": {
+      "path": "docs/research/WORKBUDDY_BROWSER_DELIVERY.json",
+      "sha256": "23bdaec096300011c9e2d1909f1721a1b191814c3c2bcb462d7eaf12eee7f728",
+      "separateFromOfflineBaseline": true,
+      "realServiceUsed": true,
+      "model": "deepseek-v4.1-flash",
+      "successfulBrowserCalls": 1
+    }
   }
 }
