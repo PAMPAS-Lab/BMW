@@ -5,18 +5,67 @@ description: Operate the active BMW Project's browser pages, images, native medi
 
 Use the connected `browser` tool and its current schema. BMW owns the active Project, pages, media, permissions and conversation scope. The Qoder Agent owns planning and its model loop.
 
-Start with `browser` action `status` when the current page or Project is unknown. Open and inspect pages through the advertised actions. Use admitted screenshots for visual questions; a tool's text description is not evidence of unseen pixels. Keep generated/imported artifacts in the current Project and report returned artifact identities.
+## Hard tool boundary
 
-For a request to make a video, prefer an editable Video Studio draft even when the workspace is currently the browser: guide, list/create, apply-edit to add scenes and cards, generate or attach real narration, check, then render. A completed `video.compose` returns `studioDraft` for ordinary scenes; read that draft for later edits rather than starting a disconnected composition. A `studioWarning` explicitly means the result is standalone. Do not claim a draft exists without reading its returned identity.
+`browser` is the only tool you have. There is no shell, no file writer, no HTTP client, no image generator outside it. Do not attempt Bash, Write, Read, fetch or any script; such a call is denied and cannot help. Every step below has a `browser` action that already covers it — find it with `help` (see Discovery) instead of inventing a workaround.
 
-For Video Studio, use `video.studio` with the advertised `studioRequest`. Read the current draft and revision before an edit. Model read/create/mutation replies are compact summaries, never full writable drafts: do not copy them into update. Use read-scene with section content/card/captions/speech/visuals/timeline/reviews/sources for current details, and read-preparation for brief pages; follow nextOffset. Use apply-edit commands such as scene.add, brief.set, scene.set, card.set, card.bind and captions.set. Audio hashes and speech target snapshots are Host-owned. Preserve the draft's owning BMW Session. If a revision conflict occurs, read the current state and reconcile the user's requested change; do not overwrite intervening edits. After any narrate-pending failure, completed scenes remain committed. Read the latest draft before retrying; use the returned STUDIO_NARRATION_PROGRESS revision and completed/pending IDs to reconcile, never replay the whole batch blindly. Source pins identify image bytes but do not attach a visual; bind imageArtifactId or visualSegments explicitly. Whole-to-detail and detail-to-whole accept one target; use sequence for multiple targets if the template permits it. Script or voice changes can require new narration before export. Check the draft before rendering and report the actual returned output.
+## Discovery
 
-Use assets with assetQuery kind/query/offset/limit to filter before paging; default native review-frame/report names are omitted. Web originals use source/list then source/read with sourceId/acquisitionId and UTF16 text page offsets, not read-material.
+`help` returns the whole action catalog. `help` with `forAction` returns one action's exact description and closed input schema. Call `help` before an unfamiliar action instead of guessing field names; a validation error names the field, so fix that field rather than switching action. `status` reports the active Project, tabs and page state.
 
-For sentence timing, inspect estimate-speech then explicitly accept editorial timing with correct-speech timingBasis:"editorial-estimate" and reviewed cardLinks; anchors may be omitted so the Host recomputes them from current measured narration. Changed timestamps use timingBasis:"manual-edit"; asr-reference requires actual current ASR evidence. Host provenance in document 2.5 never certifies word accuracy. Use diagnose-timing per scene and follow sentence/issue pages to inspect long/dense sentences, short reading holds and diagram association/rhythm problems. Correct meaning and window duration, not decorative motion loops.
+## Making a news video (default path)
 
-Before authoring new scene fields or cards, call `video.studio` with `studioRequest: {operation: "describe-schema"}`; use `describe-edit` with editOperation for one command schema and `describe-template` for the selected card's dedicated slots and variants. For drawing, `media.image.draw` creates a canvas with `width`, `height` and `shapes`; `media.image.annotate` marks an existing `artifactId`. Neither accepts `filename`. On a parameter error, correct the named field and consult the matching action schema before retrying; do not infer that supported primitives are unavailable. Successful encoding/track verification does not establish legibility or editorial quality: inspect the returned frames and report any remaining visual limitations. Use review-status for current fingerprint-bound technical/layout/frame-generation/model/user states and changed-scene priority. Follow every review-export page for every scene. After actual visual inspection, record-export-review with exportReview {exportFingerprint,scope:"scene",status:"passed"|"needs-fix",notes} and sceneId records the Agent declaration; after all current scenes are complete and passed, separately record scope:"film" without sceneId. Any later scene declaration requires a fresh separate whole-film judgement; a later scene pass cannot revive an earlier film pass. Generating frames is not approval, and Agent declarations never become user acceptance. A changed export requires new current-output review, including unchanged scenes; old frames are not final-film evidence.
+Deliver a finished MP4 with `video.compose`. Do **not** open a Studio draft first: the compose path is one call, and a completed compose automatically registers an editable Studio draft anyway and returns its `studioDraft` identity. Use `video.studio` only when the user explicitly asks for an editable draft or iterative scene editing.
 
-BMW permissions are handled by BMW's controls. If an action is denied, explain the required permission and wait for the user to change it. If the connection is lost or a submitted action's result is uncertain, report that state; do not repeat a mutation to guess whether it succeeded.
+1. Research: `tabs.open` with `foreground:true`, `wait` for load, `observe` with a small `maxCharacters` (1000-4000) and a precise `selector`. Never observe a full social/feed page: oversized output is persisted aside and you will not receive the text, so you would loop without information.
+2. Facts: read the primary source page. A page title is not evidence of body text; use `observe` on the article region.
+3. Real footage: see "Capturing real video" below. A news piece needs real broadcast/interview footage; self-drawn cards alone are not enough for a "news video".
+4. Stills: `page.viewport.set {width:640,height:360,deviceScaleFactor:3}` then `media.screenshot` gives a legible 1920x1080 16:9 still. Rendered text size scales with viewport width, not device scale, so a 1600-wide viewport produces unreadably small type. Annotate with `media.image.annotate` (highlight rect + callout), never expect the reader to find the sentence.
+5. Cards and diagrams: `media.image.draw` with `width`, `height`, `shapes`. `fontSize` max 128, opacity min 0.05, canvas max 8MP and 4096 per side. Neither draw nor annotate accepts `filename`.
+6. Narration: see "Narration" below. One `video.narrate` per scene, keep every returned `durationSeconds`.
+7. Compose: one `video.compose` call with all scenes.
+8. Review: `media.frames.sample` on the output MP4 and actually look at the frames. Report what is legible; encoding success is not editorial quality.
 
-The Host supplies Project/Session context and an ephemeral connection. Do not choose a different Session identity, request connection tokens or substitute host shell/file operations for BMW actions. If `browser` is unavailable, ask the user to open BMW and connect the Qoder driver. Installing this guidance alone does not establish a connection or synchronize the Qoder desktop sidebar.
+## Narration
+
+Chinese narration is generated by `video.narrate` with `narrationRequest {text, provider, voice, ratePercent}`. Always pass `provider` and `voice` explicitly; the unresolved default may be an unreachable Edge endpoint.
+
+* This Project's approved voice: `provider:"qwen-tts"`, `voice:"longanlang_v3.1"` (Qwen male, crisp news read). Other Qwen males: `anmingyuan_v3.1`, `huozhuoshi_v3.1`, `longsanshu_v3.1`.
+* Qwen requires the user's saved Qwen credentials; the model can never read or supply them. If Qwen reports missing configuration, say so and ask the user to save Qwen credentials in BMW Settings — do not silently switch voice.
+* `edge-readaloud` is the network Edge service. On this host it fails with `Experimental Edge TTS connection failed`. Do not retry it more than once, and never loop: switch to `qwen-tts` instead.
+* `video.compose` never synthesizes speech. A scene with `narration` must also carry the real `audioArtifactId` from `video.narrate`, or compose is rejected.
+* Read the returned `durationSeconds` and set that scene's `durationSeconds` to at least narration + 1s. This is enforced; a tight value is rejected.
+* For a longer closing beat, give the last scene durationSeconds well beyond its narration instead of adding a black scene.
+
+## Capturing real video
+
+Prefer established outlets: the subject's official channel, and broadcasters such as CNBC, Bloomberg (`@markets`), Fox News, Reuters, AP, or an on-record interview with the named person. Use the channel's own search page — `https://www.youtube.com/@<channel>/search?query=<terms>` — rather than the global results page, which is a scripted feed and reads poorly.
+
+* Find candidate videos with `page.media.list`: the results are in `items`, and poster URLs contain `/vi/<videoId>/`, which is the video id. Read `items` rather than only the rendered `text`; the call can return dozens of entries.
+* Verify the channel before trusting it: open the channel URL once and read `status`/`observe` for its title. Handles collide with unrelated accounts (`@Anthropic` is a private streamer; the official one is `@anthropic-ai`, Meta's AI channel is `@AIatMeta`, Bloomberg Television is `@markets`). A wrong handle returns an unrelated channel's videos rather than an error.
+* Open a result by clicking its anchor: `click {selector:"a#video-title"}`. Clicking by visible text often lands on Shorts or a dead entry. Read `observe`/`status` for the resulting tab URL to confirm the watch page.
+* Preroll ads: when a Skip control is present, `click {text:"跳过"}` up to three times with a `wait` of ~2500ms between; a single click usually leaves a second ad. Confirm with a sampled frame before trusting the capture.
+* Capture with `media.video.capture {selector:"video", fromStart:true, maxDurationMs:12000-25000}`. Output is WebM with one video and one audio track. With `fromStart:false` it records from the current position, which is how you get a mid-clip portrait.
+* Always verify with `media.frames.sample {timestampsSeconds:[...]}` (that exact field name, 1-8 frames) and look at the returned PNGs.
+* A capture that recorded an ad, a logo sting or an unrelated channel is discarded, not used.
+
+## Compose contract
+
+`video.compose` takes `composition {title, aspectRatio, resolution, fps, style, watermark, scenes[]}`. Every scene needs `title` (short) and `durationSeconds` (1-60); a missing title fails the whole call. A scene carries one visual: `videoArtifactId`, `imageArtifactId`, or nothing for a title card.
+
+* Landscape news: `aspectRatio:"16:9"`, `resolution:"1080p"`, `fps:24`, `style:"bmw-dark"`.
+* `layout:"fullscreen"` makes footage fill the frame; the default `presentation` insets it and crops broadcast lower-thirds.
+* `crop {x,y,width,height}` is normalized inside the source and removes dead margins, page headers, a chyron band or a platform overlay. Keep the source aspect ratio: to fill 16:9 from a 16:9 source, crop symmetrically around a centre. Keep the crop box inside `0..1`.
+* `sourceStartSeconds` is measured on the footage's own timeline, and must sit at or after its first frame timestamp. A clip captured with `fromStart:false` starts at the source position you were playing, so a `sourceStartSeconds` of `0` is rejected with `Scene source start is outside its footage`. Either capture with `fromStart:true` or start at least 0.3s in.
+* A clip captured near the end of a source video is often a logo sting or a fade to black. Check a sampled frame from the actual capture, not from the source listing.
+* Broadcast two-box shots split the frame; cropping down the middle cuts both faces. Crop to one panel.
+* Watermark is `watermark {enabled,text,position,opacity,size}`. This Project uses `text:"AIpardonSI News"`, `position:"bottom-right"`. If the defaults already carry it, omit it and let defaults apply.
+* Keep total scenes at 6-10 for a 40-60s piece; do not stretch a scene past its material.
+
+## Studio drafts
+
+Only on explicit request. `video.studio` takes `studioRequest`; `operation:"guide"` documents every operation and is the fastest way past an arguments error. Read the current draft and `revision` before an edit, then use `apply-edit` commands (`scene.add`, `scene.set`, `card.set`, `card.bind`, `captions.set`). Read-scene replies are compact summaries — read the section you need instead of copying a summary back into an update. Reconcile on a revision conflict rather than overwriting. Render only after `review-status`.
+
+## Reporting
+
+Report the real returned artifact identity and the measured duration/size; never describe an output you have not read back. If a step failed, report the exact error text and what you changed next. Artifacts stay in the current Project. If `browser` is unavailable, ask the user to open BMW and connect the driver — this guidance alone does not establish a connection.
