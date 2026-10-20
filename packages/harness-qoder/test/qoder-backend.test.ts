@@ -85,3 +85,27 @@ test('Qoder cancellation retains failed native cleanup ownership and recovery ne
   assert.equal(drained, true); assert.equal(physicallyClosed, 1)
   assert.equal(inputs, 1); assert.equal(interrupts, 1); assert.equal(closeAttempts, 3)
 })
+test('Qoder denies an unexpected permission request without interrupting a browser-only turn', async t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-qoder-denial-'))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const backend = new QoderBackend({ configDirectory: root, connection: async () => ({ bridgeUrl: 'http://127.0.0.1:1', bridgeToken: 'fixture', binding: 'a'.repeat(64), nodeExecutable: process.execPath, mcpServerPath: '/disposable/mcp.js' }), queryFactory: input => ({
+    interrupt: async () => { throw new Error('Permission denial must not interrupt the turn') }, close: async () => {},
+    async *[Symbol.asyncIterator]() {
+      yield { type: 'system', subtype: 'init', session_id: 'provider', qodercli_version: '1.1.64', tools: ['browser'], mcp_servers: [{ name: 'bmw', status: 'connected' }], skills: [], plugins: [] }
+      await input.prompt[Symbol.asyncIterator]().next()
+      const permission = input.options.canUseTool!
+      const denied = await permission('Bash', { command: 'fixture' }, { signal: new AbortController().signal, toolUseID: 'denied' })
+      assert.equal(denied.behavior, 'deny')
+      assert.ok(denied.behavior === 'deny' && denied.interrupt === false && denied.message.includes('browser'))
+      const action = { action: 'tabs.list' }
+      assert.deepEqual(await permission('browser', action, { signal: new AbortController().signal, toolUseID: 'allowed' }), { behavior: 'allow', updatedInput: action })
+      yield { type: 'assistant', session_id: 'provider', uuid: 'reply', message: { id: 'message', content: [{ type: 'text', text: 'Browser remains available' }] } }
+      yield { type: 'result', session_id: 'provider', subtype: 'success', is_error: false }
+    }
+  }) })
+  t.after(() => backend.close())
+  const run = request(root), events: AgentDriverEvent[] = []
+  await backend.prepare(run)
+  assert.equal((await backend.run(run, async event => { events.push(event) })).outcome, 'success')
+  assert.ok(events.some(event => event.type === 'message.completed' && event.text === 'Browser remains available'))
+})

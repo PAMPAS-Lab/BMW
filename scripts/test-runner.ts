@@ -45,6 +45,18 @@ export function gitChanges(root:string,base:string):string[]{
   if(untracked.status!==0)throw new Error(untracked.stderr||'Cannot inspect untracked source.')
   return [...new Set([...files,...untracked.stdout.split('\0').filter(Boolean)])]
 }
+/** A process that exits zero after its deadline is still a failed test. */
+export function runVerificationProcess(command:readonly string[],options:{cwd:string;env:NodeJS.ProcessEnv;timeoutMs:number;output(data:Buffer):void}):Promise<{code:number;reason?:string}>{
+  return new Promise(resolve=>{
+    const child=spawn(command[0],command.slice(1),{cwd:options.cwd,env:options.env,stdio:['ignore','pipe','pipe']})
+    let timedOut=false,killTimer:NodeJS.Timeout|undefined
+    const timer=setTimeout(()=>{timedOut=true;child.kill('SIGTERM');killTimer=setTimeout(()=>child.kill('SIGKILL'),3000)},options.timeoutMs)
+    const cleanup=()=>{clearTimeout(timer);if(killTimer)clearTimeout(killTimer)}
+    child.stdout.on('data',options.output);child.stderr.on('data',options.output)
+    child.once('error',error=>{cleanup();resolve({code:1,reason:error.message})})
+    child.once('close',(code,signal)=>{cleanup();resolve({code:timedOut?1:code??1,reason:timedOut?'Test exceeded '+options.timeoutMs+'ms deadline':signal??undefined})})
+  })
+}
 interface Result {id:string;layer:string;status:'passed'|'failed'|'not-run';durationMs?:number;exitCode?:number;reason?:string;log?:string}
 export async function run(options:RunnerOptions,root=process.cwd()):Promise<number>{
   const graph=readSourceGraph(root),violations=[...architectureViolations(root,graph),...catalogViolations(graph)]
@@ -83,14 +95,8 @@ export async function run(options:RunnerOptions,root=process.cwd()):Promise<numb
   async function execute(id:string,command:string[],env:Record<string,string>={},timeout=300_000):Promise<Result>{
     const log=path.join(directory,id+'.log'),stream=fs.createWriteStream(log),start=Date.now()
     console.log('BMW classified verification: '+id)
-    const result=await new Promise<{code:number;reason?:string}>(resolve=>{
-      const child=spawn(command[0],command.slice(1),{cwd:root,env:{...process.env,GOMEMLIMIT:'32MiB',GOGC:'1',GOMAXPROCS:'1',BMW_VALIDATION_DIR:path.join(directory,id),...env},stdio:['ignore','pipe','pipe']})
-      const timer=setTimeout(()=>child.kill('SIGTERM'),timeout)
-      child.stdout.on('data',data=>{stream.write(data);process.stdout.write(data)})
-      child.stderr.on('data',data=>{stream.write(data);process.stderr.write(data)})
-      child.once('error',error=>{clearTimeout(timer);stream.end();resolve({code:1,reason:error.message})})
-      child.once('exit',(code,signal)=>{clearTimeout(timer);stream.end();resolve({code:code??1,reason:signal??undefined})})
-    })
+    const result=await runVerificationProcess(command,{cwd:root,env:{...process.env,GOMEMLIMIT:'32MiB',GOGC:'1',GOMAXPROCS:'1',BMW_VALIDATION_DIR:path.join(directory,id),...env},timeoutMs:timeout,output(data){stream.write(data);process.stdout.write(data)}})
+    await new Promise<void>(resolve=>stream.end(resolve))
     return {id,layer:tests.find(test=>test.id===id)?.layer??'gate',status:result.code===0?'passed':'failed',exitCode:result.code,durationMs:Date.now()-start,reason:result.reason,log}
   }
   for(const [id,args]of [['source-policy',['--experimental-strip-types','scripts/check-source.ts']],['feature-inventory',['--experimental-strip-types','scripts/check-functional-spec.ts']]] as const){results.push(await execute(id,[process.execPath,...args]));save()}

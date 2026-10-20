@@ -8,7 +8,7 @@ import {API} from 'typescript/unstable/sync'
 import {importsOf,readSourceGraph} from '../source-graph.js'
 import {selectTests} from '../test-selection.js'
 import {tests} from '../test-catalog.js'
-import {gitChanges,parseOptions} from '../test-runner.js'
+import {gitChanges,parseOptions,runVerificationProcess} from '../test-runner.js'
 
 test('Renderer read change selects its direct/consumer guarantees and background runtime without unrelated codecs or speech',()=>{
   const graph=readSourceGraph(process.cwd()),selection=selectTests(graph,['packages/browser-capability/src/renderer-read.ts']),ids=selection.selected.map(item=>item.test.id)
@@ -194,4 +194,13 @@ test('Workspace manifest changes stay on the conservative full-coverage path',()
   assert.ok(selection.selected.some(item=>item.test.id==='studio'),file)
   assert.equal(selection.selected.some(item=>item.test.optIn),false,file)
  }
+})
+
+test('A timed out test that handles SIGTERM and exits zero cannot be reported as passed',async()=>{
+ let output=''
+ const result=await runVerificationProcess([process.execPath,'-e',"process.on('SIGTERM',()=>{console.log('clean exit');process.exit(0)});console.log('ready');setInterval(()=>{},1000)"],{cwd:process.cwd(),env:process.env,timeoutMs:500,output(data){output+=data.toString()}})
+ assert.match(output,/ready/);assert.match(output,/clean exit/)
+ assert.equal(result.code,1);assert.match(result.reason??'',/deadline/)
+ const completed=await runVerificationProcess([process.execPath,'-e','process.exit(0)'],{cwd:process.cwd(),env:process.env,timeoutMs:5000,output(){}})
+ assert.equal(completed.code,0);assert.equal(completed.reason,undefined)
 })

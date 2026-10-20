@@ -45,6 +45,8 @@ async function run():Promise<void>{
   const captured:string[]=[]
   for(const [index,color] of ['#ef1515','#15dd15'].entries()){
     await window.loadURL(`data:text/html,<style>html,body{margin:0;width:100%;height:100%;background:${encodeURIComponent(color)}}</style>`)
+    window.show();app.focus({steal:true});window.focus()
+    console.log('PHASE static page recording '+index)
     const pending=new Promise<unknown>(resolve=>{completed=resolve})
     await execute({action:'media.record.start',tabId:staticTab.id,fps:24})
     await new Promise(resolve=>setTimeout(resolve,2800))
