@@ -16,7 +16,10 @@ test('Publication metadata extracts one complete publisher date line beside byli
   ['来源：商务部新闻办公室\n类型：原创\n2026-10-16 16:00','2026-10-16 16:00'],
   ['Published: 2026-10-16T16:00:00+08:00\nBy Example','2026-10-16T16:00:00+08:00'],
   ['DeepSeek-V4.1-Flash-1017 Release 2026/10/17','2026/10/17'],
-  ['Original Issue Date: October 16, 2026','October 16, 2026']
+  ['Original Issue Date: October 16, 2026','October 16, 2026'],
+  ['October 16, 2026 5:00 AM','October 16, 2026 5:00 AM'],
+  ['Monday, October 16, 2026','Monday, October 16, 2026'],
+  ['Published Mon, Oct 16 2026 3:12 PM EDT','Mon, Oct 16 2026 3:12 PM EDT']
  ]){const r=await collect(text);assert.equal(r.publishedAt,date);assert.equal(r.result,'observed')}
  for(const text of ['2026\n10/18\n22:04:56','2026\n10/18','2028\n2/29\n00:00'])assert.equal((await collect(text)).publishedAt,text.startsWith('2028')?'2028-02-29':'2026-10-18')
  for(const text of ['2026\n10/18\n2026\n10/19','Updated\n2026\n10/18','2026\n10/18\n25:04:56','2026\\n10/18\\n22:04:56','2026\n2/29','2026\n13/18','2026\n10/18\nBy Someone'])assert.equal((await collect(text)).publishedAt,text)

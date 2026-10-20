@@ -43,6 +43,10 @@ NEWS-02将候选上限从三项扩大到十项，版本1记录和已有三题批
 
 NEWS-02推荐的Agent编辑要求：优先广泛寻找有真实原声的采访与演讲，再考虑动态演示和同题作品对照，理由需交代观众能从画面直接观察到什么；单纯公告可说明更适合图文，不因易截图而优先。比较案例需实际看预览、核对模型标签和画面布局；作者单次生成花费不能表述为模型单价或总体成本，展示不认证总体胜负。日期前本地时钟不视为片长，媒体参数以实际检查为准。结尾回扣这次消息的新变化与已展示结果，不默认套用通用用途清单、口号或免责声明；需要限定时简短归因，不能用边界说明替代新闻重点。当前54.61秒Codex／龙安朗样片已获用户接受，独立结果见[新闻验收](research/CODEX_NEWS_REWORK.json)，不改变NEWS-01缺省参数或三驱动权限。NEWS-02的43.03秒Chuck Lorre采访新闻另获用户接受，使用龙安朗、原声节选及可编辑大号双语字幕，见[独立交付](research/NEWS_02_LORRE_DELIVERY.json)；不据此认证声学精度或声称跨导出审阅复用已实现。这些为官方Agent的编辑职责，Host不实现新闻价值模型或自动胜负判定。
 
+NEWS-03发布日期识别覆盖发布方常见写法：星期前缀、月份缩写带点（`Oct.`）、序数（`17th`）、紧随日期的本地时钟与 AM/PM、时区缩写（`EDT`、`GMT+8`）以及「`3:04 PM · Oct 17, 2026`」式社交标签，均只证明到民用日期（`precision=day`），仍按 UTC-14 至 UTC+12 的最保守区间检查 72 小时，不编造午夜时刻或时区。更新、修改、录制、抓取类标签（Updated／Modified／Recorded）以及同处出现两个日期、`10/17/2026` 这类歧义写法继续拒绝，避免把更新时间或抓取时间当成原始发布日期；元素含多个日期或被截断时仍判为不可用。只有 `<time datetime>` 明确带时区时才记为即时时间。
+
+
+
 研究阶段允许materials list/search读取已有证据，以及index对实际不超过30秒的Project预览执行至多一个本地ASR区间。长素材（包括已索引长素材）在ASR或新增索引写入前拒绝；时长以原生检查与文件SHA为准，不以调用方区间冒充短素材。set-metadata、建稿、TTS、合成及既有草稿编辑仍受用户选题门禁约束；不新增工具、供应商或自动时间批准。
 
 新闻制作引导要求采访主视频显式保留原声：类型编辑读取真实主画面clipId后使用clip.mute muted=false，不把独立画面图层解除隐藏视作恢复声音，也不向scene.set提交未支持字段。最终MP4需按采访实际时间窗media.audio.sample，并通过materials原生ASR检查该导出样本；源片ASR、存在AAC音轨及全片非零峰值不能替代此检查，背景音乐本身也会非零。指标／转写与人工听感仍分别登记。
@@ -849,6 +853,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Live broadcast publication labels retain original day precision and never turn relative or future dates into fresh news`
 - `Localized post clocks never invent a timezone and retain conservative publication-day boundaries`
 - `Date-only publishers retain precision and qualify only when the entire conservative timezone range is within 72 hours`
+- `Publisher day labels tolerate weekdays, month dots, ordinals, clocks and zones while keeping day precision`
 - `Leaving news research is user-only and preserves the board while releasing the Session research restriction`
 - `Ten verified news events survive restart and selecting the tenth keeps one draft, explicit voice and no preselection media work`
 - `News candidates accept broad subjects and recording days while rejecting unknown fields, duplicate events and ambiguous dates`

@@ -19,13 +19,18 @@ export function newsDate(v:unknown):string{const s=newsText(v,'date',80),y=Numbe
 /** A date-only publisher cannot be assigned a fabricated midnight or timezone.
  * Use every possible civil timezone, bounded above by actual observation. */
 export function newsPublication(raw:unknown,observedAt=Date.now()):{publishedAt:string;precision:'instant'|'day';earliest:number;latest:number}{
- const label=newsText(raw,'publication date',80).trim().replace(/^(?:Published(?: on)?|Press release issued|Streamed live on|Premiered(?: on)?|发布日期|发布时间|直播开始日期|首播日期)\s*[:：]?\s*/i,'').replace(/\s+(?:来源|Source)\s*[:：]\s*[^0-9]*$/i,'').trim();if(!Number.isFinite(observedAt))throw new Error('NEWS_DATE: Invalid observation date.')
+ const label=newsText(raw,'publication date',80).trim().replace(/^(?:Published(?: on)?|Press release issued|Original issue date|Streamed live on|Premiered(?: on)?|发布日期|发布时间|发文日期|直播开始日期|首播日期)\s*[:：]?\s*/i,'').replace(/\s+(?:来源|Source)\s*[:：]\s*[^0-9]*$/i,'').trim();if(!Number.isFinite(observedAt))throw new Error('NEWS_DATE: Invalid observation date.')
+ // A weekday name adds no precision beyond the civil day it labels.
+ const weekday=label.replace(/^(?:(?:Mon|Tue|Tues|Wed|Thu|Thur|Thurs|Fri|Sat|Sun)(?:day|sday|nesday|rsday|urday)?\.?,?\s+)/i,'')
  // Social posts may show a local clock before a complete publication day.
  // Preserve only that day: the label does not establish a timezone or instant.
- const text=label.replace(/^(?:[01]?\d|2[0-3]):[0-5]\d(?:\:[0-5]\d)?\s*·\s*(\d{4}年\d{1,2}月\d{1,2}日)$/,'$1')
+ const text=weekday.replace(/^(?:[01]?\d|2[0-3]):[0-5]\d(?:\:[0-5]\d)?\s*·\s*(\d{4}年\d{1,2}月\d{1,2}日)$/,'$1')
+  .replace(/^(?:[01]?\d|2[0-3]):[0-5]\d(?:\:[0-5]\d)?\s*[ap]\.?m\.?\s*·\s*([A-Za-z]+\.?\s+\d{1,2},?\s+\d{4})$/i,'$1')
  try{const instant=newsDate(text),time=Date.parse(instant);return {publishedAt:instant,precision:'instant',earliest:time,latest:time}}catch{}
- let y=0,m=0,d=0;const numeric=text.match(/^(\d{4})[-年/.](\d{1,2})[-月/.](\d{1,2})(?:日)?(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?$/)
- if(numeric){y=Number(numeric[1]);m=Number(numeric[2]);d=Number(numeric[3])}else{const first=text.match(/^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})$/),last=text.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/),english=first??(last?[last[0],last[2],last[1],last[3]]:null),months=['january','february','march','april','may','june','july','august','september','october','november','december'];if(english){const name=english[1].toLowerCase();y=Number(english[3]);m=months.findIndex(month=>name===month||name===month.slice(0,3)||(name==='sept'&&month==='september'))+1;d=Number(english[2])}}
+ // A publisher clock, timezone abbreviation or trailing weekday still proves only the civil day.
+ const clock='(?:[01]?\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d)?(?:\\s*[ap]\\.?m\\.?)?',zone='(?:[A-Z]{2,5}|(?:GMT|UTC)\\s*[+-]\\d{1,2}(?::?\\d\\d)?|[+-]\\d\\d:?\\d\\d)',tail='(?:[\\s,·|T]*(?:at\\s+)?'+clock+'(?:\\s*'+zone+')?)?(?:\\s*(?:周|星期)[一二三四五六日天])?'
+ let y=0,m=0,d=0;const numeric=text.match(new RegExp('^(\\d{4})[-年/.](\\d{1,2})[-月/.](\\d{1,2})(?:日)?'+tail+'$','i')),first=text.match(new RegExp('^([A-Za-z]+)\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?,?\\s+(\\d{4})'+tail+'$','i')),last=text.match(new RegExp('^(\\d{1,2})(?:st|nd|rd|th)?\\s+([A-Za-z]+)\\.?,?\\s+(\\d{4})'+tail+'$','i'))
+ if(numeric){y=Number(numeric[1]);m=Number(numeric[2]);d=Number(numeric[3])}else if(first||last){const months=['january','february','march','april','may','june','july','august','september','october','november','december'],name=(first?first[1]:last![2]).toLowerCase().replace(/\.$/,'');y=Number(first?first[3]:last![3]);m=months.findIndex(month=>name===month||name===month.slice(0,3)||(name==='sept'&&month==='september'))+1;d=Number(first?first[2]:last![1])}
  if(y<1900||y>2200||m<1||m>12||d<1||d>new Date(Date.UTC(y,m,0)).getUTCDate())throw new Error('NEWS_DATE: Need an explicit-zone timestamp or an unambiguous publication day.')
  const earliest=Date.UTC(y,m-1,d)-14*3600000,latest=Math.min(Date.UTC(y,m-1,d+1)+12*3600000-1,observedAt)
  if(latest<earliest)throw new Error('NEWS_DATE: Publication day is in the future.')
