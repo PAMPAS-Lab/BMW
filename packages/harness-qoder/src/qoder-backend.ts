@@ -68,7 +68,11 @@ export class QoderBackend implements AgentBackend {
       ...(request.externalSessionId ? { resume: request.externalSessionId } : { sessionId: crypto.randomUUID() }),
       abortController: controller, tools: [], allowedTools: ['browser'], skills: [], plugins: [], settingSources: [], strictMcpConfig: true,
       mcpServers: { bmw: { type: 'stdio', command: connection.nodeExecutable, args: [connection.mcpServerPath], env: { BMW_BRIDGE_URL: connection.bridgeUrl, BMW_BRIDGE_TOKEN: connection.bridgeToken, BMW_SESSION_BINDING: connection.binding, ELECTRON_RUN_AS_NODE: '1' }, tools: [{ name: 'browser', exposedName: 'browser', permission_policy: 'always_allow', alwaysLoad: true }] } },
-      canUseTool: async (name, value) => name === 'browser' ? { behavior: 'allow', updatedInput: value } : { behavior: 'deny', interrupt: true, message: 'BMW permits only its browser model tool' },
+      // A denial must not end the turn: `interrupt:true` aborts the whole run the
+      // moment the model reaches for a shell or file tool, which is exactly the
+      // first move a coding-tuned model makes on a media task. Deny the call,
+      // keep the loop alive, and name the tool that can actually do the work.
+      canUseTool: async (name, value) => name === 'browser' ? { behavior: 'allow', updatedInput: value } : { behavior: 'deny', interrupt: false, message: `BMW does not expose \`${String(name).slice(0, 60)}\`. You have only the \`browser\` tool: do this step with a browser action (call help with forAction to read its schema) instead of a shell, script or file operation.` },
       includePartialMessages: true, persistSession: true, permissionMode: 'default',
       systemPrompt: 'You are BMW Assistant.\n'+qoderBmwGuidance()+'\nCurrent BMW Project context:\n'+agentText(request.context,16384),
       controlRequestTimeoutMs: 15000, stderr: () => {}
