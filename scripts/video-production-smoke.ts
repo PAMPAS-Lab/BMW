@@ -1,3 +1,4 @@
+import {WorkExportStore} from '../packages/feature-library/src/export-store.js'
 import {recordingEvents} from '../packages/media-native/src/recording-contract.js'
 import crypto from 'node:crypto'
 import {VideoStudioStore} from '../packages/feature-video/src/studio-store.js'
@@ -9,7 +10,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { app, BrowserWindow, session, ipcMain } from 'electron'
+import { app, BrowserWindow, WebContentsView, session, ipcMain } from 'electron'
 import { MediaController } from '../packages/media-native/src/media-controller.js'
 import { BrowserKernel } from '../packages/browser-capability/src/browser-kernel.js'
 import { BrowserCapabilityRegistry } from '../packages/browser-capability/src/browser-capability-registry.js'
@@ -22,6 +23,7 @@ fs.mkdirSync(artifacts,{recursive:true}); fs.mkdirSync(path.join(temporary,'prof
 let window:BrowserWindow|undefined, bridge:Awaited<ReturnType<typeof createBridgeServer>>|undefined, cancel:AbortController|undefined
 let granted=true, exitCode=0
 const timeout=setTimeout(()=>app.exit(1),300_000)
+process.on('uncaughtException',error=>{console.error('Video fixture uncaught failure',error);app.exit(1)})
 async function run():Promise<void>{
  try{
   await app.whenReady();const browserSession=session.fromPartition(`bmw-video-smoke-${process.pid}`)
@@ -40,11 +42,15 @@ async function run():Promise<void>{
   ipcMain.on('media-chunk',(event,data:ArrayBuffer)=>{if(media.ownsCaptureSender(event))media.acceptChunk(data)})
   ipcMain.on('media-state',(event,value:unknown)=>{if(media.ownsCaptureSender(event))media.updateState(value)})
   ipcMain.on('media-finished',(event,value:unknown)=>{if(media.ownsCaptureSender(event))completed(media.finalize(value))})
-  const staticTab={id:'static-page',projectId:project.id,source:'agent',title:'Static capture',url:'',view:{webContents:window.webContents}}
+  // Match the actual BMW browser surface: pages are WebContentsViews, not the
+  // main window's shell. Capture completion must come from that owning view.
+  const staticView=new WebContentsView({webPreferences:{session:browserSession,sandbox:true,contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}})
+  window.contentView.addChildView(staticView);const [surfaceWidth,surfaceHeight]=window.getContentSize();staticView.setBounds({x:0,y:0,width:surfaceWidth,height:surfaceHeight})
+  const staticTab={id:'static-page',projectId:project.id,source:'agent',title:'Static capture',url:'',view:staticView}
   kernel.tabs.set(staticTab.id,staticTab);kernel.activeTabId=staticTab.id
   const captured:string[]=[]
   for(const [index,color] of ['#ef1515','#15dd15'].entries()){
-    await window.loadURL(`data:text/html,<style>html,body{margin:0;width:100%;height:100%;background:${encodeURIComponent(color)}}</style>`)
+    await staticView.webContents.loadURL(`data:text/html,<style>html,body{margin:0;width:100%;height:100%;background:${encodeURIComponent(color)}}</style>`)
     window.show();app.focus({steal:true});window.focus()
     console.log('PHASE static page recording '+index)
     const pending=new Promise<unknown>(resolve=>{completed=resolve})
@@ -62,6 +68,7 @@ async function run():Promise<void>{
       assert.ok(index===0?pixel[0]>180&&pixel[1]<60:pixel[1]>170&&pixel[0]<60,`Static recording pixels: ${pixel}`)
     }
   }
+  window.contentView.removeChildView(staticView);staticView.webContents.close({waitForBeforeUnload:false})
   media.window?.destroy()
   await window.loadURL('data:text/html,<title>Video fixture</title>')
   const bytes=await window.webContents.executeJavaScript(`(async()=>{const canvas=document.createElement('canvas');canvas.width=320;canvas.height=180;const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='red';ctx.fillRect(0,0,320,180);const stream=canvas.captureStream(12);const recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp9'});const chunks=[];recorder.ondataavailable=e=>chunks.push(e.data);const stopped=new Promise(resolve=>recorder.onstop=resolve);recorder.start(250);const timer=setInterval(()=>{ctx.fillStyle='#ee0000';ctx.fillRect(0,0,320,180)},80);await new Promise(resolve=>setTimeout(resolve,1000));recorder.stop();await stopped;clearInterval(timer);stream.getTracks().forEach(t=>t.stop());return [...new Uint8Array(await new Blob(chunks).arrayBuffer())]})()`) as number[]
@@ -78,6 +85,7 @@ async function run():Promise<void>{
   const existing=(await execute({action:'video.studio',studioRequest:{operation:'render',draftId:editable.id,expectedRevision:editable.revision}})).result
   assert.equal(existing.reused,true);assert.equal((existing.export as {artifactId:string}).artifactId,exported.artifactId)
   console.log('PASS direct composition registers Session-owned editable Studio scenes and reuses the native completed MP4')
+  const exportLedger=new WorkExportStore(project.directory,project.id).scan(false);assert.equal(exportLedger.issues.length,0);assert.equal(exportLedger.records.length,1);assert.equal(exportLedger.records[0].artifactId,exported.artifactId);assert.equal(exported.libraryWarning,undefined);assert.equal(exportLedger.records[0].uses.filter(u=>u.role==='main-video').length,1);assert.equal(exportLedger.records[0].uses.filter(u=>u.role==='narration').length,1);assert.equal(exportLedger.records[0].outputSha256,crypto.createHash('sha256').update(fs.readFileSync(String(exported.path))).digest('hex'));assert.equal(existing.libraryWarning,undefined)
   const quality=assertCompositionQuality(exported.quality)
   assert.ok(quality.samples.some(s=>s.reasons.includes('scene-end')));assert.equal(quality.semanticVerification,'requires-visual-review')
   const report=JSON.parse(fs.readFileSync(path.join(artifacts,String(exported.verificationArtifactId)),'utf8')) as {quality:unknown};assert.deepEqual(report.quality,quality)

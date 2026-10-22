@@ -1,4 +1,6 @@
 import type {NativeMediaPort} from '@bmw-agent/media-native/port'
+import type {WorkspaceMode} from '@bmw-agent/agent-contract'
+import type {ProjectSourcePort} from '@bmw-agent/media-native/sources'
 import type {BrowserWindow, IpcMain, Notification, Session, WebContents} from 'electron'
 import type {ActiveProject, ActiveProjectProvider, BrowserFeatureHost} from '@bmw-agent/browser-capability/host'
 
@@ -7,7 +9,26 @@ export interface FeatureActivationOptions {session: Session; projectStore: Activ
 export interface FeatureAssistantActivity {projectId:string;sessionId:string|null;status:string;runId:string|null;action?:string;message?:string;toolRunning?:boolean;toolStartedAt?:number;lastEventAt?:number;lastEventType?:string;lastToolAction?:string;lastToolCompletedAt?:number;lastToolSucceeded?:boolean;dispatchBlocked?:boolean}
 export interface FeatureStudioRegion {top:number;bottom:number;floatBottom?:number;propertyWidth:number;resourceWidth?:number;avoid?:{x:number;y:number;width:number;height:number};obscured?:boolean}
 export interface FeatureStudioPresentation {immersive:boolean;chatOpen:boolean;position?:{x:number;y:number};docked?:boolean;region?:FeatureStudioRegion;floatHeight?:number}
+export interface CollectionBinding {projectId:string;sessionId:string;driverId:string}
+export interface CollectionReceipt {state:'active'|'success'|'failed'|'interrupted'|'uncertain'|'missing';drained:boolean}
+/** Host-only admission, receipt and cleanup facts. No provider transport is exposed. */
+export interface CollectionRuntimePort {
+  yield?():Promise<void>
+  binding():CollectionBinding|null
+  available(binding:CollectionBinding):string|null
+  recoverable(binding:CollectionBinding):boolean
+  enqueue(binding:CollectionBinding,text:string,collectionRunId?:string):{accepted:true;dispatchId:string}|{accepted:false;reason:string}
+  receipt(binding:CollectionBinding,dispatchId:string):CollectionReceipt
+  cancel(binding:CollectionBinding,dispatchId:string):Promise<void>
+  /** Immutable official resume anchor; batch leases never substitute one. */
+  anchor?(binding:CollectionBinding):string|null
+  /** Trusted cleanup recovery of this exact background input, never replay. */
+  recover?(binding:CollectionBinding,dispatchId:string):Promise<void>
+}
 export interface FeatureHost {
+  collectionRuntime?:CollectionRuntimePort
+  collectionSources?(projectId:string):ProjectSourcePort
+  configureCollectionBrowser?(configure:(binding:CollectionBinding,runId:string,browser:BrowserFeatureHost)=>(()=>void)):void
   setStudioPresentation?(value:FeatureStudioPresentation):void
   browserKernel: BrowserFeatureHost
   projectStore: ActiveProjectProvider
@@ -19,7 +40,11 @@ export interface FeatureHost {
   isProjectChanging(): boolean
   getAgentWebContents?(): WebContents | undefined
   getAgentUrl?(): string | null | undefined
-  setWorkspaceMode?(mode: 'browser' | 'studio'): void
+  setWorkspaceMode?(mode: WorkspaceMode): void
+  openWorkspace?(mode: WorkspaceMode): Promise<void>
+  listLibraryProjects?(includeArchived: boolean): (ActiveProject & {archivedAt?: string})[]
+  librarySources?(projectId: string): ProjectSourcePort
+  libraryProfileDirectory?():string
   getCurrentSessionId?(): string | null | undefined
   enqueueAssistant(sessionId:string,text:string,frozenContext?:string):Promise<string>
   getAssistantActivity?():FeatureAssistantActivity
@@ -35,7 +60,7 @@ export interface FeatureRuntime {
   configure?(host: FeatureHost): void
   installIpc?(ipc: IpcMain): void
   layout?(bounds: {x: number; y: number; width: number; height: number}, visible: boolean): void
-  setMode?(mode: 'browser' | 'studio'): Promise<void>
+  setMode?(mode: WorkspaceMode): Promise<void>
   openPanel?(id: string): Promise<unknown>
   contextForSession?(sessionId: string, projectId: string): Promise<{text: string}>
   onProjectActivated?(project: ActiveProject, options?: {snapshot?: boolean}): void | Promise<void>

@@ -24,10 +24,11 @@ export class AssistantController {
     const saved = selectedSessionId ? history.snapshot(selectedSessionId) : null
     const settings=this.options.settings?.snapshot(driverId)
     const activeRunId = saved?.receipts.find(row => row.runId === host.activeRunId)?.runId ?? null
-    return { project, driverId, drivers: host.descriptions(), sessions: conversations.list(project.id), selectedSessionId, messages: saved?.messages ?? [], events: saved?.events ?? [], interactions: activeRunId ? saved!.interactions : [], activeRunId, busy: host.busy, resourcesDisconnected:host.resourcesDisconnected,...(settings?{settings}:{} ) }
+    return { project, driverId, drivers: host.descriptions(), sessions: conversations.list(project.id), selectedSessionId, messages: saved?.messages ?? [], events: saved?.events ?? [], interactions: activeRunId ? saved!.interactions : [], activeRunId, busy: host.foregroundBusy, resourcesDisconnected:host.resourcesDisconnected,...(settings?{settings}:{} ) }
   }
   private member(sessionId: string): AgentConversation { return this.options.conversations.get(agentIdentifier(sessionId), this.options.currentProject().id) }
   private async selection(operation: () => Promise<void>): Promise<void> {
+    await this.options.host.yieldBackground()
     if (this.options.host.busy) throw new Error('Stop and drain the current Agent before changing conversations')
     await this.options.transition(operation)
     await this.options.onSelection(this.snapshot().selectedSessionId)
@@ -37,6 +38,7 @@ export class AssistantController {
     switch (command.action) {
       case 'snapshot': break
       case 'settings.run':
+        await host.yieldBackground()
         if(!this.options.settings)throw new Error('Agent settings are unavailable')
         this.options.settings.start(command.driverId,command.request);break
       case 'settings.cancel':await this.options.settings?.cancel();break

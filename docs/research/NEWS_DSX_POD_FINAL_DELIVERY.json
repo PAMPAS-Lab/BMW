@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "date": "2026-10-22",
+  "status": "exported-final-review-in-progress",
+  "workflow": "User-authorized current BMW instance; visible native Studio editing, single-segment Qwen regeneration and native render; official Qoder browser review. No code or production-profile tests.",
+  "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+  "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+  "draftId": "9665aa12-9361-4976-9098-7cf3752f40d5",
+  "title": "DSX POD：AI 工厂模块化",
+  "export": {
+    "artifactId": "media-b1f994a2-3d0d-452a-b5fd-1fc4b88083cc-converted.mp4",
+    "renderedRevision": 63,
+    "currentDraftRevision": 64,
+    "localFile": "outputs/dsx-pod-2026-10-22/DSX-POD-final.mp4",
+    "sha256": "7a1341e1288e80d421bf639d1e77563d24787db9c985a4485d982335dadf4095",
+    "bytes": 10762234,
+    "timelineSeconds": 48.625,
+    "actualSeconds": 48.704,
+    "width": 720,
+    "height": 1280,
+    "fps": 24,
+    "videoFrames": 1167,
+    "videoCodec": "avc",
+    "audioCodec": "aac",
+    "audioSampleRate": 48000,
+    "audioChannels": 2,
+    "technicalStatus": "passed",
+    "watermark": "AIpardonSI News",
+    "oldExportsRetained": true
+  },
+  "changes": {
+    "globalTitleShortened": true,
+    "sourceTitlesShortenedWithPublicationDates": true,
+    "firstFiveSceneSourceRangesAndDurationsRetained": true,
+    "firstFourChineseWavsRetained": true,
+    "openingOriginalSpeechAndTwoBilingualCuesRetained": true,
+    "newClosingNarration": "英伟达计划二零二七年初交付，伙伴包括戴尔和联想；实际落地仍待验证。",
+    "newClosingWav": "narration-b064d139-0bed-4bca-b513-ad6014f684ad.wav",
+    "newClosingMeasuredSeconds": 6.24,
+    "closingCaptions": "Native Studio script estimate; not human-confirmed sentence timing",
+    "conditionCardTitle": "14天 ≠ 从零建厂",
+    "closingCardTitle": "2027年初：计划交付"
+  },
+  "sources": [
+    {"url":"https://www.youtube.com/watch?v=PvFjbPYEOZI","author":"NVIDIA","publishedDate":"2026-10-21","recordedDate":null},
+    {"url":"https://blogs.nvidia.com/blog/gtc-berlin-2026-keynote/","author":"Brian Caulfield / NVIDIA","publishedDate":"2026-10-21"},
+    {"url":"https://nvidianews.nvidia.com/news/nvidia-introduces-dsx-pod-ai-factories-to-accelerate-europes-infrastructure-deployment","author":"NVIDIA","publishedDate":"2026-10-21","finding":"Partner list and early-2027 delivery plan already announced; prepared-site deployment claim, not completed customer delivery"},
+    {"url":"https://investors.delltechnologies.com/news-events/press-releases/detail/1659/dell-technologies-advances-enterprise-agentic-ai-from-the-deskside-to-data-center-with-nvidia","author":"Dell Technologies","publishedDate":"2026-10-21","finding":"Dell independently announces its DSX POD reference design and early-2027 availability plan; not delivery proof"}
+  ],
+  "review": {
+    "nativeCriticalStatesPerScene": [15,24,24,21,24,18],
+    "nativeCriticalStatesTotal": 126,
+    "omittedCandidates": 4,
+    "technicalWarnings": ["Scene 3 reference photograph has about eight seconds of low change; retained for architecture explanation"],
+    "studioHints": ["Opening second bilingual cue adapted to 28px","Scene 3 fifth caption reading time is short"],
+    "officialRuntimeSceneAndWholeFilmReview": "in-progress",
+    "finalMp4OriginalSpeechPcmAndAsr": "in-progress",
+    "independentRoot": {
+      "method": "Visible current-MP4 playback in BMW, fullscreen to end, followed by paused exact-time spot checks; no auditory claims",
+      "observed": ["Original speech opening and bilingual caption at 1.55832 and 2.98457 seconds","Opening second bilingual caption near 6 seconds","Live close-up and caption near 15 seconds","Reference architecture image at 21.97491 seconds","Later live close-up at 29.0534 seconds","14-day boundary card near 34 seconds","Updated planned-delivery card near 44 seconds and end"],
+      "limitations": ["Publication date wraps across lines but remains complete","Reference image fine print and opening wide-stage figure remain small on phone","Root playback and screenshot observations are not human listening or exhaustive frame inspection"]
+    },
+    "humanListening": "pending",
+    "userAcceptance": "pending"
+  },
+  "documents": {
+    "script": "NEWS_DSX_POD_FINAL_SCRIPT.md",
+    "nativeTechnicalReport": "outputs/dsx-pod-2026-10-22/DSX-POD-native-report.json",
+    "nativeSrt": "outputs/dsx-pod-2026-10-22/DSX-POD-final.srt",
+    "nativeSrtCueCount": 23,
+    "nativeSrtTimingProvenance": "outputs/dsx-pod-2026-10-22/DSX-POD-subtitle-timing.json",
+    "srtContentVerification": "All 23 cues read from the exported file. Opening two cues retain both languages; closing three cues match the new narration and end at 48.532 seconds."
+  },
+  "published": false,
+  "schedulesResumed": false
+}

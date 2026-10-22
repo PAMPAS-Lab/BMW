@@ -27,6 +27,8 @@ Browser is boundary, media is native, web is runtime.
 
 ## Verification and documentation
 
+- AI news production must use authentic moving footage continuously throughout the first three seconds and replace suitable static sections with relevant real footage. A still, page scroll, animated screenshot, generated image or previous finished news video does not satisfy this requirement. Verify source identity and date; label archival footage throughout with its recording date, or explicitly its publication date when recording date is unverified. Missing qualified footage means an incomplete delivery, not a silent downgrade.
+- Deliver a reviewable written script alongside each AI news video, including original-speech excerpts and Chinese translations when present, source links and dates. Verify material public responses and distinguish promises, proposed channels, execution details and actual delivery. Review the current exported MP4's critical states, all scenes and independent whole film; record technical checks and pending human listening separately. See `docs/NEWS_DAILY.md`.
 - `docs/FUNCTIONAL_SPEC.md` describes current implementation and is authoritative. Update it with feature, schema, permission and boundary changes.
 - Added, moved, renamed or removed tests require `npm run docs:features`. Keep README, handoff and status documents focused on the current product, not a change diary.
 - Run build, check, unit tests and boundaries. Runtime changes also require the relevant DSH, desktop, Studio, media, video and narration checks.

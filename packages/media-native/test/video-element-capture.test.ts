@@ -43,10 +43,12 @@ class Encoder {
 }
 class Reader {result='data:video/vp9;base64,AQIDBA==';onload?:()=>void;readAsDataURL(){this.onload?.()}}
 interface RendererState {pull():{sourceEndSeconds:number;reason:string;done:boolean;error:string};cancel():Promise<void>}
-async function initialize(video:Video,maxDurationMs=10000,fromStart=true){
+async function initialize(video:Video,maxDurationMs=10000,fromStart=true,bound=false){
   const expectedStart=fromStart?0:video.currentTime
   const context=vm.createContext({document:{querySelectorAll:()=>[video]},HTMLVideoElement:Video,MediaRecorder:Recorder,VideoFrame:NativeFrame,VideoEncoder:Encoder,FileReader:Reader,Blob,MediaStream:class {},performance:{now:()=>video.position*1000},URL,location:{href:'https://example.com'},setTimeout,clearTimeout})
-  const result=await vm.runInContext('('+videoElementCaptureInternals.initializeRenderer.toString()+')("fixture",'+JSON.stringify({selector:'video',index:0,fromStart,maxDurationMs,playbackPlan:[]})+')',context) as {ok:boolean;sourceStartSeconds:number}
+  if(bound)context.targetChanged=false
+  const videoIdentity=bound?{version:1,platform:'youtube',targetId:'fixture',resourceId:'fixture'}:undefined
+  const result=await vm.runInContext('('+videoElementCaptureInternals.initializeRenderer.toString()+')("fixture",'+JSON.stringify({selector:'video',index:0,fromStart,maxDurationMs,playbackPlan:[],videoIdentity})+','+(bound?'(()=>({blocked:null,targets:[{videoIndex:0,identity:{version:1,platform: \'youtube\',targetId:globalThis.targetChanged? \'ad\':\'fixture\',resourceId:\'fixture\'}}]}))':'undefined')+')',context) as {ok:boolean;sourceStartSeconds:number}
   const state=context.fixture as RendererState
   assert.equal(result.ok,true);assert.equal(result.sourceStartSeconds,expectedStart);assert.equal(video.paused,false)
   return {state,result,context}
@@ -113,4 +115,15 @@ test('A capture from a seeked position excludes cached frames before its admitte
  assert.equal(packets.length,1);assert.equal(packets[0]!.sourceTimestampSeconds,4.26);assert.equal(packets[0]!.endSourceSeconds,4.3)
  assert.ok(packets.every(row=>row.sourceTimestampSeconds>=result.sourceStartSeconds))
  await state.cancel();assert.equal(video.currentTime,4.25);assert.equal(video.paused,true);assert.ok(NativeFrame.instances.every(frame=>frame.closed));assert.equal(video.frames.size,0)
+})
+
+test('A target identity change before the next frame rejects capture before encoding that frame',async()=>{
+ NativeFrame.instances=[]
+ const video=new Video(8),{state,context}=await initialize(video,10000,true,true)
+ context.targetChanged=true
+ const [id,callback]=[...video.frames][0]!;video.frames.delete(id)
+ ;(callback as (now:number,metadata:{mediaTime:number;presentedFrames:number})=>void)(0,{mediaTime:0,presentedFrames:1})
+ assert.equal(NativeFrame.instances.length,0)
+ assert.throws(()=>state.pull(),/VIDEO_IDENTITY_CHANGED/)
+ await state.cancel();assert.equal(video.frames.size,0);assert.equal(video.paused,true)
 })

@@ -38,7 +38,7 @@ DSH 预设装配官方 `compaction-basic` 与 `compaction-tool-result-pruner`，
 
 ## NEWS-01 新闻选题与制作
 
-NEWS-02将候选上限从三项扩大到十项，版本1记录和已有三题批次仍可读取。Studio提供“推荐新闻选题”，由当前官方Assistant通过唯一browser检索与核对，不使用Host模型循环。默认覆盖中美及全球的重要个人、公司、大学／研究团队、公共机构，以及非AI职业重要人物关于AI的实质消息；名字不使用白名单，不按国籍或身份凑配额。按信息增量、公共影响、原始证据及视频表达价值推荐至多十个不同事件，允许零个。新闻价值、同一事件判断和推荐理由属于Agent编辑判断，Host不认证事实或热度。研究中可按最新revision逐批保存完整已合格列表，不以零散网页线索冒充可选卡片；本轮已发现动作字段复用，仅新动作或参数错误时补查帮助。propose-news-topics的操作帮助完整展开候选字段、必填项、枚举与十项预算，不再把候选契约裁掉后指回通用guide。
+NEWS-02将候选上限从三项扩大到十项，版本1记录和已有三题批次仍可读取。素材库提供“推荐新闻选题”，由当前官方Assistant通过唯一browser检索与核对，不使用Host模型循环。默认覆盖中美及全球的重要个人、公司、大学／研究团队、公共机构，以及非AI职业重要人物关于AI的实质消息；名字不使用白名单，不按国籍或身份凑配额。按信息增量、公共影响、原始证据及视频表达价值推荐至多十个不同事件，允许零个。新闻价值、同一事件判断和推荐理由属于Agent编辑判断，Host不认证事实或热度。研究中可按最新revision逐批保存完整已合格列表，不以零散网页线索冒充可选卡片；本轮已发现动作字段复用，仅新动作或参数错误时补查帮助。propose-news-topics的操作帮助完整展开候选字段、必填项、枚举与十项预算，不再把候选契约裁掉后指回通用guide。
 
 NEWS-02推荐的Agent编辑要求：优先广泛寻找有真实原声的采访与演讲，再考虑动态演示和同题作品对照，理由需交代观众能从画面直接观察到什么；单纯公告可说明更适合图文，不因易截图而优先。比较案例需实际看预览、核对模型标签和画面布局；作者单次生成花费不能表述为模型单价或总体成本，展示不认证总体胜负。日期前本地时钟不视为片长，媒体参数以实际检查为准。结尾回扣这次消息的新变化与已展示结果，不默认套用通用用途清单、口号或免责声明；需要限定时简短归因，不能用边界说明替代新闻重点。当前54.61秒Codex／龙安朗样片已获用户接受，独立结果见[新闻验收](research/CODEX_NEWS_REWORK.json)，不改变NEWS-01缺省参数或三驱动权限。NEWS-02的43.03秒Chuck Lorre采访新闻另获用户接受，使用龙安朗、原声节选及可编辑大号双语字幕，见[独立交付](research/NEWS_02_LORRE_DELIVERY.json)；不据此认证声学精度或声称跨导出审阅复用已实现。这些为官方Agent的编辑职责，Host不实现新闻价值模型或自动胜负判定。
 
@@ -50,7 +50,9 @@ NEWS-03发布日期识别覆盖发布方常见写法：星期前缀、月份缩�
 
 新闻制作引导要求采访主视频显式保留原声：类型编辑读取真实主画面clipId后使用clip.mute muted=false，不把独立画面图层解除隐藏视作恢复声音，也不向scene.set提交未支持字段。最终MP4需按采访实际时间窗media.audio.sample，并通过materials原生ASR检查该导出样本；源片ASR、存在AAC音轨及全片非零峰值不能替代此检查，背景音乐本身也会非零。指标／转写与人工听感仍分别登记。
 
-`propose-news-topics {expectedTopicRevision,newsCandidates}`保存版本1候选；`news-topics`读取当前卡片及有效性；`select-news-topic {expectedTopicRevision,topicId,baseFingerprint,options?}`仅可信Studio用户可调用；`news-guide {draftId,expectedRevision}`读取当前选定草稿的逐镜头引导。候选是闭合结构，含主体／个人或组织／类别／地区、标题／新闻点／理由／角度、形式（采访／演讲／公告／原帖／图文）／新事件或新发布、录制日期／缺口、同Project的sourceId／acquisitionId、精确UTF16 quote／quoteStart及previewArtifactId／image或video模式。来源必须有完整observed正文、作者、可靠的原始发布时间与精确引用；预览必须属于该次获取、原文件与原生解码证明均可核对。图片至多32MiB；视频预览须实际可解码且至多30秒，显示原片区间。采访／演讲形式必须有真实视频及可解码音轨；source acquire method=capture可显式fromStart=false，从实际播放器当前位置采集关键发言，缺省仍从头。原播放器位置／速率／loop恢复且保持暂停，原生证明记录实际源区间；download／preserve拒绝fromStart等录制参数。只取得图片或静音素材时需要明确提出图文候选，不能把海报当采访或在选定后静默降级。可见`time`元素的`datetime`仅在显式publishedSelector下有界读取，须带时区，其他情况保留可见日期；显式日期范围中混有署名或文号时，仅可提取唯一、完整的发布日期行或明确Release／Original Issue Date标签的日期，保留原始日／时区精度，多日期或截断范围不做提取，不拿抓取时间补发布时间。
+AI新闻制作的人工／Agent编辑验收要求还包括：前0–3秒连续使用真实动态视频，适当替换后续静态画面；资料画面持续标注可核验的录制日期，不能核验时明确标为发布日期并保留精度。图片运动、页面滚动、生成画面和旧成片不满足此要求。随片交付逐段文字稿、实际原声及译文、来源日期与待核事项，核实重要当事人回应并区分承诺、渠道、细则与到账。完整规则见 [新闻制作流程](NEWS_DAILY.md)。这是编辑验收标准，当前Host未自动认证真实运动、日期或报道完整性；不改变既有导出API或把未满足要求的历史作品改标合格。
+
+`propose-news-topics {expectedTopicRevision,newsCandidates}`保存版本1候选；`news-topics`读取当前卡片及有效性；`select-news-topic {expectedTopicRevision,topicId,baseFingerprint,options?}`仅可信BMW用户界面可调用；`news-guide {draftId,expectedRevision}`读取当前选定草稿的逐镜头引导。候选是闭合结构，含主体／个人或组织／类别／地区、标题／新闻点／理由／角度、形式（采访／演讲／公告／原帖／图文）／新事件或新发布、录制日期／缺口、同Project的sourceId／acquisitionId、精确UTF16 quote／quoteStart及previewArtifactId／image或video模式。来源必须有完整observed正文、作者、可靠的原始发布时间与精确引用；预览必须属于该次获取、原文件与原生解码证明均可核对。图片至多32MiB；视频预览须实际可解码且至多30秒，显示原片区间。采访／演讲形式必须有真实视频及可解码音轨；source acquire method=capture可显式fromStart=false，从实际播放器当前位置采集关键发言，缺省仍从头。原播放器位置／速率／loop恢复且保持暂停，原生证明记录实际源区间；download／preserve拒绝fromStart等录制参数。只取得图片或静音素材时需要明确提出图文候选，不能把海报当采访或在选定后静默降级。可见`time`元素的`datetime`仅在显式publishedSelector下有界读取，须带时区，其他情况保留可见日期；显式日期范围中混有署名或文号时，仅可提取唯一、完整的发布日期行或明确Release／Original Issue Date标签的日期，保留原始日／时区精度，多日期或截断范围不做提取，不拿抓取时间补发布时间。
 
 纯文字公告／原帖可先source collect，再调用`media.screenshot {selector,index?,sourceBinding:{sourceId,acquisitionId,expectedRevision}}`。selector/index必须等于已收集正文范围。原生层在截图前后核对URL、范围与正文SHA；全程主Frame导航（含in-place）或Renderer丢失即取消，版本冲突不接纳。来源截图保留长页细节，边界为1024像素宽／8192像素高及32MiB／16MP，较长页面不会仅因超过1536像素高被压成窄条；实际PNG按图片预算核对，Host原子加入同一acquisition的已确认image-decoded素材及不可由Agent提交的页面截图来源证明。它是原页渲染截图，不冒充网站原始下载图片；失败只清理本次新PNG／证明，不改变草稿。返回有界IDs和sourceRevision，不返回整份来源目录。
 
@@ -58,7 +60,7 @@ Host按当前UTC检查原始发布时间严格在近72小时，未来／日期�
 
 候选及用户选择存于Project内`video-studio/news`的独立version1记录，固定Project／Session、独立revision与指纹、256KiB单记录上限，拒绝损坏／链接文件并保留原件；新任务保留此前已选记录和草稿。确认先持久化Host分配的草稿ID，再创建同Session草稿；重复确认不会重复建稿。默认9:16／720p／24fps、目标45秒、Qwen安明远男声／0%，select的显式options可覆盖；设置开关及凭据仍独立验证，无静默回退。用户点击后通过已有Assistant投递机制继续，先保存uncertain投递状态，返回runId才记sent；失败或重启不自动重发。Agent不能自行确认、改选或关闭用户已选任务。
 
-Studio提供本次新闻Qwen音色选择，初始仍为安明远，选择时通过已有options显式写入新草稿；不改变全局默认或已有音频。十题卡片前三项自动加载实际预览，其余点击“加载真实预览”后才读取原文件，避免同时读取十份媒体；候选核验仍逐项实际解码。确认前该Session的Agent仅可研究取材，Studio创建／写稿／配音／合成以及直接video.narrate／video.compose被拒绝。可信用户可“退出新闻选题”：先取消并等待实际任务清理，再关闭等待限制；没有可确认的取消控制器时保留限制并报错，保留来源和记录；对应closeNewsTask仅可信用户可提交。确认后写稿、证据画面、实际旁白与字幕、成片审阅使用已有草稿与时间线，不升级Video Document格式。配音／渲染前重核选中来源，Agent渲染还需保留所选原始预览的可见使用；来源变化明确失败，不静默换题或更换证据形式。新闻只读刷新经Browser FIFO执行、合并重复请求，关闭时等待实际读取清理。技术阶段状态不代表内容、听感或最终用户接受。制作背景默认填可读选题摘要，技术身份保留在独立记录；引导统计有效独立字幕或句锚投影字幕，锚点失效单列问题。标题卡及有效图层按既有就绪检查判断，不把无素材标题卡误报为画面缺口。
+素材库选题交接提供本次新闻Qwen音色选择，初始仍为安明远，选择时通过已有options显式写入新草稿；不改变全局默认或已有音频。素材库候选卡片点击“加载真实预览”后才读取原文件，避免同时读取十份媒体；候选核验仍逐项实际解码。确认前该Session的Agent仅可研究取材，Studio创建／写稿／配音／合成以及直接video.narrate／video.compose被拒绝。可信用户可“退出新闻选题”：先取消并等待实际任务清理，再关闭等待限制；没有可确认的取消控制器时保留限制并报错，保留来源和记录；对应closeNewsTask仅可信用户可提交。确认后写稿、证据画面、实际旁白与字幕、成片审阅使用已有草稿与时间线，不升级Video Document格式。配音／渲染前重核选中来源，Agent渲染还需保留所选原始预览的可见使用；来源变化明确失败，不静默换题或更换证据形式。新闻只读刷新经Browser FIFO执行、合并重复请求，关闭时等待实际读取清理。技术阶段状态不代表内容、听感或最终用户接受。制作背景默认填可读选题摘要，技术身份保留在独立记录；引导统计有效独立字幕或句锚投影字幕，锚点失效单列问题。标题卡及有效图层按既有就绪检查判断，不把无素材标题卡误报为画面缺口。
 
 “查看原始来源”先保存当前GUI编辑，优先显示同Project中URL完全相同的已开页面；没有时才新建前台页面，并切到浏览器。打开期间禁止重复提交并沿用Studio取消／Session转换保护；不重定向其他同源用户页面，不因重复查看来源而反复新增后台tab。
 
@@ -118,9 +120,91 @@ Shell 运行时徽章从自有 Assistant 状态发布，显示等待、执行和
 
 普通 `video.compose` 在有宿主验证的 BMW 会话时，成功后原子保存该会话所属的新 Studio 草稿、原始分镜及已有 MP4；返回 `studioDraft` 并通知已打开的工作区，不覆盖已有草稿。已有音频保留为导入素材，不推断 TTS 生成参数。直接 `bulletRevealSeconds` 无法无损表示为 Studio 语音锚点时，保留独立成片并明确返回 `studioWarning`；没有会话的宿主调用仍只合成媒体。失败、取消、所属 Project 变化不登记新草稿。Studio 无草稿时显示明确空状态，加载完成后不继续显示“加载中”。
 
+## 全局素材库与三个工作区
+
+BMW 顶层并列提供浏览器、素材库、Video Studio。Host 激活各功能运行时并统一协调模式、布局、上下文和关闭；素材库由 feature-library 提供，Studio 保留制作、时间线、配音和导出。三个入口共用当前 Project/Session，切换模式不创建第二个模型循环或对话。
+
+素材库默认聚合全部未归档 Project 的已保存来源和 artifacts，不要求先建立转写索引；归档资料可通过筛选查看。目录支持标题、标签、已保存正文及已有转写检索，类型/Project/收藏/日期/可用性筛选、排序与分页及至多50项批量标签/收藏整理；每页至多50项，正文/转写搜索有界，不隐式启动全库ASR。素材及原文仍归所属Project，收藏、标题、说明和标签保存在该Project的 library/catalog.json（version1、revision、records），支持CAS；损坏记录保留并显示问题，归档Project仅可读取。普通浏览历史不自动保存。辅助审阅帧与证明文件默认不挤占资料列表，可显式包含；批量整理逐项CAS保存，取消保留已完成项并停止后续项。
+
+原文截图登记在既有32MiB图片/像素预算内按最多1MiB分块读取，校验完整静态PNG结构、解码尺寸、所读字节SHA与实时文件指纹，取消逐块检查并关闭输入；不放宽ArtifactJobIO单次读取上限。推荐准备指引要求复用事件已关联获取、实际核对预览属于正文而非推荐侧栏，并将未核实录制日保留null，不以发表日代替。
+
+来源collect优先显式authorSelector/publishedSelector；局部元素难以定位时可用可选metadataRanges.author/publishedAt绑定同一本次完整observed正文内的UTF16 startCharacter/endCharacter/quote。每字段与其selector互斥，引用与实时可见正文逐字核对，日期必须完整原始发布日期行，不得从Updated／录制／转载文字中裁出日期；只保留原始精度，不新增时区或推测时间。位置证据随新acquisition持久保存，read/import重新校验正文SHA及位置，旧获取无此字段保持原样，不自动回填。该绑定证明文字来源，不自动证明署名语义、来源权威或内容正确；推荐仍执行原有日期、身份、原文及真实预览检查。新获取、旧原文与其修订并存，不修改旧正文。
+
+library.materials 提供 search/read/set-metadata/copy；library.sources 提供既有有界 list/read/collect/confirm/acquire 来源能力，模型回复经 librarySourcePage 对列表、原文、候选和媒体分页：正文每页4000个UTF16单元，数组至多20项，nextOffset续读；library.news 提供 news-topics/propose-news-topics 新闻研究。它们均为唯一browser工具的已验证动作，沿Browser FIFO、当前Project/Session、取消及原生边界执行。模型可全库查询有界摘要，跨Project原文/媒体读取需先复制到活动Project；GUI可通过固定本地素材库主框架授权预览其他已登记Project。内联预览上限32MiB、每块512KiB，不接收路径或远程媒体URL。素材库页面禁止联网、任意导航和弹窗。
+
+跨Project复制连同所选来源获取记录、原文、媒体、证明及其保存的依赖一并验证哈希并复制，单次总量512MiB、至多4096个文件；保留原始采集时间、引用区间与证明，目标Project内保持对应ID并记录来源Project身份。目标同名同内容复用，同名不同内容明确拒绝且保留旧文件。事务保存至目标Project library/transfers：preparing/committed/failed/quarantined。源/目标身份、源目录revision和目标来源CAS均重核；中断前已提交来源可识别完成，未提交事务只按本次输出inode清理，清理失败隔离后拒绝新复制；仅可信GUI用户可通过 recover-copies 明确恢复清理。索引/整理副本独立，源Project后续变化不覆盖目标草稿。目标视频可脱离源Project使用。
+
+新闻收集与选题在素材库进行，研究批次保持现有 video-studio/news 的Project/Session归属与旧记录兼容，不搬动历史文件。历史批次可查看并再次选用；过期新闻保留资料，制作时重核时效和来源。确认选题后选择制作Project，跨Project先复制完整证据，再在目标Session保存选题与草稿并进入Studio；先持久化投递状态后发给官方Assistant，uncertain/failed不自动重发。Studio保留新闻制作进度与来源入口，并提供从全库选择素材：返回时按所捕获草稿revision加入preparation，冲突时保留副本并拒绝覆盖GUI编辑。video.studio的旧来源/研究动作仍兼容，研究契约、存储与来源执行已归feature-library。
+
+项目专题与全局方向第一阶段：素材库提供“项目专题”“关注方向”和“成品”。专题在 Project/library/research.json version1 持久化，跨 Session 共享；Profile/library/directions.json version1 保存独立全局方向、采集目标 Project 和专题引用。专题可提升为方向、关联/解除关联已有方向；直接创建方向亦可，原素材、news批次、草稿和导出文件不移动、不改写。创建方向本身不创建计划任务或启动采集；来源订阅可由用户另行启动一次有界手动巡检；保存项目归档/失效显示问题。完整设计及后续滚动事件、推荐和调度阶段见 [LIBRARY_STREAMS.md](plans/LIBRARY_STREAMS.md)。
+
+library.research 是唯一 browser 下的闭合动作，topics/directions/direction-topics/links 为至多50项分页摘要；全局方向摘要每项至多20个专题引用，明确总数。所有新增组织写入仅可信GUI用户可提交，Agent不能分类成品、提升专题、写入关系或启动长期方向。GUI可整理未归档Project资料；Agent跨Project原文/媒体仍须完整证据复制。新增存储使用固定Host目录、4MiB预算、CAS原子写入及链接/目录身份检查；Project每份至多500专题、5000资料关联、5000关系，Profile至多500方向，关系/分组损坏保留原件，原始素材检索继续显示并报告问题。
+
+用途独立于媒体类型：未分类、来源素材、加工素材、预览/中间版本、成品、辅助记录。可信用户可给素材关联本Project专题及多个全局方向，全库可按用途/topicId/directionId组合筛选；方向资料包含直接关联及所关联专题的材料；来源获取记录的专题关联可由其原文/媒体继承，独立整理记录可显式覆盖。旧文件名不构成正式成品证明；用户可显式分类文字/图片/音频等成品，已记录的视频导出自动投影为成品，分类不声明人工接受。参考/reference和计划使用/planned关系可双向分页查询，不声明实际采用。草稿字符串搜索的usage仅为引用线索，不代替导出采用账本。新组织操作沿Browser FIFO及可信素材库主Frame准入执行；Project/Session转换取消过期读取，编辑表单不因普通Assistant进度刷新被覆盖。
+
 ## 桌面、Project 与会话
 
-- 一个 BMW 主窗口，浏览器与 Video Studio 为共享工作区；右侧 Assistant 使用同一会话。关闭或切换 Studio 不退出应用。
+导出溯源第二阶段：Studio render 与直接 video.compose 在真实导出时自动保存 Project/library/exports/<sha256>.json version1 不可变记录；含作品/Session/草稿revision、原生渲染版本、规范化合成快照SHA、输出SHA及采用材料SHA、角色、镜头/片段身份、输出区间与素材文件时钟区间。启用的主画面/原声/旁白（含分段变速）/卡片图片/独立图层/音轨分别记录，隐藏、整段透明、静音、零音量、准备清单与仅参考内容不算实际采用。末帧停留与源原声截止分别标示；此记录表示合成输入采用，不证明被遮挡后的每个像素或人工听感。来源获取和已提交跨Project复制身份随材料指纹保存，采集范围不冒充录制文件到原片的精确时钟映射。
+
+每次真实输出独立一条记录，缓存复用不新增；已提交账本独立于草稿最近30次导出窗口及后续改稿/删除。新增记录先暂存，草稿回执提交后转为完成；遗留暂存须核对同owner/草稿/输出/revision回执才可读取，读取不改写旧文件。账本错误保留成功的既有制作结果并返回libraryWarning，GUI明确显示；取消/CAS失败沿原输出清理路径执行，不生成虚假已提交版本。旧成品只读投影已有导出回执，采用详情标为未知，不从当前草稿反推、不改文档格式或原文件。每Project账本最多4096份有界文件，单份4MiB；全局单次元数据读取32MiB，达到预算报告结果可能不完整，诊断列表亦有界并注明省略，原作品保留。
+
+library.exports 是唯一browser内的闭合只读动作：works（分组作品）、versions（作品或输出文件的版本）、uses（版本采用素材和区间）、adoptions（材料/来源反查采用版本），每页最多20项，按返回页核对当前文件SHA，区分一致/变化/缺失/不可核对/旧未知。跨Project仅返回摘要、身份与区间；正文/媒体仍须复制后读取，归档项目可显式查询。GUI成品按作品分组，可查看全部版本、采用区间和当前文件状态，素材详情可反查成品；缺失成品仍可查看历史记录。Host自动准入是唯一新增记录入口，无模型或普通GUI写账本操作，既有参考/planned关系保持独立。
+
+来源/事件容量第三阶段：新来源记录写入 Project/sources/stream/commits，事件观察写入 Project/library/events/commits；每千次提交一个序号目录，单提交至多4个实体/4MiB，固定命名空间最多一百万次提交。文件为不可变版本1信封，含Project、稳定key、基底指纹、递增序号和前序SHA，原子不覆盖发布为提交点。旧 sources/catalog.json 保留为只读基底，继续按旧200来源/1000获取/4MiB契约验证；新记录不受该单JSON数组限制，同一来源各次获取独立保存。基底指纹改变拒绝混用。来源正文、原候选/媒体证明身份、新闻批次、草稿和导出文件不改写、不搬动；定点来源读取、制作校验、复制及导出绑定使用身份/材料索引，不再依赖整库快照。旧目录/collect回包只提供有界兼容窗口，complete=false附续读指引，不能当作全库。
+
+派生索引使用Node内置SQLite，固定Host路径、禁用扩展，不暴露SQL或路径。增量事务保存实体版本、FTS5 trigram检索文本、精确来源/材料/主题/方向过滤词和已应用提交SHA；原文索引来自实际保存且SHA核对的文件，不联网、不启动ASR。索引缺失/落后/损坏显式报维护状态；重建在新一代文件中分批重放基底和提交链，每次最多100条基底记录/提交、8MiB元数据软预算（完成当前单份有界记录后停止），取消回滚当前索引事务，已完成检查点可继续。原损坏缓存/指针保留；已发布的来源记录不因目录耐久性警告或索引失败撤销，回包给出indexWarning，原始正文保持。缺失/变化正文不重写，检索提示正文覆盖不完整。跨Project只读浏览不初始化或修复索引；旧小目录可只读有界回退（每次至多检查100次获取，原文单份至多256KiB），不为跨Project浏览写缓存。
+
+library.streams 为唯一browser内的新闭合动作：sources/events 按已登记Project返回至多50项摘要，支持关键词与来源过滤，events另支持专题/方向身份过滤。游标固定Project/命名空间、基底、提交快照、查询/过滤/页大小和上一实体key，返回pageCursor可稳定返回首屏；采集新增或修订不会重排已展示分页，刷新才纳入新资料，首次从旧基底进入分片写入也保持旧游标。默认按稳定实体key排序，不声明热点排名。三字符及以上关键词走全文索引，短词走有界扫描；每页至多检查512个索引候选，检索/返回数据使用8MiB软预算及单记录上界；零匹配也可能有nextCursor，只有complete=true且无游标才表示扫描结束。不为有界扫描虚报全库总数。GUI提供“来源流”“事件记录”、Project选择、检索、前后翻页及维护区；后台Assistant进度不重排当前流，隐藏时取消过期更新，返回保留分页。旧全库offset概览/媒体-ASR索引仍有各自预算，来源超出兼容窗口时返回complete=false及sourceContinuations并提示使用来源流；长期来源检索不依赖200件ASR索引。
+
+rebuild和sync-news仅可信GUI用户可在当前未归档Project调用，模型没有维护或事件写入入口。历史新闻显式分批同步为legacy-batch观察，不改原批次；新合格提案自动沉淀verified-proposal观察，保留原Session/批次/候选及证据SHA，同批次稳定身份幂等、不同Session/批次不猜测合并。通用Host collection观察另有runId/recordId/sourceRevision，支持多方向而不要求AI新闻类型；当前无通用Agent写入或自动采集。事件底层不受十条推荐限制，既有新闻可信选择、投递状态和Studio制作门禁保持。原始观察不承担语义归并；第四阶段独立编辑事件提供归并/拆分。十题快照适配由第五阶段独立推荐层提供；周期采集见下述第六阶段。
+
+滚动采集第四阶段：`library.collecting` 为唯一 browser 内闭合动作，提供只读presets/list/read、可信GUI subscribe-preset/put-subscription/start/cancel/revise-lead/put-event/merge/split/rebuild，以及受用户启动任务约束的 Agent save-lead/finish。新增 Project/library/rolling/commits 固定命名空间，沿用版本1不可变信封、每提交最多4实体/4MiB、增量SQLite与稳定游标；订阅、任务、线索、编辑事件及独立audit记录各自有稳定ID和递增修订，操作后快照保存在audit，historyId分页查询历史。只读跨Project查询不建目录，隐藏证据引文和社媒指标原文；原文/媒体仍经既有复制门禁。索引重建每批最多100提交且仅当前可写Project可信用户可调用。旧来源、独立事件观察、news批次、草稿、作品与采用关系零迁移、零写回。
+
+订阅包含平台web/x/youtube、固定HTTPS入口、最多3个备用入口、身份核对依据、地区/语言、至多50专题及方向、following/paused、游标、健康和最近结束检查的回执。Project专题必须存在且开放，方向必须跟踪且采集目标为当前Project；改绑/暂停后拒绝旧任务提交，订阅配置不自动迁移。GUI提供“来源订阅”“采集记录”“滚动线索”“滚动事件”，可在已登记Project之间查看摘要，当前Project可配置、启动及整理；表单列出前50专题/方向并保留已有选择。创建订阅或方向不会启动任务。每Project至多一个未终结采集任务，启动使用当前Session的官方Assistant队列，先持久化uncertain输入收据，返回后记sent；异常/不确定投递永不自动重发，需用户查看并停止/恢复。
+
+固定来源目录提供24个建议入口（机构公告、研究、科技报道及X/YouTube账号、主题和趋势观察）。只读presets不建立订阅或初始化资料；可信GUI“添加 AI 新闻固定来源”显式勾选1–20项，可关联当前Project的跟踪方向，默认paused。subscribe-preset使用Project+预设键的稳定ID与CAS；重复添加只返回原订阅，保留用户修改、状态、游标及历史，不增提交、不启用计划。预设含HTTPS入口、显式备用入口、语言/配置范围及身份核对链接；不代表实时可访问或热点认证。目录是新源文件，不迁移旧订阅或任何已有素材。
+
+每次手动任务十分钟、最多20次保存观察；已到期拒绝后续提交。运行中的截止计时器只取消匹配本次dispatchId的Assistant并等待真实清理，清理工作纳入Project/Session转换等待；无法确认、跨Project、应用重启或清理失败时保留锁与旧游标，用户回原Session恢复，不启动后台补跑。可信GUI停止在浏览器FIFO之外先等实际cancelAssistant（避免等待自身队列），再CAS终结回执，未知活动或其他任务不会被误取消。来源抓取继续用tabs及library.sources的真实可见DOM、单份256KiB及原有浏览器/媒体预算，Host不实现模型循环、直接爬虫或绕过登录。
+
+save-lead要求本轮新获取原文的Project来源身份、真实SHA及精确UTF16引文，稳定身份为订阅+规范URL哈希，同任务相同证据/描述/指标幂等；后续观察和用户核对状态/缺口修订留历史。原始结论不声明事实核验完成。X/YouTube入口和原文URL须匹配平台域名；平台标识须为已存原文URL中一个大小写一致的路径段或视频v参数，例如X趋势入口填trending、YouTube频道填@OpenAI、搜索入口填results；不得填完整URL或趋势标签。闭合Schema及巡检提示给出这些示例；身份与指标错误分开返回，身份拒绝列出该原文URL的可用段，指标缺失可为空且不降级校验。入口快照不是其中每条趋势/帖子的独立身份，模型不应为无关体育娱乐条目创建AI新闻线索。可见指标必须逐字存在于已存文本；保存入口、地区/语言范围、来源采集时间和指标原文，无指标明确为空，不推断增长或全站趋势，新社媒线索按原始URL确定post/video/account/topic/trend观察类型，请求类型不符拒绝；旧social缺少可选observationKind时保持原样，不回填。账号公开资料不冒认帖子或趋势，配置地区不冒认实际观察地区。已识别登录跳转、反机器人和错误页只保留来源及受限检查，不生成内容线索，也不得completed/no-new推进游标；可见的局部账号资料可作为注明缺口的观察。finish如提供任一证据字段，必须同时提供sourceId/acquisitionId/quote/quoteStart，缺字段明确拒绝且不写回；partial/restricted/failed可全部省略。完成检查的证据必须是本轮固定或备用入口；仅完整observed、非登录受限、非截断的completed/no-new可与订阅游标原子提交。无新增不得含本轮新增观察，partial/restricted/failed/cancelled/过期/证据或CAS失败均不推进游标，已提交线索保留。
+
+批量增量采集：`library.collection-batch` 是同一个 BMW browser 内的闭合动作，start/cancel/recover 只允许可信素材库界面，Agent 只可 collect 一次、read 已保存结果并 submit 批量线索判断。GUI 在当前Project勾选1–9个关注中来源，显式选择2或3路，绑定当前Session、官方driver和已建立的原生恢复锚点；先持久化uncertain批次再派发唯一官方输入，异常投递不重发。旧单源入口和周期计划不改写、不自动切换为批量或启用。未核对的批次与旧单源live任务互斥。Project/library/collection-batches/commits 为独立不可变分片命名空间，保存批次、来源修订、入口证据、pending、规范URL检查点与逐项核对SHA；历史新闻、素材、快照、稿件、作品、采用关系及旧run格式不变。list用固定索引游标分页，read每页至多20篇短原文，原始全文仍存sources。
+
+一次原生批量动作内部用2–3个独立隐藏、静音、无前景挂载的页面lane并行导航和可见DOM读取，不增加模型工具或Host模型循环，不重用用户页面。九个入口全部检查后，至多20篇正文按来源轮流分配（每源含入口至多20次观察，总页面预算60、截止10分钟）；原文和检查点经串行提交器读取最新revision后CAS写入。正文/署名/原始日期与scope如实保存，未知日期为缺口；冻结近72小时新闻核对范围取批次createdAt，不扩展七天。列表指标变化不改变文章身份；X趋势入口同次原文作为可审阅original供一次submit保存相关观察线索，platformId=trending，强制注明词条与事件关联尚未核实且保持partial/旧游标；它占用20条结果预算，不能自动产生事件。链接提取仅限同次可见正文范围，原文与链接读取期间变化则拒绝混用。正文采集前对固定选择器做最多4秒的有界DOM就绪观察，至多200次检查、每次200个文本节点；未就绪保留缺失范围结果，不扩大正文或自动登录。已知同次themeRefresh替换仅允许保持原始页面域名、路径、视频ID及其他查询参数，最多等待5秒稳定后读取现存页面，不重新navigate或派发输入；其他替换拒绝。量子位没有time标签时，只接受完整正文头部前10行中与独立已获取署名相邻、后接时钟的唯一有效公历日期，保存精确UTF16日期见证，不推断时区或使用抓取时间。固定DOM适配无法读取时保留失败/受限与旧游标，仍可用旧手动入口核对。
+
+每源pending最多200个URL；超过100个积压时下一批只补读已存pending、不读取新入口，以免有界队列静默丢弃未读。只在入口完整、链接范围未截断、全部候选已保存或明确跳过后推进有界范围检查点；空白、无链接、partial/restricted/failed/cancelled均不表示no-new。Agent一次submit多条save/skip/pending，逐项复核原文SHA与精确引文、社媒URL及可见指标；核对SHA按固定字段顺序和可选空值规范化，相同内容不因JSON字段顺序重排产生重复提交；新的决策不能覆盖已提交核对。事件整理、归并拆分、推荐及可信选题权限保持。用户任务沿原后台yield取消输入并等待所有页面/读写实际排空；页面清理失败保留隔离和精确dispatch对应的执行域，可信recover只清理旧资源，不重新派发。无dispatch回执而运行时仍忙或存在unknown输入时拒绝恢复，不能把关闭页面视为官方输入已结束。
+
+编辑事件为用户明确整理的版本化对象，引用最多100条已存线索或第三阶段新闻观察；现有“事件记录”可单条整理为滚动事件。修订标题/摘要/依据和证据集合保留历史；两事件归并原子产生一个有父关系的新事件并把原事件标为merged；拆分要求原证据完整、无重复划为两个非空集合，原事件标split并记录两个后继。每次操作最多3实体+1audit原子提交，保留原事件及每个版本，退休事件不可覆盖。GUI支持证据详情、线索核对、归并/拆分及历史分页。它们不重定向旧批次/作品引用，不自动推荐、创建草稿或解除可信选题门禁；事件推荐十题适配已由下述第五阶段提供；周期调度见下述第六阶段。
+
+事件推荐第五阶段：`library.recommendations` 为唯一browser内的闭合动作，policy/list/read为有界摘要，prepare允许当前Project/Session的Agent为已关联原始证据的有效滚动事件补齐选题资料；put-policy/begin/advance/mark/rebuild只许当前未归档Project可信GUI，accept-shortage/activate另需可信用户的目标Session。Project/library/recommendations/commits为新固定分片命名空间，沿用每次最多4实体/4MiB的不可变提交、CAS、可重建SQLite与稳定分页；新增Host-only getAt按固定提交序号定点读取历史实体，不接收模型SQL或路径。策略、事件资料edition、构建快照、排序候选、范围标记、明确接受不足、旧news侧车准入和实际选题关系分别闭合版本化。旧sources、rolling、观察、news version1、草稿与成品格式不变，不迁移或清理。
+
+策略按Project默认或当前采集Project的方向独立保存，冻结策略ID/版本及1–168小时原始发布时间窗口（默认72）、recent/evidence排序、分类/地区/文字关键词与是否排除已看。项目专题按事件保存的topicId关联筛选；策略词是明确的文字包含，不声明语义分类或社媒热度认证。快照保存方向/专题身份及名称/说明，策略修改不重排旧卡；方向改绑不移动旧策略。seen/excluded/clear独立按Project或方向记录，Project排除对该Project全部方向有效；已看/已选不冒认成品，实际制作仍以导出账本为准。GUI按每页50个方向/专题翻页并保留已选范围，策略可编辑并显式保存。
+
+prepare绑定事件revision/SHA及全部所引线索/观察指纹，必须引用这些证据中的source/acquisition，Host重新校验原文精确UTF16引用、真实原作者/发布日期、同源图片或至多30秒视频预览的SHA及原生解码；采访/演讲仍需有声短预览，社媒指标不替代原文/日期/预览。既有新闻观察仅在原批次revision与观察一致时可复用候选并重核；有后续批次修订则需要显式补齐资料。资料不满足或事件修订后不自动假造选题。GUI可一次把明确方向/专题交给现有官方Assistant补齐至多十个事件，Host沿现有持久输入队列投递，不实现模型循环或自动制作。
+
+begin固定服务器截止时间、rolling/观察/edition/范围标记序号、策略和稳定事件游标；每次advance发现最多3事件（不超过设计5的上限），逐个保存经核验候选和排序key，与构建进度同一原子提交。原文日期按现有保守时区/日精度规则过滤；图片与动态预览不互相冒认。发现完整扫描后，第二遍按动态证据/原始发布优先的确定顺序分页（每批最多20），以事件ID、原始事件键、来源URL、正文SHA及共享证据去重，选取十条；不以名气、国籍配额或社媒计数排序。后台新增/修订、后写edition/排除标记不进入旧构建，索引重建后可恢复；已过期或不符合策略的已存元数据先过滤，不对这些记录重新启动原生预览检查；其余每次原生核验和提交支持取消，已完成进度保留。达到前端每轮10步预算只暂停，显示继续构建，不伪称全库不足。
+
+只有扫描完整且选出十个独立合格事件才标complete；少于十个标shortage，保存实际就绪数量与退役/排除/未补齐/修订过期/证据无法核验/时间窗口/策略不符/重复/证据预算等计数。完整/不足的终态快照不再写入，内容指纹覆盖策略、截止时间、索引版本、事件及证据版本、顺序、原文/预览SHA、理由与缺口。补采或改策略生成新快照。1–9题仅可经用户明确接受后使用，接受为独立目标Session记录，原快照仍标不足；零题不能接受或制作。GUI提供“事件推荐快照”、分批进度/继续、策略和专题、历史、原文/预览入口、明确接受不足以及接入新闻选题；后台进度不重建当前快照或未提交策略表单。
+
+activate在同Project整批打开，跨Project只复制用户所选一题的完整证据，再建立目标Session独立news批次及侧车admission；新批次沿既有新闻历史规则保留旧批次字节，失败不覆盖旧批次。侧车精确绑定snapshot、候选/facts指纹和冻结窗口，模型不能通过Studio参数放宽时效。新闻服务固定既有Host Project的规范目录并拒绝目录别名改绑，底层分片目录/文件身份边界保持。普通旧批次仍72小时且保持NEWS_EXPIRED等原错误码；绑定候选禁止Agent替换。既有新闻可信用户选择入口在创建唯一草稿之前重核快照/当前事件及证据、排除状态、时效和真实预览；已选草稿后续只重核其原证据，不因滚动事件后续修订替换或阻断固定草稿。跨Session/Project选题保留侧车和窗口身份，新快照草稿使用通用专题受众，普通旧新闻保留AI受众缺省；单次制作投递仍ready/uncertain/sent/failed，不自动重投；实际选题关系另存，不冒认导出。周期调度独立于推荐，见下述第六阶段；不自动发布。
+
+长期采集第六阶段：可信素材库GUI新增“周期采集与健康”，不增加模型/MCP工具、browser动作或Agent调度写入口。独立Profile `library/collection-schedules.json` 为闭合version1原子CAS控制账本，至多100计划及最近200健康通知，读取缺失文件不初始化；损坏/链接/目录身份改变保留原件并停用，不回退空库。计划固定方向、collection Project、BMW Session、官方driver、1–50个来源订阅、15–10080分钟周期及系统提示偏好。方向必须following且目标Project相符，订阅必须following并属于该方向；每方向至多一个计划。已有方向/订阅不自动启用。GUI分页列出计划，分页选择方向/订阅，支持暂停/启用、系统提示开关、通知已读、显式核对恢复和改绑当前Session/driver；结束旧轮次后可显式重配Project/方向/来源/周期并保持暂停，旧收据与材料不变；有旧轮次时禁止直接改绑。仅可信素材库主框架能调用闭合schedule IPC，Agent不能建立、启用、恢复或修改这些计划。
+
+调度器每30秒检查（任务截止另设定点唤醒）、全局每步最多投递一个官方输入，按最近投递时间轮转到期方向；一轮逐个检查已选来源，每个仍限制十分钟/20次观察，不限制素材库积累数。失败来源轮转到其他待检查来源之后，避免单一受限入口饿死整轮。未激活的绑定也可在固定 Project 的独立隐藏浏览器执行，不切换前台 Project/Session、驱动选择或工作区，不自动改绑。Host准入同步重核Project/Session/driver、成员/归档状态、未知收据及资源，忙碌Agent、浏览器/Project过渡、普通计划任务、Studio工作区及原生录制/处理/合成/旁白均让行。模型输入仍由既有官方driver prepare验证有效目录恰有BMW browser后释放，Host不实现爬虫、模型循环或额外能力。
+
+后台域由Host私有租约绑定注册的Project、Session和driver；普通Bridge租约仍要求活动Project，后台租约每次调用/返回重核其固定所有者。所有官方适配器沿用同一认证Bridge及有效的唯一browser目录。隐藏WebContentsView沿用BMW Chromium Session但不加入窗口，不恢复/保存用户页签；静音/暂停播放，禁止弹窗、JavaScript对话框、权限弹框、下载和调用显示捕获。固定动作门禁只允许status/help、tabs.list/open/close、navigate、observe、library.sources的list/read/collect，以及本轮collecting read/save-lead/finish；最多200调用、20次原文收集及原rolling十分钟期限，每次准入重核本轮租约，不开放制作/媒体/项目文档/计划修改。来源端口在DOM读取后的提交前再次核对租约；原文、线索和完成状态直接写原Project，来源游标仍须完整检查证据。后台交互请求不弹前台问题，记录unknown并要求显式核对。
+
+低优先级后台输入沿用AgentHost的持久输入收据与FIFO。用户输入通过同一准入进来即abort先前后台输入，用户输入等待其实际browser/native drain后执行；可信用户浏览器操作、会话/驱动选择及Project切换先让行并等待清理；后台占用不禁用前台会话/工作区选择或前台制作入口；Feature活动标记为background，实际全局资源仍由Host持有。素材库自动只读刷新不触发后台取消，写入和用户任务才让行；手动采集准入先等待后台清理并只核对旧轮次，不在该核对中抢先派发新周期。定点cancelBackground只作用于该后台run，不取消同Session稍后排入的用户输入。Bridge撤销租约、排空工具和关闭所有隐藏页，与官方驱动实际drain共同完成后才释放；关闭失败保留租约清理句柄与隐藏页隔离，显式恢复再次清理。清理失败维持Host隔离及采集锁，显式resources.recover只重试清理。调度顺序为Profile轮次及确定runId落盘、rolling uncertain收据落盘、Host输入收据落盘、官方投递与rolling dispatchId登记；即使官方任务先完成，也保留dispatchId而不覆盖已完成采集结果。调度与人工巡检共享Project live锁，互不绕过。
+
+重启逐个核对当前轮次与原Host收据，只合并停机期间遗漏为一轮，不按历史周期无限补跑。不存在rolling收据的预备项可重新准备（写序证明尚未进入Host）；有rolling uncertain、无dispatchId、Host收据缺失/unknown、投递异常或清理后结果不确定均进入review并停止自动投递，绝不重放原输入。已确认的成功/失败/中断也必须等待该Host run完全drained，官方成功不替代原始入口检查证据。仅rolling completed/no-new提交证据后原子推进游标；缺检查的官方成功按失败处理，其他情况保留已采集线索、旧游标和历史。截止前的确定中断让行至少一分钟后才允许从保留游标开启新的有限检查。超时/失败/partial/restricted指数退避从5分钟加有界确定抖动开始、上限24小时，整轮恢复成功重置；配置失效先取消已知输入并等清理，再要求用户修复。
+
+健康状态waiting/healthy/backoff/review、等待原因、下次时间、连续失败数、最后起止时间及本轮待检查来源保存在Profile；原始run/证据/修订历史仍保留在Project rolling分片。问题状态变化生成持久通知，同一退避/待核对状态去重；整轮从故障恢复才提示恢复，常规无新增不提示。系统Notification可关闭而持久健康通知继续保留，通知不会自动切Project。用户显式核对旧输入后只能结束旧轮次、保留游标并暂停；随后可在原Project显式绑定新的Session/driver再启用，不改写旧Host unknown收据或恢复锚点。旧Session含unknown时自动采集继续拒绝，需明确新Session。后台采集不改新闻批次、推荐快照、选题、草稿、成品和采用账本；全部既有路径及可信用户选择制作门禁保持。
+
+素材库的 Assistant 进度刷新保留未变化新闻卡片的已加载预览，不因核验时间更新重建播放器；Project/Session 切换与隐藏工作区仍暂停媒体、撤销本地预览URL并取消过期读取。隐藏工作区不因后台活动通知恢复读取。
+
+来源采集的 authorSelector 可显式指定可见机构 Logo 的 IMG 元素，原生读取其精确 alt 作为发布单位；仍优先可见文字，最多280字符，超限保留截断问题而不作为完整候选。不可见图片、meta content、任意 aria-label 不提供署名，Logo 不替代正文或新闻预览。全库默认同时隐藏原生 speech UUID 的 raw/log JSON 与 preserved UUID 的 preservation JSON；显式包含辅助文件可查看这些记录，普通用户JSON文档仍正常显示。
+
+- 一个 BMW 主窗口，浏览器、素材库与 Video Studio 为共享工作区；右侧 Assistant 使用同一会话。关闭或切换 Studio 不退出应用。
 - 页面视口仿真仅改变网页布局和截图尺寸，原生显示区域仍由工作区边界决定；大视口取材、切换标签页及缩放窗口不能覆盖 Assistant 或 Shell。
 - Shell 渲染器关闭后台节流，使被原生工作区遮挡时仍更新布局与窗口尺寸；设置、会话及计划任务弹窗在重新打开和短窗口下保留可见操作区。此项不新增模型权限。
 - 顶栏以导航、Project、录制和 Assistant 为主；主题、网络、搜索、布局、登录和模型设置进入 Settings。Shell 对话框使用一致字体、主题和控件。
@@ -137,7 +221,7 @@ Shell 运行时徽章从自有 Assistant 状态发布，显示等待、执行和
 
 直接覆盖：platform 的 Project、driver-boundary、product-boundaries、project-panel-layering、global-settings、layout、permission、scheduled-task 测试；agent-contract 的 context-sync；DSH 的 runtime/preset、harness 映射及独立迁移导出。实际 UI 覆盖：driver/desktop/Studio smoke。生产 OS 钥匙串授权由用户完成，不在隔离测试覆盖范围。
 
-Shell 的全部 41 项 invoke 使用统一主进程准入：只接受当前存活 Shell 的主框架及固定本地页面地址。其他 Renderer、子框架和已导航页面在应用处理函数运行前被拒绝；Shell 页面禁止自行导航和打开新窗口。媒体 Worker、Studio 和 Agent 的专用 IPC 仍按各自 sender/token/Project 规则处理。
+Shell 的全部 46 项 invoke 使用统一主进程准入：只接受当前存活 Shell 的主框架及固定本地页面地址。其他 Renderer、子框架和已导航页面在应用处理函数运行前被拒绝；Shell 页面禁止自行导航和打开新窗口。媒体 Worker、Studio 和 Agent 的专用 IPC 仍按各自 sender/token/Project 规则处理。
 
 ## 浏览器、工具和权限
 
@@ -177,13 +261,17 @@ Bridge 验证认证、Session、Project 及目录，按 FIFO 执行；Project �
 
 `observe` 可使用 selector/index 限定正文范围，并以最多 16 个 excludeSelectors 排除推荐、头像和推广。返回正文范围、UTF-16 字符口径、可见文本节点提取方式和截断状态（最多 50,000 字符/10,000 文本节点）；范围不存在返回 element-not-found 与空正文，不回退整页。输入控件/隐藏/script/style 内容不进入正文。结构化交互元素仍保留可见控件。
 
-`page.media.list` 指定范围时只返回该范围 DOM 候选，支持同样的排除项，不拼入全页 performance/网络媒体。返回 candidateOnly、范围与候选截断；发现 URL 不代表获取或解码成功。未限定范围的既有全页发现保留。
+`page.media.list` 指定范围时只返回该范围 DOM 与目标播放器绑定的分发候选，支持同样的排除项；网络 URL 仅在匹配该播放器的原帖媒体 ID 或精确资源见证时进入该范围，不拼入无关联的全页 performance/网络媒体。返回 candidateOnly、范围与候选截断；发现 URL 不代表获取或解码成功。未限定范围的既有全页发现保留。
 
 ## 原生媒体
 
 下载和保全共享原生 `media-session-fetch` 适配：读取实际页面的 `document.referrerPolicy`（默认 strict-origin-when-cross-origin），显式发送经策略缩减且去除凭据/片段的 Referer，兼容 Electron Session.fetch 不转发 RequestInit.referrer 的行为。来源由宿主页面确定，不向模型开放自定义头或 Cookie。重定向最多5次、逐跳只接受无URL凭据的HTTP(S)，跨源清除显式授权头，来源信息缩减后不恢复。`media.download` 仅接受完整 HTTP 200，拒绝206、空文件及未压缩响应长度不匹配；失败清理本次文件。完整视频仍需 inspect/解码核验，不能仅凭200断言内容完整。
 
-`media.preserve` 只接受当前 Project 页面 DOM/performance/网络已发现的 HTTP(S) 媒体 URL。全页媒体发现纳入 HLS 清单 MIME/URL，范围发现仍不拼入其他区域网络资源。HLS 保全在宿主受限浏览器 Session fetch adapter 下保存原始 master/media 清单、初始化与分段字节、URL、SHA-256、大小与标称时长；选择并记录最高带宽变体，保留其独立音轨。最多32变体、2000分段、512 MiB、30分钟、120秒；加密、直播、字节范围、不连续、缺片及不能明确保留的其他轨道拒绝。派生 MP4 仅复制编码包，重新解复用验证每轨包数、编码负载哈希和 PTS 范围，清单时长与轨道范围不符则回滚。原始分发字节与派生封装分别列出，完整分发版本不等于上传母版；网页多个媒体候选的归属需以正文和帧核对。Project/页面变化或取消先排空请求和文件后清理本次资源，不释放未完成的 FIFO。直接 HTTP 只声明完整响应，不凭响应结束声明完整视频。
+视频取材增加 Host 生成的可选 `videoIdentity`（version/platform/targetId/resourceId），保存在来源候选、采集证据和媒体验证 sidecar；历史来源无该字段仍可读取，获取时必须重新绑定当前目标。身份不是模型参数。YouTube 以页面视频 ID、播放器 videoData/playerResponse 的同一 ID、播放许可和时长共同绑定；广告、错误页或 ID 不一致不暴露可用视频。X 以原帖 URL、主帖时间或可见日期链接（兼容无 data-testid/time 的新页面）、非引用/非广告播放器的封面媒体 ID 绑定同 ID 的 twimg 资源，回复与错误播放动画不成为目标。微博专用视频页或显式范围只接受一个可见播放器；普通信息流必须先明确范围。通用网页保留 HTTP/HLS 原生入口。发现结果仅为候选；转移期间和提交前重验 URL、范围与身份，录制逐帧及结束前复核，变化即失败并回滚本次资源，不静默改用录制。
+
+YouTube `media.preserve` 支持同一有效播放器响应中直接提供的完整分离音视频 URL：由 Host 选择唯一默认音轨语言组中的最高码率音轨；有多个默认语言、无音轨、仅签名密文或没有可用直链时明确失败；当前 SABR/UMP 响应不是可独立下载的完整音视频文件，不进入 MP4/WebM 合并。媒体列表分别返回目标身份与 directResources/deliveryIssue，身份绑定成功不能当作下载可用。直接格式 URL 的 itag、标称 dur、clen/lmt（若双方提供）必须与同一播放器响应的格式元数据吻合。模型不能提供任意音轨 URL、脚本、凭据或签名解密程序。原生 Mediabunny 将两轨编码包复制到 MP4，保存两份原始字节、URL、哈希与身份，独立解复用核对每轨包数、负载哈希、PTS、零点及结束覆盖；错轨、多轨、空轨、范围/时长不符或部分 HTTP 响应均拒绝并清理。`media.download` 遇到绑定的视频独轨提示改用 `media.preserve`，避免静默生成无声文件。合并不重编码；30秒来源预览仍沿现有原生转换、完整解码和入库流程。清理失败时媒体资源保持隔离，`media.record.stop` 显式恢复成功才释放。无 yt-dlp、FFmpeg CLI、额外工具或 TikTok 专用适配。
+
+`media.preserve` 只接受当前 Project 页面 DOM/performance/网络已发现的 HTTP(S) 媒体 URL。全页媒体发现纳入 HLS 清单 MIME/URL，范围发现仅补入该范围目标播放器绑定的网络资源，不拼入其他区域媒体。HLS 保全在宿主受限浏览器 Session fetch adapter 下保存原始 master/media 清单、初始化与分段字节、URL、SHA-256、大小与标称时长；选择并记录最高带宽变体，保留其独立音轨。最多32变体、2000分段、512 MiB、30分钟、120秒；加密、直播、字节范围、不连续、缺片及不能明确保留的其他轨道拒绝。派生 MP4 仅复制编码包，重新解复用验证每轨包数、编码负载哈希和 PTS 范围，清单时长与轨道范围不符则回滚。原始分发字节与派生封装分别列出，完整分发版本不等于上传母版；支持平台的候选先按目标身份过滤，仍需以正文和帧核对内容。Project/页面变化或取消先排空请求和文件后清理本次资源，不释放未完成的 FIFO。直接 HTTP 只声明完整响应，不凭响应结束声明完整视频。
 
 `media.audio.sample` 按输入文件 PTS 提取0.001–10秒单音轨片段，保留原生采样率/声道，无增益、重采样或混音，仅PCM16量化。保存输入/输出SHA、实际样本数、RMS/peak、量化越界样本和缺失帧，按100ms窗口列指标；无音轨和越界明确失败。`media.audio.preview` 仅打开同Project有界WAV试听控件，默认不自动播放，不能将打开播放器记为人工或模型已听审。模型只接收文字/图像的驱动不得宣称实际核听，技术指标也不构成听感、配乐或同步判断。当前Codex ChatGPT登录路径的官方音频输入限制仍是未解决的运行时约束；不添加其他模型循环、额外工具或暗中音频上传。
 
@@ -455,7 +543,7 @@ Studio 任务卡读取宿主统一 Assistant 会话状态与实际 browser 工�
 
 ## 新增卡片表现的句级引用（文档 2.3）
 
-speechLinks.cards 保存最多十二条句锚点引用，支持 reading/highlight/diagram/metric/keyword。每条含 anchorId、kind、index、templateId 和闭合内容快照 target；read-speech 返回当前可绑定 cardTargets、已有 anchors 与过期状态。快照核对原句重点的源 Artifact/SHA/矩形/样式、阅读模式/全貌返回、图解节点和标签、数字值/阶段或关键词内容；目标变更不默默继承旧引用。全部阅读目标需绑定，阅读句区间不得重叠；可编辑中间状态可保存，但未完整绑定或过期时不能消费。
+按句画面强调与板书引用保存期间保持字段禁用，等待实际保存回应及编辑器事务结束后才重新开放；校验或CAS失败保留待修复输入，不让后续输入被先前保存清空。speechLinks.cards 保存最多十二条句锚点引用，支持 reading/highlight/diagram/metric/keyword。每条含 anchorId、kind、index、templateId 和闭合内容快照 target；read-speech 返回当前可绑定 cardTargets、已有 anchors 与过期状态。快照核对原句重点的源 Artifact/SHA/矩形/样式、阅读模式/全貌返回、图解节点和标签、数字值/阶段或关键词内容；目标变更不默默继承旧引用。全部阅读目标需绑定，阅读句区间不得重叠；可编辑中间状态可保存，但未完整绑定或过期时不能消费。
 
 宿主从已核听/编辑句锚点和旁白播放区间派生有界 cardCues，使用原镜头 presentation 秒数供共享绘制器消费。cardCues 不属于 Studio/视频文档的可写字段，模型不能通过草稿写入第二套时间轴。阅读按句进入细节并按所选配方回到全貌；重点和数字使用句区间；关键词和图解从句开始揭示，图解连线等待目标出现。默认手工配方在没有引用时保持原行为。compact 起点、旁白裁剪/变速、整镜头切割、重排和撤销均沿同一原时钟；分割按实际保留目标重新映射引用，不采用已删除的源。更换脚本/音频保留旧记录并阻止消费，需明确校正/重新绑定或解除引用；实际音频和源图 SHA 仍在导出前后复查。
 
@@ -725,6 +813,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 ### 当前 Browser Action 清单
 
 - BMW 核心 Browser Actions（42）：`status`、`help`、`tabs.list`、`tabs.open`、`tabs.show`、`tabs.close`、`navigate`、`back`、`forward`、`reload`、`observe`、`click`、`type`、`wait`、`key`、`hover`、`page.diagnostics`、`page.media.list`、`page.viewport.set`、`media.screenshot`、`media.download`、`media.preserve`、`media.video.capture`、`media.inspect`、`media.audio.sample`、`media.audio.preview`、`media.frames.sample`、`media.capture.frames.sample`、`media.convert`、`media.image.inspect`、`media.image.annotate`、`media.image.draw`、`media.record.start`、`media.record.stop`、`project.context`、`project.memory.append`、`project.tasks.append`、`schedule.list`、`schedule.create`、`schedule.update`、`schedule.remove`、`schedule.run`
+- feature-library Feature Browser Actions（9）：`library.materials`、`library.sources`、`library.news`、`library.research`、`library.exports`、`library.streams`、`library.collecting`、`library.collection-batch`、`library.recommendations`
 - feature-video Feature Browser Actions（4）：`video.compose`、`video.narrate`、`video.studio`、`video.settings`
 
 - video.studio 操作（77）：`news-topics`、`propose-news-topics`、`select-news-topic`、`news-guide`、`record-production-review`、`precomposition-status`、`precompose`、`production-profiles`、`propose-type`、`adopt-type`、`production-read`、`production-review`、`plan-impact`、`analysis`、`diagnose-timing`、`review-status`、`record-export-review`、`read-scene`、`read-preparation`、`describe-edit`、`guide`、`estimate-speech`、`suggest-recording-plan`、`apply-recording-plan`、`narrate-local`、`apply-source-narration`、`validate-source-narration`、`materials`、`describe-template`、`describe-schema`、`read-document`、`compatibility`、`validate-edit`、`apply-edit`、`migrate-document`、`remove-reference`、`prepare-reference`、`read-reference`、`set-reference-analysis`、`apply-reference-notes`、`propose-review`、`adopt-review`、`dismiss-review`、`undo-review`、`split-scene`、`restore`、`recognize-source`、`read-source-speech`、`apply-source-captions`、`detach-source-captions`、`set-caption-translations`、`align-speech`、`read-speech`、`correct-speech`、`source`、`export-citations`、`list`、`create`、`read`、`delete`、`update`、`narrate`、`narrate-pending`、`check`、`export-captions`、`export-cover`、`read-material`、`suggest-focus`、`review-export`、`render`、`assets`、`inspect`、`attach`、`open`、`context`、`configure`、`save-template`。字段、用户专属操作与归属检查见上方契约。
@@ -750,6 +839,12 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 - `Settings commands are closed and snapshots reject credential-bearing form defaults`
 
+#### `packages/agent-contract/test/video-identity.test.ts`
+
+- `YouTube binds URL and both tracks to the same target, selects one default language and rejects foreign/ambiguous evidence`
+- `X network resources require the original post media identity; replies, unrelated animations and changed identity fail closed`
+- `A correctly identified YouTube target without full-file URLs reports unsupported delivery instead of accepting SABR or another video`
+
 #### `packages/agent-ui/test/studio-composer-scope.test.ts`
 
 - `Composer pins a visual piece at first input, preserves owner drafts and clears piece identity for broader scopes`
@@ -757,6 +852,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 #### `packages/browser-capability/test/bridge-shutdown.test.ts`
 
 - `Bridge shutdown cancels the active renderer wait before draining FIFO`
+- `Host scoped leases use their pinned executor and context without admitting a normal inactive lease`
 
 #### `packages/browser-capability/test/browser-deadline.test.ts`
 
@@ -778,10 +874,21 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 - `Published time reads a bounded timezone-bearing TIME datetime while preserving visible date fallback`
 - `Publication metadata extracts one complete publisher date line beside bylines or document numbers, never ambiguous or truncated dates`
+- `Visible body witnesses bind UTF16 author and publication metadata without guessing selectors or accepting changed text`
+- `Body publication witnesses reject cropped update/recording dates and non-date text instead of laundering them into current news`
 - `Source collection retains scoped originals, unknown dates and candidate-only roles with no global resource admission`
 - `Missing source range never invokes media fallback; truncation, visible trial evidence and missing explicit media range remain explicit`
 - `Navigation across collection phases yields navigated evidence; cancellation leaves no late candidate admission or listeners`
 - `Clipped metadata remains explicitly truncated rather than silently admitted as complete author/date evidence`
+
+#### `packages/browser-capability/test/collection-page-pool.test.ts`
+
+- `Collection page pool runs exactly 2–3 isolated lanes with bounded admission and closes every lane`
+- `Collection page pool cancels queued pages and waits for every active lane cleanup before releasing admission`
+- `Collection page pool rejects changed ownership after reads, source tab targets, over-budget work and invalid bounds`
+- `Collection page pool isolates ordinary source errors but aborts on cleanup failure and reports explicit recovery`
+- `Collection link discovery uses only visible scoped HTTP links, normalizes fragments and reports its bounded range`
+- `Collection navigation equivalence permits theme refresh and query serialization while preserving video, origin and remaining query identity`
 
 #### `packages/browser-capability/test/mcp-tool-catalog.test.ts`
 
@@ -845,6 +952,101 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Agent tab reuse navigates the most recent same-origin Agent tab but not a user tab`
 - `Agent tab cap closes only least-recent background Agent tabs`
 - `Saved research ownership survives restore, bounds Agent pages and preserves the visible page`
+
+#### `packages/feature-library/test/collection-batch.test.ts`
+
+- `Closed batch contracts and trusted admission retain exact owner, anchor, revision and user priority`
+- `Uncertain official delivery is persisted before enqueue and never replayed; explicit rejection is distinct`
+- `Nine configured sources use bounded real-store collection, fair article slots and original/legacy preservation`
+- `Restricted, blank, incomplete, missing links and foreign redirects retain cursor and never become no-new`
+- `Incremental URL checkpoints ignore changed entry metrics without losing newly saved originals`
+- `Partial decision failures preserve per-item saved receipt and retry does not duplicate the accepted lead`
+- `Pending links survive cancellation and a fresh explicit batch; cleanup must drain and quarantine recovery never replays input`
+- `User cancellation settles only after all native page lanes close; saved originals and uncertain collection remain inspectable`
+- `A lead commit followed by interrupted batch receipt recovers the exact decision without a duplicate lead revision`
+- `A full 200-URL backlog drains saved pending before reading new entries and never truncates unreviewed URLs`
+- `Restricted or incomplete next entries preserve all prior 1–100 pending URLs and the previous successful cursor`
+- `Observed truncated article originals can save leads with explicit gaps but stay pending and never advance source cursors`
+- `Qbit publication fallback admits only one valid complete civil date beside the independent byline with an exact UTF16 witness`
+
+#### `packages/feature-library/test/collection-scheduler.test.ts`
+
+- `Multiple directions are fair, bounded and idle-only; explicit foreign bindings wait without switching or modifying old data`
+- `Restart coalesces missed periods into one bounded cycle; prepared work resumes while uncertain delivery never replays`
+- `Failure backoff is capped, cursor-safe and health notices deduplicate; recovery succeeds only after actual evidence and drain`
+- `User arrival before admission is safely deferred; thrown delivery and cleanup failures retain locks and require review`
+- `Schedule pause drains only its background receipt; driver changes stop automatic input and explicit rebinding is required`
+- `Closed bounded schedule state preserves malformed bytes, rejects CAS and linked files, and does not initialize on read`
+- `A restricted source rotates behind the other selected sources; lost cleanup acknowledgement never becomes an automatic retry`
+- `Muted system notifications still persist health notices and a Session rebind cannot silently replay a pending cycle`
+- `The deadline wakes independently of the periodic tick and cancellation still waits for its own actual drain`
+- `Explicit reconfiguration after recovery can change cadence and Project binding without changing old receipts or evidence`
+
+#### `packages/feature-library/test/exports.test.ts`
+
+- `Actual enabled render inputs preserve rates, segmented voice, source EOF and held frames without reference/hidden/muted adoption`
+- `Read-only bidirectional queries paginate and expose changed/missing output and material hashes without rewriting historical adoption`
+- `Only host-admitted committed copies add original Project ancestry to automatic adoption`
+- `Legacy exports project read-only unknown adoption; pending records need a matching owned draft receipt`
+- `Studio export history remains independent beyond thirty draft receipts and cache reuse never creates another version`
+- `Cancelled, changed-input and corrupt-ledger paths preserve old work, report unverified adoption and never mint a false committed record`
+- `Ledger admission failure preserves successful Studio work while CAS failure removes only the uncommitted output`
+- `Immutable admission refuses a target created after preparation, and damaged ledger queries keep diagnostics bounded`
+- `Export browser queries are closed, bounded and read-only with no model export-admission route`
+
+#### `packages/feature-library/test/library.test.ts`
+
+- `Global discovery includes unindexed files, body search, archive filters and independent CAS metadata`
+- `Cross-Project copy retains source originals, media and proofs, deduplicates repeats and survives loss of the source Project`
+- `Copy rejects hash changes and collisions; pre-aborted work leaves target artifacts and catalog unchanged`
+- `Corrupt metadata and symlinked directories stay unchanged and surface as explicit discovery issues`
+- `Cancellation after staging drains cleanup, and repeated copies preserve independently edited target metadata`
+- `Date and availability filters preserve publisher precision, and supporting artifacts require an explicit filter`
+- `Model source pages preserve exact UTF16 positions without returning every acquisition or candidate`
+
+#### `packages/feature-library/test/recommendations.test.ts`
+
+- `Strict ten snapshots rank all scoped events with bounded steps and pin events, policy, editions and exclusions across updates and index rebuild`
+- `Shortage reports expiry, missing editions, duplicate events and filters; no small batch becomes complete or activates without explicit acceptance`
+- `Snapshot selection rechecks event and source evidence while selected drafts retain original versions and durable dispatch never replays`
+- `Direction week windows are admitted only by frozen Host bindings; old news stays at 72 hours and foreign use copies one selected proof without rewriting source snapshots`
+- `Legacy observation editions are reused only at their frozen revision, originals stay byte-identical and cancelled/CAS steps retain resumable progress`
+- `Closed requests, stale originals and trusted-user boundaries reject model strategy/generation/activation and never create foreign indexes`
+- `Legacy news canonicalizes its owned Project alias once and rejects a rebound alias without weakening record-store boundaries`
+
+#### `packages/feature-library/test/research.test.ts`
+
+- `Project topics and global promotion persist without moving originals or rewriting legacy news/drafts`
+- `Explicit purpose supports non-video works and reference/planned relations never claim actual adoption`
+- `CAS rejects stale organization, promotion and global direction edits without partially changing either store`
+- `Corrupt and linked research metadata is preserved; raw material discovery remains available with explicit issues`
+- `Closed browser schema matches parser and refuses paths, ambiguous identities, oversized pages and adoption claims`
+- `Direction topic references paginate beyond summary limits, unlink safely and expose archived collection state`
+- `Acquisition grouping reaches its saved original without duplicating files and an explicit artifact assignment can override it`
+
+#### `packages/feature-library/test/rolling.test.ts`
+
+- `Closed rolling catalog admits bounded manual operations; no model subscription, merge, dispatch or foreign evidence bypass`
+- `Real social entry snapshots accept literal URL identities and empty metrics, with actionable errors for full URLs, trend labels and partial finish evidence`
+- `X and YouTube observations bind exact visible metrics, platform identities and source SHA, without claiming fact or growth`
+- `Only successful complete entry evidence commits a cursor; restricted, partial, corrupt evidence, cancellation and stale CAS retain it`
+- `Persisted uncertain delivery, real cleanup failures, deadlines and submission budgets never replay or drop saved leads`
+- `Editorial revisions, atomic merge/split and complete evidence partition preserve originals, lineage, snapshots and audit histories`
+- `Direction pause or collection-Project rebinding invalidates the saved lease without moving old subscriptions or evidence`
+- `A fast official completion still persists its dispatch identity without overwriting the completed collection`
+- `Social challenge originals stay inspectable but cannot become content leads or advance a successful cursor`
+
+#### `packages/feature-library/test/source-presets.test.ts`
+
+- `Fixed catalog is closed, HTTPS and platform checked, with official/research/reporting and X/YouTube observation coverage`
+- `Preset subscription is trusted, CAS protected, repeat safe and preserves edited subscriptions, old files and paused defaults`
+- `Social observation kinds and challenge guards do not invent growth or reinterpret old optional fields`
+
+#### `packages/feature-library/test/streams.test.ts`
+
+- `Generic multi-direction events exceed recommendation size, preserve revision snapshots and rebuild after interrupted maintenance`
+- `Stream schema and service keep maintenance trusted, retain legacy files and never expose foreign source bodies`
+- `Explicit legacy news synchronization is idempotent, keeps batch bytes and separates observations from different Sessions`
 
 #### `packages/feature-video/test/material-index.test.ts`
 
@@ -1278,6 +1480,8 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `HLS preservation selects explicit media, resolves relative URLs, and rejects live/encrypted/ranged/gapped input`
 - `HTTP preservation keeps exact delivery bytes and hashes, never claims the author original or full video range`
 - `Preservation fails closed and rolls back all owned resources on unsupported playlists, partial responses and cancellation`
+- `Separated transfer refuses partial/missing audio, identity mismatch and truncated responses, retaining existing artifacts`
+- `Failed preservation cleanup stays recoverable without following a replaced Project directory`
 
 #### `packages/media-native/test/media-processing.test.ts`
 
@@ -1334,6 +1538,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Native source frames bind encoded file PTS, freeze updated duration and close every frame`
 - `Pre-initialization scope rejection drains without quarantining an inactive capture or retaining temporary files`
 - `A capture from a seeked position excludes cached frames before its admitted source interval`
+- `A target identity change before the next frame rejects capture before encoding that frame`
 
 #### `packages/media-native/test/video-options.test.ts`
 
@@ -1413,6 +1618,10 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `failed native cleanup holds admission even after browser drain and recovery never replays input`
 - `late callbacks cannot resurrect an uncertain submission after its native transport settled`
 - `queued Studio requests freeze their explicit context and expose it only to the active owner`
+- `Background collection yields to user input; FIFO waits for its actual drain and targets no later user receipt`
+- `Failed cleanup of a yielded background input quarantines the queue until explicit recovery, never replays it`
+- `Pinned inactive Project/Session background inputs preserve selection and yield to the foreground only after actual drain`
+- `Background interaction requests become uncertain receipts without exposing a foreground interaction or replaying input`
 
 #### `packages/platform/test/agent-settings-controller.test.ts`
 
@@ -1427,6 +1636,11 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 - `Feature activity exposes owned runtime event facts, clears completed tools and blocks dispatch until actual cleanup is released`
 - `Assistant controls persist per-Project driver selection, reject foreign Sessions and exclude transitions during a turn`
+
+#### `packages/platform/test/background-collection.test.ts`
+
+- `Background action admission bounds originals, refuses side effects and revalidates the lease before work`
+- `Passive library refreshes preserve background work; user mutations and work requests preempt it`
 
 #### `packages/platform/test/bmw-catalog.test.ts`
 
@@ -1490,6 +1704,11 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `layout setup is required once and defaults to the sidebar`
 - `floating DSH settings persist with bounded size and supported opacity`
 
+#### `packages/platform/test/library-sources.test.ts`
+
+- `Foreign and archived Project discovery never creates source directories or repairs missing resources`
+- `Pinned collection lookup avoids catalog windows and a lost lease rolls back asynchronous source admission`
+
 #### `packages/platform/test/menu-policy.test.ts`
 
 - `builds safe webpage filenames and selects complete or single-file saves`
@@ -1520,6 +1739,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `packages/platform/test/project-source-store.test.ts`
 
+- `Body metadata witnesses persist beside originals while old acquisitions stay unchanged and invalid witnesses cannot be admitted`
 - `Source text content deduplicates across URLs while acquisitions, missing dates and candidate confirmation remain independent`
 - `Concurrent source commits and cancellation after writing remove only current text outputs`
 - `Source corrupt state, mutated original text and symlinked artifacts fail closed without overwriting evidence`
@@ -1527,6 +1747,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Current source media and proof hashes report missing/changed/linked/legacy evidence without rewriting acquisition history`
 - `Capture requests require a video selector and measured source evidence cannot cross the confirmed range or claim platform completeness`
 - `Delivery preview is a closed preserve-only interval and cannot claim a capture or exceed the short preview budget`
+- `Host video identities round-trip in candidates and capture witnesses while legacy sources remain readable`
 
 #### `packages/platform/test/project-store.test.ts`
 
@@ -1544,6 +1765,14 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Qwen credentials persist encrypted with private permissions and only a Shell status projection`
 - `Qwen refuses weak encryption and preserves existing ciphertext on encryption/decryption failures`
 - `Corrupt or linked Qwen ciphertext remains intact until explicit clear; secrets and arbitrary endpoints are rejected`
+
+#### `packages/platform/test/record-capacity.test.ts`
+
+- `Sources exceed both legacy catalog limits, preserve the baseline, pin pages during new collection and rebuild every indexed revision`
+- `Published source evidence survives a directory durability warning; pre-commit cancellation and corrupt journals never remove prior work`
+- `Stable filtered scans report empty intermediate pages, reject foreign cursors and preserve authoritative data when caches disappear`
+- `A cache torn after record publication keeps the new original and resumes through a new preserved generation`
+- `A legacy page cursor keeps its baseline after the first sharded write, including navigation back to the first page`
 
 #### `packages/platform/test/remote-control-boundary.test.ts`
 
@@ -1580,6 +1809,10 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `State read failures preserve the file and reject writes for all startup stores`
 - `Missing state initializes once and BMW Project identity, documents and explicit task ownership survive reload`
 - `A failed layout reload blocks updates until explicit repair without overwriting its original bytes`
+
+#### `packages/platform/test/workspace-runtime.test.ts`
+
+- `Host activates both independent workspaces, dispatches visibility and context, and awaits all cleanup`
 
 #### `scripts/agent-assembly.test.ts`
 

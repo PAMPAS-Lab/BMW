@@ -1,0 +1,23 @@
+{
+  "name": "@bmw-agent/feature-library",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./exports": "./src/export-capture.js",
+    "./contract": "./src/library-contract.js",
+    "./sources": "./src/library-sources.js",
+    "./news-contract": "./src/news-contract.js",
+    "./news-store": "./src/news-store.js",
+    "./news-research": "./src/news-research-service.js",
+    "./material-index-contract": "./src/material-index-contract.js",
+    "./material-index-store": "./src/material-index-store.js"
+  },
+  "dependencies": {
+    "@bmw-agent/browser-capability": "*",
+    "@bmw-agent/media-native": "*",
+    "@bmw-agent/platform": "*",
+    "@bmw-agent/agent-contract": "*"
+  }
+}

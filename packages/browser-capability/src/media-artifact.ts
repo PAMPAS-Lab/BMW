@@ -30,6 +30,7 @@ export interface MediaDownloadInput {
   maximumBytes?: number
   signal?: AbortSignal
   now?: () => number
+  guard?: (force?:boolean) => Promise<void>
 }
 
 function safeSegment(value: string): string {
@@ -76,13 +77,15 @@ export async function downloadMediaArtifact({
   referrer,
   signal,
   maximumBytes = MAX_MEDIA_BYTES,
-  now = () => Date.now()
+  now = () => Date.now(),
+  guard
 }: MediaDownloadInput) {
   const controller=new AbortController()
   const cancellation=AbortSignal.any([controller.signal,...(signal?[signal]:[]),AbortSignal.timeout(60_000)])
   let response:Response|undefined
   try {
     cancellation.throwIfAborted()
+    await guard?.()
     const sourceUrl = new URL(String(url || ''))
     if (!['http:', 'https:'].includes(sourceUrl.protocol)) throw new Error('Media downloads require an HTTP(S) URL discovered by BMW.')
     if (!Number.isSafeInteger(maximumBytes) || maximumBytes < 1) throw new TypeError('Media download limit must be a positive safe integer.')
@@ -110,6 +113,7 @@ export async function downloadMediaArtifact({
       transform(chunk, _encoding, callback) {
         bytes += chunk.length
         if (bytes > maximumBytes) callback(new Error(`Media exceeds the BMW download limit of ${maximumBytes} bytes.`))
+        else if(guard)void guard().then(()=>callback(null,chunk),error=>callback(error))
         else callback(null, chunk)
       }
     })
@@ -119,6 +123,7 @@ export async function downloadMediaArtifact({
     try {
       await pipeline(Readable.fromWeb(response.body as any), limiter, output, {signal:cancellation})
       cancellation.throwIfAborted()
+      await guard?.(true)
       if (!bytes || (declaredBytes > 0 && !response.headers.get('content-encoding') && bytes !== declaredBytes)) throw new Error('Media download is empty or does not match Content-Length.')
       const probe = bytes < 64 * 1024 ? fs.readFileSync(filePath) : Buffer.alloc(0)
       if (probe.length && isIsoBmffInitializationSegment(probe, contentType)) {

@@ -1,6 +1,6 @@
 # BMW 文档导航
 
-导航核对日期：2026-10-19；各专题的实现与验收日期见对应正文。按“现在是什么、研究了什么、下一步做什么、过去完成什么”组织。当前实现以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准；研究和规划不得覆盖运行时契约，历史通过仅适用于报告中的源码版本。
+导航核对日期：2026-10-21；各专题的实现与验收日期见对应正文。按“现在是什么、研究了什么、下一步做什么、过去完成什么”组织。当前实现以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准；研究和规划不得覆盖运行时契约，历史通过仅适用于报告中的源码版本。
 
 ## 阅读入口与权威关系
 
@@ -16,6 +16,8 @@
 | 如何验证、证据覆盖到哪里 | [VERIFICATION.md](VERIFICATION.md) | 当前检查结果、历史基线索引和覆盖边界 |
 | 当前源码的逐项离线回归 | [可移植验证摘要](verification/CURRENT.json) | 完整范围、逐项结果、未运行项及源码SHA；本机原始日志另存，不代表远程CI |
 | NEWS-01 新闻选题与制作 | [使用步骤](../README.md#主要能力)、[功能契约](FUNCTIONAL_SPEC.md#news-01-新闻选题与制作)、[Agent接口](AGENT_VIDEO_EDITING.md#新闻选题与制作引导) | 广泛主体、严格72小时、真实预览、可信用户选择；技术与真实制作、人工验收分开 |
+| AI新闻固定来源与滚动素材流 | [设计](plans/LIBRARY_STREAMS.md)、[真实来源验证](research/AI_NEWS_REAL_SOURCES.md)、[批量采集设计](plans/COLLECTION_BATCH_OPTIMIZATION.md)、[批量验证](research/COLLECTION_BATCH_VALIDATION.md) | 可选固定订阅、X/YouTube观察类型、近72小时原文/事件/快照；访问受限与模型覆盖分别记录 |
+| 社媒视频身份绑定与获取 | [功能契约](FUNCTIONAL_SPEC.md)、[真实实测](research/SOCIAL_DOWNLOAD_VALIDATION.md)、[YouTube 待办](plans/YOUTUBE_NATIVE_ACQUISITION.md) | X／微博原生获取已抽样验证；YouTube 同目标直链合并有隔离验证，SABR/UMP 真实获取待办 |
 | BMW＋Qoder CN 日常新闻速递 | [日常手册](NEWS_DAILY.md)、[修复与回归](research/NEWS_DAILY_FIXES.json) | Flash／龙安朗／品牌偏好，选题确认、原声核验、局部改稿及收工恢复；不表示无人值守 |
 | DSH 最新候选版制作 SI 新闻 | [DSH SI交付](research/DSH_SI_DELIVERY.json) | 独立工程、57.664秒MP4、模型路由、男声复用及实际审阅范围 |
 | DSH 科普与学术重制 | [两条完整主片交付](research/DSH_SCIENCE_RESEARCH_DELIVERY.json) | 量子位／AK形式参考、原声复用、实际MP4与审阅、原生压缩及验证范围 |

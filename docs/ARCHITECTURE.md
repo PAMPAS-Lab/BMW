@@ -1,10 +1,12 @@
 # BMW 模块、接口与局部验证
 
-BMW 保持一个应用、唯一 `browser` 工具，以及 DSH、Codex、Qoder CN 三个官方驱动。当前目录定义 12 个模块、10 项接口保障和 3 项具体实现／装配保障；生成表是数量与依赖的准确来源。模块目录、公开入口、依赖方向、接口保障测试与测试分类分别由 `scripts/module-catalog.ts`、各 package 的 `exports`、`scripts/test-catalog.ts` 定义。本文生成区由 `npm run docs:architecture` 刷新，`npm run check:architecture` 检查，不能只修改文档而绕过源码约束。
+BMW 保持一个应用、唯一 `browser` 工具，以及 DSH、Codex、Qoder CN、WorkBuddy 四个官方驱动。当前目录定义 14 个模块、19 项接口保障和 4 项具体实现／装配保障；生成表是数量与依赖的准确来源。模块目录、公开入口、依赖方向、接口保障测试与测试分类分别由 `scripts/module-catalog.ts`、各 package 的 `exports`、`scripts/test-catalog.ts` 定义。本文生成区由 `npm run docs:architecture` 刷新，`npm run check:architecture` 检查，不能只修改文档而绕过源码约束。
 
-应用入口负责选择并装配具体驱动与自有 Assistant，平台 Host 协调会话、设置和资源，不读取具体驱动协议与存储。Agent 契约是提供方无关的数据／生命周期接口；三个 harness 分别实现它，`agent-ui` 仅通过可信 Host IPC 展示对话。Browser 管理 Project 页面和受认证的操作队列，Feature 只通过具名宿主接口取得 Project、设置、媒体与浏览器执行。Media 接受未知输入后校验，返回未知的跨进程回复后再次校验；不把结构断言当作数据验证。Video Feature 管理草稿和工作流，复用媒体实现，不拥有第二套浏览器或 Agent 循环。
+应用入口负责选择并装配具体驱动与自有 Assistant，平台 Host 协调会话、设置和资源，不读取具体驱动协议与存储。Agent 契约是提供方无关的数据／生命周期接口；四个 harness 分别实现它，`agent-ui` 仅通过可信 Host IPC 展示对话。Browser 管理 Project 页面和受认证的操作队列，Feature 只通过具名宿主接口取得 Project、设置、媒体与浏览器执行。Media 接受未知输入后校验，返回未知的跨进程回复后再次校验；不把结构断言当作数据验证。Video Feature 管理草稿和工作流，复用媒体实现，不拥有第二套浏览器或 Agent 循环。
 
 平台内部进一步分为 application lifecycle、Project/state storage、settings/permissions/schedules、Shell/preload。媒体内部进一步分为 host/controller/artifact IO 和 sandboxed workers。Feature 内部分为 draft/service/context 和 Studio/preload/renderer。这些进程边界也有 sender/token/Project/revision 的保障；同一 package 不代表同一信任域。
+
+批量采集仍由一个官方输入拥有Agent循环；feature-library冻结批次与增量检查点，Browser私有页面池只在同一动作内执行2–3路独立隐藏页面读取，来源提交保持串行CAS。用户任务让行等待全部lane和官方输入实际清理；精确dispatch执行域的清理失败保持隔离，不以关闭前景页面或恢复另一执行域冒充排空。
 
 公开包入口允许 Node 使用 package subpath，也允许浏览器 ES 模块使用指向同一公开文件的相对 URL。跨模块导入内部文件、未声明依赖、运行时依赖环、Core 导入具体 harness 或 Apps、Renderer 导入宿主权限均会失败。类型依赖允许 Feature 实现平台生命周期，但编译后不形成运行时循环。开发脚本和测试可以检查实现细节，不能被产品模块反向依赖，生产代码也不能经同包测试目录间接访问具体 harness，日常运行时不能导入 harness 的显式迁移入口。公开入口不能导出测试文件。Renderer 的 Node 内建模块检查包含裸名称、node: 前缀和间接辅助库。生产计算式导入默认拒绝；DSH 安装版插件只能以声明的固定包名字面量解析依赖。
 
@@ -68,28 +70,37 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 
 | 模块 | 职责 | 运行时依赖 | 额外类型依赖 |
 |---|---|---|---|
-| agent-contract | Provider-neutral Agent backend, settings, events and BMW Project/Session context contracts. | 无 | 无 |
+| agent-contract | Provider-neutral Agent backend, settings, events and BMW Project/Session context and bounded video identity contracts. | 无 | 无 |
 | agent-ui | BMW-owned sandboxed conversation renderer and preload; only typed Host IPC, no provider or browser execution privileges. | agent-contract | 无 |
-| media-native | Project artifact IO, capture, decode, processing, narration, composition and sandboxed workers. | 无 | 无 |
-| browser-capability | One browser catalog, validated actions, Project pages, Bridge/MCP admission, FIFO and renderer reads. | 无 | media-native |
+| media-native | Project artifact IO, capture, decode, processing, narration, composition and sandboxed workers. | agent-contract | 无 |
+| browser-capability | One browser catalog, validated actions, Project pages, Bridge/MCP admission, FIFO and renderer reads. | agent-contract | media-native |
 | platform | Application lifecycle, Projects/storage, permissions/settings/schedules, Shell and typed Feature host. | agent-contract, browser-capability, media-native | 无 |
-| feature-video | Video actions, draft/CAS/audio provenance, Studio state/IPC/UI and prompt context. | browser-capability, media-native | platform |
+| feature-library | Global Project materials, persistent project topics, global following directions, purpose/reference organization, news research and bounded evidence copies. | browser-capability, media-native, agent-contract, platform | 无 |
+| feature-video | Video actions, draft/CAS/audio provenance, Studio state/IPC/UI and prompt context. | browser-capability, media-native, feature-library | platform |
 | harness-dsh | Official DSH Agent process/auth/transport, native Project mappings, effective tool admission and explicit cold migration export. | agent-contract | 无 |
 | harness-qoder | Official Qoder CN SDK/Worker Agent loop, pre-input effective browser catalog admission and normalized stream events. | agent-contract | 无 |
 | harness-codex | Official Codex App Server, isolated effective model catalog preflight, dynamic browser tool transport and normalized receipts/events. | agent-contract | 无 |
 | harness-workbuddy | Official pinned WorkBuddy CodeBuddy CLI over ACP v1, host-owned MCP bridge, browser-only tool admission and API Key credential isolation. | agent-contract | 无 |
-| product-bmw | BMW product composition and enabled Features; no driver selection or application loop. | platform, feature-video | 无 |
+| product-bmw | BMW product composition and enabled Features; no driver selection or application loop. | platform, feature-video, feature-library | 无 |
 | application | Select BMW and its configured drivers, then enter the platform application. | product-bmw, harness-dsh, harness-qoder, harness-codex, harness-workbuddy, agent-ui, platform | 无 |
-| validation | Development-only verification, fixtures, dependency analysis and test selection; never a model capability. | agent-contract, agent-ui, media-native, browser-capability, platform, feature-video, harness-dsh, harness-qoder, harness-codex, harness-workbuddy, product-bmw, application | 无 |
+| validation | Development-only verification, fixtures, dependency analysis and test selection; never a model capability. | agent-contract, agent-ui, media-native, browser-capability, platform, feature-video, feature-library, harness-dsh, harness-qoder, harness-codex, harness-workbuddy, product-bmw, application | 无 |
 
 ### 跨模块接口与保障
 
 | 接口 | 提供方 → 消费方 | 保证 | 直接接口保障测试 |
 |---|---|---|---|
+| video-identity | agent-contract → browser-capability, media-native, validation | Closed target and resource witnesses shared by bounded browser observations and native capture; original post/player identity, ad rejection and same-target default-audio pairing without provider, transport or filesystem access. | agent.video-identity, browser.video-identity, media.processing-runtime, sources |
 | agent-driver | agent-contract → platform, harness-dsh, harness-qoder, harness-codex, harness-workbuddy, application | Stable BMW Sessions, closed event/capability admission, lifecycle and per-driver provider resume anchors; core owns no provider Agent loop. | agent.context, agent.conversation, api.types, driver |
 | agent-settings | agent-contract → platform, agent-ui, harness-dsh, harness-qoder, harness-codex, harness-workbuddy, application | Closed official-control requests and redacted account/model projections, no echoed secrets or model input; settings and actual native cleanup hold Host exclusion before Project transitions. | agent.driver-settings, agent.assistant-ui, platform.agent-settings, codex.settings, codex.backend, workbuddy.settings, workbuddy.backend, qoder.settings, dsh.settings, assistant.application, dsh |
 | agent-conversations | platform → application | Visible blank Sessions, durable submission receipts, Project membership, immutable provider bindings, FIFO until actual resource drain, generic display-history ownership and uncertain-delivery recovery without replay. | platform.conversation-store, platform.agent-history, platform.agent-host, agent.data-migration |
-| feature-lifecycle | platform → feature-video, product-bmw | Named activation/configure/layout/context/shutdown hooks; malformed runtime hooks fail before wiring; no extra model tools. | platform.feature-contract, api.types, desktop.workspace |
+| feature-lifecycle | platform → feature-video, feature-library, product-bmw | Named activation/configure/layout/context/shutdown hooks; malformed runtime hooks fail before wiring; no extra model tools. | platform.feature-contract, api.types, desktop.workspace |
+| project-records | platform → feature-library, validation | Immutable partitioned commits, legacy baseline preservation, bounded incrementally rebuildable SQLite indexes and revision-pinned cursor pages; Host-only cache maintenance and no model SQL or path capability. | platform.record-capacity, library.recommendations, library.rolling, library.streams, library.news-desktop, video |
+| library-source-presets | feature-library → validation | Optional trusted CAS preset subscriptions preserve edits and cursors without scheduling; typed social observations bind visible originals and reject challenge pages as content or successful cursor checkpoints. | library.source-presets, library.rolling, library.source-presets-desktop, platform.background-collection |
+| library-collection-batch | feature-library → validation | One official input with a frozen Project/Session/driver/anchor, 2–3 hidden independent page lanes, fair bounded original reads, serialized source CAS, incremental URL checkpoints, retained pending and explicit cleanup without replay; no event editing authority. | library.collection-batch, browser.collection-page-pool, library.collection-batch-desktop, library.background |
+| library-schedules | platform → feature-library, validation | Pinned inactive Project/Session/driver collection scopes preserve foreground selection and tabs, restrict actions, yield to user work, await actual driver/browser cleanup and reconcile durable receipts without replaying uncertain input. | library.schedules, library.schedules-desktop, library.background, platform.background-collection, platform.agent-host |
+| library-recommendations | feature-library → feature-video, validation | Strict ten-item immutable event snapshots, bounded revision-pinned generation and trusted sidecar admission preserve ordinary news windows, user selection and original drafts. | library.recommendations, library.recommendations-desktop, video.news, library.news-desktop |
+| library-exports | feature-library → feature-video, validation | Host-admitted immutable export snapshots with measured render intervals, explicit legacy unknown provenance and paginated read-only bidirectional queries; no model admission route. | library.exports, library.news-desktop, video |
+| library-organization | feature-library → validation | Project-owned topics and material purposes, Profile-owned directions with non-moving references, paginated read-only Agent summaries, trusted GUI-only CAS organization and no implied collection or actual adoption. | library.research, library.materials, library.news-desktop |
 | browser-tabs | browser-capability → platform | Bounded persisted URL/source ownership, conservative legacy restoration and Agent LRU policy; native reclamation awaits actual destruction and retains user pages. | browser.tab-policy, platform.projects, browser.tab-lifecycle, desktop.projects |
 | browser-feature-host | browser-capability → platform, feature-video | Minimum Project/settings/media ports, actor enum, cancellation signal; validated action dispatch remains the only execution entry. | browser.host-contract, api.types, video.boundary, driver |
 | browser-model | browser-capability → platform, feature-video | Exactly browser; bounded closed requests, authenticated Project/Session admission, FIFO, cancellation and image admission. | browser.sources, browser.schema, browser.catalog, browser.operations, browser.shutdown, browser.deadline, platform.boundaries, driver |
@@ -121,11 +132,12 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 
 跨模块相对导入也只能指向这些入口；浏览器中的 ES 模块继续使用相对 URL。
 
-- agent-contract: `packages/agent-contract/index.ts`
+- agent-contract: `packages/agent-contract/index.ts`, `packages/agent-contract/src/video-identity.ts`
 - agent-ui: `packages/agent-ui/index.ts`
 - media-native: `packages/media-native/src/media-controller.ts`, `packages/media-native/src/media-port.ts`, `packages/media-native/src/media-contract.ts`, `packages/media-native/src/composition-contract.ts`, `packages/media-native/src/card-templates.ts`, `packages/media-native/src/composition-layers.ts`, `packages/media-native/src/science-spec.ts`, `packages/media-native/src/layer-packaging.ts`, `packages/media-native/src/layer-text-treatment.ts`, `packages/media-native/src/media/composition-layers-paint.ts`, `packages/media-native/src/narration-contract.ts`, `packages/media-native/src/video-options.ts`, `packages/media-native/src/video-options-form.ts`, `packages/media-native/src/artifact-job-io.ts`, `packages/media-native/src/media-preservation.ts`, `packages/media-native/src/media/composition-audio.ts`, `packages/media-native/src/media/composition-paint.ts`, `packages/media-native/src/media/linear-frames.ts`, `packages/media-native/src/image-contract.ts`, `packages/media-native/src/media/image-decoder.ts`, `packages/media-native/src/caption-export.ts`, `packages/media-native/src/text-export.ts`, `packages/media-native/src/focus-contract.ts`, `packages/media-native/src/recording-plan.ts`, `packages/media-native/src/recording-contract.ts`, `packages/media-native/src/visual-segments.ts`, `packages/media-native/src/image-drawing-contract.ts`, `packages/media-native/src/media/processing.cover-contract.ts`, `packages/media-native/src/source-contract.ts`, `packages/media-native/src/speech-contract.ts`, `packages/media-native/src/visual-effects.ts`, `packages/media-native/src/card-details.ts`, `packages/media-native/src/composition-quality.ts`, `packages/media-native/src/card-cues.ts`, `packages/media-native/src/speech-range.ts`, `packages/media-native/src/research-diagrams.ts`, `packages/media-native/src/precomposition-contract.ts`
 - browser-capability: `packages/browser-capability/src/browser-schema.ts`, `packages/browser-capability/src/bridge-server.ts`, `packages/browser-capability/src/browser-kernel.ts`, `packages/browser-capability/src/browser-capability-registry.ts`, `packages/browser-capability/src/browser-host.ts`, `packages/browser-capability/src/tab-policy.ts`
-- platform: `packages/platform/src/product-definition.ts`, `packages/platform/src/main.ts`, `packages/platform/src/assistant-service.ts`, `packages/platform/src/feature-contract.ts`, `packages/platform/src/agent-data-schema.ts`
+- platform: `packages/platform/src/product-definition.ts`, `packages/platform/src/main.ts`, `packages/platform/src/assistant-service.ts`, `packages/platform/src/feature-contract.ts`, `packages/platform/src/agent-data-schema.ts`, `packages/platform/src/project-record-store.ts`
+- feature-library: `packages/feature-library/index.ts`, `packages/feature-library/src/export-capture.ts`, `packages/feature-library/src/library-contract.ts`, `packages/feature-library/src/library-sources.ts`, `packages/feature-library/src/news-contract.ts`, `packages/feature-library/src/news-store.ts`, `packages/feature-library/src/news-research-service.ts`, `packages/feature-library/src/material-index-contract.ts`, `packages/feature-library/src/material-index-store.ts`
 - feature-video: `packages/feature-video/index.ts`
 - harness-dsh: `packages/harness-dsh/index.ts`, `packages/harness-dsh/migration/index.ts`
 - harness-qoder: `packages/harness-qoder/index.ts`
@@ -137,6 +149,8 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 
 | ID | 分类 | 归属 | 入口 | 配置／分支 |
 |---|---|---|---|---|
+| external.social-download.live | external (opt-in) | browser-capability, media-native, agent-contract | scripts/social-download-live-validation.ts | opt-in: BMW_LIVE_SOCIAL=1; public videos in disposable signed-out Profile only |
+| external.library.live-sources | external (opt-in) | feature-library, platform, browser-capability, media-native | scripts/ai-news-live-validation.ts | opt-in: BMW_LIVE_NEWS=1; public-network read-only validation in disposable Profile only |
 | browser.tab-lifecycle | integration | browser-capability, platform | scripts/browser-tab-lifecycle-smoke.ts | 默认 |
 | video.news | contract | feature-video | packages/feature-video/test/news.test.ts | 默认 |
 | browser.navigation | contract | browser-capability | packages/browser-capability/test/page-navigation.test.ts | 默认 |
@@ -154,6 +168,8 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | media.science-spec | contract | media-native | packages/media-native/test/science-spec.test.ts | 默认 |
 | media.video-capture | contract | media-native | packages/media-native/test/video-element-capture.test.ts | 默认 |
 | media.capture-source-index | contract | media-native | packages/media-native/test/capture-source-index.test.ts | 默认 |
+| agent.video-identity | contract | agent-contract | packages/agent-contract/test/video-identity.test.ts | 默认 |
+| browser.video-identity | integration | browser-capability, media-native | scripts/video-identity-smoke.ts | 默认 |
 | media.preservation | contract | media-native | packages/media-native/test/media-preservation.test.ts | 默认 |
 | video.material-index | contract | feature-video | packages/feature-video/test/material-index.test.ts | 默认 |
 | video.source-analysis | contract | feature-video | packages/feature-video/test/source-analysis.test.ts | 默认 |
@@ -213,8 +229,10 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | browser.download | unit | browser-capability | packages/browser-capability/test/media-artifact.test.ts | 默认 |
 | browser.tab-policy | unit | browser-capability | packages/browser-capability/test/tab-policy.test.ts | 默认 |
 | browser.sources | contract | browser-capability | packages/browser-capability/test/collect-page-source.test.ts | 默认 |
+| platform.background-collection | contract | platform | packages/platform/test/background-collection.test.ts | 默认 |
 | platform.sources | contract | platform | packages/platform/test/project-source-store.test.ts | 默认 |
 | video.sources | contract | feature-video | packages/feature-video/test/studio-sources.test.ts | 默认 |
+| browser.collection-page-pool | contract | browser-capability | packages/browser-capability/test/collection-page-pool.test.ts | 默认 |
 | browser.host-contract | contract | browser-capability | packages/browser-capability/test/browser-host.test.ts | 默认 |
 | dsh.dsh-runtime | contract | harness-dsh | packages/harness-dsh/test/dsh-runtime.test.ts | 默认 |
 | dsh.dsh-transport | contract | harness-dsh | packages/harness-dsh/test/dsh-transport.test.ts | 默认 |
@@ -248,6 +266,26 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | platform.shell-ipc | contract | platform | packages/platform/test/shell-ipc.test.ts | 默认 |
 | platform.permission-store | contract | platform | packages/platform/test/permission-store.test.ts | 默认 |
 | platform.continuity-state | contract | platform | packages/platform/test/continuity-state.test.ts | 默认 |
+| library.schedules-desktop | desktop | feature-library, platform, browser-capability | scripts/library-schedule-smoke.ts | 默认 |
+| library.recommendations-desktop | desktop | feature-library, feature-video, platform, media-native | scripts/library-recommendation-smoke.ts | 默认 |
+| library.rolling-desktop | desktop | feature-library, platform, browser-capability | scripts/library-rolling-smoke.ts | 默认 |
+| library.source-presets-desktop | desktop | feature-library, platform, browser-capability | scripts/library-source-presets-smoke.ts | 默认 |
+| library.background | desktop | feature-library, platform, browser-capability | scripts/library-background-smoke.ts | 默认 |
+| library.news-desktop | desktop | feature-library, feature-video, platform, media-native | scripts/library-news-smoke.ts | 默认 |
+| library.desktop | desktop | platform, feature-library, feature-video | scripts/desktop-smoke.ts | group=workspace |
+| library.materials | contract | feature-library | packages/feature-library/test/library.test.ts | 默认 |
+| library.source-presets | contract | feature-library | packages/feature-library/test/source-presets.test.ts | 默认 |
+| library.collection-batch | contract | feature-library | packages/feature-library/test/collection-batch.test.ts | 默认 |
+| library.collection-batch-desktop | desktop | feature-library, platform, browser-capability | scripts/library-collection-batch-smoke.ts | 默认 |
+| library.schedules | contract | feature-library | packages/feature-library/test/collection-scheduler.test.ts | 默认 |
+| library.recommendations | contract | feature-library | packages/feature-library/test/recommendations.test.ts | 默认 |
+| library.rolling | contract | feature-library | packages/feature-library/test/rolling.test.ts | 默认 |
+| library.streams | contract | feature-library | packages/feature-library/test/streams.test.ts | 默认 |
+| platform.record-capacity | contract | platform | packages/platform/test/record-capacity.test.ts | 默认 |
+| library.exports | contract | feature-library | packages/feature-library/test/exports.test.ts | 默认 |
+| library.research | contract | feature-library | packages/feature-library/test/research.test.ts | 默认 |
+| platform.library-sources | contract | platform | packages/platform/test/library-sources.test.ts | 默认 |
+| platform.workspaces | contract | platform | packages/platform/test/workspace-runtime.test.ts | 默认 |
 | platform.feature-contract | contract | platform | packages/platform/test/feature-contract.test.ts | 默认 |
 | video.schema-publication | contract | feature-video, validation | scripts/video-schema-document.ts | 默认 |
 | video.schema | contract | feature-video | packages/feature-video/test/video-document.test.ts | 默认 |

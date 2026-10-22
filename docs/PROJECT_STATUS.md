@@ -1,5 +1,17 @@
 # BMW 当前实现
 
+社媒视频取材已补 Host 目标身份绑定及同目标完整直链的原生分离音视频合并；当前公开样本 X、微博各2/2完成获取、双轨完整解码与画面核对，X实际回复资源被拒绝。YouTube当前SABR/UMP分发0/2通过，用户要求将真实获取改进记为[YOUTUBE-01待办](plans/YOUTUBE_NATIVE_ACQUISITION.md)，本期暂缓。保留HTTP/HLS，不引入yt-dlp和TikTok专用适配；[实测范围](research/SOCIAL_DOWNLOAD_VALIDATION.md)不扩大为全站或人工听感验收。
+
+BMW 当前提供浏览器、素材库、Video Studio 三个并列工作区。素材库自动聚合各 Project 的已保存来源和媒体，支持全库检索、日期/状态筛选、收藏、标签、批量整理、历史新闻批次和跨 Project 完整证据复制；素材仍归各自 Project，目标副本及其说明独立保存。新闻收集与选题位于素材库，可信选择后进入原生 Studio；旧草稿、会话、来源和投递记录保留，唯一模型工具仍为 browser。
+
+素材库组织、作品溯源与来源/事件容量六阶段已实现：Project 专题、全局方向、独立用途及参考/计划关系；Studio与直接合成自动记录独立导出版本、实际采用材料SHA、角色、文件/输出区间及复制来源身份。成品按作品分组，支持版本→材料及材料/来源→成品双向查询；缓存复用不新增，旧成品采用未知，原资料、新闻批次和草稿保留。来源/事件采用不可变分片、可重建SQLite增量索引和固定快照分页，来源流/事件记录提供完整检索与可信维护；旧来源目录只读兼容。来源订阅已支持有界手动巡检、线索与事件修订、可追溯归并/拆分、采集游标及X/YouTube可见指标观察；严格十题事件推荐快照、方向策略、专题筛选和旧news交接也已接通；已接通明确Project/Session/driver绑定的周期采集、用户任务优先、重启回执核对、失败退避及健康通知；资源空闲时可在独立隐藏页采集未激活绑定，不切换前台工作区；用户任务先等实际清理，未知输入不自动重投，见[设计](plans/LIBRARY_STREAMS.md)。验证范围与报告见[验证说明](VERIFICATION.md)。
+
+增量批量采集提供可信素材库勾选至多九源的一次官方输入，2–3路隐藏页面读取、串行来源CAS、保留pending的URL检查点和一次批量线索提交；X趋势可保存带明确缺口的观察，完成游标始终不推进。原单源采集、事件整理、十题推荐及制作入口保留，周期计划不自动启用。不确定输入不重投，取消等待实际页面／驱动清理。设计与分层实测见[批量采集方案](plans/COLLECTION_BATCH_OPTIMIZATION.md)和[验证说明](research/COLLECTION_BATCH_VALIDATION.md)；已登录主Profile官方驱动的九源验收与隔离实测分别记录。
+
+AI新闻固定来源目录提供24项可选订阅，默认暂停、稳定预设ID重复保全；新增社媒观察类型并拦截登录/挑战页推进游标。真实公开网页的72小时采集、原文、线索/事件及推荐验证使用隔离Project，X/YouTube访问限制独立记录，见[真实来源验证](research/AI_NEWS_REAL_SOURCES.md)。
+
+主Profile实际续验保留九项订阅及初始72小时九题不足快照，已完成约41秒DSX POD首片、原生SRT、完整稿件、111帧／五镜／整片Agent意见、独立画面检查及实际采用双向查询；旧数据SHA保全。后续第一轮更新六个入口并整理为23条线索、17个事件，新72小时快照核验合格严格十题，沿原入口完成31.5秒开放模型新片、六镜／68帧与独立整片画面检查、原生SRT及12项采用双向查询，PHP修复第二条亦完成40.04秒、五镜／59帧与独立整片画面检查、原生七条SRT和11项采用双向查询；合计后续2／4条、完成1／2轮，第二轮已恢复有界采集。流程有GUI辅助，人工听感／用户接受待验，见[实际验证](research/AI_NEWS_MAIN_PROFILE.md)与[首片证据](research/NEWS_DSX_POD_DELIVERY.json)。
+
 NEWS-DAILY已修复Studio预览／新闻核验争用共享解码worker，以及映射采集终帧被WebM默认时长压短的问题；末个Opus包未知时长保持原值。来源夹具改为显式绘制／请求首帧并独立核对真实编码轨道，保留加载诊断。这批改动在旧分支的完整离线回归为**167 passed／0 failed／12 opt-in not-run**，466项非Markdown受测输入与437个生成输出另核对；两次先前失败完整报告保留，不合并计数。见[修复证据](research/NEWS_DAILY_FIXES.json)与[当前验证](verification/CURRENT.json)。
 
 日常系列优先BMW＋官方Qoder CN／DeepSeek-Flash（dfmodel）、Qwen龙安朗及AIpardonSI News；[日常操作手册](NEWS_DAILY.md)说明选题、取材、审片与收工恢复。10月19日有人指导的制作中，用户选定AI养老沙龙，可信Studio入口后完成约49秒图文新闻及逐镜／整片Agent审阅，见[交付证据](research/NEWS_ELDERCARE_DELIVERY.json)。人工听感与最终接受待确认；原始采访未取得，十个研究线索未全部进入候选卡，不表示无人值守或研究覆盖已经验收。
@@ -8,14 +20,14 @@ IMF Jack Clark两版继续保留：DSH47.744秒、Qoder53.867秒；用户认为Q
 
 NEWS-01已完成技术实现、真实制作与用户验收。当前接受基准为BMW＋官方Codex 0.160.1／gpt-6-astra制作的54.61秒竖屏新闻，Qwen龙安朗男声；结尾以作者本次DeepSeek $1.25／Opus 5.5 $16.36的作品花费对照，回扣低花费也能完成精细动画。仅重配末镜12.4秒，前五镜全部数据及声音SHA不变，793个历史文件保留；136个当前成片关键帧、逐镜／全片Agent意见与用户“这个版本可以了”分别登记。旧公告片与DSH对比片的未接受状态保留，见[验收证据](research/CODEX_NEWS_REWORK.json)。用户接受不补造逐字声学对齐或专项发音评分。
 
-NEWS-02本轮功能与真实样片已交付，当前43.03秒Chuck Lorre新闻已获用户“这个版本可以了”的接受。候选上限扩至十项，优先采访／演讲原声；Studio支持本次Qwen音色覆盖、前三项自动预览及其余按需加载。本轮研究只取得IMF总裁与Reuters采访两张合格卡，不以旧闻凑数；用户选择Chuck Lorre后，BMW＋官方Codex／Qwen龙安朗完成9:16可编辑新闻，以两段原声解释其对强于人类的智能及捕食者／昆虫类比的担忧。字幕修改为大号可编辑双语，音频和区间保持不变；73张当前关键帧、逐镜／全片Agent意见、60个研究文件及72个初期制作文件的SHA保留检查见[成片与接受证据](research/NEWS_02_LORRE_DELIVERY.json)，[选题与未入选原因](research/NEWS_02_TOPICS.json)单列。用户接受不补造专项发音、声学对齐或复述分数。研究覆盖、署名日期格式兼容与有约束的未变镜头审阅复用仍待后续，现行审阅规则保持；下一主线为SCIENCE-01，再到RESEARCH-01。
+NEWS-02本轮功能与真实样片已交付，当前43.03秒Chuck Lorre新闻已获用户“这个版本可以了”的接受。候选上限扩至十项，优先采访／演讲原声；素材库支持本次Qwen音色覆盖与真实预览按需加载，Studio保留制作进度。本轮研究只取得IMF总裁与Reuters采访两张合格卡，不以旧闻凑数；用户选择Chuck Lorre后，BMW＋官方Codex／Qwen龙安朗完成9:16可编辑新闻，以两段原声解释其对强于人类的智能及捕食者／昆虫类比的担忧。字幕修改为大号可编辑双语，音频和区间保持不变；73张当前关键帧、逐镜／全片Agent意见、60个研究文件及72个初期制作文件的SHA保留检查见[成片与接受证据](research/NEWS_02_LORRE_DELIVERY.json)，[选题与未入选原因](research/NEWS_02_TOPICS.json)单列。用户接受不补造专项发音、声学对齐或复述分数。研究覆盖、署名日期格式兼容与有约束的未变镜头审阅复用仍待后续，现行审阅规则保持；下一主线为SCIENCE-01，再到RESEARCH-01。
 
-核对日期：2026-10-20。当前行为与 Schema 见 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md)，模块／接口／测试分支见 [ARCHITECTURE.md](ARCHITECTURE.md)，报告见 [VERIFICATION.md](VERIFICATION.md)。
+核对日期：2026-10-21。当前行为与 Schema 见 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md)，模块／接口／测试分支见 [ARCHITECTURE.md](ARCHITECTURE.md)，报告见 [VERIFICATION.md](VERIFICATION.md)。
 此前三类基准主片均已由 BMW＋DSH 0.2.1-rc.2／官方 deepseek-flash 制作：SI新闻57.664秒、机器人科普210.859秒、HybridAgent学术229.248秒。新闻的基本满意反馈已单独保存；科普与学术按量子位、AK参考重做画面，保留各八段原Matcha旁白，增加大幅厨房实拍、杯／夹爪条件变化、计算器／大h状态包／连续KV动画及论文对照。新片的实际MP4、来源、SHA与当前审阅范围见交付记录，人工听感、观众理解和接受仍待反馈。原Qoder版本和所有素材保留。
 
 | 范围 | 当前实现与边界 |
 |---|---|
-| 桌面与 Agent | 一个 BMW，浏览器／Video Studio／自有 Assistant；DSH、Codex、Qoder CN、WorkBuddy 各拥有官方循环，唯一 browser 模型工具 |
+| 桌面与 Agent | 一个 BMW，浏览器／素材库／Video Studio及共享 Assistant；DSH、Codex、Qoder CN、WorkBuddy 各拥有官方循环，唯一 browser 模型工具 |
 | Project 与 Session | Project 共享页面和媒体；稳定 Session 固定 Project／driver，Studio 草稿固定唯一 owner；CAS、FIFO、取消清理和 unknown 不重发 |
 | 浏览器与媒体 | 页面交互、后台取材、截图、录屏、有限下载、HTTP／明文有限 HLS VOD 分发资源保全、图像检查／标注／绘图、抽帧、裁剪缩放与转换 |
 | 视频采集与源时间 | 修正有限视频结束时范围校验；逐帧保存源时间→录制文件 PTS 映射并核对成品；支持按源时间取中段／尾段帧，尺寸切换按初始画布等比适配留边，保留实际源尺寸 |
@@ -75,7 +87,7 @@ DSH 提供 DeepSeek API Key，Codex 提供 ChatGPT 浏览器登录，Qoder CN �
 
 ## 数据与运行限制
 
-正常启动只接受 v2 Agent 数据，历史转换通过 [显式迁移命令](AGENT_DATA_MIGRATION.md)，不自动导入或认领。已授权的本机迁移记录属于历史证据；本轮核查不修改生产 Profile 或 Project 文件。
+正常启动只接受 v2 Agent 数据，历史转换通过 [显式迁移命令](AGENT_DATA_MIGRATION.md)，不自动导入或认领。已授权的本机迁移记录属于历史证据；历史迁移核查保持只读；用户授权的新闻实际作业仅新增本次材料和制作记录，旧资料保全另见主Profile验证记录。
 
 原生桌面列表同步、fork、steer、Agent 原生审批与 nativeOpen 未启用。损坏状态保留原文件并提供重试／退出，清理失败隔离资源。设备编码能力、Edge 服务及 Qwen 账号权限／额度／网络影响成功率；实际 alpha 视频抽帧／转换拒绝。ASR macOS 分支有实测，Linux 分支未实测。
 

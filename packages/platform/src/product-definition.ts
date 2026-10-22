@@ -1,5 +1,6 @@
 import type {FeatureActivation} from './feature-contract.js'
 import type { BrowserActionDefinition } from '@bmw-agent/browser-capability'
+import type {WorkspaceMode} from '@bmw-agent/agent-contract'
 
 export type { BrowserActionDefinition } from '@bmw-agent/browser-capability'
 
@@ -13,6 +14,8 @@ const PRODUCT_NAMES: Readonly<Record<ProductId, ProductName>> = Object.freeze({
 
 export interface FeatureModule {
   readonly id: string
+  readonly workspace?: WorkspaceMode
+  readonly panels?: readonly string[]
   readonly actionNamespace?: string
   readonly browserActions?: readonly BrowserActionDefinition[]
   readonly browserDescription?: string

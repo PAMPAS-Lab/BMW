@@ -1,0 +1,469 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-22T01:56:42.657972+00:00",
+  "scope": "Collection optimization subagent only. Separate parent DSX main-Profile editing is excluded.",
+  "design": "docs/plans/COLLECTION_BATCH_OPTIMIZATION.md",
+  "newsWindow": {
+    "hours": 72,
+    "from": "2026-10-19T01:44:38.316000Z",
+    "to": "2026-10-22T01:44:38.316Z",
+    "sevenDayFallback": false,
+    "oldOriginalsRetainedButNotCountedAsWindowQualified": true
+  },
+  "sourceUrls": [
+    "https://blogs.nvidia.com/blog/category/generative-ai/",
+    "https://huggingface.co/blog",
+    "https://techcrunch.com/category/artificial-intelligence/",
+    "https://openai.com/news/",
+    "https://www.qbitai.com/",
+    "https://x.com/OpenAI",
+    "https://x.com/explore/tabs/trending",
+    "https://www.youtube.com/@OpenAI/videos",
+    "https://www.youtube.com/results?search_query=artificial+intelligence"
+  ],
+  "historicalLoggedInReference": {
+    "at": "2026-10-22T00:31:48.515Z",
+    "elapsedSeconds": 3525,
+    "calls": 231,
+    "newLeads": 12,
+    "browserBusySeconds": 285,
+    "outsideToolSeconds": 2074,
+    "betweenInputsSeconds": 1167
+  },
+  "comparability": {
+    "historicalVsFixture": false,
+    "historicalVsPublic": false,
+    "reason": "Different corpus, account state, editorial decisions and model/runtime waits; outside-tool elapsed is not pure model compute. No production speed multiple is established."
+  },
+  "syntheticNativeDOM": {
+    "realNetwork": false,
+    "paidModel": false,
+    "officialRuntime": false,
+    "productionProfile": false,
+    "sameOriginalAndMetadataFingerprint": true,
+    "nativeCancellationProof": true,
+    "nativeSameNavigationRecoveryProof": true,
+    "nativeDOMReadinessProof": true,
+    "results": [
+      {
+        "ioConcurrency": 1,
+        "elapsedMs": 8409,
+        "pageTasks": 25,
+        "peakNativeNavigations": 1,
+        "articleOriginals": 16,
+        "trendObservations": 1,
+        "qualityFingerprint": "20a2e5bab8b7315bfc3cb604c7dda05ca3be1e4cd5e32cf60dbabbcb86ff4206",
+        "nativeActionCount": 2,
+        "officialModelCalls": 0,
+        "elapsedReductionPercentVsSerial": 0.0
+      },
+      {
+        "ioConcurrency": 2,
+        "elapsedMs": 8166,
+        "pageTasks": 25,
+        "peakNativeNavigations": 2,
+        "articleOriginals": 16,
+        "trendObservations": 1,
+        "qualityFingerprint": "20a2e5bab8b7315bfc3cb604c7dda05ca3be1e4cd5e32cf60dbabbcb86ff4206",
+        "nativeActionCount": 2,
+        "officialModelCalls": 0,
+        "elapsedReductionPercentVsSerial": 2.89
+      },
+      {
+        "ioConcurrency": 3,
+        "elapsedMs": 7562,
+        "pageTasks": 25,
+        "peakNativeNavigations": 3,
+        "articleOriginals": 16,
+        "trendObservations": 1,
+        "qualityFingerprint": "20a2e5bab8b7315bfc3cb604c7dda05ca3be1e4cd5e32cf60dbabbcb86ff4206",
+        "nativeActionCount": 2,
+        "officialModelCalls": 0,
+        "elapsedReductionPercentVsSerial": 10.07
+      }
+    ],
+    "evidenceDirectory": "${BMW_REPO}/.bmw-runtime/collection-batch-validation-2026-10-22/native",
+    "note": "Single-run serial I/O vs 2/3 I/O in the same new service. 25 pages and 17 synthetic originals (16 articles, one partial trend); no independent-news or production throughput claim."
+  },
+  "syntheticStoreAndIO": {
+    "realNetwork": false,
+    "paidModel": false,
+    "qualityValidation": {
+      "matched": true,
+      "baseline": "c3ac63ec315df6b1e7f714f918a914849c6e8206d9326f023c9e0d5a408610f6",
+      "checked": 3,
+      "fields": [
+        "url",
+        "bodySha256",
+        "author",
+        "publishedAt",
+        "complete"
+      ],
+      "ordering": "url ascending"
+    },
+    "results": [
+      {
+        "ioConcurrency": 1,
+        "elapsedMs": 9480,
+        "collectMs": 6783,
+        "pageReads": 25,
+        "peakReads": 1,
+        "originals": 17,
+        "articleOriginals": 16,
+        "trendObservations": 1,
+        "savedLeads": 17,
+        "qualityFingerprint": "c3ac63ec315df6b1e7f714f918a914849c6e8206d9326f023c9e0d5a408610f6"
+      },
+      {
+        "ioConcurrency": 2,
+        "elapsedMs": 8901,
+        "collectMs": 6476,
+        "pageReads": 25,
+        "peakReads": 2,
+        "originals": 17,
+        "articleOriginals": 16,
+        "trendObservations": 1,
+        "savedLeads": 17,
+        "qualityFingerprint": "c3ac63ec315df6b1e7f714f918a914849c6e8206d9326f023c9e0d5a408610f6"
+      },
+      {
+        "ioConcurrency": 3,
+        "elapsedMs": 8898,
+        "collectMs": 6494,
+        "pageReads": 25,
+        "peakReads": 3,
+        "originals": 17,
+        "articleOriginals": 16,
+        "trendObservations": 1,
+        "savedLeads": 17,
+        "qualityFingerprint": "c3ac63ec315df6b1e7f714f918a914849c6e8206d9326f023c9e0d5a408610f6"
+      }
+    ],
+    "note": "Fixed synthetic delay, real disposable source/rolling stores. Busy/sum intervals include serialized-store/event-loop waits and are not pure network time."
+  },
+  "publicNative": {
+    "realNetwork": true,
+    "signedIn": false,
+    "paidModel": false,
+    "officialRuntime": false,
+    "productionProfile": false,
+    "userAgentPolicy": "production-browser-compatible",
+    "elapsedMs": 43447,
+    "pageTasks": 29,
+    "peakNativeNavigations": 3,
+    "originalDetails": 14,
+    "editorialDecisions": "All pending; no invented leads, events or recommendation snapshot.",
+    "sourceResults": [
+      {
+        "entry": "https://blogs.nvidia.com/blog/category/generative-ai/",
+        "entryEvidence": {
+          "sourceId": "04d5664e0364a44370750d00e4ae74dc54525cc73fd0b0b743b6be7ff43ea12c",
+          "acquisitionId": "46cf0a64-4017-4a52-9b47-267cd5eb2fa9",
+          "bodySha256": "ca7b2d47f0cd7ea2a152b3396a01bb9ee2d3fb82e643b71f73a2a973f30b5711",
+          "url": "https://blogs.nvidia.com/blog/category/generative-ai/",
+          "observedAt": "2026-10-22T01:44:43.988Z",
+          "quote": "AI\nBringing the Spark to Europe: Local Intelligence Powers Next Wave of Agents\nAt GTC Berlin, NVIDIA is showcasing its full lineup of local AI hardware. RTX Spark, which launched last week, powers personal agents on Windows PCs;...\nOct 21, 2026\nEurope’s Industrial Leaders Reinvent Engineering and Manufacturing With NVIDIA\nOct 21, 2026\nNVIDIA cuDSS Now Generally Available to Accelerate Engineering and Scientific Simulations\nOct 21, 2026\nNVIDIA Agent Toolkit Expands, Grounding Enterprise Agents in",
+          "quoteStart": 0
+        },
+        "state": "partial",
+        "pending": 21,
+        "note": "新原文已沉淀，等待一次批量相关性核对；元数据缺失明确保留。"
+      },
+      {
+        "entry": "https://huggingface.co/blog",
+        "entryEvidence": {
+          "sourceId": "935fbe5ba89ff5f91fc8c69bf0635b996bf552cca8ecec4e464d38254683ff40",
+          "acquisitionId": "9bdd7743-74c1-4198-8738-874d5e60b05a",
+          "bodySha256": "f43e3c2a0f84b6d72b855bcf2c6832fa7f83dacf775d3a8a19892efc0860580d",
+          "url": "https://huggingface.co/blog",
+          "observedAt": "2026-10-22T01:44:41.952Z",
+          "quote": "Community Blog & Articles\nNew Article\ncommunity\nguide\nopen source collab\npartnerships\nresearch\nNLP\nAudio\nCV\nRL\nethics\nDiffusion\nGame Development\nRLHF\nLeaderboard\nCase Studies\nLeRobot\nInference Providers\nNEW\n你也可以阅读这篇博客的中文版\nCommunity Articles\nview all\nGranite Switch 4.1: Chat, Decisions, and Speech from One Endpoint\nibm-granite\n•\n6 days ago\n•\n69\nThe Missing Piece in LLM Memory: Why Long Context and Retrieval Aren't Enough for Belief Revision\nboltwave\n•\n6 days ago\n•\n60\nTokenmaxxing BERT: 50x faster",
+          "quoteStart": 0
+        },
+        "state": "partial",
+        "pending": 34,
+        "note": "新原文已沉淀，等待一次批量相关性核对；元数据缺失明确保留。"
+      },
+      {
+        "entry": "https://techcrunch.com/category/artificial-intelligence/",
+        "entryEvidence": {
+          "sourceId": "d91b1a307571d77e325e73fbc7c300f1d53199c06e1befc6073ee0b1bbe9d876",
+          "acquisitionId": "afbd56f4-9da2-4b94-8cb2-79f62c137435",
+          "bodySha256": "6de3f36a536994183e2541c3847be47f9e79f712bdcc4027d2bb194705600e3d",
+          "url": "https://techcrunch.com/category/artificial-intelligence/",
+          "observedAt": "2026-10-22T01:44:47.262Z",
+          "quote": "AI\nNews coverage on artificial intelligence and machine learning tech, the companies building them, and the ethical issues AI raises today. This encompasses\ngenerative AI\n, including large language models, text-to-image and text-to-video models; speech recognition and generation; and predictive analytics.\nHeadlines Only\nAI\nBlackstone’s Jas Khaira says fears over AI-buildout debt are overblown\nMarina Temkin\n3 hours ago\nTechCrunch Founder Summit 2026\nTechCrunch Founder Summit 2026: Everything you ",
+          "quoteStart": 0
+        },
+        "state": "partial",
+        "pending": 37,
+        "note": "新原文已沉淀，等待一次批量相关性核对；元数据缺失明确保留。"
+      },
+      {
+        "entry": "https://openai.com/news/",
+        "entryEvidence": {
+          "sourceId": "d36c9d6e50bf98ea0adcfc93f9f5095fab759a431e5747f97c063ac59dbc4439",
+          "acquisitionId": "e223e628-243c-4723-905b-8c0453d38bd6",
+          "bodySha256": "cbae2566ff9f0457d077aac5a2f9bc0b08a3e7fef0338d3efafce20b4e90c0b8",
+          "url": "https://openai.com/zh-Hans-CN/news/",
+          "observedAt": "2026-10-22T01:44:46.810Z",
+          "quote": "OpenAI\n全部\n公司\n研究\n产品\n安全\n工程\n安全\n智能时代\n全球事务\nAI 采用\n应用 AI\n全部\n筛选\n排序\n切换卡片以显示媒体\n切换卡片以隐藏媒体\n以一致标准推动广泛使用\n安全\n2026年10月21日\nOpenAI 模型即将登陆 Google Cloud\n公司\n2026年10月21日\nPatch the Planet：协调全球响应，应对智能体发现的严重漏洞\n安全\n2026年10月21日\nChatGPT Ads 新增覆盖 26 个国家/地区\n产品\n2026年10月21日\n利用数千个 AI 智能体，从生物学数据中发掘新线索\n刊发\n2026年10月21日\n我们如何构建兼顾用户信任与广告相关性的 ChatGPT 新型广告技术栈\n工程\n2026年10月21日\n前沿 AI 的民主治理（二）：赋能网络防御者\n全球事务\n2026年10月21日\nOpenAI 收购 Orchestra Bio\n公司\n2026年10月20日\n提升低资源编程语言的编程能力\n刊发\n2026年10月19日\n加载更多",
+          "quoteStart": 0
+        },
+        "state": "partial",
+        "pending": 9,
+        "note": "部分原文未能读取：Error: Collection page changed between original and visible links"
+      },
+      {
+        "entry": "https://www.qbitai.com/",
+        "entryEvidence": {
+          "sourceId": "bf6d5652fef9bd67d097162ba96dbd78606794393a83b8105fbfe32c4b31c768",
+          "acquisitionId": "abac6052-c8cc-46bc-a916-6c5a5afb3326",
+          "bodySha256": "10ddb0cf2519888e137e93c15d1eb471b9de5165f6534f47ca54cf74e0b23d51",
+          "url": "https://www.qbitai.com/",
+          "observedAt": "2026-10-22T01:44:45.473Z",
+          "quote": "首页\n资讯\n智能车\n智库\n活动\nMEET大会\nAIGC\n科技企业出海，为啥我推荐你去迪拜？\n多智能体协同重构医疗AI！清华AIR孵化：医生AI分身“坐诊”医院\nRSI三块关键拼图，MemT 1.0从模型层补上「记忆」\n突发！DeepSeek新模型发布，超级性价比斩杀一切\n科技企业出海，为啥我推荐你去迪拜？\n多智能体协同重构医疗AI！清华AIR孵化：医生AI分身“坐诊”医院\n梁文锋投了Swin Transformer作者！DeepSeek开始布局具身大脑\n生数科技Motubrain团队将直播Physical AI训练全流程，持续半个月\n量子位\n15小时前\nLeCun押注的世界模型，中国一家清华系公司已经做进了机器人\n田晏林\n17小时前\n量智齐飞！4个月9款车落地，轻舟城市NOA击穿10-20万体验天花板\n邓思邈\n18小时前\n实探宁德时代总部：“去宁化”是喊太大声了\n杰西卡\n20小时前\n飞书豆包工作AI先锋未来人才大赛：企业正在争抢会用AI做成事的人\n量子位\n22小时前\n理想宣布：电池自燃报废赔新车！自研6年后有底气了\n杰西卡\n昨天 09:04\n国模Agent第一！MiniMax爆改Fla",
+          "quoteStart": 0
+        },
+        "state": "partial",
+        "pending": 28,
+        "note": "新原文已沉淀，等待一次批量相关性核对；元数据缺失明确保留。"
+      },
+      {
+        "entry": "https://x.com/OpenAI",
+        "entryEvidence": {
+          "sourceId": "fb71d2d8625344e5fe2ec2e36a603618b31dd4569b56ca8b76f065f54ba1a73c",
+          "acquisitionId": "d1c88da8-795d-4fd8-8518-9c50265dca7f",
+          "bodySha256": "67f12524e9d83c900b3b8f8380a3ca52f6d42663ed3b6c520bc42416d17f41ec",
+          "url": "https://x.com/OpenAI",
+          "observedAt": "2026-10-22T01:44:50.563Z",
+          "quote": "OpenAI\n2,195\nposts\nOpenAI\n@OpenAI\nOpenAI’s mission is to ensure that artificial general intelligence benefits all of humanity. We’re hiring:\nopenai.com/jobs\nopenai.com\n加入于 2015年12月\n4\n正在关注\n546万\n关注者\n7\n附属账号\n提及\n关注\n帖子\n回复\n转帖\n媒体",
+          "quoteStart": 0
+        },
+        "state": "partial",
+        "pending": 0,
+        "note": "当前入口未定位到可核验的文章链接，不能当作无新增。"
+      },
+      {
+        "entry": "https://x.com/explore/tabs/trending",
+        "entryEvidence": null,
+        "state": "restricted",
+        "pending": 0,
+        "note": "入口受限、空白、缺失或不完整（missing-range / main）；保留原文与旧游标。"
+      },
+      {
+        "entry": "https://www.youtube.com/@OpenAI/videos",
+        "entryEvidence": null,
+        "state": "partial",
+        "pending": 0,
+        "note": "入口受限、空白、缺失或不完整（missing-range / ytd-browse）；保留原文与旧游标。"
+      },
+      {
+        "entry": "https://www.youtube.com/results?search_query=artificial+intelligence",
+        "entryEvidence": null,
+        "state": "partial",
+        "pending": 0,
+        "note": "入口受限、空白、缺失或不完整（missing-range / ytd-two-column-search-results-renderer）；保留原文与旧游标。"
+      }
+    ],
+    "originalMetadata": [
+      {
+        "sourceId": "8722385c6c33a84607c373d61347af5cf6968103da45281c21700e65a0de7106",
+        "acquisitionId": "5578579e-bd2e-453d-8e5e-2fedaaa539e7",
+        "url": "https://blogs.nvidia.com/blog/local-ai-gtc-rtx-dgx-spark-station-sync/",
+        "bodySha256": "ce2307c9724b6c1ccc81f971301bc3829f92c2058370ae4ff32e2ff815813051",
+        "author": "Gerardo Delgado",
+        "publishedAt": "2026-10-21T03:45:17-07:00",
+        "complete": true
+      },
+      {
+        "sourceId": "86185ff09c24ae9f959f9d298aa36c00dfd13b30729142e7cd673ad6999a7e9e",
+        "acquisitionId": "df772788-859b-4f9d-a4c7-ebde7725629c",
+        "url": "https://blogs.nvidia.com/blog/europe-industrial-leaders-engineering-manufacturing/",
+        "bodySha256": "a122ea9171a347fcd0dcb48f0775f1f9adcac7a6f2a4134103a000b4bc2ed495",
+        "author": "James McKenna",
+        "publishedAt": "2026-10-21T03:50:37-07:00",
+        "complete": true
+      },
+      {
+        "sourceId": "b2b697f42a42e82a601063bb3668032f42d040054a331263c3462bca19924687",
+        "acquisitionId": "8ab7ea93-7a7d-47e1-9ad4-09a3e7da156d",
+        "url": "https://blogs.nvidia.com/blog/cudss-generally-available-engineering-scientific-simulation/",
+        "bodySha256": "7068a06f3b75a35161333586d38cab63657a179bafe8e1d9dee011faf1c5be34",
+        "author": "Timothy Costa",
+        "publishedAt": "2026-10-21T03:50:37-07:00",
+        "complete": true
+      },
+      {
+        "sourceId": "09d942bb1aad0976da416aa639f2750fcaf152cc81cd37f560def1c9203e7c58",
+        "acquisitionId": "1da27cf7-79cd-474c-939a-4928e0a56bea",
+        "url": "https://blogs.nvidia.com/blog/enterprise-platforms-agent-toolkit/",
+        "bodySha256": "bec6942f30b80bca6051adede98167a1df72ca51ea42d0ede56fd6b687df8bb4",
+        "author": "Erik Pounds",
+        "publishedAt": "2026-10-21T03:50:37-07:00",
+        "complete": true
+      },
+      {
+        "sourceId": "d330643595776f9f542e9f48a636499dcc2c3968ee0ccb07e6ba5a41a8cbcae0",
+        "acquisitionId": "1d150acd-350c-40d5-aae2-f57e8aa47ead",
+        "url": "https://huggingface.co/blog/ibm-granite/granite-switch-4-1",
+        "bodySha256": "79ffc8112ccc69c4c0ec285230502eb77c1c0f6a960cc3141ac138612621dc78",
+        "author": null,
+        "publishedAt": "about 4 hours ago",
+        "complete": true
+      },
+      {
+        "sourceId": "dc2f95f251860c5adae75ed614d96dee76e79b7461623ceacfc91e4cfe326900",
+        "acquisitionId": "0ab35742-64e7-4a28-a188-df9fc2f5025c",
+        "url": "https://huggingface.co/blog/huggingface/tokenmaxxing-bert",
+        "bodySha256": "062fcbc01c3fe12399b77b8a25aab0ca355eefcb31d9617de8f76677f8da84cd",
+        "author": null,
+        "publishedAt": "Feb 22, 2024",
+        "complete": true
+      },
+      {
+        "sourceId": "138e9b7e7d9747243aa585f555fbf6f3d58b687e3498b374de6b74802266db21",
+        "acquisitionId": "6c3da2f3-56dc-4026-9c2f-4f570a1e1b43",
+        "url": "https://huggingface.co/blog/nvidia/scaling-indic-pretraining",
+        "bodySha256": "061d67dcea141648d23bc32c689ac20ce03ec5af0d58b47fb4e403a163357621",
+        "author": null,
+        "publishedAt": "3 days ago",
+        "complete": true
+      },
+      {
+        "sourceId": "e01489efb3f449fb60c7672d4323d8d44ac380188faadbb717d850e0734ab64f",
+        "acquisitionId": "0ce4c46c-e68f-42a3-8c22-5c434deafd7c",
+        "url": "https://techcrunch.com/2026/10/21/techcrunch-founder-summit-2026-everything-you-need-to-know/",
+        "bodySha256": "1ce20c3485bfdb7177a519e2048e81d73dfd3de803e4a64ce7b7b491b70b3c48",
+        "author": null,
+        "publishedAt": "2026-10-21T14:16:20-07:00",
+        "complete": true
+      },
+      {
+        "sourceId": "40e4827a0c18ace8d7b0643f355b8b6bcc97601f67798ceeb44fd8b0c1498775",
+        "acquisitionId": "45252ec9-fe3f-4767-ba38-aa511a909633",
+        "url": "https://techcrunch.com/2026/10/21/meta-says-muse-has-over-10m-users-with-shopping-a-top-activity/",
+        "bodySha256": "06c5df9e77cb4fdcacd4fa4db6b7b1c3216b7a41640981155699b4554e3dc84a",
+        "author": null,
+        "publishedAt": "2026-10-21T14:14:19-07:00",
+        "complete": true
+      },
+      {
+        "sourceId": "b1ec87d705753567cead9b8e4e56f032209ccf8d741fe50135d3b2c30fdfc875",
+        "acquisitionId": "28e6334e-21ad-41c3-8cf7-66051e5457c3",
+        "url": "https://techcrunch.com/2026/10/21/recursive-launches-flint-a-laptop-coding-model-it-says-was-largely-built-by-ai/",
+        "bodySha256": "b17016e7d593dc24dd5e6f1cd7f10680e750dc01893280ee115a92734afe01b4",
+        "author": null,
+        "publishedAt": "2026-10-21T13:27:41-07:00",
+        "complete": true
+      },
+      {
+        "sourceId": "ee5297d7e82b37f097f782e11ed8caaa56eee2d3c23e82bd20549808ddee16b9",
+        "acquisitionId": "760bc5f8-58bb-4457-b17f-98f504ddc8bc",
+        "url": "https://www.qbitai.com/2026/10/503893.html",
+        "bodySha256": "099ff67919bcf7bceb7205e5e59c1497f4e9e30a597bc9c79afbccff509ccd7b",
+        "author": "一水",
+        "publishedAt": "2026-10-17",
+        "complete": true
+      },
+      {
+        "sourceId": "b9dc1a91e45ba8558c6828c862405a942aefb8ac9dda75c1644b8b842115823f",
+        "acquisitionId": "e92112c2-412d-4485-9e5e-55135658b43e",
+        "url": "https://www.qbitai.com/2026/10/504734.html",
+        "bodySha256": "50056f88f887ac07f2ef5ed34be91abbd4ab0dd8cb5fd037e3e3570b08c6359a",
+        "author": "鹭羽",
+        "publishedAt": "2026-10-21",
+        "complete": true
+      },
+      {
+        "sourceId": "7e7dc0ccabb4f344d653b531a3b87eb916c928a4c64303b673677a9ab8480093",
+        "acquisitionId": "a3a7501e-8eba-4b1e-a065-a6d173040730",
+        "url": "https://www.qbitai.com/2026/10/503093.html",
+        "bodySha256": "d24e3bb905a116fee1726014ca69e4c864f93dc8942da78439e0e2440ad32476",
+        "author": "量子位的朋友们",
+        "publishedAt": "2026-10-13",
+        "complete": true
+      },
+      {
+        "sourceId": "cd2dfd00bf8737e6712b471d764b78905fbed3f1a04057abb76eaf66bc10c13e",
+        "acquisitionId": "ab97046c-3d09-4d59-afb1-64b914670097",
+        "url": "https://www.qbitai.com/2026/10/504730.html",
+        "bodySha256": "3065088a05d6ce501fced6f8472531436f8b1ab6c716e8f232ff3b8744172550",
+        "author": "量子位的朋友们",
+        "publishedAt": "2026-10-21",
+        "complete": true
+      }
+    ],
+    "evidenceDirectory": "${BMW_REPO}/.bmw-runtime/collection-batch-validation-2026-10-22/public",
+    "allOriginalsSHARechecked": true,
+    "allCompletionCursorsRetained": true,
+    "gaps": [
+      "X account has no verifiable original status links; X trends restricted.",
+      "YouTube fixed roots are absent in this disposable public DOM; retained missing-range/partial, never no-new.",
+      "Hugging Face author and relative dates, TechCrunch author and other missing metadata stay explicit.",
+      "Some OpenAI reads change between original and visible-link phases; rejected without mixing and remain pending.",
+      "Old dates may be retained in raw originals, but do not expand the 72-hour news window."
+    ]
+  },
+  "regressions": {
+    "build": "passed in isolated copy",
+    "check": "passed in isolated copy",
+    "focusedTests": {
+      "total": 21,
+      "passed": 21,
+      "failed": 0,
+      "log": "${BMW_REPO}/.bmw-runtime/collection-batch-validation-2026-10-22/new-tests-verified.log"
+    },
+    "broadUnitContractBoundary": {
+      "status": "passed",
+      "classifiedChecksPassed": 116,
+      "failed": 0,
+      "scope": "unit,contract,boundary",
+      "sourceSnapshot": "/tmp/bmw-collection-validation-1792630577",
+      "report": "${BMW_REPO}/.bmw-runtime/collection-batch-validation-2026-10-22/classified-release-result.json"
+    },
+    "runtimePassed": [
+      "DSH installed compatibility",
+      "desktop workspace",
+      "library source presets",
+      "library rolling",
+      "library schedules",
+      "library recommendations",
+      "library news and export adoption",
+      "background inactive Project/Session and actual drain",
+      "Studio",
+      "media processing",
+      "video production",
+      "Qwen narration fixture"
+    ],
+    "runtimePaidModelCoverage": false,
+    "productionProfileCoverage": false,
+    "copiedPublicEvidenceVerification": {
+      "allOriginalSHA": true,
+      "allNineCompletionCursorsRetained": true
+    },
+    "sourceConsistency": {
+      "authoredBuildInputs": 567,
+      "currentCheckoutMatchesIsolatedReceipt": true,
+      "rootGeneratedOutputsRebuiltBySubagent": false
+    }
+  },
+  "productionSameNine": {
+    "status": "pending-parent-coordination",
+    "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+    "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+    "driver": "qoder-cn/dfmodel",
+    "mustWaitForParentDSXWorkAndActualResourceDrain": true
+  },
+  "schedules": {
+    "bmw": "remain PAUSED; no modification by this subagent",
+    "bmw-4": "remain PAUSED; no modification by this subagent"
+  },
+  "dataPreservation": {
+    "oldFormatsMigrated": false,
+    "oldMaterialsNewsSnapshotsDraftsAndExportsRemoved": false,
+    "newNamespace": "Project/library/collection-batches/commits",
+    "generatedRootBuildChangedBySubagent": false
+  },
+  "artifactRoot": "${BMW_REPO}/.bmw-runtime/collection-batch-validation-2026-10-22"
+}

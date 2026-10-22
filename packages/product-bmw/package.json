@@ -6,6 +6,7 @@
   "exports": "./index.js",
   "dependencies": {
     "@bmw-agent/platform": "*",
-    "@bmw-agent/feature-video": "*"
+    "@bmw-agent/feature-video": "*",
+    "@bmw-agent/feature-library": "*"
   }
 }

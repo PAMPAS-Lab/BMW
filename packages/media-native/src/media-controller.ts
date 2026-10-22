@@ -2,12 +2,13 @@ import {GridPrecomposer,inspectGridProxy} from './precomposition.js'
 import {assertNarration} from './narration-contract.js'
 import type {QwenNarrationCredentials} from './narration-contract.js'
 import {ArtifactJobIO} from './artifact-job-io.js'
-import {preserveMedia} from './media-preservation.js'
+import {preserveMedia,PreservationCleanupError} from './media-preservation.js'
 import type {PreservationInput} from './media-preservation.js'
 import {SpeechProcessor} from './speech-processor.js'
 import {VideoElementCapture} from './video-element-capture.js'
 import {readCaptureIndex,captureIndexSummary,sampleCaptureSourceFrames} from './capture-source-index.js'
 import type {SourceCaptureGuard} from './source-contract.js'
+import type {VideoIdentity} from './source-contract.js'
 import type {WebContents} from 'electron'
 import {recordingEvents,assertRecordingFrameClock,RECORDING_EVENT_BYTES} from './recording-contract.js'
 import type {RecordingClock,RecordingEventSource} from './recording-contract.js'
@@ -35,6 +36,7 @@ export class MediaController implements NativeMediaPort {
   private precomposer:GridPrecomposer
   private sourceFramesReading=false
   private preserving=false
+  private failedPreservation?:PreservationCleanupError
   private eventSource?:RecordingEventSource
   private recordingClock?:RecordingClock
   private recordingBytes=0
@@ -79,8 +81,9 @@ export class MediaController implements NativeMediaPort {
 
   ownsCaptureSender(event:{sender:unknown;senderFrame:unknown}):boolean { return isOwnedCaptureMessage(event,this.window) }
 
-  configureDisplayMedia() {
+  configureDisplayMedia(denyRequest?:(request:Electron.DisplayMediaRequestHandlerHandlerRequest)=>boolean) {
     this.session.setDisplayMediaRequestHandler((_request, callback) => {
+      if(denyRequest?.(_request)){callback({});return}
       if (!this.target) {
         callback({})
         return
@@ -94,7 +97,7 @@ export class MediaController implements NativeMediaPort {
   }
 
   isCaptureActive(): boolean {
-    return Boolean(this.precomposer.busy || this.preserving || this.sourceFramesReading || this.file || this.elementCapture || this.processor.busy || this.composer.busy || this.narrator.busy || this.coverProcessor.busy || this.speechProcessor.busy)
+    return Boolean(this.precomposer.busy || this.preserving || this.failedPreservation || this.sourceFramesReading || this.file || this.elementCapture || this.processor.busy || this.composer.busy || this.narrator.busy || this.coverProcessor.busy || this.speechProcessor.busy)
   }
 
   async narrate(raw: unknown, signal?: AbortSignal) {
@@ -144,7 +147,7 @@ export class MediaController implements NativeMediaPort {
     if(mediaRecord(raw).action==='media.precompose.discard'){const value=mediaRecord(raw);if(Object.keys(value).some(k=>!['action','cacheKey'].includes(k))||typeof value.cacheKey!=='string'||!/^[a-f0-9]{64}$/.test(value.cacheKey))throw new TypeError('Invalid proxy rollback.');await this.precomposer.discard(value.cacheKey);return {discarded:true}}
     if(mediaRecord(raw).action==='media.precompose.inspect'){if(this.isCaptureActive())throw new Error('Media is busy.');const value=mediaRecord(raw);if(Object.keys(value).some(k=>!['action','artifactId'].includes(k)))throw new TypeError('Invalid proxy inspection.');return inspectGridProxy(this.resolveArtifactsDirectory?.()||this.artifactsDirectory,assertArtifactId(value.artifactId),signal)}
     if(mediaRecord(raw).action==='media.precompose'){if(this.isCaptureActive())throw new Error('Finish the current media job before precomposing.');const value=mediaRecord(raw);if(Object.keys(value).some(k=>!['action','recipe'].includes(k)))throw new TypeError('Invalid native precomposition request.');return this.precomposer.run(value.recipe,this.resolveArtifactsDirectory?.()||this.artifactsDirectory,signal)}
-    if(this.preserving)throw new Error('Finish media preservation before processing artifacts.')
+    if(this.preserving||this.failedPreservation)throw new Error('Finish media preservation and cleanup before processing artifacts.')
     if(mediaRecord(raw).action==='media.capture.frames.sample'){
       if(this.isCaptureActive())throw new Error('Finish the current media job before reading source frame evidence.')
       this.sourceFramesReading=true
@@ -196,7 +199,7 @@ export class MediaController implements NativeMediaPort {
   async preserveMedia(request:Omit<PreservationInput,'directory'>){
     if(this.isCaptureActive())throw new Error('Finish the current media job before preservation.')
     this.preserving=true
-    try{return await preserveMedia({...request,directory:this.resolveArtifactsDirectory?.()||this.artifactsDirectory})}finally{this.preserving=false}
+    try{return await preserveMedia({...request,directory:this.resolveArtifactsDirectory?.()||this.artifactsDirectory})}catch(error){if(error instanceof PreservationCleanupError)this.failedPreservation=error;throw error}finally{this.preserving=false}
   }
 
   projectArtifactPath(filename) {
@@ -289,6 +292,7 @@ export class MediaController implements NativeMediaPort {
   }
 
   async stop(request:{discard?:boolean}={}) {
+    if(this.failedPreservation){await this.failedPreservation.recover();this.failedPreservation=undefined;return {state:'idle',cleanupRecovered:true}}
     await this.processor.recoverCleanup()
     await this.composer.recoverCleanup()
     await this.precomposer.recoverCleanup()
@@ -354,7 +358,7 @@ export class MediaController implements NativeMediaPort {
     finally { await this.eventSource?.dispose();this.eventSource=undefined;this.recordingClock=undefined;stream.removeListener('error',this.captureStreamError);this.stream = null; this.file = null; this.target = null }
   }
 
-  async captureVideo(tab:{id:string;title:string;url:string;view:{webContents:WebContents}},request:{selector?:unknown;index?:unknown;filename?:unknown;fromStart?:unknown;maxDurationMs?:unknown;playbackPlan?:unknown;sourceGuard?:SourceCaptureGuard}={},signal?:AbortSignal){
+  async captureVideo(tab:{id:string;title:string;url:string;view:{webContents:WebContents}},request:{selector?:unknown;index?:unknown;filename?:unknown;fromStart?:unknown;maxDurationMs?:unknown;playbackPlan?:unknown;sourceGuard?:SourceCaptureGuard;videoIdentity?:VideoIdentity}={},signal?:AbortSignal){
     signal?.throwIfAborted();if(this.isCaptureActive())throw new Error('A media job is already active.')
     const directory=this.resolveArtifactsDirectory?.(tab)||this.artifactsDirectory;fs.mkdirSync(directory,{recursive:true,mode:0o700})
     const capture=new VideoElementCapture(tab.view.webContents,directory,request,{id:tab.id,title:tab.title,url:tab.url},value=>this.onStatus?.(value));this.elementCapture=capture

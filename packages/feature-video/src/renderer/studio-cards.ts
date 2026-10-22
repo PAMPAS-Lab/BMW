@@ -194,6 +194,7 @@ export class StudioCards {
     const inspector=node('inspector'),body=node('card-detail-body'),preparation=node('preparation-workspace'),materials=node('stage-content')
     if(this.detail==='materials'){body.append(preparation,materials);preparation.hidden=this.matching;materials.hidden=false;inspector.hidden=true}
     else{body.append(inspector);inspector.hidden=false}
+    node('studio-library').hidden=this.detail!=='materials'
     node('card-detail-title').textContent=this.detail==='materials'?(this.matching?'更换此镜头画面':'目标与素材'):this.detail==='visual'?'画面与取景':'旁白与字幕'
     node('card-detail-back').hidden=false
   }

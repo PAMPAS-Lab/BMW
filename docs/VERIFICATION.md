@@ -1,8 +1,122 @@
 # BMW 验证说明
 
-核对日期：2026-10-20。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
+核对日期：2026-10-21。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
 
-## 当前源码离线验证
+## 主 Profile 实际发现的大截图读取问题
+
+实际候选准备暴露Source screenshot登记将最多32MiB PNG一次传给每次最多1MiB的ArtifactJobIO.read，超过1MiB时被正确拒绝。修复为有界分块读取，逐块检查取消和Project边界，仍检查完整静态PNG结构、解码尺寸、所读字节SHA、实时文件指纹及同源正文；不提高读取/图片/像素上限。准备指引同时明确复用事件原获取、排除推荐侧栏和无关缩略图，并将未核实录制日保留null，不抄发布日期。
+
+最终build/check、**114项离线分类通过/0失败/90未运行**。19项隔离原生用例首轮18项通过，sources用例在生成自身短视频输入时缺少视频轨、尚未进入被测流程，原失败保留；其他检查退出后，该用例独立重跑通过，实际来源/解码/引用/GUI与清理均完成。不能写成19项首轮全通过。汇总 `.bmw-runtime/main-profile-news-2026-10-21/screenshot-regression.json`，保留首轮 `runtime-after-screenshot-chunks/result.json` 及 `source-retry-after-screenshot-chunks.log`。受测554项输入/520项输出未变。真实DOM大截图证明为 `runtime-after-screenshot-chunks/source-screenshot/large-screenshot.json`：1,621,852字节、608×4848，实际PNG、来源关联与解码核验通过；一次性测试Profile，不是主Profile新闻素材。
+
+主Profile的实际准备输入 `29639146-f34c-4e8a-86fd-3a1e355f9419` 经GUI停止并等待清理，回执finished/interrupted，保留已提交5个edition、15条线索和12个事件。正常退出主实例后才构建及回归；后续以不同的新输入继续，不重投旧输入。源获取不匹配、截图陈旧、日期/预览及CAS门禁仍严格拒绝。实际候选的预览相关性和录制日期仍需编辑核对，尚不能据本节认定快照或视频已交付。
+
+## 正文可见元数据位置绑定
+
+主Profile实际采集中，Hugging Face及OpenAI文章的正文有可见日期/署名，但局部元素选择器未能定位，旧获取明确保留null及缺口。新增可选metadataRanges回退：Native从本次完整可见正文的精确UTF16区间取值，保留quote和位置；字段与selector互斥，正文变化、截断、缺失、错误偏移和裁剪Updated/录制/转载日期拒绝。位置证据随新获取保存，read/import重新核对正文与SHA。旧获取零回填；位置绑定不认证发布者权威或事实正确。browser只负责DOM及边界检查，未添加到media-native的运行时依赖。
+
+最终build/check、**16个定向用例**、**114项离线分类通过/0失败/90未运行**及**19项隔离原生回归**通过。新增真实DOM用例证明无专用日期元素仍可绑定，修改页面日期后旧见证失败，旧获取字节保持；原生来源/媒体、素材库、新闻、推荐、周期/后台、Studio恢复、制作、DSH、桌面、旁白及驱动均纳入。报告在本机 `.bmw-runtime/main-profile-news-2026-10-21/unit-after-metadata/`、`runtime-after-metadata/`，真实DOM证明为后者 `sources/metadata-witness.json`。默认受限启动曾在Electron启动前被终止（143，日志为空），该次失败报告单独保留为 `runtime-after-metadata-sandbox-launch/`；通过结果来自获准的隔离原生重跑，不混计启动失败或真实外部服务覆盖。
+
+主Profile于全部输入正常终结、清理并空闲后正常退出，完成隔离回归再更新。此前只读保全复核：原13,429个材料、173份Studio/新闻状态及95份历史文件字节未变，108个旧会话的Project/driver/原生恢复锚点未变。后续元数据补采、严格72小时推荐与视频交付仍须以主Profile真实驱动回执核验。
+
+## 主 Profile 实际驱动发现的社媒参数说明修正
+
+主Profile只做用户授权的实际使用与只读兼容核对，不运行夹具。兼容核对覆盖29个Project、108个会话、95份已存历史、124份草稿、18个新闻批次、220次来源获取及266条导出记录，格式错误为零；207份原文SHA及13,429个材料文件已核对/记录。元数据副本和逐文件基线留在本机。11条既有unknown输入保留，不重投。真实Qoder CN首次X趋势访问成功保存原文，但错误的platformId参数反复被拒绝，本轮以failed正常终结，游标保留；不能将Host轮次success混称采集success。
+
+据真实失败补充原文URL路径标识、空指标、入口观察范围及整组finish证据说明；身份与指标错误独立，返回原URL允许标识，缺证据字段明确拒绝。没有放宽原文、指标、租约或游标，也未改变存储版本。最终build/check、12个目标用例、**114项离线分类/0失败/90未运行**和**18项隔离原生回归**通过；未运行项不算通过。受测非Markdown源码及生成输出与本次修正逐项SHA一致。所有这些回归使用一次性Profile/Home/Workspace，与主Profile实际结果分列，不据夹具宣称真实访问或制作完成。
+
+报告 `.bmw-runtime/main-profile-news-2026-10-21/unit-after-social-help/result.json`、`runtime-after-social-help/result.json`、`social-help-regression.json`。旧108个Session的Project/driver/原生恢复锚点在修正后逐项未变。主实例正常退出更新后已重新启动，真实采集、推荐及后续视频目标仍在继续，见 [主Profile工作记录](research/AI_NEWS_MAIN_PROFILE.md)。
+
+## 固定来源与真实近72小时链路验证
+
+固定目录、可信添加、社媒类型和受限页门禁已实现；规格及测试清单已更新。最终build/check通过，六个冻结类型例外未增加。离线分类 **114 passed / 0 failed / 90 not-run**；not-run是层级外或显式opt-in，不计通过。**18项隔离原生回归全部通过**：固定来源GUI、隐藏后台采集、周期采集、推荐、rolling、旧素材库选题及成品采用、原文截图、Studio生产恢复、原生视频、DSH、桌面workspace、标准Studio、旧news、媒体采集/处理、Qwen HTTP旁白、驱动/MCP契约及普通浏览器后台。
+
+新增契约核对24项目录、闭合请求、用户/CAS/Project准入、重复添加不增提交且保留修改/游标、旧social可选字段原样读取、观察类型与原始URL一致、真实指标原文及登录/挑战页不能成为内容或成功游标检查。GUI核验默认暂停、明确勾选、并发修改后停止、显式刷新后重复保全，不建立计划或投递模型输入；截图已查看。沿用回归继续验证用户输入先等后台实际清理、未知输入不重投及旧素材/批次/快照/草稿/导出与实际采用关系。
+
+真实公网另列：[固定来源与真实链路](research/AI_NEWS_REAL_SOURCES.md)及[机器摘要](research/AI_NEWS_REAL_SOURCES.json)。在全新隔离Profile/Project中，经真实Chromium、Host/认证Bridge、原文/rolling/推荐服务访问9项预设，保留28篇不同文章、30次原文观察、27个活动事件和2个归并退休事件；17份候选通过准备核验，最终近72小时 **complete / 严格10题**，原文SHA、原页PNG及事件身份逐项断言。旧完整、七题和九题不足快照独立保留；“10月19日”无时区日精度在UTC10:00后自然退出保守72小时边界，没有补时区、改日期或生成七天快照。两次明确正文变化后的新获取仍因截图超时被排除，没有当作恢复成功。
+
+X只取得公开账号观察，趋势/实时搜索登录跳转；YouTube频道/搜索未取得可用正文。全部五项社媒订阅保留游标，不宣称真实热点榜、增长或社媒全量覆盖。最终十题偏科技报道与图文资料，不代表编辑多样性或成片验收。目录24项不是24项在线成功证明；实际原文范围明确保存，不冒认整站/整篇覆盖。
+
+回归报告 `.bmw-runtime/ai-news-real/unit-final/result.json`、`runtime-final/result.json`；最终真实报告 `live-72h-verified/result.json`，源码核对 `source-audit.json`，汇总 `summary.json`。整轮后仅显式opt-in外网验证脚本调整了18篇预算、单次确定性正文重取、有限DOM就绪等待和正常浅色视口，再独立build/check并完整实测。离线报告552个非Markdown输入中551个未变，原生构建553个输入中552个、519个生成输出中518个未变；唯一变化为该外网脚本及其JS输出，生产实现及所有离线/原生回归源码和输出逐项一致。新版外网报告绑定的553个构建输入、519个输出全部与最终文件SHA一致。文档回填不改变受测实现。
+
+所有技术回归为一次性Profile/Home/Workspace与受控服务夹具，真实公网验证用确定性队列适配器；没有付费模型自主研究、在线TTS、生产Profile、实际成片制作、长期无人值守或人工音画接受覆盖。中间元数据/地区跳转/截图故障、初始隐藏GUI截图错误和预期CAS拒绝均保留，未混入最终通过计数。本机运行材料被Git忽略，换机需单独保留。
+
+## 第六阶段未激活绑定扩展验证
+
+最终 build/check、功能与架构清单、类型/源码边界检查通过，六个冻结类型例外未增加。离线分类 **113 passed / 0 failed / 88 not-run**；not-run 为层级外或opt-in，不计通过。Host与Bridge补强覆盖固定非活动Project/Session/driver准入、普通外部租约仍拒绝、用户输入等待真实清理、后台交互变unknown且不显示前台问题，以及本轮动作/原文预算和只读刷新门禁。
+
+**17项隔离原生回归全部通过**：新增跨Project隐藏采集、周期采集GUI、推荐GUI、滚动采集GUI、原素材库选题及成品采用、原文截图、Studio生产恢复、原生视频、DSH冷目录、桌面workspace、标准Studio、旧news、媒体采集、媒体处理、Qwen HTTP旁白、真实BMW主程序的中立驱动/MCP契约、普通浏览器后台渲染。新增场景使用真实AssistantService、Host、认证Bridge、素材库运行时和Chromium DOM，核验未激活绑定的原文只写原Project、固定驱动、后台副作用/跨run拒绝、隐藏页静音且不进入窗口、只读素材查询不取消、用户输入在原生drain等待期间只保存prepared回执、隐藏页销毁、unknown恢复不重投、原游标保留、前台Session/页签/未提交输入及旧文件字节不变。周期健康GUI截图已查看，绑定、等待/核对原因和恢复入口可读。
+
+报告见 `.bmw-runtime/library-streams-phase6-detached/unit-final/result.json`、`runtime-final/result.json` 与 `summary.json`。最终轮次冻结全部555个受测输入SHA一致，文档回填后548个非Markdown实现/测试/配置SHA一致。中间结果另存：首次后台夹具的前台页自身弹窗导致页签断言失败；随后补强自动只读刷新门禁时，旧轮次来源完整性检查如实拒绝变化的TS；标准Studio等待动态控件时直接读取空节点，已改为存在且可用的就绪检查。中间轮次未计入最终通过数；最终完整重跑，未降低业务断言。
+
+全部使用一次性Profile/Home/Workspace、本地协议页面、官方队列及服务夹具；保持唯一browser有效工具目录和官方运行时自有循环。没有付费模型、真实在线社媒/登录账号、真实在线TTS、系统通知实际投递、生产Profile、实际断电或人工听审覆盖。不切换前台不等于另开并发Agent循环；全局仍仅一个官方输入执行，清理失败继续隔离。旧素材、批次、推荐快照、草稿、成品和采用账本的格式及入口保持。
+
+## 长期采集第六阶段验证
+
+最终 build/check、源码边界、视频Schema及功能/架构清单通过，六个冻结类型例外未扩展。最终离线分类 **112 passed / 0 failed / 87 not-run**，包括unit/contract/boundary/type；87项为该分类轮次的层级外或显式opt-in，不计通过。新增10个调度契约案例、2个Host优先级案例和1个快速采集完成案例；相关三个文件共32个案例通过。覆盖明确Project/Session/driver、方向公平轮转和多来源、非激活绑定等待、用户忙碌/到达时让行、精确run取消和真实drain、失败隔离、重启合并补查、未知/缺失输入不重投、保存顺序、未投递预备项恢复、5分钟至24小时退避、受限来源轮转、独立截止唤醒及超时退避、证据与游标保全、通知去重/静音/已读、显式恢复/跨Project重配、闭合输入/CAS/损坏/链接保全与空读不初始化。
+
+最终 **14项隔离原生回归全部通过**：周期采集GUI、推荐GUI、滚动采集GUI、旧素材库新闻/成品采用、原文截图、Studio取消/CAS恢复、原生视频、DSH冷目录、桌面workspace、标准Studio、旧news、媒体采集、媒体处理、Qwen HTTP旁白。新增调度桌面链路实际建立两个方向及固定绑定、通过真实DOM检查后提交游标、使用实际AgentHost输入收据、持有真实drain等待证明用户输入尚未执行、清理后恢复FIFO、保留游标、未知投递不重发、持久健康通知/系统通知夹具、显式结束旧轮次与已读。健康GUI截图已查看；既有批次、快照、草稿、作品、导出版本和采用关系回归保留。
+
+最终报告在 `.bmw-runtime/library-streams-phase6/unit-final/result.json`、`runtime-final/result.json` 和 `summary.json`。冻结源码上完成整轮，回填前552个受测输入SHA全部一致；文档回填后545个非Markdown实现/测试/配置SHA全部一致。中间结果独立保留在同目录带 `before-` 的报告中，不混入最终通过数。收尾补齐了超时与用户让行的退避区分、快速官方完成仍保存dispatchId；Studio回归暴露了实际在途句锚点引用保存提前重开字段的问题，已对新增/移除和字段保存统一持有编辑门禁，失败保留输入；旧夹具还存在磁盘保存早于GUI就绪的点击时序，现统一等待控件可用后只点击一次。标准Studio另独立完整通过，最终整轮也重新通过。早期分类未包含type层，最终显式纳入，不沿用早期统计口径。
+
+只在一次性Profile/Home/Workspace和mock keychain上运行。官方模型与系统Notification使用受控夹具，旁白使用Qwen HTTP夹具；没有付费模型、真实在线新闻/社媒账号、真实系统通知投递、真实在线TTS、生产Profile、实际断电或人工听审覆盖。调度仅在绑定已激活且资源空闲时运行，不自动切用户Project/Session；退出应用不运行，重启不无限补跑。手动任务没有被自动转换成周期任务，既有方向/订阅也不会自动启用采集或对外发布。
+
+## 事件推荐第五阶段验证
+
+最终build/check通过（TypeScript、六个冻结类型例外未扩展、源码边界、视频Schema及功能/架构清单）。最终离线分类 **111 passed / 0 failed / 86 not-run**；86项是所选层级外或显式opt-in，不计通过。新增7个推荐契约案例：严格十题与三事件/步预算、Project/方向/专题及策略窗口、冻结事件/edition/排除/策略序号与索引重建、原始事件键/来源/正文/证据去重、不足与明确接受、旧news资料复用和字节保留、取消/CAS续建、源文变化拒绝、当前事件重核和已选草稿保持、168小时侧车/旧72小时隔离、跨Project单题证据复制、普通news错误码和Project目录别名锚定/改绑拒绝。过期或不符合策略的元数据在原生预览核验前过滤；list只返快照头，Agent read不传长证据向量，跨Project不返回引文。
+
+最终13项隔离原生回归全部通过：新推荐GUI、滚动采集GUI、原素材库新闻/成品采用、原文截图、Studio取消/CAS恢复、原生视频、DSH冷目录、桌面workspace、标准Studio、旧news、媒体采集、媒体处理、Qwen HTTP旁白。新GUI夹具核验55专题分页、严格十题、方向168小时策略、专题仅一题的不足/明确接受、固定快照历史、后台进度及隐藏返回、隐藏的未提交策略不阻挡新闻更新、原批次归档字节及旧草稿/文件保留、真实PNG解码、可信第十题选择与重复选择不重发、所选事件后续修订不替换草稿，以及实际MP4与独立导出账本。十题和不足截图均已查看；样本均明确标识隔离测试，不是实际新闻质量认证。退出时可能出现取消及并发读的CAS诊断，通过依据是业务断言、真实资源清理等待与完整退出状态，不宣称线上无错误。
+
+最终报告 `.bmw-runtime/library-streams-phase5/unit-final/result.json`、`runtime-final/result.json` 和 `summary.json`。冻结源码上完成整轮，回填前546个受测输入SHA全部一致，回填后非Markdown实现SHA全部一致。中间曾发现旧NEWS_EXPIRED错误码、快照历史沿用空分页游标、恢复夹具过早判断DOM就绪及新闻侧车对Host目录别名不兼容；已修复并新增/补强回归。另按当前可见分类限制未提交表单保护，防止隐藏策略阻挡旧新闻刷新。早期契约/GUI及`unit-before-compatibility-fix`、`runtime-before-compatibility-fix`结果独立保留，不混入最终通过数；最终全部重新运行。
+
+全部使用一次性Profile/Home/Workspace和mock keychain；官方Agent投递与旁白服务为受控夹具，无付费模型、真实在线TTS、生产Profile或真实外网新闻/社媒账号验证。没有实际断电或人工听审。方向策略的地区值按候选标识（如CN/US）匹配，专题按已存关联筛选，不把编辑标签或社媒指标冒认事实/语义认证。周期调度仍属第六阶段，不启动自动采集或对外发布。
+
+## 滚动采集第四阶段验证
+
+最终 build/check（类型、六个冻结类型例外不增、源码边界、视频Schema、功能/架构清单）通过。离线分类 **110 passed / 0 failed / 85 not-run**；85项为所选层级外或显式opt-in，不计为通过。新增rolling契约6个案例覆盖闭合schema及用户/Project/Session准入、X/YouTube精确可见指标与URL身份/SHA、同任务幂等、原文检查与游标原子提交、部分/受限/损坏/CAS保全、uncertain不重投、真实清理失败保留、期限与20次观察预算、修订历史/归并拆分完整证据分区/快照重建，以及方向暂停/改绑使旧租约失效。沿用前三阶段旧数据及容量/导出溯源测试。
+
+最终12项隔离原生回归全部通过：新增滚动采集GUI、原素材库新闻/Studio/成品采用、来源截图、Studio取消/CAS恢复、原生视频、DSH冷目录、桌面workspace、标准Studio、旧news、媒体采集、媒体处理、Qwen HTTP旁白。新增桌面夹具通过可信GUI配置两平台订阅和方向、三次单一官方队列投递、真实Chromium DOM保存原文（本地HTTPS协议响应）、隐藏指标拒绝、保存检查游标、线索整理、事件归并/拆分/历史与停止时等待实际清理；终态之前保留采集锁与旧游标。事件历史截图已检查，显示可读修订、状态、依据和前后事件入口。原生旧素材库夹具继续核验旧选题门禁、唯一草稿/单次投递、真实导出版本和采用区间双向查询。
+
+全部使用一次性Profile/Home/Workspace及mock keychain。社媒为本地可见页面夹具，官方Agent为受控队列夹具；不能据此宣称真实X/YouTube登录、全站趋势或在线覆盖、付费模型、真实在线TTS、生产Profile、实际断电和人工听审。十题快照适配及周期调度仍属于第五、六阶段。
+
+最终报告 `.bmw-runtime/library-streams-phase4/unit-final/result.json`、`runtime-final/result.json` 与 `summary.json`；冻结源码上完成整轮，报告540个受测输入的SHA在回填文档前全部一致，回填后非Markdown实现SHA全部一致。中间夹具缺少原生媒体/页状态适配器曾失败或触发Electron错误弹框阻塞，补齐契约、研究页关闭及错误输出后完整退出；一次界面文案变量冲突导致构建拒绝，无编译入口的启动失败另存runtime-build-rejected，不计最终回归。最终整轮独立重跑，没有把中间成功断言或未运行项混入通过数。后续只回填本说明、当前规范与设计交付状态，未修改受测实现。
+
+## 来源与事件容量第三阶段验证
+
+当前行为见 FUNCTIONAL_SPEC，设计见 LIBRARY_STREAMS。新增容量契约覆盖超旧来源/获取上限、分片边界、旧基底字节保全、首次分片写入前后游标、实体修订与新增不改旧分页、短词空扫描续页、原始正文/媒体身份读取、索引损坏/丢失/中断及新代重建、发布后耐久性警告/撕裂缓存不撤销原文、可信维护边界，以及多方向通用观察和旧新闻幂等同步。原生素材库夹具扩展来源分页、全文检索、后台刷新稳定、隐藏返回及事件索引维护，保留旧专题/新闻/Studio/成品采用断言。最终 build/check（类型、源策略、视频Schema、功能/架构清单）通过；离线分类 **109 passed / 0 failed / 84 not-run**，84项是层级外/显式opt-in，不计为通过。新增8个容量/流契约案例覆盖204个来源、1026次获取（不含随后并发新增/修订）、跨1000提交分片边界及230个多方向通用观察；未扩大冻结类型例外。
+
+最终原生11项顺序通过：素材库来源/事件/旧新闻/Studio/成品采用、原文截图绑定、Studio取消/CAS恢复、原生视频、DSH冷目录、桌面workspace、标准Studio、旧news入口、媒体采集、媒体处理和Qwen HTTP旁白。真实页面的来源分页20+5、正文FTS检索20+4、后台刷新/返回首屏/隐藏恢复、事件观察及可信索引重建均通过；事件与素材反查截图已查看。均用一次性Profile/Home/Workspace和mock keychain，不涉及生产Profile、付费模型、真实在线TTS、实际断电或人工听审。发布后目录同步失败/撕裂缓存为注入故障夹具。
+
+报告为 `.bmw-runtime/library-streams-phase3/unit-final/result.json`、`runtime-final/result.json` 与 `summary.json`，全部非Markdown受测输入与最终实现SHA逐项一致。中间 `runtime/result.json` 的素材库项曾因分类切换沿用来源关键词而失败；修复分类查询状态，并补强旧基底缓存及返回对象隔离后，最终整轮通过。中间结果独立保留，不混入最终通过数。后续仅回填说明文档，未改受测实现。
+
+## 作品版本与实际采用第二阶段验证
+
+当前实现见 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md)，设计及后续阶段见 [LIBRARY_STREAMS.md](plans/LIBRARY_STREAMS.md)。新增导出契约案例覆盖分段/变速/末帧停留、隐藏/静音/准备清单排除、超过30次独立版本、缓存不新增、旧回执只读未知、跨Project复制反查、SHA变化/缺失、损坏与链接保留、取消/CAS清理、账本失败保全成品、提交目标冲突和有界诊断。实际采用表示启用合成输入，不代表每像素可见性、人工听审或作品接受。
+
+隔离原生素材库夹具保留原专题/新闻/选题/单次投递/Studio流程，并完成两次真实Studio导出、原始来源获取绑定、成品版本/采用区间和素材反向查询。原生视频夹具还核对直接合成自动记录、实际输出SHA和缓存复用；相关DSH、桌面、Studio、媒体和旁白基线使用一次性Profile/Home/Workspace与mock keychain，旁白为HTTP夹具，不调用付费模型、真实在线TTS或生产Profile。报告收集在 `.bmw-runtime/library-streams-phase2/`，最终报告为 `unit/result.json` 与 `runtime-final/result.json`，汇总为 `summary.json`。
+
+build 与 check（类型、六个冻结类型例外不增、视频Schema、功能与架构清单）通过。最终离线分类 **107 passed / 0 failed / 84 not-run**，not-run为所选层级外或显式opt-in，不计为通过；素材库/组织/导出契约合计23个案例，其中新增导出9个。报告全部非Markdown受测输入与最终实现逐项SHA一致。最终原生十项顺序通过：素材库新闻及真实版本/采用双向查询、Studio自动制作取消/CAS恢复专项、原生视频、DSH冷目录、桌面workspace、标准Studio、旧news入口、媒体采集、媒体处理、Qwen HTTP旁白。
+
+首次新增GUI夹具因版本文案匹配缺少“个”而超时，修正夹具并等待操作完成后重跑通过；未作为产品成功结果。最终版本截图查看了真实版本与采用区域；反向查询由原生页面实际按钮和DOM记录数断言覆盖。后续仅回填本说明和当前文档，未改受测实现。旧第一阶段结果在下方独立保留，不混入本阶段通过数。
+
+## 专题与全局方向第一阶段验证
+
+第一阶段当时实现的行为以其报告为准，当前实现见 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md)，设计与未交付阶段见 [LIBRARY_STREAMS.md](plans/LIBRARY_STREAMS.md)。build 和 check 通过；最终离线 unit/contract/boundary/type 分类报告为 **106 passed / 0 failed / 84 not-run**，not-run 属于其他层级或显式 opt-in，不计为通过。报告 `.bmw-runtime/library-streams-phase1/unit/result.json` 的非 Markdown 受测输入与最终源码逐项核对一致。新增组织与原素材库合计14个契约案例覆盖持久化/重启、跨Project摘要不扩大正文读取、GUI专属写入、CAS冲突、损坏/链接文件保留、旧资料零改写、非视频成品、方向引用分页、归档目标、取消和来源分组继承。
+
+最终隔离原生GUI通过：真实页面创建项目专题、提升全局方向、保持正确导航高亮；将文字文件显式分类为成品、关联专题后显示继承方向、等待保存完成后再切换导航；原始新闻PNG解码、可信用户选题、显式音色、唯一草稿和单次投递继续进入Studio。截图和回执在 `.bmw-runtime/library-streams-phase1/library-native/`，最终跨Project桌面与Studio选材日志为 `desktop-final.log`。这两项在最后局部界面修改后重新执行。
+
+兼容基线八项顺序运行并通过：官方DSH临时Home/Workspace冷目录、桌面workspace、标准Studio、旧news入口、媒体采集、媒体处理、原生视频导出及Qwen HTTP旁白夹具；日志在 `.bmw-runtime/library-streams-phase1/runtime-baseline/`。DSH目录另有 `dsh-final.log` 复验。技术导出、实际采用和用户接受分别判断；本阶段成品仍为用户显式分类，没有自动采用账本、持续采集或周期调度。
+
+一次中间完整回归的测试断言通过，但运行期间修改了两个Renderer及原生夹具，source-integrity门禁拒绝该轮整体通过；记录保留为 `intermediate-source-integrity-rejected.json`，不混入最终通过数。冻结源码后重新运行的最终报告通过。所有Electron/DSH检查使用一次性Profile/Home/Workspace及mock keychain；未使用生产Profile、系统凭据提示、付费模型、真实在线配音或人工听感验收。
+
+## 基础素材库验证（前一轮）
+
+该轮源码的 build、check（类型、源策略、视频Schema、功能清单及架构）通过。unit/contract/boundary/type 105项通过、0失败，84项属于该层级之外，未混计为通过；报告 `.bmw-runtime/classified-tests/2026-10-20T23-43-03-721Z/result.json` 的所有受测输入SHA与当前非Markdown源码逐项一致。素材库新闻桌面夹具另核对已解码预览在 Assistant 活动刷新后仍保留同一元素；来源原生夹具核对可见机构Logo替代文本、隐藏/meta/aria拒绝和截断处理。两者未使用真实 Profile、模型或在线配音。
+
+独立运行通过：官方DSH临时Home/Workspace冷目录，neutral driver/MCP/Shell，三个工作区与跨Project来源/媒体/证明复制、Studio选材，素材库真实PNG预览/可信选题/唯一草稿/单次投递，标准Studio，旧新闻入口兼容，原页来源截图，来源Studio，媒体录制、转码、原生成片和Qwen HTTP旁白夹具。主要证据位于 `.bmw-runtime/desktop-workspace/`、`/private/tmp/bmw-library-news-verified/` 及本次 `/private/tmp/bmw-library-*.log`；这些是隔离夹具，未调用真实付费模型或TTS，不宣称人工核听或内容接受。
+
+整片夹具最初在静态录屏阶段超时，保留原日志；改为与实际BMW一致的WebContentsView后，两段真实颜色录屏及原有像素、时长、音轨、取消和导出断言全部通过。标准Studio夹具对预填消息按 `bmw-assistant-prefill` 通道计数，工作区上下文事件另行投递，不改变原有仅填入原会话输入框的断言。退出后的旧页面状态事件不再触碰已销毁窗口。中间失败没有计为通过。
+
+## 整合前完整验证基线
 
 2026-10-20 当前整合后的完整 `--all` 为 **173 passed／0 failed／12 opt-in not-run**，报告为 `.bmw-runtime/news-daily-main-integration/full-final/result.json`，受测输入以本次提交前冻结的源码 SHA 为准。构建、check、功能与架构清单、unit／contract／boundary、官方 DSH 冷检查、desktop、Studio、media、video、speech、本地旁白与 Qwen HTTP 夹具通过。逐项结果、全部非 Markdown 输入的 SHA、依赖和报告指纹见 [CURRENT](verification/CURRENT.json)。本节与状态说明在报告后回填；受测实现文件指纹逐项复核一致。
 

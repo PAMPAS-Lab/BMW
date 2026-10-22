@@ -22,7 +22,10 @@ import {videoEditSchema} from './src/video-edit.js'
 import {referenceAnalysisSchema} from './src/studio-reference-contract.js'
 import {studioReviewProposalSchema} from './src/studio-review.js'
 import {visualLayersSchema,audioLayersSchema} from '../media-native/src/composition-layers.js'
-import {VideoStudioStore} from './src/studio-store.js'
+import {VideoStudioStore,STUDIO_EXPORT_RENDERER_VERSION} from './src/studio-store.js'
+import {captureWorkExport,WorkExportStore} from '@bmw-agent/feature-library/exports'
+import type {CapturedExport} from '@bmw-agent/feature-library/exports'
+import crypto from 'node:crypto'
 import {sentenceAnchorsSchema} from './src/studio-speech-contract.js'
 import {sourceRequestSchema} from '@bmw-agent/media-native/sources'
 import {focusIntervalsSchema} from '../media-native/src/focus-contract.js'
@@ -51,15 +54,23 @@ const compose: BrowserActionDefinition = {
     const project=browserKernel.projectStore.active(),owner=context.sessionOwner
     if(owner&&(owner.projectId!==project.id||!owner.sessionId))throw new Error('STUDIO_SESSION_REQUIRED: Composition requires its current Project Session.')
     const composition=resolvedComposition(input.composition,browserKernel.settingsStore?.snapshot().videoPreferences)
+    let capture:CapturedExport|undefined,libraryWarning:string|undefined
+    try{capture=await captureWorkExport(browserKernel,composition,signal,STUDIO_EXPORT_RENDERER_VERSION)}catch(error){signal?.throwIfAborted();libraryWarning='素材采用快照未记录：'+String(error)}
     signal?.throwIfAborted()
     const result=assertMediaArtifactReceipt(await browserKernel.recordingController.compose(composition,signal),'composition')
     signal?.throwIfAborted()
-    if(!owner)return result // Host-only callers may intentionally make a standalone asset.
     if(browserKernel.projectStore.active().id!==project.id||browserKernel.projectStore.active().directory!==project.directory)throw new Error('Composition Project changed before draft registration.')
-    if(composition.scenes.some(scene=>scene.bulletRevealSeconds!==undefined))return {...result,studioWarning:'此成片使用直接板书揭示时标，尚不能无损转换为 Studio 语音锚点草稿。请用 video.studio 创建可编辑版本；原成片保留。'}
-    const draft=new VideoStudioStore(project.directory,owner.sessionId).addComposition(composition,result)
+    const standalone=!owner||composition.scenes.some(scene=>scene.bulletRevealSeconds!==undefined),draftId=standalone?undefined:crypto.randomUUID()
+    let prepared:ReturnType<WorkExportStore['prepare']>|undefined
+    if(capture)try{prepared=new WorkExportStore(project.directory,project.id).prepare(await capture.record(result,owner?{sessionId:owner.sessionId,...(draftId?{draftId,revision:1}:{})}:undefined))}catch(error){signal?.throwIfAborted();libraryWarning='成品采用账本未完成：'+String(error)}
+    try{
+    signal?.throwIfAborted();if(browserKernel.projectStore.active().id!==project.id)throw new Error('Composition Project changed during export admission.')
+    if(standalone){if(prepared)try{prepared.commit()}catch(error){libraryWarning='成品采用账本提交待核对：'+String(error)}return {...result,...(libraryWarning?{libraryWarning}:{}),...(owner?{studioWarning:'此成片使用直接板书揭示时标，尚不能无损转换为 Studio 语音锚点草稿。请用 video.studio 创建可编辑版本；原成片保留。'}:{})}}
+    const draft=new VideoStudioStore(project.directory,owner!.sessionId).addComposition(composition,result,draftId)
+    if(prepared)try{prepared.commit()}catch(error){libraryWarning='成品已保存，采用账本提交待核对：'+String(error)}
     browserKernel.videoStudioChanged?.(owner)
-    return {...result,studioDraft:{id:draft.id,revision:draft.revision,title:draft.title,sceneCount:draft.scenes.length}}
+    return {...result,studioDraft:{id:draft.id,revision:draft.revision,title:draft.title,sceneCount:draft.scenes.length},...(libraryWarning?{libraryWarning}:{})}
+    }catch(error){prepared?.discard();throw error}
   }
 }
 const narrate: BrowserActionDefinition = {
@@ -90,4 +101,4 @@ const studio:BrowserActionDefinition={
   }
 }
 
-export const videoFeature = Object.freeze({ id:'feature-video',browserActions:Object.freeze([compose,narrate,studio,videoSettingsAction]),actionNamespace:'video.',browserDescription:compose.description+' '+narrate.description+' '+studio.description+' '+videoSettingsAction.description,main:Object.freeze({async activate(){const {VideoStudioRuntime}=await import('./src/studio-runtime.js');return new VideoStudioRuntime()}}) } satisfies FeatureModule)
+export const videoFeature = Object.freeze({ id:'feature-video',workspace:'studio',panels:['video-studio'],browserActions:Object.freeze([compose,narrate,studio,videoSettingsAction]),actionNamespace:'video.',browserDescription:compose.description+' '+narrate.description+' '+studio.description+' '+videoSettingsAction.description,main:Object.freeze({async activate(){const {VideoStudioRuntime}=await import('./src/studio-runtime.js');return new VideoStudioRuntime()}}) } satisfies FeatureModule)

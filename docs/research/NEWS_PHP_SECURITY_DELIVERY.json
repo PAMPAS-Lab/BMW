@@ -1,0 +1,3094 @@
+{
+  "at": "2026-10-21T22:47:58.079Z",
+  "status": "completed-technical-agent-independent-visual",
+  "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+  "draftId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+  "exportId": "d25f4be877f8917a87bb18c25a49a367dbc68a76f71d9f509f1c1a8aeef0c143",
+  "artifactId": "media-fa4c2a06-8782-4559-a8e1-3f4dfed759e6-converted.mp4",
+  "sha256": "89d46f90154eb407eb5cb7fdeffb6abe6281f0361477d58919bf4ff623364e26",
+  "visualRevision": 30,
+  "currentRevision": 31,
+  "exportFingerprint": "1603e5e81fd73440d82c1a93b3208eaf54187a7ae4629bb48b700241e6509b8c",
+  "technical": {
+    "status": "passed",
+    "artifactId": "media-fa4c2a06-8782-4559-a8e1-3f4dfed759e6-converted.mp4",
+    "expectedDurationSeconds": 40.041667000000004,
+    "actualDurationSeconds": 40.10666666666667,
+    "width": 720,
+    "height": 1280,
+    "fps": 24,
+    "tracks": [
+      {
+        "id": 1,
+        "type": "video",
+        "codec": "avc",
+        "canDecode": true,
+        "width": 720,
+        "height": 1280,
+        "rotation": 0,
+        "startSeconds": 0,
+        "endSeconds": 40.041666666666664,
+        "canBeTransparent": false
+      },
+      {
+        "id": 2,
+        "type": "audio",
+        "codec": "aac",
+        "canDecode": true,
+        "channels": 2,
+        "sampleRate": 48000,
+        "startSeconds": 0,
+        "endSeconds": 40.10666666666667
+      }
+    ],
+    "frames": 962,
+    "audioPeak": 0.7799999713897705,
+    "narrationDurations": [
+      5.92,
+      6,
+      9.52,
+      6.56,
+      4.64
+    ],
+    "quality": {
+      "version": 1,
+      "kind": "composition-quality",
+      "coverage": "critical-state-samples",
+      "phoneWidth": 390,
+      "semanticVerification": "requires-visual-review",
+      "samples": [
+        {
+          "sceneIndex": 0,
+          "seconds": 0,
+          "localSeconds": 0,
+          "reasons": [
+            "scene-start",
+            "visual-cut"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 0.041666666666666664,
+          "localSeconds": 0.041666666666666664,
+          "reasons": [
+            "caption-start-before",
+            "visual-cut-after"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 0.08333333333333333,
+          "localSeconds": 0.08333333333333333,
+          "reasons": [
+            "caption-start"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 0.125,
+          "localSeconds": 0.125,
+          "reasons": [
+            "caption-start-after"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 0.7916666666666666,
+          "localSeconds": 0.7916666666666666,
+          "reasons": [
+            "entrance-complete"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 3.0416666666666665,
+          "localSeconds": 3.0416666666666665,
+          "reasons": [
+            "caption-middle"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 3.7083333333333335,
+          "localSeconds": 3.7083333333333335,
+          "reasons": [
+            "scene-middle"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 5.958333333333333,
+          "localSeconds": 5.958333333333333,
+          "reasons": [
+            "caption-end-before"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 6,
+          "localSeconds": 6,
+          "reasons": [
+            "caption-end"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 6.041666666666667,
+          "localSeconds": 6.041666666666667,
+          "reasons": [
+            "caption-end-after"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 7.375,
+          "localSeconds": 7.375,
+          "reasons": [
+            "scene-end"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 7.458333333333333,
+          "localSeconds": 0.041666333333332695,
+          "reasons": [
+            "scene-start",
+            "caption-start-before",
+            "visual-cut",
+            "visual-cut-after",
+            "layer-start",
+            "layer-start-after"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 7.5,
+          "localSeconds": 0.08333299999999966,
+          "reasons": [
+            "caption-start"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 7.541666666666667,
+          "localSeconds": 0.12499966666666662,
+          "reasons": [
+            "caption-start-after"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 8.208333333333334,
+          "localSeconds": 0.7916663333333336,
+          "reasons": [
+            "entrance-complete"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 9.5,
+          "localSeconds": 2.0833329999999997,
+          "reasons": [
+            "caption-middle"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 11.166666666666666,
+          "localSeconds": 3.7499996666666657,
+          "reasons": [
+            "scene-middle"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 11.416666666666666,
+          "localSeconds": 3.9999996666666657,
+          "reasons": [
+            "caption-end-before",
+            "caption-start-before"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 11.458333333333334,
+          "localSeconds": 4.041666333333334,
+          "reasons": [
+            "caption-end",
+            "caption-start"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 11.5,
+          "localSeconds": 4.083333,
+          "reasons": [
+            "caption-end-after",
+            "caption-start-after"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 12.5,
+          "localSeconds": 5.083333,
+          "reasons": [
+            "caption-middle"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 13.458333333333334,
+          "localSeconds": 6.041666333333334,
+          "reasons": [
+            "caption-end-before"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 13.5,
+          "localSeconds": 6.083333,
+          "reasons": [
+            "caption-end"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 13.541666666666666,
+          "localSeconds": 6.124999666666666,
+          "reasons": [
+            "caption-end-after"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 14.875,
+          "localSeconds": 7.458333,
+          "reasons": [
+            "scene-end",
+            "layer-end-before"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 14.958333333333334,
+          "localSeconds": 0.04166633333333358,
+          "reasons": [
+            "scene-start",
+            "caption-start-before",
+            "visual-cut",
+            "visual-cut-after"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 15,
+          "localSeconds": 0.08333299999999966,
+          "reasons": [
+            "caption-start"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 15.041666666666666,
+          "localSeconds": 0.12499966666666573,
+          "reasons": [
+            "caption-start-after"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 15.708333333333334,
+          "localSeconds": 0.7916663333333336,
+          "reasons": [
+            "entrance-complete"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 17.625,
+          "localSeconds": 2.7083329999999997,
+          "reasons": [
+            "caption-middle"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 20.208333333333332,
+          "localSeconds": 5.291666333333332,
+          "reasons": [
+            "caption-end-before",
+            "caption-start-before"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 20.25,
+          "localSeconds": 5.333333,
+          "reasons": [
+            "caption-end",
+            "caption-start"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 20.291666666666668,
+          "localSeconds": 5.3749996666666675,
+          "reasons": [
+            "caption-end-after",
+            "caption-start-after"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 20.416666666666668,
+          "localSeconds": 5.4999996666666675,
+          "reasons": [
+            "scene-middle"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 22.416666666666668,
+          "localSeconds": 7.4999996666666675,
+          "reasons": [
+            "caption-middle"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 24.5,
+          "localSeconds": 9.583333,
+          "reasons": [
+            "caption-end-before"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 24.541666666666668,
+          "localSeconds": 9.624999666666668,
+          "reasons": [
+            "caption-end"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 24.583333333333332,
+          "localSeconds": 9.666666333333332,
+          "reasons": [
+            "caption-end-after"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 25.875,
+          "localSeconds": 10.958333,
+          "reasons": [
+            "scene-end"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 25.958333333333332,
+          "localSeconds": 0.041666333333331806,
+          "reasons": [
+            "scene-start",
+            "caption-start-before",
+            "visual-cut",
+            "visual-cut-after"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 26,
+          "localSeconds": 0.08333299999999966,
+          "reasons": [
+            "caption-start"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 26.041666666666668,
+          "localSeconds": 0.12499966666666751,
+          "reasons": [
+            "caption-start-after"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 26.708333333333332,
+          "localSeconds": 0.7916663333333318,
+          "reasons": [
+            "entrance-complete"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 29.291666666666668,
+          "localSeconds": 3.3749996666666675,
+          "reasons": [
+            "caption-middle"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 29.916666666666668,
+          "localSeconds": 3.9999996666666675,
+          "reasons": [
+            "scene-middle"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 32.541666666666664,
+          "localSeconds": 6.624999666666664,
+          "reasons": [
+            "caption-end-before"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 32.583333333333336,
+          "localSeconds": 6.666666333333335,
+          "reasons": [
+            "caption-end"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 32.625,
+          "localSeconds": 6.708333,
+          "reasons": [
+            "caption-end-after"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 33.875,
+          "localSeconds": 7.958333,
+          "reasons": [
+            "scene-end"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 33.958333333333336,
+          "localSeconds": 0.041666333333331806,
+          "reasons": [
+            "scene-start",
+            "caption-start-before",
+            "visual-cut",
+            "visual-cut-after"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 34,
+          "localSeconds": 0.0833329999999961,
+          "reasons": [
+            "caption-start"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 34.041666666666664,
+          "localSeconds": 0.1249996666666604,
+          "reasons": [
+            "caption-start-after"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 34.708333333333336,
+          "localSeconds": 0.7916663333333318,
+          "reasons": [
+            "entrance-complete"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 36.333333333333336,
+          "localSeconds": 2.416666333333332,
+          "reasons": [
+            "caption-middle"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 37,
+          "localSeconds": 3.083332999999996,
+          "reasons": [
+            "scene-middle"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 38.625,
+          "localSeconds": 4.708332999999996,
+          "reasons": [
+            "caption-end-before"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 38.666666666666664,
+          "localSeconds": 4.74999966666666,
+          "reasons": [
+            "caption-end"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 38.708333333333336,
+          "localSeconds": 4.791666333333332,
+          "reasons": [
+            "caption-end-after"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 40,
+          "localSeconds": 6.083332999999996,
+          "reasons": [
+            "scene-end"
+          ]
+        }
+      ],
+      "omittedCandidates": 0,
+      "issues": [
+        {
+          "code": "long-static-hold",
+          "severity": "warning",
+          "sceneIndex": 2,
+          "seconds": 24.5,
+          "message": "抽样的主要画面区域连续八秒变化很少，请检查讲解节奏；这不证明中间每帧静止。"
+        }
+      ],
+      "omittedIssues": 0,
+      "omittedTextObservations": 0
+    }
+  },
+  "actualUses": [
+    {
+      "artifactId": "a7e09f57-cce0-4210-8831-194929705a3a-source-a2d69ce1-f010-4b62-8992-4cc518fe9d3a.webm",
+      "sha256": "2082c78996d90a4c023a7a3342bdeb5c215532f1b71dcee0d48da960048a286e",
+      "bytes": 2429471,
+      "role": "main-video",
+      "sceneIndex": 0,
+      "clipId": "php-01",
+      "outputRange": {
+        "startSeconds": 0,
+        "endSeconds": 7.416667
+      },
+      "sourceRange": {
+        "startSeconds": 0.2,
+        "endSeconds": 7.6166670000000005
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [
+        {
+          "sourceId": "7e4365d6c8334fc0192e82ce5616386e7a214866cde70d95a0ad8ab373d87bec",
+          "acquisitionId": "8a3aa7ef-e9a4-4c9e-9506-8ce396a697c7",
+          "bodySha256": "4e187c607a602b9afad6b0be1b3ce14b26a9c55bb8d3535fabd84ad8f3257206",
+          "url": "https://www.youtube.com/watch?v=hS1YqcewH0c",
+          "captureRange": {
+            "startSeconds": 75,
+            "endSeconds": 82.958147
+          }
+        }
+      ],
+      "origins": []
+    },
+    {
+      "artifactId": "1792611682749-patch-the-planet-body-preview.png",
+      "sha256": "b612fb69359491b910f3cd0f443aadee88493baa4dd3a90a2574375df1a5f1e4",
+      "bytes": 1029574,
+      "role": "main-image",
+      "sceneIndex": 1,
+      "clipId": "php-02",
+      "outputRange": {
+        "startSeconds": 7.416667,
+        "endSeconds": 14.916667
+      },
+      "sourceRange": null,
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [
+        {
+          "sourceId": "203093066e1251d7c55c110cf77f9a079275d1e620513f8c770373600781c5cc",
+          "acquisitionId": "5bdfc2d0-d592-42ec-a165-c65a46a3f3a1",
+          "bodySha256": "907216599e15000a49d08687c9af4a4673d755a9171882fc94efd25590f216d2",
+          "url": "https://openai.com/index/coordinated-disclosure-of-critical-vulnerabilities/",
+          "captureRange": null
+        }
+      ],
+      "origins": []
+    },
+    {
+      "artifactId": "1792611682749-patch-the-planet-body-preview.png",
+      "sha256": "b612fb69359491b910f3cd0f443aadee88493baa4dd3a90a2574375df1a5f1e4",
+      "bytes": 1029574,
+      "role": "visual-layer",
+      "sceneIndex": 1,
+      "clipId": "0f88c1b5-b56b-497c-bd06-731ddcb4373e",
+      "outputRange": {
+        "startSeconds": 7.416667,
+        "endSeconds": 14.916667
+      },
+      "sourceRange": null,
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [
+        {
+          "sourceId": "203093066e1251d7c55c110cf77f9a079275d1e620513f8c770373600781c5cc",
+          "acquisitionId": "5bdfc2d0-d592-42ec-a165-c65a46a3f3a1",
+          "bodySha256": "907216599e15000a49d08687c9af4a4673d755a9171882fc94efd25590f216d2",
+          "url": "https://openai.com/index/coordinated-disclosure-of-critical-vulnerabilities/",
+          "captureRange": null
+        }
+      ],
+      "origins": []
+    },
+    {
+      "artifactId": "1792620546253-Today-s-PHP-Security-Release-and-How-We-re-Strengthening-PHP-Security-The-PHP-Fo.png",
+      "sha256": "3737b4b49679314ae0447faed37aa4f7ed7e15e9bc2a0dc91efe01e097c6bf1d",
+      "bytes": 167083,
+      "role": "main-image",
+      "sceneIndex": 2,
+      "clipId": "php-03",
+      "outputRange": {
+        "startSeconds": 14.916667,
+        "endSeconds": 25.916667
+      },
+      "sourceRange": null,
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [
+        {
+          "sourceId": "878b4c3862bfd35638714f31f654eab3e6d500c477c8c05b26aa3ec688052d97",
+          "acquisitionId": "fd9e8cfc-0a6d-4a28-a702-6eb20f3a575c",
+          "bodySha256": "700c031afaa1f0754f722381f318d5d07e48b20ede70f9677179bfe15720c203",
+          "url": "https://thephp.foundation/blog/2026/10/21/todays-php-security-release-and-how-were-strengthening-php-security/",
+          "captureRange": null
+        }
+      ],
+      "origins": []
+    },
+    {
+      "artifactId": "1792620553401-Today-s-PHP-Security-Release-and-How-We-re-Strengthening-PHP-Security-The-PHP-Fo.png",
+      "sha256": "8bd5031574c80e380417221f4f54c08c7f436f513315760135c83f6bddbc491f",
+      "bytes": 86482,
+      "role": "main-image",
+      "sceneIndex": 3,
+      "clipId": "php-04",
+      "outputRange": {
+        "startSeconds": 25.916667,
+        "endSeconds": 33.916667000000004
+      },
+      "sourceRange": null,
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [
+        {
+          "sourceId": "878b4c3862bfd35638714f31f654eab3e6d500c477c8c05b26aa3ec688052d97",
+          "acquisitionId": "dd06692d-7dc9-407b-9e39-5bebe0c9845b",
+          "bodySha256": "e8e03e8f81c5e04ad1c0d28142359c61592765d94f5d85c00eb207625e0b2544",
+          "url": "https://thephp.foundation/blog/2026/10/21/todays-php-security-release-and-how-were-strengthening-php-security/",
+          "captureRange": null
+        }
+      ],
+      "origins": []
+    },
+    {
+      "artifactId": "a7e09f57-cce0-4210-8831-194929705a3a-source-a2d69ce1-f010-4b62-8992-4cc518fe9d3a.webm",
+      "sha256": "2082c78996d90a4c023a7a3342bdeb5c215532f1b71dcee0d48da960048a286e",
+      "bytes": 2429471,
+      "role": "main-video",
+      "sceneIndex": 4,
+      "clipId": "php-05",
+      "outputRange": {
+        "startSeconds": 33.916667000000004,
+        "endSeconds": 40.041667000000004
+      },
+      "sourceRange": {
+        "startSeconds": 0.2,
+        "endSeconds": 6.325
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [
+        {
+          "sourceId": "7e4365d6c8334fc0192e82ce5616386e7a214866cde70d95a0ad8ab373d87bec",
+          "acquisitionId": "8a3aa7ef-e9a4-4c9e-9506-8ce396a697c7",
+          "bodySha256": "4e187c607a602b9afad6b0be1b3ce14b26a9c55bb8d3535fabd84ad8f3257206",
+          "url": "https://www.youtube.com/watch?v=hS1YqcewH0c",
+          "captureRange": {
+            "startSeconds": 75,
+            "endSeconds": 82.958147
+          }
+        }
+      ],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-d1c9cdd8-1449-46ff-8736-92da87e3056b.wav",
+      "sha256": "b9d4a38bef55afb70bf586bf10a5f31680a2b528f95da60bd791f3b626a7f8cd",
+      "bytes": 284204,
+      "role": "narration",
+      "sceneIndex": 0,
+      "clipId": "php-01",
+      "outputRange": {
+        "startSeconds": 0.08333333333333333,
+        "endSeconds": 6.003333333333333
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 5.92
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-c11555ab-5baa-4788-b0dc-ca41dd418665.wav",
+      "sha256": "13bd671333f2037fc401b82dc28aecb1e3b1a9bf5362705df8e5e0a8d39f385b",
+      "bytes": 288044,
+      "role": "narration",
+      "sceneIndex": 1,
+      "clipId": "php-02",
+      "outputRange": {
+        "startSeconds": 7.500000333333333,
+        "endSeconds": 13.500000333333332
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 5.999999999999999
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-7763eaa7-441c-4bfc-92a8-f9ab3c1cf702.wav",
+      "sha256": "304e63831489fd8d77db7b7e9c7c2e43e3736166341f9c8850fd9ec55ba91904",
+      "bytes": 457004,
+      "role": "narration",
+      "sceneIndex": 2,
+      "clipId": "php-03",
+      "outputRange": {
+        "startSeconds": 15.000000333333334,
+        "endSeconds": 24.520000333333336
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 9.52
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-3b4b485f-2f3e-4f6d-9902-8b7212e3de7a.wav",
+      "sha256": "10e1390c71198f432d771520814879f4dabc11fc15ccff7b21a1d71bc7dd37d3",
+      "bytes": 314924,
+      "role": "narration",
+      "sceneIndex": 3,
+      "clipId": "php-04",
+      "outputRange": {
+        "startSeconds": 26.000000333333332,
+        "endSeconds": 32.560000333333335
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 6.56
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-739fd6a6-a7b1-446d-b9d7-02574c7dce07.wav",
+      "sha256": "dd7b56f3a10b8cf50e094015b2bdb2c95de6a08342131ddf203d80a800682c82",
+      "bytes": 222764,
+      "role": "narration",
+      "sceneIndex": 4,
+      "clipId": "php-05",
+      "outputRange": {
+        "startSeconds": 34.00000033333334,
+        "endSeconds": 38.64000033333334
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 4.64
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    }
+  ],
+  "sourceVoice": "Both historical B-roll intervals explicitly muted, not PHP interview speech",
+  "narrationPreservation": "Five actual audio files/narrations/captions/voice timings match immutable v15",
+  "humanListening": "pending",
+  "userAcceptance": "pending",
+  "nativeBidirectionalQueries": [
+    {
+      "sequence": 24360,
+      "result": {
+        "items": [
+          {
+            "id": "d25f4be877f8917a87bb18c25a49a367dbc68a76f71d9f509f1c1a8aeef0c143",
+            "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+            "workId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+            "draftId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+            "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+            "draftRevision": 30,
+            "title": "PHP安全修复：AI验证与维护者回应",
+            "createdAt": "2026-10-21T22:47:10.643Z",
+            "artifactId": "media-fa4c2a06-8782-4559-a8e1-3f4dfed759e6-converted.mp4",
+            "outputSha256": "89d46f90154eb407eb5cb7fdeffb6abe6281f0361477d58919bf4ff623364e26",
+            "durationSeconds": 40.041667000000004,
+            "provenance": "recorded",
+            "useCount": 11,
+            "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+            "archived": false,
+            "status": "available",
+            "bytes": 5285954,
+            "versionNumber": 2
+          },
+          {
+            "id": "319cfeb84a48062071b68da2eb4fca8363eec2dcad9900c9133f30f0806e5065",
+            "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+            "workId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+            "draftId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+            "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+            "draftRevision": 24,
+            "title": "PHP安全修复：AI验证与维护者回应",
+            "createdAt": "2026-10-21T22:35:38.890Z",
+            "artifactId": "media-6d864de0-92c8-45d0-a535-789cc52b234f-converted.mp4",
+            "outputSha256": "1b9dba9b6b6876571baff90d4ff97cdb2bcc7d279dfc582da5c52f9f833c3c95",
+            "durationSeconds": 40.041667000000004,
+            "provenance": "recorded",
+            "useCount": 11,
+            "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+            "archived": false,
+            "status": "available",
+            "bytes": 5322572,
+            "versionNumber": 1
+          }
+        ],
+        "total": 2,
+        "nextOffset": null,
+        "issues": [],
+        "issuesOmitted": 0
+      }
+    },
+    {
+      "sequence": 24362,
+      "result": "MCP error -32000: BROWSER_ACTION_FAILED: Unknown saved export version."
+    },
+    {
+      "sequence": 24364,
+      "result": {
+        "items": [
+          {
+            "artifactId": "a7e09f57-cce0-4210-8831-194929705a3a-source-a2d69ce1-f010-4b62-8992-4cc518fe9d3a.webm",
+            "sha256": "2082c78996d90a4c023a7a3342bdeb5c215532f1b71dcee0d48da960048a286e",
+            "bytes": 2429471,
+            "role": "main-video",
+            "sceneIndex": 0,
+            "clipId": "php-01",
+            "outputRange": {
+              "startSeconds": 0,
+              "endSeconds": 7.416667
+            },
+            "sourceRange": {
+              "startSeconds": 0.2,
+              "endSeconds": 7.6166670000000005
+            },
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [
+              {
+                "sourceId": "7e4365d6c8334fc0192e82ce5616386e7a214866cde70d95a0ad8ab373d87bec",
+                "acquisitionId": "8a3aa7ef-e9a4-4c9e-9506-8ce396a697c7",
+                "bodySha256": "4e187c607a602b9afad6b0be1b3ce14b26a9c55bb8d3535fabd84ad8f3257206",
+                "url": "https://www.youtube.com/watch?v=hS1YqcewH0c",
+                "captureRange": {
+                  "startSeconds": 75,
+                  "endSeconds": 82.958147
+                }
+              }
+            ],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "1792611682749-patch-the-planet-body-preview.png",
+            "sha256": "b612fb69359491b910f3cd0f443aadee88493baa4dd3a90a2574375df1a5f1e4",
+            "bytes": 1029574,
+            "role": "main-image",
+            "sceneIndex": 1,
+            "clipId": "php-02",
+            "outputRange": {
+              "startSeconds": 7.416667,
+              "endSeconds": 14.916667
+            },
+            "sourceRange": null,
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [
+              {
+                "sourceId": "203093066e1251d7c55c110cf77f9a079275d1e620513f8c770373600781c5cc",
+                "acquisitionId": "5bdfc2d0-d592-42ec-a165-c65a46a3f3a1",
+                "bodySha256": "907216599e15000a49d08687c9af4a4673d755a9171882fc94efd25590f216d2",
+                "url": "https://openai.com/index/coordinated-disclosure-of-critical-vulnerabilities/",
+                "captureRange": null
+              }
+            ],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "1792611682749-patch-the-planet-body-preview.png",
+            "sha256": "b612fb69359491b910f3cd0f443aadee88493baa4dd3a90a2574375df1a5f1e4",
+            "bytes": 1029574,
+            "role": "visual-layer",
+            "sceneIndex": 1,
+            "clipId": "0f88c1b5-b56b-497c-bd06-731ddcb4373e",
+            "outputRange": {
+              "startSeconds": 7.416667,
+              "endSeconds": 14.916667
+            },
+            "sourceRange": null,
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [
+              {
+                "sourceId": "203093066e1251d7c55c110cf77f9a079275d1e620513f8c770373600781c5cc",
+                "acquisitionId": "5bdfc2d0-d592-42ec-a165-c65a46a3f3a1",
+                "bodySha256": "907216599e15000a49d08687c9af4a4673d755a9171882fc94efd25590f216d2",
+                "url": "https://openai.com/index/coordinated-disclosure-of-critical-vulnerabilities/",
+                "captureRange": null
+              }
+            ],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "1792620546253-Today-s-PHP-Security-Release-and-How-We-re-Strengthening-PHP-Security-The-PHP-Fo.png",
+            "sha256": "3737b4b49679314ae0447faed37aa4f7ed7e15e9bc2a0dc91efe01e097c6bf1d",
+            "bytes": 167083,
+            "role": "main-image",
+            "sceneIndex": 2,
+            "clipId": "php-03",
+            "outputRange": {
+              "startSeconds": 14.916667,
+              "endSeconds": 25.916667
+            },
+            "sourceRange": null,
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [
+              {
+                "sourceId": "878b4c3862bfd35638714f31f654eab3e6d500c477c8c05b26aa3ec688052d97",
+                "acquisitionId": "fd9e8cfc-0a6d-4a28-a702-6eb20f3a575c",
+                "bodySha256": "700c031afaa1f0754f722381f318d5d07e48b20ede70f9677179bfe15720c203",
+                "url": "https://thephp.foundation/blog/2026/10/21/todays-php-security-release-and-how-were-strengthening-php-security/",
+                "captureRange": null
+              }
+            ],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "1792620553401-Today-s-PHP-Security-Release-and-How-We-re-Strengthening-PHP-Security-The-PHP-Fo.png",
+            "sha256": "8bd5031574c80e380417221f4f54c08c7f436f513315760135c83f6bddbc491f",
+            "bytes": 86482,
+            "role": "main-image",
+            "sceneIndex": 3,
+            "clipId": "php-04",
+            "outputRange": {
+              "startSeconds": 25.916667,
+              "endSeconds": 33.916667000000004
+            },
+            "sourceRange": null,
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [
+              {
+                "sourceId": "878b4c3862bfd35638714f31f654eab3e6d500c477c8c05b26aa3ec688052d97",
+                "acquisitionId": "dd06692d-7dc9-407b-9e39-5bebe0c9845b",
+                "bodySha256": "e8e03e8f81c5e04ad1c0d28142359c61592765d94f5d85c00eb207625e0b2544",
+                "url": "https://thephp.foundation/blog/2026/10/21/todays-php-security-release-and-how-were-strengthening-php-security/",
+                "captureRange": null
+              }
+            ],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "a7e09f57-cce0-4210-8831-194929705a3a-source-a2d69ce1-f010-4b62-8992-4cc518fe9d3a.webm",
+            "sha256": "2082c78996d90a4c023a7a3342bdeb5c215532f1b71dcee0d48da960048a286e",
+            "bytes": 2429471,
+            "role": "main-video",
+            "sceneIndex": 4,
+            "clipId": "php-05",
+            "outputRange": {
+              "startSeconds": 33.916667000000004,
+              "endSeconds": 40.041667000000004
+            },
+            "sourceRange": {
+              "startSeconds": 0.2,
+              "endSeconds": 6.325
+            },
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [
+              {
+                "sourceId": "7e4365d6c8334fc0192e82ce5616386e7a214866cde70d95a0ad8ab373d87bec",
+                "acquisitionId": "8a3aa7ef-e9a4-4c9e-9506-8ce396a697c7",
+                "bodySha256": "4e187c607a602b9afad6b0be1b3ce14b26a9c55bb8d3535fabd84ad8f3257206",
+                "url": "https://www.youtube.com/watch?v=hS1YqcewH0c",
+                "captureRange": {
+                  "startSeconds": 75,
+                  "endSeconds": 82.958147
+                }
+              }
+            ],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "narration-d1c9cdd8-1449-46ff-8736-92da87e3056b.wav",
+            "sha256": "b9d4a38bef55afb70bf586bf10a5f31680a2b528f95da60bd791f3b626a7f8cd",
+            "bytes": 284204,
+            "role": "narration",
+            "sceneIndex": 0,
+            "clipId": "php-01",
+            "outputRange": {
+              "startSeconds": 0.08333333333333333,
+              "endSeconds": 6.003333333333333
+            },
+            "sourceRange": {
+              "startSeconds": 0,
+              "endSeconds": 5.92
+            },
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "narration-c11555ab-5baa-4788-b0dc-ca41dd418665.wav",
+            "sha256": "13bd671333f2037fc401b82dc28aecb1e3b1a9bf5362705df8e5e0a8d39f385b",
+            "bytes": 288044,
+            "role": "narration",
+            "sceneIndex": 1,
+            "clipId": "php-02",
+            "outputRange": {
+              "startSeconds": 7.500000333333333,
+              "endSeconds": 13.500000333333332
+            },
+            "sourceRange": {
+              "startSeconds": 0,
+              "endSeconds": 5.999999999999999
+            },
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "narration-7763eaa7-441c-4bfc-92a8-f9ab3c1cf702.wav",
+            "sha256": "304e63831489fd8d77db7b7e9c7c2e43e3736166341f9c8850fd9ec55ba91904",
+            "bytes": 457004,
+            "role": "narration",
+            "sceneIndex": 2,
+            "clipId": "php-03",
+            "outputRange": {
+              "startSeconds": 15.000000333333334,
+              "endSeconds": 24.520000333333336
+            },
+            "sourceRange": {
+              "startSeconds": 0,
+              "endSeconds": 9.52
+            },
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "narration-3b4b485f-2f3e-4f6d-9902-8b7212e3de7a.wav",
+            "sha256": "10e1390c71198f432d771520814879f4dabc11fc15ccff7b21a1d71bc7dd37d3",
+            "bytes": 314924,
+            "role": "narration",
+            "sceneIndex": 3,
+            "clipId": "php-04",
+            "outputRange": {
+              "startSeconds": 26.000000333333332,
+              "endSeconds": 32.560000333333335
+            },
+            "sourceRange": {
+              "startSeconds": 0,
+              "endSeconds": 6.56
+            },
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "narration-739fd6a6-a7b1-446d-b9d7-02574c7dce07.wav",
+            "sha256": "dd7b56f3a10b8cf50e094015b2bdb2c95de6a08342131ddf203d80a800682c82",
+            "bytes": 222764,
+            "role": "narration",
+            "sceneIndex": 4,
+            "clipId": "php-05",
+            "outputRange": {
+              "startSeconds": 34.00000033333334,
+              "endSeconds": 38.64000033333334
+            },
+            "sourceRange": {
+              "startSeconds": 0,
+              "endSeconds": 4.64
+            },
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [],
+            "origins": [],
+            "status": "available"
+          }
+        ],
+        "total": 11,
+        "nextOffset": null,
+        "issues": [],
+        "issuesOmitted": 0,
+        "export": {
+          "id": "d25f4be877f8917a87bb18c25a49a367dbc68a76f71d9f509f1c1a8aeef0c143",
+          "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+          "workId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+          "draftId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+          "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+          "draftRevision": 30,
+          "title": "PHP安全修复：AI验证与维护者回应",
+          "createdAt": "2026-10-21T22:47:10.643Z",
+          "artifactId": "media-fa4c2a06-8782-4559-a8e1-3f4dfed759e6-converted.mp4",
+          "outputSha256": "89d46f90154eb407eb5cb7fdeffb6abe6281f0361477d58919bf4ff623364e26",
+          "durationSeconds": 40.041667000000004,
+          "provenance": "recorded",
+          "useCount": 11,
+          "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+          "archived": false,
+          "status": "available",
+          "bytes": 5285954
+        },
+        "known": true
+      }
+    },
+    {
+      "sequence": 24366,
+      "result": {
+        "items": [
+          {
+            "export": {
+              "id": "d25f4be877f8917a87bb18c25a49a367dbc68a76f71d9f509f1c1a8aeef0c143",
+              "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+              "workId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+              "draftId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+              "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+              "draftRevision": 30,
+              "title": "PHP安全修复：AI验证与维护者回应",
+              "createdAt": "2026-10-21T22:47:10.643Z",
+              "artifactId": "media-fa4c2a06-8782-4559-a8e1-3f4dfed759e6-converted.mp4",
+              "outputSha256": "89d46f90154eb407eb5cb7fdeffb6abe6281f0361477d58919bf4ff623364e26",
+              "durationSeconds": 40.041667000000004,
+              "provenance": "recorded",
+              "useCount": 11,
+              "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+              "archived": false,
+              "status": "available",
+              "bytes": 5285954
+            },
+            "useCount": 2,
+            "uses": [
+              {
+                "artifactId": "a7e09f57-cce0-4210-8831-194929705a3a-source-a2d69ce1-f010-4b62-8992-4cc518fe9d3a.webm",
+                "sha256": "2082c78996d90a4c023a7a3342bdeb5c215532f1b71dcee0d48da960048a286e",
+                "bytes": 2429471,
+                "role": "main-video",
+                "sceneIndex": 0,
+                "clipId": "php-01",
+                "outputRange": {
+                  "startSeconds": 0,
+                  "endSeconds": 7.416667
+                },
+                "sourceRange": {
+                  "startSeconds": 0.2,
+                  "endSeconds": 7.6166670000000005
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "7e4365d6c8334fc0192e82ce5616386e7a214866cde70d95a0ad8ab373d87bec",
+                    "acquisitionId": "8a3aa7ef-e9a4-4c9e-9506-8ce396a697c7",
+                    "bodySha256": "4e187c607a602b9afad6b0be1b3ce14b26a9c55bb8d3535fabd84ad8f3257206",
+                    "url": "https://www.youtube.com/watch?v=hS1YqcewH0c",
+                    "captureRange": {
+                      "startSeconds": 75,
+                      "endSeconds": 82.958147
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              },
+              {
+                "artifactId": "a7e09f57-cce0-4210-8831-194929705a3a-source-a2d69ce1-f010-4b62-8992-4cc518fe9d3a.webm",
+                "sha256": "2082c78996d90a4c023a7a3342bdeb5c215532f1b71dcee0d48da960048a286e",
+                "bytes": 2429471,
+                "role": "main-video",
+                "sceneIndex": 4,
+                "clipId": "php-05",
+                "outputRange": {
+                  "startSeconds": 33.916667000000004,
+                  "endSeconds": 40.041667000000004
+                },
+                "sourceRange": {
+                  "startSeconds": 0.2,
+                  "endSeconds": 6.325
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "7e4365d6c8334fc0192e82ce5616386e7a214866cde70d95a0ad8ab373d87bec",
+                    "acquisitionId": "8a3aa7ef-e9a4-4c9e-9506-8ce396a697c7",
+                    "bodySha256": "4e187c607a602b9afad6b0be1b3ce14b26a9c55bb8d3535fabd84ad8f3257206",
+                    "url": "https://www.youtube.com/watch?v=hS1YqcewH0c",
+                    "captureRange": {
+                      "startSeconds": 75,
+                      "endSeconds": 82.958147
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              }
+            ],
+            "usesNextOffset": null
+          },
+          {
+            "export": {
+              "id": "319cfeb84a48062071b68da2eb4fca8363eec2dcad9900c9133f30f0806e5065",
+              "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+              "workId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+              "draftId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+              "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+              "draftRevision": 24,
+              "title": "PHP安全修复：AI验证与维护者回应",
+              "createdAt": "2026-10-21T22:35:38.890Z",
+              "artifactId": "media-6d864de0-92c8-45d0-a535-789cc52b234f-converted.mp4",
+              "outputSha256": "1b9dba9b6b6876571baff90d4ff97cdb2bcc7d279dfc582da5c52f9f833c3c95",
+              "durationSeconds": 40.041667000000004,
+              "provenance": "recorded",
+              "useCount": 11,
+              "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+              "archived": false,
+              "status": "available",
+              "bytes": 5322572
+            },
+            "useCount": 2,
+            "uses": [
+              {
+                "artifactId": "a7e09f57-cce0-4210-8831-194929705a3a-source-a2d69ce1-f010-4b62-8992-4cc518fe9d3a.webm",
+                "sha256": "2082c78996d90a4c023a7a3342bdeb5c215532f1b71dcee0d48da960048a286e",
+                "bytes": 2429471,
+                "role": "main-video",
+                "sceneIndex": 0,
+                "clipId": "php-01",
+                "outputRange": {
+                  "startSeconds": 0,
+                  "endSeconds": 7.416667
+                },
+                "sourceRange": {
+                  "startSeconds": 0.2,
+                  "endSeconds": 7.6166670000000005
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "7e4365d6c8334fc0192e82ce5616386e7a214866cde70d95a0ad8ab373d87bec",
+                    "acquisitionId": "8a3aa7ef-e9a4-4c9e-9506-8ce396a697c7",
+                    "bodySha256": "4e187c607a602b9afad6b0be1b3ce14b26a9c55bb8d3535fabd84ad8f3257206",
+                    "url": "https://www.youtube.com/watch?v=hS1YqcewH0c",
+                    "captureRange": {
+                      "startSeconds": 75,
+                      "endSeconds": 82.958147
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              },
+              {
+                "artifactId": "a7e09f57-cce0-4210-8831-194929705a3a-source-a2d69ce1-f010-4b62-8992-4cc518fe9d3a.webm",
+                "sha256": "2082c78996d90a4c023a7a3342bdeb5c215532f1b71dcee0d48da960048a286e",
+                "bytes": 2429471,
+                "role": "main-video",
+                "sceneIndex": 4,
+                "clipId": "php-05",
+                "outputRange": {
+                  "startSeconds": 33.916667000000004,
+                  "endSeconds": 40.041667000000004
+                },
+                "sourceRange": {
+                  "startSeconds": 0.2,
+                  "endSeconds": 6.325
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "7e4365d6c8334fc0192e82ce5616386e7a214866cde70d95a0ad8ab373d87bec",
+                    "acquisitionId": "8a3aa7ef-e9a4-4c9e-9506-8ce396a697c7",
+                    "bodySha256": "4e187c607a602b9afad6b0be1b3ce14b26a9c55bb8d3535fabd84ad8f3257206",
+                    "url": "https://www.youtube.com/watch?v=hS1YqcewH0c",
+                    "captureRange": {
+                      "startSeconds": 75,
+                      "endSeconds": 82.958147
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              }
+            ],
+            "usesNextOffset": null
+          }
+        ],
+        "total": 2,
+        "nextOffset": null,
+        "issues": [],
+        "issuesOmitted": 0,
+        "identity": {
+          "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+          "artifactId": "a7e09f57-cce0-4210-8831-194929705a3a-source-a2d69ce1-f010-4b62-8992-4cc518fe9d3a.webm"
+        },
+        "legacyAdoption": "unknown; legacy exports are never inferred from current draft references"
+      }
+    },
+    {
+      "sequence": 24368,
+      "result": {
+        "items": [
+          {
+            "export": {
+              "id": "d25f4be877f8917a87bb18c25a49a367dbc68a76f71d9f509f1c1a8aeef0c143",
+              "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+              "workId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+              "draftId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+              "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+              "draftRevision": 30,
+              "title": "PHP安全修复：AI验证与维护者回应",
+              "createdAt": "2026-10-21T22:47:10.643Z",
+              "artifactId": "media-fa4c2a06-8782-4559-a8e1-3f4dfed759e6-converted.mp4",
+              "outputSha256": "89d46f90154eb407eb5cb7fdeffb6abe6281f0361477d58919bf4ff623364e26",
+              "durationSeconds": 40.041667000000004,
+              "provenance": "recorded",
+              "useCount": 11,
+              "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+              "archived": false,
+              "status": "available",
+              "bytes": 5285954
+            },
+            "useCount": 2,
+            "uses": [
+              {
+                "artifactId": "a7e09f57-cce0-4210-8831-194929705a3a-source-a2d69ce1-f010-4b62-8992-4cc518fe9d3a.webm",
+                "sha256": "2082c78996d90a4c023a7a3342bdeb5c215532f1b71dcee0d48da960048a286e",
+                "bytes": 2429471,
+                "role": "main-video",
+                "sceneIndex": 0,
+                "clipId": "php-01",
+                "outputRange": {
+                  "startSeconds": 0,
+                  "endSeconds": 7.416667
+                },
+                "sourceRange": {
+                  "startSeconds": 0.2,
+                  "endSeconds": 7.6166670000000005
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "7e4365d6c8334fc0192e82ce5616386e7a214866cde70d95a0ad8ab373d87bec",
+                    "acquisitionId": "8a3aa7ef-e9a4-4c9e-9506-8ce396a697c7",
+                    "bodySha256": "4e187c607a602b9afad6b0be1b3ce14b26a9c55bb8d3535fabd84ad8f3257206",
+                    "url": "https://www.youtube.com/watch?v=hS1YqcewH0c",
+                    "captureRange": {
+                      "startSeconds": 75,
+                      "endSeconds": 82.958147
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              },
+              {
+                "artifactId": "a7e09f57-cce0-4210-8831-194929705a3a-source-a2d69ce1-f010-4b62-8992-4cc518fe9d3a.webm",
+                "sha256": "2082c78996d90a4c023a7a3342bdeb5c215532f1b71dcee0d48da960048a286e",
+                "bytes": 2429471,
+                "role": "main-video",
+                "sceneIndex": 4,
+                "clipId": "php-05",
+                "outputRange": {
+                  "startSeconds": 33.916667000000004,
+                  "endSeconds": 40.041667000000004
+                },
+                "sourceRange": {
+                  "startSeconds": 0.2,
+                  "endSeconds": 6.325
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "7e4365d6c8334fc0192e82ce5616386e7a214866cde70d95a0ad8ab373d87bec",
+                    "acquisitionId": "8a3aa7ef-e9a4-4c9e-9506-8ce396a697c7",
+                    "bodySha256": "4e187c607a602b9afad6b0be1b3ce14b26a9c55bb8d3535fabd84ad8f3257206",
+                    "url": "https://www.youtube.com/watch?v=hS1YqcewH0c",
+                    "captureRange": {
+                      "startSeconds": 75,
+                      "endSeconds": 82.958147
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              }
+            ],
+            "usesNextOffset": null
+          },
+          {
+            "export": {
+              "id": "319cfeb84a48062071b68da2eb4fca8363eec2dcad9900c9133f30f0806e5065",
+              "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+              "workId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+              "draftId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+              "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+              "draftRevision": 24,
+              "title": "PHP安全修复：AI验证与维护者回应",
+              "createdAt": "2026-10-21T22:35:38.890Z",
+              "artifactId": "media-6d864de0-92c8-45d0-a535-789cc52b234f-converted.mp4",
+              "outputSha256": "1b9dba9b6b6876571baff90d4ff97cdb2bcc7d279dfc582da5c52f9f833c3c95",
+              "durationSeconds": 40.041667000000004,
+              "provenance": "recorded",
+              "useCount": 11,
+              "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+              "archived": false,
+              "status": "available",
+              "bytes": 5322572
+            },
+            "useCount": 2,
+            "uses": [
+              {
+                "artifactId": "a7e09f57-cce0-4210-8831-194929705a3a-source-a2d69ce1-f010-4b62-8992-4cc518fe9d3a.webm",
+                "sha256": "2082c78996d90a4c023a7a3342bdeb5c215532f1b71dcee0d48da960048a286e",
+                "bytes": 2429471,
+                "role": "main-video",
+                "sceneIndex": 0,
+                "clipId": "php-01",
+                "outputRange": {
+                  "startSeconds": 0,
+                  "endSeconds": 7.416667
+                },
+                "sourceRange": {
+                  "startSeconds": 0.2,
+                  "endSeconds": 7.6166670000000005
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "7e4365d6c8334fc0192e82ce5616386e7a214866cde70d95a0ad8ab373d87bec",
+                    "acquisitionId": "8a3aa7ef-e9a4-4c9e-9506-8ce396a697c7",
+                    "bodySha256": "4e187c607a602b9afad6b0be1b3ce14b26a9c55bb8d3535fabd84ad8f3257206",
+                    "url": "https://www.youtube.com/watch?v=hS1YqcewH0c",
+                    "captureRange": {
+                      "startSeconds": 75,
+                      "endSeconds": 82.958147
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              },
+              {
+                "artifactId": "a7e09f57-cce0-4210-8831-194929705a3a-source-a2d69ce1-f010-4b62-8992-4cc518fe9d3a.webm",
+                "sha256": "2082c78996d90a4c023a7a3342bdeb5c215532f1b71dcee0d48da960048a286e",
+                "bytes": 2429471,
+                "role": "main-video",
+                "sceneIndex": 4,
+                "clipId": "php-05",
+                "outputRange": {
+                  "startSeconds": 33.916667000000004,
+                  "endSeconds": 40.041667000000004
+                },
+                "sourceRange": {
+                  "startSeconds": 0.2,
+                  "endSeconds": 6.325
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "7e4365d6c8334fc0192e82ce5616386e7a214866cde70d95a0ad8ab373d87bec",
+                    "acquisitionId": "8a3aa7ef-e9a4-4c9e-9506-8ce396a697c7",
+                    "bodySha256": "4e187c607a602b9afad6b0be1b3ce14b26a9c55bb8d3535fabd84ad8f3257206",
+                    "url": "https://www.youtube.com/watch?v=hS1YqcewH0c",
+                    "captureRange": {
+                      "startSeconds": 75,
+                      "endSeconds": 82.958147
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              }
+            ],
+            "usesNextOffset": null
+          }
+        ],
+        "total": 2,
+        "nextOffset": null,
+        "issues": [],
+        "issuesOmitted": 0,
+        "identity": {
+          "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+          "sourceId": "7e4365d6c8334fc0192e82ce5616386e7a214866cde70d95a0ad8ab373d87bec",
+          "acquisitionId": "8a3aa7ef-e9a4-4c9e-9506-8ce396a697c7"
+        },
+        "legacyAdoption": "unknown; legacy exports are never inferred from current draft references"
+      }
+    }
+  ],
+  "rootIndependentWholeFilm": {
+    "at": "2026-10-21T23:00:02.385Z",
+    "artifactId": "media-fa4c2a06-8782-4559-a8e1-3f4dfed759e6-converted.mp4",
+    "sha256": "89d46f90154eb407eb5cb7fdeffb6abe6281f0361477d58919bf4ff623364e26",
+    "exportFingerprint": "1603e5e81fd73440d82c1a93b3208eaf54187a7ae4629bb48b700241e6509b8c",
+    "status": "passed-visual-with-disclosed-limitations",
+    "method": "Independent root trusted-UI continuous current-MP4 playback from zero to EOF, live screenshots at approximately 0/18/28/40 seconds, plus actual-export 390px samples of all five scenes",
+    "observedPlaybackEndSeconds": 40.10667,
+    "allScenePhoneSamples": [
+      {
+        "scene": "php-01",
+        "seconds": [
+          0,
+          0.7916666667,
+          3.0416666667
+        ],
+        "artifacts": [
+          "media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-1.png",
+          "media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-5.png",
+          "media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-6.png"
+        ]
+      },
+      {
+        "scene": "php-02",
+        "seconds": [
+          8.2083333333
+        ],
+        "artifacts": [
+          "media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-4.png"
+        ]
+      },
+      {
+        "scene": "php-03",
+        "seconds": [
+          15.7083333333
+        ],
+        "artifacts": [
+          "media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-4.png"
+        ]
+      },
+      {
+        "scene": "php-04",
+        "seconds": [
+          26.7083333333
+        ],
+        "artifacts": [
+          "media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-4.png"
+        ]
+      },
+      {
+        "scene": "php-05",
+        "seconds": [
+          34.7083333333
+        ],
+        "artifacts": [
+          "media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-4.png"
+        ]
+      }
+    ],
+    "observations": [
+      "Current opening samples show real Sam head/hand/body changes with archive publication date throughout; same real footage at closing, not interview speech",
+      "Second scene original headline/date now complete and large; no narrow white-strip source thumbnail in the visible main frame",
+      "All Chinese headings, point cards and captions readable; third/fourth English source body text remains small at phone width",
+      "No black frame observed in sampled/live states; full playback reached EOF without operator seek or pause",
+      "One native long-static-hold warning on scene three retained as source reading; configured bottom-right watermark appears at top-right in output"
+    ],
+    "humanListening": "pending",
+    "userAcceptance": "pending",
+    "cleanup": {
+      "videoTimeSeconds": 0,
+      "paused": true,
+      "fullscreen": false,
+      "assistantReadyVisible": true,
+      "userFeishuPagePreserved": true
+    }
+  },
+  "assistedWorkflow": true,
+  "completedAt": "2026-10-21T23:01:55.130Z",
+  "inputReceipt": {
+    "runId": "a746c6f1-25a9-4350-9e62-b9034d183b05",
+    "messageId": "cd06e29c-4c9f-4522-bef8-050bbc7d0786",
+    "providerReceiptId": "cd06e29c-4c9f-4522-bef8-050bbc7d0786",
+    "state": "finished",
+    "outcome": "success"
+  },
+  "nativeCurrentReview": {
+    "draftId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+    "revision": 31,
+    "technical": {
+      "status": "passed",
+      "reportArtifactId": "video-112d702c-eff3-4ae2-8e13-e69cbbcfbe56.json"
+    },
+    "layout": {
+      "status": "issues-present",
+      "issueCount": 1,
+      "omittedIssues": 0,
+      "omittedCandidates": 0,
+      "coverage": "critical-state-samples",
+      "semanticVerification": "requires-visual-review"
+    },
+    "exportFingerprint": "1603e5e81fd73440d82c1a93b3208eaf54187a7ae4629bb48b700241e6509b8c",
+    "sourceArtifactId": "media-fa4c2a06-8782-4559-a8e1-3f4dfed759e6-converted.mp4",
+    "scenes": [
+      {
+        "sceneId": "php-01",
+        "totalSamples": 11,
+        "generatedCurrentFrames": 11,
+        "frameGenerationComplete": true,
+        "missingReviewOffsets": [],
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T22:53:33.512Z",
+          "sequence": 2,
+          "authority": "agent-declared",
+          "notesPreview": "11个当前指纹帧全看：实际Sam原片0–3秒连续真人动态；全程持续资料画面/日期/录制日未知标识；中文镜题与字幕清楚，字幕结束约6秒后画面延续至镜末，无黑帧或异常停帧。",
+          "notesCharacters": 84
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      },
+      {
+        "sceneId": "php-02",
+        "totalSamples": 14,
+        "generatedCurrentFrames": 14,
+        "frameGenerationComplete": true,
+        "missingReviewOffsets": [],
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T22:53:30.733Z",
+          "sequence": 1,
+          "authority": "agent-declared",
+          "notesPreview": "14个当前指纹手机帧全看：独立原文层标题大而完整，跨7.5秒持续，旧细白条消失；日期/元信息行较小但可见。中文镜题、要点、两段字幕均未被遮；第二句字幕正常出现并结束，无黑帧。",
+          "notesCharacters": 87
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      },
+      {
+        "sceneId": "php-03",
+        "totalSamples": 14,
+        "generatedCurrentFrames": 14,
+        "frameGenerationComplete": true,
+        "missingReviewOffsets": [],
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T22:53:36.404Z",
+          "sequence": 3,
+          "authority": "agent-declared",
+          "notesPreview": "14个当前指纹帧全看：中文镜题、要点条与字幕清楚，末句约24.54秒结束后由24.58秒消失，镜末25.875秒仍为读稿卡，无黑帧。英文正文细字在390px下无法可靠辨识，如实记限制。24.5秒long-static-hold为原文阅读镜的静态停留，非技术失败。",
+          "notesCharacters": 131
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      },
+      {
+        "sceneId": "php-04",
+        "totalSamples": 10,
+        "generatedCurrentFrames": 10,
+        "frameGenerationComplete": true,
+        "missingReviewOffsets": [],
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T22:53:39.096Z",
+          "sequence": 4,
+          "authority": "agent-declared",
+          "notesPreview": "10个当前指纹帧全看：静态读稿卡上中文镜题与要点条清楚，字幕约26.04秒出现并持续到32.58秒，之后消失；末尾约1.25秒为静止停留，镜末33.875秒仍有画面，无黑帧。英文正文细字在390px下过小，不能宣称清晰。",
+          "notesCharacters": 110
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      },
+      {
+        "sceneId": "php-05",
+        "totalSamples": 10,
+        "generatedCurrentFrames": 10,
+        "frameGenerationComplete": true,
+        "missingReviewOffsets": [],
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T22:53:41.861Z",
+          "sequence": 5,
+          "authority": "agent-declared",
+          "notesPreview": "10个当前指纹帧全看：真实Sam画面持续到40秒镜末，全程资料画面/日期/录制日未知标识，中文镜题与字幕清楚；字幕约34秒出现并到38.67秒结束，38.71秒后消失；无黑帧或异常定格。",
+          "notesCharacters": 93
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      }
+    ],
+    "agent": {
+      "status": "passed",
+      "createdAt": "2026-10-21T22:53:45.864Z",
+      "sequence": 6,
+      "authority": "agent-declared",
+      "notesPreview": "全片40.04秒五镜59个当前指纹帧逐页实看：第二镜原文层标题/日期大而完整，旧细白条消失且不遮中文要点字幕；首镜0–3秒真人动态，首末真实Sam画面均带资料画面标识；各镜字幕起止正常、无黑帧。php-03/04英文细字小、php-03的24.5秒long-static-hold为静态读稿停留，已如实记录。技术检查通过",
+      "notesCharacters": 186
+    },
+    "user": {
+      "status": "pending",
+      "authority": "user-declared"
+    },
+    "plan": {
+      "previousArtifactId": "media-6d864de0-92c8-45d0-a535-789cc52b234f-converted.mp4",
+      "changedSceneIds": [
+        "php-02"
+      ],
+      "unchangedSceneIds": [
+        "php-01",
+        "php-03",
+        "php-04",
+        "php-05"
+      ],
+      "reviewSceneOrder": [
+        "php-02",
+        "php-01",
+        "php-03",
+        "php-04",
+        "php-05"
+      ],
+      "requiresFullFilmReview": true,
+      "reuseOldFrames": false
+    },
+    "coverageMeaning": "Generated actual export samples; model/user assessments are separate declarations, not automatic semantic or audio certification.",
+    "scenePage": {
+      "total": 5,
+      "offset": 0,
+      "nextOffset": null
+    },
+    "notesCoverage": "Assessment notes are previews; the user view keeps complete declared notes."
+  },
+  "currentFrameCoverage": {
+    "count": 59,
+    "frames": [
+      {
+        "sceneIndex": 1,
+        "seconds": 7.458333333333333,
+        "localSeconds": 0.041666333333332695,
+        "reasons": [
+          "scene-start",
+          "caption-start-before",
+          "visual-cut",
+          "visual-cut-after",
+          "layer-start",
+          "layer-start-after"
+        ],
+        "artifactId": "media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-1.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-1.png",
+        "sha256": "b4ef927f8ab29a59231c6fd83d9cbf08bb5c07d9bd89b1a6827a63a1fd7a3f81",
+        "bytes": 91715,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 7.458333333333333
+      },
+      {
+        "sceneIndex": 1,
+        "seconds": 7.5,
+        "localSeconds": 0.08333299999999966,
+        "reasons": [
+          "caption-start"
+        ],
+        "artifactId": "media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-2.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-2.png",
+        "sha256": "ff3771c4230250d7e54a7d1aa25e628bfecdc1a663876ffe8b9df474dc478b6d",
+        "bytes": 92609,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 7.5
+      },
+      {
+        "sceneIndex": 1,
+        "seconds": 7.541666666666667,
+        "localSeconds": 0.12499966666666662,
+        "reasons": [
+          "caption-start-after"
+        ],
+        "artifactId": "media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-3.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-3.png",
+        "sha256": "6091c650af4905d8cffca51a676d5f0adc14814d70fe17145e6ed8f25e8c89f6",
+        "bytes": 112017,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 7.541666666666667
+      },
+      {
+        "sceneIndex": 1,
+        "seconds": 8.208333333333334,
+        "localSeconds": 0.7916663333333336,
+        "reasons": [
+          "entrance-complete"
+        ],
+        "artifactId": "media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-4.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-4.png",
+        "sha256": "389cacf37a88b198cb986813137137120a2e9ae46c2d1cd4d37f5174e05df8c5",
+        "bytes": 112084,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 8.208333333333334
+      },
+      {
+        "sceneIndex": 1,
+        "seconds": 9.5,
+        "localSeconds": 2.0833329999999997,
+        "reasons": [
+          "caption-middle"
+        ],
+        "artifactId": "media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-5.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-5.png",
+        "sha256": "ce120e49a7837c596a3a2707fd2abaf1bf7f36f85560a0cdd71d0599bed5299d",
+        "bytes": 112085,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 9.5
+      },
+      {
+        "sceneIndex": 1,
+        "seconds": 11.166666666666666,
+        "localSeconds": 3.7499996666666657,
+        "reasons": [
+          "scene-middle"
+        ],
+        "artifactId": "media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-6.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-6.png",
+        "sha256": "ce120e49a7837c596a3a2707fd2abaf1bf7f36f85560a0cdd71d0599bed5299d",
+        "bytes": 112085,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 11.166666666666666
+      },
+      {
+        "sceneIndex": 1,
+        "seconds": 11.416666666666666,
+        "localSeconds": 3.9999996666666657,
+        "reasons": [
+          "caption-end-before",
+          "caption-start-before"
+        ],
+        "artifactId": "media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-7.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-7.png",
+        "sha256": "ce120e49a7837c596a3a2707fd2abaf1bf7f36f85560a0cdd71d0599bed5299d",
+        "bytes": 112085,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 11.416666666666666
+      },
+      {
+        "sceneIndex": 1,
+        "seconds": 11.458333333333334,
+        "localSeconds": 4.041666333333334,
+        "reasons": [
+          "caption-end",
+          "caption-start"
+        ],
+        "artifactId": "media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-8.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-383cdb10-e44d-4b25-b095-f7a96429b4c0-frame-8.png",
+        "sha256": "ce120e49a7837c596a3a2707fd2abaf1bf7f36f85560a0cdd71d0599bed5299d",
+        "bytes": 112085,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 11.458333333333334
+      },
+      {
+        "sceneIndex": 1,
+        "seconds": 11.5,
+        "localSeconds": 4.083333,
+        "reasons": [
+          "caption-end-after",
+          "caption-start-after"
+        ],
+        "artifactId": "media-c8a76e42-adb5-4429-9689-804e5f18f9c1-frame-1.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-c8a76e42-adb5-4429-9689-804e5f18f9c1-frame-1.png",
+        "sha256": "081d572783e94a03cd9acd58238bc35c2a616c1d3bf7b7d2c61f4ed40125b60d",
+        "bytes": 105315,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 11.5
+      },
+      {
+        "sceneIndex": 1,
+        "seconds": 12.5,
+        "localSeconds": 5.083333,
+        "reasons": [
+          "caption-middle"
+        ],
+        "artifactId": "media-c8a76e42-adb5-4429-9689-804e5f18f9c1-frame-2.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-c8a76e42-adb5-4429-9689-804e5f18f9c1-frame-2.png",
+        "sha256": "9c7828ebcf4b9d5eaf9a1213ad5280988ddc4fe3bcd6155d992e837e9b1185df",
+        "bytes": 104812,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 12.5
+      },
+      {
+        "sceneIndex": 1,
+        "seconds": 13.458333333333334,
+        "localSeconds": 6.041666333333334,
+        "reasons": [
+          "caption-end-before"
+        ],
+        "artifactId": "media-c8a76e42-adb5-4429-9689-804e5f18f9c1-frame-3.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-c8a76e42-adb5-4429-9689-804e5f18f9c1-frame-3.png",
+        "sha256": "9c7828ebcf4b9d5eaf9a1213ad5280988ddc4fe3bcd6155d992e837e9b1185df",
+        "bytes": 104812,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 13.458333333333334
+      },
+      {
+        "sceneIndex": 1,
+        "seconds": 13.5,
+        "localSeconds": 6.083333,
+        "reasons": [
+          "caption-end"
+        ],
+        "artifactId": "media-c8a76e42-adb5-4429-9689-804e5f18f9c1-frame-4.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-c8a76e42-adb5-4429-9689-804e5f18f9c1-frame-4.png",
+        "sha256": "da4e9e13eded9bcc1f976f86bf0e89e8df9ede757c9bb766807632f090751281",
+        "bytes": 92584,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 13.5
+      },
+      {
+        "sceneIndex": 1,
+        "seconds": 13.541666666666666,
+        "localSeconds": 6.124999666666666,
+        "reasons": [
+          "caption-end-after"
+        ],
+        "artifactId": "media-c8a76e42-adb5-4429-9689-804e5f18f9c1-frame-5.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-c8a76e42-adb5-4429-9689-804e5f18f9c1-frame-5.png",
+        "sha256": "da4e9e13eded9bcc1f976f86bf0e89e8df9ede757c9bb766807632f090751281",
+        "bytes": 92584,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 13.541666666666666
+      },
+      {
+        "sceneIndex": 1,
+        "seconds": 14.875,
+        "localSeconds": 7.458333,
+        "reasons": [
+          "scene-end",
+          "layer-end-before"
+        ],
+        "artifactId": "media-c8a76e42-adb5-4429-9689-804e5f18f9c1-frame-6.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-c8a76e42-adb5-4429-9689-804e5f18f9c1-frame-6.png",
+        "sha256": "8b0c12725121ca361d0cb9481ed9a0f2e8916c31307e2fdceee429f5bed1dadf",
+        "bytes": 92537,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 14.875
+      },
+      {
+        "sceneIndex": 0,
+        "seconds": 0,
+        "localSeconds": 0,
+        "reasons": [
+          "scene-start",
+          "visual-cut"
+        ],
+        "artifactId": "media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-1.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-1.png",
+        "sha256": "6b59ac8ba9bb6826c8c0ccfdddf62ad967b9d70d59e3275a96f4c0ffb02d5e21",
+        "bytes": 107792,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 0
+      },
+      {
+        "sceneIndex": 0,
+        "seconds": 0.041666666666666664,
+        "localSeconds": 0.041666666666666664,
+        "reasons": [
+          "caption-start-before",
+          "visual-cut-after"
+        ],
+        "artifactId": "media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-2.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-2.png",
+        "sha256": "1473c7f1f5090f503cdba1d08d8f7778ae2330fe91452ed9f2d19768ab7b8db1",
+        "bytes": 114740,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 0.041666666666666664
+      },
+      {
+        "sceneIndex": 0,
+        "seconds": 0.08333333333333333,
+        "localSeconds": 0.08333333333333333,
+        "reasons": [
+          "caption-start"
+        ],
+        "artifactId": "media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-3.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-3.png",
+        "sha256": "e1fa1f66236243881264304bebe7e27e7d6cafb08487c7fe85e2286cde76148d",
+        "bytes": 145621,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 0.08333333333333333
+      },
+      {
+        "sceneIndex": 0,
+        "seconds": 0.125,
+        "localSeconds": 0.125,
+        "reasons": [
+          "caption-start-after"
+        ],
+        "artifactId": "media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-4.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-4.png",
+        "sha256": "14b56e7f40bfc88b596353eaa886873b058bba15e206b4576573fb84adcaaed1",
+        "bytes": 147650,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 0.125
+      },
+      {
+        "sceneIndex": 0,
+        "seconds": 0.7916666666666666,
+        "localSeconds": 0.7916666666666666,
+        "reasons": [
+          "entrance-complete"
+        ],
+        "artifactId": "media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-5.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-5.png",
+        "sha256": "b8c9088f92adc737b6d11d69e6676637e318ae54b68b3dd34e297156300715db",
+        "bytes": 148999,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 0.7916666666666666
+      },
+      {
+        "sceneIndex": 0,
+        "seconds": 3.0416666666666665,
+        "localSeconds": 3.0416666666666665,
+        "reasons": [
+          "caption-middle"
+        ],
+        "artifactId": "media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-6.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-6.png",
+        "sha256": "d51ec8676e06e3d0d461fcaa1e9d55e88946952d666e27caa9a3750e0f5eb6b7",
+        "bytes": 146616,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 3.0416666666666665
+      },
+      {
+        "sceneIndex": 0,
+        "seconds": 3.7083333333333335,
+        "localSeconds": 3.7083333333333335,
+        "reasons": [
+          "scene-middle"
+        ],
+        "artifactId": "media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-7.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-7.png",
+        "sha256": "966df3e45f2952e7a2210f7a37d8f973bd95c3ad4d366dda0f0d9db32c82a85e",
+        "bytes": 145631,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 3.7083333333333335
+      },
+      {
+        "sceneIndex": 0,
+        "seconds": 5.958333333333333,
+        "localSeconds": 5.958333333333333,
+        "reasons": [
+          "caption-end-before"
+        ],
+        "artifactId": "media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-8.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-ef189f9f-7503-4a20-bbf3-cb6b9389e549-frame-8.png",
+        "sha256": "aa4e1866c8873234fa51db8bcf2b28945fef559d6f6351a5c5f66f9ea9505671",
+        "bytes": 142556,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 5.958333333333333
+      },
+      {
+        "sceneIndex": 0,
+        "seconds": 6,
+        "localSeconds": 6,
+        "reasons": [
+          "caption-end"
+        ],
+        "artifactId": "media-2333faf4-280c-49f0-8dce-56de95ca8697-frame-1.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-2333faf4-280c-49f0-8dce-56de95ca8697-frame-1.png",
+        "sha256": "a866d538f6a9b10158c7acd1fc61d6f91809ca1b5626d51478b23382ff95dfd6",
+        "bytes": 139406,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 6
+      },
+      {
+        "sceneIndex": 0,
+        "seconds": 6.041666666666667,
+        "localSeconds": 6.041666666666667,
+        "reasons": [
+          "caption-end-after"
+        ],
+        "artifactId": "media-2333faf4-280c-49f0-8dce-56de95ca8697-frame-2.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-2333faf4-280c-49f0-8dce-56de95ca8697-frame-2.png",
+        "sha256": "f1a7dbb65a118a0ffd36ed64f114e82ccd8d11bdc9f9868364b5ff41c5769c22",
+        "bytes": 112997,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 6.041666666666667
+      },
+      {
+        "sceneIndex": 0,
+        "seconds": 7.375,
+        "localSeconds": 7.375,
+        "reasons": [
+          "scene-end"
+        ],
+        "artifactId": "media-2333faf4-280c-49f0-8dce-56de95ca8697-frame-3.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-2333faf4-280c-49f0-8dce-56de95ca8697-frame-3.png",
+        "sha256": "a3380f5c2c775ac92b0abe84a482b23ac3f65a18b472db29397247707583a2fb",
+        "bytes": 115628,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 7.375
+      },
+      {
+        "sceneIndex": 2,
+        "seconds": 14.958333333333334,
+        "localSeconds": 0.04166633333333358,
+        "reasons": [
+          "scene-start",
+          "caption-start-before",
+          "visual-cut",
+          "visual-cut-after"
+        ],
+        "artifactId": "media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-1.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-1.png",
+        "sha256": "fc197c8ae42944e0491712994c63393915cb9784070aa0abfda261f8731daa18",
+        "bytes": 101955,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 14.958333333333334
+      },
+      {
+        "sceneIndex": 2,
+        "seconds": 15,
+        "localSeconds": 0.08333299999999966,
+        "reasons": [
+          "caption-start"
+        ],
+        "artifactId": "media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-2.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-2.png",
+        "sha256": "202bd97979f3715c34347d2250553fa741a2ee656049fb3e7bbb7fd54c1e1cd3",
+        "bytes": 103456,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 15
+      },
+      {
+        "sceneIndex": 2,
+        "seconds": 15.041666666666666,
+        "localSeconds": 0.12499966666666573,
+        "reasons": [
+          "caption-start-after"
+        ],
+        "artifactId": "media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-3.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-3.png",
+        "sha256": "39878d632c36149b8e01512002e5033f27201c4a67622a0025fcaeaf732b4882",
+        "bytes": 129358,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 15.041666666666666
+      },
+      {
+        "sceneIndex": 2,
+        "seconds": 15.708333333333334,
+        "localSeconds": 0.7916663333333336,
+        "reasons": [
+          "entrance-complete"
+        ],
+        "artifactId": "media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-4.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-4.png",
+        "sha256": "4736996112ef30ca6a5bffd3b52399152f9f3c0f4be92b27fb2e65d9ad44621d",
+        "bytes": 131700,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 15.708333333333334
+      },
+      {
+        "sceneIndex": 2,
+        "seconds": 17.625,
+        "localSeconds": 2.7083329999999997,
+        "reasons": [
+          "caption-middle"
+        ],
+        "artifactId": "media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-5.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-5.png",
+        "sha256": "2d448ce81675f97e870ff72cbd8ca3da52ed91f9a82dfcc24c610c939093197b",
+        "bytes": 129445,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 17.625
+      },
+      {
+        "sceneIndex": 2,
+        "seconds": 20.208333333333332,
+        "localSeconds": 5.291666333333332,
+        "reasons": [
+          "caption-end-before",
+          "caption-start-before"
+        ],
+        "artifactId": "media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-6.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-6.png",
+        "sha256": "eb469e4aea010a524efb883ec9965d1dd8dae1031986a9f7d8397eeb6591b7ec",
+        "bytes": 129445,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 20.208333333333332
+      },
+      {
+        "sceneIndex": 2,
+        "seconds": 20.25,
+        "localSeconds": 5.333333,
+        "reasons": [
+          "caption-end",
+          "caption-start"
+        ],
+        "artifactId": "media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-7.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-7.png",
+        "sha256": "cde90d5fe0a811830a87e13bde09658d6b25f98c0464d108c48fcd2295dedac3",
+        "bytes": 128314,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 20.25
+      },
+      {
+        "sceneIndex": 2,
+        "seconds": 20.291666666666668,
+        "localSeconds": 5.3749996666666675,
+        "reasons": [
+          "caption-end-after",
+          "caption-start-after"
+        ],
+        "artifactId": "media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-8.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-7fc158fc-ed96-4bbb-9c0b-ef4df240f91f-frame-8.png",
+        "sha256": "713f30e1938e928afc42b9c7bfe16aa116e65fa106776719eb94e8148d4b9d3b",
+        "bytes": 126569,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 20.291666666666668
+      },
+      {
+        "sceneIndex": 2,
+        "seconds": 20.416666666666668,
+        "localSeconds": 5.4999996666666675,
+        "reasons": [
+          "scene-middle"
+        ],
+        "artifactId": "media-5e4b09ba-4b80-4c01-8aa4-d54f0af06974-frame-1.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-5e4b09ba-4b80-4c01-8aa4-d54f0af06974-frame-1.png",
+        "sha256": "5657bf650e6754db1c21af9967a4fcd5e3f5326a2e5d75c373fe2b80f193f130",
+        "bytes": 128917,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 20.416666666666668
+      },
+      {
+        "sceneIndex": 2,
+        "seconds": 22.416666666666668,
+        "localSeconds": 7.4999996666666675,
+        "reasons": [
+          "caption-middle"
+        ],
+        "artifactId": "media-5e4b09ba-4b80-4c01-8aa4-d54f0af06974-frame-2.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-5e4b09ba-4b80-4c01-8aa4-d54f0af06974-frame-2.png",
+        "sha256": "8f3ae136a8cbcf9fb61132274ba6075e5e9566965ac5b12cf78e4f769493ea22",
+        "bytes": 127780,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 22.416666666666668
+      },
+      {
+        "sceneIndex": 2,
+        "seconds": 24.5,
+        "localSeconds": 9.583333,
+        "reasons": [
+          "caption-end-before"
+        ],
+        "artifactId": "media-5e4b09ba-4b80-4c01-8aa4-d54f0af06974-frame-3.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-5e4b09ba-4b80-4c01-8aa4-d54f0af06974-frame-3.png",
+        "sha256": "8f3ae136a8cbcf9fb61132274ba6075e5e9566965ac5b12cf78e4f769493ea22",
+        "bytes": 127780,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 24.5
+      },
+      {
+        "sceneIndex": 2,
+        "seconds": 24.541666666666668,
+        "localSeconds": 9.624999666666668,
+        "reasons": [
+          "caption-end"
+        ],
+        "artifactId": "media-5e4b09ba-4b80-4c01-8aa4-d54f0af06974-frame-4.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-5e4b09ba-4b80-4c01-8aa4-d54f0af06974-frame-4.png",
+        "sha256": "8f3ae136a8cbcf9fb61132274ba6075e5e9566965ac5b12cf78e4f769493ea22",
+        "bytes": 127780,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 24.541666666666668
+      },
+      {
+        "sceneIndex": 2,
+        "seconds": 24.583333333333332,
+        "localSeconds": 9.666666333333332,
+        "reasons": [
+          "caption-end-after"
+        ],
+        "artifactId": "media-5e4b09ba-4b80-4c01-8aa4-d54f0af06974-frame-5.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-5e4b09ba-4b80-4c01-8aa4-d54f0af06974-frame-5.png",
+        "sha256": "79d1dacf279e673d0268b05137229bdb7decd3461be66fb3c41b0aa0531b3fda",
+        "bytes": 106328,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 24.583333333333332
+      },
+      {
+        "sceneIndex": 2,
+        "seconds": 25.875,
+        "localSeconds": 10.958333,
+        "reasons": [
+          "scene-end"
+        ],
+        "artifactId": "media-5e4b09ba-4b80-4c01-8aa4-d54f0af06974-frame-6.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-5e4b09ba-4b80-4c01-8aa4-d54f0af06974-frame-6.png",
+        "sha256": "79d1dacf279e673d0268b05137229bdb7decd3461be66fb3c41b0aa0531b3fda",
+        "bytes": 106328,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 25.875
+      },
+      {
+        "sceneIndex": 3,
+        "seconds": 25.958333333333332,
+        "localSeconds": 0.041666333333331806,
+        "reasons": [
+          "scene-start",
+          "caption-start-before",
+          "visual-cut",
+          "visual-cut-after"
+        ],
+        "artifactId": "media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-1.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-1.png",
+        "sha256": "a4f37ae19350e623645756415ea1cff8f048e407093591763228024685c8ffaa",
+        "bytes": 92014,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 25.958333333333332
+      },
+      {
+        "sceneIndex": 3,
+        "seconds": 26,
+        "localSeconds": 0.08333299999999966,
+        "reasons": [
+          "caption-start"
+        ],
+        "artifactId": "media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-2.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-2.png",
+        "sha256": "981f03eaa847a5a25fd180b34f64fbb9ce9d1c966d6b445e61762a28300d2605",
+        "bytes": 90674,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 26
+      },
+      {
+        "sceneIndex": 3,
+        "seconds": 26.041666666666668,
+        "localSeconds": 0.12499966666666751,
+        "reasons": [
+          "caption-start-after"
+        ],
+        "artifactId": "media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-3.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-3.png",
+        "sha256": "7b65d6f1358096a92166eca27d98b45d711106a6793d231a247b68b4c61c3f73",
+        "bytes": 118091,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 26.041666666666668
+      },
+      {
+        "sceneIndex": 3,
+        "seconds": 26.708333333333332,
+        "localSeconds": 0.7916663333333318,
+        "reasons": [
+          "entrance-complete"
+        ],
+        "artifactId": "media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-4.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-4.png",
+        "sha256": "ed1b43821996cf732b78f37b4b4f4546f44ec222b8d7c0af2d28c7ae5acebcb5",
+        "bytes": 118467,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 26.708333333333332
+      },
+      {
+        "sceneIndex": 3,
+        "seconds": 29.291666666666668,
+        "localSeconds": 3.3749996666666675,
+        "reasons": [
+          "caption-middle"
+        ],
+        "artifactId": "media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-5.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-5.png",
+        "sha256": "e713a672354bbe8f51bf5b87ced4211e0ad40a97c5a6437a90e29c0273421e52",
+        "bytes": 117991,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 29.291666666666668
+      },
+      {
+        "sceneIndex": 3,
+        "seconds": 29.916666666666668,
+        "localSeconds": 3.9999996666666675,
+        "reasons": [
+          "scene-middle"
+        ],
+        "artifactId": "media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-6.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-6.png",
+        "sha256": "e713a672354bbe8f51bf5b87ced4211e0ad40a97c5a6437a90e29c0273421e52",
+        "bytes": 117991,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 29.916666666666668
+      },
+      {
+        "sceneIndex": 3,
+        "seconds": 32.541666666666664,
+        "localSeconds": 6.624999666666664,
+        "reasons": [
+          "caption-end-before"
+        ],
+        "artifactId": "media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-7.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-7.png",
+        "sha256": "e713a672354bbe8f51bf5b87ced4211e0ad40a97c5a6437a90e29c0273421e52",
+        "bytes": 117991,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 32.541666666666664
+      },
+      {
+        "sceneIndex": 3,
+        "seconds": 32.583333333333336,
+        "localSeconds": 6.666666333333335,
+        "reasons": [
+          "caption-end"
+        ],
+        "artifactId": "media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-8.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-e7148b8c-9ce0-4f1b-bcdd-0cb7cdd7b971-frame-8.png",
+        "sha256": "e713a672354bbe8f51bf5b87ced4211e0ad40a97c5a6437a90e29c0273421e52",
+        "bytes": 117991,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 32.583333333333336
+      },
+      {
+        "sceneIndex": 3,
+        "seconds": 32.625,
+        "localSeconds": 6.708333,
+        "reasons": [
+          "caption-end-after"
+        ],
+        "artifactId": "media-46f1605c-aa34-4e6c-83ed-8e581c0f43c6-frame-1.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-46f1605c-aa34-4e6c-83ed-8e581c0f43c6-frame-1.png",
+        "sha256": "60b3bb65d1e191c8bf5ff9b72ca734c0819d1053eda65f81a30f09fe47ce5e8c",
+        "bytes": 90009,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 32.625
+      },
+      {
+        "sceneIndex": 3,
+        "seconds": 33.875,
+        "localSeconds": 7.958333,
+        "reasons": [
+          "scene-end"
+        ],
+        "artifactId": "media-46f1605c-aa34-4e6c-83ed-8e581c0f43c6-frame-2.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-46f1605c-aa34-4e6c-83ed-8e581c0f43c6-frame-2.png",
+        "sha256": "60b3bb65d1e191c8bf5ff9b72ca734c0819d1053eda65f81a30f09fe47ce5e8c",
+        "bytes": 90009,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 33.875
+      },
+      {
+        "sceneIndex": 4,
+        "seconds": 33.958333333333336,
+        "localSeconds": 0.041666333333331806,
+        "reasons": [
+          "scene-start",
+          "caption-start-before",
+          "visual-cut",
+          "visual-cut-after"
+        ],
+        "artifactId": "media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-1.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-1.png",
+        "sha256": "2410c3c0e44d017fc4036c6d90a7699d2f92094c75f5a16f85e58361a8a1e151",
+        "bytes": 105960,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 33.958333333333336
+      },
+      {
+        "sceneIndex": 4,
+        "seconds": 34,
+        "localSeconds": 0.0833329999999961,
+        "reasons": [
+          "caption-start"
+        ],
+        "artifactId": "media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-2.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-2.png",
+        "sha256": "4c91276c5f934b2ea5497b73a6fbb7c1aff3dd184f5cd1a69e7d55ddde16c5fd",
+        "bytes": 108265,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 34
+      },
+      {
+        "sceneIndex": 4,
+        "seconds": 34.041666666666664,
+        "localSeconds": 0.1249996666666604,
+        "reasons": [
+          "caption-start-after"
+        ],
+        "artifactId": "media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-3.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-3.png",
+        "sha256": "ac57b7030c156198cf8da0c59c2d23f08a3f1a38b3025ece8b488b3e2760019f",
+        "bytes": 135951,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 34.041666666666664
+      },
+      {
+        "sceneIndex": 4,
+        "seconds": 34.708333333333336,
+        "localSeconds": 0.7916663333333318,
+        "reasons": [
+          "entrance-complete"
+        ],
+        "artifactId": "media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-4.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-4.png",
+        "sha256": "2d14e216bf88853dd6b246988071ae25b45892e702bf5ceafb0695d880fad2db",
+        "bytes": 138529,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 34.708333333333336
+      },
+      {
+        "sceneIndex": 4,
+        "seconds": 36.333333333333336,
+        "localSeconds": 2.416666333333332,
+        "reasons": [
+          "caption-middle"
+        ],
+        "artifactId": "media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-5.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-5.png",
+        "sha256": "a505cc52eb1b49afe11091b2902a8523a33601889ee7bdafc46f81b3e434cc1b",
+        "bytes": 136436,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 36.333333333333336
+      },
+      {
+        "sceneIndex": 4,
+        "seconds": 37,
+        "localSeconds": 3.083332999999996,
+        "reasons": [
+          "scene-middle"
+        ],
+        "artifactId": "media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-6.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-6.png",
+        "sha256": "33fee50e2d091d0a3357b46d64733877f6a2c0b88e8185f0da4607f527288cff",
+        "bytes": 137900,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 37
+      },
+      {
+        "sceneIndex": 4,
+        "seconds": 38.625,
+        "localSeconds": 4.708332999999996,
+        "reasons": [
+          "caption-end-before"
+        ],
+        "artifactId": "media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-7.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-7.png",
+        "sha256": "3f51a621e016537bc998afbea7415a2024ccf543a5c9a5a909a393c5feb98b43",
+        "bytes": 137035,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 38.625
+      },
+      {
+        "sceneIndex": 4,
+        "seconds": 38.666666666666664,
+        "localSeconds": 4.74999966666666,
+        "reasons": [
+          "caption-end"
+        ],
+        "artifactId": "media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-8.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-a4197ff4-1bf0-4ccc-9acd-1f6ae3b6501b-frame-8.png",
+        "sha256": "f050390c3ec96d7165f40d80a1be40035633cec2009f1545becf645197c9e8b1",
+        "bytes": 136725,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 38.666666666666664
+      },
+      {
+        "sceneIndex": 4,
+        "seconds": 38.708333333333336,
+        "localSeconds": 4.791666333333332,
+        "reasons": [
+          "caption-end-after"
+        ],
+        "artifactId": "media-53bc1d32-e416-4004-be8c-e67714971f1e-frame-1.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-53bc1d32-e416-4004-be8c-e67714971f1e-frame-1.png",
+        "sha256": "411f09f337ce7c48d6751e4899d335e37fa5d7f8c5110da07889990867c13c7a",
+        "bytes": 111052,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 38.708333333333336
+      },
+      {
+        "sceneIndex": 4,
+        "seconds": 40,
+        "localSeconds": 6.083332999999996,
+        "reasons": [
+          "scene-end"
+        ],
+        "artifactId": "media-53bc1d32-e416-4004-be8c-e67714971f1e-frame-2.png",
+        "path": "${BMW_PROFILE}/projects/76c98d62-ff8a-41f6-a439-76332fc4db3f/artifacts/media-53bc1d32-e416-4004-be8c-e67714971f1e-frame-2.png",
+        "sha256": "9bdba5fb1b347b632ab3898f4195bd8437f063d0d9dd9f691861a7283764b134",
+        "bytes": 108520,
+        "type": "screenshot",
+        "contentType": "image/png",
+        "width": 390,
+        "height": 693,
+        "actualSeconds": 40
+      }
+    ]
+  },
+  "subtitle": {
+    "artifactId": "video-bafd5c53-ff89-4d2e-92ca-2882c187bca1.srt",
+    "sha256": "1ab8c198772dc553301cf95437729e35894ee8ee777013191ca02942cbf05d8e",
+    "cueCount": 7,
+    "bytes": 714,
+    "reusedFromRevision": 20,
+    "verification": "Read by official driver; captions and all five WAV/voice timings match saved v15/v31"
+  },
+  "citationExport": {
+    "artifactId": "video-86577805-704c-44e6-b045-3934da635ff7.json",
+    "citationCount": 0,
+    "note": "Retained empty native list; not used as script or complete source list"
+  },
+  "scriptPath": "docs/research/NEWS_PHP_SECURITY_SCRIPT.md",
+  "voiceSnapshot": {
+    "at": "2026-10-21T22:47:58.400Z",
+    "draftId": "5fab01fa-942a-423f-82ee-22827795a3c1",
+    "revision": 31,
+    "tts": {
+      "provider": "qwen-tts",
+      "voice": "longanlang_v3.1",
+      "ratePercent": 0
+    },
+    "scenes": [
+      {
+        "sceneId": "php-01",
+        "narration": "10月21日，PHP为四个分支发布安全更新，修复两项严重漏洞。",
+        "audioText": "10月21日，PHP为四个分支发布安全更新，修复两项严重漏洞。",
+        "audioArtifactId": "narration-d1c9cdd8-1449-46ff-8736-92da87e3056b.wav",
+        "sha256": "b9d4a38bef55afb70bf586bf10a5f31680a2b528f95da60bd791f3b626a7f8cd",
+        "bytes": 284204,
+        "audioDurationSeconds": 5.92,
+        "audioGeneration": {
+          "kind": "tts",
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "longanlang_v3.1",
+            "ratePercent": 0
+          },
+          "autoTiming": {
+            "startSeconds": 0.08333333333333333,
+            "sourceStartSeconds": 0,
+            "durationSeconds": 5.92,
+            "playbackRate": 1
+          }
+        },
+        "captions": [
+          {
+            "startSeconds": 0.083333,
+            "endSeconds": 6.003333,
+            "text": "10月21日，PHP为四个分支发布安全更新，修复两项严重漏洞。"
+          }
+        ],
+        "voiceTiming": {
+          "startSeconds": 0.08333333333333333,
+          "sourceStartSeconds": 0,
+          "durationSeconds": 5.92,
+          "playbackRate": 1
+        }
+      },
+      {
+        "sceneId": "php-02",
+        "narration": "OpenAI称，AI帮助研究者发现并验证风险，多方协作推动了这次修复。",
+        "audioText": "OpenAI称，AI帮助研究者发现并验证风险，多方协作推动了这次修复。",
+        "audioArtifactId": "narration-c11555ab-5baa-4788-b0dc-ca41dd418665.wav",
+        "sha256": "13bd671333f2037fc401b82dc28aecb1e3b1a9bf5362705df8e5e0a8d39f385b",
+        "bytes": 288044,
+        "audioDurationSeconds": 6,
+        "audioGeneration": {
+          "kind": "tts",
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "longanlang_v3.1",
+            "ratePercent": 0
+          },
+          "autoTiming": {
+            "startSeconds": 0.08333333333333333,
+            "sourceStartSeconds": 0,
+            "durationSeconds": 6,
+            "playbackRate": 1
+          }
+        },
+        "captions": [
+          {
+            "startSeconds": 0.083333,
+            "endSeconds": 4.041667,
+            "text": "OpenAI称，AI帮助研究者发现并验证风险，"
+          },
+          {
+            "startSeconds": 4.041667,
+            "endSeconds": 6.083333,
+            "text": "多方协作推动了这次修复。"
+          }
+        ],
+        "voiceTiming": {
+          "startSeconds": 0.08333333333333333,
+          "sourceStartSeconds": 0,
+          "durationSeconds": 6,
+          "playbackRate": 1
+        }
+      },
+      {
+        "sceneId": "php-03",
+        "narration": "PHP基金会补充：其中一项的线索在2024年就已出现。兼容性、决策和人手不足，让修复一度反复停滞。",
+        "audioText": "PHP基金会补充：其中一项的线索在2024年就已出现。兼容性、决策和人手不足，让修复一度反复停滞。",
+        "audioArtifactId": "narration-7763eaa7-441c-4bfc-92a8-f9ab3c1cf702.wav",
+        "sha256": "304e63831489fd8d77db7b7e9c7c2e43e3736166341f9c8850fd9ec55ba91904",
+        "bytes": 457004,
+        "audioDurationSeconds": 9.52,
+        "audioGeneration": {
+          "kind": "tts",
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "longanlang_v3.1",
+            "ratePercent": 0
+          },
+          "autoTiming": {
+            "startSeconds": 0.08333333333333333,
+            "sourceStartSeconds": 0,
+            "durationSeconds": 9.52,
+            "playbackRate": 1
+          }
+        },
+        "captions": [
+          {
+            "startSeconds": 0.083333,
+            "endSeconds": 5.333333,
+            "text": "PHP基金会补充：其中一项的线索在2024年就已出现。"
+          },
+          {
+            "startSeconds": 5.333333,
+            "endSeconds": 9.625,
+            "text": "兼容性、决策和人手不足，让修复一度反复停滞。"
+          }
+        ],
+        "voiceTiming": {
+          "startSeconds": 0.08333333333333333,
+          "sourceStartSeconds": 0,
+          "durationSeconds": 9.52,
+          "playbackRate": 1
+        }
+      },
+      {
+        "sceneId": "php-04",
+        "narration": "基金会强调，AI能加速报告验证，但每次判断和每个补丁，仍由工程师负责。",
+        "audioText": "基金会强调，AI能加速报告验证，但每次判断和每个补丁，仍由工程师负责。",
+        "audioArtifactId": "narration-3b4b485f-2f3e-4f6d-9902-8b7212e3de7a.wav",
+        "sha256": "10e1390c71198f432d771520814879f4dabc11fc15ccff7b21a1d71bc7dd37d3",
+        "bytes": 314924,
+        "audioDurationSeconds": 6.56,
+        "audioGeneration": {
+          "kind": "tts",
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "longanlang_v3.1",
+            "ratePercent": 0
+          },
+          "autoTiming": {
+            "startSeconds": 0.08333333333333333,
+            "sourceStartSeconds": 0,
+            "durationSeconds": 6.56,
+            "playbackRate": 1
+          }
+        },
+        "captions": [
+          {
+            "startSeconds": 0.083333,
+            "endSeconds": 6.666667,
+            "text": "基金会强调，AI能加速报告验证，但每次判断和每个补丁，仍由工程师负责。"
+          }
+        ],
+        "voiceTiming": {
+          "startSeconds": 0.08333333333333333,
+          "sourceStartSeconds": 0,
+          "durationSeconds": 6.56,
+          "playbackRate": 1
+        }
+      },
+      {
+        "sceneId": "php-05",
+        "narration": "如今四个分支已有修复版本，实际更新覆盖率仍待核实。",
+        "audioText": "如今四个分支已有修复版本，实际更新覆盖率仍待核实。",
+        "audioArtifactId": "narration-739fd6a6-a7b1-446d-b9d7-02574c7dce07.wav",
+        "sha256": "dd7b56f3a10b8cf50e094015b2bdb2c95de6a08342131ddf203d80a800682c82",
+        "bytes": 222764,
+        "audioDurationSeconds": 4.64,
+        "audioGeneration": {
+          "kind": "tts",
+          "options": {
+            "provider": "qwen-tts",
+            "voice": "longanlang_v3.1",
+            "ratePercent": 0
+          },
+          "autoTiming": {
+            "startSeconds": 0.08333333333333333,
+            "sourceStartSeconds": 0,
+            "durationSeconds": 4.64,
+            "playbackRate": 1
+          }
+        },
+        "captions": [
+          {
+            "startSeconds": 0.083333,
+            "endSeconds": 4.75,
+            "text": "如今四个分支已有修复版本，实际更新覆盖率仍待核实。"
+          }
+        ],
+        "voiceTiming": {
+          "startSeconds": 0.08333333333333333,
+          "sourceStartSeconds": 0,
+          "durationSeconds": 4.64,
+          "playbackRate": 1
+        }
+      }
+    ]
+  },
+  "headerCrop": {
+    "artifactId": "1792611682749-patch-the-planet-body-preview.png",
+    "sourceCrop": {
+      "x": 0.23,
+      "y": 0.002,
+      "width": 0.55,
+      "height": 0.05
+    },
+    "box": {
+      "x": 0.06,
+      "y": 0.33,
+      "width": 0.88,
+      "height": 0.39
+    }
+  },
+  "unattendedAcceptance": false,
+  "deliveryNumber": 2,
+  "roundNumber": 1,
+  "legacyDataPreserved": true
+}

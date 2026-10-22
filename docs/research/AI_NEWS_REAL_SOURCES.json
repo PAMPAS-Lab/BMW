@@ -1,0 +1,394 @@
+{
+  "observedAt": "2026-10-21T10:19:31.801Z",
+  "liveNetwork": true,
+  "rewrittenPages": false,
+  "paidModel": false,
+  "driver": "deterministic integration adapter through real Host/Bridge",
+  "disposableProfile": true,
+  "windowHours": 72,
+  "cutoff": "2026-10-21T10:19:30.051Z",
+  "finalFingerprint": "5ddbd0e0953772cc887a2803512d780428d437404504ed99e89f1cbb4c4e2ed0",
+  "originalShaAndPreviewVerified": true,
+  "socialCursorsRetained": true,
+  "subscriptions": 9,
+  "articleObservations": 30,
+  "distinctArticleUrls": 28,
+  "sourceReobservations": 2,
+  "activeEvents": 27,
+  "retiredEvents": 2,
+  "prepared": 17,
+  "initialShortage": "16d9ad64-2df2-45db-b1f1-042b2c2cb241",
+  "finalSnapshotId": "df93fffe-e11f-49a4-9219-b70380cd5443",
+  "status": "complete",
+  "itemCount": 10,
+  "diagnostics": {
+    "retired": 2,
+    "excluded": 0,
+    "unprepared": 11,
+    "stale": 0,
+    "evidence": 0,
+    "expired": 6,
+    "filtered": 0,
+    "duplicate": 0,
+    "budget": 0
+  },
+  "items": [
+    {
+      "eventId": "5dd9669c-36de-4c4a-984e-ccad8db62c15",
+      "title": "Anthropic pitches AI safety bill that may block a model if 50+ people could be k",
+      "url": "https://techcrunch.com/2026/10/20/anthropic-pitches-ai-safety-bill-that-may-block-a-model-if-50-people-could-be-killed/",
+      "publishedAt": "2026-10-20T23:01:23.000Z",
+      "sourceId": "2d2caae98728dfe7fcc2bc80f8086560b8b5dd23479960c99644bd0a32e77cb4",
+      "acquisitionId": "304b781f-1a93-4589-a532-ce67535148e2",
+      "preview": "1792577844463-Anthropic-pitches-AI-safety-bill-that-may-block-a-model-if-50-people-could-be-ki.png",
+      "author": "Lucas Ropek",
+      "contentSha256": "9fb6f106b3ba7b6bef5df42eda1e9de2515ed516e0f07fc84a68faf1739eb955",
+      "previewSha256": "3420489102c6a068b72a07b498096932cf29cfdb2cea50664531f7b5caa15526",
+      "eventRevision": 1,
+      "evidence": [
+        {
+          "id": "839d75d6627268a5c2340fe936426ef0ba635d061aca2707930bb854a2cdda95",
+          "sha": "56424a60e914590401d8d7962dfc4306a7924c02a1c0ac353796d9fb38f65894"
+        }
+      ]
+    },
+    {
+      "eventId": "7c308598-9d67-42dc-91ea-a5fc73aca397",
+      "title": "OpenAI acquires startup Orchestra Bio⁠ to beef up its biotech business",
+      "url": "https://techcrunch.com/2026/10/20/openai-acquires-startup-orchestra-bio%e2%81%a0-to-beef-up-its-biotech-business/",
+      "publishedAt": "2026-10-20T20:35:10.000Z",
+      "sourceId": "fb5a585d63d0a7f5e41bad485f909490651e989befa3fbbffe71f93d169a6d19",
+      "acquisitionId": "7f90c8f5-79af-4e2c-83e9-271e29007196",
+      "preview": "1792577886221-OpenAI-acquires-startup-Orchestra-Bio-to-beef-up-its-biotech-business-TechCrunch.png",
+      "author": "Julie Bort",
+      "contentSha256": "2581b0d1947968c5330ff38234edba1786a93d99e0607e8777928ffa4a74ecf9",
+      "previewSha256": "04db94674be827a74a5b4d97e0034a9ebaab610d3acb853538d0a2828078266d",
+      "eventRevision": 1,
+      "evidence": [
+        {
+          "id": "47ad1373d88425f5ddbb6cc597bfadbcebfee1e78b1be7de1d35479bcb6a57aa",
+          "sha": "c96f9ad5e31ccb3ac2b2d59c10d51a253541eacabacf0f078fe2098f9e199594"
+        },
+        {
+          "id": "7a7ee4c88e19d2a1b69fb75059a24b3efe4e64d7b2d55eba4366d427c0c7d328",
+          "sha": "0e8502d0df9d9ec3be71927040dc7972644cd8bd868a183a5863c1b5ed9a77f8"
+        }
+      ]
+    },
+    {
+      "eventId": "71e5cb12-b47b-4878-a01f-fb52af6a8ec6",
+      "title": "ChatGPT now lets you lock your chats",
+      "url": "https://techcrunch.com/2026/10/20/chatgpt-now-lets-you-lock-your-chats/",
+      "publishedAt": "2026-10-20T18:36:53.000Z",
+      "sourceId": "af34a6699219bf32973d4718a4ba002c32a7fcaed001c8d2d7cd54acf80064b8",
+      "acquisitionId": "4efd2224-2660-45c1-8d5f-9007ed91d513",
+      "preview": "1792577891572-ChatGPT-now-lets-you-lock-your-chats-TechCrunch.png",
+      "author": "Aisha Malik",
+      "contentSha256": "7bb249f9e427190ff0233939d45bb82877e3864f3ab25b9db2072812012d6283",
+      "previewSha256": "263d8496155ba39a77140c8e9b59a3201b1056beea9e087f47a6728936d142c7",
+      "eventRevision": 1,
+      "evidence": [
+        {
+          "id": "0e14fb3e559d57fadaf547909adc0ba54b72cce6609e38a24756ad932473546d",
+          "sha": "06d126624c66fc4d926e92b86d2caeffb7ae6a76a70e556c72a6a690266a5969"
+        }
+      ]
+    },
+    {
+      "eventId": "42d71f1d-e89a-410b-ba79-c41cf959ecf7",
+      "title": "Eric Schmidt reportedly owns about half as much of Anthropic as CEO Dario Amodei",
+      "url": "https://techcrunch.com/2026/10/20/eric-schmidt-reportedly-owns-about-half-as-much-of-anthropic-as-ceo-dario-amodei/",
+      "publishedAt": "2026-10-20T17:55:12.000Z",
+      "sourceId": "f947e16b0eddde440bb41ff209af5d675f0a04e97a126495536c6c662a888516",
+      "acquisitionId": "5ce94142-3d70-49a2-a82b-1536c9e460e8",
+      "preview": "1792577893992-Eric-Schmidt-reportedly-owns-about-half-as-much-of-Anthropic-as-CEO-Dario-Amodei.png",
+      "author": "Marina Temkin",
+      "contentSha256": "490e1a7d88c4d457ad17419d7477602a9326c30a594d36a62afcc54307b31ded",
+      "previewSha256": "5eb2e5cc121af7f34b8013cd151af248d1bdcfcb965a064f86afb798cac38b42",
+      "eventRevision": 1,
+      "evidence": [
+        {
+          "id": "02688471b967b41f9be68361dc4954a39efefb1e2168e4c96c90588a87a36077",
+          "sha": "31c2d6f95bc4d7ddfb8b4feee1c89a43546620052aebf98dad696a778d552d96"
+        }
+      ]
+    },
+    {
+      "eventId": "d3d1d6eb-732b-494d-81fc-1cde9f33cf94",
+      "title": "Meta’s Muse hits 10M US downloads in 40 days, a milestone reached by only 11 oth",
+      "url": "https://techcrunch.com/2026/10/20/metas-muse-hits-10m-u-s-downloads-in-40-days-a-milestone-reached-by-only-11-other-apps/",
+      "publishedAt": "2026-10-20T17:12:48.000Z",
+      "sourceId": "17c56b266c7cbdfad25d1f041e9c1f8c43c7e715a39aaa30cbf3fb9fe8392760",
+      "acquisitionId": "d50f57fc-9d80-48d2-836e-2bff5190595f",
+      "preview": "1792577902426-Meta-s-Muse-hits-10M-US-downloads-in-40-days-a-milestone-reached-by-only-11-othe.png",
+      "author": "Sarah Perez",
+      "contentSha256": "194425ffa3f37fa438c8e5183e11942b9855da80d886defb96a6e7f5efb410c3",
+      "previewSha256": "119521be5c68c9d98a3be3db2bd72580302fa4d69808df208e9b5204822313d6",
+      "eventRevision": 1,
+      "evidence": [
+        {
+          "id": "8726314f1d2b85343cbcd723e79ea0811878df79b99555bd608970a748f81d1d",
+          "sha": "c258867297a395ca6e2c4a7a3dc79260ef9f0a142de15507fab1a5e68e5f44d8"
+        }
+      ]
+    },
+    {
+      "eventId": "731f9640-1000-41b5-b2df-3fe1434e7056",
+      "title": "Ex-Nvidia-turned-VC Amulya Vishwanath: ‘Physical AI is in its LEGO era’",
+      "url": "https://techcrunch.com/2026/10/20/ex-nvidia-turned-vc-amulya-vishwanath-physical-ai-is-in-its-lego-era/",
+      "publishedAt": "2026-10-20T16:20:06.000Z",
+      "sourceId": "2c0c78d6dd60d8434364a06da97f50b04dd18939203d18dfdd82286d0105e95d",
+      "acquisitionId": "2482d035-3848-4cca-8c17-1f0295a3c1a7",
+      "preview": "1792577904998-Ex-Nvidia-turned-VC-Amulya-Vishwanath-Physical-AI-is-in-its-LEGO-era-TechCrunch.png",
+      "author": "Dominic-Madori Davis",
+      "contentSha256": "c6a8ea7f3ecbb0b7d22eb46be166b3e125b32a9bf797ea2ac5e6395436ae5aaa",
+      "previewSha256": "b4b0ea4a2fa9366290efdaaa371e5309d1da8371d465c7dbecc1f96654fcb0d1",
+      "eventRevision": 1,
+      "evidence": [
+        {
+          "id": "304f88a2a5dd6ae73adb473ef8d396a74b44b7801506c4c6844ff3d31fe04c0b",
+          "sha": "d9f794c6700697f1275fcdf89dabbd3e62f4041f5ff00411a6715e4c798d6129"
+        }
+      ]
+    },
+    {
+      "eventId": "245424f1-7a33-4e06-bf3b-d22e68151536",
+      "title": "Figma co-founder Dylan Field thinks MCP is not a perfect protocol",
+      "url": "https://techcrunch.com/2026/10/20/figma-co-founder-dylan-field-thinks-mcp-is-not-a-perfect-protocol/",
+      "publishedAt": "2026-10-20T14:13:32.000Z",
+      "sourceId": "eaac9100c083c7cbc9abe111166ae2947f841b9d32394c7493cce1582d1e0ba3",
+      "acquisitionId": "6a0655a7-ae2a-4463-82de-6fb31c5cc203",
+      "preview": "1792577911664-Figma-co-founder-Dylan-Field-thinks-MCP-is-not-a-perfect-protocol-TechCrunch.png",
+      "author": "Ivan Mehta",
+      "contentSha256": "b48fcce5ab339f9f18b61080c86d8df2afdd0154eec87c67f6901947a733443e",
+      "previewSha256": "424fa6cdc4ba1d5b6a25729798d8a686ceec971e5873171634793deea392a534",
+      "eventRevision": 1,
+      "evidence": [
+        {
+          "id": "1c94cf5c73fab03dcd1248ff562117cadcb5e9143232e34ac94b08bc587c5958",
+          "sha": "d18cebec165941289eedbe17118f92fec868a852296d203c3bed26572729e0ae"
+        }
+      ]
+    },
+    {
+      "eventId": "02672de2-d9ad-4df6-9bfb-d3d40598a3a5",
+      "title": "US orders federal agencies to remove China’s DeepSeek AI from their systems",
+      "url": "https://techcrunch.com/2026/10/20/us-orders-federal-agencies-to-remove-chinas-deepseek-ai-from-their-systems/",
+      "publishedAt": "2026-10-20T13:07:24.000Z",
+      "sourceId": "9124fc501335a8a314bad33388047e354ab4ed530a4075809d0f50dc423486d3",
+      "acquisitionId": "95052e38-a725-4106-be4c-57062a7ce4f4",
+      "preview": "1792577914349-US-orders-federal-agencies-to-remove-China-s-DeepSeek-AI-from-their-systems-Tech.png",
+      "author": "Kate Park",
+      "contentSha256": "c392e57093cacbeba041cdaeb031902eafbc761f1fc284860702b88e9f77dbf0",
+      "previewSha256": "421c5acf74cded977490fb8eb5476ee1e5651797de1598d10bf08493f746134c",
+      "eventRevision": 1,
+      "evidence": [
+        {
+          "id": "c461c031e97caaaf00f0c64714c87c08bbd078d9d2cbc26c746824773e892389",
+          "sha": "e07dbd7ab373c160eb9d1f5cb54ba404dda56974830d19ef6ff46f09c8e4b162"
+        }
+      ]
+    },
+    {
+      "eventId": "ce561969-004c-4d48-b6d9-adde54df6151",
+      "title": "GTC Berlin 2026: Live Updates From NVIDIA CEO Jensen Huang’s Keynote",
+      "url": "https://blogs.nvidia.com/blog/gtc-berlin-2026-keynote/",
+      "publishedAt": "2026-10-21",
+      "sourceId": "db3718abbfc4c7d4e28326478b9f515ce9a8b12f495b73978d77abde4ef7d825",
+      "acquisitionId": "fd700b0f-c847-48dc-9d6d-d8ee30669244",
+      "preview": "1792577823495-GTC-Berlin-2026-Live-Updates-From-NVIDIA-CEO-Jensen-Huang-s-Keynote-NVIDIA-Blog.png",
+      "author": "Brian Caulfield",
+      "contentSha256": "69b76d6411e9c1aaa4629f4b7d7b55de137900b594d1a2baad9c94932911ad0a",
+      "previewSha256": "5eef840f92238a12a1f654aa78b6cac92655bc72b5c3a03ced5bad246040ab6c",
+      "eventRevision": 1,
+      "evidence": [
+        {
+          "id": "389ef30e096eea053d187943d3ab35f001f92bf5ac3c33ab4383a894f2a22ff0",
+          "sha": "a6101587d56a0001db4ffc6254a7ea733f01827a56302f34166aa622a2c928c2"
+        }
+      ]
+    },
+    {
+      "eventId": "87eac3eb-c82d-425b-8242-0b3f11ae730a",
+      "title": "Nscale and Anthropic are reportedly in talks for yet another $45B compute deal",
+      "url": "https://techcrunch.com/2026/10/19/nscale-and-anthropic-are-reportedly-in-talks-for-yet-another-45-billion-compute-deal/",
+      "publishedAt": "2026-10-19T23:39:38.000Z",
+      "sourceId": "68a6b53f34def307ff2f22bdb88fd6b1a417181a7020561b9711efa19c1001a1",
+      "acquisitionId": "4eb58cf0-aa77-4506-98a2-a59c92ebee99",
+      "preview": "1792577944222-Nscale-and-Anthropic-are-reportedly-in-talks-for-yet-another-45B-compute-deal-Te.png",
+      "author": "Lucas Ropek",
+      "contentSha256": "fef47edcfc36d2d9309ee0b64a33673ea9696619314a3fd154bbf949b746cde2",
+      "previewSha256": "2e15655ca5e5e6730041de44dc2cef68f41294f1906ae10d1cd0957537e8d57c",
+      "eventRevision": 1,
+      "evidence": [
+        {
+          "id": "758e72391c52dfd11b3d0ce60a506499ea4f8520064dacc3f123404d0f765705",
+          "sha": "ccd274c0eb5d3c0e83e0b16b8201b7aae5842d12105b6f63f8a1df2e7963b210"
+        }
+      ]
+    }
+  ],
+  "social": [
+    {
+      "presetId": "x-openai",
+      "url": "https://x.com/OpenAI",
+      "observationKind": "account",
+      "metricsText": "545.6万\n关注者",
+      "access": "unknown",
+      "textAvailable": true,
+      "scope": {
+        "selector": "main",
+        "index": 0,
+        "excludeSelectors": [],
+        "characterUnit": "utf16",
+        "extraction": "visible-text-nodes",
+        "truncated": false,
+        "status": "observed"
+      },
+      "actualRegion": "not-verified",
+      "status": "partial",
+      "challenge": false
+    },
+    {
+      "presetId": "x-trends",
+      "url": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fexplore%2Ftabs%2Ftrending&mode=login",
+      "observationKind": null,
+      "metricsText": "",
+      "access": "unknown",
+      "textAvailable": true,
+      "scope": {
+        "selector": "body",
+        "index": 0,
+        "excludeSelectors": [],
+        "characterUnit": "utf16",
+        "extraction": "visible-text-nodes",
+        "truncated": false,
+        "status": "observed"
+      },
+      "actualRegion": "not-verified",
+      "status": "restricted",
+      "challenge": true
+    },
+    {
+      "presetId": "x-ai-search",
+      "url": "https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fsearch%3Ff%3Dlive%26q%3DAI&mode=login",
+      "observationKind": null,
+      "metricsText": "",
+      "access": "unknown",
+      "textAvailable": true,
+      "scope": {
+        "selector": "body",
+        "index": 0,
+        "excludeSelectors": [],
+        "characterUnit": "utf16",
+        "extraction": "visible-text-nodes",
+        "truncated": false,
+        "status": "observed"
+      },
+      "actualRegion": "not-verified",
+      "status": "restricted",
+      "challenge": true
+    },
+    {
+      "presetId": "youtube-openai",
+      "url": "https://www.youtube.com/@OpenAI/videos",
+      "observationKind": null,
+      "metricsText": "",
+      "access": "unknown",
+      "textAvailable": false,
+      "scope": {
+        "selector": "body",
+        "index": 0,
+        "excludeSelectors": [],
+        "characterUnit": "utf16",
+        "extraction": "visible-text-nodes",
+        "truncated": false,
+        "status": "observed"
+      },
+      "actualRegion": "not-verified",
+      "status": "restricted",
+      "challenge": false
+    },
+    {
+      "presetId": "youtube-ai-search",
+      "url": "https://www.youtube.com/results?search_query=artificial+intelligence",
+      "observationKind": null,
+      "metricsText": "",
+      "access": "unknown",
+      "textAvailable": false,
+      "scope": {
+        "selector": "body",
+        "index": 0,
+        "excludeSelectors": [],
+        "characterUnit": "utf16",
+        "extraction": "visible-text-nodes",
+        "truncated": false,
+        "status": "observed"
+      },
+      "actualRegion": "not-verified",
+      "status": "restricted",
+      "challenge": false
+    }
+  ],
+  "notes": [
+    "Article discovery budget reached; partial check and cursor retained: openai-news",
+    "Article discovery budget reached; partial check and cursor retained: nvidia-ai",
+    "Article discovery budget reached; partial check and cursor retained: techcrunch-ai",
+    "Entry redirected outside configured exact URLs; cursor retained: https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fexplore%2Ftabs%2Ftrending&mode=login",
+    "Entry redirected outside configured exact URLs; cursor retained: https://x.com/i/jf/onboarding/web?redirect_after_login=%2Fsearch%3Ff%3Dlive%26q%3DAI&mode=login"
+  ],
+  "evidenceRoot": ".bmw-runtime/ai-news-real/live-72h-verified",
+  "projectDirectory": ".bmw-runtime/ai-news-real/live-72h-verified/project",
+  "regression": {
+    "unitCounts": {
+      "not-run": 90,
+      "passed": 114
+    },
+    "runtimePassed": 18,
+    "runtimeTotal": 18,
+    "buildAndCheck": true,
+    "unitNonMarkdownInputs": 552,
+    "unitNonMarkdownDrift": [
+      "scripts/ai-news-live-validation.ts"
+    ],
+    "runtimeSourceInputs": 553,
+    "runtimeSourceDrift": [
+      "scripts/ai-news-live-validation.ts"
+    ],
+    "runtimeGeneratedOutputs": 519,
+    "runtimeOutputDrift": [
+      "scripts/ai-news-live-validation.js"
+    ],
+    "finalLiveSourceInputs": 553,
+    "finalLiveSourceMismatches": [],
+    "finalLiveGeneratedOutputs": 519,
+    "finalLiveOutputMismatches": [],
+    "driftReason": "Only opt-in live validation helper changed after offline/native suite: bounded 18 articles, one fresh original after explicit text-change error, finite SPA wait, normal light theme/viewport, precise metadata selection and partial failure reporting. No production implementation, offline/native test source or corresponding generated output changed. New helper rebuilt, checked and exercised by final live run."
+  },
+  "intermediateSnapshots": [
+    {
+      "evidenceRoot": ".bmw-runtime/ai-news-real/live-72h-3",
+      "status": "complete",
+      "count": 10
+    },
+    {
+      "evidenceRoot": ".bmw-runtime/ai-news-real/live-72h-final",
+      "status": "shortage",
+      "count": 7
+    },
+    {
+      "evidenceRoot": ".bmw-runtime/ai-news-real/live-72h-bounded-18",
+      "status": "shortage",
+      "count": 9
+    }
+  ],
+  "limits": [
+    "Deterministic integration adapter, not paid-model autonomous research.",
+    "No production Profile, online TTS, posting or actual video production.",
+    "Catalog has 24 suggested entries, nine used in final live verification.",
+    "Final ten: nine TechCrunch reports and one NVIDIA article; not an editorial diversity certification.",
+    "Actual page scope is recorded; not a claim that every page or complete site was collected.",
+    "X public account only; X trends/search redirected to login; YouTube pages had no usable body.",
+    "Single fresh original attempts after changed body did not certify recovery success; failed captures retained."
+  ]
+}

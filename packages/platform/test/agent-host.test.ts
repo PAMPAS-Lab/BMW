@@ -23,7 +23,7 @@ function fixture(t: TestContext, run: AgentBackend['run'], drain: (request: Agen
     prepare: async () => backend.description, run, interrupt: async () => {}, respond: async () => {}, close: async () => {}
   }
   let project = { id: 'p', name: 'Test', directory: root }
-  const host = new AgentHost({ conversations, history, backends: [backend], currentProject: () => project, context: async () => 'Project context', drain })
+  const host = new AgentHost({ conversations, history, backends: [backend], currentProject: () => project, project:id=>['p','q'].includes(id)?{id,name:'Test',directory:root}:undefined, context: async () => 'Project context', drain })
   t.after(async () => { await host.close(); fs.rmSync(root, { recursive: true, force: true }) })
   return { host, conversations, history, backend, setProject: (id: string) => { project = { ...project, id } } }
 }
@@ -202,4 +202,57 @@ test('queued Studio requests freeze their explicit context and expose it only to
  assert.equal(f.host.activeContext(session.sessionId,'p'),null)
  assert.throws(()=>f.host.enqueue(session.sessionId,'invalid','x'.repeat(16385)))
  assert.equal(f.history.snapshot(session.sessionId).receipts.length,2,'Invalid context cannot persist a receipt')
+})
+
+test('Background collection yields to user input; FIFO waits for its actual drain and targets no later user receipt',async t=>{
+ const entered=deferred<void>(),aborted=deferred<void>(),cleanup=deferred<void>(),draining=deferred<void>(),calls:string[]=[]
+ const f=fixture(t,async request=>{calls.push(request.text);if(request.text==='collect'){entered.resolve();await new Promise<void>(resolve=>{if(request.signal.aborted)resolve();else request.signal.addEventListener('abort',()=>resolve(),{once:true})});aborted.resolve();return {outcome:'interrupted',message:'yielded'}}return success},async request=>{if(request.text==='collect'){draining.resolve();await cleanup.promise}})
+ const session=f.host.create('fixture'),background=f.host.enqueue(session.sessionId,'collect',undefined,true)
+ assert.equal(f.history.snapshot(session.sessionId).receipts[0].state,'prepared');await entered.promise
+ assert.throws(()=>f.host.enqueue(session.sessionId,'duplicate background',undefined,true),/idle/)
+ const user=f.host.enqueue(session.sessionId,'user');await aborted.promise;await draining.promise
+ assert.deepEqual(calls,['collect']);assert.equal(f.host.ownsRun(background.runId),true)
+ const cancel=f.host.cancelBackground(background.runId);cleanup.resolve();await cancel;await f.host.wait(user.runId)
+ assert.deepEqual(calls,['collect','user']);assert.equal(f.history.snapshot(session.sessionId).receipts.find(r=>r.runId===user.runId)?.outcome,'success')
+ await f.host.cancelBackground(background.runId);assert.equal(f.host.busy,false)
+})
+
+test('Failed cleanup of a yielded background input quarantines the queue until explicit recovery, never replays it',async t=>{
+ const entered=deferred<void>(),calls:string[]=[];let fail=true
+ const f=fixture(t,async request=>{calls.push(request.text);if(request.text==='collect'){entered.resolve();await new Promise<void>(resolve=>request.signal.addEventListener('abort',()=>resolve(),{once:true}));return {outcome:'interrupted',message:''}}return success},async request=>{if(request.text==='collect'&&fail)throw new Error('native drain failed')})
+ const session=f.host.create('fixture'),background=f.host.enqueue(session.sessionId,'collect',undefined,true);await entered.promise
+ const user=f.host.enqueue(session.sessionId,'user');await assert.rejects(f.host.wait(background.runId),/drain/);await f.host.wait(user.runId)
+ assert.deepEqual(calls,['collect']);assert.equal(f.host.resourcesDisconnected,true);assert.equal(f.history.snapshot(session.sessionId).receipts[0].state,'unknown')
+ fail=false;await f.host.recover();assert.equal(f.host.busy,false);assert.deepEqual(calls,['collect'])
+})
+
+test('Pinned inactive Project/Session background inputs preserve selection and yield to the foreground only after actual drain',async t=>{
+ const entered=deferred<void>(),draining=deferred<void>(),release=deferred<void>(),calls:string[]=[]
+ const f=fixture(t,async request=>{calls.push(request.project.id+':'+request.text);if(request.text==='collect'){entered.resolve();await new Promise<void>(resolve=>request.signal.addEventListener('abort',()=>resolve(),{once:true}));return {outcome:'interrupted',message:'yield'}}return success},async request=>{if(request.text==='collect'){draining.resolve();await release.promise}})
+ const inactive=f.host.create('fixture');f.setProject('q');const foreground=f.host.create('fixture')
+ const binding={projectId:'p',sessionId:inactive.sessionId,driverId:'fixture'}
+ assert.throws(()=>f.host.enqueueBackground({...binding,driverId:'wrong'},'collect'),/binding/)
+ const background=f.host.enqueueBackground(binding,'collect')
+ assert.equal(f.history.snapshot(inactive.sessionId).receipts[0].state,'prepared')
+ await entered.promise
+ assert.equal(f.host.foregroundBusy,false);assert.equal(f.host.busy,true)
+ assert.equal(f.conversations.selected('q','fixture'),foreground.sessionId)
+ const user=f.host.enqueue(foreground.sessionId,'user');await draining.promise
+ assert.deepEqual(calls,['p:collect']);assert.equal(f.host.ownsRun(background.runId),true)
+ release.resolve();await f.host.wait(user.runId)
+ assert.deepEqual(calls,['p:collect','q:user'])
+ assert.equal(f.conversations.selected('q','fixture'),foreground.sessionId)
+ assert.equal(f.history.snapshot(inactive.sessionId).receipts[0].outcome,'interrupted')
+ assert.throws(()=>f.host.enqueue(inactive.sessionId,'foreign user'),/Project|belong/)
+})
+
+test('Background interaction requests become uncertain receipts without exposing a foreground interaction or replaying input',async t=>{
+ let calls=0
+ const f=fixture(t,async(_request,emit)=>{calls++;await emit({type:'input.accepted',receiptId:'accepted'});await emit({type:'interaction.requested',interaction:{id:'question',kind:'question',message:'Choose',choices:[]}});return success})
+ const row=f.host.create('fixture'),run=f.host.enqueueBackground({projectId:'p',sessionId:row.sessionId,driverId:'fixture'},'collect')
+ await assert.rejects(f.host.wait(run.runId),/interaction/)
+ assert.equal(f.history.snapshot(row.sessionId).receipts[0].state,'unknown')
+ assert.equal(f.history.snapshot(row.sessionId).interactions.length,0)
+ assert.equal(calls,1);assert.equal(f.host.busy,false)
+ assert.throws(()=>f.host.enqueueBackground({projectId:'p',sessionId:row.sessionId,driverId:'fixture'},'collect'),/uncertain/)
 })

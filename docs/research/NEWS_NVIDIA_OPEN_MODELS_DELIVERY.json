@@ -1,0 +1,2181 @@
+{
+  "at": "2026-10-21T20:56:06.573Z",
+  "status": "delivered-technical-agent-and-independent-visual-reviewed",
+  "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+  "draftId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+  "exportId": "496c20b10baa0ba016e7b84e61e9a953632847361629bdf0912735df22bc939e",
+  "artifactId": "media-4e6e96d6-ff94-4dee-99f7-c7982462a03f-converted.mp4",
+  "sha256": "b2437e4f6a38836715cfa4e9a4383d13e14b1d56d268e3460d9ce2385e448fac",
+  "visualRevision": 35,
+  "currentRevision": 36,
+  "exportFingerprint": "259c229fb59825dc124f419bc79a4a715264abb0ea6c34f5c3cf3b1f397e269f",
+  "technical": {
+    "status": "passed",
+    "artifactId": "media-4e6e96d6-ff94-4dee-99f7-c7982462a03f-converted.mp4",
+    "expectedDurationSeconds": 31.5,
+    "actualDurationSeconds": 31.573333333333334,
+    "width": 720,
+    "height": 1280,
+    "fps": 24,
+    "tracks": [
+      {
+        "id": 1,
+        "type": "video",
+        "codec": "avc",
+        "canDecode": true,
+        "width": 720,
+        "height": 1280,
+        "rotation": 0,
+        "startSeconds": 0,
+        "endSeconds": 31.5,
+        "canBeTransparent": false
+      },
+      {
+        "id": 2,
+        "type": "audio",
+        "codec": "aac",
+        "canDecode": true,
+        "channels": 2,
+        "sampleRate": 48000,
+        "startSeconds": 0,
+        "endSeconds": 31.573333333333334
+      }
+    ],
+    "frames": 756,
+    "audioPeak": 0.7799999713897705,
+    "narrationDurations": [
+      3.76,
+      5.92,
+      4,
+      5.2,
+      5.2,
+      6.32
+    ],
+    "quality": {
+      "version": 1,
+      "kind": "composition-quality",
+      "coverage": "critical-state-samples",
+      "phoneWidth": 390,
+      "semanticVerification": "requires-visual-review",
+      "samples": [
+        {
+          "sceneIndex": 0,
+          "seconds": 0,
+          "localSeconds": 0,
+          "reasons": [
+            "scene-start",
+            "visual-cut"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 0.041666666666666664,
+          "localSeconds": 0.041666666666666664,
+          "reasons": [
+            "caption-start-before",
+            "visual-cut-after"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 0.08333333333333333,
+          "localSeconds": 0.08333333333333333,
+          "reasons": [
+            "caption-start"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 0.125,
+          "localSeconds": 0.125,
+          "reasons": [
+            "caption-start-after"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 0.7916666666666666,
+          "localSeconds": 0.7916666666666666,
+          "reasons": [
+            "entrance-complete"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 2,
+          "localSeconds": 2,
+          "reasons": [
+            "scene-middle",
+            "caption-middle"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 3.8333333333333335,
+          "localSeconds": 3.8333333333333335,
+          "reasons": [
+            "caption-end-before"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 3.875,
+          "localSeconds": 3.875,
+          "reasons": [
+            "caption-end"
+          ]
+        },
+        {
+          "sceneIndex": 0,
+          "seconds": 3.9166666666666665,
+          "localSeconds": 3.9166666666666665,
+          "reasons": [
+            "scene-end",
+            "caption-end-after"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 3.9583333333333335,
+          "localSeconds": 0,
+          "reasons": [
+            "scene-start",
+            "visual-cut"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 4,
+          "localSeconds": 0.04166666666666652,
+          "reasons": [
+            "caption-start-before",
+            "card-speech-start-before",
+            "visual-cut-after"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 4.041666666666667,
+          "localSeconds": 0.08333333333333348,
+          "reasons": [
+            "caption-start",
+            "card-speech-start"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 4.083333333333333,
+          "localSeconds": 0.12499999999999956,
+          "reasons": [
+            "caption-start-after",
+            "card-speech-start-after"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 4.75,
+          "localSeconds": 0.7916666666666665,
+          "reasons": [
+            "entrance-complete"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 5.083333333333333,
+          "localSeconds": 1.1249999999999996,
+          "reasons": [
+            "reading-locate-before"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 5.125,
+          "localSeconds": 1.1666666666666665,
+          "reasons": [
+            "reading-locate"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 5.166666666666667,
+          "localSeconds": 1.2083333333333335,
+          "reasons": [
+            "reading-locate-after"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 5.791666666666667,
+          "localSeconds": 1.8333333333333335,
+          "reasons": [
+            "reading-zoom-before"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 5.833333333333333,
+          "localSeconds": 1.8749999999999996,
+          "reasons": [
+            "reading-zoom"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 5.875,
+          "localSeconds": 1.9166666666666665,
+          "reasons": [
+            "reading-zoom-after"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 6.625,
+          "localSeconds": 2.6666666666666665,
+          "reasons": [
+            "reading-detail-before"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 6.666666666666667,
+          "localSeconds": 2.7083333333333335,
+          "reasons": [
+            "reading-detail"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 6.708333333333333,
+          "localSeconds": 2.7499999999999996,
+          "reasons": [
+            "reading-detail-after"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 7,
+          "localSeconds": 3.0416666666666665,
+          "reasons": [
+            "caption-middle",
+            "card-speech-middle",
+            "reading-transition-before"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 7.041666666666667,
+          "localSeconds": 3.0833333333333335,
+          "reasons": [
+            "scene-middle",
+            "reading-transition"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 7.083333333333333,
+          "localSeconds": 3.1249999999999996,
+          "reasons": [
+            "reading-transition-after"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 7.625,
+          "localSeconds": 3.6666666666666665,
+          "reasons": [
+            "reading-detail"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 7.833333333333333,
+          "localSeconds": 3.8749999999999996,
+          "reasons": [
+            "reading-detail-hold"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 9.916666666666666,
+          "localSeconds": 5.958333333333332,
+          "reasons": [
+            "caption-end-before",
+            "card-speech-end-before"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 9.958333333333334,
+          "localSeconds": 6,
+          "reasons": [
+            "caption-end",
+            "card-speech-end"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 10,
+          "localSeconds": 6.041666666666666,
+          "reasons": [
+            "caption-end-after",
+            "card-speech-end-after"
+          ]
+        },
+        {
+          "sceneIndex": 1,
+          "seconds": 10.041666666666666,
+          "localSeconds": 6.083333333333332,
+          "reasons": [
+            "scene-end"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 10.083333333333334,
+          "localSeconds": 0,
+          "reasons": [
+            "scene-start",
+            "visual-cut"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 10.125,
+          "localSeconds": 0.041666666666666075,
+          "reasons": [
+            "caption-start-before",
+            "visual-cut-after"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 10.166666666666666,
+          "localSeconds": 0.08333333333333215,
+          "reasons": [
+            "caption-start"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 10.208333333333334,
+          "localSeconds": 0.125,
+          "reasons": [
+            "caption-start-after"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 10.875,
+          "localSeconds": 0.7916666666666661,
+          "reasons": [
+            "entrance-complete"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 12.166666666666666,
+          "localSeconds": 2.083333333333332,
+          "reasons": [
+            "scene-middle",
+            "caption-middle"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 14.125,
+          "localSeconds": 4.041666666666666,
+          "reasons": [
+            "caption-end-before"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 14.166666666666666,
+          "localSeconds": 4.083333333333332,
+          "reasons": [
+            "caption-end"
+          ]
+        },
+        {
+          "sceneIndex": 2,
+          "seconds": 14.208333333333334,
+          "localSeconds": 4.125,
+          "reasons": [
+            "scene-end",
+            "caption-end-after"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 14.25,
+          "localSeconds": 0,
+          "reasons": [
+            "scene-start",
+            "visual-cut"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 14.291666666666666,
+          "localSeconds": 0.041666666666666075,
+          "reasons": [
+            "caption-start-before",
+            "visual-cut-after"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 14.333333333333334,
+          "localSeconds": 0.08333333333333393,
+          "reasons": [
+            "caption-start"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 14.375,
+          "localSeconds": 0.125,
+          "reasons": [
+            "caption-start-after"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 15.041666666666666,
+          "localSeconds": 0.7916666666666661,
+          "reasons": [
+            "entrance-complete"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 16.958333333333332,
+          "localSeconds": 2.708333333333332,
+          "reasons": [
+            "scene-middle",
+            "caption-middle"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 19.5,
+          "localSeconds": 5.25,
+          "reasons": [
+            "caption-end-before"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 19.541666666666668,
+          "localSeconds": 5.291666666666668,
+          "reasons": [
+            "caption-end"
+          ]
+        },
+        {
+          "sceneIndex": 3,
+          "seconds": 19.583333333333332,
+          "localSeconds": 5.333333333333332,
+          "reasons": [
+            "scene-end",
+            "caption-end-after"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 19.625,
+          "localSeconds": 0,
+          "reasons": [
+            "scene-start",
+            "visual-cut"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 19.666666666666668,
+          "localSeconds": 0.04166666666666785,
+          "reasons": [
+            "caption-start-before",
+            "visual-cut-after"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 19.708333333333332,
+          "localSeconds": 0.08333333333333215,
+          "reasons": [
+            "caption-start"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 19.75,
+          "localSeconds": 0.125,
+          "reasons": [
+            "caption-start-after"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 20.416666666666668,
+          "localSeconds": 0.7916666666666679,
+          "reasons": [
+            "entrance-complete"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 22.333333333333332,
+          "localSeconds": 2.708333333333332,
+          "reasons": [
+            "scene-middle",
+            "caption-middle"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 24.875,
+          "localSeconds": 5.25,
+          "reasons": [
+            "caption-end-before"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 24.916666666666668,
+          "localSeconds": 5.291666666666668,
+          "reasons": [
+            "caption-end"
+          ]
+        },
+        {
+          "sceneIndex": 4,
+          "seconds": 24.958333333333332,
+          "localSeconds": 5.333333333333332,
+          "reasons": [
+            "scene-end",
+            "caption-end-after"
+          ]
+        },
+        {
+          "sceneIndex": 5,
+          "seconds": 25,
+          "localSeconds": 0,
+          "reasons": [
+            "scene-start",
+            "visual-cut"
+          ]
+        },
+        {
+          "sceneIndex": 5,
+          "seconds": 25.041666666666668,
+          "localSeconds": 0.04166666666666785,
+          "reasons": [
+            "caption-start-before",
+            "visual-cut-after"
+          ]
+        },
+        {
+          "sceneIndex": 5,
+          "seconds": 25.083333333333332,
+          "localSeconds": 0.08333333333333215,
+          "reasons": [
+            "caption-start"
+          ]
+        },
+        {
+          "sceneIndex": 5,
+          "seconds": 25.125,
+          "localSeconds": 0.125,
+          "reasons": [
+            "caption-start-after"
+          ]
+        },
+        {
+          "sceneIndex": 5,
+          "seconds": 25.791666666666668,
+          "localSeconds": 0.7916666666666679,
+          "reasons": [
+            "entrance-complete"
+          ]
+        },
+        {
+          "sceneIndex": 5,
+          "seconds": 28.25,
+          "localSeconds": 3.25,
+          "reasons": [
+            "scene-middle",
+            "caption-middle"
+          ]
+        },
+        {
+          "sceneIndex": 5,
+          "seconds": 31.375,
+          "localSeconds": 6.375,
+          "reasons": [
+            "caption-end-before"
+          ]
+        },
+        {
+          "sceneIndex": 5,
+          "seconds": 31.416666666666668,
+          "localSeconds": 6.416666666666668,
+          "reasons": [
+            "caption-end"
+          ]
+        },
+        {
+          "sceneIndex": 5,
+          "seconds": 31.458333333333332,
+          "localSeconds": 6.458333333333332,
+          "reasons": [
+            "scene-end",
+            "caption-end-after"
+          ]
+        }
+      ],
+      "omittedCandidates": 0,
+      "issues": [
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 1,
+          "seconds": 3.9583333333333335,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "本地数据与自控部署 · 原文全貌 / 译文"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 1,
+          "seconds": 5.125,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "本地数据与自控部署 · 定位原句 / 译文"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 1,
+          "seconds": 5.833333333333333,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "本地数据与自控部署 · 放大原句 / 译文"
+        },
+        {
+          "code": "painted-text-overlap",
+          "severity": "warning",
+          "sceneIndex": 1,
+          "seconds": 6.666666666666667,
+          "message": "实际绘制的两处文字相交，请检查字幕或图层遮挡。",
+          "text": "本地数据与自控部署 · 原句细节 / 译文"
+        }
+      ],
+      "omittedIssues": 0,
+      "omittedTextObservations": 0
+    }
+  },
+  "actualUses": [
+    {
+      "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+      "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+      "bytes": 7264454,
+      "role": "main-video",
+      "sceneIndex": 0,
+      "clipId": "nvo-01",
+      "outputRange": {
+        "startSeconds": 0,
+        "endSeconds": 3.9583333333333335
+      },
+      "sourceRange": {
+        "startSeconds": 0.093,
+        "endSeconds": 4.051333333333334
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [
+        {
+          "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+          "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+          "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+          "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+          "captureRange": {
+            "startSeconds": 309.257375,
+            "endSeconds": 327.183
+          }
+        }
+      ],
+      "origins": []
+    },
+    {
+      "artifactId": "1792589761388-nvidia-open-models-europe-body-1280.png",
+      "sha256": "04b9ca27ae1bfc48744c900737e2655ea9d1cb3b99436432498e9063eecd876e",
+      "bytes": 630070,
+      "role": "main-image",
+      "sceneIndex": 1,
+      "clipId": "nvo-02",
+      "outputRange": {
+        "startSeconds": 3.9583333333333335,
+        "endSeconds": 10.083333333333334
+      },
+      "sourceRange": null,
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [
+        {
+          "sourceId": "d46c8940730c093aa2d055afbb383ce53acb6e873fd442b25d5e12a705ddd2d0",
+          "acquisitionId": "8db4b178-ac56-40a7-a103-c599456c3f3b",
+          "bodySha256": "d92ce99e96292e3b7cc5e76071252fdaff50c2284454bd45f3f65ed37541bc1c",
+          "url": "https://blogs.nvidia.com/blog/open-models-europe-industry/",
+          "captureRange": null
+        }
+      ],
+      "origins": []
+    },
+    {
+      "artifactId": "1792613441596-nvo-supervl-availability.png",
+      "sha256": "0fafd21fb0656046b16a10843568ab8efa25418f543697d504d51b5f48d18e63",
+      "bytes": 79362,
+      "role": "main-image",
+      "sceneIndex": 2,
+      "clipId": "nvo-03",
+      "outputRange": {
+        "startSeconds": 10.083333333333334,
+        "endSeconds": 14.25
+      },
+      "sourceRange": null,
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "1792613441596-nvo-supervl-availability.png",
+      "sha256": "0fafd21fb0656046b16a10843568ab8efa25418f543697d504d51b5f48d18e63",
+      "bytes": 79362,
+      "role": "main-image",
+      "sceneIndex": 3,
+      "clipId": "nvo-04",
+      "outputRange": {
+        "startSeconds": 14.25,
+        "endSeconds": 19.625
+      },
+      "sourceRange": null,
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "1792613445345-nvo-alpamayo-availability.png",
+      "sha256": "fa37e64ab2edfd8887badb260a4aeef1b79d20900747fc8259760daf3b9e894e",
+      "bytes": 29196,
+      "role": "main-image",
+      "sceneIndex": 4,
+      "clipId": "nvo-05",
+      "outputRange": {
+        "startSeconds": 19.625,
+        "endSeconds": 25
+      },
+      "sourceRange": null,
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+      "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+      "bytes": 7264454,
+      "role": "main-video",
+      "sceneIndex": 5,
+      "clipId": "nvo-06",
+      "outputRange": {
+        "startSeconds": 25,
+        "endSeconds": 31.5
+      },
+      "sourceRange": {
+        "startSeconds": 0.093,
+        "endSeconds": 6.593
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [
+        {
+          "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+          "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+          "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+          "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+          "captureRange": {
+            "startSeconds": 309.257375,
+            "endSeconds": 327.183
+          }
+        }
+      ],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-dda7cf9c-14a9-45cc-9a04-507000eaf3f4.wav",
+      "sha256": "e5de8b92fa9534ac92596117fd7a7500d9100678a56f2c5df7a4a6bba6e595f2",
+      "bytes": 180524,
+      "role": "narration",
+      "sceneIndex": 0,
+      "clipId": "nvo-01",
+      "outputRange": {
+        "startSeconds": 0.08333333333333333,
+        "endSeconds": 3.8433333333333333
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 3.76
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-ed335b25-ec65-4a87-90c4-b6932a953bb3.wav",
+      "sha256": "4758306e032369a033405b3e82f18404c139c182795d0e6cb4272f17f4ab9fac",
+      "bytes": 284204,
+      "role": "narration",
+      "sceneIndex": 1,
+      "clipId": "nvo-02",
+      "outputRange": {
+        "startSeconds": 4.041666666666667,
+        "endSeconds": 9.961666666666666
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 5.919999999999999
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-ad2ef2ab-7269-4c90-8c4e-a208cff64ba9.wav",
+      "sha256": "6f3ad2c089818bdce45c895ae37f4f270c9477ceb5c3e323e70d337f081ccb5a",
+      "bytes": 192044,
+      "role": "narration",
+      "sceneIndex": 2,
+      "clipId": "nvo-03",
+      "outputRange": {
+        "startSeconds": 10.166666666666668,
+        "endSeconds": 14.166666666666668
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 4
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-0bf4aae5-0735-418b-aea7-f3b3278bad3b.wav",
+      "sha256": "ba85a8db993d438c9db785d20196bbae4a0256be6d0371bf9d23fcf37527eeb6",
+      "bytes": 249644,
+      "role": "narration",
+      "sceneIndex": 3,
+      "clipId": "nvo-04",
+      "outputRange": {
+        "startSeconds": 14.333333333333334,
+        "endSeconds": 19.533333333333335
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 5.2
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-9be12195-8182-4855-8aa1-ba6bd547585b.wav",
+      "sha256": "930a095f338a348dff9efb7850015071e3e93f5e73e3705e1c2413c9e5d543ec",
+      "bytes": 249644,
+      "role": "narration",
+      "sceneIndex": 4,
+      "clipId": "nvo-05",
+      "outputRange": {
+        "startSeconds": 19.708333333333332,
+        "endSeconds": 24.90833333333333
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 5.199999999999999
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-a996ab5b-c495-4bad-9fcb-5ac046823fd6.wav",
+      "sha256": "be66b519735bf21d60f8990cd25f7a8d227265a52e0f28ddde3dd3742e246f6d",
+      "bytes": 303404,
+      "role": "narration",
+      "sceneIndex": 5,
+      "clipId": "nvo-06",
+      "outputRange": {
+        "startSeconds": 25.083333333333332,
+        "endSeconds": 31.403333333333332
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 6.32
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    }
+  ],
+  "sourceVoice": "Both B-roll intervals explicitly muted, not interview speech",
+  "narrationPreservation": "All six current audio files/narrations/captions match immutable v20 baseline",
+  "humanListening": "pending",
+  "userAcceptance": "pending",
+  "nativeBidirectionalQueries": {
+    "runId": "88c019aa-e815-4ba8-8a33-fa8a87e0f002",
+    "versions": {
+      "sequence": 19266,
+      "result": {
+        "items": [
+          {
+            "id": "496c20b10baa0ba016e7b84e61e9a953632847361629bdf0912735df22bc939e",
+            "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+            "workId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+            "draftId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+            "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+            "draftRevision": 35,
+            "title": "NVIDIA 扩展开放模型组合，面向欧洲本地化行业部署",
+            "createdAt": "2026-10-21T20:49:35.104Z",
+            "artifactId": "media-4e6e96d6-ff94-4dee-99f7-c7982462a03f-converted.mp4",
+            "outputSha256": "b2437e4f6a38836715cfa4e9a4383d13e14b1d56d268e3460d9ce2385e448fac",
+            "durationSeconds": 31.5,
+            "provenance": "recorded",
+            "useCount": 12,
+            "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+            "archived": false,
+            "status": "available",
+            "bytes": 6109250,
+            "versionNumber": 2
+          },
+          {
+            "id": "22f5ac0e0446720dc8a33d4cd076b81dea356f2decba966a6978aa241a6e1f78",
+            "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+            "workId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+            "draftId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+            "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+            "draftRevision": 23,
+            "title": "NVIDIA 扩展开放模型组合，面向欧洲本地化行业部署",
+            "createdAt": "2026-10-21T20:37:19.531Z",
+            "artifactId": "media-0fc06f9e-5cd1-4585-a417-b965f8130074-converted.mp4",
+            "outputSha256": "e8065a914ab81581e0ac5a82d908cc51343aeb6180946c4322e06a69ee760671",
+            "durationSeconds": 31.5,
+            "provenance": "recorded",
+            "useCount": 12,
+            "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+            "archived": false,
+            "status": "available",
+            "bytes": 4043984,
+            "versionNumber": 1
+          }
+        ],
+        "total": 2,
+        "nextOffset": null,
+        "issues": [],
+        "issuesOmitted": 0
+      }
+    },
+    "uses": {
+      "sequence": 19268,
+      "result": {
+        "items": [
+          {
+            "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+            "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+            "bytes": 7264454,
+            "role": "main-video",
+            "sceneIndex": 0,
+            "clipId": "nvo-01",
+            "outputRange": {
+              "startSeconds": 0,
+              "endSeconds": 3.9583333333333335
+            },
+            "sourceRange": {
+              "startSeconds": 0.093,
+              "endSeconds": 4.051333333333334
+            },
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [
+              {
+                "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                "captureRange": {
+                  "startSeconds": 309.257375,
+                  "endSeconds": 327.183
+                }
+              }
+            ],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "1792589761388-nvidia-open-models-europe-body-1280.png",
+            "sha256": "04b9ca27ae1bfc48744c900737e2655ea9d1cb3b99436432498e9063eecd876e",
+            "bytes": 630070,
+            "role": "main-image",
+            "sceneIndex": 1,
+            "clipId": "nvo-02",
+            "outputRange": {
+              "startSeconds": 3.9583333333333335,
+              "endSeconds": 10.083333333333334
+            },
+            "sourceRange": null,
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [
+              {
+                "sourceId": "d46c8940730c093aa2d055afbb383ce53acb6e873fd442b25d5e12a705ddd2d0",
+                "acquisitionId": "8db4b178-ac56-40a7-a103-c599456c3f3b",
+                "bodySha256": "d92ce99e96292e3b7cc5e76071252fdaff50c2284454bd45f3f65ed37541bc1c",
+                "url": "https://blogs.nvidia.com/blog/open-models-europe-industry/",
+                "captureRange": null
+              }
+            ],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "1792613441596-nvo-supervl-availability.png",
+            "sha256": "0fafd21fb0656046b16a10843568ab8efa25418f543697d504d51b5f48d18e63",
+            "bytes": 79362,
+            "role": "main-image",
+            "sceneIndex": 2,
+            "clipId": "nvo-03",
+            "outputRange": {
+              "startSeconds": 10.083333333333334,
+              "endSeconds": 14.25
+            },
+            "sourceRange": null,
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "1792613441596-nvo-supervl-availability.png",
+            "sha256": "0fafd21fb0656046b16a10843568ab8efa25418f543697d504d51b5f48d18e63",
+            "bytes": 79362,
+            "role": "main-image",
+            "sceneIndex": 3,
+            "clipId": "nvo-04",
+            "outputRange": {
+              "startSeconds": 14.25,
+              "endSeconds": 19.625
+            },
+            "sourceRange": null,
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "1792613445345-nvo-alpamayo-availability.png",
+            "sha256": "fa37e64ab2edfd8887badb260a4aeef1b79d20900747fc8259760daf3b9e894e",
+            "bytes": 29196,
+            "role": "main-image",
+            "sceneIndex": 4,
+            "clipId": "nvo-05",
+            "outputRange": {
+              "startSeconds": 19.625,
+              "endSeconds": 25
+            },
+            "sourceRange": null,
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+            "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+            "bytes": 7264454,
+            "role": "main-video",
+            "sceneIndex": 5,
+            "clipId": "nvo-06",
+            "outputRange": {
+              "startSeconds": 25,
+              "endSeconds": 31.5
+            },
+            "sourceRange": {
+              "startSeconds": 0.093,
+              "endSeconds": 6.593
+            },
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [
+              {
+                "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                "captureRange": {
+                  "startSeconds": 309.257375,
+                  "endSeconds": 327.183
+                }
+              }
+            ],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "narration-dda7cf9c-14a9-45cc-9a04-507000eaf3f4.wav",
+            "sha256": "e5de8b92fa9534ac92596117fd7a7500d9100678a56f2c5df7a4a6bba6e595f2",
+            "bytes": 180524,
+            "role": "narration",
+            "sceneIndex": 0,
+            "clipId": "nvo-01",
+            "outputRange": {
+              "startSeconds": 0.08333333333333333,
+              "endSeconds": 3.8433333333333333
+            },
+            "sourceRange": {
+              "startSeconds": 0,
+              "endSeconds": 3.76
+            },
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "narration-ed335b25-ec65-4a87-90c4-b6932a953bb3.wav",
+            "sha256": "4758306e032369a033405b3e82f18404c139c182795d0e6cb4272f17f4ab9fac",
+            "bytes": 284204,
+            "role": "narration",
+            "sceneIndex": 1,
+            "clipId": "nvo-02",
+            "outputRange": {
+              "startSeconds": 4.041666666666667,
+              "endSeconds": 9.961666666666666
+            },
+            "sourceRange": {
+              "startSeconds": 0,
+              "endSeconds": 5.919999999999999
+            },
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "narration-ad2ef2ab-7269-4c90-8c4e-a208cff64ba9.wav",
+            "sha256": "6f3ad2c089818bdce45c895ae37f4f270c9477ceb5c3e323e70d337f081ccb5a",
+            "bytes": 192044,
+            "role": "narration",
+            "sceneIndex": 2,
+            "clipId": "nvo-03",
+            "outputRange": {
+              "startSeconds": 10.166666666666668,
+              "endSeconds": 14.166666666666668
+            },
+            "sourceRange": {
+              "startSeconds": 0,
+              "endSeconds": 4
+            },
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "narration-0bf4aae5-0735-418b-aea7-f3b3278bad3b.wav",
+            "sha256": "ba85a8db993d438c9db785d20196bbae4a0256be6d0371bf9d23fcf37527eeb6",
+            "bytes": 249644,
+            "role": "narration",
+            "sceneIndex": 3,
+            "clipId": "nvo-04",
+            "outputRange": {
+              "startSeconds": 14.333333333333334,
+              "endSeconds": 19.533333333333335
+            },
+            "sourceRange": {
+              "startSeconds": 0,
+              "endSeconds": 5.2
+            },
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "narration-9be12195-8182-4855-8aa1-ba6bd547585b.wav",
+            "sha256": "930a095f338a348dff9efb7850015071e3e93f5e73e3705e1c2413c9e5d543ec",
+            "bytes": 249644,
+            "role": "narration",
+            "sceneIndex": 4,
+            "clipId": "nvo-05",
+            "outputRange": {
+              "startSeconds": 19.708333333333332,
+              "endSeconds": 24.90833333333333
+            },
+            "sourceRange": {
+              "startSeconds": 0,
+              "endSeconds": 5.199999999999999
+            },
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [],
+            "origins": [],
+            "status": "available"
+          },
+          {
+            "artifactId": "narration-a996ab5b-c495-4bad-9fcb-5ac046823fd6.wav",
+            "sha256": "be66b519735bf21d60f8990cd25f7a8d227265a52e0f28ddde3dd3742e246f6d",
+            "bytes": 303404,
+            "role": "narration",
+            "sceneIndex": 5,
+            "clipId": "nvo-06",
+            "outputRange": {
+              "startSeconds": 25.083333333333332,
+              "endSeconds": 31.403333333333332
+            },
+            "sourceRange": {
+              "startSeconds": 0,
+              "endSeconds": 6.32
+            },
+            "playbackRate": 1,
+            "holdFromOutputSeconds": null,
+            "sources": [],
+            "origins": [],
+            "status": "available"
+          }
+        ],
+        "total": 12,
+        "nextOffset": null,
+        "issues": [],
+        "issuesOmitted": 0,
+        "export": {
+          "id": "496c20b10baa0ba016e7b84e61e9a953632847361629bdf0912735df22bc939e",
+          "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+          "workId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+          "draftId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+          "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+          "draftRevision": 35,
+          "title": "NVIDIA 扩展开放模型组合，面向欧洲本地化行业部署",
+          "createdAt": "2026-10-21T20:49:35.104Z",
+          "artifactId": "media-4e6e96d6-ff94-4dee-99f7-c7982462a03f-converted.mp4",
+          "outputSha256": "b2437e4f6a38836715cfa4e9a4383d13e14b1d56d268e3460d9ce2385e448fac",
+          "durationSeconds": 31.5,
+          "provenance": "recorded",
+          "useCount": 12,
+          "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+          "archived": false,
+          "status": "available",
+          "bytes": 6109250
+        },
+        "known": true
+      }
+    },
+    "artifactAdoptions": {
+      "sequence": 19273,
+      "result": {
+        "items": [
+          {
+            "export": {
+              "id": "496c20b10baa0ba016e7b84e61e9a953632847361629bdf0912735df22bc939e",
+              "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+              "workId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+              "draftId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+              "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+              "draftRevision": 35,
+              "title": "NVIDIA 扩展开放模型组合，面向欧洲本地化行业部署",
+              "createdAt": "2026-10-21T20:49:35.104Z",
+              "artifactId": "media-4e6e96d6-ff94-4dee-99f7-c7982462a03f-converted.mp4",
+              "outputSha256": "b2437e4f6a38836715cfa4e9a4383d13e14b1d56d268e3460d9ce2385e448fac",
+              "durationSeconds": 31.5,
+              "provenance": "recorded",
+              "useCount": 12,
+              "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+              "archived": false,
+              "status": "available",
+              "bytes": 6109250
+            },
+            "useCount": 2,
+            "uses": [
+              {
+                "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+                "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+                "bytes": 7264454,
+                "role": "main-video",
+                "sceneIndex": 0,
+                "clipId": "nvo-01",
+                "outputRange": {
+                  "startSeconds": 0,
+                  "endSeconds": 3.9583333333333335
+                },
+                "sourceRange": {
+                  "startSeconds": 0.093,
+                  "endSeconds": 4.051333333333334
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                    "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                    "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                    "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                    "captureRange": {
+                      "startSeconds": 309.257375,
+                      "endSeconds": 327.183
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              },
+              {
+                "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+                "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+                "bytes": 7264454,
+                "role": "main-video",
+                "sceneIndex": 5,
+                "clipId": "nvo-06",
+                "outputRange": {
+                  "startSeconds": 25,
+                  "endSeconds": 31.5
+                },
+                "sourceRange": {
+                  "startSeconds": 0.093,
+                  "endSeconds": 6.593
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                    "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                    "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                    "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                    "captureRange": {
+                      "startSeconds": 309.257375,
+                      "endSeconds": 327.183
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              }
+            ],
+            "usesNextOffset": null
+          },
+          {
+            "export": {
+              "id": "22f5ac0e0446720dc8a33d4cd076b81dea356f2decba966a6978aa241a6e1f78",
+              "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+              "workId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+              "draftId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+              "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+              "draftRevision": 23,
+              "title": "NVIDIA 扩展开放模型组合，面向欧洲本地化行业部署",
+              "createdAt": "2026-10-21T20:37:19.531Z",
+              "artifactId": "media-0fc06f9e-5cd1-4585-a417-b965f8130074-converted.mp4",
+              "outputSha256": "e8065a914ab81581e0ac5a82d908cc51343aeb6180946c4322e06a69ee760671",
+              "durationSeconds": 31.5,
+              "provenance": "recorded",
+              "useCount": 12,
+              "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+              "archived": false,
+              "status": "available",
+              "bytes": 4043984
+            },
+            "useCount": 2,
+            "uses": [
+              {
+                "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+                "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+                "bytes": 7264454,
+                "role": "main-video",
+                "sceneIndex": 0,
+                "clipId": "nvo-01",
+                "outputRange": {
+                  "startSeconds": 0,
+                  "endSeconds": 3.9583333333333335
+                },
+                "sourceRange": {
+                  "startSeconds": 0.093,
+                  "endSeconds": 4.051333333333334
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                    "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                    "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                    "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                    "captureRange": {
+                      "startSeconds": 309.257375,
+                      "endSeconds": 327.183
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              },
+              {
+                "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+                "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+                "bytes": 7264454,
+                "role": "source-audio",
+                "sceneIndex": 0,
+                "clipId": "nvo-01",
+                "outputRange": {
+                  "startSeconds": 0,
+                  "endSeconds": 3.9583333333333335
+                },
+                "sourceRange": {
+                  "startSeconds": 0.093,
+                  "endSeconds": 4.051333333333334
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                    "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                    "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                    "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                    "captureRange": {
+                      "startSeconds": 309.257375,
+                      "endSeconds": 327.183
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              }
+            ],
+            "usesNextOffset": null
+          },
+          {
+            "export": {
+              "id": "764a2bd413fe4099b06e660fa87f8be99267b01735f967a2f5820f1b70ae1f78",
+              "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+              "workId": "9665aa12-9361-4976-9098-7cf3752f40d5",
+              "draftId": "9665aa12-9361-4976-9098-7cf3752f40d5",
+              "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+              "draftRevision": 33,
+              "title": "NVIDIA 宣布 DSX POD：Vera Rubin AI 工厂模块化参考架构",
+              "createdAt": "2026-10-21T15:37:23.025Z",
+              "artifactId": "media-65f950cb-a585-42e4-bff0-e7acde294d5d-converted.mp4",
+              "outputSha256": "84fb77ba68035dd5440fab47abef0e6b1983a4ff86ccdbbb2316009e1350cbcd",
+              "durationSeconds": 40.875,
+              "provenance": "recorded",
+              "useCount": 10,
+              "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+              "archived": false,
+              "status": "available",
+              "bytes": 7199038
+            },
+            "useCount": 3,
+            "uses": [
+              {
+                "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+                "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+                "bytes": 7264454,
+                "role": "main-video",
+                "sceneIndex": 0,
+                "clipId": "dsx-01",
+                "outputRange": {
+                  "startSeconds": 0,
+                  "endSeconds": 6
+                },
+                "sourceRange": {
+                  "startSeconds": 0.319,
+                  "endSeconds": 6.319
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                    "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                    "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                    "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                    "captureRange": {
+                      "startSeconds": 309.257375,
+                      "endSeconds": 327.183
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              },
+              {
+                "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+                "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+                "bytes": 7264454,
+                "role": "main-video",
+                "sceneIndex": 1,
+                "clipId": "dsx-02",
+                "outputRange": {
+                  "startSeconds": 11.375,
+                  "endSeconds": 14.375
+                },
+                "sourceRange": {
+                  "startSeconds": 3.2,
+                  "endSeconds": 6.2
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                    "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                    "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                    "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                    "captureRange": {
+                      "startSeconds": 309.257375,
+                      "endSeconds": 327.183
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              },
+              {
+                "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+                "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+                "bytes": 7264454,
+                "role": "main-video",
+                "sceneIndex": 2,
+                "clipId": "dsx-03",
+                "outputRange": {
+                  "startSeconds": 19.708333333333336,
+                  "endSeconds": 26.041666666666668
+                },
+                "sourceRange": {
+                  "startSeconds": 0.319,
+                  "endSeconds": 6.652333333333332
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                    "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                    "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                    "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                    "captureRange": {
+                      "startSeconds": 309.257375,
+                      "endSeconds": 327.183
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              }
+            ],
+            "usesNextOffset": null
+          }
+        ],
+        "total": 3,
+        "nextOffset": null,
+        "issues": [],
+        "issuesOmitted": 0,
+        "identity": {
+          "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+          "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm"
+        },
+        "legacyAdoption": "unknown; legacy exports are never inferred from current draft references"
+      }
+    },
+    "sourceAdoptions": {
+      "sequence": 19274,
+      "result": {
+        "items": [
+          {
+            "export": {
+              "id": "496c20b10baa0ba016e7b84e61e9a953632847361629bdf0912735df22bc939e",
+              "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+              "workId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+              "draftId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+              "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+              "draftRevision": 35,
+              "title": "NVIDIA 扩展开放模型组合，面向欧洲本地化行业部署",
+              "createdAt": "2026-10-21T20:49:35.104Z",
+              "artifactId": "media-4e6e96d6-ff94-4dee-99f7-c7982462a03f-converted.mp4",
+              "outputSha256": "b2437e4f6a38836715cfa4e9a4383d13e14b1d56d268e3460d9ce2385e448fac",
+              "durationSeconds": 31.5,
+              "provenance": "recorded",
+              "useCount": 12,
+              "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+              "archived": false,
+              "status": "available",
+              "bytes": 6109250
+            },
+            "useCount": 2,
+            "uses": [
+              {
+                "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+                "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+                "bytes": 7264454,
+                "role": "main-video",
+                "sceneIndex": 0,
+                "clipId": "nvo-01",
+                "outputRange": {
+                  "startSeconds": 0,
+                  "endSeconds": 3.9583333333333335
+                },
+                "sourceRange": {
+                  "startSeconds": 0.093,
+                  "endSeconds": 4.051333333333334
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                    "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                    "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                    "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                    "captureRange": {
+                      "startSeconds": 309.257375,
+                      "endSeconds": 327.183
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              },
+              {
+                "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+                "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+                "bytes": 7264454,
+                "role": "main-video",
+                "sceneIndex": 5,
+                "clipId": "nvo-06",
+                "outputRange": {
+                  "startSeconds": 25,
+                  "endSeconds": 31.5
+                },
+                "sourceRange": {
+                  "startSeconds": 0.093,
+                  "endSeconds": 6.593
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                    "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                    "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                    "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                    "captureRange": {
+                      "startSeconds": 309.257375,
+                      "endSeconds": 327.183
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              }
+            ],
+            "usesNextOffset": null
+          },
+          {
+            "export": {
+              "id": "22f5ac0e0446720dc8a33d4cd076b81dea356f2decba966a6978aa241a6e1f78",
+              "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+              "workId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+              "draftId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+              "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+              "draftRevision": 23,
+              "title": "NVIDIA 扩展开放模型组合，面向欧洲本地化行业部署",
+              "createdAt": "2026-10-21T20:37:19.531Z",
+              "artifactId": "media-0fc06f9e-5cd1-4585-a417-b965f8130074-converted.mp4",
+              "outputSha256": "e8065a914ab81581e0ac5a82d908cc51343aeb6180946c4322e06a69ee760671",
+              "durationSeconds": 31.5,
+              "provenance": "recorded",
+              "useCount": 12,
+              "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+              "archived": false,
+              "status": "available",
+              "bytes": 4043984
+            },
+            "useCount": 2,
+            "uses": [
+              {
+                "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+                "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+                "bytes": 7264454,
+                "role": "main-video",
+                "sceneIndex": 0,
+                "clipId": "nvo-01",
+                "outputRange": {
+                  "startSeconds": 0,
+                  "endSeconds": 3.9583333333333335
+                },
+                "sourceRange": {
+                  "startSeconds": 0.093,
+                  "endSeconds": 4.051333333333334
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                    "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                    "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                    "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                    "captureRange": {
+                      "startSeconds": 309.257375,
+                      "endSeconds": 327.183
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              },
+              {
+                "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+                "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+                "bytes": 7264454,
+                "role": "source-audio",
+                "sceneIndex": 0,
+                "clipId": "nvo-01",
+                "outputRange": {
+                  "startSeconds": 0,
+                  "endSeconds": 3.9583333333333335
+                },
+                "sourceRange": {
+                  "startSeconds": 0.093,
+                  "endSeconds": 4.051333333333334
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                    "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                    "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                    "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                    "captureRange": {
+                      "startSeconds": 309.257375,
+                      "endSeconds": 327.183
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              }
+            ],
+            "usesNextOffset": null
+          },
+          {
+            "export": {
+              "id": "764a2bd413fe4099b06e660fa87f8be99267b01735f967a2f5820f1b70ae1f78",
+              "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+              "workId": "9665aa12-9361-4976-9098-7cf3752f40d5",
+              "draftId": "9665aa12-9361-4976-9098-7cf3752f40d5",
+              "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+              "draftRevision": 33,
+              "title": "NVIDIA 宣布 DSX POD：Vera Rubin AI 工厂模块化参考架构",
+              "createdAt": "2026-10-21T15:37:23.025Z",
+              "artifactId": "media-65f950cb-a585-42e4-bff0-e7acde294d5d-converted.mp4",
+              "outputSha256": "84fb77ba68035dd5440fab47abef0e6b1983a4ff86ccdbbb2316009e1350cbcd",
+              "durationSeconds": 40.875,
+              "provenance": "recorded",
+              "useCount": 10,
+              "projectName": "AI 新闻速递 · 2026-10 三巨头周报",
+              "archived": false,
+              "status": "available",
+              "bytes": 7199038
+            },
+            "useCount": 3,
+            "uses": [
+              {
+                "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+                "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+                "bytes": 7264454,
+                "role": "main-video",
+                "sceneIndex": 0,
+                "clipId": "dsx-01",
+                "outputRange": {
+                  "startSeconds": 0,
+                  "endSeconds": 6
+                },
+                "sourceRange": {
+                  "startSeconds": 0.319,
+                  "endSeconds": 6.319
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                    "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                    "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                    "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                    "captureRange": {
+                      "startSeconds": 309.257375,
+                      "endSeconds": 327.183
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              },
+              {
+                "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+                "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+                "bytes": 7264454,
+                "role": "main-video",
+                "sceneIndex": 1,
+                "clipId": "dsx-02",
+                "outputRange": {
+                  "startSeconds": 11.375,
+                  "endSeconds": 14.375
+                },
+                "sourceRange": {
+                  "startSeconds": 3.2,
+                  "endSeconds": 6.2
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                    "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                    "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                    "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                    "captureRange": {
+                      "startSeconds": 309.257375,
+                      "endSeconds": 327.183
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              },
+              {
+                "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+                "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+                "bytes": 7264454,
+                "role": "main-video",
+                "sceneIndex": 2,
+                "clipId": "dsx-03",
+                "outputRange": {
+                  "startSeconds": 19.708333333333336,
+                  "endSeconds": 26.041666666666668
+                },
+                "sourceRange": {
+                  "startSeconds": 0.319,
+                  "endSeconds": 6.652333333333332
+                },
+                "playbackRate": 1,
+                "holdFromOutputSeconds": null,
+                "sources": [
+                  {
+                    "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+                    "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+                    "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+                    "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+                    "captureRange": {
+                      "startSeconds": 309.257375,
+                      "endSeconds": 327.183
+                    }
+                  }
+                ],
+                "origins": [],
+                "status": "available"
+              }
+            ],
+            "usesNextOffset": null
+          }
+        ],
+        "total": 3,
+        "nextOffset": null,
+        "issues": [],
+        "issuesOmitted": 0,
+        "identity": {
+          "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+          "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+          "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12"
+        },
+        "legacyAdoption": "unknown; legacy exports are never inferred from current draft references"
+      }
+    },
+    "discardedOutputIdentityQuery": {
+      "sequence": 19270,
+      "reason": "The exported work is not an input material; empty adoption response is retained, not used as lineage proof"
+    }
+  },
+  "rootIndependentWholeFilm": {
+    "at": "2026-10-21T21:12:53.232Z",
+    "method": "CUA latest actual MP4 fullscreen continuous playback from0 to31.5733 seconds; separate current-export phone-frame samples for all six scenes",
+    "observedTimes": [
+      0,
+      1,
+      5,
+      16,
+      22,
+      27,
+      31.5733
+    ],
+    "finding": "The announcement clearly separates Super VL availability from Bolt Oct23 and Alpamayo later-month plans; evidence quotations, byline, publication and Chinese captions form a coherent account. Opening and closing use genuine Huang stage footage with persistent publication-date/recording-unknown labels, not an assertion that the original speaker spoke the narration. The later wide shot shows Startups This Week stage signage. Known scene2 status-label collision and small embedded source thumbnails remain disclosed; no semantic claim depends on reading the tiny source text.",
+    "humanListening": "pending; visual playback does not certify auditory perception",
+    "finalPlayerState": "Native progress0:00 and Play button visible after Home; fullscreen exited; Assistant ready"
+  },
+  "assistedWorkflow": true,
+  "nativeReviewStatus": {
+    "draftId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+    "revision": 36,
+    "technical": {
+      "status": "passed",
+      "reportArtifactId": "video-bd6865d1-b0fe-4447-818d-f5fe49926c23.json"
+    },
+    "layout": {
+      "status": "issues-present",
+      "issueCount": 4,
+      "omittedIssues": 0,
+      "omittedCandidates": 0,
+      "coverage": "critical-state-samples",
+      "semanticVerification": "requires-visual-review"
+    },
+    "exportFingerprint": "259c229fb59825dc124f419bc79a4a715264abb0ea6c34f5c3cf3b1f397e269f",
+    "sourceArtifactId": "media-4e6e96d6-ff94-4dee-99f7-c7982462a03f-converted.mp4",
+    "scenes": [
+      {
+        "sceneId": "nvo-01",
+        "totalSamples": 9,
+        "generatedCurrentFrames": 9,
+        "frameGenerationComplete": true,
+        "missingReviewOffsets": [],
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T20:58:24.500Z",
+          "sequence": 1,
+          "authority": "agent-declared",
+          "notesPreview": "9/9当前指纹帧已实看：0.17–3.375s 为吉森·黄侧身连续手势，真实运动无卡帧；标题、完整字幕与“资料画面｜NVIDIA发布2026-10-21｜录制日未知”持续在位。水印实测在右上（配置为右下）。原片音轨按公告设定静音。",
+          "notesCharacters": 115
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      },
+      {
+        "sceneId": "nvo-02",
+        "totalSamples": 23,
+        "generatedCurrentFrames": 23,
+        "frameGenerationComplete": true,
+        "missingReviewOffsets": [],
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T20:58:29.643Z",
+          "sequence": 3,
+          "authority": "agent-declared",
+          "notesPreview": "23/23当前帧已实看：大字英文原句、完整中文译文、署名 Kari Briski｜NVIDIA Blog｜2026-10-21 与字幕均可在390px读完。宿主4项 layout issue 均在此镜：“本地数据与自控部署”蓝色阶段标签重影并压住译文标签；嵌入式原页条在手机宽度不可读。判定为装饰/状态层缺陷，引文语义未",
+          "notesCharacters": 175
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      },
+      {
+        "sceneId": "nvo-03",
+        "totalSamples": 9,
+        "generatedCurrentFrames": 9,
+        "frameGenerationComplete": true,
+        "missingReviewOffsets": [],
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T20:58:32.246Z",
+          "sequence": 4,
+          "authority": "agent-declared",
+          "notesPreview": "9/9当前帧已实看：Super VL 上架 Hugging Face、ModelScope、OpenRouter 及 build.nvidia.com 的英文原句、完整中文译文（保留 NIM）与署名可读。译文在“ModelScope”处断成“ModelScop/e”，属排版断行瑕疵，不改变引用内容；未改操作者v35。",
+          "notesCharacters": 159
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      },
+      {
+        "sceneId": "nvo-04",
+        "totalSamples": 9,
+        "generatedCurrentFrames": 9,
+        "frameGenerationComplete": true,
+        "missingReviewOffsets": [],
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T20:58:35.535Z",
+          "sequence": 5,
+          "authority": "agent-declared",
+          "notesPreview": "9/9当前帧已实看：Bolt E4B 4GB 10月23日开放的原句、完整中文译文与署名可读，预告属性由“预计”明确保留。英文在“Oct.”处断成“Oc/t. 23.”，属排版断词瑕疵；与Super VL共用的可用性图仍可读，未改v35。",
+          "notesCharacters": 119
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      },
+      {
+        "sceneId": "nvo-05",
+        "totalSamples": 9,
+        "generatedCurrentFrames": 9,
+        "frameGenerationComplete": true,
+        "missingReviewOffsets": [],
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T20:58:38.145Z",
+          "sequence": 6,
+          "authority": "agent-declared",
+          "notesPreview": "9/9当前帧已实看：Alpamayo 2 Edge 将于本月晚些时候在 GitHub 与 Hugging Face 开放下载的英文原句、完整中文译文与署名可读，“本月晚些时候”未被写成已发布。嵌入式原页图在390px过小、顶行右侧似被裁，属证据缩略图可读性不足，非引文缺失；未改v35。",
+          "notesCharacters": 143
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      },
+      {
+        "sceneId": "nvo-06",
+        "totalSamples": 9,
+        "generatedCurrentFrames": 9,
+        "frameGenerationComplete": true,
+        "missingReviewOffsets": [],
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T20:58:26.975Z",
+          "sequence": 2,
+          "authority": "agent-declared",
+          "notesPreview": "9/9当前指纹帧已实看：25–31.46s 吉森·黄由正面转侧身并持续手势，结尾仍有真实运动；后段切宽景，背景可见 starCops This Week 与标识。资料画面标签全程在位；字幕6.41s结束后留白至6.5s，非内容缺失。水印实测右上，原片静音。",
+          "notesCharacters": 128
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      }
+    ],
+    "agent": {
+      "status": "passed",
+      "createdAt": "2026-10-21T20:58:45.282Z",
+      "sequence": 7,
+      "authority": "agent-declared",
+      "notesPreview": "整片31.50s（实际31.573s）独立意见：六镜均按当前fingerprint逐页实看。开场0.17–3.375s与结尾25–31.46s均为真实舞台动态，资料标签持续；三张可用性/证据卡的原句、译文、署名与字幕在390px可读。事实边界清楚：Super VL已开放，Bolt 10月23日与Alpamayo本月晚些",
+      "notesCharacters": 291
+    },
+    "user": {
+      "status": "pending",
+      "authority": "user-declared"
+    },
+    "plan": {
+      "previousArtifactId": "media-0fc06f9e-5cd1-4585-a417-b965f8130074-converted.mp4",
+      "changedSceneIds": [
+        "nvo-01",
+        "nvo-06"
+      ],
+      "unchangedSceneIds": [
+        "nvo-02",
+        "nvo-03",
+        "nvo-04",
+        "nvo-05"
+      ],
+      "reviewSceneOrder": [
+        "nvo-01",
+        "nvo-06",
+        "nvo-02",
+        "nvo-03",
+        "nvo-04",
+        "nvo-05"
+      ],
+      "requiresFullFilmReview": true,
+      "reuseOldFrames": false
+    },
+    "coverageMeaning": "Generated actual export samples; model/user assessments are separate declarations, not automatic semantic or audio certification.",
+    "scenePage": {
+      "total": 6,
+      "offset": 0,
+      "nextOffset": null
+    },
+    "notesCoverage": "Assessment notes are previews; the user view keeps complete declared notes."
+  },
+  "subtitle": {
+    "artifactId": "video-3ca2e523-23d2-4fed-9ea0-ba4202ebfd42.srt",
+    "bytes": 657,
+    "draftId": "1ec1ac02-2e32-416c-9e4d-96e35e154880",
+    "revision": 36,
+    "type": "subtitles",
+    "format": "srt",
+    "contentType": "application/x-subrip",
+    "cueCount": 6,
+    "timing": "edited",
+    "provenanceArtifactId": "video-f64507bc-8255-4df6-90ec-8755f53fec8c.json",
+    "sentenceTiming": "edited-audio-anchors",
+    "sha256": "2cb148a6f3e0b05ad85ab5a39ffb08a7f9b42bdecd47a3b3001d7f823e952f01"
+  },
+  "independentRootSamples": {
+    "at": "2026-10-21T21:02:51.151Z",
+    "reviewedCurrentExport": true,
+    "opening": [
+      0,
+      2,
+      3.833333
+    ],
+    "scene2": [
+      3.958333,
+      5.083333,
+      5.875,
+      6.666667
+    ],
+    "scene3": [
+      12.166667
+    ],
+    "scene4": [
+      16.958333
+    ],
+    "scene5": [
+      22.333333
+    ],
+    "closing": [
+      25,
+      28.25,
+      31.375
+    ],
+    "observed": "Real Huang stage movement on opening and closing; publication-date/recording-unknown labels; exact source quotations, Chinese translations, byline and availability distinctions readable in phone frames",
+    "limitations": "Long page thumbnail and source paragraph strips too small to read; large quotation/translation is readable. Stage/status label overprints the translation label in scene2. ModelScope and Oct. wrap midword; watermark rendered upper right although draft says lower right. These remain disclosed visual limitations, not a zero-warning claim."
+  },
+  "completedAt": "2026-10-21T21:12:53.232Z",
+  "receipt": {
+    "runId": "88c019aa-e815-4ba8-8a33-fa8a87e0f002",
+    "messageId": "bfa9d8b5-921b-4771-802f-b7a6c3f5b5c9",
+    "providerReceiptId": "bfa9d8b5-921b-4771-802f-b7a6c3f5b5c9",
+    "state": "finished",
+    "outcome": "success"
+  },
+  "uiRecovery": {
+    "at": "2026-10-21T21:12:53.232Z",
+    "method": "Trusted CUA rebind to exact authorized app after terminal receipt; no app restart/no old-input replay",
+    "previousTimeout": "Recovered; user action not required"
+  }
+}

@@ -5,10 +5,12 @@ import fs from 'node:fs'
 import http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
-import { app, BrowserWindow, WebContentsView, webContents, ipcMain, Menu, safeStorage } from 'electron'
+import { app, BrowserWindow, WebContentsView, webContents, ipcMain, Menu, safeStorage, nativeImage } from 'electron'
 import type { WebContents } from 'electron'
 import bmw, { createBmwAgentAssembly } from '../apps/bmw/product.js'
 import { createBmwApplication } from '../packages/platform/src/main.js'
+import {ProjectSourceStore} from '../packages/platform/src/project-source-store.js'
+import crypto from 'node:crypto'
 import { ProjectStore } from '../packages/platform/src/project-store.js'
 import {QwenCredentialsStore} from '../packages/platform/src/qwen-credentials-store.js'
 import { LayoutStore } from '../packages/platform/src/layout-store.js'
@@ -101,7 +103,7 @@ try {
   })()`)
   markStage('Desktop smoke: product and IPC returned; checking BMW Session')
   assert.equal(result.product.id, 'bmw')
-  assert.deepEqual(result.product.features, ['feature-video'])
+  assert.deepEqual(result.product.features, ['feature-library','feature-video'])
   assert.equal(result.removed, true)
   assert.equal(result.denied, true)
   assert.equal(result.chatUi, false)
@@ -170,9 +172,34 @@ try {
   const assistantView=await waitFor(async()=>webContents.getAllWebContents().find(contents=>contents.getURL().endsWith('/assistant.html')&&!contents.isLoading())??null)
   stage=group
   if(group==='workspace'){
+  const donorState=await shell.executeJavaScript("window.bmw.createProject({name:'Library source fixture',homeUrl:''})"),donor=donorState.projects.find(p=>p.id===donorState.activeProjectId)
+  const libraryPng=nativeImage.createFromBitmap(Buffer.from([0,0,255,255]),{width:1,height:1}).toPNG(),sharedId='fixture-shared.png',donorSources=new ProjectSourceStore(donor.directory,donor.id),scope={selector:'article',index:0,excludeSelectors:[],characterUnit:'utf16' as const,extraction:'visible-text-nodes' as const,truncated:false,status:'observed' as const}
+  fs.writeFileSync(path.join(donor.directory,'artifacts',sharedId),libraryPng)
+  const collected=await donorSources.collect({url:origin+'/library-original',title:'跨 Project 素材与来源',author:'Fixture publisher',publishedAt:'2026-10-20',scope,text:'保存的原始正文，供隔离桌面跨 Project 复用验收。',mediaScope:scope,mediaTruncated:false,candidates:[],access:'unknown',accessText:'',result:'observed',error:null},0)
+  await donorSources.recordScreenshot({sourceId:collected.sourceId,acquisitionId:collected.acquisitionId,expectedRevision:1,artifactId:sharedId,contentId:crypto.createHash('sha256').update(libraryPng).digest('hex'),inspection:{kind:'image',contentType:'image/png',width:1,height:1,pixels:1,bytes:libraryPng.length,canDecode:true},pageUrl:origin+'/library-original',scope,bodyContentId:collected.catalog.sources[0].acquisitions[0].contentId!,capturedAt:new Date().toISOString()})
+  await switchProject(before.projects[0])
   const sessionBefore=(await assistantView.executeJavaScript("window.bmwAssistant.invoke({action:'snapshot'})")).selectedSessionId
   assert.equal(sessionBefore,initialSession)
   const windowsBefore=BrowserWindow.getAllWindows().length
+  await click('#library-workspace')
+  const libraryContents=await waitFor(async()=>webContents.getAllWebContents().find(contents=>contents.getURL().endsWith('/library.html')&&!contents.isLoading())??null)
+  await waitFor(async()=>await libraryContents.executeJavaScript("Boolean(window.bmwLibrary)&&document.getElementById('result-count').textContent.includes('份素材')")?true:null)
+  assert.equal(await shell.executeJavaScript("document.getElementById('library-workspace').getAttribute('aria-pressed')"),'true')
+  assert.equal((await libraryContents.executeJavaScript('window.bmwLibrary.state()')).sessionId,sessionBefore)
+  const globalMaterials=await libraryContents.executeJavaScript("window.bmwLibrary.command({operation:'search',query:'fixture-shared',kind:'image'})")
+  assert.ok(globalMaterials.items.some(item=>item.projectId===donor.id&&item.artifactId===sharedId),'Foreign unindexed media is discoverable')
+  const copied=await libraryContents.executeJavaScript('window.bmwLibrary.use('+JSON.stringify({projectId:donor.id,artifactId:sharedId})+',0)')
+  assert.equal(copied.copied,true)
+  const copiedBody=await shell.executeJavaScript('window.bmw.browser('+JSON.stringify({action:'library.materials',libraryRequest:{operation:'read',projectId:before.activeProjectId,sourceId:collected.sourceId,acquisitionId:collected.acquisitionId}})+')')
+  assert.equal(copiedBody.source.mediaAvailability[0].available,true,'Copy preserves native source proof checks')
+  await waitFor(async()=>await assistantView.executeJavaScript("document.getElementById('workspace-mode').value==='library'")?true:null)
+  await libraryContents.executeJavaScript("document.querySelector('[data-category=news]').click();true")
+  await waitFor(async()=>await libraryContents.executeJavaScript("!document.getElementById('news-page').hidden")?true:null)
+  assert.equal(await libraryContents.executeJavaScript("document.getElementById('news-start').textContent"),'推荐新闻选题')
+  fs.writeFileSync(path.join(evidenceDirectory,'material-library.png'),(await captureRendererEvidence(libraryContents)).toPNG())
+  await click('#browser-workspace')
+  await click('#library-workspace')
+  assert.equal((await libraryContents.executeJavaScript('window.bmwLibrary.state()')).sessionId,sessionBefore)
   await click('#studio-workspace')
   const studioContents=await waitFor(async()=>webContents.getAllWebContents().find(contents=>contents.getURL().endsWith('/studio.html')&&!contents.isLoading())||null)
   await waitFor(async()=>await assistantView.executeJavaScript("Boolean(document.querySelector('#workspace-mode'))")?true:null)
@@ -181,9 +208,20 @@ try {
   assert.equal(composerGeometry.modeVisible,true);assert.equal(composerGeometry.inputVisible,true);assert.equal(composerGeometry.overlap,false)
   assert.equal(BrowserWindow.getAllWindows().length,windowsBefore,'Studio must not create another window')
   assert.ok(host.contentView.children.some(view=>view instanceof WebContentsView&&view.webContents===studioContents))
+  await waitFor(async()=>await studioContents.executeJavaScript("!document.getElementById('new-draft').disabled")?true:null)
   await studioContents.executeJavaScript("document.getElementById('new-draft').click();true")
   await waitFor(async()=>await studioContents.executeJavaScript("document.getElementById('draft-select').value!==''&&!document.getElementById('draft-title').disabled")?true:null)
   assert.equal(await studioContents.executeJavaScript("document.querySelectorAll('#scene-list button').length"),0,'New videos prepare materials before scenes')
+  const emptyDraft=(await studioContents.executeJavaScript('window.bmwStudio.state()')).drafts[0]
+  await studioContents.executeJavaScript("document.getElementById('cards-materials').click();true")
+  await waitFor(async()=>await studioContents.executeJavaScript("document.getElementById('studio-library').checkVisibility()")?true:null)
+  await studioContents.executeJavaScript("document.getElementById('studio-library').click();true")
+  await waitFor(async()=>await shell.executeJavaScript("document.getElementById('library-workspace').getAttribute('aria-pressed')==='true'")?true:null)
+  await libraryContents.executeJavaScript('window.bmwLibrary.use('+JSON.stringify({projectId:donor.id,artifactId:sharedId})+',1)')
+  await waitFor(async()=>await shell.executeJavaScript("document.getElementById('studio-workspace').getAttribute('aria-pressed')==='true'")?true:null)
+  await waitFor(async()=>{const current=await studioContents.executeJavaScript('window.bmwStudio.state()');return current.drafts.find(d=>d.id===emptyDraft.id)?.preparation.artifactIds.includes(sharedId)?true:null})
+  await waitFor(async()=>await studioContents.executeJavaScript("!document.getElementById('draft-title').disabled")?true:null)
+  await studioContents.executeJavaScript("if(document.getElementById('card-detail').open)document.getElementById('card-detail-close').click();true")
   await studioContents.executeJavaScript("document.querySelector('[data-stage=\"1\"]').click();true")
   await waitFor(async()=>await studioContents.executeJavaScript("Boolean(document.querySelector('#script-outline button'))")?true:null)
   await studioContents.executeJavaScript("document.querySelector('#script-outline button').click();true")
@@ -643,6 +681,7 @@ try {
   console.log('PASS Base desktop: real shell, isolated BMW session, no chat UI/preload/actions/default bindings')
 } catch (error) {
   console.error(error)
+  for(const contents of webContents.getAllWebContents().filter(c=>/\/(studio|library)\.html$/.test(c.getURL())))try{fs.writeFileSync(path.join(evidenceDirectory,'failure-'+contents.id+'.txt'),await contents.executeJavaScript('document.body.innerText'))}catch{}
   process.exitCode = 1
   fs.writeFileSync(path.join(evidenceDirectory,'failure.json'),JSON.stringify({group,stage,error:error instanceof Error?error.stack:String(error),windows:BrowserWindow.getAllWindows().map(window=>({id:window.id,visible:window.isVisible(),focused:window.isFocused(),bounds:window.getBounds()})),contents:webContents.getAllWebContents().map(contents=>({id:contents.id,url:contents.getURL().replace(/([?&]token=)[^&]+/g,'$1[redacted]'),loading:contents.isLoading()}))},null,2))
   if(shell&&!shell.isDestroyed())try{fs.writeFileSync(path.join(evidenceDirectory,'failure-shell.png'),(await captureRendererEvidence(shell)).toPNG())}catch(captureError){fs.writeFileSync(path.join(evidenceDirectory,'failure-capture.txt'),String(captureError))}

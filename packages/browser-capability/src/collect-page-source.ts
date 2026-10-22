@@ -2,7 +2,8 @@ import type {WebContents} from 'electron'
 import type {SourceCollection,SourceObservation,SourceScope,SourceCandidate} from '@bmw-agent/media-native/sources'
 import {assertPageScope,pageRangeExpression} from './page-scope.js'
 import {readRendererPhase} from './renderer-read.js'
-interface RangeReply {text:string;range:SourceScope;dateTime?:string|null}
+import {assertVideoIdentity} from '@bmw-agent/agent-contract/video-identity'
+interface RangeReply {text:string;range:SourceScope;dateTime?:string|null;publisherAlt?:string|null}
 interface MediaReply {items:Record<string,unknown>[];truncated:boolean;range:unknown}
 const nonPublication=/\b(?:updated|modified|recorded|retrieved|accessed|reposted)\b|更新时间|更新于|录制|转载|抓取|采集/i
 /** Keep a publisher's actual date precision. A narrow metadata element may
@@ -36,16 +37,25 @@ export async function collectPageSource(wc:WebContents,request:SourceCollection,
  let result:SourceObservation={url,title:wc.getTitle().slice(0,500),author:null,publishedAt:null,scope:initial(body),text:'',mediaScope:initial(media),mediaTruncated:false,candidates:[],access:'unknown',accessText:'',result:'failed',error:null}
  const read=async(selector:string,index=0,maxCharacters=1000,excludeSelectors:string[]=[])=>{
   const input=assertPageScope({selector,index,maxCharacters,excludeSelectors})
-  const value=await readRendererPhase<RangeReply>(wc,'source.collect','body',()=>wc.executeJavaScript(`(()=>{const {text,range}=${pageRangeExpression(input)};const el=${selector===request.publishedSelector?`document.querySelectorAll(${JSON.stringify(input.selector)})[${input.index}]`:'null'};return {text,range,dateTime:el?.tagName==='TIME'?(el.getAttribute('datetime')??'').slice(0,80):null}})()`,true),controller.signal)
+  const value=await readRendererPhase<RangeReply>(wc,'source.collect','body',()=>wc.executeJavaScript(`(()=>{const {text,range}=${pageRangeExpression(input)};const el=${selector===request.publishedSelector||selector===request.authorSelector?`document.querySelectorAll(${JSON.stringify(input.selector)})[${input.index}]`:'null'};let publisherAlt=null;if(${selector===request.authorSelector}&&el?.tagName==='IMG'&&el.getClientRects().length){let visible=true,depth=0;for(let ancestor=el;ancestor;ancestor=ancestor.parentElement){const style=getComputedStyle(ancestor);if(++depth>100||style.display==='none'||style.visibility==='hidden'||style.visibility==='collapse'||Number(style.opacity)===0||style.contentVisibility==='hidden'){visible=false;break}}if(visible)publisherAlt=(el.getAttribute('alt')??'').slice(0,281)}return {text,range,publisherAlt,dateTime:el?.tagName==='TIME'?(el.getAttribute('datetime')??'').slice(0,80):null}})()`,true),controller.signal)
   const dateTime=typeof value.dateTime==='string'&&/^\d{4}-\d\d-\d\dT\d\d:\d\d(?::\d\d(?:\.\d+)?)?(?:Z|[+-]\d\d:\d\d)$/.test(value.dateTime)&&Number.isFinite(Date.parse(value.dateTime))?value.dateTime:null
-  return {text:value.text,scope:scope(value.range),dateTime}
+  return {text:value.text,scope:scope(value.range),dateTime,publisherAlt:typeof value.publisherAlt==='string'?value.publisherAlt:null}
  }
  const metadata=(value:{text:string;scope:SourceScope},name:string,max:number)=>{const text=value.text.trim();if(value.scope.truncated||text.length>max)truncatedMetadata.push(name);return text.slice(0,max)}
  try{
   if(wc.getTitle().length>500)truncatedMetadata.push('title')
   const observed=await read(body.selector!,body.index,body.maxCharacters,body.excludeSelectors);result.scope=observed.scope;result.text=observed.text
-  if(request.authorSelector){const author=await read(request.authorSelector);result.author=metadata(author,'author',280)||null}
+  if(request.authorSelector){const author=await read(request.authorSelector);result.author=metadata({...author,text:author.text.trim()||author.publisherAlt||''},'author',280)||null}
   if(request.publishedSelector){const published=await read(request.publishedSelector);result.publishedAt=published.scope.status==='observed'&&published.dateTime&&!nonPublication.test(published.text)?published.dateTime:publicationLine(published)??(metadata(published,'publishedAt',80)||null)}
+  if(request.metadataRanges){
+   const ranges=request.metadataRanges
+   if(ranges.author&&request.authorSelector||ranges.publishedAt&&request.publishedSelector)throw new Error('SOURCE_METADATA_RANGE: Choose one method per field.')
+   const bound={author:ranges.author?.quote.trim()??result.author,publishedAt:ranges.publishedAt?.quote.trim()??result.publishedAt,scope:result.scope}
+   if(result.scope.status!=='observed'||result.scope.truncated)throw new Error('SOURCE_METADATA_RANGE: Requires a complete observed body.')
+   for(const name of ['author','publishedAt'] as const){const r=ranges[name];if(r&&result.text.slice(r.startCharacter,r.endCharacter)!==r.quote)throw new Error('SOURCE_METADATA_RANGE: Metadata witness differs from the visible original; read and collect again.')}
+   if(ranges.publishedAt){const r=ranges.publishedAt,before=result.text.slice(0,r.startCharacter),after=result.text.slice(r.endCharacter),prefix=before.slice(before.lastIndexOf('\n')+1),suffix=after.split('\n')[0],previous=before.slice(0,before.lastIndexOf('\n')).trimEnd().split('\n').at(-1)??'';if(prefix.trim()||suffix.trim()||nonPublication.test(previous)||!publicationLine({text:r.quote,scope:result.scope}))throw new Error('SOURCE_METADATA_RANGE: Select a complete original publication-date line; do not crop an Updated, recorded or reposted date.')}
+   result.author=bound.author;result.publishedAt=bound.publishedAt;result.metadataRanges=ranges
+  }
   if(request.accessSelector){const access=await read(request.accessSelector);result.accessText=metadata(access,'accessText',500);if(/登录后(?:观看|播放)|请先登录.{0,12}(?:观看|播放)|login required|sign in to (?:watch|play)/i.test(result.accessText))result.access='login-required';else if(/试看|预览时长|\bpreview\b|\btrial\b/i.test(result.accessText))result.access='preview'}
   // Missing body must not fall back to whole-page recommendations.
   if(result.scope.status==='observed'){
@@ -55,7 +65,7 @@ export async function collectPageSource(wc:WebContents,request:SourceCollection,
     try{const address=new URL(item.url);if(address.username||address.password||!['http:','https:','blob:'].includes(address.protocol))continue;address.hash='';if(address.href.length>4096)continue
      const kind=item.kind as SourceCandidate['kind'],key=kind+':'+address.href;if(identities.has(key))continue;identities.add(key)
      const duration=typeof item.duration==='number'&&Number.isFinite(item.duration)&&item.duration>0&&item.duration<=86400?item.duration:null
-     candidates.push({kind,url:address.href,durationSeconds:duration,role:kind==='image'?'body':kind==='poster'?'cover':'video'})
+     candidates.push({kind,url:address.href,durationSeconds:duration,role:kind==='image'?'body':kind==='poster'?'cover':'video',...(item.videoIdentity===undefined?{}:{videoIdentity:assertVideoIdentity(item.videoIdentity)})})
     }catch{/* Non-media/unsupported addresses remain discoveries, never artifacts. */}
    }
    result.candidates=candidates

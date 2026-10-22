@@ -29,3 +29,19 @@ test('Preservation fails closed and rolls back all owned resources on unsupporte
  const controller=new AbortController();await assert.rejects(preserveMedia({directory,url:'https://video.example/a.m3u8',pageUrl:'https://page.example',signal:controller.signal,fetchImpl:async()=>{controller.abort(new Error('cancel preservation'));return new Response('#EXTM3U\n#EXTINF:1,\nseg.ts\n#EXT-X-ENDLIST')}}),/cancel preservation/)
  assert.deepEqual(await fs.readdir(directory),['existing']);assert.equal(await fs.readFile(path.join(directory,'existing'),'utf8'),'keep')
 })
+
+test('Separated transfer refuses partial/missing audio, identity mismatch and truncated responses, retaining existing artifacts',async t=>{
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'bmw-preserve-pair-'));t.after(()=>fs.rm(directory,{recursive:true,force:true}));await fs.writeFile(path.join(directory,'existing'),'keep')
+ const videoIdentity={version:1 as const,platform:'youtube' as const,targetId:'target',resourceId:'target'},base={directory,url:'https://r.googlevideo.com/video',pageUrl:'https://youtube.com/watch?v=target',videoIdentity,separated:{audioUrl:'https://r.googlevideo.com/audio',videoDurationSeconds:10,audioDurationSeconds:10,videoIdentity}}
+ for(const mode of ['partial','missing','truncated','cancel'] as const){const cancel=new AbortController();await assert.rejects(preserveMedia({...base,signal:cancel.signal,fetchImpl:async url=>{if(url.endsWith('/video'))return new Response('video',{headers:{'content-type':'video/mp4'}});if(mode==='cancel')cancel.abort(new Error('cancel audio'));if(mode==='missing')throw new Error('missing audio');return new Response('audio',{status:mode==='partial'?206:200,headers:{'content-type':'audio/mp4',...(mode==='truncated'?{'content-length':'100'}:{})}})}}),/full HTTP 200|missing audio|Incomplete preserved|cancel audio/);assert.deepEqual(await fs.readdir(directory),['existing'])}
+ await assert.rejects(preserveMedia({...base,separated:{...base.separated,videoIdentity:{...videoIdentity,targetId:'other'}},fetchImpl:async()=>{throw new Error('must not fetch')}}),/identity-bound/)
+})
+
+test('Failed preservation cleanup stays recoverable without following a replaced Project directory',async t=>{
+ const {PreservationCleanupError}=await import('../src/media-preservation.js'),root=await fs.mkdtemp(path.join(os.tmpdir(),'bmw-preserve-recovery-')),directory=path.join(root,'artifacts'),moved=path.join(root,'retained');t.after(()=>fs.rm(root,{recursive:true,force:true}));await fs.mkdir(directory);await fs.writeFile(path.join(directory,'existing'),'keep')
+ const videoIdentity={version:1 as const,platform:'youtube' as const,targetId:'target',resourceId:'target'}
+ let failure:unknown
+ try{await preserveMedia({directory,url:'https://r.googlevideo.com/video',pageUrl:'https://youtube.com/watch?v=target',videoIdentity,separated:{audioUrl:'https://r.googlevideo.com/audio',videoDurationSeconds:10,audioDurationSeconds:10,videoIdentity},fetchImpl:async url=>{if(url.endsWith('/audio')){await fs.rename(directory,moved);await fs.mkdir(directory)}return new Response('bytes',{headers:{'content-type':url.endsWith('/audio')?'audio/mp4':'video/mp4'}})}})}catch(error){failure=error}
+ assert.ok(failure instanceof PreservationCleanupError);await assert.rejects(failure.recover(),/directory changed/);assert.deepEqual(await fs.readdir(directory),[])
+ await fs.rmdir(directory);await fs.rename(moved,directory);await failure.recover();assert.deepEqual(await fs.readdir(directory),['existing']);assert.equal(await fs.readFile(path.join(directory,'existing'),'utf8'),'keep')
+})

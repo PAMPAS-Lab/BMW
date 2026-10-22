@@ -1,5 +1,7 @@
 const {contextBridge,ipcRenderer}=require('electron')
 contextBridge.exposeInMainWorld('bmwStudio',{
+  openLibrary:()=>ipcRenderer.invoke('video-studio-library'),
+  newsStatus:()=>ipcRenderer.invoke('video-studio-news-status'),
   selection:(value:unknown)=>ipcRenderer.invoke('video-studio-selection',value),
   chat:(value:unknown)=>ipcRenderer.invoke('video-studio-chat',value),
   geometry:(value:unknown)=>ipcRenderer.invoke('video-studio-geometry',value),

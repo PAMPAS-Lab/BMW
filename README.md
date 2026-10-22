@@ -2,6 +2,12 @@
 
 **Browser is boundary, media is native, web is runtime.**
 
+BMW 提供浏览器、素材库和 Video Studio 三个工作区：资料按 Project 保存，全库检索管理，跨 Project 复制完整来源后复用。
+
+素材库支持项目专题、全局关注方向及独立成品分类。专题可提升为长期方向，关联已有素材与作品而不移动原文件；Studio与直接合成自动记录成品版本、实际采用素材及区间，支持双向查询；来源与事件已支持分片、可重建增量索引和稳定游标分页；来源订阅支持有界手动巡检、线索与事件修订、归并/拆分、检查游标及X/YouTube可见热点观察；严格十题推荐快照、方向策略、专题筛选和旧news交接已接通；已支持明确绑定的周期采集、未激活 Project/Session 的独立隐藏页采集、用户任务避让、重启核对、失败退避与健康通知，详见[分阶段设计](docs/plans/LIBRARY_STREAMS.md)。原有新闻选题与 Studio 制作流程保持兼容。
+
+来源订阅提供24项可选AI新闻固定来源，默认暂停、重复添加保留编辑与游标；X/YouTube观察区分账号、原始内容、主题和趋势，登录/挑战页保留受限记录。公开原站的近72小时隔离验证及访问限制见[真实来源报告](docs/research/AI_NEWS_REAL_SOURCES.md)。
+
 BMW 是以浏览器为能力边界、以媒体为原生数据的桌面 Agent 工作区。一个 Project 管理网页、素材、视频草稿、文档和记忆；多个会话共享这些资源。浏览器操作与 Video Studio 手动编辑可在同一会话上下文中协作。
 
 ## 运行
@@ -43,7 +49,7 @@ NEWS-01已用BMW＋官方Codex完成54.61秒最新新闻并获用户接受，显
 - 浏览器标签页、语义观察、页面交互、站点权限、后台取材、登录连续性和按 Project 保存的日常任务。
 - 稳定 BMW Session 固定所属 Project 和驱动；按驱动保留原生续聊身份。不同驱动共享 Project 页面和媒体，会话切换保留独立历史；旧 DSH 身份由一次性迁移保留；日常启动不转换旧数据，原生 Workspace 映射只在对应 harness 内维护。
 - 截图、页面媒体发现与下载、HTTP／有限 HLS VOD 分发资源保全、视频 Capture、录屏、媒体检查、抽帧、裁剪、缩放和 MP4/WebM 转换。视频采集记录源时间到成品 PTS 的逐帧映射，支持中段／尾段定位与尺寸切换留边；音频支持区间 WAV 技术证据和不自动播放的试听。
-- Video Studio 在主窗口中切换工作区：素材收集、全局与分镜脚本、真实旁白、画面匹配、预览编辑和导出。
+- Video Studio 在主窗口中切换工作区：从素材库选材、全局与分镜脚本、真实旁白、画面匹配、预览编辑和导出。
 - 草稿强绑定所属会话：一个会话可有多个草稿，共享 Project 素材；切换会话切换可见草稿，无草稿显示空状态。支持删除草稿并保留素材与可恢复记录。
 - 素材准备、匹配、工作台、封面和画面片段均支持真实图片／视频缩略图、放大预览与列表／图标切换；支持拖拽绑定、使用关系分组与时间轴定位。
 - 类型制作提供新闻速递、综合科普、学术解释三类版本化指导，分段工作表、配方预览／显式采用和类型审阅表。来源作品／版本关系、句目标与原生改稿影响查询保存到2.10文档；重套模板保留既有编辑。新增事件联动、独立测量柱图／对数散点、有限分组和16格受限预合成；外部素材保留显式版本链。技术验证、三类样片、人工试听和观众理解分别验收，状态见[下一步计划](docs/plans/NEXT_STEPS.md)。
@@ -107,7 +113,7 @@ npm run test:video-e2e
 npm run test:tts-e2e
 ```
 
-当前完整离线基线为 **173 passed／0 failed／12 opt-in not-run**（2026-10-20）；构建、check及新闻、浏览器生命周期、DSH、WorkBuddy、desktop、Studio、media、video和narration检查通过，范围与源码指纹见[CURRENT](docs/verification/CURRENT.json)。测试使用一次性Profile，不计入付费模型或真实在线服务覆盖。已准备BMW＋DSH／DeepSeek Flash日常Project并通过实际只读连通；[使用流程](docs/AGENT_VIDEO_EDITING.md#日常新闻使用)与[就绪范围](docs/research/NEWS_DAILY_READINESS.json)明确选题确认、龙安朗和资源边界。已接受的43.03秒Chuck Lorre片保留，下一内容主线仍是科普、再学术。
+最近素材库相关验证为 **112项离线分层检查及14项隔离原生回归通过**；其余层级、opt-in及外部服务范围见[验证说明](docs/VERIFICATION.md)。既有完整基线归档见[CURRENT](docs/verification/CURRENT.json)。测试使用一次性Profile，不计入付费模型或真实在线服务覆盖。已准备BMW＋DSH／DeepSeek Flash日常Project并通过实际只读连通；[使用流程](docs/AGENT_VIDEO_EDITING.md#日常新闻使用)与[就绪范围](docs/research/NEWS_DAILY_READINESS.json)明确选题确认、龙安朗和资源边界。已接受的43.03秒Chuck Lorre片保留，下一内容主线仍是科普、再学术。
 
 局部改动默认先用下方 `test:plan` / `test:affected -- --files ...` 查看并执行本次范围；既有未提交工作不应混入本次文件列表。`verify:stability` 显式使用 `--all`，执行全部非 opt-in 分类；六项专用本地素材夹具和六项外部服务／模型测试仍需单独启用，不计为通过。完整串行验证：`npm run verify:stability`，并单独执行 `npm run check` 检查完整编译／Schema与生成文档一致性。完整入口构建一次，再执行源码／清单门禁、单元/边界及运行时回归；记录源码哈希、依赖版本和通过/失败/未执行结果。桌面工作区测试分为工作区、Project/会话（含实际重启）、设置、原生焦点/键盘四组；Studio 各专用环境分支另由分类目录逐项执行，单组失败不阻止其余组运行。新证据在 `.bmw-runtime/classified-tests/`，既有证据保留。
 

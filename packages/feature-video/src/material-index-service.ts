@@ -1,3 +1,4 @@
+import {sourceBindings} from '@bmw-agent/media-native/sources'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import crypto from 'node:crypto'
@@ -6,7 +7,6 @@ import {assertArtifactId,finiteNumber,mediaRecord} from '../../media-native/src/
 import {assertMediaInspection} from '../../media-native/src/media-port.js'
 import {assertImageInspection} from '../../media-native/src/image-contract.js'
 import {assertSpeechEvidence,speechSourceSegments} from '../../media-native/src/speech-contract.js'
-import {assertSourceCatalog} from '../../media-native/src/source-contract.js'
 import {exportProjectText} from '../../media-native/src/text-export.js'
 import {MaterialIndexStore} from './material-index-store.js'
 import {assertMaterialIndexRequest,MATERIAL_INDEX_LIMITS} from './material-index-contract.js'
@@ -83,14 +83,14 @@ export class MaterialIndexService {
  }
  private async partEvidence(record:MaterialIndexRecord,part:MaterialIndexPart,directory:string,signal?:AbortSignal){const evidence=await readSpeechEvidence(directory,part.evidenceArtifactId,part.evidenceSha256,signal);if(evidence.sourceArtifactId!==record.artifactId||evidence.sourceSha256!==record.sha256||evidence.model!==part.model||evidence.language!==part.language||evidence.segments.length!==part.segmentCount||JSON.stringify(evidence.normalization.sourceRange)!==JSON.stringify(part.sourceRange))throw new Error('Indexed transcript evidence disagrees with its source.');return evidence}
  private async search(request:Extract<MaterialIndexRequest,{operation:'search'}>,index:MaterialIndex,directory:string,check:()=>void,signal?:AbortSignal):Promise<unknown>{
-  const results:Record<string,unknown>[]=[],unavailable:{artifactId:string;reason:string}[]=[],query=request.query.trim().toLocaleLowerCase(),project=this.kernel.projectStore.active(),drafts=new VideoStudioStore(project.directory,this.owner.sessionId).list(),sourcePort=this.kernel.projectSources?.(),sourceCatalog=sourcePort?assertSourceCatalog(sourcePort.snapshot()):undefined
+  const results:Record<string,unknown>[]=[],unavailable:{artifactId:string;reason:string}[]=[],query=request.query.trim().toLocaleLowerCase(),project=this.kernel.projectStore.active(),drafts=new VideoStudioStore(project.directory,this.owner.sessionId).list(),sourcePort=this.kernel.projectSources?.()
   let position=0,evidenceBytes=0,sourceBytes=0,nextOffset:number|null=null
   const matches=(text:string)=>!query||text.toLocaleLowerCase().includes(query)
   for(const record of index.records){
    check();const count=1+record.parts.reduce((n,p)=>n+p.segmentCount,0);if(position+count<=request.offset){position+=count;continue}
    let available=false;const io=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:record.artifactId}).catch(error=>{unavailable.push({artifactId:record.artifactId,reason:String(error)});return undefined})
    if(io){try{if(sourceBytes+io.bytes>MATERIAL_INDEX_LIMITS.searchSourceBytes){nextOffset=position;break}sourceBytes+=io.bytes;available=await io.fingerprint(signal)===record.sha256;if(!available)unavailable.push({artifactId:record.artifactId,reason:'source-changed'})}finally{await io.close()}}
-   const sources=sourceCatalog?.sources.flatMap(s=>s.acquisitions.flatMap(a=>a.media.filter(m=>m.artifactId===record.artifactId).map(m=>({sourceId:s.id,acquisitionId:a.id,url:s.url,title:a.title,state:m.state,sourceStartSeconds:m.capture?.sourceStartSeconds,sourceEndSeconds:m.capture?.sourceEndSeconds,verification:'recorded-link'}))))??[],usage=drafts.flatMap(d=>d.scenes.flatMap(scene=>sceneVisuals(scene).flatMap((v,i)=>v.imageArtifactId===record.artifactId||v.videoArtifactId===record.artifactId?[{draftId:d.id,sceneId:scene.id,segmentIndex:i,startSeconds:v.sourceStartSeconds,endSeconds:v.sourceStartSeconds+v.durationSeconds*v.playbackRate,label:d.title+' · '+scene.title}]:[])))
+   const sources=(sourcePort?sourceBindings(sourcePort,record.artifactId):[]).flatMap(({source:s,acquisition:a})=>a.media.filter(m=>m.artifactId===record.artifactId).map(m=>({sourceId:s.id,acquisitionId:a.id,url:s.url,title:a.title,state:m.state,sourceStartSeconds:m.capture?.sourceStartSeconds,sourceEndSeconds:m.capture?.sourceEndSeconds,verification:'recorded-link'}))),usage=drafts.flatMap(d=>d.scenes.flatMap(scene=>sceneVisuals(scene).flatMap((v,i)=>v.imageArtifactId===record.artifactId||v.videoArtifactId===record.artifactId?[{draftId:d.id,sceneId:scene.id,segmentIndex:i,startSeconds:v.sourceStartSeconds,endSeconds:v.sourceStartSeconds+v.durationSeconds*v.playbackRate,label:d.title+' · '+scene.title}]:[])))
    const base={artifactId:record.artifactId,title:record.title,kind:record.kind,availability:available?'verified':'unavailable',sources,usage,thumbnails:record.thumbnails,metadataOrigin:record.metadataOrigin}
    if(position>=request.offset&&matches([record.title,record.description,...record.tags,...sources.map(s=>s.title+' '+s.url)].join(' ')))results.push({...base,match:'metadata'});position++
    if(results.length>=request.limit){nextOffset=position;break}

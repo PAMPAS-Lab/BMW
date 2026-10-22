@@ -1,0 +1,21 @@
+const {contextBridge,ipcRenderer}=require('electron')
+contextBridge.exposeInMainWorld('bmwLibrary',{
+ state:()=>ipcRenderer.invoke('library-state'),
+ command:(request:unknown)=>ipcRenderer.invoke('library-command',request),
+ research:(request:unknown)=>ipcRenderer.invoke('library-research',request),
+ recommendations:(request:unknown)=>ipcRenderer.invoke('library-recommendations',request),
+ prepareRecommendations:(scope:unknown)=>ipcRenderer.invoke('library-prepare-recommendations',scope),
+ collecting:(request:unknown)=>ipcRenderer.invoke('library-collecting',request),
+ batches:(request:unknown)=>ipcRenderer.invoke('library-batches',request),
+ schedules:(request:unknown)=>ipcRenderer.invoke('library-schedules',request),
+ streams:(request:unknown)=>ipcRenderer.invoke('library-streams',request),exports:(request:unknown)=>ipcRenderer.invoke('library-exports',request),
+ use:(identity:unknown,revision:number)=>ipcRenderer.invoke('library-use',identity,revision),
+ select:(identity:unknown)=>ipcRenderer.invoke('library-selection',identity),
+ read:(identity:unknown,offset:number,length:number)=>ipcRenderer.invoke('library-read',identity,offset,length),
+ news:(request:unknown)=>ipcRenderer.invoke('library-news',request),
+ openStudio:(draftId:string)=>ipcRenderer.invoke('library-open-studio',draftId),
+ openBrowser:()=>ipcRenderer.invoke('library-open-browser'),
+ cancel:()=>ipcRenderer.invoke('library-cancel'),
+ onChange:(listener:(value:unknown)=>void)=>ipcRenderer.on('library-change',(_event:unknown,value:unknown)=>listener(value)),
+ onHidden:(listener:()=>void)=>ipcRenderer.on('library-hidden',()=>listener())
+})

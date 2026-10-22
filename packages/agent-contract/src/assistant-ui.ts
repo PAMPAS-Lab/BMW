@@ -1,3 +1,4 @@
+import type {WorkspaceMode} from './workspace.js'
 import { agentIdentifier, agentRecord, agentText } from './conversation.js'
 import type { AgentConversation, AgentDriverDescription, AgentEvent, AgentInteraction, AgentMessage } from './conversation.js'
 import {parseAgentSettingsRequest} from './driver-settings.js'
@@ -40,7 +41,7 @@ export interface AssistantUiPort {
   onComposerContext(listener: (value: unknown) => void): () => void
   onOpenSettings(listener: () => void): () => void
   composerContext(): Promise<unknown>
-  setWorkspaceMode(mode: 'browser' | 'studio'): Promise<unknown>
+  setWorkspaceMode(mode: WorkspaceMode): Promise<unknown>
 }
 export function parseAssistantCommand(raw: unknown): AssistantCommand {
   const value = agentRecord(raw, 'Assistant command')

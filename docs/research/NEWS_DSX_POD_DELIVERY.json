@@ -1,0 +1,541 @@
+{
+  "version": 1,
+  "observedAt": "2026-10-21T16:01:22.795Z",
+  "status": "initial-film-ready-for-human-listening-followups-scheduled",
+  "workflow": "Actual authorized BMW mainProfile, official Qoder CN browser only, assisted visible GUI playback and precise visual editing. Tests isolated.",
+  "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+  "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
+  "draftId": "9665aa12-9361-4976-9098-7cf3752f40d5",
+  "driverId": "qoder-cn",
+  "modelCatalogId": "dfmodel",
+  "backendCheckpoint": "not-certified-by-display-name",
+  "snapshot": {
+    "id": "4514860b-63bc-4e2d-abc1-95c2ad4e6e31",
+    "cutoff": "2026-10-21T14:00:48.631Z",
+    "windowHours": 72,
+    "status": "shortage",
+    "examinedEvents": 12,
+    "itemCount": 9,
+    "unprepared": 3,
+    "leadCount": 15,
+    "subscriptionsActuallyChecked": 9,
+    "noSevenDayFallback": true
+  },
+  "export": {
+    "id": "764a2bd413fe4099b06e660fa87f8be99267b01735f967a2f5820f1b70ae1f78",
+    "artifactId": "media-65f950cb-a585-42e4-bff0-e7acde294d5d-converted.mp4",
+    "sha256": "84fb77ba68035dd5440fab47abef0e6b1983a4ff86ccdbbb2316009e1350cbcd",
+    "renderedRevision": 33,
+    "currentDraftRevision": 34,
+    "timelineSeconds": 40.875,
+    "actualSeconds": 40.96,
+    "width": 720,
+    "height": 1280,
+    "fps": 24,
+    "videoFrames": 981,
+    "videoCodec": "avc",
+    "audioCodec": "aac",
+    "bytes": 7199038,
+    "voice": "Qwen Longanlang longanlang_v3.1",
+    "voiceSpeed": "0%",
+    "watermark": "AIpardonSI News",
+    "priorExportRetained": "media-cc2aa1b0-b673-4b37-8baf-4b74c4e79ac4-converted.mp4"
+  },
+  "sources": [
+    {
+      "role": "facts-and-reference-image",
+      "url": "https://blogs.nvidia.com/blog/gtc-berlin-2026-keynote/",
+      "author": "Brian Caulfield",
+      "publishedAt": "2026-10-21T10:50:37Z",
+      "sourceId": "db3718abbfc4c7d4e28326478b9f515ce9a8b12f495b73978d77abde4ef7d825",
+      "acquisitionId": "5849e4e6-703d-45b1-ba18-a43a1d965c6a",
+      "recordedAt": null
+    },
+    {
+      "role": "muted-real-stage-b-roll-not-DSX-spoken-quotation",
+      "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+      "author": "NVIDIA",
+      "publishedAtLiteral": "2026年10月21日",
+      "recordedAt": null,
+      "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+      "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+      "sourceCaptureSeconds": [
+        309.257375,
+        327.183
+      ],
+      "actualDecodedPixels": [
+        1280,
+        720
+      ],
+      "fileVideoFirstPts": 0.093
+    }
+  ],
+  "actualUses": [
+    {
+      "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+      "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+      "bytes": 7264454,
+      "role": "main-video",
+      "sceneIndex": 0,
+      "clipId": "dsx-01",
+      "outputRange": {
+        "startSeconds": 0,
+        "endSeconds": 6
+      },
+      "sourceRange": {
+        "startSeconds": 0.319,
+        "endSeconds": 6.319
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [
+        {
+          "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+          "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+          "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+          "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+          "captureRange": {
+            "startSeconds": 309.257375,
+            "endSeconds": 327.183
+          }
+        }
+      ],
+      "origins": []
+    },
+    {
+      "artifactId": "1792587404052-source-fbf4fab9-539b-46d2-8e3b-6903228bfab9.jpg",
+      "sha256": "edc96c8cce6cf1a938dfbe14a9eed2c16e1ff89a884eada60368f375f2e7d09a",
+      "bytes": 350898,
+      "role": "main-image",
+      "sceneIndex": 0,
+      "clipId": "dsx-01",
+      "outputRange": {
+        "startSeconds": 6,
+        "endSeconds": 11.375
+      },
+      "sourceRange": null,
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [
+        {
+          "sourceId": "db3718abbfc4c7d4e28326478b9f515ce9a8b12f495b73978d77abde4ef7d825",
+          "acquisitionId": "5849e4e6-703d-45b1-ba18-a43a1d965c6a",
+          "bodySha256": "1b9e0fad231d2c987ccbd1aed99a385cd3bfdf8153eb8a054063750e9e5f1cce",
+          "url": "https://blogs.nvidia.com/blog/gtc-berlin-2026-keynote/",
+          "captureRange": null
+        }
+      ],
+      "origins": []
+    },
+    {
+      "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+      "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+      "bytes": 7264454,
+      "role": "main-video",
+      "sceneIndex": 1,
+      "clipId": "dsx-02",
+      "outputRange": {
+        "startSeconds": 11.375,
+        "endSeconds": 14.375
+      },
+      "sourceRange": {
+        "startSeconds": 3.2,
+        "endSeconds": 6.2
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [
+        {
+          "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+          "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+          "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+          "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+          "captureRange": {
+            "startSeconds": 309.257375,
+            "endSeconds": 327.183
+          }
+        }
+      ],
+      "origins": []
+    },
+    {
+      "artifactId": "1792587404052-source-fbf4fab9-539b-46d2-8e3b-6903228bfab9.jpg",
+      "sha256": "edc96c8cce6cf1a938dfbe14a9eed2c16e1ff89a884eada60368f375f2e7d09a",
+      "bytes": 350898,
+      "role": "main-image",
+      "sceneIndex": 1,
+      "clipId": "dsx-02",
+      "outputRange": {
+        "startSeconds": 14.375,
+        "endSeconds": 19.708333333333336
+      },
+      "sourceRange": null,
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [
+        {
+          "sourceId": "db3718abbfc4c7d4e28326478b9f515ce9a8b12f495b73978d77abde4ef7d825",
+          "acquisitionId": "5849e4e6-703d-45b1-ba18-a43a1d965c6a",
+          "bodySha256": "1b9e0fad231d2c987ccbd1aed99a385cd3bfdf8153eb8a054063750e9e5f1cce",
+          "url": "https://blogs.nvidia.com/blog/gtc-berlin-2026-keynote/",
+          "captureRange": null
+        }
+      ],
+      "origins": []
+    },
+    {
+      "artifactId": "f233a49c-ff95-407d-b620-f7582dff2cf7-source-639c3a19-60fc-4553-948f-6b8b5d876730.webm",
+      "sha256": "e2e59e0e13b63ba5a2cbc0875460f058d679aee8d0f319c28537c427a08dadb3",
+      "bytes": 7264454,
+      "role": "main-video",
+      "sceneIndex": 2,
+      "clipId": "dsx-03",
+      "outputRange": {
+        "startSeconds": 19.708333333333336,
+        "endSeconds": 26.041666666666668
+      },
+      "sourceRange": {
+        "startSeconds": 0.319,
+        "endSeconds": 6.652333333333332
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [
+        {
+          "sourceId": "d23dadf3032dc05780ba214f6b149ecf48d674913246864148f697d90e6acafc",
+          "acquisitionId": "e70fc5d2-75a8-49c4-aee6-a87e2c7bcc12",
+          "bodySha256": "de8eb924093a9c7fcb8b397b380605d259b2b7e804404067febe1a49200ccc54",
+          "url": "https://www.youtube.com/watch?v=PvFjbPYEOZI&t=310s",
+          "captureRange": {
+            "startSeconds": 309.257375,
+            "endSeconds": 327.183
+          }
+        }
+      ],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-bfd4f20b-eb5a-433a-803a-7fd25ba536fb.wav",
+      "sha256": "5b3e71f685660cf0a401808b292550e0797516ed495d91228d8ac2eda1d1fd8d",
+      "bytes": 537644,
+      "role": "narration",
+      "sceneIndex": 0,
+      "clipId": "dsx-01",
+      "outputRange": {
+        "startSeconds": 0.08333333333333333,
+        "endSeconds": 11.283333333333333
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 11.2
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-d7568111-935d-4154-9ce6-15e7ee9c6851.wav",
+      "sha256": "8439a04f697aeb23bef618f3c52ba919bb4659609f7018a5e8dc6c15420502ef",
+      "bytes": 391724,
+      "role": "narration",
+      "sceneIndex": 1,
+      "clipId": "dsx-02",
+      "outputRange": {
+        "startSeconds": 11.458333333333334,
+        "endSeconds": 19.618333333333332
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 8.159999999999998
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-4cf8f6cd-c05e-4345-a140-2512af09333b.wav",
+      "sha256": "9154b3d74d9f5006d6babb97ca4a6d1d85b5e87b06390d700082e817de67a8a0",
+      "bytes": 295724,
+      "role": "narration",
+      "sceneIndex": 2,
+      "clipId": "dsx-03",
+      "outputRange": {
+        "startSeconds": 19.791666666666668,
+        "endSeconds": 25.951666666666668
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 6.16
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-779eb767-19d5-4679-9d8b-e95625f22e4f.wav",
+      "sha256": "d919123ccd6bd7ed0c50f7fd37f14988b448d2c0fc14ecdd7f76bbc203b55a16",
+      "bytes": 407084,
+      "role": "narration",
+      "sceneIndex": 3,
+      "clipId": "dsx-04",
+      "outputRange": {
+        "startSeconds": 26.125,
+        "endSeconds": 34.605000000000004
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 8.48
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    },
+    {
+      "artifactId": "narration-9d3fb889-69c5-42cb-9728-6a5556ffd5eb.wav",
+      "sha256": "3a52b63425422a976f45bdbe767dc8bd320ebf3a5be97c864301eafd9b5893b4",
+      "bytes": 288044,
+      "role": "narration",
+      "sceneIndex": 4,
+      "clipId": "dsx-05",
+      "outputRange": {
+        "startSeconds": 34.79166666666667,
+        "endSeconds": 40.79166666666667
+      },
+      "sourceRange": {
+        "startSeconds": 0,
+        "endSeconds": 6
+      },
+      "playbackRate": 1,
+      "holdFromOutputSeconds": null,
+      "sources": [],
+      "origins": []
+    }
+  ],
+  "queryVerification": {
+    "nativeRunId": "b13af031-55d7-4510-a298-d108b3971660",
+    "versions": 2,
+    "uses": 10,
+    "roles": {
+      "main-video": 3,
+      "main-image": 2,
+      "narration": 5
+    },
+    "artifactReverseUses": 3,
+    "sourceAcquisitionReverseUses": 3,
+    "allNoHold": true,
+    "allPagesComplete": true,
+    "queryIssues": [],
+    "summaryCorrection": "Native prose confused reverse useCount3 with full uses10. Actual response contains both image uses; root verified JSON."
+  },
+  "reviews": {
+    "technical": "passed",
+    "currentExportCriticalStates": 111,
+    "scenes": [
+      {
+        "id": "dsx-01",
+        "total": 24,
+        "viewed": 24,
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T15:50:42.427Z",
+          "sequence": 1,
+          "authority": "agent-declared",
+          "notesPreview": "24/24张实片帧已看：本地0-5.96秒为真实黄仁勋舞台近景，6.0秒切到DSX参考架构原图并保持到11.33秒；原图实际可见、文字可读；四段字幕与旁白对应，结尾无黑帧。资料画面标签与2026-10-21日期完整，窄屏换行把NVIDIA断为NVI/DIA，属版式瑕疵。",
+          "notesCharacters": 135
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      },
+      {
+        "id": "dsx-02",
+        "total": 24,
+        "viewed": 24,
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T15:50:47.545Z",
+          "sequence": 2,
+          "authority": "agent-declared",
+          "notesPreview": "24/24张实片帧已看：0-2.67秒为真实黄仁勋近景/舞台，2.67-2.71秒宽景含Startups This Week LED与伙伴标识，3.0秒精确切到DSX原图并保持至结尾；五段字幕与旁白对应，尾部无黑帧；资料画面标签与2026-10-21日期完整可读。",
+          "notesCharacters": 132
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      },
+      {
+        "id": "dsx-03",
+        "total": 21,
+        "viewed": 21,
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T15:50:50.717Z",
+          "sequence": 3,
+          "authority": "agent-declared",
+          "notesPreview": "21/21张实片帧已看：真实舞台近景贯穿，末段5.25-6.29秒扩为含Startups This Week LED与伙伴标识的宽景，无空白、无静态替代、无黑帧；字幕推进到“缩短到十四天”，与旁白一致；标签和2026-10-21日期完整，仍有NVIDIA窄屏断行的版式瑕疵。",
+          "notesCharacters": 137
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      },
+      {
+        "id": "dsx-04",
+        "total": 24,
+        "viewed": 24,
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T15:50:54.969Z",
+          "sequence": 4,
+          "authority": "agent-declared",
+          "notesPreview": "24/24张实片帧已看：标题卡入场正常，标签由浅入深并在0.79秒完全可读；五段字幕依次为“但这十四天只算/公用设施就绪后的现场部署/不含前期建造/它也不是某个项目/已经交付的证明”，与旁白对应；至镜头末无黑帧、布局无跳动。标签“资料画/面”与标题“工厂模/块化”存在窄屏断行版式瑕疵，日期与语义正确。",
+          "notesCharacters": 151
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      },
+      {
+        "id": "dsx-05",
+        "total": 18,
+        "viewed": 18,
+        "agent": {
+          "status": "passed",
+          "createdAt": "2026-10-21T15:50:58.438Z",
+          "sequence": 5,
+          "authority": "agent-declared",
+          "notesPreview": "18/18张实片帧已看：标题卡入场正常，标签淡入后完整可读并按“｜”换行；三段字幕为“下一步要看合作伙伴名单/实际可用时间/以及首个可核对的落地案例”，与旁白对应；6.08-6.13秒收尾无字幕、无黑帧，卡片保持到末帧。标题仍在“工厂模/块化”处窄屏断行，日期与语义正确。",
+          "notesCharacters": 136
+        },
+        "user": {
+          "status": "pending",
+          "authority": "user-declared"
+        }
+      }
+    ],
+    "wholeFilmAgent": {
+      "status": "passed",
+      "createdAt": "2026-10-21T15:51:07.948Z",
+      "sequence": 6,
+      "authority": "agent-declared",
+      "notesPreview": "整片40.96秒、111张当前导出关键状态帧全部实看：五镜按当前EDL呈现，首0-3秒为连续真实黄仁勋近景，前后段均为真实动态舞台画面，DSX原图在两镜中实际可见；14天仅作公用设施就绪后的厂商说法，参考设计未表述为已交付；无黑帧、无空白或静态替代；标签与2026-10-21日期完整，录制日未知。五段旁白、字幕与稿件一",
+      "notesCharacters": 216
+    },
+    "independentRoot": {
+      "method": "CUA current latest-MP4/fullscreen playback0toend, followed by paused second-scene spot checks",
+      "observed": [
+        "Opening frame and actual hand/body movement in current exported film",
+        "First-scene switch to DSX reference photograph",
+        "Later real stage footage near24sec, with source publication label and actual subtitles",
+        "Condition-boundary card near32sec",
+        "Closing observation card near39sec andend",
+        "Second scene exact native player times12.30577and17.0593 checked separately"
+      ],
+      "wholeFilmFinding": "The film presents a modular reference design and attributed site-utilities-ready onsite deployment claim. The conditional boundary and absence of delivered-project proof are explicit. Opening/live B-roll, two original DSX image intervals, narration captions, date labels and final observation points form a coherent account. No ads, investment-number slide, stale news film or generated still is used as moving footage.",
+      "residualVisualLimitation": "NVIDIA wraps across lines in some labels but remains readable; factory reference image is a stage photograph, not a delivered site.",
+      "humanListening": "pending; no auditory claims from CUA screenshots or technical report",
+      "finalPlayerState": "Latest MP4 at0:00andpaused, fullscreen exited, returnedfromLibrarytoStudio.",
+      "savedPhoneFrames": [
+        {
+          "seconds": 0,
+          "artifactId": "media-10398ff2-c008-4ef4-a5bb-63c1611483dc-frame-1.png"
+        },
+        {
+          "seconds": 1.7083333333333333,
+          "artifactId": "media-10398ff2-c008-4ef4-a5bb-63c1611483dc-frame-6.png"
+        },
+        {
+          "seconds": 3.25,
+          "artifactId": "media-10398ff2-c008-4ef4-a5bb-63c1611483dc-frame-7.png"
+        },
+        {
+          "seconds": 5.958333333333333,
+          "artifactId": "media-0ce5b30d-d828-444e-85b8-a8127a1244be-frame-6.png"
+        },
+        {
+          "seconds": 6,
+          "artifactId": "media-0ce5b30d-d828-444e-85b8-a8127a1244be-frame-7.png"
+        }
+      ],
+      "openingFinding": "All five saved390px-wide current-export frames independently viewed: real face/body/hand change at0,1.708,3.25and5.958; direct cut to original DSX photograph at6. No start blank or opening still/fade substitution. Actual ledger0–6 video/file.319–6.319 with nohold matches."
+    },
+    "humanListening": "pending",
+    "userAcceptance": "pending",
+    "visualLimitations": [
+      "NVIDIA and some titles wrap across narrow lines; still readable.",
+      "Original reference photograph fine print is small; source script/links retain exact facts.",
+      "Real opening footage is reused illustrative stage B-roll, not an original DSX speech excerpt."
+    ]
+  },
+  "documents": {
+    "fullScript": "NEWS_DSX_POD_SCRIPT.md",
+    "nativeSrt": {
+      "artifactId": "video-042918aa-2c19-4e74-84d8-6c71ae89213a.srt",
+      "bytes": 1303,
+      "draftId": "9665aa12-9361-4976-9098-7cf3752f40d5",
+      "revision": 34,
+      "type": "subtitles",
+      "format": "srt",
+      "contentType": "application/x-subrip",
+      "cueCount": 21,
+      "timing": "edited",
+      "provenanceArtifactId": "video-2a8b7fc3-6f16-4579-a2b2-aebe140ca1d8.json",
+      "sentenceTiming": "independently-edited",
+      "sha256": "da6a05310749f47e20c92fc54d43c9130bc3e11b315d510dd866adb0f7174965"
+    },
+    "emptyCitationExport": {
+      "artifactId": "video-c58806c9-4322-46a5-a6ff-13a151fb9953.json",
+      "citationCount": 0,
+      "meaning": "Retained empty exact-quote export, not a script or source list. Full script and source links are in repository Markdown; actual native SRT is Project-owned."
+    }
+  },
+  "preservation": {
+    "checkedAt": "2026-10-21T15:57:36.470Z",
+    "oldArtifacts": 13429,
+    "oldStudioAndNewsStateFiles": 173,
+    "oldHistories": 95,
+    "originalSessionOwnersAndAnchors": 108,
+    "currentSessions": 109,
+    "problems": []
+  },
+  "regression": {
+    "buildAndCheck": true,
+    "offlinePassed": 114,
+    "offlineFailed": 0,
+    "offlineNotRun": 90,
+    "nativeEffectivePasses": 19,
+    "nativeFirstAttemptFailure": "One source fixture generated its own video without selected tracks; isolated retry passed. Initial failure preserved.",
+    "testedNonMarkdownInputs": 554,
+    "testedGeneratedOutputs": 520,
+    "productionProfileTests": false,
+    "scopeDocument": "../VERIFICATION.md"
+  },
+  "followups": {
+    "automationId": "bmw",
+    "status": "ACTIVE",
+    "initialCompletedAt": "2026-10-21T15:56:47.676Z",
+    "firstDueAt": "2026-10-21T18:56:48.000Z",
+    "secondNominalDueAt": "2026-10-21T21:56:48.000Z",
+    "intervalHours": 3,
+    "plannedRounds": 2,
+    "videosPerRound": 2,
+    "completedRounds": 0,
+    "stop": "Pause after2 actual completed rounds. User-task deferrals and incomplete footage do not count as completed deliveries."
+  },
+  "limits": [
+    "No full ten-item mainProfile snapshot; correct shortage9 branch verified.",
+    "Actual sources sampled and health scopes retained; not all-site coverage.",
+    "GUI assistance present; no unattended production acceptance.",
+    "Human listening and user acceptance pending.",
+    "No external upload/publication; transient paste-page opening stopped before fill/submit and closed.",
+    "Follow-up four films scheduled, not yet produced."
+  ]
+}

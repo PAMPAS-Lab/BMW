@@ -8,22 +8,23 @@ import {sceneCoverage} from '../studio-contract.js'
 type Context={projectId:string;draft:VideoDraft;scene:StudioScene;disabled:boolean}
 /** Bounded references, not a second timeline. Pending fields flush before selection or export. */
 export class StudioSpeechLinksEditor {
- private flushing=false;private pending?:StudioSpeechLinks;private scope?:{projectId:string;draftId:string;sceneId:string};private details?:HTMLDetailsElement
- constructor(private root:HTMLElement,private context:()=>Context|undefined,private edit:(fn:(scene:StudioScene)=>void)=>Promise<void>,private message:(text:string)=>void,private field:(id:string|undefined)=>void){}
+ private flushing=false;private editing=false;private pending?:StudioSpeechLinks;private scope?:{projectId:string;draftId:string;sceneId:string};private details?:HTMLDetailsElement
+ constructor(private root:HTMLElement,private context:()=>Context|undefined,private saveScene:(fn:(scene:StudioScene)=>void)=>Promise<void>,private message:(text:string)=>void,private field:(id:string|undefined)=>void){}
+ private async edit(fn:(scene:StudioScene)=>void):Promise<void>{if(this.editing)throw new Error('请等待句锚点引用保存完成。');this.editing=true;this.render();try{await this.saveScene(fn)}finally{this.editing=false;this.render()}}
  private run(fn:()=>Promise<void>|void):void{void Promise.resolve().then(fn).catch(error=>this.message(error instanceof Error?error.message:String(error)))}
  async flush():Promise<void>{if(this.flushing||!this.pending)return;const pending=assertStudioSpeechLinks(this.pending),scope=this.scope,context=this.context()
   if(!scope||!context||scope.projectId!==context.projectId||scope.draftId!==context.draft.id||scope.sceneId!==context.scene.id)throw new Error('句锚点引用所属分镜已切换，请重新加载。')
-  this.flushing=true;this.field(undefined)
-  try{await this.edit(scene=>{scene.speechLinks=pending});this.pending=undefined;this.render()}catch(error){this.field(this.root.id);throw error}finally{this.flushing=false}
+  this.flushing=true;this.field(undefined);this.render()
+  try{await this.edit(scene=>{scene.speechLinks=pending});this.pending=undefined}catch(error){this.field(this.root.id);throw error}finally{this.flushing=false;this.render()}
  }
- private modify(id:string,fn:(links:StudioSpeechLinks)=>void):void{const c=this.context();if(!c||c.disabled)return;this.pending??=structuredClone(c.scene.speechLinks??{bullets:[],focus:[]});this.scope={projectId:c.projectId,draftId:c.draft.id,sceneId:c.scene.id};fn(this.pending);this.field(id)}
+ private modify(id:string,fn:(links:StudioSpeechLinks)=>void):void{const c=this.context();if(this.flushing||this.editing||!c||c.disabled)return;this.pending??=structuredClone(c.scene.speechLinks??{bullets:[],focus:[]});this.scope={projectId:c.projectId,draftId:c.draft.id,sceneId:c.scene.id};fn(this.pending);this.field(id)}
  private button(text:string,fn:()=>Promise<void>|void,disabled=false):HTMLButtonElement{const b=document.createElement('button');b.textContent=text;b.disabled=disabled;b.onclick=()=>this.run(fn);return b}
  private anchors(scene:StudioScene,value:string,id:string,disabled:boolean,change:(id:string)=>void):HTMLSelectElement{const select=document.createElement('select');select.id=id;select.disabled=disabled;select.append(new Option('不引用句锚点',''))
   for(const anchor of scene.speechAnchors?.anchors??[]){const ranges=narrationSceneRanges(scene,anchor.startSeconds,anchor.endSeconds),label=ranges.length?ranges.map(r=>r.start.toFixed(2)+'–'+r.end.toFixed(2)+'s').join(' / '):'当前片段外 · 原音频 '+anchor.startSeconds.toFixed(2)+'–'+anchor.endSeconds.toFixed(2)+'s';select.append(new Option(`${scene.narration.slice(anchor.scriptStart,anchor.scriptEnd)} · ${label}`,anchor.id))}
   if(value&&![...select.options].some(o=>o.value===value))select.append(new Option('已失效 · '+value,value));select.value=value;select.onchange=()=>{change(select.value);this.run(()=>this.flush())};return select
  }
- render():void{const context=this.context();if(this.pending){for(const n of this.root.querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('input,select,button'))n.disabled=context?.disabled??true;return}const open=this.details?.open??false;this.root.replaceChildren();if(!context)return
-  const {scene,draft,disabled}=context,links=scene.speechLinks??{bullets:[],focus:[]},visuals=sceneVisuals(scene)
+ render():void{const context=this.context();if(this.pending){for(const n of this.root.querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('input,select,button'))n.disabled=this.flushing||this.editing||(context?.disabled??true);return}const open=this.details?.open??false;this.root.replaceChildren();if(!context)return
+  const {scene,draft}=context,disabled=context.disabled||this.flushing||this.editing,links=scene.speechLinks??{bullets:[],focus:[]},visuals=sceneVisuals(scene)
   this.details=document.createElement('details');this.details.open=open;this.details.className='speech-links advanced';const summary=document.createElement('summary');summary.textContent='按句同步 · 画面强调与板书揭示';this.details.append(summary);this.root.append(this.details)
   const note=document.createElement('p');note.className='muted';const binding=scene.speechAnchors,stale=speechBindingStale(scene,binding)||sceneCoverage(scene,draft.tts).audioStale
   note.textContent=binding?`${stale?'句锚点已过期':'句锚点来源：'+(binding.origin==='user-edited'?'用户编辑':'Agent 编辑')}。选项按当前旁白播放区间映射到分镜；紧凑节奏、裁剪与分割使用同一时钟。`:'先在旁白面板试听并保存句锚点，再绑定画面强调或板书。';this.details.append(note)

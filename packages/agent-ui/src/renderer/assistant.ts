@@ -16,9 +16,9 @@ function renderContext(raw: unknown): void {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return
   const value = raw as Record<string, unknown>, selection = value.selection && typeof value.selection === 'object' ? value.selection as Record<string, unknown> : {}
   composerScope.context(raw)
-  input.placeholder=value.mode==='studio'?'描述想做的视频，或告诉我如何修改当前视频…':'给 Assistant 发消息…'
-  workspaceMode.value = value.mode === 'studio' ? 'studio' : 'browser'
-  element('studio-context').textContent = value.mode === 'studio' ? (typeof value.draftTitle === 'string' ? value.draftTitle + ' · ' + (typeof value.sceneTitle === 'string' ? value.sceneTitle : '未选择分镜') + ' · v' + String(selection.revision ?? '') + (selection.dirty === true ? ' · 有未保存修改' : '') : '在下方描述视频目标，Assistant 将准备素材并制作初稿') : '同一会话 · 视频草稿保留'
+  input.placeholder=value.mode==='library'?'告诉 Assistant 想收集或整理哪些素材…':value.mode==='studio'?'描述想做的视频，或告诉我如何修改当前视频…':'给 Assistant 发消息…'
+  workspaceMode.value = value.mode === 'studio' ? 'studio' : value.mode === 'library' ? 'library' : 'browser'
+  element('studio-context').textContent = value.mode === 'studio' ? (typeof value.draftTitle === 'string' ? value.draftTitle + ' · ' + (typeof value.sceneTitle === 'string' ? value.sceneTitle : '未选择分镜') + ' · v' + String(selection.revision ?? '') + (selection.dirty === true ? ' · 有未保存修改' : '') : '在下方描述视频目标，Assistant 将准备素材并制作初稿') : value.mode==='library'?'素材收集到当前 Project · 可检索全库':'同一会话 · 视频草稿保留'
 }
 function setOptions(select: HTMLSelectElement, entries: { id: string; text: string }[], selected: string | null): void {
   select.replaceChildren(...entries.map(row => { const option = document.createElement('option'); option.value = row.id; option.textContent = row.text; return option }))
@@ -102,7 +102,7 @@ window.bmwAssistant.onComposerPrefill?.(raw=>{
   if(!composerScope.prefill(raw)){error.textContent='已有未发送消息，已保留文字和范围；请先处理当前消息。';error.hidden=false;input.focus();return}
   input.value=value.text;input.dispatchEvent(new Event('input'));input.focus()
 })
-workspaceMode.onchange = () => { workspaceMode.disabled = true; void window.bmwAssistant.setWorkspaceMode(workspaceMode.value === 'studio' ? 'studio' : 'browser').then(renderContext).catch((caught: unknown) => { error.textContent = caught instanceof Error ? caught.message : '工作区模式切换失败'; error.hidden = false }).finally(() => { workspaceMode.disabled = state?.busy ?? false }) }
+workspaceMode.onchange = () => { workspaceMode.disabled = true; void window.bmwAssistant.setWorkspaceMode(workspaceMode.value === 'studio' ? 'studio' : workspaceMode.value === 'library' ? 'library' : 'browser').then(renderContext).catch((caught: unknown) => { error.textContent = caught instanceof Error ? caught.message : '工作区模式切换失败'; error.hidden = false }).finally(() => { workspaceMode.disabled = state?.busy ?? false }) }
 void window.bmwAssistant.composerContext().then(renderContext).catch(() => {})
 void invoke({ action: 'snapshot' })
 

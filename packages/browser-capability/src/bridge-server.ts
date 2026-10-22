@@ -5,10 +5,12 @@ import path from 'node:path'
 import { SessionOperations } from './session-operations.js'
 import type { AddressInfo } from 'node:net'
 
-interface BrowserExecutor {
+export interface BrowserExecutor {
   readonly busy?:boolean
   execute(input: unknown, options?: { signal?: AbortSignal; sessionOwner?:import('./browser-host.js').BrowserSessionOwner }): Promise<unknown>
 }
+
+export interface ScopedBrowserExecution {executor:BrowserExecutor;valid():boolean}
 
 interface ErrorWithCode extends Error {
   code?: string
@@ -46,21 +48,22 @@ function record(value: unknown): Record<string, unknown> {
 export async function createBridgeServer(browserKernel: BrowserExecutor, { productId = 'bmw', resolveProject, activeProjectId, toolDefinition,sessionContext }: BridgeOptions = {}) {
   const token = crypto.randomBytes(32).toString('hex')
   const operations = new SessionOperations()
-  const bindings = new Map<string, { project: Project; sessionId: string }>()
+  const bindings = new Map<string, { project: Project; sessionId: string; scope?:ScopedBrowserExecution }>()
   const activeCalls = new Map<AbortController, { binding: string; settled: Promise<unknown> }>()
   const providerBindings = new Map<string, string>()
   const providerKey = (driverId: string, sessionId: string, directory: string) => JSON.stringify([driverId,sessionId,directory])
   let closing = false
   let projectChanging = false
-  function register(sessionId: string, directory: string): string {
+  function register(sessionId: string, directory: string,scope?:ScopedBrowserExecution): string {
     if (closing || projectChanging) throw new Error('BMW browser is changing or shutting down')
     if (!sessionId || sessionId.length > 4096 || /[\u0000-\u001f\u007f]/u.test(sessionId)) throw new Error('Invalid Agent Session identity')
     const project = resolveProject?.(directory)
     if (!project) throw new Error('Agent Session does not belong to an active BMW Project')
     const binding = crypto.randomBytes(32).toString('hex')
-    bindings.set(binding, { project: { ...project }, sessionId })
+    bindings.set(binding, { project: { ...project }, sessionId,scope })
     return binding
   }
+  const admitted=(owner:{project:Project;scope?:ScopedBrowserExecution})=>owner.scope?owner.scope.valid():activeProjectId?.()===owner.project.id
   async function release(binding: string): Promise<void> {
     // Revoke admission first, then wait for actual kernel/worker cleanup.
     bindings.delete(binding)
@@ -110,9 +113,9 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
       const owner = bindings.get(binding)
       if (!owner) throw new Error('BMW browser Session has ended')
       if(request.url==='/session/context'){
-        if(activeProjectId?.()!==owner.project.id)throw new Error('Activate the Session’s BMW Project before reading its context')
+        if(!admitted(owner))throw new Error('Activate the Session’s BMW Project before reading its context')
         const value=await sessionContext?.(owner.sessionId,owner.project.id)??{text:''}
-        if(closing||projectChanging||bindings.get(binding)!==owner||activeProjectId?.()!==owner.project.id)throw new Error('Session context changed during admission')
+        if(closing||projectChanging||bindings.get(binding)!==owner||!admitted(owner))throw new Error('Session context changed during admission')
         if(typeof value.text!=='string'||value.text.length>16_384)throw new Error('Invalid BMW context snapshot')
         json(response,200,value);return
       }
@@ -123,10 +126,10 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
       const actionName = String(record(input.arguments).action || 'unknown')
       const work = operations.run(() => {
         if (closing || projectChanging || disconnected || bindings.get(binding) !== owner) throw new Error('BMW browser Session was released or cancelled')
-        if (activeProjectId?.() !== owner.project.id) throw new Error('Activate the Session’s BMW Project before using browser')
+        if (!admitted(owner)) throw new Error('Activate the Session’s BMW Project before using browser')
       }, async () => {
-        const result = await browserKernel.execute(input.arguments, { signal: cancellation.signal, sessionOwner:{projectId:owner.project.id,sessionId:owner.sessionId} })
-        if (cancellation.signal.aborted || bindings.get(binding) !== owner || closing || projectChanging || activeProjectId?.() !== owner.project.id) throw new Error('BMW_BROWSER_CANCELLED: Session changed before its browser result drained')
+        const result = await (owner.scope?.executor??browserKernel).execute(input.arguments, { signal: cancellation.signal, sessionOwner:{projectId:owner.project.id,sessionId:owner.sessionId} })
+        if (cancellation.signal.aborted || bindings.get(binding) !== owner || closing || projectChanging || !admitted(owner)) throw new Error('BMW_BROWSER_CANCELLED: Session changed before its browser result drained')
         const images: { type: 'image'; mimeType: 'image/png'; data: string }[] = []
         const action = record(input.arguments).action
         const sourceAnalysisImages=action==='video.studio'&&record(record(input.arguments).studioRequest).operation==='analysis'&&['read','step'].includes(String(record(record(record(input.arguments).studioRequest).analysisRequest).operation))

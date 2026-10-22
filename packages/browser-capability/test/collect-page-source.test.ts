@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {EventEmitter} from 'node:events'
 import type {WebContents} from 'electron'
+import type {SourceScope} from '@bmw-agent/media-native/sources'
 import {collectPageSource} from '../src/collect-page-source.js'
 const scope={selector:'article',index:0,excludeSelectors:[],characterUnit:'utf16' as const,extraction:'visible-text-nodes' as const,truncated:false,status:'observed' as const}
 test('Published time reads a bounded timezone-bearing TIME datetime while preserving visible date fallback',async()=>{
@@ -30,6 +31,19 @@ test('Publication metadata extracts one complete publisher date line beside byli
  const clipped=await collect('October 16, 2026\n'+'byline '.repeat(20),true);assert.equal(clipped.result,'truncated');assert.notEqual(clipped.publishedAt,'October 16, 2026');assert.match(clipped.error!,/publishedAt/)
 })
 function fixture(read:(code:string)=>Promise<unknown>){const events=new EventEmitter();Object.assign(events,{getURL:()=> 'https://example.com/article',getTitle:()=> 'Article',isDestroyed:()=>false,executeJavaScript:read});return {events,wc:events as unknown as WebContents}}
+test('Visible body witnesses bind UTF16 author and publication metadata without guessing selectors or accepting changed text',async()=>{
+ const text='📰 News\nPublished\nOctober 20, 2026\nStory\n作者\nOpenAI',witness=(quote:string)=>({startCharacter:text.indexOf(quote),endCharacter:text.indexOf(quote)+quote.length,quote}),metadataRanges={author:witness('OpenAI'),publishedAt:witness('October 20, 2026')}
+ const collect=(body=text,range:SourceScope=scope,request:Record<string,unknown>={})=>collectPageSource(fixture(async()=>({text:body,range})).wc,{bodySelector:'article',metadataRanges,...request},async()=>({items:[],range:scope,truncated:false}))
+ const result=await collect();assert.equal(result.result,'observed');assert.equal(result.author,'OpenAI');assert.equal(result.publishedAt,'October 20, 2026');assert.deepEqual(result.metadataRanges,metadataRanges)
+ const changed=await collect(text.replace('October 20','October 19'));assert.equal(changed.result,'failed');assert.match(changed.error!,/witness differs/);assert.equal(changed.publishedAt,null);assert.equal(changed.metadataRanges,undefined)
+ assert.equal((await collect(text,{...scope,truncated:true})).result,'failed');assert.equal((await collect(text,{...scope,status:'element-not-found'})).result,'failed');assert.equal((await collect(text,scope,{publishedSelector:'time'})).result,'failed')
+})
+test('Body publication witnesses reject cropped update/recording dates and non-date text instead of laundering them into current news',async()=>{
+ for(const text of ['Updated October 20, 2026','Updated\nOctober 20, 2026','Recorded\nOctober 20, 2026','转载\nOctober 20, 2026','Event on October 20, 2026 tomorrow','October 20, 2026 and October 21, 2026','not a date']){
+  const quote=text.includes('October')?'October 20, 2026':'not a date',startCharacter=text.indexOf(quote)
+  const result=await collectPageSource(fixture(async()=>({text,range:scope})).wc,{bodySelector:'article',metadataRanges:{publishedAt:{startCharacter,endCharacter:startCharacter+quote.length,quote}}},async()=>({items:[],range:scope,truncated:false}));assert.equal(result.result,'failed',text);assert.equal(result.publishedAt,null)
+ }
+})
 test('Source collection retains scoped originals, unknown dates and candidate-only roles with no global resource admission',async()=>{const f=fixture(async()=>({text:'Original',range:scope}));const result=await collectPageSource(f.wc,{bodySelector:'article',excludeSelectors:['.ad','.avatar']},async request=>{assert.equal(request.selector,'article');assert.deepEqual(request.excludeSelectors,['.ad','.avatar']);return {items:[{kind:'image',url:'https://example.com/body.png'},{kind:'network',url:'https://example.com/avatar.png'},{kind:'poster',url:'https://example.com/cover.png'},{kind:'video',url:'blob:https://example.com/v',duration:30}],range:scope,truncated:false}})
  assert.equal(result.author,null);assert.equal(result.publishedAt,null);assert.equal(result.result,'observed');assert.deepEqual(result.candidates.map(candidate=>candidate.role),['body','cover','video']);assert.equal(f.events.eventNames().length,0)
 })

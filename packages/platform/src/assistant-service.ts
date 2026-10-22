@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { agentRecord, agentText } from '@bmw-agent/agent-contract'
 import type { AgentBackend, AgentRunRequest,AgentProject } from '@bmw-agent/agent-contract'
-import type { createBridgeServer } from '@bmw-agent/browser-capability/bridge'
+import type { BrowserExecutor,createBridgeServer } from '@bmw-agent/browser-capability/bridge'
 import { AgentHost } from './agent-host.js'
 import { ConversationStore } from './conversation-store.js'
 import { AgentHistoryStore } from './agent-history-store.js'
@@ -46,6 +46,7 @@ export interface AssistantServiceOptions {
   mcpServerPath: string
   definition: AgentBridgeConnection['definition']
   bridge: BrowserBridge
+  backgroundScope?(request:AgentRunRequest):{executor:BrowserExecutor;valid():boolean;close():Promise<void>}
   currentProject(): AgentHostProject
   getProjects(): AgentHostProject[]
   context(sessionId: string, projectId: string): Promise<string>
@@ -63,7 +64,7 @@ export class AssistantService {
   readonly controller: AssistantController
   readonly sessions: BmwSessionService
   readonly settings:AgentSettingsController
-  private readonly leases = new Map<string, string>()
+  private readonly leases = new Map<string, {binding:string|null;scope?:{close():Promise<void>}}>()
   private readonly unsubscribe: () => void
   constructor(private readonly options: AssistantServiceOptions) {
     const stores=options.stores??loadAssistantStores(options.userDataDirectory,options.assembly.defaultDriverId,options.onState)
@@ -74,8 +75,8 @@ export class AssistantService {
     const backends=options.assembly.createBackends({userDataDirectory:options.userDataDirectory,connection:request=>this.connection(request),projects,
       controlConnection:{bridgeUrl:options.bridge.url,bridgeToken:options.bridge.token,mcpServerPath:options.mcpServerPath},nodeExecutable:options.nodeExecutable,model:driverId=>this.preferences.model(driverId),setModel:(driverId,modelId)=>this.preferences.setModel(driverId,modelId),definition:options.definition})
     this.host = new AgentHost({ conversations: this.conversations, history: this.history,backends,
-      currentProject: options.currentProject, context: options.context,onSettingsInvalidated:driverId=>this.settings.invalidate(driverId),
-      drain: async request => { const binding = this.leases.get(request.runId); if (binding) { await options.bridge.releaseSession(binding); this.leases.delete(request.runId) } }
+      currentProject: options.currentProject, project:id=>options.getProjects().find(p=>p.id===id), context: options.context,onSettingsInvalidated:driverId=>this.settings.invalidate(driverId),
+      drain: async request => { const lease = this.leases.get(request.runId); if (lease) { if(lease.binding)await options.bridge.releaseSession(lease.binding); await lease.scope?.close();this.leases.delete(request.runId) } }
     })
     this.settings=new AgentSettingsController({host:this.host,backends,configurationKey:driverId=>this.preferences.model(driverId)??'',openExternal:options.openExternal??(async()=>{throw new Error('Official login browser is unavailable')}),onState:options.onState})
     this.unsubscribe = this.host.subscribe(options.onState)
@@ -96,8 +97,13 @@ export class AssistantService {
   }
   private async connection(request: AgentRunRequest): Promise<AgentBridgeConnection> {
     if (this.leases.has(request.runId)) throw new Error('Agent run already owns a browser lease')
-    const binding = this.options.bridge.registerSession(request.sessionId, request.project.directory)
-    this.leases.set(request.runId, binding)
+    const scope=this.host.isBackground(request.runId)?this.options.backgroundScope?.(request):undefined
+    if(this.host.isBackground(request.runId)&&!scope)throw new Error('Isolated background browser is unavailable')
+    // Retain the cleanup handle even if registration fails before driver admission.
+    const lease:{binding:string|null;scope?:{close():Promise<void>}}={binding:null,scope}
+    this.leases.set(request.runId,lease)
+    const binding=this.options.bridge.registerSession(request.sessionId,request.project.directory,scope)
+    lease.binding=binding
     const bridgeUrl = this.options.bridge.url, bridgeToken = this.options.bridge.token
     return { bridgeUrl, bridgeToken, binding, nodeExecutable: this.options.nodeExecutable, mcpServerPath: this.options.mcpServerPath, definition: this.options.definition,
       attachProviderSession: externalSessionId => { const row=this.conversations.get(request.sessionId,request.project.id);this.options.bridge.attachProviderSession(binding,row.driverId,externalSessionId) },

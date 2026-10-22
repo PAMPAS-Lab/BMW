@@ -4,6 +4,8 @@
 
 ## 目标与依赖
 
+2026-10-22 社媒原生获取增量：X、微博各两条公开样本通过目标绑定和完整获取；YouTube 完整直链分离合并的隔离夹具通过，当前真实站点 SABR/UMP 获取未通过。用户决定暂缓，登记 [YOUTUBE-01 待办](YOUTUBE_NATIVE_ACQUISITION.md)，不引入 yt-dlp，TikTok 不在本期范围。当前功能保留 HTTP/HLS 原生下载，[实测范围](../research/SOCIAL_DOWNLOAD_VALIDATION.md)与内容制作主线分别管理。
+
 2026-10-17 用户更新考核为三类视频：30–60 秒AI新闻速递（广泛人物、学术界、公司机构与跨领域重要表态）、内容完整且多素材的科普、围绕论文／开源项目的学术解释。以[三类制作方案](VIDEO_TYPES.md)和[文案／模板工作表](VIDEO_TYPE_TEMPLATES.md)为场景依据；这次替代此前“Simon 优先＋AK 技术切片先行”的顺序。Simon保留为后续迁移验证，旧媒体问题保留追踪。P1功能及P2的AK原生功能已实现；当前源码与完整离线回归见[验证说明](../VERIFICATION.md)，不把功能通过等同内容验收。历史BMW＋DSH／官方deepseek-flash三主片为新闻57.664秒、科普210.859秒、学术229.248秒，见[新闻](../research/DSH_SI_DELIVERY.json)、[科普／学术](../research/DSH_SCIENCE_RESEARCH_DELIVERY.json)；原Qoder主片、换题短片和AK组合片保留在[阶段清单](../research/P1_AK_DELIVERY.json)。
 
 | 顺序／ID | 状态与最小交付 | 依赖与退出条件 |

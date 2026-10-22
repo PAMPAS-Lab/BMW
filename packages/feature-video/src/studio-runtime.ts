@@ -1,5 +1,6 @@
+import {sourceBindings,sourceLookup} from '@bmw-agent/media-native/sources'
 import {NEWS_RESEARCH_PROMPT,newsProductionPrompt} from './news-contract.js'
-import {NewsJournal} from './news-store.js'
+import {NewsJournal,newsFingerprint} from './news-store.js'
 import {requireSimpleVideo} from './studio-compatibility.js'
 import {studioAssistantRequest,studioAssistantPrompt} from './studio-assistant.js'
 import {assertStudioRecoveryRequest,canPrepareStudioRecovery,studioRecoveryPrompt} from './studio-production-progress.js'
@@ -59,7 +60,7 @@ export class VideoStudioRuntime implements FeatureRuntime {
   }
   private cancellation?:AbortController
   private inputs=new Map<string,Promise<ArtifactJobIO>>()
-  configure(config:Configuration):void {this.config=config;config.browserKernel.videoStudioOpen=owner=>{if(owner.sessionId!==config.getCurrentSessionId?.())throw new Error('Only the selected Session may open Studio.');return this.openPanel('video-studio')};config.browserKernel.videoStudioContext=owner=>this.currentContext(owner);config.browserKernel.videoStudioChanged=(owner,productionProgress)=>{if(owner){const view=this.views.get(this.key(owner.projectId,owner.sessionId));if(view&&!view.webContents.isDestroyed())view.webContents.send('video-studio-change',{projectId:owner.projectId,...(productionProgress?{productionProgress}:{})})}else for(const view of this.views.values())if(!view.webContents.isDestroyed())view.webContents.send('video-studio-change',{settingsChanged:true});this.publishContext()}}
+  configure(config:Configuration):void {this.config=config;config.browserKernel.videoStudioUse=async(owner,material,target)=>{if(owner.projectId!==config.projectStore.active().id||owner.sessionId!==config.getCurrentSessionId?.())throw new Error('Studio Project changed.');const store=new VideoStudioStore(config.projectStore.active().directory,owner.sessionId),draft=store.read(target.draftId);if(draft.revision!==target.expectedRevision)throw new Error('STUDIO_CONFLICT: Material was copied, but the video changed. Reopen the picker to add it.');const sourcePort=config.browserKernel.projectSources?.(),artifactId=material.artifactId;let artifactIds:string[]=[],sourceIds:string[]=[];if(artifactId){if(!store.assets(config.projectStore.active().directory).some(a=>a.artifactId===artifactId))throw new Error('Choose an existing Project material.');artifactIds=[artifactId];sourceIds=sourcePort?sourceBindings(sourcePort,artifactId).map(v=>v.source.id):[]}else{const found=sourcePort?sourceLookup(sourcePort,material.sourceId!,material.acquisitionId!):undefined,source=found?.source,acquisition=found?.acquisition;if(!source||!acquisition)throw new Error('Choose an existing Project source.');const body=await config.browserKernel.projectSources!().readBody(source.id,acquisition.id);artifactIds=acquisition.media.filter(m=>m.artifactId&&body.mediaAvailability.find(a=>a.mediaId===m.id)?.available).map(m=>m.artifactId!);sourceIds=[source.id]}draft.preparation.artifactIds=[...new Set([...draft.preparation.artifactIds,...artifactIds])];draft.preparation.sourceIds=[...new Set([...(draft.preparation.sourceIds??[]),...sourceIds])];const saved=await config.browserKernel.execute({action:'video.studio',studioRequest:{operation:'update',draftId:draft.id,expectedRevision:draft.revision,draft}},{actor:'user',sessionOwner:owner});await config.browserKernel.videoStudioSelect?.(owner,draft.id);return saved};config.browserKernel.videoStudioSelect=async(owner,draftId)=>{if(owner.projectId!==config.projectStore.active().id||owner.sessionId!==config.getCurrentSessionId?.())throw new Error('Only the selected Session may choose a Studio draft.');const draft=new VideoStudioStore(config.projectStore.active().directory,owner.sessionId).read(draftId);await this.requestMode('studio');this.selections.set(this.key(owner.projectId,owner.sessionId),{draftId,stage:0,revision:draft.revision,dirty:false});this.view?.webContents.send('video-studio-change',{selectedDraftId:draftId});this.publishContext();return {opened:true,draftId}};config.browserKernel.videoStudioOpen=owner=>{if(owner.sessionId!==config.getCurrentSessionId?.())throw new Error('Only the selected Session may open Studio.');return this.requestMode('studio').then(()=>({opened:true}))};config.browserKernel.videoStudioContext=owner=>this.currentContext(owner);config.browserKernel.videoStudioChanged=(owner,productionProgress)=>{if(owner){const view=this.views.get(this.key(owner.projectId,owner.sessionId));if(view&&!view.webContents.isDestroyed())view.webContents.send('video-studio-change',{projectId:owner.projectId,...(productionProgress?{productionProgress}:{})})}else for(const view of this.views.values())if(!view.webContents.isDestroyed())view.webContents.send('video-studio-change',{settingsChanged:true});this.publishContext()}}
   async openPanel(id:string):Promise<{opened:boolean}> {
     if(this.stopping)throw new Error('Studio 已停止，不能重新打开。')
     if(id!=='video-studio'||!this.config||this.config.isProjectChanging())throw new Error('Unknown product panel.')
@@ -92,6 +93,7 @@ export class VideoStudioRuntime implements FeatureRuntime {
     // Reorder the attached View directly: detaching interrupts viewport delivery.
     host.contentView.addChildView(this.view);this.view.setBounds(bounds);this.view.setVisible(true)
   }
+  private requestMode(mode:StudioMode):Promise<void>{return this.config?.openWorkspace?this.config.openWorkspace(mode):this.setMode(mode)}
   async setMode(raw:unknown):Promise<void> {
     const mode=assertStudioMode(raw)
     if(mode==='studio'){await this.openPanel('video-studio');return}
@@ -111,7 +113,7 @@ export class VideoStudioRuntime implements FeatureRuntime {
     return {mode:this.mode,projectId:project.id,sessionId,chat:this.chats.get(key)??{open:false},view:this.preferences.get(key)??defaultStudioView,selection:selection&&draft?{...selection,revision:draft.revision}:null,draftTitle:draft?.title,object:studioSelectedObject(draft,selection),sceneTitle:draft?.scenes.find(scene=>scene.id===selection?.sceneId)?.title}
   }
   private publishContext():void {
-    const value=this.currentContext();this.config?.getShellWebContents()?.send('video-workspace-state',value);this.config?.getAgentWebContents?.()?.send('video-workspace-state',value)
+    const value=this.currentContext();if(this.config?.sendToShell)this.config.sendToShell('video-workspace-state',value);else this.config?.getShellWebContents()?.send('video-workspace-state',value);if(this.config?.sendToAgent)this.config.sendToAgent('video-workspace-state',value);else this.config?.getAgentWebContents?.()?.send('video-workspace-state',value)
   }
   async contextForSession(sessionId:string,projectId:string):Promise<{text:string}> {
     const config=this.config
@@ -132,8 +134,10 @@ export class VideoStudioRuntime implements FeatureRuntime {
     return config
   }
   installIpc(ipc:IpcMain):void {
+    ipc.handle('video-studio-news-status',event=>{const config=this.authorize(event),batch=new NewsJournal(config.projectStore.active().directory,this.scope()).read();return {revision:batch.revision,selection:batch.selection??null,closed:batch.closed??false,topics:[],fingerprint:newsFingerprint(batch.topics),asOf:new Date().toISOString()}})
+    ipc.handle('video-studio-library',async event=>{const config=this.authorize(event),owner=this.scope();if(this.view&&!this.view.webContents.isDestroyed())await this.view.webContents.executeJavaScript('window.bmwStudioFlush?.()');this.authorize(event);const selection=this.selections.get(this.key(owner.projectId,owner.sessionId));return config.browserKernel.libraryOpen?.(owner,selection?{draftId:selection.draftId,expectedRevision:selection.revision}:undefined)})
     ipc.handle('video-workspace-state',event=>{this.authorizeAgent(event);return this.currentContext()})
-    ipc.handle('video-workspace-mode',async(event,mode:unknown)=>{this.authorizeAgent(event);await this.setMode(mode);return this.currentContext()})
+    ipc.handle('video-workspace-mode',async(event,mode:unknown)=>{this.authorizeAgent(event);await this.requestMode(assertStudioMode(mode));return this.currentContext()})
     ipc.handle('video-studio-selection',(event,raw:unknown)=>{
       const config=this.authorize(event),key=this.key(config.projectStore.active().id,this.ownerSessionId)
       if(raw===null){this.selections.delete(key);this.publishContext();return {selected:false}}
@@ -197,7 +201,7 @@ export class VideoStudioRuntime implements FeatureRuntime {
       if(!activity||!['running','queued','waiting-user','waiting-approval','cancelling'].includes(activity.status)||!config.cancelAssistant)throw new Error('No active Assistant task in this Session.')
       await config.cancelAssistant(owner.sessionId);this.authorize(event);return {cancelled:true}
     })
-    ipc.handle('video-studio-leave' ,event=>{this.authorize(event);return this.setMode('browser')})
+    ipc.handle('video-studio-leave' ,event=>{this.authorize(event);return this.requestMode('browser')})
     ipc.handle('video-studio-state',async event=>{
       const config=this.authorize(event),kernel=config.browserKernel
       if(!this.ownerSessionId)return {project:{id:config.projectStore.active().id,name:config.projectStore.active().name},drafts:[],assets:[],theme:config.getTheme()}
@@ -265,7 +269,7 @@ export class VideoStudioRuntime implements FeatureRuntime {
         const state=mediaRecord(await config.browserKernel.execute({action:'tabs.list'},{actor:'user',signal:cancellation.signal,sessionOwner:owner})),tabs=Array.isArray(state.tabs)?state.tabs.map(mediaRecord):[],existing=tabs.find(tab=>tab.projectId===owner.projectId&&tab.url===topic.facts.url&&typeof tab.id==='string')
         this.authorize(event);cancellation.signal.throwIfAborted()
         const result=await config.browserKernel.execute(existing?{action:'tabs.show',tabId:existing.id}:{action:'tabs.open',url:topic.facts.url,foreground:true},{actor:'user',signal:cancellation.signal,sessionOwner:owner})
-        this.authorize(event);await this.setMode('browser');return result
+        this.authorize(event);await this.requestMode('browser');return result
       }finally{if(this.cancellation===cancellation)this.cancellation=undefined}
     })
     ipc.handle('video-studio-news',async event=>{
@@ -305,7 +309,7 @@ export class VideoStudioRuntime implements FeatureRuntime {
   }
   onProjectActivated():void {
     this.view?.webContents.send('video-studio-change',this.config?.projectStore.active().id===this.ownerId?{projectRestored:true}:{projectChanged:true})
-    if(this.config?.projectStore.active().id!==this.ownerId)void this.setMode('browser')
+    if(this.mode==='studio'&&this.config?.projectStore.active().id!==this.ownerId)void this.requestMode('browser')
     this.publishContext()
   }
   async onSessionWillChange():Promise<void>{

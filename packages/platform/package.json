@@ -13,6 +13,7 @@
     "./application": "./src/main.js",
     "./assistant": "./src/assistant-service.js",
     "./feature-contract": "./src/feature-contract.js",
-    "./agent-data": "./src/agent-data-schema.js"
+    "./agent-data": "./src/agent-data-schema.js",
+    "./record-store": "./src/project-record-store.js"
   }
 }

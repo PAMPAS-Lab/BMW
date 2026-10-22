@@ -13,24 +13,29 @@ import type {CaptureEncodedPacket} from './capture-mux.js'
 import {assertPlaybackPlan} from './capture-timeline.js'
 import type {CapturePlaybackStep} from './capture-timeline.js'
 import type {CaptureFrameMapping,CapturePlaybackEvent} from './capture-timeline.js'
-interface CaptureRequest {selector?:unknown;index?:unknown;filename?:unknown;fromStart?:unknown;maxDurationMs?:unknown;playbackPlan?:unknown;sourceGuard?:SourceCaptureGuard}
+import {assertVideoIdentity,inspectPageVideoTargets} from '@bmw-agent/agent-contract/video-identity'
+import type {VideoIdentity} from '@bmw-agent/agent-contract/video-identity'
+interface CaptureRequest {selector?:unknown;index?:unknown;filename?:unknown;fromStart?:unknown;maxDurationMs?:unknown;playbackPlan?:unknown;sourceGuard?:SourceCaptureGuard;videoIdentity?:VideoIdentity}
 interface Packet {chunks:string[];videoPackets:CaptureEncodedPacket[];done:boolean;pending:number;error:string;reason:string;sourceEndSeconds:number;sourceDurationSeconds:number|null;playbackEvents:CapturePlaybackEvent[]}
 interface Initialization {ok:boolean;reason?:string;mimeType?:string;duration?:number|null;sourceStartSeconds?:number;videoTracks?:number;audioTracks?:number;muted?:boolean;width?:number;height?:number;codec?:string}
 interface PendingFrame {sourceTimestampSeconds:number;presentedFrames:number;playbackRate:number;fileTimestampSeconds:number;frame:VideoFrame;sourceWidth:number;sourceHeight:number}
-interface RendererSession {cancelled?:boolean;stop(reason?:string):boolean;pull():Packet;cancel():Promise<void>;restore():void}
+interface RendererSession {cancelled?:boolean;stop(reason?:string):boolean;pull():Packet;verify():void;cancel():Promise<void>;restore():void}
 /** Fixed renderer program. It never reads input text, credentials or network state. */
-async function initializeRenderer(key:string,request:{selector:string;index:number;fromStart:boolean;maxDurationMs:number;playbackPlan:CapturePlaybackStep[];sourceGuard?:SourceCaptureGuard}):Promise<Initialization>{
+async function initializeRenderer(key:string,request:{selector:string;index:number;fromStart:boolean;maxDurationMs:number;playbackPlan:CapturePlaybackStep[];sourceGuard?:SourceCaptureGuard;videoIdentity?:VideoIdentity},inspect?:typeof inspectPageVideoTargets):Promise<Initialization>{
  const globals=globalThis as unknown as Record<string,RendererSession>
  if(globals[key]?.cancelled)return {ok:false,reason:'Capture cancelled before initialization.'}
  const root=document.querySelectorAll(request.selector)[request.index]
  if(!root)return {ok:false,reason:'No element matched the capture selector and index.'}
  const video=root instanceof HTMLVideoElement?root:root.querySelector('video')
  if(!video)return {ok:false,reason:'The selected element does not contain a video.'}
+ const initialMediaUrl=video.currentSrc||video.src
  const normalized=(value:string)=>{const url=new URL(value,location.href);url.hash='';return url.href}
  const admission=()=>{
+  if((video.currentSrc||video.src)!==initialMediaUrl)throw new Error('VIDEO_IDENTITY_CHANGED: Selected player source changed during capture.')
+  if(request.videoIdentity){if(!inspect)throw new Error('Target identity verifier unavailable.');const state=inspect({selector:request.selector,index:request.index,excludeSelectors:request.sourceGuard?.scope.excludeSelectors??[]}),target=state.targets.find(t=>t.videoIndex===[...document.querySelectorAll('video')].indexOf(video));if(state.blocked||!target||JSON.stringify(target.identity)!==JSON.stringify(request.videoIdentity))throw new Error('VIDEO_IDENTITY_CHANGED: Target video, access state or advertisement changed during capture.')}
   if(!request.sourceGuard)return
   const guard=request.sourceGuard,scope=document.querySelectorAll(guard.scope.selector)[guard.scope.index]
-  if(normalized(location.href)!==guard.pageUrl||!scope||!scope.contains(video)||normalized(video.currentSrc||video.src)!==guard.candidateUrl)throw new Error('Confirmed source page, range or video changed.')
+  if(normalized(location.href)!==guard.pageUrl||!scope||!scope.contains(video)||!request.videoIdentity&&normalized(video.currentSrc||video.src)!==guard.candidateUrl)throw new Error('Confirmed source page, range or video changed.')
   for(const selector of [...guard.scope.excludeSelectors,'[contenteditable]:not([contenteditable="false"])'])if(video.closest(selector))throw new Error('Selected video is excluded from the confirmed source range.')
  }
  admission()
@@ -81,7 +86,7 @@ async function initializeRenderer(key:string,request:{selector:string;index:numb
   if(state.restored||state.reason)return
   // A paused player can present a cached pre-seek frame before its first new
   // frame. It cannot belong to this admitted source interval.
-  try{if(state.started&&Number.isFinite(metadata.mediaTime)&&metadata.mediaTime>=state.sourceStartSeconds){
+  try{admission();if(state.started&&Number.isFinite(metadata.mediaTime)&&metadata.mediaTime>=state.sourceStartSeconds){
    state.lastSourceSeconds=Math.max(state.lastSourceSeconds,metadata.mediaTime)
    const time=Math.round(metadata.mediaTime*1e6)/1e6
    const sourceWidth=video.videoWidth,sourceHeight=video.videoHeight
@@ -113,7 +118,7 @@ async function initializeRenderer(key:string,request:{selector:string;index:numb
   while(state.audioReady.has(state.pullAudio)){const data=state.audioReady.get(state.pullAudio)!;state.audioReady.delete(state.pullAudio++);state.bufferBytes-=Math.floor(data.length*3/4);chunks.push(data)}
   while(state.videoReady.has(state.pullVideo)){const packet=state.videoReady.get(state.pullVideo)!;state.videoReady.delete(state.pullVideo++);state.bufferBytes-=Math.floor(packet.data.length*3/4);videoPackets.push(packet)}
   return {chunks,videoPackets,pending:state.pending,done:state.done,error:state.error,reason:state.reason,sourceEndSeconds:state.sourceEndSeconds,sourceDurationSeconds:state.sourceDurationSeconds,playbackEvents:state.events}
- },restore,cancel:async()=>{state.cancelled=true;session.cancelled=true;resolveCancelled();stop('cancelled');if(state.started&&!state.done)await stopped;for(const reader of state.readers)reader.abort();restore()}}
+ },verify:admission,restore,cancel:async()=>{state.cancelled=true;session.cancelled=true;resolveCancelled();stop('cancelled');if(state.started&&!state.done)await stopped;for(const reader of state.readers)reader.abort();restore()}}
  globals[key]=session
  const check=()=>{if(state.cancelled)throw new Error('Capture cancelled during initialization.');admission()}
  const wait=async(event:string,ms:number)=>{let listener:()=>void,timer:ReturnType<typeof setTimeout>;const eventOrTime=new Promise<void>(resolve=>{listener=resolve;video.addEventListener(event,listener,{once:true});timer=setTimeout(resolve,ms)});try{await Promise.race([eventOrTime,cancelled]);check()}finally{video.removeEventListener(event,listener!);clearTimeout(timer!)}}
@@ -154,12 +159,12 @@ export const videoElementCaptureInternals={initializeRenderer}
 export class VideoElementCapture {
  cleanupFailed=false
  readonly id='video-capture-'+crypto.randomUUID();readonly key='__bmwMediaCapture_'+crypto.randomUUID().replaceAll('-','');private requestedStop=false
- readonly filePath:string;private request:{selector:string;index:number;fromStart:boolean;maxDurationMs:number;playbackPlan:CapturePlaybackStep[];sourceGuard?:SourceCaptureGuard}
+ readonly filePath:string;private request:{selector:string;index:number;fromStart:boolean;maxDurationMs:number;playbackPlan:CapturePlaybackStep[];sourceGuard?:SourceCaptureGuard;videoIdentity?:VideoIdentity}
  constructor(readonly webContents:WebContents,private directory:string,raw:CaptureRequest,private tab:{id:string;title:string;url:string},private status?:(value:unknown)=>void){
   const selector=String(raw.selector??'').trim();if(!selector||selector.length>500)throw new TypeError('Video capture requires a bounded selector.')
   const index=finiteNumber(raw.index??0,'capture index',0,10000,true),maxDurationMs=finiteNumber(raw.maxDurationMs??900000,'capture duration',1000,1800000,true)
   const sourceGuard=raw.sourceGuard?assertSourceCaptureGuard(raw.sourceGuard):undefined
-  this.request={selector,index,fromStart:raw.fromStart!==false,maxDurationMs,playbackPlan:assertPlaybackPlan(raw.playbackPlan),...(sourceGuard?{sourceGuard}:{})};this.filePath=path.join(directory,crypto.randomUUID()+'-'+safeCaptureFilename(raw.filename))
+  this.request={selector,index,fromStart:raw.fromStart!==false,maxDurationMs,playbackPlan:assertPlaybackPlan(raw.playbackPlan),...(sourceGuard?{sourceGuard}:{}),...(raw.videoIdentity?{videoIdentity:assertVideoIdentity(raw.videoIdentity)}:{})};this.filePath=path.join(directory,crypto.randomUUID()+'-'+safeCaptureFilename(raw.filename))
  }
  private phase<T>(name:string,read:()=>Promise<T>,signal?:AbortSignal,timeoutMs=15000):Promise<T>{
   return new Promise<T>((resolve,reject)=>{let done=false;const finish=(error?:unknown,value?:T)=>{if(done)return;done=true;clearTimeout(timer);signal?.removeEventListener('abort',abort);error?reject(error):resolve(value!)};const abort=()=>finish(signal?.reason??new Error('Video capture cancelled.'));const timer=setTimeout(()=>finish(new Error('Video capture '+name+' timed out.')),timeoutMs);if(signal?.aborted){abort();return}signal?.addEventListener('abort',abort,{once:true});try{Promise.resolve(read()).then(value=>finish(undefined,value),error=>finish(error))}catch(error){finish(error)}})
@@ -178,7 +183,7 @@ export class VideoElementCapture {
   const deadline=setTimeout(()=>controller.abort(new Error('Video capture exceeded its host deadline.')),this.request.maxDurationMs+20000),startedAt=new Date().toISOString(),sidecars:string[]=[];let handle:FileHandle|undefined,spool:FileHandle|undefined,created=false,completed=false,initializationSettled=false,initializing:Promise<Initialization>|undefined
   try{
    await guard();handle=await fs.open(this.filePath+'.audio.webm','wx+',0o600);sidecars.push(this.filePath+'.audio.webm');spool=await fs.open(this.filePath+'.packets','wx+',0o600);sidecars.push(this.filePath+'.packets');const mux=new CaptureMux(spool);this.status?.({active:true,id:this.id,tabId:this.tab.id,state:'starting',kind:'video-element'});await guard()
-   initializing=wc.executeJavaScript(`(${initializeRenderer.toString()})(${JSON.stringify(this.key)},${JSON.stringify(this.request)})`,true) as Promise<Initialization>;void initializing.then(()=>{initializationSettled=true},()=>{initializationSettled=true})
+   initializing=wc.executeJavaScript(`(${initializeRenderer.toString()})(${JSON.stringify(this.key)},${JSON.stringify(this.request)},${inspectPageVideoTargets.toString()})`,true) as Promise<Initialization>;void initializing.then(()=>{initializationSettled=true},()=>{initializationSettled=true})
    const initial=await this.phase('initialize',()=>initializing!,controller.signal);if(!initial.ok)throw new Error(initial.reason??'Video capture could not start.')
    await guard();this.status?.({active:true,id:this.id,tabId:this.tab.id,state:'recording',kind:'video-element',...initial});if(this.requestedStop)await this.stop()
    let audioBytes=0,packet:Packet
@@ -201,7 +206,8 @@ export class VideoElementCapture {
    const capture:SourceCaptureEvidence|undefined=this.request.sourceGuard?assertSourceCaptureEvidence({kind:'video-element',...this.request.sourceGuard,selector:this.request.selector,index:this.request.index,fromStart:this.request.fromStart,sourceStartSeconds,sourceEndSeconds,sourceDurationSeconds,stopReason,startedAt,endedAt:new Date().toISOString()}):undefined
    const captureTimeline=await saveMappedCaptureIndex(this.directory,{version:2,sourceArtifactId:path.basename(this.filePath),videoSha256,basis:'native-source-frame+encoded-packet+demuxed-PTS',fileTimestampMapping:'verified',sourceStartSeconds,sourceEndSeconds,durationAtStartSeconds:initial.duration??null,sourceDurationSeconds,status:'indexed',reason:null,frames:muxed.frames,playbackEvents:packet.playbackEvents},sidecars,guard)
    await spool.close();spool=undefined;for(const file of sidecars.filter(file=>!file.endsWith('.source.json')))await fs.rm(file,{force:true})
-   completed=true;return {artifactId:path.basename(this.filePath),path:this.filePath,type:'video',contentType:initial.mimeType??'video/webm',bytes:muxed.bytes,durationMs:Date.now()-Date.parse(startedAt),durationAtStartSeconds:initial.duration,sourceDurationSeconds,sourceStartSeconds,sourceEndSeconds,videoTracks:initial.videoTracks,audioTracks:initial.audioTracks,complete:stopReason==='ended',stopReason,captureTimeline,tab:this.tab,...(capture?{capture}:{})}
+   await this.phase('identity-final',()=>wc.executeJavaScript(`globalThis[${JSON.stringify(this.key)}].verify()`,true),controller.signal)
+   completed=true;return {artifactId:path.basename(this.filePath),path:this.filePath,type:'video',contentType:initial.mimeType??'video/webm',bytes:muxed.bytes,durationMs:Date.now()-Date.parse(startedAt),durationAtStartSeconds:initial.duration,sourceDurationSeconds,sourceStartSeconds,sourceEndSeconds,videoTracks:initial.videoTracks,audioTracks:initial.audioTracks,complete:stopReason==='ended',stopReason,captureTimeline,videoIdentity:this.request.videoIdentity,tab:this.tab,...(capture?{capture}:{})}
   }finally{
    clearTimeout(deadline)
    let cleanupError:unknown

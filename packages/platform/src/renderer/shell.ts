@@ -1002,10 +1002,12 @@ api.onScheduledTaskOpen(() => {
 })
 
 function receiveWorkspace(value:unknown):void {
- const state=value as {mode?:unknown};const studio=state?.mode==='studio'
+ const state=value as {mode?:unknown};const studio=state?.mode==='studio';const library=state?.mode==='library'
  document.body.classList.toggle('video-workspace',studio)
- document.querySelector('#browser-workspace').setAttribute('aria-pressed',String(!studio))
+ document.body.classList.toggle('library-workspace',library)
+ document.querySelector('#browser-workspace').setAttribute('aria-pressed',String(!studio&&!library))
+ document.querySelector('#library-workspace').setAttribute('aria-pressed',String(library))
  document.querySelector('#studio-workspace').setAttribute('aria-pressed',String(studio))
 }
-for(const [id,mode] of [['browser-workspace','browser'],['studio-workspace','studio']] as const)document.querySelector('#'+id).addEventListener('click',()=>{void api.setWorkspaceMode(mode).catch(error=>status.textContent=String(error))})
+for(const [id,mode] of [['browser-workspace','browser'],['library-workspace','library'],['studio-workspace','studio']] as const)document.querySelector('#'+id).addEventListener('click',()=>{void api.setWorkspaceMode(mode).catch(error=>status.textContent=String(error))})
 api.onWorkspace(receiveWorkspace)

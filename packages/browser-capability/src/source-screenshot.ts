@@ -17,14 +17,14 @@ export async function prepareSourceScreenshot(port:ProjectSourcePort|undefined,w
  if(raw===undefined)return undefined
  if(!port?.recordScreenshot)throw new Error('SOURCE_SCREENSHOT_UNAVAILABLE: This Project cannot bind page captures.')
  const binding=admitBinding(raw),body=await port.readBody(binding.sourceId,binding.acquisitionId,signal),a=body.acquisition
- if(port.snapshot().revision!==binding.expectedRevision)throw new Error('SOURCE_CONFLICT: Reload the source catalog.')
+ if((port.state?.()??port.snapshot()).revision!==binding.expectedRevision)throw new Error('SOURCE_CONFLICT: Reload the source catalog.')
  if(a.result!=='observed'||a.scope.truncated||!a.contentId||selector!==a.scope.selector||Number(index??0)!==a.scope.index)throw new Error('SOURCE_SCREENSHOT_SCOPE: Capture the exact collected body selector and index.')
- const originalUrl=body.source.url,projectId=port.snapshot().projectId,scope=a.scope,contentId=a.contentId
+ const originalUrl=body.source.url,projectId=(port.state?.()??port.snapshot()).projectId,scope=a.scope,contentId=a.contentId
  const controller=new AbortController(),captureSignal=signal?AbortSignal.any([signal,controller.signal]):controller.signal,navigation=(_event:unknown,_url:string,_inPlace:boolean,mainFrame:boolean)=>{if(mainFrame)controller.abort(new Error('SOURCE_SCREENSHOT_NAVIGATED: Page navigated during capture.'))},gone=()=>controller.abort(new Error('SOURCE_SCREENSHOT_RENDERER_GONE: Capture page closed.'))
  wc.on('did-start-navigation',navigation);wc.on('destroyed',gone);wc.on('render-process-gone',gone)
  const dispose=()=>{wc.removeListener('did-start-navigation',navigation);wc.removeListener('destroyed',gone);wc.removeListener('render-process-gone',gone)}
  const verify=async()=>{
-  captureSignal.throwIfAborted();if(pageUrl(wc.getURL())!==originalUrl||port.snapshot().projectId!==projectId)throw new Error('SOURCE_SCREENSHOT_STALE: Page or Project changed.')
+  captureSignal.throwIfAborted();if(pageUrl(wc.getURL())!==originalUrl||(port.state?.()??port.snapshot()).projectId!==projectId)throw new Error('SOURCE_SCREENSHOT_STALE: Page or Project changed.')
   const input=assertPageScope({selector:scope.selector,index:scope.index,excludeSelectors:scope.excludeSelectors,maxCharacters:50000}),raw=record(await readRendererPhase(wc,'media.screenshot','source-body',()=>wc.executeJavaScript(pageRangeExpression(input),true),captureSignal)),r=record(raw.range)
   const actual={selector:r.selector,index:r.index,excludeSelectors:r.excludeSelectors,characterUnit:r.characterUnit,extraction:r.extraction,truncated:r.truncated,status:r.status}
   if(typeof raw.text!=='string'||raw.text.length>50000||JSON.stringify(actual)!==JSON.stringify(scope)||crypto.createHash('sha256').update(raw.text).digest('hex')!==contentId||pageUrl(wc.getURL())!==originalUrl)throw new Error('SOURCE_SCREENSHOT_STALE: Original scoped text changed; collect again.')

@@ -10,6 +10,7 @@ export interface AgentHostOptions {
   history: AgentHistoryStore
   backends: readonly AgentBackend[]
   currentProject(): AgentHostProject
+  project?(projectId:string):AgentHostProject|undefined
   context(sessionId: string, projectId: string): Promise<string>
   /** Revoke the run's tool binding and await its actual browser work, including cancellation. */
   drain(request: AgentRunRequest): Promise<void>
@@ -20,6 +21,7 @@ interface PendingRun {
   request: AgentRunRequest
   backend: AgentBackend
   frozenContext?:string
+  background:boolean
   controller: AbortController
   settled: Promise<AgentRunResult>
   resolve: (result: AgentRunResult) => void
@@ -46,6 +48,7 @@ export class AgentHost {
     }
   }
   get busy(): boolean { return this.pending.size > 0||this.maintenance!==null }
+  get foregroundBusy():boolean{return this.maintenance!==null||this.quarantined!==null||[...this.pending.values()].some(p=>!p.background)}
   get activeRunId(): string | null { return this.active?.request.runId ?? null }
   get resourcesDisconnected(): boolean { return this.quarantined!==null||this.maintenance?.quarantined===true }
   /** Migration/configuration owns the same resource exclusion as a user turn. */
@@ -76,8 +79,8 @@ export class AgentHost {
     if (!value) throw new Error('This Agent driver is not installed')
     return value
   }
-  private member(sessionId: string): AgentConversation {
-    const row = this.options.conversations.get(sessionId, this.options.currentProject().id)
+  private member(sessionId: string, projectId=this.options.currentProject().id): AgentConversation {
+    const row = this.options.conversations.get(sessionId, projectId)
     if (row.archivedAt !== null) throw new Error('This BMW Session is archived')
     return row
   }
@@ -90,14 +93,27 @@ export class AgentHost {
     return row
   }
   activeContext(sessionId:string,projectId:string):string|null{const request=this.active?.request;return request?.sessionId===sessionId&&request.project.id===projectId&&request.context?request.context:null}
-  enqueue(sessionId: string, text: string, frozenContext?:string): { runId: string; messageId: string } {
+  /** Pinned registered owner, independent of the foreground selection. Host-only. */
+  enqueueBackground(binding:{projectId:string;sessionId:string;driverId:string},text:string):{runId:string;messageId:string}{
+    const project=this.options.project?.(binding.projectId)
+    if(!project||this.member(binding.sessionId,project.id).driverId!==binding.driverId)throw new Error('Background Project / Session / driver binding is unavailable')
+    if(this.options.history.snapshot(binding.sessionId).receipts.some(r=>r.state==='unknown'))throw new Error('Background Session has an uncertain input; explicit review is required')
+    return this.admit(binding.sessionId,text,undefined,true,project)
+  }
+  isBackground(runId:string):boolean{return this.pending.get(runId)?.background===true}
+  async yieldBackground():Promise<void>{for(const run of [...this.pending.values()])if(run.background)try{await this.cancelBackground(run.request.runId)}catch(error){if(this.ownsRun(run.request.runId))throw error}}
+  enqueue(sessionId: string, text: string, frozenContext?:string, background=false): { runId: string; messageId: string } {
+    return this.admit(sessionId,text,frozenContext,background,this.options.currentProject())
+  }
+  private admit(sessionId:string,text:string,frozenContext:string|undefined,background:boolean,project:AgentHostProject):{runId:string;messageId:string}{
     if (this.closed) throw new Error('BMW Agent host has closed')
     if(this.maintenance)throw new Error('BMW Agent resources are completing maintenance')
     if (this.quarantined) throw new Error('BMW Agent resources are disconnected; drain recovery must finish before sending')
+    if(background&&this.busy)throw new Error('Background admission requires idle BMW resources')
     agentText(text, 65536)
     if(frozenContext!==undefined)agentText(frozenContext,16384,'BMW frozen context')
     if (!text.trim()) throw new Error('Enter a message before sending')
-    const row = this.member(sessionId), project = this.options.currentProject()
+    const row = this.member(sessionId,project.id)
     if (row.externalSessionId === null && this.options.history.snapshot(sessionId).receipts.some(receipt => receipt.state === 'unknown')) throw new Error('An uncertain submission has no provider resume anchor; create an explicit new BMW Session')
     const backend = this.backend(row.driverId), controller = new AbortController(), runId = crypto.randomUUID(), messageId = crypto.randomUUID()
     this.options.history.prepare(sessionId, runId, messageId, text)
@@ -105,8 +121,9 @@ export class AgentHost {
     const settled = new Promise<AgentRunResult>((accept, decline) => { resolve = accept; reject = decline })
     // A UI submission may never await the result. Keep failures available to wait().
     void settled.catch(() => {})
-    const pending: PendingRun = { request: { sessionId, externalSessionId: row.externalSessionId, runId, messageId, project: structuredClone(project), text, context: '', signal: controller.signal }, backend, frozenContext, controller, settled, resolve: resolve!, reject: reject! }
+    const pending: PendingRun = { request: { sessionId, externalSessionId: row.externalSessionId, runId, messageId, project: structuredClone(project), text, context: '', signal: controller.signal }, backend, frozenContext, background, controller, settled, resolve: resolve!, reject: reject! }
     this.pending.set(runId, pending)
+    if(!background)for(const earlier of this.pending.values())if(earlier.background&&!earlier.controller.signal.aborted){earlier.controller.abort();if(this.active===earlier)void earlier.backend.interrupt(earlier.request.sessionId,earlier.request.runId).catch(()=>{})}
     if (this.active?.request.sessionId !== sessionId) this.options.conversations.setStatus(sessionId, 'queued')
     this.publish(sessionId)
     const work = this.tail.then(() => this.execute(pending))
@@ -120,6 +137,16 @@ export class AgentHost {
     if (completed) return completed
     throw new Error('Agent run is no longer active; read its persisted receipt')
   }
+  /** Target one background receipt; never cancel a later user submission in its Session. */
+  async cancelBackground(runId:string):Promise<void>{
+    const pending=this.pending.get(runId)
+    if(!pending)return
+    if(!pending.background)throw new Error('This input is not a background collection')
+    pending.controller.abort()
+    if(this.active===pending)try{await pending.backend.interrupt(pending.request.sessionId,runId)}catch{/* Actual drain remains authoritative. */}
+    await pending.settled
+  }
+  ownsRun(runId:string):boolean{return this.pending.has(runId)}
   private async execute(pending: PendingRun): Promise<void> {
     if (!this.pending.has(pending.request.runId)) return // A queued cancellation was already persisted.
     const { request, backend, controller } = pending
@@ -143,6 +170,7 @@ export class AgentHost {
         }
         if (event.type === 'session.bound') this.options.conversations.bind(request.sessionId, event.externalSessionId)
         if (event.type === 'interaction.requested') {
+          if(pending.background)throw new Error('Background collection requires user interaction; inspect its receipt explicitly')
           if (controller.signal.aborted || requested.has(event.interaction.id)) throw new Error('Invalid pending Agent interaction')
           requested.add(event.interaction.id)
           this.options.conversations.setStatus(request.sessionId, event.interaction.kind === 'approval' ? 'waiting-approval' : 'waiting-user')
@@ -171,7 +199,8 @@ export class AgentHost {
       this.active = pending
       if (controller.signal.aborted) result = { outcome: 'interrupted', message: 'Queued message cancelled before execution' }
       else {
-        const row = this.member(request.sessionId)
+        if(pending.background){const project=this.options.project?.(request.project.id)??(this.options.currentProject().id===request.project.id?this.options.currentProject():undefined);if(!project||project.directory!==request.project.directory)throw new Error('Background Project changed before execution')}
+        const row = this.member(request.sessionId,pending.background?request.project.id:this.options.currentProject().id)
         if (row.projectId !== request.project.id || row.driverId !== backend.description.id) throw new Error('Agent Session membership changed before execution')
         request.externalSessionId = row.externalSessionId
         request.context = agentText(pending.frozenContext??await this.options.context(row.sessionId, row.projectId), 16384, 'BMW Project context')

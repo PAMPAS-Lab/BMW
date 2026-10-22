@@ -1,4 +1,6 @@
 /** BMW owns Project and conversation identities; adapters own all native mappings. */
+export {WORKSPACE_MODES, assertWorkspaceMode} from './src/workspace.js'
+export type {WorkspaceMode} from './src/workspace.js'
 export interface AgentProject { id: string; name: string; directory: string }
 export interface AgentSession { sessionId: string; title: string; updatedAt: number; running: boolean; blank: boolean; parentSessionId: string | null; snippet: string; canFork?:boolean }
 export interface AgentSessionList { projectId: string; selectedSessionId: string | null; items: AgentSession[]; hasMore: boolean; membership: string[] }

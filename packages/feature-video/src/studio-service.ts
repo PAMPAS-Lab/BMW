@@ -48,7 +48,9 @@ import {assertNarrationOptions} from '../../media-native/src/narration-contract.
 import {requireNarrationEnabled} from './video-settings.js'
 import { normalizeVideoPreferences, resolveVideoOutput, optionsFromOutput, saveVideoTemplate } from '../../media-native/src/video-options.js'
 import path from 'node:path'
-import {VideoStudioStore} from './studio-store.js'
+import {VideoStudioStore,STUDIO_EXPORT_RENDERER_VERSION} from './studio-store.js'
+import {captureWorkExport,WorkExportStore} from '@bmw-agent/feature-library/exports'
+import type {CapturedExport} from '@bmw-agent/feature-library/exports'
 import {assertStudioRequest,assertVideoDraft,draftComposition,draftReadiness,applyNarrationPacing,sceneCoverage,studioId} from './studio-contract.js'
 import {mediaRecord,finiteNumber,assertArtifactId} from '../../media-native/src/media-contract.js'
 import {ArtifactJobIO} from '../../media-native/src/artifact-job-io.js'
@@ -128,7 +130,7 @@ export class VideoStudioService {
     if(['update','apply-edit','validate-edit'].includes(request.operation)){
       const current=store.read(id);if(current.revision!==request.expectedRevision)throw new Error('STUDIO_CONFLICT: 请使用当前草稿版本。')
       const candidate=request.operation==='update'?request.draft:applyVideoEdit(current,request.edit!,actor==='user'),raw=mediaRecord(candidate),next=assertVideoDraft({...raw,preparation:raw.preparation??current.preparation})
-      if(next.preparation.sourceIds?.length){const catalog=sources.port().snapshot();if(next.preparation.sourceIds.some(id=>!catalog.sources.some(source=>source.id===id)))throw new Error('Preparation source does not belong to this Project.')}
+      if(next.preparation.sourceIds?.length){const port=sources.port();if(next.preparation.sourceIds.some(id=>!(port.hasSource?.(id)??port.snapshot().sources.some(source=>source.id===id))))throw new Error('Preparation source does not belong to this Project.')}
       for(const work of next.preparation.production?.works??[])await sources.port().readBody(work.sourceId,work.acquisitionId,signal)
       for(const artifactId of productionArtifactIds(next).filter(id=>!productionArtifactIds(current).includes(id))){const input=await ArtifactJobIO.open(path.join(project.directory,'artifacts'),{action:'media.inspect',artifactId});await input.close()}
       for(const scene of next.scenes)for(const citation of scene.citations??[])await sources.citation(citation,signal)
@@ -307,21 +309,26 @@ export class VideoStudioService {
     if(request.operation==='render'){
       await verifyStudioSpeech(draft,path.join(project.directory,'artifacts'),signal);await this.verifyCardPins(draft,path.join(project.directory,'artifacts'),signal);this.assertRevision(store,draft)
       const cached=request.forceRender?undefined:store.reusableExport(draft)
-      if(cached){signal?.throwIfAborted();this.assertRevision(store,draft);return {draft,export:{...cached,type:'video',contentType:'video/mp4'},reused:true}}
+      if(cached){signal?.throwIfAborted();this.assertRevision(store,draft);let libraryWarning:string|undefined;try{if(!new WorkExportStore(project.directory,project.id).scan(false).records.some(r=>r.artifactId===cached.artifactId))libraryWarning='此旧成品没有导出时的采用快照；保留原片，采用详情未知。'}catch(error){libraryWarning='成品账本暂不可读取：'+String(error)}return {draft,export:{...cached,type:'video',contentType:'video/mp4'},reused:true,...(libraryWarning?{libraryWarning}:{})}}
       await this.assertAssets(draft,project.directory,signal)
       signal?.throwIfAborted();this.assertRevision(store,draft)
       const composition=draftComposition(draft)
+      let capture:CapturedExport|undefined,libraryWarning:string|undefined
+      try{capture=await captureWorkExport(this.kernel,composition,signal,STUDIO_EXPORT_RENDERER_VERSION)}catch(error){signal?.throwIfAborted();libraryWarning='素材采用快照未记录：'+String(error)}
+      signal?.throwIfAborted();this.assertRevision(store,draft)
       const directory=path.join(project.directory,'artifacts'),root=await fs.realpath(directory),rootIdentity=await fs.lstat(directory),before=new Set(await fs.readdir(directory)),created=new Map<string,{dev:number;ino:number}>()
       const received=mediaRecord(await this.kernel.recordingController.compose(composition,signal))
-      let committed=false
+      let committed=false,prepared:ReturnType<WorkExportStore['prepare']>|undefined
       try{
         for(const id of [received.artifactId,...(typeof received.verificationArtifactId==='string'?[received.verificationArtifactId]:[])]){const artifactId=assertArtifactId(id);if(!before.has(artifactId)){const file=path.join(root,artifactId),stat=await fs.lstat(file).catch(error=>{if(error.code==='ENOENT')return undefined;throw error});if(stat?.isFile()&&!stat.isSymbolicLink())created.set(file,{dev:stat.dev,ino:stat.ino})}}
         const result=assertMediaArtifactReceipt(received,'composition')
         signal?.throwIfAborted();if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Studio Project changed during export.');this.assertRevision(store,draft)
         await verifyStudioSpeech(draft,directory,signal);await this.verifyCardPins(draft,directory,signal);signal?.throwIfAborted();this.assertRevision(store,draft)
+        if(capture)try{const record=await capture.record(result,{draftId:id,sessionId:owner.sessionId,revision:draft.revision,sceneIds:draft.scenes.map(s=>s.id)});prepared=new WorkExportStore(project.directory,project.id).prepare(record)}catch(error){signal?.throwIfAborted();libraryWarning='成片已生成，素材采用账本未完成：'+String(error)}
+        signal?.throwIfAborted();if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Studio Project changed during export admission.');this.assertRevision(store,draft)
         const updated=store.addExport(id,draft.revision,{artifactId:String(result.artifactId),durationSeconds:finiteNumber(result.durationSeconds,'duration',1,COMPOSITION_LIMITS.seconds),...(result.verificationArtifactId?{verificationArtifactId:String(result.verificationArtifactId)}:{})})
-        committed=true;return {draft:updated,export:result}
-      }finally{if(!committed){const current=await fs.lstat(directory);if(current.dev!==rootIdentity.dev||current.ino!==rootIdentity.ino||current.isSymbolicLink()||await fs.realpath(directory)!==root)throw new Error('Export Project changed; cleanup refused.');for(const [file,identity] of created){const stat=await fs.lstat(file).catch(error=>{if(error.code==='ENOENT')return undefined;throw error});if(stat?.dev===identity.dev&&stat.ino===identity.ino&&!stat.isSymbolicLink())await fs.unlink(file)}}}
+        committed=true;if(prepared)try{prepared.commit()}catch(error){libraryWarning='成品已保存，采用账本提交待核对：'+String(error)}return {draft:updated,export:result,...(libraryWarning?{libraryWarning}:{})}
+      }finally{if(!committed){try{const current=await fs.lstat(directory);if(current.dev!==rootIdentity.dev||current.ino!==rootIdentity.ino||current.isSymbolicLink()||await fs.realpath(directory)!==root)throw new Error('Export Project changed; cleanup refused.');for(const [file,identity] of created){const stat=await fs.lstat(file).catch(error=>{if(error.code==='ENOENT')return undefined;throw error});if(stat?.dev===identity.dev&&stat.ino===identity.ino&&!stat.isSymbolicLink())await fs.unlink(file)}}finally{prepared?.discard()}}}
     }
     const scene=draft.scenes.find(scene=>scene.id===request.sceneId)
     if(!scene)throw new Error('Unknown Studio scene.')

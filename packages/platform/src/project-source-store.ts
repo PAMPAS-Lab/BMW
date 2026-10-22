@@ -1,4 +1,5 @@
-import {assertSourceCatalog,assertSourceObservation,assertSourceDeliveryRange,assertSourceCaptureEvidence,SOURCE_LIMITS,sourceId} from '@bmw-agent/media-native/sources'
+import {SourceArchive} from './source-archive.js'
+import {assertSourceCatalog,assertSourceObservation,assertSourceDeliveryRange,assertSourceCaptureEvidence,verifySourceMetadataRanges,SOURCE_LIMITS,sourceId} from '@bmw-agent/media-native/sources'
 import type {ProjectSourcePort,SourceCatalog,SourceMedia,SourceMediaState,SourceRequest,SourceMediaAvailability,SourceArtifactStatus,SourceCaptureEvidence,SourceScreenshotReceipt} from '@bmw-agent/media-native/sources'
 import {ArtifactJobIO} from '@bmw-agent/media-native/artifact-io'
 import {assertImageInspection,imageHeader} from '@bmw-agent/media-native/image'
@@ -8,33 +9,51 @@ import fs from 'node:fs'
 import path from 'node:path'
 /** Shared Project evidence, independent of Session-owned editable drafts. */
 export class ProjectSourceStore implements ProjectSourcePort {
+ private legacyCache?:{stat:fs.Stats;catalog:SourceCatalog;sha256:string}
+ private legacySha=crypto.createHash('sha256').update('').digest('hex')
+ private readonly archive:SourceArchive
  private readonly root:string;private readonly directory:string;private readonly artifacts:string;private readonly file:string;private readonly identities=new Map<string,{dev:number;ino:number}>()
- constructor(directory:string,private readonly projectId:string){
+ constructor(directory:string,private readonly projectId:string,private readonly beforeSourceCommit?:()=>void){
   this.root=fs.realpathSync(directory);sourceId(projectId)
   this.directory=path.join(this.root,'sources');this.artifacts=path.join(this.root,'artifacts');this.file=path.join(this.directory,'catalog.json')
   for(const dir of [this.directory,this.artifacts]){fs.mkdirSync(dir,{recursive:true,mode:0o700});if(fs.realpathSync(dir)!==dir||fs.lstatSync(dir).isSymbolicLink())throw new Error('Source state/artifacts must stay inside their Project.')}
   for(const dir of [this.root,this.directory,this.artifacts]){const stat=fs.statSync(dir);this.identities.set(dir,{dev:stat.dev,ino:stat.ino})}
+  this.archive=new SourceArchive(this.root,projectId,()=>this.legacy(),()=>this.legacySha)
  }
  private guard():void{for(const dir of [this.root,this.directory,this.artifacts]){const stat=fs.lstatSync(dir),identity=this.identities.get(dir);if(fs.realpathSync(dir)!==dir||!stat.isDirectory()||stat.dev!==identity?.dev||stat.ino!==identity.ino)throw new Error('Source Project boundary changed.')}}
  private removeNew(file:string):void{try{this.guard();if(fs.lstatSync(file).isFile())fs.rmSync(file)}catch{/* Never follow a replaced Project directory during rollback. */}}
- snapshot():SourceCatalog {
+ private legacy():SourceCatalog {
   this.guard();let stat:fs.Stats
-  try{stat=fs.lstatSync(this.file)}catch(error){if((error as NodeJS.ErrnoException).code==='ENOENT')return {version:1,projectId:this.projectId,revision:0,sources:[]};throw error}
+  try{stat=fs.lstatSync(this.file)}catch(error){if((error as NodeJS.ErrnoException).code==='ENOENT'){this.legacyCache=undefined;this.legacySha=crypto.createHash('sha256').update('').digest('hex');return {version:1,projectId:this.projectId,revision:0,sources:[]}};throw error}
   if(!stat.isFile()||stat.isSymbolicLink()||stat.size>SOURCE_LIMITS.indexBytes)throw new Error('Invalid source catalog; original preserved.')
+  const cached=this.legacyCache;if(cached&&cached.stat.dev===stat.dev&&cached.stat.ino===stat.ino&&cached.stat.size===stat.size&&cached.stat.mtimeMs===stat.mtimeMs&&cached.stat.ctimeMs===stat.ctimeMs){this.legacySha=cached.sha256;return cached.catalog}
   const descriptor=fs.openSync(this.file,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);let text:string
-  try{const pinned=fs.fstatSync(descriptor);if(pinned.dev!==stat.dev||pinned.ino!==stat.ino||!pinned.isFile()||pinned.size>SOURCE_LIMITS.indexBytes)throw new Error('Source catalog changed during read.');text=fs.readFileSync(descriptor,'utf8')}finally{fs.closeSync(descriptor)}
-  this.guard();const catalog=assertSourceCatalog(JSON.parse(text));
-  for(const source of catalog.sources)if(source.id!==crypto.createHash('sha256').update(source.url).digest('hex'))throw new Error('Source URL identity mismatch.');if(catalog.projectId!==this.projectId)throw new Error('Foreign Project source catalog.');return catalog
+  try{const pinned=fs.fstatSync(descriptor);if(pinned.dev!==stat.dev||pinned.ino!==stat.ino||!pinned.isFile()||pinned.size>SOURCE_LIMITS.indexBytes)throw new Error('Source catalog changed during read.');text=fs.readFileSync(descriptor,'utf8');const after=fs.fstatSync(descriptor),named=fs.lstatSync(this.file);if(after.size!==pinned.size||after.mtimeMs!==pinned.mtimeMs||after.ctimeMs!==pinned.ctimeMs||named.dev!==pinned.dev||named.ino!==pinned.ino||named.isSymbolicLink())throw new Error('Source catalog changed during read.')}finally{fs.closeSync(descriptor)}
+  this.guard();const catalog=assertSourceCatalog(JSON.parse(text));this.legacySha=crypto.createHash('sha256').update(text).digest('hex');
+  for(const source of catalog.sources)if(source.id!==crypto.createHash('sha256').update(source.url).digest('hex'))throw new Error('Source URL identity mismatch.');if(catalog.projectId!==this.projectId)throw new Error('Foreign Project source catalog.');this.legacyCache={stat,catalog,sha256:this.legacySha};return catalog
  }
- private current(revision:number):SourceCatalog{const value=this.snapshot();if(value.revision!==revision)throw new Error('SOURCE_CONFLICT: Source catalog changed; reload before editing.');return value}
- private commit(catalog:SourceCatalog,revision:number):SourceCatalog {
-  this.current(revision);const parsed=assertSourceCatalog({...catalog,revision:revision+1}),text=JSON.stringify(parsed,null,2)+'\n'
-  if(Buffer.byteLength(text)>SOURCE_LIMITS.indexBytes)throw new Error('Project source metadata budget exceeded.')
-  const temp=path.join(this.directory,crypto.randomUUID()+'.tmp')
-  try{fs.writeFileSync(temp,text,{flag:'wx',mode:0o600});this.guard();this.current(revision);fs.renameSync(temp,this.file)}finally{this.removeNew(temp)}
-  return parsed
- }
+ state(){this.guard();return this.archive.state()}
+ lookup(sid:string,aid:string){this.guard();return this.archive.lookup(sid,aid)}
+ hasSource(sid:string){this.guard();return this.archive.hasSource(sid)}
+ search(request:import('@bmw-agent/media-native/sources').SourceSearch={}){this.guard();return this.archive.search(request)}
+ rebuild(options?:{reset?:boolean;limit?:number;signal?:AbortSignal}){this.guard();return this.archive.records.rebuild(options)}
+ snapshot():SourceCatalog{this.guard();return this.archive.snapshot()}
+ private current(revision:number,sid?:string,aid?:string):SourceCatalog{const state=this.state();if(state.revision!==revision)throw new Error('SOURCE_CONFLICT: Source catalog changed; reload before editing.');const found=sid&&aid?this.lookup(sid,aid):undefined;return {version:1,...state,sources:found?[found.source]:[]}}
+ private commit(catalog:SourceCatalog,revision:number):SourceCatalog{this.beforeSourceCommit?.();this.current(revision);if(catalog.sources.length!==1||catalog.sources[0].acquisitions.length!==1)throw new Error('Commit one identified acquisition.');const changed=catalog.sources[0],result=this.archive.commit(changed,revision);if(result.indexWarning)return {version:1,projectId:this.projectId,revision:result.revision,sources:[changed],complete:false,indexWarning:result.indexWarning};try{return this.archive.snapshot(changed)}catch(e){return {version:1,projectId:this.projectId,revision:result.revision,sources:[changed],complete:false,indexWarning:'Saved evidence; catalog view unavailable: '+String(e)}}}
  private locate(catalog:SourceCatalog,sid:string,aid:string){const source=catalog.sources.find(s=>s.id===sourceId(sid)),acquisition=source?.acquisitions.find(a=>a.id===sourceId(aid));if(!source||!acquisition)throw new Error('Source acquisition not found in this Project.');return {source,acquisition}}
+ /** Host-only copy admission. Acquisition time and original proofs stay immutable. */
+ async importAcquisition(source:import('@bmw-agent/media-native/sources').ProjectSource,revision:number,signal?:AbortSignal):Promise<SourceCatalog>{
+  signal?.throwIfAborted();const catalog=this.current(revision,source.id,source.acquisitions[0]?.id),parsed=assertSourceCatalog({version:1,projectId:this.projectId,revision,sources:[source]}).sources[0]
+  if(parsed.id!==crypto.createHash('sha256').update(parsed.url).digest('hex')||parsed.acquisitions.length!==1)throw new Error('Copy one identified source acquisition.')
+  const acquisition=parsed.acquisitions[0]
+  if(acquisition.originalTextArtifactId){const input=await ArtifactJobIO.open(this.artifacts,{action:'media.inspect',artifactId:acquisition.originalTextArtifactId});try{if(input.bytes>SOURCE_LIMITS.textBytes||await input.fingerprint(signal)!==acquisition.contentId)throw new Error('Copied source text changed.');if(acquisition.metadataRanges){const bytes=await input.read(0,input.bytes);if(crypto.createHash('sha256').update(bytes).digest('hex')!==acquisition.contentId)throw new Error('Copied source text changed.');verifySourceMetadataRanges(acquisition.metadataRanges,acquisition,new TextDecoder('utf-8',{fatal:true}).decode(bytes))}}finally{await input.close()}}
+  const availability=await this.mediaAvailability(acquisition.media,signal)
+  if(availability.some((state,i)=>Boolean(acquisition.media[i].artifactId)&&!state.available))throw new Error('Copied source evidence is unavailable.')
+  const existing=catalog.sources.find(item=>item.id===parsed.id),prior=existing?.acquisitions.find(item=>item.id===acquisition.id)
+  if(prior){if(JSON.stringify(prior)!==JSON.stringify(acquisition))throw new Error('Conflicting copied acquisition.');return catalog}
+  if(existing)existing.acquisitions.push(acquisition);else catalog.sources.push(parsed)
+  signal?.throwIfAborted();return this.commit(catalog,revision)
+ }
  private async writeArtifact(extension:'txt'|'json',text:string):Promise<string>{
   this.guard();const artifactId='source-'+crypto.randomUUID()+'.'+extension,file=path.join(this.artifacts,artifactId),bytes=Buffer.from(text)
   if(!bytes.length||bytes.length>SOURCE_LIMITS.textBytes)throw new Error('Source text/proof budget exceeded.')
@@ -45,9 +64,9 @@ export class ProjectSourceStore implements ProjectSourcePort {
   signal?.throwIfAborted();const observation=assertSourceObservation(raw),catalog=this.current(revision),id=crypto.createHash('sha256').update(observation.url).digest('hex'),existing=catalog.sources.find(s=>s.id===id)
   const contentId=observation.text?crypto.createHash('sha256').update(observation.text).digest('hex'):null,acquisitionId=crypto.randomUUID();let created:string|undefined
   try{
-   const same=catalog.sources.flatMap(s=>s.acquisitions).find(a=>a.contentId===contentId&&contentId&&a.originalTextArtifactId)
+   const match=contentId?this.search({contentId,limit:1}).items[0]:undefined,same=match?.acquisition
    let originalTextArtifactId:string|null=null
-   if(observation.text){if(same){try{const body=await this.readBody(catalog.sources.find(s=>s.acquisitions.includes(same))!.id,same.id);if(body.text===observation.text)originalTextArtifactId=same.originalTextArtifactId}catch{/* A fresh acquisition can preserve new evidence without repairing the old original. */}}if(!originalTextArtifactId){created=await this.writeArtifact('txt',observation.text);originalTextArtifactId=created}}
+   if(observation.text){if(same){try{const body=await this.readBody(match!.source.id,same.id);if(body.text===observation.text)originalTextArtifactId=same.originalTextArtifactId}catch{/* A fresh acquisition can preserve new evidence without repairing the old original. */}}if(!originalTextArtifactId){created=await this.writeArtifact('txt',observation.text);originalTextArtifactId=created}}
    const {text,url,candidates,...observed}=observation
    const acquisition={...observed,id:acquisitionId,capturedAt:new Date().toISOString(),eventAt:null,eventTimeOrigin:'unknown' as const,originalTextArtifactId,contentId,candidates:candidates.map(candidate=>({...candidate,id:crypto.randomUUID()})),confirmedCandidateIds:[],media:[]}
    if(existing)existing.acquisitions.push(acquisition);else catalog.sources.push({id,url,acquisitions:[acquisition]})
@@ -72,14 +91,15 @@ export class ProjectSourceStore implements ProjectSourcePort {
   return result
  }
  async readBody(sid:string,aid:string,signal?:AbortSignal){
-  signal?.throwIfAborted();const {source,acquisition}=this.locate(this.snapshot(),sid,aid);let text=''
+  signal?.throwIfAborted();const {source,acquisition}=this.lookup(sid,aid)??(()=>{throw new Error('Source acquisition not found in this Project.')})();let text=''
   if(acquisition.originalTextArtifactId){const input=await ArtifactJobIO.open(this.artifacts,{action:'media.inspect',artifactId:acquisition.originalTextArtifactId})
    try{if(input.bytes>SOURCE_LIMITS.textBytes)throw new Error('Source text budget exceeded.');const bytes=await input.read(0,input.bytes);if(crypto.createHash('sha256').update(bytes).digest('hex')!==acquisition.contentId)throw new Error('Source original text was changed; citation evidence is unavailable.');text=new TextDecoder('utf-8',{fatal:true}).decode(bytes)}finally{await input.close()}
   }
+  if(acquisition.metadataRanges)verifySourceMetadataRanges(acquisition.metadataRanges,acquisition,text)
   const mediaAvailability=await this.mediaAvailability(acquisition.media,signal);signal?.throwIfAborted();this.guard();return {source,acquisition,text,mediaAvailability}
  }
  confirm(request:Extract<SourceRequest,{operation:'confirm'}>):SourceCatalog{
-  const catalog=this.current(request.expectedRevision),{acquisition}=this.locate(catalog,request.sourceId,request.acquisitionId)
+  const catalog=this.current(request.expectedRevision,request.sourceId,request.acquisitionId),{acquisition}=this.locate(catalog,request.sourceId,request.acquisitionId)
   if(request.candidateIds.some(id=>!acquisition.candidates.some(c=>c.id===id)))throw new Error('Foreign source candidate.');acquisition.confirmedCandidateIds=[...new Set(request.candidateIds)]
   // Keep media evidence after deselection; confirmation is preparation, not deletion.
   for(const media of acquisition.media)if(media.artifactId&&!acquisition.confirmedCandidateIds.includes(media.candidateId))acquisition.confirmedCandidateIds.push(media.candidateId)
@@ -90,10 +110,10 @@ export class ProjectSourceStore implements ProjectSourcePort {
   * URL and scoped text on both sides of capture; model requests cannot supply
   * this receipt, file hash, inspection or original-text evidence. */
  async recordScreenshot(receipt:SourceScreenshotReceipt,signal?:AbortSignal){
-  signal?.throwIfAborted();const catalog=this.current(receipt.expectedRevision),{source,acquisition}=this.locate(catalog,receipt.sourceId,receipt.acquisitionId),inspection=assertImageInspection(receipt.inspection)
+  signal?.throwIfAborted();const catalog=this.current(receipt.expectedRevision,receipt.sourceId,receipt.acquisitionId),{source,acquisition}=this.locate(catalog,receipt.sourceId,receipt.acquisitionId),inspection=assertImageInspection(receipt.inspection)
   if(receipt.pageUrl!==source.url||receipt.bodyContentId!==acquisition.contentId||acquisition.result!=='observed'||acquisition.scope.truncated||JSON.stringify(receipt.scope)!==JSON.stringify(acquisition.scope))throw new Error('SOURCE_SCREENSHOT_STALE: Original page or text identity changed.')
   await this.readBody(source.id,acquisition.id,signal);const artifactId=assertArtifactId(receipt.artifactId),input=await ArtifactJobIO.open(this.artifacts,{action:'media.inspect',artifactId});let contentId:string,bytes:number
-  try{bytes=input.bytes;if(bytes!==inspection.bytes||bytes>32*1024*1024)throw new Error('Source screenshot exceeds its image budget.');const header=imageHeader(await input.read(0,bytes));if(header.width!==inspection.width||header.height!==inspection.height||header.contentType!=='image/png')throw new Error('Source screenshot container and decode dimensions disagree.');contentId=await input.fingerprint(signal);if(contentId!==receipt.contentId)throw new Error('Source screenshot file changed.')}finally{await input.close()}
+  try{bytes=input.bytes;if(bytes!==inspection.bytes||bytes>32*1024*1024)throw new Error('Source screenshot exceeds its image budget.');const encoded=new Uint8Array(bytes);for(let at=0;at<bytes;at+=1024*1024){signal?.throwIfAborted();this.guard();encoded.set(await input.read(at,Math.min(1024*1024,bytes-at)),at)}const header=imageHeader(encoded);if(header.width!==inspection.width||header.height!==inspection.height||header.contentType!=='image/png')throw new Error('Source screenshot container and decode dimensions disagree.');contentId=crypto.createHash('sha256').update(encoded).digest('hex');if(contentId!==receipt.contentId||await input.fingerprint(signal)!==contentId)throw new Error('Source screenshot file changed.')}finally{await input.close()}
   const candidateId=crypto.randomUUID(),mediaId=crypto.randomUUID();let proofArtifactId:string|undefined
   try{
    const proofText=JSON.stringify({version:1,sourceId:source.id,acquisitionId:acquisition.id,candidateId,url:source.url,artifactId,decodedArtifactId:artifactId,contentReused:false,contentId,verification:inspection,sourceScreenshot:{kind:'page-screenshot',pageUrl:source.url,scope:acquisition.scope,bodyContentId:acquisition.contentId,capturedAt:receipt.capturedAt}},null,2)+'\n'
@@ -104,7 +124,7 @@ export class ProjectSourceStore implements ProjectSourcePort {
   }catch(error){if(proofArtifactId)this.removeNew(path.join(this.artifacts,proofArtifactId));throw error}
  }
  async recordMedia(sid:string,aid:string,cid:string,receipt:{state:SourceMediaState;artifactId?:string;contentId?:string;startSeconds?:number;endSeconds?:number;proof?:unknown;capture?:SourceCaptureEvidence;deliveryRange?:import('@bmw-agent/media-native/sources').SourceDeliveryRange;error?:string},revision:number,signal?:AbortSignal):Promise<SourceCatalog>{
-  signal?.throwIfAborted();const catalog=this.current(revision),{acquisition}=this.locate(catalog,sid,aid),candidate=acquisition.candidates.find(c=>c.id===cid)
+  signal?.throwIfAborted();const catalog=this.current(revision,sid,aid),{acquisition}=this.locate(catalog,sid,aid),candidate=acquisition.candidates.find(c=>c.id===cid)
   if(!candidate||!acquisition.confirmedCandidateIds.includes(cid))throw new Error('Confirm the candidate before acquiring media.')
   const capture=receipt.capture?assertSourceCaptureEvidence(receipt.capture):undefined;if(capture&&(capture.pageUrl!==catalog.sources.find(source=>source.id===sid)!.url||capture.candidateUrl!==candidate.url||JSON.stringify(capture.scope)!==JSON.stringify(acquisition.mediaScope)))throw new Error('Capture evidence does not match the confirmed source range.');
   const successful=['image-decoded','completed-decoded','decoded-file','partial-preview'].includes(receipt.state)
@@ -116,7 +136,7 @@ export class ProjectSourceStore implements ProjectSourcePort {
   try{
    if(receipt.artifactId){artifactId=assertArtifactId(receipt.artifactId);const input=await ArtifactJobIO.open(this.artifacts,{action:'media.inspect',artifactId});const hash=crypto.createHash('sha256')
     try{bytes=input.bytes;for(let at=0;at<input.bytes;at+=1024*1024){signal?.throwIfAborted();hash.update(await input.read(at,Math.min(1024*1024,input.bytes-at)))}}finally{await input.close()};contentId=hash.digest('hex');if(contentId!==receipt.contentId)throw new Error('Acquired source file changed after decoding.')
-    const duplicate=catalog.sources.flatMap(source=>source.acquisitions.flatMap(acquisition=>acquisition.media)).find(media=>media.contentId===contentId&&media.artifactId&&media.artifactId!==artifactId)
+    const duplicate=this.search({contentId,limit:20}).items.flatMap(item=>item.acquisition.media).find(media=>media.contentId===contentId&&media.artifactId&&media.artifactId!==artifactId)
     if(duplicate){let prior:ArtifactJobIO|undefined;try{prior=await ArtifactJobIO.open(this.artifacts,{action:'media.inspect',artifactId:duplicate.artifactId!});const priorHash=crypto.createHash('sha256');for(let at=0;at<prior.bytes;at+=1024*1024){signal?.throwIfAborted();priorHash.update(await prior.read(at,Math.min(1024*1024,prior.bytes-at)))}if(priorHash.digest('hex')===contentId)artifactId=duplicate.artifactId}catch{signal?.throwIfAborted()}finally{await prior?.close()}}
     const proofText=JSON.stringify({version:1,sourceId:sid,acquisitionId:aid,candidateId:cid,url:candidate.url,artifactId,decodedArtifactId:receipt.artifactId,contentReused:artifactId!==receipt.artifactId,contentId,verification:receipt.proof,...(capture?{capture}:{}),...(deliveryRange?{deliveryRange}:{})},null,2)+'\n';proofArtifactId=await this.writeArtifact('json',proofText);proofContentId=crypto.createHash('sha256').update(proofText).digest('hex')
    }

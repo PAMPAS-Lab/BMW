@@ -89,7 +89,7 @@ export class VideoStudioStore {
     return this.write({version:1,id:hostId?studioId(hostId):crypto.randomUUID(),ownerSessionId:this.ownerSessionId,revision:1,title:studioText(title,'title',80)||'新视频',width:output.width,height:output.height,fps:output.fps,music:output.music,...(output.cardLayout===undefined?{}:{cardLayout:output.cardLayout}),...(output.narrationPacing===undefined?{}:{narrationPacing:output.narrationPacing}),tts:output.tts,style:output.style,watermark:output.watermark,...(output.templateName?{templateName:output.templateName}:{}),scenes:[],preparation:{notes:'',outline:'',artifactIds:[]},updatedAt:new Date().toISOString(),exports:[]})
   }
   /** Save a host-completed direct composition without overwriting any existing draft. */
-  addComposition(raw:unknown,receipt:unknown):VideoDraft {
+  addComposition(raw:unknown,receipt:unknown,hostId?:string):VideoDraft {
     if(!this.ownerSessionId)throw new Error('STUDIO_SESSION_REQUIRED: 成片草稿需要绑定对话。')
     const composition=assertComposition(raw),output=assertMediaArtifactReceipt(receipt,'composition')
     if(composition.scenes.some(scene=>scene.bulletRevealSeconds!==undefined))throw new Error('Direct bullet reveal timing cannot be imported into editable Studio anchors.')
@@ -98,7 +98,8 @@ export class VideoStudioStore {
     if(measured!==undefined&&(!Array.isArray(measured)||measured.length!==composition.scenes.length))throw new Error('Invalid composition narration measurements.')
     const scenes=composition.scenes.map((scene,index)=>({...scene,id:crypto.randomUUID(),visualBrief:'',sources:[],endPolicy:'hold',...(scene.audioArtifactId?{audioText:scene.narration,audioGeneration:{kind:'imported'},...(Array.isArray(measured)?{audioDurationSeconds:finiteNumber(measured[index],'audio duration',.01,180)}:{})}:{})}))
     const createdAt=new Date().toISOString()
-    const draft=assertVideoDraft({...composition,version:1,id:crypto.randomUUID(),ownerSessionId:this.ownerSessionId,revision:1,scenes,preparation:{notes:'由已完成的直接合成恢复。保留原分镜、音频、画面和成片；已有音频作为导入素材，未推断生成参数。直接合成的画面末帧停留策略已保留。',outline:'',artifactIds:compositionAssets(composition)},updatedAt:createdAt,exports:[]})
+    const id=hostId?studioId(hostId):crypto.randomUUID();if(fs.existsSync(this.file(id)))throw new Error('Direct export draft identity already exists.')
+    const draft=assertVideoDraft({...composition,version:1,id,ownerSessionId:this.ownerSessionId,revision:1,scenes,preparation:{notes:'由已完成的直接合成恢复。保留原分镜、音频、画面和成片；已有音频作为导入素材，未推断生成参数。直接合成的画面末帧停留策略已保留。',outline:'',artifactIds:compositionAssets(composition)},updatedAt:createdAt,exports:[]})
     const completed={artifactId:output.artifactId,durationSeconds:output.durationSeconds,...(typeof output.verificationArtifactId==='string'?{verificationArtifactId:output.verificationArtifactId}:{})}
     const fingerprint=this.exportFingerprint(draft,completed)
     // Admit the entire draft and completed export atomically: no empty draft on failure.

@@ -310,6 +310,36 @@ try {
       const proof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/media-preservation-validation';fs.mkdirSync(proof,{recursive:true});fs.copyFileSync(path.join(artifacts,result.preservation.proofArtifactId),path.join(proof,'preserved-delivery.json'))
     }finally{await new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve()));kernel.tabs.delete(id);kernel.activeTabId=null;await source!.webContents.executeJavaScript(`document.querySelector('#preserve-source').remove()`)}
   })
+  await stage('identity-bound YouTube separated delivery merges both complete tracks without reencoding through browser action',async()=>{
+    const files:Record<string,Buffer>={}
+    for(const kind of ['video','audio'] as const){
+      const input=new Input({formats:[MP4],source:new BufferSource(fs.readFileSync(converted.path))}),target=new BufferTarget(),output=new Output({format:new Mp4OutputFormat({fastStart:'fragmented'}),target})
+      try{const conversion=await Conversion.init({input,output,tracks:'all',copy:{mode:'forced'},video:{discard:kind==='audio'},audio:{discard:kind==='video'}});assert.equal(conversion.discardedTracks.length,1);await conversion.execute();files[kind]=Buffer.from(target.buffer!)}finally{input.dispose()}
+    }
+    const duration=exportedInfo.durationSeconds,videoUrl='https://fixture.googlevideo.com/videoplayback?itag=137&source=youtube',audioUrl='https://fixture.googlevideo.com/videoplayback?itag=140&source=youtube'
+    let badAudio=false,wrongTrack=false,changeOnAudio=false,yt:BrowserWindow|undefined
+    browserSession.protocol.handle('https',async request=>{
+      const url=new URL(request.url)
+      if(url.hostname==='www.youtube.com')return new Response(`<style>video{width:320px;height:180px}</style><div id="movie_player"><video></video></div><script>const p=document.querySelector('#movie_player'),v=p.querySelector('video');Object.defineProperty(v,'duration',{value:${duration}});Object.defineProperty(v,'currentSrc',{value:'blob:https://www.youtube.com/player'});p.getVideoData=()=>({video_id:'fixture'});p.getPlayerResponse=()=>({playabilityStatus:{status:'OK'},videoDetails:{videoId:'fixture',lengthSeconds:'${duration}'},streamingData:{adaptiveFormats:[{url:'${videoUrl}',mimeType:'video/mp4',approxDurationMs:'${duration*1000}'},{url:'${audioUrl}',mimeType:'audio/mp4',approxDurationMs:'${duration*1000}',audioTrack:{id:'en',audioIsDefault:true}}]}})</script>`,{headers:{'content-type':'text/html'}})
+      if(url.hostname!=='fixture.googlevideo.com')return new Response(null,{status:404})
+      const audio=url.searchParams.get('itag')==='140'
+      if(audio&&changeOnAudio)await yt!.webContents.executeJavaScript("document.querySelector('#movie_player').classList.add('ad-showing')")
+      const data=files[audio&&!wrongTrack?'audio':'video'];return new Response(new Uint8Array(data),{status:audio&&badAudio?206:200,headers:{'content-type':audio?'audio/mp4':'video/mp4','content-length':String(data.length)}})
+    })
+    const id='youtube-pair-fixture',url='https://www.youtube.com/watch?v=fixture'
+    try{
+      yt=new BrowserWindow({show:false,webPreferences:{session:browserSession,sandbox:true,contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}});await yt.loadURL(url)
+      kernel.tabs.set(id,{id,title:'YouTube isolated fixture',url,projectId:project.id,view:{webContents:yt.webContents}});kernel.activeTabId=id
+      await assert.rejects(bridgeCall({action:'media.download',url:videoUrl}),/YOUTUBE_SEPARATED_TRACKS/)
+      const result=(await bridgeCall({action:'media.preserve',url:videoUrl})).result as {artifactId:string;videoIdentity:{targetId:string};tracks:{type:string;packets:number;packetSha256:string}[];preservation:{reencoded:boolean;completeSeparatedTracks:boolean;resources:{artifactId:string;track:string;sha256:string}[];proofArtifactId:string}}
+      assert.equal(result.videoIdentity.targetId,'fixture');assert.equal(result.preservation.completeSeparatedTracks,true);assert.equal(result.preservation.reencoded,false);assert.deepEqual(result.tracks.map(t=>t.type).sort(),['audio','video'])
+      for(const resource of result.preservation.resources)assert.deepEqual(fs.readFileSync(path.join(artifacts,resource.artifactId)),files[resource.track])
+      const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{type:string;sampleCount:number}[]};assert.equal(decoded.completeFile,true);assert.ok(decoded.tracks.every(t=>t.sampleCount>0));assert.deepEqual(decoded.tracks.map(t=>t.type).sort(),['audio','video'])
+      const proof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/media-preservation-validation';fs.mkdirSync(proof,{recursive:true});fs.copyFileSync(path.join(artifacts,result.preservation.proofArtifactId),path.join(proof,'youtube-separated-delivery.json'));fs.copyFileSync(path.join(artifacts,result.artifactId),path.join(proof,'youtube-merged.mp4'))
+      const before=fs.readdirSync(artifacts).sort();wrongTrack=true;await assert.rejects(bridgeCall({action:'media.preserve',url:videoUrl}),/declared video or audio track/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);wrongTrack=false;badAudio=true;await assert.rejects(bridgeCall({action:'media.preserve',url:videoUrl}),/full HTTP 200/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);badAudio=false
+      changeOnAudio=true;await assert.rejects(bridgeCall({action:'media.preserve',url:videoUrl}),/VIDEO_IDENTITY/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);assert.equal(media.isCaptureActive(),false)
+    }finally{yt?.destroy();kernel.tabs.delete(id);kernel.activeTabId=null;browserSession.protocol.unhandle('https')}
+  })
   await stage('bounded native-rate stereo audition WAV, hashes, PCM metrics, no model-listening claim, no autoplay and failed-range rollback',async()=>{
     // MediaRecorder's first audio PTS can lag its video track on a busy host.
     // Select a real one-second interval, rather than asserting samples exist before it.

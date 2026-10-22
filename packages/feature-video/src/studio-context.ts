@@ -6,7 +6,7 @@ import {studioLayer} from './studio-layer-edits.js'
 import type {VideoDraft} from './studio-contract.js'
 import type {FeatureStudioRegion} from '@bmw-agent/platform/feature-contract'
 
-export type StudioMode='browser'|'studio'
+export type StudioMode='browser'|'library'|'studio'
 export interface StudioViewPreferences {mode:'simple'|'advanced';confirmStages:boolean}
 export const defaultStudioView:StudioViewPreferences={mode:'simple',confirmStages:false}
 export function assertStudioView(raw:unknown):StudioViewPreferences {
@@ -16,7 +16,7 @@ export function assertStudioView(raw:unknown):StudioViewPreferences {
 }
 export interface StudioSelection {draftId:string;sceneId?:string;objectKind?:'visual'|'voice'|'captions';layer?:{id:string;kind:'visual'|'audio'};voiceSegmentId?:string;visualSegmentId?:string;stage:number;revision:number;dirty:boolean}
 export function assertStudioMode(raw:unknown):StudioMode {
-  if(raw!=='browser'&&raw!=='studio')throw new TypeError('Unknown workspace mode.')
+  if(raw!=='browser'&&raw!=='library'&&raw!=='studio')throw new TypeError('Unknown workspace mode.')
   return raw
 }
 export function assertStudioSelection(raw:unknown,draft:VideoDraft):StudioSelection {

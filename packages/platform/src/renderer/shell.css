@@ -291,3 +291,5 @@ html:has(body.toolbar-popup-open), body.toolbar-popup-open { background:transpar
 .video-options-custom[hidden]{display:none!important}
 
 #settings-qwen-audio { width: 100%; max-width: 100%; }
+
+.library-workspace #tabs-list,.library-workspace #new-tab,.library-workspace .controls,.library-workspace #address-form,.library-workspace #record{display:none}

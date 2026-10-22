@@ -12,6 +12,7 @@
     "./tabs": "./src/tab-policy.js"
   },
   "dependencies": {
-    "@bmw-agent/media-native": "*"
+    "@bmw-agent/media-native": "*",
+    "@bmw-agent/agent-contract": "*"
   }
 }
