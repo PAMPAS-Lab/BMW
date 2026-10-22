@@ -113,7 +113,7 @@ npm run test:video-e2e
 npm run test:tts-e2e
 ```
 
-最近素材库相关验证为 **112项离线分层检查及14项隔离原生回归通过**；其余层级、opt-in及外部服务范围见[验证说明](docs/VERIFICATION.md)。既有完整基线归档见[CURRENT](docs/verification/CURRENT.json)。测试使用一次性Profile，不计入付费模型或真实在线服务覆盖。已准备BMW＋DSH／DeepSeek Flash日常Project并通过实际只读连通；[使用流程](docs/AGENT_VIDEO_EDITING.md#日常新闻使用)与[就绪范围](docs/research/NEWS_DAILY_READINESS.json)明确选题确认、龙安朗和资源边界。已接受的43.03秒Chuck Lorre片保留，下一内容主线仍是科普、再学术。
+全仓检查的源码身份、逐项结果、资源缺项复测及未运行范围见[CURRENT](docs/verification/CURRENT.json)与[验证说明](docs/VERIFICATION.md)。测试使用一次性Profile，不计入付费模型或真实在线服务覆盖；真实社媒取材结果[单独登记](docs/research/SOCIAL_DOWNLOAD_VALIDATION.md)，YouTube原生获取改进保留为[待办](docs/plans/YOUTUBE_NATIVE_ACQUISITION.md)。已准备BMW＋DSH／DeepSeek Flash日常Project并通过实际只读连通；[使用流程](docs/AGENT_VIDEO_EDITING.md#日常新闻使用)与[就绪范围](docs/research/NEWS_DAILY_READINESS.json)明确选题确认、龙安朗和资源边界。已接受的43.03秒Chuck Lorre片保留，下一内容主线仍是科普、再学术。
 
 局部改动默认先用下方 `test:plan` / `test:affected -- --files ...` 查看并执行本次范围；既有未提交工作不应混入本次文件列表。`verify:stability` 显式使用 `--all`，执行全部非 opt-in 分类；六项专用本地素材夹具和六项外部服务／模型测试仍需单独启用，不计为通过。完整串行验证：`npm run verify:stability`，并单独执行 `npm run check` 检查完整编译／Schema与生成文档一致性。完整入口构建一次，再执行源码／清单门禁、单元/边界及运行时回归；记录源码哈希、依赖版本和通过/失败/未执行结果。桌面工作区测试分为工作区、Project/会话（含实际重启）、设置、原生焦点/键盘四组；Studio 各专用环境分支另由分类目录逐项执行，单组失败不阻止其余组运行。新证据在 `.bmw-runtime/classified-tests/`，既有证据保留。
 
@@ -153,7 +153,7 @@ Shell 的全部请求验证来源、主框架和固定本地页面；损坏的�
 ## 仓库内容
 
 - `apps/`：唯一 BMW 应用组合。
-- `packages/`：产品、平台、Agent 契约、自有 Assistant、DSH/Codex/Qoder CN 驱动、浏览器、原生媒体与 Video Studio 实现及测试。
+- `packages/`：产品、平台、Agent 契约、自有 Assistant、DSH/Codex/Qoder CN/WorkBuddy 驱动、浏览器、素材库、原生媒体与 Video Studio 实现及测试。
 - `scripts/`：构建、文档清单、分类验证、隔离桌面和媒体工作流检查。
 - `docs/`：功能说明、架构、当前状态、验证方法与合成视觉测试证据；[专项功能调研](docs/research/README.md)收集外部工具比较与候选方案。
 

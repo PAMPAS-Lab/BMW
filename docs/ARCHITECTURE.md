@@ -272,7 +272,6 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | library.source-presets-desktop | desktop | feature-library, platform, browser-capability | scripts/library-source-presets-smoke.ts | 默认 |
 | library.background | desktop | feature-library, platform, browser-capability | scripts/library-background-smoke.ts | 默认 |
 | library.news-desktop | desktop | feature-library, feature-video, platform, media-native | scripts/library-news-smoke.ts | 默认 |
-| library.desktop | desktop | platform, feature-library, feature-video | scripts/desktop-smoke.ts | group=workspace |
 | library.materials | contract | feature-library | packages/feature-library/test/library.test.ts | 默认 |
 | library.source-presets | contract | feature-library | packages/feature-library/test/source-presets.test.ts | 默认 |
 | library.collection-batch | contract | feature-library | packages/feature-library/test/collection-batch.test.ts | 默认 |
@@ -318,7 +317,7 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | startup.continuity-snapshot.retry | integration | platform | scripts/state-load-smoke.ts | BMW_STATE_STARTUP_KIND=continuity-snapshot; BMW_STATE_STARTUP_SCENARIO=retry |
 | startup.continuity-snapshot.exit | integration | platform | scripts/state-load-smoke.ts | BMW_STATE_STARTUP_KIND=continuity-snapshot; BMW_STATE_STARTUP_SCENARIO=exit |
 | dsh | integration | harness-dsh, agent-contract | scripts/dsh-compatibility-smoke.ts | 默认 |
-| desktop.workspace | desktop | platform, harness-dsh, browser-capability, feature-video | scripts/desktop-smoke.ts | group=workspace |
+| desktop.workspace | desktop | platform, harness-dsh, browser-capability, feature-video, feature-library | scripts/desktop-smoke.ts | group=workspace |
 | desktop.projects | desktop | platform, harness-dsh, browser-capability, feature-video | scripts/desktop-smoke.ts | group=projects |
 | desktop.settings | desktop | platform, harness-dsh, browser-capability, feature-video | scripts/desktop-smoke.ts | group=settings |
 | desktop.native | desktop | platform, harness-dsh, browser-capability, feature-video | scripts/desktop-smoke.ts | group=native |

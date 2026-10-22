@@ -1839,6 +1839,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `scripts/test/test-selection.test.ts`
 
+- `Desktop workspace runs once and library edits retain the existing workspace coverage`
 - `Renderer read change selects its direct/consumer guarantees and background runtime without unrelated codecs or speech`
 - `Public contract changes include consumers; deleted/unknown/config changes fail toward full offline coverage`
 - `AST dependency analysis recognizes multiline aliases, exports and dynamic imports while ignoring comment/string decoys`

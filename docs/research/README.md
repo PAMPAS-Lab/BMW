@@ -21,7 +21,8 @@
 | [AI新闻固定来源与滚动素材验证](AI_NEWS_REAL_SOURCES.md) | 24项可选目录，实际公网原文/事件/72小时推荐，X/YouTube访问缺口；隔离Profile、确定性队列适配器，无付费模型与成片验收 |
 | [主Profile实际采集与制作](AI_NEWS_MAIN_PROFILE.md) | 真实Qoder驱动、九项订阅、23条线索与17个事件；保留初始72小时九题不足快照，第一轮已冻结严格十题；保全及验收范围单列 |
 | [第二轮72小时采集与编辑台账](NEWS_ROUND_2_COLLECTION.md) | 九项真实入口更新、新增12条线索；当前35条线索、24个有效事件／28个历史记录，GUI归并和覆盖缺口；用户要求暂停，第二轮进度保留 |
-| [DSX POD完整旁白与来源](NEWS_DSX_POD_SCRIPT.md)／[交付证据](NEWS_DSX_POD_DELIVERY.json) | 当前约41秒导出的完整中文稿、实际采用双向查询、111帧及独立画面审阅；人工听感待确认 |
+| [DSX POD初版旁白与来源](NEWS_DSX_POD_SCRIPT.md)／[初版证据](NEWS_DSX_POD_DELIVERY.json) | 保留约41秒初版中文稿、实际采用双向查询、111帧及独立画面审阅；后续版本另列 |
+| [DSX POD当前修订稿](NEWS_DSX_POD_FINAL_SCRIPT.md)／[修订证据](NEWS_DSX_POD_FINAL_DELIVERY.json) | 48.704秒实际MP4、原声双语开场、计划交付与实际落地区分、126个原生关键状态；技术及官方六镜／独立整片审阅通过，首句ASR置信度与时间边界有缺口，人工听感及用户接受待验；[中间稿](NEWS_DSX_POD_V2_SCRIPT.md)保留 |
 | [PHP安全修复完整稿](NEWS_PHP_SECURITY_SCRIPT.md) | 后续第2／4条：40.04秒，五镜／59帧、独立整片画面检查、原生SRT和11项采用；[交付证据](NEWS_PHP_SECURITY_DELIVERY.json)，人工听感待验 |
 | [PHP事实与回应核对](NEWS_PHP_PATCH_EDITORIAL.md) | 维护者全文、Wiz/Calif存档、2024年线索与披露过程回应；历史舞台原片身份、日期和辅助范围 |
 | [NVIDIA开放模型完整稿](NEWS_NVIDIA_OPEN_MODELS_SCRIPT.md) | 后续第1／4条：31.5秒，六镜／68帧与独立整片画面审阅、原生SRT和12项采用；[交付证据](NEWS_NVIDIA_OPEN_MODELS_DELIVERY.json)，人工听感待验 |

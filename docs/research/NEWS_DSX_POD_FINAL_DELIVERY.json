@@ -1,14 +1,17 @@
 {
   "version": 1,
   "date": "2026-10-22",
-  "status": "exported-final-review-in-progress",
-  "workflow": "User-authorized current BMW instance; visible native Studio editing, single-segment Qwen regeneration and native render; official Qoder browser review. No code or production-profile tests.",
+  "status": "exported-and-reviewed-human-listening-pending",
+  "workflow": "User-authorized current BMW instance; visible native Studio editing, single-segment Qwen regeneration and native render; official Qoder browser review. Native speech QA on copied output. No application code changes or production-profile tests.",
   "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
   "sessionId": "af971f50-7fba-431b-b180-2a7314f7a6f4",
   "draftId": "9665aa12-9361-4976-9098-7cf3752f40d5",
   "title": "DSX POD：AI 工厂模块化",
   "export": {
     "artifactId": "media-b1f994a2-3d0d-452a-b5fd-1fc4b88083cc-converted.mp4",
+    "fingerprint": "30767f08de1854ede4424f1d2064e53b103b26af17c556baaa7c914bfaca7a39",
+    "registryId": "d8158b1ed7d8ce5aa6bfa477aa3a87a74670f38975d5d2fd580dfe27d1cdb42e",
+    "verificationArtifactId": "video-b2191811-eef6-4623-923b-62276a4e1c2e.json",
     "renderedRevision": 63,
     "currentDraftRevision": 64,
     "localFile": "outputs/dsx-pod-2026-10-22/DSX-POD-final.mp4",
@@ -53,12 +56,42 @@
     "omittedCandidates": 4,
     "technicalWarnings": ["Scene 3 reference photograph has about eight seconds of low change; retained for architecture explanation"],
     "studioHints": ["Opening second bilingual cue adapted to 28px","Scene 3 fifth caption reading time is short"],
-    "officialRuntimeSceneAndWholeFilmReview": "in-progress",
-    "finalMp4OriginalSpeechPcmAndAsr": "in-progress",
+    "officialRuntimeSceneAndWholeFilmReview": "passed; all six scene declarations followed by separate whole-film declaration, 126/126 current critical states",
+    "officialWholeFilmReviewCreatedAt": "2026-10-22T02:54:13.100Z",
+    "finalMp4OriginalSpeechPcmAndAsr": {
+      "sampleArtifactId": "media-26e39d5c-d40a-43af-a9c3-b47bf4a7402d-audition.wav",
+      "sampleSha256": "afca05d18269294e132192b43ac96f4cd84a7d2585b733973918b7000a6f8d5a",
+      "sampleRangeSeconds": [0,7.5],
+      "sampleRate": 48000,
+      "channels": 2,
+      "peak": 0.5386,
+      "rms": 0.0714,
+      "clippedSamples": 0,
+      "missingSamples": 0,
+      "nativeAsrEvidence": "video-06384a5b-86e4-49e4-9add-d2b709111e8d.json",
+      "nativeAsrEvidenceSha256": "07da07b119e6e4448dd67ad4ace8bb1afc078e63e1cf771d40d42d7d87064aa2",
+      "nativeSmallFullWindowText": "So this is the next click of NVIDIA computing.",
+      "nativeSmallFullWindowProbability": 0.83531845,
+      "firstCueTargetedCheck": {
+        "method": "Native BMW SpeechProcessor small/en on byte-exact 0-3.3 second prefix of the final-MP4 normalized PCM, isolated workspace QA; original Project unchanged",
+        "text": "We call it DSX POD.",
+        "tokenMeanProbability": 0.700652625,
+        "usable": false,
+        "warnings": ["outside-audio","low-confidence"],
+        "evidence": "outputs/dsx-pod-2026-10-22/qa/first-cue-asr.json"
+      },
+      "baseFullWindowCrossCheck": "Okay, so this is the next click of NVIDIA Computing.",
+      "conclusion": "Final MP4 has measured original audio and machine recognition of the second phrase. Targeted first-cue recognition matches the first phrase but has low confidence and an out-of-range timestamp; it is not an approved alignment or human confirmation. First phrase remains for human listening.",
+      "listeningStatus": "not-performed"
+    },
+    "nativeCitationCount": 0,
+    "nativeCitationLimitation": "Empty structured citation export retained as a gap, not presented as a valid bibliography. The accompanying written script separately supplies verified primary source links, dates, attribution and the Dell public response.",
     "independentRoot": {
       "method": "Visible current-MP4 playback in BMW, fullscreen to end, followed by paused exact-time spot checks; no auditory claims",
       "observed": ["Original speech opening and bilingual caption at 1.55832 and 2.98457 seconds","Opening second bilingual caption near 6 seconds","Live close-up and caption near 15 seconds","Reference architecture image at 21.97491 seconds","Later live close-up at 29.0534 seconds","14-day boundary card near 34 seconds","Updated planned-delivery card near 44 seconds and end"],
-      "limitations": ["Publication date wraps across lines but remains complete","Reference image fine print and opening wide-stage figure remain small on phone","Root playback and screenshot observations are not human listening or exhaustive frame inspection"]
+      "limitations": ["Publication date wraps across lines but remains complete","Reference image fine print and opening wide-stage figure remain small on phone","Root playback and screenshot observations are not human listening or exhaustive frame inspection"],
+      "lastConfirmedPlayerState": "Latest MP4 paused at 0 seconds, fullscreen exited",
+      "uiReadLimitation": "Later CUA window observations timed out three times. Completion and evidence were confirmed by read-only inspection of the specific Project's saved artifacts, review journal and current Session receipt; no runtime/profile files were changed."
     },
     "humanListening": "pending",
     "userAcceptance": "pending"
@@ -69,8 +102,14 @@
     "nativeSrt": "outputs/dsx-pod-2026-10-22/DSX-POD-final.srt",
     "nativeSrtCueCount": 23,
     "nativeSrtTimingProvenance": "outputs/dsx-pod-2026-10-22/DSX-POD-subtitle-timing.json",
-    "srtContentVerification": "All 23 cues read from the exported file. Opening two cues retain both languages; closing three cues match the new narration and end at 48.532 seconds."
+    "srtContentVerification": "All 23 cues read from the exported file. Opening two cues retain both languages; closing three cues match the new narration and end at 48.532 seconds.",
+    "nativeSrtSha256": "fcc0bfd114140e69e77e79d3ace69398b48b54ed68fa04db9bb32122983a6581",
+    "openingAudition": "outputs/dsx-pod-2026-10-22/DSX-POD-opening-listen.wav",
+    "savedReviewJournal": "outputs/dsx-pod-2026-10-22/qa/native-export-reviews.json",
+    "savedExportRegistry": "outputs/dsx-pod-2026-10-22/qa/native-export-registry.json"
   },
+  "registryVerification": {"versions":4,"uses":11,"allNoHold":true,"openingSourceAudioPresent":true,"firstFourNarrationSha256MatchInitialDelivery":true,"nativeOutputAndSavedCopySha256Match":true},
+  "runtimeReceipt": {"runId":"0b576221-c5fd-4513-a0a9-521d8e855563","state":"finished","outcome":"success"},
   "published": false,
   "schedulesResumed": false
 }

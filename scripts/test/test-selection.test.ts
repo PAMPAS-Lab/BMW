@@ -10,6 +10,14 @@ import {selectTests} from '../test-selection.js'
 import {tests} from '../test-catalog.js'
 import {gitChanges,parseOptions,runVerificationProcess} from '../test-runner.js'
 
+test('Desktop workspace runs once and library edits retain the existing workspace coverage',()=>{
+ const desktop=tests.filter(test=>test.runner==='desktop')
+ assert.deepEqual(desktop.map(test=>test.group),['workspace','projects','settings','native'])
+ assert.ok(desktop.find(test=>test.group==='workspace')?.modules.includes('feature-library'))
+ const graph=readSourceGraph(process.cwd())
+ for(const file of ['packages/feature-library/src/renderer/library.ts','packages/platform/src/workspace-runtime.ts'])assert.ok(selectTests(graph,[file]).selected.some(item=>item.test.id==='desktop.workspace'),file)
+})
+
 test('Renderer read change selects its direct/consumer guarantees and background runtime without unrelated codecs or speech',()=>{
   const graph=readSourceGraph(process.cwd()),selection=selectTests(graph,['packages/browser-capability/src/renderer-read.ts']),ids=selection.selected.map(item=>item.test.id)
   for(const id of ['browser.renderer-read','browser.screenshot','browser.background','architecture.boundaries'])assert.ok(ids.includes(id),id)
