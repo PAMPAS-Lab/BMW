@@ -8,6 +8,7 @@
 | [2026-10-07-consistency](2026-10-07-consistency/index.md) | 已有 P0、一致性核查前原文与失败过程；保持原快照 | 自动句／词／字精度仍未批准；历史待办不自动恢复 |
 | [agent-drivers/IMPLEMENTATION.md](agent-drivers/IMPLEMENTATION.md) | 三驱动及 GPT-6 封装、登录集成的阶段验收已完成 | 当前架构仍在 AGENT_DRIVER_DESIGN；旧临时目录和付费模型结果不代表新版验证 |
 | [agent-drivers/MIGRATION.md](agent-drivers/MIGRATION.md) | 2026-10-05 已授权迁移执行记录 | 操作方法仍在当前迁移说明；本轮不访问生产 Profile |
+| [WorkBuddy 初版设计](agent-drivers/WORKBUDDY_DRIVER.md)、[路线比较](agent-drivers/WORKBUDDY_DRIVER_COMPARISON.md) | 合并旧分支时保留的研究与初版实现记录 | 已由实际目录门禁、系统加密、进程组清理和输入回执加固替代；旧参数结构保证与未实现结论不是当前规范 |
 | [weibo-templates/DESIGN.md](weibo-templates/DESIGN.md) | 最早依赖高级对象的资讯方案，已被卡片方案替代 | 参考来源与观察保留；不执行旧字段建议 |
 | [SIMPLE_CARDS_DESIGN.md](weibo-templates/SIMPLE_CARDS_DESIGN.md) | 两类资讯卡的中间提案，已被八类体系替代 | 共享内容与简洁可逆约束仍有效 |
 | [TEMPLATE_SYSTEM_DESIGN.md](weibo-templates/TEMPLATE_SYSTEM_DESIGN.md)、[REVIEW_DESIGN.md](weibo-templates/REVIEW_DESIGN.md) | 八类模板及分批设计；已实现部分不再当待办 | 连续指针轨迹、通用 3D、专用生成仍不属于已实现范围 |

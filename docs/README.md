@@ -26,7 +26,7 @@
 
 | 文档 | 定位 |
 |---|---|
-| [AGENT_DRIVER_DESIGN.md](AGENT_DRIVER_DESIGN.md) | 已采纳的三官方驱动架构，仍是现行设计；不是未完成的多 Agent 开发计划 |
+| [AGENT_DRIVER_DESIGN.md](AGENT_DRIVER_DESIGN.md) | 已采纳的四官方驱动架构，仍是现行设计；不是未完成的多 Agent 开发计划 |
 | [QODER_BMW.md](QODER_BMW.md) | Qoder 专用适配说明；包内 qoder-bmw/SKILL.md 是随实现发布的指导，不归入外部研究 |
 | [AGENT_DATA_MIGRATION.md](AGENT_DATA_MIGRATION.md) | 显式迁移操作说明；正常启动不做历史迁移 |
 | [VIDEO_DOCUMENT_V2.md](VIDEO_DOCUMENT_V2.md) | 2.0–2.10 文档、时间权威、类型工作表、权限、预算与迁移 |

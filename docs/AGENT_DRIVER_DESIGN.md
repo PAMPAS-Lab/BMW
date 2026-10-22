@@ -1,10 +1,12 @@
-# BMW 三官方驱动架构（已采纳）
+# BMW 四官方驱动架构（已采纳）
 
 ## 产品形态
 
-保留一个 BMW 应用和一套 Project、浏览器、媒体及 Video Studio。BMW 提供自己的 Assistant 对话面板，DSH、Codex、Qoder CN 是可选择的执行引擎。用户在 BMW 新建会话、发送消息、查看回复和工具进度、停止与续聊，不依赖 SDK 会话出现在原生桌面侧边栏。
+保留一个 BMW 应用和一套 Project、浏览器、媒体及 Video Studio。BMW 提供自己的 Assistant 对话面板，DSH、Codex、Qoder CN、WorkBuddy 是可选择的执行引擎。用户在 BMW 新建会话、发送消息、查看回复和工具进度、停止与续聊，不依赖 SDK 会话出现在原生桌面侧边栏。
 
-Qoder SDK / Codex App Server 的会话与它们桌面应用的对话列表分开验证。原生桌面打开/同步只在有公开接口并通过实际验收时启用，不作为 BMW 的运行条件。WorkBuddy 暂不纳入。
+Qoder SDK / Codex App Server 的会话与它们桌面应用的对话列表分开验证。原生桌面打开/同步只在有公开接口并通过实际验收时启用，不作为 BMW 的运行条件。
+
+WorkBuddy 通过官方固定版本 CLI 的 ACP v1 接入，认证只使用官方 API Key（`CODEBUDDY_API_KEY`），凭据经系统加密后保存在 BMW 自己的 Profile 中，不读取 WorkBuddy 桌面应用的私有通道。每次输入前捕获并验证有效工具目录，必须恰好只有 BMW browser；启动参数、无 fs/terminal 客户端能力及运行期拒绝只是附加防护，不能替代目录门禁。取消等待进程组和处理中请求实际清理；清理失败隔离至显式恢复。Windows 进程树未验收，当前保持不可用。
 
 ```mermaid
 flowchart TB
@@ -13,9 +15,11 @@ flowchart TB
   Host --> DSH[DSH 官方 runtime]
   Host --> Codex[Codex 官方 App Server]
   Host --> Qoder[Qoder CN 官方 SDK]
+  Host --> WorkBuddy[WorkBuddy 官方 ACP]
   DSH --> Browser[唯一 browser 能力]
   Codex --> Browser
   Qoder --> Browser
+  WorkBuddy --> Browser
   Browser --> Bridge[BMW 认证 Bridge\nProject/Session 租约与实际清理]
   Bridge --> Project[Project 页面、媒体与 Video Studio]
 ```
@@ -27,7 +31,7 @@ flowchart TB
 | BMW UI | 对话列表、消息、运行状态、权限提示、停止、Studio 上下文 |
 | agent-contract | Session、请求/事件/回执、驱动能力和生命周期的具名契约 |
 | BMW Host | 持久化后提交输入、验证成员关系、全局 FIFO、取消和实际清理 |
-| 三个 harness | 官方引擎启动、正常认证、模型配置、原生恢复和协议事件转换 |
+| 四个 harness | 官方引擎启动、正常认证、模型配置、原生恢复和协议事件转换 |
 | browser / Bridge | 唯一模型能力、参数验证、租约、Project 排除、截图及媒体准入 |
 | Project / Studio | 页面、素材、草稿、版本冲突与输出记录 |
 
@@ -57,7 +61,7 @@ BMW 只使用自有 Host 与 Assistant；已移除旧 DSH 客户端/DOM 选择�
 
 ## 验收与当前证据
 
-三个引擎分别验收：只暴露 browser、真实页面操作、真实截图读图、正确 Studio owner/版本、关闭原生进程后同一 Session 续聊、取消及清理、跨 Project 拒绝、计划任务固定绑定，以及损坏保存数据的重试/退出。
+四个引擎按各自范围分别验收：只暴露 browser、真实页面操作、真实截图读图、正确 Studio owner/版本、关闭原生进程后同一 Session 续聊、取消及清理、跨 Project 拒绝、计划任务固定绑定，以及损坏保存数据的重试/退出。WorkBuddy 当前通过官方 CLI＋本机模型夹具的目录／续聊／Bridge 检查，另有[单次真实调用记录](research/WORKBUDDY_BROWSER_DELIVERY.json)；其他模型、图片语义与完整制作不能沿用三驱动历史验收。
 
 三驱动默认入口、登录/模型设置、跨进程恢复与固定调度已实现并验收。当时 Codex App Server 0.160.0 通过官方启动模型目录投影，为 GPT-6.1 Sol、GPT-6 Astra、GPT-6 Sol 和 GPT-6 Luna 提供直接 browser 调用；保留原模型身份、原生传输和能力，并以实际有效目录继续要求唯一工具。四个型号与 GPT-5.5 均完成两轮真实截图、Studio 和原生续聊验收。新增未知型号不自动获得准入，账号列表也不证明推理可用性。当前代码明确准入 0.160.0 与 0.160.1，其他版本仍拒绝；当时的模型验收不代表新版重做了付费模型验证。当前源码、受保护合入及验证记录见 [实施状态](history/agent-drivers/IMPLEMENTATION.md)。
 
