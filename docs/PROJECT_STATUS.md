@@ -22,7 +22,7 @@ NEWS-01已完成技术实现、真实制作与用户验收。当前接受基准�
 
 NEWS-02本轮功能与真实样片已交付，当前43.03秒Chuck Lorre新闻已获用户“这个版本可以了”的接受。候选上限扩至十项，优先采访／演讲原声；素材库支持本次Qwen音色覆盖与真实预览按需加载，Studio保留制作进度。本轮研究只取得IMF总裁与Reuters采访两张合格卡，不以旧闻凑数；用户选择Chuck Lorre后，BMW＋官方Codex／Qwen龙安朗完成9:16可编辑新闻，以两段原声解释其对强于人类的智能及捕食者／昆虫类比的担忧。字幕修改为大号可编辑双语，音频和区间保持不变；73张当前关键帧、逐镜／全片Agent意见、60个研究文件及72个初期制作文件的SHA保留检查见[成片与接受证据](research/NEWS_02_LORRE_DELIVERY.json)，[选题与未入选原因](research/NEWS_02_TOPICS.json)单列。用户接受不补造专项发音、声学对齐或复述分数。研究覆盖、署名日期格式兼容与有约束的未变镜头审阅复用仍待后续，现行审阅规则保持；下一主线为SCIENCE-01，再到RESEARCH-01。
 
-核对日期：2026-10-21。当前行为与 Schema 见 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md)，模块／接口／测试分支见 [ARCHITECTURE.md](ARCHITECTURE.md)，报告见 [VERIFICATION.md](VERIFICATION.md)。
+核对日期：2026-10-22。当前行为与 Schema 见 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md)，模块／接口／测试分支见 [ARCHITECTURE.md](ARCHITECTURE.md)，报告见 [VERIFICATION.md](VERIFICATION.md)。
 此前三类基准主片均已由 BMW＋DSH 0.2.1-rc.2／官方 deepseek-flash 制作：SI新闻57.664秒、机器人科普210.859秒、HybridAgent学术229.248秒。新闻的基本满意反馈已单独保存；科普与学术按量子位、AK参考重做画面，保留各八段原Matcha旁白，增加大幅厨房实拍、杯／夹爪条件变化、计算器／大h状态包／连续KV动画及论文对照。新片的实际MP4、来源、SHA与当前审阅范围见交付记录，人工听感、观众理解和接受仍待反馈。原Qoder版本和所有素材保留。
 
 | 范围 | 当前实现与边界 |
@@ -59,7 +59,7 @@ DSH三条主片独立保存：[SI新闻](research/DSH_SI_DELIVERY.json)、[科�
 
 ## 当前代码与验收
 
-2026-10-20 当前整合后的完整 `--all` 为 **173 passed／0 failed／12 opt-in not-run**，报告为 `.bmw-runtime/news-daily-main-integration/full-final/result.json`，受测输入以本次提交前冻结的源码 SHA 为准。构建、check、功能／架构及边界检查通过，覆盖四驱动装配、官方 WorkBuddy／本机模型夹具、新闻 FIFO、DSH、desktop、Studio、media、video 和 narration。当前源码与逐项结果见[CURRENT](verification/CURRENT.json)。WorkBuddy 已接入输入前有效目录门禁、系统加密 Key、实际任务鉴权状态、事件串行化、原生续聊及清理隔离；另有用户授权的 WorkBuddy／deepseek-v4.1-flash 单次 browser 实际调用通过，见[脱敏记录](research/WORKBUDDY_BROWSER_DELIVERY.json)，不计入离线通过数；其他模型、额度、完整生产 Profile 和 Windows 进程树未验收，Windows 保持不可用。六个冻结类型例外未增加。
+2026-10-22 当前合并代码的 build／check 与完整 --all 为 **196 passed／0 failed／14 opt-in not-run**，覆盖 191 项登记检查、四项门禁及桌面汇总；源码与生成输出逐项核对，结果见[CURRENT](verification/CURRENT.json)。首轮缺少隔离Whisper资源及桌面重复登记的失败完整保留，补齐资源、合并登记并增加断言后重新构建、完整重跑，不混计首轮。测试使用一次性Profile／Home／Project及mock keychain；真实服务、生产Profile、人工听感及用户接受另列。WorkBuddy实际browser目录、加密Key、原生续聊和清理隔离保持；[单次真实调用](research/WORKBUDDY_BROWSER_DELIVERY.json)不扩大为其他模型或制作验收，Windows进程树保持未验收及不可用。六个冻结类型例外未增加。
 
 量子位四阶段已完成全片分析、长篇、文字包装及有限科学图解的实现和对应技术验收，记录已[归档](history/qbit/IMPLEMENTATION.md)。10 月 17 日样片副本修订后：新闻时间线 40 秒、PIP 34.666667 秒并改为 1280×720，S10／S09 为 32／24 秒；实际文件时长另有编码尾部。原版、工程和审阅证据保留。S04 未下载／全片分析；长篇只验证了 640×360／12fps，不推断 1080p／30fps 性能。新闻叙事、细字阅读与音频核听仍有缺口。
 

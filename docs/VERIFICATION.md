@@ -1,6 +1,18 @@
 # BMW 验证说明
 
-核对日期：2026-10-21。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
+核对日期：2026-10-22。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
+
+## 当前合并源码验证（2026-10-22）
+
+本轮已将所有现存本地／远端分支头纳入 main；WorkBuddy 冲突保留实际 browser 目录门禁、系统加密、事件串行化和清理隔离，旧设计归档。社媒研究保留已补充的日期与能力边界。运行中的 BMW 使用原检出目录，验证使用独立 Git 索引、与提交 `04bf356` 文件树完全一致的源码副本；只复用已安装的第三方依赖，BMW workspace 链接指向副本，复制固定本地 TTS／Whisper 资源，不代表全新 npm ci 验收。
+
+最终顺序 build、check 与完整 --all 通过：**196 passed／0 failed／14 opt-in not-run**。196 个记录组包括 191 项登记检查、4项门禁和1项桌面汇总；覆盖 unit／contract／boundary／type、四驱动、DSH、素材库、desktop、Studio、media、video 和 narration。最终运行源码与生成输出重新逐项计算 SHA；文档收尾后另核对类型、清单、边界与链接。六个冻结类型例外未增加。[CURRENT](verification/CURRENT.json)保存逐项结果、源码／输出身份、分支审计及本机完整日志指纹；不是远程 CI。
+
+首轮完整运行是 **190 passed／7 failed／14 opt-in not-run**，原报告保留。Studio next 失败来自隔离副本缺少 Whisper 模型；其余六个失败记录来自 library.desktop 与 desktop.workspace 重复登记同一组，使桌面入口拒绝参数，并非六个独立功能故障。已将素材库覆盖合入 desktop.workspace、移除别名并补唯一四组及变更选择断言，18个测试选择用例通过；补齐模型后重新构建并完整重跑，最终结果不与首轮混计。
+
+公开视频取材结果另见[实测](research/SOCIAL_DOWNLOAD_VALIDATION.md)：X、微博各2/2，两个真实 X 回复资源被拒绝；YouTube 0/2，SABR/UMP或403阻止完整文件获取。同目标分离合并的隔离夹具通过不能代替真实网站，用户要求暂缓并登记[YOUTUBE-01](plans/YOUTUBE_NATIVE_ACQUISITION.md)。没有引入 yt-dlp 或 TikTok 专用适配。运行检查使用一次性 Profile／Home／Project及mock keychain，不测试生产Profile、系统凭据提示或付费模型，人工听感和用户接受分别记录。
+
+此前完整173组基线保留在[整合前快照](history/2026-10-22-before-library-social-integration/CURRENT.json)；以下专题记录仍保留各自日期和范围，不累加为本次通过数。
 
 ## 主 Profile 实际发现的大截图读取问题
 

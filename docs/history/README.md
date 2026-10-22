@@ -4,6 +4,7 @@
 
 | 目录／记录 | 归档理由 | 继续保留的限制或去向 |
 |---|---|---|
+| [素材库与社媒整合前验证](2026-10-22-before-library-social-integration/README.md) | 保留此前173组完整验证及源码身份 | 当前源码、首轮失败与重新完整运行见当前验证摘要；历史不冒认新版覆盖 |
 | [2026-10-17-alignment](2026-10-17-alignment/README.md) | 文档／代码／测试对齐、发现的缺陷修复和完整离线基线 | 154 passed／0 failed／11 not-run；可移植指纹摘要，不包含本机媒体与付费验收 |
 | [2026-10-07-consistency](2026-10-07-consistency/index.md) | 已有 P0、一致性核查前原文与失败过程；保持原快照 | 自动句／词／字精度仍未批准；历史待办不自动恢复 |
 | [agent-drivers/IMPLEMENTATION.md](agent-drivers/IMPLEMENTATION.md) | 三驱动及 GPT-6 封装、登录集成的阶段验收已完成 | 当前架构仍在 AGENT_DRIVER_DESIGN；旧临时目录和付费模型结果不代表新版验证 |

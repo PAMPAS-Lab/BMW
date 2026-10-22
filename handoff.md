@@ -47,9 +47,9 @@ NEWS-01提供严格近72小时、广泛个人／组织主体、最多十个不�
 
 ## 验证与本机交付
 
-2026-10-20 当前整合后的完整 `--all` 为 **173 passed／0 failed／12 opt-in not-run**，报告为 `.bmw-runtime/news-daily-main-integration/full-final/result.json`，受测输入以本次提交前冻结的源码 SHA 为准。构建、check、功能／架构与边界检查通过；逐项结果和源码指纹见[CURRENT](docs/verification/CURRENT.json)。WorkBuddy 已作为第四驱动接入：固定官方 ACP 实际目录预检、系统加密 API Key、配置／实际任务验证分离、串行事件与原生回执、同一 provider 续聊及失败清理隔离。官方 CLI＋本机模型夹具完成三模型目录和两轮真实 Bridge 调用；离线基线没有真实 Key／付费服务覆盖；其后用户授权的 WorkBuddy／deepseek-v4.1-flash 单次 browser 实际调用成功，见[脱敏记录](docs/research/WORKBUDDY_BROWSER_DELIVERY.json)，不扩大其他模型或制作验收。六个冻结类型例外未增加。
+2026-10-22 当前合并代码的 build／check 和完整 --all 为 **196 passed／0 failed／14 opt-in not-run**，包含 191 项登记检查、四项门禁及桌面汇总。源码副本与提交04bf356文件树一致，避免清理运行中BMW的生成文件；[CURRENT](docs/verification/CURRENT.json)保存源码／输出SHA和逐项结果。首轮190通过／7失败单独保留；隔离Whisper资源补齐、桌面workspace重复登记合并并增加选择断言后，重新构建及完整重跑通过。WorkBuddy目录门禁、加密Key、事件／续聊／清理隔离保持；[既有单次真实调用](docs/research/WORKBUDDY_BROWSER_DELIVERY.json)不计入离线通过数。
 
-覆盖unit／contract／boundary、官方DSH冷检查、desktop、Studio、media、video及narration；六个专用本地素材夹具和六个外部入口未在完整回归中启用。真实付费模型、在线Qwen调用与用户接受另有交付证据，不计入离线通过数。测试使用一次性Profile／Home／Workspace及mock keychain，没有生产Profile或系统凭据提示覆盖。GitHub尚无Actions，不宣称远程CI已运行；可选Codex CLI另行发现安装，本机成功不代表全新`npm ci`自带它。
+覆盖unit／contract／boundary、官方DSH冷检查、desktop、Studio、media、video及narration；本轮14项显式opt-in未运行，包含指定本地素材夹具及外部服务入口。真实付费模型、在线Qwen调用与用户接受另有交付证据，不计入离线通过数。测试使用一次性Profile／Home／Workspace及mock keychain，没有生产Profile或系统凭据提示覆盖。GitHub尚无Actions，不宣称远程CI已运行；可选Codex CLI另行发现安装，本机成功不代表全新`npm ci`自带它。
 
 后续运行时改动按AGENTS串行构建并执行check、unit／boundaries与相关原生检查；测试增删后运行`npm run docs:features`。构建清理生成输出，先退出仍使用它们的BMW进程。
 
