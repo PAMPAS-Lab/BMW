@@ -1,0 +1,60 @@
+{
+  "format": "bmw.per-source-collection-verification",
+  "version": 1,
+  "verifiedAt": "2026-10-23T07:28:11.248Z",
+  "sourceBaseRevision": "ab272d7",
+  "build": "passed final closure build",
+  "check": "passed final closure TypeScript/source/schema/features/architecture",
+  "fullBaseline": {
+    "report": ".bmw-runtime/classified-tests/2026-10-23T07-08-43-065Z/result.json",
+    "counts": {
+      "passed": 130,
+      "failed": 79,
+      "notRun": 14
+    },
+    "qualification": "Default sandbox terminated Electron launches immediately with143; original records retained. This is not a passing full run."
+  },
+  "runtimeRecheck": {
+    "report": ".bmw-runtime/per-source-runtime-2026-10-23T07-15-27-851Z/result.json",
+    "executions": 75,
+    "passed": 75,
+    "failed": 0,
+    "includes": "Every failed non-external catalog item, with desktop groups checked by the passing aggregate"
+  },
+  "finalDeltaAfterRuntimeRecheck": [
+    "packages/feature-library/src/rolling-service.ts",
+    "packages/feature-library/test/rolling.test.ts",
+    "docs/FUNCTIONAL_SPEC.md"
+  ],
+  "finalDeltaVerification": {
+    "unitTests": {
+      "passed": 27,
+      "failed": 0
+    },
+    "nativeBackground": "passed",
+    "nativeSchedules": "passed",
+    "scope": "Bounded current-run continuation response/prompt only; runtime own-run read guard unchanged"
+  },
+  "sourceSemantics": [
+    "Independent per-source cooldowns; healthy due sources continue",
+    "Finite cycle handles each due source once; partial/failed never relabelled complete",
+    "Productive partial compares actual URL/bodySHA against immutable pre-dispatch sequence; repeated subsets do not invent progress",
+    "Current-run read can return same-Session/subscription/input/cursor previous-partial evidence summary,20 entries/12KiB with changed/omitted gaps",
+    "Old ledgers, receipts, source cursors, real cleanup and quarantine preserved"
+  ],
+  "logs": {
+    "build": "/private/tmp/bmw-per-source-closure-build.log",
+    "check": "/private/tmp/bmw-per-source-closure-check.log",
+    "units": "/private/tmp/bmw-per-source-closure-units.log",
+    "nativeBackground": "/private/tmp/bmw-per-source-closure-background.log",
+    "nativeSchedules": "/private/tmp/bmw-per-source-closure-schedule.log"
+  },
+  "productionLoaded": false,
+  "productionVerification": "pending real one-cycle collection and candidate report; video remake authorized, not yet started",
+  "limitations": [
+    "14 external opt-in checks not run; no paid model or production-profile coverage from fixtures",
+    "No second single full-suite pass claimed; staged rechecks and all earlier failures retained",
+    "Partial preserves saved evidence and cursor; exact DOM/pending-URL resume is not implemented",
+    "Native diagram preparation preview evidence remains unimplemented; use qualified moving footage for this remake"
+  ]
+}

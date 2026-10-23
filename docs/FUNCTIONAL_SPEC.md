@@ -212,13 +212,13 @@ activate在同Project整批打开，跨Project只复制用户所选一题的完�
 
 长期采集第六阶段：可信素材库GUI新增“周期采集与健康”，不增加模型/MCP工具、browser动作或Agent调度写入口。独立Profile `library/collection-schedules.json` 为闭合version1原子CAS控制账本，至多100计划及最近200健康通知，读取缺失文件不初始化；损坏/链接/目录身份改变保留原件并停用，不回退空库。计划固定方向、collection Project、BMW Session、官方driver、1–50个来源订阅、15–10080分钟周期及系统提示偏好。方向必须following且目标Project相符，订阅必须following并属于该方向；每方向至多一个计划。已有方向/订阅不自动启用。GUI分页列出计划，分页选择方向/订阅，支持暂停/启用、系统提示开关、通知已读、显式核对恢复和改绑当前Session/driver；结束旧轮次后可显式重配Project/方向/来源/周期并保持暂停，旧收据与材料不变；有旧轮次时禁止直接改绑。仅可信素材库主框架能调用闭合schedule IPC，Agent不能建立、启用、恢复或修改这些计划。
 
-调度器每30秒检查（任务截止另设定点唤醒）、全局每步最多投递一个官方输入，按最近投递时间轮转到期方向；一轮逐个检查已选来源，每个仍限制十分钟/20次观察，不限制素材库积累数。失败来源轮转到其他待检查来源之后，避免单一受限入口饿死整轮。未激活的绑定也可在固定 Project 的独立隐藏浏览器执行，不切换前台 Project/Session、驱动选择或工作区，不自动改绑。Host准入同步重核Project/Session/driver、成员/归档状态、未知收据及资源，忙碌Agent、浏览器/Project过渡、普通计划任务、Studio工作区及原生录制/处理/合成/旁白均让行。模型输入仍由既有官方driver prepare验证有效目录恰有BMW browser后释放，Host不实现爬虫、模型循环或额外能力。
+调度器每30秒检查（任务截止另设定点唤醒）、全局每步最多投递一个官方输入，按最近投递时间轮转到期方向；一个有限周期中每个到期来源只检查一次，每个仍限制十分钟/20次观察，不限制素材库积累数。每来源独立保存nextAt、failures及实际结果，失败不推迟其他来源；周期结束不表示每个来源都完整成功。未激活的绑定也可在固定 Project 的独立隐藏浏览器执行，不切换前台 Project/Session、驱动选择或工作区，不自动改绑。Host准入同步重核Project/Session/driver、成员/归档状态、未知收据及资源，忙碌Agent、浏览器/Project过渡、普通计划任务和原生录制/处理/合成/旁白均让行，空闲Studio页本身不判忙。模型输入仍由既有官方driver prepare验证有效目录恰有BMW browser后释放，Host不实现爬虫、模型循环或额外能力。
 
 后台域由Host私有租约绑定注册的Project、Session和driver；普通Bridge租约仍要求活动Project，后台租约每次调用/返回重核其固定所有者。所有官方适配器沿用同一认证Bridge及有效的唯一browser目录。隐藏WebContentsView沿用BMW Chromium Session但不加入窗口，不恢复/保存用户页签；静音/暂停播放，禁止弹窗、JavaScript对话框、权限弹框、下载和调用显示捕获。固定动作门禁只允许status/help、tabs.list/open/close、navigate、observe、library.sources的list/read/collect，以及本轮collecting read/save-lead/finish；最多200调用、20次原文收集及原rolling十分钟期限，每次准入重核本轮租约，不开放制作/媒体/项目文档/计划修改。来源端口在DOM读取后的提交前再次核对租约；原文、线索和完成状态直接写原Project，来源游标仍须完整检查证据。后台交互请求不弹前台问题，记录unknown并要求显式核对。
 
 低优先级后台输入沿用AgentHost的持久输入收据与FIFO。用户输入通过同一准入进来即abort先前后台输入，用户输入等待其实际browser/native drain后执行；可信用户浏览器操作、会话/驱动选择及Project切换先让行并等待清理；后台占用不禁用前台会话/工作区选择或前台制作入口；Feature活动标记为background，实际全局资源仍由Host持有。素材库自动只读刷新不触发后台取消，写入和用户任务才让行；手动采集准入先等待后台清理并只核对旧轮次，不在该核对中抢先派发新周期。定点cancelBackground只作用于该后台run，不取消同Session稍后排入的用户输入。Bridge撤销租约、排空工具和关闭所有隐藏页，与官方驱动实际drain共同完成后才释放；关闭失败保留租约清理句柄与隐藏页隔离，显式恢复再次清理。清理失败维持Host隔离及采集锁，显式resources.recover只重试清理。调度顺序为Profile轮次及确定runId落盘、rolling uncertain收据落盘、Host输入收据落盘、官方投递与rolling dispatchId登记；即使官方任务先完成，也保留dispatchId而不覆盖已完成采集结果。调度与人工巡检共享Project live锁，互不绕过。
 
-重启逐个核对当前轮次与原Host收据，只合并停机期间遗漏为一轮，不按历史周期无限补跑。不存在rolling收据的预备项可重新准备（写序证明尚未进入Host）；有rolling uncertain、无dispatchId、Host收据缺失/unknown、投递异常或清理后结果不确定均进入review并停止自动投递，绝不重放原输入。已确认的成功/失败/中断也必须等待该Host run完全drained，官方成功不替代原始入口检查证据。仅rolling completed/no-new提交证据后原子推进游标；缺检查的官方成功按失败处理，其他情况保留已采集线索、旧游标和历史。截止前的确定中断让行至少一分钟后才允许从保留游标开启新的有限检查。超时/失败/partial/restricted指数退避从5分钟加有界确定抖动开始、上限24小时，整轮恢复成功重置；配置失效先取消已知输入并等清理，再要求用户修复。
+重启逐个核对当前轮次与原Host收据，只合并停机期间遗漏为一轮，不按历史周期无限补跑。不存在rolling收据的预备项可重新准备（写序证明尚未进入Host）；有rolling uncertain、无dispatchId、Host收据缺失/unknown、投递异常或清理后结果不确定均进入review并停止自动投递，绝不重放原输入。已确认的成功/失败/中断也必须等待该Host run完全drained，官方成功不替代原始入口检查证据。仅rolling completed/no-new提交证据后原子推进游标；缺检查的官方成功按失败处理，其他情况保留已采集线索、旧游标和历史。截止前的确定中断让行至少一分钟后才允许从保留游标开启新的有限检查。失败、受限、超时和没有实际新增证据的partial只对本来源指数退避，从5分钟加有界确定抖动开始、上限24小时；完整成功只重置本源失败数。有新增原文证据的partial保留资料和旧游标，按正常周期再检查，其他来源继续。新增比较投递前持久startedSequence对应的不可变线索版本与本轮已保存的URL/bodySHA，不把重复子集、指标或模型声明当进展；缺旧基线时保守不认证新进展。已有version1账本可缺sourceStates/startedSequence，保留原轮次和收据安全补齐，不把无归属的旧计划退避复制给全部源。plan.nextAt由待检查来源最早到期时间派生；全部冷却时等待最早单源到期。当前Agent读取有效本轮run时，Host可附continuation：只引用同Session/订阅/输入/旧cursor的上一已结束partial，至多20条且12KiB的实际URL/SHA/标题/缺口摘要；被后轮或用户修改的证据不复用，changed/omitted明确保留。后台仍只准read当前runId，不新增跨ID历史读取权限；使用本轮fromCursor，不读其他任务。当前没有完整pending URL或DOM位置断点，不宣称精确网页断点恢复。配置失效先取消已知输入并等清理，再要求用户修复。
 
 健康状态waiting/healthy/backoff/review、等待原因、下次时间、连续失败数、最后起止时间及本轮待检查来源保存在Profile；原始run/证据/修订历史仍保留在Project rolling分片。问题状态变化生成持久通知，同一退避/待核对状态去重；整轮从故障恢复才提示恢复，常规无新增不提示。系统Notification可关闭而持久健康通知继续保留，通知不会自动切Project。用户显式核对旧输入后只能结束旧轮次、保留游标并暂停；随后可在原Project显式绑定新的Session/driver再启用，不改写旧Host unknown收据或恢复锚点。旧Session含unknown时自动采集继续拒绝。可信 Assistant 提供按 Session/run 精确指向的“结束已取消旧任务（保留历史，不重发）”；用户明确声明取消后，Host 复核当前 Project/Session/history 绑定、目标无 pending/active/quarantine 清理资源，才原子保存 finished/interrupted 与 user-cancelled-unknown 处置时间和原 unknown 状态。该记录表示用户取消，原执行结果仍未核实，不伪造 provider 完成事件、不改写历史消息/事件/原生恢复锚点、草稿或成片，不调用中断/重发/模型；迟到回调不可重开已结束输入。失败清理必须先显式恢复实际清理，不能用处置绕过。允许结束同 Session 已清理旧任务，同时保留另一当前任务的资源、状态和交互；处置完成后仅允许新授权输入，周期旧轮次仍须显式核对/暂停并重新启用，保留游标。也可显式绑定新的 Session。后台采集不改新闻批次、推荐快照、选题、草稿、成品和采用账本；全部既有路径及可信用户选择制作门禁保持。
 
@@ -1055,6 +1055,10 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `The deadline wakes independently of the periodic tick and cancellation still waits for its own actual drain`
 - `Explicit reconfiguration after recovery can change cadence and Project binding without changing old receipts or evidence`
 - `Collection diagnostics cannot alter admission, source completion or actual cleanup`
+- `Per-source cooldowns isolate failures and partial progress while a bounded cycle continues healthy sources`
+- `Productive partial uses the pre-dispatch evidence snapshot; repeated subsets do not invent progress across restart`
+- `Legacy global backoff is not inherited by unrelated sources, while normal cadence and unknown receipts survive upgrade`
+- `Source retry state is closed, bounded and source-bound; legacy in-flight partial cannot fabricate a progress baseline`
 
 #### `packages/feature-library/test/exports.test.ts`
 
@@ -1109,6 +1113,9 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Direction pause or collection-Project rebinding invalidates the saved lease without moving old subscriptions or evidence`
 - `A fast official completion still persists its dispatch identity without overwriting the completed collection`
 - `Social challenge originals stay inspectable but cannot become content leads or advance a successful cursor`
+- `Current-run read bundles bounded partial evidence reuse without granting subscription or history reads`
+- `Continuation rejects previous Session, subscription, input or cursor changes and omits later-mutated evidence`
+- `Continuation keeps exact URL and SHA within a twelve KiB summary and reports omitted entries without new reads`
 
 #### `packages/feature-library/test/source-preservation-basis.test.ts`
 
