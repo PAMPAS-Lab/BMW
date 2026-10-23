@@ -22,7 +22,7 @@ import {assertVideoDraft,draftComposition,studioId,studioText,sameStudioDraftCon
 import {speechScene} from './studio-speech-contract.js'
 import type {StudioSpeechCandidate,StudioSpeechAnchors} from './studio-speech-contract.js'
 import {remapSourceSpeech,syncSourceCaptionEdits} from './studio-source-speech-contract.js'
-import type {VideoDraft,StudioAsset} from './studio-contract.js'
+import type {VideoDraft,StudioScene,StudioAsset} from './studio-contract.js'
 
 // Bump when native paint/mix semantics change: an unchanged draft must not
 // reuse a completed file made by an older renderer with different pixels.
@@ -154,6 +154,14 @@ export class VideoStudioStore {
     this.editGuard?.(current,next)
     if(dryRun)return next
     next.revision++;next.updatedAt=new Date().toISOString()
+    return this.write(next)
+  }
+  /** Atomic Host commit of native prepared shots; never overwrite existing authored scenes. */
+  recordPreparedShots(id:string,expectedRevision:number,scenes:StudioScene[],references:StudioReferenceRecord[]):VideoDraft {
+    const current=this.read(id)
+    if(current.revision!==expectedRevision||scenes.some(s=>current.scenes.some(old=>old.id===s.id)))throw new Error('STUDIO_CONFLICT: Prepared shots require unchanged draft and new scene identities.')
+    const next=this.update(id,expectedRevision,{...current,scenes:[...current.scenes,...scenes]},false,false,undefined,true)
+    next.referenceRecords=assertReferenceRecords([...(current.referenceRecords??[]),...references]);next.revision++;next.updatedAt=new Date().toISOString()
     return this.write(next)
   }
   recordReference(id:string,expectedRevision:number,records:StudioReferenceRecord[]):VideoDraft {

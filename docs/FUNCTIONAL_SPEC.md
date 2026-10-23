@@ -200,6 +200,12 @@ begin固定服务器截止时间、rolling/观察/edition/范围标记序号、�
 
 activate在同Project整批打开，跨Project只复制用户所选一题的完整证据，再建立目标Session独立news批次及侧车admission；新批次沿既有新闻历史规则保留旧批次字节，失败不覆盖旧批次。侧车精确绑定snapshot、候选/facts指纹和冻结窗口，模型不能通过Studio参数放宽时效。新闻服务固定既有Host Project的规范目录并拒绝目录别名改绑，底层分片目录/文件身份边界保持。普通旧批次仍72小时且保持NEWS_EXPIRED等原错误码；绑定候选禁止Agent替换。既有新闻可信用户选择入口在创建唯一草稿之前重核快照/当前事件及证据、排除状态、时效和真实预览；已选草稿后续只重核其原证据，不因滚动事件后续修订替换或阻断固定草稿。跨Session/Project选题保留侧车和窗口身份，新快照草稿使用通用专题受众，普通旧新闻保留AI受众缺省；单次制作投递仍ready/uncertain/sent/failed，不自动重投；实际选题关系另存，不冒认导出。周期调度独立于推荐，见下述第六阶段；不自动发布。
 
+新闻准备新增确定性的批量快路：`materials/search` 可用 `query:""` 加 `queries`（1–8个非空词）作单次有界 OR 扫描，返回实际 artifactId/SHA、本文件 ASR 时间和已记录的父原片偏移；不发起新 ASR、不自动判断新闻或画面语义。超出文件处理/检索预算时保持明确 unavailable 并推进扫描；回归覆盖不返回永久不变的继续位置。
+
+`news-preparation/prepare-shots` 接受模型明确选择的1–8镜（每镜1–60秒、批次至多120秒）及原片 ID/SHA、局部起止、脚本、日期标签、原声开关和精确引用。先校验全部源与引用，再由 media-native 顺序复制短片段、核256MiB参考预算并抽实际帧；源偏移转换为短片的局部时钟。全部完成且重核源/片段/帧哈希、Project/Session/draft CAS 后，一次追加实际 fullscreen 镜头与原生参考记录。旧镜头/用户编辑不可覆盖；取消/失败不提交半成品镜头，保留已完成原生资料。Host私有 `video-studio/shot-checkpoints` 用 UUID、归属、版本、无链接文件和原子CAS固定进度；Project可读JSON仅诊断，不作为参考/时间映射权限。显式 resumeId 只在完全相同计划、当前草稿及已清理阶段下复用实际哈希匹配的已完成片段/帧；inFlight/已提交拒绝自动重做，不确定输入绝不自动重放。返回 current revision、checkpointId、阶段耗时、已提交镜头和真实参考 ID；首组三帧可直接观察，余下按 referenceId 读取。参考仍没有语义分析和审片通过，须模型实际观察后照旧完成 reference analysis、逐镜清单、原声中译/字幕、导出及独立审片。
+
+结构化 `[BMW production]` 日志按 operationId/Project/Session、operation/suboperation、stage/sceneId 输出单调时钟 elapsedMs、completed/failed 与复用标记；批量结果和检查点携带同一阶段摘要。`[BMW tool timing]` 按 runId/callId 保存调用起止、时长、成功与无其他在途工具时的 outsideToolGapMs；原有持久 Host 事件仍保留。日志不输出脚本、原文、完整请求/响应、路径或凭据。工具时长包括队列/传输；调用外空档包含官方模型、网络、上下文和调度，不冒称服务器纯推理时间。只有实际分镜提交/清单齐备/导出/内审里程碑能表示制作阶段推进，读/help/抽帧次数不表示完成率。
+
 可信定时任务 GUI 可将已绑定任务切换为每小时或原每日时间。每小时 cadence 持久为可选 intervalMinutes=60，仅支持60分钟；保留每日时区/时刻及历史。小时任务每次只合并为一个待执行轮次，不无限补跑停机周期；不重放 running 中断输入。Host/Bridge/媒体忙、Studio 模式、Project 不在前台或已有定时执行时保留 queued，直到真实空闲后才 markRunning，不打断制片或取消进行中的采集。queuedAt/startedAt/finishedAt 分别保留排队与执行耗时，单个队列 run 去重。小时候选整理仍由已授权的官方运行时和唯一 browser 完成；保存候选报告不等于用户采用、推荐快照激活或制片准入。
 
 长期采集第六阶段：可信素材库GUI新增“周期采集与健康”，不增加模型/MCP工具、browser动作或Agent调度写入口。独立Profile `library/collection-schedules.json` 为闭合version1原子CAS控制账本，至多100计划及最近200健康通知，读取缺失文件不初始化；损坏/链接/目录身份改变保留原件并停用，不回退空库。计划固定方向、collection Project、BMW Session、官方driver、1–50个来源订阅、15–10080分钟周期及系统提示偏好。方向必须following且目标Project相符，订阅必须following并属于该方向；每方向至多一个计划。已有方向/订阅不自动启用。GUI分页列出计划，分页选择方向/订阅，支持暂停/启用、系统提示开关、通知已读、显式核对恢复和改绑当前Session/driver；结束旧轮次后可显式重配Project/方向/来源/周期并保持暂停，旧收据与材料不变；有旧轮次时禁止直接改绑。仅可信素材库主框架能调用闭合schedule IPC，Agent不能建立、启用、恢复或修改这些计划。
@@ -1125,6 +1131,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `material background chunks reject GUI metadata CAS races, preserve committed parts and clean only new proof outputs`
 - `Zero-result intervals retain raw ASR evidence and coverage without fabricated text, silence claims or repeated processing`
 - `material index paths, cursors and intervals stay closed and symlink catalogs are never replaced`
+- `one bounded OR search returns exact reusable pins and oversized sources cannot trap its cursor`
 
 #### `packages/feature-video/test/news-preparation.test.ts`
 
@@ -1132,6 +1139,10 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Static MP4, missing source sound, changed PNGs and unrelated source ranges cannot establish preparation`
 - `Preparation invalidates script, citation, framing, source bytes and CAS changes without rewriting prior records`
 - `Closed preparation API, separate journal ownership, policy strengthening and bounded model paging stay explicit`
+- `Shot batch links exact pins to native segments, reference frames and one atomic scene commit without semantic approval`
+- `Shot batches retain reusable completed work after failure, reject changed plans and preserve concurrent GUI edits`
+- `Shot preparation rejects missing pins and cancellation before native work and keeps checkpoints private`
+- `Uncertain shot checkpoints refuse replay without mutating progress; timing logs contain only bounded metadata`
 
 #### `packages/feature-video/test/news.test.ts`
 

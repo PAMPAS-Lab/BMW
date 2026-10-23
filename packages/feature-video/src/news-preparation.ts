@@ -1,3 +1,4 @@
+import {prepareShots} from './shot-preparation.js'
 import path from 'node:path'
 import {ArtifactJobIO} from '../../media-native/src/artifact-job-io.js'
 import {assertMediaInspection} from '../../media-native/src/media-port.js'
@@ -22,7 +23,8 @@ export class NewsPreparationService {
  required():boolean{return this.draft.preparation.production?.profileId==='news-brief'||this.effective(this.journal.read()).enabled}
  private guard(signal?:AbortSignal){signal?.throwIfAborted();if(this.kernel.projectStore.active().id!==this.owner.projectId||this.store.read(this.draft.id).revision!==this.draft.revision)throw new Error('NEWS_PREPARATION_STALE: Draft or Project changed during preparation.')}
  async execute(request:NewsPreparationRequest,actor:'user'|'agent',signal?:AbortSignal){
-  this.guard(signal);const state=this.effective(this.journal.read())
+  this.guard(signal);if(request.operation==='prepare-shots')return prepareShots(this.kernel,this.store,this.owner,this.draft,request.shots,actor,signal,request.resumeId)
+  const state=this.effective(this.journal.read())
   if(request.operation==='read')return {draftId:this.draft.id,revision:this.draft.revision,...state,required:this.required(),meaning:'Saved declarations, not current material verification. Use preflight for actual hashes and gaps.'}
   if(request.operation==='enable'){this.guard(signal);return this.journal.save(request.expectedChecklistRevision,{...state,enabled:true,originalSpeechRequired:state.originalSpeechRequired||request.originalSpeechRequired})}
   if(request.operation==='preflight')return this.preflight(state,signal)

@@ -1,3 +1,5 @@
+import {assertPreparationShots,preparationShotsSchema} from './shot-preparation-contract.js'
+import type {PreparationShot} from './shot-preparation-contract.js'
 import {assertArtifactId,finiteNumber,mediaRecord} from '../../media-native/src/media-contract.js'
 export interface NewsScenePreparation {
  sceneId:string;fingerprint:string;intent:string;dateLabel:string
@@ -6,6 +8,7 @@ export interface NewsScenePreparation {
 }
 export type NewsPreparationRequest=
  |{operation:'read'|'preflight'}
+ |{operation:'prepare-shots';shots:PreparationShot[];resumeId?:string}
  |{operation:'enable';expectedChecklistRevision:number;originalSpeechRequired:boolean}
  |{operation:'record-scene';expectedChecklistRevision:number;scene:NewsScenePreparation}
 export const preparationId=(v:unknown):string=>{if(typeof v!=='string'||!/^[A-Za-z0-9-]{1,80}$/.test(v))throw new TypeError('Invalid preparation identity.');return v}
@@ -23,6 +26,7 @@ export function assertNewsScenePreparation(raw:unknown):NewsScenePreparation {
 export function assertNewsPreparationRequest(raw:unknown):NewsPreparationRequest {
  const r=mediaRecord(raw)
  if(r.operation==='read'||r.operation==='preflight'){closed(r,['operation']);return {operation:r.operation}}
+ if(r.operation==='prepare-shots'){closed(r,['operation','shots','resumeId']);return {operation:r.operation,shots:assertPreparationShots(r.shots),...(r.resumeId===undefined?{}:{resumeId:preparationId(r.resumeId)})}}
  const expectedChecklistRevision=finiteNumber(r.expectedChecklistRevision,'checklist revision',0,1000000,true)
  if(r.operation==='enable'){closed(r,['operation','expectedChecklistRevision','originalSpeechRequired']);if(typeof r.originalSpeechRequired!=='boolean')throw new TypeError('Expected explicit original-speech policy.');return {operation:r.operation,expectedChecklistRevision,originalSpeechRequired:r.originalSpeechRequired}}
  if(r.operation==='record-scene'){closed(r,['operation','expectedChecklistRevision','scene']);return {operation:r.operation,expectedChecklistRevision,scene:assertNewsScenePreparation(r.scene)}}
@@ -30,4 +34,4 @@ export function assertNewsPreparationRequest(raw:unknown):NewsPreparationRequest
 }
 const str=(maxLength:number)=>({type:'string',minLength:1,maxLength}),obj=(properties:Record<string,unknown>)=>({type:'object',additionalProperties:false,properties,required:Object.keys(properties)}),id={...str(80),pattern:'^[A-Za-z0-9-]{1,80}$'},revision={type:'integer',minimum:0,maximum:1000000}
 export const newsScenePreparationSchema=obj({sceneId:id,fingerprint:{...str(64),pattern:'^[a-f0-9]{64}$'},intent:str(600),dateLabel:str(160),materials:{type:'array',minItems:1,maxItems:8,items:obj({artifactId:str(256),referenceId:id,kind:{enum:['real-footage','still','diagram']},observation:str(600),relation:str(600)})},originalSpeech:obj({mode:{enum:['source','not-used']},quote:{type:'string',maxLength:1000},translation:{type:'string',maxLength:1000},reason:{type:'string',maxLength:600}})})
-export const newsPreparationRequestSchema={oneOf:[...['read','preflight'].map(operation=>obj({operation:{const:operation}})),obj({operation:{const:'enable'},expectedChecklistRevision:revision,originalSpeechRequired:{type:'boolean'}}),obj({operation:{const:'record-scene'},expectedChecklistRevision:revision,scene:newsScenePreparationSchema})]}
+export const newsPreparationRequestSchema={oneOf:[{type:'object',additionalProperties:false,required:['operation','shots'],properties:{operation:{const:'prepare-shots'},shots:preparationShotsSchema,resumeId:str(180)}},...['read','preflight'].map(operation=>obj({operation:{const:operation}})),obj({operation:{const:'enable'},expectedChecklistRevision:revision,originalSpeechRequired:{type:'boolean'}}),obj({operation:{const:'record-scene'},expectedChecklistRevision:revision,scene:newsScenePreparationSchema})]}

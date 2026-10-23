@@ -69,3 +69,13 @@ test('material index paths, cursors and intervals stay closed and symlink catalo
   const outside=path.join(f.project.directory,'untouched.json');await fs.writeFile(outside,'outside');await fs.mkdir(path.join(f.project.directory,'material-index'));await fs.symlink(outside,path.join(f.project.directory,'material-index','catalog.json'));await assert.rejects(f.store.snapshot());await assert.rejects(f.store.commit({version:1,projectId:f.project.id,revision:0,records:[]},0,()=>{}));assert.equal(await fs.readFile(outside,'utf8'),'outside')
  }finally{await f.close()}
 })
+test('one bounded OR search returns exact reusable pins and oversized sources cannot trap its cursor',async()=>{
+ const f=await fixture(10);try{
+  await f.service.execute({operation:'index',artifactId:'long.wav',expectedRevision:0,maxChunks:1})
+  const found=mediaRecord(await f.service.execute({operation:'search',query:'',queries:['does not exist','核对'],limit:10})),rows=found.results as Record<string,unknown>[]
+  assert.equal(rows.length,1);assert.equal(rows[0].match,'transcript');assert.equal(rows[0].sha256,hash('Controlled source bytes'));assert.equal(rows[0].startSeconds,0);assert.equal(f.serial(),1,'Search must reuse raw ASR rather than run it again')
+  await assert.rejects(f.service.execute({operation:'search',queries:['x'.repeat(201)]}),/search|text/)
+  await fs.truncate(path.join(f.artifacts,'long.wav'),512*1024*1024+1)
+  const unavailable=mediaRecord(await f.service.execute({operation:'search',queries:['核对'],query:'',limit:10}));assert.equal(unavailable.nextOffset,null);assert.equal((unavailable.results as unknown[]).length,0);assert.match(JSON.stringify(unavailable.unavailable),/budget/)
+ }finally{await f.close()}
+})

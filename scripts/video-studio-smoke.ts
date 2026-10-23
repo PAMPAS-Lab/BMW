@@ -1,3 +1,4 @@
+import {ProjectSourceStore} from '../packages/platform/src/project-source-store.js'
 import type {FeatureAssistantTask} from '../packages/platform/src/feature-contract.js'
 import {verifyNewsStudio} from './studio-news-fixture.js'
 import type {FeatureAssistantActivity} from '@bmw-agent/platform/feature-contract'
@@ -364,6 +365,19 @@ async function verifyProductionRecovery(store:VideoStudioStore,execute:(request:
  }
  fs.writeFileSync(path.join(proof,'production-recovery.json'),JSON.stringify({status:'passed',scope:'Actual Studio DOM/IPC/FIFO, measured synthetic WAV provider fixtures, deterministic worker phase/cleanup control, real image decoding and H264/AAC export/playable video; no paid provider, acoustic accuracy, production profile or foreground mouse acceptance',cases},null,2)+'\n')
  }finally{media.narrate=narrate;media.compose=compose}
+}
+
+async function verifyShotBatch(store:VideoStudioStore,kernel:BrowserKernel,execute:(request:unknown)=>Promise<unknown>){
+ const id=await script<string>("document.getElementById('draft-select').value"),original=store.read(id),rendered=mediaRecord(await execute({operation:'render',draftId:id,expectedRevision:original.revision})),artifactId=String(mediaRecord(rendered.export).artifactId),sha256=crypto.createHash('sha256').update(fs.readFileSync(path.join(artifacts,artifactId))).digest('hex')
+ const sources=new ProjectSourceStore(project.directory,project.id);kernel.projectSources=()=>sources
+ const text='Native fixture footage',scope={selector:'main',index:0,excludeSelectors:[],characterUnit:'utf16',extraction:'visible-text-nodes',truncated:false,status:'observed'} as const
+ const source=await sources.collect({url:'https://example.org/native-fixture',title:'Controlled fixture',author:'Fixture',publishedAt:'2026-10-21',scope,text,mediaScope:scope,mediaTruncated:false,candidates:[],access:'unknown',accessText:'',result:'observed',error:null},sources.state().revision)
+ const draft=store.create('Native shot batch'),result=mediaRecord(await execute({operation:'news-preparation',draftId:draft.id,expectedRevision:draft.revision,preparationRequest:{operation:'prepare-shots',shots:[{sceneId:'native-shot',title:'Native batch fixture',label:'隔离夹具',narration:'',artifactId,sha256,startSeconds:0,endSeconds:1,keepSourceAudio:true,citations:[{sourceId:source.sourceId,acquisitionId:source.acquisitionId,startCharacter:0,endCharacter:text.length,quote:text,kind:'fact',claim:'Controlled native fixture',conflict:'pending',eventAt:null}]}]}}))
+ const saved=store.read(draft.id);assert.equal(result.committed,true);assert.equal(saved.revision,draft.revision+1);assert.equal(saved.scenes.length,1);assert.equal(saved.referenceRecords?.[0].frames.length,3);assert.equal(saved.referenceRecords?.[0].analysis,undefined)
+ assert.equal(saved.scenes[0].keepSourceAudio,true);assert.equal(saved.scenes[0].durationSeconds,1);assert.equal(fs.readFileSync(path.join(artifacts,artifactId)).length>0,true)
+ assert.equal((await kernel.recordingController.processArtifact({action:'media.inspect',artifactId:saved.scenes[0].videoArtifactId}) as {tracks:{type:string;canDecode:boolean}[]}).tracks.some(t=>t.type==='video'&&t.canDecode),true)
+ const proof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/studio-shot-batch';fs.mkdirSync(proof,{recursive:true});fs.writeFileSync(path.join(proof,'shot-batch.json'),JSON.stringify({result,draft:saved,scope:'Disposable native segment/reference/CAS fixture; no model semantic or production-profile coverage'},null,2))
+ console.log('PASS native shot batch: actual encoded segment, three decoded PNGs, original source audio, atomic scenes/references and no semantic approval')
 }
 
 async function verifyReviewAdoption(store:VideoStudioStore,execute:(request:unknown)=>Promise<unknown>,prompts:string[]):Promise<void>{
@@ -1205,6 +1219,7 @@ async function run():Promise<void>{try{
   if(process.env.BMW_STUDIO_NEWS_OPTIONS_CASE==='1'){await verifyNewsOptions(store,studioExecute);return}
   if(process.env.BMW_STUDIO_CARD_TEXT_CASE==='1'){await verifyCardText(store,studioExecute);return}
   if(process.env.BMW_STUDIO_CARD_PAIR_CASE==='1'){await verifyCardPair(store,studioExecute);return}
+  if(process.env.BMW_STUDIO_SHOT_BATCH_CASE==='1'){await verifyShotBatch(store,kernel,studioExecute);return}
   if(process.env.BMW_STUDIO_REFERENCE_CASE==='1'){await verifyReferenceAnalysis(store,kernel,request=>kernel.execute({action:'video.studio',studioRequest:request},{actor:'agent',sessionOwner:{projectId:active.id,sessionId:currentSession}}),assistantPrompts,()=>{rejectReferenceAssistant=true});return}
   if(process.env.BMW_STUDIO_REVIEW_CASE==='1'){await verifyReviewAdoption(store,request=>kernel.execute({action:'video.studio',studioRequest:request},{actor:'agent',sessionOwner:{projectId:active.id,sessionId:currentSession}}),assistantPrompts);return}
   if(process.env.BMW_STUDIO_PRODUCTION_RECOVERY_CASE==='1'){await verifyProductionRecovery(store,studioExecute,{prefills,assistantPrompts,setActivity:value=>{activity={...activity,...value};runtime.onAssistantChanged()}});return}

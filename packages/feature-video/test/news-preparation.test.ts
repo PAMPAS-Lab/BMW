@@ -1,3 +1,4 @@
+import {ProductionDiagnostics} from '../src/production-diagnostics.js'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import fs from 'node:fs'
@@ -68,4 +69,70 @@ test('Closed preparation API, separate journal ownership, policy strengthening a
   const summary=studioAgentResult({operation:'news-preparation',pageLimit:1,preparationRequest:{operation:'read'}},{scenes:[{sceneId:'a'},{sceneId:'b'}],issues:[]}) as {scenes:unknown[];scenePage:{nextOffset:number}};assert.equal(summary.scenes.length,1);assert.equal(summary.scenePage.nextOffset,1)
   const controller=new AbortController();controller.abort(new Error('cancelled'));await assert.rejects(f.service().preflight(undefined,controller.signal),/cancelled/)
  }finally{f.close()}
+})
+async function shotFixture(){
+ const f=await fixture(),draft=f.store.create('Batch shots'),nativeCalls:string[]=[];let serial=0,failSecond=false
+ f.kernel.recordingController.isCaptureActive=()=>false
+ f.kernel.recordingController.processArtifact=async raw=>{
+  const r=raw as Record<string,unknown>;nativeCalls.push(String(r.action))
+  if(r.action==='media.segment'){
+   serial++;if(failSecond&&serial===2)throw new Error('controlled segment failure')
+   const range=r.segmentRange as {startSeconds:number;endSeconds:number},artifactId='segment-fixture-'+serial+'.mp4',bytes='native segment '+serial,sourceTimeOffsetSeconds=Math.max(0,range.startSeconds-1),proof={kind:'archive-segment',reencoded:false,sourceArtifactId:'robot.mp4',sourceSha256:hash('controlled video bytes'),requestedSourceRange:range,artifactId,sha256:hash(bytes),bytes:bytes.length,sourceTimeOffsetSeconds,durationSeconds:range.endSeconds-sourceTimeOffsetSeconds,proofArtifactId:artifactId+'.json'}
+   fs.writeFileSync(path.join(f.directory,artifactId),bytes);fs.writeFileSync(path.join(f.directory,proof.proofArtifactId),JSON.stringify(proof));return proof
+  }
+  if(r.action==='media.frames.sample')return {type:'frame-set',sourceArtifactId:r.artifactId,frames:(r.timestampsSeconds as number[]).map((time,i)=>{const artifactId=String(r.artifactId)+'-'+i+'.png';fs.writeFileSync(path.join(f.directory,artifactId),'source frame '+time);return {artifactId,outputIndex:i,requestedTimestampSeconds:time,timestampSeconds:time,width:640,height:360,type:'screenshot',contentType:'image/png'}})}
+  if(r.action==='media.image.inspect')return {kind:'image',contentType:'image/png',width:640,height:360,pixels:640*360,bytes:10,canDecode:true}
+  return {durationSeconds:10,tracks:[{id:1,type:'video',codec:'avc',canDecode:true,startSeconds:0,endSeconds:10,width:640,height:360},{id:2,type:'audio',codec:'aac',canDecode:true,startSeconds:0,endSeconds:10}]}
+ }
+ const shots=['batch-a','batch-b'].map((sceneId,i)=>({sceneId,title:'Actual scene',narration:'A verified primary claim.',label:'资料画面｜发布2026-10-21',artifactId:'robot.mp4',sha256:hash('controlled video bytes'),startSeconds:2+i*3,endSeconds:5+i*3,keepSourceAudio:i===0,citations:f.draft.scenes[0].citations!}))
+ return {...f,batchDraft:draft,shots,nativeCalls,failSecond:()=>{failSecond=true},batch:()=>new NewsPreparationService(f.kernel,f.store,f.owner,f.store.read(draft.id))}
+}
+test('Shot batch links exact pins to native segments, reference frames and one atomic scene commit without semantic approval',async()=>{
+ const f=await shotFixture();try{
+  const parsed=assertNewsPreparationRequest({operation:'prepare-shots',shots:f.shots});assert.equal(new Ajv2020({strict:false}).compile(newsPreparationRequestSchema)(parsed),true);if(parsed.operation!=='prepare-shots')throw new Error('Expected shot plan')
+  const before=f.store.read(f.batchDraft.id).revision,result=await f.batch().execute(parsed,'agent') as {revision:number;committed:boolean;ready:boolean;checkpointId:string;diagnostics:{stages:{stage:string}[]}}
+  const draft=f.store.read(f.batchDraft.id);assert.equal(result.committed,true);assert.equal(result.ready,false);assert.equal(draft.revision,before+1);assert.equal(draft.scenes.length,2);assert.equal(draft.referenceRecords?.length,2);assert.equal(draft.referenceRecords![0].analysis,undefined)
+  assert.equal(draft.scenes[0].sourceStartSeconds,1);assert.equal(draft.scenes[0].keepSourceAudio,true);assert.equal(draft.scenes[0].sources[0],'https://example.org/robot');assert.ok(result.diagnostics.stages.some(s=>s.stage==='commit-scenes'))
+  assert.equal((await f.batch().preflight()).ready,false,'Prepared native media does not bypass observed news checklist')
+  const count=f.nativeCalls.length;await assert.rejects(f.batch().execute({...parsed,resumeId:result.checkpointId},'agent'),/ALREADY_COMMITTED/);assert.equal(f.nativeCalls.length,count)
+ }finally{f.close()}
+})
+test('Shot batches retain reusable completed work after failure, reject changed plans and preserve concurrent GUI edits',async()=>{
+ const f=await shotFixture();try{
+  f.failSecond();let failure='';try{await f.batch().execute({operation:'prepare-shots',shots:f.shots},'agent')}catch(error){failure=String(error)}
+  assert.match(failure,/controlled segment failure/);assert.equal(f.store.read(f.batchDraft.id).scenes.length,0)
+  const progress=JSON.parse(failure.split('SHOT_PREPARATION_PROGRESS: ')[1]) as {resumeId:string;preparedShots:number};assert.equal(progress.preparedShots,1)
+  await assert.rejects(f.batch().execute({operation:'prepare-shots',shots:[{...f.shots[0],title:'Changed'},f.shots[1]],resumeId:progress.resumeId},'agent'),/CHECKPOINT_STALE/)
+  const before=f.nativeCalls.filter(a=>a==='media.segment').length
+  await f.batch().execute({operation:'prepare-shots',shots:f.shots,resumeId:progress.resumeId},'agent')
+  assert.equal(f.nativeCalls.filter(a=>a==='media.segment').length,before+1,'Completed segment and reference reused after exact explicit resume')
+  assert.equal(f.store.read(f.batchDraft.id).scenes.length,2)
+ }finally{f.close()}
+ const g=await shotFixture();try{
+  const native=g.kernel.recordingController.processArtifact;let changed=false
+  g.kernel.recordingController.processArtifact=async(r,s)=>{const value=await native(r,s);if(!changed){changed=true;const current=g.store.read(g.batchDraft.id);current.title='GUI edit';g.store.update(current.id,current.revision,current)}return value}
+  await assert.rejects(g.batch().execute({operation:'prepare-shots',shots:g.shots},'agent'),/CONFLICT/)
+  assert.equal(g.store.read(g.batchDraft.id).title,'GUI edit');assert.equal(g.store.read(g.batchDraft.id).scenes.length,0)
+ }finally{g.close()}
+})
+test('Shot preparation rejects missing pins and cancellation before native work and keeps checkpoints private',async()=>{
+ const f=await shotFixture();try{
+  await assert.rejects(f.batch().execute({operation:'prepare-shots',shots:[{...f.shots[0],sha256:'0'.repeat(64)}]},'agent'),/SOURCE_CHANGED/);assert.equal(f.nativeCalls.length,0)
+  const controller=new AbortController();controller.abort(new Error('user stopped'))
+  await assert.rejects(f.batch().execute({operation:'prepare-shots',shots:f.shots},'agent',controller.signal),/user stopped/);assert.equal(f.nativeCalls.length,0)
+  fs.mkdirSync(path.join(f.root,'video-studio','shot-checkpoints'),{recursive:true});const id='00000000-0000-4000-8000-000000000000'
+  fs.symlinkSync(path.join(f.directory,'robot.mp4'),path.join(f.root,'video-studio','shot-checkpoints',id+'.json'))
+  await assert.rejects(f.batch().execute({operation:'prepare-shots',shots:f.shots,resumeId:id},'agent'));assert.equal(f.store.read(f.batchDraft.id).scenes.length,0);assert.equal(fs.readFileSync(path.join(f.directory,'robot.mp4'),'utf8'),'controlled video bytes')
+ }finally{f.close()}
+})
+
+test('Uncertain shot checkpoints refuse replay without mutating progress; timing logs contain only bounded metadata',async()=>{
+ const f=await shotFixture();try{
+  f.failSecond();f.kernel.recordingController.isCaptureActive=()=>true
+  let failure='';try{await f.batch().execute({operation:'prepare-shots',shots:f.shots},'agent')}catch(error){failure=String(error)}
+  const progress=JSON.parse(failure.split('SHOT_PREPARATION_PROGRESS: ')[1]) as {resumeId:string},file=path.join(f.root,'video-studio','shot-checkpoints',progress.resumeId+'.json'),before=fs.readFileSync(file,'utf8'),calls=f.nativeCalls.length
+  assert.equal(JSON.parse(before).inFlight,true);await assert.rejects(f.batch().execute({operation:'prepare-shots',shots:f.shots,resumeId:progress.resumeId},'agent'),/UNCERTAIN/);assert.equal(fs.readFileSync(file,'utf8'),before);assert.equal(f.nativeCalls.length,calls)
+ }finally{f.close()}
+ const logs:string[]=[],info=console.info;console.info=(line:unknown)=>{logs.push(String(line))}
+ try{const trace=new ProductionDiagnostics({projectId:'p',sessionId:'s'},'test');await trace.stage('cached-segment',async()=>1,'scene',true);await assert.rejects(trace.stage('native-failure',async()=>{throw new Error('secret transcript or credentials')}));assert.equal(trace.stages.length,2);assert.equal(trace.stages[1].status,'failed');assert.ok(trace.stages.every(s=>s.elapsedMs>=0));assert.match(logs[0],/operationId/);assert.equal(logs.join('').includes('secret transcript'),false);console.info=()=>{throw new Error('diagnostic sink unavailable')};assert.equal(await trace.stage('logger-failure',async()=>42),42)}finally{console.info=info}
 })

@@ -1,0 +1,65 @@
+{
+  "verifiedAt": "2026-10-23T03:42:23.868685+00:00",
+  "scope": "Bounded OR transcript retrieval, native shot preparation/atomic composition and timing diagnostics",
+  "finalIsolatedTarget": "/private/tmp/bmw-shot-pipeline-2z3tp3",
+  "build": "passed; root live generated outputs preserved",
+  "check": {
+    "status": "passed",
+    "log": "/private/tmp/bmw-shot-final-check.log",
+    "method": "Final isolated npm run check with read-only root Git metadata and isolated worktree; no production build."
+  },
+  "videoUnitContractTests": {
+    "passed": 190,
+    "failed": 0,
+    "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/shot-pipeline-unit.log"
+  },
+  "platformContractUiTests": {
+    "passed": 143,
+    "failed": 0,
+    "log": "/private/tmp/bmw-shot-final-platform.log"
+  },
+  "nativeFixtures": {
+    "passed": 9,
+    "failed": 0,
+    "fixtures": [
+      "desktop-driver",
+      "collection-native",
+      "studio-native-default",
+      "media-native",
+      "video-native",
+      "narration-native",
+      "dsh-catalog",
+      "speech-native",
+      "shot-batch-native"
+    ],
+    "suiteTarget": "/private/tmp/bmw-shot-pipeline-isHfdj",
+    "suiteLogPrefix": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/shot-pipeline-",
+    "studioLog": "/private/tmp/bmw-shot-native-batch.log",
+    "finalNewPipelineRecheck": {
+      "target": "/private/tmp/bmw-shot-pipeline-fSgwBP",
+      "status": "passed",
+      "log": "/private/tmp/bmw-shot-final-native-pipeline.log"
+    },
+    "qualification": "Suite before final diagnostic-sink try/catch hardening and mixed-query rejection; final native pipeline at fSgwBP after logging hardening passed. The only later runtime delta restores required query validation; final source build,190 unit/contract tests,check and boundaries passed."
+  },
+  "coverage": [
+    "Exact SHA/local clock/citations and all-input validation before native work",
+    "Native short AV segment plus three real decoded PNGs and retained original audio",
+    "One-CAS real scenes/references, zero semantic approvals",
+    "Partial completed native work reused on exact explicit resume",
+    "Changed plan, GUI conflict, cancelled input, missing pin, symlink checkpoint and in-flight replay refused",
+    "OR query reuses raw ASR and oversized source scan terminates",
+    "Metadata-only timing and logging failure does not alter operation outcome"
+  ],
+  "liveGeneratedOutputsUnchanged": true,
+  "changedGeneratedOutputs": [],
+  "deployed": false,
+  "productionSpeedupMeasured": false,
+  "liveRunPreserved": "421c15f1-0232-4aed-881a-5e0d9b5f8b30",
+  "limitations": [
+    "Native fixture media is controlled, not documentary footage or human acceptance.",
+    "Current production still uses previous compiled runtime; wait actual Host/FIFO/worker idle before deployment.",
+    "Existing full archive and whole-ASR reuse must be accounted separately from code speedup.",
+    "Diagnostic console output must be saved to timestamped runtime logs; original Host event history remains authoritative."
+  ]
+}

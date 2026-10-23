@@ -175,6 +175,7 @@ export class AgentHost {
     let terminal: AgentRunResult | undefined, entered = false, eventFailure: unknown
     let acceptingCallbacks=true
     const seenTools = new Set<string>()
+    const toolMetrics=new Map<string,{started:number;action:string}>();let lastToolCompletedAt=performance.now()
     const emit = (raw: AgentDriverEvent): Promise<void> => {
       const write = eventTail.then(() => {
         if(!acceptingCallbacks)throw new Error('Agent callback arrived after the native run settled')
@@ -183,10 +184,15 @@ export class AgentHost {
         if (terminal) throw new Error('Agent emitted work after its terminal event')
         if (event.type === 'tool.started') {
           if (controller.signal.aborted || seenTools.has(event.callId)) throw new Error('Agent tool started after cancellation or reused its identity')
+          const started=performance.now(),outsideToolGapMs=tools.size===0?Math.round(started-lastToolCompletedAt):null
+          toolMetrics.set(event.callId,{started,action:event.action})
+          try{console.info('[BMW tool timing] '+JSON.stringify({version:1,projectId:request.project.id,sessionId:request.sessionId,runId:request.runId,callId:event.callId,action:event.action,phase:'started',at:new Date().toISOString(),outsideToolGapMs}))}catch{/* Logging must not poison runtime callbacks. */}
           tools.add(event.callId); seenTools.add(event.callId)
         }
         if (event.type === 'tool.completed') {
           if (!tools.delete(event.callId)) throw new Error('Agent completed a tool that was not running')
+          const metric=toolMetrics.get(event.callId);lastToolCompletedAt=performance.now();toolMetrics.delete(event.callId)
+          try{console.info('[BMW tool timing] '+JSON.stringify({version:1,projectId:request.project.id,sessionId:request.sessionId,runId:request.runId,callId:event.callId,action:metric?.action,phase:'completed',at:new Date().toISOString(),elapsedMs:metric?Math.round(lastToolCompletedAt-metric.started):null,success:event.success}))}catch{/* Logging must not poison runtime callbacks. */}
         }
         if (event.type === 'session.bound') this.options.conversations.bind(request.sessionId, event.externalSessionId)
         if (event.type === 'interaction.requested') {

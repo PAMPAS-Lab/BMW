@@ -1,3 +1,4 @@
+import {ProductionDiagnostics} from './production-diagnostics.js'
 import {NewsPreparationService} from './news-preparation.js'
 import {NewsService,requireNewsSelection,newsResearchPending} from './news-service.js'
 import {ProductionAssessmentJournal,productionAssessmentSnapshot,makeProductionAssessment,acceptedProductionAssessment} from './production-assessment.js'
@@ -70,9 +71,10 @@ export class VideoStudioService {
     if(!owner||owner.projectId!==this.kernel.projectStore.active().id)throw new Error('STUDIO_SESSION_REQUIRED: Video Studio 需要当前 Project 的对话身份。')
     studioId(owner.sessionId)
     const scope={projectId:owner.projectId,sessionId:owner.sessionId}
-    const request=assertStudioRequest(raw)
+    const telemetry=new ProductionDiagnostics(owner,'video.studio')
+    const request=await telemetry.stage('validate-request',async()=>assertStudioRequest(raw))
     if(actor==='agent'&&this.kernel.videoReviewRun?.(scope)&&isStudioWrite(request)&&request.operation!=='record-export-review'&&(request.operation!=='materials'||['set-metadata','transcribe-source','recover-source-batch'].includes(request.materialRequest?.operation??'')))throw new Error('VIDEO_AUDIT_READ_ONLY: 内部审片只能读取视频、生成取帧/语音证据并记录成片审核；不能修改草稿、素材描述、配音或导出。')
-    const result=await this.perform(request,signal,scope,actor)
+    const result=await telemetry.stage('execute/'+request.operation+(request.materialRequest?'/'+request.materialRequest.operation:request.preparationRequest?'/'+request.preparationRequest.operation:''),()=>this.perform(request,signal,scope,actor))
     if(isStudioWrite(request))this.kernel.videoStudioChanged?.(scope)
     return result
   }

@@ -88,15 +88,15 @@ export class MaterialIndexService {
  }
  private async partEvidence(record:MaterialIndexRecord,part:MaterialIndexPart,directory:string,signal?:AbortSignal){const evidence=await readSpeechEvidence(directory,part.evidenceArtifactId,part.evidenceSha256,signal);if(evidence.sourceArtifactId!==record.artifactId||evidence.sourceSha256!==record.sha256||evidence.model!==part.model||evidence.language!==part.language||evidence.segments.length!==part.segmentCount||JSON.stringify(evidence.normalization.sourceRange)!==JSON.stringify(part.sourceRange))throw new Error('Indexed transcript evidence disagrees with its source.');return evidence}
  private async search(request:Extract<MaterialIndexRequest,{operation:'search'}>,index:MaterialIndex,directory:string,check:()=>void,signal?:AbortSignal):Promise<unknown>{
-  const results:Record<string,unknown>[]=[],unavailable:{artifactId:string;reason:string}[]=[],query=request.query.trim().toLocaleLowerCase(),project=this.kernel.projectStore.active(),drafts=new VideoStudioStore(project.directory,this.owner.sessionId).list(),sourcePort=this.kernel.projectSources?.()
+  const results:Record<string,unknown>[]=[],unavailable:{artifactId:string;reason:string}[]=[],queries=(request.queries??[request.query]).map(q=>q.trim().toLocaleLowerCase()),project=this.kernel.projectStore.active(),drafts=new VideoStudioStore(project.directory,this.owner.sessionId).list(),sourcePort=this.kernel.projectSources?.()
   let position=0,evidenceBytes=0,sourceBytes=0,nextOffset:number|null=null
-  const matches=(text:string)=>!query||text.toLocaleLowerCase().includes(query)
+  const matches=(text:string)=>queries.some(query=>!query||text.toLocaleLowerCase().includes(query))
   for(const record of index.records){
    check();const count=1+record.parts.reduce((n,p)=>n+p.segmentCount,0);if(position+count<=request.offset){position+=count;continue}
    let available=false;const io=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:record.artifactId}).catch(error=>{unavailable.push({artifactId:record.artifactId,reason:String(error)});return undefined})
-   if(io){try{if(sourceBytes+io.bytes>MATERIAL_INDEX_LIMITS.searchSourceBytes){nextOffset=position;break}sourceBytes+=io.bytes;available=await io.fingerprint(signal)===record.sha256;if(!available)unavailable.push({artifactId:record.artifactId,reason:'source-changed'})}finally{await io.close()}}
+   if(io){try{if(io.bytes>MATERIAL_INDEX_LIMITS.searchSourceBytes){unavailable.push({artifactId:record.artifactId,reason:'source-exceeds-search-budget; use bounded indexed segments'});}else{if(sourceBytes+io.bytes>MATERIAL_INDEX_LIMITS.searchSourceBytes){nextOffset=position;break}sourceBytes+=io.bytes;available=await io.fingerprint(signal)===record.sha256;}if(!available)unavailable.push({artifactId:record.artifactId,reason:'source-changed'})}finally{await io.close()}}
    const sources=(sourcePort?sourceBindings(sourcePort,record.artifactId):[]).flatMap(({source:s,acquisition:a})=>a.media.filter(m=>m.artifactId===record.artifactId).map(m=>({sourceId:s.id,acquisitionId:a.id,url:s.url,title:a.title,state:m.state,sourceStartSeconds:m.capture?.sourceStartSeconds,sourceEndSeconds:m.capture?.sourceEndSeconds,verification:'recorded-link'}))),usage=drafts.flatMap(d=>d.scenes.flatMap(scene=>sceneVisuals(scene).flatMap((v,i)=>v.imageArtifactId===record.artifactId||v.videoArtifactId===record.artifactId?[{draftId:d.id,sceneId:scene.id,segmentIndex:i,startSeconds:v.sourceStartSeconds,endSeconds:v.sourceStartSeconds+v.durationSeconds*v.playbackRate,label:d.title+' · '+scene.title}]:[])))
-   const base={artifactId:record.artifactId,title:record.title,kind:record.kind,availability:available?'verified':'unavailable',sources,usage,thumbnails:record.thumbnails,metadataOrigin:record.metadataOrigin}
+   const base={artifactId:record.artifactId,sha256:record.sha256,sourceMappings:(index.sourceBatches??[]).flatMap(batch=>batch.units.filter(unit=>unit.artifactId===record.artifactId&&unit.sha256===record.sha256).map(unit=>({sourceArtifactId:batch.sourceArtifactId,sourceSha256:batch.sourceSha256,sourceTimeOffsetSeconds:unit.sourceTimeOffsetSeconds}))),title:record.title,kind:record.kind,availability:available?'verified':'unavailable',sources,usage,thumbnails:record.thumbnails,metadataOrigin:record.metadataOrigin}
    if(position>=request.offset&&matches([record.title,record.description,...record.tags,...sources.map(s=>s.title+' '+s.url)].join(' ')))results.push({...base,match:'metadata'});position++
    if(results.length>=request.limit){nextOffset=position;break}
    for(const part of record.parts){if(position+part.segmentCount<=request.offset){position+=part.segmentCount;continue}if(!available){position+=part.segmentCount;continue}
@@ -106,6 +106,6 @@ export class MaterialIndexService {
    }
    if(nextOffset!==null)break
   }
-  check();return {indexRevision:index.revision,results,unavailable,nextOffset,coverage:'indexed-metadata-and-raw-transcript',visualSemanticSearch:false,sourceLinksVerified:false,searchEvidenceBytes:evidenceBytes,searchSourceBytes:sourceBytes}
+  check();return {indexRevision:index.revision,results,unavailable,nextOffset,coverage:'indexed-metadata-and-raw-transcript',visualSemanticSearch:false,sourceLinksVerified:false,searchEvidenceBytes:evidenceBytes,searchSourceBytes:sourceBytes,queries,selectionContract:'Use verified artifactId/sha256 and startSeconds/endSeconds directly in news-preparation prepare-shots; indexed file seconds are local, sourceMappings supplies parent clock only where recorded.'}
  }
 }

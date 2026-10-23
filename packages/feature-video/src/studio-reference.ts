@@ -13,7 +13,7 @@ import type {VideoStudioStore} from './studio-store.js'
 import type {VideoDraft,StudioRequest} from './studio-contract.js'
 async function fingerprint(directory:string,id:string,signal?:AbortSignal):Promise<string>{const io=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:id});try{if(io.bytes>256*1024*1024)throw new Error('Reference exceeds 256 MiB.');return await io.fingerprint(signal)}finally{await io.close()}}
 function reply(record:StudioReferenceRecord,directory:string){return {reference:record,frames:record.frames.map(f=>({...f,path:path.join(directory,f.artifactId),type:'screenshot' as const,contentType:'image/png' as const}))}}
-export async function referenceOperation(kernel:StudioKernel,store:VideoStudioStore,draft:VideoDraft,request:StudioRequest,directory:string,guard:()=>void,actor:'user'|'agent',signal?:AbortSignal):Promise<unknown>{
+export async function referenceOperation(kernel:StudioKernel,store:VideoStudioStore,draft:VideoDraft,request:StudioRequest,directory:string,guard:()=>void,actor:'user'|'agent',signal?:AbortSignal,persistPrepared=true):Promise<unknown>{
  const check=()=>{signal?.throwIfAborted();guard()}
  const records=structuredClone(draft.referenceRecords??[])
  if(request.operation==='remove-reference'){
@@ -50,7 +50,7 @@ export async function referenceOperation(kernel:StudioKernel,store:VideoStudioSt
    }
    if(await fingerprint(root,id,signal)!==sourceSha256)throw new Error('STUDIO_REFERENCE_STALE: 参考源文件已变化，请重新取帧。');check()
    const record:StudioReferenceRecord={id:crypto.randomUUID(),sourceArtifactId:id,sourceSha256,sourceBytes:sourceStat.size,kind:kind as 'image'|'video',width,height,durationSeconds,createdAt:new Date().toISOString(),revision:draft.revision,...(videoRange?{videoRange}:{}),frames}
-   records.push(record);assertReferenceRecords(records);check();const updated=store.recordReference(draft.id,draft.revision,records);committed=true;return {draft:updated,...reply(record,root),coverage:kind==='image'?'static-image':'sampled-frames',semanticAnalysis:'pending'}
+   records.push(record);assertReferenceRecords(records);check();const updated=persistPrepared?store.recordReference(draft.id,draft.revision,records):draft;committed=true;return {draft:updated,...reply(record,root),coverage:kind==='image'?'static-image':'sampled-frames',semanticAnalysis:'pending'}
   }finally{if(!committed){const current=await fs.lstat(root);if(current.isSymbolicLink()||current.dev!==identity.dev||current.ino!==identity.ino||await fs.realpath(directory)!==root)throw new Error('Reference cleanup directory identity changed.');for(const [id,stat]of owned){const current=await fs.lstat(path.join(root,id)).catch(error=>{if(error.code==='ENOENT')return undefined;throw error});if(current?.dev===stat.dev&&current.ino===stat.ino&&!current.isSymbolicLink())await fs.unlink(path.join(root,id))}}}
  }
  const record=records.find(r=>r.id===request.referenceId);if(!record)throw new Error('Unknown prepared reference.')
