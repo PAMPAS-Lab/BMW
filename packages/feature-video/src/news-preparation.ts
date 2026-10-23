@@ -92,4 +92,10 @@ export class NewsPreparationService {
  }
 }
 /** Audio generation/caption evidence can change after preparation; visual/script edits invalidate it. */
-export function preparationSceneContent(s:StudioScene){return {id:s.id,title:s.title,label:s.label,narration:s.narration,durationSeconds:s.durationSeconds,sources:s.sources,citations:s.citations,visuals:sceneVisuals(s),layers:s.layers,cardSpec:s.cardSpec,layout:s.layout,sceneTemplate:s.sceneTemplate,endPolicy:s.endPolicy}}
+export function preparationSceneContent(s:StudioScene){
+ // A primary visual may be the scene object itself. Hash its editable visual
+ // semantics, not derived inspection duration or generated audio/caption evidence.
+ // Actual bytes and track bounds are separately pinned in preflight assets.
+ const visuals=sceneVisuals(s).map(v=>({videoArtifactId:v.videoArtifactId,imageArtifactId:v.imageArtifactId,sourceStartSeconds:v.sourceStartSeconds,durationSeconds:v.durationSeconds,playbackRate:v.playbackRate,zoom:v.zoom,crop:v.crop,keepSourceAudio:v.keepSourceAudio,sourceVolume:v.sourceVolume,effects:v.effects,focusIntervals:v.focusIntervals,...('effectWindow'in v?{effectWindow:v.effectWindow}:{}),...('transition'in v?{transition:v.transition,transitionSeconds:v.transitionSeconds}:{})}))
+ return {id:s.id,title:s.title,label:s.label,narration:s.narration,bullets:s.bullets,bulletRevealSeconds:s.bulletRevealSeconds,durationSeconds:s.durationSeconds,sources:s.sources,citations:s.citations,visuals,layers:s.layers,audioTracks:s.audioTracks,cardSpec:s.cardSpec,cardCues:s.cardCues,presentationWindow:s.presentationWindow,layout:s.layout,sceneTemplate:s.sceneTemplate,endPolicy:s.endPolicy,showSceneNumber:s.showSceneNumber,captions:s.captions,captionStyle:s.captionStyle,captionDisplay:s.captionDisplay,voiceTiming:s.voiceTiming,voiceSegments:s.voiceSegments,voiceMuted:s.voiceMuted,voiceVolume:s.voiceVolume}
+}

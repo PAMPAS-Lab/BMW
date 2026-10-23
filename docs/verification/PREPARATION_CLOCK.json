@@ -1,0 +1,109 @@
+{
+  "verifiedAt": "2026-10-23T05:33:51.204Z",
+  "scope": "Stable news preparation fingerprints across native track/container duration inspection",
+  "isolatedTarget": "/private/tmp/bmw-preparation-clock-gg19Ci",
+  "sourceHashes": {
+    "packages/feature-video/src/news-preparation.ts": "e8d8b36c927342762f5f0f0156efe35accfd625dc0b4b5678612a5116e65594c",
+    "packages/feature-video/test/news-preparation.test.ts": "4c4a4c7c3986747a2c9328f6124d81e989eb833d51f710f09a5160b2654c034f"
+  },
+  "build": "passed: final isolated TypeScript compile",
+  "check": {
+    "status": "passed",
+    "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/preparation-clock-final-check.log",
+    "includes": [
+      "TypeScript",
+      "source policy",
+      "video schema",
+      "feature inventory",
+      "architecture boundaries"
+    ]
+  },
+  "videoUnitContractTests": {
+    "passed": 191,
+    "failed": 0,
+    "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/preparation-clock-final-unit.log"
+  },
+  "nativeFixtures": {
+    "passed": 9,
+    "failed": 0,
+    "results": [
+      {
+        "name": "desktop-driver",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/preparation-clock-2026-10-23T05-30-57-126Z-desktop-driver.log"
+      },
+      {
+        "name": "collection-native",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/preparation-clock-2026-10-23T05-30-57-126Z-collection-native.log"
+      },
+      {
+        "name": "studio-native",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/preparation-clock-2026-10-23T05-30-57-126Z-studio-native.log"
+      },
+      {
+        "name": "shot-batch-native",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/preparation-clock-2026-10-23T05-30-57-126Z-shot-batch-native.log"
+      },
+      {
+        "name": "media-native",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/preparation-clock-2026-10-23T05-30-57-126Z-media-native.log"
+      },
+      {
+        "name": "video-native",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/preparation-clock-2026-10-23T05-30-57-126Z-video-native.log"
+      },
+      {
+        "name": "narration-native",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/preparation-clock-2026-10-23T05-30-57-126Z-narration-native.log"
+      },
+      {
+        "name": "dsh-catalog",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/preparation-clock-2026-10-23T05-30-57-126Z-dsh-catalog.log"
+      },
+      {
+        "name": "speech-native",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/preparation-clock-2026-10-23T05-30-57-126Z-speech-native.log"
+      }
+    ]
+  },
+  "baseline": {
+    "expectedFailure": true,
+    "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/preparation-clock-baseline-2026-10-23T05-22Z.log",
+    "meaning": "New native-check regression rejects old compiled whole-scene fingerprint; patched candidate passes."
+  },
+  "coverage": [
+    "Public Studio check changes derived sourceDurationSeconds from container end to video-track end without invalidating identical observed media",
+    "Rendered caption translation and actual trim still invalidate saved declarations",
+    "Actual source-byte replacement remains refused",
+    "Independent journal preserved; no automatic observations or semantic approval minted"
+  ],
+  "earlierVerificationErrors": [
+    "First regression omitted expectedRevision; corrected and retained log",
+    "Later test restoration used mismatched candidate revision; corrected and final191 passed"
+  ],
+  "liveGeneratedOutputs": {
+    "checked": 566,
+    "changed": []
+  },
+  "deployed": false,
+  "liveRunPreserved": "3ccc5c28-b54d-496a-8c4b-7b844ae05988",
+  "sharedCpuVerificationWindow": {
+    "startedAt": "2026-10-23T05:21:11.672Z",
+    "finishedAt": "2026-10-23T05:33:51.205Z",
+    "qualification": "Separate isolated build/test CPU window; not included as proof of production speedup."
+  },
+  "limitations": [
+    "Disposable fixtures, not paid-model, external-service or production-profile coverage",
+    "Current producer still uses previous loaded code; no hot replacement or interruption",
+    "New fingerprint requires normal current preflight and actual observation-backed declarations after safe deployment",
+    "No new production MP4 or BMW model-review pass claimed"
+  ]
+}

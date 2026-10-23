@@ -59,6 +59,29 @@ test('Preparation invalidates script, citation, framing, source bytes and CAS ch
   f.beforeInspect(()=>{const current=f.store.read(f.draft.id);current.title='GUI changed';f.store.update(current.id,current.revision,current)});await assert.rejects(f.service().preflight(),/NEWS_PREPARATION_STALE/);assert.deepEqual(f.service().journal.read(),old)
  }finally{f.close()}
 })
+test('Native track-bound inspection does not invalidate observed preparation through derived container duration',async()=>{
+ const f=await fixture();try{
+  const inspect=f.kernel.recordingController.processArtifact
+  f.kernel.recordingController.processArtifact=async(raw,signal)=>{
+   const r=raw as {action:string;width:number;height:number;fps:number}
+   if(r.action==='media.encode.check')return {kind:'encoding',width:r.width,height:r.height,fps:r.fps,videoCodec:'avc',audioCodec:'aac',videoSupported:true,audioSupported:true}
+   const value=await inspect(raw,signal) as {durationSeconds:number;tracks:{type:string;endSeconds:number}[]}
+   value.durationSeconds=10.003;value.tracks.find(t=>t.type==='audio')!.endSeconds=10.003;return value
+  }
+  let draft=f.store.read(f.draft.id);draft.scenes.forEach(s=>{s.sourceDurationSeconds=10.003});draft.scenes[0].captions=[{startSeconds:0,endSeconds:3,text:'A verified primary claim.',translationText:'已核对的原话。'}];draft=f.store.update(draft.id,draft.revision,draft)
+  await f.record();const journal=f.service().journal.read(),standalone=await f.service().preflight();assert.equal(standalone.ready,true)
+  const result=await new VideoStudioService(f.kernel).execute({operation:'check',draftId:draft.id,expectedRevision:draft.revision},undefined,f.owner) as {issues:{code:string}[]}
+  assert.equal(result.issues.some(i=>i.code==='news-preparation'),false,'check uses the video track end while the archive container has a longer AAC tail')
+  assert.deepEqual(f.service().journal.read(),journal,'native inspection does not rewrite observed declarations')
+  const unchanged=f.store.read(draft.id);draft=structuredClone(unchanged);draft.scenes[0].captions![0].translationText='A different claim.';f.store.update(draft.id,draft.revision,draft)
+  assert.ok((await f.service().preflight()).issues.some(i=>i.code==='checklist-stale'),'rendered caption or translation edits still invalidate the observed script')
+  const currentRevision=f.store.read(unchanged.id).revision;f.store.update(unchanged.id,currentRevision,{...unchanged,revision:currentRevision})
+  draft=f.store.read(draft.id);draft.scenes[0].sourceStartSeconds=.01;f.store.update(draft.id,draft.revision,draft)
+  assert.ok((await f.service().preflight()).issues.some(i=>i.code==='checklist-stale'),'an actual trim remains an editorial change')
+  fs.writeFileSync(path.join(f.directory,'robot.mp4'),'changed source bytes')
+  assert.ok((await f.service().preflight()).issues.length,'changed source bytes are still rejected')
+ }finally{f.close()}
+})
 test('Closed preparation API, separate journal ownership, policy strengthening and bounded model paging stay explicit',async()=>{
  const f=await fixture();try{
   const validate=new Ajv2020({strict:false}).compile(newsPreparationRequestSchema);assert.equal(validate({operation:'preflight'}),true)

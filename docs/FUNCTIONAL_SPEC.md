@@ -40,13 +40,15 @@ DSH 预设装配官方 `compaction-basic` 与 `compaction-tool-result-pruner`，
 
 Agent草稿摘要的每镜`preparationInventory`显示已绑定引用数、来源数和主视频／图片段数，明确`motionVerification:not-performed`；它不认证素材运动、相关性、日期或事实。read-scene/timeline在既有分页内增加`layerSetAllowed`、`sceneStartSeconds`和`editTimeDomain:film-seconds`，区分独立对象与主素材、局部与全片时钟。非法编辑／原生图层字段的拒绝回包提供有界字段名及合法字段，仍严格拒绝、不静默改值。
 
-`news-preparation` 是唯一 browser 的既有 `video.studio` 内新增封闭操作，要求当前 draftId/expectedRevision；preparationRequest 为 read/preflight/enable/record-scene。read 返回保存声明，preflight 只读检查当前实际媒体 SHA、可解码轨道和源区间、精确来源引用、实际日期文字及逐镜声明。每镜返回 fingerprint、durationSeconds、sourceIntervals、assets、missing/stale/unverified/verified-by-agent/verified-by-user 状态及缺口；模型按最多20镜／16KiB分页读取。read/preflight 不保存草稿或清单。
+`news-preparation` 是唯一 browser 的既有 `video.studio` 内新增封闭操作，要求当前 draftId/expectedRevision；preparationRequest 为 read/preflight/enable/record-scene/prepare-shots。read 返回保存声明，preflight 只读检查当前实际媒体 SHA、可解码轨道和源区间、精确来源引用、实际日期文字及逐镜声明。每镜返回 fingerprint、durationSeconds、sourceIntervals、assets、missing/stale/unverified/verified-by-agent/verified-by-user 状态及缺口；模型按最多20镜／16KiB分页读取。read/preflight 不保存草稿或清单。
 
 逐镜清单独立保存在 Project `video-studio/news-preparation/<draftId>.json` version1，绑定 Project/Session/draft，至多96镜／1MiB，使用独立 checklist revision CAS；不能通过导入／更新／恢复草稿冒充。record-scene 需当前 preflight fingerprint、编辑目的、实际 artifact/reference ID、观察动作与相关性、来源日期标签、完整原声和中译或明确未使用原因。复用实际 prepare-reference 的源SHA、PNG哈希与全部逐帧分析；真实视频声明至少三个样本、两种不同PNG且覆盖选用区间两端。源素材、PNG、稿件、引用、取景、时长、顺序或全片图层变化使记录失效；可见全片媒体也核文件哈希。原声声明需主画面实际启用且有可解码音轨覆盖，日期声明须在实际镜头标签／脚注或覆盖全镜的可见文字层中存在。scene.set 的封闭 patch.label 可编辑至多44字符的原生标签。检查累计源/参考文件限512MiB／128项，结束前重核SHA及草稿revision；超预算须先整理本地分段。
 
+准备指纹使用实际可编辑的主素材区间、播放速度、取景、动态效果、源声开关及音量等视觉语义；容器与轨道检查产生的派生时长、生成旁白和字幕证据不伪装成视觉编辑。无 visualSegments 的主素材也使用同一字段投影，不散列整个 scene。源文件 SHA、实测音视频轨范围、引用与观察仍独立强校验；真实裁剪、字幕／译文内容与版式、脚本或源字节变化依旧使准备失效。
+
 正常选题自动启用清单；news-brief 类型以及显式 enable 的草稿也受限，同一未关闭选题 Session 不能通过新普通草稿或直接 video.compose/video.narrate 绕过。enable 只能强化要求，演讲／采访选题要求原声。narrate、narrate-pending、narrate-local 和 render 在执行前拒绝未补齐／过期清单，check 同步返回 news-preparation 错误；批量配音一次准入，实际音频调整镜头时长后导出需更新受影响准备。通用 Studio 未启用新闻要求时沿既有准入。Agent不能覆盖用户准备声明；取消、Project 切换和 GUI 并发修改继续拒绝过期结果。
 
-前0–3秒连续及最后两镜全长须主素材真实视频声明与实测范围齐备；静态卡、定格和相同参考帧拒绝。不同PNG、日期文字存在或 Agent 自述仍不证明连续真实运动、相关性、语义完整、手机可读或日期准确；这些由官方模型基于实际素材判断，并在当前MP4独立逐镜和整片复核。preflight ready 只表示准备门槛齐备，不等于成片通过或人工听感。首次制作与验收边界见[优化计划](plans/NEWS_FIRST_PASS_PRODUCTION.md)。这些源码尚未重载到仍在返工的机器人生产实例。
+前0–3秒连续及最后两镜全长须主素材真实视频声明与实测范围齐备；静态卡、定格和相同参考帧拒绝。不同PNG、日期文字存在或 Agent 自述仍不证明连续真实运动、相关性、语义完整、手机可读或日期准确；这些由官方模型基于实际素材判断，并在当前MP4独立逐镜和整片复核。preflight ready 只表示准备门槛齐备，不等于成片通过或人工听感。首次制作与验收边界见[优化计划](plans/NEWS_FIRST_PASS_PRODUCTION.md)。
 
 NEWS-02将候选上限从三项扩大到十项，版本1记录和已有三题批次仍可读取。素材库提供“推荐新闻选题”，由当前官方Assistant通过唯一browser检索与核对，不使用Host模型循环。默认覆盖中美及全球的重要个人、公司、大学／研究团队、公共机构，以及非AI职业重要人物关于AI的实质消息；名字不使用白名单，不按国籍或身份凑配额。按信息增量、公共影响、原始证据及视频表达价值推荐至多十个不同事件，允许零个。新闻价值、同一事件判断和推荐理由属于Agent编辑判断，Host不认证事实或热度。研究中可按最新revision逐批保存完整已合格列表，不以零散网页线索冒充可选卡片；本轮已发现动作字段复用，仅新动作或参数错误时补查帮助。propose-news-topics的操作帮助完整展开候选字段、必填项、枚举与十项预算，不再把候选契约裁掉后指回通用guide。
 
@@ -1138,6 +1140,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `News preparation gates narration/render on actual current scene evidence and preserves generic Studio behavior`
 - `Static MP4, missing source sound, changed PNGs and unrelated source ranges cannot establish preparation`
 - `Preparation invalidates script, citation, framing, source bytes and CAS changes without rewriting prior records`
+- `Native track-bound inspection does not invalidate observed preparation through derived container duration`
 - `Closed preparation API, separate journal ownership, policy strengthening and bounded model paging stay explicit`
 - `Shot batch links exact pins to native segments, reference frames and one atomic scene commit without semantic approval`
 - `Shot batches retain reusable completed work after failure, reject changed plans and preserve concurrent GUI edits`
