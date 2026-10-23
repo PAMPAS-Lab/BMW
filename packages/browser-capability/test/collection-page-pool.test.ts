@@ -97,3 +97,10 @@ test('Collection navigation equivalence permits theme refresh and query serializ
  ])assert.equal(sameCollectionNavigation(watch,actual),false,actual)
  assert.equal(sameCollectionNavigation('https://www.youtube.com/results?search_query=AI%2Bnews','https://www.youtube.com/results?search_query=AI+news'),false,'Literal plus and query spaces must remain distinct')
 })
+
+test('Confirmed access walls stop only queued URLs of the same subscription for this batch; timeouts remain ordinary pending failures',async()=>{
+ const visited:string[]=[]
+ const values=await withCollectionPagePool({concurrency:2,maxPages:6,guard:()=>{}},()=>({visit:async input=>{visited.push(input.url);if(input.url.endsWith('/hold'))await new Promise(r=>setTimeout(r,15));if(input.url.endsWith('/timeout'))throw new Error('navigation timeout');return {...result(input.url),...(input.url.endsWith('/wall')?{restricted:true}:{})}},close:async()=>{}}),visit=>Promise.allSettled([
+  visit({...page('wall'),sourceKey:'blocked'}),visit({...page('hold'),sourceKey:'other'}),visit({...page('queued'),sourceKey:'blocked'}),visit({...page('timeout'),sourceKey:'other'}),visit({...page('readable'),sourceKey:'other'})]))
+ assert.equal(visited.includes('https://example.com/queued'),false);assert.equal(values[2].status,'rejected');assert.equal(values[4].status,'fulfilled');assert.ok(visited.includes('https://example.com/readable'))
+})

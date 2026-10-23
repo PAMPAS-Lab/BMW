@@ -5,7 +5,13 @@ import { agentIdentifier, agentRecord, agentText, parseAgentEvent } from '@bmw-a
 import type { AgentEvent, AgentMessage, AgentInteraction,AgentConversation } from '@bmw-agent/agent-contract'
 import { readStateFile,StateLoadError } from './state-load.js'
 
-export interface AgentReceipt { runId: string; messageId: string; providerReceiptId: string | null; state: 'prepared' | 'accepted' | 'finished' | 'unknown'; outcome: 'success' | 'interrupted' | 'failed' | null }
+export interface AgentTaskReceipt {kind:'video-review';key:string;payload:string;modelId:string|null}
+export function parseAgentTaskReceipt(raw:unknown):AgentTaskReceipt {
+ const v=agentRecord(raw)
+ if(Object.keys(v).some(k=>!['kind','key','payload','modelId'].includes(k))||v.kind!=='video-review'||typeof v.key!=='string'||!/^[a-f0-9]{64}$/.test(v.key))throw new Error('Invalid internal Agent task receipt')
+ return {kind:v.kind,key:v.key,payload:agentText(v.payload,8192),modelId:v.modelId===null?null:agentIdentifier(v.modelId)}
+}
+export interface AgentReceipt { runId: string; messageId: string; providerReceiptId: string | null; state: 'prepared' | 'accepted' | 'finished' | 'unknown'; outcome: 'success' | 'interrupted' | 'failed' | null;task?:AgentTaskReceipt }
 export interface AgentHistory { version: 2; sessionId: string; revision: number; events: AgentEvent[]; messages: AgentMessage[]; interactions: AgentInteraction[]; receipts: AgentReceipt[]; owner:{projectId:string;driverId:string;externalSessionId:string|null} }
 export function parseAgentHistory(raw: unknown, sessionId: string): AgentHistory {
   const value = agentRecord(raw, 'Agent history')
@@ -27,9 +33,10 @@ export function parseAgentHistory(raw: unknown, sessionId: string): AgentHistory
   const runIds = new Set<string>()
   const receipts: AgentReceipt[] = value.receipts.map(rawReceipt => {
     const row = agentRecord(rawReceipt), runId = agentIdentifier(row.runId), messageId = agentIdentifier(row.messageId)
-    if (runIds.has(runId) || !messages.some(message => message.id === messageId && message.role === 'user') || !['prepared', 'accepted', 'finished', 'unknown'].includes(String(row.state)) || (row.outcome !== null && row.outcome !== 'success' && row.outcome !== 'failed' && row.outcome !== 'interrupted') || Object.keys(row).some(key => !['runId', 'messageId', 'providerReceiptId', 'state', 'outcome'].includes(key))) throw new Error('Invalid saved Agent receipt')
+    if (runIds.has(runId) || !messages.some(message => message.id === messageId && message.role === 'user') || !['prepared', 'accepted', 'finished', 'unknown'].includes(String(row.state)) || (row.outcome !== null && row.outcome !== 'success' && row.outcome !== 'failed' && row.outcome !== 'interrupted') || Object.keys(row).some(key => !['runId', 'messageId', 'providerReceiptId', 'state', 'outcome','task'].includes(key))) throw new Error('Invalid saved Agent receipt')
     runIds.add(runId)
     const receipt: AgentReceipt = { runId, messageId, providerReceiptId: row.providerReceiptId === null ? null : agentIdentifier(row.providerReceiptId), state: row.state as AgentReceipt['state'], outcome: row.outcome as AgentReceipt['outcome'] }
+    if(row.task!==undefined)receipt.task=parseAgentTaskReceipt(row.task)
     if ((receipt.state === 'finished') !== (receipt.outcome !== null)) throw new Error('Invalid Agent receipt completion')
     return receipt
   })
@@ -88,12 +95,12 @@ export class AgentHistoryStore {
       this.cache.set(sessionId, next)
     } finally { fs.closeSync(handle); fs.rmSync(temporary, { force: true }); fs.unlinkSync(lock) }
   }
-  prepare(sessionId: string, runId: string, messageId: string, text: string): void {
+  prepare(sessionId: string, runId: string, messageId: string, text: string,task?:AgentTaskReceipt): void {
     agentIdentifier(runId); agentIdentifier(messageId); agentText(text, 65536)
     this.commit(sessionId, next => {
       if (next.receipts.some(row => row.runId === runId || row.messageId === messageId) || next.messages.some(row => row.id === messageId)) throw new Error('Agent submission identity has already been used')
       next.messages.push({ id: messageId, role: 'user', text, createdAt: Date.now(), complete: true })
-      next.receipts.push({ runId, messageId, providerReceiptId: null, state: 'prepared', outcome: null })
+      next.receipts.push({ runId, messageId, providerReceiptId: null, state: 'prepared', outcome: null,...(task?{task:parseAgentTaskReceipt(task)}:{}) })
     })
   }
   append(raw: AgentEvent): void {

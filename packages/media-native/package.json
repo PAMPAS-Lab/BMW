@@ -43,7 +43,8 @@
     "./precomposition": "./src/precomposition-contract.js"
   },
   "dependencies": {
-    "mediabunny": "1.61.0",
-    "@bmw-agent/agent-contract": "*"
+    "@bmw-agent/agent-contract": "*",
+    "googlevideo": "5.0.0",
+    "mediabunny": "1.61.0"
   }
 }

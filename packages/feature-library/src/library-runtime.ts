@@ -6,6 +6,7 @@ import {CollectionScheduleStore} from './collection-schedule-store.js'
 import {closed} from './research-contract.js'
 import {RollingService,RollingStore,collectionPrompt} from './rolling-service.js'
 import {CollectionBatchService} from './collection-batch-service.js'
+import {assertBatchBackgroundScope} from './collection-batch-contract.js'
 import {CollectionBatchStore} from './collection-batch-store.js'
 import type {CollectionRun} from './rolling-contract.js'
 import {sourceState} from '@bmw-agent/media-native/sources'
@@ -70,7 +71,7 @@ export class LibraryRuntime implements FeatureRuntime {
    const project=host.listLibraryProjects?.(false).find(p=>p.id===binding.projectId)
    if(project&&new CollectionBatchStore(project.directory,project.id).get(runId)?.kind==='batch'){
     const batch=new CollectionBatchService(this.collectionLibrary(binding.projectId),browser,host.collectionRuntime)
-    browser.libraryCollectionBatch=(raw,actor,owner,signal)=>{const request=mediaRecord(raw);if(actor!=='agent'||owner?.projectId!==binding.projectId||owner.sessionId!==binding.sessionId||request.projectId!==binding.projectId||request.id!==runId||!['read','collect','submit'].includes(String(request.operation)))throw new Error('Background batch is restricted to its exact saved batch');return batch.execute(raw,actor,owner,signal)}
+    browser.libraryCollectionBatch=(raw,actor,owner,signal)=>{assertBatchBackgroundScope(raw,actor,owner,binding,runId);return batch.execute(raw,actor,owner,signal)}
     return ()=>{batch.assertLease(binding.projectId,runId,binding)}
    }
    const rolling=this.scheduledRolling(binding.projectId)
@@ -163,7 +164,15 @@ export class LibraryRuntime implements FeatureRuntime {
   ipc.handle('library-recommendations',(event,request:unknown)=>this.track(event,async signal=>{const host=this.authorize(event),sessionId=host.getCurrentSessionId?.(),owner=sessionId?{projectId:host.projectStore.active().id,sessionId}:undefined,operation=mediaRecord(request).operation;if(operation==='activate')await this.idle();const result=await host.browserKernel.execute({action:'library.recommendations',recommendationRequest:request},{actor:'user',...(owner?{sessionOwner:owner}:{}),signal});this.authorize(event);return result}))
   ipc.handle('library-prepare-recommendations',(event,raw:unknown)=>this.track(event,async signal=>{const host=this.authorize(event),r=mediaRecord(raw);closed(r,['directionId','topicId']);const directionId=r.directionId===undefined?undefined:sourceId(r.directionId),topicId=r.topicId===undefined?undefined:sourceId(r.topicId);await this.idle();signal.throwIfAborted();const owner=this.scope(),runId=await host.enqueueAssistant(owner.sessionId,recommendationPreparationPrompt(owner.projectId,directionId,topicId));host.revealAgent();return {runId}}))
   ipc.handle('library-collecting',(event,request:unknown)=>this.track(event,async signal=>{const host=this.authorize(event),operation=mediaRecord(request).operation;if(operation==='start')await this.idle();const result=operation==='cancel'?await host.browserKernel.libraryCollecting!(request,'user',this.scope(),signal):await host.browserKernel.execute({action:'library.collecting',collectionRequest:request},{actor:'user',sessionOwner:this.scope(),signal});this.authorize(event);return result}))
-  ipc.handle('library-batches',(event,request:unknown)=>this.track(event,async signal=>{const host=this.authorize(event),operation=mediaRecord(request).operation;if(operation==='start')await this.idle();const result=['cancel','recover'].includes(String(operation))?await host.browserKernel.libraryCollectionBatch!(request,'user',this.scope(),signal):await host.browserKernel.execute({action:'library.collection-batch',collectionBatchRequest:request},{actor:'user',sessionOwner:this.scope(),signal});this.authorize(event);return result}))
+  ipc.handle('library-batches',(event,request:unknown)=>this.track(event,async signal=>{
+   const host=this.authorize(event),operation=mediaRecord(request).operation
+   if(operation==='start'){await this.idle();this.authorize(event);signal.throwIfAborted()}
+   // Admission must observe the existing browser FIFO before occupying it itself.
+   // start validates and persists synchronously before enqueueing one official input;
+   // its runtime checks still reject other user/browser work and quarantined resources.
+   const result=['start','cancel','recover'].includes(String(operation))?await host.browserKernel.libraryCollectionBatch!(request,'user',this.scope(),signal):await host.browserKernel.execute({action:'library.collection-batch',collectionBatchRequest:request},{actor:'user',sessionOwner:this.scope(),signal})
+   this.authorize(event);return result
+  }))
   ipc.handle('library-streams',(event,request:unknown)=>this.track(event,async signal=>{const host=this.authorize(event),sessionId=host.getCurrentSessionId?.(),result=await host.browserKernel.execute({action:'library.streams',streamRequest:request},{actor:'user',...(sessionId?{sessionOwner:{projectId:host.projectStore.active().id,sessionId}}:{}),signal});this.authorize(event);return result}))
   ipc.handle('library-exports',(event,request:unknown)=>this.track(event,async signal=>{const host=this.authorize(event),sessionId=host.getCurrentSessionId?.(),result=await host.browserKernel.execute({action:'library.exports',exportsRequest:request},{actor:'user',...(sessionId?{sessionOwner:{projectId:host.projectStore.active().id,sessionId}}:{}),signal});this.authorize(event);return result}))
   ipc.handle('library-use',(event,raw:unknown,revision:unknown)=>this.track(event,async signal=>{const host=this.authorize(event),owner=this.scope(),identity=assertLibraryIdentity(raw),target=this.useTarget;const result=mediaRecord(await host.browserKernel.execute({action:'library.materials',libraryRequest:{operation:'copy',...identity,expectedRevision:finiteNumber(revision,'target source revision',0,1000000,true)}},{actor:'user',sessionOwner:owner,signal}));this.authorize(event);const local=assertLibraryIdentity(result.identity);if(target){if(target.projectId!==owner.projectId||target.sessionId!==owner.sessionId)throw new Error('Studio selection changed. Reopen the material picker.');await host.browserKernel.videoStudioUse?.(owner,local,target);this.useTarget=undefined}return result}))

@@ -1,0 +1,86 @@
+{
+  "at": "2026-10-23T01:09:43.776Z",
+  "scope": "Authored source and disposable isolated workspace only; live BMW production/review not restarted or replaced.",
+  "verification": {
+    "capturedAt": "2026-10-23T01:05:14.733Z",
+    "target": "/private/tmp/bmw-news-optimization-eyS3pR",
+    "liveRuntimeRebuilt": false,
+    "results": [
+      {
+        "name": "build",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/optimization-build.log"
+      },
+      {
+        "name": "video-unit",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/optimization-video-unit.log"
+      },
+      {
+        "name": "boundary",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/optimization-boundary.log"
+      },
+      {
+        "name": "desktop-driver",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/optimization-desktop-driver.log"
+      },
+      {
+        "name": "studio-native",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/optimization-studio-native.log"
+      },
+      {
+        "name": "media-native",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/optimization-media-native.log"
+      },
+      {
+        "name": "video-native",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/optimization-video-native.log"
+      },
+      {
+        "name": "narration-native",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/optimization-narration-native.log"
+      },
+      {
+        "name": "dsh-catalog",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/optimization-dsh-catalog.log"
+      },
+      {
+        "name": "speech-native",
+        "status": 0,
+        "log": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/optimization-speech-native.log"
+      }
+    ],
+    "verifiedAt": "2026-10-23T01:08:48.762Z"
+  },
+  "additionalChecks": {
+    "newsTests": 15,
+    "typecheck": "passed",
+    "sourcePolicy": "passed;6 unchanged frozen exceptions",
+    "publishedVideoSchema": "passed against current isolated codecs",
+    "featureInventory": "generated/checked using current isolated code (78Studio operations)",
+    "boundaries": "passed against current isolated catalog",
+    "liveGeneratedOutputs": {
+      "count": 554,
+      "changed": 0
+    }
+  },
+  "decodeReproduction": {
+    "before": "outputs/gtc-berlin-three-news-2026-10-22/speech-decode-before-fix.log",
+    "after": "outputs/gtc-berlin-three-news-2026-10-22/speech-decode-after-fix.log",
+    "source": "Read-only copied prior failed GTC local unit in a disposable test Profile; not production editing/review",
+    "fault": "FirstAAC buffer starts−0.017777777777777778s and ends0.0054421768707483s; old code rejects negative clock",
+    "fixed": "Bounded firstAAC frame only, source0–180s produces2880000frames at16kHz;784negative-time input frames discarded. No skip0.1s or disabled clock guard."
+  },
+  "limitations": [
+    "No new94minute batch performance measurement or paid-model regression",
+    "Preparation declarations do not establish continuous true motion, semantic relevance, finalMP4 approval or human listening",
+    "Current robot native task is still on previous deployed code; independent matching-fingerprint review remains mandatory"
+  ]
+}

@@ -65,7 +65,7 @@ try {
     const observation=await live.execute({action:'observe',tabId:background.id});assert.match(observation.text,/Background post/)
     console.log('Background phase: diagnostics screenshot')
     const diagnostics=await live.execute({action:'page.diagnostics',tabId:background.id});assert.ok(diagnostics.screenshot.width>0)
-    const wc = view.webContents, original = wc.executeJavaScript.bind(wc)
+    const wc = view.webContents, original = wc.executeJavaScript.bind(wc), originalFrame=wc.mainFrame.executeJavaScript.bind(wc.mainFrame)
     let entered: () => void, complete: (value: unknown) => void
     const started = new Promise<void>(resolve => { entered = resolve })
     const blocked = new Promise<unknown>(resolve => { complete = resolve })
@@ -86,12 +86,14 @@ try {
       let enter:()=>void,finish:(value:unknown)=>void
       const entered=new Promise<void>(resolve=>{enter=resolve}),blockedRead=new Promise<unknown>(resolve=>{finish=resolve})
       wc.executeJavaScript=()=>{enter();return blockedRead}
+      wc.mainFrame.executeJavaScript=()=>{enter();return blockedRead}
       const cancel=new AbortController(),before=fs.readdirSync(root)
       const read=live.execute({action,tabId:background.id,...(action==='page.diagnostics'?{}:{selector:'article'})},{signal:cancel.signal})
       const rejected=assert.rejects(read,/cancelled/),next=live.execute({action:'tabs.list'})
       await entered;cancel.abort(new Error('fixture cancelled'));await rejected;await next
       finish({ok:true,items:[],text:'late'});await pause(0);assert.deepEqual(fs.readdirSync(root),before)
       wc.executeJavaScript=original
+      wc.mainFrame.executeJavaScript=originalFrame
     }
     console.log('Background phase: detached viewport screenshot')
     const viewport = await live.execute({ action: 'media.screenshot', tabId: background.id })

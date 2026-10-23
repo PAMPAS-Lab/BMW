@@ -3,9 +3,9 @@ import {assertPageScope,pageRangeExpression} from './page-scope.js'
 
 /** Host-private inputs. No caller JavaScript, credentials or shared user tab IDs. */
 export type CollectionPageSource=Pick<SourceCollection,'bodySelector'|'index'|'excludeSelectors'|'authorSelector'|'publishedSelector'>
-export interface CollectionPageRequest {url:string;source:CollectionPageSource}
+export interface CollectionPageRequest {url:string;source:CollectionPageSource;sourceKey?:string}
 export interface CollectionPageLink {url:string;text:string}
-export interface CollectionPageResult {observation:SourceObservation;links:CollectionPageLink[];linksTruncated:boolean}
+export interface CollectionPageResult {observation:SourceObservation;links:CollectionPageLink[];linksTruncated:boolean;restricted?:boolean}
 export interface CollectionPagePoolOptions {concurrency:2|3;maxPages:number;guard:()=>void}
 export type CollectionPageVisit=(request:CollectionPageRequest)=>Promise<CollectionPageResult>
 export interface CollectionPageLane {visit(request:CollectionPageRequest,signal:AbortSignal):Promise<CollectionPageResult>;close():Promise<void>}
@@ -30,14 +30,15 @@ export function collectionPageUrl(raw:unknown):string{if(typeof raw!=='string'||
 export function sameCollectionNavigation(requested:string,actual:string):boolean{try{const clean=(raw:string)=>{const url=new URL(collectionPageUrl(raw));url.searchParams.delete('themeRefresh');url.searchParams.sort();return url.href};return clean(requested)===clean(actual)}catch{return false}}
 
 function request(input:CollectionPageRequest):CollectionPageRequest {
- if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(key=>!['url','source'].includes(key)))throw new Error('Invalid collection page input')
+ if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(key=>!['url','source','sourceKey'].includes(key)))throw new Error('Invalid collection page input')
  if(!input.source||typeof input.source!=='object'||Array.isArray(input.source)||Object.hasOwn(input.source,'tabId'))throw new Error('Collection pages cannot target existing tabs')
  if(Object.keys(input.source).some(key=>!['bodySelector','index','excludeSelectors','authorSelector','publishedSelector'].includes(key)))throw new Error('Unexpected collection source field')
  if(typeof input.source.bodySelector!=='string')throw new Error('Collection page requires an explicit bounded body selector')
  const range=assertPageScope({selector:input.source.bodySelector,index:input.source.index,excludeSelectors:input.source.excludeSelectors})
  for(const selector of [input.source.authorSelector,input.source.publishedSelector])if(selector!==undefined)assertPageScope({selector})
+ if(input.sourceKey!==undefined&&(typeof input.sourceKey!=='string'||!/^[a-zA-Z0-9-]{1,80}$/.test(input.sourceKey)))throw new Error('Invalid collection source scope')
  const source:CollectionPageSource={bodySelector:input.source.bodySelector,index:range.index,excludeSelectors:range.excludeSelectors,...(input.source.authorSelector?{authorSelector:input.source.authorSelector}:{}),...(input.source.publishedSelector?{publishedSelector:input.source.publishedSelector}:{})}
- return {url:collectionPageUrl(input.url),source}
+ return {url:collectionPageUrl(input.url),source,...(input.sourceKey?{sourceKey:input.sourceKey}:{})}
 }
 
 /** Bounded deterministic I/O pool, not an Agent loop. The callback may discover
@@ -47,6 +48,7 @@ export async function withCollectionPagePool<T>(options:CollectionPagePoolOption
  interface Job {input:CollectionPageRequest;resolve:(result:CollectionPageResult)=>void;reject:(error:unknown)=>void}
  interface Slot {lane:CollectionPageLane;busy:boolean}
  const controller=new AbortController(),queue:Job[]=[],slots:Slot[]=[],tasks=new Set<Promise<void>>()
+ const restricted=new Set<string>()
  let accepting=true,admitted=0
  const stop=(reason:unknown)=>{controller.abort(reason);for(const job of queue.splice(0))job.reject(controller.signal.reason)}
  const check=()=>{signal?.throwIfAborted();controller.signal.throwIfAborted();try{options.guard()}catch(error){stop(error);throw error}}
@@ -57,7 +59,7 @@ export async function withCollectionPagePool<T>(options:CollectionPagePoolOption
    if(!slot&&slots.length<options.concurrency){try{check();slot={lane:create(slots.length),busy:false};slots.push(slot)}catch(error){stop(error);return}}
    if(!slot)return
    const job=queue.shift()!,selected=slot;selected.busy=true
-   const task=(async()=>{try{check();const result=await selected.lane.visit(job.input,controller.signal);check();job.resolve(result)}catch(error){job.reject(error);if(error instanceof CollectionPageCleanupError)stop(error)}finally{selected.busy=false}})()
+   const task=(async()=>{try{check();if(job.input.sourceKey&&restricted.has(job.input.sourceKey))throw Object.assign(new Error('BMW_COLLECTION_SOURCE_RESTRICTED: Confirmed access wall in this batch; retain queued URL as pending.'),{code:'BMW_COLLECTION_SOURCE_RESTRICTED'});const result=await selected.lane.visit(job.input,controller.signal);check();if(result.restricted&&job.input.sourceKey)restricted.add(job.input.sourceKey);job.resolve(result)}catch(error){job.reject(error);if(error instanceof CollectionPageCleanupError)stop(error)}finally{selected.busy=false}})()
    tasks.add(task);void task.finally(()=>{tasks.delete(task);pump()})
   }
  }

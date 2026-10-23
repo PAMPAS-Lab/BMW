@@ -11,6 +11,15 @@ export interface FeatureStudioRegion {top:number;bottom:number;floatBottom?:numb
 export interface FeatureStudioPresentation {immersive:boolean;chatOpen:boolean;position?:{x:number;y:number};docked?:boolean;region?:FeatureStudioRegion;floatHeight?:number}
 export interface CollectionBinding {projectId:string;sessionId:string;driverId:string}
 export interface CollectionReceipt {state:'active'|'success'|'failed'|'interrupted'|'uncertain'|'missing';drained:boolean}
+export interface FeatureAssistantTask {
+ runId:string;driverId:string;modelId:string|null;key:string;payload:string
+ state:'queued'|'running'|'success'|'failed'|'interrupted'|'uncertain';drained:boolean
+}
+export interface FeatureAssistantTasks {
+ start(owner:{projectId:string;sessionId:string},task:{key:string;payload:string;text:string;context:string}):FeatureAssistantTask
+ read(owner:{projectId:string;sessionId:string},runId:string):FeatureAssistantTask
+ find(owner:{projectId:string;sessionId:string},key:string):FeatureAssistantTask|null
+}
 /** Host-only admission, receipt and cleanup facts. No provider transport is exposed. */
 export interface CollectionRuntimePort {
   yield?():Promise<void>
@@ -26,6 +35,7 @@ export interface CollectionRuntimePort {
   recover?(binding:CollectionBinding,dispatchId:string):Promise<void>
 }
 export interface FeatureHost {
+  assistantTasks?:FeatureAssistantTasks
   collectionRuntime?:CollectionRuntimePort
   collectionSources?(projectId:string):ProjectSourcePort
   configureCollectionBrowser?(configure:(binding:CollectionBinding,runId:string,browser:BrowserFeatureHost)=>(()=>void)):void

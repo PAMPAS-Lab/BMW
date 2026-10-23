@@ -491,6 +491,9 @@
                     "type": "string",
                     "maxLength": 44
                   },
+                  "label": {
+                    "type": "string"
+                  },
                   "visualBrief": {
                     "type": "string",
                     "maxLength": 2000
@@ -3623,6 +3626,9 @@
                   "title": {
                     "type": "string",
                     "maxLength": 44
+                  },
+                  "label": {
+                    "type": "string"
                   },
                   "visualBrief": {
                     "type": "string",

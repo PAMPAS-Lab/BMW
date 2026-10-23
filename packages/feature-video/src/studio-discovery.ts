@@ -1,11 +1,13 @@
 import type {StudioRequest} from './studio-contract.js'
 import type {BrowserHelpQuery,JsonSchema} from '../../browser-capability/src/browser-schema.js'
 import {sourceOperationContracts,sourceRequestSchema} from '../../media-native/src/source-contract.js'
+import {materialIndexRequestSchema} from './material-index-contract.js'
 type Spec={required:readonly string[];optional:readonly string[]}
 const spec=(required:readonly string[]=[],optional:readonly string[]=[]):Spec=>({required,optional})
 const draft=['draftId','expectedRevision'],scene=[...draft,'sceneId'],paging=['pageOffset','pageLimit']
 /** Field ownership is shared by discovery and admission; feature code owns all operations. */
 export const studioOperationContracts={
+ 'news-preparation':spec([...draft,'preparationRequest'],paging),
  'news-topics':spec(), 'propose-news-topics':spec(['expectedTopicRevision','newsCandidates'],['closeNewsTask']), 'select-news-topic':spec(['expectedTopicRevision','topicId','baseFingerprint'],['options']), 'news-guide':spec(draft),
  'record-production-review':spec([...draft,'baseFingerprint','expectedAssessmentRevision','assessment']), 'precomposition-status':spec([...draft,'artifactId']), precompose:spec([...draft,'gridRecipe']), 'production-profiles':spec(), 'propose-type':spec([...draft,'productionType'],['recipeId','sceneId']), 'adopt-type':spec([...draft,'productionType','baseFingerprint'],['recipeId','sceneId']), 'production-read':spec(draft,['productionSection',...paging]), 'production-review':spec(draft), 'plan-impact':spec(draft,['edit','cover','baseFingerprint',...paging]),
  analysis:spec([...draft,'analysisRequest']),
@@ -44,7 +46,14 @@ export function studioRecovery(raw:unknown,error:unknown):TypeError {
 }
 export function studioHelp(schema:JsonSchema,query:BrowserHelpQuery):unknown {
  const operation=query.forOperation,operationSpec=studioOperationSpec(operation)
- if(operation!==undefined&&!operationSpec||query.forSubOperation!==undefined&&operation!=='source')throw studioRecovery({operation},new TypeError('Unknown Studio help operation.'))
+ if(operation!==undefined&&!operationSpec||query.forSubOperation!==undefined&&operation!=='source'&&operation!=='materials')throw studioRecovery({operation},new TypeError('Unknown Studio help operation.'))
+ if(operation==='materials'){
+  const subOperations=materialIndexRequestSchema.oneOf.map(branch=>branch.properties.operation.const),sub=query.forSubOperation
+  if(sub===undefined)return {action:'video.studio',operation,subOperations,next:{action:'help',forAction:'video.studio',forOperation:'materials',forSubOperation:'index'}}
+  const branch=materialIndexRequestSchema.oneOf.find(branch=>branch.properties.operation.const===sub)
+  if(!branch)throw studioRecovery({operation},new TypeError('Unknown material operation. Supported: '+subOperations.join(', ')))
+  return {action:'video.studio',operation,subOperation:sub,inputSchema:{type:'object',additionalProperties:false,required:['action','studioRequest'],properties:{action:{const:'video.studio'},studioRequest:{type:'object',additionalProperties:false,required:['operation','materialRequest'],properties:{operation:{const:'materials'},materialRequest:branch}}}},subOperations}
+ }
  const rootProperties=schema.properties as Record<string,JsonSchema>
  const sub=query.forSubOperation
  if(sub!==undefined&&!Object.hasOwn(sourceOperationContracts,sub))throw studioRecovery({operation:'source'},new TypeError('Unknown source operation; choose an exact supportedSubOperations value.'))
@@ -56,7 +65,7 @@ export function studioHelp(schema:JsonSchema,query:BrowserHelpQuery):unknown {
   let item=properties[key]
   if(key==='operation')item=operation?{const:sub??operation}:{type:'string',enum:Object.keys(studioOperationContracts)}
   if(!sub&&operation==='source'&&key==='sourceRequest'){omitted.push(key);item={type:'object',required:['operation'],additionalProperties:false,properties:{operation:sourceRequestSchema.properties.operation},description:'Select forSubOperation in browser help to get the complete closed sourceRequest fields.'}}
-  else if(JSON.stringify(item).length>1500&&!(operation==='propose-news-topics'&&key==='newsCandidates')){omitted.push(key);item={type:item.type??'object',description:'Nested contract omitted from this projection. Use the feature discovery request in next.'}}
+  else if(JSON.stringify(item).length>1500&&!((operation==='propose-news-topics'&&key==='newsCandidates')||(operation==='news-preparation'&&key==='preparationRequest'))){omitted.push(key);item={type:item.type??'object',description:'Nested contract omitted from this projection. Use the feature discovery request in next.'}}
   return [key,item]
  }))
  const requestSchema={type:'object',additionalProperties:false,required:['operation',...(selected?.required??[])],properties:selectedProperties}

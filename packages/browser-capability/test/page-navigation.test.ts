@@ -24,3 +24,14 @@ test('A user-owned page is retained after failed stop until explicit close recov
 test('Already cancelled navigation never starts native loading and an ordinary load error does not leave listeners',async()=>{
  const f=fixture(),controller=new AbortController();controller.abort();await assert.rejects(navigatePage(f.page,'https://example.org',controller.signal));assert.deepEqual(f.steps,[]);const error=new Error('network failed'),events=new EventEmitter(),page=Object.assign(events,{isDestroyed:()=>false,loadURL:async()=>{throw error},stop:()=>{throw new Error('unnecessary stop')},close:()=>{}}) as unknown as NavigationPage;await assert.rejects(navigatePage(page,'https://example.org'),e=>e===error);assert.equal(events.eventNames().length,0)
 })
+
+test('Collection DOM readiness stops and drains asset loading, while ordinary navigation still waits for load',async()=>{
+ const f=fixture(),operation=navigatePage(f.page,'https://example.org',undefined,2000,5,true,async()=>true)
+ await new Promise(resolve=>setImmediate(resolve));f.events.emit('dom-ready');await operation
+ assert.deepEqual(f.steps,['load','stop']);assert.equal(f.page.isDestroyed(),false);assert.equal(f.events.eventNames().length,0)
+ const ordinary=fixture();let finished=false;const pending=navigatePage(ordinary.page,'https://example.org',undefined,2000).then(()=>{finished=true});ordinary.events.emit('dom-ready');await new Promise(resolve=>setTimeout(resolve,180));assert.equal(finished,false);ordinary.resolveLoad();await pending;assert.deepEqual(ordinary.steps,['load'])
+})
+test('A collection ready probe cannot release a still-running native navigation or leave late renderer work',async()=>{
+ const f=fixture(false),operation=navigatePage(f.page,'https://example.org',undefined,2000,5,true,async()=>true)
+ await new Promise(resolve=>setImmediate(resolve));f.events.emit('dom-ready');await assert.rejects(operation,/PAGE_CHANGED/);assert.equal(f.page.isDestroyed(),true);assert.deepEqual(f.steps,['load','stop','close']);assert.equal(f.events.eventNames().length,0)
+})

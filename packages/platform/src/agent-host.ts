@@ -3,6 +3,7 @@ import { agentIdentifier, agentText, parseAgentCapabilities, parseAgentDriverEve
 import type { AgentBackend, AgentConversation, AgentDriverDescription, AgentDriverEvent, AgentEvent, AgentRunRequest, AgentRunResult } from '@bmw-agent/agent-contract'
 import { ConversationStore } from './conversation-store.js'
 import { AgentHistoryStore } from './agent-history-store.js'
+import type {AgentTaskReceipt} from './agent-history-store.js'
 
 export interface AgentHostProject { id: string; name: string; directory: string }
 export interface AgentHostOptions {
@@ -16,6 +17,7 @@ export interface AgentHostOptions {
   drain(request: AgentRunRequest): Promise<void>
   /** Invalidate display cache only; never refresh or replay a failed native task. */
   onSettingsInvalidated?(driverId:string):void
+  model?(driverId:string):string|null
 }
 interface PendingRun {
   request: AgentRunRequest
@@ -105,7 +107,13 @@ export class AgentHost {
   enqueue(sessionId: string, text: string, frozenContext?:string, background=false): { runId: string; messageId: string } {
     return this.admit(sessionId,text,frozenContext,background,this.options.currentProject())
   }
-  private admit(sessionId:string,text:string,frozenContext:string|undefined,background:boolean,project:AgentHostProject):{runId:string;messageId:string}{
+  /** One official runtime turn, queued after its caller. Never wait inside a tool. */
+  enqueueTask(sessionId:string,text:string,context:string,task:AgentTaskReceipt):{runId:string;messageId:string}{
+    if(this.active&&this.options.history.snapshot(this.active.request.sessionId).receipts.find(r=>r.runId===this.active!.request.runId)?.task)throw new Error('Internal tasks cannot recursively enqueue another internal task')
+    if(this.options.history.snapshot(sessionId).receipts.some(r=>r.state==='unknown'))throw new Error('Internal task requires explicit recovery of uncertain Session input')
+    return this.admit(sessionId,text,context,false,this.options.currentProject(),task)
+  }
+  private admit(sessionId:string,text:string,frozenContext:string|undefined,background:boolean,project:AgentHostProject,task?:AgentTaskReceipt):{runId:string;messageId:string}{
     if (this.closed) throw new Error('BMW Agent host has closed')
     if(this.maintenance)throw new Error('BMW Agent resources are completing maintenance')
     if (this.quarantined) throw new Error('BMW Agent resources are disconnected; drain recovery must finish before sending')
@@ -116,7 +124,7 @@ export class AgentHost {
     const row = this.member(sessionId,project.id)
     if (row.externalSessionId === null && this.options.history.snapshot(sessionId).receipts.some(receipt => receipt.state === 'unknown')) throw new Error('An uncertain submission has no provider resume anchor; create an explicit new BMW Session')
     const backend = this.backend(row.driverId), controller = new AbortController(), runId = crypto.randomUUID(), messageId = crypto.randomUUID()
-    this.options.history.prepare(sessionId, runId, messageId, text)
+    this.options.history.prepare(sessionId, runId, messageId, text,task)
     let resolve: PendingRun['resolve'], reject: PendingRun['reject']
     const settled = new Promise<AgentRunResult>((accept, decline) => { resolve = accept; reject = decline })
     // A UI submission may never await the result. Keep failures available to wait().
@@ -204,8 +212,11 @@ export class AgentHost {
         if (row.projectId !== request.project.id || row.driverId !== backend.description.id) throw new Error('Agent Session membership changed before execution')
         request.externalSessionId = row.externalSessionId
         request.context = agentText(pending.frozenContext??await this.options.context(row.sessionId, row.projectId), 16384, 'BMW Project context')
+        const task=this.options.history.snapshot(row.sessionId).receipts.find(r=>r.runId===request.runId)?.task
+        if(task?.modelId!==null&&task?.modelId!==undefined&&this.options.model?.(row.driverId)!==task.modelId)throw new Error('Internal task model selection changed before execution')
         const ready = await backend.prepare(request)
         if (ready.id !== row.driverId || !parseAgentCapabilities(ready.capabilities).browserOnly) throw new Error('Agent driver has not verified a browser-only tool catalog')
+        if(task?.kind==='video-review'&&!ready.capabilities.images)throw new Error('Video review requires an image-capable official runtime')
         if (controller.signal.aborted) result = { outcome: 'interrupted', message: 'Message cancelled during driver preparation' }
         else {
           entered = true

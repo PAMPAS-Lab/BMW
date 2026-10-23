@@ -24,8 +24,16 @@ test('X network resources require the original post media identity; replies, unr
  assert.throws(()=>selectVideoResource({...state,targets:[target,target]},url),/uniquely bound/)
 })
 
-test('A correctly identified YouTube target without full-file URLs reports unsupported delivery instead of accepting SABR or another video',()=>{
+test('A correctly identified YouTube target without observed delivery refuses guessed SABR or another video',()=>{
  const target={...yt(),resources:[]},state=assertPageVideoTargets({pageUrl:'https://www.youtube.com/watch?v=original',platform:'youtube',targets:[target],blocked:null})
  assert.throws(()=>selectVideoResource(state,'https://r1.googlevideo.com/videoplayback?sabr=1'),/YOUTUBE_DIRECT_DELIVERY_UNAVAILABLE/)
  assert.equal(selectVideoResource(state,target.playerUrl).identity.targetId,'original','An explicitly selected blob capture still binds the target without claiming a direct delivery.')
+})
+
+test('Only a same-target YouTube response can advertise an explicit native SABR resource',()=>{
+ const target=yt(),url='https://r1.googlevideo.com/videoplayback?id=current&sabr=1';target.resources=[resource(url,'sabr')]
+ const state=assertPageVideoTargets({pageUrl:'https://www.youtube.com/watch?v=original',platform:'youtube',targets:[target],blocked:null})
+ assert.equal(selectVideoResource(state,url).resources[0]!.role,'sabr');assert.equal(youtubeAudioFor(target,url),undefined)
+ assert.throws(()=>selectVideoResource(state,url+'&guessed=1'),/UNBOUND/)
+ assert.throws(()=>assertPageVideoTargets({...state,targets:[{...target,resources:[resource('https://evil.example/videoplayback?id=current','sabr')]}]}),/Foreign/)
 })

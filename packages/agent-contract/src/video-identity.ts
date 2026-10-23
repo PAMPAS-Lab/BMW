@@ -1,9 +1,16 @@
 /** Page evidence, never a claim about an author's upload or a model assertion. */
 export interface VideoIdentity {version:1;platform:'page'|'youtube'|'x'|'weibo';targetId:string;resourceId:string}
-export interface VideoResource {url:string;role:'video'|'audio'|'muxed'|'hls';durationSeconds:number|null;bitrate:number;audioGroup:string;defaultAudio:boolean}
+export interface VideoResource {url:string;role:'video'|'audio'|'muxed'|'hls'|'sabr';durationSeconds:number|null;bitrate:number;audioGroup:string;defaultAudio:boolean}
 export interface VideoTarget {identity:VideoIdentity;playerUrl:string;videoIndex:number;durationSeconds:number|null;resources:VideoResource[]}
 export interface VideoTargetScope {selector?:string;index?:number;excludeSelectors?:string[]}
 export interface PageVideoTargets {pageUrl:string;platform:VideoIdentity['platform'];targets:VideoTarget[];blocked:string|null}
+
+export const YOUTUBE_SABR_REQUEST_BYTES=256*1024
+export function youtubeSabrUrl(value:string):URL {
+ const url=new URL(value)
+ if(value.length>8192||url.protocol!=='https:'||!url.hostname.endsWith('.googlevideo.com')||url.port||url.username||url.password||url.pathname!=='/videoplayback'||!url.searchParams.get('id'))throw new Error('YOUTUBE_SABR_URL: Expected the current Googlevideo HTTPS streaming endpoint.')
+ return url
+}
 
 export function assertVideoIdentity(raw:unknown):VideoIdentity{
  if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new TypeError('Invalid video identity.')
@@ -19,7 +26,7 @@ export function assertPageVideoTargets(raw:unknown):PageVideoTargets{
  if(Object.keys(r).some(k=>!['pageUrl','platform','targets','blocked'].includes(k))||!['page','youtube','x','weibo'].includes(String(r.platform))||r.blocked!==null&&(typeof r.blocked!=='string'||r.blocked.length>1000)||!Array.isArray(r.targets)||r.targets.length>64||JSON.stringify(raw).length>256*1024)throw new TypeError('Invalid video target snapshot budget.')
  const targets=r.targets.map(raw=>{if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new TypeError('Invalid player witness.');const t=raw as Record<string,unknown>,identity=assertVideoIdentity(t.identity)
   if(Object.keys(t).some(k=>!['identity','playerUrl','videoIndex','durationSeconds','resources'].includes(k))||identity.platform!==r.platform||!Number.isSafeInteger(t.videoIndex)||Number(t.videoIndex)<-1||Number(t.videoIndex)>10000||!Array.isArray(t.resources)||t.resources.length>160)throw new TypeError('Invalid player witness.')
-  const resources=t.resources.map(raw=>{if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new TypeError('Invalid resource witness.');const f=raw as Record<string,unknown>;if(Object.keys(f).some(k=>!['url','role','durationSeconds','bitrate','audioGroup','defaultAudio'].includes(k))||!['video','audio','muxed','hls'].includes(String(f.role))||typeof f.bitrate!=='number'||!Number.isFinite(f.bitrate)||f.bitrate<0||typeof f.audioGroup!=='string'||f.audioGroup.length>100||typeof f.defaultAudio!=='boolean')throw new TypeError('Invalid resource witness.');const address=url(f.url);if(identity.platform==='youtube'&&!(new URL(address).protocol==='https:'&&new URL(address).hostname.endsWith('.googlevideo.com')))throw new TypeError('Foreign YouTube delivery resource.');return {url:address,role:f.role as VideoResource['role'],durationSeconds:seconds(f.durationSeconds),bitrate:f.bitrate,audioGroup:f.audioGroup,defaultAudio:f.defaultAudio}})
+  const resources=t.resources.map(raw=>{if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new TypeError('Invalid resource witness.');const f=raw as Record<string,unknown>;if(Object.keys(f).some(k=>!['url','role','durationSeconds','bitrate','audioGroup','defaultAudio'].includes(k))||!['video','audio','muxed','hls','sabr'].includes(String(f.role))||typeof f.bitrate!=='number'||!Number.isFinite(f.bitrate)||f.bitrate<0||typeof f.audioGroup!=='string'||f.audioGroup.length>100||typeof f.defaultAudio!=='boolean')throw new TypeError('Invalid resource witness.');const address=url(f.url);if(identity.platform==='youtube'&&!(new URL(address).protocol==='https:'&&new URL(address).hostname.endsWith('.googlevideo.com'))||f.role==='sabr'&&(identity.platform!=='youtube'||new URL(address).pathname!=='/videoplayback'))throw new TypeError('Foreign YouTube delivery resource.');return {url:address,role:f.role as VideoResource['role'],durationSeconds:seconds(f.durationSeconds),bitrate:f.bitrate,audioGroup:f.audioGroup,defaultAudio:f.defaultAudio}})
   return {identity,playerUrl:t.playerUrl===''?'':url(t.playerUrl,true),videoIndex:Number(t.videoIndex),durationSeconds:seconds(t.durationSeconds),resources}
  })
  const page=new URL(String(r.pageUrl));page.hash=''
@@ -103,6 +110,8 @@ export function inspectPageVideoTargets(scope:VideoTargetScope={}):PageVideoTarg
    }
    const hls=address(streaming.hlsManifestUrl)
    if(hls){const u=new URL(hls);if(u.protocol==='https:'&&u.hostname.endsWith('.googlevideo.com'))add(hls,'hls')}
+   const sabr=address(streaming.serverAbrStreamingUrl)
+   if(sabr){const u=new URL(sabr);if(u.protocol==='https:'&&u.hostname.endsWith('.googlevideo.com')&&u.pathname==='/videoplayback')add(sabr,'sabr')}
   }else if(platform==='x'){
    const article=video.closest('article,[data-testid="tweet"],[role="article"]')
    if(!article||video.closest('[data-testid="quoteTweet"]')||article.querySelector('[data-testid="promotedIndicator"]'))continue

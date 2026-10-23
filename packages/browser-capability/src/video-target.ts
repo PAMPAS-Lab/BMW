@@ -10,7 +10,7 @@ export async function readVideoTargets(wc:WebContents,scope:VideoTargetScope={},
  // Internal/about/data documents retain generic media discovery. They cannot
  // supply a public platform identity or a persisted source acquisition.
  if(!['http:','https:','file:'].includes(new URL(before).protocol))return {pageUrl:before,platform:'page',targets:[],blocked:null}
- const raw=await readRendererPhase<unknown>(wc,'media.identity','target',()=>wc.executeJavaScript(`(${inspectPageVideoTargets.toString()})(${JSON.stringify(scope)})`,true),signal)
+ const raw=await readRendererPhase<unknown>(wc,'media.identity','target',()=>wc.mainFrame.executeJavaScript(`(${inspectPageVideoTargets.toString()})(${JSON.stringify(scope)})`,true),signal)
  const result=assertPageVideoTargets(raw)
  if(result.pageUrl!==before||pageUrl(wc)!==before)throw new Error('VIDEO_IDENTITY_CHANGED: Page changed while binding the target.')
  return result
@@ -20,7 +20,7 @@ export interface VideoTransferAdmission {target?:VideoTarget;videoIdentity?:Vide
 export async function prepareVideoTransfer(wc:WebContents,url:string,signal?:AbortSignal,sourceGuard?:SourceCaptureGuard,allowImage=false):Promise<VideoTransferAdmission>{
  const before=pageUrl(wc),scope:VideoTargetScope=sourceGuard?.scope??{},state=await readVideoTargets(wc,scope,signal)
  if(sourceGuard&&sourceGuard.pageUrl!==before)throw new Error('VIDEO_IDENTITY_CHANGED: Confirmed source page changed.')
- const image=allowImage&&await readRendererPhase<boolean>(wc,'media.identity','image',()=>wc.executeJavaScript(`(()=>{const root=${scope.selector?`document.querySelectorAll(${JSON.stringify(scope.selector)})[${scope.index??0}]`:'document'};return !!root&&[...(root instanceof HTMLImageElement?[root]:root.querySelectorAll('img'))].some(i=>i.complete&&i.naturalWidth>0&&(i.currentSrc===${JSON.stringify(url)}||i.src===${JSON.stringify(url)}))})()`,true),signal)
+ const image=allowImage&&await readRendererPhase<unknown>(wc,'media.identity','image',()=>wc.mainFrame.executeJavaScript(`(()=>{const root=${scope.selector?`document.querySelectorAll(${JSON.stringify(scope.selector)})[${scope.index??0}]`:'document'};return !!root&&[...(root instanceof HTMLImageElement?[root]:root.querySelectorAll('img'))].some(i=>i.complete&&i.naturalWidth>0&&(i.currentSrc===${JSON.stringify(url)}||i.src===${JSON.stringify(url)}))})()`,true),signal)
  const known=state.platform!=='page',bound=state.targets.some(t=>t.resources.some(r=>r.url===url))
  let target:VideoTarget|undefined
  if(!image&&(known||bound||sourceGuard?.videoIdentity))target=selectVideoResource(state,url,sourceGuard?.videoIdentity)

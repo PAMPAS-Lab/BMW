@@ -7,7 +7,7 @@ import {assertExportReviewVerdict} from './export-review-contract.js'
 import type {ExportReviewVerdict} from './export-review-contract.js'
 import {studioId} from './studio-contract.js'
 export interface ExportReviewFrame {index:number;artifactId:string;sha256:string;seconds:number}
-export interface ExportReviewAssessment {status:'passed'|'needs-fix';notes:string;createdAt:string;sequence?:number}
+export interface ExportReviewAssessment {status:'passed'|'needs-fix';notes:string;createdAt:string;sequence?:number;runId?:string}
 export interface ExportReviewScene {sceneId:string;signature:string;totalSamples:number;frames:ExportReviewFrame[];agent?:ExportReviewAssessment;user?:ExportReviewAssessment}
 export interface ExportReviewSnapshot {fingerprint:string;artifactId:string;createdAt:string;scenes:ExportReviewScene[];agent?:ExportReviewAssessment;user?:ExportReviewAssessment}
 interface Journal {version:2;draftId:string;ownerSessionId:string;exports:ExportReviewSnapshot[]}
@@ -15,8 +15,8 @@ const LIMIT=2*1024*1024
 function hash(v:unknown):string {if(typeof v!=='string'||!/^[a-f0-9]{64}$/.test(v))throw new Error('Invalid export review fingerprint.');return v}
 function assessment(raw:unknown,version:1|2):ExportReviewAssessment|undefined {
  if(raw===undefined)return undefined
- const v=mediaRecord(raw);if(Object.keys(v).some(k=>!['status','notes','createdAt',...(version===2?['sequence']:[])].includes(k))||typeof v.createdAt!=='string'||!Number.isFinite(Date.parse(v.createdAt)))throw new Error('Invalid export review assessment.')
- const a=assertExportReviewVerdict({exportFingerprint:'0'.repeat(64),scope:'scene',status:v.status,notes:v.notes});return {status:a.status,notes:a.notes,createdAt:v.createdAt,...(v.sequence===undefined?{}:{sequence:finiteNumber(v.sequence,'review assessment sequence',1,Number.MAX_SAFE_INTEGER,true)})}
+ const v=mediaRecord(raw);if(Object.keys(v).some(k=>!['status','notes','createdAt',...(version===2?['sequence','runId']:[])].includes(k))||typeof v.createdAt!=='string'||!Number.isFinite(Date.parse(v.createdAt)))throw new Error('Invalid export review assessment.')
+ const a=assertExportReviewVerdict({exportFingerprint:'0'.repeat(64),scope:'scene',status:v.status,notes:v.notes});return {status:a.status,notes:a.notes,createdAt:v.createdAt,...(v.sequence===undefined?{}:{sequence:finiteNumber(v.sequence,'review assessment sequence',1,Number.MAX_SAFE_INTEGER,true)}),...(v.runId===undefined?{}:{runId:studioId(v.runId)})}
 }
 /** A Host-only side journal, not writable Video Document fields. Keeps eight
  * exports; summaries never infer that generating PNGs means visual approval. */
@@ -64,7 +64,7 @@ export class ExportReviewJournal {
   for(const f of frames){if(f.index<0||f.index>=scene.totalSamples||!Number.isInteger(f.index))throw new Error('Invalid actual review sample.');scene.frames=scene.frames.filter(old=>old.index!==f.index);scene.frames.push(structuredClone(f))}
   scene.frames.sort((a,b)=>a.index-b.index);this.save(current)
  }
- recordVerdict(snapshot:ExportReviewSnapshot,raw:ExportReviewVerdict,sceneId:string|undefined,actor:'agent'|'user',valid:ReadonlyMap<string,ReadonlySet<number>>):void {
+ recordVerdict(snapshot:ExportReviewSnapshot,raw:ExportReviewVerdict,sceneId:string|undefined,actor:'agent'|'user',valid:ReadonlyMap<string,ReadonlySet<number>>,runId?:string):void {
   const verdict=assertExportReviewVerdict(raw);if(verdict.exportFingerprint!==snapshot.fingerprint)throw new Error('STUDIO_REVIEW_STALE: 成片指纹已变化，请重新审片。')
   const current=this.current(snapshot),complete=(s:ExportReviewScene)=>s.totalSamples>0&&valid.get(s.sceneId)?.size===s.totalSamples
   if(actor==='agent'&&verdict.status==='passed'){
@@ -73,7 +73,7 @@ export class ExportReviewJournal {
   }
   const target=verdict.scope==='film'?current:current.scenes.find(s=>s.sceneId===sceneId);if(!target)throw new Error('Unknown review scene.')
   const sequence=finiteNumber(Math.max(0,...[current.agent,current.user,...current.scenes.flatMap(s=>[s.agent,s.user])].map(a=>a?.sequence??0))+1,'review assessment sequence',1,Number.MAX_SAFE_INTEGER,true)
-  target[actor]={status:verdict.status,notes:verdict.notes,createdAt:new Date().toISOString(),sequence};this.save(current)
+  target[actor]={status:verdict.status,notes:verdict.notes,createdAt:new Date().toISOString(),sequence,...(actor==='agent'&&runId?{runId:studioId(runId)}:{})};this.save(current)
  }
  status(snapshot:ExportReviewSnapshot,valid:ReadonlyMap<string,ReadonlySet<number>>){
   const history=this.read().exports,current=this.current(snapshot),previous=[...history].reverse().find(e=>e.fingerprint!==snapshot.fingerprint)

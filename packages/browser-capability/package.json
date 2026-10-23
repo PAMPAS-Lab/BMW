@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@bmw-agent/media-native": "*",
-    "@bmw-agent/agent-contract": "*"
+    "@bmw-agent/agent-contract": "*",
+    "undici": "^7.30.0"
   }
 }

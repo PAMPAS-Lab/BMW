@@ -285,6 +285,15 @@ try {
     await video.play(); await new Promise(resolve => setTimeout(resolve,120)); video.pause(); return { width: video.videoWidth, height: video.videoHeight, duration: video.duration, time: video.currentTime }
   })()`) as Promise<{ width: number; height: number; duration: number; time: number }>)
   assert.equal(playback.width, 160); assert.equal(playback.height, 90); assert.ok(playback.time > 0)
+  await stage('Project archive packet-copy segment retains all tracks, source mapping and independently decoded output',async()=>{
+    const sourceHash=crypto.createHash('sha256').update(fs.readFileSync(converted.path)).digest('hex')
+    const result=await media.processArtifact({action:'media.segment',artifactId:converted.artifactId,segmentRange:{startSeconds:.1,endSeconds:1.2}}) as {artifactId:string;sourceSha256:string;sourceTimeOffsetSeconds:number;actualSourceRange:{startSeconds:number;endSeconds:number};reencoded:boolean;proofArtifactId:string;sha256:string;tracks:{type:string}[]}
+    assert.equal(result.reencoded,false);assert.equal(result.sourceSha256,sourceHash);assert.ok(result.actualSourceRange.startSeconds<=.1);assert.ok(result.actualSourceRange.endSeconds>=1.2-.1);assert.deepEqual(result.tracks.map(t=>t.type).sort(),['audio','video'])
+    assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(artifacts,result.artifactId))).digest('hex'),result.sha256)
+    const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{type:string;sampleCount:number}[]};assert.equal(decoded.completeFile,true);assert.ok(decoded.tracks.every(t=>t.sampleCount>0))
+    const proof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/media-preservation-validation';fs.mkdirSync(proof,{recursive:true});fs.copyFileSync(path.join(artifacts,result.proofArtifactId),path.join(proof,'archive-segment.json'))
+    const before=fs.readdirSync(artifacts).sort(),cancel=new AbortController();cancel.abort(new Error('cancel archive segment'));await assert.rejects(media.processArtifact({action:'media.segment',artifactId:converted.artifactId,segmentRange:{startSeconds:0,endSeconds:1}},cancel.signal),/cancel archive segment/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);assert.equal(media.isCaptureActive(),false)
+  })
   await stage('preserve observed HLS delivery bytes, remux encoded packets without loss and verify every track/range',async()=>{
     const input=new Input({formats:[MP4],source:new BufferSource(fs.readFileSync(converted.path))}),target=new BufferTarget(),output=new Output({format:new Mp4OutputFormat({fastStart:'fragmented',minimumFragmentDuration:.4}),target})
     try{const conversion=await Conversion.init({input,output,tracks:'all',copy:{mode:'forced'}});assert.equal(conversion.discardedTracks.length,0);await conversion.execute()}finally{input.dispose()}
@@ -302,9 +311,12 @@ try {
     kernel.tabs.set(id,{id,title:'HLS preservation fixture',url:source!.webContents.getURL(),projectId:project.id,view:{webContents:source!.webContents}});kernel.activeTabId=id
     try{
       await assert.rejects(bridgeCall({action:'media.preserve',url:url.replace('master','unobserved')}),/must be observed/)
-      const result=(await bridgeCall({action:'media.preserve',url})).result as {artifactId:string;sha256:string;tracks:{type:string;packets:number}[];preservation:{reencoded:boolean;completeVod:boolean;uploadedOriginal:string;resources:{artifactId:string;url:string;sha256:string}[];proofArtifactId:string}}
+      const result=(await bridgeCall({action:'media.preserve',url})).result as {artifactId:string;sha256:string;tracks:{type:string;packets:number}[];preservation:{reencoded:boolean;completeVod:boolean;uploadedOriginal:string;resources:{artifactId:string;sha256:string}[];resourceCount:number;proofArtifactId:string;proofSha256:string}}
       assert.equal(result.preservation.reencoded,false);assert.equal(result.preservation.completeVod,true);assert.equal(result.preservation.uploadedOriginal,'unknown');assert.deepEqual(result.tracks.map(t=>t.type).sort(),['audio','video']);assert.ok(result.tracks.every(t=>t.packets>0))
-      for(const resource of result.preservation.resources){const expected=bodies[new URL(resource.url).pathname]!.data,actual=fs.readFileSync(path.join(artifacts,resource.artifactId));assert.deepEqual(actual,expected);assert.equal(crypto.createHash('sha256').update(actual).digest('hex'),resource.sha256)}
+      const proofBytes=fs.readFileSync(path.join(artifacts,result.preservation.proofArtifactId));assert.equal(crypto.createHash('sha256').update(proofBytes).digest('hex'),result.preservation.proofSha256)
+      const ledger=JSON.parse(proofBytes.toString('utf8')) as {resources:{artifactId:string;url:string;sha256:string}[]}
+      assert.equal(result.preservation.resourceCount,ledger.resources.length);assert.ok(result.preservation.resources.length<=20);assert.ok(result.preservation.resources.every(resource=>!('url' in resource)&&!('path' in resource)))
+      for(const resource of ledger.resources){const expected=bodies[new URL(resource.url).pathname]!.data,actual=fs.readFileSync(path.join(artifacts,resource.artifactId));assert.deepEqual(actual,expected);assert.equal(crypto.createHash('sha256').update(actual).digest('hex'),resource.sha256)}
       const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{type:string;sampleCount:number}[]};assert.equal(decoded.completeFile,true);assert.deepEqual(decoded.tracks.map(t=>t.type).sort(),['audio','video']);assert.ok(decoded.tracks.every(t=>t.sampleCount>0))
       const tail=(await bridgeCall({action:'media.frames.sample',artifactId:result.artifactId,timestampsSeconds:[1.2]}));assert.equal(tail.images.length,1)
       const proof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/media-preservation-validation';fs.mkdirSync(proof,{recursive:true});fs.copyFileSync(path.join(artifacts,result.preservation.proofArtifactId),path.join(proof,'preserved-delivery.json'))

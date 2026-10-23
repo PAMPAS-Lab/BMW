@@ -35,7 +35,7 @@ export class MediaProcessor {
       return result
     }
     try {
-      if(request.action!=='media.encode.check')io = await ArtifactJobIO.open(directory,request.action==='media.decode.check'?{action:'media.inspect',artifactId:request.artifactId}:request)
+      if(request.action!=='media.encode.check')io = request.action==='media.inspect'?await ArtifactJobIO.openArchive(directory,request.artifactId):await ArtifactJobIO.open(directory,request.action==='media.decode.check'?{action:'media.inspect',artifactId:request.artifactId}:request)
       if(request.action==='media.speech.normalize'||request.action==='media.audio.sample')sourceSha256=await io!.fingerprint(signal)
       if((request.action==='media.image.inspect'||request.action==='media.image.annotate')&&io!.bytes>32*1024*1024)throw new Error('Image exceeds 32 MiB.')
       signal?.throwIfAborted()

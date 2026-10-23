@@ -19,5 +19,6 @@ test('BMW exposes research/media actions and the Video extension boundary', () =
   assert.equal(actions.some((action) => action.startsWith('connector.')), false)
   assert.equal(actions.some((action) => /^(dev|test|experiment)\./.test(action)), false)
   assert.ok(actions.includes('video.compose'))
+  assert.ok(actions.includes('video.review'))
   assert.equal(Object.hasOwn(bmw, 'dsh'), false)
 })

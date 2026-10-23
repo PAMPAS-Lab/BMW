@@ -2,6 +2,7 @@
 import readline from 'node:readline'
 import { browserDeadlineMs } from './browser-deadline.js'
 import { browserToolCatalog } from './tool-catalog.js'
+import {createBridgeHttp} from './bridge-http.js'
 const bridgeUrl = process.env.BMW_BRIDGE_URL
 const bridgeToken = process.env.BMW_BRIDGE_TOKEN
 const privateBinding = process.env.BMW_SESSION_BINDING || undefined
@@ -15,7 +16,8 @@ if (!bridgeUrl || !bridgeToken) {
   process.exit(1)
 }
 
-const catalogResponse = await fetch(`${bridgeUrl}/tool`, { headers: { authorization: `Bearer ${bridgeToken}` }, signal: AbortSignal.timeout(10000) })
+const bridgeHttp=createBridgeHttp(bridgeUrl)
+const catalogResponse = await bridgeHttp.request('tool', { headers: { authorization: `Bearer ${bridgeToken}` }, signal: AbortSignal.timeout(10000) })
 if (!catalogResponse.ok) throw new Error('BMW browser catalog is unavailable')
 const browserTool = browserToolCatalog(await catalogResponse.json())
 
@@ -25,19 +27,22 @@ async function executeBrowser(argumentsValue, signal: AbortSignal) {
   const deadlineMs = browserDeadlineMs(argumentsValue)
   const deadline = AbortSignal.timeout(deadlineMs)
   try {
-  const response = await fetch(`${bridgeUrl}/execute`, {
+  const response = await bridgeHttp.request('execute', {
     method: 'POST',
     headers: { authorization: `Bearer ${bridgeToken}`, 'content-type': 'application/json' },
     body: JSON.stringify({ binding: privateBinding, arguments: argumentsValue }),
     signal: AbortSignal.any([signal, deadline])
   })
-  const result = await response.json()
-  if (!response.ok || !result.ok) throw new Error(`${result.code || "BROWSER_ACTION_FAILED"}: ${result.error || `Browser bridge returned ${response.status}`}`)
-  return result
+  const raw:unknown = await response.json()
+  if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('BMW Bridge returned an invalid response')
+  const result=raw as Record<string,unknown>
+  if (!response.ok || result.ok!==true) throw new Error(`${typeof result.code==='string'?result.code:"BROWSER_ACTION_FAILED"}: ${typeof result.error==='string'?result.error:`Browser bridge returned ${response.status}`}`)
+  if(result.images!==undefined&&!Array.isArray(result.images))throw new Error('BMW Bridge returned invalid images')
+  return {result:result.result,images:result.images as unknown[]|undefined}
   } catch (error) {
     if (signal.aborted) throw new Error('BMW_BROWSER_CANCELLED: browser request cancelled')
     if (deadline.aborted) throw new Error(`BMW_BROWSER_TIMEOUT: ${String(argumentsValue?.action || 'unknown')} bridge response exceeded ${deadlineMs}ms`)
-    if (error instanceof TypeError) throw new Error(`BMW_BROWSER_TRANSPORT: ${String(argumentsValue?.action || 'unknown')}: ${error.message}`)
+    if (error instanceof TypeError) {const cause=error.cause as {code?:unknown}|undefined,code=typeof cause?.code==='string'&&/^[A-Z_]{1,80}$/.test(cause.code)?` (${cause.code})`:'';throw new Error(`BMW_BROWSER_TRANSPORT: ${String(argumentsValue?.action || 'unknown')}: ${error.message}${code}`)}
     throw error
   }
 }
@@ -81,6 +86,7 @@ async function handle(message) {
 }
 
 const lines = readline.createInterface({ input: process.stdin, crlfDelay: Infinity })
+lines.on('close',()=>{for(const controller of calls.values())controller.abort();void bridgeHttp.close().catch(()=>{})})
 lines.on('line', (line) => {
   try {
     void handle(JSON.parse(line))

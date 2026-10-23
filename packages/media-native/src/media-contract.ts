@@ -3,6 +3,7 @@ import type {ImageDrawingRequest,DrawingResult} from './image-drawing-contract.j
 import {assertImageInspection} from './image-contract.js'
 import {assertAudioEvidence} from './audio-evidence-contract.js'
 import type {AudioEvidence} from './audio-evidence-contract.js'
+import {ARCHIVE_LIMITS} from './archive-limits.js'
 /** Public, browser-native media contracts. No host path or codec choice is model-controlled. */
 export const MEDIA_LIMITS = Object.freeze({
   inputBytes: 512 * 1024 * 1024, outputBytes: 512 * 1024 * 1024,
@@ -133,11 +134,12 @@ export function assertMediaWorkerResult(value: unknown, request: NativeProcessin
   else if(request.action==='media.audio.sample'&&result.kind==='audio-evidence')assertAudioEvidence(result.info,request.startSeconds,request.endSeconds)
   else if(request.action==='media.speech.normalize'&&result.kind==='speech-pcm'){
     const info=mediaRecord(result.info),frames=finiteNumber(info.frames,'speech samples',160,180*16000,true)
-    if(Object.keys(info).some(key=>!['kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix','discardedTailFrames','sourceRange','sourceDurationSeconds'].includes(key)))throw new TypeError('Unsupported speech normalization evidence.')
+    if(Object.keys(info).some(key=>!['kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix','discardedTailFrames','discardedHeadFrames','sourceRange','sourceDurationSeconds'].includes(key)))throw new TypeError('Unsupported speech normalization evidence.')
     if(info.kind!=='speech-pcm'||info.sampleRate!==16000||info.channels!==1||info.sampleType!=='pcm-s16le'||info.downmix!=='channel-mean'||info.durationSeconds!==frames/16000)throw new TypeError('Invalid normalized speech metadata.')
     assertSpeechRangeEvidence(info,request.sourceRange);if(!request.sourceRange&&info.sourceRange!==undefined)throw new TypeError('Unrequested speech source interval.');
     finiteNumber(info.clippedSamples,'PCM saturation samples',0,frames,true)
     if(info.discardedTailFrames!==undefined)finiteNumber(info.discardedTailFrames,'discarded Opus padding frames',0,Math.ceil(Number(info.inputSampleRate)*.12)+2,true)
+    if(info.discardedHeadFrames!==undefined)finiteNumber(info.discardedHeadFrames,'discarded first AAC preroll frames',0,1026,true)
     finiteNumber(info.inputSampleRate,'speech input rate',8000,96000,true);finiteNumber(info.inputChannels,'speech input channels',1,8,true)
     const start=finiteNumber(info.decodedStartSeconds,'speech decode start',0,180),end=finiteNumber(info.decodedEndSeconds,'speech decode end',start+.000001,180)
     if(end>frames/16000+1/16000)throw new TypeError('Speech decode exceeds its sample timeline.')
@@ -151,8 +153,8 @@ export function assertMediaWorkerResult(value: unknown, request: NativeProcessin
   else if (request.action === 'media.inspect' && result.kind === 'inspection') {
     const info = mediaRecord(result.info)
     if (typeof info.container !== 'string' || typeof info.contentType !== 'string' || !Array.isArray(info.tracks) || info.tracks.length < 1 || info.tracks.length > 16) throw new TypeError('Invalid media track metadata.')
-    finiteNumber(info.durationSeconds, 'duration', 0, Number.MAX_SAFE_INTEGER)
-    finiteNumber(info.firstTimestampSeconds, 'first timestamp', -Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
+    finiteNumber(info.durationSeconds, 'duration', 0, ARCHIVE_LIMITS.durationSeconds)
+    finiteNumber(info.firstTimestampSeconds, 'first timestamp', -ARCHIVE_LIMITS.durationSeconds, ARCHIVE_LIMITS.durationSeconds)
     for (const item of info.tracks) {
       const track = mediaRecord(item)
       finiteNumber(track.id, 'track id', 0, Number.MAX_SAFE_INTEGER, true)

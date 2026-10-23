@@ -1,3 +1,4 @@
+import {NewsPreparationService} from './news-preparation.js'
 import {NewsService,requireNewsSelection,newsResearchPending} from './news-service.js'
 import {ProductionAssessmentJournal,productionAssessmentSnapshot,makeProductionAssessment,acceptedProductionAssessment} from './production-assessment.js'
 import {productionProfiles,productionRecipes,productionProposal,productionReview} from './production-types.js'
@@ -58,7 +59,9 @@ import type {VideoDraft,StudioReadiness,StudioRequest} from './studio-contract.j
 export type {BrowserFeatureHost as StudioKernel} from '@bmw-agent/browser-capability/host'
 import type {BrowserSessionOwner,BrowserFeatureHost as StudioKernel} from '@bmw-agent/browser-capability/host'
 
-const studioWrites:readonly StudioRequest['operation'][]=['propose-news-topics','select-news-topic','record-production-review','precompose','adopt-type','record-export-review','apply-recording-plan','narrate-local','apply-source-narration','materials','apply-edit','migrate-document','remove-reference','prepare-reference','set-reference-analysis','apply-reference-notes','propose-review','adopt-review','dismiss-review','undo-review','split-scene','restore','recognize-source','apply-source-captions','detach-source-captions','set-caption-translations','align-speech','correct-speech','create','delete','update','attach','narrate','narrate-pending','render','export-cover','configure','save-template']
+const studioWrites:readonly StudioRequest['operation'][]=['news-preparation','propose-news-topics','select-news-topic','record-production-review','precompose','adopt-type','record-export-review','apply-recording-plan','narrate-local','apply-source-narration','materials','apply-edit','migrate-document','remove-reference','prepare-reference','set-reference-analysis','apply-reference-notes','propose-review','adopt-review','dismiss-review','undo-review','split-scene','restore','recognize-source','apply-source-captions','detach-source-captions','set-caption-translations','align-speech','correct-speech','create','delete','update','attach','narrate','narrate-pending','render','export-cover','configure','save-template']
+
+const isStudioWrite=(r:StudioRequest)=>studioWrites.includes(r.operation)&&!(r.operation==='news-preparation'&&['read','preflight'].includes(r.preparationRequest!.operation))
 
 export class VideoStudioService {
   private readonly snapshots=new StudioSnapshotProof()
@@ -67,11 +70,13 @@ export class VideoStudioService {
     if(!owner||owner.projectId!==this.kernel.projectStore.active().id)throw new Error('STUDIO_SESSION_REQUIRED: Video Studio 需要当前 Project 的对话身份。')
     studioId(owner.sessionId)
     const scope={projectId:owner.projectId,sessionId:owner.sessionId}
-    const request=assertStudioRequest(raw),result=await this.perform(request,signal,scope,actor)
-    if(studioWrites.includes(request.operation))this.kernel.videoStudioChanged?.(scope)
+    const request=assertStudioRequest(raw)
+    if(actor==='agent'&&this.kernel.videoReviewRun?.(scope)&&isStudioWrite(request)&&request.operation!=='record-export-review'&&(request.operation!=='materials'||['set-metadata','transcribe-source','recover-source-batch'].includes(request.materialRequest?.operation??'')))throw new Error('VIDEO_AUDIT_READ_ONLY: 内部审片只能读取视频、生成取帧/语音证据并记录成片审核；不能修改草稿、素材描述、配音或导出。')
+    const result=await this.perform(request,signal,scope,actor)
+    if(isStudioWrite(request))this.kernel.videoStudioChanged?.(scope)
     return result
   }
-  private async perform(raw:unknown,signal:AbortSignal|undefined,owner:BrowserSessionOwner,actor:'user'|'agent'='agent'):Promise<unknown>{
+  private async perform(raw:unknown,signal:AbortSignal|undefined,owner:BrowserSessionOwner,actor:'user'|'agent'='agent',preparationAdmitted=false):Promise<unknown>{
     const request=assertStudioRequest(raw),project=this.kernel.projectStore.active(),context=this.kernel.videoStudioContext?.(owner) as {view?:{mode?:string}}|undefined,store=new VideoStudioStore(project.directory,owner.sessionId,(current,next)=>{const live=this.kernel.videoStudioContext?.(owner) as {view?:{mode?:string}}|undefined;if(live?.view?.mode!=='advanced')requireSimpleVideoEdit(current,next)})
     if(project.id!==owner.projectId)throw new Error('Studio Project changed during operation.')
     signal?.throwIfAborted()
@@ -82,7 +87,7 @@ export class VideoStudioService {
       if(material.operation==='set-metadata')requireNewsSelection(this.kernel,owner,actor)
       return new MaterialIndexService(this.kernel,owner,actor,newsResearchPending(this.kernel,owner,actor)).execute(material,signal)
     }
-    if(studioWrites.includes(request.operation))requireNewsSelection(this.kernel,owner,actor)
+    if(isStudioWrite(request))requireNewsSelection(this.kernel,owner,actor)
     if(request.draftId&&['narrate','narrate-pending','narrate-local','render'].includes(request.operation))await news.guardDraft(request.draftId,signal,request.operation==='render'&&actor==='agent')
     if(request.operation==='production-profiles')return {profiles:productionProfiles,recipes:productionRecipes,guidanceVersion:1,permissions:'unchanged',externalSkills:false,disable:'Omit production metadata to stop using type guidance; authored scenes remain intact.'}
     if(request.operation==='guide')return studioToolGuide()
@@ -110,6 +115,8 @@ export class VideoStudioService {
       try{const sha256=await input.fingerprint(signal),info=assertImageInspection(await this.kernel.recordingController.processArtifact({action:'media.image.inspect',artifactId:request.artifactId},signal));if(await input.fingerprint(signal)!==sha256)throw new Error('CARD_SOURCE_STALE: Source changed during image inspection.');return {...info,source:{artifactId:request.artifactId!,sha256}}}finally{await input.close()}
     }
     const id=studioId(request.draftId)
+    if(request.operation==='news-preparation'){const current=store.read(id);if(current.revision!==request.expectedRevision)throw new Error('STUDIO_CONFLICT: Reload draft before preparation.');return new NewsPreparationService(this.kernel,store,owner,current).execute(request.preparationRequest!,actor,signal)}
+    if(!preparationAdmitted&&['narrate','narrate-pending','narrate-local','render'].includes(request.operation))await new NewsPreparationService(this.kernel,store,owner,store.read(id)).requireReady(signal)
     if(request.operation==='read')return store.read(id)
     if(request.operation==='read-scene')return studioSceneProjection(store.read(id),request)
     if(request.operation==='read-preparation'){
@@ -244,7 +251,7 @@ export class VideoStudioService {
       if(output.templateName)draft.templateName=output.templateName;else delete draft.templateName
       return store.update(id,draft.revision,draft)
     }
-    if(request.operation==='review-status'||request.operation==='record-export-review')return exportReviewState(store,draft,request,path.join(project.directory,'artifacts'),()=>{if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Export review Project changed.');this.assertRevision(store,draft)},actor,signal)
+    if(request.operation==='review-status'||request.operation==='record-export-review')return exportReviewState(store,draft,request,path.join(project.directory,'artifacts'),()=>{if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Export review Project changed.');this.assertRevision(store,draft)},actor,signal,actor==='agent'?this.kernel.videoReviewRun?.(owner):undefined)
     if(request.operation==='review-export')return reviewStudioExport(this.kernel,store,draft,request,path.join(project.directory,'artifacts'),()=>{if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Export review Project changed.');this.assertRevision(store,draft)},signal)
     if(request.operation==='check')return this.checkDraft(draft,project.directory,store,signal)
     if(request.operation==='export-cover'){
@@ -294,7 +301,7 @@ export class VideoStudioService {
         for(const sceneId of pending){
           failedSceneId=sceneId;signal?.throwIfAborted();publish('started',sceneId)
           // Each scene commits separately; partial work is durable, never replayed.
-          const result=await this.perform({operation:'narrate',draftId:id,expectedRevision:current.revision,sceneId},signal,owner) as {draft:VideoDraft}
+          const result=await this.perform({operation:'narrate',draftId:id,expectedRevision:current.revision,sceneId},signal,owner,actor,true) as {draft:VideoDraft}
           current=result.draft;completedSceneIds.push(sceneId);publish('scene-completed',sceneId)
         }
         failedSceneId=undefined;signal?.throwIfAborted();this.assertRevision(store,current);publish('completed')
@@ -484,6 +491,7 @@ export class VideoStudioService {
     try{await this.verifyCardPins(draft,path.join(projectDirectory,'artifacts'),signal)}catch(error){signal?.throwIfAborted();failures.push({code:'card-source-stale',severity:'error',message:error instanceof Error?error.message:String(error)})}
     signal?.throwIfAborted();this.assertRevision(store,draft)
     const report=draftReadiness(draft);report.issues.push(...failures)
+    if(draft.ownerSessionId){const preparation=new NewsPreparationService(this.kernel,store,{projectId:this.kernel.projectStore.active().id,sessionId:draft.ownerSessionId},draft);if(preparation.required()){const preflight=await preparation.preflight(undefined,signal);for(const issue of preflight.issues.slice(0,12))report.issues.push({code:'news-preparation',severity:'error',sceneId:issue.sceneId,message:issue.message})}}
     try{await verifyStudioSpeech(draft,path.join(projectDirectory,'artifacts'),signal)}catch(error){signal?.throwIfAborted();report.issues.push({code:'speech-anchors',severity:'error',message:error instanceof Error?error.message:String(error)})}
     if([...new Map(checkedAssets.map(asset=>[asset.artifactId,asset.bytes])).values()].reduce((sum,bytes)=>sum+bytes,0)>DECODE_BUDGET.assetBytes||checkedAssets.reduce((sum,asset)=>sum+(asset.pixels??0),0)>DECODE_BUDGET.imagePixels)report.issues.push({code:'asset-budget',severity:'error',message:'全片素材超过 256 MiB 或图片解码超过 32 百万像素，请减少素材。'})
     for(const scene of draft.scenes){const decoded=checkedAssets.some(a=>a.kind==='audio'&&a.artifactId===scene.audioArtifactId),diagnostics=sceneTimingDiagnostics(scene,{audioState:decoded?'decoded':scene.audioArtifactId?'unavailable':'missing',...(decoded?{actualDurationSeconds:scene.audioDurationSeconds}:{}),anchorState:scene.speechAnchors?'saved-only':'missing',provenanceState:scene.speechAnchors?.timingProvenance?'not-required':'unrecorded'});for(const issue of diagnostics.issues.filter(i=>i.severity==='warning').slice(0,3))report.issues.push({code:'timing-advisory',severity:'warning',sceneId:scene.id,message:scene.title+'：'+issue.message})}

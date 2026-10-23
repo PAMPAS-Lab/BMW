@@ -53,7 +53,7 @@ export function applyVideoEdit(raw:VideoDraft,edit:VideoEdit,trustedCaptions=fal
   const layer:StudioLayerSelection={id:String(clip.properties.sourceIdentity),kind:track.kind==='audio'?'audio':'visual',...(track.sceneId?{sceneId:track.sceneId}:{})}
   const isLayer=track.role==='overlay'||track.role==='audio'
   if(c.op==='layer.remove'){if(!isLayer)throw new Error('VIDEO_EDIT_KIND: layer.remove requires an independent object.');draft=removeStudioLayer(draft,layer);continue}
-  if(c.op==='layer.set'){if(!isLayer)throw new Error('VIDEO_EDIT_KIND: layer.set requires an independent object.');draft=editStudioLayer(draft,layer,value=>{Object.assign(value,c.patch);if(layer.kind==='visual')for(const key of ['textTreatment','packaging','sourceCrop'] as const)if(c.patch[key]===null)delete (value as VisualLayer)[key]},Object.keys(c.patch).length===1&&c.patch.locked===false);continue}
+  if(c.op==='layer.set'){if(!isLayer)throw new Error('VIDEO_EDIT_KIND: layer.set requires an independent object. Read read-scene section:"timeline" for layerSetAllowed and current clip IDs. Primary footage uses attach, clip.effects or clip.mute; timing uses clip.move/trim/split with film time, not layer.set.');draft=editStudioLayer(draft,layer,value=>{Object.assign(value,c.patch);if(layer.kind==='visual')for(const key of ['textTreatment','packaging','sourceCrop'] as const)if(c.patch[key]===null)delete (value as VisualLayer)[key]},Object.keys(c.patch).length===1&&c.patch.locked===false);continue}
   let offset=0;for(const scene of draft.scenes){if(scene.id===track.sceneId)break;offset+=scene.durationSeconds}
   const global='time' in c?finiteNumber(videoSeconds(c.time),'global edit time',0,COMPOSITION_LIMITS.seconds):0
   if(isLayer){

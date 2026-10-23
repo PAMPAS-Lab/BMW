@@ -12,6 +12,7 @@ import {STUDIO_EXPORT_RENDERER_VERSION} from './studio-store.js'
 import type {VideoStudioStore} from './studio-store.js'
 import {ExportReviewJournal} from './export-review-journal.js'
 import type {ExportReviewSnapshot} from './export-review-journal.js'
+import {VIDEO_VISUAL_REVIEW_POLICY,sparseClosingScenes} from './video-review-policy.js'
 const canonical=(v:unknown):unknown=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).filter(([,x])=>x!==undefined).sort(([a],[b])=>a.localeCompare(b)).map(([k,x])=>[k,canonical(x)])):v
 function snapshot(draft:VideoDraft,output:VideoDraft['exports'][number],quality:CompositionQuality,directory:string):ExportReviewSnapshot {
  const composition=draftComposition(draft),{scenes,...settings}=composition;let startSeconds=0
@@ -39,9 +40,13 @@ async function validFrames(context:Awaited<ReturnType<typeof currentExportReview
  }
  return valid
 }
-export async function exportReviewState(store:VideoStudioStore,draft:VideoDraft,request:StudioRequest,directory:string,guard:()=>void,actor:'agent'|'user',signal?:AbortSignal){
+export async function exportReviewState(store:VideoStudioStore,draft:VideoDraft,request:StudioRequest,directory:string,guard:()=>void,actor:'agent'|'user',signal?:AbortSignal,runId?:string){
  const context=await currentExportReview(store,draft,directory,guard,signal),valid=await validFrames(context,directory,signal)
  signal?.throwIfAborted();guard();if(store.reusableExport(draft)?.fingerprint!==context.output.fingerprint)throw new Error('STUDIO_CONFLICT: 成片或来源已变化，请重新审片。')
- if(request.operation==='record-export-review')context.journal.recordVerdict(context.snapshot,request.exportReview!,request.sceneId,actor,valid)
- return {draftId:draft.id,revision:draft.revision,technical:{status:context.technicalStatus,reportArtifactId:context.output.verificationArtifactId},layout:{status:context.quality.issues.length||context.quality.omittedIssues?'issues-present':'no-issues-in-samples',issueCount:context.quality.issues.length,omittedIssues:context.quality.omittedIssues,omittedCandidates:context.quality.omittedCandidates,coverage:context.quality.coverage,semanticVerification:context.quality.semanticVerification},...context.journal.status(context.snapshot,valid)}
+ const sparse=sparseClosingScenes(draft)
+ if(request.operation==='record-export-review'){
+  if(actor==='agent'&&request.exportReview?.status==='passed'&&(request.exportReview.scope==='film'?sparse.length>0:sparse.includes(request.sceneId!)))throw new Error('STUDIO_REVIEW_VISUAL_SUPPORT: 结尾长文字卡缺少素材或图解支撑，请记录需修改并重做，不能仅因文字未溢出判通过。')
+  context.journal.recordVerdict(context.snapshot,request.exportReview!,request.sceneId,actor,valid,runId)
+ }
+ return {draftId:draft.id,revision:draft.revision,visualSupport:{status:sparse.length?'needs-fix':'requires-visual-review',sparseClosingSceneIds:sparse,method:'structural-risk-screen; not pixel or semantic certification',policy:VIDEO_VISUAL_REVIEW_POLICY},technical:{status:context.technicalStatus,reportArtifactId:context.output.verificationArtifactId},layout:{status:context.quality.issues.length||context.quality.omittedIssues?'issues-present':'no-issues-in-samples',issueCount:context.quality.issues.length,omittedIssues:context.quality.omittedIssues,omittedCandidates:context.quality.omittedCandidates,coverage:context.quality.coverage,semanticVerification:context.quality.semanticVerification},...context.journal.status(context.snapshot,valid)}
 }

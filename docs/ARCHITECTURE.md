@@ -89,7 +89,7 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 
 | 接口 | 提供方 → 消费方 | 保证 | 直接接口保障测试 |
 |---|---|---|---|
-| video-identity | agent-contract → browser-capability, media-native, validation | Closed target and resource witnesses shared by bounded browser observations and native capture; original post/player identity, ad rejection and same-target default-audio pairing without provider, transport or filesystem access. | agent.video-identity, browser.video-identity, media.processing-runtime, sources |
+| video-identity | agent-contract → browser-capability, media-native, validation | Closed target and resource witnesses shared by bounded browser observations and native capture; original post/player identity, ad rejection and same-target default-audio pairing without provider, transport or filesystem access. | agent.video-identity, browser.video-identity, browser.youtube-sabr, media.youtube-sabr, media.processing-runtime, sources |
 | agent-driver | agent-contract → platform, harness-dsh, harness-qoder, harness-codex, harness-workbuddy, application | Stable BMW Sessions, closed event/capability admission, lifecycle and per-driver provider resume anchors; core owns no provider Agent loop. | agent.context, agent.conversation, api.types, driver |
 | agent-settings | agent-contract → platform, agent-ui, harness-dsh, harness-qoder, harness-codex, harness-workbuddy, application | Closed official-control requests and redacted account/model projections, no echoed secrets or model input; settings and actual native cleanup hold Host exclusion before Project transitions. | agent.driver-settings, agent.assistant-ui, platform.agent-settings, codex.settings, codex.backend, workbuddy.settings, workbuddy.backend, qoder.settings, dsh.settings, assistant.application, dsh |
 | agent-conversations | platform → application | Visible blank Sessions, durable submission receipts, Project membership, immutable provider bindings, FIFO until actual resource drain, generic display-history ownership and uncertain-delivery recovery without replay. | platform.conversation-store, platform.agent-history, platform.agent-host, agent.data-migration |
@@ -103,7 +103,7 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | library-organization | feature-library → validation | Project-owned topics and material purposes, Profile-owned directions with non-moving references, paginated read-only Agent summaries, trusted GUI-only CAS organization and no implied collection or actual adoption. | library.research, library.materials, library.news-desktop |
 | browser-tabs | browser-capability → platform | Bounded persisted URL/source ownership, conservative legacy restoration and Agent LRU policy; native reclamation awaits actual destruction and retains user pages. | browser.tab-policy, platform.projects, browser.tab-lifecycle, desktop.projects |
 | browser-feature-host | browser-capability → platform, feature-video | Minimum Project/settings/media ports, actor enum, cancellation signal; validated action dispatch remains the only execution entry. | browser.host-contract, api.types, video.boundary, driver |
-| browser-model | browser-capability → platform, feature-video | Exactly browser; bounded closed requests, authenticated Project/Session admission, FIFO, cancellation and image admission. | browser.sources, browser.schema, browser.catalog, browser.operations, browser.shutdown, browser.deadline, platform.boundaries, driver |
+| browser-model | browser-capability → platform, feature-video | Exactly browser; bounded closed requests, authenticated Project/Session admission, FIFO, cancellation and image admission. | browser.sources, browser.schema, browser.catalog, browser.bridge-http, browser.operations, browser.shutdown, browser.deadline, platform.boundaries, driver |
 | native-media | media-native → browser-capability, platform, feature-video | Artifact IDs rather than caller paths; bounded request/reply admission; actual duration/track checks; bounded local/global layers, explicit keyframes and streamed independent audio share preview/export; cancellation drains output before rollback. | media.research-video, media.precomposition, media.research-diagrams, studio.production, speech, media.speech, platform.sources, video.sources, sources, media.port-contract, api.types, media.controller, media.processing, media.production, media.processing-runtime, video, studio, localNarration, qwenNarration |
 | project-storage | platform → browser-capability, feature-video, application | BMW Project identity/documents/page state without native mappings, preserved unreadable Project/settings/tasks/permissions/layout/login state and encrypted snapshots, only missing-file initialization; no production Profile in tests. | platform.qwen-credentials, platform.sources, platform.projects, platform.state, platform.permission-store, platform.continuity-state, platform.driver-binding, startup-recovery, startup-exit, startup.permissions.retry, startup.permissions.exit, startup.layout.retry, startup.layout.exit, startup.continuity-config.retry, startup.continuity-config.exit, startup.continuity-snapshot.retry, startup.continuity-snapshot.exit, desktop.projects |
 | studio-draft | feature-video → platform, browser-capability | Canonical Video Document 2.0, lossless v1 migration, reversible simple subset, content-derived advanced guard, typed CAS edits; Project-owned drafts/artifacts, revision conflicts, actual narration provenance and stale export rejection; independent caption/visual edits. | video.schema, studio.schema, video.sources, video.studio, video.settings, video.boundary, studio, desktop.workspace |
@@ -149,6 +149,10 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 
 | ID | 分类 | 归属 | 入口 | 配置／分支 |
 |---|---|---|---|---|
+| library.source-preservation-basis | contract | feature-library | packages/feature-library/test/source-preservation-basis.test.ts | 默认 |
+| browser.preservation-result | contract | browser-capability | packages/browser-capability/test/preservation-result.test.ts | 默认 |
+| platform.assistant-tasks | contract | platform | packages/platform/test/assistant-tasks.test.ts | 默认 |
+| video.review | contract | feature-video | packages/feature-video/test/video-review.test.ts | 默认 |
 | external.social-download.live | external (opt-in) | browser-capability, media-native, agent-contract | scripts/social-download-live-validation.ts | opt-in: BMW_LIVE_SOCIAL=1; public videos in disposable signed-out Profile only |
 | external.library.live-sources | external (opt-in) | feature-library, platform, browser-capability, media-native | scripts/ai-news-live-validation.ts | opt-in: BMW_LIVE_NEWS=1; public-network read-only validation in disposable Profile only |
 | browser.tab-lifecycle | integration | browser-capability, platform | scripts/browser-tab-lifecycle-smoke.ts | 默认 |
@@ -160,6 +164,8 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | browser.media-session-fetch | contract | browser-capability | packages/browser-capability/test/media-session-fetch.test.ts | 默认 |
 | browser.media-download-runtime | integration | browser-capability, media-native | scripts/media-download-smoke.ts | 默认 |
 | video.production-assessment | contract | feature-video | packages/feature-video/test/production-assessment.test.ts | 默认 |
+| video.source-transcript | contract | feature-video | packages/feature-video/test/source-transcript.test.ts | 默认 |
+| video.news-preparation | contract | feature-video | packages/feature-video/test/news-preparation.test.ts | 默认 |
 | video.production | contract | feature-video | packages/feature-video/test/production.test.ts | 默认 |
 | external.production.qoder-deepseek-flash | external (opt-in) | harness-qoder, platform, feature-video, media-native | scripts/qoder-production-case.ts | opt-in: BMW_QODER_TASK_FILE + BMW_QODER_AUTH_DIRECTORY explicitly authorized; optional BMW_QODER_INPUT_INDEX |
 | media.research-video | media | media-native, feature-video | scripts/research-video-smoke.ts | 默认 |
@@ -171,6 +177,9 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | agent.video-identity | contract | agent-contract | packages/agent-contract/test/video-identity.test.ts | 默认 |
 | browser.video-identity | integration | browser-capability, media-native | scripts/video-identity-smoke.ts | 默认 |
 | media.preservation | contract | media-native | packages/media-native/test/media-preservation.test.ts | 默认 |
+| media.youtube-sabr | contract | media-native | packages/media-native/test/youtube-sabr.test.ts | 默认 |
+| browser.youtube-sabr | contract | browser-capability | packages/browser-capability/test/youtube-sabr-observation.test.ts | 默认 |
+| browser.bridge-http | contract | browser-capability | packages/browser-capability/test/bridge-http.test.ts | 默认 |
 | video.material-index | contract | feature-video | packages/feature-video/test/material-index.test.ts | 默认 |
 | video.source-analysis | contract | feature-video | packages/feature-video/test/source-analysis.test.ts | 默认 |
 | media.source-analysis-case | media (opt-in) | feature-video, media-native, browser-capability | scripts/source-analysis-case.ts | opt-in: BMW_ANALYSIS_SOURCE_INDEX=<explicit local copied-source fixture list> |
@@ -346,6 +355,7 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | media.capture | media | media-native, browser-capability | scripts/media-capture-smoke.ts | 默认 |
 | media.processing-runtime | media | media-native | scripts/media-processing-smoke.ts | 默认 |
 | video | media | media-native, feature-video | scripts/video-production-smoke.ts | 默认 |
+| speech.decode-clock | media | media-native | scripts/speech-decode-repro.ts | 默认 |
 | speech | media | media-native | scripts/speech-alignment-smoke.ts | 默认 |
 | qwenNarration | media | media-native, feature-video | scripts/narration-smoke.ts | BMW_TTS_TEST_PROVIDER=qwen-fixture |
 | localNarration | media | media-native | scripts/narration-smoke.ts | BMW_TTS_TEST_PROVIDER=local-matcha |

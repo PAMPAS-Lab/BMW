@@ -3,6 +3,7 @@ import {assertNarration} from './narration-contract.js'
 import type {QwenNarrationCredentials} from './narration-contract.js'
 import {ArtifactJobIO} from './artifact-job-io.js'
 import {preserveMedia,PreservationCleanupError} from './media-preservation.js'
+import {segmentArchivedMedia} from './media-archive-segment.js'
 import type {PreservationInput} from './media-preservation.js'
 import {SpeechProcessor} from './speech-processor.js'
 import {VideoElementCapture} from './video-element-capture.js'
@@ -144,6 +145,11 @@ export class MediaController implements NativeMediaPort {
   }
 
   async processArtifact(raw: unknown, signal?: AbortSignal) {
+    if(mediaRecord(raw).action==='media.segment'){
+      if(this.isCaptureActive())throw new Error('Finish the current media job before archive segmentation.')
+      this.preserving=true
+      try{return await segmentArchivedMedia(this.resolveArtifactsDirectory?.()||this.artifactsDirectory,raw,signal)}catch(error){if(error instanceof PreservationCleanupError)this.failedPreservation=error;throw error}finally{this.preserving=false}
+    }
     if(mediaRecord(raw).action==='media.precompose.discard'){const value=mediaRecord(raw);if(Object.keys(value).some(k=>!['action','cacheKey'].includes(k))||typeof value.cacheKey!=='string'||!/^[a-f0-9]{64}$/.test(value.cacheKey))throw new TypeError('Invalid proxy rollback.');await this.precomposer.discard(value.cacheKey);return {discarded:true}}
     if(mediaRecord(raw).action==='media.precompose.inspect'){if(this.isCaptureActive())throw new Error('Media is busy.');const value=mediaRecord(raw);if(Object.keys(value).some(k=>!['action','artifactId'].includes(k)))throw new TypeError('Invalid proxy inspection.');return inspectGridProxy(this.resolveArtifactsDirectory?.()||this.artifactsDirectory,assertArtifactId(value.artifactId),signal)}
     if(mediaRecord(raw).action==='media.precompose'){if(this.isCaptureActive())throw new Error('Finish the current media job before precomposing.');const value=mediaRecord(raw);if(Object.keys(value).some(k=>!['action','recipe'].includes(k)))throw new TypeError('Invalid native precomposition request.');return this.precomposer.run(value.recipe,this.resolveArtifactsDirectory?.()||this.artifactsDirectory,signal)}

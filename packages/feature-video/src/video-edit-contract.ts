@@ -12,7 +12,7 @@ import {assertComposition} from '../../media-native/src/composition-contract.js'
 import type {CaptionCue} from '../../media-native/src/composition-contract.js'
 import {assertCardSpeechChoices} from './studio-card-speech.js'
 import type {CardSpeechChoice} from './studio-card-speech.js'
-export const sceneFields=['title','script','visualBrief','bullets','layout','captionStyle','captionDisplay','showSceneNumber','sceneTemplate','endPolicy','citations','sources','durationSeconds'] as const
+export const sceneFields=['title','label','script','visualBrief','bullets','layout','captionStyle','captionDisplay','showSceneNumber','sceneTemplate','endPolicy','citations','sources','durationSeconds'] as const
 export type SceneContent=Partial<Pick<StudioScene,Exclude<typeof sceneFields[number],'script'>>>&{script?:string}
 export const layerFields=['title','x','y','width','height','opacity','zIndex','hidden','locked','color','text','fontSize','textTreatment','packaging','sourceCrop','science','volume','muted','fadeInSeconds','fadeOutSeconds','ducking','keyframes'] as const
 export type VideoEditCommand=
@@ -32,7 +32,9 @@ export type VideoEditCommand=
  |{op:'layer.remove';clipId:string}
  |{op:'layer.set';clipId:string;patch:Record<string,unknown>}
 export interface VideoEdit {version:1;commands:VideoEditCommand[]}
-function closed(v:Record<string,unknown>,keys:readonly string[]):void{if(Object.keys(v).some(k=>!keys.includes(k)))throw new TypeError('VIDEO_EDIT_FIELD: Unsupported edit field.')}
+function closed(v:Record<string,unknown>,keys:readonly string[]):void{
+ const unknown=Object.keys(v).filter(k=>!keys.includes(k));if(unknown.length)throw new TypeError(`VIDEO_EDIT_FIELD: Unsupported edit field: ${unknown.slice(0,8).map(k=>JSON.stringify(k.slice(0,80))).join(', ')}. Allowed fields: ${keys.join(', ')}. Use describe-edit for this command; do not retry guessed aliases.`)
+}
 function clipId(raw:unknown):string{if(typeof raw!=='string'||!/^[a-zA-Z0-9_-]{1,256}$/.test(raw))throw new TypeError('VIDEO_EDIT_ID: Invalid clip ID.');return raw}
 export function assertVideoEdit(raw:unknown):VideoEdit {
  const e=mediaRecord(raw);closed(e,['version','commands']);if(e.version!==1||!Array.isArray(e.commands)||!e.commands.length||e.commands.length>32)throw new TypeError('VIDEO_EDIT: One to 32 version-1 commands are required.')

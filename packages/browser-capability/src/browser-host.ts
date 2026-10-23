@@ -43,6 +43,8 @@ export interface BrowserFeatureHost {
   libraryStreams?: (request:unknown,actor:'agent'|'user',signal?:AbortSignal) => Promise<unknown>
   libraryExports?: (request:unknown,signal?:AbortSignal) => Promise<unknown>
   videoStudioContext?: (owner?:BrowserSessionOwner) => unknown
+  videoReview?: (owner:BrowserSessionOwner,request:unknown,signal?:AbortSignal) => Promise<unknown>
+  videoReviewRun?: (owner:BrowserSessionOwner) => string|undefined
   videoStudioChanged?: (owner?:BrowserSessionOwner,progress?:BrowserStudioProgress) => void
 }
 export interface BrowserActionContext {
@@ -61,7 +63,7 @@ export function assertBrowserFeatureHost(raw: unknown): BrowserFeatureHost {
   }
   const project = value.projectStore.active()
   if (!project || typeof project.id !== 'string' || !project.id || typeof project.name !== 'string' || !project.name || typeof project.directory !== 'string' || !/^(?:\/|[a-zA-Z]:[\\/]|\\\\)/.test(project.directory)) throw new TypeError('Invalid active Project host reply.')
-  for (const hook of ['videoStudioOpen','videoStudioSelect','videoStudioUse','libraryOpen','libraryExecute','libraryNews','libraryResearch','libraryExports','libraryStreams','libraryCollecting','libraryCollectionBatch','libraryRecommendations','libraryRecommendationValidity','videoStudioContext','videoStudioChanged','projectSources','sourcePages','collectSource','collectPageBatch','recoverCollectionPages','downloadSource','preserveSource','captureSource','verifySourceVideo'] as const) if (value[hook] !== undefined && typeof value[hook] !== 'function') throw new TypeError('Invalid browser Feature hook: '+hook)
+  for (const hook of ['videoReview','videoReviewRun','videoStudioOpen','videoStudioSelect','videoStudioUse','libraryOpen','libraryExecute','libraryNews','libraryResearch','libraryExports','libraryStreams','libraryCollecting','libraryCollectionBatch','libraryRecommendations','libraryRecommendationValidity','videoStudioContext','videoStudioChanged','projectSources','sourcePages','collectSource','collectPageBatch','recoverCollectionPages','downloadSource','preserveSource','captureSource','verifySourceVideo'] as const) if (value[hook] !== undefined && typeof value[hook] !== 'function') throw new TypeError('Invalid browser Feature hook: '+hook)
   if (value.settingsStore && (typeof value.settingsStore.snapshot !== 'function' || typeof value.settingsStore.update !== 'function')) throw new TypeError('Invalid settings host port.')
   return value as BrowserFeatureHost
 }

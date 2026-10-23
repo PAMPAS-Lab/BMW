@@ -1,3 +1,4 @@
+import {SourceTranscriptService} from './source-transcript-service.js'
 import {sourceBindings} from '@bmw-agent/media-native/sources'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -30,6 +31,10 @@ export class MaterialIndexService {
  constructor(private kernel:StudioKernel,private owner:BrowserSessionOwner,private actor:'user'|'agent',private previewOnly=false){}
  async execute(raw:unknown,signal?:AbortSignal):Promise<unknown>{
   const request=assertMaterialIndexRequest(raw),project=this.kernel.projectStore.active(),directory=path.join(project.directory,'artifacts'),store=new MaterialIndexStore(project),check=()=>{signal?.throwIfAborted();if(this.kernel.projectStore.active().id!==this.owner.projectId)throw new Error('Material index Project changed.')};check()
+  if(request.operation==='transcribe-source'||request.operation==='source-batch-status'||request.operation==='recover-source-batch'){
+   if(this.previewOnly&&request.operation!=='source-batch-status')throw new Error('NEWS_RESEARCH_PREVIEW_ONLY: Long-source processing starts only after topic selection or explicit production context.')
+   if(request.operation==='transcribe-source'||request.operation==='source-batch-status'||request.operation==='recover-source-batch')return new SourceTranscriptService(this.kernel,this.owner,(next,nextSignal)=>this.execute(next,nextSignal)).execute(request,signal)
+  }
   const index=await store.snapshot()
   if(request.operation==='list')return {index,records:index.records.map(r=>({...r,pendingRanges:pendingMaterialRanges(r)}))}
   if(request.expectedRevision!==undefined&&request.expectedRevision!==index.revision)throw new Error('MATERIAL_INDEX_CONFLICT: 请读取最新素材索引。')
@@ -78,7 +83,7 @@ export class MaterialIndexService {
     record.parts.push({sourceRange:range,evidenceArtifactId:output.artifactId,evidenceSha256:crypto.createHash('sha256').update(text).digest('hex'),segmentCount:evidence.segments.length,model:request.model,language:request.language});record.parts.sort((a,b)=>a.sourceRange.startSeconds-b.sourceRange.startSeconds);await save()
     if(request.sourceRange){chunks++;break}
    }
-   return {index,record,pendingRanges:pendingMaterialRanges(record),chunksCompleted:chunks,transcriptStatus:record.parts.length?'raw-candidates':'not-indexed',automaticTimingApproved:false,wordTimingAvailable:false,automaticRetry:false}
+   return {index,record,pendingRanges:pendingMaterialRanges(record),chunksCompleted:chunks,transcriptStatus:record.parts.some(part=>part.segmentCount>0)?'raw-candidates':record.parts.length?'no-speech-detected':'not-indexed',unrecognizedRanges:record.parts.filter(part=>part.segmentCount===0).map(part=>({sourceRange:part.sourceRange,evidenceArtifactId:part.evidenceArtifactId,evidenceSha256:part.evidenceSha256,meaning:'ASR returned no speech segments; this does not certify silence or absence of speech.'})),automaticTimingApproved:false,wordTimingAvailable:false,automaticRetry:false}
   }catch(error){await cleanup();throw new Error((error instanceof Error?error.message:String(error))+'; MATERIAL_INDEX_PROGRESS: '+JSON.stringify({artifactId:request.artifactId,indexRevision:index.revision,chunksCompleted:chunks,requiresFreshRead:true,automaticRetry:false}),{cause:error})}finally{await source.close()}
  }
  private async partEvidence(record:MaterialIndexRecord,part:MaterialIndexPart,directory:string,signal?:AbortSignal){const evidence=await readSpeechEvidence(directory,part.evidenceArtifactId,part.evidenceSha256,signal);if(evidence.sourceArtifactId!==record.artifactId||evidence.sourceSha256!==record.sha256||evidence.model!==part.model||evidence.language!==part.language||evidence.segments.length!==part.segmentCount||JSON.stringify(evidence.normalization.sourceRange)!==JSON.stringify(part.sourceRange))throw new Error('Indexed transcript evidence disagrees with its source.');return evidence}

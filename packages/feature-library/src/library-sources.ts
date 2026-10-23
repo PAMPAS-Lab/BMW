@@ -5,10 +5,17 @@ import path from 'node:path'
 import {ArtifactJobIO} from '@bmw-agent/media-native/artifact-io'
 import {assertArtifactId,assertFullMediaDecode,mediaRecord} from '@bmw-agent/media-native/contract'
 import {assertImageInspection} from '@bmw-agent/media-native/image'
-import type {SourceMediaState,SourceCaptureGuard} from '@bmw-agent/media-native/sources'
+import type {SourceMediaState,SourceCaptureGuard,VideoIdentity} from '@bmw-agent/media-native/sources'
 import {assertSourceRequest,assertSourceCatalog,assertSourceObservation,assertSourceCaptureEvidence,assertSourceDeliveryRange,assertVideoIdentity,sameVideoIdentity} from '@bmw-agent/media-native/sources'
 import type {ProjectSourcePort,SourceCitation} from '@bmw-agent/media-native/sources'
 import type {BrowserFeatureHost} from '@bmw-agent/browser-capability/host'
+/** Accept SABR evidence only for the confirmed YouTube target and both complete encoded tracks. */
+export function assertSourcePreservationBasis(proof:Record<string,unknown>,expected:VideoIdentity|undefined,observed:unknown):'HTTP-delivery-bytes'|'YouTube-SABR-encoded-tracks'{
+ if(proof.reencoded!==false)throw new Error('Invalid preservation proof.')
+ if(proof.basis==='HTTP-delivery-bytes')return proof.basis
+ if(proof.basis==='YouTube-SABR-encoded-tracks'&&expected?.platform==='youtube'&&proof.completeVod===true&&proof.completeSeparatedTracks===true&&observed!==undefined&&sameVideoIdentity(expected,assertVideoIdentity(observed)))return proof.basis
+ throw new Error('Invalid identity-bound preservation basis.')
+}
 /** Invoked within the existing Browser FIFO; never recursively executes a tool. */
 export class LibrarySources {
  constructor(private readonly kernel:BrowserFeatureHost){}
@@ -40,6 +47,7 @@ export class LibrarySources {
   if(request.method==='capture'&&!['video','source'].includes(candidate.kind))throw new Error('Only confirmed video candidates may capture a player.')
   const isVideo=['video','source'].includes(candidate.kind),sourceGuard:SourceCaptureGuard={pageUrl:body.source.url,candidateUrl:candidate.url,scope:body.acquisition.mediaScope,...(candidate.videoIdentity?{videoIdentity:candidate.videoIdentity}:{})}
   if(request.method==='preserve'&&(!['video','source'].includes(candidate.kind)||!/^https?:\/\//i.test(candidate.url)))throw new Error('Preservation requires a confirmed HTTP video or HLS candidate; blob players require capture.')
+  if(request.method==='preserve'&&(candidate.durationSeconds??0)>1800)throw new Error('Long delivery storage and decoded acquisition are separate: use media.preserve on the observed candidate URL to archive the complete delivery, then media.segment for bounded local processing. A preview request does not permit decoding the whole long input; this acquisition endpoint must not download and delete a long archive after a decode-limit failure.')
   if(body.acquisition.access==='login-required')return {catalog:await port.recordMedia(body.source.id,body.acquisition.id,candidate.id,{state:'login-required',error:body.acquisition.accessText},request.expectedRevision,signal),state:'login-required'}
   if(request.method==='download'&&!this.kernel.downloadSource||request.method==='capture'&&!this.kernel.captureSource||request.method==='preserve'&&!this.kernel.preserveSource)throw new Error('Source media acquisition is unavailable.')
   const directory=await fs.realpath(path.join(project.directory,'artifacts')),identity=await fs.stat(directory);let created:string|undefined;const related:string[]=[]
@@ -54,8 +62,9 @@ export class LibrarySources {
     const owned=raw.ownedArtifactIds.map(assertArtifactId)
     if(!owned.includes(created)||new Set(owned).size!==owned.length||owned.some(id=>!id.startsWith(prefix+'-')))throw new Error('Foreign preservation resource.')
     related.push(...owned.filter(id=>id!==created))
-    if(preservation.basis!=='HTTP-delivery-bytes'||preservation.reencoded!==false||!owned.includes(assertArtifactId(preservation.proofArtifactId))||typeof preservation.proofSha256!=='string'||!/^[a-f0-9]{64}$/.test(preservation.proofSha256))throw new Error('Invalid preservation proof.')
-    delivery={basis:preservation.basis,reencoded:false,proofArtifactId:preservation.proofArtifactId,proofSha256:preservation.proofSha256,originalArtifactId:created,originalSha256:raw.sha256}
+    const basis=assertSourcePreservationBasis(preservation,candidate.videoIdentity,raw.videoIdentity)
+    if(!owned.includes(assertArtifactId(preservation.proofArtifactId))||typeof preservation.proofSha256!=='string'||!/^[a-f0-9]{64}$/.test(preservation.proofSha256))throw new Error('Invalid preservation proof.')
+    delivery={basis,reencoded:false,proofArtifactId:preservation.proofArtifactId,proofSha256:preservation.proofSha256,originalArtifactId:created,originalSha256:raw.sha256}
    }
    const deliveryRange=request.preview?assertSourceDeliveryRange({...request.preview,kind:'delivery-file-pts',reencoded:true}):undefined
    if(deliveryRange){

@@ -5,6 +5,7 @@ import crypto from 'node:crypto'
 import type { FileHandle } from 'node:fs/promises'
 import { assertArtifactId, finiteNumber, MEDIA_LIMITS } from './media-contract.js'
 import type { MediaProcessRequest } from './media-contract.js'
+import {ARCHIVE_LIMITS} from './archive-limits.js'
 
 /** A job owns one already-open input and a fixed set of exclusively-created Project outputs. */
 export class ArtifactJobIO {
@@ -12,7 +13,8 @@ export class ArtifactJobIO {
   private closed = false
   private token = crypto.randomUUID()
   private constructor(readonly root: string, private input: FileHandle | undefined, readonly bytes: number, readonly request: MediaProcessRequest|{action:'media.speech.normalize';artifactId:string;sourceRange?:import('./speech-range.js').SpeechSourceRange},private rootIdentity?:{dev:number;ino:number}) {}
-  static async open(directory: string, request: MediaProcessRequest|{action:'media.speech.normalize';artifactId:string;sourceRange?:import('./speech-range.js').SpeechSourceRange}): Promise<ArtifactJobIO> {
+  static async openArchive(directory:string,artifactId:string):Promise<ArtifactJobIO>{return this.open(directory,{action:'media.inspect',artifactId},'archive')}
+  static async open(directory: string, request: MediaProcessRequest|{action:'media.speech.normalize';artifactId:string;sourceRange?:import('./speech-range.js').SpeechSourceRange},budget:'processing'|'archive'='processing'): Promise<ArtifactJobIO> {
     const root = await fs.realpath(directory),rootIdentity=await fs.stat(root)
     if(request.action==='media.image.draw')return new ArtifactJobIO(root,undefined,0,request,rootIdentity)
     const file = path.join(root, assertArtifactId(request.artifactId))
@@ -21,7 +23,8 @@ export class ArtifactJobIO {
     const input = await fs.open(file, constants.O_RDONLY | constants.O_NOFOLLOW)
     try {
       const stat = await input.stat()
-      if (!stat.isFile() || stat.size < 1 || stat.size > MEDIA_LIMITS.inputBytes) throw new Error('Media input must be a nonempty Project file up to 512 MiB.')
+      const maximum=budget==='archive'?ARCHIVE_LIMITS.bytes:MEDIA_LIMITS.inputBytes
+      if (!stat.isFile() || stat.size < 1 || stat.size > maximum) throw new Error('Media input must be a nonempty Project file within its '+budget+' byte budget.')
       return new ArtifactJobIO(root, input, stat.size, request,rootIdentity)
     } catch (error) { await input.close(); throw error }
   }

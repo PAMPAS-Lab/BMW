@@ -1,0 +1,290 @@
+{
+  "format": "bmw.internal-video-review-verification",
+  "version": 1,
+  "createdAt": "2026-10-22T04:32:35.254Z",
+  "baseRevision": "ee6ea684cff6e8470563e94d4ae041af1b666f1c",
+  "capability": {
+    "modelTool": "browser",
+    "action": "video.review",
+    "requestField": "reviewRequest",
+    "operations": [
+      "start",
+      "status"
+    ],
+    "session": "Selected owned BMW Session; its official driver and configured model; image capability required",
+    "execution": "One durable queued input to official AgentHost; caller must yield; Host does not implement the model loop"
+  },
+  "checks": {
+    "build": "passed",
+    "check": "passed",
+    "whitespace": "passed",
+    "fullBeforeFinalTightening": {
+      "path": ".bmw-runtime/classified-tests/2026-10-22T04-09-58-419Z/result.json",
+      "sha256": "a024d5a16814e09ab280129a1e6013416f46886815b51ead0164c8b0989666bd",
+      "counts": {
+        "not-run": 14,
+        "passed": 198
+      },
+      "scope": "Full non-external catalog including DSH, desktop, Studio, native media, video and narration"
+    },
+    "finalTightening": {
+      "path": ".bmw-runtime/classified-tests/2026-10-22T04-27-28-000Z/result.json",
+      "sha256": "fc194cc82b8231c7380d16f69720c19f5fec900d1086e1c21d9c5221800c4c93",
+      "counts": {
+        "not-run": 92,
+        "passed": 119
+      },
+      "scope": "Final source: all unit, contract, boundary and type checks after read-only enforcement, immediate queued receipts, user listening projection and Chinese UI labels"
+    },
+    "finalNative": {
+      "path": ".bmw-runtime/video-review-final-native.log",
+      "sha256": "e165a492b38365b103656b3b4857c71cd634cb86d22573f7c86503a18f7c4f1c",
+      "exitCode": 0,
+      "evidenceDirectory": ".bmw-runtime/video-review-final-native",
+      "scope": "Disposable Electron GUI/IPC, real native MP4 and Project frames; internal task protocol fixture, no paid-model or human listening claim"
+    },
+    "changedAfterFull": [
+      {
+        "file": "packages/feature-video/index.ts",
+        "sha256": "65d76ae66d7c5823ad319a73cffbdca12764a2e7072bfc7f4736f47e5796de2d"
+      },
+      {
+        "file": "packages/feature-video/src/renderer/studio-export-review-editor.ts",
+        "sha256": "97c30f7a50d8615394d69360ccf69bee7e2d9ddd12de5fcdece7fe9458c972c2"
+      },
+      {
+        "file": "packages/feature-video/src/studio-service.ts",
+        "sha256": "950fd287c3ed6f3308e5d410c71d83ea57f9c982bc5a36694a0753f979dd854e"
+      },
+      {
+        "file": "packages/feature-video/src/video-review.ts",
+        "sha256": "b74d5f43171b0f9229987ddb39024c22688007d557ed5bf573becdf74c7aa358"
+      },
+      {
+        "file": "packages/feature-video/test/video-review.test.ts",
+        "sha256": "2ce45deead02ff892ac0de482c07625f3b685672122e0572a194f8eae30cb62d"
+      },
+      {
+        "file": "scripts/video-studio-smoke.ts",
+        "sha256": "59c02effa2b9982404f24a291da9d8abf8330d4637b315ec11e9e6fa08a749fa"
+      },
+      {
+        "file": "docs/FUNCTIONAL_SPEC.md",
+        "sha256": "85dbf651d3bef16048f9d913a75c13450552a40746663634ac8cb81eac48e204"
+      }
+    ]
+  },
+  "assertions": [
+    "Current export fingerprint and draft revision bind the job",
+    "Exactly BMW browser; official harness owns reasoning and tools",
+    "Input task metadata persists before FIFO dispatch; duplicate and uncertain input never auto replay",
+    "Current runId and newer per-scene/independent film declarations required; old opinions and runtime success are insufficient",
+    "Agent video edits, narration, composition, settings and recursive audit are rejected during internal review; user GUI CAS remains available",
+    "Sparse basic closing cards require changes; layout success alone is insufficient",
+    "Pending human listening and user declarations remain separate"
+  ],
+  "previousProductionActivation": {
+    "status": "blocked-by-automatic-approval-review",
+    "runtimeRestarted": true,
+    "realModelAuditExecuted": false,
+    "movieReexported": false,
+    "observedActiveSession": "AI 滚动采集 · 10-21 主 Profile",
+    "draftId": "9665aa12-9361-4976-9098-7cf3752f40d5",
+    "driver": "Qoder CN",
+    "draftRevision": 68,
+    "existingMp4Revision": 63,
+    "advancedEditingEnabled": true,
+    "productionRun": {
+      "runId": "8d3004e2-57ad-4a3a-8b88-00acc85342fb",
+      "state": "finished",
+      "outcome": "success",
+      "changes": "Three visual scenes saved by BMW; original voice, narration and timing retained. Zoom inset and diagram/image layers remain incomplete."
+    },
+    "reason": "Normal menu restart completed. Latest user explicitly requested DSX rework and BMW internal review. Two CUA submission attempts for the prepared follow-up were rejected by automatic approval review, which treated the earlier GTC instruction as controlling and did not accept the assistant quotation of the later DSX request. No bypass or indirect submission; follow-up remains unsent in BMW UI. User was asked for a new direct confirmation.",
+    "pending": [
+      "Add actual detail inset and deployment diagram layers in the now-enabled advanced editor",
+      "Export a new native MP4; current MP4 remains the old revision 63",
+      "Run BMW internal video.review v2 on that new actual MP4",
+      "Human listening and final user acceptance remain independent"
+    ]
+  },
+  "productionActivation": {
+    "status": "in-progress-real-production",
+    "authorization": "User explicitly requested three entirely new keynote news videos, native BMW review and necessary rework; old drafts retained.",
+    "runtimeRestarted": true,
+    "realModelAuditExecuted": true,
+    "movieReexported": true,
+    "sessionId": "7503c7f6-9d78-488c-8998-7af7e92c5f1b",
+    "projectId": "76c98d62-ff8a-41f6-a439-76332fc4db3f",
+    "driver": "qoder-cn",
+    "configuredModelId": "dfmodel",
+    "serverCheckpointVerified": false,
+    "newDraftIds": [
+      "cc567455-7863-4db1-8a86-32a2d6d2cf24",
+      "5bf3a298-b2a9-458d-b25a-250123c31867",
+      "806c974a-936f-497a-a229-53cbe85d03db"
+    ],
+    "firstReview": {
+      "runId": "3343ef9d-581d-4f6e-9336-719b3353ed24",
+      "policy": 2,
+      "targetRevision": 22,
+      "fingerprint": "5bfa383b4a7b8bee94b0e968694dc45651d111104ba42bd441428c760dadcba2",
+      "artifactId": "media-13b35376-2ea9-4b61-969a-d5122c0e595f-converted.mp4",
+      "receipt": "finished/success",
+      "verdict": "needs-fix",
+      "sceneDeclarations": 5,
+      "independentFilmDeclaration": true,
+      "currentMp4CriticalSamples": 96,
+      "actualMp4PcmAndAsr": "Original-speech interval sampled and transcribed; silence after the quote detected. ASR coverage was bounded, not whole-film listening.",
+      "findings": [
+        "Old unqualified headline burned into all scenes and overlapped source/date labels",
+        "Phone subtitles split Chinese words and DSX POD",
+        "Inset source footage too small with substantial blank frame area",
+        "Integration/validation and site prerequisites lacked explanatory visuals",
+        "Frozen silent tail and missing planned-delivery timeline"
+      ],
+      "currentDraftChangedAfterReview": "Title corrected through native GUI to revision23; latest user closing-shot requirements appended through native GUI at revision24, standard/minimal layout saved at revision25. The revision22 verdict is historical evidence, not approval of a newer export. Rework and fresh review are pending."
+    },
+    "productionExecutionFollowUp": {
+      "userFinding": "DSX closing scenes remain visually sparse despite the explicit earlier prohibition on long static text.",
+      "diagnosis": "The real internal audit already rejected the visual treatment. Production rework and final-delivery checks had not completed; stronger prose alone is insufficient.",
+      "draftId": "cc567455-7863-4db1-8a86-32a2d6d2cf24",
+      "reworkRunId": "0b13d5d6-92a7-49ab-8a65-cbfb4025479a",
+      "state": "prepared DSX task 0b13d5d6 interrupted before execution when user prioritized robotics; rework remains pending after robotics",
+      "requiredClosingVisuals": [
+        "Related DSX module image or official demonstration plus site-prerequisites-to-onsite-deployment relationship, explicitly attributed conditional 14-day claim",
+        "Related DSX product image plus announcement-to-planned-early-2027-delivery timeline; actual delivery remains unverified"
+      ],
+      "processGate": "Read actual saved assets/layers/timing before export; inspect current MP4 closing entry/main/exit states after export. An aspirational visualBrief, template name or unrelated image cannot establish completion.",
+      "automationLimit": "This is a production procedure and actual-model-review requirement. Existing structural screening does not classify static frames inside videos or certify imagery relevance; no new automatic semantic gate is claimed.",
+      "observedAt": "2026-10-22T13:53:00Z",
+      "previousBroadRework": {
+        "runId": "b34a289e-03d6-4025-ab3a-53b6722951fb",
+        "outcome": "interrupted by operator; actual media bindings retained"
+      },
+      "completedFocusedEdits": [
+        "a39b586d-ac0a-4959-90b5-06696e071af0",
+        "fa5c3bdb-bcb9-4360-8e56-146e9425c586"
+      ],
+      "latestIndependentReview": {
+        "runId": "8bfa8281-0394-4ab6-9eaf-1d8e992131f4",
+        "receipt": "finished/success",
+        "targetRevision": 44,
+        "artifactId": "media-cfd42a45-e2aa-49de-8b55-3313f7dd944a-converted.mp4",
+        "fingerprint": "afb0fbde3950098f0eb0606c5bbe54d9aaf9fc63da362672f8dac3aa6df931c7",
+        "verdict": "needs-fix",
+        "criticalSamples": 108,
+        "sceneVerdicts": [
+          "passed",
+          "needs-fix",
+          "needs-fix",
+          "needs-fix",
+          "needs-fix"
+        ],
+        "findings": [
+          "Single-frame source flash at the original-speech entrance",
+          "Unreadable source slide at scene-three exit",
+          "Small product strip and scattered condition labels in scene four",
+          "Small static product image and excessive blank area in scene five",
+          "Hidden scene titles intersect independent labels; final subtitle interval requires additional sampling"
+        ],
+        "listening": "Original-speech PCM and bounded output ASR only; no human listening or continuous audiovisual review"
+      },
+      "nextRepairs": [
+        "Preserve original audio while removing the visual flash",
+        "Trim unreadable tail without truncating narration",
+        "Enlarge source product details and create actual prerequisite-to-deployment diagrams with visible state changes",
+        "Replace scattered date labels with an actual planned-delivery timeline and inspect its final caption interval"
+      ]
+    },
+    "secondProduction": {
+      "draftId": "5bf3a298-b2a9-458d-b25a-250123c31867",
+      "revision": 38,
+      "artifactId": "media-5780644d-1a8f-4fcd-9c95-76e9c02d6cae-converted.mp4",
+      "fingerprint": "ee6a90abfa7b44e23f0a208b59c95d959c01f88679a24f50082f205d835a6c5a",
+      "reworkRunId": "89b34221-442c-4c03-95f6-c78c942e2ca9",
+      "reworkReceipt": "finished/success",
+      "reviewRunId": "07e2730d-8549-4cdb-b390-c09e61089172",
+      "reviewStatus": "interrupted by operator on explicit user priority change; partial declarations only, no full-film pass",
+      "canceledPreviousReview": "c613bfa8-17b0-4c43-a54f-f73a7fe203b2 (interrupted before execution)",
+      "changes": "Actual antenna/server image and parallel operator status layers replace the final text-only sequence; source speaker reframed; current MP4 audio sampled and transcribed",
+      "priority": "deferred; user expressed low interest, all existing assets retained"
+    },
+    "pending": [
+      "Complete DSX visual repairs and export a new MP4",
+      "Complete the third production",
+      "Obtain independent BMW review verdicts on all current final MP4s",
+      "Human listening and user acceptance remain independent"
+    ],
+    "thirdProduction": {
+      "draftId": "806c974a-936f-497a-a229-53cbe85d03db",
+      "revision": 3,
+      "runId": "5b914086-6359-48fe-8898-49d4d0564acb",
+      "state": "accepted; actual video.studio read started at 2026-10-22T14:07:53Z",
+      "canceledPreviousRun": "75708e15-ef98-4d71-af03-c97ddcd90a0e (interrupted before execution)",
+      "priority": "first; explicit user request",
+      "previousPreparedRun": "27745eca-6c4f-4eea-af4b-0d9f17c9d390 interrupted before execution to reorder queue"
+    }
+  },
+  "limitations": [
+    "Full run preceded final scoped tightening; exact source delta and final targeted evidence are listed above",
+    "Opt-in external and manual coverage remains unrun",
+    "WorkBuddy currently advertises no image capability; review preflight rejects such runtimes without switching drivers",
+    "Generated frames and model declarations do not certify continuous audiovisual understanding or human acceptance"
+  ],
+  "documentation": {
+    "avoidItems": "docs/NEWS_DAILY.md",
+    "contract": "docs/FUNCTIONAL_SPEC.md"
+  },
+  "editorialPolicyV2": {
+    "updatedAt": "2026-10-22T06:18:03.913Z",
+    "standard": "AI-curious audience; ordinary ~45 seconds; focus ~120 seconds; facts and original speech, limited attributed analysis; relevant footage leads; no standalone plain text segments; actual-MP4 review and explicit capability gaps",
+    "build": "passed",
+    "check": "passed",
+    "whitespace": "passed",
+    "verification": {
+      "path": ".bmw-runtime/classified-tests/2026-10-22T05-43-39-778Z/result.json",
+      "sha256": "1317fb2e53e288cea3d27edfc29f32c93d7a2974919d5a058b49f1fe136d779d",
+      "counts": {
+        "not-run": 92,
+        "passed": 119
+      },
+      "scope": "Unit, contract, boundary and type verification; unchanged native processor retains earlier disposable native evidence, no new paid-model result inferred"
+    },
+    "earlierAttempt": {
+      "path": ".bmw-runtime/classified-tests/2026-10-22T05-38-55-818Z/result.json",
+      "status": "source-integrity-gate-failed",
+      "reason": "FUNCTIONAL_SPEC documentation changed while tests were running. Rerun above completed after final documentation edits."
+    },
+    "sources": [
+      {
+        "file": "docs/NEWS_DAILY.md",
+        "sha256": "4e06451d5c5c2cfb911e166a6b7c289aab376865084b2b0e484b1403fe5dfce9"
+      },
+      {
+        "file": "docs/FUNCTIONAL_SPEC.md",
+        "sha256": "593e7a70af29ab827c458663fea0a6a15c57da37942339b78aa0af66834ec76c"
+      },
+      {
+        "file": "packages/feature-video/src/production-types.ts",
+        "sha256": "43769a22551e9c8347d9d5166280c34ede1e15144088a80ad61ba9bafdf0428e"
+      },
+      {
+        "file": "packages/feature-video/src/video-review.ts",
+        "sha256": "e880a2d750e15f68e88127facb0eb78f83a7f6b51e33be931910d18d8590d550"
+      },
+      {
+        "file": "packages/feature-video/src/video-review-policy.ts",
+        "sha256": "3eb0a2bfb63b797ff7b5dfc818430f30740ecddbd24f8ae29ff1a0fd0bf09000"
+      },
+      {
+        "file": "packages/feature-video/test/production.test.ts",
+        "sha256": "1997106ea744d4a5c9b013765fa592e34010696fd5083c3beec4e4d6502a8809"
+      },
+      {
+        "file": "packages/feature-video/test/video-review.test.ts",
+        "sha256": "c6a9a83d3690c619b1e5beea0d04337542cc284257efba82c56d0422d178fee9"
+      }
+    ]
+  }
+}

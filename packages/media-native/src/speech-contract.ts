@@ -21,7 +21,7 @@ export interface SpeechEvidence {
  timeDomain:'audio-file-seconds'|'normalized-interval-seconds';durationSeconds:number;elapsedSeconds:number;createdAt:string;segments:SpeechSegment[]
  automaticTimingApproved:false;wordTimingAvailable:false
 }
-export interface SpeechNormalization {kind:'speech-pcm';sampleRate:16000;channels:1;sampleType:'pcm-s16le';frames:number;durationSeconds:number;inputSampleRate:number;inputChannels:number;decodedStartSeconds:number;decodedEndSeconds:number;clippedSamples:number;downmix:'channel-mean';discardedTailFrames?:number;sourceRange?:SpeechSourceRange;sourceDurationSeconds?:number}
+export interface SpeechNormalization {kind:'speech-pcm';sampleRate:16000;channels:1;sampleType:'pcm-s16le';frames:number;durationSeconds:number;inputSampleRate:number;inputChannels:number;decodedStartSeconds:number;decodedEndSeconds:number;clippedSamples:number;downmix:'channel-mean';discardedTailFrames?:number;discardedHeadFrames?:number;sourceRange?:SpeechSourceRange;sourceDurationSeconds?:number}
 function closed(value:Record<string,unknown>,keys:readonly string[]){if(Object.keys(value).some(key=>!keys.includes(key)))throw new TypeError('Unsupported speech evidence property.')}
 export function speechSha(value:unknown):string {if(typeof value!=='string'||!/^[a-f0-9]{64}$/.test(value))throw new TypeError('Invalid speech SHA-256.');return value}
 /** Preserve actual segment boundaries. Tokens are BPE units, never Chinese words/characters. */
@@ -29,7 +29,9 @@ export function whisperSegments(raw:unknown,durationSeconds:number,model:SpeechM
  finiteNumber(durationSeconds,'speech duration',.01,SPEECH_LIMITS.durationSeconds)
  const value=mediaRecord(raw),parameters=mediaRecord(value.params),metadata=mediaRecord(value.model)
  if(metadata.type!==model||metadata.multilingual!==true||parameters.translate!==false||(language==='auto'?!(typeof mediaRecord(value.result).language==='string'&&/^[a-z]{2,3}$/.test(String(mediaRecord(value.result).language))&&[language,mediaRecord(value.result).language].includes(parameters.language)):parameters.language!==language||mediaRecord(value.result).language!==language))throw new TypeError('ASR output disagrees with the fixed model/language invocation.')
- if(!Array.isArray(value.transcription)||!value.transcription.length||value.transcription.length>SPEECH_LIMITS.segments)throw new TypeError('Invalid ASR segment count.')
+ // A completed interval may yield no recognized speech. Preserve its raw proof;
+ // this is not evidence that the interval was silent or has no relevant audio.
+ if(!Array.isArray(value.transcription)||value.transcription.length>SPEECH_LIMITS.segments)throw new TypeError('Invalid ASR segment count.')
  let previousEnd=0,totalTokens=0,totalText=0
  return value.transcription.map((raw,index)=>{
   const segment=mediaRecord(raw),offsets=mediaRecord(segment.offsets)
@@ -59,7 +61,7 @@ export function assertSpeechEvidence(raw:unknown):SpeechEvidence {
  finiteNumber(value.elapsedSeconds,'ASR elapsed',0,SPEECH_LIMITS.jobTimeoutMs/1000)
  if(typeof value.createdAt!=='string'||!/^\d{4}-\d\d-\d\dT/.test(value.createdAt)||!Number.isFinite(Date.parse(value.createdAt)))throw new TypeError('Invalid speech capture time.')
  const normalization=mediaRecord(value.normalization)
- closed(normalization,['kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix','discardedTailFrames','sourceRange','sourceDurationSeconds'])
+ closed(normalization,['kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix','discardedTailFrames','discardedHeadFrames','sourceRange','sourceDurationSeconds'])
  assertSpeechRangeEvidence(normalization)
  if(value.timeDomain!==(normalization.sourceRange===undefined?'audio-file-seconds':'normalized-interval-seconds'))throw new TypeError('Speech interval uses the wrong time domain.')
  if(normalization.kind!=='speech-pcm'||normalization.sampleRate!==16000||normalization.channels!==1||normalization.sampleType!=='pcm-s16le'||normalization.downmix!=='channel-mean'||normalization.durationSeconds!==duration)throw new TypeError('Invalid speech normalization provenance.')
@@ -67,10 +69,11 @@ export function assertSpeechEvidence(raw:unknown):SpeechEvidence {
  const frames=finiteNumber(normalization.frames,'normalized frames',160,180*16000,true)
  finiteNumber(normalization.clippedSamples,'PCM saturation samples',0,frames,true)
  if(normalization.discardedTailFrames!==undefined)finiteNumber(normalization.discardedTailFrames,'discarded Opus padding frames',0,Math.ceil(Number(normalization.inputSampleRate)*.12)+2,true)
+ if(normalization.discardedHeadFrames!==undefined)finiteNumber(normalization.discardedHeadFrames,'discarded first AAC preroll frames',0,1026,true)
  if(duration!==frames/16000)throw new TypeError('Speech duration disagrees with actual normalized sample count.')
  const start=finiteNumber(normalization.decodedStartSeconds,'decoded audio start',0,180),end=finiteNumber(normalization.decodedEndSeconds,'decoded audio end',start+.000001,180)
  if(end>duration+1/16000)throw new TypeError('Decoded speech exceeds its normalized timeline.')
- if(!Array.isArray(value.segments)||!value.segments.length||value.segments.length>SPEECH_LIMITS.segments)throw new TypeError('Invalid speech segments.')
+ if(!Array.isArray(value.segments)||value.segments.length>SPEECH_LIMITS.segments)throw new TypeError('Invalid speech segments.')
  let previousEnd=0
  for(const [index,raw] of value.segments.entries()){
   const item=mediaRecord(raw);closed(item,['id','text','startSeconds','endSeconds','tokenMeanProbability','usable','warnings'])
@@ -95,8 +98,9 @@ export function speechTimelineRange(startSeconds:number,endSeconds:number,option
 
 /** Opus decoders may return a full final packet beyond the container's exact end.
  * Admit only that bounded final packet, and keep the original source timeline. */
-export function speechDecodedRange(start:number,finish:number,duration:number,rate:number,codec:string|null):{end:number;discardedTailFrames:number}{
+export function speechDecodedRange(start:number,finish:number,duration:number,rate:number,codec:string|null):{end:number;discardedTailFrames:number;discardedHeadFrames:number}{
  const tolerance=2/rate
- if(!Number.isFinite(start)||!Number.isFinite(finish)||start<0||finish<=start||start>=duration+tolerance||finish>duration+tolerance&&(codec!=='opus'||start>=duration||finish-start>.12+tolerance||finish-duration>.12+tolerance))throw new Error('Speech decoded samples exceed the source timeline.')
- return {end:Math.min(finish,duration),discardedTailFrames:Math.max(0,Math.round((finish-duration)*rate))}
+ const leadingAac=codec==='aac'&&start<0&&start>=-1024/rate-tolerance&&finish>0&&finish-start<=1024/rate+tolerance
+ if(!Number.isFinite(rate)||rate<=0||!Number.isFinite(start)||!Number.isFinite(finish)||start<0&&!leadingAac||finish<=start||start>=duration+tolerance||finish>duration+tolerance&&(codec!=='opus'||start>=duration||finish-start>.12+tolerance||finish-duration>.12+tolerance))throw new Error('Speech decoded samples exceed the source timeline.')
+ return {end:Math.min(finish,duration),discardedTailFrames:Math.max(0,Math.round((finish-duration)*rate)),discardedHeadFrames:Math.max(0,Math.round(-start*rate))}
 }

@@ -5,7 +5,7 @@ import path from 'node:path'
 import {setTimeout as delay} from 'node:timers/promises'
 import {Ajv} from 'ajv'
 import {createCollectionBatchFixture,deferred,SAME_NINE_PRESETS} from '../../../scripts/library-collection-batch-benchmark.js'
-import {assertBatchRequest,collectionBatchRequestSchema,liveBatch} from '../src/collection-batch-contract.js'
+import {assertBatchRequest,assertBatchBackgroundScope,collectionBatchRequestSchema,liveBatch} from '../src/collection-batch-contract.js'
 import type {BatchDecision} from '../src/collection-batch-contract.js'
 import {CollectionBatchStore,checkpointId} from '../src/collection-batch-store.js'
 import type {EntryFixtureMode} from '../../../scripts/library-collection-batch-benchmark.js'
@@ -60,7 +60,7 @@ test('Nine configured sources use bounded real-store collection, fair article sl
   assert.equal(f.state.peakReads,3);assert.equal(f.state.visits.length,28);assert.equal(f.state.closedLanes,3)
   assert.deepEqual(new Set(f.state.visits.slice(0,9)),new Set(f.subscriptions.map(s=>s.input.url)))
   for(const s of b.sources){if(s.input.url.includes('/explore/')){assert.equal(s.state,'partial');assert.equal(s.originals.length,1);assert.equal(s.originals[0].url,s.input.url);continue}assert.ok(s.originals.length>=2&&s.originals.length<=3,'Every article-capable source receives two slots before any gets four')}
-  const originals=b.sources.flatMap(s=>s.originals),read=await f.execute('read',{id}) as {originals:unknown[];nextOffset:number|null};assert.equal(read.originals.length,20);assert.equal(read.nextOffset,null)
+  const originals=b.sources.flatMap(s=>s.originals),read=await f.execute('read',{id},'user') as {originals:unknown[];nextOffset:number|null};assert.equal(read.originals.length,20);assert.equal(read.nextOffset,null)
   for(const o of originals){const body=await f.ports[0].readBody(o.sourceId,o.acquisitionId);assert.equal(body.acquisition.contentId,o.bodySha256);assert.equal(body.text,o.excerpt)}
   await assert.rejects(f.execute('collect',{id}),/ALREADY_STARTED/)
   await f.execute('submit',{id,decisions:f.decisions(id)});assert.equal(f.rolling.records.page({terms:['kind:lead'],limit:50}).items.length,20)
@@ -84,6 +84,27 @@ test('Restricted, blank, incomplete, missing links and foreign redirects retain 
    if(mode!=='blank'&&mode!=='failed')assert.ok(source.entry,'Access/incomplete original remains inspectable')
   }finally{f.close()}
  }
+})
+
+test('Agent batch pages avoid runtime output folding while every original and full GUI gap remains intact',async()=>{
+ const f=await createCollectionBatchFixture({ioConcurrency:3})
+ try{
+  f.state.metrics='合成中文长正文用于核对分页，原文应完整保留。'.repeat(180)
+  const id=await f.start(3),first=await f.execute('collect',{id}) as {originals:{acquisitionId:string;excerpt:string;excerptOnly:boolean}[];nextOffset:number|null;totalOriginals:number}
+  const originals=f.store.batch(id).sources.flatMap(s=>s.originals),before=JSON.stringify(originals)
+  assert.equal(first.totalOriginals,17);assert.equal(first.originals.length,4);assert.equal(first.nextOffset,4)
+  const seen:string[]=[];let page=first
+  for(;;){
+   assert.ok(Buffer.byteLength(JSON.stringify(page))<24*1024,'The full tool reply stays below the observed runtime folding threshold')
+   for(const original of page.originals){assert.equal(original.excerptOnly,true);assert.ok(original.excerpt.length<=600);const stored=originals.find(o=>o.acquisitionId===original.acquisitionId)!;assert.equal(original.excerpt,stored.excerpt.slice(0,600));seen.push(original.acquisitionId)}
+   if(page.nextOffset===null)break
+   page=await f.execute('read',{id,offset:page.nextOffset}) as typeof first
+  }
+  assert.deepEqual(seen,originals.map(o=>o.acquisitionId));assert.equal(new Set(seen).size,17);assert.equal(JSON.stringify(f.store.batch(id).sources.flatMap(s=>s.originals)),before)
+  const gui=await f.execute('read',{id},'user') as {originals:{excerpt:string}[];nextOffset:number|null}
+  assert.equal(gui.originals.length,17);assert.equal(gui.nextOffset,null);assert.ok(gui.originals.some(o=>o.excerpt.length>600))
+  const body=await f.ports[0].readBody(originals[0].sourceId,originals[0].acquisitionId);assert.ok(body.text.length>2400);assert.equal(body.acquisition.contentId,originals[0].bodySha256)
+ }finally{f.close()}
 })
 
 test('Incremental URL checkpoints ignore changed entry metrics without losing newly saved originals',async()=>{
@@ -242,4 +263,55 @@ test('Qbit publication fallback admits only one valid complete civil date beside
   {label:'non-Qbit original redirect',observation:{...original,url:'https://example.org/2024/02/90001.html'}}
  ]
  for(const row of negatives)assert.equal(collectionArticleObservation(row.input??input,row.observation),row.observation,row.label+' must preserve the original without synthesizing a date')
+})
+
+test('Compact review covers the whole batch once, keeps uncertain dates pending, and supplies immutable evidence',async()=>{
+ const validate=new Ajv({strict:false}).compile(collectionBatchRequestSchema)
+ for(const request of [
+  {operation:'submit',projectId:'p',id:'batch',decisions:[{sourceId:'a',acquisitionId:'b',decision:'skip',title:'extra'}]},
+  {operation:'submit',projectId:'p',id:'batch',decisions:[{sourceId:'a',acquisitionId:'b',decision:'save'}]},
+  {operation:'review',projectId:'p',id:'batch',choices:[{index:0,decision:'skip',summary:'extra'}]},
+  {operation:'review',projectId:'p',id:'batch',choices:[{index:0,decision:'save',title:'invented',summary:'x'}]}
+ ]){assert.equal(validate(request),false);assert.throws(()=>assertBatchRequest(request))}
+ assert.throws(()=>assertBatchRequest({operation:'review',projectId:'p',id:'b',choices:[{index:0,decision:'skip'},{index:0,decision:'skip'}]}),/Duplicate/)
+ const f=await createCollectionBatchFixture({ioConcurrency:3})
+ try{
+  f.state.metrics='中文正文'.repeat(1000)
+  const id=await f.start(3),packet=await f.execute('collect',{id,reviewFormat:'compact'}) as {totalOriginals:number;candidates:{index:number;title:string;excerpt:string}[];screened:{index:number;decision:string}[]}
+  assert.equal(packet.totalOriginals,17);assert.equal(packet.candidates.length+packet.screened.length,17);assert.equal(new Set([...packet.candidates,...packet.screened].map(r=>r.index)).size,17)
+  assert.ok(Buffer.byteLength(JSON.stringify(packet))<24*1024);assert.ok(packet.candidates.every(c=>c.excerpt.length<=220))
+  const dense=f.store.batch(id);dense.sources.forEach(s=>s.originals.forEach(o=>{o.title='中文长标题'.repeat(32)}));dense.revision++;f.store.save([dense])
+  const densePacket=await f.execute('read',{id,reviewFormat:'compact'});assert.ok(Buffer.byteLength(JSON.stringify(densePacket))<=20*1024,'Entire CJK reply has a byte budget, including repeated titles and identities')
+  const before=f.store.batch(id),originals=before.sources.flatMap(s=>s.originals),chosen=packet.candidates[0]
+  await assert.rejects(f.execute('review',{id,choices:[{index:19,decision:'skip'}]}),/outside/)
+  const result=await f.execute('review',{id,choices:[{index:chosen.index,decision:'save',summary:'Synthetic reviewed announcement.'}]}) as {saved:number;pending:number}
+  assert.equal(result.saved,1);assert.equal(result.pending,16)
+  const saved=f.store.batch(id).sources.flatMap(s=>s.originals)[chosen.index],lead=f.rolling.entity(saved.leadId!,'lead')
+  assert.equal(lead.title,originals[chosen.index].title);assert.equal(lead.evidence.quote,originals[chosen.index].excerpt.slice(0,500));assert.equal(lead.evidence.bodySha256,originals[chosen.index].bodySha256)
+  const revision=f.rolling.records.state().revision
+  await f.execute('review',{id,choices:[{index:chosen.index,decision:'save',summary:'Synthetic reviewed announcement.'}]});assert.equal(f.rolling.records.state().revision,revision)
+ }finally{f.close()}
+})
+
+test('News screening uses frozen publication intervals, excludes proven old originals and retains uncertainty',async()=>{
+ const {screenBatchOriginal,publicationInterval}=await import('../src/collection-batch-screening.js')
+ assert.equal(publicationInterval('2026-02-30'),null);assert.equal(publicationInterval('2026-02-30T12:00:00Z'),null);assert.equal(publicationInterval('about 16 hours ago'),null);assert.equal(publicationInterval('Jul 15'),null)
+ assert.deepEqual(publicationInterval('Feb 22, 2024'),publicationInterval('2024-02-22'))
+ const f=await createCollectionBatchFixture({now:Date.parse('2026-10-22T13:00:00Z')})
+ try{
+  const id=await f.start();await f.execute('collect',{id});const original=f.store.batch(id).sources.flatMap(s=>s.originals)[0],body=await f.ports[0].readBody(original.sourceId,original.acquisitionId)
+  const screen=(publishedAt:string,text=publishedAt)=>screenBatchOriginal('2026-10-22T13:00:00Z',original,{...body.acquisition,publishedAt},text)
+  assert.equal(screen('2026-10-21T12:00:00Z').decision,'review');assert.equal(screen('2024-02-22').decision,'skip')
+  assert.equal(screen('2026-10-22').decision,'pending');assert.equal(screen('2026-10-21','date absent').decision,'pending');assert.equal(screen('3 days ago').decision,'pending')
+  assert.equal(screenBatchOriginal('2026-10-22T13:00:00Z',{...original,complete:false},body.acquisition,body.text).decision,'pending')
+  assert.equal(screenBatchOriginal('2026-10-22T13:00:00Z',original,body.acquisition,body.text,true).reason,'unverified-trend-observation')
+ }finally{f.close()}
+})
+
+test('Background batch scope admits compact review only for its exact agent Project, Session and saved batch',()=>{
+ const owner={projectId:'p',sessionId:'s'},request={operation:'review',projectId:'p',id:'batch',choices:[]}
+ for(const operation of ['collect','read','submit','review'])assert.doesNotThrow(()=>assertBatchBackgroundScope({...request,operation},'agent',owner,owner,'batch'))
+ for(const other of [{...request,id:'other'},{...request,projectId:'foreign'},{...request,operation:'start'},{...request,operation:'cancel'},{...request,operation:'recover'}])assert.throws(()=>assertBatchBackgroundScope(other,'agent',owner,owner,'batch'),/restricted/)
+ assert.throws(()=>assertBatchBackgroundScope(request,'user',owner,owner,'batch'),/restricted/)
+ assert.throws(()=>assertBatchBackgroundScope(request,'agent',{...owner,sessionId:'other'},owner,'batch'),/restricted/)
 })

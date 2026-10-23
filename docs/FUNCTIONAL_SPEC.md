@@ -38,6 +38,16 @@ DSH 预设装配官方 `compaction-basic` 与 `compaction-tool-result-pruner`，
 
 ## NEWS-01 新闻选题与制作
 
+Agent草稿摘要的每镜`preparationInventory`显示已绑定引用数、来源数和主视频／图片段数，明确`motionVerification:not-performed`；它不认证素材运动、相关性、日期或事实。read-scene/timeline在既有分页内增加`layerSetAllowed`、`sceneStartSeconds`和`editTimeDomain:film-seconds`，区分独立对象与主素材、局部与全片时钟。非法编辑／原生图层字段的拒绝回包提供有界字段名及合法字段，仍严格拒绝、不静默改值。
+
+`news-preparation` 是唯一 browser 的既有 `video.studio` 内新增封闭操作，要求当前 draftId/expectedRevision；preparationRequest 为 read/preflight/enable/record-scene。read 返回保存声明，preflight 只读检查当前实际媒体 SHA、可解码轨道和源区间、精确来源引用、实际日期文字及逐镜声明。每镜返回 fingerprint、durationSeconds、sourceIntervals、assets、missing/stale/unverified/verified-by-agent/verified-by-user 状态及缺口；模型按最多20镜／16KiB分页读取。read/preflight 不保存草稿或清单。
+
+逐镜清单独立保存在 Project `video-studio/news-preparation/<draftId>.json` version1，绑定 Project/Session/draft，至多96镜／1MiB，使用独立 checklist revision CAS；不能通过导入／更新／恢复草稿冒充。record-scene 需当前 preflight fingerprint、编辑目的、实际 artifact/reference ID、观察动作与相关性、来源日期标签、完整原声和中译或明确未使用原因。复用实际 prepare-reference 的源SHA、PNG哈希与全部逐帧分析；真实视频声明至少三个样本、两种不同PNG且覆盖选用区间两端。源素材、PNG、稿件、引用、取景、时长、顺序或全片图层变化使记录失效；可见全片媒体也核文件哈希。原声声明需主画面实际启用且有可解码音轨覆盖，日期声明须在实际镜头标签／脚注或覆盖全镜的可见文字层中存在。scene.set 的封闭 patch.label 可编辑至多44字符的原生标签。检查累计源/参考文件限512MiB／128项，结束前重核SHA及草稿revision；超预算须先整理本地分段。
+
+正常选题自动启用清单；news-brief 类型以及显式 enable 的草稿也受限，同一未关闭选题 Session 不能通过新普通草稿或直接 video.compose/video.narrate 绕过。enable 只能强化要求，演讲／采访选题要求原声。narrate、narrate-pending、narrate-local 和 render 在执行前拒绝未补齐／过期清单，check 同步返回 news-preparation 错误；批量配音一次准入，实际音频调整镜头时长后导出需更新受影响准备。通用 Studio 未启用新闻要求时沿既有准入。Agent不能覆盖用户准备声明；取消、Project 切换和 GUI 并发修改继续拒绝过期结果。
+
+前0–3秒连续及最后两镜全长须主素材真实视频声明与实测范围齐备；静态卡、定格和相同参考帧拒绝。不同PNG、日期文字存在或 Agent 自述仍不证明连续真实运动、相关性、语义完整、手机可读或日期准确；这些由官方模型基于实际素材判断，并在当前MP4独立逐镜和整片复核。preflight ready 只表示准备门槛齐备，不等于成片通过或人工听感。首次制作与验收边界见[优化计划](plans/NEWS_FIRST_PASS_PRODUCTION.md)。这些源码尚未重载到仍在返工的机器人生产实例。
+
 NEWS-02将候选上限从三项扩大到十项，版本1记录和已有三题批次仍可读取。素材库提供“推荐新闻选题”，由当前官方Assistant通过唯一browser检索与核对，不使用Host模型循环。默认覆盖中美及全球的重要个人、公司、大学／研究团队、公共机构，以及非AI职业重要人物关于AI的实质消息；名字不使用白名单，不按国籍或身份凑配额。按信息增量、公共影响、原始证据及视频表达价值推荐至多十个不同事件，允许零个。新闻价值、同一事件判断和推荐理由属于Agent编辑判断，Host不认证事实或热度。研究中可按最新revision逐批保存完整已合格列表，不以零散网页线索冒充可选卡片；本轮已发现动作字段复用，仅新动作或参数错误时补查帮助。propose-news-topics的操作帮助完整展开候选字段、必填项、枚举与十项预算，不再把候选契约裁掉后指回通用guide。
 
 NEWS-02推荐的Agent编辑要求：优先广泛寻找有真实原声的采访与演讲，再考虑动态演示和同题作品对照，理由需交代观众能从画面直接观察到什么；单纯公告可说明更适合图文，不因易截图而优先。比较案例需实际看预览、核对模型标签和画面布局；作者单次生成花费不能表述为模型单价或总体成本，展示不认证总体胜负。日期前本地时钟不视为片长，媒体参数以实际检查为准。结尾回扣这次消息的新变化与已展示结果，不默认套用通用用途清单、口号或免责声明；需要限定时简短归因，不能用边界说明替代新闻重点。当前54.61秒Codex／龙安朗样片已获用户接受，独立结果见[新闻验收](research/CODEX_NEWS_REWORK.json)，不改变NEWS-01缺省参数或三驱动权限。NEWS-02的43.03秒Chuck Lorre采访新闻另获用户接受，使用龙安朗、原声节选及可编辑大号双语字幕，见[独立交付](research/NEWS_02_LORRE_DELIVERY.json)；不据此认证声学精度或声称跨导出审阅复用已实现。这些为官方Agent的编辑职责，Host不实现新闻价值模型或自动胜负判定。
@@ -50,7 +60,7 @@ NEWS-03发布日期识别覆盖发布方常见写法：星期前缀、月份缩�
 
 新闻制作引导要求采访主视频显式保留原声：类型编辑读取真实主画面clipId后使用clip.mute muted=false，不把独立画面图层解除隐藏视作恢复声音，也不向scene.set提交未支持字段。最终MP4需按采访实际时间窗media.audio.sample，并通过materials原生ASR检查该导出样本；源片ASR、存在AAC音轨及全片非零峰值不能替代此检查，背景音乐本身也会非零。指标／转写与人工听感仍分别登记。
 
-AI新闻制作的人工／Agent编辑验收要求还包括：前0–3秒连续使用真实动态视频，适当替换后续静态画面；资料画面持续标注可核验的录制日期，不能核验时明确标为发布日期并保留精度。图片运动、页面滚动、生成画面和旧成片不满足此要求。随片交付逐段文字稿、实际原声及译文、来源日期与待核事项，核实重要当事人回应并区分承诺、渠道、细则与到账。完整规则见 [新闻制作流程](NEWS_DAILY.md)。这是编辑验收标准，当前Host未自动认证真实运动、日期或报道完整性；不改变既有导出API或把未满足要求的历史作品改标合格。
+AI新闻系列面向对AI科技及全球最新变化感兴趣、接受少量英文和术语、关注重要公司／机构／人物的观众。普通快讯约45秒，重点事件约120秒，以事实与本人原声为主、少量有据解读，必要术语简释且不进入实现细节。前0–3秒连续真实动态视频，后续相关真实视频承担主体信息；图解、数据可视化和聚焦截屏／录屏用于解释与证据，不能以单纯静态文字展示组成独立段落。资料画面持续标注可核验的录制日期，不能核验时明确标为发布日期并保留精度。图片运动、页面滚动、生成画面和旧成片不满足真实视频要求。随片交付逐段文字稿、实际原声及译文、来源日期与待核事项，核实重要当事人回应并区分承诺、渠道、细则与到账。完整定位、选材写稿制作规范和审片量表见 [新闻制作流程](NEWS_DAILY.md)。准备准入不自动认证真实运动、日期或报道完整性，也不把未满足要求的历史作品改标合格。
 
 `propose-news-topics {expectedTopicRevision,newsCandidates}`保存版本1候选；`news-topics`读取当前卡片及有效性；`select-news-topic {expectedTopicRevision,topicId,baseFingerprint,options?}`仅可信BMW用户界面可调用；`news-guide {draftId,expectedRevision}`读取当前选定草稿的逐镜头引导。候选是闭合结构，含主体／个人或组织／类别／地区、标题／新闻点／理由／角度、形式（采访／演讲／公告／原帖／图文）／新事件或新发布、录制日期／缺口、同Project的sourceId／acquisitionId、精确UTF16 quote／quoteStart及previewArtifactId／image或video模式。来源必须有完整observed正文、作者、可靠的原始发布时间与精确引用；预览必须属于该次获取、原文件与原生解码证明均可核对。图片至多32MiB；视频预览须实际可解码且至多30秒，显示原片区间。采访／演讲形式必须有真实视频及可解码音轨；source acquire method=capture可显式fromStart=false，从实际播放器当前位置采集关键发言，缺省仍从头。原播放器位置／速率／loop恢复且保持暂停，原生证明记录实际源区间；download／preserve拒绝fromStart等录制参数。只取得图片或静音素材时需要明确提出图文候选，不能把海报当采访或在选定后静默降级。可见`time`元素的`datetime`仅在显式publishedSelector下有界读取，须带时区，其他情况保留可见日期；显式日期范围中混有署名或文号时，仅可提取唯一、完整的发布日期行或明确Release／Original Issue Date标签的日期，保留原始日／时区精度，多日期或截断范围不做提取，不拿抓取时间补发布时间。
 
@@ -75,6 +85,8 @@ Host按当前UTC检查原始发布时间严格在近72小时，未来／日期�
 `preparation.production`（规范文档 `content.brief.production`）是可选的闭合版本1工作表，固定 `profileId/profileVersion`，支持 `news-brief`、`science-explainer`、`research-explainer`。保存受众、主问题、目标时长意图、段落角色／目标／观察任务、稳定镜头引用与材料角色；实际时间仍只有现有时间线。`production-profiles` 读取版本化类型指导及六种有限配方；不改变模型目录、权限或预算，不安装外部 skill。`propose-type` 给保留／填充列表和候选 VideoEdit，`adopt-type` 要求同一 revision 与精确提案指纹；重新读取实际来源／设置，拒绝过期提案。配方仅填空画面说明及符合条件的空卡片槽，已有 GUI 编辑不被覆盖；测量配方明确要求填写真实数据。`production-read` 对工作表各部分按至多20项／32KiB分页（句目标省略Host绑定原文），`production-review` 给当前版本的缺口、人工量表、当前内容／MP4指纹及独立 assessmentRevision。`record-production-review` 记录五项类型检查、试听状态、观众复述／条件预测和说明；actor 由Host决定，Agent不能声明人工试听、观众回答或通过人工必需的check-5。GUI提供显式人工记录；只有当前指纹下的用户五项通过、实际试听声明、复述（T2/T3另需条件预测）且结构无缺口，才显示“已验收”。这是用户声明，不是Host科学或听感认证。Host记录保存在Project内version1类型审阅账本，固定Project／Session／draft，独立CAS，至多40项／256KiB，保留最近用户与Agent记录；普通文档更新不写此账本。内容、源文件、实际MP4或渲染版本改变后旧结论失效，技术可制作、Agent意见、人工试听、观众复述分开。
 
 研究来源工作 `works` 明确作品类型、题名、作者、版本及已有 source/acquisition；`relations` 只接受引文、点评、主张、复现、转帖和版本关系，要求明确端点并拒绝版本／转帖环。`claims` 区分 fact、quote、author-claim、reported-result、replication、commentary、inference、limitation，并关联现有镜头与引文槽；服务校验同 Project 原文身份和既有引文，但不认证科学正确性或已独立复现。`goals` 引用段落与已有 card/focus 的句绑定；Host 保存首次明确采用的音频／脚本／句／目标身份，旧 goal ID 的记录不可由普通更新改写。改音频、重复句、删除或更改目标后显示重绑；明确新身份才重新采用，不保存另一套秒数。
+
+新闻类型保留工作表v1及默认45秒目标；`production-profiles` 提供普通／重点时长指导。`production-review` 按显式 `targetDurationSeconds` 区分普通（≤60秒目标，实际30–60秒制作余量）与重点（>60秒目标，实际90–150秒制作余量），不再把约120秒重点新闻一律报成超时。时长结构检查不能替代实际节奏和受众审核。
 
 六种段落配方当前为v2：原始素材与引用主导画面、短标签、观察→变化→解释节拍，避免把长旁白铺在静态要点卡上；提案返回recipeVersion，指纹包含该版本。它们是创作指导，不是Host自动认证叙事质量或替用户改稿。测量图例在实际可读字号下测量总宽度，足够时横排，否则逐行；不缩小字体以塞入字幕带。原生检查覆盖约84%高图表下方的真实字幕像素，renderer版本10使旧版导出失去当前复用身份，原MP4不删除。
 
@@ -168,9 +180,9 @@ rebuild和sync-news仅可信GUI用户可在当前未归档Project调用，模型
 
 save-lead要求本轮新获取原文的Project来源身份、真实SHA及精确UTF16引文，稳定身份为订阅+规范URL哈希，同任务相同证据/描述/指标幂等；后续观察和用户核对状态/缺口修订留历史。原始结论不声明事实核验完成。X/YouTube入口和原文URL须匹配平台域名；平台标识须为已存原文URL中一个大小写一致的路径段或视频v参数，例如X趋势入口填trending、YouTube频道填@OpenAI、搜索入口填results；不得填完整URL或趋势标签。闭合Schema及巡检提示给出这些示例；身份与指标错误分开返回，身份拒绝列出该原文URL的可用段，指标缺失可为空且不降级校验。入口快照不是其中每条趋势/帖子的独立身份，模型不应为无关体育娱乐条目创建AI新闻线索。可见指标必须逐字存在于已存文本；保存入口、地区/语言范围、来源采集时间和指标原文，无指标明确为空，不推断增长或全站趋势，新社媒线索按原始URL确定post/video/account/topic/trend观察类型，请求类型不符拒绝；旧social缺少可选observationKind时保持原样，不回填。账号公开资料不冒认帖子或趋势，配置地区不冒认实际观察地区。已识别登录跳转、反机器人和错误页只保留来源及受限检查，不生成内容线索，也不得completed/no-new推进游标；可见的局部账号资料可作为注明缺口的观察。finish如提供任一证据字段，必须同时提供sourceId/acquisitionId/quote/quoteStart，缺字段明确拒绝且不写回；partial/restricted/failed可全部省略。完成检查的证据必须是本轮固定或备用入口；仅完整observed、非登录受限、非截断的completed/no-new可与订阅游标原子提交。无新增不得含本轮新增观察，partial/restricted/failed/cancelled/过期/证据或CAS失败均不推进游标，已提交线索保留。
 
-批量增量采集：`library.collection-batch` 是同一个 BMW browser 内的闭合动作，start/cancel/recover 只允许可信素材库界面，Agent 只可 collect 一次、read 已保存结果并 submit 批量线索判断。GUI 在当前Project勾选1–9个关注中来源，显式选择2或3路，绑定当前Session、官方driver和已建立的原生恢复锚点；先持久化uncertain批次再派发唯一官方输入，异常投递不重发。旧单源入口和周期计划不改写、不自动切换为批量或启用。未核对的批次与旧单源live任务互斥。Project/library/collection-batches/commits 为独立不可变分片命名空间，保存批次、来源修订、入口证据、pending、规范URL检查点与逐项核对SHA；历史新闻、素材、快照、稿件、作品、采用关系及旧run格式不变。list用固定索引游标分页，read每页至多20篇短原文，原始全文仍存sources。
+批量增量采集：`library.collection-batch` 是同一个 BMW browser 内的闭合动作，start/cancel/recover 只允许可信素材库界面，Agent 只可 collect 一次、read 已保存结果并 submit／review 批量线索判断。GUI 在当前Project勾选1–9个关注中来源，显式选择2或3路，绑定当前Session、官方driver和已建立的原生恢复锚点；先持久化uncertain批次再派发唯一官方输入，异常投递不重发。旧单源入口和周期计划不改写、不自动切换为批量或启用。可信主框架的批次启动先等待旧后台输入真实清理并重核主框架／Session／取消状态，再直接执行同步准入、持久化和官方输入入队；不先占用浏览器FIFO而把自身判作忙碌。其他浏览器FIFO、用户任务、Project过渡及隔离资源仍阻止启动，实际采集动作继续走原FIFO和后台租约。未核对的批次与旧单源live任务互斥。Project/library/collection-batches/commits 为独立不可变分片命名空间，保存批次、来源修订、入口证据、pending、规范URL检查点与逐项核对SHA；历史新闻、素材、快照、稿件、作品、采用关系及旧run格式不变。list用固定索引游标分页，Agent的collect／read／submit返回使用精简来源头、每页至多4条且每条至多600字符的原文摘录，标明excerptOnly并按nextOffset翻页后一次submit；不让整批长正文被官方运行时折叠为browser无法读取的本地文件。可信GUI仍每页至多20篇及完整来源缺口，原始全文／2400字符快照／SHA与已存检查点不裁剪、不改写。 新批次官方输入使用 collect 的 reviewFormat=compact：一次返回全部至多20篇候选的序号、身份、标题、日期与至多220字符摘录（整包UTF-8上限20KiB，必要时统一缩短摘录），以及每条确定规则筛选结论，不再要求四条分页。固定窗口仍为创建时近72小时；原生核对已存全文SHA，显式带时区原始日期保持偏移，公历日期按UTC±14小时保守区间且要求正文见证；无年份／相对／缺失日期、时区边界或不完整正文保留pending，仅可证明完全在窗口外的原文自动skip。趋势保持未核实观察。后台批次绑定的操作白名单同时允许review，且必须保留完全相同的Project／Session／batch及Agent身份；可信start／cancel／recover不能借此进入后台。review只接收唯一候选index与save+summary或skip；省略项保持pending，原生按冻结原文补齐身份、标题和精确引文，再走既有逐项SHA／证据／检查点提交；不可覆盖规则保留项，不创建事件或新闻推荐。submit旧格式的JSON Schema按save／skip／pending闭合分支，与运行时必需字段及禁用字段一致，防止模型提交skip时夹带标题等字段。旧collect／read分页、旧记录与GUI保持兼容。
 
-一次原生批量动作内部用2–3个独立隐藏、静音、无前景挂载的页面lane并行导航和可见DOM读取，不增加模型工具或Host模型循环，不重用用户页面。九个入口全部检查后，至多20篇正文按来源轮流分配（每源含入口至多20次观察，总页面预算60、截止10分钟）；原文和检查点经串行提交器读取最新revision后CAS写入。正文/署名/原始日期与scope如实保存，未知日期为缺口；冻结近72小时新闻核对范围取批次createdAt，不扩展七天。列表指标变化不改变文章身份；X趋势入口同次原文作为可审阅original供一次submit保存相关观察线索，platformId=trending，强制注明词条与事件关联尚未核实且保持partial/旧游标；它占用20条结果预算，不能自动产生事件。链接提取仅限同次可见正文范围，原文与链接读取期间变化则拒绝混用。正文采集前对固定选择器做最多4秒的有界DOM就绪观察，至多200次检查、每次200个文本节点；未就绪保留缺失范围结果，不扩大正文或自动登录。已知同次themeRefresh替换仅允许保持原始页面域名、路径、视频ID及其他查询参数，最多等待5秒稳定后读取现存页面，不重新navigate或派发输入；其他替换拒绝。量子位没有time标签时，只接受完整正文头部前10行中与独立已获取署名相邻、后接时钟的唯一有效公历日期，保存精确UTF16日期见证，不推断时区或使用抓取时间。固定DOM适配无法读取时保留失败/受限与旧游标，仍可用旧手动入口核对。
+一次原生批量动作内部用2–3个独立隐藏、静音、无前景挂载的页面lane并行导航和可见DOM读取，不增加模型工具或Host模型循环，不重用用户页面。九个入口全部检查后，至多20篇正文按来源轮流分配（每源含入口至多20次观察，总页面预算60、截止10分钟）；只有该动作的collect操作使用600秒MCP传输期限（包含排队时间），read／submit／start等沿用60秒缺省；业务截止、用户取消与真实清理仍独立生效，不重放超时输入。原文和检查点经串行提交器读取最新revision后CAS写入。正文/署名/原始日期与scope如实保存，未知日期为缺口；冻结近72小时新闻核对范围取批次createdAt，不扩展七天。列表指标变化不改变文章身份；X趋势入口同次原文作为可审阅original供一次submit保存相关观察线索，platformId=trending，强制注明词条与事件关联尚未核实且保持partial/旧游标；它占用20条结果预算，不能自动产生事件。链接提取仅限同次可见正文范围，原文与链接读取期间变化则拒绝混用。批量专用隐藏lane的导航仍保留25秒硬截止，但主文档提交后，以固定主frame的有界读取等待文档解析完成（interactive／complete）、固定正文范围、样式表就绪及至少250毫秒文本稳定，不等待无关defer或load事件；正文已就绪则停止无关资源加载，并等待原生loadURL实际结束，停止不排空时必须真实关闭页面，不以Promise竞速提前释放FIFO。普通用户页面与其他导航路径保持原加载语义。明确HTTP401/403/429或可见访问墙可提前转受限证据；没有main的访问墙使用固定body范围保存，并不冒充文章正文。同批以订阅ID隔离受限熔断，只拒绝该订阅尚未开始的排队URL，所有pending与旧游标保留，已在途任务仍真实清理；普通网络超时不自动推断整源受限，新批次重新观察，不永久封禁。正文采集前对固定选择器做最多4秒的有界DOM就绪观察，至多200次检查、每次200个文本节点；未就绪保留缺失范围结果，不扩大正文或自动登录。已知同次themeRefresh替换仅允许保持原始页面域名、路径、视频ID及其他查询参数，最多等待5秒稳定后读取现存页面，不重新navigate或派发输入；其他替换拒绝。量子位没有time标签时，只接受完整正文头部前10行中与独立已获取署名相邻、后接时钟的唯一有效公历日期，保存精确UTF16日期见证，不推断时区或使用抓取时间。固定DOM适配无法读取时保留失败/受限与旧游标，仍可用旧手动入口核对。
 
 每源pending最多200个URL；超过100个积压时下一批只补读已存pending、不读取新入口，以免有界队列静默丢弃未读。只在入口完整、链接范围未截断、全部候选已保存或明确跳过后推进有界范围检查点；空白、无链接、partial/restricted/failed/cancelled均不表示no-new。Agent一次submit多条save/skip/pending，逐项复核原文SHA与精确引文、社媒URL及可见指标；核对SHA按固定字段顺序和可选空值规范化，相同内容不因JSON字段顺序重排产生重复提交；新的决策不能覆盖已提交核对。事件整理、归并拆分、推荐及可信选题权限保持。用户任务沿原后台yield取消输入并等待所有页面/读写实际排空；页面清理失败保留隔离和精确dispatch对应的执行域，可信recover只清理旧资源，不重新派发。无dispatch回执而运行时仍忙或存在unknown输入时拒绝恢复，不能把关闭页面视为官方输入已结束。
 
@@ -269,9 +281,21 @@ Bridge 验证认证、Session、Project 及目录，按 FIFO 执行；Project �
 
 视频取材增加 Host 生成的可选 `videoIdentity`（version/platform/targetId/resourceId），保存在来源候选、采集证据和媒体验证 sidecar；历史来源无该字段仍可读取，获取时必须重新绑定当前目标。身份不是模型参数。YouTube 以页面视频 ID、播放器 videoData/playerResponse 的同一 ID、播放许可和时长共同绑定；广告、错误页或 ID 不一致不暴露可用视频。X 以原帖 URL、主帖时间或可见日期链接（兼容无 data-testid/time 的新页面）、非引用/非广告播放器的封面媒体 ID 绑定同 ID 的 twimg 资源，回复与错误播放动画不成为目标。微博专用视频页或显式范围只接受一个可见播放器；普通信息流必须先明确范围。通用网页保留 HTTP/HLS 原生入口。发现结果仅为候选；转移期间和提交前重验 URL、范围与身份，录制逐帧及结束前复核，变化即失败并回滚本次资源，不静默改用录制。
 
-YouTube `media.preserve` 支持同一有效播放器响应中直接提供的完整分离音视频 URL：由 Host 选择唯一默认音轨语言组中的最高码率音轨；有多个默认语言、无音轨、仅签名密文或没有可用直链时明确失败；当前 SABR/UMP 响应不是可独立下载的完整音视频文件，不进入 MP4/WebM 合并。媒体列表分别返回目标身份与 directResources/deliveryIssue，身份绑定成功不能当作下载可用。直接格式 URL 的 itag、标称 dur、clen/lmt（若双方提供）必须与同一播放器响应的格式元数据吻合。模型不能提供任意音轨 URL、脚本、凭据或签名解密程序。原生 Mediabunny 将两轨编码包复制到 MP4，保存两份原始字节、URL、哈希与身份，独立解复用核对每轨包数、负载哈希、PTS、零点及结束覆盖；错轨、多轨、空轨、范围/时长不符或部分 HTTP 响应均拒绝并清理。`media.download` 遇到绑定的视频独轨提示改用 `media.preserve`，避免静默生成无声文件。合并不重编码；30秒来源预览仍沿现有原生转换、完整解码和入库流程。清理失败时媒体资源保持隔离，`media.record.stop` 显式恢复成功才释放。无 yt-dlp、FFmpeg CLI、额外工具或 TikTok 专用适配。
+YouTube `media.preserve` 保留同一有效播放器响应中完整分离音视频直链的获取：直接格式 URL 的 itag、标称 dur、clen/lmt（若双方提供）须匹配原始格式元数据，Host 只选择唯一默认音轨语言组的最高码率音轨。缺轨、多默认语言、签名密文或缺少支持的交付见证明确失败。原生 Mediabunny 将两轨编码包复制到 MP4，独立解复用核对每轨包数、负载哈希、PTS、零点及结束覆盖；合并不重编码。`media.download` 遇到绑定的视频独轨或 SABR 提示改用 `media.preserve`，避免静默产生无声文件或将 UMP 命名为 MP4。
 
-`media.preserve` 只接受当前 Project 页面 DOM/performance/网络已发现的 HTTP(S) 媒体 URL。全页媒体发现纳入 HLS 清单 MIME/URL，范围发现仅补入该范围目标播放器绑定的网络资源，不拼入其他区域媒体。HLS 保全在宿主受限浏览器 Session fetch adapter 下保存原始 master/media 清单、初始化与分段字节、URL、SHA-256、大小与标称时长；选择并记录最高带宽变体，保留其独立音轨。最多32变体、2000分段、512 MiB、30分钟、120秒；加密、直播、字节范围、不连续、缺片及不能明确保留的其他轨道拒绝。派生 MP4 仅复制编码包，重新解复用验证每轨包数、编码负载哈希和 PTS 范围，清单时长与轨道范围不符则回滚。原始分发字节与派生封装分别列出，完整分发版本不等于上传母版；支持平台的候选先按目标身份过滤，仍需以正文和帧核对内容。Project/页面变化或取消先排空请求和文件后清理本次资源，不释放未完成的 FIFO。直接 HTTP 只声明完整响应，不凭响应结束声明完整视频。
+当前目标播放器响应可另提供 `sabr` 原生保全候选，媒体列表标记 preservable/nativeSabr，和完整直链的 directResources 分开，不宣称候选已经获取成功。Host 仅在当前 YouTube 页内存观察真实 Googlevideo POST：每页最多8条、总计48条、120秒有效，每体最多256 KiB；完整导航、换视频或 Renderer 销毁即清空。同视频主题/跟踪参数的 in-place 变化保留候选，但页所属、CPN、播放器 config、资源 ID、当前目标和格式仍须一致。无真实同播放器请求时要求先短暂播放原视频再重新发现，不猜地址或解密签名。真实 POST、临时流保护验证内容及播放器 config 仅在受限 Host/原生协议 worker 内使用，不保存到证据、诊断或模型结果，不读 Cookie、凭据或页面存储。
+
+原生 SABR/UMP 由固定版本 MIT `googlevideo@5.0.0` 在专用 worker 中处理，网络仍经过当前受限浏览器 Session。接收前按视频 ID、itag/lmt/xtags 核初始化和媒体头；核分段长度、重复负载、序号与每一段的连续覆盖，禁止仅以首尾时间代替中间完整性。bootstrap POST 可以不指定 preferred formats，但其中提供的 preferred/init/buffered 格式必须属于当前响应。选择预算内最高不超过1080p的 AVC 与唯一默认语言的非DRC AAC；预算同时考虑存档上限、原始两轨、重新封装和剩余磁盘余量，不以截短内容满足空间限制。保存原始编码轨道和安全哈希证明，证明口径为 YouTube-SABR-encoded-tracks，不冒称完整 UMP HTTP 正文字节或上传母版；精确轨道结束覆盖以格式 approxDurationMs 验证，页面整数秒仅作容差一致性检查。两轨通过相同 packet-copy 与独立包级校验才提交 MP4。只支持该有界有限点播子集；直播中、预告、DRM、流保护拒绝或不完整交付均失败；历史直播标记只在当前播放器非直播/非预告、有限时长与目标一致、单一可定位窗口覆盖零点到全长且官方播放器提供已过去的有效开始及结束时间时，才按固定回放接收。每次身份检查与验证刷新继续核这些条件，滚动窗口或缺少结束证明拒绝，不能以部分字节冒称整片。受限 SABR POST 的 Origin 只能由 Host 从当前页面派生；网站要求更新验证时，只在当前页、原 CPN、config、client 与选定格式版本不变时，等待同播放器后续真实 POST 中不同的临时验证值，每次最多15秒、最多3次；无新值或身份变化即失败，绝不生成或破解验证值。取消仍等待刷新 RPC、worker 与网络实际排空。2026-10-22 的19秒与60秒公开样本已完成真实双轨保全、合并与全片解码，最新耗时分别1.331秒和98.802秒；约10分钟样本首次遭网站流保护拒绝，复测验证通过但796.930秒发生网络中止，两次均已清理部分文件。随后同一日期的94分钟GTC目标在严格已结束回放门槛与本地Bridge通信修复后，实际通过完整双轨保全、无重编码合并、连续包级核验与元数据检查（1585654747字节、5637.7353秒）；原始双轨保留。这是该目标的实际业务证据，不代表所有长片或连续全片解码/听审通过；十分钟样本失败记录仍保留，人工听感另列待验。取消或失败须终止并等待协议 worker 真实退出、排空网络及文件，再回滚本次资源；服务端长 backoff 不能成为后台遗留任务。清理失败保持隔离，仅 `media.record.stop` 显式恢复成功后释放。无 yt-dlp、FFmpeg CLI、额外模型工具或 TikTok 专用适配。
+
+`media.preserve` 只接受当前 Project 页面 DOM/performance/网络已发现的 HTTP(S) 媒体 URL。全页媒体发现纳入 HLS 清单 MIME/URL，范围发现仅补入该范围目标播放器绑定的网络资源，不拼入其他区域媒体。保全与解码预算独立：原始 HTTP 文件流式落盘并增量 SHA-256，不将完整长文件拼入内存；原始输入合计最多4 GiB，有限音视频/HLS时长最多6小时，HLS最多32变体、20000分段，每轨最多200万编码包，原始下载最多两小时、工具传输121分钟；本地编码包分段仍为20分钟原生任务及21分钟传输预算。清单仍最多1 MiB、单分段32 MiB；原件、组合轨道及派生封装分别占磁盘。宿主受限浏览器 Session fetch adapter 保存 master/media 清单、初始化与分段字节、URL、SHA-256、大小与标称时长；选择并记录最高带宽变体，保留独立音轨。加密、直播、字节范围、不连续、缺片及不能明确保留的其他轨道拒绝。派生 MP4 仅复制编码包，重新解复用验证每轨包数、编码负载哈希和 PTS 范围，清单时长与轨道范围不符则回滚。原始分发字节与派生封装分别列出，完整分发版本不等于上传母版；支持平台的候选先按目标身份过滤，仍需以正文和帧核对内容。Project/页面变化或取消先排空请求和文件后清理本次资源，不释放未完成的 FIFO。直接 HTTP 只声明完整响应，不凭响应结束声明完整视频。
+
+`media.inspect` 可只读检查4 GiB／6小时存档的容器和轨道元数据，不能把解码支持声明为全片已解码。新增 `media.segment {artifactId,segmentRange:{startSeconds,endSeconds}}` 从同Project存档用 Mediabunny 强制复制编码包生成本地 MP4，不允许网络、模型指定路径、丢轨或隐式重编码。请求最长29分钟，关键帧边界每端最多扩展30秒；产物最多512 MiB／30分钟，并重新解析核对轨道编码、实际覆盖与时长。返回原件SHA、请求／实际原片范围、输出时间到原片的偏移、输出SHA和JSON证明，分段边界可能重叠，转写须按映射去重并核对全片无缺口。取消或失败删除本次产物，清理失败沿用媒体隔离与显式恢复。原存档保留；后续完整解码、帧采样、转写和剪辑仍使用已有有界处理器。`library.sources acquire/preserve` 仍是解码预览入库流程，对已知长于30分钟的候选在下载前明确要求改走上述完整存档流程；指定短预览不能放行对整个长输入的解码，避免下载后因解码限制删除原件。
+
+公开 `media.preserve` 回复仅返回前20份资源及所属 Artifact ID，另列总数和截断标记；完整资源账本保存在 `proofArtifactId`，不会将20000个分段回灌模型上下文。内部来源获取保留完整所属列表和清理能力，不使用公开摘要进行回滚。
+
+内部 MCP 到认证 loopback Bridge 的 HTTP 使用专属有界传输，响应头/正文不继承通用客户端的五分钟等待上限；每次动作的 AbortSignal 仍统一执行默认、分段或存档期限及取消。只允许本机明确 Bridge origin 的 tool/execute，拒绝重定向；不会把该 HTTP 客户端作为模型能力。Qoder 官方 stdio 工具调用配套设122分钟上限，超过 BMW 最长121分钟通信期限，避免默认空闲监控提前截断两小时存档；连接/目录预检仍独立短限。EOF 中止未完成调用并排空私有 HTTP 连接。
+
+短来源的 `library.sources acquire/preserve` 除原HTTP证据外，仅对已确认YouTube候选接收 `YouTube-SABR-encoded-tracks` 原生证明：返回身份必须与候选相同，completeVod、completeSeparatedTracks均为真且reencoded为假，所属文件、证明文件及SHA继续校验。缺失／跨视频／跨平台身份、不完整轨道或重编码声明拒绝并清理本次资源；这不放宽长来源的存档与处理分离要求。
 
 `media.audio.sample` 按输入文件 PTS 提取0.001–10秒单音轨片段，保留原生采样率/声道，无增益、重采样或混音，仅PCM16量化。保存输入/输出SHA、实际样本数、RMS/peak、量化越界样本和缺失帧，按100ms窗口列指标；无音轨和越界明确失败。`media.audio.preview` 仅打开同Project有界WAV试听控件，默认不自动播放，不能将打开播放器记为人工或模型已听审。模型只接收文字/图像的驱动不得宣称实际核听，技术指标也不构成听感、配乐或同步判断。当前Codex ChatGPT登录路径的官方音频输入限制仍是未解决的运行时约束；不添加其他模型循环、额外工具或暗中音频上传。
 
@@ -292,6 +316,7 @@ Mediabunny `1.61.0` 与浏览器 WebCodecs 为媒体底座；Canvas/WebAudio/Web
 | media.screenshot / media.record | 当前页面截图与浏览器录制；明确录制状态、停止和保存结果 |
 | media.video.capture | 页面真实视频采集；达到时长上限属于截断结果，不宣称完整 |
 | media.preserve | 保存当前页发现的 HTTP 媒体或完整 HLS VOD 的分发字节、清单/分段哈希及无重编码封装证据；不声称作者上传母版 |
+| media.segment | 从完整Project存档复制有界编码包分段；保存原件哈希、原片与输出时间映射，后续单独解码／转写 |
 | media.audio.sample / media.audio.preview | 有界原生采样率/声道 PCM16 片段、信号指标及不自动播放的试听窗口；与模型实际听审分开 |
 | media.inspect | 当前 Project Artifact 的媒体轨道、时长、尺寸与编码检查 |
 | media.frames.sample | 依据媒体时间抽 PNG；时间/数量有界，保存为 Project Artifact |
@@ -757,6 +782,14 @@ remove-reference 是封闭请求，必须包含 draftId/expectedRevision/referen
 
 ### Project 素材索引与区间语音检索
 
+全片转写增加 materials 的 transcribe-source/source-batch-status/recover-source-batch 三个封闭子操作；精确帮助支持 forOperation:materials + forSubOperation。先通过 media.preserve 完整归档，再以 Project artifactId/current index revision 开始；默认 base/auto，显式支持 small、zh/en。每批至多32个固定900秒原生 packet-copy 工作段，每次至多8段、18分钟预算；原件至多6小时／4GiB，仅元数据检查使用归档预算，单段仍遵守30分钟解码限制。分段记录原件SHA、区间、实际起点偏移、输出SHA和证明；每段按既有180秒原生ASR、至多十块／10分钟索引任务处理，逐块CAS保留进度。
+
+Material index version1 新增可选 sourceBatches（Project最多8批），每批有所属Session、独立revision、固定源/模型/语言、单元、pending/complete/interrupted及inFlight。先保存inFlight再执行原生操作；正常取消等待真实清理，保留已提交段／ASR证据，不自动重放。遗留inFlight标为uncertain，需原生无活动／隔离后显式recover；recover本身不重做，清理未知或仍忙拒绝。显式续做重新核原件、工作段／时间映射和原始ASR证据哈希，只处理未完成块；源／模型／语言改变拒绝绑定旧批。状态只报告保存范围，不重新认证文件；续做实际重核。处理范围映射回原片时钟，返回缺口及零识别范围；complete表示全片处理覆盖，不认证逐字准确、静音、全片观看或人工听审。原始转写仍通过现有索引／search按本地文件时钟读取，并使用单元offset映射，尚未新增合并全文导出。
+
+原生语音归一化区分 SPEECH_DECODE_CLOCK/FORMAT/BUDGET 错误。仅首个AAC缓冲可在一个1024采样编码帧及两采样容差内跨源零点，须实际跨零、长度有界；丢弃负时间PCM，保留源时钟，并记录可选discardedHeadFrames（输入采样帧数，至多1026）。后续逆序／重叠、其他codec负时钟、过量前滚继续拒绝；不通过跳过首0.1秒或放开时钟检查回避错误。隔离复制的既有失败GTC段已实际验证0–180秒完整输出2880000个16kHz样本、丢弃784个负时间输入采样帧；这不是重新跑完全片或人工听感通过。
+
+完成的合法 ASR 区间允许零识别段，仍保存归一化PCM、原始JSON、日志及SHA，不补造文字。素材索引以 `segmentCount:0` 保存已处理范围，返回 `no-speech-detected` 和 `unrecognizedRanges`；这只表示本次ASR没有返回讲话段，不认证静音或没有讲话，也不能当作已准确转写。已完成空结果不自动重放，人工核听和必要的显式重新识别另记。
+
 `materials` 是现有 `video.studio` 内的封闭操作；list/index/set-metadata/search 使用 Project 素材 ID 与独立索引 revision。索引保存源 SHA、实际媒体尺寸/时长/音频终点、至多三张实测缩略图、人工或 Agent 编写的标题/说明/标签、原始 ASR 区间证据，以及当前会话可见草稿的使用关系。来源标题/URL 来自现有 Project 来源清单，仅表示记录关系；不做来源事实认证或视觉语义搜索。GUI 从“更多”打开索引、编辑说明、搜索并在原时间区间试听；未保存输入通过工作区已有 flush/离开保护保存。
 
 每个 Project 最多 200 件、索引 JSON 至多 4 MiB、每件最多十段互不重叠的语音区间。源文件至多 1800 秒；单次 ASR 归一化区间至多 180 秒，原始 ASR 保持 normalized-interval-seconds，检索结果只加实测源起点，明确标为 source-file-seconds。单次索引至多十段，识别循环十分钟预算，媒体检查另沿各原生 worker 的限额，下一段开始前保留一分钟；每段完成以 CAS 单独提交，已完成进度保留，取消或失败只清理当前未提交产物，不隐式重试。完整音轨调用仍保持 180 秒限制。搜索每页 1–50 项，续页必须携带索引 revision，源读取累计至多 512 MiB、语音证据至多 16 MiB。源/证据 SHA 变化、符号链接、损坏索引、并发说明编辑均拒绝覆盖；原始证据和原文件保留。自动词级精度、可用性和时间批准门仍关闭。
@@ -812,11 +845,11 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 ### 当前 Browser Action 清单
 
-- BMW 核心 Browser Actions（42）：`status`、`help`、`tabs.list`、`tabs.open`、`tabs.show`、`tabs.close`、`navigate`、`back`、`forward`、`reload`、`observe`、`click`、`type`、`wait`、`key`、`hover`、`page.diagnostics`、`page.media.list`、`page.viewport.set`、`media.screenshot`、`media.download`、`media.preserve`、`media.video.capture`、`media.inspect`、`media.audio.sample`、`media.audio.preview`、`media.frames.sample`、`media.capture.frames.sample`、`media.convert`、`media.image.inspect`、`media.image.annotate`、`media.image.draw`、`media.record.start`、`media.record.stop`、`project.context`、`project.memory.append`、`project.tasks.append`、`schedule.list`、`schedule.create`、`schedule.update`、`schedule.remove`、`schedule.run`
+- BMW 核心 Browser Actions（43）：`status`、`help`、`tabs.list`、`tabs.open`、`tabs.show`、`tabs.close`、`navigate`、`back`、`forward`、`reload`、`observe`、`click`、`type`、`wait`、`key`、`hover`、`page.diagnostics`、`page.media.list`、`page.viewport.set`、`media.screenshot`、`media.download`、`media.preserve`、`media.segment`、`media.video.capture`、`media.inspect`、`media.audio.sample`、`media.audio.preview`、`media.frames.sample`、`media.capture.frames.sample`、`media.convert`、`media.image.inspect`、`media.image.annotate`、`media.image.draw`、`media.record.start`、`media.record.stop`、`project.context`、`project.memory.append`、`project.tasks.append`、`schedule.list`、`schedule.create`、`schedule.update`、`schedule.remove`、`schedule.run`
 - feature-library Feature Browser Actions（9）：`library.materials`、`library.sources`、`library.news`、`library.research`、`library.exports`、`library.streams`、`library.collecting`、`library.collection-batch`、`library.recommendations`
-- feature-video Feature Browser Actions（4）：`video.compose`、`video.narrate`、`video.studio`、`video.settings`
+- feature-video Feature Browser Actions（5）：`video.compose`、`video.narrate`、`video.studio`、`video.review`、`video.settings`
 
-- video.studio 操作（77）：`news-topics`、`propose-news-topics`、`select-news-topic`、`news-guide`、`record-production-review`、`precomposition-status`、`precompose`、`production-profiles`、`propose-type`、`adopt-type`、`production-read`、`production-review`、`plan-impact`、`analysis`、`diagnose-timing`、`review-status`、`record-export-review`、`read-scene`、`read-preparation`、`describe-edit`、`guide`、`estimate-speech`、`suggest-recording-plan`、`apply-recording-plan`、`narrate-local`、`apply-source-narration`、`validate-source-narration`、`materials`、`describe-template`、`describe-schema`、`read-document`、`compatibility`、`validate-edit`、`apply-edit`、`migrate-document`、`remove-reference`、`prepare-reference`、`read-reference`、`set-reference-analysis`、`apply-reference-notes`、`propose-review`、`adopt-review`、`dismiss-review`、`undo-review`、`split-scene`、`restore`、`recognize-source`、`read-source-speech`、`apply-source-captions`、`detach-source-captions`、`set-caption-translations`、`align-speech`、`read-speech`、`correct-speech`、`source`、`export-citations`、`list`、`create`、`read`、`delete`、`update`、`narrate`、`narrate-pending`、`check`、`export-captions`、`export-cover`、`read-material`、`suggest-focus`、`review-export`、`render`、`assets`、`inspect`、`attach`、`open`、`context`、`configure`、`save-template`。字段、用户专属操作与归属检查见上方契约。
+- video.studio 操作（78）：`news-preparation`、`news-topics`、`propose-news-topics`、`select-news-topic`、`news-guide`、`record-production-review`、`precomposition-status`、`precompose`、`production-profiles`、`propose-type`、`adopt-type`、`production-read`、`production-review`、`plan-impact`、`analysis`、`diagnose-timing`、`review-status`、`record-export-review`、`read-scene`、`read-preparation`、`describe-edit`、`guide`、`estimate-speech`、`suggest-recording-plan`、`apply-recording-plan`、`narrate-local`、`apply-source-narration`、`validate-source-narration`、`materials`、`describe-template`、`describe-schema`、`read-document`、`compatibility`、`validate-edit`、`apply-edit`、`migrate-document`、`remove-reference`、`prepare-reference`、`read-reference`、`set-reference-analysis`、`apply-reference-notes`、`propose-review`、`adopt-review`、`dismiss-review`、`undo-review`、`split-scene`、`restore`、`recognize-source`、`read-source-speech`、`apply-source-captions`、`detach-source-captions`、`set-caption-translations`、`align-speech`、`read-speech`、`correct-speech`、`source`、`export-citations`、`list`、`create`、`read`、`delete`、`update`、`narrate`、`narrate-pending`、`check`、`export-captions`、`export-cover`、`read-material`、`suggest-focus`、`review-export`、`render`、`assets`、`inspect`、`attach`、`open`、`context`、`configure`、`save-template`。字段、用户专属操作与归属检查见上方契约。
 
 ### 当前自动化测试清单
 
@@ -843,11 +876,17 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 - `YouTube binds URL and both tracks to the same target, selects one default language and rejects foreign/ambiguous evidence`
 - `X network resources require the original post media identity; replies, unrelated animations and changed identity fail closed`
-- `A correctly identified YouTube target without full-file URLs reports unsupported delivery instead of accepting SABR or another video`
+- `A correctly identified YouTube target without observed delivery refuses guessed SABR or another video`
+- `Only a same-target YouTube response can advertise an explicit native SABR resource`
 
 #### `packages/agent-ui/test/studio-composer-scope.test.ts`
 
 - `Composer pins a visual piece at first input, preserves owner drafts and clears piece identity for broader scopes`
+
+#### `packages/browser-capability/test/bridge-http.test.ts`
+
+- `Private Bridge jobs bypass the global header/body timer but retain caller cancellation and closed loopback destinations`
+- `Private Bridge transport never follows an authenticated redirect`
 
 #### `packages/browser-capability/test/bridge-shutdown.test.ts`
 
@@ -856,6 +895,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `packages/browser-capability/test/browser-deadline.test.ts`
 
+- `Only bounded batch collect receives its ten-minute transport budget; reads, admission and malformed requests retain the default`
 - `browser requests are finite while media jobs retain their long budget`
 
 #### `packages/browser-capability/test/browser-host.test.ts`
@@ -889,6 +929,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Collection page pool isolates ordinary source errors but aborts on cleanup failure and reports explicit recovery`
 - `Collection link discovery uses only visible scoped HTTP links, normalizes fragments and reports its bounded range`
 - `Collection navigation equivalence permits theme refresh and query serialization while preserving video, origin and remaining query identity`
+- `Confirmed access walls stop only queued URLs of the same subscription for this batch; timeouts remain ordinary pending failures`
 
 #### `packages/browser-capability/test/mcp-tool-catalog.test.ts`
 
@@ -913,6 +954,9 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 - `media adapter reduces referrer and strips secrets across bounded redirects`
 - `media adapter honors no-referrer and refuses non-web redirects and redirect loops`
+- `Media POST keeps bounded SABR protobuf bytes and refuses arbitrary bodies, origins and redirect rewrites`
+- `Native POST preserves binary data and close-before-response cannot release an unfinished response`
+- `Native cancellation still aborts a live response after outgoing close and waits for its destruction`
 
 #### `packages/browser-capability/test/page-navigation.test.ts`
 
@@ -921,6 +965,13 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Failed native close reports quarantine and only a later explicit close with destruction recovers`
 - `A user-owned page is retained after failed stop until explicit close recovery`
 - `Already cancelled navigation never starts native loading and an ordinary load error does not leave listeners`
+- `Collection DOM readiness stops and drains asset loading, while ordinary navigation still waits for load`
+- `A collection ready probe cannot release a still-running native navigation or leave late renderer work`
+
+#### `packages/browser-capability/test/preservation-result.test.ts`
+
+- `Long archive browser receipts remain bounded without losing the complete internal rollback ledger`
+- `Short native receipts retain every resource and malformed results are refused`
 
 #### `packages/browser-capability/test/renderer-read.test.ts`
 
@@ -953,12 +1004,20 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Agent tab cap closes only least-recent background Agent tabs`
 - `Saved research ownership survives restore, bounds Agent pages and preserves the visible page`
 
+#### `packages/browser-capability/test/youtube-sabr-observation.test.ts`
+
+- `SABR observations are private, bounded to registered page identity/session nonce, expire and clear on navigation`
+- `Same-video theme navigation retains the native witness; target changes and full reloads clear it`
+- `Finite completed broadcasts require a past end and a complete seekable window; active and incomplete streams remain refused`
+- `The actual bounded player observation admits an ended replay and rechecks rolling/live state before retaining its witness`
+
 #### `packages/feature-library/test/collection-batch.test.ts`
 
 - `Closed batch contracts and trusted admission retain exact owner, anchor, revision and user priority`
 - `Uncertain official delivery is persisted before enqueue and never replayed; explicit rejection is distinct`
 - `Nine configured sources use bounded real-store collection, fair article slots and original/legacy preservation`
 - `Restricted, blank, incomplete, missing links and foreign redirects retain cursor and never become no-new`
+- `Agent batch pages avoid runtime output folding while every original and full GUI gap remains intact`
 - `Incremental URL checkpoints ignore changed entry metrics without losing newly saved originals`
 - `Partial decision failures preserve per-item saved receipt and retry does not duplicate the accepted lead`
 - `Pending links survive cancellation and a fresh explicit batch; cleanup must drain and quarantine recovery never replays input`
@@ -968,6 +1027,9 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Restricted or incomplete next entries preserve all prior 1–100 pending URLs and the previous successful cursor`
 - `Observed truncated article originals can save leads with explicit gaps but stay pending and never advance source cursors`
 - `Qbit publication fallback admits only one valid complete civil date beside the independent byline with an exact UTF16 witness`
+- `Compact review covers the whole batch once, keeps uncertain dates pending, and supplies immutable evidence`
+- `News screening uses frozen publication intervals, excludes proven old originals and retains uncertainty`
+- `Background batch scope admits compact review only for its exact agent Project, Session and saved batch`
 
 #### `packages/feature-library/test/collection-scheduler.test.ts`
 
@@ -1036,6 +1098,11 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `A fast official completion still persists its dispatch identity without overwriting the completed collection`
 - `Social challenge originals stay inspectable but cannot become content leads or advance a successful cursor`
 
+#### `packages/feature-library/test/source-preservation-basis.test.ts`
+
+- `Source acquisition accepts complete native SABR only for its already confirmed identical YouTube target`
+- `SABR source acquisition rejects absent, foreign, cross-platform or malformed delivery identities`
+
 #### `packages/feature-library/test/source-presets.test.ts`
 
 - `Fixed catalog is closed, HTTPS and platform checked, with official/research/reporting and X/YouTube observation coverage`
@@ -1053,7 +1120,15 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `news research transcribes one measured short preview but rejects longer or cached long sources before ASR or index writes`
 - `material index durably chunks long source clocks, searches exact original intervals and reuses validated completed work`
 - `material background chunks reject GUI metadata CAS races, preserve committed parts and clean only new proof outputs`
+- `Zero-result intervals retain raw ASR evidence and coverage without fabricated text, silence claims or repeated processing`
 - `material index paths, cursors and intervals stay closed and symlink catalogs are never replaced`
+
+#### `packages/feature-video/test/news-preparation.test.ts`
+
+- `News preparation gates narration/render on actual current scene evidence and preserves generic Studio behavior`
+- `Static MP4, missing source sound, changed PNGs and unrelated source ranges cannot establish preparation`
+- `Preparation invalidates script, citation, framing, source bytes and CAS changes without rewriting prior records`
+- `Closed preparation API, separate journal ownership, policy strengthening and bounded model paging stay explicit`
 
 #### `packages/feature-video/test/news.test.ts`
 
@@ -1081,6 +1156,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `packages/feature-video/test/production.test.ts`
 
+- `News duration review distinguishes the default 45-second brief from an explicit two-minute focus target`
 - `Versioned production worksheets and research diagrams require 2.10 and round-trip without losing authored fields`
 - `Type adoption is explicit, rechecks actual source bytes and preserves GUI edits and current revision`
 - `Impact matrix distinguishes voice, visual, captions and cover changes and binds plans to current file hashes`
@@ -1096,6 +1172,13 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Failed analysis pages clean new files, require explicit retry, and cancellation preserves committed progress`
 - `Analysis exports paginate by actual UTF8 bytes and retain every long Chinese review note`
 - `Analysis CAS preserves competing edits and refuses symlinked storage`
+
+#### `packages/feature-video/test/source-transcript.test.ts`
+
+- `One bounded native source request segments locally, batches ASR, resumes committed units and reports full original-time coverage`
+- `Batch cancellation preserves completed ASR chunks, awaits cleanup and resumes only on an explicit new request`
+- `In-flight checkpoints require explicit recovery after native cleanup; foreign sessions and changed original bytes are refused`
+- `Source batching is unavailable during news research and has a closed bounded request contract`
 
 #### `packages/feature-video/test/studio-materials.test.ts`
 
@@ -1115,6 +1198,8 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `packages/feature-video/test/video-document.test.ts`
 
+- `Preparation summaries expose missing citations without certifying video motion; timeline identifies primary objects and edit clock`
+- `Edit failures identify rejected fields and recovery operations without accepting aliases or partially changing the draft`
 - `Agent context, discovery and published schema advertise the same supported document versions`
 - `Version 2.9 scientific data survives editable commands, saved documents and original-clock scene/object cuts`
 - `Version 2.8 entry packaging and six editable staggered cards use bounded Agent transactions and retained clocks`
@@ -1144,6 +1229,11 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Bounded captions and card edits preserve Host speech records and atomically bind current targets under CAS`
 - `Typed independent edits convert global time to owning scene and preserve original fade clocks on trim/split`
 - `loupe mode roundtrips in 2.3 and cannot be disguised as a previous document version`
+
+#### `packages/feature-video/test/video-review.test.ts`
+
+- `Video audit rejects caller authority, catches sparse closing cards and cannot reuse old or foreign run approval`
+- `Internal video action binds the actual native export, rejects stale owners and revisions, and records sparse ending failures under its Host run`
 
 #### `packages/feature-video/test/video-settings.test.ts`
 
@@ -1482,6 +1572,8 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Preservation fails closed and rolls back all owned resources on unsupported playlists, partial responses and cancellation`
 - `Separated transfer refuses partial/missing audio, identity mismatch and truncated responses, retaining existing artifacts`
 - `Failed preservation cleanup stays recoverable without following a replaced Project directory`
+- `Long storage and bounded decoding have independent budgets and segment contracts`
+- `HTTP archive writes incrementally before EOF and rolls back a truncated stream`
 
 #### `packages/media-native/test/media-processing.test.ts`
 
@@ -1520,6 +1612,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Speech requests admit fixed models and Project artifacts, never executable, cache, prompt or CLI options`
 - `ASR parser preserves out-of-audio/overlapping boundaries and token probability without claiming word accuracy`
 - `Speech evidence rejects fabricated approval, foreign hashes, frame clocks and silently cleared warnings`
+- `Completed ASR may report zero recognized segments while retaining measured audio and raw evidence provenance`
 - `Speech mapping uses actual source trim/rate, narration offset and cumulative film time without clamping hidden anchors`
 - `Speech normalization replies require actual bounded sample provenance`
 - `Normalized WAV outputs reject fake headers/sample counts and preserve original Project input`
@@ -1529,6 +1622,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Speech subprocess keeps UTF-8 log characters intact across raw pipe chunks`
 - `Speech language is an explicit fixed choice and English or automatic ASR retains source language`
 - `Opus final packet padding is bounded and recorded without moving the original audio clock`
+- `A single AAC buffer crossing source zero may retain bounded preroll evidence without skipping source time`
 
 #### `packages/media-native/test/video-element-capture.test.ts`
 
@@ -1598,6 +1692,20 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Qwen rejects untrusted download origins, missing credentials, provider errors, excessive bytes and invalid WAV without retries`
 - `Qwen cancellation cancels an in-flight audio body and does not retry synthesis`
 
+#### `packages/media-native/test/youtube-sabr.test.ts`
+
+- `SABR admission binds the actual binary POST configuration and formats to one finite YouTube target`
+- `Complete default-language format selection respects 1080p, archive and reserved-disk budgets`
+- `UMP validates fragmented media identity, exact segment length and complete separate tracks`
+- `UMP rejects foreign video/version/track, truncated media and changed duplicate segments`
+- `First and last segments cannot hide a missing or overlapping middle interval`
+- `Cancellation terminates a protocol worker in server backoff and retains existing Project files`
+- `Bootstrap POSTs may omit preferred tracks, but initialization/buffered formats cannot name foreign versions`
+- `A failed native drain quarantines only this acquisition until explicit cleanup recovery succeeds`
+- `A server attestation request may reuse only a newly observed same-player token, without persisting it`
+- `A server refresh cannot change the target or selected format version before another POST`
+- `Native attestation refresh refuses a different playback nonce even for the same video`
+
 #### `packages/platform/test/agent-history-store.test.ts`
 
 - `display history survives restart, keeps bounded ordered streaming and cannot replace submission receipts`
@@ -1636,6 +1744,11 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 - `Feature activity exposes owned runtime event facts, clears completed tools and blocks dispatch until actual cleanup is released`
 - `Assistant controls persist per-Project driver selection, reject foreign Sessions and exclude transitions during a turn`
+
+#### `packages/platform/test/assistant-tasks.test.ts`
+
+- `Internal review queues behind its caller, persists trusted task metadata, deduplicates and waits for real cleanup`
+- `Internal review refuses unverified catalogs, changed models and uncertain delivery without replay`
 
 #### `packages/platform/test/background-collection.test.ts`
 
@@ -1867,3 +1980,19 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 ## 制作条件覆盖字段的解释
 
 StudioReadiness.scenes 的 availableSeconds／gapSeconds 来自 sceneCoverage，表示画面素材覆盖，不是音频解码或静音检测。纯文字卡片不能仅凭 gapSeconds 判定缺少旁白；旁白状态通过 narration-stale、audio-duration 等检查，实际听感仍需独立核听。实现见 feature-video/src/studio-contract.ts 的 sceneCoverage／draftReadiness。
+
+## BMW 内部成片审核
+
+唯一 `browser` 新增闭合动作 `video.review`。`reviewRequest` 的 `start` 仅接收当前所属 `draftId/expectedRevision`；`status` 仅接收 `runId` 及可选 `pageOffset`（0–96），每页至多8镜。模型不能提供 driver/model、actor、路径或通过结论。Studio 的“实际成片 · 手机尺寸审片”提供同一内部审核入口和手动刷新结果，不替用户勾选试听或验收。
+
+Host 先验证当前 Project/Session、revision、可复用实际 MP4、原生验证报告与指纹，再把固定审核说明排到原 Session 的官方 AgentHost FIFO。模型选择沿用该 Session driver 的设置；回执记录请求时的显式 modelId 或 null（官方默认选择，不是具体服务端模型证明），显式模型在执行前变化则拒绝。准备阶段继续核验有效目录只有 BMW browser，且官方 runtime 支持图片。Host 只提交一次输入，不实现推理或工具循环，不增加第二个模型/MCP工具。
+
+start 返回后调用方必须结束当前 turn，不能占住前一任务等待审片。Host 在已有 version2 输入回执中先保存可选 task 元数据（闭合 kind=video-review、SHA256 key、至多8192字符 payload、modelId）；输入和元数据一同原子持久化后才排队。去重键绑定策略版本、草稿 revision 和实际成片指纹；同目标重复请求复用原回执，包含已失败／中断／不确定状态，不自动再次投递。内部审核不能递归新增内部任务。现有 Assistant 停止入口取消所属 Session 的任务，并等待实际工具和 worker 清理；失败清理仍隔离资源。Project/Session 转换、归属、未知投递恢复和 FIFO 不变。
+
+审核指导要求所有场景的当前 MP4 关键状态分页重新实际查看，逐镜记录并独立作整片判断；覆盖视觉支撑、信息密度、层级、节奏、结尾、手机字幕、来源身份日期、新闻事实、书面稿、保留原声与译文，并对实际最终 MP4 采样音频、按可用能力核对 ASR。策略v2追加上述AI受众、45秒／120秒目标、术语简释、原声与有据解读、画面类别实际区间及相关性／比例、全片禁止纯文字段落；不可凭模板名推定通过，不可编造比例。新任务去重包含v2，旧v1回执仍可查询但不能替代新标准的审片。缺失、低置信度、抽样边界及能力缺口必须报告。Agent 审核不是连续音视频感官认证，人工听感和用户验收另记。
+
+成片审片 version2 账本的 Agent assessment 可附 Host 绑定的 runId，普通模型请求不能提供。内部通过需要本次 run、晚于启动基线的全部逐镜及独立整片声明、当前样本完整、原生技术通过、任务成功且真实清理结束。历史声明、其他 run 声明、运行时成功或 PNG 生成本身不能成为本次通过；稿件 revision／实际 MP4 变化返回 stale。status 的结构结果保留原生技术、版式、Agent 和用户声明并分页返回完整意见；缺少本次结论为 incomplete，失败和 uncertain 不包装成通过。
+
+制作避免项：结尾不能长期停在孤立文字、空旷底色，尤其不能连续两张基础文字卡收尾。至少应提供相关真实画面／证据图或流程、对比、时间线等视觉信息；装饰和文字飞入不算支撑。原生结构筛查对最后两镜中持续至少3秒、无主素材／有意义画面图层且为默认或 title/basic 的卡片标记 needs-fix，拒绝 Agent 的相关镜头／整片通过声明；它是结构风险规则，不是像素语义认证，用户声明独立保留。其他模板通过筛查仍需实际视觉审核。DSX POD 的部署条件与未来交付计划不能只用两张白底文字卡表达，详见 NEWS_DAILY。
+
+内部审片活动期间，Host 标识实际审核 run，Video 动作在执行层拒绝 Agent 修改草稿／素材描述、合成、旁白、设置和递归审片；仍允许读取、原生取帧／语音证据及成片审核账本。用户 GUI 编辑不受此模型限制，继续走原 CAS 并使审核目标失效。入队后立即返回持久回执，不在返回回执前再次异步读取，以免 GUI 并发编辑掩盖已投递任务。人工试听状态来自当前独立用户整片声明，不由 Agent 代签。

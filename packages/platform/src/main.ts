@@ -1,4 +1,5 @@
 import {BackgroundCollectionScope,passiveCollectionUserRead} from './background-collection.js'
+import {assistantTasks} from './assistant-tasks.js'
 import type {CollectionBinding} from './feature-contract.js'
 import type {BrowserFeatureHost} from '@bmw-agent/browser-capability/host'
 import {assistantActivity} from './assistant-activity.js'
@@ -1061,6 +1062,7 @@ async function createApp() {
   })
   browserKernel.setScheduledTaskManager(scheduledTaskManager)
   productFeatureRuntime?.configure?.({
+    assistantTasks:assistantTasks({get host(){return assistantService.host},get history(){return assistantService.history},get conversations(){return assistantService.conversations},model:id=>assistantService.preferences.model(id),owner:()=>{const projectId=projectStore.active().id,sessionId=selectedSession(projectStore.active());return sessionId?{projectId,sessionId}:null},changing:()=>bridge?.changingProject===true}),
     projectStore,
     browserKernel: assertBrowserFeatureHost(browserKernel),
     mediaController,

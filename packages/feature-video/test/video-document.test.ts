@@ -21,13 +21,39 @@ import {cardMetricText,cardPaintScene} from '../../media-native/src/card-templat
 import type {CardContentContract} from '../../media-native/src/card-templates.js'
 import {studioToolGuide} from '../src/studio-tool-guide.js'
 import {videoFeature} from '../index.js'
-import {studioAgentResult} from '../src/studio-agent-result.js'
+import {studioAgentResult,studioDraftSummary,studioSceneProjection} from '../src/studio-agent-result.js'
 import {studioPage} from '../src/studio-read-contract.js'
 import {assertComposition,compositionDuration,COMPOSITION_LIMITS} from '../../media-native/src/composition-contract.js'
 import {compositionQualityPlan,assertCompositionQuality} from '../../media-native/src/composition-quality.js'
 import {defaultScienceSpec,scienceState} from '../../media-native/src/science-spec.js'
 import {splitStudioScene} from '../src/studio-scene-split.js'
 import {studioPromptContext} from '../src/studio-context.js'
+import {assertVisualLayers} from '../../media-native/src/composition-layers.js'
+
+test('Preparation summaries expose missing citations without certifying video motion; timeline identifies primary objects and edit clock',()=>{
+ const f=fixture();try{
+  const d=draft(f.store);d.scenes[0].videoArtifactId='static-slide.mp4';delete d.scenes[0].imageArtifactId
+  const before=JSON.stringify(d),summary=studioDraftSummary(d),row=summary.scenes[0]
+  assert.equal(row.preparationInventory.citationCount,0);assert.equal(row.preparationInventory.primaryVideoSegments,1);assert.equal(row.preparationInventory.motionVerification,'not-performed')
+  const advanced=addStudioLayer(d,'two','text').draft
+  const timeline=studioSceneProjection(advanced,{operation:'read-scene',expectedRevision:advanced.revision,sceneId:'two',section:'timeline'}) as {editTimeDomain:string;sceneStartSeconds:number;items:{role:string;layerSetAllowed:boolean}[]}
+  assert.equal(timeline.editTimeDomain,'film-seconds');assert.equal(timeline.sceneStartSeconds,d.scenes[0].durationSeconds)
+  assert.equal(timeline.items.find(c=>c.role==='primary')!.layerSetAllowed,false);assert.equal(timeline.items.find(c=>c.role==='overlay')!.layerSetAllowed,true)
+  assert.equal(JSON.stringify(d),before);assert.match(studioToolGuide().guide,/imported compositions do not inherit/)
+ }finally{f.close()}
+})
+
+test('Edit failures identify rejected fields and recovery operations without accepting aliases or partially changing the draft',()=>{
+ const f=fixture();try{
+  const d=addStudioLayer(draft(f.store),'one','text').draft,before=JSON.stringify(d),doc=videoDocumentFromDraft(d),primary=doc.content.timeline.tracks.find(t=>t.role==='primary')!.clips[0],overlay=doc.content.timeline.tracks.find(t=>t.role==='overlay')!.clips[0]
+  assert.throws(()=>assertVideoEdit({version:1,commands:[{op:'layer.set',clipId:overlay.id,patch:{startSeconds:1}}]}),/VIDEO_EDIT_FIELD:.*"startSeconds".*Allowed fields/)
+  assert.throws(()=>applyVideoEdit(d,{version:1,commands:[{op:'layer.set',clipId:primary.id,patch:{opacity:.5}}]}),/layerSetAllowed.*clip\.effects/)
+  const layer=d.scenes[0].layers![0]
+  assert.throws(()=>assertVisualLayers([{...layer,keyframes:[{timeSeconds:0,x:.1,y:.1,width:.3,height:.3,opacity:1,easing:'linear',offset:0},{timeSeconds:1,x:.1,y:.1,width:.3,height:.3,opacity:1,easing:'linear'}]}]),/Unsupported layer field: "offset".*Allowed fields: timeSeconds/)
+  assert.throws(()=>applyVideoEdit(d,{version:1,commands:[{op:'layer.set',clipId:overlay.id,patch:{text:'must roll back'}},{op:'clip.trim',clipId:overlay.id,edge:'end',time:videoTime(30)}]}),/clip\.trim\.time.*全片秒数/)
+  assert.equal(JSON.stringify(d),before)
+ }finally{f.close()}
+})
 
 test('Agent context, discovery and published schema advertise the same supported document versions',async()=>{
  const f=fixture();try{

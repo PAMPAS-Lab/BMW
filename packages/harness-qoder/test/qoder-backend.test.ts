@@ -14,6 +14,7 @@ test('Qoder releases UUID-stamped user input only after the effective catalog an
     resumed = input.options.resume
     assert.deepEqual(input.options.tools, []); assert.deepEqual(input.options.settingSources, [])
     assert.equal(input.options.strictMcpConfig, true)
+    const server=input.options.mcpServers?.bmw;assert.ok(server&&'timeout' in server);assert.equal(server.timeout,122*60*1000)
     return { interrupt: async () => {}, close: async () => { closed++ }, async *[Symbol.asyncIterator]() {
       yield { type: 'system', subtype: 'init', session_id: 'provider', qodercli_version: '1.1.64', tools: ['browser'], mcp_servers: [{ name: 'bmw', status: 'connected' }], skills: [], plugins: [] }
       const message = await input.prompt[Symbol.asyncIterator]().next()

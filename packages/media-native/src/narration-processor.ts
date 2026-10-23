@@ -66,7 +66,7 @@ export class NarrationProcessor {
           const csp = "default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; connect-src 'self'"
           if (filename === 'index.html') return new Response('<!doctype html><meta charset="utf-8"><title>BMW Local Narration</title><script type="module" src="./narration-local.js"></script>',{headers:{'content-type':'text/html','content-security-policy':csp}})
           let data = content[filename]
-          if (!data && ['narration-local.js','narration-contract.js','media-contract.js','image-contract.js','image-drawing-contract.js','speech-range.js','audio-evidence-contract.js'].includes(filename)) data = await fs.readFile(path.join(path.dirname(this.options.pagePath),filename==='narration-local.js'?filename:'../'+filename))
+          if (!data && ['narration-local.js','narration-contract.js','media-contract.js','archive-limits.js','image-contract.js','image-drawing-contract.js','speech-range.js','audio-evidence-contract.js'].includes(filename)) data = await fs.readFile(path.join(path.dirname(this.options.pagePath),filename==='narration-local.js'?filename:'../'+filename))
           if (!data) return new Response(null,{status:404})
           return new Response(data as Uint8Array<ArrayBuffer>,{headers:{'content-type':filename.endsWith('.js')?'text/javascript':filename.endsWith('.wasm')?'application/wasm':'application/octet-stream','content-security-policy':csp}})
         })

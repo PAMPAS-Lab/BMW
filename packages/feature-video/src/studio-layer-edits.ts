@@ -111,7 +111,7 @@ export function resetStudioLayerFade(draft:VideoDraft,selection:StudioLayerSelec
 export function trimStudioLayer(draft:VideoDraft,selection:StudioLayerSelection,edge:'start'|'end',value:number):VideoDraft {
  return editStudioLayer(draft,selection,layer=>{
   const end=layer.startSeconds+layer.durationSeconds,from=edge==='start'?value-layer.startSeconds:0,to=edge==='end'?value-layer.startSeconds:layer.durationSeconds
-  if(!Number.isFinite(value)||from<0||to>layer.durationSeconds||to-from<.1)throw new Error('修剪需要保留至少 0.1 秒；扩展请在时间属性中调整。')
+  if(!Number.isFinite(value)||from<0||to>layer.durationSeconds||to-from<.1)throw new Error(`修剪需要保留至少 0.1 秒；只能缩短当前对象。当前对象在所属容器内为 ${layer.startSeconds}–${end} 秒；clip.trim.time 必须使用全片秒数（镜头起点＋容器内秒数）。扩展请在可信编辑器时间属性中调整，不要用 layer.set 猜测时间字段。`)
   const frames=selection.kind==='visual'?clippedFrames(layer as VisualLayer,from,to):undefined
   layer.fadeWindow=cutFadeWindow(layer,from)
   if('science' in layer&&layer.science)layer.science.offsetSeconds+=from

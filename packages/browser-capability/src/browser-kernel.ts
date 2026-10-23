@@ -1,9 +1,12 @@
 import {collectPageSource} from './collect-page-source.js'
 import {prepareSourceScreenshot} from './source-screenshot.js'
+import {collectionPageReadyExpression,assertCollectionPageReady} from './collection-page-ready.js'
+import type {CollectionPageReady} from './collection-page-ready.js'
 import {navigatePage,closeNavigationPage} from './page-navigation.js'
 import {sameVideoIdentity,resourceBelongsToTarget,selectVideoResource} from '@bmw-agent/agent-contract/video-identity'
 import type {SourceCollection,ProjectSourcePort,SourceCaptureGuard,VideoTargetScope} from '@bmw-agent/media-native/sources'
 import {readVideoTargets,prepareVideoTransfer} from './video-target.js'
+import {registerYoutubeSabrPage,bindYoutubeSabrPage} from './youtube-sabr-observation.js'
 import {assertPageScope,pageRangeExpression} from './page-scope.js'
 import crypto from 'node:crypto'
 import {PageRecordingEvents} from './page-recording-events.js'
@@ -18,6 +21,7 @@ import { agentTabsToClose, reusableTab, projectTabsToRestore, MAX_AGENT_TABS_PER
 import type {ProjectTabState} from './tab-policy.js'
 import { downloadMediaArtifact } from './media-artifact.js'
 import { createMediaSessionFetch } from './media-session-fetch.js'
+import {preservationResult} from './preservation-result.js'
 import {PagePlayback} from './page-playback.js'
 import {withCollectionPagePool,collectionPageLinksExpression,collectionPageUrl,sameCollectionNavigation,CollectionPageCleanupError} from './collection-page-pool.js'
 import type {CollectionPagePoolOptions,CollectionPageVisit,CollectionPageResult,CollectionPageLink} from './collection-page-pool.js'
@@ -159,6 +163,8 @@ export class BrowserKernel {
 
   #wireTab(tab) {
     const wc = tab.view.webContents
+    wc.on('did-navigate',(_event,_url,status)=>{if(this.collectionBodyScope)this.collectionHTTPStatus=status})
+    registerYoutubeSabrPage(this.session,wc)
     this.diagnostics.set(tab.id, { console: [], network: [], media: [], loadFailures: [] })
     const emit = () => {
       if(wc.isDestroyed())return
@@ -204,6 +210,9 @@ export class BrowserKernel {
     })
   }
 
+  private collectionBodyScope?:import('./collection-page-pool.js').CollectionPageSource
+  private collectionRestricted=false
+  private collectionHTTPStatus=0
   private readonly navigationQuarantine=new Set<string>()
   private dropNavigationTab(tab:NavigationTab):void{
     if(!this.tabs.has(tab.id))return
@@ -213,7 +222,8 @@ export class BrowserKernel {
     this.emitState();this.scheduleTabStateSave()
   }
   private async navigateTab(tab:NavigationTab,url:string,signal?:AbortSignal):Promise<void>{
-    try{await navigatePage(tab.view.webContents,url,signal,25000,3000,tab.source==='agent')}catch(error){if(tab.view.webContents.isDestroyed())this.dropNavigationTab(tab);else if(error instanceof Error&&'code'in error&&error.code==='BMW_BROWSER_NAVIGATION_CLEANUP_FAILED')this.navigationQuarantine.add(tab.id);throw error}
+    let previous='',quietSince=0;const ready=this.collectionBodyScope?async()=>{const value=await readRendererPhase<CollectionPageReady>(tab.view.webContents,'collection.pages','navigation-ready',async()=>assertCollectionPageReady(await tab.view.webContents.mainFrame.executeJavaScript(collectionPageReadyExpression(this.collectionBodyScope!),true)),signal,1500);if(!sameCollectionNavigation(url,value.url)||(!value.ready&&!value.restricted)){previous='';return false}if(value.restricted||[401,403,429].includes(this.collectionHTTPStatus)){this.collectionRestricted=true;return true}if(value.text!==previous){previous=value.text;quietSince=Date.now();return false}return Date.now()-quietSince>=250}:undefined
+    try{await navigatePage(tab.view.webContents,url,signal,25000,3000,tab.source==='agent',ready)}catch(error){if(tab.view.webContents.isDestroyed())this.dropNavigationTab(tab);else if(error instanceof Error&&'code'in error&&error.code==='BMW_BROWSER_NAVIGATION_CLEANUP_FAILED')this.navigationQuarantine.add(tab.id);throw error}
   }
   async openTab({ url, foreground = false, source = 'agent', reuse = true }: { url?: unknown; foreground?: boolean; source?: string; reuse?: boolean } = {},signal?:AbortSignal) {
     if(this.navigationQuarantine.size)throw new Error('BMW_BROWSER_NAVIGATION_QUARANTINED: Explicit close recovery is required.')
@@ -573,7 +583,7 @@ export class BrowserKernel {
       if(!this.projectStore.active()?.directory||this.recordingController.isCaptureActive())throw new Error('Audio preview requires an idle active Project.')
       return this.recordingController.previewAudio(request,signal)
     }
-    if (['media.inspect', 'media.frames.sample','media.capture.frames.sample', 'media.convert','media.image.inspect','media.image.annotate','media.image.draw','media.audio.sample'].includes(request.action)) {
+    if (['media.inspect', 'media.segment', 'media.frames.sample','media.capture.frames.sample', 'media.convert','media.image.inspect','media.image.annotate','media.image.draw','media.audio.sample'].includes(request.action)) {
       if (!this.projectStore.active()?.directory) throw new Error('Media processing requires an active BMW Project.')
       return this.recordingController.processArtifact(request, signal)
     }
@@ -615,7 +625,7 @@ export class BrowserKernel {
     if(request.action==='media.preserve'){
       const observed=await this.listMedia(tab,{maxItems:200},signal)
       if(!observed.items.some((item:{url?:string})=>item.url===request.url))throw new Error('Preservation URL must be observed on this Project page with page.media.list.')
-      return this.preserveSource({url:String(request.url),pageUrl:new URL(tab.view.webContents.getURL()).href.split('#')[0],tabId:tab.id},signal)
+      return preservationResult(await this.preserveSource({url:String(request.url),pageUrl:new URL(tab.view.webContents.getURL()).href.split('#')[0],tabId:tab.id},signal))
     }
     if (request.action === 'media.video.capture') return this.captureSelectedVideo(tab, request, signal)
     if (request.action === 'media.record.start') {
@@ -771,9 +781,10 @@ export class BrowserKernel {
     const tab=this.requireTab(request.tabId),project=this.projectStore.active(),address=new URL(tab.view.webContents.getURL());address.hash=''
     if(address.href!==request.pageUrl)throw new Error('Source page changed; return to the observed page before preserving media.')
     const admission=await prepareVideoTransfer(tab.view.webContents,request.url,signal,request.sourceGuard)
-    const guard=async(force=false)=>{signal?.throwIfAborted();if(this.projectStore.active().id!==project.id||!this.tabs.has(tab.id)||tab.view.webContents.isDestroyed()||new URL(tab.view.webContents.getURL()).href.split('#')[0]!==request.pageUrl)throw new Error('Source preservation page or Project changed.');await(force?admission.finish():admission.guard())}
     const selected=admission.target?.resources.find(r=>r.url===request.url)
-    return {...await this.recordingController.preserveMedia({url:request.url,pageUrl:request.pageUrl,fetchImpl:await this.mediaFetchForTab(tab.id,signal),guard,signal,videoIdentity:admission.videoIdentity,...(admission.audio?{separated:{audioUrl:admission.audio.url,audioDurationSeconds:admission.audio.durationSeconds,videoDurationSeconds:selected?.durationSeconds??admission.target!.durationSeconds!,videoIdentity:admission.videoIdentity!}}:{})}),tab:this.serializeTab(tab)}
+    const sabr=selected?.role==='sabr'?await bindYoutubeSabrPage(tab.view.webContents,admission.target!,request.url,request.sourceGuard?.scope??{},signal):undefined
+    const guard=async(force=false)=>{signal?.throwIfAborted();if(this.projectStore.active().id!==project.id||!this.tabs.has(tab.id)||tab.view.webContents.isDestroyed()||new URL(tab.view.webContents.getURL()).href.split('#')[0]!==request.pageUrl)throw new Error('Source preservation page or Project changed.');await(force?admission.finish():admission.guard());await sabr?.check(force)}
+    return {...await this.recordingController.preserveMedia({url:request.url,pageUrl:request.pageUrl,fetchImpl:await this.mediaFetchForTab(tab.id,signal),guard,signal,videoIdentity:admission.videoIdentity,...(sabr?{youtubeSabr:sabr.delivery,refreshYoutubeSabr:sabr.refresh}:{}),...(admission.audio?{separated:{audioUrl:admission.audio.url,audioDurationSeconds:admission.audio.durationSeconds,videoDurationSeconds:selected?.durationSeconds??admission.target!.durationSeconds!,videoIdentity:admission.videoIdentity!}}:{})}),tab:this.serializeTab(tab)}
   }
   async verifySourceVideo(request:SourceCaptureGuard&{tabId?:string},signal?:AbortSignal){
     const tab=this.requireTab(request.tabId),state=await readVideoTargets(tab.view.webContents,request.scope,signal)
@@ -826,24 +837,30 @@ export class BrowserKernel {
       return {visit:async(input,phaseSignal):Promise<CollectionPageResult>=>{
         try{
           let recoveryDeadline:number|undefined;const settleExisting=async(wc:import('electron').WebContents)=>{const stableBy=recoveryDeadline??(recoveryDeadline=Date.now()+5000);let previous=wc.getURL(),quietSince=Date.now();while(Date.now()<stableBy){guard();phaseSignal.throwIfAborted();if(wc.isDestroyed()||!sameCollectionNavigation(input.url,wc.getURL()))throw new Error('Collection page identity changed during same-navigation recovery');const current=wc.getURL();if(wc.isLoading()||current!==previous){quietSince=Date.now();previous=current}else if(Date.now()-quietSince>=150)return;await new Promise(resolve=>setTimeout(resolve,50))}throw new Error('Collection same-navigation recovery did not stabilize within five seconds')}
+          kernel.collectionBodyScope=input.source;kernel.collectionRestricted=false;kernel.collectionHTTPStatus=0
           guard();let opened:{id:string}
           try{opened=await kernel.openTab({url:input.url,foreground:false,source:'agent',reuse:false},phaseSignal)}catch(error){
             const surviving=[...kernel.tabs.values()].at(-1) as NavigationTab|undefined,wc=surviving?.view.webContents
-            if(!(error instanceof Error)||!error.message.includes('ERR_ABORTED')||!wc||wc.isDestroyed()||!sameCollectionNavigation(input.url,wc.getURL()))throw error
-            await settleExisting(wc)
-            opened={id:surviving.id}
+            if(!(error instanceof Error)||!wc||wc.isDestroyed()||!sameCollectionNavigation(input.url,wc.getURL()))throw error
+            if([401,403,429].includes(kernel.collectionHTTPStatus)){kernel.collectionRestricted=true;opened={id:surviving.id}}
+            else {if(!error.message.includes('ERR_ABORTED'))throw error;await settleExisting(wc);opened={id:surviving.id}}
           }
           const tab=kernel.requireTab(opened.id)
+          const restriction=()=>readRendererPhase<CollectionPageReady>(tab.view.webContents,'collection.pages','restriction',async()=>assertCollectionPageReady(await tab.view.webContents.mainFrame.executeJavaScript(collectionPageReadyExpression(input.source),true)),phaseSignal,1500)
+          let preflight:CollectionPageReady
+          try{preflight=await restriction()}catch(error){if(!(error instanceof Error)||!('code'in error)||error.code!=='BMW_BROWSER_PAGE_CHANGED'||!sameCollectionNavigation(input.url,tab.view.webContents.getURL()))throw error;await settleExisting(tab.view.webContents);preflight=await restriction()}
+          if(preflight.restricted||[401,403,429].includes(kernel.collectionHTTPStatus))kernel.collectionRestricted=true
           const waitForBody=()=>readRendererPhase<boolean>(tab.view.webContents,'collection.pages','ready',()=>tab.view.webContents.executeJavaScript(`(()=>new Promise(resolve=>{const selector=${JSON.stringify(input.source.bodySelector)},index=${JSON.stringify(input.source.index??0)};let timer,observer,checks=0,finished=false;const done=value=>{if(finished)return;finished=true;clearTimeout(timer);observer?.disconnect();resolve(value)},ready=()=>{if(++checks>200){done(false);return false}const root=document.querySelectorAll(selector)[index];if(!root||!root.getClientRects().length)return false;const nodes=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let count=0;while(nodes.nextNode()&&++count<=200){const node=nodes.currentNode,parent=node.parentElement,style=parent?getComputedStyle(parent):null;if(parent&&style.display!=='none'&&style.visibility!=='hidden'&&style.visibility!=='collapse'&&parent.getClientRects().length&&!parent.closest('script,style,template,noscript,input,textarea,select,[hidden],[aria-hidden="true"]')&&String(node.textContent??'').slice(0,300).trim())return true}return false};if(ready()){done(true);return}observer=new MutationObserver(()=>{if(ready())done(true)});observer.observe(document.documentElement,{childList:true,subtree:true,characterData:true,attributes:true});timer=setTimeout(()=>done(false),4000)}))()`,true),phaseSignal,4500)
-          try{await waitForBody()}catch(error){if(!(error instanceof Error)||!('code'in error)||error.code!=='BMW_BROWSER_PAGE_CHANGED'||!sameCollectionNavigation(input.url,tab.view.webContents.getURL()))throw error;await settleExisting(tab.view.webContents);await waitForBody()}
+          try{if(!kernel.collectionRestricted)await waitForBody()}catch(error){if(!(error instanceof Error)||!('code'in error)||error.code!=='BMW_BROWSER_PAGE_CHANGED'||!sameCollectionNavigation(input.url,tab.view.webContents.getURL()))throw error;await settleExisting(tab.view.webContents);await waitForBody()}
           guard();phaseSignal.throwIfAborted()
-          let observation=await kernel.collectSource({...input.source,tabId:opened.id},phaseSignal)
+          let observation=await kernel.collectSource({...input.source,...(kernel.collectionRestricted?{bodySelector:'body',index:0,excludeSelectors:[],authorSelector:undefined,publishedSelector:undefined}:{}),tabId:opened.id},phaseSignal)
+          if(kernel.collectionRestricted)observation={...observation,access:'login-required',accessText:'Explicit access/challenge wall observed in the visible document',result:'login-required'}
           guard();phaseSignal.throwIfAborted()
           // One interrupted read may follow the publisher's own same-page
           // theme replacement. Re-read only the existing stable document;
           // never navigate again or replay an official/model input.
           if(observation.result==='navigated'&&sameCollectionNavigation(input.url,tab.view.webContents.getURL())){await settleExisting(tab.view.webContents);observation=await kernel.collectSource({...input.source,tabId:opened.id},phaseSignal);guard();phaseSignal.throwIfAborted()}
-          if(!['observed','truncated'].includes(observation.result))return {observation,links:[],linksTruncated:false}
+          if(!['observed','truncated'].includes(observation.result))return {observation,links:[],linksTruncated:false,...(kernel.collectionRestricted?{restricted:true}:{})}
           const found=await readRendererPhase<{url:string;text:string;links:CollectionPageLink[];linksTruncated:boolean}>(tab.view.webContents,'collection.pages','links',()=>tab.view.webContents.executeJavaScript(collectionPageLinksExpression(input.source),true),phaseSignal)
           guard();phaseSignal.throwIfAborted()
           if(found.url!==observation.url||tab.view.webContents.getURL()!==observation.url||found.text!==observation.text)throw new Error('Collection page changed between original and visible links')
@@ -872,7 +889,7 @@ export class BrowserKernel {
   async listMedia(tab, request, signal?:AbortSignal) {
     const {selector,index,excludeSelectors}=assertPageScope(request)
     const maxItems = Math.min(Math.max(Math.floor(Number(request.maxItems) || 80), 1), 240)
-    const result = await readRendererPhase<{ok:boolean;reason?:string;items:Record<string,unknown>[];matches:number;selectedIndex:number;text:string;range:unknown}>(tab.view.webContents, 'page.media.list', 'dom', () => tab.view.webContents.executeJavaScript(`(async () => {
+    const result = await readRendererPhase<{ok:boolean;reason?:string;items:Record<string,unknown>[];matches:number;selectedIndex:number;text:string;range:unknown}>(tab.view.webContents, 'page.media.list', 'dom', () => tab.view.webContents.mainFrame.executeJavaScript(`(async () => {
       const selector = ${JSON.stringify(selector)}
       const {text:bodyText,range:bodyRange}=${pageRangeExpression(assertPageScope({...request,maxCharacters:5000}))}
       const index = ${index}
@@ -954,7 +971,8 @@ export class BrowserKernel {
       const video=['video','source'].includes(String(item.kind))||item.kind==='network'&&(/^(?:video|audio)\//.test(String(item.mimeType??''))||/mpegurl|\.m3u8|\.mp4|videoplayback/.test(String(item.mimeType??'')+url))
       const audioOnly=target?.identity.platform==='youtube'&&target.resources.some(r=>r.url===url&&r.role==='audio')
       const kind=target&&video&&item.kind==='network'?'source':item.kind
-      if(url&&!audioOnly&&(!video||!identities.blocked&&(identities.platform==='page'||target)))unique.set(`${kind}:${url}`,{...item,kind,...(target?{videoIdentity:target.identity}:{}),downloadable:/^https?:/i.test(url)})
+      const sabr=target?.resources.some(resource=>resource.url===url&&resource.role==='sabr')
+      if(url&&!audioOnly&&(!video||!identities.blocked&&(identities.platform==='page'||target)))unique.set(`${kind}:${url}`,{...item,kind,...(target?{videoIdentity:target.identity}:{}),downloadable:/^https?:/i.test(url)&&!sabr,...(sabr?{preservable:true,acquisition:'youtube-sabr',help:'Use media.preserve; both original encoded tracks are validated and merged.'}:{})})
       if (poster) unique.set(`poster:${poster}`, { kind: 'poster', url: poster, downloadable: /^https?:/i.test(poster) })
     }
     return {
@@ -967,7 +985,7 @@ export class BrowserKernel {
       scope:selector?'selected-element':'page',
       candidateOnly:true,
       videoIdentityStatus:identities.blocked??(identities.targets.length?'bound':'unavailable'),
-      videoTargets:identities.targets.map(target=>({videoIdentity:target.identity,durationSeconds:target.durationSeconds,directResources:target.resources.filter(r=>r.role!=='audio').length,...(target.identity.platform==='youtube'&&!target.resources.length?{deliveryIssue:'YOUTUBE_DIRECT_DELIVERY_UNAVAILABLE: no complete HTTP/HLS URLs; SABR/UMP and signature-only streams are not supported.'}:{})})),
+      videoTargets:identities.targets.map(target=>({videoIdentity:target.identity,durationSeconds:target.durationSeconds,directResources:target.resources.filter(r=>r.role!=='audio'&&r.role!=='sabr').length,nativeSabr:target.resources.some(r=>r.role==='sabr'),...(target.identity.platform==='youtube'&&!target.resources.length?{deliveryIssue:'YOUTUBE_DIRECT_DELIVERY_UNAVAILABLE: no supported HTTP/HLS or same-player SABR delivery; signature-only formats cannot authorize acquisition.'}:{})})),
       truncated:unique.size>maxItems,
       items: [...unique.values()].slice(0, maxItems)
     }
@@ -977,7 +995,7 @@ export class BrowserKernel {
     const tab = this.tabs.get(tabId)
     if (!tab) throw new Error('Media source tab is unavailable.')
     const pageUrl = tab.url
-    const policy: unknown = await readRendererPhase(tab.view.webContents,'media.fetch','referrer-policy',()=>tab.view.webContents.executeJavaScript('document.referrerPolicy'),signal)
+    const policy: unknown = await readRendererPhase(tab.view.webContents,'media.fetch','referrer-policy',()=>tab.view.webContents.mainFrame.executeJavaScript('document.referrerPolicy'),signal)
     return createMediaSessionFetch(this.session,pageUrl,policy,net.request)
   }
 
@@ -986,6 +1004,7 @@ export class BrowserKernel {
     const project = this.projectStore?.active()
     if (!project?.directory) throw new Error('media.download requires an active BMW Project.')
     const admission=await prepareVideoTransfer(tab.view.webContents,request.url,signal,request.sourceGuard,true)
+    if(admission.target?.resources.some(r=>r.url===request.url&&r.role==='sabr'))throw new Error('YOUTUBE_SABR_TRACKS: Use media.preserve for the target; UMP must be validated and both encoded tracks merged.')
     if(admission.audio)throw new Error('YOUTUBE_SEPARATED_TRACKS: Use media.preserve for the bound video; its default audio will be merged without reencoding.')
     const guard=async(force=false)=>{signal?.throwIfAborted();if(this.projectStore.active()?.id!==project.id||tab.view.webContents.isDestroyed())throw new Error('Media download Project or page changed.');await(force?admission.finish():admission.guard())}
     const artifact = await downloadMediaArtifact({

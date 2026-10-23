@@ -5,6 +5,9 @@ import os from 'node:os'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import {parsePreservationPlaylist,preserveMedia} from '../src/media-preservation.js'
+import {ArtifactJobIO} from '../src/artifact-job-io.js'
+import {ARCHIVE_LIMITS} from '../src/archive-limits.js'
+import {assertArchiveSegment} from '../src/media-archive-segment.js'
 
 test('HLS preservation selects explicit media, resolves relative URLs, and rejects live/encrypted/ranged/gapped input',()=>{
  const url='https://video.example/path/master.m3u8',master=parsePreservationPlaylist('#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="a",DEFAULT=YES,URI="../audio.m3u8"\n#EXT-X-STREAM-INF:BANDWIDTH=200000,AUDIO="a"\nvideo.m3u8\n',url)
@@ -44,4 +47,26 @@ test('Failed preservation cleanup stays recoverable without following a replaced
  try{await preserveMedia({directory,url:'https://r.googlevideo.com/video',pageUrl:'https://youtube.com/watch?v=target',videoIdentity,separated:{audioUrl:'https://r.googlevideo.com/audio',videoDurationSeconds:10,audioDurationSeconds:10,videoIdentity},fetchImpl:async url=>{if(url.endsWith('/audio')){await fs.rename(directory,moved);await fs.mkdir(directory)}return new Response('bytes',{headers:{'content-type':url.endsWith('/audio')?'audio/mp4':'video/mp4'}})}})}catch(error){failure=error}
  assert.ok(failure instanceof PreservationCleanupError);await assert.rejects(failure.recover(),/directory changed/);assert.deepEqual(await fs.readdir(directory),[])
  await fs.rmdir(directory);await fs.rename(moved,directory);await failure.recover();assert.deepEqual(await fs.readdir(directory),['existing']);assert.equal(await fs.readFile(path.join(directory,'existing'),'utf8'),'keep')
+})
+
+test('Long storage and bounded decoding have independent budgets and segment contracts',async t=>{
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'bmw-archive-budget-'));t.after(()=>fs.rm(directory,{recursive:true,force:true}))
+ const handle=await fs.open(path.join(directory,'long.mp4'),'wx');await handle.truncate(513*1024*1024);await handle.close()
+ await assert.rejects(ArtifactJobIO.open(directory,{action:'media.convert',artifactId:'long.mp4',outputFormat:'mp4'}),/processing byte budget/)
+ const archive=await ArtifactJobIO.openArchive(directory,'long.mp4');assert.equal(archive.bytes,513*1024*1024);await archive.close()
+ assert.deepEqual(assertArchiveSegment({action:'media.segment',artifactId:'long.mp4',segmentRange:{startSeconds:4500,endSeconds:4680}}),{artifactId:'long.mp4',startSeconds:4500,endSeconds:4680})
+ for(const segmentRange of [{startSeconds:0,endSeconds:1800},{startSeconds:0,endSeconds:0},{startSeconds:0,endSeconds:Infinity},{startSeconds:0,endSeconds:10,filename:'escape.mp4'}])assert.throws(()=>assertArchiveSegment({action:'media.segment',artifactId:'long.mp4',segmentRange}))
+ const segments=Array.from({length:94},()=> '#EXTINF:60,\npart.ts\n').join(''),vod=parsePreservationPlaylist('#EXTM3U\n'+segments+'#EXT-X-ENDLIST','https://example.test/full.m3u8');assert.equal(vod.duration,5640)
+ assert.throws(()=>parsePreservationPlaylist('#EXTM3U\n'+Array.from({length:361},()=> '#EXTINF:60,\npart.ts\n').join('')+'#EXT-X-ENDLIST','https://example.test/full.m3u8'),/archive contract/)
+ assert.ok(ARCHIVE_LIMITS.timeoutMs>60_000)
+})
+
+test('HTTP archive writes incrementally before EOF and rolls back a truncated stream',async t=>{
+ const directory=await fs.mkdtemp(path.join(os.tmpdir(),'bmw-archive-stream-'));t.after(()=>fs.rm(directory,{recursive:true,force:true}));let chunk=0,sawPartialFile=false
+ const data=Buffer.alloc(128*1024,7),hash=crypto.createHash('sha256');for(let i=0;i<8;i++)hash.update(data)
+ const result=await preserveMedia({directory,url:'https://example.test/full.mp4',pageUrl:'https://example.test/page',fetchImpl:async()=>new Response(new ReadableStream({async pull(c){if(chunk++<8){if(chunk>2){const files=await fs.readdir(directory);sawPartialFile||=files.length>0&&(await fs.stat(path.join(directory,files[0]!))).size>0}c.enqueue(data)}else c.close()}}),{headers:{'content-type':'video/mp4','content-length':String(8*data.length)}})})
+ assert.equal(sawPartialFile,true);assert.equal(result.bytes,8*data.length);assert.equal(result.sha256,hash.digest('hex'))
+ const before=await fs.readdir(directory)
+ await assert.rejects(preserveMedia({directory,url:'https://example.test/partial.mp4',pageUrl:'https://example.test/page',fetchImpl:async()=>new Response(data,{headers:{'content-type':'video/mp4','content-length':String(data.length+1)}})}),/Incomplete preserved response/)
+ assert.deepEqual(await fs.readdir(directory),before)
 })

@@ -75,7 +75,7 @@ export class AssistantService {
     const backends=options.assembly.createBackends({userDataDirectory:options.userDataDirectory,connection:request=>this.connection(request),projects,
       controlConnection:{bridgeUrl:options.bridge.url,bridgeToken:options.bridge.token,mcpServerPath:options.mcpServerPath},nodeExecutable:options.nodeExecutable,model:driverId=>this.preferences.model(driverId),setModel:(driverId,modelId)=>this.preferences.setModel(driverId,modelId),definition:options.definition})
     this.host = new AgentHost({ conversations: this.conversations, history: this.history,backends,
-      currentProject: options.currentProject, project:id=>options.getProjects().find(p=>p.id===id), context: options.context,onSettingsInvalidated:driverId=>this.settings.invalidate(driverId),
+      currentProject: options.currentProject, project:id=>options.getProjects().find(p=>p.id===id), context: options.context,onSettingsInvalidated:driverId=>this.settings.invalidate(driverId),model:driverId=>this.preferences.model(driverId),
       drain: async request => { const lease = this.leases.get(request.runId); if (lease) { if(lease.binding)await options.bridge.releaseSession(lease.binding); await lease.scope?.close();this.leases.delete(request.runId) } }
     })
     this.settings=new AgentSettingsController({host:this.host,backends,configurationKey:driverId=>this.preferences.model(driverId)??'',openExternal:options.openExternal??(async()=>{throw new Error('Official login browser is unavailable')}),onState:options.onState})

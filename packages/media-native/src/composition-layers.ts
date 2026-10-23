@@ -23,7 +23,7 @@ export interface VisualLayer {science?:ScienceSpec;sourceCrop?:LayerSourceCrop;p
 export interface AudioLayer {id:string;title:string;artifactId:string;startSeconds:number;durationSeconds:number;sourceStartSeconds:number;playbackRate:number;volume:number;muted:boolean;locked:boolean;fadeInSeconds:number;fadeOutSeconds:number;fadeWindow?:LayerFadeWindow;ducking:boolean}
 export interface LayerContainer {layers?:VisualLayer[];audioTracks?:AudioLayer[]}
 export const layerId=(raw:unknown):string=>{if(typeof raw!=='string'||!/^[a-zA-Z0-9-]{1,80}$/.test(raw))throw new TypeError('Invalid layer ID.');return raw}
-const closed=(value:Record<string,unknown>,allowed:string[])=>{if(Object.keys(value).some(key=>!allowed.includes(key)))throw new TypeError('Unsupported layer field.')}
+const closed=(value:Record<string,unknown>,allowed:string[])=>{const unknown=Object.keys(value).filter(key=>!allowed.includes(key));if(unknown.length)throw new TypeError(`Unsupported layer field: ${unknown.slice(0,8).map(key=>JSON.stringify(key.slice(0,80))).join(', ')}. Allowed fields: ${allowed.join(', ')}.`)}
 const text=(v:unknown,max:number)=>{if(typeof v!=='string'||v.length>max||/[\u0000-\u0008]/.test(v))throw new TypeError('Invalid layer text.');return v}
 const bool=(v:unknown,fallback=false)=>{if(v===undefined)return fallback;if(typeof v!=='boolean')throw new TypeError('Invalid layer flag.');return v}
 function box(v:Record<string,unknown>):Pick<VisualLayer,'x'|'y'|'width'|'height'|'opacity'>{

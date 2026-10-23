@@ -41,6 +41,16 @@ test('Speech evidence rejects fabricated approval, foreign hashes, frame clocks 
  const changed=evidence();changed.segments=whisperSegments(raw([segment(0,2200)]),2,'small');changed.segments[0].warnings=[];changed.segments[0].usable=true
  assert.throws(()=>assertSpeechEvidence(changed),/altered/)
 })
+test('Completed ASR may report zero recognized segments while retaining measured audio and raw evidence provenance',()=>{
+ assert.deepEqual(whisperSegments(raw([]),2,'small'),[])
+ const proof=assertSpeechEvidence({...evidence(),segments:[]})
+ assert.deepEqual(speechSourceSegments(proof),[])
+ assert.equal(proof.normalization.frames,32000)
+ assert.equal(proof.rawArtifactId,'raw.json')
+ assert.equal(proof.automaticTimingApproved,false)
+ for(const transcription of [null,{},''])assert.throws(()=>whisperSegments({...raw(),transcription},2,'small'))
+ assert.throws(()=>assertSpeechEvidence({...evidence(),segments:[],rawSha256:'missing'}))
+})
 test('Speech mapping uses actual source trim/rate, narration offset and cumulative film time without clamping hidden anchors',()=>{
  const options={sourceStartSeconds:1,playbackRate:2,sceneOffsetSeconds:.5,sceneDurationSeconds:8,filmStartSeconds:16}
  assert.deepEqual(speechTimelineRange(3,5,options),{sceneStartSeconds:1.5,sceneEndSeconds:2.5,filmStartSeconds:17.5,filmEndSeconds:18.5})
@@ -94,4 +104,9 @@ test('Opus final packet padding is bounded and recorded without moving the origi
  const range=speechDecodedRange(35.103,35.163,35.118,48000,'opus');assert.equal(range.end,35.118);assert.equal(range.discardedTailFrames,2160)
  for(const args of [[35.2,35.26,35.118,48000,'opus'],[35,35.5,35.118,48000,'opus'],[35.103,35.163,35.118,48000,'aac'],[-.01,.01,35,48000,'opus']] as const)assert.throws(()=>speechDecodedRange(args[0],args[1],args[2],args[3],args[4]))
  const proof=evidence();const normalized={...proof.normalization,discardedTailFrames:2160};assertSpeechEvidence({...proof,normalization:normalized});assert.throws(()=>assertSpeechEvidence({...proof,normalization:{...normalized,discardedTailFrames:999999}}))
+})
+test('A single AAC buffer crossing source zero may retain bounded preroll evidence without skipping source time',()=>{
+ const range=speechDecodedRange(-784/44100,240/44100,900,44100,'aac');assert.equal(range.discardedHeadFrames,784);assert.equal(range.end,240/44100)
+ for(const [start,end,codec]of [[-.1,.01,'aac'],[-.01,-.001,'aac'],[-.01,.1,'aac'],[-.01,.01,'opus'],[-.01,.01,'pcm-s16']] as const)assert.throws(()=>speechDecodedRange(start,end,900,44100,codec))
+ const proof=evidence();assertSpeechEvidence({...proof,normalization:{...proof.normalization,discardedHeadFrames:784}});assert.throws(()=>assertSpeechEvidence({...proof,normalization:{...proof.normalization,discardedHeadFrames:2048}}))
 })
