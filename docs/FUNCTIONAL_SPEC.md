@@ -40,11 +40,13 @@ DSH 预设装配官方 `compaction-basic` 与 `compaction-tool-result-pruner`，
 
 Agent草稿摘要的每镜`preparationInventory`显示已绑定引用数、来源数和主视频／图片段数，明确`motionVerification:not-performed`；它不认证素材运动、相关性、日期或事实。read-scene/timeline在既有分页内增加`layerSetAllowed`、`sceneStartSeconds`和`editTimeDomain:film-seconds`，区分独立对象与主素材、局部与全片时钟。非法编辑／原生图层字段的拒绝回包提供有界字段名及合法字段，仍严格拒绝、不静默改值。
 
-`news-preparation` 是唯一 browser 的既有 `video.studio` 内新增封闭操作，要求当前 draftId/expectedRevision；preparationRequest 为 read/preflight/enable/record-scene/record-scenes/prepare-shots。read 返回保存声明，preflight 只读检查当前实际媒体 SHA、可解码轨道和源区间、精确来源引用、实际日期文字及逐镜声明。每镜返回 fingerprint、durationSeconds、sourceIntervals、assets、missing/stale/unverified/verified-by-agent/verified-by-user 状态及缺口；模型按最多20镜／16KiB分页读取。read/preflight 不保存草稿或清单。
+`news-preparation` 是唯一 browser 的既有 `video.studio` 内新增封闭操作，要求当前 draftId/expectedRevision；preparationRequest 为 read/preflight/enable/record-scene/record-scenes/prepare-shots/prepare-scene-references。read 返回保存声明，preflight 只读检查当前实际媒体 SHA、可解码轨道和源区间、精确来源引用、实际日期文字及逐镜声明。每镜返回 fingerprint、durationSeconds、sourceIntervals、assets、missing/stale/unverified/verified-by-agent/verified-by-user 状态及缺口；模型按最多20镜／16KiB分页读取。read/preflight 不保存草稿或清单。
 
 逐镜清单独立保存在 Project `video-studio/news-preparation/<draftId>.json` version1，绑定 Project/Session/draft，至多96镜／1MiB，使用独立 checklist revision CAS；不能通过导入／更新／恢复草稿冒充。record-scenes 接受1–8个不重复镜头的实际观察声明，单次全片事实／指纹预检、全部核验后一次清单 CAS；任何过期、证据缺失、人工声明保护、取消或 GUI 并发编辑均整批拒绝，不保存部分声明、不自动重试，也不自动生成观察。record-scene 兼容单镜入口。两者需当前 preflight fingerprint、编辑目的、实际 artifact/reference ID、观察动作与相关性、来源日期标签、完整原声和中译或明确未使用原因。复用实际 prepare-reference 的源SHA、PNG哈希与全部逐帧分析；真实视频声明至少三个样本、两种不同PNG且覆盖选用区间两端。源素材、PNG、稿件、引用、取景、时长、顺序或全片图层变化使记录失效；可见全片媒体也核文件哈希。原声声明需主画面实际启用且有可解码音轨覆盖，日期声明须在实际镜头标签／脚注或覆盖全镜的可见文字层中存在。scene.set 的封闭 patch.label 可编辑至多44字符的原生标签。检查累计源/参考文件限512MiB／128项，结束前重核SHA及草稿revision；超预算须先整理本地分段。
 
 准备指纹使用实际可编辑的主素材区间、播放速度、取景、动态效果、源声开关及音量等视觉语义；容器与轨道检查产生的派生时长、生成旁白和字幕证据不伪装成视觉编辑。无 visualSegments 的主素材也使用同一字段投影，不散列整个 scene。资产时间按真实视频轨end规范化，容器尾长不改变同一轨道事实。字幕投影只含实际文字／中译／时间，不因translationOrigin变化失效；先使用与预览／导出相同的speechScene解析锚点字幕、焦点和板书时序，真实映射变化仍失效。源文件 SHA、实测音视频轨范围、引用与观察仍独立强校验；真实裁剪、字幕／译文内容与版式、脚本或源字节变化依旧使准备失效。
+
+`news-preparation/prepare-scene-references` 接受当前 draftId/expectedRevision 与1–8个已有 sceneIds；不接受模型指定源区间或取帧时刻。Host 从当前真实主视频推导至多8个局部半开区间，同源合并起点/中点/末点前50ms候选，单源仍至多8帧。核验实际返回PTS处于起点窗口[start-.1,start+.2]与末点窗口[end-.25,end)，绝不把请求时间或端点后的帧当作覆盖。精确源SHA、PNG与当前区间已覆盖的原生记录直接复用；新增资料全部准备与复核后一次CAS追加参考，保持镜头、旧记录、旧分析和PNG不变。总预算统一32份不可变历史记录／8个artifact+SHA源组；保留原1MiB文档与256MiB原生素材、512MiB/128项清单检查预算。满额、歧义、单源超8候选、实际PTS不覆盖、源/PNG改变、取消或CAS失败均显式拒绝，不自动重试、删历史或新建壳稿。首组三帧与全部referenceIds返回供实际观察，不自动填写analysis/真实动态/相关新闻结论。preflight逐镜referenceGaps及NEWS_PREPARATION_EVIDENCE带artifact、所选start/endExclusive、实际frame秒数、必需窗口及建议时刻；修正完具体缺口才继续。
 
 正常选题自动启用清单；news-brief 类型以及显式 enable 的草稿也受限，同一未关闭选题 Session 不能通过新普通草稿或直接 video.compose/video.narrate 绕过。enable 只能强化要求，演讲／采访选题要求原声。narrate、narrate-pending、narrate-local 和 render 在执行前拒绝未补齐／过期清单，check 同步返回 news-preparation 错误；批量配音一次准入，实际音频调整镜头时长后导出需更新受影响准备。通用 Studio 未启用新闻要求时沿既有准入。Agent不能覆盖用户准备声明；取消、Project 切换和 GUI 并发修改继续拒绝过期结果。
 
@@ -749,7 +751,7 @@ reviewItems 是宿主所有的持久审阅日志，不计入视频内容比较�
 
 参考分析进入原有图片/视频素材预览的上下文入口，不增加常驻阶段按钮或第二个聊天输入。先“生成参考帧”，再“让 Assistant 分析参考 ↗”；结果在原素材列表显示就绪标记，重新打开可看实际 PNG、源时间、分析与将加入的文字。点帧可在原素材预览定位实际源时间。内容分析需要当前官方 Agent 运行时，宿主只准备图片证据和路由原会话，不自行执行模型循环。
 
-唯一 browser 的 video.studio 增加封闭 prepare-reference/read-reference/set-reference-analysis/apply-reference-notes。draftId/expectedRevision、Project/Session、当前素材种类/身份均校验；prepare-reference 可为视频指定一至八个不同有限源秒数，默认在实际视频轨范围抽三点；图片仅静态一帧。media.inspect 的视频轨 now 返回 startSeconds/endSeconds，按真实轨道起止采样，不把音频尾部导致的总媒体时长当成视频终点；其他检查和音轨字段保留。图片先实际检查解码后产生 640×360 原生适配 PNG，视频通过已有原生取帧产生不超过 640×360 的 PNG。记录保存源 ID/SHA/字节数/尺寸、总媒体时长/实际视频区间、请求与实际帧时间、帧 ID/SHA/尺寸、原版本/日期。源预算 256 MiB、单源 16 Mp，静态图片同时服从原图片 32 MiB 预算；视频不超过 1800 秒，最多八份记录，每份一至八帧。
+唯一 browser 的 video.studio 增加封闭 prepare-reference/read-reference/set-reference-analysis/apply-reference-notes。draftId/expectedRevision、Project/Session、当前素材种类/身份均校验；prepare-reference 可为视频指定一至八个不同有限源秒数，默认在实际视频轨范围抽三点；图片仅静态一帧。media.inspect 的视频轨 now 返回 startSeconds/endSeconds，按真实轨道起止采样，不把音频尾部导致的总媒体时长当成视频终点；其他检查和音轨字段保留。图片先实际检查解码后产生 640×360 原生适配 PNG，视频通过已有原生取帧产生不超过 640×360 的 PNG。记录保存源 ID/SHA/字节数/尺寸、总媒体时长/实际视频区间、请求与实际帧时间、帧 ID/SHA/尺寸、原版本/日期。源预算 256 MiB、单源 16 Mp，静态图片同时服从原图片 32 MiB 预算；视频不超过 1800 秒，最多32份历史记录及8个artifact/SHA源组，每份一至八帧。
 
 referenceRecords 是宿主所有日志，排除于视频内容比较；普通 update 与签名 restore 保留最新记录，不能伪造或清空。读取/保存分析/明确加入背景前核对当前源和所有帧 SHA，读取帧后再次核对源。Bridge 把这些返回作为真实模型 PNG 图像，沿用实际 Project 路径、PNG、数量/总字节预算与取消检查，并对将返回的实际字节再次核对记录 SHA。frames 路径是宿主结果，不向模型开放任意本地文件读写。
 
@@ -757,7 +759,7 @@ referenceRecords 是宿主所有日志，排除于视频内容比较；普通 up
 
 原生输出仅在来源再次核对和当前归属/CAS 成功后提交。取消/冲突/验证失败只删除本次新建、身份相符的帧，不删旧资源；等待真实清理完成才重新准入。取消反馈说明已保存成果保留；源/帧变化显示重新生成参考帧的说明。原会话委托失败，即使弹窗已经关闭，也向仍属原视频的状态区报告恢复方式，不自动重发。宿主诊断仍保留原错误，不把 Electron 包装或错误码直接展示为恢复文案。
 
-当前为有限抽样参考分析；尚无自动全视频分段/节奏/音轨分析、语义真值保证或实际 AI 图片/视频生成工作流。达到八份记录上限时禁止新取帧，用户现可通过下面的折叠记录管理释放额度；旧参考图片与原媒体仍保留。完整视频语义分析、复杂引用恢复与完整用户体验仍未获该抽样验证证明；后续 UI 优化已暂停。
+当前为有限抽样参考分析；尚无自动全视频分段/节奏/音轨分析、语义真值保证或实际 AI 图片/视频生成工作流。达到32份历史记录或8个源组上限时禁止超额取帧；不自动删除历史或改建草稿，用户仍可显式管理参考记录；旧参考图片与原媒体保留。完整视频语义分析、复杂引用恢复与完整用户体验仍未获该抽样验证证明；后续 UI 优化已暂停。
 
 ## 卡片内画面与脚本配对
 
@@ -771,7 +773,7 @@ referenceRecords 是宿主所有日志，排除于视频内容比较；普通 up
 
 remove-reference 是封闭请求，必须包含 draftId/expectedRevision/referenceId，只允许可信 GUI user actor，Agent 调用拒绝。沿用 owner/CAS/取消/FIFO；只操作元数据，不读取已过期或丢失的源/帧，因此这些记录仍可恢复额度。未知 ID、错误归属、版本冲突或取消不写入、不发送变更通知。读取失败后当前记录提供明确“重新读取”，仍核对最新源/帧，不自动恢复就绪或重发任务。普通 update/签名内容 Undo 不恢复已移除的宿主日志；界面明确说明内容撤销不恢复参考记录，可重新取帧，原图片仍可作为 Project 素材使用。
 
-真实宿主单元契约覆盖八份记录满额、用户专属移除、错误归属/CAS/取消、失效源/帧仍可移除、媒体与背景/脚本/导出保全、内容历史不复活旧记录及重新取帧预算。实际组件与服务回调的交互证据另见 VERIFICATION；不等同于 Electron 原生/前台、付费模型或生成服务验收。完整视频语义分析尚未实现，分析质量需人工核对，专用 AI 图片／视频生成暂缓。
+真实宿主单元契约覆盖32份记录满额及8个源组、用户专属移除、错误归属/CAS/取消、失效源/帧仍可移除、媒体与背景/脚本/导出保全、内容历史不复活旧记录及重新取帧预算。实际组件与服务回调的交互证据另见 VERIFICATION；不等同于 Electron 原生/前台、付费模型或生成服务验收。完整视频语义分析尚未实现，分析质量需人工核对，专用 AI 图片／视频生成暂缓。
 
 ## 两种编辑视图共用精简操作栏
 
@@ -1157,6 +1159,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Observed scene batches inspect current facts once and commit all declarations by one checklist CAS`
 - `Observed scene batches reject the whole batch on stale evidence, user declarations, cancellation and concurrent GUI changes`
 - `Invalid speech projection remains a per-scene preparation gap without admitting stale evidence or breaking read-only diagnostics`
+- `Preparation exposes exact reference endpoint gaps in preflight and evidence refusal without weakening source windows`
 
 #### `packages/feature-video/test/news.test.ts`
 
@@ -1197,6 +1200,13 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Semantic goals keep their captured sentence/target identity across regeneration and never silently adopt repeated sentence IDs`
 - `External asset chains retain native SHA snapshots through six versions and flag replacements without rewriting earlier versions`
 - `Late proxy completion reconciles a GUI CAS race and asks native ownership cleanup to remove only its new outputs`
+
+#### `packages/feature-video/test/scene-reference-preparation.test.ts`
+
+- `Scene reference batch fixes four selected half-open intervals with one CAS, preserves seven prior records and reuses exact native evidence`
+- `Reference endpoints use actual PTS and exclusive scene end, with structured windows instead of unchanged retries`
+- `Scene reference batch refuses stale sources, cancellation and GUI CAS while preserving records and cleaning only its new PNGs`
+- `Immutable reference history and source-group budgets are shared, backward compatible, bounded and closed to invented scene clocks`
 
 #### `packages/feature-video/test/source-analysis.test.ts`
 
@@ -1400,7 +1410,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Reference cancellation and concurrent GUI CAS after native completion wait for rollback without orphan frames or overwriting user changes`
 - `Reference Bridge admits real bound PNG bytes and rejects post-service tampering, while closed requests, foreign owners and budgets stay bounded`
 - `Reference Assistant pins its prepared identity in the original request and refuses pretending sampled frames are full-video review`
-- `User reference management releases the eight-record budget without reading changed media or deleting PNGs, preserves notes/content/history and prevents Agent removal`
+- `User reference management releases the bounded history budget without reading changed media or deleting PNGs, preserves notes/content/history and prevents Agent removal`
 - `Reference removal accepts only an owned record identity and revision, never paths, bulk lists or analysis payloads`
 - `Scene narration mute retains gain, measured audio, timing and captions through omission, explicit unmute and CAS`
 - `Main footage mute resolves stable segment identity without changing source clock, gain or captions`

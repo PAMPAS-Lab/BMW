@@ -6,7 +6,7 @@ import {exportProjectText} from '../../media-native/src/text-export.js'
 import {assertArtifactId,finiteNumber,mediaRecord} from '../../media-native/src/media-contract.js'
 import {productionHash} from './production-impact.js'
 import {referenceOperation} from './studio-reference.js'
-import {assertReferenceRecords} from './studio-reference-contract.js'
+import {assertReferenceRecords,REFERENCE_LIMITS,referenceSourceCount} from './studio-reference-contract.js'
 import type {StudioReferenceRecord} from './studio-reference-contract.js'
 import {newStudioScene} from './studio-contract.js'
 import type {VideoDraft,StudioScene} from './studio-contract.js'
@@ -35,7 +35,7 @@ export async function prepareShots(kernel:StudioKernel,store:VideoStudioStore,ow
    checkpointWritable=true
   }
   if(!resumeId)await checkpoint()
-  if(draft.scenes.length+shots.length>96||draft.scenes.reduce((n,s)=>n+s.durationSeconds,0)+shots.reduce((n,s)=>n+s.endSeconds-s.startSeconds,0)>720||shots.some(s=>draft.scenes.some(old=>old.id===s.sceneId))||(draft.referenceRecords?.length??0)+shots.length>8)throw new Error('SHOT_PLAN_CONFLICT: Use new scene IDs and at most eight total references.')
+  if(draft.scenes.length+shots.length>96||draft.scenes.reduce((n,s)=>n+s.durationSeconds,0)+shots.reduce((n,s)=>n+s.endSeconds-s.startSeconds,0)>720||shots.some(s=>draft.scenes.some(old=>old.id===s.sceneId))||(draft.referenceRecords?.length??0)+shots.length>REFERENCE_LIMITS.records||referenceSourceCount(draft.referenceRecords??[])+shots.length>REFERENCE_LIMITS.sources)throw new Error('SHOT_PLAN_CONFLICT: Use new scene IDs and remain within 32 reference records / eight source groups.')
   const pins=new Map<string,string>(),urls=new Map<string,string[]>()
   await diagnostics.stage('validate-inputs',async()=>{for(const shot of shots){guard();let pin=pins.get(shot.artifactId);if(!pin){pin=await hash(shot.artifactId,true);pins.set(shot.artifactId,pin)}if(pin!==shot.sha256)throw new Error('SHOT_SOURCE_CHANGED: Use current indexed artifact SHA.');const links:string[]=[];for(const citation of shot.citations)links.push((await sources.citation(citation,signal)).url);urls.set(shot.sceneId,[...new Set(links)])}})
   for(const [index,shot]of shots.entries()){

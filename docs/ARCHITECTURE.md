@@ -159,6 +159,7 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | video.news | contract | feature-video | packages/feature-video/test/news.test.ts | 默认 |
 | browser.navigation | contract | browser-capability | packages/browser-capability/test/page-navigation.test.ts | 默认 |
 | studio.news-source-screenshot | integration | feature-video, browser-capability, platform, media-native | scripts/news-source-screenshot-smoke.ts | 默认 |
+| studio.scene-reference-endpoints | desktop | feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_SCENE_REFERENCE_CASE=1 |
 | studio.shot-batch | desktop | feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_SHOT_BATCH_CASE=1 |
 | studio.news | desktop | feature-video, media-native, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_NEWS_CASE=1 |
 | platform.qwen-credentials | unit | platform | packages/platform/test/qwen-credentials-store.test.ts | 默认 |
@@ -166,6 +167,7 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | browser.media-download-runtime | integration | browser-capability, media-native | scripts/media-download-smoke.ts | 默认 |
 | video.production-assessment | contract | feature-video | packages/feature-video/test/production-assessment.test.ts | 默认 |
 | video.source-transcript | contract | feature-video | packages/feature-video/test/source-transcript.test.ts | 默认 |
+| video.scene-reference-preparation | contract | feature-video | packages/feature-video/test/scene-reference-preparation.test.ts | 默认 |
 | video.news-preparation | contract | feature-video | packages/feature-video/test/news-preparation.test.ts | 默认 |
 | video.preparation-fingerprint | contract | feature-video | packages/feature-video/test/preparation-fingerprint.test.ts | 默认 |
 | video.production | contract | feature-video | packages/feature-video/test/production.test.ts | 默认 |

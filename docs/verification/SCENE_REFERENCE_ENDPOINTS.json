@@ -1,0 +1,155 @@
+{
+  "verifiedAt": "2026-10-23T09:36:09.395966+00:00",
+  "baseCommit": "179abf4",
+  "worktree": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW",
+  "scope": "Existing-scene half-open native reference endpoint preparation, bounded immutable source/frame history and structured preparation gaps",
+  "productionDeployed": false,
+  "productionGeneratedOutputs": {
+    "checked": 570,
+    "changed": []
+  },
+  "implementation": {
+    "operation": "video.studio news-preparation / prepare-scene-references",
+    "input": {
+      "draftId": "CURRENT_DRAFT_ID",
+      "expectedRevision": "CURRENT_REVISION",
+      "preparationRequest": {
+        "operation": "prepare-scene-references",
+        "sceneIds": [
+          "ACTUAL_CURRENT_SCENE_ID"
+        ]
+      }
+    },
+    "limits": {
+      "selectedSceneIds": 8,
+      "selectedPrimaryVideoIntervals": 8,
+      "framesPerSource": 8,
+      "referenceRecordsPerDraft": 32,
+      "artifactShaSourceGroups": 8,
+      "sourceBytesPerBatch": 268435456,
+      "draftDocumentBytes": 1048576,
+      "existingChecklistBytes": 536870912,
+      "existingChecklistFiles": 128
+    },
+    "unchangedRequirements": [
+      "Exclusive scene end and actual native frame PTS",
+      "Source and PNG hashes",
+      "Actual observations and protected user analyses",
+      "Date labels and original-speech requirements",
+      "Draft/Project/Session/CAS and actual cancellation cleanup",
+      "No automatic replay, deletion, semantic certification or film approval"
+    ]
+  },
+  "verification": {
+    "build": "passed in isolated managed worktree",
+    "check": "passed TypeScript/source policy/schema publication/feature inventory/boundaries",
+    "relatedVideoRun": {
+      "passed": 211,
+      "failed": 0,
+      "qualification": "Earlier focused run; overlaps classified run, do not add counts"
+    },
+    "completeSelectedLayers": {
+      "layers": [
+        "unit",
+        "contract",
+        "boundary"
+      ],
+      "selectedGroups": 124,
+      "passedRecords": 128,
+      "failed": 0,
+      "externalOptInNotRun": 8,
+      "report": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/classified-tests/2026-10-23T09-28-00-010Z/result.json",
+      "qualification": "124 selected groups plus four gates; other layers outside this run"
+    },
+    "nativeFixtures": [
+      "new scene-reference fractional PTS",
+      "reference GUI/images/cancellation/CAS",
+      "shot batch",
+      "media processing",
+      "video production",
+      "Qwen HTTP protocol fixture",
+      "neutral desktop driver",
+      "DSH sole-browser catalog"
+    ],
+    "nativeActualEndpoint": {
+      "selectedStartSeconds": 0.25,
+      "selectedEndExclusive": 1.53,
+      "requestedTailSeconds": 1.48,
+      "actualTailPTS": 1.4166666666666667,
+      "sevenOldRecordsPreserved": true,
+      "oneDraftCAS": true,
+      "secondCallReuseNoNativeFramesOrRevision": true
+    },
+    "logs": {
+      "firstBuild": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/reference-endpoint-verification/firstBuild.log",
+      "unusedFixtureCompileFailure": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/reference-endpoint-verification/unusedFixtureCompileFailure.log",
+      "schemaPublicationFailure": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/reference-endpoint-verification/schemaPublicationFailure.log",
+      "finalBuild": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/reference-endpoint-verification/finalBuild.log",
+      "finalCheck": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/reference-endpoint-verification/finalCheck.log",
+      "relatedVideo211": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/reference-endpoint-verification/relatedVideo211.log",
+      "classified": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/reference-endpoint-verification/classified.log",
+      "nativeEndpoints": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/reference-endpoint-verification/nativeEndpoints.log",
+      "referenceUI": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/reference-endpoint-verification/referenceUI.log",
+      "shotBatch": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/reference-endpoint-verification/shotBatch.log",
+      "media": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/reference-endpoint-verification/media.log",
+      "video": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/reference-endpoint-verification/video.log",
+      "narrationProtocolFixture": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/reference-endpoint-verification/narrationProtocolFixture.log",
+      "driver": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/reference-endpoint-verification/driver.log",
+      "dshCatalog": "/Users/zz/.codex/worktrees/scene-reference-endpoints/BMW/.bmw-runtime/reference-endpoint-verification/dshCatalog.log"
+    },
+    "exactCommands": [
+      "npm run build",
+      "npm run docs:video-schema",
+      "npm run docs:features",
+      "npm run docs:architecture",
+      "npm run check",
+      "node scripts/test-runner.js --layer unit,contract,boundary",
+      "BMW_STUDIO_SCENE_REFERENCE_CASE=1 BMW_VALIDATION_DIR=.bmw-runtime/scene-reference-native node scripts/run-electron-script.js scripts/video-studio-smoke.js",
+      "BMW_STUDIO_REFERENCE_CASE=1 BMW_VALIDATION_DIR=.bmw-runtime/reference-ui-native node scripts/run-electron-script.js scripts/video-studio-smoke.js",
+      "BMW_STUDIO_SHOT_BATCH_CASE=1 BMW_VALIDATION_DIR=.bmw-runtime/shot-batch-native node scripts/run-electron-script.js scripts/video-studio-smoke.js",
+      "node scripts/run-electron-script.js scripts/media-processing-smoke.js",
+      "node scripts/run-electron-script.js scripts/video-production-smoke.js",
+      "BMW_TTS_TEST_PROVIDER=qwen-fixture node scripts/run-electron-script.js scripts/narration-smoke.js",
+      "node scripts/run-electron-script.js scripts/agent-driver-smoke.js",
+      "node scripts/dsh-compatibility-smoke.js"
+    ]
+  },
+  "firstPassFailures": [
+    {
+      "phase": "isolated fixture compile",
+      "problem": "Two unused fixture variables (kernel, first)",
+      "correction": "Use kernel to assert real source duration; remove unused receipt variable",
+      "reverified": "final build passed"
+    },
+    {
+      "phase": "static schema check",
+      "problem": "Published video-document schema still had old maxItems",
+      "correction": "npm run docs:video-schema; schema check passes",
+      "reverified": "full check passed"
+    }
+  ],
+  "sharedCpuWindow": {
+    "startedAt": "2026-10-23T09:21:04.595257+00:00",
+    "finishedAt": "2026-10-23T09:36:09.395966+00:00",
+    "qualification": "Conservative interval from first isolated build log creation through evidence packaging. Build/test CPU is intermittent and shared with the host; exclude this window from production speed attribution. No production deployment, Profile access or task interruption."
+  },
+  "sourceHashes": {
+    "packages/feature-video/src/news-preparation-contract.ts": "1b88a916ab4d2f991a125c521ae1585a02777d4c0203c2ad1404d28b9024f39d",
+    "packages/feature-video/src/news-preparation.ts": "f4b4f5e7e3efcce8c64be2966ec2117dadbef7eaa077546644cff5630276142e",
+    "packages/feature-video/src/reference-coverage.ts": "b564efb060f032f9b486b2299754d97388f0a7d49048bc80f9ab2837c3408cf7",
+    "packages/feature-video/src/scene-reference-preparation.ts": "29a0d923897faea322f5d3b51431d1dfdfb8d3b89fd4064da456dec1951628e7",
+    "packages/feature-video/src/studio-reference-contract.ts": "42238495f58383c0ba5734280ef3d505a15927d71ed31f75549f7f05c6df7f23",
+    "packages/feature-video/src/studio-reference.ts": "7b395d69cb266c14757c0ccc193c46392c94812af46724e6a1754783bb7c1fcb",
+    "packages/feature-video/src/shot-preparation.ts": "783edf26c923d0e27821c6222eedf4221929e16af9bf72614ba94c2ee7790d51",
+    "packages/feature-video/src/renderer/studio-reference-editor.ts": "3ca9a88801e2a2d564c5d1a5b08d0e1a77d26d3df3b0c617fd9dc276ccd519af",
+    "packages/feature-video/test/scene-reference-preparation.test.ts": "9ec2d98a9924db219e34ab35ae29ebf69c1258e571078a5257d836d2ac81f250",
+    "packages/feature-video/test/news-preparation.test.ts": "f3b8ea8e4772fe36a4e80fe7b228c04a95ae99c17e736e0cc8fb4c0221c94134",
+    "scripts/video-studio-smoke.ts": "6cd0085e558bc7b9a96f8b30f9c732a28539e6f58d58118946c4cad1fddc9e93"
+  },
+  "limitations": [
+    "Disposable/native and protocol fixtures do not prove paid-model, external-service, production-profile or human listening coverage",
+    "Actual production selected-range execution and independent BMW MP4 review remain for parent after safe deployment",
+    "Native fixture teardown may log rejected stopped-Studio IPC/macOS scheduling warnings; assertions and reported fixture success remain explicit",
+    "Ignored .bmw-runtime evidence must be preserved before archiving the managed worktree"
+  ]
+}

@@ -206,3 +206,12 @@ test('Invalid speech projection remains a per-scene preparation gap without admi
   assert.equal((await f.service().preflight()).ready,true,'explicitly correcting the inactive projection restores identical actual prepared content')
  }finally{f.close()}
 })
+
+test('Preparation exposes exact reference endpoint gaps in preflight and evidence refusal without weakening source windows',async()=>{
+ const f=await fixture();try{
+  await f.record();let draft=f.store.read(f.draft.id);draft.scenes[0].durationSeconds=2.5;draft=f.store.update(draft.id,draft.revision,draft)
+  const report=await f.service().preflight(),row=report.scenes.find(s=>s.sceneId==='opening')!,gap=row.referenceGaps[0]
+  assert.equal(report.ready,false);assert.equal(gap.artifactId,'robot.mp4');assert.equal(gap.startSeconds,0);assert.equal(gap.endExclusive,2.5);assert.deepEqual(gap.actualFrameSeconds,[0,1.5,2.9]);assert.deepEqual(gap.missing,['end']);assert.equal(gap.endWindow.minimum,2.25);assert.equal(gap.endWindow.maximumExclusive,2.5);assert.deepEqual(gap.suggestedTimestampsSeconds,[0,1.25,2.45])
+  const before=f.service().journal.read();await assert.rejects(f.record(),error=>{assert.match(String(error),/NEWS_PREPARATION_EVIDENCE/);assert.match(String(error),/referenceGaps/);assert.match(String(error),/endExclusive/);return true});assert.deepEqual(f.service().journal.read(),before)
+ }finally{f.close()}
+})

@@ -1,3 +1,4 @@
+import {REFERENCE_LIMITS,referenceSourceCount} from '../studio-reference-contract.js'
 import {SourceAnalysisPanel} from './source-analysis-panel.js'
 import {assertReferenceRecords,referenceNotes} from '../studio-reference-contract.js'
 import type {StudioReferenceRecord} from '../studio-reference-contract.js'
@@ -8,7 +9,8 @@ interface ReferenceOptions {state:()=>ReferenceState|undefined;command:(request:
 function referenceError(error:unknown):string {
  const message=(error instanceof Error?error.message:String(error)).replace(/^Error invoking remote method '[^']+':(?: Error:)?\s*/u,'')
  if(message.includes('STUDIO_REFERENCE_STALE'))return '参考素材或参考帧已变化，请重新生成参考帧后分析。'
- if(message.includes('STUDIO_REFERENCE_BUDGET'))return '此视频已保存八份参考记录，请在“管理参考记录”中移除不需要的记录后再取帧。'
+ if(message.includes('STUDIO_REFERENCE_BUDGET'))return '此视频已达32份参考历史记录上限；现有参考和图片保留，请明确处理额度后继续。'
+ if(message.includes('STUDIO_REFERENCE_SOURCE_BUDGET'))return '此视频已达8个素材身份源组上限；已有历史保留，不会自动删除参考。'
  if(message.includes('STUDIO_REFERENCE_EDITED'))return '已保留你校正的参考分析，请重新查看后继续。'
  if(message.includes('STUDIO_CONFLICT'))return '视频或制作背景已变化，请重新打开参考分析后继续。'
  return message
@@ -32,13 +34,13 @@ export class StudioReferenceEditor {
   const apply=add('reference-apply','加入制作背景',async()=>{const current=this.options.state();if(!current||!this.ready||!this.record?.analysis)throw new Error('请先完成有效参考分析。');await run({operation:'apply-reference-notes',referenceId:this.record.id,beforeNotes:current.draft.preparation.notes});if(key===this.key)status.textContent='参考分析已加入制作背景；脚本和画面仍由你决定如何修改。'})
   const cancel=add('reference-cancel','取消作业',async()=>{this.stopRequested=true;cancel.disabled=true;status.textContent='正在停止并等待清理…';await this.options.cancel()}),close=add('reference-close','关闭',async()=>this.close());cancel.hidden=true
   const updateManager=(disabled:boolean)=>{
-   const records=this.options.state()?.draft.referenceRecords??[];managerTitle.textContent='管理参考记录 · '+records.length+'/8';managerRows.replaceChildren()
+   const records=this.options.state()?.draft.referenceRecords??[];managerTitle.textContent='参考历史 · '+records.length+'/'+REFERENCE_LIMITS.records+' · 源组 '+referenceSourceCount(records)+'/'+REFERENCE_LIMITS.sources;managerRows.replaceChildren()
    for(const record of records){const row=document.createElement('div'),label=document.createElement('span');row.className='row';row.dataset.referenceRecord=record.id;label.textContent=record.sourceArtifactId+' · '+record.createdAt.slice(0,16).replace('T',' ')+' · '+record.frames.length+' 帧 · '+(record.analysis?'已有分析':'待分析');row.append(label)
     if(record.sourceArtifactId===asset.artifactId){const view=document.createElement('button');view.textContent=record.id===this.record?.id?(this.ready?'当前记录':'重新读取'):'查看';view.disabled=disabled||(record.id===this.record?.id&&this.ready);view.dataset.referenceView=record.id;view.onclick=()=>void run({operation:'read-reference',referenceId:record.id}).catch(e=>{if(key===this.key){status.textContent=referenceError(e);this.options.notify(referenceError(e))}});row.append(view)}
     const remove=document.createElement('button');remove.textContent='移除记录';remove.disabled=disabled;remove.dataset.referenceRemove=record.id;remove.setAttribute('aria-label','移除 '+record.sourceArtifactId+' 的参考记录，素材保留');remove.onclick=()=>void run({operation:'remove-reference',referenceId:record.id}).then(()=>{if(key===this.key)status.textContent='已移除参考记录；素材、参考 PNG 和制作背景保留，可继续生成参考帧。'}).catch(e=>{if(key===this.key){status.textContent=referenceError(e);this.options.notify(referenceError(e))}});row.append(remove);managerRows.append(row)
    }
   }
-  const update=()=>{const current=this.options.state(),disabled=this.working||!current||current.disabled||[current?.projectId,current?.sessionId,current?.draft.id,asset.artifactId].join('/')!==key;prepare.disabled=Boolean(disabled)||Boolean(current?.draft.referenceRecords&&current.draft.referenceRecords.length>=8);ask.disabled=Boolean(disabled)||!this.ready;apply.disabled=Boolean(disabled)||!this.ready||!this.record?.analysis||Boolean(this.record?.analysis&&current?.draft.preparation.notes.includes(referenceNotes(this.record)));times.disabled=Boolean(disabled);close.disabled=this.working;cancel.hidden=!this.working;cancel.disabled=!this.working;updateManager(Boolean(disabled))}
+  const update=()=>{const current=this.options.state(),disabled=this.working||!current||current.disabled||[current?.projectId,current?.sessionId,current?.draft.id,asset.artifactId].join('/')!==key;prepare.disabled=Boolean(disabled)||Boolean(current?.draft.referenceRecords&&current.draft.referenceRecords.length>=REFERENCE_LIMITS.records);ask.disabled=Boolean(disabled)||!this.ready;apply.disabled=Boolean(disabled)||!this.ready||!this.record?.analysis||Boolean(this.record?.analysis&&current?.draft.preparation.notes.includes(referenceNotes(this.record)));times.disabled=Boolean(disabled);close.disabled=this.working;cancel.hidden=!this.working;cancel.disabled=!this.working;updateManager(Boolean(disabled))}
   const display=async()=>{
    if(key!==this.key)return;this.urls.splice(0).forEach(u=>URL.revokeObjectURL(u));gallery.replaceChildren();analysis.replaceChildren();if(!this.record){status.textContent='尚未生成参考帧。';update();return}
    const record=this.record;status.textContent=record.width+' × '+record.height+' · '+(record.kind==='video'?record.durationSeconds.toFixed(2)+' 秒（媒体） · 画面 '+record.videoRange!.startSeconds.toFixed(2)+'–'+record.videoRange!.endSeconds.toFixed(2)+' 秒 · '+record.frames.length+' 个采样帧':'静态图片')+' · 原文件指纹已核对'

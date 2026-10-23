@@ -6,7 +6,7 @@ import {assertArtifactId,finiteNumber,mediaRecord} from '../../media-native/src/
 import {assertImageInspection} from '../../media-native/src/image-contract.js'
 import {assertMediaInspection} from '../../media-native/src/media-port.js'
 import {assertCoverOptions,assertCoverReceipt} from '../../media-native/src/media/processing.cover-contract.js'
-import {assertReferenceRecords,referenceNotes} from './studio-reference-contract.js'
+import {assertReferenceRecords,referenceNotes,assertReferenceCapacity} from './studio-reference-contract.js'
 import type {StudioReferenceRecord,StudioReferenceFrame} from './studio-reference-contract.js'
 import type {StudioKernel} from './studio-service.js'
 import type {VideoStudioStore} from './studio-store.js'
@@ -22,9 +22,9 @@ export async function referenceOperation(kernel:StudioKernel,store:VideoStudioSt
   records.splice(index,1);check();return {draft:store.recordReference(draft.id,draft.revision,records),removedReferenceId:request.referenceId}
  }
  if(request.operation==='prepare-reference'){
-  if(records.length>=8)throw new Error('STUDIO_REFERENCE_BUDGET: 此草稿已保存八份参考取帧记录。')
+  assertReferenceCapacity(records,[],1)
   const id=request.artifactId!,kind=request.assetKind!;if(!store.assets(path.dirname(directory)).some(a=>a.artifactId===id&&a.kind===kind))throw new Error('Choose a current Project image or video reference.')
-  check();const sourceSha256=await fingerprint(directory,id,signal),sourceStat=await fs.lstat(path.join(directory,id)),before=new Set(await fs.readdir(directory)),root=await fs.realpath(directory),identity=await fs.lstat(root),owned=new Map<string,{dev:number;ino:number}>();let committed=false
+  check();const sourceSha256=await fingerprint(directory,id,signal);assertReferenceCapacity(records,[{sourceArtifactId:id,sourceSha256}],1);const sourceStat=await fs.lstat(path.join(directory,id)),before=new Set(await fs.readdir(directory)),root=await fs.realpath(directory),identity=await fs.lstat(root),owned=new Map<string,{dev:number;ino:number}>();let committed=false
   const claim=async(raw:unknown)=>{const id=assertArtifactId(mediaRecord(raw).artifactId),stat=await fs.lstat(path.join(root,id));if(before.has(id)||!stat.isFile()||stat.isSymbolicLink())throw new Error('Reference frame is not a newly owned Project artifact.');owned.set(id,{dev:stat.dev,ino:stat.ino});return id}
   try{
    let width:number,height:number,durationSeconds=0,videoRange:StudioReferenceRecord['videoRange'],frames:StudioReferenceFrame[]=[]

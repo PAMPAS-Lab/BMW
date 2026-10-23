@@ -380,6 +380,21 @@ async function verifyShotBatch(store:VideoStudioStore,kernel:BrowserKernel,execu
  console.log('PASS native shot batch: actual encoded segment, three decoded PNGs, original source audio, atomic scenes/references and no semantic approval')
 }
 
+async function verifySceneReferenceEndpoints(store:VideoStudioStore,kernel:BrowserKernel,execute:(request:unknown)=>Promise<unknown>){
+ const id=await script<string>("document.getElementById('draft-select').value"),original=store.read(id),rendered=mediaRecord(await execute({operation:'render',draftId:id,expectedRevision:original.revision})),artifactId=String(mediaRecord(rendered.export).artifactId),sourceBytes=fs.readFileSync(path.join(artifacts,artifactId)),sourceSha=crypto.createHash('sha256').update(sourceBytes).digest('hex')
+ let draft=store.create('Native selected interval references');draft.scenes=[{...newStudioScene('native-current-range'),videoArtifactId:artifactId,sourceStartSeconds:.25,durationSeconds:1.28,narration:''}];draft=store.update(draft.id,draft.revision,draft)
+ await execute({operation:'prepare-reference',draftId:draft.id,expectedRevision:draft.revision,artifactId,assetKind:'video',timestampsSeconds:[0,.5,.9]});draft=store.read(draft.id)
+ const info=mediaRecord(await kernel.recordingController.processArtifact({action:'media.inspect',artifactId}));assert.ok(Number(info.durationSeconds)>1.53)
+ const record=draft.referenceRecords![0],history=Array.from({length:7},(_,index)=>({...structuredClone(record),id:'native-history-'+index}));draft=store.recordReference(draft.id,draft.revision,history)
+ const previousRevision=draft.revision,pngs=new Map(history[0].frames.map(f=>[f.artifactId,fs.readFileSync(path.join(artifacts,f.artifactId))])),result=mediaRecord(await execute({operation:'news-preparation',draftId:draft.id,expectedRevision:draft.revision,preparationRequest:{operation:'prepare-scene-references',sceneIds:['native-current-range']}}))
+ draft=store.read(draft.id);assert.equal(draft.revision,previousRevision+1);assert.equal(draft.referenceRecords!.length,8);assert.deepEqual(draft.referenceRecords!.slice(0,7),history)
+ const current=draft.referenceRecords!.at(-1)!,last=current.frames.at(-1)!;assert.equal(last.requestedSeconds,1.48);assert.ok(last.seconds>=1.28&&last.seconds<1.53);assert.notEqual(last.seconds,last.requestedSeconds,'Native held-frame PTS, not the requested timestamp, is persisted');assert.equal(current.analysis,undefined)
+ for(const [png,bytes]of pngs)assert.deepEqual(fs.readFileSync(path.join(artifacts,png)),bytes);assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(artifacts,artifactId))).digest('hex'),sourceSha)
+ const reused=mediaRecord(await execute({operation:'news-preparation',draftId:draft.id,expectedRevision:draft.revision,preparationRequest:{operation:'prepare-scene-references',sceneIds:['native-current-range']}}));assert.equal(reused.reused,1);assert.equal(reused.prepared,0);assert.equal(store.read(draft.id).revision,draft.revision)
+ const proof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/studio-scene-references';fs.mkdirSync(proof,{recursive:true});fs.writeFileSync(path.join(proof,'scene-references.json'),JSON.stringify({status:'passed',result,reused,draft,sourceSha,scope:'Disposable real H264/AAC source and native PNG decoding; exact returned PTS, seven preserved prior records, one CAS and reuse. No model observations, production Profile or news acceptance.'},null,2))
+ console.log('PASS native scene reference endpoints: actual fractional source PTS, old immutable history, atomic append and exact reuse')
+}
+
 async function verifyReviewAdoption(store:VideoStudioStore,execute:(request:unknown)=>Promise<unknown>,prompts:string[]):Promise<void>{
  const id=await script<string>("document.getElementById('draft-select').value");let draft=store.read(id)
  draft.scenes[0].captions=draft.scenes[0].captions!.map(c=>({...c,translationText:'Reviewed translation',translationOrigin:'user-edited'}));draft.scenes.push({...newStudioScene('review-second','第二镜头原始标题'),durationSeconds:2,imageArtifactId:'source.png'});await execute({operation:'update',draftId:id,expectedRevision:draft.revision,draft});draft=store.read(id)
@@ -1219,6 +1234,7 @@ async function run():Promise<void>{try{
   if(process.env.BMW_STUDIO_NEWS_OPTIONS_CASE==='1'){await verifyNewsOptions(store,studioExecute);return}
   if(process.env.BMW_STUDIO_CARD_TEXT_CASE==='1'){await verifyCardText(store,studioExecute);return}
   if(process.env.BMW_STUDIO_CARD_PAIR_CASE==='1'){await verifyCardPair(store,studioExecute);return}
+  if(process.env.BMW_STUDIO_SCENE_REFERENCE_CASE==='1'){await verifySceneReferenceEndpoints(store,kernel,request=>kernel.execute({action:'video.studio',studioRequest:request},{actor:'agent',sessionOwner:{projectId:active.id,sessionId:currentSession}}));return}
   if(process.env.BMW_STUDIO_SHOT_BATCH_CASE==='1'){await verifyShotBatch(store,kernel,studioExecute);return}
   if(process.env.BMW_STUDIO_REFERENCE_CASE==='1'){await verifyReferenceAnalysis(store,kernel,request=>kernel.execute({action:'video.studio',studioRequest:request},{actor:'agent',sessionOwner:{projectId:active.id,sessionId:currentSession}}),assistantPrompts,()=>{rejectReferenceAssistant=true});return}
   if(process.env.BMW_STUDIO_REVIEW_CASE==='1'){await verifyReviewAdoption(store,request=>kernel.execute({action:'video.studio',studioRequest:request},{actor:'agent',sessionOwner:{projectId:active.id,sessionId:currentSession}}),assistantPrompts);return}
