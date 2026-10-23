@@ -808,6 +808,55 @@
             "additionalProperties": false,
             "properties": {
               "op": {
+                "const": "captions.translate"
+              },
+              "sceneId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9-]{1,80}$"
+              },
+              "translations": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 100,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "cueIndex",
+                    "originalText",
+                    "translationText"
+                  ],
+                  "properties": {
+                    "cueIndex": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 99
+                    },
+                    "originalText": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    "translationText": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    }
+                  }
+                }
+              }
+            },
+            "required": [
+              "op",
+              "sceneId",
+              "translations"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
                 "const": "card.set"
               },
               "sceneId": {

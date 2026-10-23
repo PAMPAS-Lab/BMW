@@ -6,6 +6,7 @@ import {sceneVisuals} from '../../media-native/src/visual-segments.js'
 import {cardImageAssets} from '../../media-native/src/card-details.js'
 import {productionHash} from './production-impact.js'
 import {NewsPreparationJournal} from './news-preparation-journal.js'
+import {speechScene} from './studio-speech-contract.js'
 import type {NewsPreparationRequest,NewsScenePreparation} from './news-preparation-contract.js'
 import type {VideoDraft,StudioScene} from './studio-contract.js'
 import type {VideoStudioStore} from './studio-store.js'
@@ -28,18 +29,29 @@ export class NewsPreparationService {
   if(request.operation==='read')return {draftId:this.draft.id,revision:this.draft.revision,...state,required:this.required(),meaning:'Saved declarations, not current material verification. Use preflight for actual hashes and gaps.'}
   if(request.operation==='enable'){this.guard(signal);return this.journal.save(request.expectedChecklistRevision,{...state,enabled:true,originalSpeechRequired:state.originalSpeechRequired||request.originalSpeechRequired})}
   if(request.operation==='preflight')return this.preflight(state,signal)
-  if(request.operation!=='record-scene')throw new Error('Unknown preparation operation.')
+  if(request.operation!=='record-scene'&&request.operation!=='record-scenes')throw new Error('Unknown preparation operation.')
   if(state.revision!==request.expectedChecklistRevision)throw new Error('NEWS_PREPARATION_CONFLICT: Reload checklist revision.')
-  const report=await this.preflight(state,signal),row=report.scenes.find(s=>s.sceneId===request.scene.sceneId)
-  if(!row||row.fingerprint!==request.scene.fingerprint)throw new Error('NEWS_PREPARATION_STALE: Use the current scene fingerprint from preflight.')
-  const problems=await this.verifyDeclaration(request.scene,row.assets,signal)
-  if(problems.length)throw new Error('NEWS_PREPARATION_EVIDENCE: '+problems.join(' '))
-  const previous=state.scenes.find(s=>s.sceneId===request.scene.sceneId)
-  if(actor==='agent'&&previous?.origin==='user')throw new Error('NEWS_PREPARATION_USER_EDITED: Preserve the user preparation record; request a user correction instead of overwriting it.')
-  const next={...state,enabled:true,scenes:[...state.scenes.filter(s=>s.sceneId!==request.scene.sceneId),{...request.scene,origin:actor,capturedRevision:this.draft.revision,createdAt:new Date().toISOString()}]}
-  this.guard(signal);return {draftId:this.draft.id,revision:this.draft.revision,checklist:this.journal.save(state.revision,next),authority:'agent/user-declared; not independent film review'}
+  const declarations=request.operation==='record-scene'?[request.scene]:request.scenes
+  // Validate every author-supplied observation against one current material snapshot.
+  // No declaration is persisted until the complete bounded batch and final guard pass.
+  const report=await this.preflight(state,signal),verifiedHashes=new Map<string,string>(),directory=path.join(this.kernel.projectStore.active().directory,'artifacts');let bytes=0
+  const hash=async(id:string)=>{const cached=verifiedHashes.get(id);if(cached)return cached;const io=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:id});try{bytes+=io.bytes;if(bytes>512*1024*1024||verifiedHashes.size>=128)throw new Error('NEWS_PREPARATION_BUDGET: Observed batch exceeds 512 MiB /128 files.');const value=await io.fingerprint(signal);verifiedHashes.set(id,value);return value}finally{await io.close()}}
+  for(const scene of declarations){
+   this.guard(signal);const row=report.scenes.find(s=>s.sceneId===scene.sceneId)
+   if(!row||row.fingerprint!==scene.fingerprint)throw this.blocked('NEWS_PREPARATION_STALE','Use the current scene fingerprint from preflight; do not retry the unchanged declaration.',state.revision,scene.sceneId)
+   const previous=state.scenes.find(s=>s.sceneId===scene.sceneId)
+   if(actor==='agent'&&previous?.origin==='user')throw new Error('NEWS_PREPARATION_USER_EDITED: Preserve the user preparation record; request a user correction instead of overwriting it.')
+   const problems=await this.verifyDeclaration(scene,row.assets,signal,hash)
+   if(problems.length)throw this.blocked('NEWS_PREPARATION_EVIDENCE',problems.join(' '),state.revision,scene.sceneId)
+   for(const asset of row.assets)if(await hash(asset.artifactId)!==asset.sha256)throw new Error('NEWS_PREPARATION_STALE: Material changed while recording observations.')
+  }
+  for(const [id,expected]of verifiedHashes){const io=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:id});try{if(await io.fingerprint(signal)!==expected)throw new Error('NEWS_PREPARATION_STALE: Observed material changed before commit.')}finally{await io.close()}}
+  const ids=new Set(declarations.map(s=>s.sceneId)),createdAt=new Date().toISOString(),next={...state,enabled:true,scenes:[...state.scenes.filter(s=>!ids.has(s.sceneId)),...declarations.map(scene=>({...scene,origin:actor,capturedRevision:this.draft.revision,createdAt}))]}
+  this.guard(signal);return {draftId:this.draft.id,revision:this.draft.revision,recordedSceneIds:[...ids],checklist:this.journal.save(state.revision,next),authority:'agent/user-declared; not independent film review',automaticRetry:false}
+
  }
- async requireReady(signal?:AbortSignal){if(!this.required())return;const report=await this.preflight(this.journal.read(),signal);if(!report.ready)throw new Error('NEWS_PREPARATION_REQUIRED: '+report.issues.slice(0,8).map(i=>`${i.sceneId??'film'}: ${i.message}`).join(' ')+' Use news-preparation preflight and record-scene; do not compose a new draft to bypass it.')}
+ private blocked(code:string,message:string,checklistRevision:number,sceneId:string){return new Error(code+': '+JSON.stringify({code,message,draftId:this.draft.id,revision:this.draft.revision,checklistRevision,sceneId,committed:false,automaticRetry:false,recovery:'Correct the specific editorial/evidence gap or report a deterministic blocker. Do not repeat unchanged record/check requests at the same revision/fingerprint.'}))}
+ async requireReady(signal?:AbortSignal){if(!this.required())return;const report=await this.preflight(this.journal.read(),signal);if(!report.ready)throw new Error('NEWS_PREPARATION_REQUIRED: '+JSON.stringify({code:'NEWS_PREPARATION_REQUIRED',draftId:this.draft.id,revision:this.draft.revision,checklistRevision:report.checklistRevision,issues:report.issues.slice(0,8),sceneFingerprints:report.scenes.slice(0,8).map(s=>({sceneId:s.sceneId,fingerprint:s.fingerprint})),committed:false,automaticRetry:false,recovery:'Correct specific editorial/evidence gaps, then use preflight and record-scenes. If revision/fingerprints and errors are unchanged, stop and report the deterministic blocker; do not repeat record/check or create another draft to bypass it.'}))}
  async preflight(state=this.journal.read(),signal?:AbortSignal){
   this.guard(signal);state=this.effective(state);const directory=path.join(this.kernel.projectStore.active().directory,'artifacts'),hashes=new Map<string,string>(),facts=new Map<string,AssetFact>(),sources=new StudioSources(this.kernel),issues:Issue[]=[],rows:{sceneId:string;fingerprint:string;durationSeconds:number;sourceIntervals:{artifactId:string;startSeconds:number;endSeconds:number;kind:'image'|'video'}[];assets:AssetFact[];state:'missing'|'stale'|'unverified'|'verified-by-agent'|'verified-by-user';issues:Issue[]}[]=[];let bytes=0
   const hash=async(id:string)=>{let sha=hashes.get(id);if(sha)return sha;const io=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:id});try{bytes+=io.bytes;if(bytes>512*1024*1024||hashes.size>=128)throw new Error('NEWS_PREPARATION_BUDGET: Segment selected media before checking; 512 MiB /128 files.');sha=await io.fingerprint(signal);hashes.set(id,sha);return sha}finally{await io.close()}}
@@ -52,13 +64,17 @@ export class NewsPreparationService {
     let fact=facts.get(artifactId)
     if(!fact){const sha256=await hash(artifactId),video=visuals.some(v=>v.videoArtifactId===artifactId)||[...(scene.layers??[]),...globalMedia].some(l=>l.kind==='video'&&l.artifactId===artifactId)
      fact={artifactId,sha256,kind:video?'video':'image'}
-     if(video){const info=assertMediaInspection(await this.kernel.recordingController.processArtifact({action:'media.inspect',artifactId},signal)),track=info.tracks.find(t=>t.type==='video'&&t.canDecode),audio=info.tracks.find(t=>t.type==='audio'&&t.canDecode);if(!track)throw new Error('No decodable video track.');Object.assign(fact,{durationSeconds:info.durationSeconds,startSeconds:Math.max(0,track.startSeconds??0),endSeconds:track.endSeconds??info.durationSeconds,...(audio?{audioStartSeconds:Math.max(0,audio.startSeconds??0),audioEndSeconds:audio.endSeconds??info.durationSeconds}:{})})}facts.set(artifactId,fact)
+     if(video){const info=assertMediaInspection(await this.kernel.recordingController.processArtifact({action:'media.inspect',artifactId},signal)),track=info.tracks.find(t=>t.type==='video'&&t.canDecode),audio=info.tracks.find(t=>t.type==='audio'&&t.canDecode);if(!track)throw new Error('No decodable video track.');Object.assign(fact,{durationSeconds:track.endSeconds??info.durationSeconds,startSeconds:Math.max(0,track.startSeconds??0),endSeconds:track.endSeconds??info.durationSeconds,...(audio?{audioStartSeconds:Math.max(0,audio.startSeconds??0),audioEndSeconds:audio.endSeconds??info.durationSeconds}:{})})}facts.set(artifactId,fact)
     }assets.push(fact)
    }catch(error){signal?.throwIfAborted();if(error instanceof Error&&error.message.startsWith('NEWS_PREPARATION_BUDGET'))throw error;add('asset-unavailable',`Actual material unavailable: ${artifactId}.`)}
    if(!assets.length)add('material-missing','A visual brief or text card is not prepared media.')
    for(const visual of visuals){const fact=assets.find(a=>a.artifactId===visual.videoArtifactId);if(fact&&(visual.sourceStartSeconds<(fact.startSeconds??0)-.001||visual.sourceStartSeconds+visual.durationSeconds*visual.playbackRate>(fact.endSeconds??0)+.001))add('source-range','Selected video does not cover its actual scene interval; a held frame is not moving footage.')}
-   const fingerprint=productionHash({draftId:this.draft.id,scene:preparationSceneContent(scene),settings:[this.draft.width,this.draft.height,this.draft.fps,this.draft.watermark,this.draft.layers],order:this.draft.scenes.map(s=>s.id),assets,citations}),saved=state.scenes.find(s=>s.sceneId===scene.id)
-   let status:typeof rows[number]['state']=saved?saved.fingerprint===fingerprint?saved.origin==='user'?'verified-by-user':'verified-by-agent':'stale':'missing'
+   let content:ReturnType<typeof preparationSceneContent>|undefined
+   try{content=preparationSceneContent(scene)}catch(error){signal?.throwIfAborted();add('render-projection-invalid','Current caption/focus/cue projection is unavailable: '+(error instanceof Error?error.message:String(error)).slice(0,1000))}
+   // An invalid projection has no admissible 64-character scene fingerprint.
+   // Read-only diagnostics stay available; recording and render remain blocked.
+   const fingerprint=content?productionHash({draftId:this.draft.id,scene:content,settings:[this.draft.width,this.draft.height,this.draft.fps,this.draft.watermark,this.draft.layers],order:this.draft.scenes.map(s=>s.id),assets,citations}):'',saved=state.scenes.find(s=>s.sceneId===scene.id)
+   let status:typeof rows[number]['state']=!content?'unverified':saved?saved.fingerprint===fingerprint?saved.origin==='user'?'verified-by-user':'verified-by-agent':'stale':'missing'
    if(!saved)add('checklist-missing','Record observed material/relevance/date/original-speech preparation for this scene.')
    else if(saved.fingerprint!==fingerprint)add('checklist-stale','Script, material, citation, range, framing or order changed; review the current preparation.')
    else {for(const message of await this.verifyDeclaration(saved,assets,signal,hash))add('evidence-unverified',message);if(sceneIssues.length)status='unverified'}
@@ -92,10 +108,13 @@ export class NewsPreparationService {
  }
 }
 /** Audio generation/caption evidence can change after preparation; visual/script edits invalidate it. */
-export function preparationSceneContent(s:StudioScene){
+export function preparationSceneContent(scene:StudioScene){
+ // Resolve the same anchor-driven captions, focus and cues used by preview/export.
+ // Evidence receipt dates/ownership alone do not identify rendered content.
+ const s=speechScene(scene)
  // A primary visual may be the scene object itself. Hash its editable visual
  // semantics, not derived inspection duration or generated audio/caption evidence.
  // Actual bytes and track bounds are separately pinned in preflight assets.
  const visuals=sceneVisuals(s).map(v=>({videoArtifactId:v.videoArtifactId,imageArtifactId:v.imageArtifactId,sourceStartSeconds:v.sourceStartSeconds,durationSeconds:v.durationSeconds,playbackRate:v.playbackRate,zoom:v.zoom,crop:v.crop,keepSourceAudio:v.keepSourceAudio,sourceVolume:v.sourceVolume,effects:v.effects,focusIntervals:v.focusIntervals,...('effectWindow'in v?{effectWindow:v.effectWindow}:{}),...('transition'in v?{transition:v.transition,transitionSeconds:v.transitionSeconds}:{})}))
- return {id:s.id,title:s.title,label:s.label,narration:s.narration,bullets:s.bullets,bulletRevealSeconds:s.bulletRevealSeconds,durationSeconds:s.durationSeconds,sources:s.sources,citations:s.citations,visuals,layers:s.layers,audioTracks:s.audioTracks,cardSpec:s.cardSpec,cardCues:s.cardCues,presentationWindow:s.presentationWindow,layout:s.layout,sceneTemplate:s.sceneTemplate,endPolicy:s.endPolicy,showSceneNumber:s.showSceneNumber,captions:s.captions,captionStyle:s.captionStyle,captionDisplay:s.captionDisplay,voiceTiming:s.voiceTiming,voiceSegments:s.voiceSegments,voiceMuted:s.voiceMuted,voiceVolume:s.voiceVolume}
+ return {id:s.id,title:s.title,label:s.label,narration:s.narration,bullets:s.bullets,bulletRevealSeconds:s.bulletRevealSeconds,durationSeconds:s.durationSeconds,sources:s.sources,citations:s.citations,visuals,layers:s.layers,audioTracks:s.audioTracks,cardSpec:s.cardSpec,cardCues:s.cardCues,presentationWindow:s.presentationWindow,layout:s.layout,sceneTemplate:s.sceneTemplate,endPolicy:s.endPolicy,showSceneNumber:s.showSceneNumber,captions:s.captions?.map(c=>({startSeconds:c.startSeconds,endSeconds:c.endSeconds,text:c.text,translationText:c.translationText})),captionStyle:s.captionStyle,captionDisplay:s.captionDisplay,voiceTiming:s.voiceTiming,voiceSegments:s.voiceSegments,voiceMuted:s.voiceMuted,voiceVolume:s.voiceVolume}
 }

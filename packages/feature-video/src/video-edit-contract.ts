@@ -1,3 +1,5 @@
+import {assertCaptionTranslations} from './caption-translations.js'
+import type {CaptionTranslation} from './caption-translations.js'
 import {COMPOSITION_LIMITS} from '../../media-native/src/composition-contract.js'
 import {studioId} from './studio-contract.js'
 import type {StudioScene,StudioPreparation} from './studio-contract.js'
@@ -20,6 +22,7 @@ export type VideoEditCommand=
  |{op:'scene.add';scene:SceneContent&{id:string;title:string};afterSceneId?:string}
  |{op:'captions.set';sceneId:string;mode:'manual';cues:CaptionCue[]}
  |{op:'captions.set';sceneId:string;mode:'sentences'|'off'}
+ |{op:'captions.translate';sceneId:string;translations:CaptionTranslation[]}
  |{op:'card.set';sceneId:string;cardSpec:CardSpec;links?:CardSpeechChoice[]}
  |{op:'card.bind';sceneId:string;links:CardSpeechChoice[]}
  |{op:'scene.set';sceneId:string;patch:SceneContent}
@@ -42,6 +45,7 @@ export function assertVideoEdit(raw:unknown):VideoEdit {
   switch(c.op){
    case 'brief.set':{closed(c,['op','patch']);const patch=mediaRecord(c.patch);closed(patch,['production','notes','outline','artifactIds','sourceIds']);if(!Object.keys(patch).length)throw new TypeError('VIDEO_EDIT: Empty brief patch.');return {op:c.op,patch:structuredClone(patch)} as VideoEditCommand}
    case 'scene.add':{closed(c,['op','scene','afterSceneId']);const scene=mediaRecord(c.scene);closed(scene,['id',...sceneFields]);studioId(scene.id);if(typeof scene.title!=='string'||!scene.title.trim())throw new TypeError('VIDEO_EDIT_SCENE: A new scene needs a title.');return {op:c.op,scene:structuredClone(scene),...(c.afterSceneId===undefined?{}:{afterSceneId:studioId(c.afterSceneId)})} as VideoEditCommand}
+   case 'captions.translate':closed(c,['op','sceneId','translations']);return {op:c.op,sceneId:studioId(c.sceneId),translations:assertCaptionTranslations(c.translations)}
    case 'captions.set':{
     if(!['manual','sentences','off'].includes(String(c.mode)))throw new TypeError('VIDEO_EDIT_CAPTIONS: Choose manual, sentences or off.')
     closed(c,['op','sceneId','mode',...(c.mode==='manual'?['cues']:[])])

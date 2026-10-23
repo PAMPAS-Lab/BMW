@@ -19,3 +19,11 @@
 - 正常启动时将 stdout/stderr 保存到带时间的独立运行日志，记录路径到任务状态，保留旧日志。当前实例仍执行旧代码，不在运行中重建；安全空闲、实际清理后再加载新版本。
 
 速度验收以“实际分镜提交、清单齐备、首导出、独立审片”里程碑为准；help/read/抽帧增长不当作完成率。隔离媒体夹具证明技术链路可用，不能据此宣称真实45秒新闻提速；本轮实际制作、后台采集与隔离验证的共享CPU窗口分别计量。
+
+## 字幕与观察清单批量交接
+
+实际参考观察仍是模型／用户任务。先完成所有字幕、译文、原声选择及取景，`apply-edit` 的 `captions.translate` 可把多镜译文并在一次至多32命令的事务中提交：每镜 `sceneId` 与 `translations:[{cueIndex,originalText,translationText}]`，每组1–100条；保留字幕原文、时间和 Host 原声关联，原文变化／人工译文冲突整批拒绝。完整手工字幕仍用同事务的 `captions.set`；有原声关联时不能借字幕替换绕过已核范围。
+
+字幕稳定后只做一次 `news-preparation/preflight`，复制当前各镜 fingerprint；再用 `record-scenes {expectedChecklistRevision,scenes:[完整实际观察声明]}` 一次保存1–8镜。宿主用一次全片事实快照核对全部声明，仍检查每个真实参考、日期文字、原声、文件 SHA 和当前 Project／草稿版本，全部成立后才做一次清单 CAS。任一无效声明、人工声明覆盖、取消或并发编辑均零提交；不自动填写观察，不自动重试。相比5镜分别 preflight+record，显式调用从10次变为2次，record 内全片预检从5次变为1次；独立 MP4 审核和必要实际观察次数不减少。
+
+`help forOperation:"news-preparation",forSubOperation:"record-scenes"` 返回该闭合分支；`describe-edit editOperation:"captions.translate"` 返回译文事务命令。相同草稿版本、相同指纹和相同问题没有实质编辑时，应报具体阻断而非循环 record/check；错误包含 committed:false、automaticRetry:false 和当前绑定身份。准备通过仍只代表已记录观察声明，不能当作最终审片通过。

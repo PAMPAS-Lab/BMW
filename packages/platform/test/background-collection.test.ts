@@ -16,6 +16,20 @@ test('Background action admission bounds originals, refuses side effects and rev
 })
 
 test('Passive library refreshes preserve background work; user mutations and work requests preempt it',()=>{
- for(const raw of [{action:'library.collecting',collectionRequest:{operation:'presets'}},{action:'library.materials',libraryRequest:{operation:'search'}},{action:'library.collecting',collectionRequest:{operation:'list'}},{action:'library.recommendations',recommendationRequest:{operation:'policy'}},{action:'library.exports',exportsRequest:{operation:'uses'}}])assert.equal(passiveCollectionUserRead(raw),true)
+ for(const raw of [{action:'video.studio',studioRequest:{operation:'news-guide'}},{action:'video.studio',studioRequest:{operation:'news-topics'}},{action:'video.studio',studioRequest:{operation:'read'}},{action:'library.collecting',collectionRequest:{operation:'presets'}},{action:'library.materials',libraryRequest:{operation:'search'}},{action:'library.collecting',collectionRequest:{operation:'list'}},{action:'library.recommendations',recommendationRequest:{operation:'policy'}},{action:'library.exports',exportsRequest:{operation:'uses'}}])assert.equal(passiveCollectionUserRead(raw),true)
  for(const raw of [{action:'library.collecting',collectionRequest:{operation:'subscribe-preset'}},{action:'library.materials',libraryRequest:{operation:'copy'}},{action:'library.collecting',collectionRequest:{operation:'start'}},{action:'library.recommendations',recommendationRequest:{operation:'activate'}},{action:'video.studio',studioRequest:{operation:'render'}},{action:'navigate',url:'https://example.org'},null,{action:'library.materials',libraryRequest:null}])assert.equal(passiveCollectionUserRead(raw),false)
+})
+test('Background discovery publishes only admitted actions and exact operation branches',async()=>{
+ const schema={action:'library.collecting',description:'Global operations',inputSchema:{properties:{collectionRequest:{oneOf:['list','read','save-lead','finish','start'].map(operation=>({properties:{operation:{const:operation}}}))}}}}
+ const kernel={libraryCollecting:()=>{},capabilityRegistry:{assertRequest:(raw:unknown)=>raw},execute:async(raw:unknown)=>{const request=raw as {action:string;forAction?:string};return request.forAction?structuredClone(schema):{tool:'browser',actions:['help','observe','library.collecting','library.collection-batch','library.streams','video.studio'].map(action=>({action,description:'global'}))}},closeDetached:async()=>{}} as unknown as BrowserKernel
+ const scope=new BackgroundCollectionScope(kernel,()=>true)
+ const discovery=await scope.executor.execute({action:'help'}) as {actions:{action:string}[]}
+ assert.deepEqual(discovery.actions.map(row=>row.action),['help','observe','library.collecting'])
+ const detail=await scope.executor.execute({action:'help',forAction:'library.collecting'}) as typeof schema
+ assert.deepEqual(detail.inputSchema.properties.collectionRequest.oneOf.map(row=>row.properties.operation.const),['read','save-lead','finish'])
+ assert.equal(schema.inputSchema.properties.collectionRequest.oneOf.length,5)
+ await assert.rejects(scope.executor.execute({action:'help',forAction:'library.streams'}),/unavailable/)
+ await assert.rejects(scope.executor.execute({action:'library.collecting',collectionRequest:{operation:'list'}}),/read\/save-lead\/finish/)
+ await assert.rejects(scope.executor.execute({action:'library.collection-batch',collectionBatchRequest:{operation:'read'}}),/unavailable/)
+ await scope.close()
 })

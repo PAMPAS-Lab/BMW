@@ -61,18 +61,21 @@ test('Preparation invalidates script, citation, framing, source bytes and CAS ch
 })
 test('Native track-bound inspection does not invalidate observed preparation through derived container duration',async()=>{
  const f=await fixture();try{
-  const inspect=f.kernel.recordingController.processArtifact
+  const inspect=f.kernel.recordingController.processArtifact;let containerDuration=10.003
   f.kernel.recordingController.processArtifact=async(raw,signal)=>{
    const r=raw as {action:string;width:number;height:number;fps:number}
    if(r.action==='media.encode.check')return {kind:'encoding',width:r.width,height:r.height,fps:r.fps,videoCodec:'avc',audioCodec:'aac',videoSupported:true,audioSupported:true}
    const value=await inspect(raw,signal) as {durationSeconds:number;tracks:{type:string;endSeconds:number}[]}
-   value.durationSeconds=10.003;value.tracks.find(t=>t.type==='audio')!.endSeconds=10.003;return value
+   value.durationSeconds=containerDuration;value.tracks.find(t=>t.type==='audio')!.endSeconds=10.003;return value
   }
   let draft=f.store.read(f.draft.id);draft.scenes.forEach(s=>{s.sourceDurationSeconds=10.003});draft.scenes[0].captions=[{startSeconds:0,endSeconds:3,text:'A verified primary claim.',translationText:'已核对的原话。'}];draft=f.store.update(draft.id,draft.revision,draft)
   await f.record();const journal=f.service().journal.read(),standalone=await f.service().preflight();assert.equal(standalone.ready,true)
   const result=await new VideoStudioService(f.kernel).execute({operation:'check',draftId:draft.id,expectedRevision:draft.revision},undefined,f.owner) as {issues:{code:string}[]}
   assert.equal(result.issues.some(i=>i.code==='news-preparation'),false,'check uses the video track end while the archive container has a longer AAC tail')
   assert.deepEqual(f.service().journal.read(),journal,'native inspection does not rewrite observed declarations')
+  containerDuration=10.005;assert.equal((await f.service().preflight()).ready,true,'container metadata does not change the fixed video/audio track boundaries')
+  draft=f.store.read(draft.id);draft.scenes[0].captions![0].translationOrigin='user-edited';draft=f.store.update(draft.id,draft.revision,draft)
+  assert.equal((await f.service().preflight()).ready,true,'translation ownership alone does not change rendered text or observed footage')
   const unchanged=f.store.read(draft.id);draft=structuredClone(unchanged);draft.scenes[0].captions![0].translationText='A different claim.';f.store.update(draft.id,draft.revision,draft)
   assert.ok((await f.service().preflight()).issues.some(i=>i.code==='checklist-stale'),'rendered caption or translation edits still invalidate the observed script')
   const currentRevision=f.store.read(unchanged.id).revision;f.store.update(unchanged.id,currentRevision,{...unchanged,revision:currentRevision})
@@ -158,4 +161,48 @@ test('Uncertain shot checkpoints refuse replay without mutating progress; timing
  }finally{f.close()}
  const logs:string[]=[],info=console.info;console.info=(line:unknown)=>{logs.push(String(line))}
  try{const trace=new ProductionDiagnostics({projectId:'p',sessionId:'s'},'test');await trace.stage('cached-segment',async()=>1,'scene',true);await assert.rejects(trace.stage('native-failure',async()=>{throw new Error('secret transcript or credentials')}));assert.equal(trace.stages.length,2);assert.equal(trace.stages[1].status,'failed');assert.ok(trace.stages.every(s=>s.elapsedMs>=0));assert.match(logs[0],/operationId/);assert.equal(logs.join('').includes('secret transcript'),false);console.info=()=>{throw new Error('diagnostic sink unavailable')};assert.equal(await trace.stage('logger-failure',async()=>42),42)}finally{console.info=info}
+})
+
+async function observedBatch(f:Awaited<ReturnType<typeof fixture>>):Promise<NewsScenePreparation[]>{
+ const report=await f.service().preflight()
+ return report.scenes.map(row=>({sceneId:row.sceneId,fingerprint:row.fingerprint,intent:'Show inspected related evidence.',dateLabel:'资料画面｜发布2026-10-21',materials:[{artifactId:'robot.mp4',referenceId:'ref',kind:'real-footage',observation:'Controlled distinct samples show the related object.',relation:'Supports this scene claim.'}],originalSpeech:{mode:'source',quote:'A verified primary claim.',translation:'已核对的原话。',reason:''}}))
+}
+test('Observed scene batches inspect current facts once and commit all declarations by one checklist CAS',async()=>{
+ const f=await fixture();try{
+  const scenes=await observedBatch(f),request=assertNewsPreparationRequest({operation:'record-scenes',expectedChecklistRevision:0,scenes}),before=f.store.read(f.draft.id);let inspections=0;f.beforeInspect(()=>{inspections++})
+  assert.equal(new Ajv2020({strict:false}).compile(newsPreparationRequestSchema)(request),true)
+  const result=await f.service().execute(request,'agent') as {checklist:{revision:number};recordedSceneIds:string[]}
+  assert.equal(inspections,1,'one shared material is inspected once for the full bounded batch')
+  assert.equal(result.checklist.revision,1);assert.deepEqual(result.recordedSceneIds,scenes.map(s=>s.sceneId));assert.deepEqual(f.store.read(f.draft.id),before);assert.equal((await f.service().preflight()).ready,true)
+  for(const input of [{...request,scenes:[scenes[0],scenes[0]]},{...request,scenes:Array.from({length:9},(_,i)=>({...scenes[0],sceneId:'scene-'+i}))},{...request,automaticMotionApproved:true}])assert.throws(()=>assertNewsPreparationRequest(input))
+ }finally{f.close()}
+})
+test('Observed scene batches reject the whole batch on stale evidence, user declarations, cancellation and concurrent GUI changes',async()=>{
+ const f=await fixture();try{
+  const scenes=await observedBatch(f),bad=structuredClone(scenes);bad.at(-1)!.fingerprint='0'.repeat(64)
+  await assert.rejects(f.service().execute({operation:'record-scenes',expectedChecklistRevision:0,scenes:bad},'agent'),/STALE/);assert.equal(f.service().journal.read().revision,0)
+  await f.service().execute({operation:'record-scene',expectedChecklistRevision:0,scene:scenes[1]},'user');const user=f.service().journal.read()
+  await assert.rejects(f.service().execute({operation:'record-scenes',expectedChecklistRevision:user.revision,scenes},'agent'),/USER_EDITED/);assert.deepEqual(f.service().journal.read(),user)
+  const controller=new AbortController();f.beforeInspect(()=>controller.abort(new Error('bounded batch cancelled')))
+  await assert.rejects(f.service().execute({operation:'record-scenes',expectedChecklistRevision:user.revision,scenes:[scenes[0]]},'agent',controller.signal),/cancelled/);assert.deepEqual(f.service().journal.read(),user)
+  let changed=false;f.beforeInspect(()=>{if(changed)return;changed=true;const draft=f.store.read(f.draft.id);draft.title='Concurrent GUI edit';f.store.update(draft.id,draft.revision,draft)})
+  await assert.rejects(f.service().execute({operation:'record-scenes',expectedChecklistRevision:user.revision,scenes:[scenes[0]]},'agent'),/STALE/);assert.equal(f.store.read(f.draft.id).title,'Concurrent GUI edit');assert.deepEqual(f.service().journal.read(),user)
+ }finally{f.close()}
+})
+
+
+test('Invalid speech projection remains a per-scene preparation gap without admitting stale evidence or breaking read-only diagnostics',async()=>{
+ const f=await fixture();try{
+  await f.record();const journal=f.service().journal.read(),previous=journal.scenes.find(s=>s.sceneId==='opening')!
+  let draft=f.store.read(f.draft.id);draft.scenes[0].speechCaptions=true;draft=f.store.update(draft.id,draft.revision,draft)
+  const report=await f.service().preflight(),row=report.scenes.find(s=>s.sceneId==='opening')!
+  assert.equal(report.ready,false);assert.equal(row.state,'unverified');assert.equal(row.fingerprint,'')
+  assert.ok(row.issues.some(i=>i.code==='render-projection-invalid'&&i.message.includes('STUDIO_SPEECH_STALE')))
+  assert.deepEqual(f.service().journal.read(),journal,'diagnostics never alter existing material observations')
+  await assert.rejects(f.service().requireReady(),/NEWS_PREPARATION_REQUIRED/,'unavailable projection never silently becomes prepared')
+  await assert.rejects(f.service().execute({operation:'record-scene',expectedChecklistRevision:journal.revision,scene:previous},'agent'),/NEWS_PREPARATION_STALE/)
+  assert.deepEqual(f.service().journal.read(),journal,'old declarations cannot be rebound to the invalid fingerprint')
+  draft=f.store.read(f.draft.id);draft.scenes[0].speechCaptions=false;f.store.update(draft.id,draft.revision,draft)
+  assert.equal((await f.service().preflight()).ready,true,'explicitly correcting the inactive projection restores identical actual prepared content')
+ }finally{f.close()}
 })

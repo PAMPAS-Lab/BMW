@@ -2,6 +2,7 @@ import type {StudioRequest} from './studio-contract.js'
 import type {BrowserHelpQuery,JsonSchema} from '../../browser-capability/src/browser-schema.js'
 import {sourceOperationContracts,sourceRequestSchema} from '../../media-native/src/source-contract.js'
 import {materialIndexRequestSchema} from './material-index-contract.js'
+import {newsPreparationRequestSchema} from './news-preparation-contract.js'
 type Spec={required:readonly string[];optional:readonly string[]}
 const spec=(required:readonly string[]=[],optional:readonly string[]=[]):Spec=>({required,optional})
 const draft=['draftId','expectedRevision'],scene=[...draft,'sceneId'],paging=['pageOffset','pageLimit']
@@ -46,14 +47,16 @@ export function studioRecovery(raw:unknown,error:unknown):TypeError {
 }
 export function studioHelp(schema:JsonSchema,query:BrowserHelpQuery):unknown {
  const operation=query.forOperation,operationSpec=studioOperationSpec(operation)
- if(operation!==undefined&&!operationSpec||query.forSubOperation!==undefined&&operation!=='source'&&operation!=='materials')throw studioRecovery({operation},new TypeError('Unknown Studio help operation.'))
- if(operation==='materials'){
-  const subOperations=materialIndexRequestSchema.oneOf.map(branch=>branch.properties.operation.const),sub=query.forSubOperation
-  if(sub===undefined)return {action:'video.studio',operation,subOperations,next:{action:'help',forAction:'video.studio',forOperation:'materials',forSubOperation:'index'}}
-  const branch=materialIndexRequestSchema.oneOf.find(branch=>branch.properties.operation.const===sub)
-  if(!branch)throw studioRecovery({operation},new TypeError('Unknown material operation. Supported: '+subOperations.join(', ')))
-  return {action:'video.studio',operation,subOperation:sub,inputSchema:{type:'object',additionalProperties:false,required:['action','studioRequest'],properties:{action:{const:'video.studio'},studioRequest:{type:'object',additionalProperties:false,required:['operation','materialRequest'],properties:{operation:{const:'materials'},materialRequest:branch}}}},subOperations}
+ if(operation!==undefined&&!operationSpec||query.forSubOperation!==undefined&&operation!=='source'&&operation!=='materials'&&operation!=='news-preparation')throw studioRecovery({operation},new TypeError('Unknown Studio help operation.'))
+ if(operation==='materials'||operation==='news-preparation'){
+  const branches=operation==='materials'?materialIndexRequestSchema.oneOf:newsPreparationRequestSchema.oneOf,subOperations=branches.map(branch=>(branch.properties.operation as {const:string}).const),sub=query.forSubOperation,field=operation==='materials'?'materialRequest':'preparationRequest'
+  if(sub===undefined)return {action:'video.studio',operation,subOperations,next:{action:'help',forAction:'video.studio',forOperation:operation,forSubOperation:operation==='materials'?'index':'record-scenes'}}
+  const branch=branches.find(branch=>(branch.properties.operation as {const:string}).const===sub)
+  if(!branch)throw studioRecovery({operation},new TypeError('Unknown '+operation+' operation. Supported: '+subOperations.join(', ')))
+  const binding=operation==='news-preparation'?{draftId:rootDraftId(schema),expectedRevision:{type:'integer',minimum:1,maximum:1000000}}:{}
+  return {action:'video.studio',operation,subOperation:sub,inputSchema:{type:'object',additionalProperties:false,required:['action','studioRequest'],properties:{action:{const:'video.studio'},studioRequest:{type:'object',additionalProperties:false,required:['operation',...Object.keys(binding),field],properties:{operation:{const:operation},...binding,[field]:branch}}}},subOperations}
  }
+
  const rootProperties=schema.properties as Record<string,JsonSchema>
  const sub=query.forSubOperation
  if(sub!==undefined&&!Object.hasOwn(sourceOperationContracts,sub))throw studioRecovery({operation:'source'},new TypeError('Unknown source operation; choose an exact supportedSubOperations value.'))
@@ -73,3 +76,5 @@ export function studioHelp(schema:JsonSchema,query:BrowserHelpQuery):unknown {
  const inputSchema={type:'object',additionalProperties:false,required:['action','studioRequest'],properties:{action:{const:'video.studio'},studioRequest:studioSchema}}
  return {action:'video.studio',...(operation?{operation}:{}),...(sub?{subOperation:sub}:{}),inputSchema,...(!operation?{operations:Object.keys(studioOperationContracts)}:{}),...(operation==='source'&&!sub?{subOperations:Object.keys(sourceOperationContracts),next:{action:'help',forAction:'video.studio',forOperation:'source',forSubOperation:'collect'}}:{next:{action:'video.studio',studioRequest:{operation:omitted.includes('edit')?'describe-schema':'guide'}}}),...(omitted.length?{nestedSchemaProjection:true,omittedFields:omitted}:{}),...(sub==='acquire'?{conditions:['method=capture also requires videoSelector; download rejects capture-only options.']}:{})}
 }
+
+function rootDraftId(schema:JsonSchema):JsonSchema{return (schema.properties as Record<string,JsonSchema>).draftId}

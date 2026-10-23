@@ -111,3 +111,16 @@ test('busy video defers hourly scheduled execution, preserves queue time and nev
  assert.equal(calls,1);assert.equal(store.activeRun(task.id)?.queuedAt,'2026-10-23T02:00:00.000Z');assert.equal(store.activeRun(task.id)?.startedAt,'2026-10-23T02:10:00.000Z')
  await manager.tick();release();await manager.queue;assert.equal(calls,1);assert.equal(store.runs('p')[0].status,'completed')
 })
+test('Scheduler diagnostics cannot fail a task or expose raw error text',async t=>{
+ const {store}=fixture(t),task=store.create({id:'p',sessionId:'s',driverId:'fixture'},{name:'Hourly',prompt:'Report candidates',time:'06:00',timeZone:'UTC',enabled:false})
+ let fail=false;const manager=new ScheduledTaskManager({store,execute:async()=>{if(fail)throw new Error('private-path-and-token');return 'candidates'}})
+ t.after(()=>manager.stop());manager.start()
+ const sink=t.mock.method(console,'info',()=>{throw new Error('diagnostic sink unavailable')})
+ const first=manager.runNow('p',task.id);await manager.queue
+ assert.equal(store.runs('p').find(run=>run.id===first.run.id)?.status,'completed')
+ sink.mock.restore();const messages:string[]=[];t.mock.method(console,'info',(...items:unknown[])=>{messages.push(items.map(String).join(' '))})
+ fail=true;const second=manager.runNow('p',task.id);await manager.queue
+ assert.equal(store.runs('p').find(run=>run.id===second.run.id)?.error,'private-path-and-token')
+ assert.ok(messages.some(message=>message.includes('"hasError":true')))
+ assert.ok(messages.every(message=>!message.includes('private-path-and-token')))
+})

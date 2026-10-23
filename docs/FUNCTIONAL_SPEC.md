@@ -40,11 +40,11 @@ DSH 预设装配官方 `compaction-basic` 与 `compaction-tool-result-pruner`，
 
 Agent草稿摘要的每镜`preparationInventory`显示已绑定引用数、来源数和主视频／图片段数，明确`motionVerification:not-performed`；它不认证素材运动、相关性、日期或事实。read-scene/timeline在既有分页内增加`layerSetAllowed`、`sceneStartSeconds`和`editTimeDomain:film-seconds`，区分独立对象与主素材、局部与全片时钟。非法编辑／原生图层字段的拒绝回包提供有界字段名及合法字段，仍严格拒绝、不静默改值。
 
-`news-preparation` 是唯一 browser 的既有 `video.studio` 内新增封闭操作，要求当前 draftId/expectedRevision；preparationRequest 为 read/preflight/enable/record-scene/prepare-shots。read 返回保存声明，preflight 只读检查当前实际媒体 SHA、可解码轨道和源区间、精确来源引用、实际日期文字及逐镜声明。每镜返回 fingerprint、durationSeconds、sourceIntervals、assets、missing/stale/unverified/verified-by-agent/verified-by-user 状态及缺口；模型按最多20镜／16KiB分页读取。read/preflight 不保存草稿或清单。
+`news-preparation` 是唯一 browser 的既有 `video.studio` 内新增封闭操作，要求当前 draftId/expectedRevision；preparationRequest 为 read/preflight/enable/record-scene/record-scenes/prepare-shots。read 返回保存声明，preflight 只读检查当前实际媒体 SHA、可解码轨道和源区间、精确来源引用、实际日期文字及逐镜声明。每镜返回 fingerprint、durationSeconds、sourceIntervals、assets、missing/stale/unverified/verified-by-agent/verified-by-user 状态及缺口；模型按最多20镜／16KiB分页读取。read/preflight 不保存草稿或清单。
 
-逐镜清单独立保存在 Project `video-studio/news-preparation/<draftId>.json` version1，绑定 Project/Session/draft，至多96镜／1MiB，使用独立 checklist revision CAS；不能通过导入／更新／恢复草稿冒充。record-scene 需当前 preflight fingerprint、编辑目的、实际 artifact/reference ID、观察动作与相关性、来源日期标签、完整原声和中译或明确未使用原因。复用实际 prepare-reference 的源SHA、PNG哈希与全部逐帧分析；真实视频声明至少三个样本、两种不同PNG且覆盖选用区间两端。源素材、PNG、稿件、引用、取景、时长、顺序或全片图层变化使记录失效；可见全片媒体也核文件哈希。原声声明需主画面实际启用且有可解码音轨覆盖，日期声明须在实际镜头标签／脚注或覆盖全镜的可见文字层中存在。scene.set 的封闭 patch.label 可编辑至多44字符的原生标签。检查累计源/参考文件限512MiB／128项，结束前重核SHA及草稿revision；超预算须先整理本地分段。
+逐镜清单独立保存在 Project `video-studio/news-preparation/<draftId>.json` version1，绑定 Project/Session/draft，至多96镜／1MiB，使用独立 checklist revision CAS；不能通过导入／更新／恢复草稿冒充。record-scenes 接受1–8个不重复镜头的实际观察声明，单次全片事实／指纹预检、全部核验后一次清单 CAS；任何过期、证据缺失、人工声明保护、取消或 GUI 并发编辑均整批拒绝，不保存部分声明、不自动重试，也不自动生成观察。record-scene 兼容单镜入口。两者需当前 preflight fingerprint、编辑目的、实际 artifact/reference ID、观察动作与相关性、来源日期标签、完整原声和中译或明确未使用原因。复用实际 prepare-reference 的源SHA、PNG哈希与全部逐帧分析；真实视频声明至少三个样本、两种不同PNG且覆盖选用区间两端。源素材、PNG、稿件、引用、取景、时长、顺序或全片图层变化使记录失效；可见全片媒体也核文件哈希。原声声明需主画面实际启用且有可解码音轨覆盖，日期声明须在实际镜头标签／脚注或覆盖全镜的可见文字层中存在。scene.set 的封闭 patch.label 可编辑至多44字符的原生标签。检查累计源/参考文件限512MiB／128项，结束前重核SHA及草稿revision；超预算须先整理本地分段。
 
-准备指纹使用实际可编辑的主素材区间、播放速度、取景、动态效果、源声开关及音量等视觉语义；容器与轨道检查产生的派生时长、生成旁白和字幕证据不伪装成视觉编辑。无 visualSegments 的主素材也使用同一字段投影，不散列整个 scene。源文件 SHA、实测音视频轨范围、引用与观察仍独立强校验；真实裁剪、字幕／译文内容与版式、脚本或源字节变化依旧使准备失效。
+准备指纹使用实际可编辑的主素材区间、播放速度、取景、动态效果、源声开关及音量等视觉语义；容器与轨道检查产生的派生时长、生成旁白和字幕证据不伪装成视觉编辑。无 visualSegments 的主素材也使用同一字段投影，不散列整个 scene。资产时间按真实视频轨end规范化，容器尾长不改变同一轨道事实。字幕投影只含实际文字／中译／时间，不因translationOrigin变化失效；先使用与预览／导出相同的speechScene解析锚点字幕、焦点和板书时序，真实映射变化仍失效。源文件 SHA、实测音视频轨范围、引用与观察仍独立强校验；真实裁剪、字幕／译文内容与版式、脚本或源字节变化依旧使准备失效。
 
 正常选题自动启用清单；news-brief 类型以及显式 enable 的草稿也受限，同一未关闭选题 Session 不能通过新普通草稿或直接 video.compose/video.narrate 绕过。enable 只能强化要求，演讲／采访选题要求原声。narrate、narrate-pending、narrate-local 和 render 在执行前拒绝未补齐／过期清单，check 同步返回 news-preparation 错误；批量配音一次准入，实际音频调整镜头时长后导出需更新受影响准备。通用 Studio 未启用新闻要求时沿既有准入。Agent不能覆盖用户准备声明；取消、Project 切换和 GUI 并发修改继续拒绝过期结果。
 
@@ -208,7 +208,7 @@ activate在同Project整批打开，跨Project只复制用户所选一题的完�
 
 结构化 `[BMW production]` 日志按 operationId/Project/Session、operation/suboperation、stage/sceneId 输出单调时钟 elapsedMs、completed/failed 与复用标记；批量结果和检查点携带同一阶段摘要。`[BMW tool timing]` 按 runId/callId 保存调用起止、时长、成功与无其他在途工具时的 outsideToolGapMs；原有持久 Host 事件仍保留。日志不输出脚本、原文、完整请求/响应、路径或凭据。工具时长包括队列/传输；调用外空档包含官方模型、网络、上下文和调度，不冒称服务器纯推理时间。只有实际分镜提交/清单齐备/导出/内审里程碑能表示制作阶段推进，读/help/抽帧次数不表示完成率。
 
-可信定时任务 GUI 可将已绑定任务切换为每小时或原每日时间。每小时 cadence 持久为可选 intervalMinutes=60，仅支持60分钟；保留每日时区/时刻及历史。小时任务每次只合并为一个待执行轮次，不无限补跑停机周期；不重放 running 中断输入。Host/Bridge/媒体忙、Studio 模式、Project 不在前台或已有定时执行时保留 queued，直到真实空闲后才 markRunning，不打断制片或取消进行中的采集。queuedAt/startedAt/finishedAt 分别保留排队与执行耗时，单个队列 run 去重。小时候选整理仍由已授权的官方运行时和唯一 browser 完成；保存候选报告不等于用户采用、推荐快照激活或制片准入。
+可信定时任务 GUI 可将已绑定任务切换为每小时或原每日时间。每小时 cadence 持久为可选 intervalMinutes=60，仅支持60分钟；保留每日时区/时刻及历史。小时任务每次只合并为一个待执行轮次，不无限补跑停机周期；不重放 running 中断输入。Host/Bridge/FIFO/媒体或清理忙、Project转换／不在当前Project、未授权Agent控制或已有定时执行时保留queued，真实空闲才markRunning。单纯停留Studio页不判忙；被动list/read/assets/news-topics/news-guide刷新不取消后台，实际编辑／检查／渲染仍按前台规则。原生采集与小时推荐在空闲边界交替准入，另一类已等候时同类不连续占用；撤回需求90秒过期。原生采集可为前台真实清理让行；小时推荐仍是普通官方输入阶段，至多10分钟、超时等待Host实际取消与drain，不能声称即时抢占或真正并行。queuedAt/startedAt/finishedAt 分别保留排队与执行耗时，单个队列run去重；后台日志输出等待原因、准入、执行和实际drain，不输出正文或错误原文，日志sink失败不改变任务结果。小时候选整理仍由已授权的官方运行时和唯一 browser 完成；保存候选报告不等于用户采用、推荐快照激活或制片准入。
 
 长期采集第六阶段：可信素材库GUI新增“周期采集与健康”，不增加模型/MCP工具、browser动作或Agent调度写入口。独立Profile `library/collection-schedules.json` 为闭合version1原子CAS控制账本，至多100计划及最近200健康通知，读取缺失文件不初始化；损坏/链接/目录身份改变保留原件并停用，不回退空库。计划固定方向、collection Project、BMW Session、官方driver、1–50个来源订阅、15–10080分钟周期及系统提示偏好。方向必须following且目标Project相符，订阅必须following并属于该方向；每方向至多一个计划。已有方向/订阅不自动启用。GUI分页列出计划，分页选择方向/订阅，支持暂停/启用、系统提示开关、通知已读、显式核对恢复和改绑当前Session/driver；结束旧轮次后可显式重配Project/方向/来源/周期并保持暂停，旧收据与材料不变；有旧轮次时禁止直接改绑。仅可信素材库主框架能调用闭合schedule IPC，Agent不能建立、启用、恢复或修改这些计划。
 
@@ -588,7 +588,7 @@ Codex 恢复官方线程时使用 `thread/resume` 的 `excludeTurns:true`，只�
 
 ## 手机证据阅读与顺序图解（文档 2.4）
 
-局部内容编辑复用 `apply-edit` 的单次预期版本事务：`captions.set` 支持显式手工 cues、已有句锚点字幕或关闭字幕，保持音频与阅读句区间；原声字幕须先明确解除，Agent 不能删除或替换用户校正的译文。`card.set` 只修改原生卡片，可同时提交 `links`（kind/index/anchorId）；`card.bind` 仅修改当前卡片引用。Host 从当前目标生成快照并沿用已有实测句锚点，模型不提交音频记录或句锚点哈希。换标签、源图、范围或限定脚注不会自动认证旧语义；未显式重绑的旧引用仍会失效。绑定提交前复核原音频 SHA、脚本文本、播放区间与当前 Project/Session，多个命令任一步失败不落盘，CAS 冲突保留 GUI 编辑。
+局部内容编辑复用 `apply-edit` 的单次预期版本事务：`captions.set` 支持显式手工 cues、已有句锚点字幕或关闭字幕，保持音频与阅读句区间；原声字幕须先明确解除，Agent 不能删除或替换用户校正的译文。`captions.translate` 在同一 apply-edit 事务中跨镜批量提交 cueIndex／originalText／translationText；每命令1–100条，保持原文、时间及原声关联，原文不匹配或 Agent 试图改写人工校正时整批拒绝，保留原稿。可把字幕生成／改时、译文与兼容样式编辑先合为一次事务，再取得当前清单指纹，避免每镜读写。`card.set` 只修改原生卡片，可同时提交 `links`（kind/index/anchorId）；`card.bind` 仅修改当前卡片引用。Host 从当前目标生成快照并沿用已有实测句锚点，模型不提交音频记录或句锚点哈希。换标签、源图、范围或限定脚注不会自动认证旧语义；未显式重绑的旧引用仍会失效。绑定提交前复核原音频 SHA、脚本文本、播放区间与当前 Project/Session，多个命令任一步失败不落盘，CAS 冲突保留 GUI 编辑。
 
 手机原文的标准推荐配方为 `whole-to-detail`、`returnToWhole:true` 配合目标 `lineCount`：同一源图全貌 → 原句矩形框选与周围压暗 → 平滑放大完整目标 → 静止阅读 → 返回全貌。原生渲染与审片计划共享阶段定义；`describe-template` 的 reading.recommended 发布模式、返回策略、源像素要求、实际行数前提及阶段，`guide` 提供有明确占位值的配方和节奏修复提示。GUI 新建单个阅读目标默认返回全貌，可一键对现有单目标应用推荐策略；不猜测行数，多目标须显式选择 sequence。已有保存的模式、返回设置和未指定行数的历史行为保持有效。
 
@@ -644,7 +644,7 @@ Video Studio 保存 format=bmw.video 的单份规范文档，按实际使用字�
 
 simple.cards/3 是高级模型的可逆子集，继续接受原 simple.cards/1 的内容；仅进入高级模式、主画面/旁白裁剪、固定效果等不永久锁定。任一独立叠加图层、独立音轨或自由关键帧要求高级编辑；隐藏/静音/锁定仍存在。compatibility 根据当前内容/版本返回对象、路径、原因。简洁写入同时校验当前和最终合并后的候选，不能用遗漏字段/空数组丢弃高级内容；返回卡片由 Host 校验当前 owner、selection/revision、dirty 和兼容性，UI 提示原因。撤销/移除这些对象后可恢复卡片资格；已保存的高级草稿在卡片视图只读，可从原入口进入高级。无自动有损降级。
 
-唯一 browser 的 video.studio 提供 describe-schema、read-document、compatibility、validate-edit、apply-edit、migrate-document。类型命令包括 brief.set、scene.add/set/reorder，captions.set、card.set/bind，clip.move/trim/split/effects/mute，layer.add/set/remove，固定 ID、类型和全片时钟；最多 32 条，一次 CAS 保存。brief.set 只修改受校验的 preparation 字段；scene.add 接受 id/title 与闭合内容字段，默认追加，可显式 afterSceneId 插入，不能写入旁白测量、哈希、生成记录或关联快照。scene.set 可修改脚本、字幕样式、引用、来源和显式时长；实际引用仍由宿主核对，音频与图解绑定保留原有失效规则。试算不写入，结构/原生支持、可逆性与实际渲染就绪分别判断；真实素材准入、翻译保护、源时钟/日志保留沿现有 Host 校验。Agent 不能自行声明高级权限，提交前重新核验可信当前高级界面与 Project。试算不证明媒体/排版或渲染成功，生成的新 ID 必须在 apply 后重读。
+唯一 browser 的 video.studio 提供 describe-schema、read-document、compatibility、validate-edit、apply-edit、migrate-document。类型命令包括 brief.set、scene.add/set/reorder，captions.set/translate、card.set/bind，clip.move/trim/split/effects/mute，layer.add/set/remove，固定 ID、类型和全片时钟；最多 32 条，一次 CAS 保存。brief.set 只修改受校验的 preparation 字段；scene.add 接受 id/title 与闭合内容字段，默认追加，可显式 afterSceneId 插入，不能写入旁白测量、哈希、生成记录或关联快照。scene.set 可修改脚本、字幕样式、引用、来源和显式时长；实际引用仍由宿主核对，音频与图解绑定保留原有失效规则。试算不写入，结构/原生支持、可逆性与实际渲染就绪分别判断；真实素材准入、翻译保护、源时钟/日志保留沿现有 Host 校验。Agent 不能自行声明高级权限，提交前重新核验可信当前高级界面与 Project。试算不证明媒体/排版或渲染成功，生成的新 ID 必须在 apply 后重读。
 
 模型浏览器适配层把 create/read/草稿修改返回转换为有界摘要，保留草稿 ID、所属 Session、revision、输出设置、镜头清单、旁白待办和就绪问题计数；摘要不是可写完整草稿。GUI 与直接宿主服务仍读取完整投影。read-scene 要求 draftId/expectedRevision/sceneId，按 content/card/captions/speech/visuals/reviews/timeline/sources 返回所需字段；字幕、句锚、建议、时间轴与来源按 pageOffset/pageLimit 分页，卡片目标仅返回 kind/index/label 和关联选择，不重复宿主身份快照。read-preparation 按 notes/outline/artifacts/sources 分区，文字每页 4000 UTF16 单元，记录每页最多二十项；文字与记录的 nextOffset 各自按对应单位续读。describe-schema 对模型返回能力及命令索引，describe-edit 按 editOperation 返回一个命令契约；卡片具体 Schema 仍由 describe-template 提供。渲染回复保留实际 MP4、完整报告 Artifact 身份与有界质量计数；逐页实际成片审阅保持原有图片准入。read-document 对模型返回摘要并指向逐镜头 timeline 取得稳定 clip ID；试算不重复整份 canonical document。模型 list 分页且只携带本页草稿的证明与兼容性，ASR 读取分页保留置信/警告及时间域，长段落预览明确标记截断，原始证据仍可按 Artifact 读取。
 
@@ -1054,6 +1054,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Muted system notifications still persist health notices and a Session rebind cannot silently replay a pending cycle`
 - `The deadline wakes independently of the periodic tick and cancellation still waits for its own actual drain`
 - `Explicit reconfiguration after recovery can change cadence and Project binding without changing old receipts or evidence`
+- `Collection diagnostics cannot alter admission, source completion or actual cleanup`
 
 #### `packages/feature-library/test/exports.test.ts`
 
@@ -1146,6 +1147,9 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Shot batches retain reusable completed work after failure, reject changed plans and preserve concurrent GUI edits`
 - `Shot preparation rejects missing pins and cancellation before native work and keeps checkpoints private`
 - `Uncertain shot checkpoints refuse replay without mutating progress; timing logs contain only bounded metadata`
+- `Observed scene batches inspect current facts once and commit all declarations by one checklist CAS`
+- `Observed scene batches reject the whole batch on stale evidence, user declarations, cancellation and concurrent GUI changes`
+- `Invalid speech projection remains a per-scene preparation gap without admitting stale evidence or breaking read-only diagnostics`
 
 #### `packages/feature-video/test/news.test.ts`
 
@@ -1164,6 +1168,11 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Native page screenshots bind exact source URL and text, preserve CAS and reject changed pages or files before a news proposal`
 - `News guide recognizes rendered title cards and sentence captions, but reports stale or explicitly disabled captions`
 - `News guide accepts captioned original-speech scenes without TTS and rejects muted or short source coverage`
+
+#### `packages/feature-video/test/preparation-fingerprint.test.ts`
+
+- `Preparation fingerprints ignore inspection and provenance metadata while retaining rendered caption and segment edits`
+- `Preparation fingerprints bind effective anchored captions and speech links without hashing evidence provenance`
 
 #### `packages/feature-video/test/production-assessment.test.ts`
 
@@ -1246,6 +1255,8 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Bounded captions and card edits preserve Host speech records and atomically bind current targets under CAS`
 - `Typed independent edits convert global time to owning scene and preserve original fade clocks on trim/split`
 - `loupe mode roundtrips in 2.3 and cannot be disguised as a previous document version`
+- `Caption translation commands batch scenes under one draft CAS and preserve original source clocks and user corrections`
+- `Editorial batch discovery returns exact preparation branch and translation command without unrelated schemas`
 
 #### `packages/feature-video/test/video-review.test.ts`
 
@@ -1770,10 +1781,16 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Internal review queues behind its caller, persists trusted task metadata, deduplicates and waits for real cleanup`
 - `Internal review refuses unverified catalogs, changed models and uncertain delivery without replay`
 
+#### `packages/platform/test/background-admission.test.ts`
+
+- `Background admission uses real resources, permits an idle Studio and never preempts work or cleanup`
+- `Waiting collection and hourly phases alternate at idle boundaries, expire withdrawn demand and retain foreground priority`
+
 #### `packages/platform/test/background-collection.test.ts`
 
 - `Background action admission bounds originals, refuses side effects and revalidates the lease before work`
 - `Passive library refreshes preserve background work; user mutations and work requests preempt it`
+- `Background discovery publishes only admitted actions and exact operation branches`
 
 #### `packages/platform/test/bmw-catalog.test.ts`
 
@@ -1925,6 +1942,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Schedules require explicit driver ownership and unbound tasks can only be enabled after a BMW binding`
 - `trusted hourly cadence persists, bounds its interval and coalesces missed hours without replaying an active run`
 - `busy video defers hourly scheduled execution, preserves queue time and never starts duplicates`
+- `Scheduler diagnostics cannot fail a task or expose raw error text`
 
 #### `packages/platform/test/session-continuity.test.ts`
 
@@ -2018,3 +2036,5 @@ start 返回后调用方必须结束当前 turn，不能占住前一任务等待
 制作避免项：结尾不能长期停在孤立文字、空旷底色，尤其不能连续两张基础文字卡收尾。至少应提供相关真实画面／证据图或流程、对比、时间线等视觉信息；装饰和文字飞入不算支撑。原生结构筛查对最后两镜中持续至少3秒、无主素材／有意义画面图层且为默认或 title/basic 的卡片标记 needs-fix，拒绝 Agent 的相关镜头／整片通过声明；它是结构风险规则，不是像素语义认证，用户声明独立保留。其他模板通过筛查仍需实际视觉审核。DSX POD 的部署条件与未来交付计划不能只用两张白底文字卡表达，详见 NEWS_DAILY。
 
 内部审片活动期间，Host 标识实际审核 run，Video 动作在执行层拒绝 Agent 修改草稿／素材描述、合成、旁白、设置和递归审片；仍允许读取、原生取帧／语音证据及成片审核账本。用户 GUI 编辑不受此模型限制，继续走原 CAS 并使审核目标失效。入队后立即返回持久回执，不在返回回执前再次异步读取，以免 GUI 并发编辑掩盖已投递任务。人工试听状态来自当前独立用户整片声明，不由 Agent 代签。
+
+新闻流程的当前编辑要求与复核见[新闻制作流程复核](plans/NEWS_PRODUCTION_RESET.md)：普通快讯默认中文串讲加约8–15秒完整原声；末镜原生动态图解属于允许的编辑形式，但绑定草稿版本的逐态预览证据尚待实现，当前未据声明放行，见[图解准备方案](plans/NATIVE_DIAGRAM_PREPARATION.md)。

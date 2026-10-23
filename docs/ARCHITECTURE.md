@@ -167,6 +167,7 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | video.production-assessment | contract | feature-video | packages/feature-video/test/production-assessment.test.ts | 默认 |
 | video.source-transcript | contract | feature-video | packages/feature-video/test/source-transcript.test.ts | 默认 |
 | video.news-preparation | contract | feature-video | packages/feature-video/test/news-preparation.test.ts | 默认 |
+| video.preparation-fingerprint | contract | feature-video | packages/feature-video/test/preparation-fingerprint.test.ts | 默认 |
 | video.production | contract | feature-video | packages/feature-video/test/production.test.ts | 默认 |
 | external.production.qoder-deepseek-flash | external (opt-in) | harness-qoder, platform, feature-video, media-native | scripts/qoder-production-case.ts | opt-in: BMW_QODER_TASK_FILE + BMW_QODER_AUTH_DIRECTORY explicitly authorized; optional BMW_QODER_INPUT_INDEX |
 | media.research-video | media | media-native, feature-video | scripts/research-video-smoke.ts | 默认 |
@@ -240,6 +241,7 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | browser.tab-policy | unit | browser-capability | packages/browser-capability/test/tab-policy.test.ts | 默认 |
 | browser.sources | contract | browser-capability | packages/browser-capability/test/collect-page-source.test.ts | 默认 |
 | platform.background-collection | contract | platform | packages/platform/test/background-collection.test.ts | 默认 |
+| platform.background-admission | contract | platform | packages/platform/test/background-admission.test.ts | 默认 |
 | platform.sources | contract | platform | packages/platform/test/project-source-store.test.ts | 默认 |
 | video.sources | contract | feature-video | packages/feature-video/test/studio-sources.test.ts | 默认 |
 | browser.collection-page-pool | contract | browser-capability | packages/browser-capability/test/collection-page-pool.test.ts | 默认 |

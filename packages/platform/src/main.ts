@@ -1,4 +1,5 @@
 import {BackgroundCollectionScope,passiveCollectionUserRead} from './background-collection.js'
+import {BackgroundAdmission,backgroundDiagnostic} from './background-admission.js'
 import {assistantTasks} from './assistant-tasks.js'
 import type {CollectionBinding} from './feature-contract.js'
 import type {BrowserFeatureHost} from '@bmw-agent/browser-capability/host'
@@ -50,6 +51,7 @@ const MIN_AGENT_WIDTH = 360
 
 let agentAssembly: AgentApplicationAssembly
 let assistantService: AssistantService | undefined
+const backgroundAdmission=new BackgroundAdmission()
 let assistantPublishTimer: ReturnType<typeof setTimeout> | undefined
 let productDefinition: Readonly<ResolvedProductDefinition>
 
@@ -520,8 +522,12 @@ async function activateProject(projectId, { scheduled = false } = {}) {
   })
 }
 
+function backgroundWorkReason(kind:'hourly'|'collection',projectId:string):string|null {
+ return backgroundAdmission.reason(kind,{projectId,activeProjectId:projectStore.active().id,projectChanging:bridge?.changingProject===true,browserBusy:bridge?.busy===true,hostBusy:assistantService?.host.busy!==false,mediaBusy:mediaController.isCaptureActive(),scheduledBusy:Boolean(scheduledExecutionProjectId),agentControlGranted:permissionStore.hasAgentControl()})
+}
+
 async function executeScheduledTask(task) {
-  if(task.intervalMinutes===60){if(assistantService.host.busy||bridge?.busy||bridge?.changingProject||mediaController.isCaptureActive()||workspaceMode==='studio'||task.projectId!==projectStore.active().id)throw new Error('Hourly task waits for idle resources in its selected Project')}
+  if(task.intervalMinutes===60){const reason=backgroundWorkReason('hourly',task.projectId);if(reason)throw new Error('Hourly task waits: '+reason);backgroundAdmission.admitted('hourly')}
   else await assistantService.host.yieldBackground()
   const originalProjectId = projectStore.active().id
   const target = projectStore.get(task.projectId, { includeArchived: false })
@@ -539,8 +545,8 @@ async function executeScheduledTask(task) {
     const sessions = await assistantService.sessions.listProjectSessions(agentProject(target))
     if (!sessions.membership.includes(sessionId))throw new Error('The saved scheduled Session is unavailable. Repair its binding explicitly.')
     {await productFeatureRuntime?.onSessionWillChange?.();await bridge.changeProject(async()=>{assistantService.select(sessionId,target.id)});await productFeatureRuntime?.onSessionChanged?.();await publishAssistantSelection()}
-    const prompt = `[BMW Scheduled Task · ${task.name}]\n\nThis Project-scoped task is running automatically on its saved schedule (${task.intervalMinutes===60?'every 60 minutes':task.schedule.time+' '+task.schedule.timeZone}).\n\nTask instructions:\n${task.prompt}\n\nUse only BMW's browser capability. Work in background tabs unless foreground visibility is required to finish the task. Save screenshots, downloaded page media, and recordings as Project-owned artifacts. Do not create, modify, or remove scheduled tasks during this run unless the saved instructions explicitly require it. Do not publish, purchase, delete user data, or expand the task beyond these instructions. Finish with a concise result and list the artifacts you saved.`
-    const replies = await assistantService.sessions.promptAndWait(sessionId, prompt, { timeoutMs: 30 * 60_000 })
+    const prompt = `[BMW Scheduled Task · ${task.name}]\n\nThis Project-scoped task is running automatically on its saved schedule (${task.intervalMinutes===60?'every 60 minutes':task.schedule.time+' '+task.schedule.timeZone}).\n\nTask instructions:\n${task.prompt}\n\nUse only BMW's browser capability. Work in background tabs unless foreground visibility is required to finish the task. Save screenshots, downloaded page media, and recordings as Project-owned artifacts. Do not create, modify, or remove scheduled tasks during this run unless the saved instructions explicitly require it. Do not publish, purchase, delete user data, or expand the task beyond these instructions. ${task.intervalMinutes===60?'This is one bounded phase of at most ten minutes: reuse stored evidence, stop with explicit shortages instead of repeated discovery or retries; do not begin video production. ':''}Finish with a concise result and list the artifacts you saved.`
+    const replies = await assistantService.sessions.promptAndWait(sessionId, prompt, { timeoutMs: (task.intervalMinutes===60?10:30) * 60_000 })
     return replies
   } finally {
     try{
@@ -1058,7 +1064,7 @@ async function createApp() {
   browserKernel.projectSources=()=>{const project=projectStore.active();return new ProjectSourceStore(project.directory,project.id)}
   scheduledTaskManager = new ScheduledTaskManager({
     store: scheduledTaskStore,
-    canStart:task=>task.intervalMinutes!==60||(!assistantService.host.busy&&!bridge?.busy&&!bridge?.changingProject&&!mediaController.isCaptureActive()&&workspaceMode!=='studio'&&!scheduledExecutionProjectId&&task.projectId===projectStore.active().id),
+    canStart:task=>task.intervalMinutes!==60||(backgroundWorkReason('hourly',task.projectId)??true),
     execute: executeScheduledTask,
     onRun: notifyScheduledTaskRun
   })
@@ -1087,16 +1093,18 @@ async function createApp() {
         if(row.archivedAt!==null||row.driverId!==binding.driverId)throw new Error('采集 Session 或驱动绑定已失效；请显式修复计划')
         if(assistantService.history.snapshot(binding.sessionId).receipts.some(r=>r.state==='unknown'))throw new Error('绑定 Session 有不确定输入；请先核对并显式恢复')
         if(!permissionStore.hasAgentControl())return '等待用户启用 Agent 浏览器控制'
-        if(bridge?.changingProject||bridge?.busy||scheduledExecutionProjectId||assistantService.host.busy||mediaController.isCaptureActive()||workspaceMode==='studio')return '避让用户任务、浏览器或原生媒体工作'
+        const reason=backgroundWorkReason('collection',binding.projectId);if(reason)return '等待后台准入：'+reason
         return null
       },
       enqueue:(binding,text,collectionRunId)=>{
         // Synchronous check and receipt admission: a user input cannot slip between them.
-        if(bridge?.changingProject||bridge?.busy||scheduledExecutionProjectId||assistantService.host.busy||mediaController.isCaptureActive()||workspaceMode==='studio')return {accepted:false,reason:'避让用户任务'}
+        const reason=backgroundWorkReason('collection',binding.projectId);if(reason)return {accepted:false,reason:'等待后台准入：'+reason}
         if(!collectionRunId||!configureCollectionBrowser||!projectStore.get(binding.projectId,{includeArchived:false}))return {accepted:false,reason:'采集执行域不可用'}
         const row=assistantService.conversations.get(binding.sessionId,binding.projectId)
         if(row.archivedAt!==null||row.driverId!==binding.driverId||assistantService.history.snapshot(binding.sessionId).receipts.some(r=>r.state==='unknown'))return {accepted:false,reason:'采集绑定需要核对'}
         const dispatchId=assistantService.host.enqueueBackground(binding,text).runId
+        backgroundAdmission.admitted('collection')
+        backgroundDiagnostic({kind:'collection',stage:'admitted',projectId:binding.projectId,sessionId:binding.sessionId,runId:collectionRunId,dispatchId})
         collectionInputs.set(dispatchId,{binding:{...binding},runId:collectionRunId})
         void assistantService.host.wait(dispatchId).catch(()=>{}).finally(()=>{if(!assistantService.host.ownsRun(dispatchId))collectionInputs.delete(dispatchId)})
         return {accepted:true,dispatchId}

@@ -1,6 +1,23 @@
 import type {BrowserKernel} from '@bmw-agent/browser-capability/kernel'
 import type {BrowserExecutor} from '@bmw-agent/browser-capability/bridge'
 import type {BrowserExecutionOptions} from '@bmw-agent/browser-capability/host'
+const collectionActions=['status','help','tabs.list','tabs.open','tabs.close','navigate','observe','library.sources','library.collecting','library.collection-batch'] as const
+const scopedOperations:Record<string,{field:string;operations:readonly string[]}>= {
+ 'library.sources':{field:'sourceRequest',operations:['list','read','collect']},
+ 'library.collecting':{field:'collectionRequest',operations:['read','save-lead','finish']},
+ 'library.collection-batch':{field:'collectionBatchRequest',operations:['read','collect','submit','review']}
+}
+function record(value:unknown):Record<string,unknown>|undefined{return value!==null&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:undefined}
+/** Project only the exact operation branches, without changing the validator or widening admission. */
+function scopedHelpSchema(value:unknown,operations:readonly string[]):unknown {
+ if(Array.isArray(value))return value.map(item=>scopedHelpSchema(item,operations))
+ const object=record(value);if(!object)return value
+ return Object.fromEntries(Object.entries(object).map(([key,item])=>{
+  if(key==='oneOf'&&Array.isArray(item))return [key,item.filter(branch=>{const operation=record(record(branch)?.properties)?.operation,constraint=record(operation);return typeof constraint?.const!=='string'||operations.includes(constraint.const)}).map(branch=>scopedHelpSchema(branch,operations))]
+  if(key==='operation'){const constraint=record(item);if(Array.isArray(constraint?.enum))return [key,{...constraint,enum:constraint.enum.filter(operation=>typeof operation==='string'&&operations.includes(operation))}]}
+  return [key,scopedHelpSchema(item,operations)]
+ }))
+}
 /** Host-private action admission for a disposable, pinned collection browser. */
 export class BackgroundCollectionScope {
  private calls=0
@@ -12,14 +29,23 @@ export class BackgroundCollectionScope {
   this.executor={execute:async(raw:unknown,options?:BrowserExecutionOptions)=>{
    if(!this.valid()||++this.calls>200)throw new Error('Background collection lease ended or exceeded its bounded call budget')
    this.beforeCall()
-   const request=kernel.capabilityRegistry.assertRequest(raw) as {action:string;url?:string;sourceRequest?:{operation:string}}
-   if(!['status','help','tabs.list','tabs.open','tabs.close','navigate','observe','library.sources','library.collecting','library.collection-batch'].includes(request.action))throw new Error('Action is unavailable in a background collection')
+   const request=kernel.capabilityRegistry.assertRequest(raw) as {action:string;url?:string;forAction?:string;forOperation?:string;sourceRequest?:{operation:string}}
+   const actions=collectionActions.filter(action=>action!=='library.collecting'||Boolean(kernel.libraryCollecting)).filter(action=>action!=='library.collection-batch'||Boolean(kernel.libraryCollectionBatch))
+   if(!actions.includes(request.action as typeof actions[number]))throw new Error('Action is unavailable in a background collection; use scoped help')
+   const spec=scopedOperations[request.action]
+   if(spec){const operation=record(record(raw)?.[spec.field])?.operation;if(typeof operation!=='string'||!spec.operations.includes(operation))throw new Error('Background '+request.action+' allows only '+spec.operations.join('/'))}
+   if(request.action==='help'&&request.forAction&&!actions.includes(request.forAction as typeof actions[number]))throw new Error('Help target is unavailable in a background collection; use scoped help')
+   if(request.action==='help'&&request.forAction&&request.forOperation&&scopedOperations[request.forAction]&&!scopedOperations[request.forAction].operations.includes(request.forOperation))throw new Error('Help operation is unavailable in a background collection')
    if(['tabs.open','navigate'].includes(request.action)&&(!request.url||!/^https?:\/\//i.test(request.url)))throw new Error('Background navigation requires an explicit HTTP(S) URL')
    if(request.action==='library.sources'){
     if(!request.sourceRequest||!['list','read','collect'].includes(request.sourceRequest.operation))throw new Error('Background sources allow only list/read/collect')
     if(request.sourceRequest.operation==='collect'&&++this.originals>20)throw new Error('Background original observation budget exceeded')
    }
-   const result:unknown=await kernel.execute(raw,options)
+   let result:unknown=await kernel.execute(raw,options)
+   if(request.action==='help'){
+    if(!request.forAction){const help=record(result);result={tool:'browser',scope:'background-collection',actions:Array.isArray(help?.actions)?help.actions.filter(item=>{const row=record(item);return typeof row?.action==='string'&&actions.includes(row.action as typeof actions[number])}).map(item=>{const row=record(item)!;return {...row,description:scopedOperations[String(row.action)]?'Bound to the current saved collection run; operations: '+scopedOperations[String(row.action)].operations.join('/') :row.description}}):[],next:{action:'help',forAction:'observe'}}}
+    else if(scopedOperations[request.forAction]){result=scopedHelpSchema(result,scopedOperations[request.forAction].operations);const help=record(result);if(help)help.description='Background collection operations: '+scopedOperations[request.forAction].operations.join('/')+'; bound Project, Session and run are required.'}
+   }
    if(!this.valid())throw new Error('Background collection ended before its result drained')
    return result
   }}
@@ -32,6 +58,7 @@ export class BackgroundCollectionScope {
 export function passiveCollectionUserRead(raw:unknown):boolean {
  if(!raw||typeof raw!=='object'||Array.isArray(raw))return false
  const value=raw as Record<string,unknown>,actions:Record<string,{field:string;operations:readonly string[]}>={
+  'video.studio':{field:'studioRequest',operations:['list','read','assets','news-topics','news-guide']},
   'library.materials':{field:'libraryRequest',operations:['search','read']},
   'library.sources':{field:'sourceRequest',operations:['list','read']},
   'library.research':{field:'researchRequest',operations:['topics','directions','direction-topics','links']},

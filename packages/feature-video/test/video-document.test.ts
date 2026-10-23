@@ -373,3 +373,33 @@ test('Typed independent edits convert global time to owning scene and preserve o
 })
 
 test('loupe mode roundtrips in 2.3 and cannot be disguised as a previous document version',()=>{const f=fixture();try{const d=draft(f.store);d.scenes[0].imageArtifactId='source.png';d.scenes[0].focusIntervals=[{startSeconds:0,endSeconds:2,x:.5,y:.5,zoom:2,emphasize:false,mode:'loupe',loupeCorner:'top-right'}];const document=videoDocumentFromDraft(d);assert.equal(document.schemaVersion,'2.3');same(assertVideoDraft(d),videoDraftFromDocument(document));assert.throws(()=>videoDraftFromDocument({...document,schemaVersion:'2.2'}),/requires 2.3/)}finally{f.close()}})
+
+test('Caption translation commands batch scenes under one draft CAS and preserve original source clocks and user corrections',async()=>{
+ const f=fixture();try{
+  let d=draft(f.store);for(const [i,scene]of d.scenes.entries()){scene.captions=[{startSeconds:0,endSeconds:2,text:'Original '+i}];scene.videoArtifactId='source.mp4';scene.sourceDurationSeconds=10;scene.durationSeconds=3}
+  d=f.store.update(d.id,d.revision,d)
+  // Host-only source binding, acquired before translation; the edit cannot mint it.
+  d=f.store.setSourceSpeech(d.id,d.revision,'one',scene=>{scene.sourceCaptionBinding={sourceArtifactId:'source.mp4',sourceSha256:'a'.repeat(64),segmentIndex:0,clock:JSON.stringify({id:'source.mp4',start:0,rate:1,duration:3,offset:0}),origin:'agent-edited',sourceRange:{startSeconds:0,endSeconds:3},sourceCues:structuredClone(scene.captions)}})
+  const binding=structuredClone(d.scenes[0].sourceCaptionBinding),kernel:StudioKernel={projectStore:{active:()=>({id:owner.projectId,name:'P',directory:fs.realpathSync(f.root)})},execute:async()=>({}),recordingController:{processArtifact:async()=>({}),narrate:async()=>({}),compose:async()=>({})}},service=new VideoStudioService(kernel),revision=d.revision
+  const edit={version:1,commands:d.scenes.map((s,i)=>({op:'captions.translate',sceneId:s.id,translations:[{cueIndex:0,originalText:'Original '+i,translationText:'译文'+i}]}))}
+  const validate=new Ajv2020({strict:false}).compile(videoEditSchema);assert.equal(validate(edit),true,JSON.stringify(validate.errors))
+  d=await service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit},undefined,owner) as VideoDraft
+  assert.equal(d.revision,revision+1);assert.equal(d.scenes[0].captions![0].text,'Original 0');assert.equal(d.scenes[1].captions![0].translationText,'译文1');assert.equal(d.scenes[0].sourceCaptionBinding!.clock,binding!.clock);assert.equal(d.scenes[0].sourceCaptionBinding!.sourceSha256,binding!.sourceSha256);assert.equal(d.scenes[0].sourceCaptionBinding!.sourceCues![0].translationText,'译文0')
+  const file=path.join(f.store.directory,d.id+'.json'),before=fs.readFileSync(file,'utf8'),bad=structuredClone(edit);bad.commands[1].translations[0].originalText='Changed original'
+  await assert.rejects(service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit:bad},undefined,owner),/CONFLICT/);assert.equal(fs.readFileSync(file,'utf8'),before)
+  await assert.rejects(service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:revision,edit},undefined,owner),/CONFLICT/)
+  const current=structuredClone(d);current.scenes[1].captions![0].translationOrigin='user-edited';current.scenes[1].captions![0].translationText='人工校正';assert.throws(()=>applyVideoEdit(current,assertVideoEdit(edit)),/TRANSLATION_EDITED/)
+  assert.throws(()=>assertVideoEdit({...edit,commands:[{...edit.commands[0],translations:[edit.commands[0].translations[0],edit.commands[0].translations[0]]}]}),/Duplicate/)
+  assert.throws(()=>assertVideoEdit({...edit,commands:[{...edit.commands[0],sourceCaptionBinding:binding}]}),/FIELD/)
+ }finally{f.close()}
+})
+
+test('Editorial batch discovery returns exact preparation branch and translation command without unrelated schemas',async()=>{
+ const action=videoFeature.browserActions.find(a=>a.action==='video.studio')!
+ const help=await action.help!({forOperation:'news-preparation',forSubOperation:'record-scenes'}) as {inputSchema:object;subOperations:string[]}
+ const validate=new Ajv2020({strict:false}).compile(help.inputSchema)
+ assert.equal(validate({action:'video.studio',studioRequest:{operation:'news-preparation',draftId:'known-draft',expectedRevision:2,preparationRequest:{operation:'record-scenes',expectedChecklistRevision:1,scenes:[]}}}),false,'empty declarations never become auto-approved')
+ assert.ok(help.subOperations.includes('record-scenes'));assert.ok(JSON.stringify(help).includes('observation'));assert.equal(JSON.stringify(help).includes('prepare-shots'),true,'sub-operation names remain available for exact discovery')
+ assert.equal(JSON.stringify(help).includes('startCharacter'),false,'unrelated citation/source schemas are omitted')
+ assert.ok(JSON.stringify(studioToolGuide().examples.translateSceneGroup).includes('captions.translate'))
+})

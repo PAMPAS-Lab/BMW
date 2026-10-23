@@ -1,0 +1,65 @@
+{
+  "format": "bmw.news-production-reset-verification",
+  "version": 1,
+  "verifiedAt": "2026-10-23T06:06:26.125546+00:00",
+  "sourceBaseRevision": "6c7ba28",
+  "scope": [
+    "Canonical rendered preparation fingerprints and structured invalid-projection gaps",
+    "Atomic observed-scene and caption-translation batches",
+    "Resource-based fair background admission, scoped discovery and safe diagnostics",
+    "Agreed news requirements and three-stage production review"
+  ],
+  "build": "passed final root build after normal BMW quit and confirmed cleanup",
+  "check": "passed final TypeScript/source/schema/features/architecture boundaries",
+  "fullNonExternalBaseline": {
+    "report": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/classified-tests/2026-10-23T05-47-02-217Z/result.json",
+    "counts": {
+      "not-run": 14,
+      "passed": 208,
+      "failed": 1
+    },
+    "failed": [
+      "video.news"
+    ],
+    "failure": "Stale anchored captions threw from new fingerprint projection instead of returning a read-only gap",
+    "resolvedBy": "Final preflight returns render-projection-invalid, unverified, empty non-admissible fingerprint and ready:false; existing declarations and render remain refused"
+  },
+  "sourceDeltaAfterBaseline": [
+    "packages/feature-video/src/news-preparation.ts",
+    "packages/feature-video/test/news-preparation.test.ts",
+    "docs/FUNCTIONAL_SPEC.md"
+  ],
+  "finalAffectedVideoTests": {
+    "passed": 213,
+    "failed": 0,
+    "includesOriginalFailure": true
+  },
+  "finalNativeRechecks": {
+    "newsStudio": "passed",
+    "nativeShotBatch": "passed"
+  },
+  "finalFullSuiteRerun": false,
+  "qualification": "The complete baseline is retained with its one historical failure. Final minimal gap-reporting correction was rebuilt/check-verified, then 213 affected video tests and both native news/shot paths passed. Other runtime sources from the full run are unchanged; no claim of a second all-suite pass. Counts are not added across overlapping runs.",
+  "logs": {
+    "build": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/reset-final-build.log",
+    "check": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/reset-final-check.log",
+    "videoTests": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/reset-final-videoTests.log",
+    "nativeNews": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/reset-final-nativeNews.log",
+    "nativeShots": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/reset-final-nativeShots.log"
+  },
+  "runtimeSourceManifestSha256": "7ae6dcf37c758bded348d218bf077ca95311e5bd23da12da420851a5c0496d52",
+  "generatedOutputsVerified": 570,
+  "changedGeneratedOutputs": [],
+  "productionPreservationVerified": true,
+  "productionLoaded": false,
+  "productionRunRestarted": false,
+  "stoppedRun": "3ccc5c28-b54d-496a-8c4b-7b844ae05988",
+  "requirements": "docs/plans/NEWS_PRODUCTION_RESET.md",
+  "diagramPreparationCapabilityImplemented": false,
+  "limitations": [
+    "14 external opt-in checks not run; no paid model/external/production-profile coverage from fixtures",
+    "Hourly report uses a bounded ordinary official input, not instant foreground preemption or true parallelism",
+    "Production source cycle and up-to-ten report still need actual post-load verification",
+    "No new production video or internal review pass claimed"
+  ]
+}
