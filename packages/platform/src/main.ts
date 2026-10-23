@@ -521,7 +521,8 @@ async function activateProject(projectId, { scheduled = false } = {}) {
 }
 
 async function executeScheduledTask(task) {
-  await assistantService.host.yieldBackground()
+  if(task.intervalMinutes===60){if(assistantService.host.busy||bridge?.busy||bridge?.changingProject||mediaController.isCaptureActive()||workspaceMode==='studio'||task.projectId!==projectStore.active().id)throw new Error('Hourly task waits for idle resources in its selected Project')}
+  else await assistantService.host.yieldBackground()
   const originalProjectId = projectStore.active().id
   const target = projectStore.get(task.projectId, { includeArchived: false })
   if (!target) throw new Error('The scheduled task Project is archived or unavailable.')
@@ -538,7 +539,7 @@ async function executeScheduledTask(task) {
     const sessions = await assistantService.sessions.listProjectSessions(agentProject(target))
     if (!sessions.membership.includes(sessionId))throw new Error('The saved scheduled Session is unavailable. Repair its binding explicitly.')
     {await productFeatureRuntime?.onSessionWillChange?.();await bridge.changeProject(async()=>{assistantService.select(sessionId,target.id)});await productFeatureRuntime?.onSessionChanged?.();await publishAssistantSelection()}
-    const prompt = `[BMW Scheduled Task · ${task.name}]\n\nThis Project-scoped task is running automatically on its saved daily schedule (${task.schedule.time} ${task.schedule.timeZone}).\n\nTask instructions:\n${task.prompt}\n\nUse only BMW's browser capability. Work in background tabs unless foreground visibility is required to finish the task. Save screenshots, downloaded page media, and recordings as Project-owned artifacts. Do not create, modify, or remove scheduled tasks during this run unless the saved instructions explicitly require it. Do not publish, purchase, delete user data, or expand the task beyond these instructions. Finish with a concise result and list the artifacts you saved.`
+    const prompt = `[BMW Scheduled Task · ${task.name}]\n\nThis Project-scoped task is running automatically on its saved schedule (${task.intervalMinutes===60?'every 60 minutes':task.schedule.time+' '+task.schedule.timeZone}).\n\nTask instructions:\n${task.prompt}\n\nUse only BMW's browser capability. Work in background tabs unless foreground visibility is required to finish the task. Save screenshots, downloaded page media, and recordings as Project-owned artifacts. Do not create, modify, or remove scheduled tasks during this run unless the saved instructions explicitly require it. Do not publish, purchase, delete user data, or expand the task beyond these instructions. Finish with a concise result and list the artifacts you saved.`
     const replies = await assistantService.sessions.promptAndWait(sessionId, prompt, { timeoutMs: 30 * 60_000 })
     return replies
   } finally {
@@ -1057,6 +1058,7 @@ async function createApp() {
   browserKernel.projectSources=()=>{const project=projectStore.active();return new ProjectSourceStore(project.directory,project.id)}
   scheduledTaskManager = new ScheduledTaskManager({
     store: scheduledTaskStore,
+    canStart:task=>task.intervalMinutes!==60||(!assistantService.host.busy&&!bridge?.busy&&!bridge?.changingProject&&!mediaController.isCaptureActive()&&workspaceMode!=='studio'&&!scheduledExecutionProjectId&&task.projectId===projectStore.active().id),
     execute: executeScheduledTask,
     onRun: notifyScheduledTaskRun
   })

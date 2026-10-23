@@ -11,7 +11,8 @@ export function parseAgentTaskReceipt(raw:unknown):AgentTaskReceipt {
  if(Object.keys(v).some(k=>!['kind','key','payload','modelId'].includes(k))||v.kind!=='video-review'||typeof v.key!=='string'||!/^[a-f0-9]{64}$/.test(v.key))throw new Error('Invalid internal Agent task receipt')
  return {kind:v.kind,key:v.key,payload:agentText(v.payload,8192),modelId:v.modelId===null?null:agentIdentifier(v.modelId)}
 }
-export interface AgentReceipt { runId: string; messageId: string; providerReceiptId: string | null; state: 'prepared' | 'accepted' | 'finished' | 'unknown'; outcome: 'success' | 'interrupted' | 'failed' | null;task?:AgentTaskReceipt }
+export interface CancelledUnknownResolution {kind:'user-cancelled-unknown';resolvedAt:number;previousState:'unknown'}
+export interface AgentReceipt { runId: string; messageId: string; providerReceiptId: string | null; state: 'prepared' | 'accepted' | 'finished' | 'unknown'; outcome: 'success' | 'interrupted' | 'failed' | null;task?:AgentTaskReceipt;resolution?:CancelledUnknownResolution }
 export interface AgentHistory { version: 2; sessionId: string; revision: number; events: AgentEvent[]; messages: AgentMessage[]; interactions: AgentInteraction[]; receipts: AgentReceipt[]; owner:{projectId:string;driverId:string;externalSessionId:string|null} }
 export function parseAgentHistory(raw: unknown, sessionId: string): AgentHistory {
   const value = agentRecord(raw, 'Agent history')
@@ -33,10 +34,15 @@ export function parseAgentHistory(raw: unknown, sessionId: string): AgentHistory
   const runIds = new Set<string>()
   const receipts: AgentReceipt[] = value.receipts.map(rawReceipt => {
     const row = agentRecord(rawReceipt), runId = agentIdentifier(row.runId), messageId = agentIdentifier(row.messageId)
-    if (runIds.has(runId) || !messages.some(message => message.id === messageId && message.role === 'user') || !['prepared', 'accepted', 'finished', 'unknown'].includes(String(row.state)) || (row.outcome !== null && row.outcome !== 'success' && row.outcome !== 'failed' && row.outcome !== 'interrupted') || Object.keys(row).some(key => !['runId', 'messageId', 'providerReceiptId', 'state', 'outcome','task'].includes(key))) throw new Error('Invalid saved Agent receipt')
+    if (runIds.has(runId) || !messages.some(message => message.id === messageId && message.role === 'user') || !['prepared', 'accepted', 'finished', 'unknown'].includes(String(row.state)) || (row.outcome !== null && row.outcome !== 'success' && row.outcome !== 'failed' && row.outcome !== 'interrupted') || Object.keys(row).some(key => !['runId', 'messageId', 'providerReceiptId', 'state', 'outcome','task','resolution'].includes(key))) throw new Error('Invalid saved Agent receipt')
     runIds.add(runId)
     const receipt: AgentReceipt = { runId, messageId, providerReceiptId: row.providerReceiptId === null ? null : agentIdentifier(row.providerReceiptId), state: row.state as AgentReceipt['state'], outcome: row.outcome as AgentReceipt['outcome'] }
     if(row.task!==undefined)receipt.task=parseAgentTaskReceipt(row.task)
+    if(row.resolution!==undefined){
+      const resolution=agentRecord(row.resolution,'unknown input resolution')
+      if(Object.keys(resolution).some(key=>!['kind','resolvedAt','previousState'].includes(key))||resolution.kind!=='user-cancelled-unknown'||resolution.previousState!=='unknown'||!Number.isSafeInteger(resolution.resolvedAt)||Number(resolution.resolvedAt)<0||receipt.state!=='finished'||receipt.outcome!=='interrupted')throw new Error('Invalid cancelled unknown resolution')
+      receipt.resolution={kind:'user-cancelled-unknown',previousState:'unknown',resolvedAt:Number(resolution.resolvedAt)}
+    }
     if ((receipt.state === 'finished') !== (receipt.outcome !== null)) throw new Error('Invalid Agent receipt completion')
     return receipt
   })
@@ -144,6 +150,17 @@ export class AgentHistoryStore {
           next.interactions = []
         }
       }
+    })
+  }
+  /** Explicit user disposition, not a provider completion; retain every event/message. */
+  resolveCancelledUnknown(sessionId:string,runId:string):void {
+    this.commit(sessionId,next=>{
+      const receipt=next.receipts.find(row=>row.runId===runId)
+      if(!receipt)throw new Error('Unknown Agent submission')
+      if(receipt.resolution?.kind==='user-cancelled-unknown')return
+      if(receipt.state!=='unknown')throw new Error('Only an uncertain input can be explicitly ended')
+      receipt.state='finished';receipt.outcome='interrupted'
+      receipt.resolution={kind:'user-cancelled-unknown',previousState:'unknown',resolvedAt:Date.now()}
     })
   }
   recoverInterrupted(sessionId: string): void {

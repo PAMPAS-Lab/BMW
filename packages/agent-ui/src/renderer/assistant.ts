@@ -58,6 +58,17 @@ function render(next: AssistantState): void {
     for (const choice of interaction.choices) { const button = document.createElement('button'); button.textContent = choice.label; button.onclick = () => { if (next.selectedSessionId && next.activeRunId) void invoke({ action: 'interaction.respond', sessionId: next.selectedSessionId, runId: next.activeRunId, interactionId: interaction.id, response: choice.id }) }; article.append(button) }
     interactions.append(article)
   }
+  const uncertain=element('uncertain-inputs');uncertain.replaceChildren()
+  for(const entry of next.uncertainInputs??[]){
+    const article=document.createElement('article'),text=document.createElement('p'),button=document.createElement('button')
+    text.textContent='结果未确认 · '+entry.runId+' · '+entry.preview
+    button.textContent='结束已取消旧任务（保留历史，不重发）';button.disabled=changing||!entry.canEnd
+    button.onclick=()=>{if(next.selectedSessionId)void invoke({action:'input.end-cancelled-unknown',sessionId:next.selectedSessionId,runId:entry.runId,acknowledgement:'cancel-without-replay'})}
+    article.append(text,button);uncertain.append(article)
+  }
+  for(const entry of next.cancelledUnknownInputs??[]){
+    const text=document.createElement('p');text.textContent='已按用户取消结束旧任务 '+entry.runId+'；原执行结果未核实，历史与成片保留，未重发。';uncertain.append(text)
+  }
   for (const id of ['create', 'archive', 'rename']) element<HTMLButtonElement>(id).disabled = changing || next.busy || (id !== 'create' && !session)
   driver.disabled = sessions.disabled = changing || next.busy
   workspaceMode.disabled = changing || next.busy

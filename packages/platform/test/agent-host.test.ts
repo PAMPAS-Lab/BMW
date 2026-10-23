@@ -256,3 +256,41 @@ test('Background interaction requests become uncertain receipts without exposing
  assert.equal(calls,1);assert.equal(f.host.busy,false)
  assert.throws(()=>f.host.enqueueBackground({projectId:'p',sessionId:row.sessionId,driverId:'fixture'},'collect'),/uncertain/)
 })
+test('targeted user cancellation ends drained unknown without interrupting a newer run in the same Session',async t=>{
+  const began=deferred<void>(),release=deferred<void>();let calls=0,interrupts=0,drains=0
+  const f=fixture(t,async(request,emit)=>{
+    calls++;await emit({type:'session.bound',externalSessionId:'stable-anchor'})
+    await emit({type:'input.accepted',receiptId:request.runId})
+    if(request.text==='old')throw new Error('Connection lost')
+    if(request.text==='hourly collection')return success
+    await emit({type:'interaction.requested',interaction:{id:'current-question',kind:'question',message:'Current question',choices:[{id:'ok',label:'OK'}]}})
+    began.resolve();await release.promise;assert.equal(request.signal.aborted,false);await emit({type:'interaction.resolved',interactionId:'current-question'});return success
+  },async()=>{drains++})
+  f.backend.interrupt=async()=>{interrupts++}
+  f.backend.close=async()=>{release.resolve()}
+  const session=f.host.create('fixture'),old=f.host.enqueue(session.sessionId,'old')
+  await assert.rejects(f.host.wait(old.runId),/Connection lost/)
+  const current=f.host.enqueue(session.sessionId,'new');await began.promise
+  const before=f.history.snapshot(session.sessionId),status=f.conversations.get(session.sessionId).status,previousInterrupts=interrupts
+  assert.throws(()=>f.host.resolveCancelledUnknown(session.sessionId,current.runId),/still owns/)
+  f.setProject('q');assert.throws(()=>f.host.resolveCancelledUnknown(session.sessionId,old.runId),/does not belong/);f.setProject('p')
+  f.host.resolveCancelledUnknown(session.sessionId,old.runId)
+  assert.equal(f.host.activeRunId,current.runId);assert.equal(f.host.busy,true);assert.equal(f.conversations.get(session.sessionId).status,status)
+  assert.equal(interrupts,previousInterrupts);assert.equal(drains,1);assert.equal(calls,2)
+  const after=f.history.snapshot(session.sessionId)
+  assert.deepEqual(after.events,before.events);assert.deepEqual(after.messages,before.messages);assert.deepEqual(after.interactions,before.interactions);assert.equal(after.interactions.length,1);assert.deepEqual(after.receipts[1],before.receipts[1])
+  assert.equal(after.receipts[0].resolution?.kind,'user-cancelled-unknown');assert.equal(f.conversations.get(session.sessionId).externalSessionId,'stable-anchor')
+  release.resolve();await f.host.wait(current.runId)
+  const background=f.host.enqueueBackground({projectId:'p',sessionId:session.sessionId,driverId:'fixture'},'hourly collection')
+  await f.host.wait(background.runId);assert.equal(calls,3,'Only the explicitly new background input is dispatched')
+})
+test('unknown resolution cannot bypass failed native cleanup quarantine',async t=>{
+  let broken=true,calls=0
+  const f=fixture(t,async()=>{calls++;throw new Error('Connection lost')},async()=>{if(broken)throw new Error('cleanup failed')})
+  const session=f.host.create('fixture'),old=f.host.enqueue(session.sessionId,'old')
+  await assert.rejects(f.host.wait(old.runId),/cleanup failed/)
+  assert.throws(()=>f.host.resolveCancelledUnknown(session.sessionId,old.runId),/still owns/)
+  assert.equal(f.history.snapshot(session.sessionId).receipts[0].state,'unknown');assert.equal(f.host.busy,true)
+  broken=false;await f.host.recover();f.host.resolveCancelledUnknown(session.sessionId,old.runId)
+  assert.equal(f.host.busy,false);assert.equal(calls,1);assert.equal(f.history.snapshot(session.sessionId).receipts[0].resolution?.kind,'user-cancelled-unknown')
+})

@@ -155,6 +155,18 @@ export class AgentHost {
     await pending.settled
   }
   ownsRun(runId:string):boolean{return this.pending.has(runId)}
+  /** Trusted user action only. Never interrupt, drain, dispatch or replay any input. */
+  resolveCancelledUnknown(sessionId:string,runId:string):void {
+    agentIdentifier(runId)
+    const row=this.member(sessionId)
+    this.options.history.validateBinding(row)
+    // pending survives until BOTH runtime and browser cleanup succeed, including quarantine.
+    // An unrelated active run is allowed and must keep its admission and interaction state.
+    if(this.closed||this.maintenance||this.pending.has(runId)||this.active?.request.runId===runId||this.quarantined?.request.runId===runId)throw new Error('This input still owns execution or cleanup resources; stop and drain it first')
+    this.options.history.resolveCancelledUnknown(sessionId,runId)
+    if(!this.pendingHasSession(sessionId)&&row.status==='disconnected')this.options.conversations.setStatus(sessionId,'interrupted')
+    this.publish(sessionId)
+  }
   private async execute(pending: PendingRun): Promise<void> {
     if (!this.pending.has(pending.request.runId)) return // A queued cancellation was already persisted.
     const { request, backend, controller } = pending

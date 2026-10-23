@@ -200,6 +200,8 @@ begin固定服务器截止时间、rolling/观察/edition/范围标记序号、�
 
 activate在同Project整批打开，跨Project只复制用户所选一题的完整证据，再建立目标Session独立news批次及侧车admission；新批次沿既有新闻历史规则保留旧批次字节，失败不覆盖旧批次。侧车精确绑定snapshot、候选/facts指纹和冻结窗口，模型不能通过Studio参数放宽时效。新闻服务固定既有Host Project的规范目录并拒绝目录别名改绑，底层分片目录/文件身份边界保持。普通旧批次仍72小时且保持NEWS_EXPIRED等原错误码；绑定候选禁止Agent替换。既有新闻可信用户选择入口在创建唯一草稿之前重核快照/当前事件及证据、排除状态、时效和真实预览；已选草稿后续只重核其原证据，不因滚动事件后续修订替换或阻断固定草稿。跨Session/Project选题保留侧车和窗口身份，新快照草稿使用通用专题受众，普通旧新闻保留AI受众缺省；单次制作投递仍ready/uncertain/sent/failed，不自动重投；实际选题关系另存，不冒认导出。周期调度独立于推荐，见下述第六阶段；不自动发布。
 
+可信定时任务 GUI 可将已绑定任务切换为每小时或原每日时间。每小时 cadence 持久为可选 intervalMinutes=60，仅支持60分钟；保留每日时区/时刻及历史。小时任务每次只合并为一个待执行轮次，不无限补跑停机周期；不重放 running 中断输入。Host/Bridge/媒体忙、Studio 模式、Project 不在前台或已有定时执行时保留 queued，直到真实空闲后才 markRunning，不打断制片或取消进行中的采集。queuedAt/startedAt/finishedAt 分别保留排队与执行耗时，单个队列 run 去重。小时候选整理仍由已授权的官方运行时和唯一 browser 完成；保存候选报告不等于用户采用、推荐快照激活或制片准入。
+
 长期采集第六阶段：可信素材库GUI新增“周期采集与健康”，不增加模型/MCP工具、browser动作或Agent调度写入口。独立Profile `library/collection-schedules.json` 为闭合version1原子CAS控制账本，至多100计划及最近200健康通知，读取缺失文件不初始化；损坏/链接/目录身份改变保留原件并停用，不回退空库。计划固定方向、collection Project、BMW Session、官方driver、1–50个来源订阅、15–10080分钟周期及系统提示偏好。方向必须following且目标Project相符，订阅必须following并属于该方向；每方向至多一个计划。已有方向/订阅不自动启用。GUI分页列出计划，分页选择方向/订阅，支持暂停/启用、系统提示开关、通知已读、显式核对恢复和改绑当前Session/driver；结束旧轮次后可显式重配Project/方向/来源/周期并保持暂停，旧收据与材料不变；有旧轮次时禁止直接改绑。仅可信素材库主框架能调用闭合schedule IPC，Agent不能建立、启用、恢复或修改这些计划。
 
 调度器每30秒检查（任务截止另设定点唤醒）、全局每步最多投递一个官方输入，按最近投递时间轮转到期方向；一轮逐个检查已选来源，每个仍限制十分钟/20次观察，不限制素材库积累数。失败来源轮转到其他待检查来源之后，避免单一受限入口饿死整轮。未激活的绑定也可在固定 Project 的独立隐藏浏览器执行，不切换前台 Project/Session、驱动选择或工作区，不自动改绑。Host准入同步重核Project/Session/driver、成员/归档状态、未知收据及资源，忙碌Agent、浏览器/Project过渡、普通计划任务、Studio工作区及原生录制/处理/合成/旁白均让行。模型输入仍由既有官方driver prepare验证有效目录恰有BMW browser后释放，Host不实现爬虫、模型循环或额外能力。
@@ -210,7 +212,7 @@ activate在同Project整批打开，跨Project只复制用户所选一题的完�
 
 重启逐个核对当前轮次与原Host收据，只合并停机期间遗漏为一轮，不按历史周期无限补跑。不存在rolling收据的预备项可重新准备（写序证明尚未进入Host）；有rolling uncertain、无dispatchId、Host收据缺失/unknown、投递异常或清理后结果不确定均进入review并停止自动投递，绝不重放原输入。已确认的成功/失败/中断也必须等待该Host run完全drained，官方成功不替代原始入口检查证据。仅rolling completed/no-new提交证据后原子推进游标；缺检查的官方成功按失败处理，其他情况保留已采集线索、旧游标和历史。截止前的确定中断让行至少一分钟后才允许从保留游标开启新的有限检查。超时/失败/partial/restricted指数退避从5分钟加有界确定抖动开始、上限24小时，整轮恢复成功重置；配置失效先取消已知输入并等清理，再要求用户修复。
 
-健康状态waiting/healthy/backoff/review、等待原因、下次时间、连续失败数、最后起止时间及本轮待检查来源保存在Profile；原始run/证据/修订历史仍保留在Project rolling分片。问题状态变化生成持久通知，同一退避/待核对状态去重；整轮从故障恢复才提示恢复，常规无新增不提示。系统Notification可关闭而持久健康通知继续保留，通知不会自动切Project。用户显式核对旧输入后只能结束旧轮次、保留游标并暂停；随后可在原Project显式绑定新的Session/driver再启用，不改写旧Host unknown收据或恢复锚点。旧Session含unknown时自动采集继续拒绝，需明确新Session。后台采集不改新闻批次、推荐快照、选题、草稿、成品和采用账本；全部既有路径及可信用户选择制作门禁保持。
+健康状态waiting/healthy/backoff/review、等待原因、下次时间、连续失败数、最后起止时间及本轮待检查来源保存在Profile；原始run/证据/修订历史仍保留在Project rolling分片。问题状态变化生成持久通知，同一退避/待核对状态去重；整轮从故障恢复才提示恢复，常规无新增不提示。系统Notification可关闭而持久健康通知继续保留，通知不会自动切Project。用户显式核对旧输入后只能结束旧轮次、保留游标并暂停；随后可在原Project显式绑定新的Session/driver再启用，不改写旧Host unknown收据或恢复锚点。旧Session含unknown时自动采集继续拒绝。可信 Assistant 提供按 Session/run 精确指向的“结束已取消旧任务（保留历史，不重发）”；用户明确声明取消后，Host 复核当前 Project/Session/history 绑定、目标无 pending/active/quarantine 清理资源，才原子保存 finished/interrupted 与 user-cancelled-unknown 处置时间和原 unknown 状态。该记录表示用户取消，原执行结果仍未核实，不伪造 provider 完成事件、不改写历史消息/事件/原生恢复锚点、草稿或成片，不调用中断/重发/模型；迟到回调不可重开已结束输入。失败清理必须先显式恢复实际清理，不能用处置绕过。允许结束同 Session 已清理旧任务，同时保留另一当前任务的资源、状态和交互；处置完成后仅允许新授权输入，周期旧轮次仍须显式核对/暂停并重新启用，保留游标。也可显式绑定新的 Session。后台采集不改新闻批次、推荐快照、选题、草稿、成品和采用账本；全部既有路径及可信用户选择制作门禁保持。
 
 素材库的 Assistant 进度刷新保留未变化新闻卡片的已加载预览，不因核验时间更新重建播放器；Project/Session 切换与隐藏工作区仍暂停媒体、撤销本地预览URL并取消过期读取。隐藏工作区不因后台活动通知恢复读取。
 
@@ -856,6 +858,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 #### `packages/agent-contract/test/assistant-ui.test.ts`
 
 - `Assistant IPC admits only named bounded commands with explicit Session/run identities`
+- `unknown input disposition requires exact owner/run and explicit no-replay acknowledgement`
 
 #### `packages/agent-contract/test/context-sync.test.ts`
 
@@ -1710,6 +1713,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 - `display history survives restart, keeps bounded ordered streaming and cannot replace submission receipts`
 - `history never admits foreign, out-of-order or terminal-late events and preserves corrupt saved files`
+- `explicitly ending an unknown receipt preserves evidence, active interactions and restart audit without replay`
 
 #### `packages/platform/test/agent-host.test.ts`
 
@@ -1730,6 +1734,8 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Failed cleanup of a yielded background input quarantines the queue until explicit recovery, never replays it`
 - `Pinned inactive Project/Session background inputs preserve selection and yield to the foreground only after actual drain`
 - `Background interaction requests become uncertain receipts without exposing a foreground interaction or replaying input`
+- `targeted user cancellation ends drained unknown without interrupting a newer run in the same Session`
+- `unknown resolution cannot bypass failed native cleanup quarantine`
 
 #### `packages/platform/test/agent-settings-controller.test.ts`
 
@@ -1903,6 +1909,8 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `scheduled task runs are project isolated, durable, and recover interruption`
 - `scheduler serializes due and manual Agent task execution`
 - `Schedules require explicit driver ownership and unbound tasks can only be enabled after a BMW binding`
+- `trusted hourly cadence persists, bounds its interval and coalesces missed hours without replaying an active run`
+- `busy video defers hourly scheduled execution, preserves queue time and never starts duplicates`
 
 #### `packages/platform/test/session-continuity.test.ts`
 

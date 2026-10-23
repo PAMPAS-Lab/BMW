@@ -36,6 +36,7 @@ const backend:AgentBackend={
  async run(request,emit){
    await emit({type:'session.bound',externalSessionId:request.externalSessionId??'fixture-native:'+request.sessionId})
    await emit({type:'input.accepted',receiptId:'fixture-'+request.runId})
+   if(request.text==='Cancelled unknown fixture')throw new Error('Fixture transport lost after acceptance')
    const outcome=await new Promise<'success'|'interrupted'>(resolve=>{finishRun=()=>resolve('success');cancelRun=()=>resolve('interrupted');if(request.signal.aborted)cancelRun()})
    await emit({type:'turn.completed',outcome,message:''});return {outcome,message:''}
  },
@@ -88,7 +89,17 @@ try{
    await waitFor(async()=>finishRun&&connection?true:null)
  }
  const finish=async()=>{finishRun?.();await waitFor(async()=>await assistant.executeJavaScript('window.bmwAssistant.invoke({action:"snapshot"}).then(value=>!value.busy?true:null)'))}
+ await assistant.executeJavaScript('window.bmwAssistant.invoke('+JSON.stringify({action:'message.send',sessionId:initial.sessionId,text:'Cancelled unknown fixture'})+')')
+ await waitFor(async()=>await assistant.executeJavaScript('window.bmwAssistant.invoke({action:"snapshot"}).then(value=>!value.busy&&value.uncertainInputs?.length===1?true:null)'))
  await startRun(initial.sessionId)
+ const activeBeforeResolution=await assistant.executeJavaScript('window.bmwAssistant.invoke({action:"snapshot"}).then(value=>({runId:value.activeRunId,messages:value.messages,events:value.events}))')
+ await assistant.executeJavaScript('document.querySelector("#uncertain-inputs button").click()')
+ await waitFor(async()=>await assistant.executeJavaScript('window.bmwAssistant.invoke({action:"snapshot"}).then(value=>value.cancelledUnknownInputs?.length===1&&value.uncertainInputs?.length===0?true:null)'))
+ const activeAfterResolution=await assistant.executeJavaScript('window.bmwAssistant.invoke({action:"snapshot"})')
+ assert.equal(activeAfterResolution.activeRunId,activeBeforeResolution.runId);assert.equal(activeAfterResolution.busy,true)
+ assert.deepEqual(activeAfterResolution.messages,activeBeforeResolution.messages);assert.deepEqual(activeAfterResolution.events,activeBeforeResolution.events)
+ assert.match(await assistant.executeJavaScript('document.getElementById("uncertain-inputs").textContent'),/原执行结果未核实/)
+ console.log('PASS trusted Assistant unknown cancellation: current input retained, evidence preserved and no replay')
  assert.ok(connection,'Platform must inject a generic Host execution lease')
  const config=connection
  const unauthorized=await fetch(config.bridgeUrl+'/health',{headers:{authorization:'Bearer invalid-fixture'},signal:AbortSignal.timeout(10000)})
@@ -132,7 +143,16 @@ try{
  await assert.rejects(model.request('tools/call',{name:'shell',arguments:{}}),/Unknown tool/)
  await assert.rejects(model.call(binding,{action:'connector.external.status'}),/Unsupported browser action/)
  await model.call(binding,{action:'tabs.close',tabId:opened.id})
+ const hourlyTask=fixtureRecord((await model.call(binding,{action:'schedule.create',scheduleName:'Hourly candidate fixture',schedulePrompt:'Report existing candidate evidence only; no production.',scheduleTime:'06:00',scheduleTimeZone:'UTC',scheduleEnabled:false})).structuredContent)
  await finish()
+ await shell.executeJavaScript('document.getElementById("scheduled-task-button").click()')
+ await waitFor(async()=>await shell.executeJavaScript('document.querySelector("#scheduled-task-overlay:not(.hidden) .scheduled-task-row")?true:null'))
+ await shell.executeJavaScript('Array.from(document.querySelectorAll(".scheduled-task-actions button")).find(button=>button.textContent==="改为每小时").click()')
+ await waitFor(async()=>await shell.executeJavaScript('window.bmw.scheduledTasks().then(value=>value.tasks.find(task=>task.id==='+JSON.stringify(hourlyTask.id)+')?.intervalMinutes===60?true:null)'))
+ assert.equal(await shell.executeJavaScript('window.bmw.scheduledTasks().then(value=>value.tasks[0].enabled)'),false)
+ assert.match(await shell.executeJavaScript('document.querySelector(".scheduled-task-schedule").textContent'),/每小时/)
+ await shell.executeJavaScript('document.getElementById("scheduled-task-close").click()')
+ console.log('PASS trusted hourly task GUI: persisted60-minute cadence with explicit paused task; no new Agent dispatch')
  const proof=await shell.executeJavaScript([
  '(async()=>{const api=window.bmw,first=(await api.projectState()).projects[0],initial=await api.listAgentSessions();',
  'const firstId=initial.selectedSessionId;await api.renameAgentSession(firstId,"Original conversation");',

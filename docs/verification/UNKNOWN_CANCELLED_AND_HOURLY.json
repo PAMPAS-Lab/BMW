@@ -1,0 +1,49 @@
+{
+  "verifiedAt": "2026-10-23T03:03:11.140691+00:00",
+  "scope": "Cancelled unknown receipt disposition and trusted hourly candidate-task cadence",
+  "isolatedFinalBuild": "/private/tmp/bmw-unknown-resolution-xifdjY",
+  "build": "passed in isolated workspace; live generated runtime not rebuilt",
+  "check": "npm run check passed; 6 frozen source exceptions unchanged",
+  "targetedTests": {
+    "passed": 44,
+    "failed": 0,
+    "note": "Includes Host/history/controller/contract/collection scheduling and hourly tasks; overlaps broader unit set."
+  },
+  "broaderUnitTests": {
+    "passed": 143,
+    "failed": 0,
+    "log": "/private/tmp/bmw-unknown-final-unit.log"
+  },
+  "nativeFixtures": {
+    "passed": 8,
+    "failed": 0,
+    "target": "/private/tmp/bmw-unknown-resolution-C0DJSP",
+    "fixtures": [
+      "desktop-driver",
+      "collection-native",
+      "studio-native",
+      "media-native",
+      "video-native",
+      "narration-native",
+      "dsh-catalog",
+      "speech-native"
+    ],
+    "logPrefix": "/Users/zz/Documents/ChatGPT/BMW/outputs/gtc-berlin-three-news-2026-10-22/unknown-resolution-",
+    "note": "Before final additional busy guards/atomic cadence validation; final source compiled and tested separately."
+  },
+  "finalNativeAssistantAndCadenceGui": {
+    "status": "passed",
+    "target": "/private/tmp/bmw-unknown-resolution-xifdjY",
+    "log": "/private/tmp/bmw-unknown-final-driver.log",
+    "checks": [
+      "trusted precise unknown resolution preserves a running same-Session task and its evidence",
+      "trusted hourly GUI persists60-minute cadence of an initially paused task without dispatch"
+    ]
+  },
+  "liveGeneratedOutputsUnchanged": true,
+  "changedLiveGeneratedOutputs": [],
+  "productionDeployment": false,
+  "oldUnknownResolvedInProduction": false,
+  "actualHourlyCollectionOrRecommendationRun": false,
+  "coverageLimit": "Disposable fixtures and installed DSH catalog/lifecycle; no paid-model or production-profile test claim. Current video intentionally untouched; deployment/real hourly scheduling and efficiency measurement remain pending idle."
+}

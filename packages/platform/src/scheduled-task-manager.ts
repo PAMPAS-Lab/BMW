@@ -6,6 +6,7 @@ interface ScheduledTaskManagerOptions {
   execute: (task: ScheduledTask, run: ScheduledTaskRun) => Promise<unknown>
   onRun?: (run: ScheduledTaskRun, task: ScheduledTask) => void
   intervalMs?: number
+  canStart?:(task:ScheduledTask)=>boolean
 }
 
 export class ScheduledTaskManager {
@@ -13,11 +14,14 @@ export class ScheduledTaskManager {
   readonly executeTask: ScheduledTaskManagerOptions['execute']
   readonly onRun?: ScheduledTaskManagerOptions['onRun']
   readonly intervalMs: number
+  private readonly scheduled=new Set<string>()
+  readonly canStart:ScheduledTaskManagerOptions['canStart']
   queue: Promise<void> = Promise.resolve()
   timer: NodeJS.Timeout | null = null
   stopped = true
 
-  constructor({ store, execute, onRun, intervalMs = 30_000 }: ScheduledTaskManagerOptions) {
+  constructor({ store, execute, onRun, canStart, intervalMs = 30_000 }: ScheduledTaskManagerOptions) {
+    this.canStart=canStart
     this.store = store
     this.executeTask = execute
     this.onRun = onRun
@@ -42,6 +46,7 @@ export class ScheduledTaskManager {
 
   async tick(): Promise<void> {
     if (this.stopped) return
+    for(const run of this.store.pendingRuns())this.enqueueExecution(run)
     for (const task of this.store.due()) {
       const run = this.store.enqueue(task.projectId, task.id, 'scheduled')
       this.enqueueExecution(run)
@@ -77,10 +82,14 @@ export class ScheduledTaskManager {
   }
 
   enqueueExecution(run: ScheduledTaskRun): void {
+    if(this.scheduled.has(run.id))return
+    this.scheduled.add(run.id)
     this.queue = this.queue.then(async () => {
       if (this.stopped) return
       const current = this.store.pendingRuns().find((candidate) => candidate.id === run.id)
       if (!current) return
+      const savedTask=this.store.get(current.taskId)
+      if(this.canStart&&!this.canStart(structuredClone(savedTask)))return
       const running = this.store.markRunning(run.id)
       const task = this.store.get(running.taskId)
       this.onRun?.(running, task)
@@ -93,6 +102,6 @@ export class ScheduledTaskManager {
         const failed = this.store.finish(run.id, 'failed', { error: (error as Error).message })
         this.onRun?.(failed, task)
       }
-    }).catch((error) => console.error('BMW scheduled task queue failed', error))
+    }).catch((error) => console.error('BMW scheduled task queue failed', error)).finally(()=>{this.scheduled.delete(run.id)})
   }
 }

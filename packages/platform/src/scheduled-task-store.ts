@@ -27,6 +27,8 @@ export interface ScheduledTask {
   name: string
   prompt: string
   schedule: { kind: 'daily'; time: string; timeZone: string }
+  /** Optional trusted-GUI cadence; daily fields remain available when switching back. */
+  intervalMinutes?:60
   enabled: boolean
   nextRunAt: string | null
   lastRunAt: string | null
@@ -130,6 +132,7 @@ export function parseScheduledTaskState(raw:unknown):ScheduledTaskState {
         if (typeof task.id !== 'string' || !task.id || ids.has(task.id) || typeof task.projectId !== 'string' || !task.projectId || typeof task.enabled !== 'boolean' || schedule.kind !== 'daily') throw new Error('Invalid scheduled task identity or schedule.')
         cleanText(task.name, 'name', 120); cleanText(task.prompt, 'prompt', 20_000)
         cleanTime(schedule.time); cleanTimeZone(schedule.timeZone)
+        if(task.intervalMinutes!==undefined&&task.intervalMinutes!==60)throw new Error('Only an hourly interval is supported.')
         if(task.sessionId!==null&&(typeof task.sessionId!=='string'||!task.sessionId||task.sessionId.length>4096))throw new Error('Invalid scheduled Session binding.')
         if(task.driverId===undefined)throw new Error('An explicit scheduled driver is required.')
         if(task.driverId!==null&&(typeof task.driverId!=='string'||!/^[a-z0-9-]{1,64}$/u.test(task.driverId)))throw new Error('Invalid scheduled driver binding.')
@@ -226,15 +229,20 @@ export class ScheduledTaskStore {
   }
 
   update(projectId: string, taskId: string, input: Record<string, unknown>): ScheduledTask {
-    const task = this.getForProject(projectId, taskId)
+    const existing = this.getForProject(projectId, taskId),task=structuredClone(existing)
+    if(input.intervalMinutes!==undefined&&this.activeRun(taskId))throw new Error('Cannot change cadence of a running or queued task.')
     if(input.enabled===true&&(!task.sessionId||!task.driverId))throw new Error('Select an explicit BMW Session and driver before enabling this task.')
+    if(input.intervalMinutes!==undefined&&input.intervalMinutes!==null&&input.intervalMinutes!==60)throw new Error('Only an hourly interval is supported.')
+    if(input.intervalMinutes===null)delete task.intervalMinutes
+    else if(input.intervalMinutes===60)task.intervalMinutes=60
     if (input.name !== undefined) task.name = cleanText(input.name, 'Scheduled task name', 80)
     if (input.prompt !== undefined) task.prompt = cleanText(input.prompt, 'Scheduled task prompt', 8_000)
     if (input.time !== undefined) task.schedule.time = cleanTime(input.time)
     if (input.timeZone !== undefined) task.schedule.timeZone = cleanTimeZone(input.timeZone)
     if (input.enabled !== undefined) task.enabled = input.enabled === true
-    task.nextRunAt = task.enabled ? nextDailyRunAt(task.schedule.time, task.schedule.timeZone, this.now()) : null
+    task.nextRunAt = task.enabled ? this.next(task,this.now()) : null
     task.updatedAt = this.now().toISOString()
+    this.state.tasks[this.state.tasks.indexOf(existing)]=task
     this.save()
     return structuredClone(task)
   }
@@ -259,6 +267,8 @@ export class ScheduledTaskStore {
     return { removed: taskId }
   }
 
+  private next(task:ScheduledTask,after:Date):string{return task.intervalMinutes===60?new Date(after.getTime()+60*60000).toISOString():nextDailyRunAt(task.schedule.time,task.schedule.timeZone,after)}
+
   due(at = this.now()): ScheduledTask[] {
     const timestamp = at.getTime()
     return this.list().filter((task) => task.enabled && task.nextRunAt && Date.parse(task.nextRunAt) <= timestamp && !this.activeRun(task.id))
@@ -278,7 +288,7 @@ export class ScheduledTaskStore {
       queuedAt: now.toISOString(), startedAt: null, finishedAt: null, summary: '', error: ''
     }
     this.state.runs.push(run)
-    if (trigger === 'scheduled') task.nextRunAt = nextDailyRunAt(task.schedule.time, task.schedule.timeZone, now)
+    if (trigger === 'scheduled') task.nextRunAt = this.next(task,now)
     task.updatedAt = now.toISOString()
     this.save()
     return structuredClone(run)

@@ -261,7 +261,7 @@ function renderScheduledTasks() {
     heading.append(name, badge)
     const schedule = document.createElement('span')
     schedule.className = 'scheduled-task-schedule'
-    schedule.textContent = `Daily ${task.schedule.time} · ${task.schedule.timeZone} · next ${scheduledTaskTime(task.nextRunAt)} · ${task.driverId || '未绑定驱动'} · ${task.sessionId || '未绑定会话'}`
+    schedule.textContent = `${task.intervalMinutes===60?'每小时（空闲时执行）':'Daily '+task.schedule.time+' · '+task.schedule.timeZone} · next ${scheduledTaskTime(task.nextRunAt)} · ${task.driverId || '未绑定驱动'} · ${task.sessionId || '未绑定会话'}`
     const prompt = document.createElement('div')
     prompt.className = 'scheduled-task-prompt'
     prompt.textContent = task.prompt
@@ -288,6 +288,11 @@ function renderScheduledTasks() {
       }
     })
     enabledLabel.append(enabled, document.createTextNode('Enabled'))
+    const cadence=document.createElement('button')
+    cadence.textContent=task.intervalMinutes===60?'改为每天':'改为每小时'
+    cadence.disabled=Boolean(activeRun)
+    cadence.onclick=async()=>{try{await api.updateScheduledTask(task.id,{intervalMinutes:task.intervalMinutes===60?null:60});await refreshScheduledTasks()}catch(error){scheduledTaskMessage.textContent=error.message}}
+    actions.append(cadence)
     const runNow = document.createElement('button')
     runNow.textContent = activeRun ? activeRun.status : 'Run now'
     runNow.disabled = Boolean(activeRun)

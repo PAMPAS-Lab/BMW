@@ -15,6 +15,8 @@ export interface AssistantState {
   activeRunId: string | null
   busy: boolean
   resourcesDisconnected: boolean
+  uncertainInputs?:{runId:string;messageId:string;preview:string;canEnd:boolean}[]
+  cancelledUnknownInputs?:{runId:string;resolvedAt:number}[]
   settings?:AssistantSettingsState
 }
 export type AssistantCommand =
@@ -28,6 +30,7 @@ export type AssistantCommand =
   | { action: 'message.cancel'; sessionId: string }
   | { action: 'interaction.respond'; sessionId: string; runId: string; interactionId: string; response: string }
   | { action: 'resources.recover' }
+  | {action:'input.end-cancelled-unknown';sessionId:string;runId:string;acknowledgement:'cancel-without-replay'}
   | { action:'settings.run';driverId:string;request:AgentSettingsRequest }
   | { action:'settings.cancel' }
 export interface AssistantStudioTarget {projectId:string;sessionId:string;draftId:string;kind:'film'|'scene'|'object';sceneId?:string;objectKind?:'visual'|'voice'|'captions';layer?:{id:string;kind:'visual'|'audio'};voiceSegmentId?:string;visualSegmentId?:string}
@@ -54,6 +57,7 @@ export function parseAssistantCommand(raw: unknown): AssistantCommand {
     case 'session.select': case 'session.archive': case 'message.cancel': fields(['sessionId']); return { action: value.action, sessionId: agentIdentifier(value.sessionId) }
     case 'session.rename': fields(['sessionId', 'title']); return { action: value.action, sessionId: agentIdentifier(value.sessionId), title: agentText(value.title, 200) }
     case 'message.send': fields(['sessionId', 'text']); return { action: value.action, sessionId: agentIdentifier(value.sessionId), text: agentText(value.text, 65536) }
+    case 'input.end-cancelled-unknown': fields(['sessionId','runId','acknowledgement']);if(value.acknowledgement!=='cancel-without-replay')throw new Error('Explicit cancellation without replay acknowledgement is required');return {action:value.action,sessionId:agentIdentifier(value.sessionId),runId:agentIdentifier(value.runId),acknowledgement:value.acknowledgement}
     case 'interaction.respond': fields(['sessionId', 'runId', 'interactionId', 'response']); return { action: value.action, sessionId: agentIdentifier(value.sessionId), runId: agentIdentifier(value.runId), interactionId: agentIdentifier(value.interactionId), response: agentText(value.response, 65536) }
     default: throw new Error('Unknown BMW Assistant command')
   }

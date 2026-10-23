@@ -51,8 +51,13 @@ test('Assistant controls persist per-Project driver selection, reject foreign Se
   assert.equal(created.sessions.at(-1)?.externalSessionId, null)
   assert.equal(created.sessions.at(-1)?.driverId, 'b')
   const selected = created.selectedSessionId!
+  history.prepare(selected,'cancelled-old','cancelled-message','user cancelled this old production');history.append({sessionId:selected,runId:'cancelled-old',sequence:1,createdAt:1,event:{type:'session.bound',externalSessionId:'old-anchor'}});conversations.bind(selected,'old-anchor');history.markUncertain(selected,'cancelled-old','Previous process ended')
+  assert.equal(controller.snapshot().uncertainInputs?.[0].canEnd,true)
   await controller.invoke({ action: 'message.send', sessionId: selected, text: 'Execute' })
   await began
+  await assert.rejects(controller.invoke({action:'input.end-cancelled-unknown',sessionId:foreign.sessionId,runId:'cancelled-old',acknowledgement:'cancel-without-replay'}),/does not belong/)
+  const resolved=await controller.invoke({action:'input.end-cancelled-unknown',sessionId:selected,runId:'cancelled-old',acknowledgement:'cancel-without-replay'})
+  assert.equal(resolved.busy,true);assert.ok(resolved.activeRunId);assert.equal(resolved.uncertainInputs?.length,0);assert.equal(resolved.cancelledUnknownInputs?.[0].runId,'cancelled-old')
   await assert.rejects(controller.invoke({ action: 'driver.select', driverId: 'a' }), /Stop and drain/)
   await assert.rejects(controller.invoke({ action: 'session.archive', sessionId: selected }), /Stop and drain/)
   await assert.rejects(controller.invoke({ action: 'message.send', sessionId: foreign.sessionId, text: 'Foreign' }), /does not belong/)

@@ -24,7 +24,7 @@ export class AssistantController {
     const saved = selectedSessionId ? history.snapshot(selectedSessionId) : null
     const settings=this.options.settings?.snapshot(driverId)
     const activeRunId = saved?.receipts.find(row => row.runId === host.activeRunId)?.runId ?? null
-    return { project, driverId, drivers: host.descriptions(), sessions: conversations.list(project.id), selectedSessionId, messages: saved?.messages ?? [], events: saved?.events ?? [], interactions: activeRunId ? saved!.interactions : [], activeRunId, busy: host.foregroundBusy, resourcesDisconnected:host.resourcesDisconnected,...(settings?{settings}:{} ) }
+    return { uncertainInputs:saved?.receipts.filter(row=>row.state==='unknown').map(row=>({runId:row.runId,messageId:row.messageId,preview:saved.messages.find(message=>message.id===row.messageId)?.text.slice(0,160)??'',canEnd:!host.ownsRun(row.runId)&&!host.resourcesDisconnected}))??[],cancelledUnknownInputs:saved?.receipts.filter(row=>row.resolution).map(row=>({runId:row.runId,resolvedAt:row.resolution!.resolvedAt}))??[],project, driverId, drivers: host.descriptions(), sessions: conversations.list(project.id), selectedSessionId, messages: saved?.messages ?? [], events: saved?.events ?? [], interactions: activeRunId ? saved!.interactions : [], activeRunId, busy: host.foregroundBusy, resourcesDisconnected:host.resourcesDisconnected,...(settings?{settings}:{} ) }
   }
   private member(sessionId: string): AgentConversation { return this.options.conversations.get(agentIdentifier(sessionId), this.options.currentProject().id) }
   private async selection(operation: () => Promise<void>): Promise<void> {
@@ -75,6 +75,7 @@ export class AssistantController {
       case 'message.send': this.member(command.sessionId);if(command.sessionId!==this.snapshot().selectedSessionId)throw new Error('Select the BMW Session before sending its message');host.enqueue(command.sessionId, command.text); break
       case 'message.cancel': this.member(command.sessionId); await host.cancel(command.sessionId); break
       case 'interaction.respond': this.member(command.sessionId); await host.respond(command.sessionId, command.runId, command.interactionId, command.response); break
+      case 'input.end-cancelled-unknown': this.member(command.sessionId);host.resolveCancelledUnknown(command.sessionId,command.runId);break
       case 'resources.recover': await host.recover(); break
     }
     return this.snapshot()
