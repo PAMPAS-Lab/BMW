@@ -1069,6 +1069,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Preparation waits for actual buffered video and pauses before capture can start`
 - `Unbuffered or zero-size players do not masquerade as ready; timeout drains playback`
 - `Cancellation during warmup awaits pause and never returns readiness`
+- `A short capture buffers its own bounded window rather than requiring thirty source seconds`
 
 #### `packages/browser-capability/test/youtube-sabr-observation.test.ts`
 
@@ -2212,3 +2213,5 @@ YouTube 导航采用同一45秒就绪预算：核对 watch 目标、播放器数
 原文件下载继续要求精确资源 URL 和配对音轨。下载资源过期后，只有实际下载工作已清理，才允许重新验证同一页面、确认范围与唯一 YouTube 逻辑视频身份，再进入缓冲及采集；不要求旧的临时流/blob URL 继续有效。来源 evidence 仍保留原候选 URL 和确认身份，不改写为其他来源。其他平台继续精确资源绑定，换视频、广告、范围歧义、Project 变化或清理失败均拒绝。采集开始后播放器 URL、身份、范围和广告检查保持不变。
 
 自动获取的采集兜底最多45秒（显式更短 maxDurationMs 继续生效），不再因长原片默认录制整段；超过窗口仍由既有 partial-preview / source-clock evidence 表明局部获取。显式 capture 与完整归档接口不受这一自动兜底窗口替代。
+
+采集缓冲预检按本次窗口取值：自动采集只预缓冲 min(请求上限,10秒,原片时长)，仍须从片头连续覆盖并实际解码；不再对8–10秒请求固定要求30秒。未就绪、取消或身份变化仍需暂停确认，不能绕过实际采集和输出检查。

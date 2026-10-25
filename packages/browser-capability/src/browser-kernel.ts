@@ -888,7 +888,7 @@ export class BrowserKernel {
             const paused=await readRendererPhase<unknown>(tab.view.webContents,'library.sources','pause-prepared-player',()=>tab.view.webContents.mainFrame.executeJavaScript(`(()=>{const v=document.querySelectorAll(${JSON.stringify(request.videoSelector)})[${JSON.stringify(request.videoIndex??0)}];if(!(v instanceof HTMLVideoElement))return false;v.pause();return v.paused===true})()`,true),undefined,3000)
             if(paused!==true)throw new Error('Prepared player did not acknowledge paused state.')
           }catch(error){if(!tab.view.webContents.isDestroyed())this.navigationQuarantine.add(tab.id);throw new Error('MEDIA_CAPTURE_CLEANUP_FAILED: Prepared player pause could not be verified; close the quarantined page before further browser work.',{cause:error})}}
-        },jobSignal)}finally{if(previous&&previous!==tab.id&&this.tabs.has(previous))await this.showTab(previous)}
+        },jobSignal,30000,Math.min(request.maxDurationMs??45000,10000)/1000)}finally{if(previous&&previous!==tab.id&&this.tabs.has(previous))await this.showTab(previous)}
       }
 
     },signal??new AbortController().signal)
