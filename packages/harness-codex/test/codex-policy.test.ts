@@ -1,3 +1,4 @@
+import {codexProtocolError} from '../src/codex-rpc.js'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -134,4 +135,12 @@ test('GPT-6 host catalog is immutable, content addressed and private without mod
   fs.writeFileSync(file,'tampered');assert.throws(()=>materializeCodexBrowserCatalog(root,'gpt-6.1-sol'),/changed after publication/)
   fs.unlinkSync(file);fs.symlinkSync(cache,file);assert.throws(()=>materializeCodexBrowserCatalog(root,'gpt-6.1-sol'),/changed after publication/)
   fs.unlinkSync(cache);fs.symlinkSync(file,cache);assert.throws(()=>materializeCodexBrowserCatalog(root,'gpt-6.1-sol'),/official model catalog/)
+})
+
+
+test('Codex protocol rejection names only admitted operation and numeric code, never raw provider text',()=>{
+ const error={code:-32602,message:'private-token-and-account-data'}
+ assert.match(codexProtocolError('thread/resume',error).message,/thread\/resume.*-32602/)
+ assert.doesNotMatch(codexProtocolError('thread/resume',error).message,/private-token|account-data/)
+ assert.doesNotMatch(codexProtocolError('private-token',{code:'private-token'}).message,/private-token/)
 })

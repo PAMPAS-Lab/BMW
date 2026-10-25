@@ -176,6 +176,16 @@ try {
   assert.deepEqual(info.tracks.map((track) => track.type).sort(), ['audio', 'video'])
   assert.equal(info.tracks.find((track) => track.type === 'video')?.width, 320)
   assert.equal(info.tracks.find((track) => track.type === 'audio')?.codec, 'opus')
+  await stage('all-frame native motion report catches held color frames, pins SHA and excludes semantic certification',async()=>{
+    const before=fs.readdirSync(artifacts).sort(),start=info.tracks.find(t=>t.type==='video')!.startSeconds!,end=Math.min(2.1,info.tracks.find(t=>t.type==='video')!.endSeconds!)
+    const request={action:'media.video.motion',artifactId,startSeconds:start,endSeconds:end,region:{x:.1,y:.1,width:.8,height:.8}}
+    const report=mediaRecord((await bridgeCall(request)).result),windows=(report.windows as unknown[]).map(mediaRecord)
+    assert.equal(report.sourceSha256,crypto.createHash('sha256').update(fs.readFileSync(path.join(artifacts,artifactId))).digest('hex'))
+    assert.equal(report.semanticMotionVerified,false);assert.equal(report.audioAuditioned,false);assert.equal(windows.length,2);assert.ok(Number(windows[0].maximumNearStaticSeconds)>.4);assert.ok(Number(windows[0].changedFramePairs)>=2)
+    assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
+    await assert.rejects(bridgeCall({...request,region:{x:.8,y:0,width:.5,height:1}}));await assert.rejects(bridgeCall({...request,endSeconds:181}))
+    const cancelled=new AbortController();cancelled.abort(new Error('Motion cancellation'));await assert.rejects(media.processArtifact(request,cancelled.signal),/Motion cancellation/);assert.equal(media.isCaptureActive(),false)
+  })
   const framesResult = await stage('sample timestamped frames and admit actual PNGs through Bridge', () => bridgeCall({ action: 'media.frames.sample', artifactId, timestampsSeconds: [.3, 1, 1.7], maxWidth: 160, maxHeight: 90 }))
   const frames = (framesResult.result as Frames).frames
   assert.equal(framesResult.images.length, 3)

@@ -1,3 +1,4 @@
+import {MotionAccumulator,assertMotionRequest,assertMotionReport} from '../src/motion-contract.js'
 import {assertImageDrawingRequest,assertDrawingBounds,assertDrawingResult,DRAWING_LIMITS} from '../src/image-drawing-contract.js'
 import {imageHeader,ImageDecodeBudget,DECODE_BUDGET,assertImageInspection} from '../src/image-contract.js'
 import {assertNativeProcessingRequest,assertEncodingInspection} from '../src/media-contract.js'
@@ -157,4 +158,17 @@ test('Drawing validation identifies wrong action fields and nested property path
  assert.throws(()=>assertImageDrawingRequest({action:'media.image.draw',width:320,height:180,shapes:[{type:'path',points:[{x:0,y:0,z:1},{x:10,y:10}]}]}),/shapes\[0\]\.points\[0\]: "z"/)
  assert.equal(assertImageDrawingRequest({action:'media.image.draw',width:320,height:180,shapes}).action,'media.image.draw')
  assert.equal(assertImageDrawingRequest({action:'media.image.annotate',artifactId:'existing.png',shapes}).action,'media.image.annotate')
+})
+
+
+test('complete motion evidence detects static video, changes, decode gaps and missing boundaries without semantic approval',()=>{
+ const pixels=(n:number)=>new Uint8ClampedArray([n,n,n,255])
+ const still=new MotionAccumulator(0,2);for(let i=0;i<20;i++)still.add(i/10,.1,pixels(20));assert.ok(still.finish().maximumNearStaticSeconds>=1.99)
+ const moving=new MotionAccumulator(0,2);for(let i=0;i<20;i++)moving.add(i/10,.1,pixels(i*10));const m=moving.finish();assert.equal(m.changedFramePairs,19);assert.ok(m.maximumNearStaticSeconds<.101)
+ const gap=new MotionAccumulator(0,2);gap.add(0,.5,pixels(0));gap.add(1,1,pixels(255));assert.equal(gap.finish().maximumDecodeGapSeconds,.5)
+ const missing=new MotionAccumulator(0,2);missing.add(.1,1.9,pixels(0));assert.throws(()=>missing.finish(),/complete/)
+ const request=assertMotionRequest({action:'media.video.motion',artifactId:'film.mp4',startSeconds:0,endSeconds:2,region:{x:0,y:.2,width:1,height:.5}})
+ const report={method:'all-decoded-frames/64x64-RGB-mean-absolute-difference',threshold:.5,region:request.region,windows:[m,m],semanticMotionVerified:false,audioAuditioned:false};assertMotionReport(report,request)
+ assert.throws(()=>assertMotionReport({...report,semanticMotionVerified:true},request));assert.throws(()=>assertMotionReport({...report,windows:[{...m,coveredEndSeconds:1},m]},request))
+ for(const extra of [{endSeconds:181},{artifactId:'/tmp/film.mp4'},{region:{x:.8,y:0,width:.5,height:1}}])assert.throws(()=>assertMotionRequest({...request,...extra}))
 })

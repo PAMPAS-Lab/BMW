@@ -3,6 +3,11 @@ import path from 'node:path'
 import { createInterface } from 'node:readline'
 import { agentRecord } from '@bmw-agent/agent-contract'
 
+export function codexProtocolError(method:string,error:unknown):Error {
+ const safe=/^(initialize|account\/read|model\/list|thread\/(start|resume|inject_items)|turn\/(start|interrupt)|config\/read)$/.test(method)?method:'operation'
+ const code=error&&typeof error==='object'&&'code' in error&&Number.isSafeInteger(error.code)?String(error.code):'unknown'
+ return new Error('Codex rejected an official protocol operation: '+safe+' (code '+code+')')
+}
 export interface CodexRpc {
   call(method: string, params: unknown): Promise<unknown>
   notify(method: string, params: unknown): void
@@ -18,7 +23,7 @@ export function createCodexRpc(executable: string, directory: string, configDire
   if(modelCatalogPath!==undefined)args.push('-c','model_catalog_json='+JSON.stringify(modelCatalogPath))
   const child = spawn(executable, args, { cwd: directory, env: { ...process.env, ...environment, CODEX_HOME: configDirectory }, stdio: ['pipe', 'pipe', 'pipe'] })
   const lines = createInterface({ input: child.stdout, crlfDelay: Infinity })
-  const pending = new Map<number, { resolve(value: unknown): void; reject(error: Error): void; timer: ReturnType<typeof setTimeout> }>()
+  const pending = new Map<number, { resolve(value: unknown): void; reject(error: Error): void; timer: ReturnType<typeof setTimeout>; method:string }>()
   const listeners = new Set<(method: string, params: unknown) => void>()
   let nextId = 0, closed = false, closing: Promise<void> | null = null, failure: Error | null = null
   let requestHandler: ((method: string, params: unknown) => Promise<unknown>) | null = null
@@ -58,7 +63,7 @@ export function createCodexRpc(executable: string, directory: string, configDire
         const row = pending.get(message.id)
         if (row) {
           pending.delete(message.id); clearTimeout(row.timer)
-          if (message.error) row.reject(new Error('Codex rejected an official protocol operation'))
+          if (message.error) row.reject(codexProtocolError(row.method,message.error))
           else row.resolve(message.result)
         }
       }
@@ -69,7 +74,7 @@ export function createCodexRpc(executable: string, directory: string, configDire
       return new Promise((resolve, reject) => {
         const id = ++nextId
         const timer = setTimeout(() => { pending.delete(id); reject(new Error('Codex protocol timeout: ' + method)) }, 30000)
-        pending.set(id, { resolve, reject, timer })
+        pending.set(id, { resolve, reject, timer, method })
         try { write({ id, method, params }) } catch (error: unknown) { clearTimeout(timer); pending.delete(id); reject(error) }
       })
     },

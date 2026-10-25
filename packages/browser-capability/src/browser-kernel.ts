@@ -650,7 +650,7 @@ export class BrowserKernel {
       if(!this.projectStore.active()?.directory||this.recordingController.isCaptureActive())throw new Error('Audio preview requires an idle active Project.')
       return this.recordingController.previewAudio(request,signal)
     }
-    if (['media.inspect', 'media.segment', 'media.frames.sample','media.capture.frames.sample', 'media.convert','media.image.inspect','media.image.annotate','media.image.draw','media.audio.sample','media.speech.align'].includes(request.action)) {
+    if (['media.video.motion','media.inspect', 'media.segment', 'media.frames.sample','media.capture.frames.sample', 'media.convert','media.image.inspect','media.image.annotate','media.image.draw','media.audio.sample','media.speech.align'].includes(request.action)) {
       if (!this.projectStore.active()?.directory) throw new Error('Media processing requires an active BMW Project.')
       const {tabId:ignored,...mediaRequest}=request;void ignored
       return this.recordingController.processArtifact(mediaRequest, signal)

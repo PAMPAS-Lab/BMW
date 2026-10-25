@@ -351,6 +351,7 @@ Mediabunny `1.61.0` 与浏览器 WebCodecs 为媒体底座；Canvas/WebAudio/Web
 | media.segment | 从完整Project存档复制有界编码包分段；保存原件哈希、原片与输出时间映射，后续单独解码／转写 |
 | media.audio.sample / media.audio.preview | 有界原生采样率/声道 PCM16 片段、信号指标及不自动播放的试听窗口；与模型实际听审分开 |
 | media.inspect | 当前 Project Artifact 的媒体轨道、时长、尺寸与编码检查 |
+| media.video.motion | SHA绑定指定本地视频主轨区间的全部解码帧；有界180秒/6000帧，在调用者指定的真实画面区域测量64×64 RGB逐帧差、持时、解码缺口、低变化区间，另列首3秒；不替代真实内容、语义运动或听感判断 |
 | media.frames.sample | 依据媒体时间抽 PNG；时间/数量有界，保存为 Project Artifact |
 | media.image.inspect | 解码当前 Project 静态 PNG/JPEG/WebP，返回真实尺寸；32 MiB / 16 MP，图片头在分配像素前检查 |
 | media.image.annotate | 以原图像素坐标标注截图/图片，保留尺寸和原文件，输出新的 Project PNG 并回传模型图像 |
@@ -877,7 +878,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 ### 当前 Browser Action 清单
 
-- BMW 核心 Browser Actions（48）：`status`、`help`、`tabs.list`、`pages.discover`、`pages.read`、`pages.read-result`、`tabs.open`、`tabs.show`、`tabs.close`、`navigate`、`back`、`forward`、`reload`、`observe`、`page.text.find`、`click`、`type`、`wait`、`key`、`hover`、`page.diagnostics`、`page.media.list`、`page.viewport.set`、`media.screenshot`、`media.download`、`media.preserve`、`media.segment`、`media.video.capture`、`media.inspect`、`media.audio.sample`、`media.speech.align`、`media.audio.preview`、`media.frames.sample`、`media.capture.frames.sample`、`media.convert`、`media.image.inspect`、`media.image.annotate`、`media.image.draw`、`media.record.start`、`media.record.stop`、`project.context`、`project.memory.append`、`project.tasks.append`、`schedule.list`、`schedule.create`、`schedule.update`、`schedule.remove`、`schedule.run`
+- BMW 核心 Browser Actions（49）：`status`、`help`、`tabs.list`、`pages.discover`、`pages.read`、`pages.read-result`、`tabs.open`、`tabs.show`、`tabs.close`、`navigate`、`back`、`forward`、`reload`、`observe`、`page.text.find`、`click`、`type`、`wait`、`key`、`hover`、`page.diagnostics`、`page.media.list`、`page.viewport.set`、`media.screenshot`、`media.download`、`media.preserve`、`media.segment`、`media.video.capture`、`media.inspect`、`media.audio.sample`、`media.speech.align`、`media.audio.preview`、`media.video.motion`、`media.frames.sample`、`media.capture.frames.sample`、`media.convert`、`media.image.inspect`、`media.image.annotate`、`media.image.draw`、`media.record.start`、`media.record.stop`、`project.context`、`project.memory.append`、`project.tasks.append`、`schedule.list`、`schedule.create`、`schedule.update`、`schedule.remove`、`schedule.run`
 - feature-library Feature Browser Actions（9）：`library.materials`、`library.sources`、`library.news`、`library.research`、`library.exports`、`library.streams`、`library.collecting`、`library.collection-batch`、`library.recommendations`
 - feature-video Feature Browser Actions（5）：`video.compose`、`video.narrate`、`video.studio`、`video.review`、`video.settings`
 
@@ -1530,6 +1531,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Codex raw catalog cache avoids repeated refresh but rechecks fingerprints, projection integrity, expiry and cancellation`
 - `GPT-6 startup catalog changes only tool metadata and preserves native model capabilities and transport`
 - `GPT-6 host catalog is immutable, content addressed and private without modifying the official model cache`
+- `Codex protocol rejection names only admitted operation and numeric code, never raw provider text`
 
 #### `packages/harness-codex/test/codex-settings.test.ts`
 
@@ -1712,6 +1714,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Image drawing admits bounded primitives and rejects executable, outside, transparent-redaction and aggregate inputs`
 - `Drawing output IO has no input, bounds PNG writes and rolls back failed dimensions without changing existing images`
 - `Drawing validation identifies wrong action fields and nested property paths without exposing values`
+- `complete motion evidence detects static video, changes, decode gaps and missing boundaries without semantic approval`
 
 #### `packages/media-native/test/precomposition.test.ts`
 

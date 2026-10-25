@@ -1,3 +1,5 @@
+import {MotionAccumulator} from '../motion-contract.js'
+import {CanvasSink} from 'mediabunny'
 import {normalizeSpeech} from './speech-normalize.js'
 import {sampleAudioEvidence} from './audio-evidence.js'
 import {paintDrawing} from './image-drawing.js'
@@ -91,7 +93,23 @@ async function processMedia(command: MediaProcessingCommand): Promise<void> {
     for (const track of await input.getVideoTracks()) await normalizeBrowserVideoColor(track)
     const metadata = await info(input)
     let result: MediaWorkerResult
-    if(request.action==='media.audio.sample'){const audio=await sampleAudioEvidence(input,request.startSeconds,request.endSeconds);await write(command.token,0,0,audio.data);result={kind:'audio-evidence',info:audio.info}}
+    if(request.action==='media.video.motion'){
+      assertProcessableVideoTracks(metadata.tracks)
+      const track=await input.getPrimaryVideoTrack();if(!track||!await track.canDecode())throw new Error('No decodable motion video.')
+      if(request.startSeconds<await track.getFirstTimestamp()||request.endSeconds>await track.computeDuration())throw new Error('Motion interval is outside video.')
+      const all=new MotionAccumulator(request.startSeconds,request.endSeconds),opening=new MotionAccumulator(request.startSeconds,Math.min(request.endSeconds,request.startSeconds+3)),r=request.region
+      const thumbnail=new OffscreenCanvas(64,64),context=thumbnail.getContext('2d',{willReadFrequently:true})!
+      const sw=await track.getDisplayWidth(),sh=await track.getDisplayHeight(),scale=Math.min(1,192/sw,192/sh),width=Math.max(1,Math.floor(sw*scale)),height=Math.max(1,Math.floor(sh*scale))
+      let count=0
+      for await(const frame of new CanvasSink(track,{width,height,fit:'contain',poolSize:2}).canvases(request.startSeconds,request.endSeconds)){
+        if(++count>6000)throw new Error('Motion frame budget exceeded.')
+        context.drawImage(frame.canvas,r.x*width,r.y*height,r.width*width,r.height*height,0,0,64,64)
+        const pixels=context.getImageData(0,0,64,64).data
+        all.add(frame.timestamp,frame.duration,pixels);opening.add(frame.timestamp,frame.duration,pixels)
+      }
+      result={kind:'motion',info:{method:'all-decoded-frames/64x64-RGB-mean-absolute-difference',threshold:.5,region:r,windows:[all.finish(),opening.finish()],semanticMotionVerified:false,audioAuditioned:false}}
+    }
+    else if(request.action==='media.audio.sample'){const audio=await sampleAudioEvidence(input,request.startSeconds,request.endSeconds);await write(command.token,0,0,audio.data);result={kind:'audio-evidence',info:audio.info}}
     else if(request.action==='media.speech.normalize'){const normalized=await normalizeSpeech(input,request.sourceRange);await write(command.token,0,0,normalized.data);result={kind:'speech-pcm',info:normalized.info}}
     else if (request.action === 'media.inspect') result = { kind: 'inspection', info: metadata }
     else if(request.action==='media.decode.check'){

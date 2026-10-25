@@ -36,7 +36,7 @@ export class MediaProcessor {
     }
     try {
       if(request.action!=='media.encode.check')io = request.action==='media.inspect'?await ArtifactJobIO.openArchive(directory,request.artifactId):await ArtifactJobIO.open(directory,request.action==='media.decode.check'?{action:'media.inspect',artifactId:request.artifactId}:request)
-      if(request.action==='media.speech.normalize'||request.action==='media.audio.sample')sourceSha256=await io!.fingerprint(signal)
+      if(request.action==='media.speech.normalize'||request.action==='media.audio.sample'||request.action==='media.video.motion')sourceSha256=await io!.fingerprint(signal)
       if((request.action==='media.image.inspect'||request.action==='media.image.annotate')&&io!.bytes>32*1024*1024)throw new Error('Image exceeds 32 MiB.')
       signal?.throwIfAborted()
       const token = crypto.randomUUID()
@@ -86,7 +86,7 @@ export class MediaProcessor {
       mediaWindow.webContents.send('bmw-media-process', { token, bytes: io?.bytes??0, request })
       const result = await pending
       signal?.throwIfAborted()
-      if((request.action==='media.speech.normalize'||request.action==='media.audio.sample')&&await io!.fingerprint(signal)!==sourceSha256)throw new Error('Audio source changed during decoding.')
+      if((request.action==='media.speech.normalize'||request.action==='media.audio.sample'||request.action==='media.video.motion')&&await io!.fingerprint(signal)!==sourceSha256)throw new Error('Media source changed during decoding.')
       const artifacts = io?await io.finish(result.kind === 'frames' ? result.frames.length : result.kind === 'conversion'||result.kind==='drawing'||result.kind==='speech-pcm'||result.kind==='audio-evidence' ? 1 : 0,result.kind==='drawing'?result:undefined):[]
       if(result.kind==='audio-evidence'){
         const artifact=artifacts[0]!,wav=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:artifact.artifactId})
@@ -96,6 +96,7 @@ export class MediaProcessor {
       if(result.kind==='encoding')return result.info
       const base = { sourceArtifactId: 'artifactId' in request?request.artifactId:undefined, sourceBytes: io?.bytes??0, engine: 'mediabunny-webcodecs' }
       if(result.kind==='drawing')return {...base,...artifacts[0],type:'screenshot',contentType:'image/png',state:'completed',engine:'bmw-native-canvas',width:result.width,height:result.height,shapeCount:result.shapeCount}
+      if(result.kind==='motion')return {...base,sourceSha256,...result.info}
       if(result.kind==='decoding')return {...base,...result.info}
       if(result.kind==='image')return {...base,...result.info}
       if (result.kind === 'inspection') return { ...base, ...result.info }

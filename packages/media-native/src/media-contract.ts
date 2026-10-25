@@ -1,3 +1,5 @@
+import {assertMotionRequest,assertMotionReport} from './motion-contract.js'
+import type {MotionRequest,MotionReport} from './motion-contract.js'
 import {assertImageDrawingRequest,assertDrawingResult} from './image-drawing-contract.js'
 import type {ImageDrawingRequest,DrawingResult} from './image-drawing-contract.js'
 import {assertImageInspection} from './image-contract.js'
@@ -11,6 +13,7 @@ export const MEDIA_LIMITS = Object.freeze({
   frames: 8, durationSeconds: 1800, sourcePixels: 16_777_216, jobTimeoutMs: 120_000
 })
 export type MediaProcessRequest =
+  | MotionRequest
   | ImageDrawingRequest
   | {action:'media.image.inspect';artifactId:string}
   | { action: 'media.inspect'; artifactId: string }
@@ -62,6 +65,7 @@ export interface SampledFrame {
   outputIndex: number; requestedTimestampSeconds: number; timestampSeconds: number; durationSeconds: number; width: number; height: number
 }
 export type MediaWorkerResult =
+  | {kind:'motion';info:MotionReport}
   | {kind:'audio-evidence';info:AudioEvidence}
   | {kind:'speech-pcm';info:import('./speech-contract.js').SpeechNormalization}
   | DrawingResult
@@ -96,6 +100,7 @@ export function assertArtifactId(value: unknown): string {
 }
 export function assertMediaProcessRequest(value: unknown): MediaProcessRequest {
   const input = mediaRecord(value)
+  if(input.action==='media.video.motion')return assertMotionRequest(input)
   if(input.action==='media.image.annotate'||input.action==='media.image.draw')return assertImageDrawingRequest(input)
   const artifactId = assertArtifactId(input.artifactId)
   const common = ['action', 'artifactId', 'tabId']
@@ -130,6 +135,7 @@ export function assertMediaProcessRequest(value: unknown): MediaProcessRequest {
 /** Validate the renderer result before admitting it to the host/MCP boundary. */
 export function assertMediaWorkerResult(value: unknown, request: NativeProcessingRequest): MediaWorkerResult {
   const result = mediaRecord(value)
+  if(request.action==='media.video.motion'&&result.kind==='motion'){assertMotionReport(result.info,request);return value as MediaWorkerResult}
   if(request.action==='media.image.annotate'||request.action==='media.image.draw'){assertDrawingResult(result,request)}
   else if(request.action==='media.audio.sample'&&result.kind==='audio-evidence')assertAudioEvidence(result.info,request.startSeconds,request.endSeconds)
   else if(request.action==='media.speech.normalize'&&result.kind==='speech-pcm'){
