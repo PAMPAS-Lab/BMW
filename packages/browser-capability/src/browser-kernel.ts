@@ -118,10 +118,11 @@ export class BrowserKernel {
   private readonly playback=new PagePlayback()
   private browserVisible=true
   private capturePlaybackTabId:string|null=null
-  private playbackAllowed(tab:NavigationTab):boolean{return tab.id===this.capturePlaybackTabId||this.browserVisible&&!this.restoringTabState&&!this.suspendedResearchProjects.has(tab.projectId??'')&&tab.id===this.activeTabId&&(!this.projectStore||tab.projectId===this.projectStore.active().id)}
+  private readinessPlaybackTabId:string|null=null
+  private playbackAllowed(tab:NavigationTab):boolean{return tab.id===this.capturePlaybackTabId||tab.id===this.readinessPlaybackTabId||this.browserVisible&&!this.restoringTabState&&!this.suspendedResearchProjects.has(tab.projectId??'')&&tab.id===this.activeTabId&&(!this.projectStore||tab.projectId===this.projectStore.active().id)}
   private async applyPlayback(tab:NavigationTab,allowed:boolean,forcePause=false):Promise<void>{
     if(this.deferredNavigation.has(tab.id)){tab.view.webContents.setAudioMuted(true);return}
-    try{await this.playback.update(tab.view.webContents,allowed,forcePause)}catch(error){this.#addDiagnostic(tab.id,'media',{message:'Playback policy remains muted; retry on frame load: '+String(error),at:Date.now()})}
+    try{await this.playback.update(tab.view.webContents,allowed,forcePause,tab.id===this.readinessPlaybackTabId)}catch(error){this.#addDiagnostic(tab.id,'media',{message:'Playback policy remains muted; retry on frame load: '+String(error),at:Date.now()})}
   }
   private refreshPlayback(tab:NavigationTab):Promise<void>{return this.applyPlayback(tab,this.playbackAllowed(tab))}
   setBrowserVisible(visible:boolean):void{
@@ -243,7 +244,10 @@ export class BrowserKernel {
       lastPlayerState=await readRendererPhase<ReturnType<typeof advanceYoutubePlayer>>(tab.view.webContents,'navigate','youtube-player-ready',async()=>{const value=await tab.view.webContents.mainFrame.executeJavaScript(`(${advanceYoutubePlayer.toString()})(${JSON.stringify(youtubeTarget)})`,true);if(value!=='ready'&&value!=='advertisement'&&value!=='waiting'&&value!=='different-target')throw new Error('Invalid native player state.');return value},signal,1000)
       return lastPlayerState==='ready'
     }:undefined
+    // Advancing a normal ad is part of this bounded readiness phase. It must
+    // survive the background pause policy without ever making the page audible.
     try{
+      if(videoReady&&!this.collectionBodyScope){this.readinessPlaybackTabId=tab.id;await this.refreshPlayback(tab)}
       await navigatePage(tab.view.webContents,url,signal,videoReady&&!this.collectionBodyScope?45000:timeoutMs,3000,tab.source==='agent',videoReady&&!this.collectionBodyScope?videoReady:this.collectionBodyScope&&!['x.com','twitter.com'].includes(new URL(url).hostname.replace(/^www\./,''))?ready:undefined,entry=>this.#addDiagnostic(tab.id,'network',{type:'navigation',url:diagnosticUrl(url),...entry,at:Date.now()}))
       // loadURL may finish before an ad does. Keep the same bounded readiness
       // phase instead of returning an apparently ready advertising player.
@@ -255,10 +259,13 @@ export class BrowserKernel {
       }
     }catch(error){if(tab.view.webContents.isDestroyed())this.dropNavigationTab(tab);else if(error instanceof Error&&'code'in error&&error.code==='BMW_BROWSER_NAVIGATION_CLEANUP_FAILED')this.navigationQuarantine.add(tab.id);throw error}
     finally{
-      if(playerReadStarted&&!tab.view.webContents.isDestroyed()){
+      try{if(playerReadStarted&&!tab.view.webContents.isDestroyed()){
         try{await readRendererPhase(tab.view.webContents,'navigate','pause-youtube-player',()=>tab.view.webContents.mainFrame.executeJavaScript(`(()=>{const p=document.getElementById('movie_player'),v=p?.querySelector('video');if(v){v.pause();return v.paused===true}return true})()`,true).then(paused=>{if(paused!==true)throw new Error('Player did not pause.')}),undefined,3000)}
         catch(error){this.navigationQuarantine.add(tab.id);throw new Error('MEDIA_CAPTURE_CLEANUP_FAILED: YouTube readiness playback could not be paused.',{cause:error})}
-      }
+      }}finally{if(this.readinessPlaybackTabId===tab.id){
+        this.readinessPlaybackTabId=null
+        if(!tab.view.webContents.isDestroyed())try{await this.playback.update(tab.view.webContents,this.playbackAllowed(tab),true)}catch(error){this.navigationQuarantine.add(tab.id);throw new Error('MEDIA_CAPTURE_CLEANUP_FAILED: Readiness playback policy could not be restored.',{cause:error})}
+      }}
     }
   }
   async openTab({ url, foreground = false, source = 'agent', reuse = true }: { url?: unknown; foreground?: boolean; source?: string; reuse?: boolean } = {},signal?:AbortSignal,navigationTimeoutMs?:number,deferNavigation=false) {

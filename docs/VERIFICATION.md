@@ -2,6 +2,12 @@
 
 核对日期：2026-10-25。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
 
+## 后台广告就绪与播放策略回归（2026-10-25）
+
+周期新闻实际续作暴露后台暂停策略与YouTube正常广告推进冲突。隔离回归先复现：视频已解码（64×64、1秒），4秒内19次播放均被暂停，currentTime约0.004秒，未能就绪。Host现只在原45秒目标导航就绪阶段允许静音推进；不抢前台、广告不认证内容，成功／失败／取消后撤销并暂停，恢复失败仍隔离。实际播放过程原生静音、取消清理及普通后台播放拦截均有断言。
+
+build/check通过；unit/contract/boundary/type层 **133 passed / 0 failed / 98 outside-layer or opt-in not-run**。另顺序通过10个原生命令：标签/广告生命周期、后台、后台采集、媒体录制/处理、视频、Studio、本地旁白、DSH及完整桌面（四组加Project重启）。代码与全部生成输出SHA核对通过，见[专项记录](verification/BACKGROUND_READINESS.json)。没有再次重跑完整所有层；原全量基线与已解决夹具失败分别保留。均为一次性Profile/Home及mock keychain；该受控广告回归不代表真实YouTube或生产Profile验收，真实来源将在更新后另行复测，未据此宣称新成片通过。
+
 ## 当前合并与 Harness 升级验证（2026-10-25）
 
 现存分支的提交均包含在本次集成历史中，其他工作树无未提交改动。锁文件固定官方 Codex CLI0.164.0、Qoder CN CLI/Worker1.1.78及SDK1.0.56、WorkBuddy CLI2.176.0；DSH0.2.1-rc.2已是查询时的官方latest。Codex/DSH改用BMW自己的官方npm运行时，显式Codex覆盖仍受版本与实际目录门禁约束；清理BMW旧Codex0.160.1运行时和被替换的已安装依赖，不删除用户Project、素材、凭据、会话锚点或其他应用的全局运行时。

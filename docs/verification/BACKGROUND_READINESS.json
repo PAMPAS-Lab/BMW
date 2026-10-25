@@ -1,0 +1,98 @@
+{
+  "format": "bmw.background-readiness-verification",
+  "version": 1,
+  "createdAt": "2026-10-25T15:19:24.971960+00:00",
+  "sourceBaseRevision": "31084e8be3ac663d7ae7fe2bf0c667814939504c",
+  "scope": "bounded muted YouTube readiness exception; focused regression after full baseline",
+  "baseline": "HARNESS_UPGRADE.json",
+  "build": "passed",
+  "check": "passed",
+  "layerCounts": {
+    "passed": 133,
+    "failed": 0,
+    "not-run": 98
+  },
+  "unitReport": ".bmw-runtime/news-every-two-hours/ad-fix-unit/result.json",
+  "nativeChecks": {
+    "tabs": {
+      "status": "passed",
+      "logSha256": "a9b60ac20bd7ed7b61266ef5eb5d9146a8260f8751123be46f738dfbcd59a402"
+    },
+    "background": {
+      "status": "passed",
+      "logSha256": "a883236b49cad81fa54f25805f939c7cc3918e48b8f7b3592c4ac0210b1cac90"
+    },
+    "library": {
+      "status": "passed",
+      "logSha256": "603d354d07f58fe8a2f23b6f7fe804821af731250388e884dda3c71c1a308fa0"
+    },
+    "capture": {
+      "status": "passed",
+      "logSha256": "0bcf94b1f4b40bcefdb587620cc22bc0e933c2d69705fc146745405733e3b0d4"
+    },
+    "processing": {
+      "status": "passed",
+      "logSha256": "b7e45e812b7e76b24b34cf85bfc30999963f6d186a7ffa072c2f1dcbeee4182d"
+    },
+    "video": {
+      "status": "passed",
+      "logSha256": "697839cab2d7238125ffd5cf16bdfe6b223fb614180029635b2c420148b9e385"
+    },
+    "studio": {
+      "status": "passed",
+      "logSha256": "796842d7bc1bba136abd718974a165dd319eea88215a99715e29774eedd9fa4e"
+    },
+    "narration": {
+      "status": "passed",
+      "logSha256": "62f953954da67a181cd6091a3f3dd4dabd52132602640e559c5169d0d342f27b"
+    },
+    "dsh": {
+      "status": "passed",
+      "logSha256": "a270e309bf99edfa7a4990baf4373e110d4d98e2652b8eaad4b175e98d85afd0"
+    },
+    "desktop": {
+      "status": "passed",
+      "logSha256": "28607d745da0d0d5839709f1848d394a7990399b055e0163b701055c0ee33126"
+    }
+  },
+  "desktopGroups": [
+    {
+      "group": "workspace",
+      "status": "passed"
+    },
+    {
+      "group": "projects",
+      "status": "passed"
+    },
+    {
+      "group": "projects/restart",
+      "status": "passed"
+    },
+    {
+      "group": "settings",
+      "status": "passed"
+    },
+    {
+      "group": "native",
+      "status": "passed"
+    }
+  ],
+  "regression": {
+    "before": "Decoded finite64x64 video:19play events immediately followed by19pauses,currentTime0.004s;timeout4s",
+    "after": "Actual ad playback advances muted without foreground switch; success/cancel pause and revoke; ordinary background replay remains blocked"
+  },
+  "implementationHashes": {
+    "packages/browser-capability/src/browser-kernel.ts": "420320d459b1d18e255bd1889b316c6da052f0c7a50a93f1912d354ea2b801f6",
+    "packages/browser-capability/src/page-playback.ts": "f1998860dadf5202a1ae6c84a8d722bb5a604117a43c1625b22c3e18595440b5",
+    "scripts/browser-tab-lifecycle-smoke.ts": "03e2d5b2514da0bdf8b65fdbfabe4ba0329a3d45fbb4b57f5dd04ed558f7dba9"
+  },
+  "buildSourceManifestSha256": "c4e5563e5cdb2b262a5b515c83ac076293460242b0a2013d406b8801d1214e23",
+  "outputsVerified": 599,
+  "fullSuiteRerun": false,
+  "productionSourceRecheck": "pending on updated runtime",
+  "exclusions": [
+    "No paid-model or production-profile coverage from isolated tests",
+    "Controlled ad fixture is not a real YouTube-service acceptance",
+    "No film produced or accepted by these checks"
+  ]
+}

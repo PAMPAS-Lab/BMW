@@ -41,6 +41,32 @@ async function run(){let code=0;const watchdog=setTimeout(()=>app.exit(1),120000
   assert.equal(await probe('pinned'),'waiting','No decoded content is not ready after skip')
   await userPage.executeJavaScript('document.getElementById("movie_player").remove()')
   console.log('PASS ad readiness: different target never clicked; visible normal skip executes; ad and undecoded post-ad player never certify content')
+  // Exercise the actual background playback policy, not only the DOM helper.
+  const encoder=new BrowserWindow({show:false,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false}});windows.push(encoder)
+  await encoder.loadFile(path.resolve('packages/media-native/src/media/media.html'))
+  const clip=Buffer.from(await encoder.webContents.executeJavaScript(`(async()=>{const {Output,Mp4OutputFormat,BufferTarget,CanvasSource}=await import('mediabunny');const c=new OffscreenCanvas(64,64),x=c.getContext('2d'),target=new BufferTarget(),output=new Output({format:new Mp4OutputFormat(),target}),video=new CanvasSource(c,{codec:'avc',bitrate:100000});output.addVideoTrack(video,{frameRate:10});await output.start();for(let n=0;n<10;n++){x.fillStyle=n%2?'red':'blue';x.fillRect(0,0,64,64);await video.add(n/10,.1)}video.close();await output.finalize();return [...new Uint8Array(target.buffer)]})()`,true) as number[]).toString('base64');encoder.destroy()
+  await browserSession.protocol.handle('https',request=>{const id=new URL(request.url).searchParams.get('v');return new Response(`<!doctype html><title>Controlled ad readiness</title><div id="movie_player" class="ad-showing"><video muted loop preload="auto" src="data:video/mp4;base64,${clip}"></video></div><script>const p=document.getElementById('movie_player'),v=p.querySelector('video');p.getVideoData=()=>({video_id:${JSON.stringify(id)}});p.getPlayerResponse=()=>({videoDetails:{videoId:${JSON.stringify(id)}},playabilityStatus:{status:'OK'}});p.dataset.playCount='0';p.dataset.pauseCount='0';v.addEventListener('play',()=>p.dataset.playCount=String(Number(p.dataset.playCount)+1));v.addEventListener('pause',()=>p.dataset.pauseCount=String(Number(p.dataset.pauseCount)+1));setInterval(()=>{if(${JSON.stringify(id)}!=='never-ready'&&v.currentTime>.15)p.classList.remove('ad-showing')},20)</script>`,{headers:{'content-type':'text/html'}})})
+  const readinessMuteStates:boolean[]=[]
+  const traceReadiness=(_event:Electron.Event,contents:Electron.WebContents)=>contents.on('media-started-playing',()=>{if(contents.getURL().includes('www.youtube.com/watch?v='))readinessMuteStates.push(contents.isAudioMuted())})
+  app.on('web-contents-created',traceReadiness)
+  k.setBrowserVisible(false)
+  try{
+    let readyTab:Awaited<ReturnType<BrowserKernel['openTab']>>
+    try{readyTab=await k.openTab({url:'https://www.youtube.com/watch?v=ad-lease',foreground:false,source:'agent'},AbortSignal.timeout(4000))}catch(error){const blocked=[...k.tabs.values()].find(tab=>tab.url.includes('ad-lease'));if(blocked)console.error('Controlled ad state',await blocked.view.webContents.executeJavaScript("(()=>{const p=document.getElementById('movie_player'),v=p.querySelector('video');return {readyState:v.readyState,width:v.videoWidth,duration:v.duration,currentTime:v.currentTime,paused:v.paused,plays:p.dataset.playCount,pauses:p.dataset.pauseCount,policy:globalThis.__bmwPlaybackPolicy}})()"));throw error}
+    const readyPage=k.tabs.get(readyTab.id).view.webContents
+    assert.equal(k.activeTabId,user.id,'Readiness must not steal the foreground tab')
+    assert.equal(await readyPage.executeJavaScript("document.getElementById('movie_player').classList.contains('ad-showing')"),false,'The controlled ad actually advanced under the real background policy')
+    assert.equal(await readyPage.executeJavaScript("document.querySelector('video').paused"),true,'Readiness always pauses after admission')
+    assert.equal(readyPage.isAudioMuted(),true,'Background readiness never makes ads audible')
+    assert.ok(readinessMuteStates.length>0&&readinessMuteStates.every(Boolean),'Every actual media-started notification during readiness remains natively muted')
+    await readyPage.executeJavaScript("document.querySelector('video').play().catch(()=>{});true",true);await new Promise(resolve=>setTimeout(resolve,100))
+    assert.equal(await readyPage.executeJavaScript("document.querySelector('video').paused"),true,'The temporary playback exception is revoked')
+    await k.closeTab(readyTab.id)
+    await assert.rejects(k.openTab({url:'https://www.youtube.com/watch?v=never-ready',foreground:false,source:'agent'},AbortSignal.timeout(1000)),/abort|timeout/i)
+    const stopped=[...k.tabs.values()].find(tab=>tab.url.includes('never-ready'))
+    if(stopped){assert.equal(stopped.view.webContents.isAudioMuted(),true);assert.equal(await stopped.view.webContents.executeJavaScript("document.querySelector('video').paused"),true);await k.closeTab(stopped.id)}
+    console.log('PASS background ad readiness: actual decoding progresses muted, foreground is preserved, normal background pause returns and cancellation drains')
+  }finally{app.removeListener('web-contents-created',traceReadiness);k.setBrowserVisible(true);await browserSession.protocol.unhandle('https')}
   const paused=async(page:typeof userPage)=>page.executeJavaScript("document.querySelector('video').paused")
   const play=async(page:typeof userPage)=>{await page.executeJavaScript("document.querySelector('video').play().catch(()=>{});true",true);await new Promise(resolve=>setTimeout(resolve,100))}
   const firstFrame=userPage.mainFrame,realScript=firstFrame.executeJavaScript.bind(firstFrame)

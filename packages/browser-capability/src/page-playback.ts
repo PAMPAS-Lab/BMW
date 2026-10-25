@@ -7,7 +7,7 @@ export class PagePlayback {
  private readonly pending=new WeakMap<WebContents,Promise<void>>()
  private readonly latest=new WeakMap<WebContents,number>()
  private sequence=0
- update(page:WebContents,allowed:boolean,forcePause=false):Promise<void>{
+ update(page:WebContents,allowed:boolean,forcePause=false,stayMuted=false):Promise<void>{
   if(page.isDestroyed())return Promise.resolve()
   page.setAudioMuted(true)
   const sequence=++this.sequence
@@ -28,7 +28,7 @@ export class PagePlayback {
     const failure=results.find(result=>result.status==='rejected')
     if(failure?.status==='rejected')throw failure.reason
    },undefined,3000)
-   if(allowed&&!page.isDestroyed()&&this.latest.get(page)===sequence)page.setAudioMuted(false)
+   if(allowed&&!page.isDestroyed()&&this.latest.get(page)===sequence)page.setAudioMuted(stayMuted)
   }).catch(error=>{if(!page.isDestroyed())page.setAudioMuted(true);throw error})
   this.pending.set(page,work)
   return work
