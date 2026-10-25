@@ -1896,6 +1896,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Internal review queues behind its caller, persists trusted task metadata, deduplicates and waits for real cleanup`
 - `Internal review refuses unverified catalogs, changed models and uncertain delivery without replay`
 - `Only an explicit new start after interrupted cleanup gets a fresh input; uncertain and active receipts never replay`
+- `Explicit review restart recovers a drained failure before provider acceptance but never replays accepted or uncertain delivery`
 
 #### `packages/platform/test/background-admission.test.ts`
 
@@ -2153,7 +2154,7 @@ StudioReadiness.scenes 的 availableSeconds／gapSeconds 来自 sceneCoverage，
 
 Host 先验证当前 Project/Session、revision、可复用实际 MP4、原生验证报告与指纹，再把固定审核说明排到原 Session 的官方 AgentHost FIFO。模型选择沿用该 Session driver 的设置；回执记录请求时的显式 modelId 或 null（官方默认选择，不是具体服务端模型证明），显式模型在执行前变化则拒绝。准备阶段继续核验有效目录只有 BMW browser，且官方 runtime 支持图片。Host 只提交一次输入，不实现推理或工具循环，不增加第二个模型/MCP工具。
 
-start 返回后调用方必须结束当前 turn，不能占住前一任务等待审片。Host 在已有 version2 输入回执中先保存可选 task 元数据（闭合 kind=video-review、SHA256 key、至多8192字符 payload、modelId）；输入和元数据一同原子持久化后才排队。去重键绑定策略版本、草稿 revision 和实际成片指纹；同目标重复请求复用原回执，包含已失败／中断／不确定状态，不自动再次投递。内部审核不能递归新增内部任务。现有 Assistant 停止入口取消所属 Session 的任务，并等待实际工具和 worker 清理；失败清理仍隔离资源。Project/Session 转换、归属、未知投递恢复和 FIFO 不变。
+start 返回后调用方必须结束当前 turn，不能占住前一任务等待审片。Host 在已有 version2 输入回执中先保存可选 task 元数据（闭合 kind=video-review、SHA256 key、至多8192字符 payload、modelId）；输入和元数据一同原子持久化后才排队。去重键绑定策略版本、草稿 revision 和实际成片指纹；同目标重复请求默认复用原回执，不自动再次投递；明确再次启动仅可恢复已排空的中断，或已完成且 providerReceiptId 严格为 null 的接收前失败。已接收失败、遗留接收状态缺失、不确定状态均不重投。内部审核不能递归新增内部任务。现有 Assistant 停止入口取消所属 Session 的任务，并等待实际工具和 worker 清理；失败清理仍隔离资源。Project/Session 转换、归属、未知投递恢复和 FIFO 不变。
 
 审核指导要求所有场景的当前 MP4 关键状态分页重新实际查看，逐镜记录并独立作整片判断；覆盖视觉支撑、信息密度、层级、节奏、结尾、手机字幕、来源身份日期、新闻事实、书面稿、保留原声与译文，并对实际最终 MP4 采样音频、按可用能力核对 ASR。策略v2追加上述AI受众、45秒／120秒目标、术语简释、原声与有据解读、画面类别实际区间及相关性／比例、全片禁止纯文字段落；不可凭模板名推定通过，不可编造比例。新任务去重包含策略v4，旧v1/v2/v3回执仍可查询但不能替代新标准的审片。缺失、低置信度、抽样边界及能力缺口必须报告。Agent 审核不是连续音视频感官认证，人工听感和用户验收另记。
 
@@ -2192,7 +2193,7 @@ start 返回后调用方必须结束当前 turn，不能占住前一任务等待
 
 - 账号快照等待区分内容就绪与主文档传输：普通等待仍为8秒；只有同一Document HTTP200、实际收到正文数据、最近1秒仍有新增字节且传输未完成/失败时，才能使用最多4秒完成窗口，单次总计不超过12秒。页头、无进展、其他脚本/图片、完整但无帖文档和拒绝访问均不能换取延期；180秒整批预算、取消与隔离清理不变，read仍要求真实帖子及来源绑定。批次诊断保存文档累计字节、最近数据时刻和终止状态，不以HTTP200或接收字节代替帖子覆盖。时间判定先读取传输快照再采样当前时刻，避免跨毫秒把刚收到的字节误判为未来数据；真正来自未来的时间仍拒绝延期。
 
-内部审片的同目标去重保留运行中、排队、成功及投递不确定的输入收据。用户明确再次启动时，只有旧输入已 interrupted 且官方运行/原生资源已实际排空，才创建同一目标的新输入收据；旧 runId 和审片证据保留，新尝试采用当前审片声明 baseline。不自动重试，也不重放不确定投递。
+内部审片的同目标去重保留运行中、排队、成功及投递不确定的输入收据。用户明确再次启动时，只有旧输入已 interrupted，或 finished/failed 且 providerReceiptId 严格为 null、确认尚未被官方引擎接收，并且官方运行/原生资源已实际排空，才创建同一目标的新输入收据；旧 runId 和审片证据保留，新尝试采用当前审片声明 baseline。不自动重试，也不重放不确定投递。
 
 内部审片入队时附带当前草稿/导出指纹锁定的有界资料快照：最多8镜、每镜20条字幕/12个文字层/2条引用，总UTF8不超过12 KiB；每条引用由当前Project来源端口核对已存正文范围，提供来源元数据/正文内容ID和最多600字符原句摘录。原句绑定不证明事实真伪，所有摘录均为不可信资料。缺失来源、截断和省略字段显式标记并给出后续读取位置；不把摘要冒作完整草稿。审片模型可据此跳过重复分散读取未变的脚本/音轨/字幕及不存在的卡片，但仍须实际查看当前MP4所有关键状态、核当前成片原声，分别记录逐镜和独立整片声明。快照构造过程中版本/Project变化即拒绝入队，不修改草稿。
 

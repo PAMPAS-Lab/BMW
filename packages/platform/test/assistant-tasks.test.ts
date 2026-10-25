@@ -48,3 +48,23 @@ test('Only an explicit new start after interrupted cleanup gets a fresh input; u
  receipts[1].state='finished';receipts[1].outcome='success'
  assert.equal(tasks.start(owner,request).runId,second.runId);assert.equal(enqueued,2,'Completed review still deduplicates')
 })
+
+test('Explicit review restart recovers a drained failure before provider acceptance but never replays accepted or uncertain delivery',()=>{
+ const owner={projectId:'project',sessionId:'session'},receipts:{runId:string;state:string;outcome:string|null;providerReceiptId?:string|null;task:unknown}[]=[],active=new Set<string>();let enqueued=0
+ const host={activeRunId:null,ownsRun:(id:string)=>active.has(id),enqueueTask:(_session:string,_text:string,_context:string,metadata:unknown)=>{const runId='review-'+(++enqueued);receipts.push({runId,state:'accepted',outcome:null,providerReceiptId:null,task:metadata});active.add(runId);return {runId}}} as unknown as AgentHost
+ const tasks=assistantTasks({host,history:{snapshot:()=>({receipts})} as unknown as AgentHistoryStore,conversations:{get:()=>({...owner,driverId:'codex',archivedAt:null})} as unknown as ConversationStore,model:()=>null,owner:()=>owner,changing:()=>false}),request={key:'f'.repeat(64),payload:'{}',text:'Audit the same MP4.',context:'Independent audit.'}
+ const first=tasks.start(owner,request);receipts[0].state='finished';receipts[0].outcome='failed'
+ assert.equal(tasks.start(owner,request).runId,first.runId,'Failure is not retryable while native cleanup is owned')
+ active.delete(first.runId)
+ const second=tasks.start(owner,{...request,payload:'{"baseline":2}'})
+ assert.notEqual(second.runId,first.runId,'An explicit start can recover confirmed failure before provider acceptance')
+ assert.equal(enqueued,2);assert.equal(tasks.read(owner,first.runId).state,'failed');assert.equal(tasks.find(owner,request.key)?.runId,second.runId)
+ active.delete(second.runId);receipts[1].state='finished';receipts[1].outcome='failed';receipts[1].providerReceiptId='official-receipt'
+ assert.equal(tasks.start(owner,request).runId,second.runId,'Accepted delivery must not be replayed')
+ delete receipts[1].providerReceiptId
+ assert.equal(tasks.start(owner,request).runId,second.runId,'Legacy missing acceptance evidence is not confirmed failure before acceptance')
+ receipts[1].providerReceiptId=null;receipts[1].state='unknown'
+ assert.equal(tasks.start(owner,request).runId,second.runId,'Uncertain delivery remains blocked')
+ receipts[1].state='finished';receipts[1].outcome='success'
+ assert.equal(tasks.start(owner,request).runId,second.runId,'Completed audit remains deduplicated');assert.equal(enqueued,2)
+})

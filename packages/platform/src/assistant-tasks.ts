@@ -24,10 +24,12 @@ export function assistantTasks(options:{host:AgentHost;history:AgentHistoryStore
   const row=member(owner),metadata=parseAgentTaskReceipt({kind:'video-review',key:task.key,payload:task.payload,modelId:options.model(row.driverId)})
   agentText(task.text,65536);agentText(task.context,16384)
   const old=find(owner,metadata.key)
-  // start is an explicit new request. A cancelled input may be deliberately
-  // started again only after the official run and native work actually drain.
-  // Queued/running, successful and uncertain receipts continue to deduplicate.
-  if(old&&!(old.state==='interrupted'&&old.drained))return old
+  // Only an explicit start can recover a drained cancellation or confirmed
+  // failure before provider acceptance. Missing legacy acceptance evidence,
+  // accepted failures, active work, success and uncertainty still deduplicate.
+  const previous=old?options.history.snapshot(owner.sessionId).receipts.find(r=>r.runId===old.runId):null
+  const recoverable=old?.drained&&(old.state==='interrupted'||old.state==='failed'&&previous?.state==='finished'&&previous.outcome==='failed'&&previous.providerReceiptId===null)
+  if(old&&!recoverable)return old
   const run=options.host.enqueueTask(row.sessionId,task.text,task.context,metadata)
   return read(owner,run.runId)
  }}
