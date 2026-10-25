@@ -216,6 +216,16 @@ test('Invalid speech projection remains a per-scene preparation gap without admi
   const report=await f.service().preflight(),row=report.scenes.find(s=>s.sceneId==='opening')!
   assert.equal(report.ready,false);assert.equal(row.state,'unverified');assert.equal(row.fingerprint,'')
   assert.ok(row.issues.some(i=>i.code==='render-projection-invalid'&&i.message.includes('STUDIO_SPEECH_STALE')))
+  const recovery=row.issues.find(i=>i.code==='render-projection-invalid')!.recovery
+  assert.ok(recovery,'Stale sentence captions must expose an exact, explicit recovery request without another help lookup.')
+  assert.equal(recovery.automaticRetry,false)
+  const request=assertStudioRequest(recovery.request.studioRequest)
+  assert.equal(request.operation,'apply-edit');assert.equal(request.expectedRevision,draft.revision)
+  const repaired=applyVideoEdit(draft,request.edit!)
+  assert.equal(repaired.scenes[0].speechCaptions,false)
+  assert.deepEqual(repaired.scenes[0].captions,[])
+  assert.deepEqual(repaired.scenes[0].speechAnchors,draft.scenes[0].speechAnchors,'The proposed edit retains original anchor evidence.')
+  assert.equal(f.store.read(draft.id).scenes[0].speechCaptions,true,'Read-only recovery does not apply the proposed edit.')
   assert.deepEqual(f.service().journal.read(),journal,'diagnostics never alter existing material observations')
   await assert.rejects(f.service().requireReady(),/NEWS_PREPARATION_REQUIRED/,'unavailable projection never silently becomes prepared')
   await assert.rejects(f.service().execute({operation:'record-scene',expectedChecklistRevision:journal.revision,scene:previous},'agent'),/NEWS_PREPARATION_STALE/)

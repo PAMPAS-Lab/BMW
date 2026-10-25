@@ -50,6 +50,8 @@ Agent草稿摘要的每镜`preparationInventory`显示已绑定引用数、来�
 
 `news-preparation` 是唯一 browser 的既有 `video.studio` 内新增封闭操作，要求当前 draftId/expectedRevision；preparationRequest 为 read/preflight/enable/record-scene/record-scenes/prepare-shots/prepare-scene-references。read 返回保存声明，preflight 只读检查当前实际媒体 SHA、可解码轨道和源区间、精确来源引用、实际日期文字及逐镜声明。每镜返回 fingerprint、durationSeconds、sourceIntervals、assets、missing/stale/unverified/verified-by-agent/verified-by-user 状态及缺口；模型按最多20镜／16KiB分页读取。read/preflight 不保存草稿或清单。
 
+脚本改动导致生成式句锚字幕过期时，若没有原声字幕绑定或板书／焦点／卡片句关联，`render-projection-invalid` 缺口附当前 draft/revision/scene 的完整 `video.studio apply-edit` 恢复建议：显式 `captions.set mode=off` 暂停旧句锚字幕，保留原锚点证据。建议不自动执行、不重试、不使准备门禁通过；作者须用返回新版本刷新受影响准备，再配音、建立新实测锚点并显式恢复字幕后导出。原声字幕或复杂句关联不提供此简化建议，避免清除独立编辑。独立审片输入仍只读，不可执行恢复写入。
+
 逐镜清单独立保存在 Project `video-studio/news-preparation/<draftId>.json` version1，绑定 Project/Session/draft，至多96镜／1MiB，使用独立 checklist revision CAS；不能通过导入／更新／恢复草稿冒充。record-scenes 接受1–8个不重复镜头的实际观察声明，单次全片事实／指纹预检、全部核验后一次清单 CAS；任何过期、证据缺失、人工声明保护、取消或 GUI 并发编辑均整批拒绝，不保存部分声明、不自动重试，也不自动生成观察。record-scene 兼容单镜入口。两者需当前 preflight fingerprint、编辑目的、实际 artifact/reference ID、观察动作与相关性、来源日期标签、完整原声和中译或明确未使用原因。复用实际 prepare-reference 的源SHA、PNG哈希与全部逐帧分析；真实视频声明至少三个样本、两种不同PNG且覆盖选用区间两端。源素材、PNG、稿件、引用、取景、时长、顺序或全片图层变化使记录失效；可见全片媒体也核文件哈希。原声声明需主画面实际启用且有可解码音轨覆盖，日期声明须在实际镜头标签／脚注或覆盖全镜的可见文字层中存在。scene.set 的封闭 patch.label 可编辑至多44字符的原生标签。检查累计源/参考文件限512MiB／128项，结束前重核SHA及草稿revision；超预算须先整理本地分段。
 
 准备指纹使用实际可编辑的主素材区间、播放速度、取景、动态效果、源声开关及音量等视觉语义；容器与轨道检查产生的派生时长、生成旁白和字幕证据不伪装成视觉编辑。无 visualSegments 的主素材也使用同一字段投影，不散列整个 scene。资产时间按真实视频轨end规范化，容器尾长不改变同一轨道事实。字幕投影只含实际文字／中译／时间，不因translationOrigin变化失效；先使用与预览／导出相同的speechScene解析锚点字幕、焦点和板书时序，真实映射变化仍失效。源文件 SHA、实测音视频轨范围、引用与观察仍独立强校验；真实裁剪、字幕／译文内容与版式、脚本或源字节变化依旧使准备失效。

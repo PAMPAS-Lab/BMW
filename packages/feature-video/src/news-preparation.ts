@@ -9,7 +9,8 @@ import {sceneVisuals} from '../../media-native/src/visual-segments.js'
 import {cardImageAssets} from '../../media-native/src/card-details.js'
 import {productionHash} from './production-impact.js'
 import {NewsPreparationJournal} from './news-preparation-journal.js'
-import {speechScene} from './studio-speech-contract.js'
+import {speechScene,usesSpeechCaptions} from './studio-speech-contract.js'
+import type {StudioRequest} from './studio-contract.js'
 import type {NewsPreparationRequest,NewsScenePreparation} from './news-preparation-contract.js'
 import type {VideoDraft,StudioScene} from './studio-contract.js'
 import type {VideoStudioStore} from './studio-store.js'
@@ -18,7 +19,7 @@ import {StudioSources} from './studio-sources.js'
 import {NewsJournal} from './news-store.js'
 import type {NewsPreparationState} from './news-preparation-journal.js'
 
-interface Issue {sceneId?:string;code:string;message:string}
+interface Issue {sceneId?:string;code:string;message:string;recovery?:{automaticRetry:false;request:{action:'video.studio';studioRequest:StudioRequest};after:string}}
 interface AssetFact {artifactId:string;sha256:string;kind:'image'|'video';durationSeconds?:number;startSeconds?:number;endSeconds?:number;audioStartSeconds?:number;audioEndSeconds?:number}
 export class NewsPreparationService {
  readonly journal:NewsPreparationJournal
@@ -61,7 +62,7 @@ export class NewsPreparationService {
   const hash=async(id:string)=>{let sha=hashes.get(id);if(sha)return sha;const io=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:id});try{bytes+=io.bytes;if(bytes>512*1024*1024||hashes.size>=128)throw new Error('NEWS_PREPARATION_BUDGET: Segment selected media before checking; 512 MiB /128 files.');sha=await io.fingerprint(signal);hashes.set(id,sha);return sha}finally{await io.close()}}
   for(const [index,scene]of this.draft.scenes.entries()){
    const sceneOffset=this.draft.scenes.slice(0,index).reduce((n,s)=>n+s.durationSeconds,0),globalMedia=(this.draft.layers??[]).filter(l=>!l.hidden&&(l.kind==='video'||l.kind==='image')&&l.startSeconds<sceneOffset+scene.durationSeconds&&l.startSeconds+l.durationSeconds>sceneOffset)
-   const sceneIssues:Issue[]=[],add=(code:string,message:string)=>sceneIssues.push({sceneId:scene.id,code,message}),visuals=sceneVisuals(scene),ids=[...new Set([...visuals.flatMap(v=>[v.videoArtifactId,v.imageArtifactId]),...(scene.layers??[]).filter(l=>!l.hidden).map(l=>l.artifactId),...globalMedia.map(l=>l.artifactId),...cardImageAssets(scene.cardSpec?.version===2?scene.cardSpec:undefined)].filter((id):id is string=>Boolean(id)))],assets:AssetFact[]=[],citations:unknown[]=[]
+   const sceneIssues:Issue[]=[],add=(code:string,message:string,recovery?:Issue['recovery'])=>sceneIssues.push({sceneId:scene.id,code,message,...(recovery?{recovery}:{})}),visuals=sceneVisuals(scene),ids=[...new Set([...visuals.flatMap(v=>[v.videoArtifactId,v.imageArtifactId]),...(scene.layers??[]).filter(l=>!l.hidden).map(l=>l.artifactId),...globalMedia.map(l=>l.artifactId),...cardImageAssets(scene.cardSpec?.version===2?scene.cardSpec:undefined)].filter((id):id is string=>Boolean(id)))],assets:AssetFact[]=[],citations:unknown[]=[]
    if(!scene.citations?.length)add('citation-missing','Bind exact current-draft citations before narration or render.')
    for(const citation of scene.citations??[])try{const c=await sources.citation(citation,signal);citations.push({citation:c.citation,url:c.url,title:c.title,author:c.author,publishedAt:c.publishedAt,eventAt:c.eventAt,eventTimeOrigin:c.eventTimeOrigin,contentId:c.contentId})}catch(error){signal?.throwIfAborted();add('citation-unavailable',error instanceof Error?error.message:String(error))}
    for(const artifactId of ids)try{
@@ -74,7 +75,11 @@ export class NewsPreparationService {
    if(!assets.length)add('material-missing','A visual brief or text card is not prepared media.')
    for(const visual of visuals){const fact=assets.find(a=>a.artifactId===visual.videoArtifactId);if(fact&&(visual.sourceStartSeconds<(fact.startSeconds??0)-.001||visual.sourceStartSeconds+visual.durationSeconds*visual.playbackRate>(fact.endSeconds??0)+.001))add('source-range','Selected video does not cover its actual scene interval; a held frame is not moving footage.')}
    let content:ReturnType<typeof preparationSceneContent>|undefined
-   try{content=preparationSceneContent(scene)}catch(error){signal?.throwIfAborted();add('render-projection-invalid','Current caption/focus/cue projection is unavailable: '+(error instanceof Error?error.message:String(error)).slice(0,1000))}
+   try{content=preparationSceneContent(scene)}catch(error){
+    signal?.throwIfAborted();const message=(error instanceof Error?error.message:String(error)).slice(0,1000),links=scene.speechLinks
+    const captionOnly=message.includes('STUDIO_SPEECH_STALE')&&usesSpeechCaptions(scene)&&!scene.sourceCaptionBinding&&!links?.bullets.length&&!links?.focus.length&&!links?.cards?.length
+    add('render-projection-invalid','Current caption/focus/cue projection is unavailable: '+message,captionOnly?{automaticRetry:false,request:{action:'video.studio',studioRequest:{operation:'apply-edit',draftId:this.draft.id,expectedRevision:this.draft.revision,edit:{version:1,commands:[{op:'captions.set',sceneId:scene.id,mode:'off'}]}}},after:'Explicitly disable only stale generated sentence captions; original anchor evidence is retained. Re-read the returned revision, preflight and refresh affected preparation before narration. After new audio, establish current measured sentence anchors and explicitly restore sentence captions before export. This suggestion does not admit preparation, generate audio or pass final review.'}:undefined)
+   }
    // An invalid projection has no admissible 64-character scene fingerprint.
    // Read-only diagnostics stay available; recording and render remain blocked.
    const fingerprint=content?productionHash({draftId:this.draft.id,scene:content,settings:[this.draft.width,this.draft.height,this.draft.fps,this.draft.watermark,this.draft.layers],order:this.draft.scenes.map(s=>s.id),assets,citations}):'',saved=state.scenes.find(s=>s.sceneId===scene.id)
