@@ -19,7 +19,7 @@ export const studioOperationContracts={
  'read-material':spec(['artifactId'],paging),'read-scene':spec(scene,['section',...paging]),'read-preparation':spec(draft,['briefSection',...paging]),
  'read-document':spec(draft),compatibility:spec(draft),'migrate-document':spec(draft),'validate-edit':spec([...draft,'edit']),'apply-edit':spec([...draft,'edit']),
  update:spec([...draft,'draft']),delete:spec(draft),restore:spec([...draft,'draft','snapshotProof']),
- 'review-status':spec(draft,paging),'record-export-review':spec([...draft,'exportReview'],['sceneId']),
+ 'review-status':spec(draft,paging),'record-export-review':spec(draft,['exportReview','exportReviewBatch','sceneId']),
  'review-export':spec(scene,['reviewOffset']),'export-citations':spec(draft),'export-cover':spec(draft,['cover']),'export-captions':spec([...draft,'captionFormat']),
  'prepare-reference':spec([...draft,'artifactId','assetKind'],['timestampsSeconds']),'read-reference':spec([...draft,'referenceId']),
  'set-reference-analyses':spec([...draft,'referenceAnalyses']),
@@ -73,7 +73,7 @@ export function studioHelp(schema:JsonSchema,query:BrowserHelpQuery):unknown {
   else if(JSON.stringify(item).length>1500&&!((operation==='propose-news-topics'&&key==='newsCandidates')||(operation==='news-preparation'&&key==='preparationRequest'))){omitted.push(key);item={type:item.type??'object',description:'Nested contract omitted from this projection. Use the feature discovery request in next.'}}
   return [key,item]
  }))
- const requestSchema={type:'object',additionalProperties:false,required:['operation',...(selected?.required??[])],properties:selectedProperties}
+ const requestSchema={type:'object',additionalProperties:false,required:['operation',...(selected?.required??[])],properties:selectedProperties,...(operation==='record-export-review'?{oneOf:[{required:['exportReview'],not:{required:['exportReviewBatch']}},{required:['exportReviewBatch'],not:{anyOf:[{required:['exportReview']},{required:['sceneId']}]}}]}:{})}
  const studioSchema=sub?{type:'object',additionalProperties:false,required:['operation','sourceRequest'],properties:{operation:{const:'source'},sourceRequest:requestSchema}}:requestSchema
  const inputSchema={type:'object',additionalProperties:false,required:['action','studioRequest'],properties:{action:{const:'video.studio'},studioRequest:studioSchema}}
  return {action:'video.studio',...(operation?{operation}:{}),...(sub?{subOperation:sub}:{}),inputSchema,...(!operation?{operations:Object.keys(studioOperationContracts)}:{}),...(operation==='source'&&!sub?{subOperations:Object.keys(sourceOperationContracts),next:{action:'help',forAction:'video.studio',forOperation:'source',forSubOperation:'collect'}}:{next:{action:'video.studio',studioRequest:{operation:omitted.includes('edit')?'describe-schema':'guide'}}}),...(omitted.length?{nestedSchemaProjection:true,omittedFields:omitted}:{}),...(sub==='acquire'?{conditions:['method=capture also requires videoSelector; download rejects capture-only options.']}:{})}

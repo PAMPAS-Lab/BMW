@@ -3,8 +3,8 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import {assertArtifactId,finiteNumber,mediaRecord} from '../../media-native/src/media-contract.js'
-import {assertExportReviewVerdict} from './export-review-contract.js'
-import type {ExportReviewVerdict} from './export-review-contract.js'
+import {assertExportReviewVerdict,assertExportReviewBatch} from './export-review-contract.js'
+import type {ExportReviewVerdict,ExportReviewBatch} from './export-review-contract.js'
 import {studioId} from './studio-contract.js'
 export interface ExportReviewFrame {index:number;artifactId:string;sha256:string;seconds:number}
 export interface ExportReviewAssessment {status:'passed'|'needs-fix';notes:string;createdAt:string;sequence?:number;runId?:string}
@@ -66,14 +66,26 @@ export class ExportReviewJournal {
  }
  recordVerdict(snapshot:ExportReviewSnapshot,raw:ExportReviewVerdict,sceneId:string|undefined,actor:'agent'|'user',valid:ReadonlyMap<string,ReadonlySet<number>>,runId?:string):void {
   const verdict=assertExportReviewVerdict(raw);if(verdict.exportFingerprint!==snapshot.fingerprint)throw new Error('STUDIO_REVIEW_STALE: 成片指纹已变化，请重新审片。')
-  const current=this.current(snapshot),complete=(s:ExportReviewScene)=>s.totalSamples>0&&valid.get(s.sceneId)?.size===s.totalSamples
+  const current=this.current(snapshot);this.applyVerdict(current,verdict,sceneId,actor,valid,runId);this.save(current)
+ }
+ recordBatch(snapshot:ExportReviewSnapshot,raw:ExportReviewBatch,actor:'agent'|'user',valid:ReadonlyMap<string,ReadonlySet<number>>,runId?:string):void {
+  const batch=assertExportReviewBatch(raw);if(batch.exportFingerprint!==snapshot.fingerprint)throw new Error('STUDIO_REVIEW_STALE: 成片指纹已变化。')
+  const current=this.current(snapshot)
+  if(batch.scenes.length!==current.scenes.length||batch.scenes.some(s=>!current.scenes.some(c=>c.sceneId===s.sceneId)))throw new Error('STUDIO_REVIEW_INCOMPLETE: Batch requires every current scene exactly once.')
+  // Mutate only this detached snapshot. Any failed check leaves the journal intact.
+  for(const s of batch.scenes)this.applyVerdict(current,{exportFingerprint:batch.exportFingerprint,scope:'scene',status:s.status,notes:s.notes},s.sceneId,actor,valid,runId)
+  this.applyVerdict(current,{exportFingerprint:batch.exportFingerprint,scope:'film',...batch.film},undefined,actor,valid,runId)
+  this.save(current)
+ }
+ private applyVerdict(current:ExportReviewSnapshot,verdict:ExportReviewVerdict,sceneId:string|undefined,actor:'agent'|'user',valid:ReadonlyMap<string,ReadonlySet<number>>,runId?:string):void {
+  const complete=(s:ExportReviewScene)=>s.totalSamples>0&&valid.get(s.sceneId)?.size===s.totalSamples
   if(actor==='agent'&&verdict.status==='passed'){
    if(verdict.scope==='scene'){const scene=current.scenes.find(s=>s.sceneId===sceneId);if(!scene||!complete(scene))throw new Error('STUDIO_REVIEW_INCOMPLETE: 请先取得当前镜头全部关键状态，再提交模型视觉判断。')}
    else if(!current.scenes.length||current.scenes.some(s=>!complete(s)||s.agent?.status!=='passed'))throw new Error('STUDIO_REVIEW_INCOMPLETE: 整片模型判断要求每个镜头的当前取帧完整且已单独审阅。')
   }
   const target=verdict.scope==='film'?current:current.scenes.find(s=>s.sceneId===sceneId);if(!target)throw new Error('Unknown review scene.')
   const sequence=finiteNumber(Math.max(0,...[current.agent,current.user,...current.scenes.flatMap(s=>[s.agent,s.user])].map(a=>a?.sequence??0))+1,'review assessment sequence',1,Number.MAX_SAFE_INTEGER,true)
-  target[actor]={status:verdict.status,notes:verdict.notes,createdAt:new Date().toISOString(),sequence,...(actor==='agent'&&runId?{runId:studioId(runId)}:{})};this.save(current)
+  target[actor]={status:verdict.status,notes:verdict.notes,createdAt:new Date().toISOString(),sequence,...(actor==='agent'&&runId?{runId:studioId(runId)}:{})}
  }
  status(snapshot:ExportReviewSnapshot,valid:ReadonlyMap<string,ReadonlySet<number>>){
   const history=this.read().exports,current=this.current(snapshot),previous=[...history].reverse().find(e=>e.fingerprint!==snapshot.fingerprint)

@@ -2233,3 +2233,7 @@ YouTube 导航采用同一45秒就绪预算：核对 watch 目标、播放器数
 Studio render（包括缓存复用）直接返回原生计算的export.sha256，不要求为取哈希另行assets搜索或materials索引。video.review策略v4在Host固定target.sha256，并随审片上下文给出原生导出报告已有的尺寸、封装时长和各可解码音/视频轨首尾摘要；缺失字段保持缺失。ASR/PCM使用音频轨范围，motion使用视频轨范围，容器时长不能作统一轨尾；范围门禁不放松，也不静默截短请求。仍需当前全部关键态、本轮逐镜及独立整片通过，人工试听另记。
 
 操作员CLI `node scripts/prepare-news-delivery.js PROJECT_DIRECTORY HISTORY_FILE DRAFT_ID REVIEW_RUN_ID NEW_OUTPUT_DIRECTORY` 对已完成成片进行确定性文件准备：核官方终态/Project和Session归属/当前draft及导出指纹/Host固定SHA/逐镜和整片新声明/全部关键帧哈希/结构与原生技术门禁，复制MP4并核副本SHA，导出当前时间轴稿、字幕、来源及manifest至源Project以外的新目录。失败不覆盖既有交付；不编辑源Profile、不运行模型、不恢复模型设置、不渲染、不重审、不替用户试听；不注册为模型工具。详细耗时复盘在交付之后，不能再由模型现场编写新整理脚本阻塞成片交付。
+
+### 独立导出审片批量声明
+
+`video.studio / record-export-review` 支持互斥的单项 `exportReview` 和整批 `exportReviewBatch`。批结构固定当前exportFingerprint、全部当前sceneId的独立status/notes以及独立film status/notes；scene集合必须完整且唯一，不含actor/runId权限字段。沿用revision、当前导出、实际关键帧哈希覆盖、视觉支撑、逐镜及整片通过门禁。所有校验成功后单次原子journal写入；失败不产生部分声明。每镜sequence独立增长，film随后，Host绑定同一审片runId。批回执只回确认与逐镜/整片状态，不重发完整视觉政策和旧报告；确认后无需再读status。单项与用户GUI语义保持。内置审片提示v2.2/任务策略v5要求完成独立判断后一次提交，保留旧策略读取，不启动或复用旧passed完成新任务。

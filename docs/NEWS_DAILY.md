@@ -137,3 +137,9 @@ HTTP完整资源优先 download；未加密完整HLS或HTTP区间预览优先 pr
 已有当前有效core Schema直接使用；无参guide/describe-schema不先查同名help。未知Studio子操作使用 `helpQueries:[{forAction,forOperation?,forSubOperation?},…]` 一次至多8个、12KiB回复预算；complete才可用，omitted显式单独补读，invalid先纠正目标。不对尚未使用的library.news/research、inspect别名、materials索引做探索式帮助。导出已返回原生SHA，审片v4又固定Host SHA和已有轨道摘要，不为找哈希再读报告/扫assets/建索引。选原声先核音轨真实首尾，motion核视频轨首尾；source/read的pageLimit是1–20项，不是字符数。导航后以返回tab/URL为准，不把旧搜索tab当媒体页。
 
 交审说明最多8行，链接已存稿与原生证据，列未测项和具体风险；不再在交审前手写全流程长复盘或重抄事实/稿件。拿runId立即释放FIFO。审片通过且实际清理后，用prepare-news-delivery操作员CLI一次生成交付文件；模型恢复先Raise窗口并读取实际状态，截图失败先核是否已打开对话框，不重复点击或反复进入设置。确认一次恢复成功即可。交付优先，详细逐调用分析随后；工具外间隔不统称纯模型等待。此次仅用隔离夹具/Schema回放验证，无新题制作或付费模型复测；下一轮测试待用户决定。
+
+## v2.2：独立审片一次保存
+
+审片者仍实际查看全部当前关键态、核事实/原声中译并补齐同MP4的运动/PCM/ASR缺项；不能将像素变化或旧passed当本轮语义通过。完整Host编辑包与原生轨道摘要只在缺项或冲突时追加读取；没有具体缺口不重复补帧、重读稿或每页查询status。
+
+全部检查结束后，一次 `record-export-review {draftId,expectedRevision,exportReviewBatch:{exportFingerprint,scenes:[{sceneId,status,notes}],film:{status,notes}}}` 提交全部当前镜头各一次以及另行形成的整片判断，不混用旧exportReview/顶层sceneId。Host在单次当前版本与帧SHA核验后，校验完整集合、逐镜通过条件、独立film和结尾视觉支撑，再一次原子替换journal；任何项失败整批不写。各镜头有独立sequence，film最后，runId/actor由Host绑定；用户听感不代勾。确认committed回执后结束，不再拉整份报告或status。旧单项接口保留用于GUI/旧调用方。审片策略v5与旧策略分开，历史回执仍可读；隔离测试不能冒称新成片速度实测。

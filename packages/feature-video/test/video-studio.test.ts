@@ -164,8 +164,21 @@ test('Export review persists current frame coverage and separate declared assess
   state=await status();assert.equal(state.scenes[0].generatedCurrentFrames,8);assert.equal(state.scenes[0].agent.status,'pending','Generating PNGs must never become model approval')
   for(const scene of d.scenes){let offset:number|null=scene.id==='first-scene'?8:0;while(offset!==null){const page=await service.execute(request('review-export',{sceneId:scene.id,reviewOffset:offset}),undefined,owner) as {nextOffset:number|null};offset=page.nextOffset}}
   state=await status();assert.ok(state.scenes.every(s=>s.frameGenerationComplete));assert.equal(state.agent.status,'pending');assert.equal(state.user.status,'pending')
+  const batch={exportFingerprint:firstFingerprint,scenes:d.scenes.map(s=>({sceneId:s.id,status:'passed',notes:'独立核当前镜头全部状态。'})),film:{status:'passed',notes:'另行核整片叙事、连续性和原声。'}}
+  const batchRequest=(b:unknown)=>request('record-export-review',{exportReviewBatch:b}),journalPath=path.join(f.store.directory,'export-reviews',d.id+'.json'),unchanged=fs.readFileSync(journalPath,'utf8')
+  await assert.rejects(service.execute(batchRequest({...batch,scenes:batch.scenes.slice(0,1)}),undefined,owner),/INCOMPLETE/)
+  await assert.rejects(service.execute(batchRequest({...batch,scenes:[batch.scenes[0],batch.scenes[0]]}),undefined,owner),/duplicate/)
+  await assert.rejects(service.execute(batchRequest({...batch,exportFingerprint:'a'.repeat(64)}),undefined,owner),/STALE/)
+  await assert.rejects(service.execute(batchRequest({...batch,scenes:batch.scenes.map((s,i)=>({...s,status:i?'needs-fix':'passed'}))}),undefined,owner),/INCOMPLETE/)
+  assert.equal(fs.readFileSync(journalPath,'utf8'),unchanged,'A rejected batch cannot partially save earlier scenes')
+  assert.throws(()=>assertStudioRequest({...batchRequest(batch),exportReview:{exportFingerprint:firstFingerprint,scope:'film',status:'passed',notes:'mixed'}}),/exactly one/)
+  assert.throws(()=>assertStudioRequest({...batchRequest(batch),sceneId:'first-scene'}),/own scene/)
+  const committed=await service.execute(batchRequest(batch),undefined,owner) as {committed:boolean;agent:{status:string};user:{status:string}}
+  assert.equal(committed.committed,true);assert.equal(committed.agent.status,'passed');assert.equal(committed.user.status,'pending')
+  const savedBatch=JSON.parse(fs.readFileSync(journalPath,'utf8')) as {exports:ExportReviewSnapshot[]},batchSnapshot=savedBatch.exports[0]
+  assert.ok(batchSnapshot.scenes.every(s=>s.agent!.sequence!<batchSnapshot.agent!.sequence!),'Film declaration follows every distinct scene declaration')
   for(const scene of d.scenes)await assess('scene',scene.id)
-  assert.equal((await status()).agent.status,'pending','Per-scene declarations do not silently declare whole-film review')
+  assert.equal((await status()).agent.status,'needs-recheck','Later per-scene declarations cannot silently reuse the batch film pass')
   await assess('film');state=await status();assert.equal(state.agent.status,'passed');assert.equal(state.user.status,'pending')
   await assess('film',undefined,'user');state=await status();assert.equal(state.user.status,'passed');assert.equal(state.user.authority,'user-declared')
   await service.execute(request('record-export-review',{sceneId:'first-scene',exportReview:{exportFingerprint:firstFingerprint,scope:'scene',status:'needs-fix',notes:'用户后来发现新的画面问题。'}}),undefined,owner,'user');assert.equal((await status()).user.status,'needs-recheck');await assess('scene','first-scene','user')
@@ -175,7 +188,7 @@ test('Export review persists current frame coverage and separate declared assess
   const rollbackJournal=JSON.parse(fs.readFileSync(path.join(f.store.directory,'export-reviews',d.id+'.json'),'utf8')) as {exports:ExportReviewSnapshot[]};assert.equal(rollbackJournal.exports[0].user!.createdAt,'2026-10-14T09:59:00.000Z','Ordering must not invent future wall-clock timestamps')
   assert.throws(()=>assertStudioRequest(request('record-export-review',{exportReview:{exportFingerprint:firstFingerprint,scope:'film',status:'passed',notes:'伪造用户',actor:'user'}})))
   await assert.rejects(assess('film',undefined,'agent','a'.repeat(64)),/STALE/)
-  fs.writeFileSync(path.join(directory,one.frames[0].artifactId),'changed image');state=await status();assert.equal(state.scenes[0].frameGenerationComplete,false);assert.equal(state.scenes[0].agent.status,'needs-recheck');assert.equal(state.agent.status,'needs-recheck')
+  fs.writeFileSync(path.join(directory,one.frames[0].artifactId),'changed image');state=await status();await assert.rejects(service.execute(batchRequest(batch),undefined,owner),/INCOMPLETE/);assert.equal(state.scenes[0].frameGenerationComplete,false);assert.equal(state.scenes[0].agent.status,'needs-recheck');assert.equal(state.agent.status,'needs-recheck')
   await service.execute(request('review-export',{sceneId:'first-scene',reviewOffset:0}),undefined,owner);state=await status();assert.equal(state.scenes[0].generatedCurrentFrames,state.scenes[0].totalSamples,'Overlapping pages count each actual sample once')
   const legacyFile=path.join(f.store.directory,'export-reviews',d.id+'.json'),legacy=JSON.parse(fs.readFileSync(legacyFile,'utf8')) as {version:1|2;exports:ExportReviewSnapshot[]};assert.equal(legacy.version,2)
   const duplicate=structuredClone(legacy);duplicate.exports[0].agent!.sequence=duplicate.exports[0].scenes[0].agent!.sequence;fs.writeFileSync(legacyFile,JSON.stringify(duplicate));await assert.rejects(status(),/Duplicate.*sequence/)

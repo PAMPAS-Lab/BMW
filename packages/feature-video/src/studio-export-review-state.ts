@@ -46,6 +46,13 @@ export async function exportReviewState(store:VideoStudioStore,draft:VideoDraft,
  const sparse=sparseClosingScenes(draft)
  if(request.operation==='record-export-review'){
   if(actor==='agent'&&request.exportReview?.status==='passed'&&(request.exportReview.scope==='film'?sparse.length>0:sparse.includes(request.sceneId!)))throw new Error('STUDIO_REVIEW_VISUAL_SUPPORT: 结尾长文字卡缺少素材或图解支撑，请记录需修改并重做，不能仅因文字未溢出判通过。')
+  if(request.exportReviewBatch){
+   const b=request.exportReviewBatch
+   if(actor==='agent'&&(b.film.status==='passed'&&sparse.length>0||b.scenes.some(s=>s.status==='passed'&&sparse.includes(s.sceneId))))throw new Error('STUDIO_REVIEW_VISUAL_SUPPORT: Batch cannot approve unsupported visual scenes.')
+   context.journal.recordBatch(context.snapshot,b,actor,valid,runId)
+   const state=context.journal.status(context.snapshot,valid)
+   return {draftId:draft.id,revision:draft.revision,exportFingerprint:context.snapshot.fingerprint,sourceArtifactId:context.output.artifactId,committed:true,technical:{status:context.technicalStatus},agent:state.agent,user:state.user,scenes:state.scenes.map(s=>({sceneId:s.sceneId,frameGenerationComplete:s.frameGenerationComplete,agent:s.agent,user:s.user})),humanListening:'separate-user-declaration',next:null}
+  }
   context.journal.recordVerdict(context.snapshot,request.exportReview!,request.sceneId,actor,valid,runId)
  }
  return {draftId:draft.id,revision:draft.revision,visualSupport:{status:sparse.length?'needs-fix':'requires-visual-review',sparseClosingSceneIds:sparse,method:'structural-risk-screen; not pixel or semantic certification',policy:VIDEO_VISUAL_REVIEW_POLICY},technical:{status:context.technicalStatus,reportArtifactId:context.output.verificationArtifactId},layout:{status:context.quality.issues.length||context.quality.omittedIssues?'issues-present':'no-issues-in-samples',issueCount:context.quality.issues.length,omittedIssues:context.quality.omittedIssues,omittedCandidates:context.quality.omittedCandidates,coverage:context.quality.coverage,semanticVerification:context.quality.semanticVerification},...context.journal.status(context.snapshot,valid)}
