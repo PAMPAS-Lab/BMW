@@ -1214,6 +1214,8 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Preparation exposes exact reference endpoint gaps in preflight and evidence refusal without weakening source windows`
 - `Incomplete reference analysis names exact missing frame indices and a read-only recovery without changing evidence`
 - `An acquisition ID typo returns a closed exact-source lookup without correcting or executing the failed shot`
+- `Preparation diagnostics identify the exact authored field without echoing text or weakening speech requirements`
+- `Reusing existing shot IDs rejects before native work or checkpoint writes and directs explicit footage replacement`
 
 #### `packages/feature-video/test/news.test.ts`
 
@@ -1493,6 +1495,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `new recording focus suggestions reject replaced source bytes while retaining the current draft`
 - `Complete reference analysis groups commit once and preserve source bytes, scenes and user corrections`
 - `Reference analysis groups reject partial, foreign, stale, cancelled, changed-file and open requests without partial writes`
+- `Unknown edit discovery returns supported commands and footage replacement route without executing work`
 
 #### `packages/harness-codex/test/codex-backend.test.ts`
 
@@ -2188,3 +2191,12 @@ Studio 当前输入的上下文同时提供精确的context请求与当前草稿
 来源操作字段恢复：library.sources 的 sourceRequest 帮助列出每个操作实际必填／可选字段；read/list 不接受 expectedRevision。额外字段继续拒绝，错误仅返回至多8个、每个至多80字元的字段名及该操作允许字段，不回显字段值；明确本次未执行，需修正后显式重提，不自动删除字段或重放。
 
 单一 browser 工具的传输 schema 使用确定性的共享定义去重：只在标准 schema 位置识别重复子树，生成资源内 $defs/$ref，嵌入 $id 资源独立处理，含该资源的上层节点不移动。旧方言、自定义方言、片段标识符，以及已有引用、锚点、定义或未知词汇的资源保持不变；const/default/examples 等数据不作为 schema 遍历。节点及定义数量有界，若结果不更小则保留原 schema。完整原生 action schema、归属、字段校验、权限、help 与有效工具目录唯一 browser 的验证不变；不使用开放请求对象代替契约。与 action 描述完全重复的 Feature 总览不在工具说明中再重复，所有原 action 描述仍完整保留于 schema 分支，额外上下文不删除。该优化减少重复结构，不表示全流程时长已达标。
+
+
+### 冷启动制作与返工的有界恢复
+
+新闻准备文本拒绝返回 `NEWS_PREPARATION_FIELD`，精确指出镜头ID和字段路径、类型、长度、空值/控制字符状态及原有上限；不回显原文。原声模式的原文/中译及不用原声时的理由仍须非空，不改变原先门禁；批量请求解析拒绝时没有保存任何声明。
+
+`describe-edit` 的未知命令拒绝同时列出实际闭合命令名，以及 `media.segment → video.studio attach → scene.set` 的已有素材替换路径，明确不执行猜测命令。`prepare-shots` 对新请求中已有镜头ID，在创建checkpoint和原生处理前以 `SHOT_SCENE_EXISTS` 拒绝并返回明确的替换流程；不覆盖镜头、不改历史、不自动改用另一操作。原有显式resume/不确定投递/版本/归属/预算检查保留。
+
+制作指引要求在写稿配音前先看实际开场短窗，确认前三秒有相关真实运动且新闻主体可见，并保留完整原话语境。寻找短原声时优先选20–45秒候选窗口，必要时再定向扩展；不限制合法长窗，更不缩短最终当前MP4完整保留原声的核验。成功记录全部必需镜头后可直接进入 `narrate-pending`，由其内部重新核对当前准备门禁，避免额外重复相同preflight往返。最终修改仍刷新受影响证据，check/render仍执行各自当前校验，独立全片审片不变。

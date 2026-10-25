@@ -1725,3 +1725,13 @@ test('Reference analysis groups reject partial, foreign, stale, cancelled, chang
   assert.throws(()=>assertStudioRequest({...request,referenceId:value.reference.id}));assert.throws(()=>assertStudioRequest({operation:'read',draftId:draft.id,referenceAnalyses:[item]}))
  }finally{f.close()}
 })
+
+test('Unknown edit discovery returns supported commands and footage replacement route without executing work',async()=>{
+ const f=fixture();try{
+  let calls=0;const service=new VideoStudioService({projectStore:{active:()=>({id:'p',name:'P',directory:f.root})},execute:async()=>{calls++;return {}},recordingController:{processArtifact:async()=>{calls++;return {}},compose:async()=>{calls++;return {}},narrate:async()=>{calls++;return {}}}})
+  await service.execute({operation:'describe-edit',editOperation:'scene.set'},undefined,{projectId:'p',sessionId:'fixture-session'})
+  const before=fs.readdirSync(f.root).sort()
+  await assert.rejects(service.execute({operation:'describe-edit',editOperation:'scene.replace'},undefined,{projectId:'p',sessionId:'fixture-session'}),error=>{assert.ok(error instanceof TypeError);const detail=JSON.parse(error.message.split('VIDEO_EDIT_OPERATION: ')[1]) as {executed:boolean;supportedCommands:string[];footageReplacement:string};assert.equal(detail.executed,false);assert.ok(detail.supportedCommands.includes('scene.set'));assert.ok(detail.supportedCommands.includes('clip.trim'));assert.match(detail.footageReplacement,/attach/);assert.match(detail.footageReplacement,/sourceTimeOffsetSeconds/);return true})
+  assert.equal(calls,0);assert.deepEqual(fs.readdirSync(f.root).sort(),before)
+ }finally{f.close()}
+})

@@ -258,3 +258,23 @@ test('An acquisition ID typo returns a closed exact-source lookup without correc
   const page=f.kernel.projectSources!().search!({sourceId:citation.sourceId,limit:20});assert.ok(page.items.some(row=>row.source.id===citation.sourceId&&row.acquisition.id===citation.acquisitionId));assert.ok(page.items.every(row=>row.source.id===citation.sourceId));assert.equal(f.nativeCalls.length,0);assert.equal(f.store.read(f.batchDraft.id).scenes.length,0)
  }finally{f.close()}
 })
+
+test('Preparation diagnostics identify the exact authored field without echoing text or weakening speech requirements',()=>{
+ const scene:NewsScenePreparation={sceneId:'voice',fingerprint:'a'.repeat(64),intent:'Explain observed footage',dateLabel:'资料画面｜发布2026-10-23',materials:[{artifactId:'source.mp4',referenceId:'ref',kind:'real-footage',observation:'Observed speaker moves.',relation:'Supports this quote.'}],originalSpeech:{mode:'source',quote:'Complete original quote.',translation:'完整中译。',reason:''}}
+ const request=(value:NewsScenePreparation)=>({operation:'record-scenes',expectedChecklistRevision:0,scenes:[value]})
+ assert.doesNotThrow(()=>assertNewsPreparationRequest(request(scene)))
+ const cases:[NewsScenePreparation,string,number][]=[
+  [{...scene,originalSpeech:{...scene.originalSpeech,translation:''}},'voice.originalSpeech.translation',0],
+  [{...scene,originalSpeech:{mode:'not-used' as const,quote:'',translation:'',reason:''}},'voice.originalSpeech.reason',0],
+  [{...scene,materials:[{...scene.materials[0],observation:'private-observation-'.repeat(40)}]},'voice.materials[0].observation',800]
+ ];for(const [value,field,characters] of cases){assert.throws(()=>assertNewsPreparationRequest(request(value)),error=>{assert.ok(error instanceof TypeError);const detail=JSON.parse(error.message.split('NEWS_PREPARATION_FIELD: ')[1]) as {field:string;actualCharacters:number;emptyAllowed:boolean;executed:boolean};assert.equal(detail.field,field);assert.equal(detail.actualCharacters,characters);assert.equal(detail.emptyAllowed,false);assert.equal(detail.executed,false);assert.equal(error.message.includes('private-observation-'),false);return true})}
+})
+
+test('Reusing existing shot IDs rejects before native work or checkpoint writes and directs explicit footage replacement',async()=>{
+ const f=await shotFixture();try{
+  await f.batch().execute({operation:'prepare-shots',shots:f.shots},'agent')
+  const before=fs.readdirSync(f.directory).sort(),draft=JSON.stringify(f.store.read(f.batchDraft.id)),count=f.nativeCalls.length
+  await assert.rejects(f.batch().execute({operation:'prepare-shots',shots:f.shots},'agent'),error=>{assert.ok(error instanceof Error);assert.match(error.message,/SHOT_SCENE_EXISTS/);assert.match(error.message,/media.segment/);assert.match(error.message,/video.studio attach/);assert.match(error.message,/sourceStartSeconds/);return true})
+  assert.equal(f.nativeCalls.length,count);assert.deepEqual(fs.readdirSync(f.directory).sort(),before);assert.equal(JSON.stringify(f.store.read(f.batchDraft.id)),draft)
+ }finally{f.close()}
+})
