@@ -14,3 +14,22 @@ export async function prepareVideoCapture(port:CaptureReadinessPort,signal:Abort
   }
  }finally{await port.pause()}
 }
+
+/** Fixed native player operation: normal play/visible skip only. An ad can
+ * advance but can never certify the requested content as ready. */
+export function advanceYoutubePlayer(expectedId:string):'ready'|'advertisement'|'waiting'|'different-target'{
+ const player=document.getElementById('movie_player') as HTMLElement&{getVideoData?:()=>{video_id?:string};getPlayerResponse?:()=>{videoDetails?:{videoId?:string};playabilityStatus?:{status?:string}}}|null
+ const video=player?.querySelector('video'),data=player?.getVideoData?.(),response=player?.getPlayerResponse?.()
+ if(!player||!video||!data?.video_id||!response?.videoDetails?.videoId)return 'waiting'
+ if(data.video_id!==expectedId||response.videoDetails.videoId!==expectedId)return 'different-target'
+ if(player.classList.contains('ad-showing')||player.classList.contains('ad-interrupting')){
+  const skip=[...player.querySelectorAll('button.ytp-skip-ad-button,button.ytp-ad-skip-button,button.ytp-ad-skip-button-modern')].find(element=>{
+   const style=getComputedStyle(element);return element instanceof HTMLButtonElement&&!element.disabled&&element.getClientRects().length>0&&style.display!=='none'&&style.visibility==='visible'&&Number(style.opacity)>0
+  }) as HTMLButtonElement|undefined
+  if(skip)skip.click()
+  else if(video.paused)void video.play().catch(()=>{})
+  return 'advertisement'
+ }
+ if(response.playabilityStatus?.status&&response.playabilityStatus.status!=='OK')return 'waiting'
+ return video.videoWidth>0&&video.readyState>=2&&Number.isFinite(video.duration)&&video.duration>0?'ready':'waiting'
+}

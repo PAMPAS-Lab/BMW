@@ -4,7 +4,7 @@ export interface VideoAcquisitionAttempt {method:'preserve';transport:VideoResou
 export interface VideoAcquisitionPort {
  preserve(url:string,signal:AbortSignal):Promise<unknown>
  capture(signal:AbortSignal):Promise<unknown>
- verify():Promise<void>
+ verify(purpose:'preserve'|'capture'):Promise<void>
  busy():boolean
  prepareCapture(signal:AbortSignal):Promise<unknown>
 }
@@ -20,8 +20,8 @@ export async function acquireVideoDelivery(target:VideoTarget,port:VideoAcquisit
  for(const resource of candidates){
   signal.throwIfAborted();if(deadline.aborted)break
   const started=performance.now()
-  await port.verify()
   try{
+   await port.verify('preserve')
    const result=await port.preserve(resource.url,AbortSignal.any([signal,deadline]))
    attempts.push({method:'preserve',transport:resource.role,status:'completed',elapsedMs:Math.round(performance.now()-started)})
    return {method:'preserve' as const,result,acquisition:{policy:'download-first/capture-fallback' as const,reencoded:false,attempts}}
@@ -29,16 +29,17 @@ export async function acquireVideoDelivery(target:VideoTarget,port:VideoAcquisit
    signal.throwIfAborted()
    if(port.busy())throw new Error('MEDIA_ACQUIRE_CLEANUP_PENDING: Preservation still owns native resources; capture was not started.',{cause:error})
    const message=error instanceof Error?error.message:String(error)
-   if(/VIDEO_IDENTITY|SOURCE_CONFLICT|Project changed|source page.*changed|quarantin|cleanup/i.test(message))throw error
+   if(/VIDEO_IDENTITY_(?!UNBOUND)|SOURCE_CONFLICT|Project changed|source page.*changed|quarantin|cleanup/i.test(message))throw error
    const reason=/\b(?:YOUTUBE|BMW|MEDIA)_[A-Z_]+/.exec(message)?.[0]??(/\b403\b/.test(message)?'HTTP_403':deadline.aborted?'DOWNLOAD_BUDGET_EXHAUSTED':'DOWNLOAD_FAILED')
    attempts.push({method:'preserve',transport:resource.role,status:'failed',elapsedMs:Math.round(performance.now()-started),reason})
+   if(/VIDEO_IDENTITY_UNBOUND/.test(message))break
   }
  }
- signal.throwIfAborted();await port.verify()
+ signal.throwIfAborted();await port.verify('capture')
  if(port.busy())throw new Error('MEDIA_ACQUIRE_CLEANUP_PENDING: Native resources have not drained.')
  try{
   const quality=await port.prepareCapture(signal)
-  await port.verify();const result=await port.capture(signal)
+  await port.verify('capture');const result=await port.capture(signal)
   return {method:'capture' as const,result,acquisition:{policy:'download-first/capture-fallback' as const,reencoded:true,attempts,quality}}
  }catch(error){
   // Keep the real preparation/capture failure and the bounded download reasons

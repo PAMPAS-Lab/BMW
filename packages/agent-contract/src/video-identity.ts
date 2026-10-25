@@ -49,6 +49,15 @@ export function selectVideoResource(state:PageVideoTargets,url:string,expected?:
  if(targets.length!==1)throw new Error('VIDEO_IDENTITY_UNBOUND: Resource is not uniquely bound to the requested video. Observe the target player and collect again.')
  return targets[0]!
 }
+/** Capture follows a pinned logical YouTube player, never an expired delivery
+ * URL. Downloads retain exact resource binding. Other platforms stay strict. */
+export function selectVideoCaptureTarget(state:PageVideoTargets,url:string,expected?:VideoIdentity):VideoTarget{
+ if(!expected||expected.platform!=='youtube')return selectVideoResource(state,url,expected)
+ if(state.blocked)throw new Error('VIDEO_IDENTITY_UNAVAILABLE: '+state.blocked)
+ const targets=state.targets.filter(t=>sameVideoIdentity(expected,t.identity))
+ if(state.platform!=='youtube'||targets.length!==1)throw new Error('VIDEO_IDENTITY_CHANGED: Capture requires exactly the pinned logical player; advertisements and other videos are not admitted.')
+ return targets[0]!
+}
 export function youtubeAudioFor(target:VideoTarget,url:string):VideoResource|undefined{
  if(target.identity.platform!=='youtube')return
  const selected=target.resources.find(r=>r.url===url)
@@ -80,7 +89,7 @@ export function inspectPageVideoTargets(scope:VideoTargetScope={}):PageVideoTarg
  let expected=platform==='youtube'?(page.searchParams.get('v')??/^\/(?:shorts|embed|live)\/([^/]+)/.exec(page.pathname)?.[1]??(host==='youtu.be'?page.pathname.slice(1):'')):platform==='x'?/^\/[^/]+\/status\/(\d+)/.exec(page.pathname)?.[1]??'':pageUrl
  if(!expected||expected.length>4096){result.blocked='Open an original video/post URL before acquiring video.';return result}
  for(const video of videos){
-  if(!visible(video)||excluded.some(s=>video.closest(s))||video.closest('[data-bmw-ad],.ad-showing,[data-testid="placementTracking"],[data-testid="promotedIndicator"]'))continue
+  if(!visible(video)||excluded.some(s=>video.closest(s))||video.closest('[data-bmw-ad],.ad-showing,.ad-interrupting,[data-testid="placementTracking"],[data-testid="promotedIndicator"]'))continue
   const playerUrl=address(video.currentSrc||video.src)
   // These are site UI animations, never a user's video, regardless of MIME or duration.
   if(/\/(?:playback[0-9]+|error-animation|loading-animation)\.mp4(?:\?|$)/i.test(playerUrl))continue
@@ -88,7 +97,7 @@ export function inspectPageVideoTargets(scope:VideoTargetScope={}):PageVideoTarg
   const add=(url:unknown,role:VideoResource['role'],extra:Partial<VideoResource>={})=>{const u=address(url);if(u&&!u.startsWith('blob:')&&!resources.some(r=>r.url===u))resources.push({url:u,role,durationSeconds:seconds,bitrate:0,audioGroup:'',defaultAudio:false,...extra})}
   if(platform==='youtube'){
    const player=video.closest('#movie_player') as HTMLElement&{getVideoData?:()=>unknown;getPlayerResponse?:()=>unknown}
-   if(!player||player.classList.contains('ad-showing'))continue
+   if(!player||player.classList.contains('ad-showing')||player.classList.contains('ad-interrupting'))continue
    const data=record(player.getVideoData?.()),response=record(player.getPlayerResponse?.()),details=record(response.videoDetails),status=record(response.playabilityStatus)
    if(data.video_id!==expected||details.videoId!==expected||status.status&&status.status!=='OK')continue
    const declared=duration(details.lengthSeconds)

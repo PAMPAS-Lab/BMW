@@ -5,7 +5,7 @@ import path from 'node:path'
 import {app,BrowserWindow,session} from 'electron'
 import {readVideoTargets,prepareVideoTransfer} from '../packages/browser-capability/src/video-target.js'
 import {BrowserKernel} from '../packages/browser-capability/src/browser-kernel.js'
-import {selectVideoResource} from '@bmw-agent/agent-contract/video-identity'
+import {selectVideoResource,selectVideoCaptureTarget} from '@bmw-agent/agent-contract/video-identity'
 import {downloadMediaArtifact} from '../packages/browser-capability/src/media-artifact.js'
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-video-identity-'));app.setPath('userData',path.join(root,'profile'))
 let window:BrowserWindow|undefined,exitCode=0
@@ -39,7 +39,13 @@ async function run(){try{
  const video='https://r1.googlevideo.com/videoplayback?itag=137&source=youtube',audio='https://r1.googlevideo.com/videoplayback?itag=140&source=youtube'
  await wc.executeJavaScript(`(()=>{document.body.innerHTML='<div id="movie_player"><video></video></div>';const p=document.querySelector('#movie_player'),v=p.querySelector('video');Object.defineProperty(v,'duration',{value:10});Object.defineProperty(v,'currentSrc',{value:'blob:https://www.youtube.com/player'});p.getVideoData=()=>({video_id:'target'});p.getPlayerResponse=()=>({playabilityStatus:{status:'OK'},videoDetails:{videoId:'target',lengthSeconds:'10'},streamingData:{adaptiveFormats:[{url:${JSON.stringify(video)},mimeType:'video/mp4',approxDurationMs:'10000'},{url:${JSON.stringify(audio)},mimeType:'audio/mp4',approxDurationMs:'10000',audioTrack:{id:'en',audioIsDefault:true}}]}})})()`)
  const yt=await prepareVideoTransfer(wc,video);assert.equal(yt.audio?.url,audio);assert.equal(yt.videoIdentity?.targetId,'target')
- await wc.executeJavaScript("document.querySelector('#movie_player').classList.add('ad-showing')");await assert.rejects(yt.finish(),/CHANGED|UNAVAILABLE/)
+ await wc.executeJavaScript("document.querySelector('#movie_player').classList.add('ad-interrupting')");await assert.rejects(yt.finish(),/CHANGED|UNAVAILABLE/)
+ await wc.executeJavaScript("document.querySelector('#movie_player').classList.remove('ad-interrupting');const p=document.querySelector('#movie_player'),original=p.getPlayerResponse;p.getPlayerResponse=()=>{const r=original();r.streamingData.adaptiveFormats=r.streamingData.adaptiveFormats.map(f=>({...f,url:f.url+'&rotated=1'}));return r};true")
+ const rotated=await readVideoTargets(wc)
+ assert.equal(selectVideoCaptureTarget(rotated,video,yt.videoIdentity).identity.targetId,'target')
+ await assert.rejects(prepareVideoTransfer(wc,video),/UNBOUND/)
+ await wc.executeJavaScript("document.querySelector('#movie_player').classList.add('ad-showing')");assert.throws(()=>selectVideoCaptureTarget({...rotated,targets:[]},video,yt.videoIdentity),/CHANGED/)
+ await assert.rejects(prepareVideoTransfer(wc,video),/UNAVAILABLE/)
  await wc.executeJavaScript("document.querySelector('#movie_player').classList.remove('ad-showing');document.querySelector('#movie_player').getVideoData=()=>({video_id:'reply'});true");await assert.rejects(prepareVideoTransfer(wc,video),/UNAVAILABLE/)
  await window.loadURL('https://weibo.com/tv/show/1034:123')
  await wc.executeJavaScript(`(()=>{document.body.innerHTML='<video id="main"></video>';Object.defineProperty(document.querySelector('video'),'currentSrc',{value:'https://cdn.example/4k.mp4'})})()`)

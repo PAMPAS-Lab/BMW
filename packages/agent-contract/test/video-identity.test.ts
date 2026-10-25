@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import {assertPageVideoTargets,assertVideoIdentity,selectVideoResource,youtubeAudioFor} from '../src/video-identity.js'
+import {assertPageVideoTargets,assertVideoIdentity,selectVideoResource,selectVideoCaptureTarget,youtubeAudioFor} from '../src/video-identity.js'
 import type {VideoTarget,VideoResource} from '../src/video-identity.js'
 const resource=(url:string,role:VideoResource['role'],audioGroup='default',defaultAudio=false,bitrate=100):VideoResource=>({url,role,audioGroup,defaultAudio,bitrate,durationSeconds:10})
 const yt=():VideoTarget=>({identity:{version:1,platform:'youtube',targetId:'original',resourceId:'original'},playerUrl:'blob:https://www.youtube.com/player',videoIndex:0,durationSeconds:10,resources:[resource('https://r1.googlevideo.com/videoplayback?itag=137','video'),resource('https://r1.googlevideo.com/videoplayback?itag=140','audio','en',true)]})
@@ -36,4 +36,17 @@ test('Only a same-target YouTube response can advertise an explicit native SABR 
  assert.equal(selectVideoResource(state,url).resources[0]!.role,'sabr');assert.equal(youtubeAudioFor(target,url),undefined)
  assert.throws(()=>selectVideoResource(state,url+'&guessed=1'),/UNBOUND/)
  assert.throws(()=>assertPageVideoTargets({...state,targets:[{...target,resources:[resource('https://evil.example/videoplayback?id=current','sabr')]}]}),/Foreign/)
+})
+
+
+test('Capture follows only the same pinned YouTube identity across delivery rotation; downloads remain exact',()=>{
+ const target=yt(),state=assertPageVideoTargets({pageUrl:'https://www.youtube.com/watch?v=original',platform:'youtube',targets:[target],blocked:null}),old='blob:https://www.youtube.com/expired'
+ assert.equal(selectVideoCaptureTarget(state,old,target.identity).identity.targetId,target.identity.targetId)
+ assert.throws(()=>selectVideoResource(state,old,target.identity),/UNBOUND/)
+ assert.throws(()=>selectVideoCaptureTarget({...state,targets:[]},old,target.identity),/CHANGED/)
+ assert.throws(()=>selectVideoCaptureTarget({...state,targets:[target,target]},old,target.identity),/CHANGED/)
+ assert.throws(()=>selectVideoCaptureTarget({...state,blocked:'Advertisement'},old,target.identity),/UNAVAILABLE/)
+ assert.throws(()=>selectVideoCaptureTarget(state,old,{...target.identity,targetId:'other',resourceId:'other'}),/CHANGED/)
+ const generic={...target,identity:{...target.identity,platform:'page' as const}}
+ assert.throws(()=>selectVideoCaptureTarget({...state,platform:'page',targets:[generic]},old,generic.identity),/UNBOUND/)
 })

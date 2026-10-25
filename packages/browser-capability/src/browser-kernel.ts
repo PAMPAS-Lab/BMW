@@ -1,4 +1,4 @@
-import {prepareVideoCapture} from './video-capture-ready.js'
+import {prepareVideoCapture,advanceYoutubePlayer} from './video-capture-ready.js'
 import type {CapturePlayerState} from './video-capture-ready.js'
 import {acquireVideoDelivery} from './video-acquisition.js'
 import {textReadSummary,TextReadPageReader} from './text-read-pages.js'
@@ -9,7 +9,7 @@ import {prepareSourceScreenshot} from './source-screenshot.js'
 import {collectionPageReadyExpression,assertCollectionPageReady} from './collection-page-ready.js'
 import type {CollectionPageReady} from './collection-page-ready.js'
 import {navigatePage,closeNavigationPage,withNativePageRead} from './page-navigation.js'
-import {sameVideoIdentity,resourceBelongsToTarget,selectVideoResource} from '@bmw-agent/agent-contract/video-identity'
+import {sameVideoIdentity,resourceBelongsToTarget,selectVideoResource,selectVideoCaptureTarget} from '@bmw-agent/agent-contract/video-identity'
 import type {SourceCollection,ProjectSourcePort,SourceCaptureGuard,VideoTargetScope,TextReadDiagnostic,TextReadBatch,TextReadRow} from '@bmw-agent/media-native/sources'
 import {readVideoTargets,prepareVideoTransfer} from './video-target.js'
 import {registerYoutubeSabrPage,bindYoutubeSabrPage} from './youtube-sabr-observation.js'
@@ -203,11 +203,12 @@ export class BrowserKernel {
       if(this.detached)return {action:'deny'}
       // Popups opened by research pages share their disposable ownership and FIFO.
       // A page event must not create unbounded, falsely user-owned renderers.
-      void this.operations.run(()=>{if(this.projectStore&&this.projectStore.active().id!==tab.projectId)throw new Error('Popup Project changed.')},()=>this.openTab({url,foreground:true,source:tab.source==='agent'?'agent':'page',reuse:false})).catch(error=>this.#addDiagnostic(tab.id,'loadFailures',{message:error instanceof Error?error.message:String(error),at:Date.now()}))
+      void this.operations.run(()=>{if(this.projectStore&&this.projectStore.active().id!==tab.projectId)throw new Error('Popup Project changed.')},()=>this.openTab({url,foreground:false,source:tab.source==='agent'?'agent':'page',reuse:false},undefined,undefined,true).then(result=>{this.popupParents.set(result.id,tab.id);this.emitState();return result})).catch(error=>this.#addDiagnostic(tab.id,'loadFailures',{message:error instanceof Error?error.message:String(error),at:Date.now()}))
       return { action: 'deny' }
     })
   }
 
+  private readonly popupParents=new Map<string,string>()
   private readonly networkRequests=new WeakMap<import('electron').WebContents,Map<string,{url:string;resourceType:string}>>()
   private readonly documentTransfers=new WeakMap<import('electron').WebContents,import('./page-navigation.js').DocumentTransfer&{requestId:string}>()
   private readonly offscreenPaintFrames=new WeakMap<import('electron').WebContents,number>()
@@ -224,7 +225,7 @@ export class BrowserKernel {
   private dropNavigationTab(tab:NavigationTab):void{
     if(!this.tabs.has(tab.id))return
     if(!this.window.isDestroyed()&&this.window.contentView.children.includes(tab.view))this.window.contentView.removeChildView(tab.view)
-    this.tabs.delete(tab.id);this.deferredNavigation.delete(tab.id);this.diagnostics.delete(tab.id);this.navigationQuarantine.delete(tab.id)
+    this.popupParents.delete(tab.id);this.tabs.delete(tab.id);this.deferredNavigation.delete(tab.id);this.diagnostics.delete(tab.id);this.navigationQuarantine.delete(tab.id)
     if(this.activeTabId===tab.id){this.activeTabId=null;const next=[...this.tabs.values()].find((t:NavigationTab)=>t.projectId===tab.projectId&&!t.view.webContents.isDestroyed());if(next)void this.showTab(next.id).catch(error=>this.#addDiagnostic(next.id,'media',{message:String(error),at:Date.now()}))}
     this.emitState();this.scheduleTabStateSave()
   }
@@ -235,8 +236,29 @@ export class BrowserKernel {
     const scope=this.collectionBodyScope??{bodySelector:'body'}
     let previous='',quietSince=0;const ready=async()=>{const value=await readRendererPhase<CollectionPageReady>(tab.view.webContents,'collection.pages','navigation-ready',async()=>assertCollectionPageReady(await tab.view.webContents.mainFrame.executeJavaScript(collectionPageReadyExpression(scope),true)),signal,1500);if(!sameCollectionNavigation(url,value.url)||(!value.ready&&!value.restricted)){previous='';return false}if(value.restricted||[401,403,429].includes(this.collectionHTTPStatus)){this.collectionRestricted=true;return true}if(value.text!==previous){previous=value.text;quietSince=Date.now();return false}return Date.now()-quietSince>=250}
     const videoAddress=new URL(url),youtubeTarget=['youtube.com','www.youtube.com','m.youtube.com'].includes(videoAddress.hostname)?videoAddress.searchParams.get('v'):null
-    const videoReady=youtubeTarget?async()=>readRendererPhase<boolean>(tab.view.webContents,'navigate','youtube-player-ready',async()=>await tab.view.webContents.mainFrame.executeJavaScript(`(()=>{const p=document.getElementById('movie_player'),v=p?.querySelector('video'),d=typeof p?.getVideoData==='function'?p.getVideoData():null;return d?.video_id===${JSON.stringify(youtubeTarget)}&&!p.classList.contains('ad-showing')&&v?.videoWidth>0&&Number.isFinite(v.duration)&&v.duration>0})()`,true) as boolean,signal,1000):undefined
-    try{await navigatePage(tab.view.webContents,url,signal,videoReady&&!this.collectionBodyScope?90000:timeoutMs,3000,tab.source==='agent',videoReady&&!this.collectionBodyScope?videoReady:this.collectionBodyScope&&!['x.com','twitter.com'].includes(new URL(url).hostname.replace(/^www\./,''))?ready:undefined,entry=>this.#addDiagnostic(tab.id,'network',{type:'navigation',url:diagnosticUrl(url),...entry,at:Date.now()}))}catch(error){if(tab.view.webContents.isDestroyed())this.dropNavigationTab(tab);else if(error instanceof Error&&'code'in error&&error.code==='BMW_BROWSER_NAVIGATION_CLEANUP_FAILED')this.navigationQuarantine.add(tab.id);throw error}
+    const playerDeadline=Date.now()+45000
+    let lastPlayerState='waiting'
+    const videoReady=youtubeTarget?async()=>{
+      lastPlayerState=await readRendererPhase<ReturnType<typeof advanceYoutubePlayer>>(tab.view.webContents,'navigate','youtube-player-ready',async()=>{const value=await tab.view.webContents.mainFrame.executeJavaScript(`(${advanceYoutubePlayer.toString()})(${JSON.stringify(youtubeTarget)})`,true);if(value!=='ready'&&value!=='advertisement'&&value!=='waiting'&&value!=='different-target')throw new Error('Invalid native player state.');return value},signal,1000)
+      return lastPlayerState==='ready'
+    }:undefined
+    try{
+      await navigatePage(tab.view.webContents,url,signal,videoReady&&!this.collectionBodyScope?45000:timeoutMs,3000,tab.source==='agent',videoReady&&!this.collectionBodyScope?videoReady:this.collectionBodyScope&&!['x.com','twitter.com'].includes(new URL(url).hostname.replace(/^www\./,''))?ready:undefined,entry=>this.#addDiagnostic(tab.id,'network',{type:'navigation',url:diagnosticUrl(url),...entry,at:Date.now()}))
+      // loadURL may finish before an ad does. Keep the same bounded readiness
+      // phase instead of returning an apparently ready advertising player.
+      if(videoReady&&!this.collectionBodyScope)while(!await videoReady()){
+        signal?.throwIfAborted()
+        if(lastPlayerState==='different-target')throw new Error('VIDEO_IDENTITY_CHANGED: YouTube opened a different target.')
+        if(Date.now()>=playerDeadline)throw new Error('YOUTUBE_PLAYER_NOT_READY: '+lastPlayerState+'; no source was admitted.')
+        await new Promise<void>(resolve=>setTimeout(resolve,200))
+      }
+    }catch(error){if(tab.view.webContents.isDestroyed())this.dropNavigationTab(tab);else if(error instanceof Error&&'code'in error&&error.code==='BMW_BROWSER_NAVIGATION_CLEANUP_FAILED')this.navigationQuarantine.add(tab.id);throw error}
+    finally{
+      if(videoReady&&!tab.view.webContents.isDestroyed()){
+        try{await readRendererPhase(tab.view.webContents,'navigate','pause-youtube-player',()=>tab.view.webContents.mainFrame.executeJavaScript(`(()=>{const p=document.getElementById('movie_player'),v=p?.querySelector('video');if(v){v.pause();return v.paused===true}return true})()`,true).then(paused=>{if(paused!==true)throw new Error('Player did not pause.')}),undefined,3000)}
+        catch(error){this.navigationQuarantine.add(tab.id);throw new Error('MEDIA_CAPTURE_CLEANUP_FAILED: YouTube readiness playback could not be paused.',{cause:error})}
+      }
+    }
   }
   async openTab({ url, foreground = false, source = 'agent', reuse = true }: { url?: unknown; foreground?: boolean; source?: string; reuse?: boolean } = {},signal?:AbortSignal,navigationTimeoutMs?:number,deferNavigation=false) {
     if(this.navigationQuarantine.size)throw new Error('BMW_BROWSER_NAVIGATION_QUARANTINED: Explicit close recovery is required.')
@@ -382,7 +404,7 @@ export class BrowserKernel {
   private async destroyTab(tab:NavigationTab):Promise<void>{
     try{await closeNavigationPage(tab.view.webContents)}catch(error){this.navigationQuarantine.add(tab.id);throw error}
     if(!this.window.isDestroyed()&&this.window.contentView.children.includes(tab.view))this.window.contentView.removeChildView(tab.view)
-    this.tabs.delete(tab.id);this.deferredNavigation.delete(tab.id);this.diagnostics.delete(tab.id);this.navigationQuarantine.delete(tab.id)
+    this.popupParents.delete(tab.id);this.tabs.delete(tab.id);this.deferredNavigation.delete(tab.id);this.diagnostics.delete(tab.id);this.navigationQuarantine.delete(tab.id)
     if(this.activeTabId===tab.id)this.activeTabId=null
   }
 
@@ -445,7 +467,8 @@ export class BrowserKernel {
       deferred: this.deferredNavigation.has(tab.id),
       active: tab.id === this.activeTabId,
       source: tab.source,
-      projectId: tab.projectId
+      projectId: tab.projectId,
+      openerTabId:this.popupParents.get(tab.id)??null
     }
   }
 
@@ -770,14 +793,22 @@ export class BrowserKernel {
       )
       if (!element) return { ok: false, reason: 'element-not-found' }
       element.scrollIntoView({ block: 'center', inline: 'center' })
+      const anchor=element.closest('a[href]'),href=anchor?.href??null,target=anchor?.target??null,newTab=target==='_blank'&&href&&['http:','https:'].includes(anchor?.protocol);
       const rect=element.getBoundingClientRect();const recordingEvent={epochMs:performance.timeOrigin+performance.now(),kind:'click',source:'agent-action',x:Math.max(0,Math.min(innerWidth,rect.x+rect.width/2)),y:Math.max(0,Math.min(innerHeight,rect.y+rect.height/2)),viewportWidth:innerWidth,viewportHeight:innerHeight,dpr:devicePixelRatio,scrollX:Math.max(0,scrollX),scrollY:Math.max(0,scrollY)}
-      element.click()
-      return { recordingEvent, ok: true, tag: element.tagName.toLowerCase(), text: (element.innerText || element.value || '').trim().slice(0, 200) }
+      if(!newTab)element.click()
+      return { recordingEvent, href, target, newTab:!!newTab, ok: true, tag: element.tagName.toLowerCase(), text: (element.innerText || element.value || '').trim().slice(0, 200) }
     })()`, true)
     if (!result.ok) throw new Error(result.reason)
     tab.recordingEvents?.agentClick(result.recordingEvent)
     delete result.recordingEvent
-    return result
+    const sourceTab=this.serializeTab(tab)
+    if(result.newTab){
+      if(this.projectStore.active().id!==tab.projectId)throw new Error('Click Project changed.')
+      const destinationTab=await this.openTab({url:result.href,foreground:true,source:tab.source==='agent'?'agent':'page',reuse:false})
+      this.popupParents.set(destinationTab.id,tab.id)
+      return {...result,sourceTab,destinationTab:{...destinationTab,openerTabId:tab.id},navigation:'opened-target-tab'}
+    }
+    return {...result,sourceTab,navigation:'inspect-source-tab-after-click'}
   }
 
   async type(tab, request) {
@@ -836,19 +867,19 @@ export class BrowserKernel {
   }
   async acquireSource(request:NonNullable<import('./browser-host.js').BrowserFeatureHost['acquireSource']> extends (request:infer R,...args:unknown[])=>unknown?R:never,signal?:AbortSignal){
     const tab=this.requireTab(request.tabId),projectId=this.projectStore.active().id
-    const verify=async()=>{signal?.throwIfAborted();if(this.projectStore.active().id!==projectId)throw new Error('Source Project changed.');await this.verifySourceVideo({...request.sourceGuard,tabId:tab.id},signal)}
-    await verify()
+    const verify=async(purpose:'preserve'|'capture')=>{signal?.throwIfAborted();if(this.projectStore.active().id!==projectId)throw new Error('Source Project changed.');await this.verifySourceVideo({...request.sourceGuard,tabId:tab.id},signal,purpose==='capture')}
+    await verify('preserve')
     const state=await readVideoTargets(tab.view.webContents,request.sourceGuard.scope,signal)
     const selected=selectVideoResource(state,request.sourceGuard.candidateUrl,request.sourceGuard.videoIdentity)
     return acquireVideoDelivery(selected,{
       verify,busy:()=>this.recordingController.isCaptureActive(),
       preserve:(url,jobSignal)=>this.preserveSource({url,pageUrl:request.sourceGuard.pageUrl,tabId:tab.id,sourceGuard:request.sourceGuard},jobSignal),
-      capture:jobSignal=>this.captureSource(request,jobSignal),
+      capture:jobSignal=>this.captureSource({...request,maxDurationMs:Math.min(request.maxDurationMs??45000,45000)},jobSignal),
       prepareCapture:async jobSignal=>{
         const previous=this.activeTabId
         await this.showTab(tab.id)
         try{return await prepareVideoCapture({
-          read:async start=>{await verify();return readRendererPhase<CapturePlayerState>(tab.view.webContents,'library.sources','capture-buffer',async()=>await tab.view.webContents.mainFrame.executeJavaScript(`(()=>{const selector=${JSON.stringify(request.videoSelector)},index=${JSON.stringify(request.videoIndex??0)},start=${JSON.stringify(start)},video=document.querySelectorAll(selector)[index];if(!(video instanceof HTMLVideoElement))throw new Error('VIDEO_IDENTITY_UNBOUND: Missing confirmed player.');const player=['youtube.com','www.youtube.com','m.youtube.com'].includes(location.hostname)?document.getElementById('movie_player'):null,levels=player&&typeof player.getAvailableQualityLevels==='function'?player.getAvailableQualityLevels():[],requested=['hd1080','hd720','large','medium','small','tiny'].find(level=>levels.includes(level));if(start){video.pause();if(requested&&typeof player.setPlaybackQualityRange==='function')player.setPlaybackQualityRange(requested,requested);if(requested&&typeof player.setPlaybackQuality==='function')player.setPlaybackQuality(requested);${request.fromStart!==false?'if(video.currentTime>0)video.currentTime=0;':''}void video.play().catch(()=>{})}return {requested:requested??null,width:video.videoWidth,height:video.videoHeight,readyState:video.readyState,durationSeconds:Number.isFinite(video.duration)?video.duration:0,bufferedStartSeconds:video.buffered.length?video.buffered.start(0):null,bufferedEndSeconds:video.buffered.length?video.buffered.end(0):0}})()`,true) as CapturePlayerState,jobSignal,3000)},
+          read:async start=>{await verify('capture');return readRendererPhase<CapturePlayerState>(tab.view.webContents,'library.sources','capture-buffer',async()=>await tab.view.webContents.mainFrame.executeJavaScript(`(()=>{const selector=${JSON.stringify(request.videoSelector)},index=${JSON.stringify(request.videoIndex??0)},start=${JSON.stringify(start)},video=document.querySelectorAll(selector)[index];if(!(video instanceof HTMLVideoElement))throw new Error('VIDEO_IDENTITY_UNBOUND: Missing confirmed player.');const player=['youtube.com','www.youtube.com','m.youtube.com'].includes(location.hostname)?document.getElementById('movie_player'):null,levels=player&&typeof player.getAvailableQualityLevels==='function'?player.getAvailableQualityLevels():[],requested=['hd1080','hd720','large','medium','small','tiny'].find(level=>levels.includes(level));if(start){video.pause();if(requested&&typeof player.setPlaybackQualityRange==='function')player.setPlaybackQualityRange(requested,requested);if(requested&&typeof player.setPlaybackQuality==='function')player.setPlaybackQuality(requested);${request.fromStart!==false?'if(video.currentTime>0)video.currentTime=0;':''}void video.play().catch(()=>{})}return {requested:requested??null,width:video.videoWidth,height:video.videoHeight,readyState:video.readyState,durationSeconds:Number.isFinite(video.duration)?video.duration:0,bufferedStartSeconds:video.buffered.length?video.buffered.start(0):null,bufferedEndSeconds:video.buffered.length?video.buffered.end(0):0}})()`,true) as CapturePlayerState,jobSignal,3000)},
           pause:async()=>{try{
             // Cleanup must still stop playback when preparation changed the
             // delivery URL/identity. Admission checks remain before every read
@@ -862,10 +893,10 @@ export class BrowserKernel {
 
     },signal??new AbortController().signal)
   }
-  async verifySourceVideo(request:SourceCaptureGuard&{tabId?:string},signal?:AbortSignal){
+  async verifySourceVideo(request:SourceCaptureGuard&{tabId?:string},signal?:AbortSignal,capture=false){
     const tab=this.requireTab(request.tabId),state=await readVideoTargets(tab.view.webContents,request.scope,signal)
     if(state.pageUrl!==request.pageUrl)throw new Error('VIDEO_IDENTITY_CHANGED: Source page changed before commit.')
-    return selectVideoResource(state,request.candidateUrl,request.videoIdentity).identity
+    return (capture?selectVideoCaptureTarget:selectVideoResource)(state,request.candidateUrl,request.videoIdentity).identity
   }
   private async captureSelectedVideo(tab,request,signal?:AbortSignal){
     // Chromium does not deliver presentation callbacks to a detached tab view.
@@ -879,7 +910,7 @@ export class BrowserKernel {
       const state=await readVideoTargets(tab.view.webContents,{selector:request.selector,index:request.index??0,excludeSelectors:request.sourceGuard?.scope.excludeSelectors??[]},signal)
       const target=state.targets[0]
       if(state.blocked||state.targets.length!==1||!target||request.sourceGuard?.videoIdentity&&!sameVideoIdentity(request.sourceGuard.videoIdentity,target.identity))throw new Error('VIDEO_IDENTITY_UNBOUND: '+(state.blocked??'Select exactly the confirmed target video.'))
-      if(request.sourceGuard)selectVideoResource(state,request.sourceGuard.candidateUrl,request.sourceGuard.videoIdentity)
+      if(request.sourceGuard)selectVideoCaptureTarget(state,request.sourceGuard.candidateUrl,request.sourceGuard.videoIdentity)
       return await this.recordingController.captureVideo(tab,{...request,videoIdentity:target.identity,...(request.sourceGuard?{sourceGuard:{...request.sourceGuard,videoIdentity:target.identity}}:{})},signal)
     }finally{
       this.capturePlaybackTabId=null

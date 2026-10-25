@@ -911,6 +911,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `X network resources require the original post media identity; replies, unrelated animations and changed identity fail closed`
 - `A correctly identified YouTube target without observed delivery refuses guessed SABR or another video`
 - `Only a same-target YouTube response can advertise an explicit native SABR resource`
+- `Capture follows only the same pinned YouTube identity across delivery rotation; downloads remain exact`
 
 #### `packages/agent-ui/test/studio-composer-scope.test.ts`
 
@@ -1061,6 +1062,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `One shared native budget aborts download and awaits its cleanup before fallback`
 - `Long or unknown sources require explicit archive handling; guards fail before acquiring`
 - `Fallback failures retain the real guard error and bounded download reasons without signed URLs`
+- `Expired delivery can enter capture only after a fresh capture-specific identity check`
 
 #### `packages/browser-capability/test/video-capture-ready.test.ts`
 
@@ -2200,3 +2202,13 @@ Studio 当前输入的上下文同时提供精确的context请求与当前草稿
 `describe-edit` 的未知命令拒绝同时列出实际闭合命令名，以及 `media.segment → video.studio attach → scene.set` 的已有素材替换路径，明确不执行猜测命令。`prepare-shots` 对新请求中已有镜头ID，在创建checkpoint和原生处理前以 `SHOT_SCENE_EXISTS` 拒绝并返回明确的替换流程；不覆盖镜头、不改历史、不自动改用另一操作。原有显式resume/不确定投递/版本/归属/预算检查保留。
 
 制作指引要求在写稿配音前先看实际开场短窗，确认前三秒有相关真实运动且新闻主体可见，并保留完整原话语境。寻找短原声时优先选20–45秒候选窗口，必要时再定向扩展；不限制合法长窗，更不缩短最终当前MP4完整保留原声的核验。成功记录全部必需镜头后可直接进入 `narrate-pending`，由其内部重新核对当前准备门禁，避免额外重复相同preflight往返。最终修改仍刷新受影响证据，check/render仍执行各自当前校验，独立全片审片不变。
+
+### 新闻素材采集恢复与页面归属
+
+`click` 返回点击时的 `sourceTab` 和原生 DOM 观察到的 `href/target`。普通 HTTP(S) `target=_blank` 链接在同一已准入操作内打开，返回实际 `destinationTab` 与 `openerTabId`；调用方必须使用该目标标签页继续查证。脚本弹窗继承来源 Project/研究页归属，保持后台且延迟加载，不能抢走当前来源页；`tabs.list` 暴露其 `openerTabId`。普通同页点击仍需重新观察页面，不承诺导航完成。
+
+YouTube 导航采用同一45秒就绪预算：核对 watch 目标、播放器数据和响应中的 videoId；广告期只执行正常播放或实际可见且可用的跳过广告按钮。广告、其他目标和未解码内容不能认证为就绪，loadURL 提前结束也必须继续验证。所有出口等待播放器暂停确认；清理失败隔离该页直至显式关闭。
+
+原文件下载继续要求精确资源 URL 和配对音轨。下载资源过期后，只有实际下载工作已清理，才允许重新验证同一页面、确认范围与唯一 YouTube 逻辑视频身份，再进入缓冲及采集；不要求旧的临时流/blob URL 继续有效。来源 evidence 仍保留原候选 URL 和确认身份，不改写为其他来源。其他平台继续精确资源绑定，换视频、广告、范围歧义、Project 变化或清理失败均拒绝。采集开始后播放器 URL、身份、范围和广告检查保持不变。
+
+自动获取的采集兜底最多45秒（显式更短 maxDurationMs 继续生效），不再因长原片默认录制整段；超过窗口仍由既有 partial-preview / source-clock evidence 表明局部获取。显式 capture 与完整归档接口不受这一自动兜底窗口替代。

@@ -88,7 +88,7 @@ export const BROWSER_CORE_ACTION_DEFINITIONS: readonly BrowserActionDefinition[]
   action('page.text.find','Find 1–200 characters of visible text within an explicit 1–500 character CSS selector without probing each index. Returns up to eight exact selector/index locators and bounded excerpts; use these for observe or source collect/screenshot. Case-insensitive whitespace-normalized substring search, at most 200 elements/20000 text nodes per page and 10000 elements overall. Pass nextOffset as findOffset; partialElementIndices and budgetExhausted are search gaps, never proof of absence. This does not collect or certify originals.',{
     selector:{type:'string'},text:{type:'string'},findOffset:{type:'integer',minimum:0,maximum:10000},excludeSelectors:{type:'array',maxItems:16,items:{type:'string',minLength:1,maxLength:500}}
   },['selector','text']),
-  action('click', 'Click an element by selector or visible text.', {
+  action('click', 'Click an element by selector or visible text. Returns sourceTab and observed link href/target. A normal target=_blank HTTP link returns destinationTab; use its id for source work. Other clicks require inspecting sourceTab after navigation; unrelated page popups stay deferred/background with openerTabId.', {
     selector: { type: 'string' },
     text: { type: 'string' }
   }),

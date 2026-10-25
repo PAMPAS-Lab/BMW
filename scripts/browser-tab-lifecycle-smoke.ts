@@ -6,6 +6,7 @@ import http from 'node:http'
 import {app,BrowserWindow,session} from 'electron'
 import {BrowserKernel} from '../packages/browser-capability/src/browser-kernel.js'
 import {closeNavigationPage} from '../packages/browser-capability/src/page-navigation.js'
+import {advanceYoutubePlayer} from '../packages/browser-capability/src/video-capture-ready.js'
 import {MAX_AGENT_TABS_PER_PROJECT} from '../packages/browser-capability/src/tab-policy.js'
 import {ProjectStore} from '../packages/platform/src/project-store.js'
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-tab-lifecycle-'))
@@ -32,6 +33,14 @@ async function run(){let code=0;const watchdog=setTimeout(()=>app.exit(1),120000
   assert.equal(next.matches.length,3);assert.equal(next.nextOffset,null);assert.equal(next.complete,false,'Truncated paragraph is an explicit search gap, not proven absence');assert.equal(next.partialElementIndices.length,1);assert.ok(next.matches.every(m=>m.index>=found.nextOffset))
   const original=await k.execute({action:'observe',tabId:user.id,selector:found.matches.length?'#text-find-fixture p':'p',index:found.matches[0].index}) as {text:string};assert.equal(original.text,'Share your new behavior with the community!','Returned index selects the exact original paragraph')
   console.log('PASS bounded page text finding: exact native selectors, normalized split text, exclusions, pagination and explicit truncation gaps')
+  await userPage.executeJavaScript(`(()=>{const p=document.createElement('div');p.id='movie_player';p.className='ad-showing';p.getVideoData=()=>({video_id:'pinned'});p.getPlayerResponse=()=>({videoDetails:{videoId:'pinned'},playabilityStatus:{status:'OK'}});p.innerHTML='<video></video><button class="ytp-skip-ad-button">Skip ad</button>';p.querySelector('button').onclick=()=>{p.className='';p.dataset.skipped='yes'};document.body.append(p)})()`)
+  const probe=(id:string)=>userPage.executeJavaScript(`(${advanceYoutubePlayer.toString()})(${JSON.stringify(id)})`,true)
+  assert.equal(await probe('other'),'different-target');assert.equal(await userPage.executeJavaScript('document.querySelector("#movie_player").dataset.skipped??null'),null)
+  assert.equal(await probe('pinned'),'advertisement','Clicking skip cannot itself certify content')
+  assert.equal(await userPage.executeJavaScript('document.querySelector("#movie_player").dataset.skipped'),'yes')
+  assert.equal(await probe('pinned'),'waiting','No decoded content is not ready after skip')
+  await userPage.executeJavaScript('document.getElementById("movie_player").remove()')
+  console.log('PASS ad readiness: different target never clicked; visible normal skip executes; ad and undecoded post-ad player never certify content')
   const paused=async(page:typeof userPage)=>page.executeJavaScript("document.querySelector('video').paused")
   const play=async(page:typeof userPage)=>{await page.executeJavaScript("document.querySelector('video').play().catch(()=>{});true",true);await new Promise(resolve=>setTimeout(resolve,100))}
   const firstFrame=userPage.mainFrame,realScript=firstFrame.executeJavaScript.bind(firstFrame)
@@ -73,6 +82,11 @@ async function run(){let code=0;const watchdog=setTimeout(()=>app.exit(1),120000
   await opener.view.webContents.executeJavaScript(`window.open(${JSON.stringify(origin+'/research-popup')});true`,true)
   const popupState=await k.execute({action:'tabs.list'})
   assert.ok(popupState.tabs.some(t=>t.url===origin+'/research-popup'&&t.source==='agent'));assert.equal(popupState.tabs.filter(t=>t.source==='agent').length,6)
+  const popup=popupState.tabs.find(t=>t.url===origin+'/research-popup')!;assert.equal(popup.openerTabId,opener.id);assert.equal(popup.active,false);assert.equal(popup.deferred,true,'Unrequested popups cannot navigate or steal the source selection')
+  await opener.view.webContents.executeJavaScript(`(()=>{const a=document.createElement('a');a.id='original-source';a.href=${JSON.stringify(origin+'/clicked-source')};a.target='_blank';a.textContent='Original footage';document.body.append(a)})()`)
+  const clicked=await k.execute({action:'click',tabId:opener.id,selector:'#original-source'})
+  assert.equal(clicked.sourceTab.id,opener.id);assert.equal(clicked.href,origin+'/clicked-source');assert.equal(clicked.destinationTab.url,clicked.href);assert.equal(clicked.destinationTab.openerTabId,opener.id);assert.equal(clicked.destinationTab.projectId,store.active().id);assert.notEqual(clicked.destinationTab.id,opener.id)
+  console.log('PASS source tab attribution: explicit new-tab link returns clicked URL, actual destination and Project-bound opener; unsolicited popup remains deferred/background')
   const delayed=await k.execute({action:'tabs.open',url:origin+'/delayed-close',reuse:false}),wc=k.tabs.get(delayed.id).view.webContents,close=wc.close.bind(wc)
   wc.close=options=>{setTimeout(()=>close(options),60)}
   const closing=k.execute({action:'tabs.close',tabId:delayed.id}),queued=k.execute({action:'tabs.list'});assert.equal(wc.isDestroyed(),false);await closing;assert.equal(wc.isDestroyed(),true);assert.equal((await queued).tabs.some(t=>t.id===delayed.id),false)

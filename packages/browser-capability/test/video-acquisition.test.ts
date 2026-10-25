@@ -42,3 +42,14 @@ test('Fallback failures retain the real guard error and bounded download reasons
  await assert.rejects(acquireVideoDelivery(target,port,new AbortController().signal),error=>{assert.ok(error instanceof Error);assert.match(error.message,/VIDEO_IDENTITY_CHANGED/);assert.match(error.message,/Download attempts: sabr:HTTP_403:[0-9]+ms/);assert.ok(!error.message.includes('secret'));return true})
  assert.ok(!calls.includes('capture'))
 })
+
+
+test('Expired delivery can enter capture only after a fresh capture-specific identity check',async()=>{
+ const {calls,port}=setup();port.preserve=async()=>{calls.push('expired');throw new Error('VIDEO_IDENTITY_UNBOUND: delivery rotated')}
+ port.verify=async purpose=>{calls.push(purpose)}
+ const result=await acquireVideoDelivery(target,port,new AbortController().signal)
+ assert.equal(result.method,'capture');assert.deepEqual(calls,['preserve','expired','capture','quality','capture','capture'])
+ const denied=setup();denied.port.preserve=port.preserve;denied.port.verify=async purpose=>{if(purpose==='capture')throw new Error('VIDEO_IDENTITY_CHANGED: other player')}
+ await assert.rejects(acquireVideoDelivery(target,denied.port,new AbortController().signal),/CHANGED/)
+ assert.ok(!denied.calls.includes('quality'));assert.ok(!denied.calls.includes('capture'))
+})
