@@ -19,6 +19,7 @@
     "./video-options-form": "./src/video-options-form.js",
     "./artifact-io": "./src/artifact-job-io.js",
     "./preservation": "./src/media-preservation.js",
+    "./derivation": "./src/media-derivation.js",
     "./rendering/audio": "./src/media/composition-audio.js",
     "./rendering/paint": "./src/media/composition-paint.js",
     "./rendering/frames": "./src/media/linear-frames.js",

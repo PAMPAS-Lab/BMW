@@ -23,7 +23,11 @@ export function assistantTasks(options:{host:AgentHost;history:AgentHistoryStore
  return {read,find,start:(owner,task)=>{
   const row=member(owner),metadata=parseAgentTaskReceipt({kind:'video-review',key:task.key,payload:task.payload,modelId:options.model(row.driverId)})
   agentText(task.text,65536);agentText(task.context,16384)
-  const old=find(owner,metadata.key);if(old)return old // Includes uncertain delivery: never replay.
+  const old=find(owner,metadata.key)
+  // start is an explicit new request. A cancelled input may be deliberately
+  // started again only after the official run and native work actually drain.
+  // Queued/running, successful and uncertain receipts continue to deduplicate.
+  if(old&&!(old.state==='interrupted'&&old.drained))return old
   const run=options.host.enqueueTask(row.sessionId,task.text,task.context,metadata)
   return read(owner,run.runId)
  }}

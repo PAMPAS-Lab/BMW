@@ -48,7 +48,7 @@ async function run():Promise<void>{
   window.contentView.addChildView(staticView);const [surfaceWidth,surfaceHeight]=window.getContentSize();staticView.setBounds({x:0,y:0,width:surfaceWidth,height:surfaceHeight})
   const staticTab={id:'static-page',projectId:project.id,source:'agent',title:'Static capture',url:'',view:staticView}
   kernel.tabs.set(staticTab.id,staticTab);kernel.activeTabId=staticTab.id
-  const captured:string[]=[]
+  const captured:string[]=[],capturedStarts:number[]=[]
   for(const [index,color] of ['#ef1515','#15dd15'].entries()){
     await staticView.webContents.loadURL(`data:text/html,<style>html,body{margin:0;width:100%;height:100%;background:${encodeURIComponent(color)}}</style>`)
     window.show();app.focus({steal:true});window.focus()
@@ -61,6 +61,10 @@ async function run():Promise<void>{
     assert.ok(shot.bytes>1024);captured.push(shot.artifactId)
     const inspection=(await execute({action:'media.inspect',artifactId:shot.artifactId})).result
     assert.ok(Number(inspection.durationSeconds)>1.6)
+    const videoTrack=(inspection.tracks as {type:string;startSeconds:number;endSeconds:number}[]).find(track=>track.type==='video')
+    assert.ok(videoTrack&&Number.isFinite(videoTrack.startSeconds))
+    capturedStarts.push(Math.max(0,videoTrack.startSeconds))
+    assert.ok(videoTrack.endSeconds-capturedStarts[index]>=2,'Card fixture needs two seconds after its actual first video timestamp')
     const frames=(await execute({action:'media.frames.sample',artifactId:shot.artifactId,timestampsSeconds:[1.6,.1]})).result.frames as {path:string;timestampSeconds:number}[]
     assert.ok(frames[0].timestampSeconds>1.4)
     for(const frame of frames){
@@ -155,9 +159,9 @@ async function run():Promise<void>{
    {title:'两项对比',bullets:['文字模板','素材模板'],cardSpec:{version:1,templateId:'comparison/two'}},
    {title:'数字强调',bullets:['受控测试数值'],cardSpec:{version:1,templateId:'metric/hero',value:44,decimals:0,unit:'%',motion:'count-up'}},
    {title:'原文证据',bullets:['受控截图素材'],imageArtifactId:'card-source.png',cardSpec:{version:1,templateId:'evidence/screenshot'}},
-   {title:'真实录屏',videoArtifactId:captured[0],cardSpec:{version:1,templateId:'demo/recording'}},
+   {title:'真实录屏',videoArtifactId:captured[0],sourceStartSeconds:capturedStarts[0],cardSpec:{version:1,templateId:'demo/recording'}},
    {title:'静态图解',imageArtifactId:'card-source.png',cardSpec:{version:1,templateId:'diagram/image',motion:'slow-push'}},
-   {title:'顺序素材',visualSegments:[{imageArtifactId:'card-source.png',durationSeconds:1},{videoArtifactId:captured[1],durationSeconds:1}],cardSpec:{version:1,templateId:'media/sequence'}}
+   {title:'顺序素材',visualSegments:[{imageArtifactId:'card-source.png',durationSeconds:1},{videoArtifactId:captured[1],durationSeconds:1,sourceStartSeconds:capturedStarts[1]}],cardSpec:{version:1,templateId:'media/sequence'}}
   ].map(scene=>({...scene,durationSeconds:2}))
   for(const [width,height] of [[640,360],[360,640]])for(const cardLayout of ['standard','news'] as const){
    const output=(await execute({action:'video.compose',composition:{title:'八类卡片原生验收\n统一栏目标题',cardLayout,width,height,fps:12,music:false,watermark:{enabled:cardLayout==='news',text:'BMW',position:'top-right'},scenes:cards}})).result

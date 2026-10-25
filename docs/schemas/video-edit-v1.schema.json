@@ -4093,6 +4093,63 @@
             "additionalProperties": false,
             "properties": {
               "op": {
+                "const": "clip.crop"
+              },
+              "clipId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9_-]{1,256}$"
+              },
+              "crop": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "x",
+                      "y",
+                      "width",
+                      "height"
+                    ],
+                    "properties": {
+                      "x": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 0.95
+                      },
+                      "y": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 0.95
+                      },
+                      "width": {
+                        "type": "number",
+                        "minimum": 0.05,
+                        "maximum": 1
+                      },
+                      "height": {
+                        "type": "number",
+                        "minimum": 0.05,
+                        "maximum": 1
+                      }
+                    }
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "clipId",
+              "crop"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
                 "const": "clip.mute"
               },
               "clipId": {

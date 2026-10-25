@@ -143,12 +143,30 @@ test('Shot batches retain reusable completed work after failure, reject changed 
 })
 test('Shot preparation rejects missing pins and cancellation before native work and keeps checkpoints private',async()=>{
  const f=await shotFixture();try{
+  const badCitation={...f.shots[0].citations[0],sourceId:'misspelled-source'}
+  await assert.rejects(f.batch().execute({operation:'prepare-shots',shots:[{...f.shots[0],citations:[badCitation]}]},'agent'),error=>{const message=String(error);assert.match(message,/SHOT_CITATION_BINDING/);assert.match(message,/"sceneId":"batch-a"/);assert.match(message,/"citationIndex":0/);assert.match(message,/"sourceId":"misspelled-source"/);assert.ok(message.includes(badCitation.acquisitionId));assert.match(message,/committed":false/);const data=JSON.parse(message.split('SHOT_CITATION_BINDING: ')[1].split('; ')[0]);assert.deepEqual(data.bindingHint,{sourceId:f.shots[0].citations[0].sourceId,acquisitionId:badCitation.acquisitionId,requiresExplicitResubmission:true});return true})
+  assert.equal(f.nativeCalls.length,0);assert.equal(f.store.read(f.batchDraft.id).scenes.length,0)
   await assert.rejects(f.batch().execute({operation:'prepare-shots',shots:[{...f.shots[0],sha256:'0'.repeat(64)}]},'agent'),/SOURCE_CHANGED/);assert.equal(f.nativeCalls.length,0)
   const controller=new AbortController();controller.abort(new Error('user stopped'))
   await assert.rejects(f.batch().execute({operation:'prepare-shots',shots:f.shots},'agent',controller.signal),/user stopped/);assert.equal(f.nativeCalls.length,0)
   fs.mkdirSync(path.join(f.root,'video-studio','shot-checkpoints'),{recursive:true});const id='00000000-0000-4000-8000-000000000000'
   fs.symlinkSync(path.join(f.directory,'robot.mp4'),path.join(f.root,'video-studio','shot-checkpoints',id+'.json'))
   await assert.rejects(f.batch().execute({operation:'prepare-shots',shots:f.shots,resumeId:id},'agent'));assert.equal(f.store.read(f.batchDraft.id).scenes.length,0);assert.equal(fs.readFileSync(path.join(f.directory,'robot.mp4'),'utf8'),'controlled video bytes')
+ }finally{f.close()}
+})
+test('Shot binding hints stay bounded, reject ambiguous acquisitions and never replace failed or cancelled validation',async()=>{
+ const f=await shotFixture();try{
+  const port=f.kernel.projectSources!(),search=port.search!.bind(port),citation=f.shots[0].citations[0],wrong={...citation,sourceId:'mistyped-source'},request={operation:'prepare-shots' as const,shots:[{...f.shots[0],citations:[wrong]}]}
+  const noHint=async()=>{await assert.rejects(f.batch().execute(request,'agent'),error=>{assert.match(String(error),/SHOT_CITATION_BINDING/);assert.doesNotMatch(String(error),/"bindingHint"/);return true});assert.equal(f.nativeCalls.length,0);assert.equal(f.store.read(f.batchDraft.id).scenes.length,0)}
+  port.search=r=>{assert.equal(r.limit,20);const page=search(r),row=page.items[0];return {...page,items:[row,{...row,source:{...row.source,id:'another-source'}}]}}
+  await noHint()
+  port.search=r=>{const page=search(r),row=page.items[0];return {...page,items:[...Array.from({length:20},(_,i)=>({...row,acquisition:{...row.acquisition,id:'unrelated-'+i}})),row]}}
+  await noHint()
+  port.search=()=>{throw new Error('index unavailable')};await noHint()
+  const controller=new AbortController();port.search=()=>{controller.abort(new Error('cancel hint lookup'));throw new Error('index unavailable')}
+  await assert.rejects(f.batch().execute(request,'agent',controller.signal),/cancel hint lookup/);assert.equal(f.nativeCalls.length,0)
+  port.search=search
+  await assert.rejects(f.batch().execute({...request,shots:[{...f.shots[0],citations:[{...citation,quote:'B verified primary claim.'}]}]},'agent'),error=>{assert.match(String(error),/stored original text/);assert.doesNotMatch(String(error),/"bindingHint"/);return true})
  }finally{f.close()}
 })
 
@@ -213,5 +231,30 @@ test('Preparation exposes exact reference endpoint gaps in preflight and evidenc
   const report=await f.service().preflight(),row=report.scenes.find(s=>s.sceneId==='opening')!,gap=row.referenceGaps[0]
   assert.equal(report.ready,false);assert.equal(gap.artifactId,'robot.mp4');assert.equal(gap.startSeconds,0);assert.equal(gap.endExclusive,2.5);assert.deepEqual(gap.actualFrameSeconds,[0,1.5,2.9]);assert.deepEqual(gap.missing,['end']);assert.equal(gap.endWindow.minimum,2.25);assert.equal(gap.endWindow.maximumExclusive,2.5);assert.deepEqual(gap.suggestedTimestampsSeconds,[0,1.25,2.45])
   const before=f.service().journal.read();await assert.rejects(f.record(),error=>{assert.match(String(error),/NEWS_PREPARATION_EVIDENCE/);assert.match(String(error),/referenceGaps/);assert.match(String(error),/endExclusive/);return true});assert.deepEqual(f.service().journal.read(),before)
+ }finally{f.close()}
+})
+
+test('Incomplete reference analysis names exact missing frame indices and a read-only recovery without changing evidence',async()=>{
+ const f=await fixture();try{
+  let draft=f.store.read(f.draft.id);const refs=structuredClone(draft.referenceRecords!),original=structuredClone(refs[0].analysis!);refs[0].analysis!.observations.splice(1,1);draft=f.store.recordReference(draft.id,draft.revision,refs)
+  const before=f.service().journal.read(),saved=fs.readFileSync(path.join(f.store.directory,draft.id+'.json'),'utf8')
+  await assert.rejects(f.record(),error=>{
+   assert.ok(error instanceof Error);const outer=JSON.parse(error.message.slice(error.message.indexOf('{'))) as {message:string;committed:boolean};assert.equal(outer.committed,false)
+   const issue=JSON.parse(outer.message.slice(outer.message.indexOf('{'))) as {referenceId:string;frameCount:number;observationCount:number;missingFrameIndices:number[];requiredFrameIndices:number[];recovery:{read:unknown;writeOperation:string;applyReferenceNotesRequired:boolean}}
+   assert.equal(issue.referenceId,'ref');assert.equal(issue.frameCount,3);assert.equal(issue.observationCount,2);assert.deepEqual(issue.missingFrameIndices,[1]);assert.deepEqual(issue.requiredFrameIndices,[0,1,2]);assert.deepEqual(issue.recovery.read,{action:'video.studio',studioRequest:{operation:'read-reference',draftId:draft.id,expectedRevision:draft.revision,referenceId:'ref'}});assert.equal(issue.recovery.writeOperation,'set-reference-analysis');assert.equal(issue.recovery.applyReferenceNotesRequired,false);return true
+  })
+  assert.deepEqual(f.service().journal.read(),before);assert.equal(fs.readFileSync(path.join(f.store.directory,draft.id+'.json'),'utf8'),saved)
+  refs[0].analysis=original;f.store.recordReference(draft.id,draft.revision,refs);await f.record();assert.equal((await f.service().preflight()).ready,true)
+ }finally{f.close()}
+})
+
+test('An acquisition ID typo returns a closed exact-source lookup without correcting or executing the failed shot',async()=>{
+ const f=await shotFixture();try{
+  const citation=f.shots[0].citations[0],badId=citation.acquisitionId.slice(0,-1)+(citation.acquisitionId.endsWith('9')?'8':'9')
+  await assert.rejects(f.batch().execute({operation:'prepare-shots',shots:[{...f.shots[0],citations:[{...citation,acquisitionId:badId}]}]},'agent'),error=>{
+   const text=String(error),data=JSON.parse(text.split('SHOT_CITATION_BINDING: ')[1].split('; ')[0]) as {acquisitionId:string;bindingHint?:unknown;lookupRecovery:unknown}
+   assert.equal(data.acquisitionId,badId);assert.equal(data.bindingHint,undefined);assert.deepEqual(data.lookupRecovery,{action:'library.streams',streamRequest:{operation:'sources',projectId:f.owner.projectId,sourceId:citation.sourceId,limit:20}});return true
+  })
+  const page=f.kernel.projectSources!().search!({sourceId:citation.sourceId,limit:20});assert.ok(page.items.some(row=>row.source.id===citation.sourceId&&row.acquisition.id===citation.acquisitionId));assert.ok(page.items.every(row=>row.source.id===citation.sourceId));assert.equal(f.nativeCalls.length,0);assert.equal(f.store.read(f.batchDraft.id).scenes.length,0)
  }finally{f.close()}
 })

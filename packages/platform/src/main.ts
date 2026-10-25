@@ -1,6 +1,7 @@
 import {BackgroundCollectionScope,passiveCollectionUserRead} from './background-collection.js'
 import {BackgroundAdmission,backgroundDiagnostic} from './background-admission.js'
 import {assistantTasks} from './assistant-tasks.js'
+import {historicalCaptureOrigin} from './capture-history-origin.js'
 import type {CollectionBinding} from './feature-contract.js'
 import type {BrowserFeatureHost} from '@bmw-agent/browser-capability/host'
 import {assistantActivity} from './assistant-activity.js'
@@ -1062,6 +1063,7 @@ async function createApp() {
   browserKernel.beforeUserTask=raw=>passiveCollectionUserRead(raw)?undefined:assistantService?.host.yieldBackground()
   browserKernel.setRecordingController(mediaController)
   browserKernel.projectSources=()=>{const project=projectStore.active();return new ProjectSourceStore(project.directory,project.id)}
+  browserKernel.capturedVideoOrigin=async(owner,artifactId,signal)=>{const project=projectStore.active();if(project.id!==owner.projectId||!assistantService)throw new Error('Capture origin Project is unavailable.');const row=assistantService.conversations.get(owner.sessionId,owner.projectId);assistantService.history.validateBinding(row);const result=await historicalCaptureOrigin(assistantService.history.snapshot(owner.sessionId),owner,path.join(project.directory,'artifacts'),artifactId,signal);if(projectStore.active().id!==project.id)throw new Error('Capture origin Project changed.');return result}
   scheduledTaskManager = new ScheduledTaskManager({
     store: scheduledTaskStore,
     canStart:task=>task.intervalMinutes!==60||(backgroundWorkReason('hourly',task.projectId)??true),

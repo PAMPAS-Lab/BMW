@@ -22,7 +22,7 @@ export function assertNewsScenePreparation(raw:unknown):NewsScenePreparation {
  if(!Array.isArray(s.materials)||!s.materials.length||s.materials.length>8)throw new TypeError('Preparation requires one to eight actual scene materials.')
  const materials=s.materials.map(raw=>{const m=mediaRecord(raw);closed(m,['artifactId','referenceId','kind','observation','relation']);if(!['real-footage','still','diagram'].includes(String(m.kind)))throw new TypeError('Unknown preparation material kind.');return {artifactId:assertArtifactId(m.artifactId),referenceId:preparationId(m.referenceId),kind:m.kind as NewsScenePreparation['materials'][number]['kind'],observation:text(m.observation,600),relation:text(m.relation,600)}})
  if(new Set(materials.map(m=>m.artifactId)).size!==materials.length)throw new TypeError('Duplicate prepared material.')
- const o=mediaRecord(s.originalSpeech);closed(o,['mode','quote','translation','reason']);if(!['source','not-used'].includes(String(o.mode)))throw new TypeError('Unknown original speech mode.')
+ const o=mediaRecord(s.originalSpeech);closed(o,['mode','quote','translation','reason']);if(!['source','not-used'].includes(String(o.mode)))throw new TypeError('Original speech mode must be source or not-used.')
  return {sceneId:preparationId(s.sceneId),fingerprint:preparationHash(s.fingerprint),intent:text(s.intent,600),dateLabel:text(s.dateLabel,160),materials,originalSpeech:{mode:o.mode as 'source'|'not-used',quote:text(o.quote,1000,o.mode!=='source'),translation:text(o.translation,1000,o.mode!=='source'),reason:text(o.reason,600,o.mode==='source')}}
 }
 export function assertNewsPreparationRequest(raw:unknown):NewsPreparationRequest {

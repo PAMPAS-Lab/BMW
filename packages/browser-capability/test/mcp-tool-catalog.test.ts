@@ -7,6 +7,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import crypto from 'node:crypto'
 import {Ajv} from 'ajv'
+import {compactToolSchema} from '../src/tool-schema-compaction.js'
 import product from '../../../apps/bmw/product.js'
 import { BrowserCapabilityRegistry } from '../src/browser-capability-registry.js'
 import { browserToolCatalog } from '../src/tool-catalog.js'
@@ -146,4 +147,47 @@ test('Source-frame model image admission rechecks the native PNG hash after serv
  const registry=new BrowserCapabilityRegistry(product),bridge=await createBridgeServer({async execute(){if(tamper)await fs.appendFile(file,'changed');return {frames:[{artifactId:'tail.png',path:file,type:'screenshot',sha256}]}}},{toolDefinition:registry.toolDefinition(),resolveProject:()=>({id:'source-project',directory:root}),activeProjectId:()=> 'source-project'})
  t.after(()=>bridge.close());const binding=bridge.registerSession('source-session',root),invoke=async()=>{const response=await fetch(bridge.url+'/execute',{method:'POST',headers:{authorization:'Bearer '+bridge.token,'content-type':'application/json'},body:JSON.stringify({binding,arguments:{action:'media.capture.frames.sample',artifactId:'video.webm',sourceTimestampsSeconds:[59.99]}})});return response.json() as Promise<{ok:boolean;images?:unknown[];error?:string}>}
  assert.equal((await invoke()).images?.length,1);tamper=true;const rejected=await invoke();assert.equal(rejected.ok,false);assert.match(rejected.error!,/PNG changed before image admission/)
+})
+
+test('Wire schema factoring preserves full BMW validation, deterministic catalogs and unchanged native help contracts',()=>{
+ const registry=new BrowserCapabilityRegistry(product),raw=registry.inputSchema(),before=JSON.stringify(raw),wire=registry.toolDefinition().inputSchema
+ assert.ok(JSON.stringify(wire).length<before.length*.7,'Repeated full schemas must materially shrink on the wire')
+ assert.equal(JSON.stringify(registry.inputSchema()),before,'Factoring must not mutate native action contracts')
+ assert.deepEqual(registry.toolDefinition().inputSchema,wire,'Effective catalog must remain deterministic')
+ const fullValidate=new Ajv({strict:false}).compile(raw),wireValidate=new Ajv({strict:false}).compile(wire)
+ const requests=[{action:'status'},{action:'status',artifactId:'forbidden.png'},{action:'page.text.find',selector:'p',text:'Share your behavior'},
+  {action:'library.sources',sourceRequest:{operation:'collect',expectedRevision:0,bodySelector:'p'}},
+  {action:'library.sources',sourceRequest:{operation:'collect',expectedRevision:0,bodySelector:'p',callerCode:'forbidden'}},
+  {action:'video.studio',studioRequest:{operation:'context'}},
+  ...[1333333,-1].map(ticks=>({action:'video.studio',studioRequest:{operation:'apply-edit',draftId:'draft',expectedRevision:1,edit:{version:1,commands:[{op:'clip.trim',clipId:'clip',edge:'end',time:{ticks}}]}}})),
+  {action:'video.studio',studioRequest:{operation:'apply-edit',edit:{version:1,commands:[{op:'clip.trim',clipId:'clip',edge:'end',time:{ticks:1,secret:true}}]}}},
+  {action:'media.image.draw',width:320,height:180,shapes:[{type:'text',x:1,y:1,text:'Visible',color:'#172536'}]},
+  {action:'media.image.draw',width:320,height:180,shapes:[{type:'script',text:'forbidden'}]},
+  {action:'shell',command:'forbidden'}]
+ for(const request of requests)assert.equal(wireValidate(request),fullValidate(request),JSON.stringify(request))
+ assert.equal(wireValidate(requests[0]),true);assert.equal(wireValidate(requests[1]),false)
+ const native=registry.help('video.studio',{forOperation:'describe-edit'}) as {inputSchema:unknown};assert.ok(native.inputSchema,'Exact native operation help remains available')
+})
+
+test('Factoring keeps embedded schema identifiers local, literal data intact, and existing references/vocabularies untouched',()=>{
+ const shared={type:'object',additionalProperties:false,required:['value'],description:'Shared description '.repeat(30),properties:{value:{type:'integer',minimum:1,maximum:3}}}
+ const inner={...shared,properties:{value:{const:'inner'}}},schema={type:'object',properties:{left:shared,right:shared,embedded:{$id:'https://bmw.local/test/embedded',type:'object',properties:{a:inner,b:inner}}}}
+ const compact=compactToolSchema(schema) as Record<string,unknown>,rootDefs=compact.$defs as Record<string,unknown>,properties=compact.properties as Record<string,Record<string,unknown>>
+ assert.ok(rootDefs&&properties.embedded.$defs);assert.equal(properties.embedded.$id,'https://bmw.local/test/embedded')
+ const validate=new Ajv({strict:false}).compile(compact)
+ assert.equal(validate({left:{value:1},right:{value:3},embedded:{a:{value:'inner'},b:{value:'inner'}}}),true)
+ assert.equal(validate({left:{value:1},embedded:{a:{value:1}}}),false,'Nested references must not resolve to the outer resource')
+ assert.equal(validate({left:{value:4}}),false);assert.deepEqual(compactToolSchema(compact),compact)
+ const literal={type:'object',const:{$ref:'literal-data-not-a-schema',note:'x'.repeat(400)}},data=compactToolSchema({type:'object',properties:{one:literal,two:literal}}),dataValidate=new Ajv({strict:false}).compile(data)
+ assert.equal(dataValidate({one:{$ref:'literal-data-not-a-schema',note:'x'.repeat(400)}}),true);assert.equal(dataValidate({one:{$ref:'different'}}),false)
+ for(const opaque of [{$defs:{shared},properties:{one:{$ref:'#/$defs/shared'}},description:'existing references'}, {type:'object',customVocabulary:{validation:true},properties:{left:shared,right:shared}},{$anchor:'retained',properties:{left:shared,right:shared}},{$schema:'http://json-schema.org/draft-07/schema#',properties:{left:shared,right:shared}},{id:'legacy-id',properties:{left:shared,right:shared}},{$schema:'https://example.com/custom-dialect',properties:{left:shared,right:shared}},{$id:'#legacy-fragment',properties:{left:shared,right:shared}}])assert.deepEqual(compactToolSchema(opaque),opaque)
+})
+
+test('Published descriptions retain every action instruction once and preserve additional feature context',()=>{
+ const registry=new BrowserCapabilityRegistry(product),definition=registry.toolDefinition(),branches=definition.inputSchema.oneOf as {description:string}[]
+ const descriptions=branches.map(branch=>branch.description).join(' ')
+ for(const action of registry.actions.values())assert.ok(descriptions.includes(action.description))
+ for(const feature of product.features??[])if(feature.browserDescription&&descriptions.includes(feature.browserDescription))assert.equal(definition.description.includes(feature.browserDescription),false,'Exact duplicate overview belongs in schema branches, not repeated in tool prose')
+ const extra=new BrowserCapabilityRegistry({id:'fixture',name:'Fixture',features:[{id:'extra',browserDescription:'Additional context with no corresponding action description.'}]}).toolDefinition()
+ assert.match(extra.description,/Additional context with no corresponding action description/)
 })

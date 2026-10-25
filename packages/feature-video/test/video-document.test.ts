@@ -20,8 +20,34 @@ import {planCardTemplate} from '../src/studio-card-templates.js'
 import {cardMetricText,cardPaintScene} from '../../media-native/src/card-templates.js'
 import type {CardContentContract} from '../../media-native/src/card-templates.js'
 import {studioToolGuide} from '../src/studio-tool-guide.js'
+import {studioRecovery} from '../src/studio-discovery.js'
+import {trimStudioMain} from '../src/studio-main-edits.js'
 import {videoFeature} from '../index.js'
 import {studioAgentResult,studioDraftSummary,studioSceneProjection} from '../src/studio-agent-result.js'
+
+test('Context rejection supplies a valid explicit read request without admitting extra fields or changing edit recovery',()=>{
+ const invalid={operation:'context',draftId:'not-a-context-field',expectedRevision:60}
+ assert.throws(()=>assertStudioRequest(invalid))
+ const detail=JSON.parse(studioRecovery(invalid,new TypeError('Unsupported Studio property.')).message)
+ assert.equal(detail.executed,false)
+ assert.deepEqual(detail.correctedRequest,{action:'video.studio',studioRequest:{operation:'context'}})
+ assertStudioRequest(detail.correctedRequest.studioRequest)
+ const edit=JSON.parse(studioRecovery({operation:'apply-edit'},new TypeError('Missing fields.')).message)
+ assert.equal(edit.correctedRequest,undefined)
+ assert.equal(edit.executed,false)
+})
+
+test('Primary trim retains exact microsecond caption boundaries without erasing deliberate source residuals',()=>{
+ const f=fixture();try{
+  const d=draft(f.store),s=d.scenes[0];s.durationSeconds=10.773;s.captions=[{startSeconds:.5,endSeconds:7.373,text:'保留到镜头尾'}]
+  s.visualSegments=[{id:'trim-source',videoArtifactId:'clip.mp4',sourceStartSeconds:.02699653,durationSeconds:10.773,playbackRate:1,zoom:1,keepSourceAudio:false,sourceVolume:1,transition:'cut',transitionSeconds:.2}]
+  const result=trimStudioMain(d,{sceneId:s.id,kind:'visual',visualSegmentId:'trim-source'},'start',3.4).draft.scenes[0]
+  assert.equal(result.durationSeconds,7.373);assert.equal(result.visualSegments![0].durationSeconds,7.373)
+  const residual=structuredClone(d);residual.scenes[0].captions=[];residual.scenes[0].durationSeconds+=.000000123;residual.scenes[0].visualSegments![0].durationSeconds+=.000000123
+  const second=trimStudioMain(residual,{sceneId:s.id,kind:'visual',visualSegmentId:'trim-source'},'start',3.4).draft.scenes[0]
+  assert.ok(Math.abs(second.durationSeconds-7.373000123)<1e-12)
+ }finally{f.close()}
+})
 import {studioPage} from '../src/studio-read-contract.js'
 import {assertComposition,compositionDuration,COMPOSITION_LIMITS} from '../../media-native/src/composition-contract.js'
 import {compositionQualityPlan,assertCompositionQuality} from '../../media-native/src/composition-quality.js'
@@ -29,6 +55,26 @@ import {defaultScienceSpec,scienceState} from '../../media-native/src/science-sp
 import {splitStudioScene} from '../src/studio-scene-split.js'
 import {studioPromptContext} from '../src/studio-context.js'
 import {assertVisualLayers} from '../../media-native/src/composition-layers.js'
+
+test('Primary crop edits target actual segmented or single-source footage and preserve clocks, audio and captions atomically',()=>{
+ const f=fixture();try{
+  const d=addStudioLayer(draft(f.store),'one','text').draft
+  d.scenes[0].videoArtifactId='source.mp4';d.scenes[0].keepSourceAudio=true;d.scenes[0].sourceStartSeconds=.25
+  d.scenes[0].captions=[{startSeconds:0,endSeconds:1,text:'Keep this caption'}]
+  d.scenes[1].visualSegments=[{id:'segment',videoArtifactId:'second.mp4',sourceStartSeconds:.5,durationSeconds:d.scenes[1].durationSeconds,playbackRate:1,zoom:1,keepSourceAudio:true,transition:'cut',transitionSeconds:.3}]
+  const doc=videoDocumentFromDraft(d),one=doc.content.timeline.tracks.find(t=>t.role==='primary'&&t.sceneId==='one')!.clips[0],two=doc.content.timeline.tracks.find(t=>t.role==='primary'&&t.sceneId==='two')!.clips[0],overlay=doc.content.timeline.tracks.find(t=>t.role==='overlay')!.clips[0]
+  const crop={x:.36,y:.36,width:.36,height:.64},edit={version:1 as const,commands:[{op:'clip.crop' as const,clipId:one.id,crop},{op:'clip.crop' as const,clipId:two.id,crop}]}
+  assert.equal(new Ajv2020({strict:false}).compile(videoEditSchema)(edit),true)
+  const before=JSON.stringify(d),changed=applyVideoEdit(d,edit)
+  assert.deepEqual(changed.scenes[0].crop,crop);assert.deepEqual(changed.scenes[1].visualSegments![0].crop,crop)
+  const restored=applyVideoEdit(changed,{version:1,commands:[{op:'clip.crop',clipId:one.id,crop:null},{op:'clip.crop',clipId:two.id,crop:null}]})
+  assert.deepEqual(restored.scenes,assertVideoDraft(d).scenes);assert.equal(JSON.stringify(d),before)
+  assert.throws(()=>applyVideoEdit(d,{version:1,commands:[edit.commands[0],{op:'clip.crop',clipId:overlay.id,crop}]}),/primary footage/)
+  assert.throws(()=>assertVideoEdit({version:1,commands:[{op:'clip.crop',clipId:one.id,crop:{...crop,x:.9}}]}))
+  assert.throws(()=>assertVideoEdit({version:1,commands:[{op:'clip.crop',clipId:one.id,crop,artifactId:'foreign.mp4'}]}),/Unsupported edit field/)
+  assert.equal(JSON.stringify(d),before)
+ }finally{f.close()}
+})
 
 test('Preparation summaries expose missing citations without certifying video motion; timeline identifies primary objects and edit clock',()=>{
  const f=fixture();try{
@@ -166,6 +212,13 @@ test('Browser model reads and mutations use bounded projections while GUI retain
   const note2=await call({operation:'read-preparation',draftId:id,expectedRevision:2,briefSection:'notes',pageOffset:4000});assert.equal(note2.offset,4000)
   const descriptor=await call({operation:'describe-schema'});assert.equal(descriptor.documentSchema,undefined);assert.equal(descriptor.editSchema,undefined)
   const command=await call({operation:'describe-edit',editOperation:'card.set'});assert.ok(JSON.stringify(command).length<5000);assert.ok(JSON.stringify(command).includes('describe-template'))
+  const batch=await call({operation:'describe-edit',editOperations:['clip.trim','captions.set','scene.set','layer.set']})
+  const described=batch.operations as Record<string,unknown>[],omitted=batch.omittedOperations as string[]
+  assert.deepEqual([...described.map(item=>item.editOperation),...omitted].sort(),['clip.trim','captions.set','scene.set','layer.set'].sort())
+  assert.ok(Buffer.byteLength(JSON.stringify(described))<=16000)
+  assert.ok(described.length>=2)
+  assert.equal(f.store.read(id).revision,2)
+  for(const request of [{operation:'describe-edit',editOperations:[]},{operation:'describe-edit',editOperation:'clip.trim',editOperations:['clip.trim']},{operation:'describe-edit',editOperations:['clip.trim','clip.trim']},{operation:'describe-edit',editOperations:['unknown.command']}])await assert.rejects(call(request))
   await assert.rejects(call({operation:'read-scene',draftId:id,expectedRevision:1,sceneId:'opening'}),/STUDIO_CONFLICT/)
   const before=JSON.stringify(f.store.read(id));await assert.rejects(call({operation:'apply-edit',draftId:id,expectedRevision:2,edit:{version:1,commands:[{op:'scene.add',scene:{id:'new',title:'不得部分保存'}},{op:'scene.add',scene:{id:'opening',title:'重复'}}]}}),/Duplicate/);assert.equal(JSON.stringify(f.store.read(id)),before)
   assert.throws(()=>assertVideoEdit({version:1,commands:[{op:'scene.add',scene:{id:'fake',title:'伪造',audioDurationSeconds:10}}]}),/FIELD/)
@@ -396,6 +449,17 @@ test('Caption translation commands batch scenes under one draft CAS and preserve
 
 test('Editorial batch discovery returns exact preparation branch and translation command without unrelated schemas',async()=>{
  const action=videoFeature.browserActions.find(a=>a.action==='video.studio')!
+ const index=await action.help!({forOperation:'news-preparation'}) as {inputSchema:object;schemaSubOperations:string[];schemaCoverage:string}
+ const readOnly=new Ajv2020({strict:false}).compile(index.inputSchema)
+ assert.deepEqual(index.schemaSubOperations,['read','preflight'])
+ for(const operation of index.schemaSubOperations){
+  const request={action:'video.studio',studioRequest:{operation:'news-preparation',draftId:'known-draft',expectedRevision:2,preparationRequest:{operation}}}
+  assert.equal(readOnly(request),true,JSON.stringify(readOnly.errors));assert.doesNotThrow(()=>assertStudioRequest(request.studioRequest))
+  assert.equal(readOnly({...request,studioRequest:{...request.studioRequest,preparationRequest:{operation,sceneIds:['one']}}}),false)
+ }
+ assert.equal(readOnly({action:'video.studio',studioRequest:{operation:'news-preparation',draftId:'known-draft',preparationRequest:{operation:'read'}}}),false,'current draft revision remains required')
+ assert.equal(readOnly({action:'video.studio',studioRequest:{operation:'news-preparation',draftId:'known-draft',expectedRevision:2,preparationRequest:{operation:'enable',expectedChecklistRevision:0,originalSpeechRequired:true}}}),false,'index help must not imply write admission')
+ assert.ok(Buffer.byteLength(JSON.stringify(index))<4096,'common read discovery stays bounded')
  const help=await action.help!({forOperation:'news-preparation',forSubOperation:'record-scenes'}) as {inputSchema:object;subOperations:string[]}
  const validate=new Ajv2020({strict:false}).compile(help.inputSchema)
  assert.equal(validate({action:'video.studio',studioRequest:{operation:'news-preparation',draftId:'known-draft',expectedRevision:2,preparationRequest:{operation:'record-scenes',expectedChecklistRevision:1,scenes:[]}}}),false,'empty declarations never become auto-approved')

@@ -8,7 +8,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import crypto from 'node:crypto'
-import {app,session} from 'electron'
+import {app,session,BrowserWindow} from 'electron'
+import {BrowserKernel} from '../packages/browser-capability/src/browser-kernel.js'
+import {BrowserCapabilityRegistry} from '../packages/browser-capability/src/browser-capability-registry.js'
+import {bmwProduct} from '../packages/product-bmw/index.js'
 import {MediaController} from '../packages/media-native/src/media-controller.js'
 import {MediaProcessor} from '../packages/media-native/src/media-processor.js'
 import {assertSpeechEvidence,speechSourceSegments} from '../packages/media-native/src/speech-contract.js'
@@ -42,6 +45,15 @@ async function run(){
   const result=assertSpeechEvidence(await media.processArtifact({action:'media.speech.align',artifactId:sourceArtifactId,model:'base'}));assert.equal(result.sourceSha256,hash(original));assert.equal(result.automaticTimingApproved,false);assert.equal(result.wordTimingAvailable,false);assert.ok(result.segments.length>0)
   const selectedEnd=Math.min(result.durationSeconds,7),intervalSpeech=assertSpeechEvidence(await media.processArtifact({action:'media.speech.align',artifactId:sourceArtifactId,model:'base',sourceRange:{startSeconds:1,endSeconds:selectedEnd}}))
   assert.equal(intervalSpeech.timeDomain,'normalized-interval-seconds');assert.equal(intervalSpeech.sourceSha256,result.sourceSha256);assert.equal(intervalSpeech.normalization.sourceRange!.startSeconds,1);assert.ok(speechSourceSegments(intervalSpeech).every(s=>s.startSeconds>=1));assert.ok(Math.abs(intervalSpeech.durationSeconds-(selectedEnd-1))<=1/16000)
+  const browserWindow=new BrowserWindow({show:false,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false}})
+  try{
+   const kernel=new BrowserKernel({window:browserWindow,session:isolated,permissionStore:{hasAgentControl:()=>true},projectStore:{active:()=>({id:'speech-public',name:'Disposable speech Project',directory:path.dirname(artifacts)})},capabilityRegistry:new BrowserCapabilityRegistry(bmwProduct),artifactsDirectory:artifacts,onState:()=>{},settingsStore:undefined,sessionContinuity:undefined,allowedActions:undefined});kernel.setRecordingController(media)
+   const exposed=assertSpeechEvidence(await kernel.execute({action:'media.speech.align',artifactId:sourceArtifactId,model:'base',language:'zh',sourceRange:{startSeconds:1,endSeconds:selectedEnd}}))
+   assert.equal(exposed.sourceSha256,result.sourceSha256);assert.equal(exposed.language,'zh');assert.deepEqual(exposed.normalization.sourceRange,{startSeconds:1,endSeconds:selectedEnd});assert.ok(exposed.segments.length>0);assert.equal(media.isCaptureActive(),false)
+   await assert.rejects(kernel.execute({action:'media.speech.align',artifactId:sourceArtifactId,language:'zh',sourceRange:{startSeconds:0,endSeconds:181}}),/180/)
+   console.log('PASS public BMW browser interval ASR without a tab, draft edits or source transcript batches; source hash and interval provenance retained')
+  }finally{browserWindow.destroy()}
+
   console.log('PASS actual local interval ASR: unchanged original SHA, raw normalized times and explicit original source projection')
   for(const [artifactId,expected] of [[result.rawArtifactId,result.rawSha256],[result.normalizedArtifactId,result.normalizedSha256],[result.logArtifactId,result.logSha256]]){const bytes=fs.readFileSync(path.join(artifacts,artifactId));assert.equal(hash(bytes),expected)}
   const raw=JSON.parse(fs.readFileSync(path.join(artifacts,result.rawArtifactId),'utf8'));assert.equal(raw.params.model,'model.bin');assert.equal(raw.params.language,'zh')

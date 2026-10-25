@@ -16,10 +16,19 @@ import {readingCrop,speechReadingCrop,paintHighlights,paintDetailedCard,detailed
 import {phoneReadingView} from './phone-reading.js'
 import type {SourceRect} from '../card-details.js'
 export interface CompositionVisualBox {artifactId:string;crop:SourceRect;x:number;y:number;width:number;height:number}
-import {fitText,templateBoxes} from './composition-text.js'
+import {fitText,templateBoxes,wrapText} from './composition-text.js'
 export {reviewSceneText,assertCompositionText} from './composition-text.js'
 const font = '"PingFang SC", "Microsoft YaHei", sans-serif'
-function lines(context:CanvasRenderingContext2D,text:string,width:number):string[]{const result:string[]=[];let line='';for(const character of text){if(character==='\n'){result.push(line);line='';continue}if(character==='\r')continue;if(context.measureText(line+character).width>width&&line){result.push(line);line=''}line+=character}if(line)result.push(line);return result}
+const footerCache=new WeakMap<CanvasRenderingContext2D,WeakMap<CompositionScene,{key:string;top:number}>>()
+/** Reserve the entire scene's bottom-caption footprint, so the media window
+ * cannot pulse when a short caption changes to a three-line bilingual block. */
+function captionFooterTop(context:CanvasRenderingContext2D,identity:CompositionScene,scene:CompositionScene,W:number,cues:NonNullable<CompositionScene['captions']>):number{
+ const key=JSON.stringify([W,scene.captionDisplay,scene.captionStyle,cues]),entries=footerCache.get(context)??new WeakMap<CompositionScene,{key:string;top:number}>();footerCache.set(context,entries)
+ const saved=entries.get(identity);if(saved?.key===key)return saved.top
+ let top=Infinity
+ if(!scene.captionStyle?.position||scene.captionStyle.position==='bottom')for(const cue of cues){const box=captionLayout(context,captionText(cue,scene.captionDisplay),W,scene.captionStyle,Boolean(cue.translationText)).box;if(box&&box.y>=432)top=Math.min(top,box.y)}
+ entries.set(identity,{key,top});return top
+}
 /** A single responsive painter is used by Studio preview and MP4 export. */
 export function paintScene(context:CanvasRenderingContext2D,scene:CompositionScene,frame:CompositionCanvasFrame|null,time:number,_duration:number,index:number,total:number,narrationDuration:number,output?:Pick<MediaComposition,'width'|'height'|'style'|'watermark'>&Partial<Pick<MediaComposition,'title'|'cardLayout'>>,onText?:(box:CompositionTextBox)=>void,cardAssets?:ReadonlyMap<string,{image?:HTMLCanvasElement}>,onVisual?:(box:CompositionVisualBox)=>void):void {
   const height=output?.height??720,width=output?.width??1280,W=720*width/height,H=720,margin=W<600?24:48
@@ -33,7 +42,11 @@ export function paintScene(context:CanvasRenderingContext2D,scene:CompositionSce
   const watermark=output?.watermark??DEFAULT_VIDEO_OPTIONS.watermark,headerOffset=!news&&watermark.enabled&&watermark.position.startsWith('top')?24:0
   const clock=scenePlaybackClock(scene,index,total),presentationTime=clock.startSeconds+time
   const ease=card&&card.motion!=='fade-in'?1:1-Math.pow(1-Math.min(1,presentationTime/.8),3)
-  const textBox=(kind:CompositionTextBox['kind'],index:number,text:string,x:number,y:number,size:number,offset=0)=>{if(!onText||!text||(ease<=0&&(kind==='title'||!scene.sceneTemplate)))return;const measured=context.measureText(text);onText?.({kind,index,x:x/W,y:(y-size+offset)/H,width:Math.max(1,measured.width)/W,height:size*1.3/H})}
+  let headerBottom=0
+  const textBox=(kind:CompositionTextBox['kind'],index:number,text:string,x:number,y:number,size:number,offset=0)=>{
+    if(kind==='title'&&text)headerBottom=Math.max(headerBottom,y+Math.max(size*.3,context.measureText(text).actualBoundingBoxDescent??0)+18)
+    if(!onText||!text||(ease<=0&&(kind==='title'||!scene.sceneTemplate)))return;const measured=context.measureText(text);onText({kind,index,x:x/W,y:(y-size+offset)/H,width:Math.max(1,measured.width)/W,height:size*1.3/H})
+  }
   if(light||minimal){context.fillStyle=light?'#f8fafc':'#111111'}else{const gradient=context.createLinearGradient(0,0,W,H);gradient.addColorStop(0,'#101827');gradient.addColorStop(1,'#181b36');context.fillStyle=gradient}
   if(scene.sceneTemplate?.backgroundColor)context.fillStyle=scene.sceneTemplate.backgroundColor
   if(news)context.fillStyle=light?'#f8fafc':'#232323'
@@ -54,14 +67,20 @@ export function paintScene(context:CanvasRenderingContext2D,scene:CompositionSce
     context.font=`700 ${fitted.size}px ${font}`
     fitted.lines.forEach((line,row)=>{const y=178+row*fitted.size*1.3;context.fillText(line,margin,y);textBox('title',0,line,margin,y,fitted.size,18*(1-ease))})
   }else if(W<600||scene.title.includes('\n')){
-    const titleLines=lines(context,scene.title,W-margin*2)
+    const titleLines=wrapText(context,scene.title,W-margin*2)
     const displayed=titleLines.length>2?[titleLines[0],titleLines.slice(1).join('')]:titleLines
     displayed.forEach((line,row)=>{const measured=context.measureText(line).width,size=Math.min(W<600?titleBase:28,titleBase*(W-margin*2)/Math.max(1,measured)),y=(displayed.length>1?(W<600?77:61)+row*30:91)+headerOffset;context.font=`700 ${size}px ${font}`;context.fillText(line,margin,y);textBox('title',0,line,margin,y,size,18*(1-ease));context.font=`700 ${titleBase}px ${font}`})
   }else{const titleSize=Math.min(titleBase,titleBase*(W-margin*2)/Math.max(1,context.measureText(scene.title).width));context.font=`700 ${titleSize}px ${font}`;context.fillText(scene.title,margin,91+headerOffset);textBox('title',0,scene.title,margin,91+headerOffset,titleSize,18*(1-ease))}
   context.restore()
+  const cues=scene.captions??estimatedCaptionCues(scene,width,height,narrationDuration)
   const visual=visualAtTime(scene,time),framing=visual?.segment??scene
   if(frame){
     const baseArea=news?{x:margin,y:236,width:W-margin*2,height:scene.sceneTemplate?.kind==='screenshot'?280:362}:scene.layout==='fullscreen'?{x:0,y:110+headerOffset,width:W,height:510-headerOffset}:{x:margin,y:122+headerOffset,width:W-margin*2,height:(scene.sceneTemplate?.kind==='screenshot'?390:484)-headerOffset}
+    if(!news&&!card&&W<600&&scene.layout==='fullscreen'){
+      const bottom=Math.min(baseArea.y+baseArea.height,captionFooterTop(context,originalScene,scene,W,cues)-12),top=Math.max(baseArea.y,headerBottom+12)
+      if(bottom-top<120)throw new Error('STUDIO_TEXT_LAYOUT: Portrait title and captions leave too little visual space.')
+      baseArea.y=top;baseArea.height=bottom-top
+    }
     let area=detailedVisualArea(card?.version===2?card:undefined,baseArea)
     const focused=focusFraming(framing,visual?.localSeconds??time),reading=card?.version===2&&'reading'in card?card.reading:undefined
     const phone=phoneReadingView(reading,framing.imageArtifactId,focused.crop,frame.canvas.width,frame.canvas.height,area,presentationTime,clock.durationSeconds,W,scene.cardCues)
@@ -127,7 +146,6 @@ export function paintScene(context:CanvasRenderingContext2D,scene:CompositionSce
   if(card?.version===2&&'quote'in card&&originalScene.bullets[0]){context.fillStyle=ink;const fit=fitText(context,originalScene.bullets[0],W-margin*2,1,16);if(fit.overflow)throw new Error('STUDIO_TEXT_LAYOUT: 引述说明过长。');context.font=`600 ${fit.size}px ${font}`;context.fillText(fit.lines[0]??'',margin,228)}
   if(card?.version===2)paintDetailedCard(context,card,W,presentationTime,clock.durationSeconds,cardAssets,{ink,muted:light?'#65758b':'#c4cbd7',accent,panel:light?'#e7edf5':'#354152',connection:light?'#2369db':'#8ebaff',mark:light?'#946200':'#ffcc33',rangeFill:light?'#207a6a':'#62b5a6'},undefined,scene.cardCues)
   // Estimated sentence captions follow measured audio; no word-alignment claim.
-  const cues=scene.captions??estimatedCaptionCues(scene,width,height,narrationDuration)
   const cue=cues.find(cue=>time>=cue.startSeconds&&time<cue.endSeconds),caption=cue?captionText(cue,scene.captionDisplay):''
   const look=scene.captionStyle,layout=captionLayout(context,caption,W,look,Boolean(cue?.translationText)),backing=captionBacking(look?.color??ink)
   if(layout.overflow)throw new Error('STUDIO_TEXT_LAYOUT: 字幕超出显示行数。')

@@ -5,7 +5,25 @@ import path from 'node:path'
 import test from 'node:test'
 import type {AgentConversation} from '@bmw-agent/agent-contract'
 import { AgentHistoryStore } from '../src/agent-history-store.js'
+import crypto from 'node:crypto'
+import {historicalCaptureOrigin} from '../src/capture-history-origin.js'
 const owner=(sessionId:string):AgentConversation=>({sessionId,projectId:'project',driverId:'fixture',externalSessionId:null,title:'Session',createdAt:1,updatedAt:1,archivedAt:null,parentSessionId:null,status:'idle'})
+test('Historical native capture identity survives restart only with paired admitted calls and unchanged capture-index bytes',async t=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-historical-capture-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));const directory=path.join(root,'artifacts');fs.mkdirSync(directory)
+ const artifactId='capture.webm',videoIdentity={version:1,platform:'youtube',targetId:'official-film',resourceId:'official-film'},bytes=Buffer.from('native captured fixture bytes'),sha256=crypto.createHash('sha256').update(bytes).digest('hex');fs.writeFileSync(path.join(directory,artifactId),bytes)
+ fs.writeFileSync(path.join(directory,artifactId+'.source.json'),JSON.stringify({version:1,sourceArtifactId:artifactId,videoSha256:sha256,basis:'requestVideoFrameCallback.mediaTime',fileTimestampMapping:'unavailable',status:'unavailable',reason:'legacy fixture',durationAtStartSeconds:10,sourceDurationSeconds:10,sourceStartSeconds:0,sourceEndSeconds:1,frames:[]}))
+ const store=new AgentHistoryStore(path.join(root,'history'),owner);store.prepare('session','run','user','capture');store.append({sessionId:'session',runId:'run',sequence:1,createdAt:1,event:{type:'input.accepted',receiptId:'native-run'}})
+ store.append({sessionId:'session',runId:'run',sequence:2,createdAt:2,event:{type:'tool.started',callId:'native-capture',name:'browser',action:'media.video.capture'}})
+ store.append({sessionId:'session',runId:'run',sequence:3,createdAt:3,event:{type:'tool.completed',callId:'native-capture',success:true,message:JSON.stringify({artifactId,type:'video',contentType:'video/webm',videoIdentity,captureTimeline:{indexArtifactId:artifactId+'.source.json'}})}})
+ const binding={projectId:'project',sessionId:'session'},history=new AgentHistoryStore(path.join(root,'history'),owner).snapshot('session')
+ assert.equal((await historicalCaptureOrigin(history,binding,directory,artifactId))?.sha256,sha256)
+ await assert.rejects(historicalCaptureOrigin(history,{...binding,projectId:'foreign'},directory,artifactId),/Project\/Session/)
+ const failed=structuredClone(history);const completed=failed.events[2]!.event;if(completed.type==='tool.completed')completed.success=false;assert.equal(await historicalCaptureOrigin(failed,binding,directory,artifactId),undefined)
+ const wrong=structuredClone(history);const started=wrong.events[1]!.event;if(started.type==='tool.started')started.action='observe';assert.equal(await historicalCaptureOrigin(wrong,binding,directory,artifactId),undefined)
+ const unpaired=structuredClone(history);const ended=unpaired.events[2]!.event;if(ended.type==='tool.completed')ended.callId='different-call';assert.equal(await historicalCaptureOrigin(unpaired,binding,directory,artifactId),undefined)
+ const cancelled=new AbortController();cancelled.abort(new Error('cancelled'));await assert.rejects(historicalCaptureOrigin(history,binding,directory,artifactId,cancelled.signal),/cancelled/)
+ fs.appendFileSync(path.join(directory,artifactId),'tampered');await assert.rejects(historicalCaptureOrigin(history,binding,directory,artifactId),/CAPTURE_SOURCE_CHANGED/)
+})
 test('display history survives restart, keeps bounded ordered streaming and cannot replace submission receipts', t => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-agent-history-'))
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }))

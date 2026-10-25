@@ -3,8 +3,9 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
-import { codexModelTools, codexThreadParameters, codexProtocolVersion } from '../src/codex-policy.js'
-import {codexBrowserModelCatalog,materializeCodexBrowserCatalog} from '../src/codex-model-catalog.js'
+import { codexModelTools, codexThreadParameters, codexProtocolVersion, codexDisabledMcpServers } from '../src/codex-policy.js'
+import type {CodexRpc} from '../src/codex-rpc.js'
+import {codexBrowserModelCatalog,materializeCodexBrowserCatalog,refreshCodexBrowserCatalog,CodexCatalogRefreshCache} from '../src/codex-model-catalog.js'
 test('Codex protocol admits verified patch versions and reports detected and supported versions',()=>{
   for(const version of ['0.160.0','0.160.1']){
     assert.equal(codexProtocolVersion('codex-cli '+version),version)
@@ -23,6 +24,44 @@ test('Codex effective catalog reads Responses and Responses Lite additional_tool
   assert.deepEqual(codexModelTools({ ...lite, tools: [{ type: 'function', name: 'browser' }] }).map(row => row.name), ['browser', 'exec', 'spawn_agent'])
   assert.throws(() => codexModelTools({ input: [{ type: 'additional_tools', tools: 'browser' }] }), /Invalid/)
 })
+test('Codex accepts a newer shared official model cache without admitting its CLI protocol or extra tools',()=>{
+  const source={...officialCatalog(),client_version:'0.164.0'},before=structuredClone(source)
+  const projected=codexBrowserModelCatalog(source,'gpt-6.1-sol')
+  assert.deepEqual(source,before)
+  assert.equal(projected.models[0].slug,'gpt-6.1-sol')
+  assert.equal(projected.models[0].use_responses_lite,true)
+  assert.equal(projected.models[0].tool_mode,undefined)
+  assert.equal(projected.models[0].multi_agent_version,undefined)
+  assert.deepEqual(projected.models[0].experimental_supported_tools,[])
+  assert.throws(()=>codexProtocolVersion('codex-cli 0.164.0'),/0.164.0/)
+  assert.throws(()=>codexBrowserModelCatalog({...source,client_version:'0.164.1'},'gpt-6.1-sol'),/0.164.1/)
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-codex-shared-cache-'))
+  try{
+    const bytes=JSON.stringify(source),file=path.join(root,'models_cache.json')
+    fs.writeFileSync(file,bytes)
+    const catalog=materializeCodexBrowserCatalog(root,'gpt-6.1-sol')
+    assert.ok(catalog);assert.equal(fs.readFileSync(file,'utf8'),bytes)
+    assert.deepEqual(JSON.parse(fs.readFileSync(catalog,'utf8')),projected)
+  }finally{fs.rmSync(root,{recursive:true,force:true})}
+})
+test('Codex reads the selected official CLI catalog without trusting or overwriting a foreign shared cache',async()=>{
+  const root=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'bmw-codex-native-catalog-')))
+  try{
+    const cache=path.join(root,'models_cache.json'),stale='{"client_version":"0.153.4","models":[]}'
+    fs.writeFileSync(cache,stale)
+    const executable=path.join(root,'official-fixture.cts'),native=officialCatalog()
+    fs.writeFileSync(executable,'#!'+process.execPath+'\nif(JSON.stringify(process.argv.slice(2))!==\'['+JSON.stringify('debug')+','+JSON.stringify('models')+']\'||process.env.CODEX_HOME!==process.cwd())process.exit(2);process.stdout.write('+JSON.stringify(JSON.stringify({models:native.models}))+');\n',{mode:0o700})
+    const file=await refreshCodexBrowserCatalog(executable,root,'gpt-6.1-sol','0.160.1',new AbortController().signal)
+    assert.ok(file)
+    const projected=JSON.parse(fs.readFileSync(file,'utf8')) as {models:Record<string,unknown>[]}
+    assert.equal(projected.models[0].slug,'gpt-6.1-sol');assert.equal(projected.models[0].use_responses_lite,true)
+    assert.equal(projected.models[0].tool_mode,undefined);assert.deepEqual(projected.models[0].experimental_supported_tools,[])
+    assert.equal(fs.readFileSync(cache,'utf8'),stale)
+    await assert.rejects(refreshCodexBrowserCatalog(executable,root,'gpt-6.1-sol','0.153.4',new AbortController().signal),/Unverified/)
+    fs.writeFileSync(executable,'#!'+process.execPath+'\nprocess.stdout.write(\'{"models":[]}\');\n',{mode:0o700})
+    await assert.rejects(refreshCodexBrowserCatalog(executable,root,'gpt-6.1-sol','0.160.1',new AbortController().signal),/catalog/)
+  }finally{fs.rmSync(root,{recursive:true,force:true})}
+})
 test('Codex browser thread excludes environments, shell, MCP helpers and question tools before user input', () => {
   const params = codexThreadParameters('/disposable/project', 'gpt-5.5', { name: 'browser', description: 'BMW', inputSchema: { type: 'object' } }, 'context')
   assert.deepEqual(params.environments, [])
@@ -31,6 +70,16 @@ test('Codex browser thread excludes environments, shell, MCP helpers and questio
   assert.equal(config.features.multi_agent, false)
   assert.equal(config.tools.experimental_request_user_input.enabled, false)
   assert.deepEqual(config.mcp_servers, {})
+})
+test('Codex disables inherited MCP entries without carrying their commands or credentials into thread overrides',async()=>{
+  const source={config:{mcp_servers:{node:{command:'foreign',env:{SECRET:'private'}},computer:{url:'https://invalid.test',enabled:true}}}},before=structuredClone(source)
+  const rpc={async call(method:string,params:unknown){assert.equal(method,'config/read');assert.deepEqual(params,{includeLayers:false});return source}} as Pick<CodexRpc,'call'>
+  const disabled=await codexDisabledMcpServers(rpc)
+  assert.deepEqual(disabled,{node:{enabled:false},computer:{enabled:false}});assert.deepEqual(source,before)
+  const params=codexThreadParameters('/disposable/project','gpt-6.1-sol',{name:'browser',description:'BMW',inputSchema:{type:'object'}},'',disabled)
+  assert.deepEqual((params.config as {mcp_servers:unknown}).mcp_servers,disabled)
+  assert.ok(!JSON.stringify(params).includes('private'));assert.ok(!JSON.stringify(params).includes('foreign'))
+  await assert.rejects(codexDisabledMcpServers({async call(){return {config:{mcp_servers:[]}}}}),/Invalid Agent value/)
 })
 
 test('Codex discovery instructions derive action names from the admitted browser catalog and survive resume parameters',()=>{
@@ -50,6 +99,19 @@ function officialCatalog(){return {client_version:'0.160.0',identity:{account:'p
   {slug:'gpt-5.5',tool_mode:null,use_responses_lite:false},
   {slug:'gpt-6-future',tool_mode:'code_mode_only',experimental_supported_tools:['clock']}
 ]}}
+
+test('Codex raw catalog cache avoids repeated refresh but rechecks fingerprints, projection integrity, expiry and cancellation',async t=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-catalog-cache-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}))
+ let clock=0,refreshes=0;const cache=new CodexCatalogRefreshCache(()=>clock,100),signal=new AbortController().signal,file=path.join(root,'projected.json')
+ const refresh=async()=>{refreshes++;fs.writeFileSync(file,'verified-'+refreshes);return file}
+ assert.equal(await cache.get('cli-config-model',refresh,signal),file)
+ await cache.get('cli-config-model',refresh,signal);assert.equal(refreshes,1)
+ fs.writeFileSync(file,'tampered');await cache.get('cli-config-model',refresh,signal);assert.equal(refreshes,2)
+ await cache.get('changed-cli-config-model',refresh,signal);assert.equal(refreshes,3)
+ clock=101;await cache.get('changed-cli-config-model',refresh,signal);assert.equal(refreshes,4)
+ cache.clear();await cache.get('changed-cli-config-model',refresh,signal);assert.equal(refreshes,5)
+ const cancelled=new AbortController();cancelled.abort();await assert.rejects(cache.get('changed-cli-config-model',refresh,cancelled.signal));assert.equal(refreshes,5)
+})
 test('GPT-6 startup catalog changes only tool metadata and preserves native model capabilities and transport',()=>{
   const source=officialCatalog(),before=structuredClone(source),projected=codexBrowserModelCatalog(source,'gpt-6.1-sol')
   assert.deepEqual(source,before);assert.deepEqual(Object.keys(projected),['models'])

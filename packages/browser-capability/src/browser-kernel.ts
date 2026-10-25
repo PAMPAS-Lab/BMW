@@ -1,13 +1,20 @@
+import {prepareVideoCapture} from './video-capture-ready.js'
+import type {CapturePlayerState} from './video-capture-ready.js'
+import {acquireVideoDelivery} from './video-acquisition.js'
+import {textReadSummary,TextReadPageReader} from './text-read-pages.js'
+import {discoveryAccountUrl,discoveryExpression,discoveryObservation} from './hotspot-discovery.js'
+import {assertDiscoveryLeads} from '@bmw-agent/agent-contract/discovery'
 import {collectPageSource} from './collect-page-source.js'
 import {prepareSourceScreenshot} from './source-screenshot.js'
 import {collectionPageReadyExpression,assertCollectionPageReady} from './collection-page-ready.js'
 import type {CollectionPageReady} from './collection-page-ready.js'
-import {navigatePage,closeNavigationPage} from './page-navigation.js'
+import {navigatePage,closeNavigationPage,withNativePageRead} from './page-navigation.js'
 import {sameVideoIdentity,resourceBelongsToTarget,selectVideoResource} from '@bmw-agent/agent-contract/video-identity'
-import type {SourceCollection,ProjectSourcePort,SourceCaptureGuard,VideoTargetScope} from '@bmw-agent/media-native/sources'
+import type {SourceCollection,ProjectSourcePort,SourceCaptureGuard,VideoTargetScope,TextReadDiagnostic,TextReadBatch,TextReadRow} from '@bmw-agent/media-native/sources'
 import {readVideoTargets,prepareVideoTransfer} from './video-target.js'
 import {registerYoutubeSabrPage,bindYoutubeSabrPage} from './youtube-sabr-observation.js'
 import {assertPageScope,pageRangeExpression} from './page-scope.js'
+import {assertPageTextFind,pageTextFindExpression} from './page-text-find.js'
 import crypto from 'node:crypto'
 import {PageRecordingEvents} from './page-recording-events.js'
 import { readRendererPhase } from './renderer-read.js'
@@ -15,7 +22,7 @@ import { readScreenshotPhase } from './screenshot-read.js'
 import { SessionOperations } from './session-operations.js'
 import fs from 'node:fs'
 import path from 'node:path'
-import { nativeImage, WebContentsView, net } from 'electron'
+import { nativeImage, WebContentsView, BrowserWindow, net } from 'electron'
 import { assertBrowserRequest, BROWSER_ACTIONS, targetTabId } from './browser-schema.js'
 import { agentTabsToClose, reusableTab, projectTabsToRestore, MAX_AGENT_TABS_PER_PROJECT } from './tab-policy.js'
 import type {ProjectTabState} from './tab-policy.js'
@@ -23,11 +30,12 @@ import { downloadMediaArtifact } from './media-artifact.js'
 import { createMediaSessionFetch } from './media-session-fetch.js'
 import {preservationResult} from './preservation-result.js'
 import {PagePlayback} from './page-playback.js'
-import {withCollectionPagePool,collectionPageLinksExpression,collectionPageUrl,sameCollectionNavigation,CollectionPageCleanupError} from './collection-page-pool.js'
-import type {CollectionPagePoolOptions,CollectionPageVisit,CollectionPageResult,CollectionPageLink} from './collection-page-pool.js'
+import {withCollectionPagePool,collectionPageLinksExpression,collectionPageUrl,sameCollectionNavigation,textPageReadState,CollectionPageCleanupError,CollectionPageReadError} from './collection-page-pool.js'
+import type {CollectionPagePoolOptions,CollectionPageVisit,CollectionPageResult,CollectionPageLink,CollectionPageRequest} from './collection-page-pool.js'
 import type {ActiveProject} from './browser-host.js'
 
 const PROJECT_BLANK_URL = 'about:blank'
+function diagnosticUrl(raw:unknown):string{try{const url=new URL(String(raw));return ['https:','http:'].includes(url.protocol)?url.origin+url.pathname:''}catch{return ''}}
 interface NavigationTab {id:string;projectId:string|null;view:WebContentsView;source?:string}
 const SEMANTIC_CLASS_STATES = Object.freeze([
   'unread',
@@ -112,6 +120,7 @@ export class BrowserKernel {
   private capturePlaybackTabId:string|null=null
   private playbackAllowed(tab:NavigationTab):boolean{return tab.id===this.capturePlaybackTabId||this.browserVisible&&!this.restoringTabState&&!this.suspendedResearchProjects.has(tab.projectId??'')&&tab.id===this.activeTabId&&(!this.projectStore||tab.projectId===this.projectStore.active().id)}
   private async applyPlayback(tab:NavigationTab,allowed:boolean,forcePause=false):Promise<void>{
+    if(this.deferredNavigation.has(tab.id)){tab.view.webContents.setAudioMuted(true);return}
     try{await this.playback.update(tab.view.webContents,allowed,forcePause)}catch(error){this.#addDiagnostic(tab.id,'media',{message:'Playback policy remains muted; retry on frame load: '+String(error),at:Date.now()})}
   }
   private refreshPlayback(tab:NavigationTab):Promise<void>{return this.applyPlayback(tab,this.playbackAllowed(tab))}
@@ -126,29 +135,18 @@ export class BrowserKernel {
     const saved=projectTabsToRestore(project.tabState),entries=saved.tabs
     const activeUrl = saved.activeUrl || project.homeUrl || PROJECT_BLANK_URL
     if (!entries.length || !entries.some(t=>t.url===activeUrl)) entries.push({url:activeUrl,source:'user'})
-    const failures: string[] = []
     clearTimeout(this.tabStateTimer)
     this.restoringTabState = true
     try {
-      for (const {url,source} of entries) {
+      for(const {url,source} of entries){
         if([...this.tabs.values()].some(tab=>tab.projectId===project.id&&tab.url===url))continue
-        try {
-          await this.openTab({ url, foreground: false, source, reuse: false })
-        } catch (error) {
-          // Retain the requested URL even when an offline page cannot load.
-          const tab = [...this.tabs.values()].filter(value => value.projectId === project.id).at(-1)
-          if (!tab) throw error
-          tab.url = url
-          const message = error instanceof Error ? error.message : String(error)
-          failures.push(message)
-          console.warn(`[BMW] Restored page failed to load without blocking Project activation: ${message}`)
-        }
+        await this.openTab({url,foreground:false,source,reuse:false},undefined,undefined,true)
       }
       const owned = [...this.tabs.values()].filter(tab => tab.projectId === project.id)
       const active = owned.find(tab => tab.url === activeUrl) || owned.at(-1)
       await this.showTab(active.id)
       this.suspendedResearchProjects.delete(project.id)
-      return { ...this.serializeTab(active), ...(failures.length ? { loadError: failures.join('; ') } : {}) }
+      return this.serializeTab(active)
     } finally {
       this.restoringTabState = false
       await Promise.all([...this.tabs.values()].map(tab=>this.refreshPlayback(tab)))
@@ -210,22 +208,37 @@ export class BrowserKernel {
     })
   }
 
+  private readonly networkRequests=new WeakMap<import('electron').WebContents,Map<string,{url:string;resourceType:string}>>()
+  private readonly documentTransfers=new WeakMap<import('electron').WebContents,import('./page-navigation.js').DocumentTransfer&{requestId:string}>()
+  private readonly offscreenPaintFrames=new WeakMap<import('electron').WebContents,number>()
+  private readonly deferredNavigation=new Map<string,string>()
+  private async ensureTabLoaded(tab:NavigationTab,signal?:AbortSignal):Promise<void>{
+    const url=this.deferredNavigation.get(tab.id)
+    if(url)await this.navigateTab(tab,url,signal)
+  }
   private collectionBodyScope?:import('./collection-page-pool.js').CollectionPageSource
   private collectionRestricted=false
   private collectionHTTPStatus=0
+  private collectionNavigationTimeoutMs=25000
   private readonly navigationQuarantine=new Set<string>()
   private dropNavigationTab(tab:NavigationTab):void{
     if(!this.tabs.has(tab.id))return
     if(!this.window.isDestroyed()&&this.window.contentView.children.includes(tab.view))this.window.contentView.removeChildView(tab.view)
-    this.tabs.delete(tab.id);this.diagnostics.delete(tab.id);this.navigationQuarantine.delete(tab.id)
+    this.tabs.delete(tab.id);this.deferredNavigation.delete(tab.id);this.diagnostics.delete(tab.id);this.navigationQuarantine.delete(tab.id)
     if(this.activeTabId===tab.id){this.activeTabId=null;const next=[...this.tabs.values()].find((t:NavigationTab)=>t.projectId===tab.projectId&&!t.view.webContents.isDestroyed());if(next)void this.showTab(next.id).catch(error=>this.#addDiagnostic(next.id,'media',{message:String(error),at:Date.now()}))}
     this.emitState();this.scheduleTabStateSave()
   }
-  private async navigateTab(tab:NavigationTab,url:string,signal?:AbortSignal):Promise<void>{
-    let previous='',quietSince=0;const ready=this.collectionBodyScope?async()=>{const value=await readRendererPhase<CollectionPageReady>(tab.view.webContents,'collection.pages','navigation-ready',async()=>assertCollectionPageReady(await tab.view.webContents.mainFrame.executeJavaScript(collectionPageReadyExpression(this.collectionBodyScope!),true)),signal,1500);if(!sameCollectionNavigation(url,value.url)||(!value.ready&&!value.restricted)){previous='';return false}if(value.restricted||[401,403,429].includes(this.collectionHTTPStatus)){this.collectionRestricted=true;return true}if(value.text!==previous){previous=value.text;quietSince=Date.now();return false}return Date.now()-quietSince>=250}:undefined
-    try{await navigatePage(tab.view.webContents,url,signal,25000,3000,tab.source==='agent',ready)}catch(error){if(tab.view.webContents.isDestroyed())this.dropNavigationTab(tab);else if(error instanceof Error&&'code'in error&&error.code==='BMW_BROWSER_NAVIGATION_CLEANUP_FAILED')this.navigationQuarantine.add(tab.id);throw error}
+  private async navigateTab(tab:NavigationTab,url:string,signal?:AbortSignal,timeoutMs=this.collectionNavigationTimeoutMs):Promise<void>{
+    this.deferredNavigation.delete(tab.id)
+    if(!tab.view.webContents.getURL())await navigatePage(tab.view.webContents,PROJECT_BLANK_URL,signal,3000,3000,tab.source==='agent')
+    await readRendererPhase(tab.view.webContents,'page.diagnostics','network-observer',()=>this.#applyPageTheme(tab),signal,2000)
+    const scope=this.collectionBodyScope??{bodySelector:'body'}
+    let previous='',quietSince=0;const ready=async()=>{const value=await readRendererPhase<CollectionPageReady>(tab.view.webContents,'collection.pages','navigation-ready',async()=>assertCollectionPageReady(await tab.view.webContents.mainFrame.executeJavaScript(collectionPageReadyExpression(scope),true)),signal,1500);if(!sameCollectionNavigation(url,value.url)||(!value.ready&&!value.restricted)){previous='';return false}if(value.restricted||[401,403,429].includes(this.collectionHTTPStatus)){this.collectionRestricted=true;return true}if(value.text!==previous){previous=value.text;quietSince=Date.now();return false}return Date.now()-quietSince>=250}
+    const videoAddress=new URL(url),youtubeTarget=['youtube.com','www.youtube.com','m.youtube.com'].includes(videoAddress.hostname)?videoAddress.searchParams.get('v'):null
+    const videoReady=youtubeTarget?async()=>readRendererPhase<boolean>(tab.view.webContents,'navigate','youtube-player-ready',async()=>await tab.view.webContents.mainFrame.executeJavaScript(`(()=>{const p=document.getElementById('movie_player'),v=p?.querySelector('video'),d=typeof p?.getVideoData==='function'?p.getVideoData():null;return d?.video_id===${JSON.stringify(youtubeTarget)}&&!p.classList.contains('ad-showing')&&v?.videoWidth>0&&Number.isFinite(v.duration)&&v.duration>0})()`,true) as boolean,signal,1000):undefined
+    try{await navigatePage(tab.view.webContents,url,signal,videoReady&&!this.collectionBodyScope?90000:timeoutMs,3000,tab.source==='agent',videoReady&&!this.collectionBodyScope?videoReady:this.collectionBodyScope&&!['x.com','twitter.com'].includes(new URL(url).hostname.replace(/^www\./,''))?ready:undefined,entry=>this.#addDiagnostic(tab.id,'network',{type:'navigation',url:diagnosticUrl(url),...entry,at:Date.now()}))}catch(error){if(tab.view.webContents.isDestroyed())this.dropNavigationTab(tab);else if(error instanceof Error&&'code'in error&&error.code==='BMW_BROWSER_NAVIGATION_CLEANUP_FAILED')this.navigationQuarantine.add(tab.id);throw error}
   }
-  async openTab({ url, foreground = false, source = 'agent', reuse = true }: { url?: unknown; foreground?: boolean; source?: string; reuse?: boolean } = {},signal?:AbortSignal) {
+  async openTab({ url, foreground = false, source = 'agent', reuse = true }: { url?: unknown; foreground?: boolean; source?: string; reuse?: boolean } = {},signal?:AbortSignal,navigationTimeoutMs?:number,deferNavigation=false) {
     if(this.navigationQuarantine.size)throw new Error('BMW_BROWSER_NAVIGATION_QUARANTINED: Explicit close recovery is required.')
     const projectId = this.projectStore?.active().id || null
     const targetUrl = normalizeUrl(url, this.settingsStore)
@@ -234,6 +247,7 @@ export class BrowserKernel {
       if (reusable) {
         reusable.tab.lastUsedAt = Date.now()
         if (reusable.navigate) await this.navigateTab(reusable.tab,targetUrl,signal)
+        else await this.ensureTabLoaded(reusable.tab,signal)
         if (foreground) await this.showTab(reusable.tab.id)
         else this.emitState()
         await this.enforceAgentTabLimit(projectId, reusable.tab.id)
@@ -251,6 +265,7 @@ export class BrowserKernel {
         webSecurity: true,
         backgroundThrottling: !this.detached,
         ...(this.detached?{disableDialogs:true}:{})
+        ,...(this.detached?{offscreen:true}:{})
       }
     })
     view.setBounds(this.browserBounds)
@@ -266,13 +281,15 @@ export class BrowserKernel {
       lastUsedAt: Date.now()
     }
     this.tabs.set(id, tab)
+    if(this.detached){const contents=view.webContents;this.offscreenPaintFrames.set(contents,0);contents.on('paint',()=>{if(!contents.isDestroyed())this.offscreenPaintFrames.set(contents,(this.offscreenPaintFrames.get(contents)??0)+1)});contents.setFrameRate(10)}
+    if(deferNavigation){this.deferredNavigation.set(id,targetUrl);tab.loading=false;tab.title=targetUrl}
     this.#wireTab(tab)
     view.setBackgroundColor(this.pageTheme === 'dark' ? '#0a0d12' : '#ffffff')
     if (foreground || !this.activeTabId) await this.showTab(id)
     else this.emitState()
     // Admission is bounded even if the next page fails its native load.
     if (source === 'agent') await this.enforceAgentTabLimit(projectId, id)
-    await this.navigateTab(tab,targetUrl,signal)
+    if(!deferNavigation)await this.navigateTab(tab,targetUrl,signal,navigationTimeoutMs)
     return { ...this.serializeTab(tab), reused: false }
   }
 
@@ -285,10 +302,22 @@ export class BrowserKernel {
       if (!wc.debugger.isAttached()) wc.debugger.attach('1.3')
       if (!tab.debuggerWired) {
         tab.debuggerWired = true
+        const requests=new Map<string,{url:string;resourceType:string}>();this.networkRequests.set(wc,requests)
         wc.debugger.on('message', (_event, method, params) => {
-          if (method === 'Network.loadingFailed') this.#addDiagnostic(tab.id, 'network', { type: 'failed', url: params?.url || '', errorText: params?.errorText || '', at: Date.now() })
-          if (method === 'Network.responseReceived' && Number(params?.response?.status) >= 400) {
-            this.#addDiagnostic(tab.id, 'network', { type: 'response', url: params.response.url, status: params.response.status, statusText: params.response.statusText, at: Date.now() })
+          const requestId=String(params?.requestId??'')
+          if(method==='Network.requestWillBeSent'&&params?.type==='Document'&&requestId)this.documentTransfers.set(wc,{requestId,url:diagnosticUrl(params?.request?.url),status:0,receivedBytes:0,lastDataAt:0,completed:false,failed:false})
+          const transfer=this.documentTransfers.get(wc)
+          if(transfer?.requestId===requestId){
+            if(method==='Network.responseReceived')transfer.status=Number(params?.response?.status??0)
+            if(method==='Network.dataReceived'&&Number(params?.dataLength)>0){transfer.receivedBytes=Math.min(50000000,transfer.receivedBytes+Number(params.dataLength));transfer.lastDataAt=Date.now()}
+            if(method==='Network.loadingFinished')transfer.completed=true
+            if(method==='Network.loadingFailed')transfer.failed=true
+          }
+          if(method==='Network.requestWillBeSent'&&requestId){const url=diagnosticUrl(params?.request?.url);if(url){requests.set(requestId,{url,resourceType:String(params?.type??'')});while(requests.size>200)requests.delete(requests.keys().next().value!)}}
+          if(method==='Network.loadingFinished')requests.delete(requestId)
+          if (method === 'Network.loadingFailed') {const request=requests.get(requestId);this.#addDiagnostic(tab.id, 'network', { type: 'failed',url:request?.url??diagnosticUrl(params?.url),resourceType:request?.resourceType??String(params?.type??''), errorText: String(params?.errorText??'').slice(0,500),requestId:requestId.slice(0,100),...(typeof params?.canceled==='boolean'?{canceled:params.canceled}:{}),...(typeof params?.blockedReason==='string'?{blockedReason:params.blockedReason.slice(0,100)}:{}), at: Date.now() });requests.delete(requestId)}
+          if (method === 'Network.responseReceived' && (Number(params?.response?.status) >= 400||['Document','Script','Fetch','XHR'].includes(String(params?.type??'')))) {
+            this.#addDiagnostic(tab.id, 'network', { type: 'response', url: diagnosticUrl(params?.response?.url),resourceType:String(params?.type??''), status: params?.response?.status, statusText: String(params?.response?.statusText??'').slice(0,200), at: Date.now() })
           }
           if (method === 'Network.responseReceived') {
             const resourceType = String(params?.type || '')
@@ -334,9 +363,10 @@ export class BrowserKernel {
     for (const tab of stale) await this.closeTab(tab.id)
   }
 
-  async showTab(tabId) {
+  async showTab(tabId,signal?:AbortSignal) {
     const tab = this.requireTab(tabId)
-    if(this.detached){this.activeTabId=tab.id;tab.view.setVisible(false);await this.applyPlayback(tab,false,true);return this.serializeTab(tab)}
+    if(!this.restoringTabState)await this.ensureTabLoaded(tab,signal)
+    if(this.detached){this.activeTabId=tab.id;if(!this.window.contentView.children.includes(tab.view))this.window.contentView.addChildView(tab.view);tab.view.setBounds({x:0,y:0,width:this.browserBounds.width,height:this.browserBounds.height});tab.view.setVisible(true);await this.applyPlayback(tab,false,true);return this.serializeTab(tab)}
     const previous = this.tabs.get(this.activeTabId)
     if (previous && previous.id !== tab.id){this.activeTabId=tab.id;await this.applyPlayback(previous,false);this.window.contentView.removeChildView(previous.view)}
     if (!this.window.contentView.children.includes(tab.view)) this.window.contentView.addChildView(tab.view)
@@ -352,11 +382,20 @@ export class BrowserKernel {
   private async destroyTab(tab:NavigationTab):Promise<void>{
     try{await closeNavigationPage(tab.view.webContents)}catch(error){this.navigationQuarantine.add(tab.id);throw error}
     if(!this.window.isDestroyed()&&this.window.contentView.children.includes(tab.view))this.window.contentView.removeChildView(tab.view)
-    this.tabs.delete(tab.id);this.diagnostics.delete(tab.id);this.navigationQuarantine.delete(tab.id)
+    this.tabs.delete(tab.id);this.deferredNavigation.delete(tab.id);this.diagnostics.delete(tab.id);this.navigationQuarantine.delete(tab.id)
     if(this.activeTabId===tab.id)this.activeTabId=null
   }
 
   private readonly collectionPageLanes=new Set<BrowserKernel>()
+  private readonly collectionSurfaces=new Map<BrowserKernel,{window:BrowserWindow;contents:import('electron').WebContents}>()
+  private async disposeCollectionLane(kernel:BrowserKernel):Promise<void>{
+    await kernel.closeDetached()
+    const surface=this.collectionSurfaces.get(kernel)
+    if(surface&&!surface.contents.isDestroyed())await closeNavigationPage(surface.contents,3000)
+    if(surface&&!surface.window.isDestroyed())surface.window.destroy()
+    if(surface&&(!surface.window.isDestroyed()||!surface.contents.isDestroyed()))throw new CollectionPageCleanupError('Collection surface did not close')
+    this.collectionSurfaces.delete(kernel);this.collectionPageLanes.delete(kernel)
+  }
   private collectionPagePoolRunning=false
   private collectionPagePoolQuarantined=false
   ownsCollectionWebContents(contents:import('electron').WebContents):boolean{return [...this.collectionPageLanes].some(kernel=>kernel.ownsWebContents(contents))}
@@ -403,6 +442,7 @@ export class BrowserKernel {
       title: tab.title,
       url: tab.url,
       loading: tab.loading,
+      deferred: this.deferredNavigation.has(tab.id),
       active: tab.id === this.activeTabId,
       source: tab.source,
       projectId: tab.projectId
@@ -418,6 +458,7 @@ export class BrowserKernel {
         .filter((tab) => !activeProject || tab.projectId === activeProject.id)
         .map((tab) => this.serializeTab(tab)),
       agentControlGranted: this.permissionStore.hasAgentControl(),
+      collection:{running:this.collectionPagePoolRunning,quarantined:this.collectionPagePoolQuarantined,surfaces:this.collectionSurfaces.size,pages:[...this.collectionPageLanes].reduce((count,kernel)=>count+kernel.tabs.size,0)},
       sessionContinuity: this.sessionContinuity?.status(active?.url) || null,
       activeProject: activeProject ? { id: activeProject.id, name: activeProject.name } : null
     }
@@ -438,6 +479,7 @@ export class BrowserKernel {
 
   async saveActivePage(fullPath, saveType) {
     const tab = this.requireTab(this.activeTabId)
+    await this.ensureTabLoaded(tab)
     await tab.view.webContents.savePage(fullPath, saveType)
     return { ...this.serializeTab(tab), fullPath, saveType }
   }
@@ -576,16 +618,19 @@ export class BrowserKernel {
         reuse: actor === 'agent' ? request.reuse !== false : false
       },signal)
     }
-    if (request.action === 'tabs.show') return this.showTab(targetTabId(request))
+    if(request.action==='pages.read'||request.action==='pages.discover')return this.readTextPages(request.urls as string[],signal,request.action==='pages.discover')
+    if(request.action==='pages.read-result')return this.readTextPageResult(request,signal,sessionOwner)
+    if (request.action === 'tabs.show') return this.showTab(targetTabId(request),signal)
     if (request.action === 'tabs.close'){const id=targetTabId(request),tab=this.requireTab(id);if(this.navigationQuarantine.has(tab.id)&&tab.source!=='agent'&&actor!=='user')throw new Error('BMW_BROWSER_USER_RECOVERY_REQUIRED: Close the retained user page from BMW before continuing.');return this.closeTab(id)}
 
     if(request.action==='media.audio.preview'){
       if(!this.projectStore.active()?.directory||this.recordingController.isCaptureActive())throw new Error('Audio preview requires an idle active Project.')
       return this.recordingController.previewAudio(request,signal)
     }
-    if (['media.inspect', 'media.segment', 'media.frames.sample','media.capture.frames.sample', 'media.convert','media.image.inspect','media.image.annotate','media.image.draw','media.audio.sample'].includes(request.action)) {
+    if (['media.inspect', 'media.segment', 'media.frames.sample','media.capture.frames.sample', 'media.convert','media.image.inspect','media.image.annotate','media.image.draw','media.audio.sample','media.speech.align'].includes(request.action)) {
       if (!this.projectStore.active()?.directory) throw new Error('Media processing requires an active BMW Project.')
-      return this.recordingController.processArtifact(request, signal)
+      const {tabId:ignored,...mediaRequest}=request;void ignored
+      return this.recordingController.processArtifact(mediaRequest, signal)
     }
 
     const tab = this.requireTab(targetTabId(request))
@@ -595,6 +640,7 @@ export class BrowserKernel {
       await this.navigateTab(tab,normalizeUrl(request.url, this.settingsStore),signal)
       return this.serializeTab(tab)
     }
+    await this.ensureTabLoaded(tab,signal)
     if (request.action === 'back') {
       if (wc.navigationHistory.canGoBack()) wc.navigationHistory.goBack()
       return this.serializeTab(tab)
@@ -615,6 +661,7 @@ export class BrowserKernel {
     if (request.action === 'key') return this.key(tab, request)
     if (request.action === 'hover') return this.hover(tab, request)
     if (request.action === 'observe') return this.observe(tab, request, signal)
+    if (request.action === 'page.text.find') return {tab:this.serializeTab(tab),...await readRendererPhase<Record<string,unknown>>(tab.view.webContents,'page.text.find','dom',()=>tab.view.webContents.executeJavaScript(pageTextFindExpression(assertPageTextFind(request)),true),signal)}
     if (request.action === 'page.diagnostics') return this.pageDiagnostics(tab, request, signal)
     if (request.action === 'page.media.list') return this.listMedia(tab, request, signal)
     if (request.action === 'page.viewport.set') return this.setViewport(tab, request)
@@ -771,6 +818,7 @@ export class BrowserKernel {
   }
 
   projectSources?:()=>ProjectSourcePort
+  capturedVideoOrigin?:import('./browser-host.js').BrowserFeatureHost['capturedVideoOrigin']
   sourcePages():{id:string;url:string;title:string}[]{return this.state().tabs.map(tab=>({id:tab.id,url:tab.url,title:tab.title}))}
   async downloadSource(request:{url:string;pageUrl:string;filename:string;tabId?:string;sourceGuard?:SourceCaptureGuard},signal?:AbortSignal):Promise<unknown>{
     const tab=this.requireTab(request.tabId),address=new URL(tab.view.webContents.getURL());address.hash=''
@@ -785,6 +833,34 @@ export class BrowserKernel {
     const sabr=selected?.role==='sabr'?await bindYoutubeSabrPage(tab.view.webContents,admission.target!,request.url,request.sourceGuard?.scope??{},signal):undefined
     const guard=async(force=false)=>{signal?.throwIfAborted();if(this.projectStore.active().id!==project.id||!this.tabs.has(tab.id)||tab.view.webContents.isDestroyed()||new URL(tab.view.webContents.getURL()).href.split('#')[0]!==request.pageUrl)throw new Error('Source preservation page or Project changed.');await(force?admission.finish():admission.guard());await sabr?.check(force)}
     return {...await this.recordingController.preserveMedia({url:request.url,pageUrl:request.pageUrl,fetchImpl:await this.mediaFetchForTab(tab.id,signal),guard,signal,videoIdentity:admission.videoIdentity,...(sabr?{youtubeSabr:sabr.delivery,refreshYoutubeSabr:sabr.refresh}:{}),...(admission.audio?{separated:{audioUrl:admission.audio.url,audioDurationSeconds:admission.audio.durationSeconds,videoDurationSeconds:selected?.durationSeconds??admission.target!.durationSeconds!,videoIdentity:admission.videoIdentity!}}:{})}),tab:this.serializeTab(tab)}
+  }
+  async acquireSource(request:NonNullable<import('./browser-host.js').BrowserFeatureHost['acquireSource']> extends (request:infer R,...args:unknown[])=>unknown?R:never,signal?:AbortSignal){
+    const tab=this.requireTab(request.tabId),projectId=this.projectStore.active().id
+    const verify=async()=>{signal?.throwIfAborted();if(this.projectStore.active().id!==projectId)throw new Error('Source Project changed.');await this.verifySourceVideo({...request.sourceGuard,tabId:tab.id},signal)}
+    await verify()
+    const state=await readVideoTargets(tab.view.webContents,request.sourceGuard.scope,signal)
+    const selected=selectVideoResource(state,request.sourceGuard.candidateUrl,request.sourceGuard.videoIdentity)
+    return acquireVideoDelivery(selected,{
+      verify,busy:()=>this.recordingController.isCaptureActive(),
+      preserve:(url,jobSignal)=>this.preserveSource({url,pageUrl:request.sourceGuard.pageUrl,tabId:tab.id,sourceGuard:request.sourceGuard},jobSignal),
+      capture:jobSignal=>this.captureSource(request,jobSignal),
+      prepareCapture:async jobSignal=>{
+        const previous=this.activeTabId
+        await this.showTab(tab.id)
+        try{return await prepareVideoCapture({
+          read:async start=>{await verify();return readRendererPhase<CapturePlayerState>(tab.view.webContents,'library.sources','capture-buffer',async()=>await tab.view.webContents.mainFrame.executeJavaScript(`(()=>{const selector=${JSON.stringify(request.videoSelector)},index=${JSON.stringify(request.videoIndex??0)},start=${JSON.stringify(start)},video=document.querySelectorAll(selector)[index];if(!(video instanceof HTMLVideoElement))throw new Error('VIDEO_IDENTITY_UNBOUND: Missing confirmed player.');const player=['youtube.com','www.youtube.com','m.youtube.com'].includes(location.hostname)?document.getElementById('movie_player'):null,levels=player&&typeof player.getAvailableQualityLevels==='function'?player.getAvailableQualityLevels():[],requested=['hd1080','hd720','large','medium','small','tiny'].find(level=>levels.includes(level));if(start){video.pause();if(requested&&typeof player.setPlaybackQualityRange==='function')player.setPlaybackQualityRange(requested,requested);if(requested&&typeof player.setPlaybackQuality==='function')player.setPlaybackQuality(requested);${request.fromStart!==false?'if(video.currentTime>0)video.currentTime=0;':''}void video.play().catch(()=>{})}return {requested:requested??null,width:video.videoWidth,height:video.videoHeight,readyState:video.readyState,durationSeconds:Number.isFinite(video.duration)?video.duration:0,bufferedStartSeconds:video.buffered.length?video.buffered.start(0):null,bufferedEndSeconds:video.buffered.length?video.buffered.end(0):0}})()`,true) as CapturePlayerState,jobSignal,3000)},
+          pause:async()=>{try{
+            // Cleanup must still stop playback when preparation changed the
+            // delivery URL/identity. Admission checks remain before every read
+            // and before capture; never let them prevent bounded cleanup.
+            if(this.projectStore.active().id!==projectId||tab.view.webContents.isDestroyed()||new URL(tab.view.webContents.getURL()).href.split('#')[0]!==request.sourceGuard.pageUrl)throw new Error('Prepared player page or Project changed.')
+            const paused=await readRendererPhase<unknown>(tab.view.webContents,'library.sources','pause-prepared-player',()=>tab.view.webContents.mainFrame.executeJavaScript(`(()=>{const v=document.querySelectorAll(${JSON.stringify(request.videoSelector)})[${JSON.stringify(request.videoIndex??0)}];if(!(v instanceof HTMLVideoElement))return false;v.pause();return v.paused===true})()`,true),undefined,3000)
+            if(paused!==true)throw new Error('Prepared player did not acknowledge paused state.')
+          }catch(error){if(!tab.view.webContents.isDestroyed())this.navigationQuarantine.add(tab.id);throw new Error('MEDIA_CAPTURE_CLEANUP_FAILED: Prepared player pause could not be verified; close the quarantined page before further browser work.',{cause:error})}}
+        },jobSignal)}finally{if(previous&&previous!==tab.id&&this.tabs.has(previous))await this.showTab(previous)}
+      }
+
+    },signal??new AbortController().signal)
   }
   async verifySourceVideo(request:SourceCaptureGuard&{tabId?:string},signal?:AbortSignal){
     const tab=this.requireTab(request.tabId),state=await readVideoTargets(tab.view.webContents,request.scope,signal)
@@ -822,20 +898,122 @@ export class BrowserKernel {
     return collectPageSource(tab.view.webContents,request,(scope,phaseSignal)=>this.listMedia(tab,scope,phaseSignal),signal)
   }
 
+  private async textReadDiagnostic(tab:NavigationTab,requestedUrl:string,signal?:AbortSignal,discovery=false):Promise<TextReadDiagnostic>{
+    const account=new URL(requestedUrl).pathname.split('/').filter(Boolean)[0]?.toLowerCase()??''
+    let dom={url:tab.view.webContents.getURL()||'about:blank',title:'',documentReadyState:'unknown' as TextReadDiagnostic['documentReadyState'],bodyTextCharacters:0,visiblePosts:0,matchingPostLinks:0,contentState:'unknown' as TextReadDiagnostic['contentState']},rendererFailure:TextReadDiagnostic['rendererFailure']|undefined
+    try{
+      dom=await readRendererPhase<typeof dom>(tab.view.webContents,'collection.pages','content-state',async()=>await tab.view.webContents.mainFrame.executeJavaScript(`(()=>{const account=${JSON.stringify(account)},discovery=${discovery},visible=element=>{const rect=element.getBoundingClientRect(),style=getComputedStyle(element);return rect.width>0&&rect.height>0&&style.display!=='none'&&style.visibility!=='hidden'&&style.visibility!=='collapse'&&Number(style.opacity)!==0},body=discovery?(()=>{const walker=document.createTreeWalker(document.body??document.documentElement,NodeFilter.SHOW_TEXT);let text='',count=0;while(walker.nextNode()&&++count<=200&&text.length<500){const parent=walker.currentNode.parentElement;if(parent&&!parent.closest('script,style,noscript,template')&&visible(parent))text+=String(walker.currentNode.textContent??'').slice(0,500-text.length)}return text})():String(document.body?.innerText??'').slice(0,50000),visiblePosts=[...document.querySelectorAll('article,[data-testid="tweet"]')].slice(0,100).filter(element=>visible(element)&&String(discovery?element.textContent??'':element.innerText??'').slice(0,discovery?360:50000).trim()).length,matchingPostLinks=[...document.querySelectorAll('a[href]')].slice(0,2000).filter(element=>{if(!visible(element)||!element.closest('article,[data-testid="tweet"]'))return false;try{const url=new URL(element.href);return ['x.com','twitter.com'].includes(url.hostname)&&url.pathname.split('/')[1]?.toLowerCase()===account&&url.pathname.split('/')[2]==='status'&&/^\\d+$/.test(url.pathname.split('/')[3]??'')}catch{return false}}).length,title=String(document.title??'').slice(0,500),restricted=/^(?:please (?:log|sign) in to continue|you must (?:log|sign) in|verify you are human|请先登录|访问被拒绝|人机验证)/i.test(body.trim())||['/i/flow/login','/i/flow/signup','/account/access'].some(path=>location.pathname.startsWith(path)),contentState=restricted?'restricted':visiblePosts&&matchingPostLinks?'posts':/this account (?:doesn.t|does not) exist|account doesn.t exist/i.test(body)?'missing-account':/\\b0 posts\\b/i.test(body)?'empty-account':/something went wrong|try again|refresh/i.test(body)?'error':body.trim()?'header-only':'loading';return {url:location.href,title,documentReadyState:document.readyState,bodyTextCharacters:body.length,visiblePosts,matchingPostLinks,contentState}})()`,true) as typeof dom,signal,1000)
+    }catch(error){signal?.throwIfAborted();rendererFailure={code:error instanceof Error&&'code'in error?String(error.code).slice(0,100):'BMW_RENDERER_READ_FAILED',message:String(error instanceof Error?error.message:error).slice(0,500)}}
+    const log=this.diagnosticsFor(tab.id),network=log.network as {type:string;url?:string;resourceType?:string;status?:number;errorText?:string;canceled?:boolean;blockedReason?:string;requestId?:string;phase?:string;reason?:string;elapsedMs?:number;at:number}[]
+    const main=network.filter(row=>row.type==='response'&&row.resourceType==='Document').at(-1)
+    const result:TextReadDiagnostic={...dom,...(rendererFailure?{rendererFailure}:{}),url:diagnosticUrl(dom.url)||'about:blank',at:new Date().toISOString(),mainDocumentStatus:main?.status??null,
+      navigation:network.filter(row=>row.type==='navigation'&&row.url===diagnosticUrl(requestedUrl)).slice(-8).map(row=>({phase:row.phase as 'stop'|'complete',reason:row.reason as TextReadDiagnostic['navigation'][number]['reason'],elapsedMs:row.elapsedMs??0,at:row.at})),
+      network:network.filter(row=>row.type!=='navigation').slice(-30).map(row=>({type:row.type==='response'?'response' as const:'failed' as const,url:diagnosticUrl(row.url),resourceType:row.resourceType??'',...(row.status===undefined?{}:{status:row.status}),...(row.errorText?{errorText:row.errorText.slice(0,500)}:{}),...(row.canceled===undefined?{}:{canceled:row.canceled}),...(row.blockedReason?{blockedReason:row.blockedReason.slice(0,100)}:{}),...(row.requestId?{requestId:row.requestId.slice(0,100)}:{}),at:row.at})),
+      pending:[...(this.networkRequests.get(tab.view.webContents)?.values()??[])].slice(-30)}
+    const transfer=this.documentTransfers.get(tab.view.webContents)
+    if(transfer&&transfer.url===diagnosticUrl(requestedUrl))result.documentTransfer={url:transfer.url,status:transfer.status,receivedBytes:transfer.receivedBytes,lastDataAt:transfer.lastDataAt,completed:transfer.completed,failed:transfer.failed}
+    if([401,403,429].includes(result.mainDocumentStatus??0)&&result.contentState!=='posts')result.contentState='restricted'
+    while(new TextEncoder().encode(JSON.stringify(result)).byteLength>11000&&(result.network.length||result.pending.length)){result.truncated=true;if(result.network.length)result.network.shift();else result.pending.shift()}
+    return result
+  }
+
+  private async readSocialPage(input:CollectionPageRequest,signal:AbortSignal):Promise<CollectionPageResult>{
+    const opened=await this.openTab({url:PROJECT_BLANK_URL,source:'agent',reuse:false},signal),tab=this.requireTab(opened.id)
+    let diagnostic=await this.textReadDiagnostic(tab,input.url,signal,input.discovery)
+    const snapshot=async(reason?:string):Promise<CollectionPageResult>=>{
+      diagnostic=await this.textReadDiagnostic(tab,input.url,signal,input.discovery)
+      if(input.discovery){
+        const found=await readRendererPhase<{url:string;title:string;leads:unknown}>(tab.view.webContents,'collection.pages','discovery',()=>tab.view.webContents.mainFrame.executeJavaScript(discoveryExpression(input.url),true),signal,1500)
+        const leads=assertDiscoveryLeads(found.leads,input.url)
+        if(leads.length&&discoveryAccountUrl(found.url)!==discoveryAccountUrl(input.url))throw new Error('Discovery account changed during snapshot.')
+        return {observation:discoveryObservation(found.url,found.title,leads),links:leads.map(lead=>({url:lead.url,text:lead.displayTime??''})),linksTruncated:false,leads,diagnostic,reason,...(diagnostic.contentState==='restricted'?{restricted:true}:{})}
+      }
+      const observation=await this.collectSource({...input.source,tabId:opened.id},signal)
+      const found=await readRendererPhase<{url:string;text:string;links:CollectionPageLink[];linksTruncated:boolean}>(tab.view.webContents,'collection.pages','links',()=>tab.view.webContents.mainFrame.executeJavaScript(collectionPageLinksExpression(input.source),true),signal,1500)
+      if(observation.url!==found.url||observation.text!==found.text)throw new Error('Source changed between text and link snapshot')
+      if(!Array.isArray(found.links)||found.links.length>100||found.links.some(link=>typeof link.url!=='string'||typeof link.text!=='string'||link.text.length>320))throw new Error('Invalid bounded source links')
+      const links=found.links.map(link=>({url:collectionPageUrl(link.url),text:link.text}));if(new Set(links.map(link=>link.url)).size!==links.length)throw new Error('Duplicate source links')
+      return {observation,links,linksTruncated:found.linksTruncated,diagnostic,reason,...(diagnostic.contentState==='restricted'?{restricted:true}:{})}
+    }
+    try{
+      const result=await withNativePageRead(tab.view.webContents,input.url,{signal,timeoutMs:this.collectionNavigationTimeoutMs,
+        documentTransfer:()=>this.documentTransfers.get(tab.view.webContents),
+        trace:entry=>this.#addDiagnostic(tab.id,'network',{type:'navigation',url:diagnosticUrl(input.url),...entry,at:Date.now()}),
+        ready:async()=>{diagnostic=await this.textReadDiagnostic(tab,input.url,signal,input.discovery);return ['posts','restricted','missing-account','empty-account','error'].includes(diagnostic.contentState)},
+        read:()=>snapshot(diagnostic.contentState==='posts'?'qualified-posts':diagnostic.contentState),
+        incomplete:async reason=>{diagnostic=await this.textReadDiagnostic(tab,input.url,signal,input.discovery);if(!/^https?:/.test(tab.view.webContents.getURL()))throw new CollectionPageReadError(reason.message,diagnostic);return snapshot(diagnostic.contentState==='posts'?'qualified-posts':'account-content-deadline')}
+      })
+      const navigation=(this.diagnosticsFor(tab.id).network as {type:string;url?:string;phase:'stop'|'complete';reason:TextReadDiagnostic['navigation'][number]['reason'];elapsedMs:number;at:number}[]).filter(row=>row.type==='navigation'&&row.url===diagnosticUrl(input.url)).slice(-8).map(({phase,reason,elapsedMs,at})=>({phase,reason,elapsedMs,at}))
+      if(result.diagnostic)result.diagnostic.navigation=navigation
+      return result
+    }catch(error){if(signal.aborted||error instanceof CollectionPageReadError||error instanceof Error&&'code'in error&&error.code==='BMW_BROWSER_NAVIGATION_CLEANUP_FAILED')throw error;throw new CollectionPageReadError(error instanceof Error?error.message:String(error),diagnostic)}
+  }
+
   /** Private mechanical reads within one admitted browser action. Each lane has
    * its own hidden kernel; no mutation of foreground tabs or nested outer FIFO. */
+  private async readTextPages(rawUrls:string[],signal?:AbortSignal,discovery=false){
+    const urls=rawUrls.map(raw=>{if(discovery)return discoveryAccountUrl(raw);const url=collectionPageUrl(raw);if(new URL(url).protocol!=='https:')throw new Error('Text batches require explicit HTTPS pages.');return url})
+    if(new Set(urls).size!==urls.length)throw new Error('Text batch URLs repeat after normalization.')
+    const project={...this.projectStore.active()},port=this.projectSources?.()
+    if(!port||(port.state?.()??port.snapshot()).projectId!==project.id||!port.writeTextBatch||!port.readTextBatch)throw new Error('Text batch requires the active Project durable source store.')
+    const startedAt=Date.now(),deadline=new AbortController(),timer=setTimeout(()=>deadline.abort(new Error('BMW_TEXT_BATCH_DEADLINE')),180000)
+    const combined=signal?AbortSignal.any([signal,deadline.signal]):deadline.signal
+    const rows:TextReadRow[]=urls.map((url,index)=>({index,url,state:'pending'}))
+    const batch:TextReadBatch={version:1,id:crypto.randomUUID(),projectId:project.id,revision:0,startedAt:new Date(startedAt).toISOString(),finishedAt:null,cleanupState:'pending',rows,...(discovery?{mode:'discovery' as const}:{})}
+    const write=port.writeTextBatch.bind(port);let receipt=await Promise.resolve().then(()=>write(batch)).catch(error=>{clearTimeout(timer);throw error}),writes=Promise.resolve(),storageError:unknown
+    const checkpoint=async(final=false)=>{if(storageError)throw storageError;const snapshot=structuredClone(batch);snapshot.revision=receipt.revision+1;snapshot.finishedAt=final?new Date().toISOString():null;if(final)snapshot.cleanupState=this.collectionPageLanes.size===0&&!this.collectionPagePoolQuarantined?'complete':'quarantined';receipt=await write(snapshot,receipt.revision);batch.revision=snapshot.revision;batch.finishedAt=snapshot.finishedAt;batch.cleanupState=snapshot.cleanupState}
+    const queueCheckpoint=()=>{const update=writes.then(()=>checkpoint());writes=update.catch(error=>{storageError=error;deadline.abort(error)});return update}
+    const guard=()=>{signal?.throwIfAborted();if(this.projectStore.active().id!==project.id||!this.permissionStore.hasAgentControl())throw new Error('Text batch Project or permission changed.')}
+    try{
+      await this.collectPageBatch({concurrency:3,maxPages:urls.length,navigationTimeoutMs:8000,guard},async visit=>{
+        await Promise.all(rows.map(async row=>{
+          row.startedAt=new Date().toISOString()
+          try{
+            const read=await visit({url:row.url,source:{bodySelector:'body'},sourceKey:'page-'+row.index,...(discovery?{discovery:true}:{})})
+            row.readFinishedAt=new Date().toISOString()
+            const commit=writes.then(async()=>{combined.throwIfAborted();guard();return port.collect(read.observation,(port.state?.()??port.snapshot()).revision,combined)})
+            writes=commit.then(()=>{},()=>{})
+            const saved=await commit
+            const address=new URL(row.url),account=address.pathname.split('/').filter(Boolean)[0],postLinks=['x.com','twitter.com'].includes(address.hostname)?read.links.filter(link=>{try{const url=new URL(link.url);return ['x.com','twitter.com'].includes(url.hostname)&&new RegExp('^/'+account+'/status/\\d+(?:/|$)','i').test(url.pathname)}catch{return false}}):[]
+            const preferred=new Set(postLinks.map(link=>link.url)),links=[...postLinks,...read.links.filter(link=>!preferred.has(link.url))]
+            const state=discovery?(read.restricted?'restricted':read.diagnostic?.contentState==='posts'&&read.leads?.length?'read':'incomplete'):textPageReadState(row.url,read)
+            Object.assign(row,{sourceId:saved.sourceId,acquisitionId:saved.acquisitionId,observedUrl:read.observation.url,title:read.observation.title,publishedAt:read.observation.publishedAt,links,state,reason:state==='read'?'qualified-content':read.reason??(state==='restricted'?'access-restricted':'no-qualified-content'),...(read.diagnostic?{diagnostic:read.diagnostic}:{})})
+            if(discovery)row.leads=read.leads??[]
+          }catch(error){row.state=combined.aborted?'pending':'failed';row.reason=combined.aborted?'cancelled-or-batch-deadline':error instanceof CollectionPageReadError?'native-content-failed':'native-read-failed';row.error=error instanceof Error?error.message.slice(0,1000):'Text page failed';if(error instanceof CollectionPageReadError)row.diagnostic=error.diagnostic}
+          finally{row.finishedAt=new Date().toISOString();await queueCheckpoint()}
+        }))
+      },combined)
+    }catch(error){if(signal?.aborted||!deadline.signal.aborted||error instanceof CollectionPageCleanupError)throw error}
+    finally{clearTimeout(timer);await writes;if(!storageError)await checkpoint(true)}
+    if(storageError)throw storageError
+    guard()
+    return textReadSummary(batch,receipt)
+  }
+
+  private readonly textReadPages=new TextReadPageReader()
+  private async readTextPageResult(request:Readonly<Record<string,unknown>>,signal?:AbortSignal,owner?:import('./browser-host.js').BrowserSessionOwner){
+    const port=this.projectSources?.(),projectId=this.projectStore.active().id
+    if(!port?.readTextBatch)throw new Error('Project text batch store is unavailable')
+    const receipt={batchId:String(request.batchId??''),revision:Number(request.revision),sha256:String(request.sha256??'')},batch=await port.readTextBatch(receipt.batchId,receipt.revision,receipt.sha256)
+    if(batch.projectId!==projectId)throw new Error('Foreign text batch Project')
+    return this.textReadPages.read(owner?.sessionId??'host-user',batch,receipt,{section:request.section as 'rows'|'text'|'links'|'diagnostics'|'details'|'leads',rowIndex:request.rowIndex===undefined?undefined:Number(request.rowIndex),offset:Number(request.offset??0),limit:request.limit===undefined?undefined:Number(request.limit)},port,signal)
+  }
+
   async collectPageBatch<T>(options:CollectionPagePoolOptions,work:(visit:CollectionPageVisit)=>Promise<T>,signal?:AbortSignal):Promise<T>{
     if(this.collectionPagePoolRunning||this.collectionPagePoolQuarantined)throw new CollectionPageCleanupError('A collection page batch is active or requires explicit cleanup recovery')
     const project:ActiveProject={...this.projectStore.active()}
     const guard=()=>{options.guard();signal?.throwIfAborted();const current=this.projectStore.active();if(current.id!==project.id||current.directory!==project.directory||!this.permissionStore.hasAgentControl())throw new Error('Collection page Project or permission lease changed')}
     guard();this.collectionPagePoolRunning=true
     try{return await withCollectionPagePool({...options,guard},()=>{
-      const kernel=new BrowserKernel({detached:true,window:this.window,session:this.session,permissionStore:this.permissionStore,sessionContinuity:undefined,projectStore:{active:()=>project},settingsStore:this.settingsStore,capabilityRegistry:this.capabilityRegistry,allowedActions:this.allowedActions,artifactsDirectory:this.artifactsDirectory,pageTheme:this.pageTheme,onState:undefined,getCurrentSessionId:this.getCurrentSessionId,getSessionDriver:this.getSessionDriver})
+      const surface=new BrowserWindow({show:false,width:900,height:700,useContentSize:true,frame:false,paintWhenInitiallyHidden:true,webPreferences:{session:this.session,offscreen:true,backgroundThrottling:false,sandbox:true,contextIsolation:true,nodeIntegration:false}})
+      const kernel=new BrowserKernel({detached:true,window:surface,session:this.session,permissionStore:this.permissionStore,sessionContinuity:undefined,projectStore:{active:()=>project},settingsStore:this.settingsStore,capabilityRegistry:this.capabilityRegistry,allowedActions:this.allowedActions,artifactsDirectory:this.artifactsDirectory,pageTheme:this.pageTheme,onState:undefined,getCurrentSessionId:this.getCurrentSessionId,getSessionDriver:this.getSessionDriver})
       kernel.recordingController=this.recordingController
-      this.collectionPageLanes.add(kernel)
+      kernel.collectionNavigationTimeoutMs=options.navigationTimeoutMs??25000
+      this.collectionPageLanes.add(kernel);this.collectionSurfaces.set(kernel,{window:surface,contents:surface.webContents})
       let cleanupFailed=false
       return {visit:async(input,phaseSignal):Promise<CollectionPageResult>=>{
         try{
+          if(['x.com','twitter.com'].includes(new URL(input.url).hostname)&&/^\/[a-zA-Z0-9_]{1,15}(?:\/?$|\/status\/\d+)/.test(new URL(input.url).pathname)&&!['home','explore','search','login','signup','settings','notifications','messages','i'].includes(new URL(input.url).pathname.split('/')[1].toLowerCase()))return await kernel.readSocialPage(input,phaseSignal)
           let recoveryDeadline:number|undefined;const settleExisting=async(wc:import('electron').WebContents)=>{const stableBy=recoveryDeadline??(recoveryDeadline=Date.now()+5000);let previous=wc.getURL(),quietSince=Date.now();while(Date.now()<stableBy){guard();phaseSignal.throwIfAborted();if(wc.isDestroyed()||!sameCollectionNavigation(input.url,wc.getURL()))throw new Error('Collection page identity changed during same-navigation recovery');const current=wc.getURL();if(wc.isLoading()||current!==previous){quietSince=Date.now();previous=current}else if(Date.now()-quietSince>=150)return;await new Promise(resolve=>setTimeout(resolve,50))}throw new Error('Collection same-navigation recovery did not stabilize within five seconds')}
           kernel.collectionBodyScope=input.source;kernel.collectionRestricted=false;kernel.collectionHTTPStatus=0
           guard();let opened:{id:string}
@@ -852,6 +1030,10 @@ export class BrowserKernel {
           if(preflight.restricted||[401,403,429].includes(kernel.collectionHTTPStatus))kernel.collectionRestricted=true
           const waitForBody=()=>readRendererPhase<boolean>(tab.view.webContents,'collection.pages','ready',()=>tab.view.webContents.executeJavaScript(`(()=>new Promise(resolve=>{const selector=${JSON.stringify(input.source.bodySelector)},index=${JSON.stringify(input.source.index??0)};let timer,observer,checks=0,finished=false;const done=value=>{if(finished)return;finished=true;clearTimeout(timer);observer?.disconnect();resolve(value)},ready=()=>{if(++checks>200){done(false);return false}const root=document.querySelectorAll(selector)[index];if(!root||!root.getClientRects().length)return false;const nodes=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let count=0;while(nodes.nextNode()&&++count<=200){const node=nodes.currentNode,parent=node.parentElement,style=parent?getComputedStyle(parent):null;if(parent&&style.display!=='none'&&style.visibility!=='hidden'&&style.visibility!=='collapse'&&parent.getClientRects().length&&!parent.closest('script,style,template,noscript,input,textarea,select,[hidden],[aria-hidden="true"]')&&String(node.textContent??'').slice(0,300).trim())return true}return false};if(ready()){done(true);return}observer=new MutationObserver(()=>{if(ready())done(true)});observer.observe(document.documentElement,{childList:true,subtree:true,characterData:true,attributes:true});timer=setTimeout(()=>done(false),4000)}))()`,true),phaseSignal,4500)
           try{if(!kernel.collectionRestricted)await waitForBody()}catch(error){if(!(error instanceof Error)||!('code'in error)||error.code!=='BMW_BROWSER_PAGE_CHANGED'||!sameCollectionNavigation(input.url,tab.view.webContents.getURL()))throw error;await settleExisting(tab.view.webContents);await waitForBody()}
+          const address=new URL(input.url),account=address.pathname.match(/^\/([a-zA-Z0-9_]{1,15})\/?$/)?.[1]
+          if(!kernel.collectionRestricted&&['x.com','twitter.com'].includes(address.hostname)&&account&&!['home','explore','search','login','signup','settings','notifications','messages','i'].includes(account.toLowerCase())){
+            await readRendererPhase(tab.view.webContents,'collection.pages','account-posts',()=>tab.view.webContents.executeJavaScript(`(()=>new Promise(resolve=>{let timer,observer,done=false;const account=${JSON.stringify(account.toLowerCase())},finish=value=>{if(done)return;done=true;clearTimeout(timer);observer?.disconnect();resolve(value)},ready=()=>[...document.querySelectorAll('a[href]')].slice(0,2000).some(link=>{if(!link.getClientRects().length)return false;try{const url=new URL(link.href);return ['x.com','twitter.com'].includes(url.hostname)&&url.pathname.toLowerCase().startsWith('/'+account+'/status/')&&/^\\d+/.test(url.pathname.split('/')[3]??'')}catch{return false}});if(ready()){finish(true);return}observer=new MutationObserver(()=>{if(ready())finish(true)});observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true});timer=setTimeout(()=>finish(false),4000)}))()`,true),phaseSignal,4500)
+          }
           guard();phaseSignal.throwIfAborted()
           let observation=await kernel.collectSource({...input.source,...(kernel.collectionRestricted?{bodySelector:'body',index:0,excludeSelectors:[],authorSelector:undefined,publishedSelector:undefined}:{}),tabId:opened.id},phaseSignal)
           if(kernel.collectionRestricted)observation={...observation,access:'login-required',accessText:'Explicit access/challenge wall observed in the visible document',result:'login-required'}
@@ -861,7 +1043,7 @@ export class BrowserKernel {
           // never navigate again or replay an official/model input.
           if(observation.result==='navigated'&&sameCollectionNavigation(input.url,tab.view.webContents.getURL())){await settleExisting(tab.view.webContents);observation=await kernel.collectSource({...input.source,tabId:opened.id},phaseSignal);guard();phaseSignal.throwIfAborted()}
           if(!['observed','truncated'].includes(observation.result))return {observation,links:[],linksTruncated:false,...(kernel.collectionRestricted?{restricted:true}:{})}
-          const found=await readRendererPhase<{url:string;text:string;links:CollectionPageLink[];linksTruncated:boolean}>(tab.view.webContents,'collection.pages','links',()=>tab.view.webContents.executeJavaScript(collectionPageLinksExpression(input.source),true),phaseSignal)
+          const found=await readRendererPhase<{url:string;text:string;links:CollectionPageLink[];linksTruncated:boolean}>(tab.view.webContents,'collection.pages','links',()=>tab.view.webContents.mainFrame.executeJavaScript(collectionPageLinksExpression(input.source),true),phaseSignal)
           guard();phaseSignal.throwIfAborted()
           if(found.url!==observation.url||tab.view.webContents.getURL()!==observation.url||found.text!==observation.text)throw new Error('Collection page changed between original and visible links')
           if(!Array.isArray(found.links)||found.links.length>100||typeof found.linksTruncated!=='boolean'||found.links.some(link=>typeof link.url!=='string'||typeof link.text!=='string'||link.text.length>320))throw new Error('Invalid bounded collection links')
@@ -874,14 +1056,14 @@ export class BrowserKernel {
         }finally{
           if(!cleanupFailed)try{await kernel.closeDetached()}catch(error){cleanupFailed=true;const failure=new CollectionPageCleanupError('Collection page did not close; explicit recovery required');Object.assign(failure,{cause:error});throw failure}
         }
-      },close:async()=>{if(cleanupFailed)throw new CollectionPageCleanupError('Collection page cleanup is quarantined');await kernel.closeDetached();this.collectionPageLanes.delete(kernel)}}
+      },close:async()=>{if(cleanupFailed)throw new CollectionPageCleanupError('Collection page cleanup is quarantined');await this.disposeCollectionLane(kernel)}}
     },work,signal)}finally{this.collectionPagePoolRunning=false;this.collectionPagePoolQuarantined=this.collectionPageLanes.size>0}
   }
 
   /** Only a trusted Host recovery path calls this; it never replays any input. */
   async recoverCollectionPages():Promise<void>{
     if(this.collectionPagePoolRunning)throw new Error('Wait for the active collection page batch to drain')
-    const cleanup=await Promise.allSettled([...this.collectionPageLanes].map(async kernel=>{await kernel.closeDetached();this.collectionPageLanes.delete(kernel)}))
+    const cleanup=await Promise.allSettled([...this.collectionPageLanes].map(kernel=>this.disposeCollectionLane(kernel)))
     this.collectionPagePoolQuarantined=this.collectionPageLanes.size>0
     if(cleanup.some(result=>result.status==='rejected'))throw new CollectionPageCleanupError('Collection page cleanup remains quarantined')
   }
@@ -1027,7 +1209,11 @@ export class BrowserKernel {
         domContentLoadedMs: navigation ? Math.round(navigation.domContentLoadedEventEnd) : null,
         loadMs: navigation ? Math.round(navigation.loadEventEnd) : null,
         resourceCount: performance.getEntriesByType('resource').length,
-        longTaskCount: performance.getEntriesByType('longtask').length
+        longTaskCount: performance.getEntriesByType('longtask').length,
+        documentReadyState:document.readyState,
+        bodyTextCharacters:String(document.body?.innerText??'').slice(0,50000).length,
+        scriptCount:document.scripts.length,
+        pendingStylesheets:[...document.querySelectorAll('link[rel="stylesheet"]')].slice(0,100).filter(link=>!link.disabled&&!link.sheet&&(!link.media||matchMedia(link.media).matches)).length
       }
     })()`, true), signal)
     let accessibility = []
@@ -1042,7 +1228,7 @@ export class BrowserKernel {
       if(signal?.aborted || (error instanceof Error && 'code' in error && String(error.code).startsWith('BMW_BROWSER_')))throw error
     }
     const screenshot=await this.screenshot(tab,{},signal)
-    return { ...observation, screenshot, diagnostics: this.diagnosticsFor(tab.id), performance, accessibility }
+    return { ...observation, screenshot, diagnostics: this.diagnosticsFor(tab.id),networkPending:[...(this.networkRequests.get(tab.view.webContents)?.values()??[])].slice(-30), performance, accessibility }
   }
 
   async assertPage(tab, request) {

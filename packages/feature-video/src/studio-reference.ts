@@ -16,6 +16,31 @@ function reply(record:StudioReferenceRecord,directory:string){return {reference:
 export async function referenceOperation(kernel:StudioKernel,store:VideoStudioStore,draft:VideoDraft,request:StudioRequest,directory:string,guard:()=>void,actor:'user'|'agent',signal?:AbortSignal,persistPrepared=true):Promise<unknown>{
  const check=()=>{signal?.throwIfAborted();guard()}
  const records=structuredClone(draft.referenceRecords??[])
+ if(request.operation==='set-reference-analyses'){
+  const pins=new Map<string,string>();let bytes=0
+  const pin=async(id:string,expected:string)=>{
+   check();const existing=pins.get(id);if(existing!==undefined){if(existing!==expected)throw new Error('STUDIO_REFERENCE_STALE: Conflicting reference file identity.');return}
+   if(pins.size>=128)throw new Error('STUDIO_REFERENCE_BUDGET: Analysis batch exceeds128 files.')
+   const io=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:id})
+   try{bytes+=io.bytes;if(io.bytes>256*1024*1024||bytes>512*1024*1024)throw new Error('STUDIO_REFERENCE_BUDGET: Analysis batch exceeds512 MiB.');if(await io.fingerprint(signal)!==expected)throw new Error('STUDIO_REFERENCE_STALE: Reference source or PNG changed.');pins.set(id,expected)}finally{await io.close()}
+   check()
+  }
+  const analyses:{referenceId:string;sourceArtifactId:string;frameCount:number;observationCount:number;analysisOrigin?:'user'|'agent'}[]=[]
+  for(const update of request.referenceAnalyses!){
+   check();const record=records.find(r=>r.id===update.referenceId);if(!record)throw new Error('Unknown prepared reference: '+update.referenceId)
+   const analysis=update.referenceAnalysis
+   if(analysis.observations.length!==record.frames.length||analysis.observations.some(o=>o.frameIndex>=record.frames.length))throw new Error('REFERENCE_ANALYSIS_INCOMPLETE: '+JSON.stringify({referenceId:record.id,frameCount:record.frames.length,requiredFrameIndices:record.frames.map((_,i)=>i),missingFrameIndices:record.frames.map((_,i)=>i).filter(i=>!analysis.observations.some(o=>o.frameIndex===i)),committed:false,automaticRetry:false}))
+   const same=JSON.stringify(analysis)===JSON.stringify(record.analysis)
+   if(actor!=='user'&&record.analysisOrigin==='user'&&!same)throw new Error('STUDIO_REFERENCE_EDITED: Preserve the user-corrected analysis: '+record.id)
+   await pin(record.sourceArtifactId,record.sourceSha256)
+   for(const frame of record.frames)await pin(frame.artifactId,frame.sha256)
+   record.analysis=structuredClone(analysis);record.analysisOrigin=same?record.analysisOrigin:actor
+   analyses.push({referenceId:record.id,sourceArtifactId:record.sourceArtifactId,frameCount:record.frames.length,observationCount:analysis.observations.length,analysisOrigin:record.analysisOrigin})
+  }
+  assertReferenceRecords(records)
+  for(const [id,expected]of pins){if(await fingerprint(directory,id,signal)!==expected)throw new Error('STUDIO_REFERENCE_STALE: Reference file changed before batch commit.');check()}
+  check();return {draft:store.recordReference(draft.id,draft.revision,records),analyses,transaction:'one draft CAS; all author-supplied analyses or none',automaticRetry:false}
+ }
  if(request.operation==='remove-reference'){
   if(actor!=='user')throw new Error('STUDIO_REFERENCE_USER_REQUIRED: 请由用户移除参考记录。')
   const index=records.findIndex(r=>r.id===request.referenceId);if(index<0)throw new Error('Unknown prepared reference.')

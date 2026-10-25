@@ -37,7 +37,21 @@ export async function prepareShots(kernel:StudioKernel,store:VideoStudioStore,ow
   if(!resumeId)await checkpoint()
   if(draft.scenes.length+shots.length>96||draft.scenes.reduce((n,s)=>n+s.durationSeconds,0)+shots.reduce((n,s)=>n+s.endSeconds-s.startSeconds,0)>720||shots.some(s=>draft.scenes.some(old=>old.id===s.sceneId))||(draft.referenceRecords?.length??0)+shots.length>REFERENCE_LIMITS.records||referenceSourceCount(draft.referenceRecords??[])+shots.length>REFERENCE_LIMITS.sources)throw new Error('SHOT_PLAN_CONFLICT: Use new scene IDs and remain within 32 reference records / eight source groups.')
   const pins=new Map<string,string>(),urls=new Map<string,string[]>()
-  await diagnostics.stage('validate-inputs',async()=>{for(const shot of shots){guard();let pin=pins.get(shot.artifactId);if(!pin){pin=await hash(shot.artifactId,true);pins.set(shot.artifactId,pin)}if(pin!==shot.sha256)throw new Error('SHOT_SOURCE_CHANGED: Use current indexed artifact SHA.');const links:string[]=[];for(const citation of shot.citations)links.push((await sources.citation(citation,signal)).url);urls.set(shot.sceneId,[...new Set(links)])}})
+  await diagnostics.stage('validate-inputs',async()=>{for(const shot of shots){guard();let pin=pins.get(shot.artifactId);if(!pin){pin=await hash(shot.artifactId,true);pins.set(shot.artifactId,pin)}if(pin!==shot.sha256)throw new Error('SHOT_SOURCE_CHANGED: Use current indexed artifact SHA.');const links:string[]=[]
+   for(const [citationIndex,citation]of shot.citations.entries()){
+    try{links.push((await sources.citation(citation,signal)).url)}catch(error){
+     signal?.throwIfAborted();guard()
+     const reason=error instanceof Error?error.message:String(error)
+     let bindingHint:{sourceId:string;acquisitionId:string;requiresExplicitResubmission:true}|undefined
+     if(reason.includes('Source acquisition not found'))try{
+      const page=sources.port().search?.({limit:20}),matches=page?.items.slice(0,20).filter(row=>row.acquisition.id===citation.acquisitionId)
+      if(matches?.length===1&&matches[0].source.id!==citation.sourceId)bindingHint={sourceId:matches[0].source.id,acquisitionId:matches[0].acquisition.id,requiresExplicitResubmission:true}
+     }catch{/* Optional index evidence cannot replace or hide the original rejection. */}
+     signal?.throwIfAborted();guard()
+     throw new Error('SHOT_CITATION_BINDING: '+JSON.stringify({sceneId:shot.sceneId,citationIndex,sourceId:citation.sourceId,acquisitionId:citation.acquisitionId,startCharacter:citation.startCharacter,endCharacter:citation.endCharacter,...(bindingHint?{bindingHint}:{}),...(reason.includes('Source acquisition not found')?{lookupRecovery:{action:'library.streams',streamRequest:{operation:'sources',projectId:owner.projectId,sourceId:citation.sourceId,limit:20}}}:{})})+'; '+reason+' Compare the exact submitted IDs and saved quote range before retrying; no binding was corrected or accepted. Hints only match the same acquisition ID within at most twenty current-Project index rows. lookupRecovery is an explicit read-only exact-source filter; use its nextCursor when present. Text query is not an identifier lookup. Correcting a binding changes the plan: read current draft and cleanup state, then submit a fresh request without the failed plan resumeId.',{cause:error})
+    }
+   }
+   urls.set(shot.sceneId,[...new Set(links)])}})
   for(const [index,shot]of shots.entries()){
    guard();let row=prepared[index]
    if(row){await diagnostics.stage('reuse-segment-and-frames',async()=>{

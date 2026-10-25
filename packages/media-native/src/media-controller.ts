@@ -2,6 +2,7 @@ import {GridPrecomposer,inspectGridProxy} from './precomposition.js'
 import {assertNarration} from './narration-contract.js'
 import type {QwenNarrationCredentials} from './narration-contract.js'
 import {ArtifactJobIO} from './artifact-job-io.js'
+import {mediaArtifactHash,saveMediaDerivation,saveNativeVideoOrigin} from './media-derivation.js'
 import {preserveMedia,PreservationCleanupError} from './media-preservation.js'
 import {segmentArchivedMedia} from './media-archive-segment.js'
 import type {PreservationInput} from './media-preservation.js'
@@ -173,6 +174,7 @@ export class MediaController implements NativeMediaPort {
     }
     const request = assertNativeProcessingRequest(raw)
     const directory = this.resolveArtifactsDirectory?.() || this.artifactsDirectory
+    const conversionSourceHash=request.action==='media.convert'?await mediaArtifactHash(directory,request.artifactId,signal):undefined
     const result = await this.processor.process(request, directory, signal)
     if(request.action==='media.inspect'){
       const index=await readCaptureIndex(directory,request.artifactId,signal)
@@ -194,6 +196,7 @@ export class MediaController implements NativeMediaPort {
       const trackKeys = (tracks: readonly { type: string; codec: string | null }[]) => tracks.map((track) => `${track.type}:${track.codec}`).sort().join(',')
       if (trackKeys(inspection.tracks) !== trackKeys(result.tracks)) throw new Error('Exported file did not preserve its declared tracks.')
       const { range, ...artifact } = result
+      await saveMediaDerivation(directory,{version:1,kind:'native-media-conversion',artifactId:result.artifactId,sha256:await mediaArtifactHash(directory,result.artifactId,signal),sourceArtifactId:request.artifactId,sourceSha256:conversionSourceHash!,sourceRange:range},signal)
       return { ...artifact, requestedSourceRange: range, durationSeconds: inspection.durationSeconds,
         firstTimestampSeconds: inspection.firstTimestampSeconds, tracks: inspection.tracks }
     } catch (error) {
@@ -205,7 +208,7 @@ export class MediaController implements NativeMediaPort {
   async preserveMedia(request:Omit<PreservationInput,'directory'>){
     if(this.isCaptureActive())throw new Error('Finish the current media job before preservation.')
     this.preserving=true
-    try{return await preserveMedia({...request,directory:this.resolveArtifactsDirectory?.()||this.artifactsDirectory})}catch(error){if(error instanceof PreservationCleanupError)this.failedPreservation=error;throw error}finally{this.preserving=false}
+    try{const directory=this.resolveArtifactsDirectory?.()||this.artifactsDirectory,result=await preserveMedia({...request,directory});if(request.videoIdentity)await saveNativeVideoOrigin(directory,result.artifactId,request.videoIdentity,request.signal);return result}catch(error){if(error instanceof PreservationCleanupError)this.failedPreservation=error;throw error}finally{this.preserving=false}
   }
 
   projectArtifactPath(filename) {
@@ -368,7 +371,7 @@ export class MediaController implements NativeMediaPort {
     signal?.throwIfAborted();if(this.isCaptureActive())throw new Error('A media job is already active.')
     const directory=this.resolveArtifactsDirectory?.(tab)||this.artifactsDirectory;fs.mkdirSync(directory,{recursive:true,mode:0o700})
     const capture=new VideoElementCapture(tab.view.webContents,directory,request,{id:tab.id,title:tab.title,url:tab.url},value=>this.onStatus?.(value));this.elementCapture=capture
-    try{return await capture.run(signal)}finally{if(this.elementCapture===capture&&!capture.cleanupFailed)this.elementCapture=null}
+    try{const result=await capture.run(signal);if(request.videoIdentity)await saveNativeVideoOrigin(directory,result.artifactId,request.videoIdentity,signal);return result}finally{if(this.elementCapture===capture&&!capture.cleanupFailed)this.elementCapture=null}
   }
 
   async compareImages(baselinePng, currentPng) {

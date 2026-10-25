@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { agentIdentifier, agentRecord, agentText } from '@bmw-agent/agent-contract'
 import type { AgentBackend, AgentDriverDescription, AgentDriverEvent, AgentRunRequest, AgentRunResult } from '@bmw-agent/agent-contract'
-import { CodexCatalogGate, codexThreadParameters, initializeCodex } from './codex-policy.js'
+import { CodexCatalogGate, codexThreadParameters, codexDisabledMcpServers, initializeCodex } from './codex-policy.js'
 import type { CodexBrowserDefinition } from './codex-policy.js'
 import { createCodexRpc } from './codex-rpc.js'
 import type { CodexRpc } from './codex-rpc.js'
@@ -114,7 +114,7 @@ export class CodexBackend implements AgentBackend {
       const catalog=await codexAccountModels(rpc)
       if(catalog.authentication.state!=='ready'||!catalog.models.some(row=>row.id===model))throw new Error('Codex model is unavailable for the signed-in account; open Agent settings')
       request.signal.throwIfAborted()
-      const params = codexThreadParameters(request.project.directory, model, connection.definition, agentText(request.context, 16384))
+      const params = codexThreadParameters(request.project.directory, model, connection.definition, agentText(request.context, 16384),await codexDisabledMcpServers(rpc))
       let started: Record<string, unknown>
       if (request.externalSessionId) {
         // Dynamic tools persist in official rollout metadata. Resume never adopts
@@ -127,6 +127,10 @@ export class CodexBackend implements AgentBackend {
       run.threadId = agentIdentifier(agentRecord(started.thread).id)
       if (request.externalSessionId && run.threadId !== request.externalSessionId) throw new Error('Codex resumed a different provider Session')
       if (started.model !== model) throw new Error('Codex changed the model after catalog verification')
+      // Resume configuration does not replace developer items already retained
+      // in native history. Append this input's scope after that history through
+      // the official protocol so the latest Host context is model-visible.
+      await rpc.call('thread/inject_items',{threadId:run.threadId,items:[{type:'message',role:'developer',content:[{type:'input_text',text:params.developerInstructions}]}]})
       request.signal.throwIfAborted()
       return { ...this.description, capabilities: { ...this.description.capabilities, browserOnly: true } }
     } catch (error: unknown) { await this.cleanup(run); throw error }

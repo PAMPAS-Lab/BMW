@@ -8,7 +8,7 @@ import type { AddressInfo } from 'node:net'
 import { agentRecord } from '@bmw-agent/agent-contract'
 import type { CodexRpc } from './codex-rpc.js'
 import { createCodexRpc } from './codex-rpc.js'
-import {materializeCodexBrowserCatalog,codexSupportsProtocolVersion,codexVerifiedProtocolVersions} from './codex-model-catalog.js'
+import {refreshCodexBrowserCatalog,CodexCatalogRefreshCache,codexSupportsProtocolVersion,codexVerifiedProtocolVersions} from './codex-model-catalog.js'
 
 export interface CodexBrowserDefinition { name: 'browser'; description: string; inputSchema: Record<string, unknown> }
 /** Responses and Responses Lite carry the authoritative catalog differently. */
@@ -49,13 +49,20 @@ export async function initializeCodex(rpc: CodexRpc): Promise<void> {
   await rpc.call('initialize', { clientInfo: { name: 'bmw_agent', title: 'BMW Assistant', version: '0.1.0' }, capabilities: { experimentalApi: true } })
   rpc.notify('initialized', {})
 }
-export function codexThreadParameters(directory: string, model: string, definition: CodexBrowserDefinition, context: string): Record<string, unknown> {
+/** Empty TOML tables merge with inherited servers. Disable each normalized official entry explicitly. */
+export async function codexDisabledMcpServers(rpc:Pick<CodexRpc,'call'>):Promise<Record<string,{enabled:false}>>{
+  const response=agentRecord(await rpc.call('config/read',{includeLayers:false})),config=agentRecord(response.config)
+  const servers=config.mcp_servers==null?{}:agentRecord(config.mcp_servers),names=Object.keys(servers)
+  if(names.length>1000||names.some(name=>!name||name.length>200))throw new Error('Invalid Codex inherited MCP catalog')
+  return Object.fromEntries(names.map(name=>[name,{enabled:false as const}]))
+}
+export function codexThreadParameters(directory: string, model: string, definition: CodexBrowserDefinition, context: string,disabledMcpServers:Record<string,{enabled:false}>={}): Record<string, unknown> {
   const properties=definition.inputSchema.properties as Record<string,unknown>|undefined
   const action=properties?.action as {enum?:unknown}|undefined
   const actions=Array.isArray(action?.enum)?action.enum.filter((value):value is string=>typeof value==='string'):[]
-  const guide=actions.length?' Browser action index (current authenticated catalog): '+actions.join(', ')+'.'+(actions.includes('help')?' Start page research with browser {"action":"observe"}. To discover or recover, call browser {"action":"help"}, or {"action":"help","forAction":"EXACT_ACTION"} for its closed input schema. Do not guess aliases. On a validation failure, follow its recovery contract and correct the request; unknown fields are rejected before execution. Collect finite video to its ended event with a safety limit longer than the source duration; a limit stop is partial.':''):''
-  return { cwd: directory, model, config: structuredClone(codexBrowserConfig), environments: [], sandbox: 'read-only', approvalPolicy: 'never',
-    dynamicTools: [definition], developerInstructions: 'You are BMW Assistant. Use browser for Project pages, images, media and Video Studio. BMW owns resource and Session scope.'+guide+' Current Project context:\n' + context }
+  const guide=actions.length?' Browser action index (current authenticated catalog): '+actions.join(', ')+'.'+(actions.includes('help')?' Start page research with browser {"action":"observe"}. To discover or recover, call browser {"action":"help"}, or {"action":"help","forAction":"EXACT_ACTION"} for its closed input schema. Reuse previously discovered contracts across inputs while this catalog is unchanged; a new input scope does not invalidate tool contracts. For Studio use help with forOperation and, when needed, describe-edit editOperations (up to8) to discover a group once. Continue an authorized production through its requested deliverables; use exact recovery for a correctable argument error rather than treating it as missing permission or ending at an intermediate milestone. Never replay uncertain work or bypass real evidence/cleanup gates. Do not guess aliases. On a validation failure, follow its recovery contract and correct the request; unknown fields are rejected before execution. Collect finite video to its ended event with a safety limit longer than the source duration; a limit stop is partial.':''):''
+  return { cwd: directory, model, config: {...structuredClone(codexBrowserConfig),mcp_servers:structuredClone(disabledMcpServers)}, environments: [], sandbox: 'read-only', approvalPolicy: 'never',
+    dynamicTools: [definition], developerInstructions: 'You are BMW Assistant. Use browser for Project pages, images, media and Video Studio. BMW owns resource and Session scope.'+guide+' These are the current BMW input instructions and replace earlier input-specific developer context in this resumed Session. Task-specific restrictions, including audit-only scope, apply only to the input for which they were supplied; they do not restrict later user-authorized production or rework. Apply the current context below for this input only. Browser permissions, ownership checks, active audit write restrictions and cleanup requirements remain enforced by BMW Host. Current Project context:\n' + context }
 }
 export function codexProtocolVersion(output:string):string {
   const value=output.startsWith('codex-cli ')?output.slice('codex-cli '.length):undefined
@@ -68,20 +75,20 @@ function version(executable: string): Promise<string> {
 /** Capture the real model request before BMW releases any user input. Never forwards inference. */
 export class CodexCatalogGate {
   private verified = new Set<string>()
-  invalidate():void{this.verified.clear()}
+  private readonly catalogs=new CodexCatalogRefreshCache()
+  invalidate():void{this.verified.clear();this.catalogs.clear()}
   async verify(executable: string, configDirectory: string, model: string, definition: CodexBrowserDefinition, signal: AbortSignal): Promise<string|void> {
     signal.throwIfAborted()
     fs.mkdirSync(configDirectory, { recursive: true, mode: 0o700 })
-    codexProtocolVersion(await version(executable))
+    const protocolVersion=codexProtocolVersion(await version(executable))
     const digest = crypto.createHash('sha256')
     for await (const chunk of fs.createReadStream(executable)) digest.update(chunk)
     const configPath = path.join(configDirectory, 'config.toml')
     const config = fs.existsSync(configPath) ? fs.readFileSync(configPath) : Buffer.alloc(0)
-    const modelsPath = path.join(configDirectory, 'models_cache.json')
-    const models = fs.existsSync(modelsPath) ? fs.readFileSync(modelsPath) : Buffer.alloc(0)
-    const modelCatalogPath=materializeCodexBrowserCatalog(configDirectory,model)
+    const catalogKey=digest.copy().update(config).update(JSON.stringify([executable,configDirectory,model,protocolVersion])).digest('hex')
+    const modelCatalogPath=await this.catalogs.get(catalogKey,()=>refreshCodexBrowserCatalog(executable,configDirectory,model,protocolVersion,signal),signal)
     const browserCatalog=modelCatalogPath?fs.readFileSync(modelCatalogPath):Buffer.alloc(0)
-    const key = digest.update(config).update(models).update(browserCatalog).update(JSON.stringify([model, definition, codexBrowserConfig])).digest('hex')
+    const key = digest.update(config).update(browserCatalog).update(JSON.stringify([model, definition, codexBrowserConfig])).digest('hex')
     if (this.verified.has(key)) return modelCatalogPath
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-codex-catalog-'))
     let accept!: () => void, decline!: (error: Error) => void, settled = false
@@ -113,10 +120,10 @@ export class CodexCatalogGate {
       rpc = createCodexRpc(executable, directory, configDirectory, { BMW_CODEX_CATALOG_KEY: 'unused-local-fixture' },modelCatalogPath)
       rpc.onFailure(reject)
       await initializeCodex(rpc)
-      const params = codexThreadParameters(directory, model, definition, '')
+      const params = codexThreadParameters(directory, model, definition, '',await codexDisabledMcpServers(rpc))
       params.ephemeral = true
       params.modelProvider = 'bmw_catalog'
-      params.config = { ...codexBrowserConfig, model_provider: 'bmw_catalog', model_providers: { bmw_catalog: {
+      params.config = { ...agentRecord(params.config), model_provider: 'bmw_catalog', model_providers: { bmw_catalog: {
         name: 'BMW local catalog preflight', base_url: baseUrl, env_key: 'BMW_CODEX_CATALOG_KEY', wire_api: 'responses',
         requires_openai_auth: false, supports_websockets: false, request_max_retries: 0, stream_max_retries: 0
       } } }

@@ -1,4 +1,5 @@
 import {assertBrowserActionContext} from './browser-host.js'
+import {compactToolSchema} from './tool-schema-compaction.js'
 import type {BrowserActionContext} from './browser-host.js'
 import { assertBrowserRequest, BROWSER_CORE_ACTION_DEFINITIONS } from './browser-schema.js'
 import type { BrowserActionDefinition, BrowserInputSchema, BrowserRequest, JsonSchema, BrowserHelpQuery } from './browser-schema.js'
@@ -121,12 +122,15 @@ export class BrowserCapabilityRegistry {
   }
 
   toolDefinition(): { name: 'browser'; description: string; inputSchema: BrowserInputSchema } {
-    const fragments = (this.product.features || []).map((feature) => feature.browserDescription).filter(Boolean)
+    // Feature overviews sometimes concatenate the exact action descriptions
+    // already retained in schema branches. Publish that text only once.
+    const actionDescriptions=[...this.actions.values()].map(action=>action.description).join(' ')
+    const fragments = (this.product.features || []).map((feature) => feature.browserDescription).filter((text):text is string=>Boolean(text)&&!actionDescriptions.includes(text!))
     const base = `The only ${this.product.name} model capability. Search, inspect, navigate, interact with, capture, record, and analyze tabs owned by the active Project, usually in the background. Use the schema branch matching action: fields belonging to other actions are not accepted. Use media.inspect, media.frames.sample, and media.convert for Project-owned video/audio artifacts; sampled PNGs are returned as images and conversion preserves all supported tracks or fails. Use media.image.inspect to measure Project images. media.image.draw creates a new canvas and requires width, height and shapes; do not pass artifactId or filename. Example: {"action":"media.image.draw","width":320,"height":180,"shapes":[{"type":"text","x":20,"y":20,"text":"Diagram","color":"#172536"}]}. media.image.annotate marks an existing image and requires artifactId and shapes; do not pass width, height or filename. Example: {"action":"media.image.annotate","artifactId":"existing.png","shapes":[{"type":"rect","x":10,"y":10,"width":50,"height":30}]}. Both save a new Project PNG and return it as an image; shapes use actual image pixels and preserve the original. Parameter validation errors do not mean a primitive is unsupported; correct the named fields before retrying. No Shell, unrestricted filesystem, or external browser tool is available.`
     return {
       name: 'browser',
       description: ['Start with {"action":"observe"} to read the current page, or {"action":"tabs.list"} for Project tabs. Discover actions with {"action":"help"}; get exact fields with {"action":"help","forAction":"media.video.capture"}. Only names in the action enum exist. Unknown-action/argument failures return a recovery request and executed:false; inspect that contract and correct fields, never add guessed parameters. Long-media workflow: page.media.list -> media.preserve streams complete HTTP/HLS delivery to a Project archive (4 GiB/six hours, no decoded playback) -> media.inspect verifies metadata -> media.segment creates local bounded packet-copy work units with source SHA/time mapping -> decode, transcribe and sample those units. Do not use a thirty-minute decoding limit to reject complete download, and do not silently substitute short capture for a full source. YouTube direct or supported SABR tracks use bound default audio; SABR requires a same-player native POST witness and verified complete tracks. Website attestation rejection, unavailable witnesses and signature-only delivery fail explicitly; storage budgets do not certify long-video site coverage. media.audio.sample saves bounded playable WAV and technical evidence; media.audio.preview opens user controls with no autoplay. These do not certify that the active model heard audio.',base, ...fragments].join(' '),
-      inputSchema: this.inputSchema()
+      inputSchema: compactToolSchema(this.inputSchema())
     }
   }
 }

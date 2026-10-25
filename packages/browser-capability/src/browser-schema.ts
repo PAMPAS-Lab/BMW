@@ -1,4 +1,5 @@
 import {assertPageScope} from './page-scope.js'
+import {assertPageTextFind} from './page-text-find.js'
 import type {BrowserActionContext} from './browser-host.js'
 export type JsonSchema = Readonly<Record<string, unknown>>
 
@@ -33,7 +34,7 @@ function action(action: string, description: string, properties: Readonly<Record
     description,
     inputSchema: Object.freeze({
       type: 'object',
-      properties: Object.freeze({ ...tabTarget, ...properties }),
+      properties: Object.freeze({ ...(['pages.read','pages.discover','pages.read-result'].includes(action)?{}:tabTarget), ...properties }),
       required: Object.freeze([...required]),
       additionalProperties: false
     })
@@ -59,6 +60,13 @@ export const BROWSER_CORE_ACTION_DEFINITIONS: readonly BrowserActionDefinition[]
     forSubOperation:{type:'string',maxLength:100,description:'An exact nested operation returned by the selected operation help.'}
   }),
   action('tabs.list', 'List tabs owned by the active Project.'),
+  action('pages.discover','Lightweight discovery from 1–60 explicit public X account URLs. Save at most five rendered post excerpts (360 characters each), original post links, visible time labels and pinned flags per account. No scrolling, expanding posts, article navigation, media enumeration or download. Same native 8s ordinary page/180s batch budgets; an HTTP 200 same-document HTML transfer with bytes received in the last second gets at most 4s additional completion time and actual cleanup as pages.read. A read state means real same-account post excerpts saved, never full feed or trend coverage. Project-owned batch/source/acquisition receipts persist before return. Read the compact leads section; inspect saved diagnostics only as needed. Discovery excerpts are not fact-checked originals.',{urls:{type:'array',minItems:1,maxItems:60,uniqueItems:true,items:{type:'string',minLength:1,maxLength:4096}}},['urls']),
+  action('pages.read', 'Read and save 1–60 explicit public HTTPS pages in three native offscreen surfaces. No media downloads, caller JavaScript or existing tab mutation. Native ordinary page wait 8 seconds; only active same-document HTTP 200 HTML bytes may use up to 4 seconds completion grace. Headers, stalled/finished documents and unrelated assets do not extend it. Batch 180 seconds plus real cleanup. A qualified X snapshot requires visible posts and same-account status links. Every state, including failures, is checkpointed in the Project before a compact summary returns. The summary contains every input index/state and a fixed batchId/revision/sha256. Read metadata, original text, links and diagnostics with pages.read-result; do not repeat the network collection to recover a truncated response. An account snapshot never certifies full feed or trends.', {
+    urls:{type:'array',minItems:1,maxItems:60,uniqueItems:true,items:{type:'string',minLength:1,maxLength:4096}}
+  },['urls']),
+  action('pages.read-result','Read a fixed, Project-owned text batch checkpoint without network access. Use the batchId/revision/sha256 returned by pages.read. rows pages contain metadata previews and original-source references; details pages preserve the exact complete row as JSON fragments; text pages read verified saved original text; links and diagnostics are separate. Start each section/row at offset zero and follow nextOffset. The Host rejects skipped ranges with TEXT_READ_PAGE_ORDER. Only coverage.complete certifies contiguous delivery in the current Session; a tail page alone is not completion. Delivery progress resets on restart or bounded-cache eviction, requiring offset zero again. Original-text and diagnostic responses are bounded to 3000 serialized characters and never silently truncates a middle section. rowIndex is required for text/links/diagnostics/details; rows uses input indexes. The leads section is a discovery-only projection, one account per page bounded to 7000 characters including the delivery receipt; its coverage certifies only that projection, not full text/diagnostics. No paths, SQL, caller code or batch writes.',{
+    batchId:{type:'string',minLength:1,maxLength:80},revision:{type:'integer',minimum:0,maximum:1000000},sha256:{type:'string',pattern:'^[a-f0-9]{64}$'},section:{enum:['rows','text','links','diagnostics','details','leads']},rowIndex:{type:'integer',minimum:0,maximum:59},offset:{type:'integer',minimum:0,maximum:50000},limit:{type:'integer',minimum:1,maximum:2}
+  },['batchId','revision','sha256','section','offset']),
   action('tabs.open', 'Open or reuse an Agent-owned browser tab.', {
     url: { type: 'string' },
     foreground: { type: 'boolean', description: 'Defaults to false for background work.' },
@@ -77,6 +85,9 @@ export const BROWSER_CORE_ACTION_DEFINITIONS: readonly BrowserActionDefinition[]
     maxCharacters: { type: 'number' },
     mode: { type: 'string', enum: ['viewport', 'fullpage', 'background', 'observe'] }
   }),
+  action('page.text.find','Find 1–200 characters of visible text within an explicit 1–500 character CSS selector without probing each index. Returns up to eight exact selector/index locators and bounded excerpts; use these for observe or source collect/screenshot. Case-insensitive whitespace-normalized substring search, at most 200 elements/20000 text nodes per page and 10000 elements overall. Pass nextOffset as findOffset; partialElementIndices and budgetExhausted are search gaps, never proof of absence. This does not collect or certify originals.',{
+    selector:{type:'string'},text:{type:'string'},findOffset:{type:'integer',minimum:0,maximum:10000},excludeSelectors:{type:'array',maxItems:16,items:{type:'string',minLength:1,maxLength:500}}
+  },['selector','text']),
   action('click', 'Click an element by selector or visible text.', {
     selector: { type: 'string' },
     text: { type: 'string' }
@@ -132,6 +143,7 @@ export const BROWSER_CORE_ACTION_DEFINITIONS: readonly BrowserActionDefinition[]
     artifactId: { type: 'string', description: 'Existing filename ID in the current Project artifact store; never a host path or URL.' }
   }, ['artifactId']),
   action('media.audio.sample','Save a 0.001–10 second Project audio interval as playable PCM16 WAV, retaining native sample rate and channels without gain/resampling. Returns input/output SHA256, file-PTS range, RMS/peak/clipping/missing sample metrics and 100ms windows. Requires exactly one decodable audio track. Technical analysis is not listening: listeningStatus stays not-performed; text/image-only runtimes must not claim to hear it. Use media.audio.preview for user playback controls; speech transcription is separate.',{artifactId:{type:'string',description:'Existing filename ID in the current Project artifact store; never a host path or URL.'},startSeconds:{type:'number',minimum:0,maximum:1800},endSeconds:{type:'number',minimum:.001,maximum:1800}},['artifactId','startSeconds','endSeconds']),
+  action('media.speech.align','Transcribe a bounded interval of an existing Project audio/video artifact with the fixed local Whisper model. Use the CURRENT exported MP4 and language=en for an English original-speech window; sourceRange is file PTS, at most 180 seconds. Returns transcript segments, interval/source hashes and normalized PCM provenance. Does not edit a draft, apply captions or certify listening. No tab, URL, model path, shell or provider configuration.',{artifactId:{type:'string',description:'Existing filename ID in the current Project artifact store; never a host path or URL.'},model:{type:'string',enum:['base','small']},language:{type:'string',enum:['zh','en','auto']},sourceRange:{type:'object',additionalProperties:false,required:['startSeconds','endSeconds'],properties:{startSeconds:{type:'number',minimum:0,maximum:1800},endSeconds:{type:'number',minimum:.001,maximum:1800}}}},['artifactId','language','sourceRange']),
   action('media.audio.preview','Open a bounded Project WAV audition in BMW native media viewer with user playback controls and no autoplay. This does not feed audio to the model or certify a human listened. Requires an idle media controller.',{artifactId:{type:'string',description:'Existing filename ID in the current Project artifact store; never a host path or URL.'}},['artifactId']),
   action('media.frames.sample', 'Extract 1 to 8 PNG frames from a Project video artifact and return them as model images with actual presentation timestamps. Opaque finite local files up to 512 MiB/30 minutes; thumbnails up to 1280x720.', {
     artifactId: { type: 'string', description: 'Existing filename ID in the current Project artifact store; never a host path or URL.' },
@@ -228,7 +240,16 @@ export function assertBrowserRequest(value: unknown, allowedActions: readonly st
     }).map(([key])=>key)
     if(invalid.length)throw requestError('Fields have invalid types or bounds; request help for the exact input schema.',allowedActions,definition,invalid)
   }
+  if(request.action==='media.speech.align'){
+    const range=request.sourceRange as Record<string,unknown>|undefined,id=request.artifactId,start=range?.startSeconds,end=range?.endSeconds
+    if(typeof id!=='string'||!id||id.length>180||/[/\\:\u0000-\u001f]/.test(id)||id==='.'||id==='..'||!['zh','en','auto'].includes(String(request.language))||request.model!==undefined&&!['base','small'].includes(String(request.model))||!range||Object.keys(range).some(key=>!['startSeconds','endSeconds'].includes(key))||typeof start!=='number'||!Number.isFinite(start)||start<0||typeof end!=='number'||!Number.isFinite(end)||end>1800||end<start+.01||end-start>180)throw requestError('Speech requires a Project artifactId, fixed base/small model, explicit zh/en/auto language and a 0.01–180 second file-PTS sourceRange.',allowedActions,definition)
+  }
   if(request.action==='observe'||request.action==='page.media.list')assertPageScope(request)
+  if(request.action==='page.text.find')assertPageTextFind(request)
+  if(request.action==='pages.read'||request.action==='pages.discover'){
+    const urls=request.urls
+    if(!Array.isArray(urls)||urls.length<1||urls.length>60||new Set(urls).size!==urls.length||urls.some(url=>typeof url!=='string'||!url||url.length>4096))throw requestError('Text batches require 1–60 unique bounded URLs.',allowedActions,definition,['urls'])
+  }
   return request as BrowserRequest
 }
 

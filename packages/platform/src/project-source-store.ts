@@ -1,6 +1,7 @@
+import {TextReadBatchStore} from './text-read-batch-store.js'
 import {SourceArchive} from './source-archive.js'
 import {assertSourceCatalog,assertSourceObservation,assertSourceDeliveryRange,assertSourceCaptureEvidence,verifySourceMetadataRanges,SOURCE_LIMITS,sourceId} from '@bmw-agent/media-native/sources'
-import type {ProjectSourcePort,SourceCatalog,SourceMedia,SourceMediaState,SourceRequest,SourceMediaAvailability,SourceArtifactStatus,SourceCaptureEvidence,SourceScreenshotReceipt} from '@bmw-agent/media-native/sources'
+import type {ProjectSourcePort,SourceCatalog,SourceMedia,SourceMediaState,SourceRequest,SourceMediaAvailability,SourceArtifactStatus,SourceCaptureEvidence,SourceScreenshotReceipt,TextReadBatch,TextReadBatchReceipt} from '@bmw-agent/media-native/sources'
 import {ArtifactJobIO} from '@bmw-agent/media-native/artifact-io'
 import {assertImageInspection,imageHeader} from '@bmw-agent/media-native/image'
 import {assertFullMediaDecode,assertArtifactId} from '@bmw-agent/media-native/contract'
@@ -11,6 +12,7 @@ import path from 'node:path'
 export class ProjectSourceStore implements ProjectSourcePort {
  private legacyCache?:{stat:fs.Stats;catalog:SourceCatalog;sha256:string}
  private legacySha=crypto.createHash('sha256').update('').digest('hex')
+ private readonly textBatches:TextReadBatchStore
  private readonly archive:SourceArchive
  private readonly root:string;private readonly directory:string;private readonly artifacts:string;private readonly file:string;private readonly identities=new Map<string,{dev:number;ino:number}>()
  constructor(directory:string,private readonly projectId:string,private readonly beforeSourceCommit?:()=>void){
@@ -19,6 +21,7 @@ export class ProjectSourceStore implements ProjectSourcePort {
   for(const dir of [this.directory,this.artifacts]){fs.mkdirSync(dir,{recursive:true,mode:0o700});if(fs.realpathSync(dir)!==dir||fs.lstatSync(dir).isSymbolicLink())throw new Error('Source state/artifacts must stay inside their Project.')}
   for(const dir of [this.root,this.directory,this.artifacts]){const stat=fs.statSync(dir);this.identities.set(dir,{dev:stat.dev,ino:stat.ino})}
   this.archive=new SourceArchive(this.root,projectId,()=>this.legacy(),()=>this.legacySha)
+  this.textBatches=new TextReadBatchStore(this.root,projectId)
  }
  private guard():void{for(const dir of [this.root,this.directory,this.artifacts]){const stat=fs.lstatSync(dir),identity=this.identities.get(dir);if(fs.realpathSync(dir)!==dir||!stat.isDirectory()||stat.dev!==identity?.dev||stat.ino!==identity.ino)throw new Error('Source Project boundary changed.')}}
  private removeNew(file:string):void{try{this.guard();if(fs.lstatSync(file).isFile())fs.rmSync(file)}catch{/* Never follow a replaced Project directory during rollback. */}}
@@ -32,6 +35,8 @@ export class ProjectSourceStore implements ProjectSourcePort {
   this.guard();const catalog=assertSourceCatalog(JSON.parse(text));this.legacySha=crypto.createHash('sha256').update(text).digest('hex');
   for(const source of catalog.sources)if(source.id!==crypto.createHash('sha256').update(source.url).digest('hex'))throw new Error('Source URL identity mismatch.');if(catalog.projectId!==this.projectId)throw new Error('Foreign Project source catalog.');this.legacyCache={stat,catalog,sha256:this.legacySha};return catalog
  }
+ writeTextBatch(batch:TextReadBatch,expectedBatchRevision?:number):TextReadBatchReceipt{this.guard();return this.textBatches.write(batch,expectedBatchRevision)}
+ readTextBatch(batchId:string,revision:number,sha256:string):TextReadBatch{this.guard();return this.textBatches.read(batchId,revision,sha256)}
  state(){this.guard();return this.archive.state()}
  lookup(sid:string,aid:string){this.guard();return this.archive.lookup(sid,aid)}
  hasSource(sid:string){this.guard();return this.archive.hasSource(sid)}

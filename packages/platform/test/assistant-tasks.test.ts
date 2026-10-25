@@ -33,3 +33,18 @@ test('Internal review refuses unverified catalogs, changed models and uncertain 
  backend.description.capabilities.browserOnly=true;const changed=tasks.start(owner,request('b'));model='two';assert.equal((await host.wait(changed.runId)).outcome,'failed');assert.equal(calls,0)
  const uncertain=tasks.start(owner,request('c'));await assert.rejects(host.wait(uncertain.runId),/uncertain/);assert.equal(tasks.read(owner,uncertain.runId).state,'uncertain');assert.equal(tasks.start(owner,request('c')).runId,uncertain.runId);assert.throws(()=>tasks.start(owner,request('d')),/uncertain/);assert.equal(calls,1)
 })
+
+test('Only an explicit new start after interrupted cleanup gets a fresh input; uncertain and active receipts never replay',()=>{
+ const owner={projectId:'project',sessionId:'session'},receipts:{runId:string;state:string;outcome:string|null;task:unknown}[]=[],active=new Set<string>();let enqueued=0
+ const host={activeRunId:null,ownsRun:(id:string)=>active.has(id),enqueueTask:(_session:string,_text:string,_context:string,metadata:unknown)=>{const runId='review-'+(++enqueued);receipts.push({runId,state:'accepted',outcome:null,task:metadata});active.add(runId);return {runId}}} as unknown as AgentHost
+ const tasks=assistantTasks({host,history:{snapshot:()=>({receipts})} as unknown as AgentHistoryStore,conversations:{get:()=>({...owner,driverId:'codex',archivedAt:null})} as unknown as ConversationStore,model:()=>null,owner:()=>owner,changing:()=>false}),request={key:'a'.repeat(64),payload:'{}',text:'Review actual exported MP4.',context:'Audit only.'}
+ const first=tasks.start(owner,request);assert.equal(enqueued,1);assert.equal(tasks.start(owner,request).runId,first.runId)
+ receipts[0].state='finished';receipts[0].outcome='interrupted'
+ assert.equal(tasks.start(owner,request).runId,first.runId,'A still-owned cancelled run has not drained');assert.equal(enqueued,1)
+ active.delete(first.runId)
+ const second=tasks.start(owner,{...request,payload:'{"newBaseline":1}'});assert.notEqual(second.runId,first.runId);assert.equal(enqueued,2);assert.equal(tasks.find(owner,request.key)?.runId,second.runId);assert.equal(tasks.read(owner,first.runId).state,'interrupted')
+ active.delete(second.runId);receipts[1].state='unknown'
+ assert.equal(tasks.start(owner,request).runId,second.runId);assert.equal(enqueued,2,'Uncertain delivery is never replayed')
+ receipts[1].state='finished';receipts[1].outcome='success'
+ assert.equal(tasks.start(owner,request).runId,second.runId);assert.equal(enqueued,2,'Completed review still deduplicates')
+})

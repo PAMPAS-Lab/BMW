@@ -1,12 +1,27 @@
 import type {SourceCollection,SourceObservation} from '@bmw-agent/media-native/sources'
 import {assertPageScope,pageRangeExpression} from './page-scope.js'
+import type {TextReadDiagnostic,DiscoveryLead} from '@bmw-agent/media-native/sources'
 
 /** Host-private inputs. No caller JavaScript, credentials or shared user tab IDs. */
 export type CollectionPageSource=Pick<SourceCollection,'bodySelector'|'index'|'excludeSelectors'|'authorSelector'|'publishedSelector'>
-export interface CollectionPageRequest {url:string;source:CollectionPageSource;sourceKey?:string}
+export interface CollectionPageRequest {url:string;source:CollectionPageSource;sourceKey?:string;discovery?:boolean}
 export interface CollectionPageLink {url:string;text:string}
-export interface CollectionPageResult {observation:SourceObservation;links:CollectionPageLink[];linksTruncated:boolean;restricted?:boolean}
-export interface CollectionPagePoolOptions {concurrency:2|3;maxPages:number;guard:()=>void}
+export interface CollectionPageResult {observation:SourceObservation;links:CollectionPageLink[];linksTruncated:boolean;restricted?:boolean;reason?:string;diagnostic?:TextReadDiagnostic;leads?:DiscoveryLead[]}
+export class CollectionPageReadError extends Error {constructor(message:string,readonly diagnostic:TextReadDiagnostic){super(message)}}
+/** A social login shell or an empty profile is not account coverage. */
+export function textPageReadState(requested:string,result:CollectionPageResult):'read'|'restricted'|'incomplete'{
+ const o=result.observation,target=new URL(requested),actual=new URL(o.url),social=['x.com','twitter.com'].includes(target.hostname)
+ if(result.restricted||o.access==='login-required'||social&&/^\/(?:i\/flow\/(?:login|signup)|login|account\/access)(?:\/|$)/.test(actual.pathname))return 'restricted'
+ if(o.result!=='observed'||!o.text.trim()||o.scope.truncated)return 'incomplete'
+ if(social){
+  if(result.diagnostic?.contentState!=='posts'||result.diagnostic.visiblePosts<1||result.diagnostic.matchingPostLinks<1)return 'incomplete'
+  const account=target.pathname.split('/').filter(Boolean)[0]
+  if(!['x.com','twitter.com'].includes(actual.hostname)||actual.pathname.replace(/\/$/,'').toLowerCase()!==target.pathname.replace(/\/$/,'').toLowerCase())return 'incomplete'
+  if(!result.links.some(link=>{try{const url=new URL(link.url);return ['x.com','twitter.com'].includes(url.hostname)&&new RegExp('^/'+account+'/status/\\d+(?:/|$)','i').test(url.pathname)}catch{return false}}))return 'incomplete'
+ }else if(!sameCollectionNavigation(requested,o.url))return 'incomplete'
+ return 'read'
+}
+export interface CollectionPagePoolOptions {concurrency:2|3;maxPages:number;guard:()=>void;navigationTimeoutMs?:number}
 export type CollectionPageVisit=(request:CollectionPageRequest)=>Promise<CollectionPageResult>
 export interface CollectionPageLane {visit(request:CollectionPageRequest,signal:AbortSignal):Promise<CollectionPageResult>;close():Promise<void>}
 export class CollectionPageCleanupError extends Error {readonly code='BMW_COLLECTION_PAGE_CLEANUP_FAILED'}
@@ -30,7 +45,7 @@ export function collectionPageUrl(raw:unknown):string{if(typeof raw!=='string'||
 export function sameCollectionNavigation(requested:string,actual:string):boolean{try{const clean=(raw:string)=>{const url=new URL(collectionPageUrl(raw));url.searchParams.delete('themeRefresh');url.searchParams.sort();return url.href};return clean(requested)===clean(actual)}catch{return false}}
 
 function request(input:CollectionPageRequest):CollectionPageRequest {
- if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(key=>!['url','source','sourceKey'].includes(key)))throw new Error('Invalid collection page input')
+ if(!input||typeof input!=='object'||Array.isArray(input)||Object.keys(input).some(key=>!['url','source','sourceKey','discovery'].includes(key))||input.discovery!==undefined&&typeof input.discovery!=='boolean')throw new Error('Invalid collection page input')
  if(!input.source||typeof input.source!=='object'||Array.isArray(input.source)||Object.hasOwn(input.source,'tabId'))throw new Error('Collection pages cannot target existing tabs')
  if(Object.keys(input.source).some(key=>!['bodySelector','index','excludeSelectors','authorSelector','publishedSelector'].includes(key)))throw new Error('Unexpected collection source field')
  if(typeof input.source.bodySelector!=='string')throw new Error('Collection page requires an explicit bounded body selector')
@@ -38,13 +53,13 @@ function request(input:CollectionPageRequest):CollectionPageRequest {
  for(const selector of [input.source.authorSelector,input.source.publishedSelector])if(selector!==undefined)assertPageScope({selector})
  if(input.sourceKey!==undefined&&(typeof input.sourceKey!=='string'||!/^[a-zA-Z0-9-]{1,80}$/.test(input.sourceKey)))throw new Error('Invalid collection source scope')
  const source:CollectionPageSource={bodySelector:input.source.bodySelector,index:range.index,excludeSelectors:range.excludeSelectors,...(input.source.authorSelector?{authorSelector:input.source.authorSelector}:{}),...(input.source.publishedSelector?{publishedSelector:input.source.publishedSelector}:{})}
- return {url:collectionPageUrl(input.url),source,...(input.sourceKey?{sourceKey:input.sourceKey}:{})}
+ return {url:collectionPageUrl(input.url),source,...(input.sourceKey?{sourceKey:input.sourceKey}:{}),...(input.discovery?{discovery:true}:{})}
 }
 
 /** Bounded deterministic I/O pool, not an Agent loop. The callback may discover
  * detail URLs from saved entries; all views drain and close before this returns. */
 export async function withCollectionPagePool<T>(options:CollectionPagePoolOptions,create:(index:number)=>CollectionPageLane,work:(visit:CollectionPageVisit)=>Promise<T>,signal?:AbortSignal):Promise<T> {
- if(![2,3].includes(options.concurrency)||!Number.isInteger(options.maxPages)||options.maxPages<1||options.maxPages>60||typeof options.guard!=='function')throw new Error('Collection page pool requires 2–3 lanes and 1–60 pages')
+ if(![2,3].includes(options.concurrency)||!Number.isInteger(options.maxPages)||options.maxPages<1||options.maxPages>60||typeof options.guard!=='function'||options.navigationTimeoutMs!==undefined&&(!Number.isInteger(options.navigationTimeoutMs)||options.navigationTimeoutMs<1000||options.navigationTimeoutMs>25000))throw new Error('Collection page pool requires 2–3 lanes and 1–60 pages')
  interface Job {input:CollectionPageRequest;resolve:(result:CollectionPageResult)=>void;reject:(error:unknown)=>void}
  interface Slot {lane:CollectionPageLane;busy:boolean}
  const controller=new AbortController(),queue:Job[]=[],slots:Slot[]=[],tasks=new Set<Promise<void>>()

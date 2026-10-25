@@ -1,5 +1,6 @@
 import type {ProjectSourcePort,SourceCollection,SourceObservation,SourceCaptureGuard,VideoIdentity} from '@bmw-agent/media-native/sources'
 import type {NativeMediaPort} from '@bmw-agent/media-native/port'
+import type {NativeVideoOrigin} from '@bmw-agent/media-native/derivation'
 import type {BrowserRequest} from './browser-schema.js'
 import type {CollectionPagePoolOptions,CollectionPageVisit} from './collection-page-pool.js'
 export type {CollectionPagePoolOptions,CollectionPageVisit,CollectionPageRequest,CollectionPageResult,CollectionPageLink} from './collection-page-pool.js'
@@ -20,10 +21,12 @@ export interface BrowserFeatureHost {
   settingsStore?: VideoSettingsPort
   recordingController: NativeMediaPort
   projectSources?:()=>ProjectSourcePort
+  capturedVideoOrigin?:(owner:BrowserSessionOwner,artifactId:string,signal?:AbortSignal)=>Promise<NativeVideoOrigin|undefined>
   sourcePages?:()=>{id:string;url:string;title:string}[]
   captureSource?:(request:{sourceGuard:SourceCaptureGuard;videoSelector:string;videoIndex?:number;fromStart?:boolean;maxDurationMs?:number;filename:string;tabId?:string},signal?:AbortSignal)=>Promise<unknown>
   downloadSource?:(request:{url:string;pageUrl:string;filename:string;tabId?:string;sourceGuard?:SourceCaptureGuard},signal?:AbortSignal)=>Promise<unknown>
   preserveSource?:(request:{url:string;pageUrl:string;tabId?:string;sourceGuard?:SourceCaptureGuard},signal?:AbortSignal)=>Promise<unknown>
+  acquireSource?:(request:{sourceGuard:SourceCaptureGuard;videoSelector:string;videoIndex?:number;fromStart?:boolean;maxDurationMs?:number;filename:string;tabId?:string},signal?:AbortSignal)=>Promise<unknown>
   verifySourceVideo?:(request:SourceCaptureGuard&{tabId?:string},signal?:AbortSignal)=>Promise<VideoIdentity>
   collectSource?:(request:SourceCollection,signal?:AbortSignal)=>Promise<SourceObservation>
   collectPageBatch?<T>(options:CollectionPagePoolOptions,work:(visit:CollectionPageVisit)=>Promise<T>,signal?:AbortSignal):Promise<T>
@@ -63,7 +66,7 @@ export function assertBrowserFeatureHost(raw: unknown): BrowserFeatureHost {
   }
   const project = value.projectStore.active()
   if (!project || typeof project.id !== 'string' || !project.id || typeof project.name !== 'string' || !project.name || typeof project.directory !== 'string' || !/^(?:\/|[a-zA-Z]:[\\/]|\\\\)/.test(project.directory)) throw new TypeError('Invalid active Project host reply.')
-  for (const hook of ['videoReview','videoReviewRun','videoStudioOpen','videoStudioSelect','videoStudioUse','libraryOpen','libraryExecute','libraryNews','libraryResearch','libraryExports','libraryStreams','libraryCollecting','libraryCollectionBatch','libraryRecommendations','libraryRecommendationValidity','videoStudioContext','videoStudioChanged','projectSources','sourcePages','collectSource','collectPageBatch','recoverCollectionPages','downloadSource','preserveSource','captureSource','verifySourceVideo'] as const) if (value[hook] !== undefined && typeof value[hook] !== 'function') throw new TypeError('Invalid browser Feature hook: '+hook)
+  for (const hook of ['videoReview','videoReviewRun','videoStudioOpen','videoStudioSelect','videoStudioUse','libraryOpen','libraryExecute','libraryNews','libraryResearch','libraryExports','libraryStreams','libraryCollecting','libraryCollectionBatch','libraryRecommendations','libraryRecommendationValidity','videoStudioContext','videoStudioChanged','projectSources','capturedVideoOrigin','sourcePages','collectSource','collectPageBatch','recoverCollectionPages','downloadSource','preserveSource','acquireSource','captureSource','verifySourceVideo'] as const) if (value[hook] !== undefined && typeof value[hook] !== 'function') throw new TypeError('Invalid browser Feature hook: '+hook)
   if (value.settingsStore && (typeof value.settingsStore.snapshot !== 'function' || typeof value.settingsStore.update !== 'function')) throw new TypeError('Invalid settings host port.')
   return value as BrowserFeatureHost
 }

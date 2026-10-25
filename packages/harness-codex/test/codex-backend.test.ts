@@ -21,6 +21,7 @@ function fixture(model='gpt-5.4') {
   const rpc: CodexRpc = {
     async call(method, params) {
       calls.push({ method, params })
+      if(method==='config/read')return {config:{mcp_servers:{'foreign-node':{command:'unavailable',env:{TOKEN:'private-fixture'}},'foreign-computer':{url:'https://invalid.test'}}}}
       if(method==='account/read')return {account:authenticated?{type:'chatgpt'}:null,requiresOpenaiAuth:true}
       if(method==='model/list')return {data:modelAvailable?[{model,displayName:'Fixture model',description:'Official test catalog'}]:[],nextCursor:null}
       if (method === 'thread/resume' || method === 'thread/start') return { thread: { id: 'provider' }, model }
@@ -38,6 +39,32 @@ function fixture(model='gpt-5.4') {
   }
 }
 const definition = { name: 'browser' as const, description: 'BMW', inputSchema: { type: 'object' } }
+test('Codex resumes the same anchor with fresh input scope after an audit and preserves browser-only admission',async t=>{
+ const f=fixture();t.after(()=>fs.rmSync(f.root,{recursive:true,force:true}))
+ const backend=new CodexBackend({executable:'/disposable/codex',configDirectory:f.root,model:'gpt-5.4',catalogGate:{async verify(){}},rpcFactory:()=>f.rpc,connection:async()=>({definition,async execute(){return {result:{}}}})})
+ const audit={...f.request,context:'Audit only for queued review input. Pinned target: fixture-film'}
+ await backend.prepare(audit)
+ const running=backend.run(audit,async()=>{});await new Promise(resolve=>setImmediate(resolve))
+ f.event('turn/completed',{threadId:'provider',turn:{id:'turn',status:'completed'}});await running
+ const rework={...f.request,runId:'rework',messageId:'rework-input',context:'Current Studio: user authorized title and subtitle rework'}
+ await backend.prepare(rework)
+ const resumed=f.calls.filter(row=>row.method==='thread/resume').map(row=>row.params as {threadId:string;developerInstructions:string;config:{features:{shell_tool:boolean}}})
+ assert.equal(resumed.length,2);assert.ok(resumed.every(row=>row.threadId==='provider'))
+ assert.match(resumed[0].developerInstructions,/Pinned target: fixture-film/)
+ assert.match(resumed[1].developerInstructions,/replace earlier input-specific developer context/)
+ assert.match(resumed[1].developerInstructions,/do not restrict later user-authorized production or rework/)
+ assert.match(resumed[1].developerInstructions,/Current Studio: user authorized title and subtitle rework/)
+ assert.doesNotMatch(resumed[1].developerInstructions,/Pinned target: fixture-film/)
+ assert.equal(resumed[1].config.features.shell_tool,false)
+ const injected=f.calls.filter(row=>row.method==='thread/inject_items').map(row=>row.params as {threadId:string;items:{role:string;content:{text:string}[]}[]})
+ assert.equal(injected.length,2);assert.ok(injected.every(row=>row.threadId==='provider'&&row.items[0].role==='developer'))
+ assert.match(injected[0].items[0].content[0].text,/Pinned target: fixture-film/)
+ assert.match(injected[1].items[0].content[0].text,/Current Studio: user authorized title and subtitle rework/)
+ assert.doesNotMatch(injected[1].items[0].content[0].text,/Pinned target: fixture-film/)
+ const firstTurn=f.calls.findIndex(row=>row.method==='turn/start')
+ assert.ok(f.calls.findIndex(row=>row.method==='thread/inject_items')<firstTurn)
+ await backend.close()
+})
 test('GPT-6 uses the exact admitted startup catalog when resuming its native Session before dispatch',async t=>{
   const model='gpt-6.1-sol',f=fixture(model);t.after(()=>fs.rmSync(f.root,{recursive:true,force:true}))
   const catalog=path.join(f.root,'admitted.json');let verified=false
@@ -45,9 +72,10 @@ test('GPT-6 uses the exact admitted startup catalog when resuming its native Ses
     assert.ok(verified);assert.equal(modelCatalogPath,catalog);return f.rpc
   },connection:async()=>({definition,async execute(){assert.fail('No tool before input')}})})
   await backend.prepare(f.request)
-  const resumed=f.calls.find(row=>row.method==='thread/resume')?.params as {threadId:string;model:string;excludeTurns:boolean}
+  const resumed=f.calls.find(row=>row.method==='thread/resume')?.params as {threadId:string;model:string;excludeTurns:boolean;config:{mcp_servers:Record<string,unknown>}}
   assert.equal(resumed.threadId,'provider');assert.equal(resumed.model,model)
   assert.equal(resumed.excludeTurns,true,'Resume must not hydrate accumulated tool image history into an oversized transport response')
+  assert.deepEqual(resumed.config.mcp_servers,{'foreign-node':{enabled:false},'foreign-computer':{enabled:false}})
   assert.equal(f.calls.some(row=>row.method==='turn/start'),false);await backend.close();assert.ok(f.ended()>0)
 })
 test('GPT-6 never starts a native runtime without its admitted startup catalog',async t=>{

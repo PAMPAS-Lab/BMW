@@ -6,6 +6,9 @@ import crypto from 'node:crypto'
 import path from 'node:path'
 import {ProjectSourceStore} from '../src/project-source-store.js'
 import {assertSourceRequest,assertSourceCitation,assertSourceCatalog,assertSourceMediaAvailability,assertSourceCaptureEvidence} from '@bmw-agent/media-native/sources'
+import {assertTextReadBatch,assertTextReadDiagnostic} from '@bmw-agent/media-native/sources'
+import type {TextReadBatch,TextReadDiagnostic} from '@bmw-agent/media-native/sources'
+import {DatabaseSync} from 'node:sqlite'
 import type {SourceObservation} from '@bmw-agent/media-native/sources'
 function fixture(){const root=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'bmw-source-contract-'))),store=new ProjectSourceStore(root,'p');return {root,store,close:()=>fs.rmSync(root,{recursive:true,force:true})}}
 function observation(url='https://example.com/article'):SourceObservation {const scope={selector:'article',index:0,excludeSelectors:['.recommendation','.avatar'],characterUnit:'utf16' as const,extraction:'visible-text-nodes' as const,truncated:false,status:'observed' as const};return {url,title:'Original',author:null,publishedAt:null,scope,text:'来源原文😀：事实与观点分别呈现。',mediaScope:scope,mediaTruncated:false,candidates:[{kind:'image',url:'https://example.com/original.png',durationSeconds:null,role:'body'}],access:'unknown',accessText:'',result:'observed',error:null}}
@@ -42,6 +45,11 @@ test('Source corrupt state, mutated original text and symlinked artifacts fail c
  fs.renameSync(path.join(f.root,'artifacts'),path.join(f.root,'preserved'));fs.symlinkSync(path.join(f.root,'preserved'),path.join(f.root,'artifacts'));assert.throws(()=>f.store.snapshot(),/boundary changed/);assert.throws(()=>new ProjectSourceStore(f.root,'p'),/inside their Project/);assert.equal(fs.readFileSync(path.join(f.root,'preserved',body.acquisition.originalTextArtifactId!),'utf8'),'tampered')
 }finally{f.close()}})
 test('Closed source requests reject missing ranges, credentials, injected file receipts and fictional fact-check status',()=>{
+ const read={operation:'read',sourceId:'saved-source',acquisitionId:'saved-acquisition'}
+ assert.deepEqual(assertSourceRequest(read),read)
+ assert.throws(()=>assertSourceRequest({...read,expectedRevision:454}),/Unsupported source field for read: \["expectedRevision"\].*Allowed fields: operation, sourceId, acquisitionId.*No operation was executed/)
+ const unknown=Object.fromEntries(Array.from({length:20},(_,i)=>['unknown-'+i+'x'.repeat(500),'private-value-must-not-be-echoed']))
+ assert.throws(()=>assertSourceRequest({...read,...unknown}),(error:unknown)=>error instanceof TypeError&&error.message.length<1000&&error.message.includes('additional fields omitted')&&!error.message.includes('private-value-must-not-be-echoed'))
  assert.throws(()=>assertSourceRequest({operation:'collect',expectedRevision:0}),/explicit body/)
  assert.throws(()=>assertSourceRequest({operation:'confirm',expectedRevision:0,sourceId:'s',acquisitionId:'a',candidateIds:[],artifactId:'fake.mp4'}),/Unsupported/)
  assert.throws(()=>assertSourceCitation({sourceId:'s',acquisitionId:'a',startCharacter:0,endCharacter:2,quote:'😀',kind:'fact',claim:'claim',conflict:'verified',eventAt:null}),/enum/)
@@ -90,3 +98,59 @@ test('Host video identities round-trip in candidates and capture witnesses while
  const legacy=structuredClone(saved.catalog);delete legacy.sources[0].acquisitions[0].candidates[0].videoIdentity;assert.equal(assertSourceCatalog(legacy).sources[0].acquisitions[0].candidates[0].videoIdentity,undefined)
  assert.throws(()=>assertSourceRequest({operation:'acquire',expectedRevision:1,sourceId:saved.sourceId,acquisitionId:saved.acquisitionId,candidateId:candidate.id,method:'preserve',videoIdentity}),/Unsupported/)
 }finally{f.close()}})
+
+
+function textBatch():TextReadBatch{return {version:1,id:'text-batch',projectId:'p',revision:0,startedAt:'2026-10-24T12:00:00.000Z',finishedAt:null,rows:[{index:0,url:'https://x.com/fixture',state:'pending'},{index:1,url:'https://x.com/fixture-two',state:'pending'}]}}
+function textDiagnostic():TextReadDiagnostic{return {at:'2026-10-24T12:00:01.000Z',url:'https://x.com/fixture',title:'Fixture',documentReadyState:'complete',bodyTextCharacters:30,visiblePosts:0,matchingPostLinks:0,contentState:'header-only',mainDocumentStatus:200,navigation:[{phase:'stop',reason:'deadline',elapsedMs:8000,at:1792843201000}],network:[],pending:[]}}
+test('Text-read codec rejects body injection, mismatched evidence, unsafe diagnostic URLs and oversized replies',()=>{
+ assert.deepEqual(assertTextReadBatch(textBatch()),textBatch());assert.equal(Object.hasOwn(assertTextReadBatch(textBatch()),'cleanupState'),false);for(const cleanupState of ['pending','complete','quarantined'] as const)assert.equal(assertTextReadBatch({...textBatch(),cleanupState}).cleanupState,cleanupState);assert.throws(()=>assertTextReadBatch({...textBatch(),cleanupState:'assumed-complete'}));assert.deepEqual(assertTextReadDiagnostic(textDiagnostic()),textDiagnostic());assert.equal(assertTextReadDiagnostic({...textDiagnostic(),truncated:true}).truncated,true);assert.throws(()=>assertTextReadDiagnostic({...textDiagnostic(),truncated:'yes'}))
+ const batch=textBatch()
+ const transfer={url:'https://x.com/fixture',status:200,receivedBytes:123,lastDataAt:1792843201000,completed:false,failed:false}
+ assert.deepEqual(assertTextReadDiagnostic({...textDiagnostic(),documentTransfer:transfer}).documentTransfer,transfer)
+ assert.throws(()=>assertTextReadDiagnostic({...textDiagnostic(),documentTransfer:{...transfer,receivedBytes:-1}}))
+ assert.throws(()=>assertTextReadDiagnostic({...textDiagnostic(),documentTransfer:{...transfer,url:'https://x.com/fixture?secret=1'}}))
+ for(const invalid of [{...batch,body:'Do not embed source text'},{...batch,rows:[{...batch.rows[0],sourceId:'source-only'}]},{...batch,rows:[{...batch.rows[0],state:'read'}]},{...batch,rows:[{...batch.rows[0],url:'https://user:secret@example.com'}]},{...batch,rows:[batch.rows[0],{...batch.rows[1],url:batch.rows[0].url}]},{...batch,startedAt:'2026-02-30T12:00:00.000Z'},{...batch,rows:Array.from({length:61},(_,index)=>({...batch.rows[0],index,url:'https://x.com/a'+index}))}])assert.throws(()=>assertTextReadBatch(invalid))
+ for(const address of ['https://x.com/fixture?token=secret','https://x.com/fixture#private','file:///private','https://user:secret@x.com/fixture'])assert.throws(()=>assertTextReadDiagnostic({...textDiagnostic(),url:address}))
+ assert.throws(()=>assertTextReadDiagnostic({...textDiagnostic(),network:[{type:'failed',url:'https://x.com/api?token=secret',resourceType:'XHR',errorText:'failed',at:1792843201000}]}))
+ assert.throws(()=>assertTextReadDiagnostic({...textDiagnostic(),pending:Array.from({length:30},(_,i)=>({url:'https://x.com/'+i+'a'.repeat(500),resourceType:'Script'}))}),/byte budget/)
+})
+test('Text-read checkpoints durably preserve pending, failed and incomplete rows with fixed revisions and CAS',()=>{const f=fixture();try{
+ const initial=textBatch(),receipt0=f.store.writeTextBatch(initial);assert.equal(receipt0.revision,0);assert.equal(receipt0.sha256.length,64)
+ const reopened=new ProjectSourceStore(f.root,'p');assert.deepEqual(reopened.readTextBatch(receipt0.batchId,0,receipt0.sha256),initial);assert.equal(reopened.snapshot().sources.length,0,'Batch metadata never creates fictional news sources')
+ const progressed:TextReadBatch={...initial,revision:1,rows:[{...initial.rows[0],state:'failed',reason:'navigation-timeout',diagnostic:textDiagnostic(),error:'sensitive fixture detail not indexed',finishedAt:'2026-10-24T12:00:01.000Z'},initial.rows[1]]},receipt1=reopened.writeTextBatch(progressed,0)
+ assert.deepEqual(reopened.readTextBatch(receipt0.batchId,0,receipt0.sha256),initial,'Pinned old revision never silently becomes latest')
+ assert.deepEqual(new ProjectSourceStore(f.root,'p').readTextBatch(receipt1.batchId,1,receipt1.sha256),progressed,'Crash leaves unfinished row pending; read has no dispatch/replay')
+ assert.throws(()=>reopened.writeTextBatch({...progressed,revision:1},0),/CONFLICT/)
+ assert.throws(()=>reopened.writeTextBatch({...progressed,revision:2,rows:[{...progressed.rows[0],state:'pending'},progressed.rows[1]]},1),/CONFLICT/)
+ assert.throws(()=>reopened.writeTextBatch({...progressed,revision:2,rows:[progressed.rows[0],{...progressed.rows[1],url:'https://x.com/changed'}]},1),/CONFLICT/)
+ const final:TextReadBatch={...progressed,revision:2,finishedAt:'2026-10-24T12:00:02.000Z',rows:[progressed.rows[0],{...initial.rows[1],state:'incomplete',reason:'header-only',finishedAt:'2026-10-24T12:00:02.000Z'}]},receipt2=reopened.writeTextBatch(final,1)
+ assert.deepEqual(reopened.readTextBatch(receipt2.batchId,2,receipt2.sha256),final)
+ assert.throws(()=>reopened.readTextBatch(receipt2.batchId,1,receipt2.sha256),/INTEGRITY/)
+ assert.throws(()=>reopened.readTextBatch(receipt2.batchId,2,'a'.repeat(64)),/INTEGRITY/)
+ assert.throws(()=>reopened.writeTextBatch({...final,revision:3},2),/CONFLICT/)
+ assert.throws(()=>reopened.writeTextBatch({...initial,id:'foreign',projectId:'other'}),/PROJECT/)
+ const indexDirectory=path.join(f.root,'sources/text-batches/index'),ref=JSON.parse(fs.readFileSync(path.join(indexDirectory,'current.json'),'utf8')),db=new DatabaseSync(path.join(indexDirectory,ref.generation+'.sqlite'),{readOnly:true});try{const search=db.prepare('SELECT search FROM entries').all().map(row=>row.search).join(' ');assert.match(search,/failed/);assert.ok(!search.includes('sensitive fixture detail'),'SQLite index contains only identifiers, URL and states')}finally{db.close()}
+ assert.equal(fs.readdirSync(path.join(f.root,'sources/text-batches/commits/0000')).length,3);assert.equal(reopened.state().revision,0,'Batch CAS is independent of source revision')
+}finally{f.close()}})
+test('Text-read immutable checkpoint corruption is rejected without rewriting authoritative files',()=>{const f=fixture();try{
+ const receipt=f.store.writeTextBatch(textBatch()),file=path.join(f.root,'sources/text-batches/commits/0000/0000001.json'),original=fs.readFileSync(file,'utf8'),value=JSON.parse(original)
+ value.changes[0].value.batch.rows[0].reason='tampered';fs.writeFileSync(file,JSON.stringify(value));assert.throws(()=>f.store.readTextBatch(receipt.batchId,receipt.revision,receipt.sha256));assert.equal(JSON.parse(fs.readFileSync(file,'utf8')).changes[0].value.batch.rows[0].reason,'tampered')
+}finally{f.close()}})
+
+test('Discovery checkpoints preserve excerpt domain and cannot be promoted to full-text batches',async()=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'discovery-batch-'))
+ try{const store=new ProjectSourceStore(root,'p'),base={...textBatch(),mode:'discovery' as const},receipt=store.writeTextBatch(base)
+ assert.equal(store.readTextBatch(receipt.batchId,receipt.revision,receipt.sha256).mode,'discovery')
+ const changed={...base,revision:1};delete changed.mode
+ assert.throws(()=>store.writeTextBatch(changed,0),/CONFLICT/)
+ assert.throws(()=>assertTextReadBatch({...base,rows:[{...base.rows[0],state:'read',sourceId:'s',acquisitionId:'a',diagnostic:{...textDiagnostic(),contentState:'posts',visiblePosts:1,matchingPostLinks:1}}]}),/saved leads/)
+ }finally{fs.rmSync(root,{recursive:true,force:true})}
+})
+
+ test('Automatic finite video acquisition requires a confirmed-player selector and rejects archive preview options',()=>{
+ const base={operation:'acquire',sourceId:'s',acquisitionId:'a',candidateId:'c',expectedRevision:0,method:'auto',videoSelector:'#player'}
+ assert.equal(assertSourceRequest(base).operation,'acquire')
+ assert.throws(()=>assertSourceRequest({...base,videoSelector:undefined}),/selector/)
+ assert.throws(()=>assertSourceRequest({...base,preview:{startSeconds:0,endSeconds:10}}),/preserve/)
+ assert.throws(()=>assertSourceRequest({...base,downloadBudgetMs:999999}),/Unsupported/)
+ })

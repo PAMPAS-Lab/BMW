@@ -6,6 +6,7 @@ import {currentExportReview} from './studio-export-review-state.js'
 import type {StudioKernel} from './studio-service.js'
 import type {VideoStudioStore} from './studio-store.js'
 import type {VideoDraft,StudioRequest} from './studio-contract.js'
+import {videoTime} from './video-time.js'
 
 /** Review only a fingerprint-valid export of the owned current draft. Sampling
  * never edits the draft or grants semantic approval, and rolls back on a race. */
@@ -15,18 +16,23 @@ export async function reviewStudioExport(kernel:StudioKernel,store:VideoStudioSt
  const sceneIndex=draft.scenes.findIndex(s=>s.id===request.sceneId);if(sceneIndex<0)throw new Error('Unknown review scene.')
  check();const samples=quality.samples.filter(s=>s.sceneIndex===sceneIndex),offset=request.reviewOffset??0,selected=samples.slice(offset,offset+8)
  if(!selected.length)throw new Error('No review samples in this page.')
+ // Seek inside each output frame: its rounded start may otherwise decode to
+ // the preceding frame. Coverage still belongs to the nominal critical state.
+ const requestedSeconds=selected.map(s=>Math.min(s.seconds+.5/draft.fps,output.durationSeconds-1e-6))
  const before=new Set(await fs.readdir(directory)),root=await fs.realpath(directory),identity=await fs.lstat(directory),owned=new Map<string,{dev:number;ino:number}>();let complete=false
  try{
-  const result=mediaRecord(await kernel.recordingController.processArtifact({action:'media.frames.sample',artifactId:output.artifactId,timestampsSeconds:selected.map(s=>s.seconds),maxWidth:390,maxHeight:720},signal))
+  const result=mediaRecord(await kernel.recordingController.processArtifact({action:'media.frames.sample',artifactId:output.artifactId,timestampsSeconds:requestedSeconds,maxWidth:390,maxHeight:720},signal))
   if(!Array.isArray(result.frames)||result.frames.length>8)throw new Error('Invalid export review frame collection.')
   for(const raw of result.frames){const f=mediaRecord(raw),id=assertArtifactId(f.artifactId),stat=await fs.lstat(path.join(root,id));if(before.has(id)||!stat.isFile()||stat.isSymbolicLink())throw new Error('Export review frame is not newly owned.');owned.set(id,{dev:stat.dev,ino:stat.ino})}
   if(result.type!=='frame-set'||result.sourceArtifactId!==output.artifactId||result.frames.length!==selected.length)throw new Error('Invalid export review sampling receipt.')
   const frames=[]
   for(const [i,raw]of result.frames.entries()){
-   const f=mediaRecord(raw);if(f.outputIndex!==i||f.requestedTimestampSeconds!==selected[i].seconds||f.type!=='screenshot'||f.contentType!=='image/png')throw new Error('Export review sampled the wrong state.')
+   const f=mediaRecord(raw);if(f.outputIndex!==i||f.requestedTimestampSeconds!==requestedSeconds[i]||f.type!=='screenshot'||f.contentType!=='image/png')throw new Error('Export review sampled the wrong state.')
+   const actualSeconds=finiteNumber(f.timestampSeconds,'decoded frame time',0,output.durationSeconds)
+   if(Math.abs(actualSeconds-selected[i].seconds)>.25/draft.fps)throw new Error('Export review sampled the wrong output frame; critical-state coverage was not recorded.')
    const id=assertArtifactId(f.artifactId),input=await ArtifactJobIO.open(root,{action:'media.inspect',artifactId:id});let sha256:string
    try{sha256=await input.fingerprint(signal)}finally{await input.close()}
-   frames.push({...selected[i],artifactId:id,path:path.join(root,id),sha256,bytes:input.bytes,type:'screenshot',contentType:'image/png',width:finiteNumber(f.width,'review frame width',1,390,true),height:finiteNumber(f.height,'review frame height',1,720,true),actualSeconds:finiteNumber(f.timestampSeconds,'decoded frame time',0,selected[i].seconds)})
+   frames.push({...selected[i],editTime:videoTime(selected[i].seconds),artifactId:id,path:path.join(root,id),sha256,bytes:input.bytes,type:'screenshot',contentType:'image/png',width:finiteNumber(f.width,'review frame width',1,390,true),height:finiteNumber(f.height,'review frame height',1,720,true),requestedSeconds:requestedSeconds[i],actualSeconds})
   }
   check();const current=store.reusableExport(draft);if(current?.artifactId!==output.artifactId||current.fingerprint!==output.fingerprint)throw new Error('STUDIO_CONFLICT: 成片或来源已变化，请重新审片。')
   const sceneIssues=quality.issues.filter(i=>i.sceneIndex===sceneIndex),shownIssues=sceneIssues.slice(0,12)

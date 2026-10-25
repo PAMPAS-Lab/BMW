@@ -24,6 +24,12 @@ export function wrapText(context:TextMeasure,text:string,width:number):string[]{
     if(previous.length-count>=2&&/^\p{Script=Han}+$/u.test(tail)&&context.measureText(tail+line).width<=width){result[result.length-1]=prefix;line=tail+line;break}
    }
   }
+  // Keep a short English connector from becoming an automatic orphan, while
+  // respecting explicit paragraph breaks and retaining every original word.
+  if(/^(?:a|an|and|as|at|by|for|in|of|on|or|to|with)$/i.test(line.trim())&&result.length>paragraphStart){
+   const words=result.at(-1)!.trim().split(/\s+/),tail=words.at(-1)!,candidate=tail+' '+line.trim()
+   if(words.length>=3&&context.measureText(candidate).width<=width){result[result.length-1]=words.slice(0,-1).join(' ');line=candidate}
+  }
   result.push(line);line=''
  }
  for(const c of text){

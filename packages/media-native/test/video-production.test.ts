@@ -124,6 +124,14 @@ test('Shared caption wrapping avoids automatic single-Han tails without changing
  assert.deepEqual(wrapText(measure,'甲乙丙\n丁',3),['甲乙丙','丁'])
  assert.deepEqual(wrapText(measure,'ABCDE1',5),['ABCDE','1'])
 })
+test('English connector wrapping retains speech words and explicit breaks without an automatic on orphan',()=>{
+ const measure={font:'',measureText(text:string){return {width:Array.from(text).length}}},text='You learned your skills right here on',width=text.length-3
+ const rows=wrapText(measure,text,width)
+ assert.equal(rows.join(' ').replace(/\s+/g,' '),text)
+ assert.ok(rows.every(row=>row.trim()!=='on'&&row.length<=width))
+ assert.deepEqual(wrapText(measure,'You learned your skills\non',width),['You learned your skills','on'])
+ assert.deepEqual(wrapText(measure,'one on',3),['one',' on'],'Do not rebalance an oversized preceding token')
+})
 test('Caption backing contrasts with the actual foreground rather than always using black',()=>{
  assert.deepEqual(captionBacking('#152C40'),{box:'#ffffffb3',outline:'#ffffff'})
  assert.deepEqual(captionBacking('#ffffff'),{box:'#000000b3',outline:'#000000'})
@@ -540,4 +548,28 @@ test('Qwen cancellation cancels an in-flight audio body and does not retry synth
   },abort.signal,qwenFixtureEnvironment),/Cancel Qwen fixture/)
   assert.equal(calls,2);assert.equal(cancelled,true)
   await assert.rejects(synthesizeQwenNarration({text:'新闻',provider:'qwen-tts'},async()=>{throw new Error('Must not fetch')},abort.signal,qwenFixtureEnvironment),/Cancel Qwen fixture/)
+})
+
+test('Portrait fullscreen footage clears animated headings and every bottom-caption block without moving at cue changes',()=>{
+ for(const [width,height]of [[360,640],[720,1280],[1080,1920]]){
+  const rectangles:{x:number;y:number;width:number;height:number}[]=[],headings:{kind:string;x:number;y:number;width:number;height:number}[]=[],painted:{text:string;y:number;size:number;role:string|undefined}[]=[]
+  const surface={font:'',fillStyle:'',measureText(text:string){const size=Number(this.font.match(/([\d.]+)px/)?.[1]??16);return {width:Array.from(text).reduce((n,c)=>n+size*(/\p{Script=Han}/u.test(c)?1:.56),0),actualBoundingBoxAscent:size*.8,actualBoundingBoxDescent:size*.2}},fillText(text:string,_x:number,y:number){painted.push({text,y,size:Number(this.font.match(/([\d.]+)px/)?.[1]??16),role:canvasPaintRole(context)})},roundRect(x:number,y:number,width:number,height:number){rectangles.push({x,y,width,height})},createLinearGradient(){return {addColorStop(){}}}}
+  const context=new Proxy(surface,{get(target,key){return Reflect.get(target,key)??(()=>{})}}) as unknown as CanvasRenderingContext2D
+  const composition=assertComposition({title:'News',width,height,music:false,style:'bmw-dark',watermark:{enabled:false},scenes:[{title:'黄仁勋现场逗小鸭\nMicroduck预订超两万台',durationSeconds:2,layout:'fullscreen',videoArtifactId:'source.mp4',narration:'',showSceneNumber:false,captionDisplay:'bilingual',captionStyle:{fontSize:20,color:'#ffffff',background:'outline',position:'bottom',align:'center',offsetPercent:2},captions:[{startSeconds:0,endSeconds:1,text:'on RTX Spark\nand a digital twin,',translationText:'RTX Spark与数字孪生，'},{startSeconds:1,endSeconds:2,text:'Short'}]}]})
+  const scene=composition.scenes[0],frame={canvas:{width:1920,height:1080} as HTMLCanvasElement},areas:typeof rectangles=[]
+  for(const time of [.05,.5,1.5]){
+   rectangles.length=0;headings.length=0;painted.length=0;paintScene(context,scene,frame,time,2,0,1,0,composition,box=>headings.push(box))
+   const area=rectangles[0];assert.ok(area);assert.ok(area.height>=120);for(const box of headings.filter(b=>b.kind==='title'))assert.ok(area.y>=(box.y+box.height)*720+11.99,'Media must clear the actual animated heading')
+   for(const row of painted.filter(r=>r.role==='caption'))assert.ok(area.y+area.height<=row.y-row.size*.8-11.99,'Caption glyphs must clear the video edge')
+   areas.push({...area})
+  }
+  assert.deepEqual(areas[0],areas[1]);assert.deepEqual(areas[1],areas[2],'Changing only the visible cue must not pulse the media window')
+  scene.captionDisplay='original';rectangles.length=0;paintScene(context,scene,frame,.5,2,0,1,0,composition);assert.ok(rectangles[0].y+rectangles[0].height>=areas[0].y+areas[0].height,'A real display edit must invalidate the footprint cache')
+ }
+})
+test('Portrait heading painting uses shared paragraph wrapping and avoids an automatic isolated Han character',()=>{
+ const painted:string[]=[],surface={font:'',fillText(text:string){painted.push(text)},measureText(text:string){const size=Number(this.font.match(/([\d.]+)px/)?.[1]??16);return {width:Array.from(text).reduce((n,c)=>n+size*(/\p{Script=Han}/u.test(c)?1:.56),0)}},createLinearGradient(){return {addColorStop(){}}}},context=new Proxy(surface,{get(target,key){return Reflect.get(target,key)??(()=>{})}}) as unknown as CanvasRenderingContext2D
+ const composition=assertComposition({title:'News',width:720,height:1280,music:false,watermark:{enabled:false},scenes:[{title:'开源Microduck可训练可分享',durationSeconds:2,captions:[],showSceneNumber:false}]})
+ paintScene(context,composition.scenes[0],null,1,2,0,1,0,composition)
+ const rows=painted.filter(t=>t&&t!=='01 / 01');assert.equal(rows.join(''),'开源Microduck可训练可分享');assert.ok(rows.length<=2);assert.ok(rows.every(row=>!/^\p{Script=Han}$/u.test(row)),'Automatic title wrapping must not strand享 alone')
 })

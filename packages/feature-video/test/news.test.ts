@@ -17,6 +17,8 @@ import {assertStudioRequest} from '../src/studio-contract.js'
 import {EventEmitter} from 'node:events'
 import type {WebContents} from 'electron'
 import {prepareSourceScreenshot} from '../../browser-capability/src/source-screenshot.js'
+import {selectedVideoVisual} from '../src/news-visual-source.js'
+import {mediaArtifactHash,saveMediaDerivation,saveNativeVideoOrigin,readNativeVideoOrigin} from '@bmw-agent/media-native/derivation'
 test('Live broadcast publication labels retain original day precision and never turn relative or future dates into fresh news',()=>{
  const now=Date.parse('2026-10-18T09:00:00Z')
  for(const value of ['直播开始日期：2026年10月17日','Streamed live on Oct 17, 2026','Premiered on October 17, 2026','首播日期：2026年10月17日']){assert.equal(newsPublication(value,now).publishedAt,'2026-10-17');assert.equal(newsPublication(value,now).precision,'day');assert.equal(newsFresh(value,now),true)}
@@ -113,5 +115,67 @@ test('News guide accepts captioned original-speech scenes without TTS and reject
   let g=await guide();assert.equal(g.stages.find(s=>s.id==='script')?.ready,true);assert.equal(g.stages.find(s=>s.id==='audio')?.ready,true);assert.equal(g.scenes[0].audioMode,'source');assert.equal(f.nativeCalls,0)
   draft.scenes[0].sourceVolume=0;draft=store.update(id,draft.revision,draft);g=await guide();assert.equal(g.stages.find(s=>s.id==='audio')?.ready,false)
   draft.scenes[0].sourceVolume=1;draft.scenes[0].sourceDurationSeconds=2;draft=store.update(id,draft.revision,draft);g=await guide();assert.equal(g.scenes[0].audioReady,false)
+ }finally{f.close()}
+})
+
+test('Selected video evidence accepts native same-film HD trims across restart, never same-site different films or unproven names',async()=>{
+ const f=fixture();try{
+  const directory=path.join(f.root,'artifacts'),identity={version:1 as const,platform:'youtube' as const,targetId:'same-film',resourceId:'same-film'}
+  fs.writeFileSync(path.join(directory,'high-definition.webm'),'native captured HD bytes')
+  await saveNativeVideoOrigin(directory,'high-definition.webm',identity)
+  fs.writeFileSync(path.join(directory,'interview.mp4'),'native trimmed interview')
+  await saveMediaDerivation(directory,{version:1,kind:'native-media-conversion',artifactId:'interview.mp4',sha256:await mediaArtifactHash(directory,'interview.mp4'),sourceArtifactId:'high-definition.webm',sourceSha256:await mediaArtifactHash(directory,'high-definition.webm'),sourceRange:{startSeconds:0,endSeconds:19}})
+  assert.equal(await selectedVideoVisual(f.sources,directory,'interview.mp4',identity),true)
+  assert.equal(await selectedVideoVisual(new ProjectSourceStore(f.root,'project'),directory,'interview.mp4',identity),true,'durable receipt survives service restart')
+  assert.equal(await selectedVideoVisual(f.sources,directory,'interview.mp4',{...identity,targetId:'other-film',resourceId:'other-film'}),false)
+  fs.writeFileSync(path.join(directory,'same-official-title.mp4'),'unproven copy')
+  assert.equal(await selectedVideoVisual(f.sources,directory,'same-official-title.mp4',identity),false)
+  assert.equal(await selectedVideoVisual(f.sources,directory,'same-official-title.mp4',identity,undefined,async id=>({version:1,kind:'native-video-origin',artifactId:id,sha256:await mediaArtifactHash(directory,id),videoIdentity:identity})),true,'Host verified historical capture can establish the same original without new sidecars')
+  await assert.rejects(selectedVideoVisual(f.sources,directory,'same-official-title.mp4',identity,undefined,async id=>({version:1,kind:'native-video-origin',artifactId:id,sha256:'0'.repeat(64),videoIdentity:identity})),/Historical capture bytes changed/)
+  fs.appendFileSync(path.join(directory,'interview.mp4'),'changed')
+  await assert.rejects(selectedVideoVisual(f.sources,directory,'interview.mp4',identity),/bytes changed/)
+  assert.equal((await readNativeVideoOrigin(directory,'high-definition.webm'))?.videoIdentity.targetId,'same-film')
+  fs.appendFileSync(path.join(directory,'high-definition.webm'),'changed')
+  await assert.rejects(readNativeVideoOrigin(directory,'high-definition.webm'),/bytes changed/)
+ }finally{f.close()}
+})
+
+test('Native lineage rejects missing parents, linked receipts, cycles, foreign paths and cancelled verification',async()=>{
+ const f=fixture();try{
+  const directory=path.join(f.root,'artifacts'),identity={version:1 as const,platform:'youtube' as const,targetId:'film',resourceId:'film'}
+  fs.writeFileSync(path.join(directory,'a.mp4'),'a');fs.writeFileSync(path.join(directory,'b.mp4'),'b')
+  for(const [child,parent] of [['a.mp4','b.mp4'],['b.mp4','a.mp4']])await saveMediaDerivation(directory,{version:1,kind:'native-media-conversion',artifactId:child,sha256:await mediaArtifactHash(directory,child),sourceArtifactId:parent,sourceSha256:await mediaArtifactHash(directory,parent),sourceRange:{startSeconds:0,endSeconds:1}})
+  await assert.rejects(selectedVideoVisual(f.sources,directory,'a.mp4',identity),/Cyclic/)
+  const controller=new AbortController();controller.abort(new Error('cancelled'))
+  await assert.rejects(selectedVideoVisual(f.sources,directory,'a.mp4',identity,controller.signal),/cancelled/)
+  await assert.rejects(selectedVideoVisual(f.sources,directory,'../outside.mp4',identity),/artifact/i)
+  fs.unlinkSync(path.join(directory,'a.mp4.derivation.json'));fs.symlinkSync(path.join(directory,'b.mp4.derivation.json'),path.join(directory,'a.mp4.derivation.json'))
+  await assert.rejects(selectedVideoVisual(f.sources,directory,'a.mp4',identity),/symbolic|outside/)
+  fs.unlinkSync(path.join(directory,'b.mp4'))
+  await assert.rejects(selectedVideoVisual(f.sources,directory,'b.mp4',identity),/ENOENT/)
+ }finally{f.close()}
+})
+
+test('Selected news render guard permits same-original HD footage without burning its low-resolution preview, retaining stale-source rejection',async()=>{
+ const f=fixture();try{
+  const directory=path.join(f.root,'artifacts'),identity={version:1 as const,platform:'youtube' as const,targetId:'abcdefghijk',resourceId:'abcdefghijk'},text='Official new interview.',scope={selector:'main',index:0,excludeSelectors:[],characterUnit:'utf16' as const,extraction:'visible-text-nodes' as const,truncated:false,status:'observed' as const}
+  const saved=await f.sources.collect({url:'https://www.youtube.com/watch?v=abcdefghijk',title:'Official interview',author:'Official publisher',publishedAt:new Date(f.now-1000).toISOString(),scope,text,mediaScope:scope,mediaTruncated:false,candidates:[{kind:'video',url:'https://media.example/original.mp4',durationSeconds:25,role:'video',videoIdentity:identity}],access:'unknown',accessText:'',result:'observed',error:null},0)
+  const body=await f.sources.readBody(saved.sourceId,saved.acquisitionId),cid=body.acquisition.candidates[0].id
+  f.sources.confirm({operation:'confirm',sourceId:saved.sourceId,acquisitionId:saved.acquisitionId,expectedRevision:f.sources.snapshot().revision,candidateIds:[cid]})
+  fs.writeFileSync(path.join(directory,'low-preview.mp4'),'low preview')
+  await f.sources.recordMedia(saved.sourceId,saved.acquisitionId,cid,{state:'decoded-file',artifactId:'low-preview.mp4',contentId:await mediaArtifactHash(directory,'low-preview.mp4'),startSeconds:0,endSeconds:25,proof:{kind:'decoding',completeFile:true,container:'mp4',contentType:'video/mp4',durationSeconds:25,firstTimestampSeconds:0,tracks:[{id:1,type:'video',codec:'avc',sampleCount:25,startSeconds:0,endSeconds:25},{id:2,type:'audio',codec:'aac',sampleCount:25,startSeconds:0,endSeconds:25}]}},f.sources.snapshot().revision)
+  f.kernel.recordingController.processArtifact=async()=>({durationSeconds:25,tracks:[{type:'video',canDecode:true,width:256,height:144},{type:'audio',canDecode:true}]})
+  const candidate:NewsTopicCandidate={id:'hd-topic',eventKey:'hd-event',subject:'Official publisher',subjectKind:'organization',category:'technology',region:'US',title:'New interview',news:'New public demonstration',reason:'Original public statement',angle:'Explain the demonstration',format:'interview',novelty:'new-event',recordedAt:null,missing:'',sourceId:saved.sourceId,acquisitionId:saved.acquisitionId,quote:text,quoteStart:0,previewArtifactId:'low-preview.mp4',mode:'video'}
+  await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:[candidate]},'agent');const board=f.news.journal.read()
+  await f.news.execute({operation:'select-news-topic',expectedTopicRevision:board.revision,topicId:candidate.id,baseFingerprint:newsFingerprint(board.topics)},'user')
+  const store=new VideoStudioStore(f.root,'owner'),id=f.news.journal.read().selection!.draftId;let draft=store.read(id)
+  fs.writeFileSync(path.join(directory,'hd.mp4'),'native high definition');await saveNativeVideoOrigin(directory,'hd.mp4',identity)
+  draft=store.update(id,draft.revision,{...draft,scenes:[{id:'interview',title:'Original interview',narration:'',durationSeconds:20,videoArtifactId:'hd.mp4',sourceStartSeconds:0,zoom:1,playbackRate:1,bullets:[]}]})
+  await f.news.guardDraft(id,undefined,true)
+  assert.equal(store.read(id).scenes[0].videoArtifactId,'hd.mp4');assert.equal(f.news.journal.read().topics[0].candidate.previewArtifactId,'low-preview.mp4')
+  fs.writeFileSync(path.join(directory,'unproven.mp4'),'same-title different footage');draft=store.update(id,draft.revision,{...draft,scenes:[{...draft.scenes[0],videoArtifactId:'unproven.mp4'}]})
+  await assert.rejects(f.news.guardDraft(id,undefined,true),/NEWS_EVIDENCE_MISSING/)
+  fs.appendFileSync(path.join(directory,'low-preview.mp4'),'tampered original evidence')
+  await assert.rejects(f.news.guardDraft(id,undefined,true),/NEWS_SOURCE_STALE/)
  }finally{f.close()}
 })

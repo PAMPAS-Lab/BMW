@@ -1,6 +1,7 @@
 import {assertArtifactId,finiteNumber,mediaRecord} from '../../media-native/src/media-contract.js'
 export interface StudioReferenceObservation {frameIndex:number;description:string;adaptation:string}
 export interface StudioReferenceAnalysis {summary:string;observations:StudioReferenceObservation[]}
+export interface StudioReferenceAnalysisUpdate {referenceId:string;referenceAnalysis:StudioReferenceAnalysis}
 export interface StudioReferenceFrame {artifactId:string;sha256:string;width:number;height:number;requestedSeconds:number;seconds:number}
 export interface StudioReferenceRecord {id:string;sourceArtifactId:string;sourceSha256:string;sourceBytes:number;kind:'image'|'video';width:number;height:number;durationSeconds:number;createdAt:string;revision:number;videoRange?:{startSeconds:number;endSeconds:number};frames:StudioReferenceFrame[];analysis?:StudioReferenceAnalysis;analysisOrigin?:'user'|'agent'}
 export const REFERENCE_LIMITS={records:32,sources:8,frames:8} as const
@@ -14,6 +15,12 @@ export function assertReferenceAnalysis(raw:unknown):StudioReferenceAnalysis {
  const v=mediaRecord(raw);closed(v,['summary','observations']);const summary=text(v.summary,2000);if(!summary.trim()||!Array.isArray(v.observations)||!v.observations.length||v.observations.length>8)throw new TypeError('Reference analysis needs a summary and one to eight frame observations.')
  const observations=v.observations.map(raw=>{const o=mediaRecord(raw);closed(o,['frameIndex','description','adaptation']);const description=text(o.description,600),adaptation=text(o.adaptation,600);if(!description.trim()||!adaptation.trim())throw new TypeError('Reference observations need concrete content and adaptation.');return {frameIndex:finiteNumber(o.frameIndex,'reference frame',0,7,true),description,adaptation}})
  if(new Set(observations.map(o=>o.frameIndex)).size!==observations.length)throw new TypeError('Duplicate reference frame observation.');return {summary,observations}
+}
+export function assertReferenceAnalyses(raw:unknown):StudioReferenceAnalysisUpdate[]{
+ if(!Array.isArray(raw)||!raw.length||raw.length>8)throw new TypeError('Submit one to eight complete reference analyses.')
+ const updates=raw.map(raw=>{const v=mediaRecord(raw);closed(v,['referenceId','referenceAnalysis']);return {referenceId:identity(v.referenceId),referenceAnalysis:assertReferenceAnalysis(v.referenceAnalysis)}})
+ if(new Set(updates.map(v=>v.referenceId)).size!==updates.length)throw new TypeError('Duplicate reference analysis identity.')
+ return updates
 }
 export function assertReferenceRecords(raw:unknown):StudioReferenceRecord[] {
  if(!Array.isArray(raw)||raw.length>REFERENCE_LIMITS.records)throw new TypeError('At most 32 prepared reference records per draft.')
@@ -31,3 +38,5 @@ export function referenceNotes(record:StudioReferenceRecord):string {if(!record.
 const string={type:'string'},id={type:'string',pattern:'^[a-zA-Z0-9-]{1,80}$'},hash={type:'string',pattern:'^[a-f0-9]{64}$'}
 export const referenceAnalysisSchema={type:'object',additionalProperties:false,required:['summary','observations'],properties:{summary:{...string,minLength:1,maxLength:2000},observations:{type:'array',minItems:1,maxItems:8,items:{type:'object',additionalProperties:false,required:['frameIndex','description','adaptation'],properties:{frameIndex:{type:'integer',minimum:0,maximum:7},description:{...string,minLength:1,maxLength:600},adaptation:{...string,minLength:1,maxLength:600}}}}}}
 export const referenceRecordsSchema={type:'array',maxItems:REFERENCE_LIMITS.records,items:{type:'object',additionalProperties:false,required:['id','sourceArtifactId','sourceSha256','sourceBytes','kind','width','height','durationSeconds','createdAt','revision','frames'],properties:{id,sourceArtifactId:string,sourceSha256:hash,sourceBytes:{type:'integer',minimum:1,maximum:268435456},kind:{enum:['image','video']},width:{type:'integer',minimum:1,maximum:16384},height:{type:'integer',minimum:1,maximum:16384},durationSeconds:{type:'number',minimum:0,maximum:1800},createdAt:{...string,maxLength:40},revision:{type:'integer',minimum:1,maximum:1000000},videoRange:{type:'object',additionalProperties:false,required:['startSeconds','endSeconds'],properties:{startSeconds:{type:'number',minimum:0,maximum:1800},endSeconds:{type:'number',minimum:0,maximum:1800}}},analysis:referenceAnalysisSchema,analysisOrigin:{enum:['user','agent']},frames:{type:'array',minItems:1,maxItems:8,items:{type:'object',additionalProperties:false,required:['artifactId','sha256','width','height','requestedSeconds','seconds'],properties:{artifactId:string,sha256:hash,width:{type:'integer',minimum:1,maximum:1280},height:{type:'integer',minimum:1,maximum:720},requestedSeconds:{type:'number',minimum:0,maximum:1800},seconds:{type:'number',minimum:0,maximum:1800}}}}}}}
+
+export const referenceAnalysesSchema={type:'array',minItems:1,maxItems:8,items:{type:'object',additionalProperties:false,required:['referenceId','referenceAnalysis'],properties:{referenceId:id,referenceAnalysis:referenceAnalysisSchema}},description:'Complete observations for every actual frame in each of one to eight prepared references; one atomic draft CAS, no automatic analysis.'}

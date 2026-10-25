@@ -11,6 +11,8 @@ import type {VideoTime} from './video-time.js'
 import {assertCardSpec} from '../../media-native/src/card-templates.js'
 import type {CardSpec} from '../../media-native/src/card-templates.js'
 import {assertComposition} from '../../media-native/src/composition-contract.js'
+import {assertLayerSourceCrop} from '../../media-native/src/composition-layers.js'
+import type {LayerSourceCrop} from '../../media-native/src/composition-layers.js'
 import type {CaptionCue} from '../../media-native/src/composition-contract.js'
 import {assertCardSpeechChoices} from './studio-card-speech.js'
 import type {CardSpeechChoice} from './studio-card-speech.js'
@@ -30,6 +32,7 @@ export type VideoEditCommand=
  |{op:'clip.move'|'clip.split';clipId:string;time:VideoTime}
  |{op:'clip.trim';clipId:string;edge:'start'|'end';time:VideoTime}
  |{op:'clip.effects';clipId:string;effects:VisualEffects|null}
+ |{op:'clip.crop';clipId:string;crop:LayerSourceCrop|null}
  |{op:'clip.mute';clipId:string;muted:boolean}
  |{op:'layer.add';kind:'text'|'rectangle'|'image'|'video'|'audio'|'diagram'|'card-stack';sceneId?:string;artifactId?:string}
  |{op:'layer.remove';clipId:string}
@@ -59,6 +62,7 @@ export function assertVideoEdit(raw:unknown):VideoEdit {
    case 'scene.reorder':closed(c,['op','sceneIds']);if(!Array.isArray(c.sceneIds)||c.sceneIds.length>COMPOSITION_LIMITS.scenes)throw new TypeError('VIDEO_EDIT: Invalid scene order.');return {op:c.op,sceneIds:c.sceneIds.map(studioId)}
    case 'clip.move':case 'clip.split':case 'clip.trim':{closed(c,['op','clipId','time',...(c.op==='clip.trim'?['edge']:[])]);videoSeconds(c.time as VideoTime);if(c.op==='clip.trim'&&!['start','end'].includes(String(c.edge)))throw new TypeError('VIDEO_EDIT: Invalid trim edge.');return {op:c.op,clipId:clipId(c.clipId),time:structuredClone(c.time),...(c.op==='clip.trim'?{edge:c.edge}:{})} as VideoEditCommand}
    case 'clip.effects':closed(c,['op','clipId','effects']);return {op:c.op,clipId:clipId(c.clipId),effects:c.effects===null?null:assertVisualEffects(c.effects)}
+   case 'clip.crop':closed(c,['op','clipId','crop']);return {op:c.op,clipId:clipId(c.clipId),crop:c.crop===null?null:assertLayerSourceCrop(c.crop)}
    case 'clip.mute':closed(c,['op','clipId','muted']);if(typeof c.muted!=='boolean')throw new TypeError('VIDEO_EDIT: Invalid mute.');return {op:c.op,clipId:clipId(c.clipId),muted:c.muted}
    case 'layer.remove':closed(c,['op','clipId']);return {op:c.op,clipId:clipId(c.clipId)}
    case 'layer.set':{closed(c,['op','clipId','patch']);const patch=mediaRecord(c.patch);closed(patch,layerFields);if(!Object.keys(patch).length)throw new TypeError('VIDEO_EDIT: Empty layer patch.');return {op:c.op,clipId:clipId(c.clipId),patch:structuredClone(patch)}}

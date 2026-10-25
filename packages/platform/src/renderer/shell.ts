@@ -157,7 +157,8 @@ function renderContext():void{
  const selected=document.querySelector('#context-session')
  selected.textContent='Conversation: '+(contextState.state==='empty'?'None selected':linked?context.sessionTitle:'Connecting…')+' ▾'
  selected.title=linked?`Selected conversation · ${context.sessionCount} sessions in this Project`:'Choose a conversation in this Project'
- document.querySelector('#context-pages').textContent=`${browserState.tabs.length} pages · shared across conversations`
+ const deferred=browserState.tabs.filter(tab=>tab.deferred===true).length,loaded=browserState.tabs.length-deferred,research=browserState.tabs.filter(tab=>tab.source==='agent').length
+ document.querySelector('#context-pages').textContent=`${browserState.tabs.length} saved pages · ${loaded} loaded · ${deferred} deferred · ${research} research`
  const message=document.querySelector('#context-message')
  message.textContent=contextState.message||''
  message.classList.toggle('hidden',!contextState.message)
@@ -515,7 +516,7 @@ function render() {
     button.title = tab.url
     const source = tab.source === 'agent' ? '<span class="tab-agent">AGENT</span>' : ''
     button.innerHTML = `${source}<span class="tab-title"></span><span class="tab-close">×</span>`
-    button.querySelector('.tab-title').textContent = tab.loading ? `◌ ${tab.title}` : tab.title
+    button.querySelector('.tab-title').textContent = tab.deferred ? `○ ${tab.title}` : tab.loading ? `◌ ${tab.title}` : tab.title
     button.addEventListener('click', () => api.browser({ action: 'tabs.show', tabId: tab.id }))
     button.querySelector('.tab-close').addEventListener('click', (event) => {
       event.stopPropagation()

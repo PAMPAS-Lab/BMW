@@ -7,9 +7,17 @@ import {speechCaptionCues,speechScene,usesSpeechCaptions,usesStudioSpeech} from 
 import {estimatedCaptionCues,narrationWindows,assertNarrationTiming} from '../../media-native/src/composition-contract.js'
 import {layerProblems} from '../../media-native/src/composition-layers.js'
 import {sceneVisuals} from '../../media-native/src/visual-segments.js'
+import {assertLayerSourceCrop} from '../../media-native/src/composition-layers.js'
+import type {LayerSourceCrop} from '../../media-native/src/composition-layers.js'
 
 export interface StudioMainSelection {sceneId:string;kind:'scene'|'visual'|'voice'|'caption';index?:number;voiceSegmentId?:string;visualSegmentId?:string}
 export interface StudioMainResult {draft:VideoDraft;selection:StudioMainSelection}
+/** Restore exact microsecond boundaries only when subtraction introduced a few
+ * floating-point ULPs. Deliberate sub-microsecond source timing stays intact. */
+function addTrimDuration(seconds:number,delta:number):number {
+ const sum=seconds+delta,tick=Math.round(sum*1e6)/1e6
+ return Math.abs(sum-tick)<=Number.EPSILON*Math.max(1,Math.abs(seconds),Math.abs(delta),Math.abs(sum))*4?tick:sum
+}
 export function studioMainScene(draft:VideoDraft,ref:StudioMainSelection):StudioScene {
  const scene=draft.scenes.find(scene=>scene.id===ref.sceneId)
  if(!scene)throw new Error('时间轴镜头已删除，请重新选择。')
@@ -90,11 +98,11 @@ export function trimStudioMain(value:VideoDraft,ref:StudioMainSelection,edge:'st
   if(visual){
    if(visual.durationSeconds+delta<.1)throw new Error('画面至少保留 0.1 秒。')
    if(edge==='start'){const elapsed=globalSeconds-span.start;visual.sourceStartSeconds+=elapsed*visual.playbackRate;if('effectWindow' in visual&&visual.effectWindow){visual.effectWindow.startSeconds+=elapsed;if(visual.effectWindow.opacityStartSeconds!==undefined)visual.effectWindow.opacityStartSeconds+=elapsed}}
-   visual.durationSeconds+=delta
+   visual.durationSeconds=addTrimDuration(visual.durationSeconds,delta)
    if('transitionSeconds' in visual)visual.transitionSeconds=Math.min(visual.transitionSeconds,visual.durationSeconds/2)
-  }else if(scene.visualSegments){const last=scene.visualSegments.at(-1)!;last.durationSeconds+=delta;last.transitionSeconds=Math.min(last.transitionSeconds,last.durationSeconds/2)}
+  }else if(scene.visualSegments){const last=scene.visualSegments.at(-1)!;last.durationSeconds=addTrimDuration(last.durationSeconds,delta);last.transitionSeconds=Math.min(last.transitionSeconds,last.durationSeconds/2)}
   // A single visual is the scene itself; segmented visuals ripple the scene length.
-  if(visual!==scene)scene.durationSeconds+=delta
+  if(visual!==scene)scene.durationSeconds=addTrimDuration(scene.durationSeconds,delta)
   remapSourceSpeech(previous,scene)
  }
  return finish(next,ref)
@@ -105,6 +113,13 @@ export function setStudioMainEffects(value:VideoDraft,ref:StudioMainSelection,ef
  if(!visual)throw new Error('画面片段已删除，请重新选择。')
  const parsed=effects===undefined?undefined:assertVisualEffects(effects)
  if(parsed&&hasVisualEffects(parsed))visual.effects=parsed;else delete visual.effects
+ return finish(next,ref)
+}
+export function setStudioMainCrop(value:VideoDraft,ref:StudioMainSelection,crop:LayerSourceCrop|null):StudioMainResult {
+ if(ref.kind!=='visual')throw new Error('VIDEO_EDIT_KIND: clip.crop requires primary footage.')
+ const next=structuredClone(value),scene=studioMainScene(next,ref),visual=sceneVisuals(scene)[studioMainVisualIndex(scene,ref)]
+ if(!visual||!visual.videoArtifactId&&!visual.imageArtifactId)throw new Error('VIDEO_EDIT_KIND: clip.crop requires primary footage.')
+ if(crop===null)delete visual.crop;else visual.crop=assertLayerSourceCrop(crop)
  return finish(next,ref)
 }
 export function setStudioMainMuted(value:VideoDraft,ref:StudioMainSelection,muted:boolean):StudioMainResult {
