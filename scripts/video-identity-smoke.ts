@@ -6,6 +6,7 @@ import {app,BrowserWindow,session} from 'electron'
 import {readVideoTargets,prepareVideoTransfer} from '../packages/browser-capability/src/video-target.js'
 import {BrowserKernel} from '../packages/browser-capability/src/browser-kernel.js'
 import {selectVideoResource,selectVideoCaptureTarget} from '@bmw-agent/agent-contract/video-identity'
+import type {SourceCaptureGuard} from '@bmw-agent/media-native/sources'
 import {downloadMediaArtifact} from '../packages/browser-capability/src/media-artifact.js'
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-video-identity-'));app.setPath('userData',path.join(root,'profile'))
 let window:BrowserWindow|undefined,exitCode=0
@@ -44,6 +45,14 @@ async function run(){try{
  const rotated=await readVideoTargets(wc)
  assert.equal(selectVideoCaptureTarget(rotated,video,yt.videoIdentity).identity.targetId,'target')
  await assert.rejects(prepareVideoTransfer(wc,video),/UNBOUND/)
+ const sourceGuard:SourceCaptureGuard={pageUrl:rotated.pageUrl,candidateUrl:video,videoIdentity:yt.videoIdentity,scope:{selector:'#movie_player',index:0,excludeSelectors:[],characterUnit:'utf16',extraction:'visible-text-nodes',truncated:false,status:'observed'}}
+ let preserved=0
+ const host={requireTab:()=>({id:'yt-source',view:{webContents:wc}}),projectStore:{active:()=>({id:'fixture'})},recordingController:{isCaptureActive:()=>false},
+  verifySourceVideo:(request:SourceCaptureGuard&{tabId?:string},signal?:AbortSignal)=>BrowserKernel.prototype.verifySourceVideo.call(host as unknown as BrowserKernel,request,signal),
+  preserveSource:async(request:{url:string})=>{assert.equal(request.url,video+'&rotated=1');preserved++;return {artifactId:'fixture-preserved'}},captureSource:async()=>{throw new Error('Unexpected capture after successful preservation')}}
+ assert.equal((await host.verifySourceVideo(sourceGuard)).targetId,'target','Final source identity survives delivery rotation')
+ const freshDelivery=await BrowserKernel.prototype.acquireSource.call(host as unknown as BrowserKernel,{sourceGuard,videoSelector:'video',filename:'fixture'},new AbortController().signal)
+ assert.equal(freshDelivery.method,'preserve');assert.equal(preserved,1,'Auto begins with the fresh observed delivery of the pinned target')
  await wc.executeJavaScript("document.querySelector('#movie_player').classList.add('ad-showing')");assert.throws(()=>selectVideoCaptureTarget({...rotated,targets:[]},video,yt.videoIdentity),/CHANGED/)
  await assert.rejects(prepareVideoTransfer(wc,video),/UNAVAILABLE/)
  await wc.executeJavaScript("document.querySelector('#movie_player').classList.remove('ad-showing');document.querySelector('#movie_player').getVideoData=()=>({video_id:'reply'});true");await assert.rejects(prepareVideoTransfer(wc,video),/UNAVAILABLE/)

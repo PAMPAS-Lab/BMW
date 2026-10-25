@@ -9,7 +9,7 @@ import {prepareSourceScreenshot} from './source-screenshot.js'
 import {collectionPageReadyExpression,assertCollectionPageReady} from './collection-page-ready.js'
 import type {CollectionPageReady} from './collection-page-ready.js'
 import {navigatePage,closeNavigationPage,withNativePageRead} from './page-navigation.js'
-import {sameVideoIdentity,resourceBelongsToTarget,selectVideoResource,selectVideoCaptureTarget} from '@bmw-agent/agent-contract/video-identity'
+import {sameVideoIdentity,resourceBelongsToTarget,selectVideoCaptureTarget} from '@bmw-agent/agent-contract/video-identity'
 import type {SourceCollection,ProjectSourcePort,SourceCaptureGuard,VideoTargetScope,TextReadDiagnostic,TextReadBatch,TextReadRow} from '@bmw-agent/media-native/sources'
 import {readVideoTargets,prepareVideoTransfer} from './video-target.js'
 import {registerYoutubeSabrPage,bindYoutubeSabrPage} from './youtube-sabr-observation.js'
@@ -867,10 +867,12 @@ export class BrowserKernel {
   }
   async acquireSource(request:NonNullable<import('./browser-host.js').BrowserFeatureHost['acquireSource']> extends (request:infer R,...args:unknown[])=>unknown?R:never,signal?:AbortSignal){
     const tab=this.requireTab(request.tabId),projectId=this.projectStore.active().id
-    const verify=async(purpose:'preserve'|'capture')=>{signal?.throwIfAborted();if(this.projectStore.active().id!==projectId)throw new Error('Source Project changed.');await this.verifySourceVideo({...request.sourceGuard,tabId:tab.id},signal,purpose==='capture')}
+    // This job pins a logical player. Each preserveSource call separately binds
+    // the live selected delivery bytes through prepareVideoTransfer.
+    const verify=async(_purpose:'preserve'|'capture')=>{signal?.throwIfAborted();if(this.projectStore.active().id!==projectId)throw new Error('Source Project changed.');await this.verifySourceVideo({...request.sourceGuard,tabId:tab.id},signal)}
     await verify('preserve')
     const state=await readVideoTargets(tab.view.webContents,request.sourceGuard.scope,signal)
-    const selected=selectVideoResource(state,request.sourceGuard.candidateUrl,request.sourceGuard.videoIdentity)
+    const selected=selectVideoCaptureTarget(state,request.sourceGuard.candidateUrl,request.sourceGuard.videoIdentity)
     return acquireVideoDelivery(selected,{
       verify,busy:()=>this.recordingController.isCaptureActive(),
       preserve:(url,jobSignal)=>this.preserveSource({url,pageUrl:request.sourceGuard.pageUrl,tabId:tab.id,sourceGuard:request.sourceGuard},jobSignal),
@@ -893,10 +895,12 @@ export class BrowserKernel {
 
     },signal??new AbortController().signal)
   }
-  async verifySourceVideo(request:SourceCaptureGuard&{tabId?:string},signal?:AbortSignal,capture=false){
+  async verifySourceVideo(request:SourceCaptureGuard&{tabId?:string},signal?:AbortSignal){
     const tab=this.requireTab(request.tabId),state=await readVideoTargets(tab.view.webContents,request.scope,signal)
     if(state.pageUrl!==request.pageUrl)throw new Error('VIDEO_IDENTITY_CHANGED: Source page changed before commit.')
-    return (capture?selectVideoCaptureTarget:selectVideoResource)(state,request.candidateUrl,request.videoIdentity).identity
+    // Final source admission verifies identity, not a delivery URL which can
+    // expire while an already hash-bound file is decoded.
+    return selectVideoCaptureTarget(state,request.candidateUrl,request.videoIdentity).identity
   }
   private async captureSelectedVideo(tab,request,signal?:AbortSignal){
     // Chromium does not deliver presentation callbacks to a detached tab view.
