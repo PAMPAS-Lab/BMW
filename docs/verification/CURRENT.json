@@ -4,7 +4,7 @@
   "createdAt": "2026-10-25T15:19:24.971960+00:00",
   "verificationMode": "previous-full-baseline-plus-focused-background-readiness-regression",
   "report": "docs/verification/BACKGROUND_READINESS.json",
-  "sourceBaseRevision": "31084e8be3ac663d7ae7fe2bf0c667814939504c",
+  "sourceBaseRevision": "a737080",
   "runtimeVersions": {
     "@openai/codex": "0.164.0",
     "@deepseek-ai/dsh": "0.2.1-rc.2",
@@ -12,7 +12,7 @@
     "@qodercn-ai/qodercn-agent-sdk": "1.0.56",
     "@tencent-ai/codebuddy-code": "2.176.0"
   },
-  "sourceManifestSha256": "c4e5563e5cdb2b262a5b515c83ac076293460242b0a2013d406b8801d1214e23",
+  "sourceManifestSha256": "02a4f0d178f407c75f8242e501ddf701c1ad603d793ae255152f92fd64a680a3",
   "build": "passed",
   "check": "passed",
   "fullBaselineCounts": {
@@ -32,13 +32,22 @@
   "unresolvedFailures": [],
   "finalFullSuiteRerun": false,
   "externalOptInNotRun": 14,
-  "productionCoverage": "Controlled isolated regression only; real source recheck pending; no new film acceptance",
+  "productionCoverage": "Initial real source recheck failed closed and was explicitly recovered; final main-Frame refinement only has isolated coverage pending real recheck; no new film acceptance",
   "previousCurrentReport": "Preserved in Git history; prior evidence retained",
   "previousReport": "docs/verification/HARNESS_UPGRADE.json",
-  "focusedLayerCounts": {
+  "focusedNativeChecks": "10 commands passed, including desktop four groups plus restart",
+  "initialFocusedLayerCounts": {
     "passed": 133,
     "failed": 0,
     "not-run": 98
   },
-  "focusedNativeChecks": "10 commands passed, including desktop four groups plus restart"
+  "focusedBrowserContracts": {
+    "passed": 102,
+    "failed": 0
+  },
+  "focusedBoundaryCounts": {
+    "passed": 9,
+    "failed": 0,
+    "not-run": 222
+  }
 }

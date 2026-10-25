@@ -6,7 +6,7 @@
 
 周期新闻实际续作暴露后台暂停策略与YouTube正常广告推进冲突。隔离回归先复现：视频已解码（64×64、1秒），4秒内19次播放均被暂停，currentTime约0.004秒，未能就绪。Host现只在原45秒目标导航就绪阶段允许静音推进；不抢前台、广告不认证内容，成功／失败／取消后撤销并暂停，恢复失败仍隔离。实际播放过程原生静音、取消清理及普通后台播放拦截均有断言。
 
-build/check通过；unit/contract/boundary/type层 **133 passed / 0 failed / 98 outside-layer or opt-in not-run**。另顺序通过10个原生命令：标签/广告生命周期、后台、后台采集、媒体录制/处理、视频、Studio、本地旁白、DSH及完整桌面（四组加Project重启）。代码与全部生成输出SHA核对通过，见[专项记录](verification/BACKGROUND_READINESS.json)。没有再次重跑完整所有层；原全量基线与已解决夹具失败分别保留。均为一次性Profile/Home及mock keychain；该受控广告回归不代表真实YouTube或生产Profile验收，真实来源将在更新后另行复测，未据此宣称新成片通过。
+build/check通过；unit/contract/boundary/type层 **133 passed / 0 failed / 98 outside-layer or opt-in not-run**。另顺序通过10个原生命令：标签/广告生命周期、后台、后台采集、媒体录制/处理、视频、Studio、本地旁白、DSH及完整桌面（四组加Project重启）。初始修复真实来源复测在跨Frame策略恢复时失败并显式关闭恢复；最终将静音例外限主Frame、主播放器暂停/撤权单独核验，子Frame从未获播放例外，其失败保留静音与诊断，不伪称已暂停。新增无关Frame故障回归先失败后通过；最终另通过102个浏览器契约、9条边界记录及同10个原生命令。最终代码与全部生成输出SHA核对通过，见[专项记录](verification/BACKGROUND_READINESS.json)。没有再次重跑完整所有层；原全量基线与已解决夹具失败分别保留。均为一次性Profile/Home及mock keychain；该受控广告回归不代表真实YouTube或生产Profile验收，真实来源将在更新后另行复测，未据此宣称新成片通过。
 
 ## 当前合并与 Harness 升级验证（2026-10-25）
 

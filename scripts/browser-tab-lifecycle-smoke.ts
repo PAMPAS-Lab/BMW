@@ -45,9 +45,16 @@ async function run(){let code=0;const watchdog=setTimeout(()=>app.exit(1),120000
   const encoder=new BrowserWindow({show:false,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false}});windows.push(encoder)
   await encoder.loadFile(path.resolve('packages/media-native/src/media/media.html'))
   const clip=Buffer.from(await encoder.webContents.executeJavaScript(`(async()=>{const {Output,Mp4OutputFormat,BufferTarget,CanvasSource}=await import('mediabunny');const c=new OffscreenCanvas(64,64),x=c.getContext('2d'),target=new BufferTarget(),output=new Output({format:new Mp4OutputFormat(),target}),video=new CanvasSource(c,{codec:'avc',bitrate:100000});output.addVideoTrack(video,{frameRate:10});await output.start();for(let n=0;n<10;n++){x.fillStyle=n%2?'red':'blue';x.fillRect(0,0,64,64);await video.add(n/10,.1)}video.close();await output.finalize();return [...new Uint8Array(target.buffer)]})()`,true) as number[]).toString('base64');encoder.destroy()
-  await browserSession.protocol.handle('https',request=>{const id=new URL(request.url).searchParams.get('v');return new Response(`<!doctype html><title>Controlled ad readiness</title><div id="movie_player" class="ad-showing"><video muted loop preload="auto" src="data:video/mp4;base64,${clip}"></video></div><script>const p=document.getElementById('movie_player'),v=p.querySelector('video');p.getVideoData=()=>({video_id:${JSON.stringify(id)}});p.getPlayerResponse=()=>({videoDetails:{videoId:${JSON.stringify(id)}},playabilityStatus:{status:'OK'}});p.dataset.playCount='0';p.dataset.pauseCount='0';v.addEventListener('play',()=>p.dataset.playCount=String(Number(p.dataset.playCount)+1));v.addEventListener('pause',()=>p.dataset.pauseCount=String(Number(p.dataset.pauseCount)+1));setInterval(()=>{if(${JSON.stringify(id)}!=='never-ready'&&v.currentTime>.15)p.classList.remove('ad-showing')},20)</script>`,{headers:{'content-type':'text/html'}})})
+  await browserSession.protocol.handle('https',request=>{const address=new URL(request.url);if(address.hostname==='player-frame.example')return new Response(player,{headers:{'content-type':'text/html'}});const id=address.searchParams.get('v');return new Response(`<!doctype html><title>Controlled ad readiness</title><div id="movie_player" class="ad-showing"><video muted loop preload="auto" src="data:video/mp4;base64,${clip}"></video></div>${id==='frame-failure'?'<iframe src="https://player-frame.example/player"></iframe>':''}<script>const p=document.getElementById('movie_player'),v=p.querySelector('video');p.getVideoData=()=>({video_id:${JSON.stringify(id)}});p.getPlayerResponse=()=>({videoDetails:{videoId:${JSON.stringify(id)}},playabilityStatus:{status:'OK'}});p.dataset.playCount='0';p.dataset.pauseCount='0';v.addEventListener('play',()=>p.dataset.playCount=String(Number(p.dataset.playCount)+1));v.addEventListener('pause',()=>p.dataset.pauseCount=String(Number(p.dataset.pauseCount)+1));setInterval(()=>{if(${JSON.stringify(id)}!=='never-ready'&&v.currentTime>.15)p.classList.remove('ad-showing')},20)</script>`,{headers:{'content-type':'text/html'}})})
   const readinessMuteStates:boolean[]=[]
-  const traceReadiness=(_event:Electron.Event,contents:Electron.WebContents)=>contents.on('media-started-playing',()=>{if(contents.getURL().includes('www.youtube.com/watch?v='))readinessMuteStates.push(contents.isAudioMuted())})
+  const framePolicies:boolean[]=[],frameScripts=new Map<Electron.WebFrameMain,Electron.WebFrameMain['executeJavaScript']>()
+  const traceReadiness=(_event:Electron.Event,contents:Electron.WebContents)=>{
+    contents.on('media-started-playing',()=>{if(contents.getURL().includes('www.youtube.com/watch?v='))readinessMuteStates.push(contents.isAudioMuted())})
+    contents.on('did-frame-finish-load',()=>{if(contents.getURL().includes('v=frame-failure'))for(const frame of contents.mainFrame.framesInSubtree)if(frame.url.startsWith('https://player-frame.example/')&&!frameScripts.has(frame)){
+      frameScripts.set(frame,frame.executeJavaScript);const execute=frame.executeJavaScript.bind(frame)
+      frame.executeJavaScript=async(code:string,userGesture?:boolean)=>{if(code.includes('__bmwPlaybackPolicy')){framePolicies.push(code.includes('state.allowed=true'));throw new Error('Controlled unrelated frame failure')}return execute(code,userGesture)}
+    }})
+  }
   app.on('web-contents-created',traceReadiness)
   k.setBrowserVisible(false)
   try{
@@ -65,8 +72,13 @@ async function run(){let code=0;const watchdog=setTimeout(()=>app.exit(1),120000
     await assert.rejects(k.openTab({url:'https://www.youtube.com/watch?v=never-ready',foreground:false,source:'agent'},AbortSignal.timeout(1000)),/abort|timeout/i)
     const stopped=[...k.tabs.values()].find(tab=>tab.url.includes('never-ready'))
     if(stopped){assert.equal(stopped.view.webContents.isAudioMuted(),true);assert.equal(await stopped.view.webContents.executeJavaScript("document.querySelector('video').paused"),true);await k.closeTab(stopped.id)}
+    const independent=await k.openTab({url:'https://www.youtube.com/watch?v=frame-failure',foreground:false,source:'agent'},AbortSignal.timeout(4000)),independentPage=k.tabs.get(independent.id).view.webContents
+    assert.ok(framePolicies.length>0&&framePolicies.every(allowed=>!allowed),'Readiness never grants playback to the unrelated child frame')
+    assert.equal(independentPage.isAudioMuted(),true);assert.equal(await independentPage.executeJavaScript("document.querySelector('video').paused"),true)
+    assert.ok(k.diagnosticsFor(independent.id).media.some((entry:{message?:string})=>entry.message?.includes('remains muted')),'The unrelated frame failure remains visible')
+    await k.closeTab(independent.id)
     console.log('PASS background ad readiness: actual decoding progresses muted, foreground is preserved, normal background pause returns and cancellation drains')
-  }finally{app.removeListener('web-contents-created',traceReadiness);k.setBrowserVisible(true);await browserSession.protocol.unhandle('https')}
+  }finally{for(const [frame,execute] of frameScripts)if(!frame.isDestroyed()&&!frame.detached)frame.executeJavaScript=execute;app.removeListener('web-contents-created',traceReadiness);k.setBrowserVisible(true);await browserSession.protocol.unhandle('https')}
   const paused=async(page:typeof userPage)=>page.executeJavaScript("document.querySelector('video').paused")
   const play=async(page:typeof userPage)=>{await page.executeJavaScript("document.querySelector('video').play().catch(()=>{});true",true);await new Promise(resolve=>setTimeout(resolve,100))}
   const firstFrame=userPage.mainFrame,realScript=firstFrame.executeJavaScript.bind(firstFrame)

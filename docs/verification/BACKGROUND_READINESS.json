@@ -1,22 +1,17 @@
 {
   "format": "bmw.background-readiness-verification",
   "version": 1,
-  "createdAt": "2026-10-25T15:19:24.971960+00:00",
-  "sourceBaseRevision": "31084e8be3ac663d7ae7fe2bf0c667814939504c",
+  "createdAt": "2026-10-25T15:40:51.501794+00:00",
+  "sourceBaseRevision": "a737080",
   "scope": "bounded muted YouTube readiness exception; focused regression after full baseline",
   "baseline": "HARNESS_UPGRADE.json",
   "build": "passed",
   "check": "passed",
-  "layerCounts": {
-    "passed": 133,
-    "failed": 0,
-    "not-run": 98
-  },
   "unitReport": ".bmw-runtime/news-every-two-hours/ad-fix-unit/result.json",
   "nativeChecks": {
     "tabs": {
       "status": "passed",
-      "logSha256": "a9b60ac20bd7ed7b61266ef5eb5d9146a8260f8751123be46f738dfbcd59a402"
+      "logSha256": "f3e7b5dfc24c14fed15053214857071aa7ff34015dee56780f51898362fab6e9"
     },
     "background": {
       "status": "passed",
@@ -24,35 +19,35 @@
     },
     "library": {
       "status": "passed",
-      "logSha256": "603d354d07f58fe8a2f23b6f7fe804821af731250388e884dda3c71c1a308fa0"
+      "logSha256": "7d66d9a50a1adc2be8a42534291520aaf17df4dfc2d36367399c0ca415acc449"
     },
     "capture": {
       "status": "passed",
-      "logSha256": "0bcf94b1f4b40bcefdb587620cc22bc0e933c2d69705fc146745405733e3b0d4"
+      "logSha256": "0988ab0fce41a81c980563deba86f862d56191fb618f78f3069de45b04afdc7d"
     },
     "processing": {
       "status": "passed",
-      "logSha256": "b7e45e812b7e76b24b34cf85bfc30999963f6d186a7ffa072c2f1dcbeee4182d"
+      "logSha256": "f38221da209e7264dde52112f43aabbaa770d5638f64861067bf725562a38889"
     },
     "video": {
       "status": "passed",
-      "logSha256": "697839cab2d7238125ffd5cf16bdfe6b223fb614180029635b2c420148b9e385"
+      "logSha256": "145a0b6376479cb27b7b70ab3792af902591f28fb23ab08b37d923590f861011"
     },
     "studio": {
       "status": "passed",
-      "logSha256": "796842d7bc1bba136abd718974a165dd319eea88215a99715e29774eedd9fa4e"
+      "logSha256": "77c9ed8aae1a0d80367acb0be237c7ead71333848d545098388707c200014cda"
     },
     "narration": {
       "status": "passed",
-      "logSha256": "62f953954da67a181cd6091a3f3dd4dabd52132602640e559c5169d0d342f27b"
+      "logSha256": "d007473e4e5ca47c29d00cf973f280094f2656f6620c2ddf55e16fedb636f4a1"
     },
     "dsh": {
       "status": "passed",
-      "logSha256": "a270e309bf99edfa7a4990baf4373e110d4d98e2652b8eaad4b175e98d85afd0"
+      "logSha256": "f39bdc8acd21972eafad0245374cf704261cbbd9c22cdb8c0a47d4d653e351d9"
     },
     "desktop": {
       "status": "passed",
-      "logSha256": "28607d745da0d0d5839709f1848d394a7990399b055e0163b701055c0ee33126"
+      "logSha256": "c8a318eea8acc5383bd7a8bd2a56e14374e2926ad95ebac5e51ab472532e3e16"
     }
   },
   "desktopGroups": [
@@ -82,11 +77,11 @@
     "after": "Actual ad playback advances muted without foreground switch; success/cancel pause and revoke; ordinary background replay remains blocked"
   },
   "implementationHashes": {
-    "packages/browser-capability/src/browser-kernel.ts": "420320d459b1d18e255bd1889b316c6da052f0c7a50a93f1912d354ea2b801f6",
-    "packages/browser-capability/src/page-playback.ts": "f1998860dadf5202a1ae6c84a8d722bb5a604117a43c1625b22c3e18595440b5",
-    "scripts/browser-tab-lifecycle-smoke.ts": "03e2d5b2514da0bdf8b65fdbfabe4ba0329a3d45fbb4b57f5dd04ed558f7dba9"
+    "packages/browser-capability/src/browser-kernel.ts": "45dec08b8a3c7622cf825bc1edf576364b87656538b185686f10ef239e3029ad",
+    "packages/browser-capability/src/page-playback.ts": "f46cc5b604b06ab83854023f00e6e8c1f62081a5fefd191671bddceee780dc4c",
+    "scripts/browser-tab-lifecycle-smoke.ts": "2e3748fdfd6b58a72bf3dddf671884d24ea61584222b103d86e024b2b7c0f521"
   },
-  "buildSourceManifestSha256": "c4e5563e5cdb2b262a5b515c83ac076293460242b0a2013d406b8801d1214e23",
+  "buildSourceManifestSha256": "02a4f0d178f407c75f8242e501ddf701c1ad603d793ae255152f92fd64a680a3",
   "outputsVerified": 599,
   "fullSuiteRerun": false,
   "productionSourceRecheck": "pending on updated runtime",
@@ -94,5 +89,25 @@
     "No paid-model or production-profile coverage from isolated tests",
     "Controlled ad fixture is not a real YouTube-service acceptance",
     "No film produced or accepted by these checks"
-  ]
+  ],
+  "initialLayerCounts": {
+    "passed": 133,
+    "failed": 0,
+    "not-run": 98
+  },
+  "browserContractCounts": {
+    "passed": 102,
+    "failed": 0
+  },
+  "boundaryCounts": {
+    "passed": 9,
+    "failed": 0,
+    "not-run": 222
+  },
+  "refinement": {
+    "realSourceInitialFailure": "Readiness policy restore failed; explicit close recovered the page",
+    "isolatedBefore": "Controlled unrelated child Frame failure discards the first-fix readiness result",
+    "final": "Only main Frame receives the muted exception; revoke/verify main separately; unrelated Frame never allowed and failure remains muted+diagnosed",
+    "realSourceFinalRecheck": "pending"
+  }
 }

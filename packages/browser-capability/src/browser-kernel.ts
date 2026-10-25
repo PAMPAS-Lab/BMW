@@ -264,7 +264,12 @@ export class BrowserKernel {
         catch(error){this.navigationQuarantine.add(tab.id);throw new Error('MEDIA_CAPTURE_CLEANUP_FAILED: YouTube readiness playback could not be paused.',{cause:error})}
       }}finally{if(this.readinessPlaybackTabId===tab.id){
         this.readinessPlaybackTabId=null
-        if(!tab.view.webContents.isDestroyed())try{await this.playback.update(tab.view.webContents,this.playbackAllowed(tab),true)}catch(error){this.navigationQuarantine.add(tab.id);throw new Error('MEDIA_CAPTURE_CLEANUP_FAILED: Readiness playback policy could not be restored.',{cause:error})}
+        if(!tab.view.webContents.isDestroyed()){
+          // The exception only owned the main player. Revoke it and verify its
+          // pause independently of unrelated frames which were never allowed.
+          try{await this.playback.update(tab.view.webContents,this.playbackAllowed(tab),true,true,true)}catch(error){this.navigationQuarantine.add(tab.id);throw new Error('MEDIA_CAPTURE_CLEANUP_FAILED: Readiness main-player policy could not be restored.',{cause:error})}
+          await this.applyPlayback(tab,this.playbackAllowed(tab),true)
+        }
       }}
     }
   }

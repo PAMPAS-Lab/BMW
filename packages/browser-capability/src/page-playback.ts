@@ -7,7 +7,7 @@ export class PagePlayback {
  private readonly pending=new WeakMap<WebContents,Promise<void>>()
  private readonly latest=new WeakMap<WebContents,number>()
  private sequence=0
- update(page:WebContents,allowed:boolean,forcePause=false,stayMuted=false):Promise<void>{
+ update(page:WebContents,allowed:boolean,forcePause=false,stayMuted=false,mainFrameOnly=false):Promise<void>{
   if(page.isDestroyed())return Promise.resolve()
   page.setAudioMuted(true)
   const sequence=++this.sequence
@@ -15,13 +15,13 @@ export class PagePlayback {
   const previous=this.pending.get(page)??Promise.resolve()
   const work=previous.catch(()=>{}).then(async()=>{
    if(page.isDestroyed()||!page.getURL())return
-   const frames=page.mainFrame.framesInSubtree
+   const main=page.mainFrame,frames=mainFrameOnly?[main]:main.framesInSubtree
    if(frames.length>128)throw new Error('Page playback frame budget exceeded; page remains muted.')
    await readRendererPhase(page,'page.playback','pause',async()=>{
-    const results=await Promise.allSettled(frames.filter(frame=>!frame.isDestroyed()&&!frame.detached).map(async frame=>{const url=frame.url;try{await frame.executeJavaScript(`(()=>{
+    const results=await Promise.allSettled(frames.filter(frame=>!frame.isDestroyed()&&!frame.detached).map(async frame=>{const url=frame.url,frameAllowed=allowed&&(!stayMuted||frame===main);try{await frame.executeJavaScript(`(()=>{
      const key='__bmwPlaybackPolicy',prior=globalThis[key];
      if(prior&&prior.sequence>${sequence})return;
-     const state=prior||{sequence:0,allowed:false};state.sequence=${sequence};state.allowed=${allowed};
+     const state=prior||{sequence:0,allowed:false};state.sequence=${sequence};state.allowed=${frameAllowed};
      if(!prior){globalThis[key]=state;document.addEventListener('play',event=>{if(!state.allowed&&event.target instanceof HTMLMediaElement)event.target.pause()},true)}
      if(!state.allowed||${forcePause})for(const media of document.querySelectorAll('audio,video'))media.pause();
     })()`,false)}catch(error){if(frame.isDestroyed()||frame.detached||frame.url!==url)return;throw error}}))
