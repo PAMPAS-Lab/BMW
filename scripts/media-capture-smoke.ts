@@ -195,7 +195,7 @@ async function run(): Promise<void> {
       await wait(250)
       // Separate Agent action evidence; synthetic element.click must not be user input.
       Object.assign(tab,{recordingEvents:source})
-      await BrowserKernel.prototype.click.call({},tab,{selector:'#record-step'})
+      await BrowserKernel.prototype.click.call(kernel,tab,{selector:'#record-step'})
       await wait(200)
       await window.loadURL(url+'next')
       await wait(300)

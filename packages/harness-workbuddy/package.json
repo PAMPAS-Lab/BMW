@@ -5,7 +5,9 @@
   "type": "module",
   "dependencies": {
     "@bmw-agent/agent-contract": "*",
-    "@tencent-ai/codebuddy-code": "2.169.0"
+    "@tencent-ai/codebuddy-code": "2.176.0"
   },
-  "exports": { ".": "./index.js" }
+  "exports": {
+    ".": "./index.js"
+  }
 }

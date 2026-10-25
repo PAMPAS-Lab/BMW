@@ -3,7 +3,7 @@
  * is negotiated by protocol version, not by "whatever the user happens to have",
  * so a drifting install cannot silently change the tool catalog or auth methods.
  */
-export const workbuddyPinnedCliVersion = '2.169.0'
+export const workbuddyPinnedCliVersion = '2.176.0'
 /** The only ACP protocol version BMW has verified. */
 export const workbuddyVerifiedProtocolVersions: readonly number[] = [1]
 /** Models BMW will admit. A model present in the account catalog but absent here stays unavailable. */

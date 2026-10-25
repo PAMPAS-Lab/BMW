@@ -6,7 +6,7 @@ import test from 'node:test'
 import {QoderSettings} from '../src/qoder-settings.js'
 import type {QoderSettingsOptions} from '../src/qoder-settings.js'
 import type {Options} from '@qodercn-ai/qodercn-agent-sdk'
-const init={type:'system',subtype:'init',session_id:'fixture-settings',qodercli_version:'1.1.64',tools:['browser'],skills:[],plugins:[],mcp_servers:[{name:'bmw',status:'connected'}]}
+const init={type:'system',subtype:'init',session_id:'fixture-settings',qodercli_version:'1.1.78',tools:['browser'],skills:[],plugins:[],mcp_servers:[{name:'bmw',status:'connected'}]}
 function fixture(t:import('node:test').TestContext,unexpected=false,failClose=false){
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-qoder-settings-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}))
   let selected:string|null=null,options:Options|undefined,closed=0,modelChanges=0,releasedInputs=0

@@ -46,7 +46,7 @@
     "migrate:agent-data": "npm run build --silent && node scripts/migrate-agent-data.js"
   },
   "dependencies": {
-    "@qodercn-ai/qoderclicn": "1.1.64",
+    "@qodercn-ai/qoderclicn": "1.1.78",
     "ws": "8.21.3"
   },
   "overrides": {

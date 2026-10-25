@@ -432,6 +432,11 @@ try {
   await shell.executeJavaScript(`(async () => { await window.bmw.setAgentControl(true); return window.bmw.browser({ action: 'tabs.open', url: ${JSON.stringify(`${origin}/opener`)}, foreground: true }) })()`)
   const opener = await waitFor(async () => webContents.getAllWebContents().find((contents) => contents.getURL() === `${origin}/opener` && !contents.isLoading()) || null)
   await opener.executeJavaScript(`document.cookie = 'bmw_smoke=1; SameSite=Lax'; window.open(${JSON.stringify(`${origin}/popup`)}, '_blank'); 'opened'`, true)
+  type PopupTab={id:string;url:string;source:string;projectId:string;openerTabId:string|null;deferred:boolean}
+  const deferredPopup=await waitFor(async()=>{const state=await shell.executeJavaScript("window.bmw.browser({action:'status'})") as {activeProject:{id:string};activeTabId:string;tabs:PopupTab[]};const tab=state.tabs.find(t=>t.url===`${origin}/popup`);return tab?{tab,state}:null})
+  const openerTab=deferredPopup.state.tabs.find(tab=>tab.url===`${origin}/opener`);assert.ok(openerTab)
+  assert.equal(openerTab.source,'user');assert.equal(deferredPopup.tab.projectId,deferredPopup.state.activeProject.id);assert.equal(deferredPopup.tab.openerTabId,openerTab.id);assert.equal(deferredPopup.tab.source,'page');assert.equal(deferredPopup.tab.deferred,true);assert.notEqual(deferredPopup.state.activeTabId,deferredPopup.tab.id,'Page popups cannot steal foreground admission')
+  await shell.executeJavaScript('window.bmw.browser('+JSON.stringify({action:'tabs.show',tabId:deferredPopup.tab.id})+')')
   const popup = await waitFor(async () => webContents.getAllWebContents().find((contents) => contents.getURL() === `${origin}/popup` && !contents.isLoading()) || null)
   const state = await shell.executeJavaScript("window.bmw.browser({ action: 'status' })") as { activeProject: { id: string }; tabs: { url: string; source: string; projectId: string }[] }
   assert.ok(state.tabs.some((tab) => tab.url === `${origin}/popup` && tab.source === 'page' && tab.projectId === state.activeProject.id))
@@ -440,7 +445,7 @@ try {
   assert.ok(processMetric, 'The popup renderer must be tracked by Electron')
   if (process.platform === 'darwin' || process.platform === 'win32') assert.equal(processMetric.sandboxed, true)
   assert.equal(await popup.executeJavaScript("typeof require === 'undefined' && typeof window.bmw === 'undefined' && document.cookie.includes('bmw_smoke=1')"), true)
-  console.log('PASS popup: Project-owned, shared browser Session, OS sandbox, no Node/privileged preload')
+  console.log('PASS popup: Project-owned deferred background, explicit activation, shared browser Session, OS sandbox, no Node/privileged preload')
 
   const firstProject=before.projects.find((project:{id:string})=>project.id===before.activeProjectId)
   const secondProject=created.projects.find((project:{id:string})=>project.id===created.activeProjectId)

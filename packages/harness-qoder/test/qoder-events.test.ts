@@ -2,9 +2,9 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { AgentDriverEvent } from '@bmw-agent/agent-contract'
 import { QoderEvents, qoderBrowserCatalog } from '../src/qoder-events.js'
-const init = { type: 'system', subtype: 'init', session_id: 'provider-session', qodercli_version: '1.1.64', tools: ['browser'], mcp_servers: [{ name: 'bmw', status: 'connected' }], skills: [], plugins: [] }
+const init = { type: 'system', subtype: 'init', session_id: 'provider-session', qodercli_version: '1.1.78', tools: ['browser'], mcp_servers: [{ name: 'bmw', status: 'connected' }], skills: [], plugins: [] }
 test('Qoder effective initialization rejects builtins, foreign MCP, inherited plugins and unsupported runtime', () => {
-  assert.deepEqual(qoderBrowserCatalog(init), { sessionId: 'provider-session', runtimeVersion: '1.1.64' })
+  assert.deepEqual(qoderBrowserCatalog(init), { sessionId: 'provider-session', runtimeVersion: '1.1.78' })
   for (const patch of [{ tools: ['browser', 'Bash'] }, { tools: [] }, { mcp_servers: [{ name: 'bmw', status: 'failed' }] }, { mcp_servers: [...init.mcp_servers, { name: 'other', status: 'connected' }] }, { plugins: [{ name: 'extra' }] }, { skills: ['shell-skill'] }, { qodercli_version: 'unknown' }]) assert.throws(() => qoderBrowserCatalog({ ...init, ...patch }))
 })
 test('Qoder content blocks sharing a model message ID retain distinct tool/text identities and stream one reply', async () => {

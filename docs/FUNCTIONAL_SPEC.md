@@ -119,18 +119,18 @@ Host按当前UTC检查原始发布时间严格在近72小时，未来／日期�
 - Agent 相关 Project/Settings/Conversation/History/Preferences/Schedule 文件统一采用 v2，迁移提交标记为 `agent-data-version.json`。日常启动只接受当前格式；历史 Profile 明确拒绝并提示独立命令，不再执行历史导入、自动字段修补或 legacyImportPending 重试。
 - 显式迁移通过 harness-dsh 的独立导出入口，在临时复制的原生 Home 上调用官方 cold session/list、workspace/follow、session/follow/page，冻结 cursor 并完整读取。保留已有 BMW Session ID、原生恢复锚点和显示历史；尚未纳入索引的旧会话按原 ID 导入。已归档且原 Workspace 已移除的 Project 必须由 Session header cwd 证明归属；缺失或跨 Project 身份失败。只导入人类/模型文本，原生 context、私有推理和图片不复制为显示消息，不伪造输入回执。
 - History 保存统一 owner `{projectId, driverId, externalSessionId}`，启动验证与索引完全一致后才执行通用崩溃恢复。DSH Workspace 从 Project 文件迁移至 `dsh-home/bmw-project-bindings.json`，新目录或 Workspace 不得静默替换既有映射。迁移命令备份受影响元数据、检查输入/输出与草稿哈希、最后提交标记；写入失败回滚本事务文件，并保留并发修改。操作及恢复见 [AGENT_DATA_MIGRATION.md](AGENT_DATA_MIGRATION.md)。
-- apps/bmw 的 createBmwAgentAssembly 装配 DSH、Codex、Qoder CN、WorkBuddy，默认从实际 BMW userData 派生 `agent-drivers/codex`、`agent-drivers/qoder-cn`、`agent-drivers/workbuddy`，保留 DSH 的 `dsh-home`；物理路径别名及父子目录重叠被拒绝。Codex 公共 CLI 安装可通过正常 PATH、固定应用 CLI 路径或明确的 BMW_CODEX_EXECUTABLE 发现，缺失时设置仍可显示安装状态，不启动模型。每个引擎仍需在输入前通过实际目录门槛。默认入口只使用此装配；旧 DSH Client、Runtime port、DOM context poller 和专用 preload 已移除，全部 Shell/Feature 会话操作进入 BMW Session service。最终真实模型复验与目标工作区验收以实施状态中的实际证据为准。
+- apps/bmw 的 createBmwAgentAssembly 装配 DSH、Codex、Qoder CN、WorkBuddy，默认从实际 BMW userData 派生 `agent-drivers/codex`、`agent-drivers/qoder-cn`、`agent-drivers/workbuddy`，保留 DSH 的 `dsh-home`；物理路径别名及父子目录重叠被拒绝。Codex 优先使用锁文件安装的官方 CLI；明确的 BMW_CODEX_EXECUTABLE 可覆盖选择，仍受固定版本与实际目录门禁约束。无捆绑运行时才回退公共 PATH／应用 CLI；缺失时设置仍显示安装状态，不启动模型。每个引擎仍需在输入前通过实际目录门槛。默认入口只使用此装配；旧 DSH Client、Runtime port、DOM context poller 和专用 preload 已移除，全部 Shell/Feature 会话操作进入 BMW Session service。最终真实模型复验与目标工作区验收以实施状态中的实际证据为准。
 - 自有 Assistant 设置通过可信闭合 IPC 调用各引擎官方控制 API，不产生模型输入、持久化测试会话或 browser 执行。账号投影与表单 Schema 不含秘密值；密码框在提交、关闭按钮及 Escape 时清空。Codex 浏览器登录、Qoder 官方 CLI 登录、DSH 凭据设置/退出留在适配器内。Qoder CLI 未验证非交互退出，UI 保持该操作禁用。新 Profile 的默认 driver 为 DSH，之后按 Project 保存选择；应用启动不自动发起登录，GUI 首次切换到未读取的 driver 后懒加载登录状态；打开设置只在该 driver 从未尝试读取且 Host 空闲时首次加载，后续查看与切回复用 Profile 内分 driver 内存缓存；缺少凭据时弹出登录方式，登录对话框可切换其他 driver，先取消并等待当前登录实际清理。登录成功后显示可选模型并由用户点选“确认选择”；无需用户发起工具目录验证或模型推理。模型偏好按 driver 保存，认证、支持名单与账号目录匹配并等待原生控制清理完成后才提交；确认后关闭弹窗。状态读取完成后关闭登录框不会反复自动弹出，切回已读取 driver 不重复检查；已读取状态缺少认证或有效模型时禁止发送。同一 Agent 的设置读取在已有设置操作期间合并，不重复启动原生读取；打开设置窗口不与驱动切换再次竞争刷新。认证和模型修改仍保持独占，切换等待取消和实际清理完成；对话状态明确显示设置读取或连接清理，清理隔离时不能合并读取。设置/取消/原生清理持有 Host 排除，清理失败进入隔离，恢复仅重试清理；小窗口保留底部操作，Assistant 跟随 BMW 明暗主题。
 - 设置缓存只存经过验证的无秘密显示投影，不持久化或跨 Profile/控制器共享，也不按 Project 重复读取。登录状态参考有效期 5 分钟、模型目录 30 分钟，分开显示最后检查时间与待检查标记；过期仍展示上次结果，不自动轮询、后台启动控制连接或绕过实际任务准入。手动「刷新状态」「刷新模型」均调用现有官方联合读取，成功且实际清理结束后同步更新两个时间。认证/模型修改先使旧投影失效，失败或取消不会恢复旧就绪状态；刷新失败保留旧显示与原时间，首次失败不因反复查看而自动重试。宿主模型偏好或驱动 baseline 变化会丢弃对应缓存。真实任务失败（包括认证/模型准备拒绝和连接失败）保守标记对应 driver 的两部分待检查，不猜测诊断文本、不自动发送/刷新；取消不作为失效事件。外部账号/配置变化不监控磁盘或凭据，仅通过手动刷新或后续官方任务验证发现，重启清空内存缓存。缓存查看不获取 Host 排除；原生读取、登录、模型写入与清理仍保持排除/隔离。
 - 每个适配器维护明确的支持名单，并与官方目录取交集；Codex/Qoder 读取账号状态及原生模型目录，DSH 只检查本地 DeepSeek Key 是否配置并读取官方 Provider 目录，不进行 API Key 有效性或余额验证；未知模型及 Qoder 标记禁用项不显示。Codex 支持 `gpt-6.1-sol`、`gpt-6-astra`、`gpt-6-sol`、`gpt-6-luna`、`gpt-5.5`；DSH 支持 `deepseek-official` 下的 `deepseek-flash`、`deepseek-v4-pro`，认证只使用 `DEEPSEEK_API_KEY`，其他 Provider 凭据不构成就绪条件且退出时保留；Qoder CN 支持 `auto`、`qmodel_38max`、`qfmodel`、`qmodel_latest`、`qmodel`、`q37fmodel`、`dmodel`、`dfmodel`、`gmodel`、`gfmodel`、`gm51model`、`kmodel_latest`、`kmodel`、`mmodel`。设置投影中的 `verified` 表示维护名单支持，不表示用户运行过预检或账号拥有推理额度；Qoder 的真实模型验收目前只覆盖 `auto`。
 - 设置不要求用户执行专项验证。Codex 设置选择不调用工具预检；Qoder 冷控制会话仍内部检查 SDK init 的有效工具目录并禁止任何模型消息，DSH 使用官方 cold 设置／目录控制。三者设置均不发送模型输入。
 - 官方引擎拥有 Agent 循环，Host 只协调输入和资源。输入前有效目录必须只有 `browser`；DSH 0.2.1 在官方 `agent/created` 初始化中限制该 Agent 的继承工具为 `browser`，预设指定 native 工具呈现，Host 准入及每次 request assembly 检查实际 `wireSchemas`（含呈现方式），并核对请求事件目录。该限制随官方 Agent 作用域清理，不能以提示或执行拒绝代替。未配置 Key 时新版官方目录隐藏模型，配置后才与 BMW 支持名单取交集；冷设置不发送模型输入。Qoder 禁止继承 plugins/skills/settings，Codex 检查 Responses 及 Lite additional_tools。Qoder 对意外非 browser 权限请求返回拒绝但不主动中断当前轮，实际工具目录及后续事件仍执行原有严格准入。内置 BMW 指导遵循当前 Project 设置和可信新闻选题，不写死项目品牌、音色或某台机器的服务故障。目录成员不证明账号推理额度或实际请求可用。
-- WorkBuddy 使用固定官方 `@tencent-ai/codebuddy-code@2.169.0` / ACP v1，每次 prepare 先运行隔离目录探测：禁用所有 settings sources、使用 strict MCP 和 `NoDefer(mcp__bmw__browser)`；catalog-only BMW MCP 从认证 Bridge 读取当前完整 browser，禁止执行。固定探测文本仅发送至本机 HTTP sink，sink 只观察官方实际模型请求并始终返回 503，不转发或生成模型响应，不使用真实 Key。只有请求恰好含一个 `mcp__bmw__browser`，模型、说明和 schema 全部相符才准入；官方仅将顶层 additionalProperties 投影为 true，此已知投影严格匹配，Bridge 仍独立执行原闭合请求校验。无工具的辅助请求不构成证明；额外工具、身份／schema／版本不符、Project 或祖先 `.codebuddy/models.json` 覆盖均失败关闭。实际任务与探测共用固定启动策略；CLI／Node／MCP 文件、模型、区域、凭据密文及原生历史指纹变化拒绝输入，每轮重新检查，不缓存可变 profile 的目录证明。
+- WorkBuddy 使用固定官方 `@tencent-ai/codebuddy-code@2.176.0` / ACP v1，每次 prepare 先运行隔离目录探测：禁用所有 settings sources、使用 strict MCP 和 `NoDefer(mcp__bmw__browser)`；catalog-only BMW MCP 从认证 Bridge 读取当前完整 browser，禁止执行。固定探测文本仅发送至本机 HTTP sink，sink 只观察官方实际模型请求并始终返回 503，不转发或生成模型响应，不使用真实 Key。只有请求恰好含一个 `mcp__bmw__browser`，模型、说明和 schema 全部相符才准入；官方仅将顶层 additionalProperties 投影为 true，此已知投影严格匹配，Bridge 仍独立执行原闭合请求校验。无工具的辅助请求不构成证明；额外工具、身份／schema／版本不符、Project 或祖先 `.codebuddy/models.json` 覆盖均失败关闭。实际任务与探测共用固定启动策略；CLI／Node／MCP 文件、模型、区域、凭据密文及原生历史指纹变化拒绝输入，每轮重新检查，不缓存可变 profile 的目录证明。
 - WorkBuddy Key 由桌面 composition 注入系统加密服务，密文原子写入宿主独立 profile，禁止 basic_text 和明文回退；无法解密或旧明文文件保留，须显式退出后重配。设置刷新仅检查本地配置，不发送模型输入、不证明 Key 有效性或额度。通用设置新增 `configured` 表示 Key 已配置；此状态可选兼容的 unverified 模型并发送实际任务，其他驱动 ready 状态仍只允许 verified 模型。当前兼容名单为 `deepseek-v4.1-flash`、`glm-5.3`、`glm-5.3-flash`、`kimi-k2.8-preview`，任务准备再与官方 Session 模型目录取交集并核对当前模型。仅真实任务成功后，当前 Key／区域／模型组合显示已验证；新任务开始前撤销该证明，失败不会误报认证通过。与另外三驱动的 verified 名单语义分别保留，不自动产生付费探测。
 - WorkBuddy 实际运行使用一次性 Home，真实 Key 仅经受控环境传入；关闭并确认官方进程及其 MCP 进程组退出后，仅原子保存该原生 Session 的有界 JSONL 和 BMW Session／Project 归属映射，删除其他临时认证缓存。续聊和目录探测各复制同一个原生历史快照，不能替换恢复锚点；探测不修改原历史。准备、实际任务与清理均持有驱动排除，失败清理保留所有权，显式 drain 只重试清理。当前原生进程树清理验证覆盖 macOS；Windows 在输入前保持不可用。上下文随实际输入注入，事件串行写入；只有官方 prompt response 的 userMessageId 是输入回执，传输写入不冒充送达。模型失败的 ACP outcome 不按 end_turn 成功处理；未知投递不重放。WorkBuddy 的 deepseek-v4.1-flash 已通过用户授权 Key 的单次 browser 实际调用，Host 工具完成／官方回执／清理状态及刷新后的任务验证状态见 [脱敏记录](research/WORKBUDDY_BROWSER_DELIVERY.json)。图像／音频准入、原生桌面可见历史和其他模型真实服务仍未验收；单次实际调用、官方 CLI＋本机模型夹具与另外三引擎的真实模型证据分开记录。
 - Codex 有效工具目录验证通过后，在独立 CLI Profile 的宿主私有 `bmw-executable.json` 保留已验证执行文件路径。显式 `BMW_CODEX_EXECUTABLE` 优先，否则已保存路径优先于 PATH；不可用或非法记录失败拒绝并提示显式恢复，不退回其他版本。保存路径不代替每轮版本、文件内容及实际工具目录验证。成功工具回执保留 JSON 文本（最多 16384 字符）；大结果保存明确标记的有界预览，模型仍收到完整准入结果，历史不保存图像 base64。
 - 原生卡片预览与导出共用中文换行：自动末行仅剩一个汉字时，在不超宽、不破坏数字／英文单词或显式换行的条件下重新分配上一行。字幕底框和描边根据实际前景色明暗选择白色或黑色，保留用户字体和位置。模板内容契约发布 focus 必需区间、slow-push 与 zoom/focus 互斥、attach 清除旧聚焦及固定逐项展示不代表语音同步的条件。
-- Codex App Server 执行协议仍仅接受 `0.160.0`、`0.160.1`，错误明确显示实际及已支持版本。模型缓存作为数据单独接受上述版本及已核兼容的 `0.164.0` 格式，以支持用户显式选用由桌面端刷新过的原有 Codex 配置；接受缓存格式不授权运行 `0.164.0` CLI，未知缓存版本仍拒绝并显示实际版本。对 `gpt-6.1-sol`、`gpt-6-astra`、`gpt-6-sol`、`gpt-6-luna` 使用官方启动配置 `model_catalog_json`。输入准入先由明确选定且版本已验证的官方 CLI 执行 `debug models` 读取完整原始目录（有界输出、取消与超时，不创建模型 turn），避免并行旧 CLI 覆写共享 cache 或 `model/list` 不落盘导致缺型号；共享 cache 不作为该路径的权威。再从该官方目录生成内容寻址的只读策略副本，移除强制 code mode/多 Agent 元数据并清空额外实验工具，保留模型 ID、原生 Lite 传输、推理等级、上下文、图像能力和模型指导。不改写官方 cache/config、不复制凭据；官方运行时仍可正常刷新其缓存。副本必须是宿主私有的普通文件，模型缺失、路径碰撞/篡改和实际额外工具均失败拒绝。官方config/read仅提取继承MCP服务器名称；空表会合并旧配置，因此预检和实际start/resume都逐项传enabled:false，不复制服务器命令、URL或凭据，不修改用户配置。目录预检与实际启动使用同一个副本；实际模型请求恰含 BMW browser 的准入仍在输入释放前执行，用户模型选择不触发预检。GPT-5.5 保持原有路径，未知 GPT-6 型号不自动套用策略。BMW 不增加模型循环、代码执行工具或其他宿主权限。
+- Codex App Server执行协议仅接受当前锁定的 `0.164.0`，错误明确显示实际及已支持版本。模型缓存作为数据单独接受已核兼容的 `0.160.0`、`0.160.1` 和 `0.164.0` 格式，以支持用户显式选用由桌面端刷新过的原有 Codex 配置；读取旧缓存格式不授权运行旧CLI，未知缓存版本仍拒绝并显示实际版本。对 `gpt-6.1-sol`、`gpt-6-astra`、`gpt-6-sol`、`gpt-6-luna` 使用官方启动配置 `model_catalog_json`。输入准入先由明确选定且版本已验证的官方 CLI 执行 `debug models` 读取完整原始目录（有界输出、取消与超时，不创建模型 turn），避免并行旧 CLI 覆写共享 cache 或 `model/list` 不落盘导致缺型号；共享 cache 不作为该路径的权威。再从该官方目录生成内容寻址的只读策略副本，移除强制 code mode/多 Agent 元数据并清空额外实验工具、将apply_patch_tool_type置空，阻止0.164.0默认的文件编辑工具，保留模型 ID、原生 Lite 传输、推理等级、上下文、图像能力和模型指导。不改写官方 cache/config、不复制凭据；官方运行时仍可正常刷新其缓存。副本必须是宿主私有的普通文件，模型缺失、路径碰撞/篡改和实际额外工具均失败拒绝。官方config/read仅提取继承MCP服务器名称；空表会合并旧配置，因此预检和实际start/resume都逐项传enabled:false，不复制服务器命令、URL或凭据，不修改用户配置。目录预检与实际启动使用同一个副本；实际模型请求恰含 BMW browser 的准入仍在输入释放前执行，用户模型选择不触发预检。GPT-5.5同样使用已验证的启动目录投影，关闭新版默认apply_patch；实际预检覆盖全部五个维护模型，未知 GPT-6 型号不自动套用策略。BMW 不增加模型循环、代码执行工具或其他宿主权限。
 - Host 私有租约绑定 canonical BMW Session；provider 注册只能解析已明确附着的有效 Host 租约。MCP 执行 scope 通过私有环境传递，显式 catalog-only 模式只提供目录且禁止工具执行，模型传入 `__bmwSession` 始终拒绝。撤销等待真实 kernel/worker 清理。完成事件在实际清理前不结束回执或释放 FIFO；原生清理失败同样隔离资源，恢复仅重试清理。
 - 自有 Assistant UI 按发生顺序穿插显示消息和最近 100 条事件中的工具进度；流式消息保留首次出现的位置，同毫秒按 Host 事件顺序显示。工具显示已完成、失败、执行中或结果未确认，停止与断连不伪装成功；最终回复后显示本轮完成／停止／失败状态，历史重载保持相同顺序。界面提供运行状态、停止和资源恢复，支持 Browser/Studio 模式与上下文。基础 Markdown 用 DOM text nodes 渲染，模型 HTML 不执行。fork 未验证时在会话中心禁用。新的退出路径等待 Assistant 原生进程、Bridge 和 Feature 实际清理。
 - 三个真实引擎已分别通过隔离 BMW 的页面、截图读图、canonical Studio owner 和同一 provider 续聊。DSH/Qoder/Codex 在每轮完成后关闭原生运行进程，以原生存储恢复后续输入；这不证明原生桌面侧边栏同步。测试不用生产桌面 Profile；正常官方 CLI 登录配置与 desktop 私有凭据分离。
@@ -1523,12 +1523,13 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Codex public CLI discovery resolves executable files and an explicit missing installation never falls back`
 - `Codex retains only an admitted executable across restarts, with explicit recovery and private bounded pins`
 - `A missing Codex installation keeps BMW settings available and rejects input before opening a connection`
+- `BMW uses its lockfile Codex before older pins and PATH without bypassing explicit recovery`
 
 #### `packages/harness-codex/test/codex-policy.test.ts`
 
 - `Codex protocol admits verified patch versions and reports detected and supported versions`
 - `Codex effective catalog reads Responses and Responses Lite additional_tools, including hidden extra namespaces`
-- `Codex accepts a newer shared official model cache without admitting its CLI protocol or extra tools`
+- `Codex admits the pinned official runtime and preserves shared-cache projection without extra tools`
 - `Codex reads the selected official CLI catalog without trusting or overwriting a foreign shared cache`
 - `Codex browser thread excludes environments, shell, MCP helpers and question tools before user input`
 - `Codex disables inherited MCP entries without carrying their commands or credentials into thread overrides`
@@ -1586,6 +1587,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `BMW Session Center lists only active sessions in its Project and searches content`
 - `BMW creates new DSH sessions with the browser-only preset`
 - `DSH prompt submission preserves exact input and returns every Assistant output in order`
+- `DSH resolves the lockfile-owned official installation independently of PATH`
 
 #### `packages/harness-dsh/test/dsh-settings.test.ts`
 
@@ -2097,6 +2099,11 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Explicit migration preserves native-only selection, infers schedule driver from BMW ownership and detaches credential links`
 - `Migration refuses to overwrite an existing different harness Workspace mapping`
 
+#### `scripts/harness-official-runtime.test.ts`
+
+- `Pinned official Codex verifies only browser against a local rejecting sink before any real input`
+- `Pinned official Qoder SDK/Worker refuses a missing cold login before releasing input and drains cleanup`
+
 #### `scripts/test/module-boundary.test.ts`
 
 - `Every authored module uses declared public interfaces, acyclic runtime dependencies and classified guarantors`
@@ -2237,3 +2244,9 @@ Studio render（包括缓存复用）直接返回原生计算的export.sha256，
 ### 独立导出审片批量声明
 
 `video.studio / record-export-review` 支持互斥的单项 `exportReview` 和整批 `exportReviewBatch`。批结构固定当前exportFingerprint、全部当前sceneId的独立status/notes以及独立film status/notes；scene集合必须完整且唯一，不含actor/runId权限字段。沿用revision、当前导出、实际关键帧哈希覆盖、视觉支撑、逐镜及整片通过门禁。所有校验成功后单次原子journal写入；失败不产生部分声明。每镜sequence独立增长，film随后，Host绑定同一审片runId。批回执只回确认与逐镜/整片状态，不重发完整视觉政策和旧报告；确认后无需再读status。单项与用户GUI语义保持。内置审片提示v2.2/任务策略v5要求完成独立判断后一次提交，保留旧策略读取，不启动或复用旧passed完成新任务。
+
+### Harness安装与升级
+
+四个官方运行时由workspace依赖和lockfile固定：Codex CLI0.164.0、Qoder CN SDK1.0.56/Worker1.1.78、DSH0.2.1-rc.2（发布源latest未变）、WorkBuddy2.176.0。Codex默认先解析BMW安装的对应平台官方原生可执行文件，再回退公共安装发现；显式覆盖仍须版本/目录门禁，旧选择文件格式/权限/链接校验保持，缺失的旧二进制可由已装的锁定版本接替。只有有效目录准入后才记录新路径。DSH经Host Node运行锁定官方CLI，设置ELECTRON_RUN_AS_NODE，插件仍从实际运行DSH的同一依赖树解析；不依赖PATH里的其他版本。升级不更换BMW Session或不可变驱动resume anchor，不迁移或删除凭据、项目和媒体。正式输入前继续验证有效目录恰为BMW browser；验证失败的新版运行时保持不可用，不放宽工具边界。
+
+桌面Project弹出页验证遵守当前后台延迟加载契约：先核Project/source/opener归属及不抢占前台，显式激活后检查同一Session、OS sandbox及无Node/特权接口；不再等待后台页自动导航。

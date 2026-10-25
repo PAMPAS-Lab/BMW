@@ -237,8 +237,9 @@ export class BrowserKernel {
     let previous='',quietSince=0;const ready=async()=>{const value=await readRendererPhase<CollectionPageReady>(tab.view.webContents,'collection.pages','navigation-ready',async()=>assertCollectionPageReady(await tab.view.webContents.mainFrame.executeJavaScript(collectionPageReadyExpression(scope),true)),signal,1500);if(!sameCollectionNavigation(url,value.url)||(!value.ready&&!value.restricted)){previous='';return false}if(value.restricted||[401,403,429].includes(this.collectionHTTPStatus)){this.collectionRestricted=true;return true}if(value.text!==previous){previous=value.text;quietSince=Date.now();return false}return Date.now()-quietSince>=250}
     const videoAddress=new URL(url),youtubeTarget=['youtube.com','www.youtube.com','m.youtube.com'].includes(videoAddress.hostname)?videoAddress.searchParams.get('v'):null
     const playerDeadline=Date.now()+45000
-    let lastPlayerState='waiting'
+    let lastPlayerState='waiting',playerReadStarted=false
     const videoReady=youtubeTarget?async()=>{
+      playerReadStarted=true
       lastPlayerState=await readRendererPhase<ReturnType<typeof advanceYoutubePlayer>>(tab.view.webContents,'navigate','youtube-player-ready',async()=>{const value=await tab.view.webContents.mainFrame.executeJavaScript(`(${advanceYoutubePlayer.toString()})(${JSON.stringify(youtubeTarget)})`,true);if(value!=='ready'&&value!=='advertisement'&&value!=='waiting'&&value!=='different-target')throw new Error('Invalid native player state.');return value},signal,1000)
       return lastPlayerState==='ready'
     }:undefined
@@ -254,7 +255,7 @@ export class BrowserKernel {
       }
     }catch(error){if(tab.view.webContents.isDestroyed())this.dropNavigationTab(tab);else if(error instanceof Error&&'code'in error&&error.code==='BMW_BROWSER_NAVIGATION_CLEANUP_FAILED')this.navigationQuarantine.add(tab.id);throw error}
     finally{
-      if(videoReady&&!tab.view.webContents.isDestroyed()){
+      if(playerReadStarted&&!tab.view.webContents.isDestroyed()){
         try{await readRendererPhase(tab.view.webContents,'navigate','pause-youtube-player',()=>tab.view.webContents.mainFrame.executeJavaScript(`(()=>{const p=document.getElementById('movie_player'),v=p?.querySelector('video');if(v){v.pause();return v.paused===true}return true})()`,true).then(paused=>{if(paused!==true)throw new Error('Player did not pause.')}),undefined,3000)}
         catch(error){this.navigationQuarantine.add(tab.id);throw new Error('MEDIA_CAPTURE_CLEANUP_FAILED: YouTube readiness playback could not be paused.',{cause:error})}
       }
@@ -388,7 +389,16 @@ export class BrowserKernel {
   async showTab(tabId,signal?:AbortSignal) {
     const tab = this.requireTab(tabId)
     if(!this.restoringTabState)await this.ensureTabLoaded(tab,signal)
-    if(this.detached){this.activeTabId=tab.id;if(!this.window.contentView.children.includes(tab.view))this.window.contentView.addChildView(tab.view);tab.view.setBounds({x:0,y:0,width:this.browserBounds.width,height:this.browserBounds.height});tab.view.setVisible(true);await this.applyPlayback(tab,false,true);return this.serializeTab(tab)}
+    if(this.detached){
+      this.activeTabId=tab.id
+      // Presentation is permitted only on the disposable offscreen surface, never the user's window.
+      const offscreen=this.window.webContents.isOffscreen()
+      if(offscreen&&!this.window.contentView.children.includes(tab.view))this.window.contentView.addChildView(tab.view)
+      tab.view.setBounds({x:0,y:0,width:this.browserBounds.width,height:this.browserBounds.height})
+      tab.view.setVisible(offscreen)
+      await this.applyPlayback(tab,false,true)
+      return this.serializeTab(tab)
+    }
     const previous = this.tabs.get(this.activeTabId)
     if (previous && previous.id !== tab.id){this.activeTabId=tab.id;await this.applyPlayback(previous,false);this.window.contentView.removeChildView(previous.view)}
     if (!this.window.contentView.children.includes(tab.view)) this.window.contentView.addChildView(tab.view)

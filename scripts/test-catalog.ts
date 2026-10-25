@@ -96,6 +96,7 @@ export const tests: readonly TestDefinition[] = [
   node('dsh.backend',p+'harness-dsh/test/dsh-backend.test.ts','contract','harness-dsh'),
   node('qoder.events',p+'harness-qoder/test/qoder-events.test.ts','contract','harness-qoder'),
   node('qoder.backend',p+'harness-qoder/test/qoder-backend.test.ts','contract','harness-qoder'),
+  {id:'harness.official-runtime',file:'scripts/harness-official-runtime.test.ts',layer:'integration',modules:['harness-codex','harness-qoder','browser-capability','application'],runner:'node-test'},
   {id:'workbuddy.runtime',file:'scripts/workbuddy-runtime.test.ts',layer:'integration',modules:['harness-workbuddy','browser-capability','application'],runner:'node-test'},
   node('workbuddy.catalog',p+'harness-workbuddy/test/workbuddy-catalog.test.ts','contract','harness-workbuddy'),
   node('workbuddy.settings',p+'harness-workbuddy/test/workbuddy-settings.test.ts','contract','harness-workbuddy'),

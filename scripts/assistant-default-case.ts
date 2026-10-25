@@ -61,6 +61,7 @@ async function run():Promise<void>{
     const draft=agentRecord(await studio({operation:'read',draftId:saved.draftId}))
     assert.equal(draft.ownerSessionId,saved.dshSession)
     await waitFor(async()=>{const tabs=agentRecord(await browser({action:'tabs.list'}));return Array.isArray(tabs.tabs)&&tabs.tabs.some(raw=>agentRecord(raw).url===saved.pageUrl)?true:null},'restored Project page')
+    const restored=agentRecord(await browser({action:'tabs.list'}));const restoredTab=(restored.tabs as unknown[]).map(value=>agentRecord(value)).find(tab=>tab.url===saved.pageUrl);assert.ok(restoredTab);await browser({action:'tabs.show',tabId:restoredTab.id})
     await waitFor(async()=>{const page=webContents.getAllWebContents().find(row=>row.getURL()===saved.pageUrl&&!row.isLoading());return page&&await page.executeJavaScript('document.querySelector("h1")?.textContent')==='Shared page'?true:null},'restored live page content')
     console.log('PASS default restart: same BMW identities, Project page and immutable Studio owner')
   }else{

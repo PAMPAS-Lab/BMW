@@ -83,5 +83,5 @@ test('WorkBuddy official runtime gates real browser schema, executes browser and
   const scan = (directory: string): void => { for (const entry of fs.readdirSync(directory, { withFileTypes: true })) { const target = path.join(directory, entry.name); if (entry.isDirectory()) scan(target); else assert.equal(fs.readFileSync(target).includes('bmw-fake-local-service-key'), false, 'Native history or credential cache must not persist the API Key') } }
   scan(configDirectory)
   assert.deepEqual(fs.readdirSync(configDirectory).sort(), ['home', 'sessions', 'task-verification.json', 'workbuddy-credentials.enc'])
-  console.log(JSON.stringify({ officialCli: '2.169.0', gatedModels: 3, browserExecutions: executions, nativeResume: true, realKeyUsed: false, paidModelCalls: 0 }))
+  console.log(JSON.stringify({ officialCli: '2.176.0', gatedModels: 3, browserExecutions: executions, nativeResume: true, realKeyUsed: false, paidModelCalls: 0 }))
 })

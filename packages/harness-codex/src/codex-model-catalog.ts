@@ -4,13 +4,13 @@ import crypto from 'node:crypto'
 import {execFile} from 'node:child_process'
 import {agentRecord} from '@bmw-agent/agent-contract'
 
-export const codexVerifiedProtocolVersions:readonly string[]=Object.freeze(['0.160.0','0.160.1'])
+export const codexVerifiedProtocolVersions:readonly string[]=Object.freeze(['0.164.0'])
 export function codexSupportsProtocolVersion(value:unknown):value is string{return typeof value==='string'&&codexVerifiedProtocolVersions.includes(value)}
 // A shared official profile may have been refreshed by a newer desktop client.
 // This is a data-format admission list, not permission to run that CLI version.
-const verifiedCacheVersions:readonly string[]=Object.freeze([...codexVerifiedProtocolVersions,'0.164.0'])
+const verifiedCacheVersions:readonly string[]=Object.freeze(['0.160.0','0.160.1',...codexVerifiedProtocolVersions])
 
-const browserModels=new Set(['gpt-6.1-sol','gpt-6-astra','gpt-6-sol','gpt-6-luna'])
+const browserModels=new Set(['gpt-6.1-sol','gpt-6-astra','gpt-6-sol','gpt-6-luna','gpt-5.5'])
 export function codexNeedsBrowserCatalog(model:string):boolean{return browserModels.has(model)}
 
 /** Official startup catalog projection; model IDs, native transport and model capabilities stay intact. */
@@ -24,10 +24,11 @@ export function codexBrowserModelCatalog(raw:unknown,model:string):{models:Recor
     seen.add(row.slug)
     const next=structuredClone(row)
     if(browserModels.has(row.slug)){
-      // Forced model tool modes override ordinary feature flags in the verified 0.160.0/0.160.1 runtimes.
+      // Forced model tool modes override ordinary feature flags in the verified official runtime.
       // Omission restores the runtime defaults, which obey BMW's disabled flags.
       delete next.tool_mode;delete next.multi_agent_version;delete next.multi_agent_reasoning_effort
       next.experimental_supported_tools=[]
+      next.apply_patch_tool_type=null
     }
     return next
   })

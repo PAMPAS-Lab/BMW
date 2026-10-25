@@ -1,30 +1,37 @@
 {
   "format": "bmw.current-verification",
   "version": 1,
-  "createdAt": "2026-10-23T06:06:26.125546+00:00",
-  "verificationMode": "full-non-external-baseline-plus-minimal-fix-rerun",
-  "sourceBaseRevision": "6c7ba28",
-  "report": "docs/verification/NEWS_PRODUCTION_RESET.json",
-  "runtimeSourceManifestSha256": "7ae6dcf37c758bded348d218bf077ca95311e5bd23da12da420851a5c0496d52",
+  "createdAt": "2026-10-25T13:38:37.783002+00:00",
+  "verificationMode": "full-non-external-baseline-plus-fixture-only-targeted-recheck",
+  "report": "docs/verification/HARNESS_UPGRADE.json",
+  "sourceBaseRevision": "a32eced74d7d02e063423f6fc3e61a1b245cd9a4",
+  "runtimeVersions": {
+    "@openai/codex": "0.164.0",
+    "@deepseek-ai/dsh": "0.2.1-rc.2",
+    "@qodercn-ai/qoderclicn": "1.1.78",
+    "@qodercn-ai/qodercn-agent-sdk": "1.0.56",
+    "@tencent-ai/codebuddy-code": "2.176.0"
+  },
+  "sourceManifestSha256": "57a231707bbb2a62c02debc2b2bd6621e2fbb0fe078db0a082b4ddc86a327468",
   "build": "passed",
   "check": "passed",
   "fullBaselineCounts": {
-    "not-run": 14,
-    "passed": 208,
-    "failed": 1
+    "passed": 215,
+    "failed": 3,
+    "not-run": 14
   },
-  "historicalFailure": "video.news; corrected and original failure passed in final213 affected video tests",
-  "finalAffectedVideoTests": {
-    "passed": 213,
-    "failed": 0,
-    "includesOriginalFailure": true
+  "historicalFailures": [
+    "media.capture",
+    "desktop.projects",
+    "desktop-suite"
+  ],
+  "finalTargetedRechecks": {
+    "media.capture": "passed",
+    "desktop-suite": "passed; all four groups and Project restart"
   },
-  "finalNativeRechecks": {
-    "newsStudio": "passed",
-    "nativeShotBatch": "passed"
-  },
+  "unresolvedFailures": [],
   "finalFullSuiteRerun": false,
   "externalOptInNotRun": 14,
-  "productionCoverage": "No paid-model, external-service or production-profile coverage from fixtures; no new production-film acceptance",
-  "previousCurrentReport": "Preserved in Git history; earlier full-run evidence files retained"
+  "productionCoverage": "No paid-model, external-service or production-profile coverage from isolated fixtures; no new film acceptance",
+  "previousCurrentReport": "Preserved in Git history; prior evidence retained"
 }

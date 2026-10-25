@@ -4,7 +4,7 @@ import type { AgentDriverEvent, AgentRunResult } from '@bmw-agent/agent-contract
 /** Validate the effective SDK init, rather than inferring safety from options. */
 export function qoderBrowserCatalog(raw: unknown): { sessionId: string; runtimeVersion: string } {
   const value = agentRecord(raw, 'Qoder initialization')
-  if (value.type !== 'system' || value.subtype !== 'init' || value.qodercli_version !== '1.1.64') throw new Error('Unsupported Qoder CN runtime; BMW requires the verified SDK 1.0.50 / runtime 1.1.64 pair')
+  if (value.type !== 'system' || value.subtype !== 'init' || value.qodercli_version !== '1.1.78') throw new Error('Unsupported Qoder CN runtime; BMW requires the verified SDK 1.0.56 / runtime 1.1.78 pair')
   if (!Array.isArray(value.tools) || value.tools.length !== 1 || value.tools[0] !== 'browser') throw new Error('Qoder effective model tool catalog must contain exactly BMW browser')
   if (!Array.isArray(value.mcp_servers) || value.mcp_servers.length !== 1) throw new Error('Qoder must connect only the BMW MCP server')
   const server = agentRecord(value.mcp_servers[0])
@@ -18,7 +18,7 @@ export class QoderEvents {
   private streamOrdinal = 0
   private readonly completed = new Set<string>()
   private readonly tools = new Set<string>()
-  // SDK 1.0.50 may split a single MCP result into text and image User messages.
+  // SDK 1.0.56 may split a single MCP result into text and image User messages.
   private readonly returnedTools = new Map<string, { text: string; images: number }>()
   private accepted = false
   constructor(private readonly runId: string, private readonly messageId: string) {}

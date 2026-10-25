@@ -8,12 +8,12 @@ import { codexModelTools, codexThreadParameters, codexProtocolVersion, codexDisa
 import type {CodexRpc} from '../src/codex-rpc.js'
 import {codexBrowserModelCatalog,materializeCodexBrowserCatalog,refreshCodexBrowserCatalog,CodexCatalogRefreshCache} from '../src/codex-model-catalog.js'
 test('Codex protocol admits verified patch versions and reports detected and supported versions',()=>{
-  for(const version of ['0.160.0','0.160.1']){
+  for(const version of ['0.164.0']){
     assert.equal(codexProtocolVersion('codex-cli '+version),version)
     assert.doesNotThrow(()=>codexBrowserModelCatalog({...officialCatalog(),client_version:version},'gpt-6.1-sol'))
   }
-  for(const version of ['0.160.2','0.161.0','0.159.0','0.160.1-dev']){
-    assert.throws(()=>codexProtocolVersion('codex-cli '+version),error=>error instanceof Error&&error.message.includes(version)&&error.message.includes('0.160.0、0.160.1'))
+  for(const version of ['0.164.1','0.161.0','0.159.0','0.160.1-dev']){
+    assert.throws(()=>codexProtocolVersion('codex-cli '+version),error=>error instanceof Error&&error.message.includes(version)&&error.message.includes('0.164.0'))
     assert.throws(()=>codexBrowserModelCatalog({...officialCatalog(),client_version:version},'gpt-6.1-sol'),/catalog/)
   }
   assert.throws(()=>codexProtocolVersion('other-cli 0.160.1'),/other-cli/)
@@ -25,7 +25,7 @@ test('Codex effective catalog reads Responses and Responses Lite additional_tool
   assert.deepEqual(codexModelTools({ ...lite, tools: [{ type: 'function', name: 'browser' }] }).map(row => row.name), ['browser', 'exec', 'spawn_agent'])
   assert.throws(() => codexModelTools({ input: [{ type: 'additional_tools', tools: 'browser' }] }), /Invalid/)
 })
-test('Codex accepts a newer shared official model cache without admitting its CLI protocol or extra tools',()=>{
+test('Codex admits the pinned official runtime and preserves shared-cache projection without extra tools',()=>{
   const source={...officialCatalog(),client_version:'0.164.0'},before=structuredClone(source)
   const projected=codexBrowserModelCatalog(source,'gpt-6.1-sol')
   assert.deepEqual(source,before)
@@ -34,7 +34,7 @@ test('Codex accepts a newer shared official model cache without admitting its CL
   assert.equal(projected.models[0].tool_mode,undefined)
   assert.equal(projected.models[0].multi_agent_version,undefined)
   assert.deepEqual(projected.models[0].experimental_supported_tools,[])
-  assert.throws(()=>codexProtocolVersion('codex-cli 0.164.0'),/0.164.0/)
+  assert.equal(codexProtocolVersion('codex-cli 0.164.0'),'0.164.0');assert.throws(()=>codexProtocolVersion('codex-cli 0.160.1'),/0.160.1/)
   assert.throws(()=>codexBrowserModelCatalog({...source,client_version:'0.164.1'},'gpt-6.1-sol'),/0.164.1/)
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-codex-shared-cache-'))
   try{
@@ -52,7 +52,7 @@ test('Codex reads the selected official CLI catalog without trusting or overwrit
     fs.writeFileSync(cache,stale)
     const executable=path.join(root,'official-fixture.cts'),native=officialCatalog()
     fs.writeFileSync(executable,'#!'+process.execPath+'\nif(JSON.stringify(process.argv.slice(2))!==\'['+JSON.stringify('debug')+','+JSON.stringify('models')+']\'||process.env.CODEX_HOME!==process.cwd())process.exit(2);process.stdout.write('+JSON.stringify(JSON.stringify({models:native.models}))+');\n',{mode:0o700})
-    const file=await refreshCodexBrowserCatalog(executable,root,'gpt-6.1-sol','0.160.1',new AbortController().signal)
+    const file=await refreshCodexBrowserCatalog(executable,root,'gpt-6.1-sol','0.164.0',new AbortController().signal)
     assert.ok(file)
     const projected=JSON.parse(fs.readFileSync(file,'utf8')) as {models:Record<string,unknown>[]}
     assert.equal(projected.models[0].slug,'gpt-6.1-sol');assert.equal(projected.models[0].use_responses_lite,true)
@@ -60,7 +60,7 @@ test('Codex reads the selected official CLI catalog without trusting or overwrit
     assert.equal(fs.readFileSync(cache,'utf8'),stale)
     await assert.rejects(refreshCodexBrowserCatalog(executable,root,'gpt-6.1-sol','0.153.4',new AbortController().signal),/Unverified/)
     fs.writeFileSync(executable,'#!'+process.execPath+'\nprocess.stdout.write(\'{"models":[]}\');\n',{mode:0o700})
-    await assert.rejects(refreshCodexBrowserCatalog(executable,root,'gpt-6.1-sol','0.160.1',new AbortController().signal),/catalog/)
+    await assert.rejects(refreshCodexBrowserCatalog(executable,root,'gpt-6.1-sol','0.164.0',new AbortController().signal),/catalog/)
   }finally{fs.rmSync(root,{recursive:true,force:true})}
 })
 test('Codex browser thread excludes environments, shell, MCP helpers and question tools before user input', () => {
@@ -116,12 +116,12 @@ test('Codex raw catalog cache avoids repeated refresh but rechecks fingerprints,
 test('GPT-6 startup catalog changes only tool metadata and preserves native model capabilities and transport',()=>{
   const source=officialCatalog(),before=structuredClone(source),projected=codexBrowserModelCatalog(source,'gpt-6.1-sol')
   assert.deepEqual(source,before);assert.deepEqual(Object.keys(projected),['models'])
-  for(let i=0;i<4;i++){
-    const expected:Record<string,unknown>={...source.models[i],experimental_supported_tools:[]}
+  for(let i=0;i<5;i++){
+    const expected:Record<string,unknown>={...source.models[i],experimental_supported_tools:[],apply_patch_tool_type:null}
     delete expected.tool_mode;delete expected.multi_agent_version;delete expected.multi_agent_reasoning_effort
     assert.deepEqual(projected.models[i],expected)
   }
-  assert.deepEqual(projected.models.slice(4),source.models.slice(4))
+  assert.deepEqual(projected.models.slice(5),source.models.slice(5))
   for(const value of [{...source,client_version:'future'},{...source,models:[]},{...source,models:[...source.models,source.models[0]]},{...source,models:[{}]}])assert.throws(()=>codexBrowserModelCatalog(value,'gpt-6.1-sol'),/catalog/)
   assert.throws(()=>codexBrowserModelCatalog(source,'absent'),/absent/)
 })
@@ -131,7 +131,7 @@ test('GPT-6 host catalog is immutable, content addressed and private without mod
   const file=materializeCodexBrowserCatalog(root,'gpt-6.1-sol');assert.ok(file)
   assert.equal(materializeCodexBrowserCatalog(root,'gpt-6-luna'),file);assert.equal(fs.readFileSync(cache,'utf8'),source)
   assert.equal(fs.statSync(file).mode&0o777,0o600);assert.equal(fs.statSync(path.dirname(file)).mode&0o777,0o700)
-  assert.equal(materializeCodexBrowserCatalog(root,'gpt-5.5'),undefined)
+  assert.equal(materializeCodexBrowserCatalog(root,'gpt-5.5'),file)
   fs.writeFileSync(file,'tampered');assert.throws(()=>materializeCodexBrowserCatalog(root,'gpt-6.1-sol'),/changed after publication/)
   fs.unlinkSync(file);fs.symlinkSync(cache,file);assert.throws(()=>materializeCodexBrowserCatalog(root,'gpt-6.1-sol'),/changed after publication/)
   fs.unlinkSync(cache);fs.symlinkSync(file,cache);assert.throws(()=>materializeCodexBrowserCatalog(root,'gpt-6.1-sol'),/official model catalog/)

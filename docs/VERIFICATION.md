@@ -1,8 +1,18 @@
 # BMW 验证说明
 
-核对日期：2026-10-22。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
+核对日期：2026-10-25。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
 
-## 当前合并源码验证（2026-10-22）
+## 当前合并与 Harness 升级验证（2026-10-25）
+
+现存分支的提交均包含在本次集成历史中，其他工作树无未提交改动。锁文件固定官方 Codex CLI0.164.0、Qoder CN CLI/Worker1.1.78及SDK1.0.56、WorkBuddy CLI2.176.0；DSH0.2.1-rc.2已是查询时的官方latest。Codex/DSH改用BMW自己的官方npm运行时，显式Codex覆盖仍受版本与实际目录门禁约束；清理BMW旧Codex0.160.1运行时和被替换的已安装依赖，不删除用户Project、素材、凭据、会话锚点或其他应用的全局运行时。
+
+最终build/check通过。完整非外部基线为 **215 passed / 3 failed / 14 opt-in not-run**：三条失败对应两处测试夹具问题——媒体点击使用空receiver，桌面弹出页来源断言写成agent；desktop-suite汇总随Project组失败。全量结束后只改这两个测试文件，重新build/check并重跑完整媒体采集及完整桌面套件（四组及Project重启）全部通过，**无未解决失败**。未再次重跑整轮，不能将不同运行混称为一次218全通过。最终实现相对完整基线未变；核对全部构建输入及生成输出SHA，基线、变更范围、复验和日志指纹分别保存在[升级报告](verification/HARNESS_UPGRADE.json)与[CURRENT](verification/CURRENT.json)。
+
+前一轮中断报告保留200通过/6失败；实际修复了本地TTS隔离页面漏放行motion-contract依赖、后台采集误挂前台窗口、未进入播放器就绪阶段却触发清理，以及延迟加载/有限播放器测试夹具。最终完整基线已覆盖这些修复。独立审片与真实动态素材门禁未放宽，类型冻结例外未增加。
+
+官方运行时验证：Codex五个维护模型通过实际请求目录捕获，只有browser，本地sink始终503；WorkBuddy使用本地HTTP夹具验证三模型目录、两次browser执行与原生续聊；DSH验证实际固定运行时与冷控制；Qoder验证新SDK/Worker无登录拒绝、输入不释放和清理，并通过适配器契约，未覆盖登录后的真实init目录。全部原生测试使用一次性Profile/Home/Workspace与mock keychain，不代表付费模型、外部服务或生产Profile覆盖，也不是全新npm ci验收；既有影片与人工听审的接受状态分别保留。
+
+## 历史合并源码验证（2026-10-22）
 
 本轮已将所有现存本地／远端分支头纳入 main；WorkBuddy 冲突保留实际 browser 目录门禁、系统加密、事件串行化和清理隔离，旧设计归档。社媒研究保留已补充的日期与能力边界。运行中的 BMW 使用原检出目录，验证使用独立 Git 索引、与提交 `04bf356` 文件树完全一致的源码副本；只复用已安装的第三方依赖，BMW workspace 链接指向副本，复制固定本地 TTS／Whisper 资源，不代表全新 npm ci 验收。
 

@@ -8,6 +8,7 @@
     "./migration": "./migration/index.js"
   },
   "dependencies": {
-    "@bmw-agent/agent-contract": "*"
+    "@bmw-agent/agent-contract": "*",
+    "@deepseek-ai/dsh": "0.2.1-rc.2"
   }
 }

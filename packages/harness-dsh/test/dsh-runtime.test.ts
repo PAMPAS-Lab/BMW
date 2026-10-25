@@ -2,6 +2,9 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { DshRuntime } from '../src/dsh-runtime.js'
+import {bundledDshCli} from '../src/dsh-installation.js'
+import fs from 'node:fs'
+import {createRequire} from 'node:module'
 
 test('DSH calls use the harness RPC envelope and validate the response', async (t) => {
   const originalFetch = globalThis.fetch
@@ -145,4 +148,9 @@ test('DSH prompt submission preserves exact input and returns every Assistant ou
   assert.deepEqual(promptPayload.content, [{ type: 'text', text: 'hello' }])
   assert.deepEqual(replies, ['First output', 'Second output'])
   assert.equal(await runtime.waitForPromptReply('session-1', 'rpc-fixture', { timeoutMs: 100 }), 'First output\n\nSecond output')
+})
+
+test('DSH resolves the lockfile-owned official installation independently of PATH',()=>{
+ const cli=bundledDshCli(),requireDsh=createRequire(cli),manifest=requireDsh('@deepseek-ai/dsh/package.json')
+ assert.equal(manifest.version,'0.2.1-rc.2');assert.ok(fs.statSync(cli).isFile());assert.ok(cli.includes('node_modules'))
 })

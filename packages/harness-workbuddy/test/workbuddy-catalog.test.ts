@@ -12,7 +12,7 @@ test('WorkBuddy effective catalog gate rejects extra tools, wrong identity/schem
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
   fs.mkdirSync(path.join(root, 'bin')); fs.mkdirSync(path.join(root, 'dist')); fs.mkdirSync(path.join(root, 'project'))
   fs.copyFileSync(path.join(import.meta.dirname, 'workbuddy-fixture.js'), path.join(root, 'bin', 'codebuddy'))
-  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: '@tencent-ai/codebuddy-code', version: '2.169.0', type: 'module' }))
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ name: '@tencent-ai/codebuddy-code', version: '2.176.0', type: 'module' }))
   fs.writeFileSync(path.join(root, 'dist', 'codebuddy-headless.js'), '')
   for (const name of ['product.json', 'product.internal.json']) fs.writeFileSync(path.join(root, name), '{}')
   const browser = { name: 'browser' as const, description: 'catalog fixture', inputSchema: { type: 'object', additionalProperties: false, properties: { action: { type: 'string' } } } }

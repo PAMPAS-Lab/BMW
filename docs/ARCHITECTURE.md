@@ -232,6 +232,7 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | dsh.backend | contract | harness-dsh | packages/harness-dsh/test/dsh-backend.test.ts | 默认 |
 | qoder.events | contract | harness-qoder | packages/harness-qoder/test/qoder-events.test.ts | 默认 |
 | qoder.backend | contract | harness-qoder | packages/harness-qoder/test/qoder-backend.test.ts | 默认 |
+| harness.official-runtime | integration | harness-codex, harness-qoder, browser-capability, application | scripts/harness-official-runtime.test.ts | 默认 |
 | workbuddy.runtime | integration | harness-workbuddy, browser-capability, application | scripts/workbuddy-runtime.test.ts | 默认 |
 | workbuddy.catalog | contract | harness-workbuddy | packages/harness-workbuddy/test/workbuddy-catalog.test.ts | 默认 |
 | workbuddy.settings | contract | harness-workbuddy | packages/harness-workbuddy/test/workbuddy-settings.test.ts | 默认 |

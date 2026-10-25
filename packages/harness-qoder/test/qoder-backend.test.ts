@@ -16,7 +16,7 @@ test('Qoder releases UUID-stamped user input only after the effective catalog an
     assert.equal(input.options.strictMcpConfig, true)
     const server=input.options.mcpServers?.bmw;assert.ok(server&&'timeout' in server);assert.equal(server.timeout,122*60*1000)
     return { interrupt: async () => {}, close: async () => { closed++ }, async *[Symbol.asyncIterator]() {
-      yield { type: 'system', subtype: 'init', session_id: 'provider', qodercli_version: '1.1.64', tools: ['browser'], mcp_servers: [{ name: 'bmw', status: 'connected' }], skills: [], plugins: [] }
+      yield { type: 'system', subtype: 'init', session_id: 'provider', qodercli_version: '1.1.78', tools: ['browser'], mcp_servers: [{ name: 'bmw', status: 'connected' }], skills: [], plugins: [] }
       const message = await input.prompt[Symbol.asyncIterator]().next()
       inputs++; assert.equal(message.value!.uuid, 'submission'); assert.equal(message.value!.message.content, 'hello')
       yield { type: 'assistant', session_id: 'provider', uuid: 'reply', message: { id: 'shared', content: [{ type: 'text', text: 'answer' }] } }
@@ -38,7 +38,7 @@ test('Qoder preflight failure closes its worker without consuming input or falli
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
   let inputs = 0, closed = 0
   const backend = new QoderBackend({ configDirectory: root, connection: async () => ({ bridgeUrl: 'http://127.0.0.1:1', bridgeToken: 'fixture', binding: 'a'.repeat(64), nodeExecutable: process.execPath, mcpServerPath: '/disposable/mcp.js' }), queryFactory: () => ({ interrupt: async () => {}, close: async () => { closed++ }, async *[Symbol.asyncIterator]() {
-    yield { type: 'system', subtype: 'init', session_id: 'wrong-provider', qodercli_version: '1.1.64', tools: ['browser', 'Bash'], mcp_servers: [{ name: 'bmw', status: 'connected' }], skills: [], plugins: [] }
+    yield { type: 'system', subtype: 'init', session_id: 'wrong-provider', qodercli_version: '1.1.78', tools: ['browser', 'Bash'], mcp_servers: [{ name: 'bmw', status: 'connected' }], skills: [], plugins: [] }
     inputs++
   } }) })
   t.after(() => backend.close())
@@ -56,7 +56,7 @@ test('Qoder cancellation retains failed native cleanup ownership and recovery ne
     async interrupt() { interrupts++; releaseStopped() },
     async close() { closeAttempts++; if (failClose) throw new Error('Fixture worker has not closed'); await cleanup; physicallyClosed++ },
     async *[Symbol.asyncIterator]() {
-      yield { type: 'system', subtype: 'init', session_id: 'provider', qodercli_version: '1.1.64', tools: ['browser'], mcp_servers: [{ name: 'bmw', status: 'connected' }], skills: [], plugins: [] }
+      yield { type: 'system', subtype: 'init', session_id: 'provider', qodercli_version: '1.1.78', tools: ['browser'], mcp_servers: [{ name: 'bmw', status: 'connected' }], skills: [], plugins: [] }
       const message = await input.prompt[Symbol.asyncIterator]().next()
       assert.equal(message.value?.uuid, 'submission'); inputs++
       yield { type: 'assistant', session_id: 'provider', uuid: 'tool-message', message: { id: 'model-message', content: [{ type: 'tool_use', id: 'call', name: 'browser', input: { action: 'wait' } }] } }
@@ -92,7 +92,7 @@ test('Qoder denies an unexpected permission request without interrupting a brows
   const backend = new QoderBackend({ configDirectory: root, connection: async () => ({ bridgeUrl: 'http://127.0.0.1:1', bridgeToken: 'fixture', binding: 'a'.repeat(64), nodeExecutable: process.execPath, mcpServerPath: '/disposable/mcp.js' }), queryFactory: input => ({
     interrupt: async () => { throw new Error('Permission denial must not interrupt the turn') }, close: async () => {},
     async *[Symbol.asyncIterator]() {
-      yield { type: 'system', subtype: 'init', session_id: 'provider', qodercli_version: '1.1.64', tools: ['browser'], mcp_servers: [{ name: 'bmw', status: 'connected' }], skills: [], plugins: [] }
+      yield { type: 'system', subtype: 'init', session_id: 'provider', qodercli_version: '1.1.78', tools: ['browser'], mcp_servers: [{ name: 'bmw', status: 'connected' }], skills: [], plugins: [] }
       await input.prompt[Symbol.asyncIterator]().next()
       const permission = input.options.canUseTool!
       const denied = await permission('Bash', { command: 'fixture' }, { signal: new AbortController().signal, toolUseID: 'denied' })

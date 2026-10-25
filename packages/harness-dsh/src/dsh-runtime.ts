@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import {bundledDshCli} from './dsh-installation.js'
 import type { ChildProcess } from 'node:child_process'
 import crypto from 'node:crypto'
 import net from 'node:net'
@@ -152,8 +153,8 @@ export class DshRuntime {
       fs.writeFileSync(controlPatch,'- insert:\n    - id: bmw-driver-control\n      name: '+JSON.stringify(path.resolve(import.meta.dirname,'../dsh/driver-control.js'))+'\n',{mode:0o600})
       controlArgs.push('--patch',controlPatch)
     }
-    this.child = spawn('dsh', ['web', '--patch', this.patchPath, '--patch', presetPatch, ...controlArgs, '--host', '127.0.0.1', '--port', String(port), '--no-open'], {
-      env,
+    this.child = spawn(process.execPath, [bundledDshCli(), 'web', '--patch', this.patchPath, '--patch', presetPatch, ...controlArgs, '--host', '127.0.0.1', '--port', String(port), '--no-open'], {
+      env:{...env,ELECTRON_RUN_AS_NODE:'1'},
       stdio: ['ignore', 'pipe', 'pipe']
     })
     this.child.stdout.setEncoding('utf8')

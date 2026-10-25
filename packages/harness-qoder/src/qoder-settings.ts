@@ -9,7 +9,7 @@ import {agentIdentifier,agentRecord,agentText} from '@bmw-agent/agent-contract'
 import type {AgentDriverSettings,AgentSettingsContext,AgentSettingsRequest,AgentModelChoice} from '@bmw-agent/agent-contract'
 import {qoderBrowserCatalog} from './qoder-events.js'
 
-// Maintained official Worker 1.1.64 model IDs; new catalog entries need development admission.
+// Maintained official Worker 1.1.78 model IDs; new catalog entries need development admission.
 const supportedModels=new Set(['auto','qmodel_38max','qfmodel','qmodel_latest','qmodel','q37fmodel','dmodel','dfmodel','gmodel','gfmodel','gm51model','kmodel_latest','kmodel','mmodel'])
 
 type ControlQuery=Pick<Query,'getAvailableModels'|'setModel'|'accountInfo'|'close'> & AsyncIterable<unknown>

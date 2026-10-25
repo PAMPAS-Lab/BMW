@@ -4,3 +4,5 @@ export { installManagedDshPreset, prepareProductDshHome, resolveDshHome } from '
 export {dshConfiguration} from './src/configuration.js'
 export { DshBackend } from './src/dsh-backend.js'
 export type { DshBackendOptions } from './src/dsh-backend.js'
+
+export {bundledDshCli} from './src/dsh-installation.js'

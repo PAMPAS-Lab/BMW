@@ -1,7 +1,7 @@
+import {bundledDshCli} from '../packages/harness-dsh/index.js'
 import { dshConfiguration } from '../packages/harness-dsh/index.js'
 import {BrowserFailureGuard} from '../packages/harness-dsh/dsh/plugins/browser-mcp/failure-guard.js'
 import {createRequire} from 'node:module'
-import {execFileSync} from 'node:child_process'
 import {appendWorkspaceContext} from '../packages/harness-dsh/dsh/plugins/browser-mcp/workspace-context.js'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
@@ -20,7 +20,7 @@ const temporary = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-dsh
 const products = [{ ...product, ...dshConfiguration }]
 try {
   // Exercise the installed official assembly and its model/log snapshot renderer.
-  const requireDsh=createRequire(fs.realpathSync(execFileSync('which',['dsh'],{encoding:'utf8'}).trim()))
+  const requireDsh=createRequire(bundledDshCli())
   const {Context}=await import(requireDsh.resolve('@deepseek-ai/cordis'))
   const {SystemPrompt,renderContextSnapshot}=await import(requireDsh.resolve('@deepseek-ai/dsh-system-prompt'))
   const ctx=new Context(),prompt=new SystemPrompt(ctx,{includeRuntimeContext:true})

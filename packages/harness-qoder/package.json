@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@bmw-agent/agent-contract": "*",
-    "@qodercn-ai/qoderclicn": "1.1.64",
-    "@qodercn-ai/qodercn-agent-sdk": "1.0.50"
+    "@qodercn-ai/qoderclicn": "1.1.78",
+    "@qodercn-ai/qodercn-agent-sdk": "1.0.56"
   }
 }

@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
 import { createInterface } from 'node:readline'
-if (process.argv.includes('--version')) console.log('2.169.0')
+if (process.argv.includes('--version')) console.log('2.176.0')
 else if (process.env.BMW_WORKBUDDY_GRANDCHILD === '1') { process.on('SIGTERM', () => {}); setInterval(() => {}, 1000) }
 else if (process.env.BMW_WORKBUDDY_TRANSPORT_FIXTURE === '1') {
   const lines = createInterface({ input: process.stdin })

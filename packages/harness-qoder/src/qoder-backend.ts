@@ -46,7 +46,7 @@ interface Run {
 }
 export class QoderBackend implements AgentBackend {
   readonly description: AgentDriverDescription = {
-    id: 'qoder-cn', label: 'Qoder CN', baseline: 'SDK 1.0.50 / Worker 1.1.64',
+    id: 'qoder-cn', label: 'Qoder CN', baseline: 'SDK 1.0.56 / Worker 1.1.78',
     capabilities: { streaming: true, images: true, interrupt: true, steer: false, fork: false, approvals: false, nativeOpen: false, browserOnly: false }
   }
   private readonly runs = new Map<string, Run>()
