@@ -6,6 +6,7 @@ import {ArtifactJobIO} from './artifact-job-io.js'
 import {ARCHIVE_LIMITS} from './archive-limits.js'
 import {MEDIA_LIMITS,assertArtifactId,finiteNumber,mediaRecord,assertPreservedMediaTracks} from './media-contract.js'
 import {PreservationCleanupError} from './media-preservation.js'
+import {saveMediaDerivation} from './media-derivation.js'
 
 export function assertArchiveSegment(raw:unknown){
  const v=mediaRecord(raw)
@@ -40,6 +41,8 @@ export async function segmentArchivedMedia(directory:string,raw:unknown,signal?:
    const sha256=await outputIO.fingerprint(abort);if(await io.fingerprint(abort)!==sourceSha256)throw new Error('Archive changed during segmentation.')
    const proof={version:1,kind:'archive-segment',reencoded:false,sourceArtifactId:request.artifactId,sourceSha256,sourceDurationSeconds:duration,requestedSourceRange:{startSeconds:request.startSeconds,endSeconds:request.endSeconds},sourceTimeOffsetSeconds:base,actualSourceRange:{startSeconds:base+first,endSeconds:base+end},artifactId,sha256,bytes,durationSeconds:end,firstTimestampSeconds:first,tracks:await Promise.all(actual.map(async t=>({id:t.id,type:t.type,codec:await t.getCodec()})))}
    await guard();const proofHandle=await fs.open(path.join(root,proofId),'wx',0o600);created.push(path.join(root,proofId));try{await proofHandle.writeFile(JSON.stringify(proof,null,2)+'\n');await proofHandle.sync()}finally{await proofHandle.close()}
+   await saveMediaDerivation(root,{version:1,kind:'native-media-conversion',artifactId,sha256,sourceArtifactId:request.artifactId,sourceSha256,sourceRange:proof.actualSourceRange},abort)
+   created.push(path.join(root,artifactId+'.derivation.json'))
    await guard();success=true;return {...proof,path:file,proofArtifactId:proofId,type:'video',contentType:'video/mp4',engine:'mediabunny-packet-copy',decodeVerification:'not-performed; process this bounded segment separately'}
   }finally{check.dispose();await outputIO.close()}
  }finally{

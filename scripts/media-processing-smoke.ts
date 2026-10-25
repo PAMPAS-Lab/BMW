@@ -5,6 +5,7 @@ import path from 'node:path'
 import { app, BrowserWindow, session } from 'electron'
 import { MediaController } from '../packages/media-native/src/media-controller.js'
 import { ArtifactJobIO } from '../packages/media-native/src/artifact-job-io.js'
+import {readMediaDerivation} from '../packages/media-native/src/media-derivation.js'
 import { BrowserKernel } from '../packages/browser-capability/src/browser-kernel.js'
 import { BrowserCapabilityRegistry } from '../packages/browser-capability/src/browser-capability-registry.js'
 import { createBridgeServer } from '../packages/browser-capability/src/bridge-server.js'
@@ -301,6 +302,13 @@ try {
     assert.equal(result.reencoded,false);assert.equal(result.sourceSha256,sourceHash);assert.ok(result.actualSourceRange.startSeconds<=.1);assert.ok(result.actualSourceRange.endSeconds>=1.2-.1);assert.deepEqual(result.tracks.map(t=>t.type).sort(),['audio','video'])
     assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(artifacts,result.artifactId))).digest('hex'),result.sha256)
     const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{type:string;sampleCount:number}[]};assert.equal(decoded.completeFile,true);assert.ok(decoded.tracks.every(t=>t.sampleCount>0))
+    const lineage=await readMediaDerivation(artifacts,result.artifactId)
+    assert.ok(lineage,'Packet-copy segments must retain the native lineage consumed by selected-news evidence.')
+    assert.equal(lineage.sourceArtifactId,converted.artifactId);assert.equal(lineage.sourceSha256,sourceHash);assert.equal(lineage.sha256,result.sha256);assert.deepEqual(lineage.sourceRange,result.actualSourceRange)
+    const segmentPath=path.join(artifacts,result.artifactId),segmentBytes=fs.readFileSync(segmentPath)
+    try{fs.appendFileSync(segmentPath,'changed');await assert.rejects(readMediaDerivation(artifacts,result.artifactId),/bytes changed/)}finally{fs.writeFileSync(segmentPath,segmentBytes)}
+    const originalBytes=fs.readFileSync(converted.path)
+    try{fs.appendFileSync(converted.path,'changed');await assert.rejects(readMediaDerivation(artifacts,result.artifactId),/bytes changed/)}finally{fs.writeFileSync(converted.path,originalBytes)}
     const proof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/media-preservation-validation';fs.mkdirSync(proof,{recursive:true});fs.copyFileSync(path.join(artifacts,result.proofArtifactId),path.join(proof,'archive-segment.json'))
     const before=fs.readdirSync(artifacts).sort(),cancel=new AbortController();cancel.abort(new Error('cancel archive segment'));await assert.rejects(media.processArtifact({action:'media.segment',artifactId:converted.artifactId,segmentRange:{startSeconds:0,endSeconds:1}},cancel.signal),/cancel archive segment/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);assert.equal(media.isCaptureActive(),false)
   })
