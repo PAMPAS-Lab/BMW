@@ -265,7 +265,7 @@ Feature 可在动作注册中提供自有帮助投影，Core 不导入 Studio �
 
 新闻准备的首次操作帮助同时提供 `read/preflight` 两个只读请求的完整闭合 Schema，明确 `schemaSubOperations` 与覆盖范围，仍要求当前 draftId/expectedRevision；调用者不必再为无嵌套内容的读取多查一次子操作帮助。其他子操作仍按 `forSubOperation` 返回精确写入契约；该只读 Schema 不接受 enable/记录/原生准备等变更，也不放宽实际服务校验。materials 的目录帮助保持原有形态。
 
-Studio采用作者v2／独立审片v2提示词，video.review任务策略版本为3（仍可查询v1/v2回执，去重不复用旧策略任务）。作者提示编译于feature-library，审片提示编译于feature-video。没有新增模型循环、browser动作或持久化Schema。Studio 指导把制作端与独立审片分为两个阶段：制作者在源素材／布局预检与导出后核机械完整性，使用当前MP4的有界风险时刻取帧检查变更处，再启动 video.review 并结束当前轮以释放FIFO；不先重复完整逐页审片。作者不默认重复全片motion和最终原声ASR/PCM。官方独立审片先核可读取原始技术证据的当前MP4 SHA、完整范围、ROI/语言/参数和工具版本，只补缺失、失效或异常部分；无法读到旧原始结果不声称复用。源片ASR不能替代最终音频。独立审片仍必须实际查看当前导出全部镜头关键状态页，核同片原声ASR/PCM证据，记录本轮新的逐镜及独立整片判断。仅引用变更不启用增量审片，不新增自动证据缓存。相同指纹下可复用技术证据，制作端的风险抽查不能代替完整独立审片或人工听审。
+Studio采用作者v2／独立审片v2提示词，video.review任务策略版本为4（仍可查询v1/v2回执，去重不复用旧策略任务）。作者提示编译于feature-library，审片提示编译于feature-video。没有新增模型循环、browser动作或持久化Schema。Studio 指导把制作端与独立审片分为两个阶段：制作者在源素材／布局预检与导出后核机械完整性，使用当前MP4的有界风险时刻取帧检查变更处，再启动 video.review 并结束当前轮以释放FIFO；不先重复完整逐页审片。作者不默认重复全片motion和最终原声ASR/PCM。官方独立审片先核可读取原始技术证据的当前MP4 SHA、完整范围、ROI/语言/参数和工具版本，只补缺失、失效或异常部分；无法读到旧原始结果不声称复用。源片ASR不能替代最终音频。独立审片仍必须实际查看当前导出全部镜头关键状态页，核同片原声ASR/PCM证据，记录本轮新的逐镜及独立整片判断。仅引用变更不启用增量审片，不新增自动证据缓存。相同指纹下可复用技术证据，制作端的风险抽查不能代替完整独立审片或人工听审。
 
 时间线读取与编辑指导明确：主画面的 clip.move 是整段调序，不改变共享切点；同源连续片段若需保持全片时钟，可在同一校验事务中先延展后段起点，再修剪前段终点，仍受源范围、效果窗、字幕和对象边界校验。必须读回实际保存的片段时钟；合法／保存成功不能证明预期切点已改变。该说明不改变命令或提交语义。
 
@@ -986,6 +986,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Wire schema factoring preserves full BMW validation, deterministic catalogs and unchanged native help contracts`
 - `Factoring keeps embedded schema identifiers local, literal data intact, and existing references/vocabularies untouched`
 - `Published descriptions retain every action instruction once and preserve additional feature context`
+- `Batched help reads only effective schemas, preserves closed shapes and explicitly omits over-budget targets`
 
 #### `packages/browser-capability/test/media-artifact.test.ts`
 
@@ -1199,6 +1200,10 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Zero-result intervals retain raw ASR evidence and coverage without fabricated text, silence claims or repeated processing`
 - `material index paths, cursors and intervals stay closed and symlink catalogs are never replaced`
 - `one bounded OR search returns exact reusable pins and oversized sources cannot trap its cursor`
+
+#### `packages/feature-video/test/news-delivery.test.ts`
+
+- `Operator delivery packages only fresh pinned independent passes; rejects queued, changed frames/output and existing destinations`
 
 #### `packages/feature-video/test/news-preparation.test.ts`
 
@@ -2139,7 +2144,7 @@ Host 先验证当前 Project/Session、revision、可复用实际 MP4、原生�
 
 start 返回后调用方必须结束当前 turn，不能占住前一任务等待审片。Host 在已有 version2 输入回执中先保存可选 task 元数据（闭合 kind=video-review、SHA256 key、至多8192字符 payload、modelId）；输入和元数据一同原子持久化后才排队。去重键绑定策略版本、草稿 revision 和实际成片指纹；同目标重复请求复用原回执，包含已失败／中断／不确定状态，不自动再次投递。内部审核不能递归新增内部任务。现有 Assistant 停止入口取消所属 Session 的任务，并等待实际工具和 worker 清理；失败清理仍隔离资源。Project/Session 转换、归属、未知投递恢复和 FIFO 不变。
 
-审核指导要求所有场景的当前 MP4 关键状态分页重新实际查看，逐镜记录并独立作整片判断；覆盖视觉支撑、信息密度、层级、节奏、结尾、手机字幕、来源身份日期、新闻事实、书面稿、保留原声与译文，并对实际最终 MP4 采样音频、按可用能力核对 ASR。策略v2追加上述AI受众、45秒／120秒目标、术语简释、原声与有据解读、画面类别实际区间及相关性／比例、全片禁止纯文字段落；不可凭模板名推定通过，不可编造比例。新任务去重包含策略v3，旧v1/v2回执仍可查询但不能替代新标准的审片。缺失、低置信度、抽样边界及能力缺口必须报告。Agent 审核不是连续音视频感官认证，人工听感和用户验收另记。
+审核指导要求所有场景的当前 MP4 关键状态分页重新实际查看，逐镜记录并独立作整片判断；覆盖视觉支撑、信息密度、层级、节奏、结尾、手机字幕、来源身份日期、新闻事实、书面稿、保留原声与译文，并对实际最终 MP4 采样音频、按可用能力核对 ASR。策略v2追加上述AI受众、45秒／120秒目标、术语简释、原声与有据解读、画面类别实际区间及相关性／比例、全片禁止纯文字段落；不可凭模板名推定通过，不可编造比例。新任务去重包含策略v4，旧v1/v2/v3回执仍可查询但不能替代新标准的审片。缺失、低置信度、抽样边界及能力缺口必须报告。Agent 审核不是连续音视频感官认证，人工听感和用户验收另记。
 
 成片审片 version2 账本的 Agent assessment 可附 Host 绑定的 runId，普通模型请求不能提供。内部通过需要本次 run、晚于启动基线的全部逐镜及独立整片声明、当前样本完整、原生技术通过、任务成功且真实清理结束。历史声明、其他 run 声明、运行时成功或 PNG 生成本身不能成为本次通过；稿件 revision／实际 MP4 变化返回 stale。status 的结构结果保留原生技术、版式、Agent 和用户声明并分页返回完整意见；缺少本次结论为 incomplete，失败和 uncertain 不包装成通过。
 
@@ -2220,3 +2225,11 @@ YouTube 导航采用同一45秒就绪预算：核对 watch 目标、播放器数
 采集缓冲预检按本次窗口取值：自动采集只预缓冲 min(请求上限,10秒,原片时长)，仍须从片头连续覆盖并实际解码；不再对8–10秒请求固定要求30秒。未就绪、取消或身份变化仍需暂停确认，不能绕过实际采集和输出检查。
 
 自动获取的入口及文件解码后的最终来源提交同样核对唯一已确认逻辑目标，覆盖确认后、下载前和解码期间的流地址刷新。该放宽只对带已确认身份的同一YouTube播放器生效；普通页保持资源精确匹配。实际下载仍通过 prepareVideoTransfer 对本次刚观察的资源地址及音轨配对实施精确检查，最终来源提交还核对产物身份。不得把旧候选的临时地址有效性当作逻辑视频身份，也不得把其他视频的新流地址接到旧来源。
+
+## 新闻往返与交付优化（v2.1）
+
+唯一browser的help支持helpQueries一次读取1–8个当前有效目录精确Schema目标，字段闭合且不执行目标动作；不能与单目标forAction/forOperation/forSubOperation混用。回复预算12KiB，整项超预算明确omitted并列omittedIndices，不截断Schema冒充完整，不缓存其他运行时的Schema。已有完整core目录字段不要求预先help；Studio深层字段按当前阶段批读，真实错误才补读。
+
+Studio render（包括缓存复用）直接返回原生计算的export.sha256，不要求为取哈希另行assets搜索或materials索引。video.review策略v4在Host固定target.sha256，并随审片上下文给出原生导出报告已有的尺寸、封装时长和各可解码音/视频轨首尾摘要；缺失字段保持缺失。ASR/PCM使用音频轨范围，motion使用视频轨范围，容器时长不能作统一轨尾；范围门禁不放松，也不静默截短请求。仍需当前全部关键态、本轮逐镜及独立整片通过，人工试听另记。
+
+操作员CLI `node scripts/prepare-news-delivery.js PROJECT_DIRECTORY HISTORY_FILE DRAFT_ID REVIEW_RUN_ID NEW_OUTPUT_DIRECTORY` 对已完成成片进行确定性文件准备：核官方终态/Project和Session归属/当前draft及导出指纹/Host固定SHA/逐镜和整片新声明/全部关键帧哈希/结构与原生技术门禁，复制MP4并核副本SHA，导出当前时间轴稿、字幕、来源及manifest至源Project以外的新目录。失败不覆盖既有交付；不编辑源Profile、不运行模型、不恢复模型设置、不渲染、不重审、不替用户试听；不注册为模型工具。详细耗时复盘在交付之后，不能再由模型现场编写新整理脚本阻塞成片交付。

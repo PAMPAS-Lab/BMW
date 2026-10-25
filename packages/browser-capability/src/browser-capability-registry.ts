@@ -78,6 +78,28 @@ export class BrowserCapabilityRegistry {
     return {tool:'browser',actions:[...this.actions.values()].map(definition=>({action:definition.action,description:definition.description.slice(0,160),requiredFields:definition.inputSchema.required})),next:{action:'help',forAction:'observe'}}
   }
 
+  /** Schema reads only. Never dispatch an action or silently truncate a schema. */
+  helpBatch(raw:unknown):unknown {
+    if(!Array.isArray(raw)||raw.length<1||raw.length>8)throw new TypeError('helpQueries requires 1–8 schema targets.')
+    const queries=raw.map(value=>{
+      if(!value||typeof value!=='object'||Array.isArray(value))throw new TypeError('Invalid help query.')
+      const v=value as Record<string,unknown>
+      if(Object.keys(v).some(k=>!['forAction','forOperation','forSubOperation'].includes(k))||typeof v.forAction!=='string'||!v.forAction.trim()||v.forAction.length>200)throw new TypeError('Invalid help target.')
+      for(const key of ['forOperation','forSubOperation'])if(v[key]!==undefined&&(typeof v[key]!=='string'||(v[key] as string).length>100))throw new TypeError('Invalid nested help target.')
+      return {forAction:v.forAction,...(v.forOperation===undefined?{}:{forOperation:v.forOperation as string}),...(v.forSubOperation===undefined?{}:{forSubOperation:v.forSubOperation as string})}
+    })
+    if(new Set(queries.map(v=>JSON.stringify(v))).size!==queries.length)throw new TypeError('Duplicate help targets.')
+    const items:unknown[]=[],omittedIndices:number[]=[],byteBudget=12288
+    for(const [index,query] of queries.entries()){
+      let item:unknown
+      try{item={index,query,status:'complete',result:this.help(query.forAction,query)}}catch(error){item={index,query,status:'invalid',executed:false,error:String(error instanceof Error?error.message:error).slice(0,1800)}}
+      // Reserve space for all remaining bounded identity/omission entries.
+      if(Buffer.byteLength(JSON.stringify(items))+Buffer.byteLength(JSON.stringify(item))+4096>byteBudget){omittedIndices.push(index);item={index,query,status:'omitted',reason:'Schema byte budget; request this exact target separately.'}}
+      items.push(item)
+    }
+    return {tool:'browser',scope:'effective-catalog-schema-only',byteBudget,items,omittedIndices,executed:false}
+  }
+
   async execute(action: string, context: unknown, input: BrowserRequest): Promise<{ handled: boolean; value: unknown }> {
     const definition = this.actions.get(action)
     if (!definition?.execute) return { handled: false, value: undefined }

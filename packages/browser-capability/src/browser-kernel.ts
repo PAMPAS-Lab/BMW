@@ -586,7 +586,14 @@ export class BrowserKernel {
 
     if (request.action === 'status') return this.state()
     if (request.action === 'tabs.list') return this.state()
-    if (request.action === 'help') return this.capabilityRegistry?this.capabilityRegistry.help(request.forAction,{forOperation:request.forOperation,forSubOperation:request.forSubOperation}):{actions:this.allowedActions}
+    if (request.action === 'help') {
+      if(request.helpQueries!==undefined){
+        if(request.forAction!==undefined||request.forOperation!==undefined||request.forSubOperation!==undefined)throw new TypeError('Do not mix helpQueries and a single help target.')
+        if(!this.capabilityRegistry)throw new Error('Effective schema catalog unavailable.')
+        return this.capabilityRegistry.helpBatch(request.helpQueries)
+      }
+      return this.capabilityRegistry?this.capabilityRegistry.help(request.forAction,{forOperation:request.forOperation,forSubOperation:request.forSubOperation}):{actions:this.allowedActions}
+    }
     const contributed = await this.capabilityRegistry?.execute(request.action, { browserKernel: this, actor, signal, sessionOwner }, request)
     if (contributed?.handled) return contributed.value
     if (request.action === 'project.context') {

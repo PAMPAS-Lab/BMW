@@ -52,6 +52,7 @@ import { normalizeVideoPreferences, resolveVideoOutput, optionsFromOutput, saveV
 import path from 'node:path'
 import {VideoStudioStore,STUDIO_EXPORT_RENDERER_VERSION} from './studio-store.js'
 import {captureWorkExport,WorkExportStore} from '@bmw-agent/feature-library/exports'
+import {mediaArtifactHash} from '../../media-native/src/media-derivation.js'
 import type {CapturedExport} from '@bmw-agent/feature-library/exports'
 import {assertStudioRequest,assertVideoDraft,draftComposition,draftReadiness,applyNarrationPacing,sceneCoverage,studioId} from './studio-contract.js'
 import {mediaRecord,finiteNumber,assertArtifactId} from '../../media-native/src/media-contract.js'
@@ -327,7 +328,7 @@ export class VideoStudioService {
     if(request.operation==='render'){
       await verifyStudioSpeech(draft,path.join(project.directory,'artifacts'),signal);await this.verifyCardPins(draft,path.join(project.directory,'artifacts'),signal);this.assertRevision(store,draft)
       const cached=request.forceRender?undefined:store.reusableExport(draft)
-      if(cached){signal?.throwIfAborted();this.assertRevision(store,draft);let libraryWarning:string|undefined;try{if(!new WorkExportStore(project.directory,project.id).scan(false).records.some(r=>r.artifactId===cached.artifactId))libraryWarning='此旧成品没有导出时的采用快照；保留原片，采用详情未知。'}catch(error){libraryWarning='成品账本暂不可读取：'+String(error)}return {draft,export:{...cached,type:'video',contentType:'video/mp4'},reused:true,...(libraryWarning?{libraryWarning}:{})}}
+      if(cached){signal?.throwIfAborted();this.assertRevision(store,draft);let libraryWarning:string|undefined;try{if(!new WorkExportStore(project.directory,project.id).scan(false).records.some(r=>r.artifactId===cached.artifactId))libraryWarning='此旧成品没有导出时的采用快照；保留原片，采用详情未知。'}catch(error){libraryWarning='成品账本暂不可读取：'+String(error)}const sha256=await mediaArtifactHash(path.join(project.directory,'artifacts'),cached.artifactId,signal);this.assertRevision(store,draft);if(store.reusableExport(draft)?.fingerprint!==cached.fingerprint)throw new Error('Cached export changed.');return {draft,export:{...cached,sha256,type:'video',contentType:'video/mp4'},reused:true,...(libraryWarning?{libraryWarning}:{})}}
       await this.assertAssets(draft,project.directory,signal)
       signal?.throwIfAborted();this.assertRevision(store,draft)
       const composition=draftComposition(draft)
@@ -344,8 +345,10 @@ export class VideoStudioService {
         await verifyStudioSpeech(draft,directory,signal);await this.verifyCardPins(draft,directory,signal);signal?.throwIfAborted();this.assertRevision(store,draft)
         if(capture)try{const record=await capture.record(result,{draftId:id,sessionId:owner.sessionId,revision:draft.revision,sceneIds:draft.scenes.map(s=>s.id)});prepared=new WorkExportStore(project.directory,project.id).prepare(record)}catch(error){signal?.throwIfAborted();libraryWarning='成片已生成，素材采用账本未完成：'+String(error)}
         signal?.throwIfAborted();if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Studio Project changed during export admission.');this.assertRevision(store,draft)
+        const sha256=await mediaArtifactHash(directory,result.artifactId,signal)
+        signal?.throwIfAborted();this.assertRevision(store,draft)
         const updated=store.addExport(id,draft.revision,{artifactId:String(result.artifactId),durationSeconds:finiteNumber(result.durationSeconds,'duration',1,COMPOSITION_LIMITS.seconds),...(result.verificationArtifactId?{verificationArtifactId:String(result.verificationArtifactId)}:{})})
-        committed=true;if(prepared)try{prepared.commit()}catch(error){libraryWarning='成品已保存，采用账本提交待核对：'+String(error)}return {draft:updated,export:result,...(libraryWarning?{libraryWarning}:{})}
+        committed=true;if(prepared)try{prepared.commit()}catch(error){libraryWarning='成品已保存，采用账本提交待核对：'+String(error)}return {draft:updated,export:{...result,sha256},...(libraryWarning?{libraryWarning}:{})}
       }finally{if(!committed){try{const current=await fs.lstat(directory);if(current.dev!==rootIdentity.dev||current.ino!==rootIdentity.ino||current.isSymbolicLink()||await fs.realpath(directory)!==root)throw new Error('Export Project changed; cleanup refused.');for(const [file,identity] of created){const stat=await fs.lstat(file).catch(error=>{if(error.code==='ENOENT')return undefined;throw error});if(stat?.dev===identity.dev&&stat.ino===identity.ino&&!stat.isSymbolicLink())await fs.unlink(file)}}finally{prepared?.discard()}}}
     }
     const scene=draft.scenes.find(scene=>scene.id===request.sceneId)

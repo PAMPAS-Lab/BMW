@@ -156,6 +156,7 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | browser.preservation-result | contract | browser-capability | packages/browser-capability/test/preservation-result.test.ts | 默认 |
 | platform.assistant-tasks | contract | platform | packages/platform/test/assistant-tasks.test.ts | 默认 |
 | video.review-packet | contract | feature-video | packages/feature-video/test/video-review-packet.test.ts | 默认 |
+| video.news-delivery | contract | feature-video | packages/feature-video/test/news-delivery.test.ts | 默认 |
 | video.review | contract | feature-video | packages/feature-video/test/video-review.test.ts | 默认 |
 | external.social-download.live | external (opt-in) | browser-capability, media-native, agent-contract | scripts/social-download-live-validation.ts | opt-in: BMW_LIVE_SOCIAL=1; public videos in disposable signed-out Profile only |
 | external.library.live-sources | external (opt-in) | feature-library, platform, browser-capability, media-native | scripts/ai-news-live-validation.ts | opt-in: BMW_LIVE_NEWS=1; public-network read-only validation in disposable Profile only |

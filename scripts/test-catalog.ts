@@ -20,6 +20,7 @@ export const tests: readonly TestDefinition[] = [
   node('browser.preservation-result',p+'browser-capability/test/preservation-result.test.ts','contract','browser-capability'),
   node('platform.assistant-tasks',p+'platform/test/assistant-tasks.test.ts','contract','platform'),
   node('video.review-packet',p+'feature-video/test/video-review-packet.test.ts','contract','feature-video'),
+  node('video.news-delivery',p+'feature-video/test/news-delivery.test.ts','contract','feature-video'),
   node('video.review',p+'feature-video/test/video-review.test.ts','contract','feature-video'),
   {id:'external.social-download.live',file:'scripts/social-download-live-validation.ts',layer:'external',modules:['browser-capability','media-native','agent-contract'],runner:'electron',optIn:'BMW_LIVE_SOCIAL=1; public videos in disposable signed-out Profile only'},
   {id:'external.library.live-sources',file:'scripts/ai-news-live-validation.ts',layer:'external',modules:['feature-library','platform','browser-capability','media-native'],runner:'electron',optIn:'BMW_LIVE_NEWS=1; public-network read-only validation in disposable Profile only'},

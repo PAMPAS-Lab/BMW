@@ -191,3 +191,15 @@ test('Published descriptions retain every action instruction once and preserve a
  const extra=new BrowserCapabilityRegistry({id:'fixture',name:'Fixture',features:[{id:'extra',browserDescription:'Additional context with no corresponding action description.'}]}).toolDefinition()
  assert.match(extra.description,/Additional context with no corresponding action description/)
 })
+
+test('Batched help reads only effective schemas, preserves closed shapes and explicitly omits over-budget targets',()=>{
+ const registry=new BrowserCapabilityRegistry(product),queries=[{forAction:'tabs.open'},{forAction:'video.studio',forOperation:'render'},{forAction:'video.studio',forOperation:'source',forSubOperation:'read'}]
+ const response=registry.helpBatch(queries) as {items:{status:string;result?:unknown}[];omittedIndices:number[];executed:boolean}
+ assert.equal(response.executed,false);assert.equal(response.items.length,3);assert.deepEqual(response.omittedIndices,[])
+ for(const [i,row]of response.items.entries()){assert.equal(row.status,'complete');assert.deepEqual(row.result,registry.help(queries[i].forAction,queries[i]))}
+ for(const invalid of [[],Array(9).fill(queries[0]),[queries[0],queries[0]],[{forAction:'tabs.open',shell:'forged'}],[{forAction:''}]])assert.throws(()=>registry.helpBatch(invalid))
+ const unknown=registry.helpBatch([{forAction:'shell'}]) as {items:{status:string;executed:boolean}[]};assert.equal(unknown.items[0].status,'invalid');assert.equal(unknown.items[0].executed,false)
+ const huge=new BrowserCapabilityRegistry({id:'fixture',name:'Fixture',features:[{id:'huge',browserActions:[{action:'large',description:'large',inputSchema:{type:'object',additionalProperties:false,required:[],properties:{text:{type:'string',description:'x'.repeat(30000)}}}}]}]})
+ const omitted=huge.helpBatch([{forAction:'large'},{forAction:'tabs.open'}]) as {items:{status:string;result?:unknown}[];omittedIndices:number[]};assert.deepEqual(omitted.omittedIndices,[0]);assert.equal(omitted.items[0].result,undefined);assert.equal(omitted.items[1].status,'complete');assert.ok(Buffer.byteLength(JSON.stringify(omitted))<=12288)
+ const admitted=registry.assertRequest({action:'help',helpQueries:queries});assert.equal(admitted.action,'help');assert.deepEqual(registry.toolDefinition().name,'browser')
+})
