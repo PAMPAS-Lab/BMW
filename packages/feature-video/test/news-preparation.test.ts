@@ -288,3 +288,19 @@ test('Reusing existing shot IDs rejects before native work or checkpoint writes 
   assert.equal(f.nativeCalls.length,count);assert.deepEqual(fs.readdirSync(f.directory).sort(),before);assert.equal(JSON.stringify(f.store.read(f.batchDraft.id)),draft)
  }finally{f.close()}
 })
+
+test('AI film exception requires trusted exact-video approval, persistent labeling and unchanged independent evidence gates',async()=>{
+ const f=await fixture();try{
+  let draft=f.store.read(f.draft.id);draft.scenes.forEach(scene=>{scene.label='AI生成影片片段｜发布2026-10-21'});draft=f.store.update(draft.id,draft.revision,draft)
+  const request={operation:'authorize-ai-film' as const,expectedChecklistRevision:0,artifactId:'robot.mp4'}
+  await assert.rejects(f.service().execute(request,'agent'),/USER_REQUIRED/);assert.equal(f.service().journal.read().aiFilmApproval,undefined)
+  await assert.rejects(f.service().execute({...request,artifactId:'frame-0.png'},'user'),/SCOPE/)
+  const record=async()=>{const service=f.service(),report=await service.preflight(),state=service.journal.read();return service.execute({operation:'record-scenes',expectedChecklistRevision:state.revision,scenes:report.scenes.map(row=>({sceneId:row.sceneId,fingerprint:row.fingerprint,intent:'Show the AI film as a labeled generated work.',dateLabel:'发布2026-10-21',materials:[{artifactId:'robot.mp4',referenceId:'ref',kind:'ai-film' as const,observation:'Controlled distinct movie frames.',relation:'This is the reported AI work.'}],originalSpeech:{mode:'source' as const,quote:'A verified primary claim.',translation:'影片合成旁白。',reason:''}}))},'agent')}
+  await assert.rejects(record(),/USER_REQUIRED/)
+  await f.service().execute(request,'user');const approved=f.service().journal.read();assert.equal(approved.aiFilmApproval?.sha256,hash('controlled video bytes'));assert.equal(f.store.read(draft.id).revision,draft.revision+1)
+  await f.service().execute({...request,expectedChecklistRevision:approved.revision},'user');assert.equal(f.store.read(draft.id).revision,draft.revision+1,'Same approval is idempotent')
+  await record();const ready=await f.service().preflight();assert.equal(ready.ready,true,JSON.stringify(ready.issues));assert.equal(ready.requiresIndependentExportReview,true);assert.equal(ready.humanListening,'not-performed')
+  draft=f.store.read(draft.id);draft.scenes[0].label='发布2026-10-21';f.store.update(draft.id,draft.revision,draft);await assert.rejects(record(),/AI_FILM_LABEL/)
+  fs.writeFileSync(path.join(f.directory,'robot.mp4'),'other movie');assert.ok((await f.service().preflight()).issues.some(issue=>issue.code==='moving-footage-required'))
+ }finally{f.close()}
+})

@@ -1229,6 +1229,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `An acquisition ID typo returns a closed exact-source lookup without correcting or executing the failed shot`
 - `Preparation diagnostics identify the exact authored field without echoing text or weakening speech requirements`
 - `Reusing existing shot IDs rejects before native work or checkpoint writes and directs explicit footage replacement`
+- `AI film exception requires trusted exact-video approval, persistent labeling and unchanged independent evidence gates`
 
 #### `packages/feature-video/test/news.test.ts`
 
@@ -2270,3 +2271,5 @@ Host耗时诊断追加保存于agent-history/timings/*.jsonl，按Session/run散
 新闻选题界面不设置旁白音色，可信选题仅绑定题目、目标 Project 和唯一草稿。空草稿先继承视频默认参数，作者在配音/排版前通过一次 `video.studio configure` 设置本片 `options.tts`（provider/voice/ratePercent）、画幅、分辨率及帧率，并可用同次顶层 `title` 修改片名；用户明确参数优先，选题调用显式传入的 options 保留在草稿及准备资料中。新闻作者普通快讯使用 Qwen 龙安朗/0%、9:16、720p/24fps，已有匹配设置和续作不重复配置，narrate 继承草稿参数。全局默认与模板不因本流程改写。
 
 `configure` 校验当前 expectedRevision 后原子提交标题及全片参数；内容完全相同则返回当前草稿而不升版本，陈旧版本仍拒绝。此行为不重新生成已有声音。可信选题入口为尚未派发的新空草稿在作者入队前开启高级编辑，并保留确认阶段偏好；内部 typed Host 选择回调可携带 editingMode:advanced，不向模型开放模式授权或选题权限。已派发/旧有镜头草稿和普通打开入口不自动切换。这样避免停止作者、界面切换再续作的额外交接，选题、独立审片、Project/Session 归属、冲突和清理门禁保持。
+
+AI原片例外以draft与实际视频SHA限定。可信Studio进度区的“允许本片使用已选AI影片（须持续标注）”调用user-only authorize-ai-film，原生核附着视频、解码和当前SHA，单独Host准备台账保存批准时间；一次草稿revision更新使旧审片目标失效。模型、导入/恢复草稿及准备声明不能自行批准。材料新增ai-film类别，仅匹配批准的artifact/SHA才可用于开头及末两镜，必须连续可见“AI生成影片片段”，其帧观测/源区间/声音/中译仍完整检查；其他素材维持真实实拍门禁。独立审片策略6携带可信批准范围，仍逐镜和整片独立判断及完整当前输出运动/音频证据，不把合成旁白当真人发言。默认草稿无例外，旧journal缺该字段兼容读取；原内容和历史审片不改写。

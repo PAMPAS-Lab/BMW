@@ -1,10 +1,10 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
-import {finiteNumber,mediaRecord} from '../../media-native/src/media-contract.js'
+import {assertArtifactId,finiteNumber,mediaRecord} from '../../media-native/src/media-contract.js'
 import {assertNewsScenePreparation,preparationId} from './news-preparation-contract.js'
 import type {NewsScenePreparation} from './news-preparation-contract.js'
-export interface NewsPreparationState {revision:number;enabled:boolean;originalSpeechRequired:boolean;scenes:(NewsScenePreparation&{origin:'user'|'agent';capturedRevision:number;createdAt:string})[]}
+export interface NewsPreparationState {revision:number;enabled:boolean;originalSpeechRequired:boolean;aiFilmApproval?:{artifactId:string;sha256:string;approvedAt:string};scenes:(NewsScenePreparation&{origin:'user'|'agent';capturedRevision:number;createdAt:string})[]}
 /** Separate Host-owned journal: cannot be forged by draft update/import/restore. */
 export class NewsPreparationJournal {
  private root:string;private directory:string;private file:string;private identity:{dev:number;ino:number}
@@ -15,9 +15,10 @@ export class NewsPreparationJournal {
   const s=fs.lstatSync(this.file);if(!s.isFile()||s.isSymbolicLink()||s.size>1024*1024)throw new Error('Invalid preparation journal.')
   const fd=fs.openSync(this.file,fs.constants.O_RDONLY|fs.constants.O_NOFOLLOW);let raw:unknown
   try{const pinned=fs.fstatSync(fd);if(pinned.dev!==s.dev||pinned.ino!==s.ino)throw new Error('Preparation journal changed.');const data=fs.readFileSync(fd,'utf8');if(Buffer.byteLength(data)>1024*1024)throw new Error('Preparation journal exceeds budget.');raw=JSON.parse(data)}finally{fs.closeSync(fd)}
-  this.guard();const v=mediaRecord(raw);if(Object.keys(v).some(k=>!['version','projectId','sessionId','draftId','revision','enabled','originalSpeechRequired','scenes'].includes(k))||v.version!==1||v.projectId!==this.owner.projectId||v.sessionId!==this.owner.sessionId||v.draftId!==this.owner.draftId||typeof v.enabled!=='boolean'||typeof v.originalSpeechRequired!=='boolean'||!Array.isArray(v.scenes)||v.scenes.length>96)throw new Error('Foreign or invalid preparation journal.')
+  this.guard();const v=mediaRecord(raw);if(Object.keys(v).some(k=>!['version','projectId','sessionId','draftId','revision','enabled','originalSpeechRequired','aiFilmApproval','scenes'].includes(k))||v.version!==1||v.projectId!==this.owner.projectId||v.sessionId!==this.owner.sessionId||v.draftId!==this.owner.draftId||typeof v.enabled!=='boolean'||typeof v.originalSpeechRequired!=='boolean'||!Array.isArray(v.scenes)||v.scenes.length>96)throw new Error('Foreign or invalid preparation journal.')
+  let aiFilmApproval:NewsPreparationState['aiFilmApproval'];if(v.aiFilmApproval!==undefined){const a=mediaRecord(v.aiFilmApproval);if(Object.keys(a).some(k=>!['artifactId','sha256','approvedAt'].includes(k))||typeof a.sha256!=='string'||!/^[a-f0-9]{64}$/.test(a.sha256)||typeof a.approvedAt!=='string'||!Number.isFinite(Date.parse(a.approvedAt)))throw new Error('Invalid AI-film approval.');aiFilmApproval={artifactId:assertArtifactId(a.artifactId),sha256:a.sha256,approvedAt:a.approvedAt}}
   const scenes=v.scenes.map(raw=>{const r=mediaRecord(raw),{origin,capturedRevision,createdAt,...scene}=r;if(!['user','agent'].includes(String(origin))||typeof createdAt!=='string'||!Number.isFinite(Date.parse(createdAt)))throw new Error('Invalid preparation author.');return {...assertNewsScenePreparation(scene),origin:origin as 'user'|'agent',capturedRevision:finiteNumber(capturedRevision,'captured draft revision',1,1000000,true),createdAt}})
-  if(new Set(scenes.map(s=>s.sceneId)).size!==scenes.length)throw new Error('Duplicate prepared scene.');return {revision:finiteNumber(v.revision,'checklist revision',1,1000000,true),enabled:v.enabled,originalSpeechRequired:v.originalSpeechRequired,scenes}
+  if(new Set(scenes.map(s=>s.sceneId)).size!==scenes.length)throw new Error('Duplicate prepared scene.');return {revision:finiteNumber(v.revision,'checklist revision',1,1000000,true),enabled:v.enabled,originalSpeechRequired:v.originalSpeechRequired,...(aiFilmApproval?{aiFilmApproval}:{}),scenes}
  }
  save(expected:number,next:NewsPreparationState):NewsPreparationState {
   const previous=this.read();if(previous.revision!==expected)throw new Error('NEWS_PREPARATION_CONFLICT: Reload checklist revision.')
