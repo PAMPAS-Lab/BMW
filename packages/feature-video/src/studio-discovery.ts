@@ -37,7 +37,7 @@ export const studioOperationContracts={
  'suggest-focus':spec(scene,['segmentIndex']),inspect:spec(['artifactId'],['assetKind']),
  narrate:spec(scene,['provider','voice','ratePercent','templateName']),'narrate-local':spec(scene),'narrate-pending':spec(draft),
  check:spec(draft),render:spec(draft,['forceRender']),attach:spec([...scene,'artifactId','assetKind'],['segmentIndex']),
- configure:spec(draft,['options','templateName']),'save-template':spec([...draft,'templateName'])
+ configure:spec(draft,['options','templateName','title']),'save-template':spec([...draft,'templateName'])
 } satisfies Record<StudioRequest['operation'],Spec>
 export function studioOperationSpec(value:unknown):Spec|undefined{return typeof value==='string'&&Object.hasOwn(studioOperationContracts,value)?studioOperationContracts[value as keyof typeof studioOperationContracts]:undefined}
 export function studioRecovery(raw:unknown,error:unknown):TypeError {

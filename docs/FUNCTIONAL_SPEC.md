@@ -1232,6 +1232,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `packages/feature-video/test/news.test.ts`
 
+- `Author configures all news output parameters and title in one revision; identical configuration preserves revision and stale writes fail`
 - `Live broadcast publication labels retain original day precision and never turn relative or future dates into fresh news`
 - `Localized post clocks never invent a timezone and retain conservative publication-day boundaries`
 - `Date-only publishers retain precision and qualify only when the entire conservative timezone range is within 72 hours`
@@ -2264,3 +2265,8 @@ Studio render（包括缓存复用）直接返回原生计算的export.sha256，
 新闻作者/独立审片提示词v2.3在现行v2.2分工及审片策略5上明确Schema和同版本读取复用、仅对实际参数缺口补发现、原声镜避免重复中文TTS，以及film独立批量字段的本输入内修正。移除交审提示中重复的完整英文编辑包/批量操作说明，保留一份权威中文规则和全部视觉/事实/运动/原声/独立整片门禁。不新增自动语义缓存、自动重投或增量语义审片，不将此提示调整宣称为已实测节省时长。
 
 Host耗时诊断追加保存于agent-history/timings/*.jsonl，按Session/run散列、进程bootId和分段关联；记录queued/dispatch、上下文/驱动准备、runtime开始/返回/失败、实际input.accepted、消息输出首尾、tool首尾、driver/browser各自实际cleanup首尾或失败、取消与最终settled。时间同时有UTC毫秒和同boot单调时钟，工具保留callId/action、成功与耗时；选择的模型ID仅在排队记录。准备未过不伪记模型执行，清理未完不伪记settled。单段8MiB后新建分段，重启不覆盖旧段，不删除历史。仅保存闭合元数据，不保存正文、工具参数、回复内容、凭据或服务端推理估计。未提供的纯模型推理/服务排队始终unavailable。日志写入失败返回false并一次警告，不改变回执、FIFO或清理隔离；原始输入回执仍是投递权威，诊断不能用于自动重放。文件不可用时外层明确记录审计缺口。
+# 新闻作者配置与选题交接
+
+新闻选题界面不设置旁白音色，可信选题仅绑定题目、目标 Project 和唯一草稿。空草稿先继承视频默认参数，作者在配音/排版前通过一次 `video.studio configure` 设置本片 `options.tts`（provider/voice/ratePercent）、画幅、分辨率及帧率，并可用同次顶层 `title` 修改片名；用户明确参数优先，选题调用显式传入的 options 保留在草稿及准备资料中。新闻作者普通快讯使用 Qwen 龙安朗/0%、9:16、720p/24fps，已有匹配设置和续作不重复配置，narrate 继承草稿参数。全局默认与模板不因本流程改写。
+
+`configure` 校验当前 expectedRevision 后原子提交标题及全片参数；内容完全相同则返回当前草稿而不升版本，陈旧版本仍拒绝。此行为不重新生成已有声音。可信选题入口为尚未派发的新空草稿在作者入队前开启高级编辑，并保留确认阶段偏好；内部 typed Host 选择回调可携带 editingMode:advanced，不向模型开放模式授权或选题权限。已派发/旧有镜头草稿和普通打开入口不自动切换。这样避免停止作者、界面切换再续作的额外交接，选题、独立审片、Project/Session 归属、冲突和清理门禁保持。

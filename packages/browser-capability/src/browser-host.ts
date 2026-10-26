@@ -33,7 +33,7 @@ export interface BrowserFeatureHost {
   recoverCollectionPages?():Promise<void>
   execute(request: unknown, options?: BrowserExecutionOptions): Promise<unknown>
   videoStudioOpen?: (owner:BrowserSessionOwner) => Promise<unknown>
-  videoStudioSelect?: (owner:BrowserSessionOwner,draftId:string) => Promise<unknown>
+  videoStudioSelect?: (owner:BrowserSessionOwner,draftId:string,options?:{editingMode:'advanced'}) => Promise<unknown>
   libraryExecute?: (request:unknown,actor:'user'|'agent',signal?:AbortSignal) => Promise<unknown>
   libraryOpen?: (owner:BrowserSessionOwner,target?:StudioLibraryTarget) => Promise<unknown>
   videoStudioUse?: (owner:BrowserSessionOwner,material:{artifactId?:string;sourceId?:string;acquisitionId?:string},target:StudioLibraryTarget) => Promise<unknown>

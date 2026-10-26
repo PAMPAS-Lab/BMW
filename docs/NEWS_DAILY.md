@@ -159,3 +159,10 @@ HTTP完整资源优先 download；未加密完整HLS或HTTP区间预览优先 pr
 BMW自身的输入/工具/文字流事件仍保留在agent-history。新增agent-history/timings/*.jsonl记录排队、派发、上下文与官方驱动准备、runtime、输出、工具及两类实际清理，按Project/Session/runId/callId和bootId关联；崩溃或隔离未结束的区间保持开放，不能补成成功。无服务端原始计时证据，不把调用间等待分成纯模型推理/排队。新增日志仅从部署起记录，不伪造历史缺失时点。
 
 外层每次制作/审片交接先标handoff ready，可信UI派发并取得真实runId后标dispatched；按轮次和尝试保留同一关联ID。修复、build、check、test与重启用操作员stage-log.ts的run包装记录真实起止、退出码/信号，不再仅凭日志文件修改时间推测。分阶段collection/verification/footage/script/production/export/review/rework/delivery可用mark start/finish，未完成保留开放。工具和官方工作由BMW原生记录，外层文件仅写本地台账，不代写生产Profile。写日志失败或缺端点单列缺口，下一派发前先修复；不能把缺日志当作纯模型等待或声称全覆盖。
+# 作者参数与可信选题交接
+
+选题界面只确认题目和目标 Project，不再重复选择新闻音色。新草稿先继承视频默认参数作为临时值；作者读取当前版本后，在配音和排版前用一次 `video.studio configure` 合并本片音色、语速、画幅、分辨率、帧率及需要修改的片名。普通快讯采用 Qwen 龙安朗 `longanlang_v3.1`、0%、9:16、720p、24fps；用户显式参数优先。当前值已匹配则跳过，续作不重复配置，`narrate` 不再重复传全片的声音参数。不改变全局默认或命名模板。
+
+可信新闻选题按钮明确进入高级编辑，在创建的新空草稿派发作者前完成模式设置；保留当前分阶段确认偏好。旧草稿、已派发任务和非新闻入口不因本流程切换模式。外层不再为改音色、改片名或进入高级编辑而停止作者、点控件、再续作。工具不能自行选择新闻或授权高级模式，Project/Session、版本冲突和实际清理门禁保持。
+
+`configure` 可同时传顶层 `title` 与 `options`，相同有效参数不产生新草稿版本；陈旧 `expectedRevision` 仍拒绝，重命名不复制读取摘要覆盖整个草稿。作者机械预检、当前成片完整原声和运动检查、独立逐镜与整片判断保持原有分工。

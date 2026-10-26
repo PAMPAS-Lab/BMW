@@ -255,12 +255,15 @@ export class VideoStudioService {
       this.kernel.settingsStore.update({videoPreferences:preferences});return {saved:request.templateName,videoPreferences:preferences}
     }
     if(request.operation==='configure'){
+      const before=JSON.stringify(draft)
       const preferences=normalizeVideoPreferences(this.kernel.settingsStore?.snapshot().videoPreferences??{})
       if(!request.templateName)preferences.defaults=optionsFromOutput(draft)
       const retainDimensions=!request.templateName&&request.options?.aspectRatio===undefined&&request.options?.resolution===undefined&&request.options?.width===undefined&&request.options?.height===undefined
       const output=resolveVideoOutput(preferences,request.options??{},request.templateName,retainDimensions?{width:draft.width,height:draft.height}:undefined)
       draft.cardLayout=output.cardLayout;draft.narrationPacing=output.narrationPacing;draft.width=output.width;draft.height=output.height;draft.fps=output.fps;draft.music=output.music;draft.style=output.style;draft.tts=output.tts;draft.watermark=output.watermark
       if(output.templateName)draft.templateName=output.templateName;else delete draft.templateName
+      if(request.title!==undefined)draft.title=request.title
+      if(JSON.stringify(draft)===before)return draft
       return store.update(id,draft.revision,draft)
     }
     if(request.operation==='review-status'||request.operation==='record-export-review')return exportReviewState(store,draft,request,path.join(project.directory,'artifacts'),()=>{if(this.kernel.projectStore.active().id!==owner.projectId)throw new Error('Export review Project changed.');this.assertRevision(store,draft)},actor,signal,actor==='agent'?this.kernel.videoReviewRun?.(owner):undefined)
