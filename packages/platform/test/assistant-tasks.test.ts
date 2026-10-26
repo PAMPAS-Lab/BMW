@@ -47,6 +47,9 @@ test('Only an explicit new start after interrupted cleanup gets a fresh input; u
  assert.equal(tasks.start(owner,request).runId,second.runId);assert.equal(enqueued,2,'Uncertain delivery is never replayed')
  receipts[1].state='finished';receipts[1].outcome='success'
  assert.equal(tasks.start(owner,request).runId,second.runId);assert.equal(enqueued,2,'Completed review still deduplicates')
+ assert.equal(tasks.start(owner,{...request,restartIncompleteRunId:first.runId}).runId,second.runId,'A stale Host recovery identity cannot restart the latest completed task')
+ const recovered=tasks.start(owner,{...request,restartIncompleteRunId:second.runId});assert.notEqual(recovered.runId,second.runId);assert.equal(enqueued,3)
+ assert.equal(tasks.start(owner,{...request,restartIncompleteRunId:recovered.runId}).runId,recovered.runId,'Host recovery cannot restart active work')
 })
 
 test('Explicit review restart recovers a drained failure before provider acceptance but never replays accepted or uncertain delivery',()=>{

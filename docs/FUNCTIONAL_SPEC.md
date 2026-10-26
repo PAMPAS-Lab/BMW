@@ -2255,3 +2255,5 @@ Studio render（包括缓存复用）直接返回原生计算的export.sha256，
 四个官方运行时由workspace依赖和lockfile固定：Codex CLI0.164.0、Qoder CN SDK1.0.56/Worker1.1.78、DSH0.2.1-rc.2（发布源latest未变）、WorkBuddy2.176.0。Codex默认先解析BMW安装的对应平台官方原生可执行文件，再回退公共安装发现；显式覆盖仍须版本/目录门禁，旧选择文件格式/权限/链接校验保持，缺失的旧二进制可由已装的锁定版本接替。只有有效目录准入后才记录新路径。DSH经Host Node运行锁定官方CLI，设置ELECTRON_RUN_AS_NODE，插件仍从实际运行DSH的同一依赖树解析；不依赖PATH里的其他版本。升级不更换BMW Session或不可变驱动resume anchor，不迁移或删除凭据、项目和媒体。正式输入前继续验证有效目录恰为BMW browser；验证失败的新版运行时保持不可用，不放宽工具边界。
 
 桌面Project弹出页验证遵守当前后台延迟加载契约：先核Project/source/opener归属及不抢占前台，显式激活后检查同一Session、OS sandbox及无Node/特权接口；不再等待后台页自动导航。
+
+内部审片的明确 start 若遇已实际排空、官方输入 success 但同目标原生逐镜／独立整片声明不完整，可由 feature-video 读取当前审片状态后请求同 key 的新输入；Host 仅接受与最新已完成 runId 一致的内部恢复声明。该字段不在模型 browser schema 开放，不能由模型指定。已通过或已保存 needs-fix 结论、活动输入、投递不明仍去重，不自动重试，不复用旧语义通过结论。批量结论缺少 film 对象时明确提示其必须独立于 scenes 数组，不能把 film 伪装成镜头。

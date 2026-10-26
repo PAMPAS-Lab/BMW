@@ -12,6 +12,7 @@ export function assertExportReviewBatch(raw:unknown):ExportReviewBatch {
  const v=mediaRecord(raw)
  if(Object.keys(v).some(k=>!['exportFingerprint','scenes','film'].includes(k))||!Array.isArray(v.scenes)||!v.scenes.length||v.scenes.length>COMPOSITION_LIMITS.scenes)throw new TypeError('Supply one complete bounded scene/film review batch.')
  const seen=new Set<string>(),scenes=v.scenes.map(raw=>{const s=mediaRecord(raw);if(Object.keys(s).some(k=>!['sceneId','status','notes'].includes(k))||typeof s.sceneId!=='string'||!/^[a-zA-Z0-9-]{1,80}$/.test(s.sceneId)||seen.has(s.sceneId))throw new TypeError('Invalid or duplicate batch scene.');seen.add(s.sceneId);const a=assertExportReviewVerdict({exportFingerprint:v.exportFingerprint,scope:'scene',status:s.status,notes:s.notes});return {sceneId:s.sceneId,status:a.status,notes:a.notes}})
+ if(!v.film||typeof v.film!=='object'||Array.isArray(v.film))throw new TypeError('exportReviewBatch.film must be a separate {status,notes} object; scenes contains only actual scene IDs, never a film scene.')
  const f=mediaRecord(v.film);if(Object.keys(f).some(k=>!['status','notes'].includes(k)))throw new TypeError('Invalid batch film declaration.')
  const film=assertExportReviewVerdict({exportFingerprint:v.exportFingerprint,scope:'film',status:f.status,notes:f.notes})
  return {exportFingerprint:film.exportFingerprint,scenes,film:{status:film.status,notes:film.notes}}

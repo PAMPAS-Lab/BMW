@@ -16,7 +16,7 @@ export interface FeatureAssistantTask {
  state:'queued'|'running'|'success'|'failed'|'interrupted'|'uncertain';drained:boolean
 }
 export interface FeatureAssistantTasks {
- start(owner:{projectId:string;sessionId:string},task:{key:string;payload:string;text:string;context:string}):FeatureAssistantTask
+ start(owner:{projectId:string;sessionId:string},task:{key:string;payload:string;text:string;context:string;restartIncompleteRunId?:string}):FeatureAssistantTask
  read(owner:{projectId:string;sessionId:string},runId:string):FeatureAssistantTask
  find(owner:{projectId:string;sessionId:string},key:string):FeatureAssistantTask|null
 }

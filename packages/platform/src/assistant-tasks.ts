@@ -28,7 +28,7 @@ export function assistantTasks(options:{host:AgentHost;history:AgentHistoryStore
   // failure before provider acceptance. Missing legacy acceptance evidence,
   // accepted failures, active work, success and uncertainty still deduplicate.
   const previous=old?options.history.snapshot(owner.sessionId).receipts.find(r=>r.runId===old.runId):null
-  const recoverable=old?.drained&&(old.state==='interrupted'||old.state==='failed'&&previous?.state==='finished'&&previous.outcome==='failed'&&previous.providerReceiptId===null)
+  const recoverable=old?.drained&&(old.state==='interrupted'||old.state==='failed'&&previous?.state==='finished'&&previous.outcome==='failed'&&previous.providerReceiptId===null||old.state==='success'&&task.restartIncompleteRunId===old.runId)
   if(old&&!recoverable)return old
   const run=options.host.enqueueTask(row.sessionId,task.text,task.context,metadata)
   return read(owner,run.runId)
