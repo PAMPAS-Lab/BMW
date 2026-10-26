@@ -32,7 +32,7 @@ export async function prepareNewsDelivery(input:NewsDeliveryInput){
  const artifactId=assertArtifactId(snapshot.artifactId),io=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId});let sha256:string
  try{sha256=await io.fingerprint()}finally{await io.close()}
  if(typeof target.sha256!=='string'||target.sha256!==sha256)throw new Error('Delivery requires the Host-pinned MP4 SHA; legacy reviews need explicit evidence recovery, never guessed approval.')
- const composition=draftComposition(draft),captions=captionDocument(composition.scenes,draft.width,draft.height,'srt'),script:string[]=[draft.title,'当前成片时间轴（秒）'];let offset=0
+ const composition=draftComposition(draft),captions=captionDocument(composition.scenes.map((scene,index)=>({...scene,audioDurationSeconds:draft.scenes[index].audioDurationSeconds})),draft.width,draft.height,'srt'),script:string[]=[draft.title,'当前成片时间轴（秒）'];let offset=0
  for(const s of composition.scenes){script.push(`\n[${offset.toFixed(3)}–${(offset+s.durationSeconds).toFixed(3)}] ${s.title}`,s.narration??'',...(s.captions??[]).map(c=>`${c.text}${c.translationText?' ／ '+c.translationText:''}`));offset+=s.durationSeconds}
  script.push('\n作者原声原文/中译与出处说明（原文保留；其中早期计划时间不替代上面的最终时间轴）：',draft.preparation.outline??'',draft.preparation.notes??'')
  const staging=await fs.mkdtemp(path.join(parent,'.news-delivery-'));let committed=false
