@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import {normalizeVideoPreferences,resolveVideoOutput,saveVideoTemplate,assertVideoDimensions,assertVideoOptions} from '../src/video-options.js'
+test('Explicit portrait dimensions resolve compact layout before validating inherited landscape defaults',()=>{
+  const output=resolveVideoOutput({}, {cardLayout:'news-compact'},undefined,{width:720,height:1280})
+  assert.equal(output.aspectRatio,'9:16');assert.equal(output.cardLayout,'news-compact')
+})
 
 test('video ratios map to bounded even landscape portrait and square resolutions',()=>{
   const dimensions={'16:9':[1920,1080],'9:16':[1080,1920],'1:1':[1080,1080],'4:3':[1440,1080],'3:4':[1080,1440]}

@@ -11,7 +11,7 @@ export class VideoOptionsForm {
       <label>分辨率<select id="${prefix}-resolution"><option value="720p">720p · 短边 720</option><option value="1080p">1080p · 短边 1080</option><option value="custom">自定义尺寸</option></select></label>
       <label class="video-options-custom">宽度<input id="${prefix}-width" type="number" min="320" max="1920" step="2"></label><label class="video-options-custom">高度<input id="${prefix}-height" type="number" min="180" max="1920" step="2"></label>
       <label>画面风格<select id="${prefix}-style"><option value="bmw-dark">BMW 深色</option><option value="clean-light">简洁浅色</option><option value="minimal">极简</option></select></label>
-      <label>全片布局<select id="${prefix}-card-layout"><option value="standard">标准</option><option value="news">资讯 · 固定标题与字幕区</option></select></label>
+      <label>全片布局<select id="${prefix}-card-layout"><option value="standard">标准</option><option value="news">资讯 · 固定标题与字幕区</option><option value="news-compact">紧凑新闻 · 横屏原片与邻接字幕</option></select></label>
       <label>旁白节奏<select id="${prefix}-narration-pacing"><option value="standard">标准 · 前后各半秒</option><option value="compact">紧凑 · 前后各两帧</option></select></label>
       <p class="video-options-note video-options-wide">资讯布局支持横屏、竖屏，使用全片标题和顶部品牌；紧凑节奏用于之后新生成或新导入的完整旁白，保留已有剪切与字幕。</p>
       <label>帧率<input id="${prefix}-fps" type="number" min="12" max="30" step="1"></label>
@@ -36,7 +36,7 @@ export class VideoOptionsForm {
   }
   read():VideoOptions{return assertVideoOptions({...((this.initialLayout!==undefined||this.control('card-layout').value!=='standard')?{cardLayout:this.control('card-layout').value}:{}),...((this.initialPacing!==undefined||this.control('narration-pacing').value!=='standard')?{narrationPacing:this.control('narration-pacing').value}:{}),aspectRatio:this.control('ratio').value,resolution:this.control('resolution').value,...(this.control('resolution').value==='custom'?{width:Number(this.control('width').value),height:Number(this.control('height').value)}:{}),style:this.control('style').value,fps:Number(this.control('fps').value),music:this.control<HTMLInputElement>('music').checked,tts:{provider:narrationVoiceProvider(this.control('tts-voice').value),voice:this.control('tts-voice').value,ratePercent:Number(this.control('tts-rate').value)},watermark:{enabled:this.control<HTMLInputElement>('watermark-enabled').checked,text:this.control('watermark-text').value,position:this.control('watermark-position').value,opacity:Number(this.control('watermark-opacity').value),size:Number(this.control('watermark-size').value)}})}
   private dimensions():void {
-    this.control<HTMLSelectElement>('watermark-position').disabled=this.control('card-layout').value==='news'
+    this.control<HTMLSelectElement>('watermark-position').disabled=['news','news-compact'].includes(this.control('card-layout').value)
     this.root.querySelectorAll<HTMLElement>('.video-options-custom').forEach(node=>{node.hidden=this.control('resolution').value!=='custom'})
     const node=this.root.querySelector('#'+this.prefix+'-dimensions')!
     try{const size=videoDimensions(this.read());node.textContent=`${size.width} × ${size.height} · MP4 / H.264 + AAC`}catch(error){node.textContent=error instanceof Error?error.message:String(error)}

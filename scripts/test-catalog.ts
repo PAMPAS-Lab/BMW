@@ -113,6 +113,7 @@ export const tests: readonly TestDefinition[] = [
   node('browser.host-contract',p+'browser-capability/test/browser-host.test.ts','contract','browser-capability'),
   ...(['dsh-runtime','dsh-transport','dsh-preset','browser-failure-guard','workspace-context','video-case-log'] as const).map(name=>node('dsh.'+name,p+'harness-dsh/test/'+name+'.test.ts',name==='browser-failure-guard'||name==='video-case-log'?'unit':'contract','harness-dsh')),
   ...(['media-controller','media-processing','video-production','video-options'] as const).map((name,index)=>node(['media.controller','media.processing','media.production','media.options'][index],p+'media-native/test/'+name+'.test.ts',index===3?'unit':'contract','media-native')),
+  node('media.compact-news',p+'media-native/test/compact-news.test.ts','contract','media-native'),
   {id:'media.scene-clock',file:'scripts/scene-clock-smoke.ts',layer:'media',modules:['media-native','feature-video'],runner:'electron',watch:['packages/media-native/src/scene-playback-window.ts','packages/media-native/src/narration-timing.ts','packages/media-native/src/media/composition-paint.ts','packages/media-native/src/media/composition-audio.ts','packages/media-native/src/composition-contract.ts']},
   node('media.speech',p+'media-native/test/speech.test.ts','contract','media-native'),
   node('media.port-contract',p+'media-native/test/media-port.test.ts','contract','media-native'),

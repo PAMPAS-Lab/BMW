@@ -18,12 +18,15 @@ import type {StudioKernel} from '../src/studio-service.js'
 import {VideoStudioService} from '../src/studio-service.js'
 import {applyVideoEdit} from '../src/video-edit.js'
 import {studioAgentResult} from '../src/studio-agent-result.js'
+import {saveNativeVideoOrigin,saveMediaDerivation} from '../../media-native/src/media-derivation.js'
+import {externalVideoVisual} from '../src/news-visual-source.js'
 const hash=(v:string)=>crypto.createHash('sha256').update(v).digest('hex')
 async function fixture(){
  const root=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'bmw-news-prepare-'))),directory=path.join(root,'artifacts');fs.mkdirSync(directory)
  const owner={projectId:'prepare-project',sessionId:'prepare-session'},store=new VideoStudioStore(root,owner.sessionId),sources=new ProjectSourceStore(root,owner.projectId),scope={selector:'body',index:0,excludeSelectors:[],characterUnit:'utf16',extraction:'visible-text-nodes',truncated:false,status:'observed'} as const
  const source=await sources.collect({url:'https://example.org/robot',title:'Robot primary source',author:'Author',publishedAt:'2026-10-21',scope,text:'A verified primary claim.',mediaScope:scope,mediaTruncated:false,candidates:[],access:'unknown',accessText:'',result:'observed',error:null},0)
  fs.writeFileSync(path.join(directory,'robot.mp4'),'controlled video bytes')
+ await saveNativeVideoOrigin(directory,'robot.mp4',{version:1,platform:'page',targetId:'https://example.org/robot',resourceId:'https://example.org/robot.mp4'})
  let draft=store.create('Prepared robot');draft.preparation.production=newProductionBrief('news-brief')
  draft.scenes=['opening','middle','closing'].map(id=>({...newStudioScene(id),label:'资料画面｜发布2026-10-21',durationSeconds:3,narration:'A verified primary claim.',videoArtifactId:'robot.mp4',sourceStartSeconds:0,sourceDurationSeconds:10,keepSourceAudio:true,sources:['https://example.org/robot'],citations:[{sourceId:source.sourceId,acquisitionId:source.acquisitionId,startCharacter:0,endCharacter:25,quote:'A verified primary claim.',kind:'fact' as const,claim:'Reported primary claim',conflict:'pending' as const,eventAt:null}]}))
  const frames=[0,1.5,2.9].map((seconds,i)=>{const artifactId=`frame-${i}.png`,bytes='controlled frame '+i;fs.writeFileSync(path.join(directory,artifactId),bytes);return {artifactId,sha256:hash(bytes),width:640,height:360,requestedSeconds:seconds,seconds}})
@@ -291,16 +294,38 @@ test('Reusing existing shot IDs rejects before native work or checkpoint writes 
 
 test('AI film exception requires trusted exact-video approval, persistent labeling and unchanged independent evidence gates',async()=>{
  const f=await fixture();try{
+  fs.unlinkSync(path.join(f.directory,'robot.mp4.origin.json')) // Locally generated: no external acquisition proof.
   let draft=f.store.read(f.draft.id);draft.scenes.forEach(scene=>{scene.label='AI生成影片片段｜发布2026-10-21'});draft=f.store.update(draft.id,draft.revision,draft)
   const request={operation:'authorize-ai-film' as const,expectedChecklistRevision:0,artifactId:'robot.mp4'}
   await assert.rejects(f.service().execute(request,'agent'),/USER_REQUIRED/);assert.equal(f.service().journal.read().aiFilmApproval,undefined)
   await assert.rejects(f.service().execute({...request,artifactId:'frame-0.png'},'user'),/SCOPE/)
   const record=async()=>{const service=f.service(),report=await service.preflight(),state=service.journal.read();return service.execute({operation:'record-scenes',expectedChecklistRevision:state.revision,scenes:report.scenes.map(row=>({sceneId:row.sceneId,fingerprint:row.fingerprint,intent:'Show the AI film as a labeled generated work.',dateLabel:'发布2026-10-21',materials:[{artifactId:'robot.mp4',referenceId:'ref',kind:'ai-film' as const,observation:'Controlled distinct movie frames.',relation:'This is the reported AI work.'}],originalSpeech:{mode:'source' as const,quote:'A verified primary claim.',translation:'影片合成旁白。',reason:''}}))},'agent')}
-  await assert.rejects(record(),/USER_REQUIRED/)
+  await assert.rejects(record(),/NEWS_EXTERNAL_VIDEO_REQUIRED/)
   await f.service().execute(request,'user');const approved=f.service().journal.read();assert.equal(approved.aiFilmApproval?.sha256,hash('controlled video bytes'));assert.equal(f.store.read(draft.id).revision,draft.revision+1)
   await f.service().execute({...request,expectedChecklistRevision:approved.revision},'user');assert.equal(f.store.read(draft.id).revision,draft.revision+1,'Same approval is idempotent')
   await record();const ready=await f.service().preflight();assert.equal(ready.ready,true,JSON.stringify(ready.issues));assert.equal(ready.requiresIndependentExportReview,true);assert.equal(ready.humanListening,'not-performed')
   draft=f.store.read(draft.id);draft.scenes[0].label='发布2026-10-21';f.store.update(draft.id,draft.revision,draft);await assert.rejects(record(),/AI_FILM_LABEL/)
   fs.writeFileSync(path.join(f.directory,'robot.mp4'),'other movie');assert.ok((await f.service().preflight()).issues.some(issue=>issue.code==='moving-footage-required'))
+ }finally{f.close()}
+})
+
+test('Externally provided live/CG/AI video is admitted by native source SHA without per-film generation consent',async()=>{
+ const f=await fixture();try{
+  for(const kind of ['external-video','ai-film','cg-video'] as const){
+   let draft=f.store.read(f.draft.id);draft.scenes.forEach(s=>{s.label=(kind==='ai-film'?'AI生成影片片段':kind==='cg-video'?'CG动画片段':'外部视频片段')+'｜发布2026-10-21'});draft=f.store.update(draft.id,draft.revision,draft)
+   const service=f.service(),preflight=await service.preflight(),state=service.journal.read()
+   await service.execute({operation:'record-scenes',expectedChecklistRevision:state.revision,scenes:preflight.scenes.map(row=>({sceneId:row.sceneId,fingerprint:row.fingerprint,intent:'Quote an external work, not a real-world event assertion.',dateLabel:'发布2026-10-21',materials:[{artifactId:'robot.mp4',referenceId:'ref',kind,observation:'Native source-bound controlled moving samples.',relation:'Quoted external work.'}],originalSpeech:{mode:'source',quote:'A verified primary claim.',translation:'完整中译。',reason:''}}))},'agent')
+   assert.equal((await f.service().preflight()).ready,true);assert.equal(service.journal.read().aiFilmApproval,undefined)
+  }
+  fs.unlinkSync(path.join(f.directory,'robot.mp4.origin.json'));await assert.rejects(f.record(),/NEWS_EXTERNAL_VIDEO_REQUIRED/,'Relabeling a locally generated file as real footage cannot bypass consent')
+ }finally{f.close()}
+})
+
+test('External provenance follows only hash-verified native derivation, never an arbitrary MP4 or changed parent',async()=>{
+ const f=await fixture();try{
+  fs.writeFileSync(path.join(f.directory,'cut.mp4'),'native cut');await saveMediaDerivation(f.directory,{version:1,kind:'native-media-conversion',artifactId:'cut.mp4',sha256:hash('native cut'),sourceArtifactId:'robot.mp4',sourceSha256:hash('controlled video bytes'),sourceRange:{startSeconds:0,endSeconds:3}})
+  assert.equal(await externalVideoVisual(f.kernel.projectSources!(),f.directory,'cut.mp4'),true)
+  fs.writeFileSync(path.join(f.directory,'generated.mp4'),'generated text animation');assert.equal(await externalVideoVisual(f.kernel.projectSources!(),f.directory,'generated.mp4'),false)
+  fs.writeFileSync(path.join(f.directory,'robot.mp4'),'changed root bytes');await assert.rejects(externalVideoVisual(f.kernel.projectSources!(),f.directory,'cut.mp4'),/changed/i)
  }finally{f.close()}
 })

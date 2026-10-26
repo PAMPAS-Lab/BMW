@@ -6,7 +6,7 @@ export const VIDEO_RATIOS = ['16:9', '9:16', '1:1', '4:3', '3:4'] as const
 export const VIDEO_STYLES = ['bmw-dark', 'clean-light', 'minimal'] as const
 export const WATERMARK_POSITIONS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const
 export interface VideoWatermark { enabled: boolean; text: string; position: typeof WATERMARK_POSITIONS[number]; opacity: number; size: number }
-export interface VideoOptions { cardLayout?:'standard'|'news';narrationPacing?:'standard'|'compact';aspectRatio: typeof VIDEO_RATIOS[number]; resolution: '720p'|'1080p'|'custom'; width?:number; height?:number; fps: number; music: boolean; style: typeof VIDEO_STYLES[number]; tts:NarrationOptions; watermark: VideoWatermark }
+export interface VideoOptions { cardLayout?:'standard'|'news'|'news-compact';narrationPacing?:'standard'|'compact';aspectRatio: typeof VIDEO_RATIOS[number]; resolution: '720p'|'1080p'|'custom'; width?:number; height?:number; fps: number; music: boolean; style: typeof VIDEO_STYLES[number]; tts:NarrationOptions; watermark: VideoWatermark }
 export type VideoOptionOverrides=Partial<Omit<VideoOptions,'watermark'|'tts'>>&{watermark?:Partial<VideoWatermark>;tts?:Partial<NarrationOptions>}
 export interface VideoTemplate { name: string; options: VideoOptions }
 export interface VideoPreferences { defaults: VideoOptions; templates: VideoTemplate[] }
@@ -24,7 +24,8 @@ export function assertWatermark(raw: unknown, base: VideoWatermark = DEFAULT_VID
 export function assertVideoOptions(raw:unknown={},base:VideoOptions=structuredClone(DEFAULT_VIDEO_OPTIONS)):VideoOptions {
   const value=mediaRecord(raw);closed(value,[...VIDEO_OPTION_KEYS,'width','height'])
   const result={...base,...value}
-  for(const key of ['cardLayout','narrationPacing'] as const)if(result[key]!==undefined&&!['standard',key==='cardLayout'?'news':'compact'].includes(result[key]))throw new TypeError('Unsupported layout or narration pacing.')
+  for(const key of ['cardLayout','narrationPacing'] as const)if(result[key]!==undefined&&!(key==='cardLayout'?['standard','news','news-compact']:['standard','compact']).includes(result[key]))throw new TypeError('Unsupported layout or narration pacing.')
+  if(result.cardLayout==='news-compact'&&result.aspectRatio!=='9:16')throw new TypeError('Compact news requires 9:16 output.');
   if(result.cardLayout==='news'&&!['16:9','9:16'].includes(result.aspectRatio))throw new TypeError('News layout supports 16:9 and 9:16.')
   if(!VIDEO_RATIOS.includes(result.aspectRatio)||!['720p','1080p','custom'].includes(result.resolution)||!VIDEO_STYLES.includes(result.style)||typeof result.music!=='boolean')throw new TypeError('Invalid video ratio, resolution, style or music setting.')
   let dimensions:{}|{width:number;height:number}={}
@@ -34,7 +35,7 @@ export function assertVideoOptions(raw:unknown={},base:VideoOptions=structuredCl
 /** Validate individual override fields before resolving them against a template or draft. */
 export function assertVideoOverrides(raw:unknown):VideoOptionOverrides {
   const value=mediaRecord(raw);closed(value,[...VIDEO_OPTION_KEYS,'width','height'])
-  for(const key of ['cardLayout','narrationPacing'] as const)if(value[key]!==undefined&&(typeof value[key]!=='string'||!['standard',key==='cardLayout'?'news':'compact'].includes(value[key])))throw new TypeError('Unsupported layout or narration pacing.')
+  for(const key of ['cardLayout','narrationPacing'] as const)if(value[key]!==undefined&&(typeof value[key]!=='string'||!(key==='cardLayout'?['standard','news','news-compact']:['standard','compact']).includes(value[key])))throw new TypeError('Unsupported layout or narration pacing.')
   if(value.aspectRatio!==undefined&&!VIDEO_RATIOS.includes(value.aspectRatio as VideoOptions['aspectRatio']))throw new TypeError('Invalid video ratio.')
   if(value.resolution!==undefined&&!['720p','1080p','custom'].includes(String(value.resolution)))throw new TypeError('Invalid video resolution.')
   if(value.style!==undefined&&!VIDEO_STYLES.includes(value.style as VideoOptions['style']))throw new TypeError('Invalid video style.')
@@ -70,6 +71,10 @@ export function resolveVideoOutput(rawPreferences:unknown,overrides:unknown={},n
   let base=preferences.defaults,selected:string|undefined
   if(name!==undefined){selected=templateName(name);const preset=preferences.templates.find(item=>item.name.toLocaleLowerCase()===selected!.toLocaleLowerCase());if(!preset)throw new Error(`找不到视频模板「${selected}」，请先读取 video.settings 查看模板。`);base=preset.options;selected=preset.name}
   dimensions=dimensions??(patch.width!==undefined||patch.height!==undefined?{width:patch.width,height:patch.height}:undefined)
+  if(dimensions?.width!==undefined&&dimensions.height!==undefined&&patch.aspectRatio===undefined){
+    const size=assertVideoDimensions(dimensions.width,dimensions.height)
+    patch.aspectRatio=VIDEO_RATIOS.find(ratio=>{const [a,b]=ratio.split(':').map(Number);return Math.abs(size.width/size.height-a/b)<.01})
+  }
   if(dimensions?.width!==undefined&&dimensions.height!==undefined&&(patch.resolution??base.resolution)==='custom'){
     const size=assertVideoDimensions(dimensions.width,dimensions.height);patch.width=size.width;patch.height=size.height
     if(patch.aspectRatio===undefined)patch.aspectRatio=VIDEO_RATIOS.find(ratio=>{const [a,b]=ratio.split(':').map(Number);return Math.abs(size.width/size.height-a/b)<.01})
@@ -101,5 +106,5 @@ export function saveVideoTemplate(raw:unknown,name:unknown,options:unknown):Vide
   return normalizeVideoPreferences(preferences)
 }
 export const watermarkSchema={type:'object',additionalProperties:false,properties:{enabled:{type:'boolean'},text:{type:'string',maxLength:60},position:{type:'string',enum:WATERMARK_POSITIONS},opacity:{type:'number',minimum:.1,maximum:1},size:{type:'integer',minimum:10,maximum:32}}}
-export const videoOptionProperties={cardLayout:{enum:['standard','news']},narrationPacing:{enum:['standard','compact']},aspectRatio:{type:'string',enum:VIDEO_RATIOS},resolution:{type:'string',enum:['720p','1080p','custom']},width:{type:'integer',minimum:320,maximum:1920},height:{type:'integer',minimum:180,maximum:1920},fps:{type:'integer',minimum:12,maximum:30},music:{type:'boolean'},style:{type:'string',enum:VIDEO_STYLES},watermark:watermarkSchema,tts:narrationOptionsSchema}
+export const videoOptionProperties={cardLayout:{enum:['standard','news','news-compact']},narrationPacing:{enum:['standard','compact']},aspectRatio:{type:'string',enum:VIDEO_RATIOS},resolution:{type:'string',enum:['720p','1080p','custom']},width:{type:'integer',minimum:320,maximum:1920},height:{type:'integer',minimum:180,maximum:1920},fps:{type:'integer',minimum:12,maximum:30},music:{type:'boolean'},style:{type:'string',enum:VIDEO_STYLES},watermark:watermarkSchema,tts:narrationOptionsSchema}
 export const videoOptionsSchema={type:'object',additionalProperties:false,properties:videoOptionProperties}

@@ -46,6 +46,10 @@ DSH 预设装配官方 `compaction-basic` 与 `compaction-tool-result-pruner`，
 
 ## NEWS-01 新闻选题与制作
 
+横屏来源视频可配置 `cardLayout:news-compact`（9:16输出），为已确认的紧凑新闻模板。原生 `compact-news-layout` 统一文字预检、Studio预览和MP4绘制：720×1280参考坐标，标题48px/2行，原片等比适配至640宽、480高以内且不画填空外框；中文字幕42px/2行位于实际视频下沿24px，原文30px/2行另占固定区域，底部安全区128px。label按`｜`分隔素材属性与来源日期；品牌文字来自watermark。固定字体、行数和词边界测量先于导出；超长内容要求作者按语义/实测句界拆cue，不缩小或截掉文字。可见全片/镜头叠层与手工卡片拒绝进入该固定模板，避免覆盖保留区域；旧标准/news布局和已有作品保持读取。竖屏原片不静默拉伸成横屏，实际解码纵横比不合适时明确拒绝。
+
+准备材料类型支持`real-footage / ai-film / cg-video / external-video / still / diagram`。外部实拍、CG/动画、第三方AI影片均可满足来源视频要求，但视频必须有原生获取记录/身份与当前SHA匹配，或可逐级核验的原生转换派生链；hash改变、循环/过深派生、仅有文件或作者声明均拒绝。准备资产返回externalVideo事实，静帧和区间/引用门禁保留；CG和AI分别要求可见生成属性标识，合成对白不冒充真人。未经用户同意的本地文字/图片生成视频没有外部来源资格；旧user-only逐稿SHA授权保留用于明确批准的生成视频，模型不能自行授权。独立审片policy7承认外部CG/AI视频并保留当前全部关键态、实际输出原声/运动和独立整片判断；确定性行数/位置预检结果用于复用，真实输出异常仍核验。
+
 Agent草稿摘要的每镜`preparationInventory`显示已绑定引用数、来源数和主视频／图片段数，明确`motionVerification:not-performed`；它不认证素材运动、相关性、日期或事实。read-scene/timeline在既有分页内增加`layerSetAllowed`、`sceneStartSeconds`和`editTimeDomain:film-seconds`，区分独立对象与主素材、局部与全片时钟。非法编辑／原生图层字段的拒绝回包提供有界字段名及合法字段，仍严格拒绝、不静默改值。
 
 `news-preparation` 是唯一 browser 的既有 `video.studio` 内新增封闭操作，要求当前 draftId/expectedRevision；preparationRequest 为 read/preflight/enable/record-scene/record-scenes/prepare-shots/prepare-scene-references。read 返回保存声明，preflight 只读检查当前实际媒体 SHA、可解码轨道和源区间、精确来源引用、实际日期文字及逐镜声明。每镜返回 fingerprint、durationSeconds、sourceIntervals、assets、missing/stale/unverified/verified-by-agent/verified-by-user 状态及缺口；模型按最多20镜／16KiB分页读取。read/preflight 不保存草稿或清单。
@@ -1230,6 +1234,8 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Preparation diagnostics identify the exact authored field without echoing text or weakening speech requirements`
 - `Reusing existing shot IDs rejects before native work or checkpoint writes and directs explicit footage replacement`
 - `AI film exception requires trusted exact-video approval, persistent labeling and unchanged independent evidence gates`
+- `Externally provided live/CG/AI video is admitted by native source SHA without per-film generation consent`
+- `External provenance follows only hash-verified native derivation, never an arbitrary MP4 or changed parent`
 
 #### `packages/feature-video/test/news.test.ts`
 
@@ -1689,6 +1695,12 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Source PTS indexes reject file-clock substitution, unobserved gaps, stale media/PNGs and foreign Projects`
 - `Mapped captures select middle frames through pause and variable rate, verify decoded PTS and roll back failed PNGs`
 
+#### `packages/media-native/test/compact-news.test.ts`
+
+- `Compact native geometry keeps every landscape aspect caption-adjacent and within vertical safety`
+- `Compact text keeps content and Latin words, balances a Chinese orphan, and rejects overflow without shrink`
+- `Compact preflight rejects layout overrides/long cues and shared native painter uses the same fixed slots`
+
 #### `packages/media-native/test/media-controller.test.ts`
 
 - `Shared decoding FIFO drains active cleanup, skips cancelled previews and survives failed jobs`
@@ -1777,6 +1789,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `packages/media-native/test/video-options.test.ts`
 
+- `Explicit portrait dimensions resolve compact layout before validating inherited landscape defaults`
 - `video ratios map to bounded even landscape portrait and square resolutions`
 - `explicit video overrides beat template snapshots and defaults with nested watermark merge`
 - `video templates and styles reject duplicate names arbitrary controls and oversized watermarks`

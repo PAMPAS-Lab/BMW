@@ -265,6 +265,7 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | media.processing | contract | media-native | packages/media-native/test/media-processing.test.ts | 默认 |
 | media.production | contract | media-native | packages/media-native/test/video-production.test.ts | 默认 |
 | media.options | unit | media-native | packages/media-native/test/video-options.test.ts | 默认 |
+| media.compact-news | contract | media-native | packages/media-native/test/compact-news.test.ts | 默认 |
 | media.scene-clock | media | media-native, feature-video | scripts/scene-clock-smoke.ts | 默认 |
 | media.speech | contract | media-native | packages/media-native/test/speech.test.ts | 默认 |
 | media.port-contract | contract | media-native | packages/media-native/test/media-port.test.ts | 默认 |

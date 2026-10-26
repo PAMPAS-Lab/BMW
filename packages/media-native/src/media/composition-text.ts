@@ -1,3 +1,4 @@
+import {compactSceneIssues,compactText} from './compact-news-layout.js'
 import {detailedTextFits} from './card-details-paint.js'
 import {captionText,estimatedCaptionCues} from '../composition-contract.js'
 import type {CompositionScene,MediaComposition} from '../composition-contract.js'
@@ -77,6 +78,7 @@ export function templateBoxes(scene:CompositionScene,W:number,layout?:MediaCompo
  return []
 }
 export function reviewSceneText(context:TextMeasure,scene:CompositionScene,width:number,height:number,narrationDuration=scene.durationSeconds-1,layout?:MediaComposition['cardLayout']):TextReviewIssue[]{
+ if(layout==='news-compact')return compactSceneIssues(context,scene,'',narrationDuration).map(message=>({code:'text-overflow' as const,severity:'error' as const,message,seconds:0}))
  const original=scene;scene=cardPaintScene(scene)
  const W=720*width/height,margin=W<600?24:48,issues:TextReviewIssue[]=[],kind=scene.sceneTemplate?.kind,hasVisual=sceneVisuals(scene).length>0
  const issue=(code:TextReviewIssue['code'],message:string,severity:TextReviewIssue['severity']='warning',seconds=0)=>issues.push({code,severity,message,seconds})
@@ -109,6 +111,7 @@ export function reviewSceneText(context:TextMeasure,scene:CompositionScene,width
  return issues
 }
 export function assertCompositionText(context:TextMeasure,composition:MediaComposition,durations?:number[]):void{
+ if(composition.cardLayout==='news-compact'){if(compactText(context,composition.title,48,2).overflow||composition.watermark?.enabled&&compactText(context,composition.watermark.text,30,1).overflow)throw new Error('STUDIO_TEXT_LAYOUT: 紧凑标题或品牌文字超出固定区域。');if(composition.layers?.some(l=>!l.hidden&&l.opacity>0))throw new Error('STUDIO_TEXT_LAYOUT: 紧凑模板不接收全片可见叠层，避免覆盖固定区域。')}
  const W=720*composition.width/composition.height,margin=W<600?24:48
  if(composition.cardLayout==='news'&&fitText(context,composition.title,W-margin*2,3,W<600?28:40,108).overflow)throw new Error('STUDIO_TEXT_LAYOUT: 全片标题放不下，请缩短标题。')
  for(const [index,scene]of composition.scenes.entries()){const errors=reviewSceneText(context,scene,composition.width,composition.height,durations?.[index],composition.cardLayout).filter(issue=>issue.severity==='error');if(errors.length)throw new Error('STUDIO_TEXT_LAYOUT: '+scene.title+'：'+errors.map(issue=>issue.message).join('；'))}

@@ -1,3 +1,4 @@
+import {paintCompactNews} from './compact-news-layout.js'
 import {visualEffectFilter} from '../visual-effects.js'
 import {paintLoupe} from './loupe-paint.js'
 import {scenePlaybackClock} from '../scene-playback-window.js'
@@ -31,6 +32,7 @@ function captionFooterTop(context:CanvasRenderingContext2D,identity:CompositionS
 }
 /** A single responsive painter is used by Studio preview and MP4 export. */
 export function paintScene(context:CanvasRenderingContext2D,scene:CompositionScene,frame:CompositionCanvasFrame|null,time:number,_duration:number,index:number,total:number,narrationDuration:number,output?:Pick<MediaComposition,'width'|'height'|'style'|'watermark'>&Partial<Pick<MediaComposition,'title'|'cardLayout'>>,onText?:(box:CompositionTextBox)=>void,cardAssets?:ReadonlyMap<string,{image?:HTMLCanvasElement}>,onVisual?:(box:CompositionVisualBox)=>void):void {
+  if(output?.cardLayout==='news-compact'){paintCompactNews(context,scene,frame,time,narrationDuration,{...output,title:output.title??''},(_text,x,y,width,height)=>onText?.({kind:'global-title',index:0,x,y,width,height}));return}
   const height=output?.height??720,width=output?.width??1280,W=720*width/height,H=720,margin=W<600?24:48
   const card=scene.cardSpec,originalScene=scene
   scene=cardPaintScene(scene)

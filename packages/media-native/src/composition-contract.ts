@@ -145,7 +145,8 @@ export function assertComposition(raw: unknown): MediaComposition {
   if(value.audioTracks!==undefined)result.audioTracks=assertAudioLayers(value.audioTracks)
   assertLayerComposition(result)
   assertVideoDimensions(result.width,result.height)
-  for(const key of ['cardLayout','narrationPacing'] as const)if(value[key]!==undefined){if(typeof value[key]!=='string'||!['standard',key==='cardLayout'?'news':'compact'].includes(value[key]))throw new TypeError('Unsupported layout or narration pacing.');Object.assign(result,{[key]:value[key]})}
+  for(const key of ['cardLayout','narrationPacing'] as const)if(value[key]!==undefined){if(typeof value[key]!=='string'||!(key==='cardLayout'?['standard','news','news-compact']:['standard','compact']).includes(value[key]))throw new TypeError('Unsupported layout or narration pacing.');Object.assign(result,{[key]:value[key]})}
+  if(result.cardLayout==='news-compact'&&(!result.title.trim()||Math.abs(result.width/result.height-9/16)>.01))throw new TypeError('Compact news requires a title and 9:16 output.');
   if(result.cardLayout==='news'&&(!result.title.trim()||![16/9,9/16].some(ratio=>Math.abs(result.width/result.height-ratio)<.01)))throw new TypeError('News layout requires a title and 16:9 or 9:16 output.')
   if(value.style!==undefined&&!VIDEO_STYLES.includes(value.style as VideoOptions['style']))throw new TypeError('Invalid video style.')
   result.style=(value.style??'bmw-dark') as VideoOptions['style']

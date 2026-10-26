@@ -871,7 +871,8 @@
             "cardLayout": {
               "enum": [
                 "standard",
-                "news"
+                "news",
+                "news-compact"
               ]
             },
             "narrationPacing": {
