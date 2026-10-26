@@ -3,7 +3,7 @@ import { agentIdentifier, agentText, parseAgentCapabilities, parseAgentDriverEve
 import type { AgentBackend, AgentConversation, AgentDriverDescription, AgentDriverEvent, AgentEvent, AgentRunRequest, AgentRunResult } from '@bmw-agent/agent-contract'
 import { ConversationStore } from './conversation-store.js'
 import { AgentHistoryStore } from './agent-history-store.js'
-import type {AgentTaskReceipt} from './agent-history-store.js'
+import type {AgentTaskReceipt,AgentTimingPoint} from './agent-history-store.js'
 
 export interface AgentHostProject { id: string; name: string; directory: string }
 export interface AgentHostOptions {
@@ -131,6 +131,7 @@ export class AgentHost {
     void settled.catch(() => {})
     const pending: PendingRun = { request: { sessionId, externalSessionId: row.externalSessionId, runId, messageId, project: structuredClone(project), text, context: '', signal: controller.signal }, backend, frozenContext, background, controller, settled, resolve: resolve!, reject: reject! }
     this.pending.set(runId, pending)
+    this.timing(pending.request,{phase:'queued',modelId:this.options.model?.(row.driverId)??null})
     if(!background)for(const earlier of this.pending.values())if(earlier.background&&!earlier.controller.signal.aborted){earlier.controller.abort();if(this.active===earlier)void earlier.backend.interrupt(earlier.request.sessionId,earlier.request.runId).catch(()=>{})}
     if (this.active?.request.sessionId !== sessionId) this.options.conversations.setStatus(sessionId, 'queued')
     this.publish(sessionId)
@@ -150,6 +151,7 @@ export class AgentHost {
     const pending=this.pending.get(runId)
     if(!pending)return
     if(!pending.background)throw new Error('This input is not a background collection')
+    this.timing(pending.request,{phase:'cancel.requested'})
     pending.controller.abort()
     if(this.active===pending)try{await pending.backend.interrupt(pending.request.sessionId,runId)}catch{/* Actual drain remains authoritative. */}
     await pending.settled
@@ -170,11 +172,12 @@ export class AgentHost {
   private async execute(pending: PendingRun): Promise<void> {
     if (!this.pending.has(pending.request.runId)) return // A queued cancellation was already persisted.
     const { request, backend, controller } = pending
+    this.timing(request,{phase:'dispatch'})
     let result: AgentRunResult | undefined, failure: unknown, eventTail = Promise.resolve()
     const tools = new Set<string>(), requested = new Set<string>()
     let terminal: AgentRunResult | undefined, entered = false, eventFailure: unknown
     let acceptingCallbacks=true
-    const seenTools = new Set<string>()
+    const seenTools = new Set<string>(),outputStarted=new Set<string>()
     const toolMetrics=new Map<string,{started:number;action:string}>();let lastToolCompletedAt=performance.now()
     const emit = (raw: AgentDriverEvent): Promise<void> => {
       const write = eventTail.then(() => {
@@ -182,16 +185,21 @@ export class AgentHost {
         const event = parseAgentDriverEvent(raw)
         if (event.type === 'turn.disconnected') throw new Error('Only BMW Host may declare an uncertain disconnected run')
         if (terminal) throw new Error('Agent emitted work after its terminal event')
+        if(event.type==='input.accepted')this.timing(request,{phase:'input.accepted'})
+        if(event.type==='message.delta'&&!outputStarted.has(event.messageId)){outputStarted.add(event.messageId);this.timing(request,{phase:'output.started',messageId:event.messageId})}
+        if(event.type==='message.completed')this.timing(request,{phase:'output.completed',messageId:event.messageId})
         if (event.type === 'tool.started') {
           if (controller.signal.aborted || seenTools.has(event.callId)) throw new Error('Agent tool started after cancellation or reused its identity')
           const started=performance.now(),outsideToolGapMs=tools.size===0?Math.round(started-lastToolCompletedAt):null
           toolMetrics.set(event.callId,{started,action:event.action})
+          this.timing(request,{phase:'tool.started',callId:event.callId,action:event.action,outsideToolGapMs})
           try{console.info('[BMW tool timing] '+JSON.stringify({version:1,projectId:request.project.id,sessionId:request.sessionId,runId:request.runId,callId:event.callId,action:event.action,phase:'started',at:new Date().toISOString(),outsideToolGapMs}))}catch{/* Logging must not poison runtime callbacks. */}
           tools.add(event.callId); seenTools.add(event.callId)
         }
         if (event.type === 'tool.completed') {
           if (!tools.delete(event.callId)) throw new Error('Agent completed a tool that was not running')
           const metric=toolMetrics.get(event.callId);lastToolCompletedAt=performance.now();toolMetrics.delete(event.callId)
+          this.timing(request,{phase:'tool.completed',callId:event.callId,action:metric?.action,elapsedMs:metric?Math.max(0,lastToolCompletedAt-metric.started):undefined,success:event.success})
           try{console.info('[BMW tool timing] '+JSON.stringify({version:1,projectId:request.project.id,sessionId:request.sessionId,runId:request.runId,callId:event.callId,action:metric?.action,phase:'completed',at:new Date().toISOString(),elapsedMs:metric?Math.round(lastToolCompletedAt-metric.started):null,success:event.success}))}catch{/* Logging must not poison runtime callbacks. */}
         }
         if (event.type === 'session.bound') this.options.conversations.bind(request.sessionId, event.externalSessionId)
@@ -229,17 +237,23 @@ export class AgentHost {
         const row = this.member(request.sessionId,pending.background?request.project.id:this.options.currentProject().id)
         if (row.projectId !== request.project.id || row.driverId !== backend.description.id) throw new Error('Agent Session membership changed before execution')
         request.externalSessionId = row.externalSessionId
+        this.timing(request,{phase:'context.started'})
         request.context = agentText(pending.frozenContext??await this.options.context(row.sessionId, row.projectId), 16384, 'BMW Project context')
+        this.timing(request,{phase:'context.completed'})
         const task=this.options.history.snapshot(row.sessionId).receipts.find(r=>r.runId===request.runId)?.task
         if(task?.modelId!==null&&task?.modelId!==undefined&&this.options.model?.(row.driverId)!==task.modelId)throw new Error('Internal task model selection changed before execution')
+        this.timing(request,{phase:'prepare.started'})
         const ready = await backend.prepare(request)
+        this.timing(request,{phase:'prepare.completed'})
         if (ready.id !== row.driverId || !parseAgentCapabilities(ready.capabilities).browserOnly) throw new Error('Agent driver has not verified a browser-only tool catalog')
         if(task?.kind==='video-review'&&!ready.capabilities.images)throw new Error('Video review requires an image-capable official runtime')
         if (controller.signal.aborted) result = { outcome: 'interrupted', message: 'Message cancelled during driver preparation' }
         else {
           entered = true
           this.options.conversations.setStatus(request.sessionId, 'running'); this.publish(request.sessionId)
+          this.timing(request,{phase:'runtime.started'})
           result = await backend.run(request, emit)
+          this.timing(request,{phase:'runtime.returned',outcome:result?.outcome})
           await eventTail
           if (eventFailure) throw eventFailure
           if (!result || !['success', 'interrupted', 'failed'].includes(result.outcome)) throw new Error('Invalid Agent run result')
@@ -251,6 +265,7 @@ export class AgentHost {
       }
     } catch (error: unknown) {
       failure = error
+      this.timing(request,{phase:'runtime.failed'})
       if(!controller.signal.aborted)this.options.onSettingsInvalidated?.(backend.description.id)
       controller.abort()
       if (entered) { try { await backend.interrupt(request.sessionId, request.runId) } catch { /* Resource drain below remains authoritative. */ } }
@@ -289,17 +304,24 @@ export class AgentHost {
       pending.reject(error)
     }
     this.remember(pending)
+    this.timing(request,{phase:'settled',outcome:failure&&entered?'uncertain':result?.outcome??'failed'})
     this.pending.delete(request.runId)
     if (this.active === pending) this.active = null
     if ([...this.pending.values()].some(run => run.request.sessionId === request.sessionId)) this.options.conversations.setStatus(request.sessionId, 'queued')
     this.publish(request.sessionId)
   }
+  private timing(request:AgentRunRequest,point:AgentTimingPoint):void{try{this.options.history.recordTiming?.(request.sessionId,request.runId,point)}catch{/* Diagnostics cannot change admission or cleanup. */}}
   private remember(pending: PendingRun): void {
     this.completed.set(pending.request.runId, pending.settled)
     if (this.completed.size > 256) this.completed.delete(this.completed.keys().next().value!)
   }
   private async drain(pending: PendingRun): Promise<void> {
-    const results=await Promise.allSettled([Promise.resolve().then(()=>pending.backend.drain?.(pending.request.sessionId,pending.request.runId)),Promise.resolve().then(()=>this.options.drain(pending.request))])
+    const observe=async(component:'driver'|'browser',work:()=>Promise<unknown>)=>{
+      const started=performance.now();this.timing(pending.request,{phase:'cleanup.started',component})
+      try{await work();this.timing(pending.request,{phase:'cleanup.completed',component,elapsedMs:performance.now()-started,success:true})}
+      catch(error){this.timing(pending.request,{phase:'cleanup.failed',component,elapsedMs:performance.now()-started,success:false});throw error}
+    }
+    const results=await Promise.allSettled([observe('driver',()=>Promise.resolve().then(()=>pending.backend.drain?.(pending.request.sessionId,pending.request.runId))),observe('browser',()=>Promise.resolve().then(()=>this.options.drain(pending.request)))])
     const failure=results.find((row):row is PromiseRejectedResult=>row.status==='rejected')
     if(failure)throw failure.reason
   }
@@ -322,11 +344,13 @@ export class AgentHost {
     this.member(sessionId)
     const runs = [...this.pending.values()].filter(row => row.request.sessionId === sessionId)
     for (const run of runs) {
+      this.timing(run.request,{phase:'cancel.requested'})
       run.controller.abort()
       if (this.active !== run && this.quarantined !== run) {
         const result: AgentRunResult = { outcome: 'interrupted', message: 'Queued message cancelled before execution' }
         const event: AgentEvent = { sessionId, runId: run.request.runId, sequence: this.options.history.snapshot(sessionId).events.length + 1, createdAt: Date.now(), event: { type: 'turn.completed', ...result } }
         this.options.history.append(event); this.publish(sessionId, event)
+        this.timing(run.request,{phase:'settled',outcome:'interrupted'})
         run.resolve(result); this.remember(run); this.pending.delete(run.request.runId)
       }
     }

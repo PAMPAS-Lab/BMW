@@ -153,3 +153,9 @@ HTTP完整资源优先 download；未加密完整HLS或HTTP区间预览优先 pr
 外层在终态与实际清理后先执行已准备的必要交接，再分析，不在交接前手抄长稿/逐调用复盘；一次handoff只带当前revision、实际MP4/稿/证据位置、具体未完项和下一动作。现阶段这是操作规程，不是Host自动循环或硬性时延保证。用户暂停时保持现有自动化PAUSED，不因修复、构建、重启或定时tick自行恢复，也不启动新选题/复测。
 
 代码修复先合并同一阻塞的相关改动，再以实际累计未验证文件运行`node scripts/test-runner.js --plan --files ...`。沿依赖/接口/行为watch选择验证，保留boundary/type和相关原生检查；无法证明范围时服从选择器全量fallback。一次顺序build/check后直接执行生成的检查入口，避免多个`npm run test:*`各自清理重建；相同源哈希且已经通过的检查不再重复。源或依赖改变仅复用仍匹配的原始验证，不能拿旧成功覆盖新改动。测试期间不再修改参与源哈希的文档/源码；全部必要检查通过、任务空闲才正常重启生产。隔离验证与真实付费模型/制作时长复测分开记录。
+
+## 耗时日志覆盖
+
+BMW自身的输入/工具/文字流事件仍保留在agent-history。新增agent-history/timings/*.jsonl记录排队、派发、上下文与官方驱动准备、runtime、输出、工具及两类实际清理，按Project/Session/runId/callId和bootId关联；崩溃或隔离未结束的区间保持开放，不能补成成功。无服务端原始计时证据，不把调用间等待分成纯模型推理/排队。新增日志仅从部署起记录，不伪造历史缺失时点。
+
+外层每次制作/审片交接先标handoff ready，可信UI派发并取得真实runId后标dispatched；按轮次和尝试保留同一关联ID。修复、build、check、test与重启用操作员stage-log.ts的run包装记录真实起止、退出码/信号，不再仅凭日志文件修改时间推测。分阶段collection/verification/footage/script/production/export/review/rework/delivery可用mark start/finish，未完成保留开放。工具和官方工作由BMW原生记录，外层文件仅写本地台账，不代写生产Profile。写日志失败或缺端点单列缺口，下一派发前先修复；不能把缺日志当作纯模型等待或声称全覆盖。

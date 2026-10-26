@@ -5,6 +5,9 @@ import { agentIdentifier, agentRecord, agentText, parseAgentEvent } from '@bmw-a
 import type { AgentEvent, AgentMessage, AgentInteraction,AgentConversation } from '@bmw-agent/agent-contract'
 import { readStateFile,StateLoadError } from './state-load.js'
 
+export type AgentTimingPhase='queued'|'dispatch'|'context.started'|'context.completed'|'prepare.started'|'prepare.completed'|'runtime.started'|'runtime.returned'|'runtime.failed'|'input.accepted'|'output.started'|'output.completed'|'tool.started'|'tool.completed'|'cleanup.started'|'cleanup.completed'|'cleanup.failed'|'settled'|'cancel.requested'
+export interface AgentTimingPoint {phase:AgentTimingPhase;callId?:string;messageId?:string;action?:string;component?:'driver'|'browser';elapsedMs?:number;outsideToolGapMs?:number|null;success?:boolean;outcome?:'success'|'failed'|'interrupted'|'uncertain';modelId?:string|null}
+
 export interface AgentTaskReceipt {kind:'video-review';key:string;payload:string;modelId:string|null}
 export function parseAgentTaskReceipt(raw:unknown):AgentTaskReceipt {
  const v=agentRecord(raw)
@@ -66,6 +69,8 @@ export function parseAgentHistory(raw: unknown, sessionId: string): AgentHistory
 }
 export class AgentHistoryStore {
   private readonly cache = new Map<string, AgentHistory>()
+  private readonly timingBootId=crypto.randomUUID()
+  private timingFailed=false
   constructor(private readonly directory: string, private readonly conversation:(sessionId:string)=>AgentConversation) {}
   private file(sessionId: string): string {
     agentIdentifier(sessionId)
@@ -81,6 +86,32 @@ export class AgentHistoryStore {
     return value
   }
   snapshot(sessionId: string): AgentHistory { return structuredClone(this.read(sessionId)) }
+  /** Host observation only. No prompts, arguments, response text or credentials.
+   * Segments are append-only and retained; logging never changes admission. */
+  recordTiming(sessionId:string,runId:string,point:AgentTimingPoint):boolean {
+    try{
+      agentIdentifier(runId);const history=this.read(sessionId)
+      if(!history.receipts.some(r=>r.runId===runId))throw new Error('Timing requires a persisted input receipt')
+      const allowed=['phase','callId','messageId','action','component','elapsedMs','outsideToolGapMs','success','outcome','modelId']
+      if(Object.keys(point).some(k=>!allowed.includes(k)))throw new Error('Timing accepts metadata only')
+      if(!['queued','dispatch','context.started','context.completed','prepare.started','prepare.completed','runtime.started','runtime.returned','runtime.failed','input.accepted','output.started','output.completed','tool.started','tool.completed','cleanup.started','cleanup.completed','cleanup.failed','settled','cancel.requested'].includes(point.phase))throw new Error('Unknown timing phase')
+      for(const value of [point.elapsedMs,point.outsideToolGapMs])if(value!==undefined&&value!==null&&(!Number.isFinite(value)||value<0))throw new Error('Invalid timing duration')
+      const row={version:1,at:Date.now(),monotonicMs:performance.now(),bootId:this.timingBootId,projectId:history.owner.projectId,sessionId,runId,driverId:history.owner.driverId,...point,...(point.action?{action:/^[a-z][a-z0-9.-]{0,100}$/.test(point.action)?point.action:'unknown'}:{}),measurement:'host-observed; server-inference-and-queue-unavailable'}
+      const line=JSON.stringify(row)+'\n';if(Buffer.byteLength(line)>4096)throw new Error('Timing row exceeds budget')
+      const directory=path.join(this.directory,'timings');fs.mkdirSync(directory,{recursive:true,mode:0o700})
+      if(fs.lstatSync(directory).isSymbolicLink())throw new Error('Timing directory must be local')
+      const prefix=crypto.createHash('sha256').update(sessionId+'\0'+runId).digest('hex')+'-'+this.timingBootId
+      for(let segment=0;segment<10000;segment++){
+        const file=path.join(directory,prefix+'-'+segment+'.jsonl')
+        const fd=fs.openSync(file,fs.constants.O_WRONLY|fs.constants.O_CREAT|fs.constants.O_APPEND|fs.constants.O_NOFOLLOW,0o600)
+        try{const stat=fs.fstatSync(fd);if(!stat.isFile())throw new Error('Timing output must be a regular file');if(stat.size+Buffer.byteLength(line)>8*1024*1024)continue;fs.writeFileSync(fd,line);return true}finally{fs.closeSync(fd)}
+      }
+      throw new Error('Timing segment budget exceeded')
+    }catch{
+      if(!this.timingFailed){this.timingFailed=true;console.warn('[BMW timing unavailable] Metadata log could not be saved; input receipts and cleanup remain authoritative.')}
+      return false
+    }
+  }
   validateBinding(row:AgentConversation):void {
     const owner=this.read(row.sessionId).owner
     if(owner.driverId!==row.driverId||owner.projectId!==row.projectId||owner.externalSessionId!==row.externalSessionId)throw new StateLoadError(this.file(row.sessionId),new Error('Display history belongs to another Project or driver binding'))

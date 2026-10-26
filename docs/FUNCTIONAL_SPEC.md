@@ -1852,6 +1852,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 - `Historical native capture identity survives restart only with paired admitted calls and unchanged capture-index bytes`
 - `display history survives restart, keeps bounded ordered streaming and cannot replace submission receipts`
+- `Host timing survives restart, rotates without deletion, excludes content and cannot change receipts on logging failure`
 - `history never admits foreign, out-of-order or terminal-late events and preserves corrupt saved files`
 - `explicitly ending an unknown receipt preserves evidence, active interactions and restart audit without replay`
 
@@ -2261,3 +2262,5 @@ Studio render（包括缓存复用）直接返回原生计算的export.sha256，
 操作者本地新闻交付打包在导出标准字幕时保留当前草稿已测量的旁白源时长，避免渲染投影删除该内部字段后对估算字幕路径误报缺时长；没有源时长仍拒绝，不猜测或解码新音频。当前MP4、独立结论、全部关键帧、SHA及版本门禁不变，不写生产Profile。
 
 新闻作者/独立审片提示词v2.3在现行v2.2分工及审片策略5上明确Schema和同版本读取复用、仅对实际参数缺口补发现、原声镜避免重复中文TTS，以及film独立批量字段的本输入内修正。移除交审提示中重复的完整英文编辑包/批量操作说明，保留一份权威中文规则和全部视觉/事实/运动/原声/独立整片门禁。不新增自动语义缓存、自动重投或增量语义审片，不将此提示调整宣称为已实测节省时长。
+
+Host耗时诊断追加保存于agent-history/timings/*.jsonl，按Session/run散列、进程bootId和分段关联；记录queued/dispatch、上下文/驱动准备、runtime开始/返回/失败、实际input.accepted、消息输出首尾、tool首尾、driver/browser各自实际cleanup首尾或失败、取消与最终settled。时间同时有UTC毫秒和同boot单调时钟，工具保留callId/action、成功与耗时；选择的模型ID仅在排队记录。准备未过不伪记模型执行，清理未完不伪记settled。单段8MiB后新建分段，重启不覆盖旧段，不删除历史。仅保存闭合元数据，不保存正文、工具参数、回复内容、凭据或服务端推理估计。未提供的纯模型推理/服务排队始终unavailable。日志写入失败返回false并一次警告，不改变回执、FIFO或清理隔离；原始输入回执仍是投递权威，诊断不能用于自动重放。文件不可用时外层明确记录审计缺口。

@@ -25,7 +25,7 @@ function fixture(t: TestContext, run: AgentBackend['run'], drain: (request: Agen
   let project = { id: 'p', name: 'Test', directory: root }
   const host = new AgentHost({ conversations, history, backends: [backend], currentProject: () => project, project:id=>['p','q'].includes(id)?{id,name:'Test',directory:root}:undefined, context: async () => 'Project context', drain })
   t.after(async () => { await host.close(); fs.rmSync(root, { recursive: true, force: true }) })
-  return { host, conversations, history, backend, setProject: (id: string) => { project = { ...project, id } } }
+  return { root, host, conversations, history, backend, setProject: (id: string) => { project = { ...project, id } } }
 }
 test('Agent input and BMW Session appear before connection; failed catalog preflight never releases the prompt', async t => {
   let called = false
@@ -36,6 +36,8 @@ test('Agent input and BMW Session appear before connection; failed catalog prefl
   assert.equal(f.conversations.get(session.sessionId).status, 'queued')
   assert.equal((await f.host.wait(submission.runId)).outcome, 'failed')
   assert.equal(called, false)
+  const timing=fs.readdirSync(path.join(f.root,'history/timings')).flatMap(file=>fs.readFileSync(path.join(f.root,'history/timings',file),'utf8').trim().split('\n').map(line=>JSON.parse(line) as {phase:string;outcome?:string}))
+  assert.ok(timing.some(r=>r.phase==='queued'));assert.ok(timing.some(r=>r.phase==='prepare.started'));assert.ok(timing.some(r=>r.phase==='runtime.failed'));assert.ok(timing.some(r=>r.phase==='settled'&&r.outcome==='failed'));assert.ok(!timing.some(r=>r.phase==='runtime.started'),'Rejected catalog is never reported as model execution')
   assert.equal(f.history.snapshot(session.sessionId).receipts[0].providerReceiptId, null)
 })
 test('provider terminal notification does not finish the receipt or release FIFO before browser drain', async t => {
@@ -49,14 +51,19 @@ test('provider terminal notification does not finish the receipt or release FIFO
   }, async request => { if (request.text === 'first') { inDrain.resolve(); await release.promise } })
   const session = f.host.create('fixture'), first = f.host.enqueue(session.sessionId, 'first'), second = f.host.enqueue(session.sessionId, 'second')
   await inDrain.promise
+  const trace=()=>fs.readdirSync(path.join(f.root,'history/timings')).flatMap(file=>fs.readFileSync(path.join(f.root,'history/timings',file),'utf8').trim().split('\n').map(line=>JSON.parse(line) as {runId:string;phase:string;component?:string}))
+  try{assert.ok(trace().some(r=>r.runId===first.runId&&r.phase==='cleanup.started'&&r.component==='browser'))
+  assert.ok(!trace().some(r=>r.runId===first.runId&&r.phase==='settled'),'Timing cannot claim release while browser cleanup remains held')
   assert.deepEqual(calls, ['first'])
   assert.equal(f.history.snapshot(session.sessionId).receipts[0].state, 'accepted')
   assert.equal(f.host.busy, true)
+  }finally{release.resolve()}
   release.resolve()
   await f.host.wait(first.runId); await f.host.wait(second.runId)
   assert.deepEqual(calls, ['first', 'second'])
   assert.equal(f.history.snapshot(session.sessionId).receipts.every(row => row.state === 'finished'), true)
   assert.equal(f.host.busy, false)
+  const persisted=trace().filter(r=>r.runId===first.runId);assert.ok(persisted.some(r=>r.phase==='cleanup.completed'&&r.component==='browser'));assert.equal(persisted.at(-1)?.phase,'settled')
 })
 test('cancel waits for the active browser tool to drain and cancels queued input without sending it', async t => {
   const active = deferred<void>(), release = deferred<void>(), calls: string[] = []
