@@ -3,7 +3,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import {ArtifactJobIO} from '@bmw-agent/media-native/artifact-io'
-import {assertArtifactId,assertFullMediaDecode,mediaRecord} from '@bmw-agent/media-native/contract'
+import {assertArtifactId,assertFullMediaDecode,mediaRecord,PRESERVATION_ARTIFACT_LIMIT} from '@bmw-agent/media-native/contract'
 import {assertImageInspection} from '@bmw-agent/media-native/image'
 import type {SourceMediaState,SourceCaptureGuard,VideoIdentity} from '@bmw-agent/media-native/sources'
 import {assertSourceRequest,assertSourceCatalog,assertSourceObservation,assertSourceCaptureEvidence,assertSourceDeliveryRange,assertVideoIdentity,sameVideoIdentity} from '@bmw-agent/media-native/sources'
@@ -16,6 +16,14 @@ export function assertSourcePreservationBasis(proof:Record<string,unknown>,expec
  if(proof.basis==='HTTP-delivery-bytes')return proof.basis
  if(proof.basis==='YouTube-SABR-encoded-tracks'&&expected?.platform==='youtube'&&proof.completeVod===true&&proof.completeSeparatedTracks===true&&observed!==undefined&&sameVideoIdentity(expected,assertVideoIdentity(observed)))return proof.basis
  throw new Error('Invalid identity-bound preservation basis.')
+}
+/** Validate the complete native bundle before adopting it for rollback. */
+export function sourcePreservationArtifacts(created:string,raw:unknown):string[]{
+ const prefix=/^(preserved-[a-f0-9-]{36})-/.exec(created)?.[1]
+ if(!prefix||!Array.isArray(raw)||raw.length>PRESERVATION_ARTIFACT_LIMIT)throw new Error('Invalid owned preservation resources.')
+ const owned=raw.map(assertArtifactId)
+ if(!owned.includes(created)||new Set(owned).size!==owned.length||owned.some(id=>!id.startsWith(prefix+'-')))throw new Error('Foreign preservation resource.')
+ return owned
 }
 /** Resolve the saved source within the active Project; never fall back to the user's active tab. */
 export function sourceAcquisitionTab(pages:readonly {id:string;url:string}[],pageUrl:string,requested?:string,identity?:VideoIdentity):string {
@@ -31,7 +39,7 @@ export function sourceAcquisitionTab(pages:readonly {id:string;url:string}[],pag
  * ordinary news path uses auto in one native job; archive recovery skips the
  * already failed download and carries the new revision plus original scope. */
 export function sourceCaptureRecovery(request:Extract<import('@bmw-agent/media-native/sources').SourceRequest,{operation:'acquire'}>,scope:SourceCaptureGuard['scope'],revision:number,tabId:string,error:string){
- if(request.method!=='preserve'||/VIDEO_IDENTITY|SOURCE_CONFLICT|changed|quarantin|cleanup|login|access.denied/i.test(error))return null
+ if(request.method!=='preserve'||/MEDIA_PRESERVATION_TRACKS_INCOMPLETE|VIDEO_IDENTITY|SOURCE_CONFLICT|changed|quarantin|cleanup|login|access.denied/i.test(error))return null
  return {action:'library.sources' as const,sourceRequest:assertSourceRequest({operation:'acquire',expectedRevision:revision,sourceId:request.sourceId,acquisitionId:request.acquisitionId,candidateId:request.candidateId,method:'capture',tabId,videoSelector:scope.selector,videoIndex:scope.index,fromStart:false,maxDurationMs:29000}),meaning:'Explicit native capture after actual cleanup; requested archive preview offsets are not transferred. Verify the returned actual source range.'}
 }
 /** Invoked within the existing Browser FIFO; never recursively executes a tool. */
@@ -85,10 +93,7 @@ export class LibrarySources {
 
    let delivery:Record<string,unknown>|undefined
    if(method==='preserve'){
-    const prefix=/^(preserved-[a-f0-9-]{36})-/.exec(created)?.[1],preservation=mediaRecord(raw.preservation)
-    if(!prefix||!Array.isArray(raw.ownedArtifactIds)||raw.ownedArtifactIds.length>4016)throw new Error('Invalid owned preservation resources.')
-    const owned=raw.ownedArtifactIds.map(assertArtifactId)
-    if(!owned.includes(created)||new Set(owned).size!==owned.length||owned.some(id=>!id.startsWith(prefix+'-')))throw new Error('Foreign preservation resource.')
+    const preservation=mediaRecord(raw.preservation),owned=sourcePreservationArtifacts(created,raw.ownedArtifactIds)
     related.push(...owned.filter(id=>id!==created))
     const basis=assertSourcePreservationBasis(preservation,candidate.videoIdentity,raw.videoIdentity)
     if(!owned.includes(assertArtifactId(preservation.proofArtifactId))||typeof preservation.proofSha256!=='string'||!/^[a-f0-9]{64}$/.test(preservation.proofSha256))throw new Error('Invalid preservation proof.')

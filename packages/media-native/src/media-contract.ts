@@ -7,6 +7,8 @@ import {assertAudioEvidence} from './audio-evidence-contract.js'
 import type {AudioEvidence} from './audio-evidence-contract.js'
 import {ARCHIVE_LIMITS} from './archive-limits.js'
 /** Public, browser-native media contracts. No host path or codec choice is model-controlled. */
+/** Original segments plus manifests, assembled tracks, subtitle sidecars and proofs. */
+export const PRESERVATION_ARTIFACT_LIMIT=ARCHIVE_LIMITS.segments+256
 export const MEDIA_LIMITS = Object.freeze({
   inputBytes: 512 * 1024 * 1024, outputBytes: 512 * 1024 * 1024,
   frameBytes: 20 * 1024 * 1024, chunkBytes: 1024 * 1024,

@@ -1,6 +1,8 @@
 # BMW current handoff
 
-社媒目标身份绑定已接通，X／微博公开样本各2/2完成原生获取和独立完整性核对；YouTube同目标完整直链的分离合并仅隔离夹具通过，真实SABR/UMP获取0/2，用户要求暂缓并登记[YOUTUBE-01](docs/plans/YOUTUBE_NATIVE_ACQUISITION.md)。保留HTTP/HLS，不引入yt-dlp与TikTok专用适配。[实测范围](docs/research/SOCIAL_DOWNLOAD_VALIDATION.md)与离线回归分别记录。
+视频取材按目标身份绑定；X／微博既有公开样本各2/2完成原生获取和独立完整性核对，YouTube原生工作标签、SABR／分离双轨实现及实测限制以[功能说明](docs/FUNCTIONAL_SPEC.md)和[计划](docs/plans/YOUTUBE_NATIVE_ACQUISITION.md)为准。保留HTTP/HLS，不引入yt-dlp与TikTok专用适配。
+
+新闻发布者的当前实测中，Fox HLS完整保留720p、2音轨、1条英文字幕；Yahoo Finance保留1080p、3音轨、en与en-US两条字幕。字幕为独立WebVTT，原始分片和时间索引留证，未知／缺失轨整体失败并清理，禁止自动降为无字幕MP4／录屏。独立逐cue、全音视频解码、身份/取消/Project清理及所需回归通过，详见[验证记录](docs/verification/NEWS_HLS_SUBTITLES_DOWNLOADS.json)。CNBC与CNN对应样本及版本范围见[发布者记录](docs/verification/NEWS_HLS_CNN_DOWNLOADS.json)。
 
 BMW 当前提供浏览器、素材库、Video Studio 三个并列工作区。素材库自动聚合各 Project 的已保存来源和媒体，支持全库检索、日期/状态筛选、收藏、标签、批量整理、历史新闻批次和跨 Project 完整证据复制；素材仍归各自 Project，目标副本及其说明独立保存。新闻收集与选题位于素材库，可信选择后进入原生 Studio；旧草稿、会话、来源和投递记录保留，唯一模型工具仍为 browser。
 

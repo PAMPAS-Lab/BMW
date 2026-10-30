@@ -1,3 +1,4 @@
+import {parsePreservedVtt} from '../packages/media-native/src/hls-subtitles.js'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
@@ -14,7 +15,7 @@ import type { MediaInfo } from '../packages/media-native/src/media-contract.js'
 import {mediaRecord} from '../packages/media-native/src/media-contract.js'
 import {createServer} from 'node:http'
 import crypto from 'node:crypto'
-import {Input,BufferSource,MP4,Output,BufferTarget,Mp4OutputFormat,Conversion} from 'mediabunny'
+import {Input,BufferSource,MP4,Output,BufferTarget,Mp4OutputFormat,MpegTsOutputFormat,Conversion} from 'mediabunny'
 
 const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-media-processing-')))
 const project = { id: 'media-job-project', name:'Isolated media fixture', directory: path.join(root, 'project') }
@@ -340,6 +341,77 @@ try {
       const tail=(await bridgeCall({action:'media.frames.sample',artifactId:result.artifactId,timestampsSeconds:[1.2]}));assert.equal(tail.images.length,1)
       const proof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/media-preservation-validation';fs.mkdirSync(proof,{recursive:true});fs.copyFileSync(path.join(artifacts,result.preservation.proofArtifactId),path.join(proof,'preserved-delivery.json'))
     }finally{await new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve()));kernel.tabs.delete(id);kernel.activeTabId=null;await source!.webContents.executeJavaScript(`document.querySelector('#preserve-source').remove()`)}
+  })
+  await stage('complete HLS bundle retains every declared audio and subtitle track and rolls back incomplete captions',async()=>{
+    const bodies:Record<string,Uint8Array|string>={},duration=exportedInfo.durationSeconds
+    for(const kind of ['video','audio'] as const){
+      const input=new Input({formats:[MP4],source:new BufferSource(fs.readFileSync(converted.path))}),target=new BufferTarget(),output=new Output({format:new Mp4OutputFormat({fastStart:'fragmented'}),target})
+      try{const conversion=await Conversion.init({input,output,tracks:'all',copy:{mode:'forced'},video:{discard:kind==='audio'},audio:{discard:kind==='video'}});assert.equal(conversion.discardedTracks.length,1);await conversion.execute()}finally{input.dispose()}
+      const bytes=Buffer.from(target.buffer!);let split=0;while(split<bytes.length&&bytes.toString('ascii',split+4,split+8)!=='moof'){const size=bytes.readUInt32BE(split);assert.ok(size>=8);split+=size}assert.ok(split>0&&split<bytes.length)
+      bodies['/'+kind+'-init.mp4']=bytes.subarray(0,split);bodies['/'+kind+'.m4s']=bytes.subarray(split)
+      bodies['/'+kind+'.m3u8']='#EXTM3U\n#EXT-X-MAP:URI="'+kind+'-init.mp4"\n#EXTINF:'+duration+',\n'+kind+'.m4s\n#EXT-X-ENDLIST\n'
+    }
+    bodies['/master.m3u8']='#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="a",NAME="English",LANGUAGE="en",DEFAULT=YES,URI="audio.m3u8"\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="b",NAME="English alternate encoding",LANGUAGE="en",DEFAULT=YES,URI="audio.m3u8"\n#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="s",NAME="English",LANGUAGE="en",DEFAULT=YES,URI="en.m3u8"\n#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="s",NAME="English US",LANGUAGE="en-US",URI="en-US.m3u8"\n#EXT-X-STREAM-INF:BANDWIDTH=10000,AUDIO="a",SUBTITLES="s"\nvideo.m3u8\n'
+    for(const language of ['en','en-US']){
+      bodies['/'+language+'.m3u8']='#EXTM3U\n#EXTINF:0.8,\n'+language+'-1.vtt\n#EXTINF:'+(duration-.8)+',\n'+language+'-2.vtt\n#EXT-X-ENDLIST\n'
+      const cue='a\n00:00.050 --> 00:01.000 align:start\n原声 '+language+'  \n\n',header='WEBVTT\nX-TIMESTAMP-MAP=LOCAL:00:00:00.000,MPEGTS:0\n\n'
+      bodies['/'+language+'-1.vtt']=header+cue;bodies['/'+language+'-2.vtt']=header+cue+'b\n00:01.100 --> 00:01.400\nLater text\n\n'
+    }
+    const videoIdentity={version:1 as const,platform:'page' as const,targetId:'https://fixture.example/subtitles',resourceId:'complete-bundle'}
+    let failure='';const cancel=new AbortController(),request={url:'https://fixture.example/master.m3u8',pageUrl:videoIdentity.targetId,videoIdentity,expectedTransport:'hls' as const,completeProgram:{durationSeconds:duration,requireAudio:true},fetchImpl:async(url:string)=>{
+      const key=new URL(url).pathname;let body=bodies[key]
+      if(key==='/en-US-2.vtt'){
+        if(failure==='missing')return new Response(null,{status:404})
+        if(failure==='utf8')body=Uint8Array.from([255,254])
+        if(failure==='map')body='WEBVTT\nX-TIMESTAMP-MAP=LOCAL:00:00.000,MPEGTS:8589934592\n\n'
+        if(failure==='cancel')cancel.abort(new Error('cancel final subtitle'))
+      }
+      return new Response(typeof body==='string'?body:body?new Uint8Array(body):null,{status:body?200:404,headers:{'content-type':key.endsWith('.m3u8')?'application/vnd.apple.mpegurl':key.endsWith('.vtt')?'text/vtt':'video/mp4'}})
+    }}
+    const result=await media.preserveMedia(request),p=result.preservation
+    assert.equal('completeSubtitles'in p&&p.completeSubtitles,true);assert.equal('subtitleTracks'in p&&p.subtitleTracks.length,2)
+    const ledger=mediaRecord(JSON.parse(fs.readFileSync(path.join(artifacts,p.proofArtifactId),'utf8'))),subtitleTracks=ledger.subtitleTracks as {artifactId:string;sha256:string;indexArtifactId:string;indexSha256:string;cueCount:number;duplicatesRemoved:number;language:string;delivery:string}[]
+    assert.deepEqual(subtitleTracks.map(t=>t.language),['en','en-US']);assert.ok('tracks'in result);assert.deepEqual(result.tracks.map(t=>t.type).sort(),['audio','audio','video'])
+    assert.equal((ledger.audioRenditions as {outputDefault:boolean}[]).filter(t=>t.outputDefault).length,1)
+    for(const track of subtitleTracks){
+      assert.equal(track.delivery,'external-sidecar');assert.equal(track.cueCount,2);assert.equal(track.duplicatesRemoved,1)
+      for(const [id,hash]of [[track.artifactId,track.sha256],[track.indexArtifactId,track.indexSha256]])assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(artifacts,id!))).digest('hex'),hash)
+      const parsed=parsePreservedVtt(fs.readFileSync(path.join(artifacts,track.artifactId)));assert.equal(parsed.cues[0]!.text,'原声 '+track.language+'  ')
+      const index=JSON.parse(fs.readFileSync(path.join(artifacts,track.indexArtifactId),'utf8')) as {mappings:{artifactId:string}[]};assert.equal(index.mappings.length,2);for(const m of index.mappings)assert.equal(parsePreservedVtt(fs.readFileSync(path.join(artifacts,m.artifactId))).cues.length>0,true)
+    }
+    const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{type:string;sampleCount:number}[]};assert.equal(decoded.completeFile,true);assert.deepEqual(decoded.tracks.map(t=>t.type).sort(),['audio','audio','video']);assert.ok(decoded.tracks.every(t=>t.sampleCount>0))
+    const before=fs.readdirSync(artifacts).sort()
+    for(const mode of ['missing','utf8','map','cancel']){failure=mode;await assert.rejects(media.preserveMedia({...request,signal:cancel.signal}),mode==='cancel'?/cancel final subtitle/:/MEDIA_PRESERVATION_TRACKS_INCOMPLETE/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);assert.equal(media.isCaptureActive(),false)}
+  })
+  await stage('TS HLS retains all encoded NAL/AAC payloads and verifies each packet PTS through independent MP4 demux',async()=>{
+    const input=new Input({formats:[MP4],source:new BufferSource(fs.readFileSync(converted.path))}),target=new BufferTarget(),output=new Output({format:new MpegTsOutputFormat(),target})
+    try{const conversion=await Conversion.init({input,output,tracks:'all',copy:{mode:'forced'}});assert.equal(conversion.discardedTracks.length,0);await conversion.execute()}finally{input.dispose()}
+    const ts=new Uint8Array(target.buffer!),duration=exportedInfo.durationSeconds,videoIdentity={version:1 as const,platform:'page' as const,targetId:'https://fixture.example/program',resourceId:'fixture:program'}
+    const result=await media.preserveMedia({url:'https://fixture.example/program.m3u8',pageUrl:videoIdentity.targetId,videoIdentity,completeProgram:{durationSeconds:duration,requireAudio:true},fetchImpl:async url=>new Response(url.endsWith('.ts')?ts:'#EXTM3U\n#EXTINF:'+duration+',\nprogram.ts\n#EXT-X-ENDLIST\n',{headers:{'content-type':url.endsWith('.ts')?'video/mp2t':'application/vnd.apple.mpegurl'}})})
+    assert.equal(result.preservation.completeVod,true);assert.equal(result.preservation.reencoded,false)
+    const proof=JSON.parse(fs.readFileSync(path.join(artifacts,result.preservation.proofArtifactId),'utf8')) as {remux:{tracks:{type:string;payloadSerialization:string;packetDigestFormat:string;sourcePacketSha256:string}[]}}
+    assert.deepEqual(proof.remux.tracks.map(t=>t.payloadSerialization).sort(),['adts-to-raw','annex-b-to-length4']);assert.ok(proof.remux.tracks.every(t=>t.packetDigestFormat==='sha256:length32be+mp4-packet-payload'&&/^[a-f0-9]{64}$/.test(t.sourcePacketSha256)))
+    const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{type:string;sampleCount:number}[]};assert.equal(decoded.completeFile,true);assert.deepEqual(decoded.tracks.map(t=>t.type).sort(),['audio','video']);assert.ok(decoded.tracks.every(t=>t.sampleCount>0))
+  })
+  await stage('CNN formal browser preservation binds declared original despite an unrelated ad player and rolls back identity drift',async()=>{
+    const page='https://edition.cnn.com/2026/10/28/politics/video/original',id='mecef3e95814a7c3788851d76c807e13bc6cf6e102',url='https://clips-media-aka.warnermediacdn.com/cnn/clips/2026-10/2413539-234abbc2b3454154b092f7651e6ec9ea/mp4/original-2413539-1920x1080_8000k.mp4',bytes=fs.readFileSync(converted.path),tabId='cnn-original-fixture';let cnn:BrowserWindow|undefined,drift=false
+    browserSession.protocol.handle('https',async request=>{const u=new URL(request.url);if(u.hostname==='edition.cnn.com')return new Response(`<style>video{width:320px;height:180px}</style><h1>Original CNN</h1><video src="https://ads.example/ad.mp4"></video><div id="program" data-component-name="video-resource" data-video-id="${id}" data-media-id="${id}" data-canonical-url-path="/2026/10/28/politics/video/original" data-canonical-url="https://www.cnn.com/2026/10/28/politics/video/original" data-headline="Original CNN" data-live="" data-auth-type="" data-content-type="mediasource-clip"><video></video></div><script type="application/ld+json">${JSON.stringify({'@type':'VideoObject',name:'Original CNN',duration:'PT'+exportedInfo.durationSeconds+'S',contentUrl:url,embedUrl:'https://fave.api.cnn.io/v1/fav/?video='+id})}</script>`,{headers:{'content-type':'text/html'}});if(u.href===url){if(drift)await cnn!.webContents.executeJavaScript("document.querySelector('#program').setAttribute('data-auth-type','subscription');true");return new Response(new Uint8Array(bytes),{headers:{'content-type':'video/mp4','content-length':String(bytes.length)}})}return new Response(null,{status:404})})
+    try{cnn=new BrowserWindow({show:false,webPreferences:{session:browserSession,sandbox:true,contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}});await cnn.loadURL(page);kernel.tabs.set(tabId,{id:tabId,title:'CNN original',url:page,projectId:project.id,view:{webContents:cnn.webContents}});kernel.activeTabId=tabId
+      const result=mediaRecord((await bridgeCall({action:'media.preserve',url})).result),identity=mediaRecord(result.videoIdentity),preserved=mediaRecord(result.preservation);assert.equal(identity.resourceId,'cnn:'+id);assert.equal(preserved.completeVod,true);assert.equal(preserved.reencoded,false)
+      const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{type:string}[]};assert.equal(decoded.completeFile,true);assert.deepEqual(decoded.tracks.map(t=>t.type).sort(),['audio','video'])
+      const before=fs.readdirSync(artifacts).sort();drift=true;await assert.rejects(bridgeCall({action:'media.preserve',url}),/VIDEO_IDENTITY/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);assert.equal(media.isCaptureActive(),false)
+    }finally{cnn?.destroy();kernel.tabs.delete(tabId);kernel.activeTabId=null;browserSession.protocol.unhandle('https')}
+  })
+  await stage('bound publisher HTTP program packet-copy verifies original AV duration and rolls back shorter replacements',async()=>{
+    const bytes=fs.readFileSync(converted.path),videoIdentity={version:1 as const,platform:'page' as const,targetId:'https://www.cnbc.com/video/2026/10/07/fixture.html',resourceId:'cnbc:70001'},url='https://pdl-iphone-cnbc-com.akamaized.net/70001/fixture.mp4'
+    const fetchImpl=async()=>new Response(new Uint8Array(bytes),{headers:{'content-type':'video/mp4','content-length':String(bytes.length)}})
+    const request={url,pageUrl:videoIdentity.targetId,videoIdentity,fetchImpl,completeProgram:{durationSeconds:exportedInfo.durationSeconds,requireAudio:true}}
+    const result=await media.preserveMedia(request)
+    assert.equal(result.preservation.completeVod,true);assert.equal(result.preservation.reencoded,false);assert.deepEqual(fs.readFileSync(path.join(artifacts,result.preservation.resources[0]!.artifactId)),bytes)
+    const proof=JSON.parse(fs.readFileSync(path.join(artifacts,result.preservation.proofArtifactId),'utf8')) as {completeProgram:{durationSeconds:number};remux:{tracks:{type:string;packetSha256:string}[]}}
+    assert.equal(proof.completeProgram.durationSeconds,exportedInfo.durationSeconds);assert.deepEqual(proof.remux.tracks.map(t=>t.type).sort(),['audio','video'])
+    const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{sampleCount:number}[]};assert.equal(decoded.completeFile,true);assert.ok(decoded.tracks.every(t=>t.sampleCount>0))
+    const before=fs.readdirSync(artifacts).sort();await assert.rejects(media.preserveMedia({...request,completeProgram:{durationSeconds:15,requireAudio:true}}),/PROGRAM_INCOMPLETE/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);assert.equal(media.isCaptureActive(),false)
   })
   await stage('identity-bound YouTube separated delivery merges both complete tracks without reencoding through browser action',async()=>{
     const files:Record<string,Buffer>={}

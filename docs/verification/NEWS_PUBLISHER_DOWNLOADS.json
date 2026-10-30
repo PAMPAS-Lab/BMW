@@ -1,0 +1,843 @@
+{
+  "version": 1,
+  "at": "2026-10-30T01:51:36.994Z",
+  "scope": "Historical pre-HLS-fix and pre-formal-CNN snapshot; current result is NEWS_HLS_CNN_DOWNLOADS.json",
+  "environment": {
+    "disposableProfile": true,
+    "disposableProject": true,
+    "signedOut": true,
+    "proxy": "Existing mihomo current node; not changed by this task",
+    "externalDownloader": false,
+    "ytDlp": false,
+    "performance": "Spot measurements with concurrent isolated regressions, not a controlled throughput benchmark",
+    "paidModels": false,
+    "productionProfile": false,
+    "audioHumanListening": "not performed"
+  },
+  "implementation": {
+    "sites": [
+      "CNBC finite public video pages",
+      "Fox News ungated finite public video pages"
+    ],
+    "identity": "Exact title/canonical/content ID/current official player; Fox actual scoped parent and attached cross-origin official iframe, ad=false and account/asset match. Revalidated throughout transfer and at commit.",
+    "delivery": "Declared original MP4 preferred; existing bounded HTTP/HLS native preservation retained. Publisher HTTP copies encoded packets, preserves originals and verifies full synchronized AV program duration.",
+    "cleanup": "Cancellation, identity/Project drift and failed cleanup remain closed; embedded/declarative targets cannot fall back to unrelated top-frame capture.",
+    "publicModelTools": [
+      "browser"
+    ]
+  },
+  "contentReview": {
+    "method": "Model visual spot-check of actual first/middle/end decoded frames; not independent human review or listening",
+    "framesChecked": 15,
+    "cnbcSecondClip": "Original file starts with a short Intel-to-earnings broadcast transition; by the sampled 4.97s the Amazon report is visible. Original intro/transition preserved, not auto-trimmed.",
+    "introEvidence": ".bmw-runtime/news-sites-implementation-20261030/cnbc-intro-review.json"
+  },
+  "publicCases": [
+    {
+      "id": "fox-1",
+      "site": "Fox News",
+      "url": "https://www.foxnews.com/video/6404031867112",
+      "title": "AI scammers targeting elderly Americans with fraud schemes",
+      "productionIntegrated": true,
+      "identity": {
+        "version": 1,
+        "platform": "page",
+        "targetId": "https://www.foxnews.com/video/6404031867112",
+        "resourceId": "fox:6404031867112"
+      },
+      "outcome": "native-preserve-and-complete-decode",
+      "navigationMs": 13841,
+      "identityWaitMs": 1005,
+      "transferMs": 30309,
+      "totalMs": 89936,
+      "bytes": 57131574,
+      "artifactId": "preserved-cb821979-ee12-486b-a62c-70518c0d9bac-delivery.mp4",
+      "sha256": "f301f507abc0424cf1eeb96baa2b083b277c3d8f54abef768f88ce9ffeca37e7",
+      "proofArtifactId": "preserved-cb821979-ee12-486b-a62c-70518c0d9bac-1-preservation.json",
+      "proofSha256": "66411128104a0115ba7a03a80f45db86385cd40bf6dc4f39f335352aa2cbb3fc",
+      "reencoded": false,
+      "completeProgram": true,
+      "decode": {
+        "sourceArtifactId": "preserved-cb821979-ee12-486b-a62c-70518c0d9bac-delivery.mp4",
+        "sourceBytes": 57131574,
+        "engine": "mediabunny-webcodecs",
+        "kind": "decoding",
+        "completeFile": true,
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.4d4020, mp4a.40.2\"",
+        "durationSeconds": 171.00866666666667,
+        "firstTimestampSeconds": -0.042,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "sampleCount": 10260,
+            "startSeconds": 0,
+            "endSeconds": 171
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 8018,
+            "startSeconds": -0.042,
+            "endSeconds": 171.00866666666667
+          }
+        ]
+      },
+      "inspection": {
+        "sourceArtifactId": "preserved-cb821979-ee12-486b-a62c-70518c0d9bac-delivery.mp4",
+        "sourceBytes": 57131574,
+        "engine": "mediabunny-webcodecs",
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.4d4020, mp4a.40.2\"",
+        "durationSeconds": 171.00866666666667,
+        "firstTimestampSeconds": -0.042,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "canDecode": true,
+            "width": 1280,
+            "height": 720,
+            "rotation": 0,
+            "startSeconds": 0,
+            "endSeconds": 171,
+            "canBeTransparent": false
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "canDecode": true,
+            "channels": 2,
+            "sampleRate": 48000,
+            "startSeconds": -0.042,
+            "endSeconds": 171.00866666666667
+          }
+        ],
+        "captureTimeline": {
+          "status": "unavailable",
+          "reason": "No capture-time source frame index exists for this artifact. File PTS cannot be treated as source PTS."
+        }
+      },
+      "originalDeliveryResources": [
+        {
+          "artifactId": "preserved-cb821979-ee12-486b-a62c-70518c0d9bac-0-original.mp4",
+          "sha256": "87747da2f17026109cb650265936dccc276585e1511de95d13820967d6f1a09d",
+          "bytes": 57166220,
+          "role": "file"
+        }
+      ],
+      "reviewFrames": [
+        {
+          "artifactId": "media-686f7939-28ef-4989-861f-fe0df7dc547b-frame-1.png",
+          "timestampSeconds": 0.1,
+          "width": 640,
+          "height": 360,
+          "path": ".bmw-runtime/news-sites-implementation-20261030/live-final/project/artifacts/media-686f7939-28ef-4989-861f-fe0df7dc547b-frame-1.png"
+        },
+        {
+          "artifactId": "media-686f7939-28ef-4989-861f-fe0df7dc547b-frame-2.png",
+          "timestampSeconds": 85.5,
+          "width": 640,
+          "height": 360,
+          "path": ".bmw-runtime/news-sites-implementation-20261030/live-final/project/artifacts/media-686f7939-28ef-4989-861f-fe0df7dc547b-frame-2.png"
+        },
+        {
+          "artifactId": "media-686f7939-28ef-4989-861f-fe0df7dc547b-frame-3.png",
+          "timestampSeconds": 170.8,
+          "width": 640,
+          "height": 360,
+          "path": ".bmw-runtime/news-sites-implementation-20261030/live-final/project/artifacts/media-686f7939-28ef-4989-861f-fe0df7dc547b-frame-3.png"
+        }
+      ]
+    },
+    {
+      "id": "fox-2",
+      "site": "Fox News",
+      "url": "https://www.foxnews.com/video/6403817944112",
+      "title": "Are American workers really using AI? ",
+      "productionIntegrated": true,
+      "identity": {
+        "version": 1,
+        "platform": "page",
+        "targetId": "https://www.foxnews.com/video/6403817944112",
+        "resourceId": "fox:6403817944112"
+      },
+      "outcome": "native-preserve-and-complete-decode",
+      "navigationMs": 4467,
+      "identityWaitMs": 0,
+      "transferMs": 4733,
+      "totalMs": 33307,
+      "bytes": 34839084,
+      "artifactId": "preserved-a5e4681d-9459-4b08-80db-842e72a6a05e-delivery.mp4",
+      "sha256": "28813363b3efe9ede0a495878e4f43cde57854fdac57b4fca240ba932862dbcc",
+      "proofArtifactId": "preserved-a5e4681d-9459-4b08-80db-842e72a6a05e-1-preservation.json",
+      "proofSha256": "759c21e0411cbac2a82b0935593b25e352e370ccf79f1d7676da05e586b751cb",
+      "reencoded": false,
+      "completeProgram": true,
+      "decode": {
+        "sourceArtifactId": "preserved-a5e4681d-9459-4b08-80db-842e72a6a05e-delivery.mp4",
+        "sourceBytes": 34839084,
+        "engine": "mediabunny-webcodecs",
+        "kind": "decoding",
+        "completeFile": true,
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.4d401f, mp4a.40.2\"",
+        "durationSeconds": 104.10733333333333,
+        "firstTimestampSeconds": -0.042,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "sampleCount": 3120,
+            "startSeconds": 0,
+            "endSeconds": 104.10401041666667
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 4882,
+            "startSeconds": -0.042,
+            "endSeconds": 104.10733333333333
+          }
+        ]
+      },
+      "inspection": {
+        "sourceArtifactId": "preserved-a5e4681d-9459-4b08-80db-842e72a6a05e-delivery.mp4",
+        "sourceBytes": 34839084,
+        "engine": "mediabunny-webcodecs",
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.4d401f, mp4a.40.2\"",
+        "durationSeconds": 104.10733333333333,
+        "firstTimestampSeconds": -0.042,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "canDecode": true,
+            "width": 1280,
+            "height": 720,
+            "rotation": 0,
+            "startSeconds": 0,
+            "endSeconds": 104.10401041666667,
+            "canBeTransparent": false
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "canDecode": true,
+            "channels": 2,
+            "sampleRate": 48000,
+            "startSeconds": -0.042,
+            "endSeconds": 104.10733333333333
+          }
+        ],
+        "captureTimeline": {
+          "status": "unavailable",
+          "reason": "No capture-time source frame index exists for this artifact. File PTS cannot be treated as source PTS."
+        }
+      },
+      "originalDeliveryResources": [
+        {
+          "artifactId": "preserved-a5e4681d-9459-4b08-80db-842e72a6a05e-0-original.mp4",
+          "sha256": "25e977b69c27c8b2882f5565b68acff6358d3c4c9f70722ac34c7fc18314eaa7",
+          "bytes": 34821598,
+          "role": "file"
+        }
+      ],
+      "reviewFrames": [
+        {
+          "artifactId": "media-e84734cc-c85b-426b-8bf9-9c19e9bf1293-frame-1.png",
+          "timestampSeconds": 0.06673611111111111,
+          "width": 640,
+          "height": 360,
+          "path": ".bmw-runtime/news-sites-implementation-20261030/live-final/project/artifacts/media-e84734cc-c85b-426b-8bf9-9c19e9bf1293-frame-1.png"
+        },
+        {
+          "artifactId": "media-e84734cc-c85b-426b-8bf9-9c19e9bf1293-frame-2.png",
+          "timestampSeconds": 52.051996527777774,
+          "width": 640,
+          "height": 360,
+          "path": ".bmw-runtime/news-sites-implementation-20261030/live-final/project/artifacts/media-e84734cc-c85b-426b-8bf9-9c19e9bf1293-frame-2.png"
+        },
+        {
+          "artifactId": "media-e84734cc-c85b-426b-8bf9-9c19e9bf1293-frame-3.png",
+          "timestampSeconds": 103.90380208333333,
+          "width": 640,
+          "height": 360,
+          "path": ".bmw-runtime/news-sites-implementation-20261030/live-final/project/artifacts/media-e84734cc-c85b-426b-8bf9-9c19e9bf1293-frame-3.png"
+        }
+      ]
+    },
+    {
+      "id": "cnbc-1",
+      "site": "CNBC",
+      "url": "https://www.cnbc.com/video/2026/10/07/spacex-in-talks-with-apollo-consortium-of-banks-to-support-40-billion-purchase-of-nvidia-gpus.html",
+      "title": "SpaceX in talks with Apollo, consortium of banks to support $40 billion purchase of Nvidia GPUs",
+      "productionIntegrated": true,
+      "identity": {
+        "version": 1,
+        "platform": "page",
+        "targetId": "https://www.cnbc.com/video/2026/10/07/spacex-in-talks-with-apollo-consortium-of-banks-to-support-40-billion-purchase-of-nvidia-gpus.html",
+        "resourceId": "cnbc:7000426739"
+      },
+      "outcome": "native-preserve-and-complete-decode",
+      "navigationMs": 8321,
+      "identityWaitMs": 0,
+      "transferMs": 5262,
+      "totalMs": 30456,
+      "bytes": 9566837,
+      "artifactId": "preserved-9976c12a-7592-4d6e-87a1-f341ae3660ab-delivery.mp4",
+      "sha256": "b26a738b7dd4cf4d2ddd27904333021314f831553bf0fcd927fc1636e539bfda",
+      "proofArtifactId": "preserved-9976c12a-7592-4d6e-87a1-f341ae3660ab-1-preservation.json",
+      "proofSha256": "58808e0769a519f7b8303540982834fdae20cf92c98646653efcf36d986e1d94",
+      "reencoded": false,
+      "completeProgram": true,
+      "decode": {
+        "sourceArtifactId": "preserved-9976c12a-7592-4d6e-87a1-f341ae3660ab-delivery.mp4",
+        "sourceBytes": 9566837,
+        "engine": "mediabunny-webcodecs",
+        "kind": "decoding",
+        "completeFile": true,
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.42c015, mp4a.40.2\"",
+        "durationSeconds": 133.6001388888889,
+        "firstTimestampSeconds": -0.06808333333333333,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "sampleCount": 4004,
+            "startSeconds": 0,
+            "endSeconds": 133.60013888888886
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 3131,
+            "startSeconds": -0.06808333333333333,
+            "endSeconds": 133.52125
+          }
+        ]
+      },
+      "inspection": {
+        "sourceArtifactId": "preserved-9976c12a-7592-4d6e-87a1-f341ae3660ab-delivery.mp4",
+        "sourceBytes": 9566837,
+        "engine": "mediabunny-webcodecs",
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.42c015, mp4a.40.2\"",
+        "durationSeconds": 133.6001388888889,
+        "firstTimestampSeconds": -0.06808333333333333,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "canDecode": true,
+            "width": 534,
+            "height": 300,
+            "rotation": 0,
+            "startSeconds": 0,
+            "endSeconds": 133.6001388888889,
+            "canBeTransparent": false
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "canDecode": true,
+            "channels": 2,
+            "sampleRate": 48000,
+            "startSeconds": -0.06808333333333333,
+            "endSeconds": 133.52125
+          }
+        ],
+        "captureTimeline": {
+          "status": "unavailable",
+          "reason": "No capture-time source frame index exists for this artifact. File PTS cannot be treated as source PTS."
+        }
+      },
+      "originalDeliveryResources": [
+        {
+          "artifactId": "preserved-9976c12a-7592-4d6e-87a1-f341ae3660ab-0-original.mp4",
+          "sha256": "78d32b6451148a3ab8245d3242f4b2512a9488c72ee00127cbcdae5ff4d1d088",
+          "bytes": 9586079,
+          "role": "file"
+        }
+      ],
+      "reviewFrames": [
+        {
+          "artifactId": "media-ea0c7074-42a6-49cf-9558-eec2e7fd9d4c-frame-1.png",
+          "timestampSeconds": 0.06673611111111111,
+          "width": 534,
+          "height": 300,
+          "path": ".bmw-runtime/news-sites-implementation-20261030/live-final/project/artifacts/media-ea0c7074-42a6-49cf-9558-eec2e7fd9d4c-frame-1.png"
+        },
+        {
+          "artifactId": "media-ea0c7074-42a6-49cf-9558-eec2e7fd9d4c-frame-2.png",
+          "timestampSeconds": 66.80006944444445,
+          "width": 534,
+          "height": 300,
+          "path": ".bmw-runtime/news-sites-implementation-20261030/live-final/project/artifacts/media-ea0c7074-42a6-49cf-9558-eec2e7fd9d4c-frame-2.png"
+        },
+        {
+          "artifactId": "media-ea0c7074-42a6-49cf-9558-eec2e7fd9d4c-frame-3.png",
+          "timestampSeconds": 133.39993055555556,
+          "width": 534,
+          "height": 300,
+          "path": ".bmw-runtime/news-sites-implementation-20261030/live-final/project/artifacts/media-ea0c7074-42a6-49cf-9558-eec2e7fd9d4c-frame-3.png"
+        }
+      ]
+    },
+    {
+      "id": "cnbc-2",
+      "site": "CNBC",
+      "url": "https://www.cnbc.com/video/2026/10/29/amazon-misses-on-q3-earnings-and-revenue.html",
+      "title": "Amazon misses on Q3 earnings and revenue",
+      "productionIntegrated": true,
+      "identity": {
+        "version": 1,
+        "platform": "page",
+        "targetId": "https://www.cnbc.com/video/2026/10/29/amazon-misses-on-q3-earnings-and-revenue.html",
+        "resourceId": "cnbc:7000429276"
+      },
+      "outcome": "native-preserve-and-complete-decode",
+      "navigationMs": 1071,
+      "identityWaitMs": 0,
+      "transferMs": 1807,
+      "totalMs": 12118,
+      "bytes": 6437857,
+      "artifactId": "preserved-eefba6c3-c551-48f8-9bfb-586da0b36a65-delivery.mp4",
+      "sha256": "9a327b249e9a0d2bdc6d1414d1cc63048b0df5b177a9b5c946decbb3e084f03c",
+      "proofArtifactId": "preserved-eefba6c3-c551-48f8-9bfb-586da0b36a65-1-preservation.json",
+      "proofSha256": "0870883be8103072ab785a0305ab2173a2ca425611ff915251ad5c19eed5d998",
+      "reencoded": false,
+      "completeProgram": true,
+      "decode": {
+        "sourceArtifactId": "preserved-eefba6c3-c551-48f8-9bfb-586da0b36a65-delivery.mp4",
+        "sourceBytes": 6437857,
+        "engine": "mediabunny-webcodecs",
+        "kind": "decoding",
+        "completeFile": true,
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.42c015, mp4a.40.2\"",
+        "durationSeconds": 89.58949652777778,
+        "firstTimestampSeconds": -0.06808333333333333,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "sampleCount": 2685,
+            "startSeconds": 0,
+            "endSeconds": 89.58949652777778
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 2099,
+            "startSeconds": -0.06808333333333333,
+            "endSeconds": 89.48925
+          }
+        ]
+      },
+      "inspection": {
+        "sourceArtifactId": "preserved-eefba6c3-c551-48f8-9bfb-586da0b36a65-delivery.mp4",
+        "sourceBytes": 6437857,
+        "engine": "mediabunny-webcodecs",
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.42c015, mp4a.40.2\"",
+        "durationSeconds": 89.58949652777778,
+        "firstTimestampSeconds": -0.06808333333333333,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "canDecode": true,
+            "width": 534,
+            "height": 300,
+            "rotation": 0,
+            "startSeconds": 0,
+            "endSeconds": 89.58949652777778,
+            "canBeTransparent": false
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "canDecode": true,
+            "channels": 2,
+            "sampleRate": 48000,
+            "startSeconds": -0.06808333333333333,
+            "endSeconds": 89.48925
+          }
+        ],
+        "captureTimeline": {
+          "status": "unavailable",
+          "reason": "No capture-time source frame index exists for this artifact. File PTS cannot be treated as source PTS."
+        }
+      },
+      "originalDeliveryResources": [
+        {
+          "artifactId": "preserved-eefba6c3-c551-48f8-9bfb-586da0b36a65-0-original.mp4",
+          "sha256": "70071910f0b0f38ba942eb9fc39c5985ab4cfb780ec2c72ab831fcd1387a3bbf",
+          "bytes": 6450807,
+          "role": "file"
+        }
+      ],
+      "reviewFrames": [
+        {
+          "artifactId": "media-1dad4c8c-09e3-4031-b298-ade61a11dc52-frame-1.png",
+          "timestampSeconds": 0.06673611111111111,
+          "width": 534,
+          "height": 300,
+          "path": ".bmw-runtime/news-sites-implementation-20261030/live-final/project/artifacts/media-1dad4c8c-09e3-4031-b298-ade61a11dc52-frame-1.png"
+        },
+        {
+          "artifactId": "media-1dad4c8c-09e3-4031-b298-ade61a11dc52-frame-2.png",
+          "timestampSeconds": 44.778072916666666,
+          "width": 534,
+          "height": 300,
+          "path": ".bmw-runtime/news-sites-implementation-20261030/live-final/project/artifacts/media-1dad4c8c-09e3-4031-b298-ade61a11dc52-frame-2.png"
+        },
+        {
+          "artifactId": "media-1dad4c8c-09e3-4031-b298-ade61a11dc52-frame-3.png",
+          "timestampSeconds": 89.38930555555555,
+          "width": 534,
+          "height": 300,
+          "path": ".bmw-runtime/news-sites-implementation-20261030/live-final/project/artifacts/media-1dad4c8c-09e3-4031-b298-ade61a11dc52-frame-3.png"
+        }
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "id": "cnn-declared",
+      "site": "CNN",
+      "url": "https://www.cnn.com/2026/10/28/politics/video/obama-tease-trump-cheesecake-factory-digvid",
+      "title": "\n      Obama teases Trump about reaction to Cheesecake Factory comment\n    ",
+      "productionIntegrated": false,
+      "identity": {
+        "version": 1,
+        "platform": "page",
+        "targetId": "https://edition.cnn.com/2026/10/28/politics/video/obama-tease-trump-cheesecake-factory-digvid",
+        "resourceId": "blob:https://edition.cnn.com/e9f62857-1308-4a47-9b97-f2a272861796"
+      },
+      "outcome": "native-component-success; production-adapter-pending",
+      "initialHarnessError": "Error: A requested timestamp is outside the video track.",
+      "experimentHarnessCorrection": "Initial timestamp=0 frame request was outside CNN video start PTS; independent local review now samples actual first/middle/end PTS successfully.",
+      "navigationMs": 11129,
+      "transferMs": 43131,
+      "totalMs": 81748,
+      "bytes": 128109885,
+      "artifactId": "preserved-c6ffa0b1-ab9b-46a4-beff-0ab11cf735b2-delivery.mp4",
+      "sha256": "f73670075bb8c0e94b9d459c9168b6faabb1246e8e9ff219c97f24c454fdca03",
+      "proofArtifactId": "preserved-c6ffa0b1-ab9b-46a4-beff-0ab11cf735b2-1-preservation.json",
+      "proofSha256": "971a3d0642ddeb4c5e031eb3d3f2716bb3ff4e79b9562220c1d9e3936fa503b5",
+      "reencoded": false,
+      "completeProgram": true,
+      "decode": {
+        "sourceArtifactId": "preserved-c6ffa0b1-ab9b-46a4-beff-0ab11cf735b2-delivery.mp4",
+        "sourceBytes": 128109885,
+        "engine": "mediabunny-webcodecs",
+        "kind": "decoding",
+        "completeFile": true,
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.640028, mp4a.40.2\"",
+        "durationSeconds": 125.32520833333334,
+        "firstTimestampSeconds": 0.000020833333333333333,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "sampleCount": 3755,
+            "startSeconds": 0.033368055555555554,
+            "endSeconds": 125.32520833333334
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 5873,
+            "startSeconds": 0.000020833333333333333,
+            "endSeconds": 125.2906875
+          }
+        ]
+      },
+      "inspection": {
+        "sourceArtifactId": "preserved-c6ffa0b1-ab9b-46a4-beff-0ab11cf735b2-delivery.mp4",
+        "sourceBytes": 128109885,
+        "engine": "mediabunny-webcodecs",
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.640028, mp4a.40.2\"",
+        "durationSeconds": 125.32520833333334,
+        "firstTimestampSeconds": 0.000020833333333333333,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "canDecode": true,
+            "width": 1920,
+            "height": 1080,
+            "rotation": 0,
+            "startSeconds": 0.033368055555555554,
+            "endSeconds": 125.32520833333334,
+            "canBeTransparent": false
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "canDecode": true,
+            "channels": 2,
+            "sampleRate": 48000,
+            "startSeconds": 0.000020833333333333333,
+            "endSeconds": 125.2906875
+          }
+        ],
+        "captureTimeline": {
+          "status": "unavailable",
+          "reason": "No capture-time source frame index exists for this artifact. File PTS cannot be treated as source PTS."
+        }
+      },
+      "originalDeliveryResources": [
+        {
+          "artifactId": "preserved-c6ffa0b1-ab9b-46a4-beff-0ab11cf735b2-0-original.mp4",
+          "sha256": "df5c18ee4dffe881e17d25807ebf348de492f5dfd3b5ec2e6894901a72261cf7",
+          "bytes": 128154699,
+          "role": "file"
+        }
+      ],
+      "reviewFrames": [
+        {
+          "artifactId": "media-64ad9763-ef98-466a-968d-1e064b9ec98a-frame-1.png",
+          "timestampSeconds": 0.10010416666666666,
+          "width": 640,
+          "height": 360,
+          "path": ".bmw-runtime/news-sites-implementation-20261030/native-attempt/project/artifacts/media-64ad9763-ef98-466a-968d-1e064b9ec98a-frame-1.png"
+        },
+        {
+          "artifactId": "media-64ad9763-ef98-466a-968d-1e064b9ec98a-frame-2.png",
+          "timestampSeconds": 62.66260416666667,
+          "width": 640,
+          "height": 360,
+          "path": ".bmw-runtime/news-sites-implementation-20261030/native-attempt/project/artifacts/media-64ad9763-ef98-466a-968d-1e064b9ec98a-frame-2.png"
+        },
+        {
+          "artifactId": "media-64ad9763-ef98-466a-968d-1e064b9ec98a-frame-3.png",
+          "timestampSeconds": 125.125,
+          "width": 640,
+          "height": 360,
+          "path": ".bmw-runtime/news-sites-implementation-20261030/native-attempt/project/artifacts/media-64ad9763-ef98-466a-968d-1e064b9ec98a-frame-3.png"
+        }
+      ],
+      "newFilesOnFailure": 4
+    },
+    {
+      "id": "yahoo-declared",
+      "site": "Yahoo Finance",
+      "url": "https://ca.finance.yahoo.com/video/ai-could-disrupt-every-industry-faster-than-expected-164139763.html",
+      "title": "AI could disrupt every industry faster than expected",
+      "productionIntegrated": false,
+      "identity": "0c1b39db-70fa-4379-afbc-b24956ef2e03",
+      "outcome": "failed",
+      "error": "Error: HLS subtitle/alternate tracks are unsupported; no tracks silently discarded.",
+      "navigationMs": 17242,
+      "totalMs": 37120,
+      "decode": {},
+      "inspection": {},
+      "originalDeliveryResources": [],
+      "reviewFrames": [],
+      "newFilesOnFailure": 0
+    }
+  ],
+  "hlsCases": [
+    {
+      "id": "fox-hls",
+      "site": "Fox News",
+      "url": "https://www.foxnews.com/video/6403817944112",
+      "title": "Are American workers really using AI? ",
+      "productionIntegrated": true,
+      "identity": {
+        "version": 1,
+        "platform": "page",
+        "targetId": "https://www.foxnews.com/video/6403817944112",
+        "resourceId": "fox:6403817944112"
+      },
+      "outcome": "failed",
+      "error": "Error: Remux changed encoded media payload or PTS.",
+      "navigationMs": 9395,
+      "identityWaitMs": 0,
+      "totalMs": 86243,
+      "decode": {},
+      "inspection": {},
+      "originalDeliveryResources": [],
+      "reviewFrames": [],
+      "newFilesOnFailure": 0
+    },
+    {
+      "id": "cnbc-hls",
+      "site": "CNBC",
+      "url": "https://www.cnbc.com/video/2026/10/07/spacex-in-talks-with-apollo-consortium-of-banks-to-support-40-billion-purchase-of-nvidia-gpus.html",
+      "title": "SpaceX in talks with Apollo, consortium of banks to support $40 billion purchase of Nvidia GPUs",
+      "productionIntegrated": true,
+      "identity": {
+        "version": 1,
+        "platform": "page",
+        "targetId": "https://www.cnbc.com/video/2026/10/07/spacex-in-talks-with-apollo-consortium-of-banks-to-support-40-billion-purchase-of-nvidia-gpus.html",
+        "resourceId": "cnbc:7000426739"
+      },
+      "outcome": "failed",
+      "error": "Error: Remux changed encoded media payload or PTS.",
+      "navigationMs": 8040,
+      "identityWaitMs": 0,
+      "totalMs": 160174,
+      "decode": {},
+      "inspection": {},
+      "originalDeliveryResources": [],
+      "reviewFrames": [],
+      "newFilesOnFailure": 0
+    }
+  ],
+  "pending": [
+    {
+      "site": "CNN",
+      "work": "Integrate validated original declaration/ID association into production page admission; current success is a native component experiment only."
+    },
+    {
+      "site": "Yahoo Finance",
+      "work": "Current original HLS declares subtitle/alternate tracks unsupported by bounded preservation parser; explicit refusal and rollback, no tracks silently dropped."
+    },
+    {
+      "site": "Publisher HLS",
+      "work": "Resolve Fox and CNBC encoded-packet/PTS remux verification failures before certifying publisher HLS fallback; failed resources are rolled back."
+    }
+  ],
+  "verification": {
+    "build": "passed",
+    "check": "passed",
+    "classified": {
+      "passed": 137,
+      "failed": 0,
+      "not-run": 103,
+      "report": ".bmw-runtime/news-sites-implementation-20261030/final/.bmw-runtime/classified-tests/2026-10-30T01-40-07-795Z/result.json"
+    },
+    "native": {
+      "passed": 16,
+      "failed": 0,
+      "cases": [
+        {
+          "id": "identity",
+          "passed": true,
+          "ms": 3569
+        },
+        {
+          "id": "acquisition",
+          "passed": true,
+          "ms": 17839
+        },
+        {
+          "id": "worktabs",
+          "passed": true,
+          "ms": 32712
+        },
+        {
+          "id": "background",
+          "passed": true,
+          "ms": 4906
+        },
+        {
+          "id": "capture",
+          "passed": true,
+          "ms": 52523
+        },
+        {
+          "id": "processing",
+          "passed": true,
+          "ms": 31588
+        },
+        {
+          "id": "video",
+          "passed": true,
+          "ms": 63888
+        },
+        {
+          "id": "studio",
+          "passed": true,
+          "ms": 83685
+        },
+        {
+          "id": "qwen-narration",
+          "passed": true,
+          "ms": 1542
+        },
+        {
+          "id": "local-narration",
+          "passed": true,
+          "ms": 4576
+        },
+        {
+          "id": "driver",
+          "passed": true,
+          "ms": 3354
+        },
+        {
+          "id": "desktop-workspace",
+          "passed": true,
+          "ms": 5330
+        },
+        {
+          "id": "desktop-projects",
+          "passed": true,
+          "ms": 3499
+        },
+        {
+          "id": "desktop-restore",
+          "passed": true,
+          "ms": 1227
+        },
+        {
+          "id": "desktop-settings",
+          "passed": true,
+          "ms": 11011
+        },
+        {
+          "id": "desktop-native",
+          "passed": true,
+          "ms": 4704
+        }
+      ],
+      "report": ".bmw-runtime/news-sites-implementation-20261030/runtime-final/results.json"
+    },
+    "dsh": {
+      "passed": true,
+      "log": ".bmw-runtime/news-sites-implementation-20261030/dsh-final.log"
+    },
+    "initialHostFixtureFailure": "Default VP8 fixture emitted no encoded AV chunks; unchanged fixture with its supported BMW_MEDIA_FIXTURE_CODEC=vp9 completed successfully, including final native suite.",
+    "rawEvidence": ".bmw-runtime/news-sites-implementation-20261030",
+    "codeHashes": {
+      "packages/browser-capability/src/publisher-video.ts": "1278bd9e0b9db6e83ea2064f27f7e818f7d15a7d65abbd44e32d51f7d729c653",
+      "packages/browser-capability/src/browser-kernel.ts": "db0e3a90c2e3b598886ef0e926c0e7b181e1ed28cc91e7b73fb746564dee6170",
+      "packages/browser-capability/src/video-target.ts": "ee77fbc80d1e77eceb228612c8032c05a261541e383db3815ef57dd6c4a2626e",
+      "packages/browser-capability/src/video-acquisition.ts": "860a0904bb39219bbdfe6b632bce4fbf428121d5837ea509018190d87c1b838c",
+      "packages/media-native/src/media-preservation.ts": "cbd3eb508b07829823dfeff11be2aaf3a1299de24e4ac506310f738c908e4efd"
+    },
+    "codeDifferences": [],
+    "notes": "All final production code and tests match the isolated final snapshot. CNN experiment ran in r2, differing only in the later CNBC duration compatibility and identity test; native preservation code is identical. Documentation can be reconciled after tests without changing code."
+  },
+  "supersededBy": "NEWS_HLS_CNN_DOWNLOADS.json"
+}

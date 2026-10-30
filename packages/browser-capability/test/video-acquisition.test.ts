@@ -58,3 +58,15 @@ test('Expired delivery can enter capture only after a fresh capture-specific ide
  await assert.rejects(acquireVideoDelivery(target,denied.port,new AbortController().signal),/CHANGED/)
  assert.ok(!denied.calls.includes('quality'));assert.ok(!denied.calls.includes('capture'))
 })
+
+test('Embedded publisher preservation failure never records an unrelated top-frame player',async()=>{
+ const target:VideoTarget={identity:{version:1,platform:'page',targetId:'https://www.foxnews.com/video/123',resourceId:'fox:123'},playerUrl:'blob:https://static.foxnews.com/original',videoIndex:-1,durationSeconds:10,resources:[{url:'https://vod.foxnews.com/original.mp4',role:'muxed',durationSeconds:10,bitrate:0,audioGroup:'default',defaultAudio:true}]};let captures=0
+ await assert.rejects(acquireVideoDelivery(target,{preserve:async()=>{throw new Error('HTTP 403')},capture:async()=>{captures++;return{}},verify:async()=>{},busy:()=>false,prepareCapture:async()=>{captures++;return{}}},new AbortController().signal),/CAPTURE_UNAVAILABLE/)
+ assert.equal(captures,0)
+})
+test('A failed complete HLS presentation never falls back to subtitle-less MP4 or capture',async()=>{
+ const {calls,port}=setup(),resources:VideoTarget['resources']=[{url:'https://example.test/master.m3u8',role:'hls',durationSeconds:28,bitrate:0,audioGroup:'',defaultAudio:true},{url:'https://example.test/clip.mp4',role:'muxed',durationSeconds:28,bitrate:0,audioGroup:'',defaultAudio:true}]
+ port.preserve=async url=>{calls.push(url);throw new Error('MEDIA_PRESERVATION_TRACKS_INCOMPLETE: missing final subtitle segment')}
+ await assert.rejects(acquireVideoDelivery({...target,resources},port,new AbortController().signal),/TRACKS_INCOMPLETE/)
+ assert.ok(calls.includes(resources[0]!.url));assert.ok(!calls.includes(resources[1]!.url));assert.ok(!calls.includes('capture'))
+})

@@ -14,6 +14,7 @@ import {sameVideoIdentity,sameVideoSourcePage,resourceBelongsToTarget,selectVide
 import type {SourceCollection,ProjectSourcePort,SourceCaptureGuard,VideoTargetScope,TextReadDiagnostic,TextReadBatch,TextReadRow} from '@bmw-agent/media-native/sources'
 import {readVideoTargets,prepareVideoTransfer} from './video-target.js'
 import {registerYoutubeSabrPage,bindYoutubeSabrPage} from './youtube-sabr-observation.js'
+import {publisherVideoSite} from './publisher-video.js'
 import {assertPageScope,pageRangeExpression} from './page-scope.js'
 import {assertPageTextFind,pageTextFindExpression} from './page-text-find.js'
 import crypto from 'node:crypto'
@@ -1030,7 +1031,7 @@ export class BrowserKernel {
     const selected=admission.target?.resources.find(r=>r.url===request.url)
     const sabr=selected?.role==='sabr'?await bindYoutubeSabrPage(tab.view.webContents,admission.target!,request.url,request.sourceGuard?.scope??{},signal):undefined
     const guard=async(force=false)=>{signal?.throwIfAborted();if(this.projectStore.active().id!==project.id||!this.tabs.has(tab.id)||tab.view.webContents.isDestroyed()||!sameVideoSourcePage(request.pageUrl,tab.view.webContents.getURL(),admission.videoIdentity))throw new Error('Source preservation page or Project changed.');await(force?admission.finish():admission.guard());await sabr?.check(force)}
-    return {...await this.recordingController.preserveMedia({url:request.url,pageUrl:request.pageUrl,fetchImpl:await this.mediaFetchForTab(tab.id,signal),guard,signal,videoIdentity:admission.videoIdentity,...(sabr?{youtubeSabr:sabr.delivery,refreshYoutubeSabr:sabr.refresh}:{}),...(admission.audio?{separated:{audioUrl:admission.audio.url,audioDurationSeconds:admission.audio.durationSeconds,videoDurationSeconds:selected?.durationSeconds??admission.target!.durationSeconds!,videoIdentity:admission.videoIdentity!}}:{})}),tab:this.serializeTab(tab)}
+    return {...await this.recordingController.preserveMedia({url:request.url,pageUrl:request.pageUrl,fetchImpl:await this.mediaFetchForTab(tab.id,signal),guard,signal,videoIdentity:admission.videoIdentity,...(selected?.role==='hls'?{expectedTransport:'hls' as const}:{}),...(publisherVideoSite(request.pageUrl)&&admission.target?.durationSeconds?{completeProgram:{durationSeconds:admission.target.durationSeconds,requireAudio:true}}:{}),...(sabr?{youtubeSabr:sabr.delivery,refreshYoutubeSabr:sabr.refresh}:{}),...(admission.audio?{separated:{audioUrl:admission.audio.url,audioDurationSeconds:admission.audio.durationSeconds,videoDurationSeconds:selected?.durationSeconds??admission.target!.durationSeconds!,videoIdentity:admission.videoIdentity!}}:{})}),tab:this.serializeTab(tab)}
   }
   async acquireSource(request:NonNullable<import('./browser-host.js').BrowserFeatureHost['acquireSource']> extends (request:infer R,...args:unknown[])=>unknown?R:never,signal?:AbortSignal){
     const tab=this.requireTab(request.tabId),projectId=this.projectStore.active().id
@@ -1081,6 +1082,7 @@ export class BrowserKernel {
       const state=await readVideoTargets(tab.view.webContents,{selector:request.selector,index:request.index??0,excludeSelectors:request.sourceGuard?.scope.excludeSelectors??[]},signal)
       const target=state.targets[0]
       if(state.blocked||state.targets.length!==1||!target||request.sourceGuard?.videoIdentity&&!sameVideoIdentity(request.sourceGuard.videoIdentity,target.identity))throw new Error('VIDEO_IDENTITY_UNBOUND: '+(state.blocked??'Select exactly the confirmed target video.'))
+      if(target.videoIndex<0)throw new Error('MEDIA_CAPTURE_FRAME_UNSUPPORTED: An embedded delivery cannot authorize recording a different top-frame video.')
       if(target.requiresProjection)throw new Error('MEDIA_ACQUIRE_PROJECTION_UNSUPPORTED: Raw spherical/360 frames cannot be captured as ordinary flat news footage. Choose a flat source or explicitly preserve the original for projection processing.')
       if(request.sourceGuard)selectVideoCaptureTarget(state,request.sourceGuard.candidateUrl,request.sourceGuard.videoIdentity)
       return await this.recordingController.captureVideo(tab,{...request,videoIdentity:target.identity,...(request.sourceGuard?{sourceGuard:{...request.sourceGuard,videoIdentity:target.identity}}:{})},signal)
@@ -1356,6 +1358,7 @@ export class BrowserKernel {
     if (!result.ok) throw new Error(result.reason)
     const targetScope:VideoTargetScope={...(selector?{selector,index}:{}),excludeSelectors}
     const identities=await readVideoTargets(tab.view.webContents,targetScope,signal)
+    const requireBound=identities.platform!=='page'||!!publisherVideoSite(identities.pageUrl)
     const network=this.diagnosticsFor(tab.id).media.map((item) => ({kind:'network',...item}))
     // A scoped player may be MSE/blob. Only its exact resource witnesses or
     // original-post media ID may admit network delivery URLs into that range.
@@ -1370,7 +1373,7 @@ export class BrowserKernel {
       const audioOnly=target?.identity.platform==='youtube'&&target.resources.some(r=>r.url===url&&r.role==='audio')
       const kind=target&&video&&item.kind==='network'?'source':item.kind
       const sabr=target?.resources.some(resource=>resource.url===url&&resource.role==='sabr')
-      if(url&&!audioOnly&&(!video||!identities.blocked&&(identities.platform==='page'||target)))unique.set(`${kind}:${url}`,{...item,kind,...(target?{videoIdentity:target.identity}:{}),downloadable:/^https?:/i.test(url)&&!sabr,...(sabr?{preservable:true,acquisition:'youtube-sabr',help:'Use media.preserve; both original encoded tracks are validated and merged.'}:{})})
+      if(url&&!audioOnly&&(!video||!identities.blocked&&(!requireBound||target)))unique.set(`${kind}:${url}`,{...item,kind,...(target?{videoIdentity:target.identity}:{}),downloadable:/^https?:/i.test(url)&&!sabr,...(sabr?{preservable:true,acquisition:'youtube-sabr',help:'Use media.preserve; both original encoded tracks are validated and merged.'}:{})})
       if (poster) unique.set(`poster:${poster}`, { kind: 'poster', url: poster, downloadable: /^https?:/i.test(poster) })
     }
     return {

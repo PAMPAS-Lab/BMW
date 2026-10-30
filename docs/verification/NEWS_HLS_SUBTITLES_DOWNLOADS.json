@@ -1,0 +1,880 @@
+{
+  "version": 1,
+  "at": "2026-10-30T04:38:38.334Z",
+  "scope": "Same remaining Fox HLS and Yahoo Finance public original through formal page.media.list/media.preserve; AV and every declared external WebVTT track retained",
+  "environment": {
+    "disposableProfiles": true,
+    "disposableProjects": true,
+    "signedOut": true,
+    "http1": true,
+    "proxy": "Existing current HTTPS proxy; unchanged",
+    "ytDlp": false,
+    "ffmpeg": false,
+    "paidModelCalls": false,
+    "productionProfile": false
+  },
+  "implementation": {
+    "delivery": "Complete bundle: packet-copy AV MP4 plus explicitly external WebVTT sidecars, raw playlists/segments and mapping/proof JSON. Subtitles are not embedded in MP4.",
+    "audio": "Highest bandwidth video; every declared audio rendition, one default output from selected audio group. Independently read back each output audio name/default and decode all tracks.",
+    "subtitles": "Preserve en/en-US independently, raw segments/metadata SHA, exact cue text/settings/identifiers, integer-millisecond clock, X-TIMESTAMP-MAP/33-bit wrap in file PTS. Deduplicate only exact repeats across original segments, never within an original segment.",
+    "failure": "Incomplete HLS tracks are terminal in acquisition and SourceLibrary recovery; no automatic subtitle-less MP4/capture. Entire failure rollback, cancellation, target/Project guard, timeout and cleanup quarantine retained.",
+    "bounds": "Combined original subtitle bytes 32MiB / 100k cues; 1MiB each source segment, 16MiB each derived sidecar, 32 subtitle tracks, 15 audio tracks. Native shared 20k segments/archive limits unchanged. SourceLibrary ownership budget aligned at segments+256."
+  },
+  "cases": [
+    {
+      "id": "fox",
+      "site": "Fox News",
+      "url": "https://www.foxnews.com/video/6404031867112",
+      "title": "AI scammers targeting elderly Americans with fraud schemes",
+      "outcome": "native-preserve-and-complete-decode",
+      "api": "browser media.preserve",
+      "formalListingBound": true,
+      "identity": {
+        "version": 1,
+        "platform": "page",
+        "targetId": "https://www.foxnews.com/video/6404031867112",
+        "resourceId": "fox:6404031867112"
+      },
+      "sourceDurationSeconds": 171,
+      "navigationMs": 9185,
+      "identityWaitMs": 0,
+      "transferMs": 18052,
+      "totalMs": 58909,
+      "pausedOriginalDuringArchive": true,
+      "resolution": {
+        "width": 1280,
+        "height": 720
+      },
+      "videoContentSpanSeconds": 171,
+      "videoPts": {
+        "startSeconds": 0.06666666666666667,
+        "endSeconds": 171.06666666666666
+      },
+      "tracks": [
+        {
+          "id": 1,
+          "type": "video",
+          "codec": "avc",
+          "canDecode": true,
+          "width": 1280,
+          "height": 720,
+          "rotation": 0,
+          "startSeconds": 0.06666666666666667,
+          "endSeconds": 171.06666666666666,
+          "canBeTransparent": false
+        },
+        {
+          "id": 2,
+          "type": "audio",
+          "codec": "aac",
+          "canDecode": true,
+          "channels": 2,
+          "sampleRate": 48000,
+          "startSeconds": 0,
+          "endSeconds": 171.05066666666667
+        },
+        {
+          "id": 3,
+          "type": "audio",
+          "codec": "aac",
+          "canDecode": true,
+          "channels": 2,
+          "sampleRate": 48000,
+          "startSeconds": 0,
+          "endSeconds": 171.05066666666667
+        }
+      ],
+      "decode": {
+        "sourceArtifactId": "preserved-8a7741a7-1945-4654-8c12-8970e81697ae-delivery.mp4",
+        "sourceBytes": 37616951,
+        "engine": "mediabunny-webcodecs",
+        "kind": "decoding",
+        "completeFile": true,
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.4d401f, mp4a.40.2\"",
+        "durationSeconds": 171.06666666666666,
+        "firstTimestampSeconds": 0,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "sampleCount": 5130,
+            "startSeconds": 0.06666666666666667,
+            "endSeconds": 171.06666666666666
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 8018,
+            "startSeconds": 0,
+            "endSeconds": 171.05066666666667
+          },
+          {
+            "id": 3,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 8018,
+            "startSeconds": 0,
+            "endSeconds": 171.05066666666667
+          }
+        ]
+      },
+      "packetProof": [
+        {
+          "type": "video",
+          "codec": "avc",
+          "packets": 5130,
+          "startSeconds": 0.06666666666666667,
+          "endSeconds": 171.06666666666666,
+          "packetSha256": "28bf2a66664779856ebdfec5fe52294a46852118e6d707b6dcc166dc75bd4cb9",
+          "sourcePacketSha256": "4cfe7e6d0fd35df406b398a8ff0b24f916fbd47dfa48bb1c13d34cf94011d105",
+          "payloadSerialization": "annex-b-to-length4",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload",
+          "sourceArtifactId": "preserved-8a7741a7-1945-4654-8c12-8970e81697ae-video.ts",
+          "sourceTrackId": 258
+        },
+        {
+          "type": "audio",
+          "codec": "aac",
+          "packets": 8018,
+          "startSeconds": 0,
+          "endSeconds": 171.05066666666667,
+          "packetSha256": "71766c902234116b4667e3ffb66e9593cc89728800f70478245628415155a868",
+          "sourcePacketSha256": "5656eccc0047947ec193e8f64eb1128a2c6178b0f04df4cde279f40c210634ad",
+          "payloadSerialization": "adts-to-raw",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload",
+          "sourceArtifactId": "preserved-8a7741a7-1945-4654-8c12-8970e81697ae-audio-0.ts",
+          "sourceTrackId": 257
+        },
+        {
+          "type": "audio",
+          "codec": "aac",
+          "packets": 8018,
+          "startSeconds": 0,
+          "endSeconds": 171.05066666666667,
+          "packetSha256": "686d2b4ec64d1dad7f278cb37eb9cb5b5fecb9e1f8a12b35766266db8453a6b0",
+          "sourcePacketSha256": "0b61fadb76ed7741ab77308b524d5853c88a60b94ac79b2832250726fcf6ee4d",
+          "payloadSerialization": "adts-to-raw",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload",
+          "sourceArtifactId": "preserved-8a7741a7-1945-4654-8c12-8970e81697ae-audio-1.ts",
+          "sourceTrackId": 257
+        }
+      ],
+      "audioRenditions": [
+        {
+          "artifactId": "preserved-8a7741a7-1945-4654-8c12-8970e81697ae-audio-0.ts",
+          "group": "audio-0",
+          "name": "en (Main)",
+          "language": "en",
+          "manifestDefault": true,
+          "outputDefault": true
+        },
+        {
+          "artifactId": "preserved-8a7741a7-1945-4654-8c12-8970e81697ae-audio-1.ts",
+          "group": "audio-1",
+          "name": "en (Main)",
+          "language": "en",
+          "manifestDefault": true,
+          "outputDefault": false
+        }
+      ],
+      "subtitleVerification": [
+        {
+          "language": "en-US",
+          "name": "English",
+          "delivery": "external-sidecar",
+          "format": "webvtt",
+          "artifactId": "preserved-8a7741a7-1945-4654-8c12-8970e81697ae-65-captions.vtt",
+          "sha256": "a12a484feef543bf496d82798f5d0a58e63d860861d159f80ccfb284816b6e17",
+          "cueCount": 50,
+          "occurrenceCount": 50,
+          "duplicatesRemoved": 0,
+          "segments": 6,
+          "firstSeconds": 0.9,
+          "lastSeconds": 169.3,
+          "timebase": "delivery-file-PTS",
+          "allHashesVerified": true,
+          "allOriginalCuesVerified": true
+        }
+      ],
+      "allOriginalHashesVerified": true,
+      "originalResourceCount": 65,
+      "completeSubtitles": true,
+      "reencoded": false,
+      "artifactId": "preserved-8a7741a7-1945-4654-8c12-8970e81697ae-delivery.mp4",
+      "bytes": 37616951,
+      "sha256": "8cafa69da1469936e360383a882fb251f288b5dca8241f44a8f33b32dbe1d833",
+      "proofArtifactId": "preserved-8a7741a7-1945-4654-8c12-8970e81697ae-67-preservation.json",
+      "proofSha256": "00c804c6db9372153a49456d899ecfa1aabef719e575faf0b7371820c35a2a8c",
+      "mediaFile": ".bmw-runtime/hls-subtitles-20261030/live-final/project/artifacts/preserved-8a7741a7-1945-4654-8c12-8970e81697ae-delivery.mp4",
+      "frames": [
+        {
+          "artifactId": "media-1ac46253-3aaa-480d-baa1-5bf057fd28a1-frame-1.png",
+          "file": ".bmw-runtime/hls-subtitles-20261030/live-final/project/artifacts/media-1ac46253-3aaa-480d-baa1-5bf057fd28a1-frame-1.png",
+          "timestampSeconds": 0.16666666666666666,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "artifactId": "media-1ac46253-3aaa-480d-baa1-5bf057fd28a1-frame-2.png",
+          "file": ".bmw-runtime/hls-subtitles-20261030/live-final/project/artifacts/media-1ac46253-3aaa-480d-baa1-5bf057fd28a1-frame-2.png",
+          "timestampSeconds": 85.56666666666666,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "artifactId": "media-1ac46253-3aaa-480d-baa1-5bf057fd28a1-frame-3.png",
+          "file": ".bmw-runtime/hls-subtitles-20261030/live-final/project/artifacts/media-1ac46253-3aaa-480d-baa1-5bf057fd28a1-frame-3.png",
+          "timestampSeconds": 170.86666666666667,
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "subtitles": [
+        {
+          "group": "subtitles-0",
+          "name": "English",
+          "language": "en-US",
+          "default": true,
+          "forced": false,
+          "artifactId": "preserved-8a7741a7-1945-4654-8c12-8970e81697ae-65-captions.vtt",
+          "sha256": "a12a484feef543bf496d82798f5d0a58e63d860861d159f80ccfb284816b6e17",
+          "indexArtifactId": "preserved-8a7741a7-1945-4654-8c12-8970e81697ae-66-subtitle-index.json",
+          "indexSha256": "7da90de18aba98cfddd62945ffa459ad90d3fa53d1d6eb6fad0528ae3f7d0edf",
+          "cueCount": 50,
+          "occurrenceCount": 50,
+          "duplicatesRemoved": 0,
+          "timebase": "delivery-file-PTS",
+          "format": "webvtt",
+          "delivery": "external-sidecar",
+          "file": ".bmw-runtime/hls-subtitles-20261030/live-final/project/artifacts/preserved-8a7741a7-1945-4654-8c12-8970e81697ae-65-captions.vtt",
+          "indexFile": ".bmw-runtime/hls-subtitles-20261030/live-final/project/artifacts/preserved-8a7741a7-1945-4654-8c12-8970e81697ae-66-subtitle-index.json"
+        }
+      ]
+    },
+    {
+      "id": "yahoo",
+      "site": "Yahoo Finance",
+      "url": "https://ca.finance.yahoo.com/video/ai-could-disrupt-every-industry-faster-than-expected-164139763.html",
+      "title": "AI could disrupt every industry faster than expected",
+      "outcome": "native-preserve-and-complete-decode",
+      "api": "browser media.preserve",
+      "formalListingBound": true,
+      "identity": {
+        "version": 1,
+        "platform": "page",
+        "targetId": "https://ca.finance.yahoo.com/video/ai-could-disrupt-every-industry-faster-than-expected-164139763.html",
+        "resourceId": "yahoo-finance:0c1b39db-70fa-4379-afbc-b24956ef2e03"
+      },
+      "sourceDurationSeconds": 137,
+      "navigationMs": 10769,
+      "identityWaitMs": 0,
+      "transferMs": 31348,
+      "totalMs": 77790,
+      "resolution": {
+        "width": 1920,
+        "height": 1080
+      },
+      "videoContentSpanSeconds": 137.67999999999998,
+      "videoPts": {
+        "startSeconds": 0.08,
+        "endSeconds": 137.76
+      },
+      "tracks": [
+        {
+          "id": 1,
+          "type": "video",
+          "codec": "avc",
+          "canDecode": true,
+          "width": 1920,
+          "height": 1080,
+          "rotation": 0,
+          "startSeconds": 0.08,
+          "endSeconds": 137.76,
+          "canBeTransparent": false
+        },
+        {
+          "id": 2,
+          "type": "audio",
+          "codec": "aac",
+          "canDecode": true,
+          "channels": 2,
+          "sampleRate": 44100,
+          "startSeconds": 0,
+          "endSeconds": 137.81043083900227
+        },
+        {
+          "id": 3,
+          "type": "audio",
+          "codec": "aac",
+          "canDecode": true,
+          "channels": 2,
+          "sampleRate": 44100,
+          "startSeconds": 0,
+          "endSeconds": 137.81043083900227
+        },
+        {
+          "id": 4,
+          "type": "audio",
+          "codec": "aac",
+          "canDecode": true,
+          "channels": 2,
+          "sampleRate": 44100,
+          "startSeconds": 0,
+          "endSeconds": 137.81043083900227
+        }
+      ],
+      "decode": {
+        "sourceArtifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-delivery.mp4",
+        "sourceBytes": 29081825,
+        "engine": "mediabunny-webcodecs",
+        "kind": "decoding",
+        "completeFile": true,
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.640028, mp4a.40.2\"",
+        "durationSeconds": 137.81043083900227,
+        "firstTimestampSeconds": 0,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "sampleCount": 3442,
+            "startSeconds": 0.08,
+            "endSeconds": 137.76
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 5935,
+            "startSeconds": 0,
+            "endSeconds": 137.8104308390023
+          },
+          {
+            "id": 3,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 5935,
+            "startSeconds": 0,
+            "endSeconds": 137.8104308390023
+          },
+          {
+            "id": 4,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 5935,
+            "startSeconds": 0,
+            "endSeconds": 137.8104308390023
+          }
+        ]
+      },
+      "packetProof": [
+        {
+          "type": "video",
+          "codec": "avc",
+          "packets": 3442,
+          "startSeconds": 0.08,
+          "endSeconds": 137.76,
+          "packetSha256": "65a211d099ef34d674c07720331305632e60a4a926550a60a00759d258759af6",
+          "sourcePacketSha256": "282dbada149866336e9084b6e10dc757895bea4830a58794794430ad351a4707",
+          "payloadSerialization": "annex-b-to-length4",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload",
+          "sourceArtifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-video.ts",
+          "sourceTrackId": 258
+        },
+        {
+          "type": "audio",
+          "codec": "aac",
+          "packets": 5935,
+          "startSeconds": 0,
+          "endSeconds": 137.81043333333332,
+          "packetSha256": "961213d86c6deb84e61c1340c1ffe5738a097a4a43a459f26501708c4aa075f8",
+          "sourcePacketSha256": "4cf086365513ff1a5861e7f6def84e14dbee9ad274f11c98f14ddc6eba41f6ae",
+          "payloadSerialization": "adts-to-raw",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload",
+          "sourceArtifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-audio-0.ts",
+          "sourceTrackId": 257
+        },
+        {
+          "type": "audio",
+          "codec": "aac",
+          "packets": 5935,
+          "startSeconds": 0,
+          "endSeconds": 137.81043333333332,
+          "packetSha256": "62831c7d44c273c6c76a94878637dabc080e010404e1b3ca2f841e548623d4f0",
+          "sourcePacketSha256": "852a8015fbd31d678d02f9951e8ed399a053768bd7f5d5f8b867efe8f05e5c21",
+          "payloadSerialization": "adts-to-raw",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload",
+          "sourceArtifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-audio-1.ts",
+          "sourceTrackId": 257
+        },
+        {
+          "type": "audio",
+          "codec": "aac",
+          "packets": 5935,
+          "startSeconds": 0,
+          "endSeconds": 137.81043333333332,
+          "packetSha256": "d17438d8c9fd39670498408aadbdafe2ee4b46f23ea775db305fdb4cfe480a59",
+          "sourcePacketSha256": "0da1e89370a02177ad5a64d7f12779d7eddb73f7c54e114bf713ea034558b060",
+          "payloadSerialization": "adts-to-raw",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload",
+          "sourceArtifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-audio-2.ts",
+          "sourceTrackId": 257
+        }
+      ],
+      "audioRenditions": [
+        {
+          "artifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-audio-0.ts",
+          "group": "audio-2",
+          "name": "en (Main)",
+          "language": "en",
+          "manifestDefault": true,
+          "outputDefault": true
+        },
+        {
+          "artifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-audio-1.ts",
+          "group": "audio-0",
+          "name": "en (Main)",
+          "language": "en",
+          "manifestDefault": true,
+          "outputDefault": false
+        },
+        {
+          "artifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-audio-2.ts",
+          "group": "audio-1",
+          "name": "en (Main)",
+          "language": "en",
+          "manifestDefault": true,
+          "outputDefault": false
+        }
+      ],
+      "subtitleVerification": [
+        {
+          "language": "en",
+          "name": "en",
+          "delivery": "external-sidecar",
+          "format": "webvtt",
+          "artifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-112-captions.vtt",
+          "sha256": "65ecaf4e7025e4d78e3479ca7090ad4a0ca1009419217b101593874c433085b3",
+          "cueCount": 41,
+          "occurrenceCount": 41,
+          "duplicatesRemoved": 0,
+          "segments": 5,
+          "firstSeconds": 0.04,
+          "lastSeconds": 137.46,
+          "timebase": "delivery-file-PTS",
+          "allHashesVerified": true,
+          "allOriginalCuesVerified": true
+        },
+        {
+          "language": "en-US",
+          "name": "Captions (En-US)",
+          "delivery": "external-sidecar",
+          "format": "webvtt",
+          "artifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-114-captions.vtt",
+          "sha256": "a442a9001234af1f3986168d24bff7b218e9b83fd27c15ab636416eb41b1c117",
+          "cueCount": 41,
+          "occurrenceCount": 41,
+          "duplicatesRemoved": 0,
+          "segments": 5,
+          "firstSeconds": 0.04,
+          "lastSeconds": 137.46,
+          "timebase": "delivery-file-PTS",
+          "allHashesVerified": true,
+          "allOriginalCuesVerified": true
+        }
+      ],
+      "allOriginalHashesVerified": true,
+      "originalResourceCount": 112,
+      "completeSubtitles": true,
+      "reencoded": false,
+      "artifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-delivery.mp4",
+      "bytes": 29081825,
+      "sha256": "05ee3341d53a08df29c80edfdd39ace1fecf5f6df8ff01edcb76ea85d5db19cf",
+      "proofArtifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-116-preservation.json",
+      "proofSha256": "723bf74f754c65649db14b209ab8bb40b736db53167235d9635279a7acde4e19",
+      "mediaFile": ".bmw-runtime/hls-subtitles-20261030/live-final/project/artifacts/preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-delivery.mp4",
+      "frames": [
+        {
+          "artifactId": "media-7c9601f9-b8c9-4b2f-adf6-92b8cd11e50b-frame-1.png",
+          "file": ".bmw-runtime/hls-subtitles-20261030/live-final/project/artifacts/media-7c9601f9-b8c9-4b2f-adf6-92b8cd11e50b-frame-1.png",
+          "timestampSeconds": 0.16,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "artifactId": "media-7c9601f9-b8c9-4b2f-adf6-92b8cd11e50b-frame-2.png",
+          "file": ".bmw-runtime/hls-subtitles-20261030/live-final/project/artifacts/media-7c9601f9-b8c9-4b2f-adf6-92b8cd11e50b-frame-2.png",
+          "timestampSeconds": 68.92,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "artifactId": "media-7c9601f9-b8c9-4b2f-adf6-92b8cd11e50b-frame-3.png",
+          "file": ".bmw-runtime/hls-subtitles-20261030/live-final/project/artifacts/media-7c9601f9-b8c9-4b2f-adf6-92b8cd11e50b-frame-3.png",
+          "timestampSeconds": 137.56,
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "subtitles": [
+        {
+          "group": "subtitles-0",
+          "name": "en",
+          "language": "en",
+          "default": false,
+          "forced": false,
+          "artifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-112-captions.vtt",
+          "sha256": "65ecaf4e7025e4d78e3479ca7090ad4a0ca1009419217b101593874c433085b3",
+          "indexArtifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-113-subtitle-index.json",
+          "indexSha256": "cca7691e12784739a677b15ce7cbb8504d0c3341aa2908d0eaf78d3fe815efb8",
+          "cueCount": 41,
+          "occurrenceCount": 41,
+          "duplicatesRemoved": 0,
+          "timebase": "delivery-file-PTS",
+          "format": "webvtt",
+          "delivery": "external-sidecar",
+          "file": ".bmw-runtime/hls-subtitles-20261030/live-final/project/artifacts/preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-112-captions.vtt",
+          "indexFile": ".bmw-runtime/hls-subtitles-20261030/live-final/project/artifacts/preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-113-subtitle-index.json"
+        },
+        {
+          "group": "subtitles-0",
+          "name": "Captions (En-US)",
+          "language": "en-US",
+          "default": false,
+          "forced": false,
+          "artifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-114-captions.vtt",
+          "sha256": "a442a9001234af1f3986168d24bff7b218e9b83fd27c15ab636416eb41b1c117",
+          "indexArtifactId": "preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-115-subtitle-index.json",
+          "indexSha256": "f3cdf48a3b7dd7dc26d7356aab20342258ab35d30b4b1c4849a315855cc937fd",
+          "cueCount": 41,
+          "occurrenceCount": 41,
+          "duplicatesRemoved": 0,
+          "timebase": "delivery-file-PTS",
+          "format": "webvtt",
+          "delivery": "external-sidecar",
+          "file": ".bmw-runtime/hls-subtitles-20261030/live-final/project/artifacts/preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-114-captions.vtt",
+          "indexFile": ".bmw-runtime/hls-subtitles-20261030/live-final/project/artifacts/preserved-9ad45596-62e8-458a-a0a5-13f1c57b6bb2-115-subtitle-index.json"
+        }
+      ]
+    }
+  ],
+  "independent": {
+    "at": "2026-10-30T03:30:14.730Z",
+    "verified": [
+      {
+        "id": "fox",
+        "allAudioMetadataReadback": true,
+        "audio": [
+          {
+            "name": "en (Main) / en / audio-0",
+            "disposition": {
+              "default": true,
+              "primary": false,
+              "forced": false,
+              "original": false,
+              "commentary": false,
+              "hearingImpaired": false,
+              "visuallyImpaired": false
+            },
+            "codec": "aac"
+          },
+          {
+            "name": "en (Main) / en / audio-1",
+            "disposition": {
+              "default": false,
+              "primary": false,
+              "forced": false,
+              "original": false,
+              "commentary": false,
+              "hearingImpaired": false,
+              "visuallyImpaired": false
+            },
+            "codec": "aac"
+          }
+        ],
+        "subtitles": [
+          {
+            "language": "en-US",
+            "cues": 50,
+            "originalOccurrences": 50,
+            "mappedCueSequenceExactlyEqual": true,
+            "sha256": "a12a484feef543bf496d82798f5d0a58e63d860861d159f80ccfb284816b6e17"
+          }
+        ]
+      },
+      {
+        "id": "yahoo",
+        "allAudioMetadataReadback": true,
+        "audio": [
+          {
+            "name": "en (Main) / en / audio-2",
+            "disposition": {
+              "default": true,
+              "primary": false,
+              "forced": false,
+              "original": false,
+              "commentary": false,
+              "hearingImpaired": false,
+              "visuallyImpaired": false
+            },
+            "codec": "aac"
+          },
+          {
+            "name": "en (Main) / en / audio-0",
+            "disposition": {
+              "default": false,
+              "primary": false,
+              "forced": false,
+              "original": false,
+              "commentary": false,
+              "hearingImpaired": false,
+              "visuallyImpaired": false
+            },
+            "codec": "aac"
+          },
+          {
+            "name": "en (Main) / en / audio-1",
+            "disposition": {
+              "default": false,
+              "primary": false,
+              "forced": false,
+              "original": false,
+              "commentary": false,
+              "hearingImpaired": false,
+              "visuallyImpaired": false
+            },
+            "codec": "aac"
+          }
+        ],
+        "subtitles": [
+          {
+            "language": "en",
+            "cues": 41,
+            "originalOccurrences": 41,
+            "mappedCueSequenceExactlyEqual": true,
+            "sha256": "65ecaf4e7025e4d78e3479ca7090ad4a0ca1009419217b101593874c433085b3"
+          },
+          {
+            "language": "en-US",
+            "cues": 41,
+            "originalOccurrences": 41,
+            "mappedCueSequenceExactlyEqual": true,
+            "sha256": "a442a9001234af1f3986168d24bff7b218e9b83fd27c15ab636416eb41b1c117"
+          }
+        ]
+      }
+    ]
+  },
+  "verification": {
+    "build": true,
+    "check": true,
+    "classified": {
+      "passed": 138,
+      "failed": 0,
+      "not-run": 103
+    },
+    "classifiedReport": ".bmw-runtime/hls-subtitles-20261030/final/.bmw-runtime/classified-tests/2026-10-30T03-26-28-240Z/result.json",
+    "native": {
+      "passed": 16,
+      "total": 16,
+      "results": [
+        {
+          "id": "identity",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 2752
+        },
+        {
+          "id": "acquisition",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 9835
+        },
+        {
+          "id": "worktabs",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 30104
+        },
+        {
+          "id": "background",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 3538
+        },
+        {
+          "id": "capture",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 42002
+        },
+        {
+          "id": "processing",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 26172
+        },
+        {
+          "id": "video",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 43120
+        },
+        {
+          "id": "studio",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 71939
+        },
+        {
+          "id": "qwen-narration",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 1482
+        },
+        {
+          "id": "local-narration",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 3984
+        },
+        {
+          "id": "driver",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 3315
+        },
+        {
+          "id": "desktop-workspace",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 4919
+        },
+        {
+          "id": "desktop-projects",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 3710
+        },
+        {
+          "id": "desktop-restore",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 1534
+        },
+        {
+          "id": "desktop-settings",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 11286
+        },
+        {
+          "id": "desktop-native",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 4613
+        }
+      ]
+    },
+    "dsh": true,
+    "targetedTests": 37,
+    "sourceHashes": {
+      "packages/media-native/src/hls-subtitles.ts": "417d36627b01cf7aed67e458ce74079f5f764cc0a7aed6f5d3758cc2d3566e16",
+      "packages/media-native/src/media-preservation.ts": "1b9d8a9d1684e2c3fad8c458bb89ce434f096b359def82db7e5dcb98d433f1e4",
+      "packages/media-native/src/preservation-packets.ts": "f5e5d15273f460fa92c0dce37d5480d5161380cbe6a206f3d21031cebfcf0444",
+      "packages/media-native/src/media-contract.ts": "aef0c83c1aa69764373446bfe24bbfc6832bdb122ca9f79ca38a842c573280f5",
+      "packages/browser-capability/src/publisher-video.ts": "fa8759447541f82ac5375b9b2d6ea244ebfb6ae968474e69582988baf7146b11",
+      "packages/browser-capability/src/browser-kernel.ts": "8ab1993681cd81a9c796a93423a90d1aefe98d469cbdc0aa1fb84ebaa09649d7",
+      "packages/browser-capability/src/video-acquisition.ts": "2e464c67f19ebd5ab115751377103af67fa1e57bcb2529c0448f3276265deeb0",
+      "packages/browser-capability/src/preservation-result.ts": "f53e2faf3107b614558392084c41dae3feb542581cb7fbe746ef7767cb66bf71",
+      "packages/feature-library/src/library-sources.ts": "1fdb84843909f078725fd5b5cf21493e9e909f0ed97b7038191f65bddba9a439"
+    },
+    "codeDifferences": [],
+    "snapshot": ".bmw-runtime/hls-subtitles-20261030/final",
+    "publicCodeUnchanged": true,
+    "rawEvidence": ".bmw-runtime/hls-subtitles-20261030",
+    "documentationAfterRuntime": {
+      "note": "Only report wording and links were updated after the runtime freeze; production and test sources are unchanged.",
+      "sha256": {
+        "README.md": "e7489a3f8f3933fe19331958c27c9d7e6f2b558d1ccec9c3e16529e29f146d0c",
+        "handoff.md": "4f8a9c690de18d64b0f3c18ad8c2a69eb8f18bfd27a0e662c93c27d9123d4b5b",
+        "docs/FUNCTIONAL_SPEC.md": "5985250ffd150daec4768a2b106c2417316604729afa39ddd990437832b3da20",
+        "docs/ARCHITECTURE.md": "3cab860bde3ca90c0f4d3bed771bafda13dad2850a3c2976514b9554ebb1cbfd",
+        "docs/VERIFICATION.md": "1046ba1213f2536d0755c5cf4dbd09e63f08cf2abd6494532eefa67f900add7e"
+      }
+    },
+    "reportReview": {
+      "frameImages": "Opening/middle/ending frames from both final MP4 files independently viewed",
+      "browserPreview": "Not run: browser policy refuses file URL navigation. No workaround attempted; local HTML/data/link checks used."
+    },
+    "manualListening": "Pending; complete decode and source/packet/subtitle verification do not certify listening or editorial acceptance."
+  },
+  "history": {
+    "firstSubtitleAttempt": [
+      {
+        "id": "fox",
+        "outcome": "native-preserve-and-complete-decode",
+        "newOwnedFiles": 76
+      },
+      {
+        "id": "yahoo",
+        "outcome": "failed",
+        "error": "Error: MEDIA_PRESERVATION_TRACKS_INCOMPLETE: Complete HLS audio/subtitle presentation was not preserved. MEDIA_PRESERVATION_SUBTITLE_INVALID: Standalone subtitle readback changed cues or configuration.",
+        "newOwnedFiles": 0
+      }
+    ],
+    "floatIssue": "Yahoo exact readback exposed floating addition 6 + .940 => 6.9399999999999995. Integer-millisecond parsing fixed without changing timing tolerances. Failed bundle left zero files.",
+    "integerParserCandidate": [
+      {
+        "id": "fox",
+        "outcome": "native-preserve-and-complete-decode",
+        "transferMs": 18395
+      },
+      {
+        "id": "yahoo",
+        "outcome": "native-preserve-and-complete-decode",
+        "transferMs": 32117
+      }
+    ],
+    "fixtureFailure": {
+      "log": "processing-candidate-1.log",
+      "reason": "Default VP8 fixture emitted no AV chunks on host; unchanged VP9 fixture passed and final runtime uses that existing option."
+    }
+  }
+}

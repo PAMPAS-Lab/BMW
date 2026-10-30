@@ -351,6 +351,14 @@ YouTube 已确认目标的页面比较仅忽略 `themeRefresh`、`feature`、`si
 
 内部 MCP 到认证 loopback Bridge 的 HTTP 使用专属有界传输，响应头/正文不继承通用客户端的五分钟等待上限；每次动作的 AbortSignal 仍统一执行默认、分段或存档期限及取消。只允许本机明确 Bridge origin 的 tool/execute，拒绝重定向；不会把该 HTTP 客户端作为模型能力。Qoder 官方 stdio 工具调用配套设122分钟上限，超过 BMW 最长121分钟通信期限，避免默认空闲监控提前截断两小时存档；连接/目录预检仍独立短限。EOF 中止未完成调用并排空私有 HTTP 连接。
 
+CNBC 的 HTTPS 单条 `/video/YYYY/MM/DD/*.html` 页面及 Fox News 的 HTTPS `/video/数字ID` 页面采用固定发布者身份读取。CNBC 同时核对正文标题、JSON-LD、当前 JW Player 的容器／mediaid／canonical URL／时长与广告状态；Fox 仅读取正文选中范围内、同页面目标 ID 的非 gated 官方 iframe，核对父页 JSON-LD 的 MP4、实际附着 Frame、AMP 当前 guid／素材 account+asset／时长和非广告状态，并在读取后重核父页与 Frame。资源只来自这些精确关联的声明，候选同时包含显式 MP4 与已绑定 HLS，自动获取按既有 HLS 优先顺序；完整轨道错误终止，其他可恢复错误仍在同一下载预算内回退 HTTP；不以全页第一个网络视频补位，不新增 Frame 操作工具。跨域 iframe 目标的下载失败不回退录制其他主 Frame 播放器。发布者完整节目保全另以宿主固定的时长与有声要求验证一个视频和全部声明音频轨道、包覆盖及 AV 首尾同步；HTTP 原件另存且无重编码重封装，HTTP/HLS 均写入期望和编码包证明，失败清理本次全部文件。通用 HTTP 结束仍不单独证明完整节目。该适配不承诺直播、订阅内容、DRM 或其他发布者均可用。 CNN 的 HTTPS 单条日期／栏目／video 页面另由固定主 Frame 程序核对可见正文范围、标题、唯一公开 VideoObject、正文 primary media/video ID、canonical 路径和 fave embed 的同一内容 ID；只接纳页面实际声明、素材数字 ID 相符的 CNN clips CDN MP4。声明原片独立于广告播放器，目标 videoIndex=-1，不授权录制其他播放器；直播、订阅标记、范围外、重复或变更身份拒绝。正式 `page.media.list`、`media.preserve`、来源保全沿用相同准入、Project 归属及提交前重核。
+
+TS 到 MP4 的保全复核以合法封装变换后的编码负载为准：AVC/HEVC Annex B 仅换为四字节长度前缀，保留所有 NAL（含 SPS/PPS、SEI、AUD）；AAC 仅在 ADTS 配置和精确单帧长度一致时移除7/9字节头。原分发字节和原包SHA另留，输出包摘要采用闭合的长度前缀加 MP4 包负载序列，格式在证明中显式记录，不能将封装差异当重编码或静默忽略负载变化。每轨最多200万条固定大小 PTS／时长／长度索引（约40MB，不缓存编码内容）独立复核输出每一包、边界、数量、音频时长与PTS；逐包PTS/音频时长仍限1ms，整轨起止仍限1ms/30ms，不扩容误差容忍来接纳损坏源。本地输入／输出各限8MiB缓存并使用文件系统预取，仍逐块核对guard；复核不再次读取并解复用整个TS，所有生产、网络、文件清理仍实际完成后才释放占用。既有分离音视频、SABR、fMP4 HLS及HTTP路径继续核验。旧版网站验收见 `docs/verification/NEWS_HLS_CNN_DOWNLOADS.json`；该记录中的 Fox／Yahoo 外置字幕限制由本次完整分轨包实现替代，当前 Fox／Yahoo 完整分轨包实测见 `docs/verification/NEWS_HLS_SUBTITLES_DOWNLOADS.json`：Fox 720p、2音轨和1条50 cue英文字幕；Yahoo 1080p、3音轨与en／en-US各41 cue字幕，全部音视频完整解码，原始分片到独立WebVTT逐cue复核通过。保全分别18.052／31.348秒，是当前代理下的单次观测，不是全站成功率。
+
+HLS 保全选择最高带宽视频，保留 master 声明的全部外置音频（最多15轨，原分组／语言／名称及清单默认值留证，选中组的默认或首轨为唯一输出默认轨）和全部外置 WebVTT 字幕（最多32轨，不合并 en 与 en-US）。原始 master／media 清单、每一字幕分片和音视频分发字节各存 SHA；MP4 仅封装音视频，字幕以明确 `external-sidecar` 的独立 WebVTT 和时间索引交付，不声称内嵌。原始 cue 的标识、设置、空格、Unicode、公共 STYLE／REGION／NOTE 保留；仅在同轨派生文件去除完全相同的跨分片重复 cue，索引记录出现次数和映射。X-TIMESTAMP-MAP 与33位 MPEGTS 回绕映射到已保全 MP4 的实际 PTS，独立读回全部派生字幕与原分片哈希。合计字幕输入32MiB／10万 cue、每片1MiB、单个派生16MiB，所有轨共用既有2万片／归档时长／网络字节限制。素材库清理所有权使用同一归档片数加256份元数据的上限，保留完整内部所属列表，不使用公开前20项摘要进行回滚。不支持的内带／TTML／fMP4 字幕声明、未知轨、缺片、非法 UTF-8、样式变化、时钟不匹配或超限均整体失败并清理，不能发布半包。`MEDIA_PRESERVATION_TRACKS_INCOMPLETE` 为获取及素材库恢复的终止错误，禁止随后自动改用无字幕 MP4 或录屏；原有身份 guard、超时、取消和清理隔离保持。
+
+Yahoo Finance 的 finance／ca.finance 单条 `/video/…-数字.html` 页面由固定只读主 Frame 程序核对所选可见正文 h1、唯一同标题 VideoObject、UUID、实际 canonical 与 embed 同路径，以及 YQL HLS 的相同 UUID。只有该声明 HLS 进入正式 `page.media.list`／`media.preserve`，广告播放器不授予资源，videoIndex=-1 不授权录屏；每次及提交前重核身份，变更、范围外和多重声明拒绝。
+
 `library.sources acquire` 的 `method:auto` 对已确认且时长不超过30分钟的同一播放器，先按已观测的 SABR/HLS/HTTP 资源尝试原编码保全（最多两个资源，共用60秒下载预算），完整保留原轨道及保全证明。下载失败必须等待 worker、网络与文件清理实际结束；取消、身份变化、Project变化或清理隔离不能触发采集。保全成功不再启动播放器采集。失败后的采集仍核同页、范围和视频身份；YouTube 从播放器已提供的清晰度中请求最高不超过1080p的档位，记录请求档位与当时实测尺寸，实际产物尺寸以解码检查为准。采集明确标记重新编码，原声沿用播放器当前音轨，不能称为原编码下载。获取证明记录脱敏的尝试方式、耗时和失败类型；没有自动破解网站验证。显式长存档仍走 `media.preserve` 的独立预算。此入口是有限原生任务，没有增加模型工具或 Host Agent loop。
 
 主画面精确裁切由 `video.edit` 的 `clip.crop` 命令按当前文档主轨 clipId 定位，可设置规范化 crop 或用 null 复原；覆盖单场景原片与 visualSegments，不改时钟、原声或字幕。独立叠层不能借此命令修改。用于在正式导出前修正新闻画面主体过小的问题。
@@ -1062,6 +1070,14 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 - `Long archive browser receipts remain bounded without losing the complete internal rollback ledger`
 - `Short native receipts retain every resource and malformed results are refused`
+- `Subtitle receipt preview is explicit and bounded without mutating the complete native bundle`
+
+#### `packages/browser-capability/test/publisher-video.test.ts`
+
+- `Publisher resources bind exact CNBC ID and Fox parent/frame/content asset without exporting a frame capability`
+- `Foreign publisher, ad, frame origin, parent reference, asset version and short replacement never bind`
+- `CNN original declaration pins canonical path, public content ID and exact CDN asset independently of ad playback`
+- `Yahoo original HLS pins UUID, canonical, embed and CDN declaration independently of ad playback`
 
 #### `packages/browser-capability/test/renderer-read.test.ts`
 
@@ -1104,6 +1120,8 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Long or unknown sources require explicit archive handling; guards fail before acquiring`
 - `Fallback failures retain the real guard error and bounded download reasons without signed URLs`
 - `Expired delivery can enter capture only after a fresh capture-specific identity check`
+- `Embedded publisher preservation failure never records an unrelated top-frame player`
+- `A failed complete HLS presentation never falls back to subtitle-less MP4 or capture`
 
 #### `packages/browser-capability/test/video-capture-ready.test.ts`
 
@@ -1233,6 +1251,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `SABR source acquisition rejects absent, foreign, cross-platform or malformed delivery identities`
 - `Acquisition resolves only its saved source rather than an unrelated active blank tab`
 - `Confirmed YouTube native acquisition resolves tracking changes without admitting foreign or ambiguous source tabs`
+- `Complete preservation rollback adopts large multi-track bundles and rejects foreign, duplicate or over-budget resources`
 
 #### `packages/feature-library/test/source-presets.test.ts`
 
@@ -1761,6 +1780,12 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Compact text keeps content and Latin words, balances a Chinese orphan, and rejects overflow without shrink`
 - `Compact preflight rejects layout overrides/long cues and shared native painter uses the same fixed slots`
 
+#### `packages/media-native/test/hls-subtitles.test.ts`
+
+- `WebVTT preserves Unicode, identifiers, settings, whitespace and common STYLE/REGION/NOTE blocks`
+- `Timestamp map and 33-bit wrap align sidecars to file PTS; only exact cross-segment duplicates are removed`
+- `Malformed UTF8, malformed/duplicate maps, invalid cues, changing styles and unsynchronized time domains fail closed`
+
 #### `packages/media-native/test/media-controller.test.ts`
 
 - `Shared decoding FIFO drains active cleanup, skips cancelled previews and survives failed jobs`
@@ -1786,6 +1811,10 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Failed preservation cleanup stays recoverable without following a replaced Project directory`
 - `Long storage and bounded decoding have independent budgets and segment contracts`
 - `HTTP archive writes incrementally before EOF and rolls back a truncated stream`
+- `Bound complete programs require full synchronized AV coverage and refuse a shorter ad or missing original audio`
+- `Packet verification preserves every NAL and raw AAC payload while rejecting malformed framing, interior PTS drift and changed bytes`
+- `Bounded packet index detects interior timing and boundary changes; digest distinguishes equal concatenated bytes`
+- `Declared HLS subtitles and all audio groups stay explicit; malformed declarations and incomplete captions roll back`
 
 #### `packages/media-native/test/media-processing.test.ts`
 

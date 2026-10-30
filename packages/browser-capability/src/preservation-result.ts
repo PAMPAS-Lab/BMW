@@ -21,6 +21,16 @@ export function preservationResult(value: unknown): Record<string, unknown> {
    summary.resourcesTruncated = proof.resources.length > PAGE_SIZE
    summary.resourceScope = 'Bounded metadata preview; complete URLs and resource ledger remain in proofArtifactId.'
   }
+  if(Array.isArray(proof.subtitleTracks)){
+   summary.subtitleTracks=proof.subtitleTracks.slice(0,PAGE_SIZE).map(value=>{
+    if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Invalid native subtitle track.')
+    const track=value as Record<string,unknown>
+    return Object.fromEntries(['group','name','language','default','forced','artifactId','sha256','indexArtifactId','indexSha256','cueCount','occurrenceCount','duplicatesRemoved','timebase','format','delivery'].filter(key=>track[key]!==undefined).map(key=>[key,track[key]]))
+   })
+   summary.subtitleTrackCount=proof.subtitleTracks.length
+   summary.subtitleTracksTruncated=proof.subtitleTracks.length>PAGE_SIZE
+   summary.subtitleDelivery='External WebVTT sidecars in the MP4 file PTS domain; original segments and mapping indexes retained in the Project. Complete track list is in proofArtifactId.'
+  }
   result.preservation = summary
  }
  return result

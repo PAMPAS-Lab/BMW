@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import {assertSourcePreservationBasis,sourceAcquisitionTab,sourceCaptureRecovery} from '../src/library-sources.js'
+import {assertSourcePreservationBasis,sourcePreservationArtifacts,sourceAcquisitionTab,sourceCaptureRecovery} from '../src/library-sources.js'
 import type {VideoIdentity} from '@bmw-agent/agent-contract/video-identity'
 const youtube:VideoIdentity={version:1,platform:'youtube',targetId:'jNQXAC9IVRw',resourceId:'jNQXAC9IVRw'}
 const complete={basis:'YouTube-SABR-encoded-tracks',reencoded:false,completeVod:true,completeSeparatedTracks:true}
@@ -8,7 +8,7 @@ test('Archive download recovery returns one complete fresh-revision capture with
  const request={operation:'acquire' as const,expectedRevision:5,sourceId:'source',acquisitionId:'acq',candidateId:'video',method:'preserve' as const,preview:{startSeconds:60,endSeconds:85}},scope={selector:'video',index:1,excludeSelectors:[],characterUnit:'utf16' as const,extraction:'visible-text-nodes' as const,truncated:false,status:'observed' as const}
  const recovery=sourceCaptureRecovery(request,scope,6,'actual-tab','HTTP 403')!
  assert.deepEqual(recovery.sourceRequest,{operation:'acquire',expectedRevision:6,sourceId:'source',acquisitionId:'acq',candidateId:'video',method:'capture',tabId:'actual-tab',videoSelector:'video',videoIndex:1,fromStart:false,maxDurationMs:29000})
- for(const error of ['VIDEO_IDENTITY_CHANGED','SOURCE_CONFLICT','MEDIA_CAPTURE_CLEANUP_FAILED','login required','source page changed'])assert.equal(sourceCaptureRecovery(request,scope,6,'actual-tab',error),null)
+ for(const error of ['MEDIA_PRESERVATION_TRACKS_INCOMPLETE: subtitle unavailable','VIDEO_IDENTITY_CHANGED','SOURCE_CONFLICT','MEDIA_CAPTURE_CLEANUP_FAILED','login required','source page changed'])assert.equal(sourceCaptureRecovery(request,scope,6,'actual-tab',error),null)
  assert.equal(sourceCaptureRecovery({...request,method:'auto'},scope,6,'actual-tab','HTTP403'),null)
 })
 test('Source acquisition accepts complete native SABR only for its already confirmed identical YouTube target',()=>{
@@ -40,4 +40,10 @@ test('Confirmed YouTube native acquisition resolves tracking changes without adm
  assert.throws(()=>sourceAcquisitionTab([{id:'source',url:original+'&list=changed'}],original,undefined,youtube),/SOURCE_TAB_UNAVAILABLE/)
  assert.throws(()=>sourceAcquisitionTab(pages,original,undefined,{...youtube,targetId:'a9LDPn-MO4I',resourceId:'a9LDPn-MO4I'}),/SOURCE_TAB_UNAVAILABLE/)
  assert.throws(()=>sourceAcquisitionTab([...pages,{id:'duplicate',url:original}],original,undefined,youtube),/SOURCE_TAB_AMBIGUOUS/)
+})
+
+test('Complete preservation rollback adopts large multi-track bundles and rejects foreign, duplicate or over-budget resources',()=>{
+ const prefix='preserved-00000000-0000-4000-8000-000000000000-',created=prefix+'delivery.mp4',owned=[created,...Array.from({length:20150},(_,i)=>prefix+i+'-resource.bin')]
+ assert.deepEqual(sourcePreservationArtifacts(created,owned),owned)
+ for(const bad of [[...owned,created],[...owned,'preserved-11111111-1111-4111-8111-111111111111-file.bin'],owned.slice(1),Array.from({length:20257},(_,i)=>prefix+i+'-resource.bin')])assert.throws(()=>sourcePreservationArtifacts(created,bad),/Foreign|Invalid/)
 })

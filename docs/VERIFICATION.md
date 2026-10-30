@@ -1,5 +1,7 @@
 # BMW 验证说明
 
+新闻网站完整分轨包的独立记录见 [NEWS_HLS_SUBTITLES_DOWNLOADS](verification/NEWS_HLS_SUBTITLES_DOWNLOADS.json)。同一 Fox／Yahoo Finance 公开视频通过正式 `page.media.list`／`media.preserve`：全部声明音轨完整解码，全部原始字幕分片、时间映射与交付 WebVTT 逐cue一致。build/check、分类138 passed／0 failed、原生16/16及DSH兼容检查通过；分类层另有103项未在该命令运行，原生覆盖单列，不与历史全套计数合并。均使用一次性Profile／Project，没有付费模型或正式Profile覆盖。原生默认VP8夹具首次未输出包及Yahoo整数毫秒修复前的失败/零残留记录保留于该报告；最终代码与隔离受测输入一致。人工听审不计入技术完整性验证。
+
 核对日期：2026-10-25。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。
 
 2026-10-29 YouTube专项[吞吐与节点对照](verification/YOUTUBE_THROUGHPUT.json)：原慢链路为几十KiB/s，本地实际原生完整处理为0.503／0.723秒。用户切换至JMS-S1后，相同冻结产品源码完整下载Microduck／UHD为17.696／18.852秒；独立临时mihomo测10个节点的相同4MiB资源，复测前三个完整候选，S801最快、S5稳定，完整范围SHA一致。S801的Microduck为5.796秒；UHD首次长诊断后唯一播放器准入失败、无产物，另新页面单条补测4.367秒成功，分别登记。四个新成功文件均全片双轨解码通过，原编码轨道SHA与此前验收一致；UHD原AAC为静音，未新增人工听审。主要瓶颈在出站节点／出口／CDN链路，未改下载实现或手动默认S1，临时子进程及私有配置均已清理。冻结源码build/check及135项离线验证通过；未重跑全部原生套件、默认协议／SPA或生产Profile，旧失败与采样局限保留。

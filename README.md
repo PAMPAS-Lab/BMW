@@ -47,7 +47,7 @@ NEWS-01已用BMW＋官方Codex完成54.61秒最新新闻并获用户接受，显
 
 - 浏览器标签页、语义观察、页面交互、站点权限、后台取材、登录连续性和按 Project 保存的日常任务。
 - 稳定 BMW Session 固定所属 Project 和驱动；按驱动保留原生续聊身份。不同驱动共享 Project 页面和媒体，会话切换保留独立历史；旧 DSH 身份由一次性迁移保留；日常启动不转换旧数据，原生 Workspace 映射只在对应 harness 内维护。
-- 截图、页面媒体发现与下载、HTTP／有限 HLS VOD 分发资源保全、视频 Capture、录屏、媒体检查、抽帧、裁剪、缩放和 MP4/WebM 转换。视频采集记录源时间到成品 PTS 的逐帧映射，支持中段／尾段定位与尺寸切换留边；音频支持区间 WAV 技术证据和不自动播放的试听。
+- 截图、页面媒体发现与下载、HTTP／有限 HLS VOD 分发资源保全（全部声明音轨、外置 WebVTT 与原分片证据）、视频 Capture、录屏、媒体检查、抽帧、裁剪、缩放和 MP4/WebM 转换。视频采集记录源时间到成品 PTS 的逐帧映射，支持中段／尾段定位与尺寸切换留边；音频支持区间 WAV 技术证据和不自动播放的试听。
 - Video Studio 在主窗口中切换工作区：从素材库选材、全局与分镜脚本、真实旁白、画面匹配、预览编辑和导出。
 - 草稿强绑定所属会话：一个会话可有多个草稿，共享 Project 素材；切换会话切换可见草稿，无草稿显示空状态。支持删除草稿并保留素材与可恢复记录。
 - 素材准备、匹配、工作台、封面和画面片段均支持真实图片／视频缩略图、放大预览与列表／图标切换；支持拖拽绑定、使用关系分组与时间轴定位。
@@ -112,7 +112,9 @@ npm run test:video-e2e
 npm run test:tts-e2e
 ```
 
-全仓检查的源码身份、逐项结果、资源缺项复测及未运行范围见[CURRENT](docs/verification/CURRENT.json)与[验证说明](docs/VERIFICATION.md)。测试使用一次性Profile，不计入付费模型或真实在线服务覆盖；真实社媒取材结果[单独登记](docs/research/SOCIAL_DOWNLOAD_VALIDATION.md)，YouTube原生获取改进保留为[待办](docs/plans/YOUTUBE_NATIVE_ACQUISITION.md)。已准备BMW＋DSH／DeepSeek Flash日常Project并通过实际只读连通；[使用流程](docs/AGENT_VIDEO_EDITING.md#日常新闻使用)与[就绪范围](docs/research/NEWS_DAILY_READINESS.json)明确选题确认、龙安朗和资源边界。已接受的43.03秒Chuck Lorre片保留，下一内容主线仍是科普、再学术。
+新闻网站下载的当前样本覆盖见[完整音视频与外置字幕验证](docs/verification/NEWS_HLS_SUBTITLES_DOWNLOADS.json)：Fox 720p、2音轨和1条字幕，Yahoo Finance 1080p、3音轨和2条字幕均通过正式入口、完整解码与独立字幕复核；字幕以独立 WebVTT 交付。CNBC／CNN 的对应样本另见[发布者验证](docs/verification/NEWS_HLS_CNN_DOWNLOADS.json)，不据此承诺全站或受限内容可用。
+
+全仓检查的源码身份、逐项结果、资源缺项复测及未运行范围见[CURRENT](docs/verification/CURRENT.json)与[验证说明](docs/VERIFICATION.md)。测试使用一次性Profile，不计入付费模型或真实在线服务覆盖；真实社媒取材结果[单独登记](docs/research/SOCIAL_DOWNLOAD_VALIDATION.md)，YouTube原生获取方案与未覆盖项见[计划](docs/plans/YOUTUBE_NATIVE_ACQUISITION.md)。已准备BMW＋DSH／DeepSeek Flash日常Project并通过实际只读连通；[使用流程](docs/AGENT_VIDEO_EDITING.md#日常新闻使用)与[就绪范围](docs/research/NEWS_DAILY_READINESS.json)明确选题确认、龙安朗和资源边界。已接受的43.03秒Chuck Lorre片保留，下一内容主线仍是科普、再学术。
 
 局部改动默认先用下方 `test:plan` / `test:affected -- --files ...` 查看并执行本次范围；既有未提交工作不应混入本次文件列表。`verify:stability` 显式使用 `--all`，执行全部非 opt-in 分类；六项专用本地素材夹具和六项外部服务／模型测试仍需单独启用，不计为通过。完整串行验证：`npm run verify:stability`，并单独执行 `npm run check` 检查完整编译／Schema与生成文档一致性。完整入口构建一次，再执行源码／清单门禁、单元/边界及运行时回归；记录源码哈希、依赖版本和通过/失败/未执行结果。桌面工作区测试分为工作区、Project/会话（含实际重启）、设置、原生焦点/键盘四组；Studio 各专用环境分支另由分类目录逐项执行，单组失败不阻止其余组运行。新证据在 `.bmw-runtime/classified-tests/`，既有证据保留。
 

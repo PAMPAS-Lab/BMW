@@ -1,0 +1,525 @@
+{
+  "version": 1,
+  "at": "2026-10-30T01:15:25.908Z",
+  "scope": "Historical 2026-10-30 baseline before publisher implementation; current result is NEWS_PUBLISHER_DOWNLOADS.json",
+  "matrix": [
+    {
+      "site": "CNBC 官网",
+      "current": "可播放；短窗录取已有实际制作记录；原编码直接下载未验收",
+      "historical": "2026-10-27记录：20.007秒、400×224连续画面和原声，进入SpaceX新闻成片；属于原生捕获，不是原编码保全。",
+      "today": "133.6秒播放器实际推进，400×224；blob源绑定成立但resources为空，网络HLS清单200。",
+      "next": "把主播放器的内容身份、广告状态与实际HLS响应建立可复核关联；再测完整下载、双轨与原编码证明。"
+    },
+    {
+      "site": "Fox News 官网",
+      "current": "已加入实测，当前一键源视频下载未打通",
+      "historical": "本轮前没有找到可核对的官网整片原生下载验收。",
+      "today": "两条视频页均打开；播放器位于static.foxnews.com跨域iframe，顶层targets为空；第二条观察到HLS200和TS200。未将未绑定网络地址交给下载。",
+      "next": "优先补iframe播放器与页面视频ID／广告／实际清单的绑定，再验证清单范围和完整音视频。"
+    },
+    {
+      "site": "Reuters 官网",
+      "current": "本轮被验证码阻断，尚未进入下载阶段",
+      "historical": "Reuters官方YouTube短片曾取得并用于新闻制作；不能视为Reuters官网适配。",
+      "today": "具体官网视频入口出现geo.captcha-delivery.com/captcha iframe，未识别可准入原片；不处理验证码。",
+      "next": "在正常可访问的公开页重测播放器和分发；不实现绕过验证码。"
+    },
+    {
+      "site": "NYTimes 官网",
+      "current": "视频页可读；当前发现器未确认播放器／媒体，直接下载未验收",
+      "historical": "没有找到可核对的官网整片原生下载验收。",
+      "today": "先从实际目录观察链接，再打开100000011159494具体视频页；正常Reject all后标题正文可读，18秒有界激活窗口未发现video目标或媒体流。",
+      "next": "排查真实播放器的初始化、控件或封装位置；不能仅凭未发现目标推断付费墙、DRM或整站不可下载。"
+    },
+    {
+      "site": "CNN 等其他新闻官网",
+      "current": "没有足够的本仓库整片下载验收证据，本轮未测",
+      "historical": "CNN仍列候选来源；没有把同机构社媒发布算成官网。",
+      "today": "未发起本轮实测。",
+      "next": "按实际选题需求再选具体公开视频。"
+    }
+  ],
+  "observations": [
+    {
+      "id": "fox-1",
+      "publisher": "Fox News",
+      "url": "https://www.foxnews.com/video/6404031867112",
+      "entryOnly": false,
+      "outcome": "no-bound-original-player",
+      "navigationMs": 9522,
+      "totalMs": 27788,
+      "title": "AI scammers targeting elderly Americans with fraud schemes | Fox News Video",
+      "heading": "AI scammers targeting elderly Americans with fraud schemes",
+      "players": [],
+      "frames": [
+        {},
+        {
+          "origin": "https://static.foxnews.com",
+          "path": "/static/orion/html/video/iframe/vod.html"
+        },
+        {
+          "origin": "https://my.foxnews.com",
+          "path": "/xd-channel.html"
+        },
+        {
+          "origin": "https://static.foxnews.com",
+          "path": "/mvpd/xdcomm.html"
+        }
+      ],
+      "challengeFrame": false,
+      "binding": {
+        "pageUrl": "https://www.foxnews.com/video/6404031867112",
+        "blocked": null,
+        "targets": []
+      },
+      "observedMedia": [],
+      "newArtifactFiles": []
+    },
+    {
+      "id": "fox-2",
+      "publisher": "Fox News",
+      "url": "https://www.foxnews.com/video/6403817944112",
+      "entryOnly": false,
+      "outcome": "no-bound-original-player",
+      "navigationMs": 4729,
+      "totalMs": 22786,
+      "title": "Are American workers really using AI?  | Fox News Video",
+      "heading": "Are American workers really using AI? ",
+      "players": [],
+      "frames": [
+        {},
+        {
+          "origin": "https://static.foxnews.com",
+          "path": "/static/orion/html/video/iframe/vod.html"
+        },
+        {
+          "origin": "https://static.foxnews.com",
+          "path": "/mvpd/xdcomm.html"
+        }
+      ],
+      "challengeFrame": false,
+      "binding": {
+        "pageUrl": "https://www.foxnews.com/video/6403817944112",
+        "blocked": null,
+        "targets": []
+      },
+      "observedMedia": [
+        {
+          "host": "manifest.prod.boltdns.net",
+          "path": "/manifest/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/10s/master.m3u8",
+          "mimeType": "application/x-mpegurl",
+          "status": 200
+        },
+        {
+          "host": "manifest.prod.boltdns.net",
+          "path": "/manifest/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/eacba8ba-815a-4c38-8a22-2306460abf02/10s/rendition.m3u8",
+          "mimeType": "application/x-mpegurl",
+          "status": 200
+        },
+        {
+          "host": "manifest.prod.boltdns.net",
+          "path": "/manifest/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/41ddc02d-f9c8-4c8f-97dc-77f684aaf32a/10s/rendition.m3u8",
+          "mimeType": "application/x-mpegurl",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/eacba8ba-815a-4c38-8a22-2306460abf02/5x/segment0.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/41ddc02d-f9c8-4c8f-97dc-77f684aaf32a/5x/segment0.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "manifest.prod.boltdns.net",
+          "path": "/manifest/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/b97be01c-446c-46a4-a1da-81a6fa24f240/10s/rendition.m3u8",
+          "mimeType": "application/x-mpegurl",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/41ddc02d-f9c8-4c8f-97dc-77f684aaf32a/5x/segment1.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/b97be01c-446c-46a4-a1da-81a6fa24f240/5x/segment1.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/41ddc02d-f9c8-4c8f-97dc-77f684aaf32a/5x/segment2.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/41ddc02d-f9c8-4c8f-97dc-77f684aaf32a/5x/segment3.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/b97be01c-446c-46a4-a1da-81a6fa24f240/5x/segment2.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/b97be01c-446c-46a4-a1da-81a6fa24f240/5x/segment3.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/41ddc02d-f9c8-4c8f-97dc-77f684aaf32a/5x/segment4.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/b97be01c-446c-46a4-a1da-81a6fa24f240/5x/segment4.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/b97be01c-446c-46a4-a1da-81a6fa24f240/5x/segment5.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/41ddc02d-f9c8-4c8f-97dc-77f684aaf32a/5x/segment5.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/41ddc02d-f9c8-4c8f-97dc-77f684aaf32a/5x/segment6.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/b97be01c-446c-46a4-a1da-81a6fa24f240/5x/segment6.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/41ddc02d-f9c8-4c8f-97dc-77f684aaf32a/5x/segment7.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "vod.foxnews.com",
+          "path": "/media/v1/hls/v4/clear/694940094001/6bb13dc4-51d4-439e-b983-fd9bbfb75423/b97be01c-446c-46a4-a1da-81a6fa24f240/5x/segment7.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        }
+      ],
+      "newArtifactFiles": []
+    },
+    {
+      "id": "cnbc-1",
+      "publisher": "CNBC",
+      "url": "https://www.cnbc.com/video/2026/10/07/spacex-in-talks-with-apollo-consortium-of-banks-to-support-40-billion-purchase-of-nvidia-gpus.html",
+      "entryOnly": false,
+      "outcome": "blob-player-no-bound-download",
+      "navigationMs": 8133,
+      "totalMs": 15895,
+      "title": "SpaceX in talks with Apollo, consortium of banks to support $40 billion purchase of Nvidia GPUs",
+      "heading": "SpaceX in talks with Apollo, consortium of banks to support $40 billion purchase of Nvidia GPUs",
+      "players": [
+        {
+          "index": 0,
+          "visible": true,
+          "srcKind": "blob",
+          "duration": 133.6,
+          "width": 400,
+          "height": 224,
+          "time": 0.592646,
+          "paused": false,
+          "ready": 4
+        }
+      ],
+      "frames": [
+        {},
+        {},
+        {},
+        {
+          "origin": "https://www.google.com",
+          "path": "/recaptcha/enterprise/anchor"
+        },
+        {},
+        {
+          "origin": "https://sp.auth.adobe.com",
+          "path": "/entitlement/v4/AccessEnablerProxy.html"
+        }
+      ],
+      "challengeFrame": false,
+      "binding": {
+        "pageUrl": "https://www.cnbc.com/video/2026/10/07/spacex-in-talks-with-apollo-consortium-of-banks-to-support-40-billion-purchase-of-nvidia-gpus.html",
+        "blocked": null,
+        "targets": [
+          {
+            "identity": {
+              "version": 1,
+              "platform": "page",
+              "targetId": "https://www.cnbc.com/video/2026/10/07/spacex-in-talks-with-apollo-consortium-of-banks-to-support-40-billion-purchase-of-nvidia-gpus.html",
+              "resourceId": "blob:https://www.cnbc.com/5e712d2e-f6d9-46c3-b4d2-796ce7839c5b"
+            },
+            "videoIndex": 0,
+            "durationSeconds": 133.6,
+            "resources": []
+          }
+        ]
+      },
+      "observedMedia": [
+        {
+          "host": "cnbcawsmpvod.akamaized.net",
+          "path": "/out/v1/0d2b7a134a554c4ca5ace6b6c7b50f19/54fbf64382f04b94bb69340d5528ff8b/26cdcccd8cb84f5398bc0124836d47ee/master.m3u8",
+          "mimeType": "application/vnd.apple.mpegurl",
+          "status": 200
+        },
+        {
+          "host": "cnbcawsmpvod.akamaized.net",
+          "path": "/out/v1/0d2b7a134a554c4ca5ace6b6c7b50f19/54fbf64382f04b94bb69340d5528ff8b/26cdcccd8cb84f5398bc0124836d47ee/41e3158556d1417091d7cc2f8ebbc86b/6d011a6dfa714175b3c7517a37afb231/master_2.m3u8",
+          "mimeType": "application/vnd.apple.mpegurl",
+          "status": 200
+        },
+        {
+          "host": "cnbcawsmpvod.akamaized.net",
+          "path": "/out/v1/0d2b7a134a554c4ca5ace6b6c7b50f19/54fbf64382f04b94bb69340d5528ff8b/41e3158556d1417091d7cc2f8ebbc86b/6d011a6dfa714175b3c7517a37afb231/index_2_0.ts",
+          "mimeType": "video/mp2t",
+          "status": 200
+        },
+        {
+          "host": "cnbcawsmpvod.akamaized.net",
+          "path": "/out/v1/0d2b7a134a554c4ca5ace6b6c7b50f19/54fbf64382f04b94bb69340d5528ff8b/26cdcccd8cb84f5398bc0124836d47ee/41e3158556d1417091d7cc2f8ebbc86b/6d011a6dfa714175b3c7517a37afb231/master_5.m3u8",
+          "mimeType": "application/vnd.apple.mpegurl",
+          "status": 200
+        }
+      ],
+      "newArtifactFiles": []
+    },
+    {
+      "id": "reuters-1",
+      "publisher": "Reuters",
+      "url": "https://www.reuters.com/video/watch/idRW298315092026RP1/",
+      "entryOnly": false,
+      "outcome": "no-bound-original-player",
+      "navigationMs": 4388,
+      "totalMs": 22432,
+      "title": "reuters.com",
+      "players": [],
+      "frames": [
+        {
+          "origin": "https://geo.captcha-delivery.com",
+          "path": "/captcha/"
+        }
+      ],
+      "challengeFrame": true,
+      "binding": {
+        "pageUrl": "https://www.reuters.com/video/watch/idRW298315092026RP1/",
+        "blocked": null,
+        "targets": []
+      },
+      "observedMedia": [],
+      "newArtifactFiles": []
+    },
+    {
+      "id": "nyt-entry",
+      "publisher": "NYTimes",
+      "url": "https://www.nytimes.com/video/technology",
+      "entryOnly": true,
+      "outcome": "entry-inspection-only",
+      "navigationMs": 17251,
+      "totalMs": 17619,
+      "title": "Technology - The New York Times",
+      "heading": "Technology",
+      "players": [],
+      "frames": [
+        {
+          "origin": "https://static01.nyt.com",
+          "path": "/ads/tpc-check.html"
+        },
+        {},
+        {
+          "origin": "null",
+          "path": "blank"
+        },
+        {
+          "origin": "null",
+          "path": "blank"
+        }
+      ],
+      "challengeFrame": false,
+      "binding": {
+        "pageUrl": "https://www.nytimes.com/video/technology",
+        "blocked": null,
+        "targets": []
+      },
+      "observedMedia": [],
+      "newArtifactFiles": []
+    },
+    {
+      "id": "nyt-video",
+      "publisher": "NYTimes",
+      "url": "https://www.nytimes.com/video/technology/100000011159494/why-ai-agents-are-going-rogue.html",
+      "entryOnly": false,
+      "outcome": "no-bound-original-player",
+      "navigationMs": 18836,
+      "totalMs": 37562,
+      "privacyOptOut": "Reject all",
+      "title": "Why A.I. Agents Are Going Rogue - The New York Times",
+      "heading": "Why A.I. Agents Are Going Rogue",
+      "players": [],
+      "frames": [
+        {
+          "origin": "https://hbx.media.net",
+          "path": "/checksync.php"
+        },
+        {
+          "origin": "https://static01.nyt.com",
+          "path": "/ads/tpc-check.html"
+        },
+        {},
+        {
+          "origin": "null",
+          "path": "blank"
+        },
+        {
+          "origin": "null",
+          "path": "blank"
+        }
+      ],
+      "challengeFrame": false,
+      "binding": {
+        "pageUrl": "https://www.nytimes.com/video/technology/100000011159494/why-ai-agents-are-going-rogue.html",
+        "blocked": null,
+        "targets": []
+      },
+      "observedMedia": [],
+      "newArtifactFiles": []
+    }
+  ],
+  "counts": {
+    "specificVideoEntries": 5,
+    "directoryEntries": 1,
+    "nativeTransferAttempts": 0,
+    "completeNativeDownloads": 0,
+    "note": "All stopped at access/player/resource admission. This is not a0% network transfer-success rate: no unbound stream was downloaded."
+  },
+  "historicalEvidence": {
+    "cnbcCaptureStartupRepair": {
+      "at": 1793079595978,
+      "change": "actual playback and first presented frame precede recording clock; startup is bounded 30s",
+      "targetedTests": 9,
+      "affectedReport": ".bmw-runtime/classified-tests/2026-10-27T05-36-53-301Z/result.json",
+      "check": "passed",
+      "acquisitionFixture": "passed",
+      "productionProof": "Source82.303-102.310s continuous; first3s and full motion no long hold; actual400x224, PCM and ASR saved. Operator-invented640px hard threshold removed after actual native frame inspection; independent current-output readability judgment still mandatory."
+    },
+    "cnbcDelivery": ".bmw-runtime/news-every-two-hours/deliveries/spacex-cnbc-30s-revision49/manifest.json",
+    "cnbcSourceBindings": ".bmw-runtime/news-every-two-hours/deliveries/spacex-cnbc-30s-revision49/sources.json",
+    "reutersOfficialYoutubeSource": {
+      "publisher": "Reuters",
+      "url": "https://www.youtube.com/watch?v=6blaHYDQFmY",
+      "publishedAt": "2026-10-18",
+      "precision": "day",
+      "recordedAt": null,
+      "recordingDateLimit": "Newly published official short; not described as filmed that day.",
+      "capture": {
+        "artifactId": "441b09ee-ebcb-4ea5-a982-9e793b0da0e6-captured-video.webm",
+        "sha256": "f255e362a2e836399e57f8250b331ed8885f2fe6c28b644710c4e3fc29f2c017",
+        "bytes": 16134534
+      },
+      "receipt": {
+        "artifactId": "441b09ee-ebcb-4ea5-a982-9e793b0da0e6-captured-video.webm.source.json",
+        "sha256": "155ce01e6902fdcb97b7d2d9610f3b17552748217484bb64ff0dc8bc3656daef",
+        "bytes": 298398,
+        "basis": "native-source-frame+encoded-packet+demuxed-PTS",
+        "status": "indexed",
+        "sourceStartSeconds": 0,
+        "sourceEndSeconds": 47.341,
+        "sourceDurationSeconds": 47.341,
+        "frameCount": 1418
+      },
+      "editorial": "Lorre’s personal risk judgment and analogy, not a verified technical prediction. No additional policy or scientific argument attributed to him."
+    },
+    "reutersSourceType": "Previously captured official YouTube source, not Reuters.com native HTTP/HLS download"
+  },
+  "implementation": {
+    "existing": "Generic finite HTTP/HLS preservation and packet-copy remain available; generic player binding follows the selected main-frame video resource. Blob does not itself supply a transferable URL.",
+    "identifiedGaps": "No publisher-specific CNBC blob-to-HLS or Fox iframe/content/ad-to-manifest admission in the tested current code. Page-level network candidates are not sufficient identity proof.",
+    "changes": "none",
+    "externalDownloader": false,
+    "identityBypass": false,
+    "proxy": "Current default was read asJMS-S5 at start; not changed"
+  },
+  "verification": {
+    "build": "passed isolated current-source build",
+    "check": "passed isolated npm run check",
+    "unitRegression": "not rerun; no application runtime code changed",
+    "sourceUnchanged": true,
+    "versions": [
+      {
+        "file": "packages/agent-contract/src/video-identity.ts",
+        "tested": "5981f09126992ebe1e004aa3e5e3fd85ae5d1254bda8e5b606596f5dd1db4b8e",
+        "current": "5981f09126992ebe1e004aa3e5e3fd85ae5d1254bda8e5b606596f5dd1db4b8e",
+        "identical": true
+      },
+      {
+        "file": "packages/browser-capability/src/video-target.ts",
+        "tested": "a52f25aaefa6ac8a0eda9b612823855b5a58b86fab41678a95dc51e9747326a2",
+        "current": "a52f25aaefa6ac8a0eda9b612823855b5a58b86fab41678a95dc51e9747326a2",
+        "identical": true
+      },
+      {
+        "file": "packages/browser-capability/src/browser-kernel.ts",
+        "tested": "523fb91e3cb612fafd4dd242f8894576cb9d8b001e522fb6be2e6b33bb5edec6",
+        "current": "523fb91e3cb612fafd4dd242f8894576cb9d8b001e522fb6be2e6b33bb5edec6",
+        "identical": true
+      },
+      {
+        "file": "packages/browser-capability/src/media-session-fetch.ts",
+        "tested": "9e68ae85e459a5575f55190a64c43322c4f0d5311e9de5ee787cdd0594dbf6c6",
+        "current": "9e68ae85e459a5575f55190a64c43322c4f0d5311e9de5ee787cdd0594dbf6c6",
+        "identical": true
+      },
+      {
+        "file": "packages/media-native/src/media-preservation.ts",
+        "tested": "f9b4ea2e114b108e1640ed58c6b52ead82db6720ccc1f578d5b14b829965d7d1",
+        "current": "f9b4ea2e114b108e1640ed58c6b52ead82db6720ccc1f578d5b14b829965d7d1",
+        "identical": true
+      }
+    ],
+    "profiles": "Disposable signed-out partitions, mock Keychain, no production-profile tests",
+    "cleanup": "Both completed probes reached cleanup-complete; zero artifact files. Supplemental startup/cwd mistake has a separate record and its exact private profile and owned process were removed.",
+    "startupFailure": {
+      "reason": "NYT supplemental entry initially launched with wrong cwd; no site measurement performed",
+      "ownedProcess": 89474,
+      "processExitCode": 143,
+      "privateTestDirectoryRemoved": true,
+      "correctedRun": "live-nyt-final"
+    }
+  },
+  "limitations": [
+    "Fox subframe playback state was not inspected or admitted by the main-frame production binding; HLS/TS200 proves delivery activity only, not a complete correct original video.",
+    "CNBC observation includes one concrete historical clip, Fox two, Reuters one blocked entry and NYTimes one video plus one directory. These are not whole-site or statistically stable success rates.",
+    "NYTimes normal opt-out was clicked; no login, subscription or access control was bypassed. No evidence that the failure was specifically a paywall orDRM.",
+    "Bounded ordinary play controls were attempted for about18seconds. No manual or shadow-DOM-specific recovery was implemented, so absence of targets does not establish that the website itself cannot play.",
+    "This round did not accept new media artifacts or test captured fallback. Prior CNBC capture and Reuters YouTube source records are historical and separately scoped.",
+    "Raw local diagnostics are ignored and not copied wholesale into portable evidence; iframe query strings, cookie data and signed media query values are omitted."
+  ],
+  "evidenceRoot": ".bmw-runtime/news-sites-20261030/",
+  "supersededBy": "NEWS_PUBLISHER_DOWNLOADS.json"
+}

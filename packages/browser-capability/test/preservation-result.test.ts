@@ -32,3 +32,9 @@ test('Short native receipts retain every resource and malformed results are refu
  assert.equal((result.preservation as Record<string,unknown>).resourcesTruncated,false)
  for (const value of [null,[],false,'result']) assert.throws(() => preservationResult(value), /Invalid native/)
 })
+test('Subtitle receipt preview is explicit and bounded without mutating the complete native bundle',()=>{
+ const tracks=Array.from({length:32},(_,i)=>({artifactId:'captions-'+i+'.vtt',sha256:'a'.repeat(64),language:'en',delivery:'external-sidecar',secret:'not-public',mappings:[{url:'https://private.example/token'}]}))
+ const native={preservation:{subtitleTracks:tracks,completeSubtitles:true}},result=preservationResult(native).preservation as Record<string,unknown>
+ assert.equal((result.subtitleTracks as unknown[]).length,20);assert.equal(result.subtitleTrackCount,32);assert.equal(result.subtitleTracksTruncated,true);assert.equal(result.completeSubtitles,true)
+ assert.ok(!JSON.stringify(result).includes('private'));assert.ok(!JSON.stringify(result).includes('secret'));assert.equal(native.preservation.subtitleTracks.length,32)
+})

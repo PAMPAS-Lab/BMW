@@ -30,13 +30,15 @@ export async function acquireVideoDelivery(target:VideoTarget,port:VideoAcquisit
    signal.throwIfAborted()
    if(port.busy())throw new Error('MEDIA_ACQUIRE_CLEANUP_PENDING: Preservation still owns native resources; capture was not started.',{cause:error})
    const message=error instanceof Error?error.message:String(error)
-   if(/VIDEO_IDENTITY_(?!UNBOUND)|SOURCE_CONFLICT|Project changed|source page.*changed|quarantin|cleanup/i.test(message))throw error
+   if(/MEDIA_PRESERVATION_TRACKS_INCOMPLETE|VIDEO_IDENTITY_(?!UNBOUND)|SOURCE_CONFLICT|Project changed|source page.*changed|quarantin|cleanup/i.test(message))throw error
    const reason=/\b(?:YOUTUBE|BMW|MEDIA)_[A-Z_]+/.exec(message)?.[0]??(/\b403\b/.test(message)?'HTTP_403':deadline.aborted?'DOWNLOAD_BUDGET_EXHAUSTED':'DOWNLOAD_FAILED')
    attempts.push({method:'preserve',transport:resource.role,status:'failed',elapsedMs:Math.round(performance.now()-started),reason})
    if(/VIDEO_IDENTITY_UNBOUND/.test(message))break
   }
  }
- signal.throwIfAborted();await port.verify('capture')
+ signal.throwIfAborted()
+ if(target.videoIndex<0)throw new Error('MEDIA_ACQUIRE_CAPTURE_UNAVAILABLE: This bound delivery belongs to an embedded/declarative source; no top-frame video may substitute for it.')
+ await port.verify('capture')
  if(port.busy())throw new Error('MEDIA_ACQUIRE_CLEANUP_PENDING: Native resources have not drained.')
  try{
   const quality=await port.prepareCapture(signal)

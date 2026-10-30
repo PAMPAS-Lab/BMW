@@ -1,0 +1,1066 @@
+{
+  "version": 1,
+  "at": "2026-10-30T02:37:11.028Z",
+  "scope": "Formal browser page.media.list/media.preserve for the same two Fox, two CNBC and one CNN public originals; supplemental MP4 for subtitle-bearing Fox",
+  "environment": {
+    "disposableProfiles": true,
+    "disposableProjects": true,
+    "signedOut": true,
+    "http1": true,
+    "proxy": "Existing current HTTPS proxy; unchanged by this task",
+    "ytDlp": false,
+    "ffmpeg": false,
+    "paidModels": false,
+    "productionProfile": false,
+    "sourcePausedAfterIdentity": "Fox/CNBC paused only after original identity/ad checks to avoid website auto-next during archive transfer. CNN declared original is independent of current ad player.",
+    "timings": "Spot measurements including transport, guard reads, packet-copy and proof; excluding navigation and independent complete decode, with concurrent isolated checks."
+  },
+  "implementation": {
+    "packetPayload": "Only deterministic Annex B start-code to MP4 length4 conversion and validated AAC ADTS header removal. Preserve every NAL and audio byte. Length-delimited output packet SHA, original packet SHA and original HTTP/HLS resource SHA are distinct.",
+    "pts": "Bounded fixed-size per-packet PTS/duration/length index; no second source TS demux; each output packet checked. Existing 1ms packet/start and 30ms track-end limits retained.",
+    "io": "Local fileSystem prefetch with 8MiB cache per input/output; every chunk retains guard and cancellation checks.",
+    "cnn": "Exact visible primary canonical path/title/public video/media ID, unique VideoObject, fave embed same content ID and explicit CNN CDN MP4 asset. Declared source never authorizes recording a different ad player.",
+    "cleanup": "Project/source/ad drift or cancellation fails closed; actual producer/HTTP/file cleanup drains before admission release; failed cleanup remains quarantined. No new model tool."
+  },
+  "cases": [
+    {
+      "id": "fox-1-hls",
+      "site": "Fox News",
+      "url": "https://www.foxnews.com/video/6404031867112",
+      "title": "AI scammers targeting elderly Americans with fraud schemes",
+      "transport": "hls",
+      "api": "browser media.preserve",
+      "formalListingBound": true,
+      "identity": {
+        "version": 1,
+        "platform": "page",
+        "targetId": "https://www.foxnews.com/video/6404031867112",
+        "resourceId": "fox:6404031867112"
+      },
+      "sourceDurationSeconds": 171,
+      "outcome": "failed",
+      "error": "Error: HLS subtitle/alternate tracks are unsupported; no tracks silently discarded.",
+      "navigationMs": 14340,
+      "identityWaitMs": 0,
+      "totalMs": 32689,
+      "pausedOriginalDuringArchive": true,
+      "decode": {},
+      "inspection": {},
+      "failedProjectNewFiles": 0,
+      "frames": []
+    },
+    {
+      "id": "fox-2-hls",
+      "site": "Fox News",
+      "url": "https://www.foxnews.com/video/6403817944112",
+      "title": "Are American workers really using AI? ",
+      "transport": "hls",
+      "api": "browser media.preserve",
+      "formalListingBound": true,
+      "identity": {
+        "version": 1,
+        "platform": "page",
+        "targetId": "https://www.foxnews.com/video/6403817944112",
+        "resourceId": "fox:6403817944112"
+      },
+      "sourceDurationSeconds": 104.10400000000001,
+      "outcome": "native-preserve-and-complete-decode",
+      "navigationMs": 3861,
+      "identityWaitMs": 0,
+      "transferMs": 6998,
+      "totalMs": 43126,
+      "pausedOriginalDuringArchive": true,
+      "contentSpanSeconds": 104.10401041666667,
+      "videoPTS": {
+        "startSeconds": 0.06673611111111111,
+        "endSeconds": 104.17074652777778
+      },
+      "videoSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "bytes": 29254408,
+      "sha256": "69da5f371da7b48a3cd6117050155553a3a46adb90fbe9ca85d4b6be8543ff4c",
+      "artifactId": "preserved-53eee09b-c714-4ca0-a949-654042cbfa44-delivery.mp4",
+      "proofArtifactId": "preserved-53eee09b-c714-4ca0-a949-654042cbfa44-25-preservation.json",
+      "proofSha256": "5653c8b7f8bd443e55d9f51767c7857cdc6478dbc77fc79c091ca6719be36dbb",
+      "reencoded": false,
+      "completeVod": true,
+      "completeProgram": {
+        "durationSeconds": 104.10400000000001,
+        "requireAudio": true
+      },
+      "packetProof": [
+        {
+          "type": "video",
+          "codec": "avc",
+          "packets": 3120,
+          "startSeconds": 0.06673333333333334,
+          "endSeconds": 104.17073333333333,
+          "packetSha256": "be2449e395ee3296f63293be7a0e39010cee37c48ec7124e7091ebe5aae4c125",
+          "sourcePacketSha256": "7aa4902fe4c59d1c65a284449ce2e1c6da12694005792f4a94acf15364b5ee81",
+          "payloadSerialization": "annex-b-to-length4",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload"
+        },
+        {
+          "type": "audio",
+          "codec": "aac",
+          "packets": 4882,
+          "startSeconds": 0,
+          "endSeconds": 104.14933333333333,
+          "packetSha256": "fdb1c9c0fe601c7879c9ac6c4763ac7c10f8c3708ea024c68393e7b3f81f09e1",
+          "sourcePacketSha256": "dfa6a509d4afcbf305d90ab650be90dcc1c4c2083f4d99b11aaac2a8adb4c237",
+          "payloadSerialization": "adts-to-raw",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload"
+        }
+      ],
+      "decode": {
+        "sourceArtifactId": "preserved-53eee09b-c714-4ca0-a949-654042cbfa44-delivery.mp4",
+        "sourceBytes": 29254408,
+        "engine": "mediabunny-webcodecs",
+        "kind": "decoding",
+        "completeFile": true,
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.4d401f, mp4a.40.2\"",
+        "durationSeconds": 104.17074652777778,
+        "firstTimestampSeconds": 0,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "sampleCount": 3120,
+            "startSeconds": 0.06673611111111111,
+            "endSeconds": 104.17074652777778
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 4882,
+            "startSeconds": 0,
+            "endSeconds": 104.14933333333333
+          }
+        ]
+      },
+      "inspection": {
+        "sourceArtifactId": "preserved-53eee09b-c714-4ca0-a949-654042cbfa44-delivery.mp4",
+        "sourceBytes": 29254408,
+        "engine": "mediabunny-webcodecs",
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.4d401f, mp4a.40.2\"",
+        "durationSeconds": 104.17074652777778,
+        "firstTimestampSeconds": 0,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "canDecode": true,
+            "width": 1280,
+            "height": 720,
+            "rotation": 0,
+            "startSeconds": 0.06673611111111111,
+            "endSeconds": 104.17074652777778,
+            "canBeTransparent": false
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "canDecode": true,
+            "channels": 2,
+            "sampleRate": 48000,
+            "startSeconds": 0,
+            "endSeconds": 104.14933333333333
+          }
+        ],
+        "captureTimeline": {
+          "status": "unavailable",
+          "reason": "No capture-time source frame index exists for this artifact. File PTS cannot be treated as source PTS."
+        }
+      },
+      "originalResourceCount": 25,
+      "frames": [
+        {
+          "artifactId": "media-edc996dd-ed46-4f9d-a1b1-e69236c39cab-frame-1.png",
+          "path": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/media-edc996dd-ed46-4f9d-a1b1-e69236c39cab-frame-1.png",
+          "timestampSeconds": 0.13347222222222221,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "artifactId": "media-edc996dd-ed46-4f9d-a1b1-e69236c39cab-frame-2.png",
+          "path": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/media-edc996dd-ed46-4f9d-a1b1-e69236c39cab-frame-2.png",
+          "timestampSeconds": 52.118732638888886,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "artifactId": "media-edc996dd-ed46-4f9d-a1b1-e69236c39cab-frame-3.png",
+          "path": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/media-edc996dd-ed46-4f9d-a1b1-e69236c39cab-frame-3.png",
+          "timestampSeconds": 103.97053819444444,
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "mediaFile": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/preserved-53eee09b-c714-4ca0-a949-654042cbfa44-delivery.mp4"
+    },
+    {
+      "id": "cnbc-1-hls",
+      "site": "CNBC",
+      "url": "https://www.cnbc.com/video/2026/10/07/spacex-in-talks-with-apollo-consortium-of-banks-to-support-40-billion-purchase-of-nvidia-gpus.html",
+      "title": "SpaceX in talks with Apollo, consortium of banks to support $40 billion purchase of Nvidia GPUs",
+      "transport": "hls",
+      "api": "browser media.preserve",
+      "formalListingBound": true,
+      "identity": {
+        "version": 1,
+        "platform": "page",
+        "targetId": "https://www.cnbc.com/video/2026/10/07/spacex-in-talks-with-apollo-consortium-of-banks-to-support-40-billion-purchase-of-nvidia-gpus.html",
+        "resourceId": "cnbc:7000426739"
+      },
+      "sourceDurationSeconds": 133.6,
+      "outcome": "native-preserve-and-complete-decode",
+      "navigationMs": 9068,
+      "identityWaitMs": 0,
+      "transferMs": 23942,
+      "totalMs": 70131,
+      "pausedOriginalDuringArchive": true,
+      "contentSpanSeconds": 133.60015625,
+      "videoPTS": {
+        "startSeconds": 2.074027777777778,
+        "endSeconds": 135.67418402777778
+      },
+      "videoSize": {
+        "width": 1920,
+        "height": 1080
+      },
+      "bytes": 75547620,
+      "sha256": "d829815e27f93527b742996f8774078cbc2e346d5ffb77f6de6bcf831de75a81",
+      "artifactId": "preserved-45cc40e9-3f24-43d5-aa4e-0f013b65ef29-delivery.mp4",
+      "proofArtifactId": "preserved-45cc40e9-3f24-43d5-aa4e-0f013b65ef29-47-preservation.json",
+      "proofSha256": "2be4342e846f629040da0c7d2a49ab083db49c73ed42ea7796347184eacbdb3c",
+      "reencoded": false,
+      "completeVod": true,
+      "completeProgram": {
+        "durationSeconds": 133.6,
+        "requireAudio": true
+      },
+      "packetProof": [
+        {
+          "type": "video",
+          "codec": "avc",
+          "packets": 4004,
+          "startSeconds": 2.0740333333333334,
+          "endSeconds": 135.67416666666668,
+          "packetSha256": "4a3fb2fb6fc4f5ddc56c8351710201569bef0374a15deb6206126c4c09c0fedc",
+          "sourcePacketSha256": "66dade8d4e99b8381d54fe5bcaf14252d2da0dd0aafaed4fe909397e693bbe2f",
+          "payloadSerialization": "annex-b-to-length4",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload"
+        },
+        {
+          "type": "audio",
+          "codec": "aac",
+          "packets": 6263,
+          "startSeconds": 2.0407,
+          "endSeconds": 135.65136666666666,
+          "packetSha256": "041eaddd0399eea4e59f72842a7cf5f92d57b1f89c18e3635f927f9a4e0b57b5",
+          "sourcePacketSha256": "ad90cae9923bcfe068775291bf2690756e0c57e8fbe6823107b979604ccf5530",
+          "payloadSerialization": "adts-to-raw",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload"
+        }
+      ],
+      "decode": {
+        "sourceArtifactId": "preserved-45cc40e9-3f24-43d5-aa4e-0f013b65ef29-delivery.mp4",
+        "sourceBytes": 75547620,
+        "engine": "mediabunny-webcodecs",
+        "kind": "decoding",
+        "completeFile": true,
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.4d4028, mp4a.40.2\"",
+        "durationSeconds": 135.67418402777778,
+        "firstTimestampSeconds": 2.0407083333333333,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "sampleCount": 4004,
+            "startSeconds": 2.074027777777778,
+            "endSeconds": 135.67418402777776
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 6263,
+            "startSeconds": 2.0407083333333333,
+            "endSeconds": 135.651375
+          }
+        ]
+      },
+      "inspection": {
+        "sourceArtifactId": "preserved-45cc40e9-3f24-43d5-aa4e-0f013b65ef29-delivery.mp4",
+        "sourceBytes": 75547620,
+        "engine": "mediabunny-webcodecs",
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.4d4028, mp4a.40.2\"",
+        "durationSeconds": 135.67418402777778,
+        "firstTimestampSeconds": 2.0407083333333333,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "canDecode": true,
+            "width": 1920,
+            "height": 1080,
+            "rotation": 0,
+            "startSeconds": 2.074027777777778,
+            "endSeconds": 135.67418402777778,
+            "canBeTransparent": false
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "canDecode": true,
+            "channels": 2,
+            "sampleRate": 48000,
+            "startSeconds": 2.0407083333333333,
+            "endSeconds": 135.651375
+          }
+        ],
+        "captureTimeline": {
+          "status": "unavailable",
+          "reason": "No capture-time source frame index exists for this artifact. File PTS cannot be treated as source PTS."
+        }
+      },
+      "originalResourceCount": 47,
+      "frames": [
+        {
+          "artifactId": "media-35ff51e6-a70a-4dce-98b8-6b04b1cee0ee-frame-1.png",
+          "path": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/media-35ff51e6-a70a-4dce-98b8-6b04b1cee0ee-frame-1.png",
+          "timestampSeconds": 2.140763888888889,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "artifactId": "media-35ff51e6-a70a-4dce-98b8-6b04b1cee0ee-frame-2.png",
+          "path": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/media-35ff51e6-a70a-4dce-98b8-6b04b1cee0ee-frame-2.png",
+          "timestampSeconds": 68.87409722222222,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "artifactId": "media-35ff51e6-a70a-4dce-98b8-6b04b1cee0ee-frame-3.png",
+          "path": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/media-35ff51e6-a70a-4dce-98b8-6b04b1cee0ee-frame-3.png",
+          "timestampSeconds": 135.47397569444445,
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "mediaFile": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/preserved-45cc40e9-3f24-43d5-aa4e-0f013b65ef29-delivery.mp4"
+    },
+    {
+      "id": "cnbc-2-hls",
+      "site": "CNBC",
+      "url": "https://www.cnbc.com/video/2026/10/29/amazon-misses-on-q3-earnings-and-revenue.html",
+      "title": "Amazon misses on Q3 earnings and revenue",
+      "transport": "hls",
+      "api": "browser media.preserve",
+      "formalListingBound": true,
+      "identity": {
+        "version": 1,
+        "platform": "page",
+        "targetId": "https://www.cnbc.com/video/2026/10/29/amazon-misses-on-q3-earnings-and-revenue.html",
+        "resourceId": "cnbc:7000429276"
+      },
+      "sourceDurationSeconds": 89.589,
+      "outcome": "native-preserve-and-complete-decode",
+      "navigationMs": 7291,
+      "identityWaitMs": 0,
+      "transferMs": 36338,
+      "totalMs": 64100,
+      "pausedOriginalDuringArchive": true,
+      "contentSpanSeconds": 89.58951388888889,
+      "videoPTS": {
+        "startSeconds": 2.074027777777778,
+        "endSeconds": 91.66354166666666
+      },
+      "videoSize": {
+        "width": 1920,
+        "height": 1080
+      },
+      "bytes": 50656914,
+      "sha256": "aef7b4f3bb06ee625c1bba051aee6f4bdd7a1f6118207122daf5b5453525f8e9",
+      "artifactId": "preserved-c987571d-9d76-4971-9d33-05931bd40a0b-delivery.mp4",
+      "proofArtifactId": "preserved-c987571d-9d76-4971-9d33-05931bd40a0b-32-preservation.json",
+      "proofSha256": "cda3e54a8d2dab9c2188ad7ce4ac861e5467f40aece9c06844c2222c5313ce7f",
+      "reencoded": false,
+      "completeVod": true,
+      "completeProgram": {
+        "durationSeconds": 89.589,
+        "requireAudio": true
+      },
+      "packetProof": [
+        {
+          "type": "video",
+          "codec": "avc",
+          "packets": 2685,
+          "startSeconds": 2.0740333333333334,
+          "endSeconds": 91.66353333333333,
+          "packetSha256": "a596fed79cb61ce3670fc31e7b702604f31fcb2d4a9dc3489ac287abdef1c4a7",
+          "sourcePacketSha256": "ddd81e0c51a8ec1109b5266714272daedb5d8b7d0652ec15fb57724fbe88315f",
+          "payloadSerialization": "annex-b-to-length4",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload"
+        },
+        {
+          "type": "audio",
+          "codec": "aac",
+          "packets": 4199,
+          "startSeconds": 2.0407,
+          "endSeconds": 91.61936666666666,
+          "packetSha256": "bdf4001f398ded051453b1ca2bf33761faed0d2bf3e20cb63d02c81410704d32",
+          "sourcePacketSha256": "cce75de7d40e6d70b0c8501a31207dd20e3771f2481fb7931184ca08152a22ee",
+          "payloadSerialization": "adts-to-raw",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload"
+        }
+      ],
+      "decode": {
+        "sourceArtifactId": "preserved-c987571d-9d76-4971-9d33-05931bd40a0b-delivery.mp4",
+        "sourceBytes": 50656914,
+        "engine": "mediabunny-webcodecs",
+        "kind": "decoding",
+        "completeFile": true,
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.4d4028, mp4a.40.2\"",
+        "durationSeconds": 91.66354166666666,
+        "firstTimestampSeconds": 2.0407083333333333,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "sampleCount": 2685,
+            "startSeconds": 2.074027777777778,
+            "endSeconds": 91.66354166666666
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 4199,
+            "startSeconds": 2.0407083333333333,
+            "endSeconds": 91.61937499999999
+          }
+        ]
+      },
+      "inspection": {
+        "sourceArtifactId": "preserved-c987571d-9d76-4971-9d33-05931bd40a0b-delivery.mp4",
+        "sourceBytes": 50656914,
+        "engine": "mediabunny-webcodecs",
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.4d4028, mp4a.40.2\"",
+        "durationSeconds": 91.66354166666666,
+        "firstTimestampSeconds": 2.0407083333333333,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "canDecode": true,
+            "width": 1920,
+            "height": 1080,
+            "rotation": 0,
+            "startSeconds": 2.074027777777778,
+            "endSeconds": 91.66354166666666,
+            "canBeTransparent": false
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "canDecode": true,
+            "channels": 2,
+            "sampleRate": 48000,
+            "startSeconds": 2.0407083333333333,
+            "endSeconds": 91.619375
+          }
+        ],
+        "captureTimeline": {
+          "status": "unavailable",
+          "reason": "No capture-time source frame index exists for this artifact. File PTS cannot be treated as source PTS."
+        }
+      },
+      "originalResourceCount": 32,
+      "frames": [
+        {
+          "artifactId": "media-722cbd56-a545-49cc-93cb-7677d5daa227-frame-1.png",
+          "path": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/media-722cbd56-a545-49cc-93cb-7677d5daa227-frame-1.png",
+          "timestampSeconds": 2.140763888888889,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "artifactId": "media-722cbd56-a545-49cc-93cb-7677d5daa227-frame-2.png",
+          "path": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/media-722cbd56-a545-49cc-93cb-7677d5daa227-frame-2.png",
+          "timestampSeconds": 46.85211805555556,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "artifactId": "media-722cbd56-a545-49cc-93cb-7677d5daa227-frame-3.png",
+          "path": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/media-722cbd56-a545-49cc-93cb-7677d5daa227-frame-3.png",
+          "timestampSeconds": 91.46335069444444,
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "mediaFile": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/preserved-c987571d-9d76-4971-9d33-05931bd40a0b-delivery.mp4"
+    },
+    {
+      "id": "cnn-1-mp4",
+      "site": "CNN",
+      "url": "https://www.cnn.com/2026/10/28/politics/video/obama-tease-trump-cheesecake-factory-digvid",
+      "title": "\n      Obama teases Trump about reaction to Cheesecake Factory comment\n    ",
+      "transport": "muxed",
+      "api": "browser media.preserve",
+      "formalListingBound": true,
+      "identity": {
+        "version": 1,
+        "platform": "page",
+        "targetId": "https://edition.cnn.com/2026/10/28/politics/video/obama-tease-trump-cheesecake-factory-digvid",
+        "resourceId": "cnn:mecef3e95814a7c3788851d76c807e13bc6cf6e102"
+      },
+      "sourceDurationSeconds": 125,
+      "outcome": "native-preserve-and-complete-decode",
+      "navigationMs": 14266,
+      "identityWaitMs": 0,
+      "transferMs": 12964,
+      "totalMs": 48393,
+      "contentSpanSeconds": 125.29184027777778,
+      "videoPTS": {
+        "startSeconds": 0.033368055555555554,
+        "endSeconds": 125.32520833333334
+      },
+      "videoSize": {
+        "width": 1920,
+        "height": 1080
+      },
+      "bytes": 128109885,
+      "sha256": "956e54e438cdc2332a94fcb69fbc93f416af2dada992d7649651926119ca2c9a",
+      "artifactId": "preserved-7f995b59-6b31-4afb-8fcd-99101c0d7d4a-delivery.mp4",
+      "proofArtifactId": "preserved-7f995b59-6b31-4afb-8fcd-99101c0d7d4a-1-preservation.json",
+      "proofSha256": "d83711d37b9d14649c80fd3c8593711007b91ca6330afab0a0d02041ab784760",
+      "reencoded": false,
+      "completeVod": true,
+      "completeProgram": {
+        "durationSeconds": 125,
+        "requireAudio": true
+      },
+      "packetProof": [
+        {
+          "type": "video",
+          "codec": "avc",
+          "packets": 3755,
+          "startSeconds": 0.03336666666666667,
+          "endSeconds": 125.3252,
+          "packetSha256": "683cde9d32c626ab9834590d1e51923fb71aeb73d5d55330d4340df190e5fc09",
+          "sourcePacketSha256": "7d8f3cc3ff4fd0a8ab76846e50c1f117c4fccaa226bde869efed8c9ca1438f49",
+          "payloadSerialization": "exact",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload"
+        },
+        {
+          "type": "audio",
+          "codec": "aac",
+          "packets": 5873,
+          "startSeconds": 0.000020833333333333333,
+          "endSeconds": 125.2906875,
+          "packetSha256": "ef9191270ff26cce9abf5ebfe6ad3a720b1a6e5bfb3e29fff9835cd16f33e887",
+          "sourcePacketSha256": "615c6ff287fcee38331ba43a29d31af2583b15c5639bb4cc18554f022c7be535",
+          "payloadSerialization": "exact",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload"
+        }
+      ],
+      "decode": {
+        "sourceArtifactId": "preserved-7f995b59-6b31-4afb-8fcd-99101c0d7d4a-delivery.mp4",
+        "sourceBytes": 128109885,
+        "engine": "mediabunny-webcodecs",
+        "kind": "decoding",
+        "completeFile": true,
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.640028, mp4a.40.2\"",
+        "durationSeconds": 125.32520833333334,
+        "firstTimestampSeconds": 0.000020833333333333333,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "sampleCount": 3755,
+            "startSeconds": 0.033368055555555554,
+            "endSeconds": 125.32520833333334
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 5873,
+            "startSeconds": 0.000020833333333333333,
+            "endSeconds": 125.2906875
+          }
+        ]
+      },
+      "inspection": {
+        "sourceArtifactId": "preserved-7f995b59-6b31-4afb-8fcd-99101c0d7d4a-delivery.mp4",
+        "sourceBytes": 128109885,
+        "engine": "mediabunny-webcodecs",
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.640028, mp4a.40.2\"",
+        "durationSeconds": 125.32520833333334,
+        "firstTimestampSeconds": 0.000020833333333333333,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "canDecode": true,
+            "width": 1920,
+            "height": 1080,
+            "rotation": 0,
+            "startSeconds": 0.033368055555555554,
+            "endSeconds": 125.32520833333334,
+            "canBeTransparent": false
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "canDecode": true,
+            "channels": 2,
+            "sampleRate": 48000,
+            "startSeconds": 0.000020833333333333333,
+            "endSeconds": 125.2906875
+          }
+        ],
+        "captureTimeline": {
+          "status": "unavailable",
+          "reason": "No capture-time source frame index exists for this artifact. File PTS cannot be treated as source PTS."
+        }
+      },
+      "originalResourceCount": 1,
+      "frames": [
+        {
+          "artifactId": "media-eb144136-3ddf-4d4c-8b9e-83e94dfa70ab-frame-1.png",
+          "path": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/media-eb144136-3ddf-4d4c-8b9e-83e94dfa70ab-frame-1.png",
+          "timestampSeconds": 0.10010416666666666,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "artifactId": "media-eb144136-3ddf-4d4c-8b9e-83e94dfa70ab-frame-2.png",
+          "path": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/media-eb144136-3ddf-4d4c-8b9e-83e94dfa70ab-frame-2.png",
+          "timestampSeconds": 62.66260416666667,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "artifactId": "media-eb144136-3ddf-4d4c-8b9e-83e94dfa70ab-frame-3.png",
+          "path": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/media-eb144136-3ddf-4d4c-8b9e-83e94dfa70ab-frame-3.png",
+          "timestampSeconds": 125.125,
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "mediaFile": ".bmw-runtime/news-hls-cnn-20261030/live-final/project/artifacts/preserved-7f995b59-6b31-4afb-8fcd-99101c0d7d4a-delivery.mp4"
+    },
+    {
+      "id": "fox-1-mp4",
+      "site": "Fox News",
+      "url": "https://www.foxnews.com/video/6404031867112",
+      "title": "AI scammers targeting elderly Americans with fraud schemes",
+      "transport": "muxed",
+      "api": "browser media.preserve",
+      "formalListingBound": true,
+      "identity": {
+        "version": 1,
+        "platform": "page",
+        "targetId": "https://www.foxnews.com/video/6404031867112",
+        "resourceId": "fox:6404031867112"
+      },
+      "sourceDurationSeconds": 171,
+      "outcome": "native-preserve-and-complete-decode",
+      "navigationMs": 9543,
+      "identityWaitMs": 1010,
+      "transferMs": 10343,
+      "totalMs": 68831,
+      "pausedOriginalDuringArchive": true,
+      "contentSpanSeconds": 171,
+      "videoPTS": {
+        "startSeconds": 0,
+        "endSeconds": 171
+      },
+      "videoSize": {
+        "width": 1280,
+        "height": 720
+      },
+      "bytes": 57131574,
+      "sha256": "8553af99a65d0405386bdcd599d92276b064d54f56b8bf979be7e5c7508ea540",
+      "artifactId": "preserved-a027b93a-6c4b-41f0-9b9f-e65053e8811d-delivery.mp4",
+      "proofArtifactId": "preserved-a027b93a-6c4b-41f0-9b9f-e65053e8811d-1-preservation.json",
+      "proofSha256": "b6f369d4a70daaeedba563d1b9a0553e08b5a6971374334349e699dc92aa1108",
+      "reencoded": false,
+      "completeVod": true,
+      "completeProgram": {
+        "durationSeconds": 171,
+        "requireAudio": true
+      },
+      "packetProof": [
+        {
+          "type": "video",
+          "codec": "avc",
+          "packets": 10260,
+          "startSeconds": 0,
+          "endSeconds": 171,
+          "packetSha256": "fddddf204ace37aa89b1ecff405fe7beee89d1c966bc29f0ec424fd44eafe773",
+          "sourcePacketSha256": "a4bd9776c2f648aa26a42533e36dc26771a1c30def32e5a2fd31f3d0e80e7fd8",
+          "payloadSerialization": "exact",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload"
+        },
+        {
+          "type": "audio",
+          "codec": "aac",
+          "packets": 8018,
+          "startSeconds": -0.042,
+          "endSeconds": 171.00866666666667,
+          "packetSha256": "b0bf524bf3b092f354f63ade133ea5d6a541d77f1018616a66f1bd25efbdad64",
+          "sourcePacketSha256": "10962faa8ac855a820673906e7fc278346f26c8b9f71a222ed0233e10cd1260c",
+          "payloadSerialization": "exact",
+          "packetDigestFormat": "sha256:length32be+mp4-packet-payload"
+        }
+      ],
+      "decode": {
+        "sourceArtifactId": "preserved-a027b93a-6c4b-41f0-9b9f-e65053e8811d-delivery.mp4",
+        "sourceBytes": 57131574,
+        "engine": "mediabunny-webcodecs",
+        "kind": "decoding",
+        "completeFile": true,
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.4d4020, mp4a.40.2\"",
+        "durationSeconds": 171.00866666666667,
+        "firstTimestampSeconds": -0.042,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "sampleCount": 10260,
+            "startSeconds": 0,
+            "endSeconds": 171
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 8018,
+            "startSeconds": -0.042,
+            "endSeconds": 171.00866666666667
+          }
+        ]
+      },
+      "inspection": {
+        "sourceArtifactId": "preserved-a027b93a-6c4b-41f0-9b9f-e65053e8811d-delivery.mp4",
+        "sourceBytes": 57131574,
+        "engine": "mediabunny-webcodecs",
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.4d4020, mp4a.40.2\"",
+        "durationSeconds": 171.00866666666667,
+        "firstTimestampSeconds": -0.042,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "canDecode": true,
+            "width": 1280,
+            "height": 720,
+            "rotation": 0,
+            "startSeconds": 0,
+            "endSeconds": 171,
+            "canBeTransparent": false
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "canDecode": true,
+            "channels": 2,
+            "sampleRate": 48000,
+            "startSeconds": -0.042,
+            "endSeconds": 171.00866666666667
+          }
+        ],
+        "captureTimeline": {
+          "status": "unavailable",
+          "reason": "No capture-time source frame index exists for this artifact. File PTS cannot be treated as source PTS."
+        }
+      },
+      "originalResourceCount": 1,
+      "frames": [
+        {
+          "artifactId": "media-b0be9381-0694-4de7-b105-86baa1827f5f-frame-1.png",
+          "path": ".bmw-runtime/news-hls-cnn-20261030/mp4-check/project/artifacts/media-b0be9381-0694-4de7-b105-86baa1827f5f-frame-1.png",
+          "timestampSeconds": 0.1,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "artifactId": "media-b0be9381-0694-4de7-b105-86baa1827f5f-frame-2.png",
+          "path": ".bmw-runtime/news-hls-cnn-20261030/mp4-check/project/artifacts/media-b0be9381-0694-4de7-b105-86baa1827f5f-frame-2.png",
+          "timestampSeconds": 85.5,
+          "width": 640,
+          "height": 360
+        },
+        {
+          "artifactId": "media-b0be9381-0694-4de7-b105-86baa1827f5f-frame-3.png",
+          "path": ".bmw-runtime/news-hls-cnn-20261030/mp4-check/project/artifacts/media-b0be9381-0694-4de7-b105-86baa1827f5f-frame-3.png",
+          "timestampSeconds": 170.8,
+          "width": 640,
+          "height": 360
+        }
+      ],
+      "mediaFile": ".bmw-runtime/news-hls-cnn-20261030/mp4-check/project/artifacts/preserved-a027b93a-6c4b-41f0-9b9f-e65053e8811d-delivery.mp4"
+    }
+  ],
+  "coverage": {
+    "hls": {
+      "passed": 3,
+      "attempted": 4
+    },
+    "cnnFormal": true,
+    "allFiveOriginalsHaveCompleteAV": true,
+    "modelVisualReview": "Actual first/middle/end PNGs, not independent human review",
+    "humanAudioListening": "not performed"
+  },
+  "remaining": [
+    {
+      "site": "Fox 6404031867112 HLS",
+      "reason": "Selected HLS master declares external en-US SUBTITLES plus alternate audio groups. Existing parser explicitly refuses unsupported external tracks; no silent dropping. MP4 from same admitted original succeeds.",
+      "manifestEvidence": ".bmw-runtime/news-hls-cnn-20261030/manifest-peek/results.json",
+      "failedProjectFiles": 0
+    },
+    {
+      "site": "Other HLS formats",
+      "reason": "Encrypted/live/ranged/discontinuous, unsupported tracks and packet/PTS mismatches continue to fail closed; this is sample coverage, not entire-site certification."
+    }
+  ],
+  "verification": {
+    "build": "passed",
+    "check": "passed",
+    "docsFeatures": "passed",
+    "classified": {
+      "passed": 137,
+      "failed": 0,
+      "not-run": 103,
+      "report": ".bmw-runtime/news-hls-cnn-20261030/final/.bmw-runtime/classified-tests/2026-10-30T02-14-45-549Z/result.json"
+    },
+    "native": {
+      "passed": 16,
+      "failed": 0,
+      "results": [
+        {
+          "id": "identity",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 1549
+        },
+        {
+          "id": "acquisition",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 11509
+        },
+        {
+          "id": "worktabs",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 29934
+        },
+        {
+          "id": "background",
+          "passed": true,
+          "code": 0,
+          "log": "background-direct.log",
+          "method": "Independent direct Electron invocation, identical code after other GUI jobs drained"
+        },
+        {
+          "id": "capture",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 36647
+        },
+        {
+          "id": "processing",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 28091
+        },
+        {
+          "id": "video",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 57913
+        },
+        {
+          "id": "studio",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 103117
+        },
+        {
+          "id": "qwen-narration",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 4047
+        },
+        {
+          "id": "local-narration",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 17423
+        },
+        {
+          "id": "driver",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 8337
+        },
+        {
+          "id": "desktop-workspace",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 8861
+        },
+        {
+          "id": "desktop-projects",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 8352
+        },
+        {
+          "id": "desktop-restore",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 2639
+        },
+        {
+          "id": "desktop-settings",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 13666
+        },
+        {
+          "id": "desktop-native",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 7988
+        }
+      ],
+      "initialFailures": [
+        {
+          "id": "background",
+          "passed": false,
+          "code": 1,
+          "signal": null,
+          "timeout": false,
+          "ms": 2374
+        },
+        {
+          "id": "studio",
+          "passed": false,
+          "code": 1,
+          "signal": null,
+          "timeout": false,
+          "ms": 55591
+        }
+      ],
+      "reruns": [
+        {
+          "id": "background",
+          "passed": false,
+          "code": 1,
+          "signal": null,
+          "timeout": false,
+          "ms": 3509
+        },
+        {
+          "id": "studio",
+          "passed": true,
+          "code": 0,
+          "signal": null,
+          "timeout": false,
+          "ms": 103117
+        },
+        {
+          "id": "background",
+          "passed": true,
+          "log": "background-direct.log"
+        }
+      ]
+    },
+    "backgroundBaseline": {
+      "baselinePassed": true,
+      "sameError": false,
+      "candidateDirectPassed": true,
+      "log": ".bmw-runtime/news-hls-cnn-20261030/baseline-background.log",
+      "note": "Initial suite and first rerun hit UnknownVizError. After GUI jobs drained, prior baseline and identical final candidate both passed a direct Electron run. All original failed and passing logs retained; no production screenshot code changed."
+    },
+    "dsh": {
+      "passed": true
+    },
+    "sourceHashes": {
+      "packages/media-native/src/media-preservation.ts": "3e0b2b71af66307c370d0f8ee9b9a511b8015e11c7d83c2d91418d3a18ed9031",
+      "packages/media-native/src/preservation-packets.ts": "f5e5d15273f460fa92c0dce37d5480d5161380cbe6a206f3d21031cebfcf0444",
+      "packages/browser-capability/src/publisher-video.ts": "5aedc7c3da57f0fcea2ba8dedfe16ec7dc561529d9efbb016a77d56b10626681",
+      "packages/browser-capability/src/video-target.ts": "ee77fbc80d1e77eceb228612c8032c05a261541e383db3815ef57dd6c4a2626e",
+      "packages/browser-capability/src/browser-kernel.ts": "db0e3a90c2e3b598886ef0e926c0e7b181e1ed28cc91e7b73fb746564dee6170"
+    },
+    "codeDifferences": [],
+    "rawEvidence": ".bmw-runtime/news-hls-cnn-20261030",
+    "diagnosticPass": "Initial private candidate repeated TS demux and was not final coverage: Fox auto-next changed identity and CNBC probe was explicitly cancelled after diagnostic TS inputs were retained. Final checks use the bounded index and local prefetch."
+  },
+  "subtitleFollowup": "NEWS_HLS_SUBTITLES_DOWNLOADS.json",
+  "subtitleStatus": "Historical unsupported external-caption outcome; current Fox/Yahoo complete subtitle bundle coverage is in subtitleFollowup. Other cases retain their original measurements."
+}
