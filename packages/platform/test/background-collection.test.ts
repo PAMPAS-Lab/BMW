@@ -29,7 +29,20 @@ test('Background discovery publishes only admitted actions and exact operation b
  assert.deepEqual(detail.inputSchema.properties.collectionRequest.oneOf.map(row=>row.properties.operation.const),['read','save-lead','finish'])
  assert.equal(schema.inputSchema.properties.collectionRequest.oneOf.length,5)
  await assert.rejects(scope.executor.execute({action:'help',forAction:'library.streams'}),/unavailable/)
- await assert.rejects(scope.executor.execute({action:'library.collecting',collectionRequest:{operation:'list'}}),/read\/save-lead\/finish/)
+ await assert.rejects(scope.executor.execute({action:'library.collecting',collectionRequest:{operation:'list'}}),/read\/save-lead\/watch-video\/update-video\/finish/)
  await assert.rejects(scope.executor.execute({action:'library.collection-batch',collectionBatchRequest:{operation:'read'}}),/unavailable/)
  await scope.close()
+})
+
+test('Video followups admit bounded preserve previews only, keeping capture, production and unrelated operations unavailable',async()=>{
+ let calls=0
+ const scope=new BackgroundCollectionScope({libraryCollecting:()=>{},capabilityRegistry:{assertRequest:(raw:unknown)=>raw},execute:async()=>{calls++;return {}},closeDetached:async()=>{}} as unknown as BrowserKernel,()=>true)
+ for(const sourceRequest of [{operation:'acquire',method:'capture',preview:{startSeconds:0,endSeconds:4}},{operation:'acquire',method:'preserve'},{operation:'acquire',method:'preserve',preview:{startSeconds:0,endSeconds:31}},{operation:'acquire',method:'preserve',preview:{startSeconds:4,endSeconds:3}}])await assert.rejects(scope.executor.execute({action:'library.sources',sourceRequest}),/3–30/)
+ assert.equal(calls,0)
+ await scope.executor.execute({action:'page.media.list'})
+ for(let i=0;i<10;i++)await scope.executor.execute({action:'library.sources',sourceRequest:{operation:'acquire',method:'preserve',preview:{startSeconds:0,endSeconds:4}}})
+ await assert.rejects(scope.executor.execute({action:'library.sources',sourceRequest:{operation:'acquire',method:'preserve',preview:{startSeconds:0,endSeconds:4}}}),/budget/)
+ await assert.rejects(scope.executor.execute({action:'library.collecting',collectionRequest:{operation:'propose-video'}}),/allows only/)
+ await assert.rejects(scope.executor.execute({action:'video.studio'}),/unavailable/)
+ assert.equal(calls,11);await scope.close()
 })

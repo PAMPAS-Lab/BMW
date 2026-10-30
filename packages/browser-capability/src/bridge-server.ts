@@ -133,7 +133,8 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
         const images: { type: 'image'; mimeType: 'image/png'; data: string }[] = []
         const action = record(input.arguments).action
         const sourceAnalysisImages=action==='video.studio'&&record(record(input.arguments).studioRequest).operation==='analysis'&&['read','step'].includes(String(record(record(record(input.arguments).studioRequest).analysisRequest).operation))
-        const referenceImages=sourceAnalysisImages||action==='video.studio'&&['prepare-reference','read-reference','review-export'].includes(String(record(record(input.arguments).studioRequest).operation))
+        const diagramImages=action==='video.studio'&&record(record(input.arguments).studioRequest).operation==='news-preparation'&&['prepare-diagram','read-diagram'].includes(String(record(record(record(input.arguments).studioRequest).preparationRequest).operation))
+        const referenceImages=diagramImages||sourceAnalysisImages||action==='video.studio'&&['prepare-reference','read-reference','review-export'].includes(String(record(record(input.arguments).studioRequest).operation))
         if (referenceImages || action === 'media.screenshot' || action === 'page.diagnostics' || action === 'media.frames.sample'||action==='media.capture.frames.sample'||action==='media.image.annotate'||action==='media.image.draw') {
           const value = record(result)
           const artifacts = action === 'page.diagnostics' ? [record(value.screenshot)] : action === 'media.frames.sample'||action==='media.capture.frames.sample'||referenceImages ? value.frames : [value]

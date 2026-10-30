@@ -1,0 +1,665 @@
+{
+  "date": "2026-10-29",
+  "status": "Implemented; local SPA/FIFO/lifecycle verified; real-site SPA and performance benefit NOT accepted on the current proxy",
+  "scope": "Disposable signed-out Profiles, mock keychain, zero paid-model calls. No production Profile, cookies, request bodies or verification values exported. No yt-dlp or FFmpeg CLI.",
+  "implementation": {
+    "residency": "One Agent-owned YouTube work tab and inner FIFO per Project; global FIFO and Project transition exclusion preserved. Full native acquisition/verification callback holds the lease until actual cleanup; active/quarantined media blocks work-tab navigation.",
+    "routing": "Real visible exact-target links first, then actual website search controls and exact result links. URL, player-data and response IDs must agree before original ad/decoded readiness. Site switch bounded to 15s; fallback shares the original 90s navigation budget.",
+    "bootstrap": "At most 5s additional navigation-control initialization after original player readiness; full site hydration is not required for native download.",
+    "lifecycle": "User tabs remain independent; paused worker survives Project switches and normal LRU within the six-Agent-tab cap. Explicit close/archive awaits native destruction. Failed/cancelled clean navigation discards the worker. Failed cleanup retains quarantine until explicit recovery. Disposable background collection pages remain run-scoped."
+  },
+  "comparison": {
+    "method": "Same three public IDs/order; separate disposable Profiles and processes; existing explicit HTTP/1.1 compatibility enabled in both final groups. One pass each on a variable proxy, no statistical speed or reliability claim. Navigation measures target-player readiness, not file transfer.",
+    "baselineKernelEquivalenceForDisabledResidentMode": true,
+    "baselineVersionNote": "The cold run preceded one additional media-active guard in the resident-only path; reconstruction SHA confirms the exact sole kernel difference, which disabled cold mode does not execute.",
+    "cold": {
+      "startedAt": "2026-10-29T04:23:25.327Z",
+      "environment": {
+        "profile": "disposable signed-out",
+        "mockKeychain": true,
+        "mode": "cold",
+        "http1Compatibility": true,
+        "modelCalls": 0,
+        "externalDownloader": false
+      },
+      "sourceUnchanged": true,
+      "sourceSha256": {
+        "packages/browser-capability/src/browser-kernel.ts": "d35c4bd15ad96f3b43bcc832a3ab75aacb915efafbf6411d9678aacf0f05b682",
+        "packages/browser-capability/src/browser-kernel.js": "10ff817a246d67e0ea656e30427ebc765713e3e3b8b81091bd363281b192a33c",
+        "packages/browser-capability/src/page-navigation.ts": "f34add7100418300c558a37044fea0adb42e0fd8c90b1a7f96645423ffe5f08e",
+        "packages/browser-capability/src/page-navigation.js": "d10978003b31bc9e27623bb36f62506cdf1a470404f16231703781c0191c9320",
+        "packages/browser-capability/src/video-target.ts": "a52f25aaefa6ac8a0eda9b612823855b5a58b86fab41678a95dc51e9747326a2",
+        "packages/browser-capability/src/video-target.js": "3317d2124bfb2d16c1c10ba608e2816b9f1fe120c8aa7c4c360928ad7c4d12d0",
+        "packages/browser-capability/src/youtube-sabr-observation.ts": "786fe8b58a5b79ffd7b49009c614ad668120f17b23311eb6efd8426e5d6469d2",
+        "packages/browser-capability/src/youtube-sabr-observation.js": "a86e9132a239cd1647d1fe4d9715c7045bfba7bcf64396aa3e585f5c99e8468a",
+        "packages/media-native/src/youtube-sabr.ts": "385095ab88865880ee7c03dae71a8b716b726c51698cceb0f6c56b4203cf2aa6",
+        "packages/media-native/src/youtube-sabr.js": "fed029582204623880304160f4dfdaa6c78ce23363c0d88c14a07cc690639421",
+        "packages/media-native/src/youtube-sabr-response.ts": "6a154d8e481293bce379de79259b653d618168d394f19d4fefb3bca22cf91070",
+        "packages/media-native/src/youtube-sabr-response.js": "7a3f7e14d7d993bd228b39457274b92111aa13e2cd0ed941f04466f63ead835a",
+        "packages/media-native/src/youtube-sabr-worker.ts": "2be74cc95f6b224c658b47fe224aaf099fd1c1a3f73bc96c7829b5f889d5b43e",
+        "packages/media-native/src/youtube-sabr-worker.js": "6aeef822f84479592e1dcb1aa5c668bfb9f9b5ccab2c74e38ba3afa638797c26",
+        "packages/platform/src/global-settings-store.ts": "70773a596ae830ab60c68b56db4a9fddf1fd8c4bedd6c55a31cd82d6e0eab03e",
+        "packages/platform/src/global-settings-store.js": "8193844d20f3b2724907ad0f3bcd316634521f6047f46f42badc398e9e25edba",
+        "packages/browser-capability/src/youtube-worktabs.ts": "1293c3e2545aab096d3bce59d04c256d2cd8f0768762e3a6735233486e81dd6c",
+        "packages/browser-capability/src/youtube-worktabs.js": "8d6a200ab1577d33cbfcbc9fe86c001b89573e78864bbeeda134ac68ba304a88",
+        "packages/browser-capability/src/youtube-switch.ts": "9612b96230ec1d00aa044459145e79041a25b98b127fc9a4f17ad613e873397c",
+        "packages/browser-capability/src/youtube-switch.js": "aa03a7cd9c87bb91c9a961ddff1a0d78e6d8eaddcc9342df275f0c609cf9af93",
+        "scripts/youtube-worktab-case.ts": "2b9fc39f0861e76d137541aae54bfa07de762e403b90871590b5237abc50f9a2",
+        "scripts/youtube-worktab-case.js": "1ef2071f15fec4da2795b008eb74781d08078634788342d3447122dc09ce5d33"
+      },
+      "navigationPassed": 3,
+      "downloadPassed": 0,
+      "sameTab": false,
+      "sameDocument": false,
+      "samples": [
+        {
+          "id": "jNQXAC9IVRw",
+          "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+          "title": "Me at the zoo - YouTube",
+          "navigationOk": true,
+          "navigationMs": 26773,
+          "navigation": {
+            "method": "cold",
+            "elapsedMs": 26736,
+            "retainedDocument": false
+          },
+          "tabId": "33c727cb-1388-4ce3-b6c3-fbb576e34929",
+          "documentTimeOrigin": 1793247805637.1,
+          "videoIdentity": {
+            "version": 1,
+            "platform": "youtube",
+            "targetId": "jNQXAC9IVRw",
+            "resourceId": "jNQXAC9IVRw"
+          },
+          "downloadOk": false,
+          "downloadAttemptMs": 15280,
+          "error": "Error: YOUTUBE_SABR_ATTESTATION: No updated same-player browser verification was observed before the bounded refresh deadline.",
+          "newFilesAfterFailure": []
+        },
+        {
+          "id": "zHBrUVyQJWc",
+          "url": "https://www.youtube.com/watch?v=zHBrUVyQJWc",
+          "title": "RTX Spark Brings Microducks to Life | NVIDIA GTC Berlin 2026 Keynote - YouTube",
+          "navigationOk": true,
+          "navigationMs": 4483,
+          "navigation": {
+            "method": "cold",
+            "elapsedMs": 4477,
+            "retainedDocument": false
+          },
+          "tabId": "a958b03c-1166-4610-b085-41a38461dfa2",
+          "documentTimeOrigin": 1793247854717.8,
+          "videoIdentity": {
+            "version": 1,
+            "platform": "youtube",
+            "targetId": "zHBrUVyQJWc",
+            "resourceId": "zHBrUVyQJWc"
+          },
+          "downloadOk": false,
+          "downloadAttemptMs": 16430,
+          "error": "Error: YOUTUBE_SABR_ATTESTATION: No updated same-player browser verification was observed before the bounded refresh deadline.",
+          "newFilesAfterFailure": []
+        },
+        {
+          "id": "a9LDPn-MO4I",
+          "url": "https://www.youtube.com/watch?v=a9LDPn-MO4I",
+          "title": "UHDTV TEST 8K VIDEO.mp4 - YouTube",
+          "navigationOk": true,
+          "navigationMs": 19390,
+          "navigation": {
+            "method": "cold",
+            "elapsedMs": 19384,
+            "retainedDocument": false
+          },
+          "tabId": "5c82f11a-7024-46a4-b431-6dee87ed19a8",
+          "documentTimeOrigin": 1793247882668.3,
+          "videoIdentity": {
+            "version": 1,
+            "platform": "youtube",
+            "targetId": "a9LDPn-MO4I",
+            "resourceId": "a9LDPn-MO4I"
+          },
+          "downloadOk": false,
+          "downloadAttemptMs": 21457,
+          "error": "Error: YOUTUBE_SABR_ATTESTATION: No updated same-player browser verification was observed before the bounded refresh deadline.",
+          "newFilesAfterFailure": []
+        }
+      ]
+    },
+    "resident": {
+      "startedAt": "2026-10-29T04:28:03.979Z",
+      "environment": {
+        "profile": "disposable signed-out",
+        "mockKeychain": true,
+        "mode": "resident",
+        "http1Compatibility": true,
+        "modelCalls": 0,
+        "externalDownloader": false
+      },
+      "sourceUnchanged": true,
+      "sourceSha256": {
+        "packages/browser-capability/src/browser-kernel.ts": "e7ede40b0d3c704e3003878f6c316ade60e726104d214c86c937531292adbef8",
+        "packages/browser-capability/src/browser-kernel.js": "0bcf46e569798fa7c4717645df2bbd9e6b04543dd659e37b8f221d85e6a2c296",
+        "packages/browser-capability/src/page-navigation.ts": "f34add7100418300c558a37044fea0adb42e0fd8c90b1a7f96645423ffe5f08e",
+        "packages/browser-capability/src/page-navigation.js": "d10978003b31bc9e27623bb36f62506cdf1a470404f16231703781c0191c9320",
+        "packages/browser-capability/src/video-target.ts": "a52f25aaefa6ac8a0eda9b612823855b5a58b86fab41678a95dc51e9747326a2",
+        "packages/browser-capability/src/video-target.js": "3317d2124bfb2d16c1c10ba608e2816b9f1fe120c8aa7c4c360928ad7c4d12d0",
+        "packages/browser-capability/src/youtube-sabr-observation.ts": "786fe8b58a5b79ffd7b49009c614ad668120f17b23311eb6efd8426e5d6469d2",
+        "packages/browser-capability/src/youtube-sabr-observation.js": "a86e9132a239cd1647d1fe4d9715c7045bfba7bcf64396aa3e585f5c99e8468a",
+        "packages/media-native/src/youtube-sabr.ts": "385095ab88865880ee7c03dae71a8b716b726c51698cceb0f6c56b4203cf2aa6",
+        "packages/media-native/src/youtube-sabr.js": "fed029582204623880304160f4dfdaa6c78ce23363c0d88c14a07cc690639421",
+        "packages/media-native/src/youtube-sabr-response.ts": "6a154d8e481293bce379de79259b653d618168d394f19d4fefb3bca22cf91070",
+        "packages/media-native/src/youtube-sabr-response.js": "7a3f7e14d7d993bd228b39457274b92111aa13e2cd0ed941f04466f63ead835a",
+        "packages/media-native/src/youtube-sabr-worker.ts": "2be74cc95f6b224c658b47fe224aaf099fd1c1a3f73bc96c7829b5f889d5b43e",
+        "packages/media-native/src/youtube-sabr-worker.js": "6aeef822f84479592e1dcb1aa5c668bfb9f9b5ccab2c74e38ba3afa638797c26",
+        "packages/platform/src/global-settings-store.ts": "70773a596ae830ab60c68b56db4a9fddf1fd8c4bedd6c55a31cd82d6e0eab03e",
+        "packages/platform/src/global-settings-store.js": "8193844d20f3b2724907ad0f3bcd316634521f6047f46f42badc398e9e25edba",
+        "packages/browser-capability/src/youtube-worktabs.ts": "1293c3e2545aab096d3bce59d04c256d2cd8f0768762e3a6735233486e81dd6c",
+        "packages/browser-capability/src/youtube-worktabs.js": "8d6a200ab1577d33cbfcbc9fe86c001b89573e78864bbeeda134ac68ba304a88",
+        "packages/browser-capability/src/youtube-switch.ts": "9612b96230ec1d00aa044459145e79041a25b98b127fc9a4f17ad613e873397c",
+        "packages/browser-capability/src/youtube-switch.js": "aa03a7cd9c87bb91c9a961ddff1a0d78e6d8eaddcc9342df275f0c609cf9af93",
+        "scripts/youtube-worktab-case.ts": "2b9fc39f0861e76d137541aae54bfa07de762e403b90871590b5237abc50f9a2",
+        "scripts/youtube-worktab-case.js": "1ef2071f15fec4da2795b008eb74781d08078634788342d3447122dc09ce5d33"
+      },
+      "navigationPassed": 3,
+      "downloadPassed": 0,
+      "sameTab": true,
+      "sameDocument": false,
+      "samples": [
+        {
+          "id": "jNQXAC9IVRw",
+          "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+          "title": "Me at the zoo - YouTube",
+          "navigationOk": true,
+          "navigationMs": 30087,
+          "navigation": {
+            "method": "cold",
+            "elapsedMs": 30079,
+            "retainedDocument": false
+          },
+          "tabId": "46c78536-b0b6-4e8b-935a-c49b6abd3ea5",
+          "documentTimeOrigin": 1793248084224.1,
+          "videoIdentity": {
+            "version": 1,
+            "platform": "youtube",
+            "targetId": "jNQXAC9IVRw",
+            "resourceId": "jNQXAC9IVRw"
+          },
+          "downloadOk": false,
+          "downloadAttemptMs": 16800,
+          "error": "Error: YOUTUBE_SABR_ATTESTATION: No updated same-player browser verification was observed before the bounded refresh deadline.",
+          "newFilesAfterFailure": []
+        },
+        {
+          "id": "zHBrUVyQJWc",
+          "url": "https://www.youtube.com/watch?v=zHBrUVyQJWc",
+          "title": "RTX Spark Brings Microducks to Life | NVIDIA GTC Berlin 2026 Keynote - YouTube",
+          "navigationOk": true,
+          "navigationMs": 13758,
+          "navigation": {
+            "method": "reload-fallback",
+            "elapsedMs": 13754,
+            "retainedDocument": false,
+            "switchMs": 1
+          },
+          "tabId": "46c78536-b0b6-4e8b-935a-c49b6abd3ea5",
+          "documentTimeOrigin": 1793248138021.9,
+          "videoIdentity": {
+            "version": 1,
+            "platform": "youtube",
+            "targetId": "zHBrUVyQJWc",
+            "resourceId": "zHBrUVyQJWc"
+          },
+          "downloadOk": false,
+          "downloadAttemptMs": 15281,
+          "error": "Error: YOUTUBE_SABR_ATTESTATION: No updated same-player browser verification was observed before the bounded refresh deadline.",
+          "newFilesAfterFailure": []
+        },
+        {
+          "id": "a9LDPn-MO4I",
+          "url": "https://www.youtube.com/watch?v=a9LDPn-MO4I",
+          "title": "UHDTV TEST 8K VIDEO.mp4 - YouTube",
+          "navigationOk": true,
+          "navigationMs": 18437,
+          "navigation": {
+            "method": "reload-fallback",
+            "elapsedMs": 18433,
+            "retainedDocument": false,
+            "switchMs": 0
+          },
+          "tabId": "46c78536-b0b6-4e8b-935a-c49b6abd3ea5",
+          "documentTimeOrigin": 1793248174073.7,
+          "videoIdentity": {
+            "version": 1,
+            "platform": "youtube",
+            "targetId": "a9LDPn-MO4I",
+            "resourceId": "a9LDPn-MO4I"
+          },
+          "downloadOk": false,
+          "downloadAttemptMs": 20111,
+          "error": "Error: YOUTUBE_SABR_ATTESTATION: No updated same-player browser verification was observed before the bounded refresh deadline.",
+          "newFilesAfterFailure": []
+        }
+      ]
+    },
+    "conclusion": "Same resident tab retained, but the real page exposed a hidden uninitialized masthead/search placeholder. Both subsequent requests used bounded full-page fallback, with changed document timeOrigin. No real-site SPA or consistent speedup was demonstrated. Download outcomes remain site-attestation dependent."
+  },
+  "additionalEvidence": {
+    "earlierResidentPass": {
+      "startedAt": "2026-10-29T04:05:38.621Z",
+      "environment": {
+        "profile": "disposable signed-out",
+        "mockKeychain": true,
+        "mode": "resident",
+        "http1Compatibility": true,
+        "modelCalls": 0,
+        "externalDownloader": false
+      },
+      "sourceUnchanged": true,
+      "sourceSha256": {
+        "packages/browser-capability/src/browser-kernel.ts": "cf9b1ea2c9321fac8e020ad2aed833293d95aadda864f35383a1fda4056a9494",
+        "packages/browser-capability/src/browser-kernel.js": "72bebffae5e46e80a950df910793ed3270f8d64042145159bc440b462112c421",
+        "packages/browser-capability/src/page-navigation.ts": "f34add7100418300c558a37044fea0adb42e0fd8c90b1a7f96645423ffe5f08e",
+        "packages/browser-capability/src/page-navigation.js": "d10978003b31bc9e27623bb36f62506cdf1a470404f16231703781c0191c9320",
+        "packages/browser-capability/src/video-target.ts": "a52f25aaefa6ac8a0eda9b612823855b5a58b86fab41678a95dc51e9747326a2",
+        "packages/browser-capability/src/video-target.js": "3317d2124bfb2d16c1c10ba608e2816b9f1fe120c8aa7c4c360928ad7c4d12d0",
+        "packages/browser-capability/src/youtube-sabr-observation.ts": "786fe8b58a5b79ffd7b49009c614ad668120f17b23311eb6efd8426e5d6469d2",
+        "packages/browser-capability/src/youtube-sabr-observation.js": "a86e9132a239cd1647d1fe4d9715c7045bfba7bcf64396aa3e585f5c99e8468a",
+        "packages/media-native/src/youtube-sabr.ts": "385095ab88865880ee7c03dae71a8b716b726c51698cceb0f6c56b4203cf2aa6",
+        "packages/media-native/src/youtube-sabr.js": "fed029582204623880304160f4dfdaa6c78ce23363c0d88c14a07cc690639421",
+        "packages/media-native/src/youtube-sabr-response.ts": "6a154d8e481293bce379de79259b653d618168d394f19d4fefb3bca22cf91070",
+        "packages/media-native/src/youtube-sabr-response.js": "7a3f7e14d7d993bd228b39457274b92111aa13e2cd0ed941f04466f63ead835a",
+        "packages/media-native/src/youtube-sabr-worker.ts": "2be74cc95f6b224c658b47fe224aaf099fd1c1a3f73bc96c7829b5f889d5b43e",
+        "packages/media-native/src/youtube-sabr-worker.js": "6aeef822f84479592e1dcb1aa5c668bfb9f9b5ccab2c74e38ba3afa638797c26",
+        "packages/platform/src/global-settings-store.ts": "70773a596ae830ab60c68b56db4a9fddf1fd8c4bedd6c55a31cd82d6e0eab03e",
+        "packages/platform/src/global-settings-store.js": "8193844d20f3b2724907ad0f3bcd316634521f6047f46f42badc398e9e25edba",
+        "packages/browser-capability/src/youtube-worktabs.ts": "1293c3e2545aab096d3bce59d04c256d2cd8f0768762e3a6735233486e81dd6c",
+        "packages/browser-capability/src/youtube-worktabs.js": "8d6a200ab1577d33cbfcbc9fe86c001b89573e78864bbeeda134ac68ba304a88",
+        "packages/browser-capability/src/youtube-switch.ts": "55847fa3e1e8e19d4a4a2a7c6b4f0c9f8cf7341d3bbcdb555fba59ee4060ae62",
+        "packages/browser-capability/src/youtube-switch.js": "df7ee237f3801ec5be4301803686d5ac8d5a542168ab92da85ddb9e54147b74e",
+        "scripts/youtube-worktab-case.ts": "f71e474b2863e5483769842526224cc2158d833155521c69ec2f31ce7ceccabf",
+        "scripts/youtube-worktab-case.js": "b6a27fc223ce398f971cbbb03792fde9525415b87a87213fe35d99a7429131b4"
+      },
+      "navigationPassed": 3,
+      "downloadPassed": 1,
+      "sameTab": true,
+      "sameDocument": false,
+      "samples": [
+        {
+          "id": "jNQXAC9IVRw",
+          "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+          "title": "Me at the zoo - YouTube",
+          "navigationOk": true,
+          "navigationMs": 20071,
+          "navigation": {
+            "method": "cold",
+            "elapsedMs": 20055,
+            "retainedDocument": false
+          },
+          "tabId": "81b4a6df-c362-46d1-8ff4-d519fb611c9f",
+          "documentTimeOrigin": 1793246738927.6,
+          "videoIdentity": {
+            "version": 1,
+            "platform": "youtube",
+            "targetId": "jNQXAC9IVRw",
+            "resourceId": "jNQXAC9IVRw"
+          },
+          "downloadOk": true,
+          "downloadAttemptMs": 12514,
+          "bytes": 741237,
+          "inspection": {
+            "durationSeconds": 19.06358276643991,
+            "tracks": [
+              {
+                "id": 1,
+                "type": "video",
+                "codec": "avc",
+                "canDecode": true,
+                "width": 320,
+                "height": 240,
+                "rotation": 0,
+                "startSeconds": 0,
+                "endSeconds": 18.933333333333334,
+                "canBeTransparent": false
+              },
+              {
+                "id": 2,
+                "type": "audio",
+                "codec": "aac",
+                "canDecode": true,
+                "channels": 2,
+                "sampleRate": 44100,
+                "startSeconds": 0,
+                "endSeconds": 19.06358276643991
+              }
+            ]
+          },
+          "decode": {
+            "completeFile": true,
+            "tracks": [
+              {
+                "id": 1,
+                "type": "video",
+                "codec": "avc",
+                "sampleCount": 284,
+                "startSeconds": 0,
+                "endSeconds": 18.933333333333334
+              },
+              {
+                "id": 2,
+                "type": "audio",
+                "codec": "aac",
+                "sampleCount": 821,
+                "startSeconds": 0,
+                "endSeconds": 19.063582766439907
+              }
+            ]
+          },
+          "preservation": {
+            "basis": "YouTube-SABR-encoded-tracks",
+            "reencoded": false,
+            "completeVod": true,
+            "completeSeparatedTracks": true,
+            "resources": [
+              {
+                "track": "video",
+                "bytes": 433081,
+                "sha256": "4dbe319113ef43a7c0581717578d1e4852dae65b2950a20a3897347dafc8e9aa"
+              },
+              {
+                "track": "audio",
+                "bytes": 309288,
+                "sha256": "a01b38c896d27707ef852301f1ccc6c39cebe792852c868109e85753ef159e47"
+              }
+            ]
+          }
+        },
+        {
+          "id": "zHBrUVyQJWc",
+          "url": "https://www.youtube.com/watch?v=zHBrUVyQJWc",
+          "title": "RTX Spark Brings Microducks to Life | NVIDIA GTC Berlin 2026 Keynote - YouTube",
+          "navigationOk": true,
+          "navigationMs": 5011,
+          "navigation": {
+            "method": "reload-fallback",
+            "elapsedMs": 5007,
+            "retainedDocument": false,
+            "switchMs": 1
+          },
+          "tabId": "81b4a6df-c362-46d1-8ff4-d519fb611c9f",
+          "documentTimeOrigin": 1793246779121.1,
+          "videoIdentity": {
+            "version": 1,
+            "platform": "youtube",
+            "targetId": "zHBrUVyQJWc",
+            "resourceId": "zHBrUVyQJWc"
+          },
+          "downloadOk": false,
+          "downloadAttemptMs": 16244,
+          "error": "Error: YOUTUBE_SABR_ATTESTATION: No updated same-player browser verification was observed before the bounded refresh deadline.",
+          "newFilesAfterFailure": []
+        },
+        {
+          "id": "a9LDPn-MO4I",
+          "url": "https://www.youtube.com/watch?v=a9LDPn-MO4I",
+          "title": "UHDTV TEST 8K VIDEO.mp4 - YouTube",
+          "navigationOk": true,
+          "navigationMs": 18857,
+          "navigation": {
+            "method": "reload-fallback",
+            "elapsedMs": 18854,
+            "retainedDocument": false,
+            "switchMs": 1
+          },
+          "tabId": "81b4a6df-c362-46d1-8ff4-d519fb611c9f",
+          "documentTimeOrigin": 1793246807385.7,
+          "videoIdentity": {
+            "version": 1,
+            "platform": "youtube",
+            "targetId": "a9LDPn-MO4I",
+            "resourceId": "a9LDPn-MO4I"
+          },
+          "downloadOk": false,
+          "downloadAttemptMs": 19738,
+          "error": "Error: YOUTUBE_SABR_ATTESTATION: No updated same-player browser verification was observed before the bounded refresh deadline.",
+          "newFilesAfterFailure": []
+        }
+      ]
+    },
+    "defaultProtocolExploration": {
+      "startedAt": "2026-10-29T03:59:15.683Z",
+      "environment": {
+        "profile": "disposable signed-out",
+        "mockKeychain": true,
+        "mode": "cold",
+        "http1Compatibility": false,
+        "modelCalls": 0,
+        "externalDownloader": false
+      },
+      "sourceUnchanged": true,
+      "sourceSha256": {
+        "packages/browser-capability/src/browser-kernel.ts": "cf9b1ea2c9321fac8e020ad2aed833293d95aadda864f35383a1fda4056a9494",
+        "packages/browser-capability/src/browser-kernel.js": "72bebffae5e46e80a950df910793ed3270f8d64042145159bc440b462112c421",
+        "packages/browser-capability/src/page-navigation.ts": "f34add7100418300c558a37044fea0adb42e0fd8c90b1a7f96645423ffe5f08e",
+        "packages/browser-capability/src/page-navigation.js": "d10978003b31bc9e27623bb36f62506cdf1a470404f16231703781c0191c9320",
+        "packages/browser-capability/src/video-target.ts": "a52f25aaefa6ac8a0eda9b612823855b5a58b86fab41678a95dc51e9747326a2",
+        "packages/browser-capability/src/video-target.js": "3317d2124bfb2d16c1c10ba608e2816b9f1fe120c8aa7c4c360928ad7c4d12d0",
+        "packages/browser-capability/src/youtube-sabr-observation.ts": "786fe8b58a5b79ffd7b49009c614ad668120f17b23311eb6efd8426e5d6469d2",
+        "packages/browser-capability/src/youtube-sabr-observation.js": "a86e9132a239cd1647d1fe4d9715c7045bfba7bcf64396aa3e585f5c99e8468a",
+        "packages/media-native/src/youtube-sabr.ts": "385095ab88865880ee7c03dae71a8b716b726c51698cceb0f6c56b4203cf2aa6",
+        "packages/media-native/src/youtube-sabr.js": "fed029582204623880304160f4dfdaa6c78ce23363c0d88c14a07cc690639421",
+        "packages/media-native/src/youtube-sabr-response.ts": "6a154d8e481293bce379de79259b653d618168d394f19d4fefb3bca22cf91070",
+        "packages/media-native/src/youtube-sabr-response.js": "7a3f7e14d7d993bd228b39457274b92111aa13e2cd0ed941f04466f63ead835a",
+        "packages/media-native/src/youtube-sabr-worker.ts": "2be74cc95f6b224c658b47fe224aaf099fd1c1a3f73bc96c7829b5f889d5b43e",
+        "packages/media-native/src/youtube-sabr-worker.js": "6aeef822f84479592e1dcb1aa5c668bfb9f9b5ccab2c74e38ba3afa638797c26",
+        "packages/platform/src/global-settings-store.ts": "70773a596ae830ab60c68b56db4a9fddf1fd8c4bedd6c55a31cd82d6e0eab03e",
+        "packages/platform/src/global-settings-store.js": "8193844d20f3b2724907ad0f3bcd316634521f6047f46f42badc398e9e25edba",
+        "packages/browser-capability/src/youtube-worktabs.ts": "1293c3e2545aab096d3bce59d04c256d2cd8f0768762e3a6735233486e81dd6c",
+        "packages/browser-capability/src/youtube-worktabs.js": "8d6a200ab1577d33cbfcbc9fe86c001b89573e78864bbeeda134ac68ba304a88",
+        "packages/browser-capability/src/youtube-switch.ts": "55847fa3e1e8e19d4a4a2a7c6b4f0c9f8cf7341d3bbcdb555fba59ee4060ae62",
+        "packages/browser-capability/src/youtube-switch.js": "df7ee237f3801ec5be4301803686d5ac8d5a542168ab92da85ddb9e54147b74e",
+        "scripts/youtube-worktab-case.ts": "f71e474b2863e5483769842526224cc2158d833155521c69ec2f31ce7ceccabf",
+        "scripts/youtube-worktab-case.js": "b6a27fc223ce398f971cbbb03792fde9525415b87a87213fe35d99a7429131b4"
+      },
+      "navigationPassed": 0,
+      "downloadPassed": 0,
+      "sameTab": false,
+      "sameDocument": false,
+      "samples": [
+        {
+          "id": "jNQXAC9IVRw",
+          "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+          "navigationOk": false,
+          "downloadOk": false,
+          "error": "Error: BMW_BROWSER_NAVIGATION_TIMEOUT: Navigation exceeded its native deadline.",
+          "newFilesAfterFailure": []
+        },
+        {
+          "id": "zHBrUVyQJWc",
+          "url": "https://www.youtube.com/watch?v=zHBrUVyQJWc",
+          "navigationOk": false,
+          "downloadOk": false,
+          "error": "Error: BMW_BROWSER_NAVIGATION_TIMEOUT: Navigation exceeded its native deadline.",
+          "newFilesAfterFailure": []
+        },
+        {
+          "id": "a9LDPn-MO4I",
+          "url": "https://www.youtube.com/watch?v=a9LDPn-MO4I",
+          "navigationOk": false,
+          "downloadOk": false,
+          "error": "Error: ERR_ABORTED (-3) loading '[delivery]",
+          "newFilesAfterFailure": []
+        }
+      ]
+    },
+    "unboundedShellWaitRejected": "A trial requiring full site navigation UI caused ERR_ABORTED/deadline failures; it is not the shipped behavior. Final behavior bounds initialization to five seconds. The visible placeholder persisted even without early stop, so early stop is not proven to be the sole cause.",
+    "visualReview": "Earlier successful Me at the zoo MP4: first/middle/last frames viewed and matched the original person/elephant scene; complete AVC + stereo AAC decode and packet-copy proof. Human listening not performed."
+  },
+  "verification": {
+    "offlinePassed": 135,
+    "offlineFailed": 0,
+    "sourceIntegrity": {
+      "status": "passed",
+      "method": "No runner integrity failure; all accepted product sources and other authored sources SHA-256 rechecked. One exact fixture-only context line changed afterward; its preimage SHA and successful current native capture run are verified.",
+      "filesChecked": 656,
+      "fixtureDelta": {
+        "file": "scripts/media-capture-smoke.ts",
+        "exactSingleLinePreimageVerified": true,
+        "beforeSha256": "24a01f2b55dec42cad995ec6f2713fd2507d839bb83e4fae55836cafcefa1523",
+        "afterSha256": "e26925890a0a4d3d778712dd56d795f7aee0619aeaba300de6e5756308e70263"
+      }
+    },
+    "runtime": [
+      {
+        "id": "acquisition",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 5367,
+        "log": ".bmw-runtime/youtube-worktab-20261029/runtime/acquisition/run.log"
+      },
+      {
+        "id": "http-hls",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 382,
+        "log": ".bmw-runtime/youtube-worktab-20261029/runtime/http-hls/run.log"
+      },
+      {
+        "id": "processing",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 23650,
+        "log": ".bmw-runtime/youtube-worktab-20261029/runtime/processing/run.log"
+      },
+      {
+        "id": "source-studio",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 20660,
+        "log": ".bmw-runtime/youtube-worktab-20261029/runtime/source-studio/run.log"
+      },
+      {
+        "id": "studio",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 66451,
+        "log": ".bmw-runtime/youtube-worktab-20261029/runtime/studio/run.log"
+      },
+      {
+        "id": "video",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 39853,
+        "log": ".bmw-runtime/youtube-worktab-20261029/runtime/video/run.log"
+      },
+      {
+        "id": "narration",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 1214,
+        "log": ".bmw-runtime/youtube-worktab-20261029/runtime/narration/run.log"
+      },
+      {
+        "id": "desktop",
+        "code": 0,
+        "signal": null,
+        "groups": [
+          {
+            "group": "workspace",
+            "status": "passed",
+            "exitCode": 0,
+            "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/youtube-worktab-20261029/runtime/desktop/workspace/run.log"
+          },
+          {
+            "group": "projects",
+            "status": "passed",
+            "exitCode": 0,
+            "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/youtube-worktab-20261029/runtime/desktop/projects/run.log"
+          },
+          {
+            "group": "projects/restart",
+            "status": "passed",
+            "exitCode": 0,
+            "log": "/Users/zz/Documents/ChatGPT/BMW/.bmw-runtime/youtube-worktab-20261029/runtime/desktop/restore/run.log"
+          },
+          {
+            "group": "settings",
+            "status": "passed",
+            "exitCode": 0,
+            "log": ".bmw-runtime/youtube-worktab-20261029/desktop-settings-debug.log"
+          },
+          {
+            "group": "native",
+            "status": "passed",
+            "exitCode": 0,
+            "log": ".bmw-runtime/youtube-worktab-20261029/desktop-native.log"
+          }
+        ],
+        "mode": "All named groups accepted; workspace/projects/restart from original suite, fresh settings/native reruns exited zero. Original aggregate exit deadline retained, cause not reproduced.",
+        "priorAttempts": [
+          {
+            "id": "desktop",
+            "code": null,
+            "signal": "SIGTERM",
+            "elapsedMs": 360001,
+            "log": ".bmw-runtime/youtube-worktab-20261029/runtime/desktop/run.log"
+          }
+        ]
+      }
+    ],
+    "currentRuntimeDelta": [
+      {
+        "id": "acquisition",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 5923,
+        "log": ".bmw-runtime/youtube-worktab-20261029/current-runtime/acquisition/run.log"
+      },
+      {
+        "id": "source-studio",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 21311,
+        "log": ".bmw-runtime/youtube-worktab-20261029/current-runtime/source-studio/run.log"
+      },
+      {
+        "id": "tab-lifecycle",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 42505,
+        "log": ".bmw-runtime/youtube-worktab-20261029/current-runtime/tab-lifecycle/run.log"
+      },
+      {
+        "id": "capture",
+        "code": 0,
+        "signal": null,
+        "log": ".bmw-runtime/youtube-worktab-20261029/final-capture.log",
+        "priorAttempts": [
+          {
+            "id": "capture",
+            "code": 1,
+            "signal": null,
+            "elapsedMs": 874,
+            "log": ".bmw-runtime/youtube-worktab-20261029/current-runtime/capture/run.log"
+          }
+        ],
+        "scope": "Actual recording, element capture, decode and three-step website/Studio workflow passed after fixing a missing fixture context method."
+      }
+    ],
+    "advanceYoutubePlayerDelta": {
+      "unchanged": true,
+      "sha256": "3f8d75e52c356bfe690a4ce4bf4c8c1f3bf60bc8d3bf671990b23fcef225cceb",
+      "scope": "Capture startup changed after the first accepted checks; the fixed YouTube navigation/player operation is byte-for-byte unchanged. Public benchmark uses preserveSource, not capture fallback."
+    },
+    "desktopCaveat": "Original aggregate suite reached its 360-second deadline after settings assertions; fresh settings/native runs exited zero, other named groups had exited zero. Timeout retained, cause not reproduced.",
+    "checkLog": ".bmw-runtime/youtube-worktab-20261029/final-fixture-check.log",
+    "worktabFixture": ".bmw-runtime/youtube-worktab-20261029/current-worktab-smoke.log",
+    "dshCatalogOnly": ".bmw-runtime/youtube-worktab-20261029/final-dsh.log",
+    "tabLifecycle": ".bmw-runtime/youtube-worktab-20261029/tab-lifecycle.log"
+  },
+  "pending": [
+    "Verify actual SPA on a fully initialized real YouTube page and locate the remaining masthead bootstrap/network blocker on this proxy.",
+    "Resolve same-player SABR attestation/network failures within existing boundaries; no automatic replay or validation bypass.",
+    "Broaden independent paired runs before claiming speed/reliability gains; human listening for any accepted delivered media."
+  ]
+}

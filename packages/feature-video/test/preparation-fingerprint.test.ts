@@ -14,11 +14,11 @@ test('Preparation fingerprints ignore inspection and provenance metadata while r
  for(const alter of [
   (s:StudioScene)=>{s.captions![0].text='Changed words.'},
   (s:StudioScene)=>{s.captions![0].translationText='Changed claim.'},
-  (s:StudioScene)=>{s.captions![0].endSeconds=2.4},
   (s:StudioScene)=>{s.sourceStartSeconds=.01},
   (s:StudioScene)=>{s.crop={x:.1,y:0,width:.9,height:1}},
   (s:StudioScene)=>{s.keepSourceAudio=false}
  ]){const changed=structuredClone(scene);alter(changed);assert.notEqual(key(changed),baseline)}
+ const retimedCaption=structuredClone(scene);retimedCaption.captions![0].endSeconds=2.4;assert.equal(key(retimedCaption),baseline,'caption timing is checked at export, not another material declaration')
  const segmented:StudioScene={...scene,visualSegments:[{id:'a',durationSeconds:3,videoArtifactId:'clip.mp4',sourceStartSeconds:0,sourceDurationSeconds:3.003,playbackRate:1,zoom:1,keepSourceAudio:true,transition:'cut',transitionSeconds:.1}]}
  const segmentBaseline=key(segmented);segmented.visualSegments![0].sourceDurationSeconds=3;assert.equal(key(segmented),segmentBaseline,'explicit segments use the same derived-duration exclusion')
  segmented.visualSegments![0].sourceStartSeconds=.01;assert.notEqual(key(segmented),segmentBaseline)
@@ -30,8 +30,8 @@ test('Preparation fingerprints bind effective anchored captions and speech links
  const baseline=key(scene),metadata=structuredClone(scene)
  metadata.speechAnchors!.createdAt='2026-10-23T01:00:00Z';metadata.speechAnchors!.capturedRevision=2;metadata.speechAnchors!.origin='user-edited'
  assert.equal(key(metadata),baseline,'evidence receipt metadata alone does not change the displayed words or timing')
- const captionEdit=structuredClone(scene);captionEdit.speechAnchors!.anchors[0].endSeconds=.75;assert.notEqual(key(captionEdit),baseline,'effective anchor-caption timing is real rendered content')
- const disabled=structuredClone(scene);disabled.speechCaptions=false;assert.notEqual(key(disabled),baseline,'disabling displayed anchor captions is an editorial change')
+ const captionEdit=structuredClone(scene);captionEdit.speechAnchors!.anchors[0].endSeconds=.75;assert.equal(key(captionEdit),baseline,'caption-only anchor timing does not change source or script semantics')
+ const disabled=structuredClone(scene);disabled.speechCaptions=false;assert.equal(key(disabled),baseline,'generated caption presence is checked at export; the narration words remain pinned')
  const focus:StudioScene={...scene,speechCaptions:false,videoArtifactId:'clip.mp4',speechLinks:{bullets:[],focus:[{anchorId:'first',visualIndex:0,artifactId:'clip.mp4',x:.6,y:.4,zoom:2,emphasize:true}]}}
  const focusBaseline=key(focus),moved=structuredClone(focus);moved.speechLinks!.focus[0].x=.7;assert.notEqual(key(moved),focusBaseline,'effective linked source focus is part of the shot')
  const retimed=structuredClone(focus);retimed.speechAnchors!.anchors[0].endSeconds=.75;assert.notEqual(key(retimed),focusBaseline,'focus timing follows its explicit anchor')

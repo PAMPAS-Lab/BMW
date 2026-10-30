@@ -6,7 +6,7 @@ import {videoElementCaptureInternals} from '../src/video-element-capture.js'
 type Listener={callback:(event:{isTrusted:boolean})=>void;capture:boolean;once:boolean}
 class Video {
   position=.03;duration:number;paused=false;loop=true;playbackRate=.75;readyState=4;seeking=false;ended=false;muted=false;stopped=false;videoWidth=640;videoHeight=360
-  listeners=new Map<string,Listener[]>();frames=new Map<number,unknown>();nextFrame=0
+  listeners=new Map<string,Listener[]>();frames=new Map<number,unknown>();nextFrame=0;primeNextFrame=false;startupFrames=2
   constructor(duration:number){this.duration=duration}
   get currentTime(){return this.position}
   set currentTime(value:number){this.position=value;this.emit('seeking');queueMicrotask(()=>this.emit('seeked'))}
@@ -16,7 +16,7 @@ class Video {
   pause(){this.paused=true}
   async play(){this.paused=false}
   advance(seconds:number){this.position=seconds;this.emit('timeupdate')}
-  requestVideoFrameCallback(callback:unknown){this.frames.set(++this.nextFrame,callback);return this.nextFrame}
+  requestVideoFrameCallback(callback:unknown){const id=++this.nextFrame;this.frames.set(id,callback);if(this.primeNextFrame&&this.startupFrames-->0){queueMicrotask(()=>{if(this.frames.delete(id))(callback as (now:number,metadata:{mediaTime:number;presentedFrames:number})=>void)(0,{mediaTime:this.position,presentedFrames:1})})}return id}
   cancelVideoFrameCallback(id:number){this.frames.delete(id)}
   captureStream(){return {getVideoTracks:()=>[{}],getAudioTracks:()=>[{}],getTracks:()=>[{stop:()=>{this.stopped=true}}]}}
 }
@@ -43,14 +43,15 @@ class Encoder {
 }
 class Reader {result='data:video/vp9;base64,AQIDBA==';onload?:()=>void;readAsDataURL(){this.onload?.()}}
 interface RendererState {pull():{sourceEndSeconds:number;reason:string;done:boolean;error:string};cancel():Promise<void>}
-async function initialize(video:Video,maxDurationMs=10000,fromStart=true,bound=false){
-  const expectedStart=fromStart?0:video.currentTime
+async function initialize(video:Video,maxDurationMs=10000,fromStart=true,bound=false,expectedStart=fromStart?0:video.currentTime){
+  video.primeNextFrame=true
   const context=vm.createContext({document:{querySelectorAll:()=>[video]},HTMLVideoElement:Video,MediaRecorder:Recorder,VideoFrame:NativeFrame,VideoEncoder:Encoder,FileReader:Reader,Blob,MediaStream:class {},performance:{now:()=>video.position*1000},URL,location:{href:'https://example.com'},setTimeout,clearTimeout})
   if(bound)context.targetChanged=false
   const videoIdentity=bound?{version:1,platform:'youtube',targetId:'fixture',resourceId:'fixture'}:undefined
   const result=await vm.runInContext('('+videoElementCaptureInternals.initializeRenderer.toString()+')("fixture",'+JSON.stringify({selector:'video',index:0,fromStart,maxDurationMs,playbackPlan:[],videoIdentity})+','+(bound?'(()=>({blocked:null,targets:[{videoIndex:0,identity:{version:1,platform: \'youtube\',targetId:globalThis.targetChanged? \'ad\':\'fixture\',resourceId:\'fixture\'}}]}))':'undefined')+')',context) as {ok:boolean;sourceStartSeconds:number}
   const state=context.fixture as RendererState
   assert.equal(result.ok,true);assert.equal(result.sourceStartSeconds,expectedStart);assert.equal(video.paused,false)
+  video.primeNextFrame=false
   return {state,result,context}
 }
 
@@ -78,6 +79,47 @@ test('Synthetic EOF and premature trusted EOF cannot claim completion; limited c
 test('Seeking during capture fails instead of claiming continuous whole-video coverage',async()=>{
   const video=new Video(8),{state}=await initialize(video)
   video.advance(1);video.currentTime=7;await new Promise(resolve=>setTimeout(resolve,0));assert.match(state.pull().error,/position changed/);assert.equal(state.pull().reason,'error');await state.cancel();assert.equal(video.paused,true)
+})
+
+test('Current-position capture preserves an already-playing player instead of triggering its resume seek',async()=>{
+ class ResumePlayer extends Video {
+  resumes=0
+  override async play(){const restarting=this.paused;await super.play();if(restarting){this.resumes++;this.currentTime=0}}
+ }
+ const video=new ResumePlayer(40);video.position=12.5
+ const {state,result}=await initialize(video,10000,false)
+ assert.equal(video.resumes,0,'Native capture must not manufacture a new play transition')
+ assert.equal(result.sourceStartSeconds,12.5)
+ assert.equal(state.pull().error,'')
+ video.currentTime=20
+ assert.match(state.pull().error,/position changed/,'An actual later seek must still reject capture')
+ await state.cancel();assert.equal(video.paused,true);assert.equal(video.currentTime,12.5)
+})
+
+test('A delayed website startup resume settles before recording while a later real seek still fails',async()=>{
+ class DelayedResume extends Video {override async play(){await super.play();setTimeout(()=>{this.currentTime=7},20)}}
+ const video=new DelayedResume(40);video.position=3;video.paused=true
+ const {state,result}=await initialize(video,10000,false,false,7)
+ assert.equal(result.sourceStartSeconds,7);assert.equal(state.pull().error,'')
+ video.currentTime=10;assert.match(state.pull().error,/position changed/)
+ await state.cancel();assert.equal(video.currentTime,3);assert.equal(video.frames.size,0)
+})
+test('Explicit restart retains the opening source after startup positioning settles',async()=>{
+ class DelayedResume extends Video {override async play(){await super.play();setTimeout(()=>{this.currentTime=7},20)}}
+ const video=new DelayedResume(40);video.position=3
+ const {state,result}=await initialize(video,10000,true,false,0)
+ assert.equal(result.sourceStartSeconds,0);assert.equal(state.pull().error,'')
+ await new Promise(resolve=>setTimeout(resolve,30));assert.equal(state.pull().error,'')
+ await state.cancel();assert.equal(video.currentTime,3)
+})
+
+test('Playback startup buffering does not consume the recording duration',async()=>{
+ class BufferingPlayer extends Video {override async play(){await new Promise(resolve=>setTimeout(resolve,60));await super.play()}}
+ const video=new BufferingPlayer(40);video.position=7
+ const {state}=await initialize(video,30,false)
+ assert.equal(state.pull().reason,'','The 60ms startup wait must not consume the requested 30ms capture')
+ await new Promise(resolve=>setTimeout(resolve,40));assert.equal(state.pull().reason,'maximum-duration')
+ await state.cancel();assert.equal(video.frames.size,0);assert.equal(video.paused,true)
 })
 
 test('Native source frames bind encoded file PTS, freeze updated duration and close every frame',async()=>{

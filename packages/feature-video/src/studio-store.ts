@@ -26,7 +26,7 @@ import type {VideoDraft,StudioScene,StudioAsset} from './studio-contract.js'
 
 // Bump when native paint/mix semantics change: an unchanged draft must not
 // reuse a completed file made by an older renderer with different pixels.
-export const STUDIO_EXPORT_RENDERER_VERSION='native-research-diagrams/11'
+export const STUDIO_EXPORT_RENDERER_VERSION='native-research-diagrams/12'
 
 /** Project-local editable state. No renderer or model may choose a host path. */
 export class VideoStudioStore {

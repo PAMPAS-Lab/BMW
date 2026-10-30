@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
+import crypto from 'node:crypto'
 import {setTimeout as delay} from 'node:timers/promises'
 import {Ajv} from 'ajv'
 import {createCollectionBatchFixture,deferred,SAME_NINE_PRESETS} from '../../../scripts/library-collection-batch-benchmark.js'
@@ -63,7 +64,11 @@ test('Nine configured sources use bounded real-store collection, fair article sl
   const originals=b.sources.flatMap(s=>s.originals),read=await f.execute('read',{id},'user') as {originals:unknown[];nextOffset:number|null};assert.equal(read.originals.length,20);assert.equal(read.nextOffset,null)
   for(const o of originals){const body=await f.ports[0].readBody(o.sourceId,o.acquisitionId);assert.equal(body.acquisition.contentId,o.bodySha256);assert.equal(body.text,o.excerpt)}
   await assert.rejects(f.execute('collect',{id}),/ALREADY_STARTED/)
+  const source=b.sources[0],first=source.originals[0],priorId=crypto.createHash('sha256').update(JSON.stringify([source.subscriptionId,first.url])).digest('hex'),stamp=new Date(f.state.now).toISOString()
+  f.rolling.commit([{version:1,kind:'lead',id:priorId,revision:1,updatedAt:stamp,subscriptionId:source.subscriptionId,runId:'earlier-collection',title:'Earlier important event',summary:'Waiting for a later video',missing:'Video pending',status:'open',evidence:{sourceId:first.sourceId,acquisitionId:first.acquisitionId,bodySha256:first.bodySha256,url:first.url,observedAt:stamp,quote:first.excerpt,quoteStart:0},social:null,topicIds:[],directionIds:[],videoWatch:{eventKey:'same-event',publishedAt:stamp,state:'waiting',intervalMinutes:120,nextCheckAt:stamp,lastCheckedAt:null,lastRunId:null,checks:0,evidence:[],topic:null,contentKind:null}}],f.rolling.records.state().revision,'fixture-earlier-video-pool')
   await f.execute('submit',{id,decisions:f.decisions(id)});assert.equal(f.rolling.records.page({terms:['kind:lead'],limit:50}).items.length,20)
+  assert.equal(f.rolling.entity(priorId,'lead').videoWatch.eventKey,'same-event','A batch refresh must retain the waiting event and original date')
+  assert.equal(f.rolling.entity(priorId,'lead').videoWatch.publishedAt,stamp)
   const trend=f.store.batch(id).sources.find(s=>s.input.url.includes('/explore/'))!,trendLead=f.rolling.entity(trend.originals[0].leadId!,'lead')
   assert.equal(trendLead.social?.platformId,'trending');assert.equal(trendLead.social?.observationKind,'trend');assert.equal(trendLead.evidence.acquisitionId,trend.entry?.acquisitionId);assert.equal(f.rolling.entity(trend.subscriptionId,'subscription').cursor,'');assert.equal(trend.state,'partial')
   assert.equal(f.store.batch(id).status,'partial');assert.ok(f.store.batch(id).sources.every(s=>s.fromCursor===''))

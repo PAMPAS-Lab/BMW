@@ -155,3 +155,13 @@ test('Codex cancellation racing the input receipt sends one interrupt after the 
   assert.equal(f.calls.filter(row => row.method === 'turn/interrupt').length, 1)
   await backend.close()
 })
+
+test('Codex records bounded reasoning/compaction lifecycle and usage metadata without content or extra model tools',async t=>{
+ const f=fixture();t.after(()=>fs.rmSync(f.root,{recursive:true,force:true}));const observed:unknown[]=[];f.request.observeRuntime=p=>{observed.push(p)}
+ const backend=new CodexBackend({executable:'/disposable/codex',configDirectory:f.root,model:'gpt-5.4',catalogGate:{async verify(){}},rpcFactory:()=>f.rpc,connection:async()=>({definition,async execute(){assert.fail('No tool expected')}})})
+ await backend.prepare(f.request);const running=backend.run(f.request,async()=>{});await new Promise(resolve=>setImmediate(resolve))
+ for(const type of ['reasoning','contextCompaction'])for(const method of ['item/started','item/completed'])f.event(method,{threadId:'provider',turnId:'turn',item:{type,id:type,content:['PRIVATE NOT LOGGED'],summary:['PRIVATE NOT LOGGED']}})
+ f.event('thread/tokenUsage/updated',{threadId:'provider',turnId:'turn',tokenUsage:{last:{inputTokens:200,cachedInputTokens:150,outputTokens:30,reasoningOutputTokens:10}}})
+ f.event('turn/completed',{threadId:'provider',turn:{id:'turn',status:'completed'}});await running
+ assert.equal(observed.length,5);assert.equal(JSON.stringify(observed).includes('PRIVATE'),false);assert.deepEqual(observed.at(-1),{phase:'usage',inputTokens:200,cachedInputTokens:150,outputTokens:30,reasoningTokens:10});await backend.close()
+})

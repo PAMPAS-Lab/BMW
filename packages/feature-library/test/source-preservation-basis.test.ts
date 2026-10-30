@@ -1,9 +1,16 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import {assertSourcePreservationBasis} from '../src/library-sources.js'
+import {assertSourcePreservationBasis,sourceAcquisitionTab,sourceCaptureRecovery} from '../src/library-sources.js'
 import type {VideoIdentity} from '@bmw-agent/agent-contract/video-identity'
 const youtube:VideoIdentity={version:1,platform:'youtube',targetId:'jNQXAC9IVRw',resourceId:'jNQXAC9IVRw'}
 const complete={basis:'YouTube-SABR-encoded-tracks',reencoded:false,completeVod:true,completeSeparatedTracks:true}
+test('Archive download recovery returns one complete fresh-revision capture without repeating transfer or inventing preview offsets',()=>{
+ const request={operation:'acquire' as const,expectedRevision:5,sourceId:'source',acquisitionId:'acq',candidateId:'video',method:'preserve' as const,preview:{startSeconds:60,endSeconds:85}},scope={selector:'video',index:1,excludeSelectors:[],characterUnit:'utf16' as const,extraction:'visible-text-nodes' as const,truncated:false,status:'observed' as const}
+ const recovery=sourceCaptureRecovery(request,scope,6,'actual-tab','HTTP 403')!
+ assert.deepEqual(recovery.sourceRequest,{operation:'acquire',expectedRevision:6,sourceId:'source',acquisitionId:'acq',candidateId:'video',method:'capture',tabId:'actual-tab',videoSelector:'video',videoIndex:1,fromStart:false,maxDurationMs:29000})
+ for(const error of ['VIDEO_IDENTITY_CHANGED','SOURCE_CONFLICT','MEDIA_CAPTURE_CLEANUP_FAILED','login required','source page changed'])assert.equal(sourceCaptureRecovery(request,scope,6,'actual-tab',error),null)
+ assert.equal(sourceCaptureRecovery({...request,method:'auto'},scope,6,'actual-tab','HTTP403'),null)
+})
 test('Source acquisition accepts complete native SABR only for its already confirmed identical YouTube target',()=>{
  assert.equal(assertSourcePreservationBasis(complete,youtube,{...youtube}),'YouTube-SABR-encoded-tracks')
  assert.equal(assertSourcePreservationBasis({basis:'HTTP-delivery-bytes',reencoded:false},undefined,undefined),'HTTP-delivery-bytes')
@@ -13,4 +20,24 @@ test('SABR source acquisition rejects absent, foreign, cross-platform or malform
  const foreign:VideoIdentity={...youtube,targetId:'a9LDPn-MO4I',resourceId:'a9LDPn-MO4I'}
  for(const observed of [undefined,null,{},foreign,{...youtube,platform:'bilibili'},{...youtube,resourceId:'a9LDPn-MO4I'}])assert.throws(()=>assertSourcePreservationBasis(complete,youtube,observed))
  for(const expected of [undefined,{version:1,platform:'page',targetId:'https://example.com/',resourceId:'https://example.com/video.mp4'} as VideoIdentity])assert.throws(()=>assertSourcePreservationBasis(complete,expected,youtube))
+})
+
+test('Acquisition resolves only its saved source rather than an unrelated active blank tab',()=>{
+ const pages=[{id:'user',url:''},{id:'source',url:'https://example.org/story#player'}]
+ assert.equal(sourceAcquisitionTab(pages,'https://example.org/story'),'source')
+ assert.equal(sourceAcquisitionTab(pages,'https://example.org/story','source'),'source')
+ assert.throws(()=>sourceAcquisitionTab(pages,'https://example.org/story','user'),/SOURCE_TAB_CHANGED/)
+ assert.throws(()=>sourceAcquisitionTab([], 'https://example.org/story'),/SOURCE_TAB_UNAVAILABLE/)
+ assert.throws(()=>sourceAcquisitionTab([...pages,{id:'duplicate',url:'https://example.org/story'}],'https://example.org/story'),/SOURCE_TAB_AMBIGUOUS/)
+ assert.throws(()=>sourceAcquisitionTab(pages,''),/SOURCE_TAB_UNAVAILABLE/)
+})
+test('Confirmed YouTube native acquisition resolves tracking changes without admitting foreign or ambiguous source tabs',()=>{
+ const original='https://www.youtube.com/watch?v='+youtube.targetId,pages=[{id:'user',url:'about:blank'},{id:'source',url:original+'&themeRefresh=2&feature=share'}]
+ assert.equal(sourceAcquisitionTab(pages,original,undefined,youtube),'source')
+ assert.equal(sourceAcquisitionTab(pages,original,'source',youtube),'source')
+ assert.throws(()=>sourceAcquisitionTab(pages,original,'user',youtube),/SOURCE_TAB_CHANGED/)
+ assert.throws(()=>sourceAcquisitionTab(pages,original),/SOURCE_TAB_UNAVAILABLE/)
+ assert.throws(()=>sourceAcquisitionTab([{id:'source',url:original+'&list=changed'}],original,undefined,youtube),/SOURCE_TAB_UNAVAILABLE/)
+ assert.throws(()=>sourceAcquisitionTab(pages,original,undefined,{...youtube,targetId:'a9LDPn-MO4I',resourceId:'a9LDPn-MO4I'}),/SOURCE_TAB_UNAVAILABLE/)
+ assert.throws(()=>sourceAcquisitionTab([...pages,{id:'duplicate',url:original}],original,undefined,youtube),/SOURCE_TAB_AMBIGUOUS/)
 })

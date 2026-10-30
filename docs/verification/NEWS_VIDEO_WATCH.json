@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "date": "2026-10-26",
+  "timezone": "Asia/Shanghai",
+  "feature": "Persistent event video wait pool",
+  "behavior": {
+    "discoveryBeforeVideoAvailability": true,
+    "originalEventDateImmutable": true,
+    "defaultCheckIntervalMinutes": 120,
+    "allowedCheckIntervalMinutes": [15, 1440],
+    "defaultNewsWindowHours": 72,
+    "lateVideoCannotRefreshUnselectedBoardCard": true,
+    "missingVideoIsNormalWaiting": true,
+    "newOfficialInputForLaterChecks": true,
+    "uncertainInputNeverAutomaticallyReplayed": true,
+    "nativeVideoVerificationRequired": true,
+    "previewDurationSeconds": [3, 30],
+    "contentKinds": ["live", "cg", "animation", "ai-generated"],
+    "assistantGeneratedNewVideoStillRequiresApproval": true,
+    "readyVideoDoesNotAutoSelectOrProduce": true,
+    "staleVideoReturnsToWaiting": true,
+    "batchRefreshPreservesExistingPoolState": true,
+    "guiRevisionProtected": true,
+    "historicalEvidenceRetained": true,
+    "usesExistingAuthorizedSourceSchedules": true,
+    "doesNotCreateSchedulesAutomatically": true,
+    "expiredEventsRetainedForEditorialReview": true
+  },
+  "verification": {
+    "build": "passed",
+    "check": "passed",
+    "classifiedUnitContractBoundary": {
+      "passed": 134,
+      "failed": 0,
+      "notRunOutsideRequestedLayersOrExternalOptIn": 100,
+      "report": ".bmw-runtime/classified-tests/2026-10-26T14-11-03-231Z/result.json"
+    },
+    "newFeatureNativeTest": {
+      "script": "scripts/library-video-watch-smoke.ts",
+      "status": "passed",
+      "profile": "Disposable bmw-watch-profile-* under the OS temporary directory; removed after cleanup",
+      "coverage": [
+        "Real library GUI enrollment and ready card",
+        "Persistent store reopen and fresh collection receipt carrying the due event",
+        "Missing video recorded as normal waiting without a resubmission confirmation",
+        "Native full decoding and SHA verification of a four-second moving CG fixture",
+        "Source-bound preview upgrades the same event while retaining its original date",
+        "Trusted handoff to the existing news board without automatic selection or production",
+        "Future clock rejects a board card after its original event expires while the later video remains fresh",
+        "Changed media is rejected and automatically returned to the wait pool"
+      ],
+      "publicNewsSourceOrNetworkCoverage": false
+    },
+    "relatedRuntimeChecks": {
+      "libraryRolling": "passed",
+      "librarySchedules": "passed",
+      "inactiveProjectBackgroundCollection": "passed",
+      "installedDshCompatibilityWithoutModelInput": "passed",
+      "desktopWorkspace": "passed",
+      "studioSessionBinding": "passed",
+      "nativeMediaProcessing": "passed",
+      "nativeVideoProduction": "passed",
+      "qwenNarrationHttpFixture": "passed",
+      "existingLibraryNewsFlowAfterFinalChanges": "passed"
+    },
+    "logs": ".bmw-runtime/news-video-watch-validation/2026-10-26/",
+    "paidModelCoverage": false,
+    "paidNarrationCoverage": false,
+    "productionProfileUsedForTesting": false,
+    "productionProfileModified": false,
+    "productionAppRestarted": false,
+    "productionAutomationModified": false,
+    "humanListening": "not performed; this feature test did not deliver a news film"
+  }
+}

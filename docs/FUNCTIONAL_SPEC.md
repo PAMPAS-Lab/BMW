@@ -2,6 +2,8 @@
 
 Browser is boundary, media is native, web is runtime.
 
+Studio 的有界编辑支持 `scene.remove {sceneId}`：在当前 Project/Session 与草稿 revision 校验后，以单次 CAS 删除指定分镜及其主画面、主配音、字幕和镜内图层；其余分镜、全片独立层、Project 素材及历史导出保留。不存在的 ID 或同一批次任一无效命令使整个事务不落盘。删除不要以清空脚本和静音旧配音替代，也不要将 summary 投影回写为完整草稿；配音失效与独立审片门禁保持。
+
 适用实现：本仓库唯一应用 BMW（id `bmw`）。本说明书是当前功能、Schema、权限和测试的权威索引；文末能力、Studio 操作和测试清单由源码生成；运行时测试分支见 ARCHITECTURE 的生成表。文档与当前工作树核对日期为 2026-10-17；验证范围见 [VERIFICATION.md](VERIFICATION.md)，日期不代表全部运行时重新验收。
 
 | 阅读范围 | 章节入口 |
@@ -46,6 +48,10 @@ DSH 预设装配官方 `compaction-basic` 与 `compaction-tool-result-pruner`，
 
 ## NEWS-01 新闻选题与制作
 
+素材库提供“视频待选池”：滚动线索通过 `library.collecting watch-video` 持久保存不可变事件标识和原始发布日期、补查间隔（默认120分钟，15–1440分钟）、等待/视频待选/暂停/过期状态及追加来源证据。Agent只能在当前Project/Session的有效采集租约内纳入本轮新线索，或用 `update-video` 更新本轮分配的到期线索；用户暂停/恢复还校验线索revision。相同eventKey在同Project复用已有线索，不新建另一待选项；每订阅最多100个等待事件、每轮最多10个到期事件，每项最多20份补充证据，历史修订不覆盖。`video-pool`分页读取，跨Project只给摘要，不暴露补查正文/视频。缺视频是正常等待，记录一次检查后按间隔续查，不要求素材重投确认，也不计来源失败退避。既有来源计划在下一轮新官方输入中带入到期待选，应用关闭期间不运行，恢复不补积压；未投递/不确定回执及真实清理边界保持，未知输入不自动重发。
+
+`update-video` 的候选必须为同事件、同Project保存来源对应的3–30秒视频，复用新闻原生来源、文件SHA和实际解码核验；不能用图片替代。contentKind显式记录live/cg/animation/ai-generated，身份/日期/属性及语义关联仍属Agent编辑核实，不伪称Host认证事实或真实运动。普通他方CG、动画和AI影片可引用并如实标注；助手新生成视频仍需用户批准。后台只增开page.media.list、来源confirm与带3–30秒preview的preserve，每输入最多10次预览，保留原生预算与清理，不开放capture、通用媒体处理或制作。核验通过升级池内视频待选；不自动修改选题板或制作稿。用户点击“加入新闻选题板”后重新核对原文/视频SHA与原始事件72小时时效，再通过原有新闻准入提交；不覆盖已有选定制作。超窗记录保留为过期资料，晚到视频上传日期不刷新事件时效；需要编辑重新判断，不能自动冒充新事件。正式选题、配音、导出与独立审片门禁保持。
+
 横屏来源视频可配置 `cardLayout:news-compact`（9:16输出），为已确认的紧凑新闻模板。原生 `compact-news-layout` 统一文字预检、Studio预览和MP4绘制：720×1280参考坐标，标题48px/2行，原片等比适配至640宽、480高以内且不画填空外框；中文字幕42px/2行位于实际视频下沿24px，原文30px/2行另占固定区域，底部安全区128px。label按`｜`分隔素材属性与来源日期；品牌文字来自watermark。固定字体、行数和词边界测量先于导出；超长内容要求作者按语义/实测句界拆cue，不缩小或截掉文字。可见全片/镜头叠层与手工卡片拒绝进入该固定模板，避免覆盖保留区域；旧标准/news布局和已有作品保持读取。竖屏原片不静默拉伸成横屏，实际解码纵横比不合适时明确拒绝。
 
 准备材料类型支持`real-footage / ai-film / cg-video / external-video / still / diagram`。外部实拍、CG/动画、第三方AI影片均可满足来源视频要求，但视频必须有原生获取记录/身份与当前SHA匹配，或可逐级核验的原生转换派生链；hash改变、循环/过深派生、仅有文件或作者声明均拒绝。准备资产返回externalVideo事实，静帧和区间/引用门禁保留；CG和AI分别要求可见生成属性标识，合成对白不冒充真人。未经用户同意的本地文字/图片生成视频没有外部来源资格；旧user-only逐稿SHA授权保留用于明确批准的生成视频，模型不能自行授权。独立审片policy7承认外部CG/AI视频并保留当前全部关键态、实际输出原声/运动和独立整片判断；确定性行数/位置预检结果用于复用，真实输出异常仍核验。
@@ -58,7 +64,7 @@ Agent草稿摘要的每镜`preparationInventory`显示已绑定引用数、来�
 
 逐镜清单独立保存在 Project `video-studio/news-preparation/<draftId>.json` version1，绑定 Project/Session/draft，至多96镜／1MiB，使用独立 checklist revision CAS；不能通过导入／更新／恢复草稿冒充。record-scenes 接受1–8个不重复镜头的实际观察声明，单次全片事实／指纹预检、全部核验后一次清单 CAS；任何过期、证据缺失、人工声明保护、取消或 GUI 并发编辑均整批拒绝，不保存部分声明、不自动重试，也不自动生成观察。record-scene 兼容单镜入口。两者需当前 preflight fingerprint、编辑目的、实际 artifact/reference ID、观察动作与相关性、来源日期标签、完整原声和中译或明确未使用原因。复用实际 prepare-reference 的源SHA、PNG哈希与全部逐帧分析；真实视频声明至少三个样本、两种不同PNG且覆盖选用区间两端。源素材、PNG、稿件、引用、取景、时长、顺序或全片图层变化使记录失效；可见全片媒体也核文件哈希。原声声明需主画面实际启用且有可解码音轨覆盖，日期声明须在实际镜头标签／脚注或覆盖全镜的可见文字层中存在。scene.set 的封闭 patch.label 可编辑至多44字符的原生标签。检查累计源/参考文件限512MiB／128项，结束前重核SHA及草稿revision；超预算须先整理本地分段。
 
-准备指纹使用实际可编辑的主素材区间、播放速度、取景、动态效果、源声开关及音量等视觉语义；容器与轨道检查产生的派生时长、生成旁白和字幕证据不伪装成视觉编辑。无 visualSegments 的主素材也使用同一字段投影，不散列整个 scene。资产时间按真实视频轨end规范化，容器尾长不改变同一轨道事实。字幕投影只含实际文字／中译／时间，不因translationOrigin变化失效；先使用与预览／导出相同的speechScene解析锚点字幕、焦点和板书时序，真实映射变化仍失效。源文件 SHA、实测音视频轨范围、引用与观察仍独立强校验；真实裁剪、字幕／译文内容与版式、脚本或源字节变化依旧使准备失效。
+准备指纹使用实际可编辑的主素材区间、播放速度、取景、动态效果、源声开关及音量等视觉语义；容器与轨道检查产生的派生时长、生成旁白和字幕证据不伪装成视觉编辑。无 visualSegments 的主素材也使用同一字段投影，不散列整个 scene。资产时间按真实视频轨end规范化，容器尾长不改变同一轨道事实。准备仅绑定字幕原文／中译的连续语义文字，不绑定cue拆分、时码或样式；与已绑定旁白脚本相同的字幕不重复进入指纹。preflight逐镜返回actualDateLabel，标签拒绝同时给出实际和声明文字以便精确修正。字幕排版与当前时序仍由原生导出预检和独立审片核验；先使用与预览／导出相同的speechScene解析锚点字幕、焦点和板书时序，真实映射变化仍失效。源文件 SHA、实测音视频轨范围、引用与观察仍独立强校验；真实裁剪、字幕／译文语义内容、脚本或源字节变化依旧使准备失效。
 
 `news-preparation/prepare-scene-references` 接受当前 draftId/expectedRevision 与1–8个已有 sceneIds；不接受模型指定源区间或取帧时刻。Host 从当前真实主视频推导至多8个局部半开区间，同源优先保留每段起点与末点前50ms的候选，再按区间由长到短填充中点，单源仍至多8帧；sampling明确列出boundaryCandidates、timestampsSeconds及omittedMidpointCandidates，省略的中点不能冒充已观察证据。核验实际返回PTS处于起点窗口[start-.1,start+.2]与末点窗口[end-.25,end)，绝不把请求时间或端点后的帧当作覆盖。精确源SHA、PNG与当前区间已覆盖的原生记录直接复用；新增资料全部准备与复核后一次CAS追加参考，保持镜头、旧记录、旧分析和PNG不变。总预算统一32份不可变历史记录／8个artifact+SHA源组；保留原1MiB文档与256MiB原生素材、512MiB/128项清单检查预算。满额、歧义、单源必需边界候选超8、实际PTS不覆盖、源/PNG改变、取消或CAS失败均显式拒绝，不自动重试、删历史或新建壳稿。首组三帧与全部referenceIds返回供实际观察，不自动填写analysis/真实动态/相关新闻结论。preflight逐镜referenceGaps及NEWS_PREPARATION_EVIDENCE带artifact、所选start/endExclusive、实际frame秒数、必需窗口及建议时刻；修正完具体缺口才继续。
 
@@ -89,6 +95,8 @@ Host按当前UTC检查原始发布时间严格在近72小时，未来／日期�
 候选及用户选择存于Project内`video-studio/news`的独立version1记录，固定Project／Session、独立revision与指纹、256KiB单记录上限，拒绝损坏／链接文件并保留原件；新任务保留此前已选记录和草稿。确认先持久化Host分配的草稿ID，再创建同Session草稿；重复确认不会重复建稿。默认9:16／720p／24fps、目标45秒、Qwen安明远男声／0%，select的显式options可覆盖；设置开关及凭据仍独立验证，无静默回退。用户点击后通过已有Assistant投递机制继续，先保存uncertain投递状态，返回runId才记sent；失败或重启不自动重发。Agent不能自行确认、改选或关闭用户已选任务。
 
 素材库选题交接提供本次新闻Qwen音色选择，初始仍为安明远，选择时通过已有options显式写入新草稿；不改变全局默认或已有音频。素材库候选卡片点击“加载真实预览”后才读取原文件，避免同时读取十份媒体；候选核验仍逐项实际解码。确认前该Session的Agent仅可研究取材，Studio创建／写稿／配音／合成以及直接video.narrate／video.compose被拒绝。可信用户可“退出新闻选题”：先取消并等待实际任务清理，再关闭等待限制；没有可确认的取消控制器时保留限制并报错，保留来源和记录；对应closeNewsTask仅可信用户可提交。确认后写稿、证据画面、实际旁白与字幕、成片审阅使用已有草稿与时间线，不升级Video Document格式。配音／渲染前重核选中来源，Agent渲染须可见使用所选预览，或通过原生来源身份与文件SHA核对的同一原片高清素材／裁切转换片；不再强制把低清选题预览烧入成片。选题预览仍保留为选题证据并照常复核。原生录制／保全保存版本1 origin旁证，转换保存版本1 derivation旁证（父子artifact及SHA、请求源区间）；只在Project内沿最多8层、无环且未变更的链回溯到与选定预览完全相同的VideoIdentity，或同Project可用来源获取记录。不以同站、同标题、同扩展名或Agent说明认定同源；缺少可信链、文件篡改、异片、图文降级及来源变化均明确失败。历史无新origin旁证时，Host可只读核对本Project/Session已接受run内配对的browser media.video.capture成功记录、明确VideoIdentity、既有原生capture索引及当前视频SHA；验证通过则复用旧高清，后续正常转换建立新SHA链。仅消息文字、失败或无配对调用、异Project/Session、缺索引及文件变化不能作为历史凭证；不修改旧历史或回填伪造旁证。没有这类可信记录才需正常重新获取。新闻只读刷新经Browser FIFO执行、合并重复请求，关闭时等待实际读取清理。技术阶段状态不代表内容、听感或最终用户接受。制作背景默认填可读选题摘要，技术身份保留在独立记录；引导统计有效独立字幕或句锚投影字幕，锚点失效单列问题。标题卡及有效图层按既有就绪检查判断，不把无素材标题卡误报为画面缺口。
+
+普通网页公告（`format:announcement`）的选题预览即使是视频，也允许将公告事实与另一条相关演示分来源绑定：Host仍验证当前选题原文、日期、预览及其page平台身份；当前稿须精确引用选定source/acquisition与完整选题quote，可见主视频须通过原生来源/SHA/派生链核验，且逐镜准备ready。不能仅凭同站、同标题或声明推断同源；预览本身不再强制成为输出镜头。此路径不适用于采访、演讲、原帖或YouTube/X/微博等视频平台选题，它们仍按原有同原片规则；当前MP4独立逐镜与整片审片保持。
 
 “查看原始来源”先保存当前GUI编辑，优先显示同Project中URL完全相同的已开页面；没有时才新建前台页面，并切到浏览器。打开期间禁止重复提交并沿用Studio取消／Session转换保护；不重定向其他同源用户页面，不因重复查看来源而反复新增后台tab。
 
@@ -152,13 +160,15 @@ Shell 运行时徽章从自有 Assistant 状态发布，显示等待、执行和
 
 ## 全局素材库与三个工作区
 
+新闻历史批次打开后，普通活动／媒体状态刷新保留当前历史批次及其实际选题控件，不重载当前会话的活动选题板；点击“刷新候选”、启动／结束研究或切换Project/Session才按原路径返回当前板。历史选题仍携带原批次revision与fingerprint，经可信UI与Host原门禁选择，不借视图固定扩大制作授权。
+
 BMW 顶层并列提供浏览器、素材库、Video Studio。Host 激活各功能运行时并统一协调模式、布局、上下文和关闭；素材库由 feature-library 提供，Studio 保留制作、时间线、配音和导出。三个入口共用当前 Project/Session，切换模式不创建第二个模型循环或对话。
 
 素材库默认聚合全部未归档 Project 的已保存来源和 artifacts，不要求先建立转写索引；归档资料可通过筛选查看。目录支持标题、标签、已保存正文及已有转写检索，类型/Project/收藏/日期/可用性筛选、排序与分页及至多50项批量标签/收藏整理；每页至多50项，正文/转写搜索有界，不隐式启动全库ASR。素材及原文仍归所属Project，收藏、标题、说明和标签保存在该Project的 library/catalog.json（version1、revision、records），支持CAS；损坏记录保留并显示问题，归档Project仅可读取。普通浏览历史不自动保存。辅助审阅帧与证明文件默认不挤占资料列表，可显式包含；批量整理逐项CAS保存，取消保留已完成项并停止后续项。
 
 原文截图登记在既有32MiB图片/像素预算内按最多1MiB分块读取，校验完整静态PNG结构、解码尺寸、所读字节SHA与实时文件指纹，取消逐块检查并关闭输入；不放宽ArtifactJobIO单次读取上限。推荐准备指引要求复用事件已关联获取、实际核对预览属于正文而非推荐侧栏，并将未核实录制日保留null，不以发表日代替。
 
-来源collect优先显式authorSelector/publishedSelector；局部元素难以定位时可用可选metadataRanges.author/publishedAt绑定同一本次完整observed正文内的UTF16 startCharacter/endCharacter/quote。每字段与其selector互斥，引用与实时可见正文逐字核对，日期必须完整原始发布日期行，不得从Updated／录制／转载文字中裁出日期；只保留原始精度，不新增时区或推测时间。位置证据随新acquisition持久保存，read/import重新校验正文SHA及位置，旧获取无此字段保持原样，不自动回填。该绑定证明文字来源，不自动证明署名语义、来源权威或内容正确；推荐仍执行原有日期、身份、原文及真实预览检查。新获取、旧原文与其修订并存，不修改旧正文。
+来源collect优先显式authorSelector/publishedSelector；局部元素难以定位时可用可选metadataRanges.author/publishedAt绑定同一本次完整observed正文内的UTF16 startCharacter/endCharacter/quote。每字段与其selector互斥，引用与实时可见正文逐字核对，日期必须完整原始发布日期行，不得从Updated／录制／转载文字中裁出日期；完整日期行允许末尾的中文“星期一／周一”等星期标记，仍只保留原始精度，不新增时区或推测时间。位置证据随新acquisition持久保存，read/import重新校验正文SHA及位置，旧获取无此字段保持原样，不自动回填。该绑定证明文字来源，不自动证明署名语义、来源权威或内容正确；推荐仍执行原有日期、身份、原文及真实预览检查。新获取、旧原文与其修订并存，不修改旧正文。
 
 library.materials 提供 search/read/set-metadata/copy；library.sources 提供既有有界 list/read/collect/confirm/acquire 来源能力，模型回复经 librarySourcePage 对列表、原文、候选和媒体分页：正文每页4000个UTF16单元，数组至多20项，nextOffset续读；library.news 提供 news-topics/propose-news-topics 新闻研究。它们均为唯一browser工具的已验证动作，沿Browser FIFO、当前Project/Session、取消及原生边界执行。模型可全库查询有界摘要，跨Project原文/媒体读取需先复制到活动Project；GUI可通过固定本地素材库主框架授权预览其他已登记Project。内联预览上限32MiB、每块512KiB，不接收路径或远程媒体URL。素材库页面禁止联网、任意导航和弹窗。
 
@@ -289,7 +299,9 @@ Studio采用作者v2／独立审片v2提示词，video.review任务策略版本�
 
 标签页新建／复用导航和navigate有25秒原生期限并接收取消。取消或超时先stop并等原生loadURL结算；仍未结算时可关闭Agent临时页面并等destroyed，确认实际清理后才释放FIFO；用户页面保留并隔离，需可信用户从BMW明确关闭。关闭失败也隔离浏览器资源，status／tabs.list／help和显式tabs.close恢复入口可用；恢复前不启动其他工作，Project切换仍受排除。
 
-浏览器媒体通常只允许活动Project的活动tab在浏览器工作区播放。切换tab／Project或进入Studio时，Host立即静音并暂停原页及跨域子Frame中的audio/video；页面后续play事件也被拦截，返回tab不自动续播。保留用户页面不保留后台播放。每次页面加载及原生media-started-playing重新核对，最多128个Frame、每次3秒；失败保持原生静音并记录诊断；子Frame换页／销毁的短暂失败不阻断启动或切换，后续Frame加载重新核对；成功安装策略后才解除活动页的原生静音。无法控制的Frame暂停状态不可声称已验证，可从诊断定位并关闭页面。YouTube目标导航的既有45秒就绪阶段拥有Host私有的主Frame静音播放例外，使后台或Studio遮挡时的正常广告能够推进／点击可见正常跳过；不切换前台、不取消原生静音，子Frame始终不获得该例外，广告仍不能认证目标内容。成功、失败及取消均先暂停实际播放器，再撤销主Frame例外并核实其策略恢复；主播放器清理失败仍隔离该标签，显式关闭恢复前不接纳新导航。无关子Frame的普通暂停策略另行恢复，失败保持原生静音与诊断，不丢弃已核实主播放器的结果或伪称该子Frame暂停已验证。普通后台播放仍拦截，文本批量采集不取得该例外。显式视频采集拥有短期播放许可，可在Studio遮住浏览器时运行；成功、错误、取消后恢复位置／速率／loop并保持暂停，实际采集清理失败仍沿用隔离，不自动恢复任务。固定原生脚本不成为模型通用执行能力。
+网络设置增加默认关闭的 `http1Compatibility` 布尔值，作为当前 version2 设置的可选字段；非法值拒绝，现有设置与代理不改绑。可信 Settings → Browser 提供 HTTP/1.1 compatibility mode，明确需重启生效。Host 在 ready／网络 Session 创建前只读校验当前设置；启用时为本进程 Chromium 添加 disable-http2 与 disable-quic，关闭时保留正常协议协商，不自动因超时降低协议。此设置不关闭证书验证、不访问凭据、不增加 browser 工具或模型可调用的网络配置。导航诊断记录开始预算、停止前的提交／DOM就绪／加载完成／主Frame错误码，以及主文档状态、字节数、完成／失败和播放器状态；子Frame的401等响应不能覆盖主文档。字段不含请求体、Cookie、验证值或完整播放器响应。
+
+浏览器媒体通常只允许活动Project的活动tab在浏览器工作区播放。切换tab／Project或进入Studio时，Host立即静音并暂停原页及跨域子Frame中的audio/video；页面后续play事件也被拦截，返回tab不自动续播。保留用户页面不保留后台播放。每次页面加载及原生media-started-playing重新核对，最多128个Frame、每次3秒；失败保持原生静音并记录诊断；子Frame换页／销毁的短暂失败不阻断启动或切换，后续Frame加载重新核对；成功安装策略后才解除活动页的原生静音。无法控制的Frame暂停状态不可声称已验证，可从诊断定位并关闭页面。YouTube目标导航的有界就绪阶段（常驻页首次180秒，后续90秒）拥有Host私有的主Frame静音播放例外，使后台或Studio遮挡时的正常广告能够推进／点击可见正常跳过；不切换前台、不取消原生静音，子Frame始终不获得该例外，广告仍不能认证目标内容。成功、失败及取消均先暂停实际播放器，再撤销主Frame例外并核实其策略恢复；主播放器清理失败仍隔离该标签，显式关闭恢复前不接纳新导航。无关子Frame的普通暂停策略另行恢复，失败保持原生静音与诊断，不丢弃已核实主播放器的结果或伪称该子Frame暂停已验证。普通后台播放仍拦截，文本批量采集不取得该例外。显式视频采集拥有短期播放许可，可在Studio遮住浏览器时运行；成功、错误、取消后恢复位置／速率／loop并保持暂停，实际采集清理失败仍沿用隔离，不自动恢复任务。固定原生脚本不成为模型通用执行能力。
 
 从播放器定位点采集前等待正在进行的seek完成；首批呈现回调若仍带定位前的缓存帧，只忽略早于本次实际采集起点的帧，不编码、不扩大原片区间。新帧仍须满足既有单调、连续及EOF校验；没有有效新帧不能产生合格采集文件。
 
@@ -307,7 +319,13 @@ Bridge 验证认证、Session、Project 及目录，按 FIFO 执行；Project �
 
 `page.media.list` 指定范围时只返回该范围 DOM 与目标播放器绑定的分发候选，支持同样的排除项；网络 URL 仅在匹配该播放器的原帖媒体 ID 或精确资源见证时进入该范围，不拼入无关联的全页 performance/网络媒体。返回 candidateOnly、范围与候选截断；发现 URL 不代表获取或解码成功。未限定范围的既有全页发现保留。
 
+`page.media.list.playerCandidates` 提供最多64个当前主文档播放器的原始 `video` 选择器索引、CSS/祖先可见性、标签、已选择资源与readyState、声明源数量和就绪状态，明确仅用于页面发现，不扩大所选媒体范围的身份授权。CSS隐藏的语言副本不再以可下载视频/子source列入媒体项；可按返回的可见索引精确重读。空currentSrc/src不解析为文章地址。通用网页中，可见且非广告的播放器即使preload=none，只有一个实际适用且可播放的HTTP(S)子source时可原生绑定该精确资源；多个未选资源、隐藏/排除播放器、广告、源变更仍拒绝。YouTube/X/微博的专用身份条件不使用此回退。该能力只补来源证明，不证明日期、声音、解码、运动或编辑质量合格，获取与独立审片要求保持。
+
 ## 原生媒体
+
+`video.studio apply-edit` 的闭合命令 `card.clear {sceneId}` 明确移除该镜头的手工cardSpec、旧sceneTemplate及卡片语音链接，保留主视频与实际源区间、时间轴、旁白文件及生成记录、字幕/人工译文、其他语音链接和独立层。沿原有Owner、模式与expectedRevision CAS执行，可与其他当前镜头清除操作一次原子提交；未知镜头、陈旧版本或附带无关字段拒绝且不部分保存。用于恢复紧凑新闻模板误加手工卡片后的导出；不删除素材、不改模板、不放宽布局或独立审片门禁。
+
+已原生绑定的通用HTTP(S)播放器在preload=none且readyState<2时，原生录制初始化只为同一已准入元素临时启用预加载，至多等待8秒真实loadeddata；不改src、不调用load()重置定位、不重启已在播放的播放器，且尚不创建轨道/编码器或启动录制时钟。仍无实际源帧则明确MEDIA_CAPTURE_NOT_READY并拒绝，不能继续校验空轨或录黑屏。成功、失败及取消均恢复原preload设置；其后同源身份、广告、视频/音轨数量、首帧、启动seek静稳、录制中真跳位、实际源时钟及真实清理校验保持。MediaStream、其他平台和已就绪播放器沿用既有路径。
 
 下载和保全共享原生 `media-session-fetch` 适配：读取实际页面的 `document.referrerPolicy`（默认 strict-origin-when-cross-origin），显式发送经策略缩减且去除凭据/片段的 Referer，兼容 Electron Session.fetch 不转发 RequestInit.referrer 的行为。来源由宿主页面确定，不向模型开放自定义头或 Cookie。重定向最多5次、逐跳只接受无URL凭据的HTTP(S)，跨源清除显式授权头，来源信息缩减后不恢复。`media.download` 仅接受完整 HTTP 200，拒绝206、空文件及未压缩响应长度不匹配；失败清理本次文件。完整视频仍需 inspect/解码核验，不能仅凭200断言内容完整。
 
@@ -318,6 +336,8 @@ YouTube `media.preserve` 保留同一有效播放器响应中完整分离音视�
 当前目标播放器响应可另提供 `sabr` 原生保全候选，媒体列表标记 preservable/nativeSabr，和完整直链的 directResources 分开，不宣称候选已经获取成功。Host 仅在当前 YouTube 页内存观察真实 Googlevideo POST：每页最多8条、总计48条、120秒有效，每体最多256 KiB；完整导航、换视频或 Renderer 销毁即清空。同视频主题/跟踪参数的 in-place 变化保留候选，但页所属、CPN、播放器 config、资源 ID、当前目标和格式仍须一致。无真实同播放器请求时要求先短暂播放原视频再重新发现，不猜地址或解密签名。真实 POST、临时流保护验证内容及播放器 config 仅在受限 Host/原生协议 worker 内使用，不保存到证据、诊断或模型结果，不读 Cookie、凭据或页面存储。
 
 原生 SABR/UMP 由固定版本 MIT `googlevideo@5.0.0` 在专用 worker 中处理，网络仍经过当前受限浏览器 Session。接收前按视频 ID、itag/lmt/xtags 核初始化和媒体头；核分段长度、重复负载、序号与每一段的连续覆盖，禁止仅以首尾时间代替中间完整性。bootstrap POST 可以不指定 preferred formats，但其中提供的 preferred/init/buffered 格式必须属于当前响应。选择预算内最高不超过1080p的 AVC 与唯一默认语言的非DRC AAC；预算同时考虑存档上限、原始两轨、重新封装和剩余磁盘余量，不以截短内容满足空间限制。保存原始编码轨道和安全哈希证明，证明口径为 YouTube-SABR-encoded-tracks，不冒称完整 UMP HTTP 正文字节或上传母版；精确轨道结束覆盖以格式 approxDurationMs 验证，页面整数秒仅作容差一致性检查。两轨通过相同 packet-copy 与独立包级校验才提交 MP4。只支持该有界有限点播子集；直播中、预告、DRM、流保护拒绝或不完整交付均失败；历史直播标记只在当前播放器非直播/非预告、有限时长与目标一致、单一可定位窗口覆盖零点到全长且官方播放器提供已过去的有效开始及结束时间时，才按固定回放接收。每次身份检查与验证刷新继续核这些条件，滚动窗口或缺少结束证明拒绝，不能以部分字节冒称整片。受限 SABR POST 的 Origin 只能由 Host 从当前页面派生；网站要求更新验证时，只在当前页、原 CPN、config、client 与选定格式版本不变时，等待同播放器后续真实 POST 中不同的临时验证值，每次最多15秒、最多3次；无新值或身份变化即失败，绝不生成或破解验证值。取消仍等待刷新 RPC、worker 与网络实际排空。2026-10-22 的19秒与60秒公开样本已完成真实双轨保全、合并与全片解码，最新耗时分别1.331秒和98.802秒；约10分钟样本首次遭网站流保护拒绝，复测验证通过但796.930秒发生网络中止，两次均已清理部分文件。随后同一日期的94分钟GTC目标在严格已结束回放门槛与本地Bridge通信修复后，实际通过完整双轨保全、无重编码合并、连续包级核验与元数据检查（1585654747字节、5637.7353秒）；原始双轨保留。这是该目标的实际业务证据，不代表所有长片或连续全片解码/听审通过；十分钟样本失败记录仍保留，人工听感另列待验。取消或失败须终止并等待协议 worker 真实退出、排空网络及文件，再回滚本次资源；服务端长 backoff 不能成为后台遗留任务。清理失败保持隔离，仅 `media.record.stop` 显式恢复成功后释放。无 yt-dlp、FFmpeg CLI、额外模型工具或 TikTok 专用适配。
+
+YouTube 已确认目标的页面比较仅忽略 `themeRefresh`、`feature`、`si`、`utm_*` 和片段标记；仍要求同 HTTPS origin、路径和唯一视频 ID，播放列表、语言及其他查询选项保持一致。此规则覆盖来源保全准入、传输及最终身份复核，不放宽媒体资源 URL、配对音轨、CPN、config 或原生 POST 版本绑定。SABR 对明确的短暂网络错误和 HTTP 500/502/503/504 最多重试两次，原 URL、请求体和整体截止不变；403、429、取消、身份、预算与协议校验错误不重试。中断后重传须先以 SHA-256 核对全部已交付前缀，完全相同才向两个 UMP 解析器继续交付新增字节；前缀变化或缩短立即失败，不拼接不同响应。重传字节和每次 POST 均计入现有总预算，证明只增加尝试次数与重传字节计数。每次先取消并释放旧响应，任务出口继续等待 worker、原生请求及文件实际排空；失败回滚和清理隔离规则保持。 慢速重传期间，已经接收过的前缀在完整SHA核对前仍不交给UMP解析器；Host仅在实际收到重传字节且已通过取消、身份及字节预算检查后，向同一有效请求发送有界单调进度，按单调时钟最多每5秒及前缀结束时更新，系统校时不能延迟续期。worker只刷新固定googlevideo@5.0.0原有30秒请求空闲计时，不构造媒体字节、不清空解析器、不放宽原CPN/config/格式/完整区间。没有真实字节、失效请求、回退或越界进度不能续期；用户取消及全局时长/字节预算仍生效。依赖没有公开的重传计时入口，原生层使用校验过形状的窄适配调用该固定版本的请求时钟，升级不兼容时在发请求前失败。真实worker回归同时覆盖超过30秒仍在接收的前缀重传、完全空闲仍超时、取消后双轨回滚及实际排空。
 
 `media.preserve` 只接受当前 Project 页面 DOM/performance/网络已发现的 HTTP(S) 媒体 URL。全页媒体发现纳入 HLS 清单 MIME/URL，范围发现仅补入该范围目标播放器绑定的网络资源，不拼入其他区域媒体。保全与解码预算独立：原始 HTTP 文件流式落盘并增量 SHA-256，不将完整长文件拼入内存；原始输入合计最多4 GiB，有限音视频/HLS时长最多6小时，HLS最多32变体、20000分段，每轨最多200万编码包，原始下载最多两小时、工具传输121分钟；本地编码包分段仍为20分钟原生任务及21分钟传输预算。清单仍最多1 MiB、单分段32 MiB；原件、组合轨道及派生封装分别占磁盘。宿主受限浏览器 Session fetch adapter 保存 master/media 清单、初始化与分段字节、URL、SHA-256、大小与标称时长；选择并记录最高带宽变体，保留独立音轨。加密、直播、字节范围、不连续、缺片及不能明确保留的其他轨道拒绝。派生 MP4 仅复制编码包，重新解复用验证每轨包数、编码负载哈希和 PTS 范围，清单时长与轨道范围不符则回滚。原始分发字节与派生封装分别列出，完整分发版本不等于上传母版；支持平台的候选先按目标身份过滤，仍需以正文和帧核对内容。Project/页面变化或取消先排空请求和文件后清理本次资源，不释放未完成的 FIFO。直接 HTTP 只声明完整响应，不凭响应结束声明完整视频。
 
@@ -359,7 +379,7 @@ Mediabunny `1.61.0` 与浏览器 WebCodecs 为媒体底座；Canvas/WebAudio/Web
 | media.segment | 从完整Project存档复制有界编码包分段；保存原件哈希、原片与输出时间映射，后续单独解码／转写 |
 | media.audio.sample / media.audio.preview | 有界原生采样率/声道 PCM16 片段、信号指标及不自动播放的试听窗口；与模型实际听审分开 |
 | media.inspect | 当前 Project Artifact 的媒体轨道、时长、尺寸与编码检查 |
-| media.video.motion | SHA绑定指定本地视频主轨区间的全部解码帧；有界180秒/6000帧，在调用者指定的真实画面区域测量64×64 RGB逐帧差、持时、解码缺口、低变化区间，另列首3秒；不替代真实内容、语义运动或听感判断 |
+| media.video.motion | SHA绑定指定本地视频主轨区间的全部解码帧；有界180秒/6000帧，在调用者指定的真实画面区域测量64×64 RGB逐帧差、持时、解码缺口、低变化区间，另列首3秒；覆盖边界只容纳8个IEEE-754相对精度量级的时间戳运算差异，保留实际解码值，真实缺失区间仍拒绝；不替代真实内容、语义运动或听感判断 |
 | media.frames.sample | 依据媒体时间抽 PNG；时间/数量有界，保存为 Project Artifact |
 | media.image.inspect | 解码当前 Project 静态 PNG/JPEG/WebP，返回真实尺寸；32 MiB / 16 MP，图片头在分配像素前检查 |
 | media.image.annotate | 以原图像素坐标标注截图/图片，保留尺寸和原文件，输出新的 Project PNG 并回传模型图像 |
@@ -384,6 +404,8 @@ media.video.capture 增加可选 playbackPlan：最多16个严格递增的 sourc
 支持 `rect`、`ellipse`、`line`、`arrow`、`path`、`text` 和 `redact`，按数组顺序绘制；框/椭圆使用 `x/y/width/height`，线/箭头使用 `x1/y1/x2/y2`，路径使用 `points:[{x,y}]`。颜色使用十六进制 RGB/RGBA；默认红色 4px 线条、24px 文字。文字支持中文、换行、`maxWidth` 自动折行、`fontSize`、`bold` 和背景。遮盖 `redact` 只能使用不透明 RGB 色及 opacity=1，写入新 PNG 的像素；原图保留。最多 128 个图形，单路径 256 点、全图 4096 点、全图 4096 文字字符；每段文字最多 512 字符/16 个显式行。新 PNG 最多 20 MiB，完成后实际重新解码核对尺寸再接纳。失败、取消（含完成文件后验收取消）只清理本次输出。
 
 绘图由无网络、无 Node 的隔离媒体 Worker 使用固定 Canvas primitives 执行；拒绝 HTML/SVG/脚本、远程图片、任意输入/输出路径和自选覆盖文件名。新图像成为 Project 素材，可用于 Studio 分镜。传输期限为五分钟（包含排队及输出验收），每个媒体 Worker 保留两分钟期限。
+
+当前位置视频采集（`fromStart:false`）保留已在正常播放的播放器，不额外暂停后重新触发网站的播放恢复处理。`fromStart:true`仍在初始化时暂停并定位；采集中真正发生seek仍拒绝，实际源区间、动态帧和音频覆盖检查不变。录制时钟和音频录制器在实际play成功且出现首张原生呈现帧后才启动，不把初始化缓冲算作录制长度或静音；播放/首帧准备上限30秒，宿主初始化45秒、总时限为请求窗口加60秒，取消与身份核对始终有效。失败播放器不得直接充当新载入播放器的稳定性证据。
 
 ### Qwen TTS 配置、安全保存与试听
 
@@ -916,6 +938,8 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `packages/agent-contract/test/video-identity.test.ts`
 
+- `Projection witness survives validation and cannot be represented as a false flat certification`
+- `Pinned YouTube page equality tolerates UI tracking only, retaining video, origin, path and content options`
 - `YouTube binds URL and both tracks to the same target, selects one default language and rejects foreign/ambiguous evidence`
 - `X network resources require the original post media identity; replies, unrelated animations and changed identity fail closed`
 - `A correctly identified YouTube target without observed delivery refuses guessed SABR or another video`
@@ -935,13 +959,14 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 - `Bridge shutdown cancels the active renderer wait before draining FIFO`
 - `Host scoped leases use their pinned executor and context without admitting a normal inactive lease`
+- `Native diagram preparation returns hash-bound Project PNG images through the same guarded Bridge admission`
 
 #### `packages/browser-capability/test/browser-deadline.test.ts`
 
 - `Only bounded batch collect receives its ten-minute transport budget; reads, admission and malformed requests retain the default`
 - `browser requests are finite while media jobs retain their long budget`
 - `Source acquisition budget includes bounded download, capture, cleanup and decode`
-- `YouTube player navigation allows bounded initialization while unrelated hosts keep the normal budget`
+- `YouTube navigation covers bounded cold application initialization and cleanup while unrelated hosts keep the normal budget`
 - `Bounded local speech gets processing plus cleanup transport time`
 
 #### `packages/browser-capability/test/browser-host.test.ts`
@@ -959,9 +984,11 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Discovery admits only closed bounded account requests, and an explicit leads projection`
 - `Export speech windows use the same browser catalog and fixed local interval contract`
 - `Visible text finding requires an explicit closed scope and bounded query without caller scripts or source authority`
+- `Batch tab close is bounded, explicit and disjoint from the active-tab fallback`
 
 #### `packages/browser-capability/test/collect-page-source.test.ts`
 
+- `Chinese publication weekday suffix retains the complete witnessed civil date without admitting cropped updates`
 - `Published time reads a bounded timezone-bearing TIME datetime while preserving visible date fallback`
 - `Publication metadata extracts one complete publisher date line beside bylines or document numbers, never ambiguous or truncated dates`
 - `Visible body witnesses bind UTF16 author and publication metadata without guessing selectors or accepting changed text`
@@ -1016,7 +1043,10 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `packages/browser-capability/test/page-navigation.test.ts`
 
+- `A site continuation observes the actual committed load without replaying loadURL`
+- `Continuation cancellation awaits actual stop and removes every observer before releasing FIFO`
 - `Navigation deadline stops and drains the real pending operation before the FIFO admits another action`
+- `Navigation deadline snapshots real pre-stop milestones rather than certifying a stopped empty document as loaded`
 - `Cancellation whose stop never settles closes the actual page before returning, with no late continuation`
 - `Failed native close reports quarantine and only a later explicit close with destruction recovers`
 - `A user-owned page is retained after failed stop until explicit close recovery`
@@ -1067,6 +1097,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 #### `packages/browser-capability/test/video-acquisition.test.ts`
 
 - `Direct preservation returns original encoding without starting playback or capture`
+- `Declared spherical video is screened before any transfer, warmup or capture`
 - `Download failure falls back only after preservation drained; public diagnostics omit delivery URLs`
 - `Cancellation, changed identity, and failed cleanup never start capture`
 - `One shared native budget aborts download and awaits its cleanup before fallback`
@@ -1076,17 +1107,28 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `packages/browser-capability/test/video-capture-ready.test.ts`
 
+- `Current-position warmup requires the future window at that position, not a stale initial buffer`
 - `Preparation waits for actual buffered video and pauses before capture can start`
 - `Unbuffered or zero-size players do not masquerade as ready; timeout drains playback`
 - `Cancellation during warmup awaits pause and never returns readiness`
-- `A short capture buffers its own bounded window rather than requiring thirty source seconds`
+- `A short capture needs a bounded startup lead and rejects a source without it`
+- `Progressive 29-second capture admits a short future buffer instead of requiring the entire clip in memory`
+- `A fully consumed player cannot satisfy startup readiness at its endpoint`
 
 #### `packages/browser-capability/test/youtube-sabr-observation.test.ts`
 
 - `SABR observations are private, bounded to registered page identity/session nonce, expire and clear on navigation`
 - `Same-video theme navigation retains the native witness; target changes and full reloads clear it`
+- `Transfer admission keeps exact SABR resources and audio while ignoring only pinned-page tracking changes`
 - `Finite completed broadcasts require a past end and a complete seekable window; active and incomplete streams remain refused`
 - `The actual bounded player observation admits an ended replay and rechecks rolling/live state before retaining its witness`
+
+#### `packages/browser-capability/test/youtube-worktabs.test.ts`
+
+- `YouTube uses its native site appearance bootstrap without affecting unrelated hosts`
+- `Only concrete HTTPS watch addresses authorize the work tab; playback modifiers require a reload`
+- `Residency is Project-owned; closing forgets the role and LRU preserves the worker within the cap`
+- `FIFO includes awaited cleanup, cancellation does not replay, and a failed job releases only its own queue`
 
 #### `packages/feature-library/test/collection-batch.test.ts`
 
@@ -1110,6 +1152,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `packages/feature-library/test/collection-scheduler.test.ts`
 
+- `Due video events resume in fresh scheduled inputs, normal missing-video updates do not trigger recovery or failure backoff`
 - `Multiple directions are fair, bounded and idle-only; explicit foreign bindings wait without switching or modifying old data`
 - `Restart coalesces missed periods into one bounded cycle; prepared work resumes while uncertain delivery never replays`
 - `Failure backoff is capped, cursor-safe and health notices deduplicate; recovery succeeds only after actual evidence and drain`
@@ -1185,8 +1228,11 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `packages/feature-library/test/source-preservation-basis.test.ts`
 
+- `Archive download recovery returns one complete fresh-revision capture without repeating transfer or inventing preview offsets`
 - `Source acquisition accepts complete native SABR only for its already confirmed identical YouTube target`
 - `SABR source acquisition rejects absent, foreign, cross-platform or malformed delivery identities`
+- `Acquisition resolves only its saved source rather than an unrelated active blank tab`
+- `Confirmed YouTube native acquisition resolves tracking changes without admitting foreign or ambiguous source tabs`
 
 #### `packages/feature-library/test/source-presets.test.ts`
 
@@ -1199,6 +1245,14 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Generic multi-direction events exceed recommendation size, preserve revision snapshots and rebuild after interrupted maintenance`
 - `Stream schema and service keep maintenance trusted, retain legacy files and never expose foreign source bodies`
 - `Explicit legacy news synchronization is idempotent, keeps batch bytes and separates observations from different Sessions`
+
+#### `packages/feature-library/test/video-watch.test.ts`
+
+- `A civil publication day stays pending until its timezone range is known; ambiguity is never treated as proven expiry`
+- `Video pool persists across next-day runs, preserves original dates, deduplicates events, and reschedules missing footage without confirmation`
+- `Native verifier is mandatory; video promotion retains both sources and original event freshness, rejecting image substitution and expired late footage`
+- `Video watch closed schema, event identity, GUI CAS and uncertain delivery boundary survive new collection attempts`
+- `A GUI edit during native verification wins; supplementary sources and ready state are not partially committed`
 
 #### `packages/feature-video/test/material-index.test.ts`
 
@@ -1236,6 +1290,9 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `AI film exception requires trusted exact-video approval, persistent labeling and unchanged independent evidence gates`
 - `Externally provided live/CG/AI video is admitted by native source SHA without per-film generation consent`
 - `External provenance follows only hash-verified native derivation, never an arbitrary MP4 or changed parent`
+- `Native diagram preparation pins three frames in a private journal, preserves opening video and rejects changed proof`
+- `Diagram capability rejects static, text-only, out-of-window, media-backed and non-final scenes`
+- `Long scene citations retain exact bindings and round-trip every UTF16 quote part without output-budget dead ends`
 
 #### `packages/feature-video/test/news.test.ts`
 
@@ -1345,6 +1402,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `model catalog shares eight categories and lazily returns only the selected closed template`
 - `explicit template conversion preserves text and source files, rejects count loss and reports visual detachment`
 - `card documents persist their only content authority in 2.1 while old 2.0 stays unchanged`
+- `Bounded scene removal drops owned tracks and preserves other content with atomic owner and revision checks`
 - `Canonical v2 preserves preparation, script, subtitles, source clocks, output settings and journals exactly`
 - `Shared codec accounts for segmented fallback, empty voice, independent effects and original fade/keyframe clocks`
 - `Integer placement with bounded residual preserves legacy JS clocks without rounding trusted source time`
@@ -1358,6 +1416,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `loupe mode roundtrips in 2.3 and cannot be disguised as a previous document version`
 - `Caption translation commands batch scenes under one draft CAS and preserve original source clocks and user corrections`
 - `Editorial batch discovery returns exact preparation branch and translation command without unrelated schemas`
+- `Explicit card clearing is atomic and preserves footage, measured audio, captions and other scene content`
 
 #### `packages/feature-video/test/video-review-packet.test.ts`
 
@@ -1529,6 +1588,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Codex catalog failure never starts the provider or releases a user message`
 - `Codex rejects a foreign tool scope and waits for transport cleanup`
 - `Codex cancellation racing the input receipt sends one interrupt after the turn becomes known`
+- `Codex records bounded reasoning/compaction lifecycle and usage metadata without content or extra model tools`
 
 #### `packages/harness-codex/test/codex-installation.test.ts`
 
@@ -1739,6 +1799,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Image drawing admits bounded primitives and rejects executable, outside, transparent-redaction and aggregate inputs`
 - `Drawing output IO has no input, bounds PNG writes and rolls back failed dimensions without changing existing images`
 - `Drawing validation identifies wrong action fields and nested property paths without exposing values`
+- `Motion coverage accepts timestamp arithmetic roundoff without rewriting evidence or admitting real missing boundaries`
 - `complete motion evidence detects static video, changes, decode gaps and missing boundaries without semantic approval`
 
 #### `packages/media-native/test/precomposition.test.ts`
@@ -1782,6 +1843,10 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Video EOF evidence survives prior page replay handlers at 8, 15, 30 and 60 second endpoints and restores position with playback paused`
 - `Synthetic EOF and premature trusted EOF cannot claim completion; limited captures retain measured progress`
 - `Seeking during capture fails instead of claiming continuous whole-video coverage`
+- `Current-position capture preserves an already-playing player instead of triggering its resume seek`
+- `A delayed website startup resume settles before recording while a later real seek still fails`
+- `Explicit restart retains the opening source after startup positioning settles`
+- `Playback startup buffering does not consume the recording duration`
 - `Native source frames bind encoded file PTS, freeze updated duration and close every frame`
 - `Pre-initialization scope rejection drains without quarantining an inactive capture or retaining temporary files`
 - `A capture from a seeked position excludes cached frames before its admitted source interval`
@@ -1851,6 +1916,14 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `packages/media-native/test/youtube-sabr.test.ts`
 
+- `Native replay activity is bounded, monotonic and cannot fabricate media or disable the pinned idle clock`
+- `Real protocol worker survives a progressing prefix replay beyond 30s, while an actually idle response still times out`
+- `Replay wire activity cadence uses a monotonic clock even when the wall clock does not advance`
+- `Interrupted UMP POST replays an identical prefix without duplicating either encoded track or resetting parser state`
+- `A changed or shortened replay prefix fails before any replacement bytes reach the UMP parser`
+- `SABR transport retries only bounded network/server failures and retains cancellation, budget and identity errors`
+- `SABR server failures release their response body before retry and never replay parser or budget failures`
+- `A changed native POST replay drains the actual protocol worker and removes both partial tracks without touching existing media`
 - `SABR admission binds the actual binary POST configuration and formats to one finite YouTube target`
 - `Complete default-language format selection respects 1080p, archive and reserved-disk budgets`
 - `UMP validates fragmented media identity, exact segment length and complete separate tracks`
@@ -1924,6 +1997,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Background action admission bounds originals, refuses side effects and revalidates the lease before work`
 - `Passive library refreshes preserve background work; user mutations and work requests preempt it`
 - `Background discovery publishes only admitted actions and exact operation branches`
+- `Video followups admit bounded preserve previews only, keeping capture, production and unrelated operations unavailable`
 
 #### `packages/platform/test/bmw-catalog.test.ts`
 
@@ -1964,6 +2038,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 #### `packages/platform/test/global-settings-store.test.ts`
 
 - `global settings default to system proxy and Google search`
+- `HTTP compatibility is opt-in, persists across restart and applies before native network creation without rewriting settings`
 - `global settings persist manual proxy and generate selected search URLs`
 - `global appearance accepts one shared dark, light or system theme`
 - `Current settings reload preserves appearance without a native Agent sidebar setting`
@@ -2035,7 +2110,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Text-read checkpoints durably preserve pending, failed and incomplete rows with fixed revisions and CAS`
 - `Text-read immutable checkpoint corruption is rejected without rewriting authoritative files`
 - `Discovery checkpoints preserve excerpt domain and cannot be promoted to full-text batches`
-- `Automatic finite video acquisition requires a confirmed-player selector and rejects archive preview options`
+- `Automatic finite video acquisition binds a confirmed player and validates delivery preview separately from capture`
 
 #### `packages/platform/test/project-store.test.ts`
 
@@ -2225,7 +2300,7 @@ Studio 当前输入的上下文同时提供精确的context请求与当前草稿
 
 共享文字换行器对自动落为单独一行的英文短连接词（如on、in、and）在宽度允许且前行至少三词时，从前行移下末词组成一行；不改变词序、原话、时间或显式段落换行。预览、导出和文字预检共用此布局，仍须检查真实手机尺寸成片。
 
-页面原文定位：唯一 browser 的 page.text.find 接受显式 selector、1–200 字元 text、findOffset 与至多16个排除选择器，读取当前 Project 页面真实可见文本，按忽略大小写和归一空白的子串定位。单页至多扫描200个元素／20000个文本节点、返回8个匹配，整体元素索引限10000；每元素读取至多2000字元、返回至多1000字元预览。结果保留真实 selector/index、nextOffset、partialElementIndices 与 budgetExhausted；截断／超预算不能证明不存在。隐藏、输入控件、可编辑区和明确排除内容不作为原文匹配。定位不保存来源、截图或授予证据权限；须用返回定位重新 collect 与 sourceBinding 截图，原有 URL/文本/SHA、CAS、FIFO 和实际清理边界不变。不接受调用方脚本或凭据访问。
+页面原文定位：唯一 browser 的 page.text.find 接受显式 selector、1–200 字元 text、findOffset 与至多16个排除选择器，读取当前 Project 页面真实可见文本，按忽略大小写和归一空白的子串定位。单页至多扫描200个元素／20000个文本节点、返回8个匹配，整体元素索引限10000；每元素读取至多2000字元、返回至多1000字元预览。结果保留真实 selector/index、nextOffset、partialElementIndices 与 budgetExhausted；单个可见文本节点含完整查询时，另返 elementLocator（该节点父元素的结构性CSS selector/index及最多1000字元文本预览），最多24层、每层4096子元素、selector最多500字元，不使用页面可控属性值构造选择器，供直接定位日期/署名，跨节点匹配仍保留原范围且不猜局部元素；截断／超预算不能证明不存在。隐藏、输入控件、可编辑区和明确排除内容不作为原文匹配。定位不保存来源、截图或授予证据权限；须用返回定位重新 collect 与 sourceBinding 截图，原有 URL/文本/SHA、CAS、FIFO 和实际清理边界不变。不接受调用方脚本或凭据访问。
 
 来源操作字段恢复：library.sources 的 sourceRequest 帮助列出每个操作实际必填／可选字段；read/list 不接受 expectedRevision。额外字段继续拒绝，错误仅返回至多8个、每个至多80字元的字段名及该操作允许字段，不回显字段值；明确本次未执行，需修正后显式重提，不自动删除字段或重放。
 
@@ -2244,7 +2319,13 @@ Studio 当前输入的上下文同时提供精确的context请求与当前草稿
 
 `click` 返回点击时的 `sourceTab` 和原生 DOM 观察到的 `href/target`。普通 HTTP(S) `target=_blank` 链接在同一已准入操作内打开，返回实际 `destinationTab` 与 `openerTabId`；调用方必须使用该目标标签页继续查证。脚本弹窗继承来源 Project/研究页归属，保持后台且延迟加载，不能抢走当前来源页；`tabs.list` 暴露其 `openerTabId`。普通同页点击仍需重新观察页面，不承诺导航完成。
 
-YouTube 导航采用同一45秒就绪预算：核对 watch 目标、播放器数据和响应中的 videoId；广告期只执行正常播放或实际可见且可用的跳过广告按钮。广告、其他目标和未解码内容不能认证为就绪，loadURL 提前结束也必须继续验证。所有出口等待播放器暂停确认；清理失败隔离该页直至显式关闭。
+YouTube 常驻工作页首次初始化采用180秒总就绪预算，已初始化工作页后续导航仍为90秒；YouTube tabs.open／navigate外层期限为200秒，其他站点预算不变：核对 watch 目标、播放器数据和响应中的 videoId；广告期只执行正常播放或实际可见且可用的跳过广告按钮。广告、其他目标和未解码内容不能认证为就绪，loadURL 提前结束也必须继续验证。所有出口等待播放器暂停确认；清理失败隔离该页直至显式关闭。
+
+活动 Host 的 Agent HTTPS YouTube watch 请求共用每 Project 一个专用工作标签与串行队列，标签仍计入六个 Agent 页上限，但普通 LRU 不回收它；用户手动标签不被征用。`tabs.open`／Agent `navigate` 返回实际工作标签 ID、`worktab:youtube` 与导航耗时/方式，调用方须使用返回 ID。全局 FIFO 与 Project 转换排除仍在外层；原生取材操作的导航、下载、合并、提交校验及实际清理完成后，下一操作才准入。Host 原生整任务入口也持有该队列，不增加模型工具、通用脚本或并行浏览权限。
+
+同 origin 的简单 watch 目标优先点击实际可见且精确匹配 ID 的站内链接；没有链接时提交网站真实搜索框中的目标 ID，再点击真实搜索结果。YouTube完整文档等待实际原生加载完成；加载中仅推进已核对目标的静音播放／正常广告，不因播放器或可见导航控件提前stop，以免取消仍在加载的应用脚本和事件绑定。实际完成后导航栏另有至多5秒探测窗口；搜索按钮优先从yt-searchbox／ytd-searchbox组件查找，允许按钮位于内部form之外。每次简单watch目标整页加载且实际控件可用时，先通过网站真实搜索返回同一视频；当前播放器明确标记isUnlisted时，只点击网站真实可见的同源首页logo，再以原生历史返回本操作捕获的同目标条目（索引必须恰增一、origin和简单watch身份一致，否则拒绝）。不公开视频不要求出现在搜索结果中，不点击相似视频。 带时间、播放列表、语言等语义参数的请求保留原URL整页加载，不通过搜索／首页重入丢弃这些参数。随后进行最多3秒的同目标静音播放与已公布清晰度切换，让网站自行发出流验证请求；这发生在下载绑定CPN/config之前，不生成验证值。先观察 URL、播放器数据和响应 ID 全部转为新目标，再进入原有广告/解码就绪检查；旧播放器不能驱动新目标的播放或跳广告。播放列表、时间等语义参数、跨 origin、缺少控件或30秒内未完成站内切换时，在本次总就绪预算剩余时间内整页加载。记录冷加载、站内链接、站内搜索、站点自行换文档、回退整页和同视频复用，以及文档是否保留；速度改善不表示网站流验证通过。 常驻页保留网站自身的颜色主题，不对YouTube强制注入prefers-color-scheme或AutoDark，以避免主题引起的额外刷新；BMW外壳主题保持。只有已实际观测网站发起同origin、同目标的后续主文档导航且原loadURL以ERR_ABORTED结束，才在剩余预算内观察该原生导航的实际提交和完成，不重发loadURL；不同目标立即拒绝。导航日志增加主文档代次、后续导航、导航控件、站内激活和静音预热结果，不保存验证值。播放器响应在SPA过渡中暂时为null时继续等候，不能认证旧播放器或点击旧播放器／miniplayer的自身链接。
+
+切换 Project 时暂停并保留该 Project 工作页，返回后按实际身份复核；归档（含非活动 Project）或显式关闭时等待实际销毁。映射仅存在于 Host 内存，重启后按已有 Agent 归属延迟恢复；不增加持久化格式。导航失败/取消且清理成功时销毁工作页，下次重新冷加载；清理失败保留隔离，显式关闭恢复前不准入新任务。Agent 要离开工作标签访问其他站点时另开普通研究页；用户主动改变该页则解除工作角色。临时后台采集池仍按轮次持有页面租约并完整释放，不转为永久后台页面。
 
 原文件下载继续要求精确资源 URL 和配对音轨。下载资源过期后，只有实际下载工作已清理，才允许重新验证同一页面、确认范围与唯一 YouTube 逻辑视频身份，再进入缓冲及采集；不要求旧的临时流/blob URL 继续有效。来源 evidence 仍保留原候选 URL 和确认身份，不改写为其他来源。其他平台继续精确资源绑定，换视频、广告、范围歧义、Project 变化或清理失败均拒绝。采集开始后播放器 URL、身份、范围和广告检查保持不变。
 
@@ -2286,3 +2367,38 @@ Host耗时诊断追加保存于agent-history/timings/*.jsonl，按Session/run散
 `configure` 校验当前 expectedRevision 后原子提交标题及全片参数；内容完全相同则返回当前草稿而不升版本，陈旧版本仍拒绝。此行为不重新生成已有声音。可信选题入口为尚未派发的新空草稿在作者入队前开启高级编辑，并保留确认阶段偏好；内部 typed Host 选择回调可携带 editingMode:advanced，不向模型开放模式授权或选题权限。已派发/旧有镜头草稿和普通打开入口不自动切换。这样避免停止作者、界面切换再续作的额外交接，选题、独立审片、Project/Session 归属、冲突和清理门禁保持。
 
 AI原片例外以draft与实际视频SHA限定。可信Studio进度区的“允许本片使用已选AI影片（须持续标注）”调用user-only authorize-ai-film，原生核附着视频、解码和当前SHA，单独Host准备台账保存批准时间；一次草稿revision更新使旧审片目标失效。模型、导入/恢复草稿及准备声明不能自行批准。材料新增ai-film类别，仅匹配批准的artifact/SHA才可用于开头及末两镜，必须连续可见“AI生成影片片段”，其帧观测/源区间/声音/中译仍完整检查；其他素材维持真实实拍门禁。独立审片策略6携带可信批准范围，仍逐镜和整片独立判断及完整当前输出运动/音频证据，不把合成旁白当真人发言。默认草稿无例外，旧journal缺该字段兼容读取；原内容和历史审片不改写。
+
+图文选题与独立视频可分来源：选题原文和预览仍由 currentTopic 校验；若输出未使用选题截图，必须实际引用同一sourceId/acquisitionId且包含选题精确引文的事实引用，并存在原生源SHA/派生链可核的可见主视频，且当前逐镜准备ready。仅相同网站、标题、声明或无准备的任意视频不能通过。原视频型选题仍要求同一原视频身份，未修改。独立当前MP4审片不省。
+
+高级 Studio 隐藏 Shell 后由自身顶栏提供原生窗口拖动区，输入框、按钮及菜单保持no-drag以便正常操作；左侧预留窗口控制区。顶栏常驻“新闻素材库”入口，复用现有可信openLibrary/保存刷新路径，打开同Project素材库的新闻选题、来源与视频待选池；不必先退回卡片或展开制作进度，不创建新稿或改变已导出内容。
+
+Codex 0.164.0 的官方账号模型目录包含 GPT-6.1 Terra 时，BMW 登录设置允许选择 `gpt-6.1-terra` 并保存为 Codex 默认模型。该模型沿用 GPT-6 浏览器目录投影，保留官方模型能力、清除强制额外工具模式；每次正式输入仍须通过有效工具目录仅含 BMW `browser` 的准入证明，未知模型不自动开放。
+
+新闻素材获取按已保存的来源页绑定标签页。library.sources acquire 显式tabId必须属于该来源；省略时只解析当前Project唯一同URL页，空页/不存在/歧义返回SOURCE_TAB_UNAVAILABLE/CHANGED/AMBIGUOUS，不读取用户活动页兜底。原生身份、原文和获取范围门禁保持。后台0:00属于可能的暂停策略，不能据此宣称来源失效；明确method:auto调用由原生有限保全、静音预热与录制兜底，预热仅临时允许该目标页并在完成/失败/取消后恢复。模型不需要手动播放和反复轮询。
+
+原browser的tabs.close支持tabIds数组1–12项，与tabId互斥；预先检查所有页属于当前Project且source=agent，批量不接受用户页，逐项等待真实清理并返回closed和当前state。单页行为保持。点击已返回destinationTab时直接使用，不再额外tabs.list。
+
+Codex每线程采用官方model_auto_compact_token_limit=200000，仍由官方运行时压缩历史，保留BMW Session与原生resume anchor，不清空生产历史或换会话。新增只读observeRuntime元数据回调，记录官方reasoning/contextCompaction开始结束及thread/tokenUsage/updated的输入、缓存、输出、reasoning计数；不保存推理正文、提示词或回复，不参与投递/准入/清理判定。Host时序新增runtime.reasoning.*、runtime.compaction.*、runtime.usage。这些是可见生命周期，不等同服务器纯推理或排队时长；部署前未知间隔不倒填。
+
+原生auto短窗预热要求当前位置有至多3秒的实际前向缓存（请求不足3秒时按请求），不要求流式播放器预先缓存整个29秒片段。YouTube可用档位优先hd720，其次hd1080，再向较低已公布档位选择；输出匹配不等于暗中承诺质量通过。预热预算30秒；失败返回实际位置、缓存区间、时长、readyState及尺寸，播到末尾不能准入。预热不是完整覆盖证明，录制阶段真实源时钟、跳位、持帧及实际区间和原声验证保持，不以成功容器替代有效动态。
+
+### 原生末镜图解准备证据
+
+`video.studio news-preparation` 新增 `prepare-diagram/read-diagram {sceneId}`，仅当前草稿末镜、1–10秒、无外部媒体/全片叠层的原生图解。Host从当前可编辑对象及实际原生 painter生成入口、中点、尾帧三张PNG；预览所需短暂编码及技术报告清理，不登记成片。独立于可导入草稿的私有准备journal绑定Project/Session/draft、当前renderer及对象/引用指纹、取帧时刻和PNG SHA。实际状态无推进、仅文字改变、过期对象/时间/引用、PNG篡改、跨归属、并发修改、取消均拒绝或不提交。作者读取三张图后，通过 `record-scene(s)` 提交 `diagramEvidenceId`、三项 `diagramObservations`，纯图解镜 `materials:[]`；图像与状态存在不表示新闻正确或用户授权。实际源精确引用、持续机制图解/日期标签、开头三秒来源动态、当前MP4全部关键态和独立整片审片保持。用户许可仍按具体任务范围；不得将能力开放视为生成任意新视频的许可。
+
+长引用读取：read-scene的sources分区对超限引文返回明确quoteOmitted、完整原引用边界/字符数/SHA和readQuote请求，不截断并伪称完整。以citationIndex选择该引用，pageOffset按引用内UTF16字符分页，quotePart每页最多600字符、避免拆开代理对，保留绝对源范围与nextOffset；重建后与原引用完全相同。仅sources允许该字段，原始稿件/来源/成片和独立审片门禁不变。图解prepare/read两操作接入原有Bridge图像准入，仍校验Project路径、PNG魔数、总量与精确SHA，不能只有文字元数据。
+
+未改MP4的显式复审：video.review start可带recheckNeedsFix:true。仅Host核实前次官方输入success、真实排空、当前同SHA目标的新鲜结论needs-fix时，使用现有Host恢复证明新建独立审片，保留旧回执与新baseline；不重配音/重导出，不复用旧语义passed。默认start仍去重，passed/active/uncertain等目标不因此重放，审片内不能递归派发。用于修复证据读取等工具缺陷后的明确复核，不能自动循环。
+
+原页截图恢复：非observed采集以SOURCE_SCREENSHOT_ACQUISITION明确返回实际result及重新采集正文/元数据、去掉不存在可选媒体selector的恢复建议；正文截断/缺失单列SOURCE_SCREENSHOT_CONTENT，选择器/索引不符才使用SOURCE_SCREENSHOT_SCOPE并给实际范围。错误提示不改变准入：仅observed、完整同scope、当前URL/正文SHA/CAS都满足才可记录PNG，不自动采集或降级非observed记录。研究接近调用数建议时，已有具体直链/明确修正可在同输入做一次有界闭环，不因次数建议把可恢复错误变为外层再次派发；实际预算、权限和不确定投递仍停止。
+
+### 新闻视频自动取材与球面帧准入
+
+有限来源 `sourceRequest.operation:acquire` 的 `method:auto` 支持与preserve相同的至多30秒 `preview` 参数。原生auto保全成功时应用分发文件PTS预览；普通传输失败且清理后执行同一已核播放器的有限录屏，捕获窗口不超过29000ms及所请求预览长度（至少1000ms）。捕获结果明确 `previewApplied:false`、`actualCaptureSourceRange`，不继承未执行的分发偏移或伪造deliveryRange。来源获取默认 `fromStart:false`；显式true保持重启语义。单独preserve保持原编码归档，不隐式改变方法；普通传输失败可返回带新目录revision和原scope的完整 `failure.recovery` capture请求，身份/来源/取消/清理错误不建议兜底。模式路由由已授权browser动作执行，非Host模型循环。
+
+录制时钟在网站启动定位静稳200ms、目标重新核验且出现新源帧后才启动，定位与新帧各最多3秒；期间取消与身份校验不失效，入录后seek仍拒绝且记录实际源时钟诊断。缓冲预检基于当前位置及对应buffer range。`VideoTarget.requiresProjection?:true` 只承载实际同播放器球面属性或format投影声明；通过闭合验证并在 `page.media.list` 显式报告球面投影及平面引用不适用。缺省不认证平面。普通auto/video-element capture在传输前拒绝已声明球面原帧，显式原编码保全仍可作档案；当前未增加重投影渲染或生成视频能力。权限、身份/广告、Project/Session、FIFO和独立审片边界保持。
+浏览器标签页保留所属原生WebContents引用用于销毁确认；Electron清空WebContentsView getter后，显式关闭仍通过既有句柄核真实isDestroyed并清理注册表。已销毁普通页不参与复用，读取返回TAB_CLOSED；被隔离页仍要求显式close恢复，不因getter缺失自动解除隔离。缺原生所有权句柄时不伪称清理成功。导航全过程保留同一原生引用，避免失败清理后的undefined getter覆盖原始错误。
+
+### 新闻作者音轨与交审约定
+
+作者v2.7在既有闭合编辑能力内区分中文旁白镜与原声镜：primary visual的clip.mute仅切换来源音轨，保留画面和旁白；无关访谈声不压在TTS下，用户明确的音乐/环境声设计仍保留。已选图文的完整精确引用与独立原视频分别绑定，选题截图不强制进入成片。作者交审最终只输出“已交审”，由操作者从Host回执读取实际身份；policy7完整独立审片、源身份与清理门禁不变。

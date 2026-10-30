@@ -60,7 +60,11 @@ export class LibraryRuntime implements FeatureRuntime {
   host.browserKernel.libraryRecommendations=(raw,actor,owner,signal)=>{if(actor==='agent'&&(!owner||owner.projectId!==host.projectStore.active().id||owner.sessionId!==host.getCurrentSessionId?.()))throw new Error('Recommendation Session changed.');return this.recommendations!.execute(raw,actor,owner,signal)}
   host.browserKernel.libraryRecommendationValidity=(raw,topic,signal)=>{const admission=assertRecommendation(raw);if(admission.kind!=='admission')throw new Error('Invalid snapshot admission.');return this.recommendations!.validateAdmission(admission,assertRecommendationTopic(topic),signal)}
   this.research=new ResearchService(this.service,directions)
-  const collecting=new RollingService(this.service,{start:(run,signal)=>this.startCollection(run,signal),cancel:run=>this.cleanupCollection(run)})
+  const collecting=new RollingService(this.service,{start:(run,signal)=>this.startCollection(run,signal),cancel:run=>this.cleanupCollection(run)},()=>Date.now(),(c,owner,signal)=>new NewsResearchService(host.browserKernel,owner).verifyCandidate(c,signal),async(c,owner,signal)=>{
+   const service=new NewsResearchService(host.browserKernel,owner),previous=service.journal.read()
+   if(previous.selection)throw new Error('NEWS_SELECTED: Preserve the current production; open a new news research board first.')
+   return service.executeResearch({operation:'propose-news-topics',expectedTopicRevision:previous.revision,newsCandidates:[...(previous.closed?[]:previous.topics.filter(t=>t.candidate.eventKey!==c.eventKey).map(t=>t.candidate)),c]},'user',signal)
+  })
   this.batches=new CollectionBatchService(this.service,host.browserKernel,host.collectionRuntime)
   host.browserKernel.libraryCollectionBatch=(raw,actor,owner,signal)=>{if(actor==='agent'&&(!owner||owner.projectId!==host.projectStore.active().id||owner.sessionId!==host.getCurrentSessionId?.()))throw new Error('Batch collection Session changed.');return this.batches!.execute(raw,actor,owner,signal)}
   if(host.libraryProfileDirectory&&host.collectionRuntime)try{
@@ -74,10 +78,10 @@ export class LibraryRuntime implements FeatureRuntime {
     browser.libraryCollectionBatch=(raw,actor,owner,signal)=>{assertBatchBackgroundScope(raw,actor,owner,binding,runId);return batch.execute(raw,actor,owner,signal)}
     return ()=>{batch.assertLease(binding.projectId,runId,binding)}
    }
-   const rolling=this.scheduledRolling(binding.projectId)
+   const rolling=this.scheduledRolling(binding.projectId,browser)
    browser.libraryCollecting=(raw,actor,owner,signal)=>{
     const request=mediaRecord(raw)
-    if(actor!=='agent'||owner?.projectId!==binding.projectId||owner.sessionId!==binding.sessionId||request.projectId!==binding.projectId||!['read','save-lead','finish'].includes(String(request.operation))||(request.operation==='read'?request.id:request.runId)!==runId)throw new Error('Background collection is restricted to its own run')
+    if(actor!=='agent'||owner?.projectId!==binding.projectId||owner.sessionId!==binding.sessionId||request.projectId!==binding.projectId||!['read','save-lead','watch-video','update-video','finish'].includes(String(request.operation))||(request.operation==='read'?request.id:request.runId)!==runId)throw new Error('Background collection is restricted to its own run')
     return rolling.execute(raw,actor,owner,signal)
    }
    return ()=>rolling.assertLease(binding.projectId,runId,binding)
@@ -92,8 +96,8 @@ export class LibraryRuntime implements FeatureRuntime {
   host.browserKernel.libraryNews=(raw,owner,actor,signal)=>{if(owner.projectId!==host.projectStore.active().id||owner.sessionId!==host.getCurrentSessionId?.())throw new Error('News Project or Session changed.');return new NewsResearchService(host.browserKernel,owner).executeResearch(assertNewsResearchRequest(raw),actor,signal)}
   host.browserKernel.libraryOpen=async(owner,target)=>{if(owner.projectId!==host.projectStore.active().id||owner.sessionId!==host.getCurrentSessionId?.())throw new Error('Library selection requires the active Session.');this.useTarget=target?{...target,...owner}:undefined;await host.openWorkspace?.('library');return {opened:true}}
  }
- private scheduledRolling(projectId:string):RollingService {
-  return new RollingService(this.collectionLibrary(projectId),{start:(run,signal)=>this.startCollection(run,signal),cancel:run=>this.cleanupCollection(run)})
+ private scheduledRolling(projectId:string,browser=this.host!.browserKernel):RollingService {
+  return new RollingService(this.collectionLibrary(projectId),{start:(run,signal)=>this.startCollection(run,signal),cancel:run=>this.cleanupCollection(run)},()=>Date.now(),(c,owner,signal)=>new NewsResearchService(browser,owner).verifyCandidate(c,signal))
  }
  private collectionLibrary(projectId:string):LibraryService {
   const host=this.host!,project=host.listLibraryProjects?.(false).find(p=>p.id===projectId)

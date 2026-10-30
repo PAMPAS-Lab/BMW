@@ -27,7 +27,9 @@ export type VideoEditCommand=
  |{op:'captions.translate';sceneId:string;translations:CaptionTranslation[]}
  |{op:'card.set';sceneId:string;cardSpec:CardSpec;links?:CardSpeechChoice[]}
  |{op:'card.bind';sceneId:string;links:CardSpeechChoice[]}
+ |{op:'card.clear';sceneId:string}
  |{op:'scene.set';sceneId:string;patch:SceneContent}
+ |{op:'scene.remove';sceneId:string}
  |{op:'scene.reorder';sceneIds:string[]}
  |{op:'clip.move'|'clip.split';clipId:string;time:VideoTime}
  |{op:'clip.trim';clipId:string;edge:'start'|'end';time:VideoTime}
@@ -58,7 +60,9 @@ export function assertVideoEdit(raw:unknown):VideoEdit {
    }
    case 'card.set':closed(c,['op','sceneId','cardSpec','links']);return {op:c.op,sceneId:studioId(c.sceneId),cardSpec:assertCardSpec(c.cardSpec),...(c.links===undefined?{}:{links:assertCardSpeechChoices(c.links)})}
    case 'card.bind':closed(c,['op','sceneId','links']);return {op:c.op,sceneId:studioId(c.sceneId),links:assertCardSpeechChoices(c.links)}
+   case 'card.clear':closed(c,['op','sceneId']);return {op:c.op,sceneId:studioId(c.sceneId)}
    case 'scene.set':{closed(c,['op','sceneId','patch']);const patch=mediaRecord(c.patch);closed(patch,sceneFields);if(!Object.keys(patch).length)throw new TypeError('VIDEO_EDIT: Empty scene patch.');return {op:c.op,sceneId:studioId(c.sceneId),patch:structuredClone(patch)} as VideoEditCommand}
+   case 'scene.remove':closed(c,['op','sceneId']);return {op:c.op,sceneId:studioId(c.sceneId)}
    case 'scene.reorder':closed(c,['op','sceneIds']);if(!Array.isArray(c.sceneIds)||c.sceneIds.length>COMPOSITION_LIMITS.scenes)throw new TypeError('VIDEO_EDIT: Invalid scene order.');return {op:c.op,sceneIds:c.sceneIds.map(studioId)}
    case 'clip.move':case 'clip.split':case 'clip.trim':{closed(c,['op','clipId','time',...(c.op==='clip.trim'?['edge']:[])]);videoSeconds(c.time as VideoTime);if(c.op==='clip.trim'&&!['start','end'].includes(String(c.edge)))throw new TypeError('VIDEO_EDIT: Invalid trim edge.');return {op:c.op,clipId:clipId(c.clipId),time:structuredClone(c.time),...(c.op==='clip.trim'?{edge:c.edge}:{})} as VideoEditCommand}
    case 'clip.effects':closed(c,['op','clipId','effects']);return {op:c.op,clipId:clipId(c.clipId),effects:c.effects===null?null:assertVisualEffects(c.effects)}

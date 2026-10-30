@@ -16,7 +16,10 @@ export function assertMotionReport(raw:unknown,request:MotionRequest):MotionRepo
   const w=mediaRecord(rawWindow),start=finiteNumber(w.startSeconds,'motion window start',0,1800),end=finiteNumber(w.endSeconds,'motion window end',start+.001,1800)
   if(start!==request.startSeconds||end!==(i?Math.min(request.endSeconds,start+3):request.endSeconds))throw new TypeError('Motion window mismatch.')
   const count=finiteNumber(w.frameCount,'motion frames',1,6000,true);finiteNumber(w.changedFramePairs,'changed pairs',0,count-1,true)
-  const first=finiteNumber(w.coveredStartSeconds,'motion coverage start',0,start),last=finiteNumber(w.coveredEndSeconds,'motion coverage end',end,1801)
+  // Frame timestamp addition can differ from the requested endpoint by a few
+  // IEEE-754 units. Retain the decoded values; do not mask real coverage gaps.
+  const precision=8*Number.EPSILON*Math.max(1,Math.abs(start),Math.abs(end))
+  const first=finiteNumber(w.coveredStartSeconds,'motion coverage start',0,start+precision),last=finiteNumber(w.coveredEndSeconds,'motion coverage end',end-precision,1801)
   for(const k of ['maximumFrameHoldSeconds','maximumDecodeGapSeconds','maximumNearStaticSeconds'])finiteNumber(w[k],k,0,last-first)
   if(!Array.isArray(w.nearStaticRuns)||w.nearStaticRuns.length>32)throw new TypeError('Invalid motion intervals.')
   for(const row of w.nearStaticRuns){const s=mediaRecord(row),a=finiteNumber(s.startSeconds,'static start',start,end);finiteNumber(s.endSeconds,'static end',a,end)}

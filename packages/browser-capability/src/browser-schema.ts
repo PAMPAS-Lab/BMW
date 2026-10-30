@@ -74,7 +74,7 @@ export const BROWSER_CORE_ACTION_DEFINITIONS: readonly BrowserActionDefinition[]
     reuse: { type: 'boolean', description: 'Defaults to true; reuse an exact URL or suitable same-origin Agent tab.' }
   }, ['url']),
   action('tabs.show', 'Show a Project-owned browser tab.'),
-  action('tabs.close', 'Close a Project-owned browser tab.'),
+  action('tabs.close', 'Close one Project-owned tab, or batch-close 1–12 explicit Agent-owned tabs after prechecking all ownership. Batch mode preserves user pages; use the returned state rather than another tabs.list.',{tabIds:{type:'array',minItems:1,maxItems:12,uniqueItems:true,items:{type:'string',minLength:1,maxLength:120}}}),
   action('navigate', 'Navigate a Project-owned browser tab.', { url: { type: 'string' } }, ['url']),
   action('back', 'Navigate the target tab backward.'),
   action('forward', 'Navigate the target tab forward.'),
@@ -86,7 +86,7 @@ export const BROWSER_CORE_ACTION_DEFINITIONS: readonly BrowserActionDefinition[]
     maxCharacters: { type: 'number' },
     mode: { type: 'string', enum: ['viewport', 'fullpage', 'background', 'observe'] }
   }),
-  action('page.text.find','Find 1–200 characters of visible text within an explicit 1–500 character CSS selector without probing each index. Returns up to eight exact selector/index locators and bounded excerpts; use these for observe or source collect/screenshot. Case-insensitive whitespace-normalized substring search, at most 200 elements/20000 text nodes per page and 10000 elements overall. Pass nextOffset as findOffset; partialElementIndices and budgetExhausted are search gaps, never proof of absence. This does not collect or certify originals.',{
+  action('page.text.find','Find 1–200 characters of visible text within an explicit 1–500 character CSS selector without probing each index. Returns up to eight exact selector/index locators and bounded excerpts. When a single visible text node contains the query, elementLocator gives its nested parent selector/index for direct observe or metadata collect, avoiding repeated DOM descent. A missing elementLocator does not justify guessing one. Case-insensitive whitespace-normalized substring search, at most 200 elements/20000 text nodes per page and 10000 elements overall. Pass nextOffset as findOffset; partialElementIndices and budgetExhausted are search gaps, never proof of absence. This does not collect or certify originals.',{
     selector:{type:'string'},text:{type:'string'},findOffset:{type:'integer',minimum:0,maximum:10000},excludeSelectors:{type:'array',maxItems:16,items:{type:'string',minLength:1,maxLength:500}}
   },['selector','text']),
   action('click', 'Click an element by selector or visible text. Returns sourceTab and observed link href/target. A normal target=_blank HTTP link returns destinationTab; use its id for source work. Other clicks require inspecting sourceTab after navigation; unrelated page popups stay deferred/background with openerTabId.', {
@@ -244,6 +244,7 @@ export function assertBrowserRequest(value: unknown, allowedActions: readonly st
     }).map(([key])=>key)
     if(invalid.length)throw requestError('Fields have invalid types or bounds; request help for the exact input schema.',allowedActions,definition,invalid)
   }
+  if(request.action==='tabs.close'&&request.tabIds!==undefined){const ids=request.tabIds;if(request.tabId!==undefined||!Array.isArray(ids)||ids.length<1||ids.length>12||new Set(ids).size!==ids.length||ids.some(id=>typeof id!=='string'||!id||id.length>120))throw requestError('Batch close requires 1–12 unique tabIds without tabId.',allowedActions,definition,['tabIds'])}
   if(request.action==='media.speech.align'){
     const range=request.sourceRange as Record<string,unknown>|undefined,id=request.artifactId,start=range?.startSeconds,end=range?.endSeconds
     if(typeof id!=='string'||!id||id.length>180||/[/\\:\u0000-\u001f]/.test(id)||id==='.'||id==='..'||!['zh','en','auto'].includes(String(request.language))||request.model!==undefined&&!['base','small'].includes(String(request.model))||!range||Object.keys(range).some(key=>!['startSeconds','endSeconds'].includes(key))||typeof start!=='number'||!Number.isFinite(start)||start<0||typeof end!=='number'||!Number.isFinite(end)||end>1800||end<start+.01||end-start>180)throw requestError('Speech requires a Project artifactId, fixed base/small model, explicit zh/en/auto language and a 0.01–180 second file-PTS sourceRange.',allowedActions,definition)

@@ -5,6 +5,18 @@ import type {WebContents} from 'electron'
 import type {SourceScope} from '@bmw-agent/media-native/sources'
 import {collectPageSource} from '../src/collect-page-source.js'
 const scope={selector:'article',index:0,excludeSelectors:[],characterUnit:'utf16' as const,extraction:'visible-text-nodes' as const,truncated:false,status:'observed' as const}
+test('Chinese publication weekday suffix retains the complete witnessed civil date without admitting cropped updates',async()=>{
+ for(const date of ['2026-10-26 22:40 星期一','2026年10月26日 周一']){
+  const text='科创板最新动态\n'+date+'\n科创板日报记者 李明明',startCharacter=text.indexOf(date)
+  const result=await collectPageSource(fixture(async()=>({text,range:scope})).wc,{bodySelector:'article',metadataRanges:{publishedAt:{startCharacter,endCharacter:startCharacter+date.length,quote:date}}},async()=>({items:[],range:scope,truncated:false}))
+  assert.equal(result.result,'observed');assert.equal(result.publishedAt,date)
+ }
+ for(const prefix of ['Updated\n','更新于\n','录制\n','转载\n']){
+  const date='2026-10-26 22:40 星期一',text=prefix+date,startCharacter=prefix.length
+  const result=await collectPageSource(fixture(async()=>({text,range:scope})).wc,{bodySelector:'article',metadataRanges:{publishedAt:{startCharacter,endCharacter:startCharacter+date.length,quote:date}}},async()=>({items:[],range:scope,truncated:false}))
+  assert.equal(result.result,'failed');assert.equal(result.publishedAt,null)
+ }
+})
 test('Published time reads a bounded timezone-bearing TIME datetime while preserving visible date fallback',async()=>{
  let n=0;const f=fixture(async()=>({text:++n===1?'Original':'Oct 18, 2026',range:scope,dateTime:n===2?'2026-10-18T01:00:00Z':null})),result=await collectPageSource(f.wc,{bodySelector:'article',publishedSelector:'time'},async()=>({items:[],range:scope,truncated:false}));assert.equal(result.publishedAt,'2026-10-18T01:00:00Z');assert.equal(result.result,'observed')
  const plain=fixture(async()=>({text:'Oct 18, 2026',range:scope,dateTime:'2026-10-18'})),fallback=await collectPageSource(plain.wc,{bodySelector:'article',publishedSelector:'time'},async()=>({items:[],range:scope,truncated:false}));assert.equal(fallback.publishedAt,'Oct 18, 2026')

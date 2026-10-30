@@ -9,6 +9,11 @@ test('Direct preservation returns original encoding without starting playback or
  const {calls,port}=setup(),result=await acquireVideoDelivery(target,port,new AbortController().signal)
  assert.equal(result.method,'preserve');assert.equal(result.acquisition.reencoded,false);assert.deepEqual(calls,['verify','preserve'])
 })
+test('Declared spherical video is screened before any transfer, warmup or capture',async()=>{
+ const {calls,port}=setup()
+ await assert.rejects(acquireVideoDelivery({...target,requiresProjection:true},port,new AbortController().signal),/MEDIA_ACQUIRE_PROJECTION_UNSUPPORTED/)
+ assert.deepEqual(calls,[])
+})
 test('Download failure falls back only after preservation drained; public diagnostics omit delivery URLs',async()=>{
  const {calls,port}=setup();let busy=false
  port.preserve=async()=>{calls.push('preserve');busy=true;try{throw new Error('HTTP 403 https://secret.test/token')}finally{busy=false;calls.push('drained')}};port.busy=()=>busy

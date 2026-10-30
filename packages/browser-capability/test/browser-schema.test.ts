@@ -57,3 +57,9 @@ test('Visible text finding requires an explicit closed scope and bounded query w
  assert.equal(assertBrowserRequest({action:'page.text.find',selector:'p',text:'Share your new behavior',findOffset:0,excludeSelectors:['aside']}).selector,'p')
  for(const fields of [{selector:'',text:'x'},{selector:'p',text:' '},{selector:'p',text:'x'.repeat(201)},{selector:'p',text:'x',findOffset:-1},{selector:'p',text:'x',index:1},{selector:'p',text:'x',script:'document.cookie'},{selector:'p',text:'x',sourceId:'pretend-proof'}])assert.throws(()=>assertBrowserRequest({action:'page.text.find',...fields}))
 })
+
+test('Batch tab close is bounded, explicit and disjoint from the active-tab fallback',()=>{
+ assert.deepEqual(assertBrowserRequest({action:'tabs.close',tabIds:['one','two']}).tabIds,['one','two'])
+ for(const tabIds of [[],['one','one'],Array.from({length:13},(_,i)=>String(i)),[42],['']])assert.throws(()=>assertBrowserRequest({action:'tabs.close',tabIds}))
+ assert.throws(()=>assertBrowserRequest({action:'tabs.close',tabId:'user',tabIds:['agent']}))
+})

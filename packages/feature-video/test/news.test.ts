@@ -13,7 +13,8 @@ import type {NewsTopicCandidate} from '../src/news-contract.js'
 import {VideoStudioService} from '../src/studio-service.js'
 import type {StudioKernel} from '../src/studio-service.js'
 import {VideoStudioStore} from '../src/studio-store.js'
-import {assertStudioRequest} from '../src/studio-contract.js'
+import {NewsPreparationService} from '../src/news-preparation.js'
+import {newStudioScene,assertStudioRequest} from '../src/studio-contract.js'
 import {EventEmitter} from 'node:events'
 import type {WebContents} from 'electron'
 import {prepareSourceScreenshot} from '../../browser-capability/src/source-screenshot.js'
@@ -193,5 +194,37 @@ test('Selected news render guard permits same-original HD footage without burnin
   await assert.rejects(f.news.guardDraft(id,undefined,true),/NEWS_EVIDENCE_MISSING/)
   fs.appendFileSync(path.join(directory,'low-preview.mp4'),'tampered original evidence')
   await assert.rejects(f.news.guardDraft(id,undefined,true),/NEWS_SOURCE_STALE/)
+ }finally{f.close()}
+})
+
+
+for(const selection of ['image','page-announcement','page-interview','youtube-announcement'] as const)test('Selected article facts retain exact citations and current preparation with independent video: '+selection,async()=>{
+ const f=fixture();try{
+  let candidate=await f.add();
+  if(selection!=='image'){
+   const directory=path.join(f.root,'artifacts'),isYoutube=selection==='youtube-announcement',url=isYoutube?'https://www.youtube.com/watch?v=abcdefghijk':'https://announcement.example/release',identity={version:1 as const,platform:isYoutube?'youtube' as const:'page' as const,targetId:isYoutube?'abcdefghijk':url,resourceId:isYoutube?'abcdefghijk':'https://media.example/announcement.mp4'},scope={selector:'main',index:0,excludeSelectors:[],characterUnit:'utf16' as const,extraction:'visible-text-nodes' as const,truncated:false,status:'observed' as const},text='Official announcement of a new world model.'
+   const saved=await f.sources.collect({url,title:'Official release',author:'Official publisher',publishedAt:new Date(f.now-1000).toISOString(),scope,text,mediaScope:scope,mediaTruncated:false,candidates:[{kind:'video',url:'https://media.example/announcement.mp4',durationSeconds:10,role:'video',videoIdentity:identity}],access:'unknown',accessText:'',result:'observed',error:null},f.sources.snapshot().revision),body=await f.sources.readBody(saved.sourceId,saved.acquisitionId),cid=body.acquisition.candidates[0].id
+   f.sources.confirm({operation:'confirm',sourceId:saved.sourceId,acquisitionId:saved.acquisitionId,expectedRevision:f.sources.snapshot().revision,candidateIds:[cid]});fs.writeFileSync(path.join(directory,'selected-preview.mp4'),'selected native preview')
+   await f.sources.recordMedia(saved.sourceId,saved.acquisitionId,cid,{state:'decoded-file',artifactId:'selected-preview.mp4',contentId:await mediaArtifactHash(directory,'selected-preview.mp4'),startSeconds:0,endSeconds:10,proof:{kind:'decoding',completeFile:true,container:'mp4',contentType:'video/mp4',durationSeconds:10,firstTimestampSeconds:0,tracks:[{id:1,type:'video',codec:'avc',sampleCount:10,startSeconds:0,endSeconds:10},{id:2,type:'audio',codec:'aac',sampleCount:10,startSeconds:0,endSeconds:10}]}},f.sources.snapshot().revision)
+   f.kernel.recordingController.processArtifact=async()=>({durationSeconds:10,tracks:[{type:'video',canDecode:true,width:640,height:360},{type:'audio',canDecode:true}]})
+   candidate={...candidate,format:selection==='page-interview'?'interview':'announcement',sourceId:saved.sourceId,acquisitionId:saved.acquisitionId,quote:text,quoteStart:0,previewArtifactId:'selected-preview.mp4',mode:'video'}
+  }
+  await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:[candidate]},'agent');const b=f.news.journal.read()
+  await f.news.execute({operation:'select-news-topic',expectedTopicRevision:b.revision,topicId:candidate.id,baseFingerprint:newsFingerprint(b.topics)},'user')
+  const store=new VideoStudioStore(f.root,f.owner.sessionId),id=f.news.journal.read().selection!.draftId,directory=path.join(f.root,'artifacts'),hash=(text:string)=>crypto.createHash('sha256').update(text).digest('hex')
+  fs.writeFileSync(path.join(directory,'separate.mp4'),'separate native video');await saveNativeVideoOrigin(directory,'separate.mp4',{version:1,platform:'page',targetId:'https://video.example/interview',resourceId:'https://video.example/interview.mp4'})
+  const frames=[0,1.5,2.9].map((seconds,i)=>{const artifactId='separate-frame-'+i+'.png',bytes='different observed frame '+i;fs.writeFileSync(path.join(directory,artifactId),bytes);return {artifactId,sha256:hash(bytes),width:640,height:360,requestedSeconds:seconds,seconds}})
+  let draft=store.read(id);draft.scenes=[{...newStudioScene('evidence'),durationSeconds:3,label:'CNBC节目片段｜节目日期2026-10-26',narration:'Selected fact.',videoArtifactId:'separate.mp4',sourceStartSeconds:0,sourceDurationSeconds:3,keepSourceAudio:false,citations:[{sourceId:candidate.sourceId,acquisitionId:candidate.acquisitionId,startCharacter:0,endCharacter:candidate.quote.length,quote:candidate.quote,kind:'fact',claim:'Selected fact',conflict:'pending',eventAt:null}]}];draft=store.update(id,draft.revision,draft)
+  draft=store.recordReference(id,draft.revision,[{id:'separate-ref',sourceArtifactId:'separate.mp4',sourceSha256:hash('separate native video'),sourceBytes:21,kind:'video',width:640,height:360,durationSeconds:3,createdAt:new Date().toISOString(),revision:1,videoRange:{startSeconds:0,endSeconds:3},frames,analysis:{summary:'Controlled distinct frames.',observations:frames.map((_,frameIndex)=>({frameIndex,description:'Observed source frame.',adaptation:'Related interview for the selected fact.'}))},analysisOrigin:'agent'}])
+  const inspect=f.kernel.recordingController.processArtifact;f.kernel.recordingController.processArtifact=async(raw,signal)=>{const request=raw as {action:string;artifactId?:string};if(request.action!=='media.inspect')return inspect(raw,signal);const duration=request.artifactId==='selected-preview.mp4'?10:3;return {durationSeconds:duration,tracks:[{id:1,type:'video',canDecode:true,startSeconds:0,endSeconds:duration,width:640,height:360},{id:2,type:'audio',canDecode:true,startSeconds:0,endSeconds:duration}]}}
+  const prepare=()=>new NewsPreparationService(f.kernel,store,f.owner,store.read(id))
+  if(selection==='page-interview'||selection==='youtube-announcement'){
+   await assert.rejects(f.news.guardDraft(id,undefined,true),/NEWS_EVIDENCE_MISSING/,'interviews and video-platform announcements retain same-original requirements');return
+  }
+  await assert.rejects(f.news.guardDraft(id,undefined,true),/NEWS_PREPARATION_REQUIRED/,'proven video alone cannot replace author observations')
+  const report=await prepare().preflight();await prepare().execute({operation:'record-scenes',expectedChecklistRevision:report.checklistRevision,scenes:[{sceneId:'evidence',fingerprint:report.scenes[0].fingerprint,intent:'Report the selected article with related interview.',dateLabel:draft.scenes[0].label!,materials:[{artifactId:'separate.mp4',referenceId:'separate-ref',kind:'external-video',observation:'Actual controlled moving interview frames.',relation:'Supports the selected news.'}],originalSpeech:{mode:'not-used',quote:'',translation:'',reason:'Chinese narration.'}}]},'agent')
+  await f.news.guardDraft(id,undefined,true);assert.equal(store.read(id).scenes[0].imageArtifactId,undefined,'no article screenshot is burned into the film')
+  const valid=store.read(id);draft=store.update(id,valid.revision,{...valid,scenes:[{...valid.scenes[0],citations:[]}]});await assert.rejects(f.news.guardDraft(id,undefined,true),/NEWS_EVIDENCE_MISSING/,'independent video does not replace the selected fact citation')
+  draft=store.update(id,draft.revision,{...valid,revision:draft.revision});fs.appendFileSync(path.join(directory,'separate.mp4'),'tamper');await assert.rejects(f.news.guardDraft(id,undefined,true),/NEWS_|hash|SHA|changed/i)
  }finally{f.close()}
 })

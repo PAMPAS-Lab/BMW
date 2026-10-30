@@ -20,7 +20,8 @@ function publicationLine(value:{text:string;scope:SourceScope}):string|null{
  // Publishers may label the day with a weekday, a local clock and a timezone
  // abbreviation; the element still proves only that civil day.
  const weekday='(?:(?:Mon|Tue|Tues|Wed|Thu|Thur|Thurs|Fri|Sat|Sun)(?:day|sday|nesday|rsday|urday)?\\.?,?\\s+)?',clock='\\d{1,2}:\\d{2}(?::\\d{2})?\\s*(?:[ap]\\.?m\\.?)?(?:\\s*[A-Z]{2,5})?'
- const exact=new RegExp('^(?:'+weekday+'(?:'+date+')(?:\\s+'+clock+')?|\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d(?::\\d\\d(?:\\.\\d+)?)?(?:Z|[+-]\\d\\d:\\d\\d))$','i')
+ const chineseWeekday='(?:\\s*(?:周|星期)[一二三四五六日天])?'
+ const exact=new RegExp('^(?:'+weekday+'(?:'+date+')(?:\\s+'+clock+')?'+chineseWeekday+'|\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d(?::\\d\\d(?:\\.\\d+)?)?(?:Z|[+-]\\d\\d:\\d\\d))$','i')
  const lines=value.text.split(/\r?\n/).map(line=>line.trim().replace(label,'')),matches=lines.flatMap(line=>{if(exact.test(line))return [line];const release=line.match(new RegExp('(?:^|\\s)Release\\s*[:：]?\\s*('+date+')$','i'));return release?[release[1]]:[]})
  return matches.length===1&&matches[0].length<=80?matches[0]:null
 }

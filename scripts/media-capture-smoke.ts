@@ -109,6 +109,7 @@ async function run(): Promise<void> {
     view: { webContents: window.webContents }
   }
   const kernel = {
+    playbackAllowed:()=>false, // This fixture starts hidden; lifecycle tests exercise the real native playback policy.
     diagnostics: new Map([[tab.id, { console: [], network: [], media: [], loadFailures: [] }]]),
     projectStore: { active: () => ({ id: 'media-smoke-project', directory: projectDirectory }) },
     session: smokeSession,

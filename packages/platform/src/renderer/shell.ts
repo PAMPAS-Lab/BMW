@@ -34,6 +34,7 @@ const settingsProxyMode = document.querySelector('#settings-proxy-mode')
 const settingsProxyManual = document.querySelector('#settings-proxy-manual')
 const settingsProxyRules = document.querySelector('#settings-proxy-rules')
 const settingsProxyBypass = document.querySelector('#settings-proxy-bypass')
+const settingsHttp1Compatibility = document.querySelector('#settings-http1-compatibility') as HTMLInputElement
 const settingsSearchEngine = document.querySelector('#settings-search-engine')
 const settingsCustomSearchRow = document.querySelector('#settings-custom-search-row')
 const settingsCustomSearch = document.querySelector('#settings-custom-search')
@@ -351,6 +352,7 @@ function renderGlobalSettings() {
   settingsProxyMode.value = globalSettings.proxyMode
   settingsProxyRules.value = globalSettings.proxyRules || ''
   settingsProxyBypass.value = globalSettings.proxyBypassRules || ''
+  settingsHttp1Compatibility.checked = globalSettings.http1Compatibility === true
   settingsSearchEngine.value = globalSettings.searchEngine
   settingsCustomSearch.value = globalSettings.customSearchUrl || ''
   settingsNewTab.value = globalSettings.newTabPage
@@ -798,11 +800,13 @@ document.querySelector('#settings-save').addEventListener('click', async () => {
   settingsMessage.textContent = 'Applying…'
   settingsMessage.classList.remove('error')
   try {
+    const networkRestartRequired = settingsHttp1Compatibility.checked !== (globalSettings.http1Compatibility === true)
     globalSettings = await api.updateGlobalSettings({
       theme: settingsTheme.value,
       proxyMode: settingsProxyMode.value,
       proxyRules: settingsProxyRules.value,
       proxyBypassRules: settingsProxyBypass.value,
+      http1Compatibility: settingsHttp1Compatibility.checked,
       searchEngine: settingsSearchEngine.value,
       customSearchUrl: settingsCustomSearch.value,
       newTabPage: settingsNewTab.value,
@@ -813,7 +817,7 @@ document.querySelector('#settings-save').addEventListener('click', async () => {
 
     videoPreferencesDirty=false
     renderGlobalSettings()
-    settingsMessage.textContent = 'Saved. BMW Shell, Agent, compatible pages, searches and network connections use these settings.'
+    settingsMessage.textContent = networkRestartRequired ? 'Saved. Restart BMW to apply the HTTP/1.1 compatibility change.' : 'Saved. BMW Shell, Agent, compatible pages, searches and network connections use these settings.'
   } catch (error) {
     settingsMessage.textContent = error.message
     settingsMessage.classList.add('error')

@@ -1,9 +1,25 @@
 /** Page evidence, never a claim about an author's upload or a model assertion. */
 export interface VideoIdentity {version:1;platform:'page'|'youtube'|'x'|'weibo';targetId:string;resourceId:string}
 export interface VideoResource {url:string;role:'video'|'audio'|'muxed'|'hls'|'sabr';durationSeconds:number|null;bitrate:number;audioGroup:string;defaultAudio:boolean}
-export interface VideoTarget {identity:VideoIdentity;playerUrl:string;videoIndex:number;durationSeconds:number|null;resources:VideoResource[]}
+export interface VideoTarget {identity:VideoIdentity;playerUrl:string;videoIndex:number;durationSeconds:number|null;resources:VideoResource[];requiresProjection?:true}
 export interface VideoTargetScope {selector?:string;index?:number;excludeSelectors?:string[]}
 export interface PageVideoTargets {pageUrl:string;platform:VideoIdentity['platform'];targets:VideoTarget[];blocked:string|null}
+
+/** Page equality for an already pinned target. Only YouTube UI/tracking keys
+ * may rotate; origin, path, video, playlist, language and other options stay exact.
+ * This never grants a media URL or replaces the live player/resource checks. */
+export function sameVideoSourcePage(expected:string,current:string,identity?:VideoIdentity):boolean {
+ try{
+  const a=new URL(expected),b=new URL(current);a.hash='';b.hash=''
+  if(a.username||a.password||b.username||b.password)return false
+  if(a.href===b.href)return true
+  if(identity?.platform!=='youtube'||identity.resourceId!==identity.targetId||!/^[A-Za-z0-9_-]{11}$/.test(identity.targetId)||a.protocol!=='https:'||a.origin!==b.origin||a.pathname!==b.pathname||!['youtube.com','www.youtube.com','m.youtube.com'].includes(a.hostname))return false
+  const target=(url:URL)=>url.pathname==='/watch'&&url.searchParams.getAll('v').length===1?url.searchParams.get('v'):/^\/(?:shorts|embed|live)\/([A-Za-z0-9_-]{11})\/?$/.exec(url.pathname)?.[1]
+  if(target(a)!==identity.targetId||target(b)!==identity.targetId)return false
+  for(const url of [a,b]){for(const key of [...url.searchParams.keys()])if(['themeRefresh','feature','si'].includes(key)||key.startsWith('utm_'))url.searchParams.delete(key);url.searchParams.sort()}
+  return a.href===b.href
+ }catch{return false}
+}
 
 export const YOUTUBE_SABR_REQUEST_BYTES=256*1024
 export function youtubeSabrUrl(value:string):URL {
@@ -25,9 +41,9 @@ export function assertPageVideoTargets(raw:unknown):PageVideoTargets{
  const r=raw as Record<string,unknown>,url=(raw:unknown,blob=false)=>{if(typeof raw!=='string'||raw.length>8192)throw new TypeError('Invalid target URL.');const u=new URL(raw);if(u.username||u.password||!(blob?['http:','https:','blob:']:['http:','https:']).includes(u.protocol))throw new TypeError('Invalid target URL.');return u.href},seconds=(v:unknown)=>{if(v===null)return null;if(typeof v!=='number'||!Number.isFinite(v)||v<=0||v>86400)throw new TypeError('Invalid target duration.');return v}
  if(Object.keys(r).some(k=>!['pageUrl','platform','targets','blocked'].includes(k))||!['page','youtube','x','weibo'].includes(String(r.platform))||r.blocked!==null&&(typeof r.blocked!=='string'||r.blocked.length>1000)||!Array.isArray(r.targets)||r.targets.length>64||JSON.stringify(raw).length>256*1024)throw new TypeError('Invalid video target snapshot budget.')
  const targets=r.targets.map(raw=>{if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new TypeError('Invalid player witness.');const t=raw as Record<string,unknown>,identity=assertVideoIdentity(t.identity)
-  if(Object.keys(t).some(k=>!['identity','playerUrl','videoIndex','durationSeconds','resources'].includes(k))||identity.platform!==r.platform||!Number.isSafeInteger(t.videoIndex)||Number(t.videoIndex)<-1||Number(t.videoIndex)>10000||!Array.isArray(t.resources)||t.resources.length>160)throw new TypeError('Invalid player witness.')
+  if(Object.keys(t).some(k=>!['identity','playerUrl','videoIndex','durationSeconds','resources','requiresProjection'].includes(k))||t.requiresProjection!==undefined&&t.requiresProjection!==true||identity.platform!==r.platform||!Number.isSafeInteger(t.videoIndex)||Number(t.videoIndex)<-1||Number(t.videoIndex)>10000||!Array.isArray(t.resources)||t.resources.length>160)throw new TypeError('Invalid player witness.')
   const resources=t.resources.map(raw=>{if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new TypeError('Invalid resource witness.');const f=raw as Record<string,unknown>;if(Object.keys(f).some(k=>!['url','role','durationSeconds','bitrate','audioGroup','defaultAudio'].includes(k))||!['video','audio','muxed','hls','sabr'].includes(String(f.role))||typeof f.bitrate!=='number'||!Number.isFinite(f.bitrate)||f.bitrate<0||typeof f.audioGroup!=='string'||f.audioGroup.length>100||typeof f.defaultAudio!=='boolean')throw new TypeError('Invalid resource witness.');const address=url(f.url);if(identity.platform==='youtube'&&!(new URL(address).protocol==='https:'&&new URL(address).hostname.endsWith('.googlevideo.com'))||f.role==='sabr'&&(identity.platform!=='youtube'||new URL(address).pathname!=='/videoplayback'))throw new TypeError('Foreign YouTube delivery resource.');return {url:address,role:f.role as VideoResource['role'],durationSeconds:seconds(f.durationSeconds),bitrate:f.bitrate,audioGroup:f.audioGroup,defaultAudio:f.defaultAudio}})
-  return {identity,playerUrl:t.playerUrl===''?'':url(t.playerUrl,true),videoIndex:Number(t.videoIndex),durationSeconds:seconds(t.durationSeconds),resources}
+  return {identity,playerUrl:t.playerUrl===''?'':url(t.playerUrl,true),videoIndex:Number(t.videoIndex),durationSeconds:seconds(t.durationSeconds),resources,...(t.requiresProjection===true?{requiresProjection:true as const}:{})}
  })
  const page=new URL(String(r.pageUrl));page.hash=''
  if(page.username||page.password||!['http:','https:','file:'].includes(page.protocol))throw new TypeError('Invalid target page.')
@@ -74,7 +90,7 @@ export function youtubeAudioFor(target:VideoTarget,url:string):VideoResource|und
  * Kept self-contained because the host serializes it into sandboxed page renderers. */
 export function inspectPageVideoTargets(scope:VideoTargetScope={}):PageVideoTargets{
  const record=(v:unknown):Record<string,unknown>=>v&&typeof v==='object'&&!Array.isArray(v)?v as Record<string,unknown>:{}
- const address=(value:unknown):string=>{try{if(typeof value!=='string'||value.length>8192)return '';const u=new URL(value,location.href);if(u.username||u.password||!['http:','https:','blob:'].includes(u.protocol))return '';u.hash='';return u.href}catch{return ''}}
+ const address=(value:unknown):string=>{try{if(typeof value!=='string'||!value.trim()||value.length>8192)return '';const u=new URL(value,location.href);if(u.username||u.password||!['http:','https:','blob:'].includes(u.protocol))return '';u.hash='';return u.href}catch{return ''}}
  const visible=(el:Element):boolean=>{if(!el.getClientRects().length)return false;let n=0;for(let e:Element|null=el;e;e=e.parentElement){if(++n>100)return false;const s=getComputedStyle(e);if(s.display==='none'||s.visibility==='hidden'||s.visibility==='collapse'||Number(s.opacity)===0)return false}return true}
  const page=new URL(location.href);page.hash='';const pageUrl=page.href,host=page.hostname.replace(/^www\./,''),platform:VideoIdentity['platform']=host==='youtube.com'||host==='m.youtube.com'||host==='youtu.be'?'youtube':host==='x.com'||host==='twitter.com'||host==='mobile.twitter.com'?'x':host==='weibo.com'||host==='m.weibo.cn'||host==='video.weibo.com'?'weibo':'page'
  const result:PageVideoTargets={pageUrl,platform,targets:[],blocked:null},root=scope.selector?document.querySelectorAll(scope.selector)[scope.index??0]:document
@@ -90,13 +106,24 @@ export function inspectPageVideoTargets(scope:VideoTargetScope={}):PageVideoTarg
  if(!expected||expected.length>4096){result.blocked='Open an original video/post URL before acquiring video.';return result}
  for(const video of videos){
   if(!visible(video)||excluded.some(s=>video.closest(s))||video.closest('[data-bmw-ad],.ad-showing,.ad-interrupting,[data-testid="placementTracking"],[data-testid="promotedIndicator"]'))continue
-  const playerUrl=address(video.currentSrc||video.src)
+  let playerUrl=address(video.currentSrc||video.src)
+  // A visible preload=none player may not have selected currentSrc yet.
+  // Bind only its unique supported declared source, never a hidden translation,
+  // a page-wide first URL or ambiguous format alternatives. The same live
+  // element/source witness is rechecked by transfer/capture admission.
+  if(!playerUrl&&platform==='page'&&!video.srcObject){
+   const declared=[...new Set([...video.querySelectorAll('source[src]')].filter(s=>{
+    const source=s as HTMLSourceElement
+    return (!source.media||matchMedia(source.media).matches)&&(!source.type||!!video.canPlayType(source.type))
+   }).map(s=>address((s as HTMLSourceElement).src)).filter(url=>/^https?:/.test(url)))]
+   if(declared.length===1)playerUrl=declared[0]!
+  }
   // These are site UI animations, never a user's video, regardless of MIME or duration.
   if(/\/(?:playback[0-9]+|error-animation|loading-animation)\.mp4(?:\?|$)/i.test(playerUrl))continue
-  let resourceId=playerUrl,resources:VideoResource[]=[],seconds=duration(video.duration)
+  let resourceId=playerUrl,resources:VideoResource[]=[],seconds=duration(video.duration),requiresProjection=false
   const add=(url:unknown,role:VideoResource['role'],extra:Partial<VideoResource>={})=>{const u=address(url);if(u&&!u.startsWith('blob:')&&!resources.some(r=>r.url===u))resources.push({url:u,role,durationSeconds:seconds,bitrate:0,audioGroup:'',defaultAudio:false,...extra})}
   if(platform==='youtube'){
-   const player=video.closest('#movie_player') as HTMLElement&{getVideoData?:()=>unknown;getPlayerResponse?:()=>unknown}
+   const player=video.closest('#movie_player') as HTMLElement&{getVideoData?:()=>unknown;getPlayerResponse?:()=>unknown;getSphericalProperties?:()=>unknown}
    if(!player||player.classList.contains('ad-showing')||player.classList.contains('ad-interrupting'))continue
    const data=record(player.getVideoData?.()),response=record(player.getPlayerResponse?.()),details=record(response.videoDetails),status=record(response.playabilityStatus)
    if(data.video_id!==expected||details.videoId!==expected||status.status&&status.status!=='OK')continue
@@ -106,6 +133,10 @@ export function inspectPageVideoTargets(scope:VideoTargetScope={}):PageVideoTarg
    const streaming=record(response.streamingData)
    const formats=[...(Array.isArray(streaming.formats)?streaming.formats:[]),...(Array.isArray(streaming.adaptiveFormats)?streaming.adaptiveFormats:[])]
    if(formats.length>160)continue
+   // Use the actual same-player projection witness, never a title keyword.
+   // Missing evidence remains unknown; an ordinary 16:9 frame proves nothing.
+   let spherical:Record<string,unknown>={};try{spherical=record(player.getSphericalProperties?.())}catch{/* Unsupported player method is unknown. */}
+   requiresProjection=['yaw','pitch','roll','fov'].some(key=>typeof spherical[key]==='number'&&Number.isFinite(spherical[key]))||formats.some(raw=>['EQUIRECTANGULAR','MESH'].includes(String(record(raw).projectionType)))
    for(const raw of formats){const f=record(raw),url=address(f.url);if(!url)continue;const u=new URL(url)
     if(u.protocol!=='https:'||!u.hostname.endsWith('.googlevideo.com')||u.pathname!=='/videoplayback'||u.searchParams.has('range')||!u.searchParams.get('itag')||u.searchParams.get('source')&&u.searchParams.get('source')!=='youtube')continue
     if(f.itag!==undefined&&String(f.itag)!==u.searchParams.get('itag'))continue
@@ -146,7 +177,7 @@ export function inspectPageVideoTargets(scope:VideoTargetScope={}):PageVideoTarg
    for(const s of video.querySelectorAll('source[src]'))add((s as HTMLSourceElement).src,/\.m3u8(?:\?|$)/.test((s as HTMLSourceElement).src)?'hls':'muxed')
   }
   if(!resourceId)continue
-  result.targets.push({identity:{version:1,platform,targetId:expected,resourceId},playerUrl,videoIndex:allVideos.indexOf(video),durationSeconds:seconds,resources})
+  result.targets.push({identity:{version:1,platform,targetId:expected,resourceId},playerUrl,videoIndex:allVideos.indexOf(video),durationSeconds:seconds,resources,...(requiresProjection?{requiresProjection:true as const}:{})})
  }
  if(platform==='page')for(const source of [...(root instanceof HTMLSourceElement?[root]:root.querySelectorAll('source[src]'))].slice(0,64)){
   if(source.closest('video')||!source.parentElement||!visible(source.parentElement)||excluded.some(s=>source.closest(s)))continue

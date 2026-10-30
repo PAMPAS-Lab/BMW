@@ -1,4 +1,4 @@
-import {prepareVideoCapture,advanceYoutubePlayer} from './video-capture-ready.js'
+import {prepareVideoCapture,advanceYoutubePlayer,capturePreparationPolicy} from './video-capture-ready.js'
 import type {CapturePlayerState} from './video-capture-ready.js'
 import {acquireVideoDelivery} from './video-acquisition.js'
 import {textReadSummary,TextReadPageReader} from './text-read-pages.js'
@@ -8,8 +8,9 @@ import {collectPageSource} from './collect-page-source.js'
 import {prepareSourceScreenshot} from './source-screenshot.js'
 import {collectionPageReadyExpression,assertCollectionPageReady} from './collection-page-ready.js'
 import type {CollectionPageReady} from './collection-page-ready.js'
-import {navigatePage,closeNavigationPage,withNativePageRead} from './page-navigation.js'
-import {sameVideoIdentity,resourceBelongsToTarget,selectVideoCaptureTarget} from '@bmw-agent/agent-contract/video-identity'
+import {navigatePage,closeNavigationPage,withNativePageRead,observeNativePageLoad} from './page-navigation.js'
+import type {NavigationTrace} from './page-navigation.js'
+import {sameVideoIdentity,sameVideoSourcePage,resourceBelongsToTarget,selectVideoCaptureTarget} from '@bmw-agent/agent-contract/video-identity'
 import type {SourceCollection,ProjectSourcePort,SourceCaptureGuard,VideoTargetScope,TextReadDiagnostic,TextReadBatch,TextReadRow} from '@bmw-agent/media-native/sources'
 import {readVideoTargets,prepareVideoTransfer} from './video-target.js'
 import {registerYoutubeSabrPage,bindYoutubeSabrPage} from './youtube-sabr-observation.js'
@@ -20,6 +21,8 @@ import {PageRecordingEvents} from './page-recording-events.js'
 import { readRendererPhase } from './renderer-read.js'
 import { readScreenshotPhase } from './screenshot-read.js'
 import { SessionOperations } from './session-operations.js'
+import {YoutubeWorkTabs,youtubeWatchAddress,youtubeNativePageTheme} from './youtube-worktabs.js'
+import {switchYoutubeVideo,youtubeNavigationSurfaceReady,primeYoutubePlayback} from './youtube-switch.js'
 import fs from 'node:fs'
 import path from 'node:path'
 import { nativeImage, WebContentsView, BrowserWindow, net } from 'electron'
@@ -36,7 +39,7 @@ import type {ActiveProject} from './browser-host.js'
 
 const PROJECT_BLANK_URL = 'about:blank'
 function diagnosticUrl(raw:unknown):string{try{const url=new URL(String(raw));return ['https:','http:'].includes(url.protocol)?url.origin+url.pathname:''}catch{return ''}}
-interface NavigationTab {id:string;projectId:string|null;view:WebContentsView;source?:string}
+interface NavigationTab {id:string;projectId:string|null;view:WebContentsView;source?:string;youtubeNavigation?:{method:string;elapsedMs:number;retainedDocument:boolean;switchMs?:number;bootstrapReady?:boolean;budgetMs?:number;activationMs?:number}}
 const SEMANTIC_CLASS_STATES = Object.freeze([
   'unread',
   'read',
@@ -72,10 +75,14 @@ function safeFilename(value) {
 export class BrowserKernel {
   [key: string]: any
   readonly detached:boolean
+  private readonly residentYoutubeEnabled:boolean
+  private readonly youtubeWorktabs=new YoutubeWorkTabs()
+  private readonly pendingNativeTheme=new WeakMap<import('electron').WebContents,boolean>()
   beforeUserTask?:(input:unknown)=>void|Promise<void>
 
-  constructor({ detached = false, window, session, permissionStore, sessionContinuity, projectStore, settingsStore, capabilityRegistry, allowedActions, artifactsDirectory, pageTheme = 'dark', onState, getCurrentSessionId = () => null, getSessionDriver = (_sessionId:string):string => {throw new Error('An explicit BMW Session driver is required')} }) {
+  constructor({ detached = false, youtubeWorktabsEnabled = !detached, window, session, permissionStore, sessionContinuity, projectStore, settingsStore, capabilityRegistry, allowedActions, artifactsDirectory, pageTheme = 'dark', onState, getCurrentSessionId = () => null, getSessionDriver = (_sessionId:string):string => {throw new Error('An explicit BMW Session driver is required')} }) {
     this.detached = detached
+    this.residentYoutubeEnabled=youtubeWorktabsEnabled
     if(detached)this.browserVisible=false
     this.getCurrentSessionId = getCurrentSessionId
     this.getSessionDriver = getSessionDriver
@@ -204,7 +211,7 @@ export class BrowserKernel {
       if(this.detached)return {action:'deny'}
       // Popups opened by research pages share their disposable ownership and FIFO.
       // A page event must not create unbounded, falsely user-owned renderers.
-      void this.operations.run(()=>{if(this.projectStore&&this.projectStore.active().id!==tab.projectId)throw new Error('Popup Project changed.')},()=>this.openTab({url,foreground:false,source:tab.source==='agent'?'agent':'page',reuse:false},undefined,undefined,true).then(result=>{this.popupParents.set(result.id,tab.id);this.emitState();return result})).catch(error=>this.#addDiagnostic(tab.id,'loadFailures',{message:error instanceof Error?error.message:String(error),at:Date.now()}))
+      void this.operations.run(()=>{if(this.projectStore&&this.projectStore.active().id!==tab.projectId)throw new Error('Popup Project changed.')},()=>this.openTabInTask({url,foreground:false,source:tab.source==='agent'?'agent':'page',reuse:false},undefined,undefined,true).then(result=>{this.popupParents.set(result.id,tab.id);this.emitState();return result})).catch(error=>this.#addDiagnostic(tab.id,'loadFailures',{message:error instanceof Error?error.message:String(error),at:Date.now()}))
       return { action: 'deny' }
     })
   }
@@ -223,32 +230,73 @@ export class BrowserKernel {
   private collectionHTTPStatus=0
   private collectionNavigationTimeoutMs=25000
   private readonly navigationQuarantine=new Set<string>()
+  // Retain the native handle: Electron may clear view.webContents after close.
+  // isDestroyed() on this owned handle remains valid for cleanup recovery.
+  private readonly tabContents=new Map<string,import('electron').WebContents>()
   private dropNavigationTab(tab:NavigationTab):void{
     if(!this.tabs.has(tab.id))return
     if(!this.window.isDestroyed()&&this.window.contentView.children.includes(tab.view))this.window.contentView.removeChildView(tab.view)
-    this.popupParents.delete(tab.id);this.tabs.delete(tab.id);this.deferredNavigation.delete(tab.id);this.diagnostics.delete(tab.id);this.navigationQuarantine.delete(tab.id)
-    if(this.activeTabId===tab.id){this.activeTabId=null;const next=[...this.tabs.values()].find((t:NavigationTab)=>t.projectId===tab.projectId&&!t.view.webContents.isDestroyed());if(next)void this.showTab(next.id).catch(error=>this.#addDiagnostic(next.id,'media',{message:String(error),at:Date.now()}))}
+    this.youtubeWorktabs.forget(tab.id);this.popupParents.delete(tab.id);this.tabs.delete(tab.id);this.tabContents.delete(tab.id);this.deferredNavigation.delete(tab.id);this.diagnostics.delete(tab.id);this.navigationQuarantine.delete(tab.id)
+    if(this.activeTabId===tab.id){this.activeTabId=null;const next=[...this.tabs.values()].find((t:NavigationTab)=>{const contents=this.tabContents.get(t.id)??t.view.webContents;return t.projectId===tab.projectId&&!!contents&&!contents.isDestroyed()});if(next)void this.showTab(next.id).catch(error=>this.#addDiagnostic(next.id,'media',{message:String(error),at:Date.now()}))}
     this.emitState();this.scheduleTabStateSave()
   }
-  private async navigateTab(tab:NavigationTab,url:string,signal?:AbortSignal,timeoutMs=this.collectionNavigationTimeoutMs):Promise<void>{
+  private async navigateTab(tab:NavigationTab,url:string,signal?:AbortSignal,timeoutMs=this.collectionNavigationTimeoutMs,preferInPage=false):Promise<void>{
+    const wc=this.tabContents.get(tab.id)??tab.view.webContents
+    if(!wc||wc.isDestroyed()){this.dropNavigationTab(tab);throw new Error('BMW_BROWSER_TAB_CLOSED: The requested page has closed; list current tabs before continuing.')}
+    this.pendingNativeTheme.set(wc,youtubeNativePageTheme(url))
+    const navigationStarted=performance.now()
     this.deferredNavigation.delete(tab.id)
-    if(!tab.view.webContents.getURL())await navigatePage(tab.view.webContents,PROJECT_BLANK_URL,signal,3000,3000,tab.source==='agent')
-    await readRendererPhase(tab.view.webContents,'page.diagnostics','network-observer',()=>this.#applyPageTheme(tab),signal,2000)
+    if(!wc.getURL())await navigatePage(wc,PROJECT_BLANK_URL,signal,3000,3000,tab.source==='agent')
+    await readRendererPhase(wc,'page.diagnostics','network-observer',()=>this.#applyPageTheme(tab),signal,2000)
     const scope=this.collectionBodyScope??{bodySelector:'body'}
-    let previous='',quietSince=0;const ready=async()=>{const value=await readRendererPhase<CollectionPageReady>(tab.view.webContents,'collection.pages','navigation-ready',async()=>assertCollectionPageReady(await tab.view.webContents.mainFrame.executeJavaScript(collectionPageReadyExpression(scope),true)),signal,1500);if(!sameCollectionNavigation(url,value.url)||(!value.ready&&!value.restricted)){previous='';return false}if(value.restricted||[401,403,429].includes(this.collectionHTTPStatus)){this.collectionRestricted=true;return true}if(value.text!==previous){previous=value.text;quietSince=Date.now();return false}return Date.now()-quietSince>=250}
+    let previous='',quietSince=0;const ready=async()=>{const value=await readRendererPhase<CollectionPageReady>(wc,'collection.pages','navigation-ready',async()=>assertCollectionPageReady(await wc.mainFrame.executeJavaScript(collectionPageReadyExpression(scope),true)),signal,1500);if(!sameCollectionNavigation(url,value.url)||(!value.ready&&!value.restricted)){previous='';return false}if(value.restricted||[401,403,429].includes(this.collectionHTTPStatus)){this.collectionRestricted=true;return true}if(value.text!==previous){previous=value.text;quietSince=Date.now();return false}return Date.now()-quietSince>=250}
     const videoAddress=new URL(url),youtubeTarget=['youtube.com','www.youtube.com','m.youtube.com'].includes(videoAddress.hostname)?videoAddress.searchParams.get('v'):null
-    const playerDeadline=Date.now()+45000
+    const resident=this.youtubeWorktabs.owns(tab.id)
+    const coldBootstrap=!!(youtubeTarget&&resident&&!tab.youtubeNavigation?.bootstrapReady)
+    const playerBudget=coldBootstrap?180000:90000
+    const playerDeadline=Date.now()+playerBudget
     let lastPlayerState='waiting',playerReadStarted=false
     const videoReady=youtubeTarget?async()=>{
       playerReadStarted=true
-      lastPlayerState=await readRendererPhase<ReturnType<typeof advanceYoutubePlayer>>(tab.view.webContents,'navigate','youtube-player-ready',async()=>{const value=await tab.view.webContents.mainFrame.executeJavaScript(`(${advanceYoutubePlayer.toString()})(${JSON.stringify(youtubeTarget)})`,true);if(value!=='ready'&&value!=='advertisement'&&value!=='waiting'&&value!=='different-target')throw new Error('Invalid native player state.');return value},signal,1000)
+      lastPlayerState=await readRendererPhase<ReturnType<typeof advanceYoutubePlayer>>(wc,'navigate','youtube-player-ready',async()=>{const value=await wc.mainFrame.executeJavaScript(`(${advanceYoutubePlayer.toString()})(${JSON.stringify(youtubeTarget)})`,true);if(value!=='ready'&&value!=='advertisement'&&value!=='waiting'&&value!=='different-target')throw new Error('Invalid native player state.');return value},signal,1000)
       return lastPlayerState==='ready'
     }:undefined
+    const navigationSurfaceReady=()=>readRendererPhase<boolean>(wc,'navigate','youtube-navigation-surface',async()=>await wc.mainFrame.executeJavaScript(`(${youtubeNavigationSurfaceReady.toString()})()`,true)===true,signal,Math.min(1000,Math.max(1,playerDeadline-Date.now())))
+    // Visible server-rendered controls can precede their event handlers and
+    // verification scripts. Advance only the requested player while loading;
+    // a YouTube document completes naturally, never via an early stop.
+    const loadingVideoProbe=videoReady?async()=>{await videoReady();return false}:undefined
+    const requestedWatch=youtubeWatchAddress(url)
+    let mainGeneration=0,committedGeneration=0,lastMainUrl=''
+    const sameTargetContinuation=(raw:string)=>{const actual=youtubeWatchAddress(raw);return !!(requestedWatch?.simple&&actual?.simple&&actual.origin===requestedWatch.origin&&actual.videoId===requestedWatch.videoId)}
+    const started=(_event:unknown,next:string,inPlace:boolean,main:boolean)=>{if(main&&!inPlace){mainGeneration++;lastMainUrl=next;this.#addDiagnostic(tab.id,'network',{type:'main-navigation',url:diagnosticUrl(next),sameRequestedTarget:sameTargetContinuation(next),generation:mainGeneration,at:Date.now()})}}
+    const committed=()=>{committedGeneration=mainGeneration}
+    if(youtubeTarget&&resident){wc.on('did-start-navigation',started);wc.on('did-navigate',committed)}
+    const traceNavigation=(entry:NavigationTrace)=>this.#addDiagnostic(tab.id,'network',{type:'navigation',url:diagnosticUrl(url),...entry,document:this.documentTransfers.get(wc)?{status:this.documentTransfers.get(wc)!.status,receivedBytes:this.documentTransfers.get(wc)!.receivedBytes,completed:this.documentTransfers.get(wc)!.completed,failed:this.documentTransfers.get(wc)!.failed}:null,playerState:lastPlayerState,at:Date.now()})
     // Advancing a normal ad is part of this bounded readiness phase. It must
     // survive the background pause policy without ever making the page audible.
     try{
       if(videoReady&&!this.collectionBodyScope){this.readinessPlaybackTabId=tab.id;await this.refreshPlayback(tab)}
-      await navigatePage(tab.view.webContents,url,signal,videoReady&&!this.collectionBodyScope?45000:timeoutMs,3000,tab.source==='agent',videoReady&&!this.collectionBodyScope?videoReady:this.collectionBodyScope&&!['x.com','twitter.com'].includes(new URL(url).hostname.replace(/^www\./,''))?ready:undefined,entry=>this.#addDiagnostic(tab.id,'network',{type:'navigation',url:diagnosticUrl(url),...entry,at:Date.now()}))
+      this.#addDiagnostic(tab.id,'network',{type:'navigation-start',url:diagnosticUrl(url),budgetMs:videoReady&&!this.collectionBodyScope?playerBudget:timeoutMs,at:Date.now()})
+      let switched=false,method=preferInPage?'reload-fallback':'cold',retainedDocument=false,switchMs=0
+      if(preferInPage&&videoReady&&!this.collectionBodyScope){
+        playerReadStarted=true
+        try{const result=await switchYoutubeVideo(wc,url,signal??new AbortController().signal);switchMs=result.elapsedMs;switched=result.method!=='unavailable';if(switched){method=result.method;retainedDocument=result.retainedDocument}this.#addDiagnostic(tab.id,'network',{type:'youtube-switch',...result,at:Date.now()})}
+        catch(error){signal?.throwIfAborted();this.#addDiagnostic(tab.id,'network',{type:'youtube-switch',method:'unavailable',errorCode:error instanceof Error&&'code'in error?String(error.code):'SWITCH_FAILED',at:Date.now()})}
+      }
+      if(!switched){
+        const remaining=videoReady&&!this.collectionBodyScope?playerDeadline-Date.now():timeoutMs
+        if(remaining<=0)throw new Error('YOUTUBE_PLAYER_NOT_READY: Switch exhausted the bounded navigation budget.')
+        try{await navigatePage(wc,url,signal,remaining,3000,tab.source==='agent',videoReady&&!this.collectionBodyScope?loadingVideoProbe:this.collectionBodyScope&&!['x.com','twitter.com'].includes(new URL(url).hostname.replace(/^www\./,''))?ready:undefined,traceNavigation)}
+        catch(error){
+          signal?.throwIfAborted()
+          if(!resident||!videoReady||this.collectionBodyScope||!(error instanceof Error)||!('code'in error)||error.code!=='ERR_ABORTED'||mainGeneration<2||!sameTargetContinuation(lastMainUrl))throw error
+          const continuationReady=()=>{if(!sameTargetContinuation(lastMainUrl))throw new Error('VIDEO_IDENTITY_CHANGED: Site continuation left the requested YouTube target.');return committedGeneration===mainGeneration}
+          this.#addDiagnostic(tab.id,'network',{type:'navigation-continuation',generation:mainGeneration,remainingMs:Math.max(0,playerDeadline-Date.now()),at:Date.now()})
+          if(playerDeadline<=Date.now())throw error
+          await navigatePage(wc,url,signal,playerDeadline-Date.now(),3000,true,async()=>{if(continuationReady())await videoReady();return false},traceNavigation,()=>observeNativePageLoad(wc,continuationReady))
+        }
+      }
       // loadURL may finish before an ad does. Keep the same bounded readiness
       // phase instead of returning an apparently ready advertising player.
       if(videoReady&&!this.collectionBodyScope)while(!await videoReady()){
@@ -257,28 +305,62 @@ export class BrowserKernel {
         if(Date.now()>=playerDeadline)throw new Error('YOUTUBE_PLAYER_NOT_READY: '+lastPlayerState+'; no source was admitted.')
         await new Promise<void>(resolve=>setTimeout(resolve,200))
       }
-    }catch(error){if(tab.view.webContents.isDestroyed())this.dropNavigationTab(tab);else if(error instanceof Error&&'code'in error&&error.code==='BMW_BROWSER_NAVIGATION_CLEANUP_FAILED')this.navigationQuarantine.add(tab.id);throw error}
+      if(resident&&videoReady&&!switched&&!this.collectionBodyScope){
+        const shellDeadline=Math.min(playerDeadline,Date.now()+5000);let surfaceReady=await navigationSurfaceReady()
+        while(!surfaceReady&&Date.now()<shellDeadline){signal?.throwIfAborted();await new Promise<void>(resolve=>setTimeout(resolve,150));surfaceReady=await navigationSurfaceReady()}
+        this.#addDiagnostic(tab.id,'network',{type:'youtube-navigation-surface',ready:surfaceReady,at:Date.now()})
+      }
+      let activationMs:number|undefined
+      if(resident&&requestedWatch?.simple&&videoReady&&!switched&&!this.collectionBodyScope&&await navigationSurfaceReady()){
+        const remaining=Math.min(30000,playerDeadline-Date.now());if(remaining<=0)throw new Error('YOUTUBE_PLAYER_NOT_READY: Document initialization exhausted its deadline.')
+        // Each full document may have consumed only a cold-start
+        // verification request. Re-enter the same video through actual site UI
+        // before binding this job to the current actual playback session.
+        const activation=await switchYoutubeVideo(wc,url,signal??new AbortController().signal,remaining,true)
+        this.#addDiagnostic(tab.id,'network',{type:'youtube-bootstrap-activation',...activation,at:Date.now()})
+        if(activation.method==='unavailable')throw new Error('YOUTUBE_PLAYER_ACTIVATION: The initialized site did not activate the requested video.')
+        activationMs=activation.elapsedMs
+        while(!await videoReady!()){signal?.throwIfAborted();if(lastPlayerState==='different-target'||Date.now()>=playerDeadline)throw new Error('VIDEO_IDENTITY_CHANGED: The initialized player did not retain the requested target.');await new Promise<void>(resolve=>setTimeout(resolve,150))}
+        const primed=await readRendererPhase<ReturnType<typeof primeYoutubePlayback>>(wc,'navigate','youtube-verification-playback',async()=>await wc.mainFrame.executeJavaScript(`(${primeYoutubePlayback.toString()})(${JSON.stringify(youtubeTarget)})`,true) as ReturnType<typeof primeYoutubePlayback>,signal,2000)
+        this.#addDiagnostic(tab.id,'network',{type:'youtube-verification-playback',...primed,at:Date.now()})
+        if(primed.state==='different-target')throw new Error('VIDEO_IDENTITY_CHANGED: The requested player changed before verification playback.')
+        if(primed.state==='playing'){const until=Math.min(playerDeadline,Date.now()+3000);while(Date.now()<until){signal?.throwIfAborted();await videoReady!();if(lastPlayerState==='different-target')throw new Error('VIDEO_IDENTITY_CHANGED: Verification playback left the requested target.');await new Promise<void>(resolve=>setTimeout(resolve,150))}}
+        while(!await videoReady!()){signal?.throwIfAborted();if(lastPlayerState==='different-target'||Date.now()>=playerDeadline)throw new Error('YOUTUBE_PLAYER_NOT_READY: Original playback did not become ready after initialization.');await new Promise<void>(resolve=>setTimeout(resolve,150))}
+      }
+      if(youtubeTarget)tab.youtubeNavigation={method,elapsedMs:Math.round(performance.now()-navigationStarted),retainedDocument,...(preferInPage?{switchMs}:{}),...(resident?{bootstrapReady:await navigationSurfaceReady(),budgetMs:playerBudget}:{}),...(activationMs===undefined?{}:{activationMs})}
+    }catch(error){if(wc.isDestroyed())this.dropNavigationTab(tab);else if(error instanceof Error&&'code'in error&&error.code==='BMW_BROWSER_NAVIGATION_CLEANUP_FAILED')this.navigationQuarantine.add(tab.id);throw error}
     finally{
-      try{if(playerReadStarted&&!tab.view.webContents.isDestroyed()){
-        try{await readRendererPhase(tab.view.webContents,'navigate','pause-youtube-player',()=>tab.view.webContents.mainFrame.executeJavaScript(`(()=>{const p=document.getElementById('movie_player'),v=p?.querySelector('video');if(v){v.pause();return v.paused===true}return true})()`,true).then(paused=>{if(paused!==true)throw new Error('Player did not pause.')}),undefined,3000)}
+      this.pendingNativeTheme.delete(wc)
+      wc.removeListener('did-start-navigation',started);wc.removeListener('did-navigate',committed)
+      try{if(playerReadStarted&&!wc.isDestroyed()){
+        try{await readRendererPhase(wc,'navigate','pause-youtube-player',()=>wc.mainFrame.executeJavaScript(`(()=>{const p=document.getElementById('movie_player'),v=p?.querySelector('video');if(v){v.pause();return v.paused===true}return true})()`,true).then(paused=>{if(paused!==true)throw new Error('Player did not pause.')}),undefined,3000)}
         catch(error){this.navigationQuarantine.add(tab.id);throw new Error('MEDIA_CAPTURE_CLEANUP_FAILED: YouTube readiness playback could not be paused.',{cause:error})}
       }}finally{if(this.readinessPlaybackTabId===tab.id){
         this.readinessPlaybackTabId=null
-        if(!tab.view.webContents.isDestroyed()){
+        if(!wc.isDestroyed()){
           // The exception only owned the main player. Revoke it and verify its
           // pause independently of unrelated frames which were never allowed.
-          try{await this.playback.update(tab.view.webContents,this.playbackAllowed(tab),true,true,true)}catch(error){this.navigationQuarantine.add(tab.id);throw new Error('MEDIA_CAPTURE_CLEANUP_FAILED: Readiness main-player policy could not be restored.',{cause:error})}
+          try{await this.playback.update(wc,this.playbackAllowed(tab),true,true,true)}catch(error){this.navigationQuarantine.add(tab.id);throw new Error('MEDIA_CAPTURE_CLEANUP_FAILED: Readiness main-player policy could not be restored.',{cause:error})}
           await this.applyPlayback(tab,this.playbackAllowed(tab),true)
         }
       }}
     }
   }
-  async openTab({ url, foreground = false, source = 'agent', reuse = true }: { url?: unknown; foreground?: boolean; source?: string; reuse?: boolean } = {},signal?:AbortSignal,navigationTimeoutMs?:number,deferNavigation=false) {
+  async openTab(options: {url?:unknown;foreground?:boolean;source?:string;reuse?:boolean}={},signal?:AbortSignal,navigationTimeoutMs?:number,deferNavigation=false){
+    const projectId=this.projectStore?.active().id
+    return this.operations.run(()=>{signal?.throwIfAborted();if(projectId!==this.projectStore?.active().id)throw new Error('YOUTUBE_WORKTAB_PROJECT_CHANGED: Project changed while the request was queued.')},()=>this.runYoutubeQueue(projectId,()=>this.openTabInTask(options,signal,navigationTimeoutMs,deferNavigation),signal))
+  }
+  private async openTabInTask(options: {url?:unknown;foreground?:boolean;source?:string;reuse?:boolean}={},signal?:AbortSignal,navigationTimeoutMs?:number,deferNavigation=false){
+    const target=youtubeWatchAddress(normalizeUrl(options.url,this.settingsStore)),projectId=this.projectStore?.active().id
+    if(this.residentYoutubeEnabled&&projectId&&target&&(options.source??'agent')==='agent'&&!deferNavigation)return this.openYoutubeWorkTab(target.url,options.foreground??false,signal)
+    return this.openPageTab(options,signal,navigationTimeoutMs,deferNavigation)
+  }
+  private async openPageTab({ url, foreground = false, source = 'agent', reuse = true }: { url?: unknown; foreground?: boolean; source?: string; reuse?: boolean } = {},signal?:AbortSignal,navigationTimeoutMs?:number,deferNavigation=false,resident=false) {
     if(this.navigationQuarantine.size)throw new Error('BMW_BROWSER_NAVIGATION_QUARANTINED: Explicit close recovery is required.')
     const projectId = this.projectStore?.active().id || null
     const targetUrl = normalizeUrl(url, this.settingsStore)
     if (source === 'agent') {
-      const reusable = reusableTab([...this.tabs.values()], { projectId, targetUrl, reuse })
+      const reusable = reusableTab([...this.tabs.values()].filter(tab=>{const contents=this.tabContents.get(tab.id)??tab.view.webContents;return !this.youtubeWorktabs.owns(tab.id)&&!!contents&&!contents.isDestroyed()}), { projectId, targetUrl, reuse })
       if (reusable) {
         reusable.tab.lastUsedAt = Date.now()
         if (reusable.navigate) await this.navigateTab(reusable.tab,targetUrl,signal)
@@ -316,6 +398,9 @@ export class BrowserKernel {
       lastUsedAt: Date.now()
     }
     this.tabs.set(id, tab)
+    this.tabContents.set(id,view.webContents)
+    if(resident&&projectId)this.youtubeWorktabs.assign(projectId,id)
+    view.webContents.once('destroyed',()=>this.youtubeWorktabs.forget(id))
     if(this.detached){const contents=view.webContents;this.offscreenPaintFrames.set(contents,0);contents.on('paint',()=>{if(!contents.isDestroyed())this.offscreenPaintFrames.set(contents,(this.offscreenPaintFrames.get(contents)??0)+1)});contents.setFrameRate(10)}
     if(deferNavigation){this.deferredNavigation.set(id,targetUrl);tab.loading=false;tab.title=targetUrl}
     this.#wireTab(tab)
@@ -328,19 +413,51 @@ export class BrowserKernel {
     return { ...this.serializeTab(tab), reused: false }
   }
 
+  private runYoutubeQueue<T>(projectId:string|undefined,work:()=>Promise<T>,signal?:AbortSignal):Promise<T>{
+    if(!this.residentYoutubeEnabled||!projectId)return work()
+    return this.youtubeWorktabs.run(projectId,()=>{signal?.throwIfAborted();if(this.projectStore?.active().id!==projectId)throw new Error('YOUTUBE_WORKTAB_PROJECT_CHANGED: Project changed while the video task was queued.')},work)
+  }
+  private async openYoutubeWorkTab(url:string,foreground:boolean,signal?:AbortSignal,preferred?:NavigationTab){
+    if(this.navigationQuarantine.size)throw new Error('BMW_BROWSER_NAVIGATION_QUARANTINED: Explicit close recovery is required.')
+    if(this.recordingController?.isCaptureActive?.())throw new Error('MEDIA_CAPTURE_ACTIVE: Finish media cleanup before navigating the YouTube work tab.')
+    const projectId=this.projectStore.active().id
+    const residentId=this.youtubeWorktabs.get(projectId)
+    let tab=residentId?this.tabs.get(residentId) as NavigationTab|undefined:undefined
+    if(tab&&(tab.projectId!==projectId||tab.source!=='agent'||tab.view.webContents.isDestroyed()||!youtubeWatchAddress(tab.view.webContents.getURL()))){this.youtubeWorktabs.forget(tab.id);tab=undefined}
+    if(!tab){
+      tab=preferred?.projectId===projectId&&preferred.source==='agent'&&['','about:blank'].includes(preferred.view.webContents.getURL())?preferred:undefined
+      if(!tab)tab=[...this.tabs.values()].filter(candidate=>candidate.projectId===projectId&&candidate.source==='agent'&&youtubeWatchAddress(candidate.view.webContents.getURL())).sort((a,b)=>Number(b.lastUsedAt||0)-Number(a.lastUsedAt||0))[0]
+      if(tab)this.youtubeWorktabs.assign(projectId,tab.id)
+    }
+    try{
+      if(tab){await this.navigateTab(tab,url,signal,undefined,!!youtubeWatchAddress(tab.view.webContents.getURL()));if(foreground)await this.showTab(tab.id);else this.emitState();return {...this.serializeTab(tab),reused:true,reuseReason:'youtube-worktab'}}
+      return await this.openPageTab({url,foreground,source:'agent',reuse:false},signal,undefined,false,true)
+    }catch(error){const failedId=this.youtubeWorktabs.get(projectId),failed=tab??(failedId?this.tabs.get(failedId):undefined);if(failed){if(error instanceof Error)Object.assign(error,{youtubeNavigation:this.diagnosticsFor(failed.id).network.filter((entry:{type?:string})=>['navigation','navigation-start','main-navigation','navigation-continuation','youtube-bootstrap-activation','youtube-switch','youtube-navigation-surface'].includes(entry.type??'')).slice(-10)});if(!this.navigationQuarantine.has(failed.id)){if(failed.view.webContents.isDestroyed())this.dropNavigationTab(failed);else await this.destroyTab(failed)}}throw error}
+  }
+  /** Trusted native callers can hold navigation, acquisition and verification
+   * in one Project/FIFO lease. Callback work uses native hooks, not execute(). */
+  async withYoutubeWorkTab<T>(url:string,work:(tab:{id:string;url:string;youtubeNavigation?:NavigationTab['youtubeNavigation']})=>Promise<T>,signal?:AbortSignal):Promise<T>{
+    if(!youtubeWatchAddress(url))throw new Error('YOUTUBE_WORKTAB_URL: A concrete HTTPS YouTube watch URL is required.')
+    const projectId=this.projectStore.active().id
+    return this.operations.run(()=>{signal?.throwIfAborted();if(this.projectStore.active().id!==projectId)throw new Error('YOUTUBE_WORKTAB_PROJECT_CHANGED: Project changed while the job was queued.')},()=>this.runYoutubeQueue(projectId,async()=>{const tab=await this.openTabInTask({url,foreground:true,source:'agent',reuse:false},signal);return work(tab)},signal))
+  }
+
   async #applyPageTheme(tab) {
     const wc = tab?.view?.webContents
     if (!wc || wc.isDestroyed()) return
     const dark = this.pageTheme === 'dark'
+    const nativeTheme=this.pendingNativeTheme.get(wc)??youtubeNativePageTheme(wc.getURL())
     try {
       tab.view.setBackgroundColor(dark ? '#0a0d12' : '#ffffff')
       if (!wc.debugger.isAttached()) wc.debugger.attach('1.3')
       if (!tab.debuggerWired) {
         tab.debuggerWired = true
+        let mainFrameId:string|undefined
         const requests=new Map<string,{url:string;resourceType:string}>();this.networkRequests.set(wc,requests)
         wc.debugger.on('message', (_event, method, params) => {
           const requestId=String(params?.requestId??'')
-          if(method==='Network.requestWillBeSent'&&params?.type==='Document'&&requestId)this.documentTransfers.set(wc,{requestId,url:diagnosticUrl(params?.request?.url),status:0,receivedBytes:0,lastDataAt:0,completed:false,failed:false})
+          if(method==='Page.frameNavigated'&&!params?.frame?.parentId&&typeof params?.frame?.id==='string')mainFrameId=params.frame.id
+          if(method==='Network.requestWillBeSent'&&params?.type==='Document'&&requestId&&mainFrameId&&params?.frameId===mainFrameId)this.documentTransfers.set(wc,{requestId,url:diagnosticUrl(params?.request?.url),status:0,receivedBytes:0,lastDataAt:0,completed:false,failed:false})
           const transfer=this.documentTransfers.get(wc)
           if(transfer?.requestId===requestId){
             if(method==='Network.responseReceived')transfer.status=Number(params?.response?.status??0)
@@ -368,16 +485,19 @@ export class BrowserKernel {
             }
           }
         })
+        await wc.debugger.sendCommand('Page.enable').catch(() => {})
+        const tree=await wc.debugger.sendCommand('Page.getFrameTree').catch(()=>undefined),id=tree?.frameTree?.frame?.id
+        if(typeof id==='string'&&id.length<=128)mainFrameId=id
         await wc.debugger.sendCommand('Network.enable').catch(() => {})
       }
       await wc.debugger.sendCommand('Emulation.setEmulatedMedia', {
         media: '',
-        features: [{ name: 'prefers-color-scheme', value: this.pageTheme }]
+        features: nativeTheme?[]:[{ name: 'prefers-color-scheme', value: this.pageTheme }]
       })
       await wc.debugger.sendCommand('Emulation.setDefaultBackgroundColorOverride', {
         color: dark ? { r: 10, g: 13, b: 18, a: 1 } : { r: 255, g: 255, b: 255, a: 1 }
       })
-      await wc.debugger.sendCommand('Emulation.setAutoDarkModeOverride', { enabled: dark }).catch(() => {})
+      await wc.debugger.sendCommand('Emulation.setAutoDarkModeOverride', { enabled: dark&&!nativeTheme }).catch(() => {})
     } catch (error) {
       console.error(`Failed to apply BMW page theme to ${tab.url || 'new tab'}`, error)
     }
@@ -393,7 +513,8 @@ export class BrowserKernel {
     const stale = agentTabsToClose([...this.tabs.values()], {
       projectId,
       activeTabId: this.activeTabId,
-      keepTabId
+      keepTabId,
+      protectedTabIds:[...this.tabs.keys()].filter(id=>this.youtubeWorktabs.owns(id))
     })
     for (const tab of stale) await this.closeTab(tab.id)
   }
@@ -424,9 +545,9 @@ export class BrowserKernel {
   }
 
   private async destroyTab(tab:NavigationTab):Promise<void>{
-    try{await closeNavigationPage(tab.view.webContents)}catch(error){this.navigationQuarantine.add(tab.id);throw error}
+    try{const contents=this.tabContents.get(tab.id)??tab.view.webContents;if(!contents)throw new Error('BMW_BROWSER_TAB_HANDLE_MISSING: Native page cleanup cannot be verified.');await closeNavigationPage(contents)}catch(error){this.navigationQuarantine.add(tab.id);throw error}
     if(!this.window.isDestroyed()&&this.window.contentView.children.includes(tab.view))this.window.contentView.removeChildView(tab.view)
-    this.popupParents.delete(tab.id);this.tabs.delete(tab.id);this.deferredNavigation.delete(tab.id);this.diagnostics.delete(tab.id);this.navigationQuarantine.delete(tab.id)
+    this.youtubeWorktabs.forget(tab.id);this.popupParents.delete(tab.id);this.tabs.delete(tab.id);this.tabContents.delete(tab.id);this.deferredNavigation.delete(tab.id);this.diagnostics.delete(tab.id);this.navigationQuarantine.delete(tab.id)
     if(this.activeTabId===tab.id)this.activeTabId=null
   }
 
@@ -452,7 +573,7 @@ export class BrowserKernel {
     for(const tab of [...this.tabs.values()])await this.destroyTab(tab)
   }
   async closeTab(tabId) {
-    const tab = this.requireTab(tabId)
+    const tab = this.requireTab(tabId,true)
     if(this.recordingController?.isCaptureActive?.())throw new Error('Finish the current media job before closing a page.')
     const recovered=this.navigationQuarantine.has(tab.id)
     const wasActive = this.activeTabId === tabId
@@ -464,19 +585,21 @@ export class BrowserKernel {
         .filter((candidate) => !projectId || candidate.projectId === projectId)
         .sort((left, right) => Number(right.lastUsedAt || right.createdAt || 0) - Number(left.lastUsedAt || left.createdAt || 0))[0]
       if (next) await this.showTab(next.id)
-      else await this.openTab({ url: PROJECT_BLANK_URL, foreground: true, source: 'user' })
+      else await this.openPageTab({ url: PROJECT_BLANK_URL, foreground: true, source: 'user' })
     }
     this.emitState()
     this.scheduleTabStateSave()
     return { closed: tabId,...(recovered?{recovered:true}:{}) }
   }
 
-  requireTab(tabId) {
+  requireTab(tabId,allowClosed=false) {
     const resolved = tabId || this.activeTabId
     const tab = this.tabs.get(resolved)
     if (!tab) throw new Error(`Unknown tab: ${String(resolved)}`)
     const activeProjectId = this.projectStore?.active().id
     if (activeProjectId && tab.projectId !== activeProjectId) throw new Error('The requested tab belongs to another BMW project.')
+    const contents=this.tabContents.get(tab.id)??tab.view.webContents
+    if(!allowClosed&&(!contents||contents.isDestroyed())){if(this.navigationQuarantine.has(tab.id))throw new Error('BMW_BROWSER_NAVIGATION_QUARANTINED: Explicitly close the failed page before starting more work.');this.dropNavigationTab(tab);throw new Error('BMW_BROWSER_TAB_CLOSED: The requested page has closed; list current tabs before continuing.')}
     return tab
   }
 
@@ -490,6 +613,8 @@ export class BrowserKernel {
       active: tab.id === this.activeTabId,
       source: tab.source,
       projectId: tab.projectId,
+      ...(this.youtubeWorktabs.owns(tab.id)?{worktab:'youtube'}:{}),
+      ...(tab.youtubeNavigation?{youtubeNavigation:tab.youtubeNavigation}:{}),
       openerTabId:this.popupParents.get(tab.id)??null
     }
   }
@@ -556,15 +681,22 @@ export class BrowserKernel {
   }
 
   /** Called under the Host Project-transition lock, before changing the active owner.
-   * Save URLs/ownership first; only Agent renderers are released. User pages remain live. */
-  async releaseProjectResearchTabs():Promise<void>{
+   * Save ownership first; retain the paused YouTube worker until close/archive. */
+  async releaseProjectResearchTabs({keepYoutubeWorktab=true}:{keepYoutubeWorktab?:boolean}={}):Promise<void>{
     if(this.recordingController?.isCaptureActive?.())throw new Error('Finish the current media job before changing Projects.')
     const projectId=this.projectStore?.active().id
     if(!projectId)return
     this.saveTabState(projectId);clearTimeout(this.tabStateTimer);this.restoringTabState=true
-    try{for(const tab of [...this.tabs.values()].filter(tab=>tab.projectId===projectId))await this.applyPlayback(tab,false);for(const tab of [...this.tabs.values()].filter(tab=>tab.projectId===projectId&&tab.source==='agent'))await this.destroyTab(tab);this.suspendedResearchProjects.add(projectId)}
+    try{for(const tab of [...this.tabs.values()].filter(tab=>tab.projectId===projectId))await this.applyPlayback(tab,false);for(const tab of [...this.tabs.values()].filter(tab=>tab.projectId===projectId&&tab.source==='agent'&&(!keepYoutubeWorktab||!this.youtubeWorktabs.owns(tab.id))))await this.destroyTab(tab);this.suspendedResearchProjects.add(projectId)}
     catch(error){this.onState?.(this.state());throw error}
     finally{this.restoringTabState=false}
+  }
+
+  /** Trusted Host archive hook, under Project-transition exclusion. */
+  async closeProjectYoutubeWorktab(projectId:string):Promise<void>{
+    if(this.operations.busy||this.youtubeWorktabs.busy(projectId)||this.recordingController?.isCaptureActive?.())throw new Error('Finish the current browser/media job before archiving the Project.')
+    const id=this.youtubeWorktabs.get(projectId),tab=id?this.tabs.get(id) as NavigationTab|undefined:undefined
+    if(tab&&tab.projectId===projectId&&tab.source==='agent')await this.destroyTab(tab)
   }
 
   async switchProject(project) {
@@ -593,7 +725,8 @@ export class BrowserKernel {
   async execute(rawRequest, { actor = 'agent', signal, sessionOwner }: { actor?: string; signal?: AbortSignal; sessionOwner?:import('./browser-host.js').BrowserSessionOwner } = {}) {
     if(actor==='user')await this.beforeUserTask?.(rawRequest)
     const owner=sessionOwner?{projectId:sessionOwner.projectId,sessionId:sessionOwner.sessionId}:undefined
-    return this.operations.run(() => { signal?.throwIfAborted() }, () => this.executeAction(rawRequest, { actor, signal, sessionOwner:owner }))
+    const projectId=this.projectStore?.active().id
+    return this.operations.run(() => { signal?.throwIfAborted();if(projectId!==this.projectStore?.active().id)throw new Error('BMW_BROWSER_PROJECT_CHANGED: Project changed while the request was queued.') }, () => this.runYoutubeQueue(projectId,()=>this.executeAction(rawRequest, { actor, signal, sessionOwner:owner }),signal))
   }
 
   private async executeAction(rawRequest, { actor = 'agent', signal, sessionOwner }: { actor?: string; signal?: AbortSignal; sessionOwner?:import('./browser-host.js').BrowserSessionOwner } = {}) {
@@ -663,7 +796,7 @@ export class BrowserKernel {
       if (request.action === 'schedule.run') return this.scheduledTaskManager.runNow(project.id, taskId)
     }
     if (request.action === 'tabs.open') {
-      return this.openTab({
+      return this.openTabInTask({
         url: request.url,
         foreground: request.foreground === true,
         source: actor === 'user' ? 'user' : 'agent',
@@ -673,6 +806,7 @@ export class BrowserKernel {
     if(request.action==='pages.read'||request.action==='pages.discover')return this.readTextPages(request.urls as string[],signal,request.action==='pages.discover')
     if(request.action==='pages.read-result')return this.readTextPageResult(request,signal,sessionOwner)
     if (request.action === 'tabs.show') return this.showTab(targetTabId(request),signal)
+    if(request.action==='tabs.close'&&Array.isArray(request.tabIds)){const tabs=request.tabIds.map(id=>this.requireTab(id));if(tabs.some(tab=>tab.source!=='agent'))throw new Error('BMW_BROWSER_BATCH_AGENT_ONLY: Batch close preserves all user pages.');const closed:string[]=[];for(const tab of tabs){signal?.throwIfAborted();this.requireTab(tab.id);await this.closeTab(tab.id);closed.push(tab.id)}return {closed,state:this.state()}}
     if (request.action === 'tabs.close'){const id=targetTabId(request),tab=this.requireTab(id);if(this.navigationQuarantine.has(tab.id)&&tab.source!=='agent'&&actor!=='user')throw new Error('BMW_BROWSER_USER_RECOVERY_REQUIRED: Close the retained user page from BMW before continuing.');return this.closeTab(id)}
 
     if(request.action==='media.audio.preview'){
@@ -689,7 +823,11 @@ export class BrowserKernel {
     tab.lastUsedAt = Date.now()
     const wc = tab.view.webContents
     if (request.action === 'navigate') {
-      await this.navigateTab(tab,normalizeUrl(request.url, this.settingsStore),signal)
+      const url=normalizeUrl(request.url,this.settingsStore)
+      if(this.residentYoutubeEnabled&&actor==='agent'&&tab.source==='agent'&&youtubeWatchAddress(url))return this.openYoutubeWorkTab(url,tab.id===this.activeTabId,signal,tab)
+      if(actor==='agent'&&this.youtubeWorktabs.owns(tab.id))return this.openPageTab({url,source:'agent',foreground:tab.id===this.activeTabId,reuse:false},signal)
+      if(this.youtubeWorktabs.owns(tab.id))this.youtubeWorktabs.forget(tab.id)
+      await this.navigateTab(tab,url,signal)
       return this.serializeTab(tab)
     }
     await this.ensureTabLoaded(tab,signal)
@@ -833,7 +971,7 @@ export class BrowserKernel {
     const sourceTab=this.serializeTab(tab)
     if(result.newTab){
       if(this.projectStore.active().id!==tab.projectId)throw new Error('Click Project changed.')
-      const destinationTab=await this.openTab({url:result.href,foreground:true,source:tab.source==='agent'?'agent':'page',reuse:false})
+      const destinationTab=await this.openTabInTask({url:result.href,foreground:true,source:tab.source==='agent'?'agent':'page',reuse:false})
       this.popupParents.set(destinationTab.id,tab.id)
       return {...result,sourceTab,destinationTab:{...destinationTab,openerTabId:tab.id},navigation:'opened-target-tab'}
     }
@@ -887,11 +1025,11 @@ export class BrowserKernel {
   }
   async preserveSource(request:{url:string;pageUrl:string;tabId?:string;sourceGuard?:SourceCaptureGuard},signal?:AbortSignal):Promise<unknown>{
     const tab=this.requireTab(request.tabId),project=this.projectStore.active(),address=new URL(tab.view.webContents.getURL());address.hash=''
-    if(address.href!==request.pageUrl)throw new Error('Source page changed; return to the observed page before preserving media.')
+    if(!sameVideoSourcePage(request.pageUrl,address.href,request.sourceGuard?.videoIdentity))throw new Error('Source page changed; return to the observed page before preserving media.')
     const admission=await prepareVideoTransfer(tab.view.webContents,request.url,signal,request.sourceGuard)
     const selected=admission.target?.resources.find(r=>r.url===request.url)
     const sabr=selected?.role==='sabr'?await bindYoutubeSabrPage(tab.view.webContents,admission.target!,request.url,request.sourceGuard?.scope??{},signal):undefined
-    const guard=async(force=false)=>{signal?.throwIfAborted();if(this.projectStore.active().id!==project.id||!this.tabs.has(tab.id)||tab.view.webContents.isDestroyed()||new URL(tab.view.webContents.getURL()).href.split('#')[0]!==request.pageUrl)throw new Error('Source preservation page or Project changed.');await(force?admission.finish():admission.guard());await sabr?.check(force)}
+    const guard=async(force=false)=>{signal?.throwIfAborted();if(this.projectStore.active().id!==project.id||!this.tabs.has(tab.id)||tab.view.webContents.isDestroyed()||!sameVideoSourcePage(request.pageUrl,tab.view.webContents.getURL(),admission.videoIdentity))throw new Error('Source preservation page or Project changed.');await(force?admission.finish():admission.guard());await sabr?.check(force)}
     return {...await this.recordingController.preserveMedia({url:request.url,pageUrl:request.pageUrl,fetchImpl:await this.mediaFetchForTab(tab.id,signal),guard,signal,videoIdentity:admission.videoIdentity,...(sabr?{youtubeSabr:sabr.delivery,refreshYoutubeSabr:sabr.refresh}:{}),...(admission.audio?{separated:{audioUrl:admission.audio.url,audioDurationSeconds:admission.audio.durationSeconds,videoDurationSeconds:selected?.durationSeconds??admission.target!.durationSeconds!,videoIdentity:admission.videoIdentity!}}:{})}),tab:this.serializeTab(tab)}
   }
   async acquireSource(request:NonNullable<import('./browser-host.js').BrowserFeatureHost['acquireSource']> extends (request:infer R,...args:unknown[])=>unknown?R:never,signal?:AbortSignal){
@@ -907,26 +1045,26 @@ export class BrowserKernel {
       preserve:(url,jobSignal)=>this.preserveSource({url,pageUrl:request.sourceGuard.pageUrl,tabId:tab.id,sourceGuard:request.sourceGuard},jobSignal),
       capture:jobSignal=>this.captureSource({...request,maxDurationMs:Math.min(request.maxDurationMs??45000,45000)},jobSignal),
       prepareCapture:async jobSignal=>{
-        const previous=this.activeTabId
-        await this.showTab(tab.id)
-        try{return await prepareVideoCapture({
-          read:async start=>{await verify('capture');return readRendererPhase<CapturePlayerState>(tab.view.webContents,'library.sources','capture-buffer',async()=>await tab.view.webContents.mainFrame.executeJavaScript(`(()=>{const selector=${JSON.stringify(request.videoSelector)},index=${JSON.stringify(request.videoIndex??0)},start=${JSON.stringify(start)},video=document.querySelectorAll(selector)[index];if(!(video instanceof HTMLVideoElement))throw new Error('VIDEO_IDENTITY_UNBOUND: Missing confirmed player.');const player=['youtube.com','www.youtube.com','m.youtube.com'].includes(location.hostname)?document.getElementById('movie_player'):null,levels=player&&typeof player.getAvailableQualityLevels==='function'?player.getAvailableQualityLevels():[],requested=['hd1080','hd720','large','medium','small','tiny'].find(level=>levels.includes(level));if(start){video.pause();if(requested&&typeof player.setPlaybackQualityRange==='function')player.setPlaybackQualityRange(requested,requested);if(requested&&typeof player.setPlaybackQuality==='function')player.setPlaybackQuality(requested);${request.fromStart!==false?'if(video.currentTime>0)video.currentTime=0;':''}void video.play().catch(()=>{})}return {requested:requested??null,width:video.videoWidth,height:video.videoHeight,readyState:video.readyState,durationSeconds:Number.isFinite(video.duration)?video.duration:0,bufferedStartSeconds:video.buffered.length?video.buffered.start(0):null,bufferedEndSeconds:video.buffered.length?video.buffered.end(0):0}})()`,true) as CapturePlayerState,jobSignal,3000)},
+        const previous=this.activeTabId,priorReadiness=this.readinessPlaybackTabId,preparation=capturePreparationPolicy(request.maxDurationMs??45000)
+        this.readinessPlaybackTabId=tab.id
+        try{await this.showTab(tab.id);return await prepareVideoCapture({
+          read:async start=>{await verify('capture');return readRendererPhase<CapturePlayerState>(tab.view.webContents,'library.sources','capture-buffer',async()=>await tab.view.webContents.mainFrame.executeJavaScript(`(()=>{const selector=${JSON.stringify(request.videoSelector)},index=${JSON.stringify(request.videoIndex??0)},start=${JSON.stringify(start)},video=document.querySelectorAll(selector)[index];if(!(video instanceof HTMLVideoElement))throw new Error('VIDEO_IDENTITY_UNBOUND: Missing confirmed player.');const player=['youtube.com','www.youtube.com','m.youtube.com'].includes(location.hostname)?document.getElementById('movie_player'):null,levels=player&&typeof player.getAvailableQualityLevels==='function'?player.getAvailableQualityLevels():[],requested=${JSON.stringify(preparation.qualityLevels)}.find(level=>levels.includes(level));if(start){${request.fromStart!==false?'video.pause();':''}if(requested&&typeof player.setPlaybackQualityRange==='function')player.setPlaybackQualityRange(requested,requested);if(requested&&typeof player.setPlaybackQuality==='function')player.setPlaybackQuality(requested);${request.fromStart!==false?'if(video.currentTime>0)video.currentTime=0;':''}if(video.paused)void video.play().catch(()=>{})}let range=-1;for(let i=0;i<video.buffered.length;i++)if(video.buffered.start(i)<=video.currentTime+.1&&video.buffered.end(i)>=video.currentTime){range=i;break}return {requested:requested??null,width:video.videoWidth,height:video.videoHeight,readyState:video.readyState,durationSeconds:Number.isFinite(video.duration)?video.duration:0,currentTimeSeconds:video.currentTime,bufferedStartSeconds:range>=0?video.buffered.start(range):null,bufferedEndSeconds:range>=0?video.buffered.end(range):0}})()`,true) as CapturePlayerState,jobSignal,3000)},
           pause:async()=>{try{
             // Cleanup must still stop playback when preparation changed the
             // delivery URL/identity. Admission checks remain before every read
             // and before capture; never let them prevent bounded cleanup.
-            if(this.projectStore.active().id!==projectId||tab.view.webContents.isDestroyed()||new URL(tab.view.webContents.getURL()).href.split('#')[0]!==request.sourceGuard.pageUrl)throw new Error('Prepared player page or Project changed.')
+            if(this.projectStore.active().id!==projectId||tab.view.webContents.isDestroyed()||!sameVideoSourcePage(request.sourceGuard.pageUrl,tab.view.webContents.getURL(),request.sourceGuard.videoIdentity))throw new Error('Prepared player page or Project changed.')
             const paused=await readRendererPhase<unknown>(tab.view.webContents,'library.sources','pause-prepared-player',()=>tab.view.webContents.mainFrame.executeJavaScript(`(()=>{const v=document.querySelectorAll(${JSON.stringify(request.videoSelector)})[${JSON.stringify(request.videoIndex??0)}];if(!(v instanceof HTMLVideoElement))return false;v.pause();return v.paused===true})()`,true),undefined,3000)
             if(paused!==true)throw new Error('Prepared player did not acknowledge paused state.')
           }catch(error){if(!tab.view.webContents.isDestroyed())this.navigationQuarantine.add(tab.id);throw new Error('MEDIA_CAPTURE_CLEANUP_FAILED: Prepared player pause could not be verified; close the quarantined page before further browser work.',{cause:error})}}
-        },jobSignal,30000,Math.min(request.maxDurationMs??45000,10000)/1000)}finally{if(previous&&previous!==tab.id&&this.tabs.has(previous))await this.showTab(previous)}
+        },jobSignal,30000,preparation.windowSeconds)}finally{this.readinessPlaybackTabId=priorReadiness;await this.applyPlayback(tab,this.playbackAllowed(tab),true);if(previous&&previous!==tab.id&&this.tabs.has(previous))await this.showTab(previous)}
       }
 
     },signal??new AbortController().signal)
   }
   async verifySourceVideo(request:SourceCaptureGuard&{tabId?:string},signal?:AbortSignal){
     const tab=this.requireTab(request.tabId),state=await readVideoTargets(tab.view.webContents,request.scope,signal)
-    if(state.pageUrl!==request.pageUrl)throw new Error('VIDEO_IDENTITY_CHANGED: Source page changed before commit.')
+    if(!sameVideoSourcePage(request.pageUrl,state.pageUrl,request.videoIdentity))throw new Error('VIDEO_IDENTITY_CHANGED: Source page changed before commit.')
     // Final source admission verifies identity, not a delivery URL which can
     // expire while an already hash-bound file is decoded.
     return selectVideoCaptureTarget(state,request.candidateUrl,request.videoIdentity).identity
@@ -943,6 +1081,7 @@ export class BrowserKernel {
       const state=await readVideoTargets(tab.view.webContents,{selector:request.selector,index:request.index??0,excludeSelectors:request.sourceGuard?.scope.excludeSelectors??[]},signal)
       const target=state.targets[0]
       if(state.blocked||state.targets.length!==1||!target||request.sourceGuard?.videoIdentity&&!sameVideoIdentity(request.sourceGuard.videoIdentity,target.identity))throw new Error('VIDEO_IDENTITY_UNBOUND: '+(state.blocked??'Select exactly the confirmed target video.'))
+      if(target.requiresProjection)throw new Error('MEDIA_ACQUIRE_PROJECTION_UNSUPPORTED: Raw spherical/360 frames cannot be captured as ordinary flat news footage. Choose a flat source or explicitly preserve the original for projection processing.')
       if(request.sourceGuard)selectVideoCaptureTarget(state,request.sourceGuard.candidateUrl,request.sourceGuard.videoIdentity)
       return await this.recordingController.captureVideo(tab,{...request,videoIdentity:target.identity,...(request.sourceGuard?{sourceGuard:{...request.sourceGuard,videoIdentity:target.identity}}:{})},signal)
     }finally{
@@ -1135,7 +1274,7 @@ export class BrowserKernel {
   async listMedia(tab, request, signal?:AbortSignal) {
     const {selector,index,excludeSelectors}=assertPageScope(request)
     const maxItems = Math.min(Math.max(Math.floor(Number(request.maxItems) || 80), 1), 240)
-    const result = await readRendererPhase<{ok:boolean;reason?:string;items:Record<string,unknown>[];matches:number;selectedIndex:number;text:string;range:unknown}>(tab.view.webContents, 'page.media.list', 'dom', () => tab.view.webContents.mainFrame.executeJavaScript(`(async () => {
+    const result = await readRendererPhase<{ok:boolean;reason?:string;items:Record<string,unknown>[];players:Record<string,unknown>[];matches:number;selectedIndex:number;text:string;range:unknown}>(tab.view.webContents, 'page.media.list', 'dom', () => tab.view.webContents.mainFrame.executeJavaScript(`(async () => {
       const selector = ${JSON.stringify(selector)}
       const {text:bodyText,range:bodyRange}=${pageRangeExpression(assertPageScope({...request,maxCharacters:5000}))}
       const index = ${index}
@@ -1148,6 +1287,18 @@ export class BrowserKernel {
       }
       const excluded=${JSON.stringify('script,style,template,noscript,input,textarea,select,[contenteditable]:not([contenteditable="false"]),[hidden],[aria-hidden="true"]')}+${JSON.stringify(excludeSelectors.length?','+excludeSelectors.join(','):'')}
       document.querySelector(excluded)
+      const visible = (el) => {
+        if(!el.getClientRects().length)return false
+        let depth=0
+        for(let node=el;node;node=node.parentElement){if(++depth>100)return false;const style=getComputedStyle(node);if(style.display==='none'||style.visibility==='hidden'||style.visibility==='collapse'||Number(style.opacity)===0)return false}
+        return true
+      }
+      const players = [...document.querySelectorAll('video')].slice(0,64).map((video,index)=>({
+        selector:'video',index,visible:visible(video)&&!video.closest(excluded),label:(video.getAttribute('aria-label')||'').slice(0,200),
+        currentSourceReady:!!(video.currentSrc||video.src),readyState:video.readyState,paused:video.paused,
+        declaredSources:video.querySelectorAll('source[src]').length,
+        state:!visible(video)||video.closest(excluded)?'hidden-or-excluded':video.currentSrc||video.src?'selected-source':'declared-source-not-loaded'
+      }))
       const descendants = (tag) => [
         ...(root instanceof Element && root.matches(tag) ? [root] : []),
         ...root.querySelectorAll(tag)
@@ -1168,14 +1319,14 @@ export class BrowserKernel {
         width: image.naturalWidth || image.width || 0,
         height: image.naturalHeight || image.height || 0
       }))
-      const videos = descendants('video').map((video) => ({
+      const videos = descendants('video').filter(visible).map((video) => ({
         kind: 'video',
         url: absolute(video.currentSrc || video.src),
         poster: absolute(video.poster),
         duration: Number.isFinite(video.duration) ? video.duration : null,
         paused: video.paused
       }))
-      const sources = descendants('source').map((source) => ({
+      const sources = descendants('source').filter(source=>visible(source.closest('video')||source.parentElement)).map((source) => ({
         kind: 'source', url: absolute(source.src), mediaType: source.type || ''
       }))
       const performanceMedia = performance.getEntriesByType('resource').map((entry) => ({
@@ -1198,6 +1349,7 @@ export class BrowserKernel {
         pageUrl: location.href,
         text: bodyText,
         range:bodyRange,
+        players,
         items: [...images, ...videos, ...sources, ...(selector?[]:performanceMedia)]
       }
     })()`, true), signal)
@@ -1230,8 +1382,11 @@ export class BrowserKernel {
       range:result.range,
       scope:selector?'selected-element':'page',
       candidateOnly:true,
+      playerCandidates:result.players,
+      playerCandidateScope:'page discovery only; media identity remains restricted to the selected range',
+      playbackPolicy:{allowed:this.playbackAllowed(tab),reason:this.playbackAllowed(tab)?'selected-or-native-acquisition':'background-policy-paused',recovery:'A paused background player may remain at 0:00. Use explicit source acquisition method auto for bounded native playback; do not loop manual play clicks.'},
       videoIdentityStatus:identities.blocked??(identities.targets.length?'bound':'unavailable'),
-      videoTargets:identities.targets.map(target=>({videoIdentity:target.identity,durationSeconds:target.durationSeconds,directResources:target.resources.filter(r=>r.role!=='audio'&&r.role!=='sabr').length,nativeSabr:target.resources.some(r=>r.role==='sabr'),...(target.identity.platform==='youtube'&&!target.resources.length?{deliveryIssue:'YOUTUBE_DIRECT_DELIVERY_UNAVAILABLE: no supported HTTP/HLS or same-player SABR delivery; signature-only formats cannot authorize acquisition.'}:{})})),
+      videoTargets:identities.targets.map(target=>({videoIdentity:target.identity,durationSeconds:target.durationSeconds,directResources:target.resources.filter(r=>r.role!=='audio'&&r.role!=='sabr').length,nativeSabr:target.resources.some(r=>r.role==='sabr'),...(target.requiresProjection?{projection:'spherical',flatVideoSuitable:false,deliveryIssue:'MEDIA_ACQUIRE_PROJECTION_UNSUPPORTED: Raw spherical frames require projection processing; choose flat footage before download/capture.'}:{}),...(target.identity.platform==='youtube'&&!target.resources.length?{deliveryIssue:'YOUTUBE_DIRECT_DELIVERY_UNAVAILABLE: no supported HTTP/HLS or same-player SABR delivery; signature-only formats cannot authorize acquisition.'}:{})})),
       truncated:unique.size>maxItems,
       items: [...unique.values()].slice(0, maxItems)
     }
@@ -1240,7 +1395,7 @@ export class BrowserKernel {
   async mediaFetchForTab(tabId: string, signal?: AbortSignal) {
     const tab = this.tabs.get(tabId)
     if (!tab) throw new Error('Media source tab is unavailable.')
-    const pageUrl = tab.url
+    const pageUrl = tab.view.webContents.getURL()
     const policy: unknown = await readRendererPhase(tab.view.webContents,'media.fetch','referrer-policy',()=>tab.view.webContents.mainFrame.executeJavaScript('document.referrerPolicy'),signal)
     return createMediaSessionFetch(this.session,pageUrl,policy,net.request)
   }

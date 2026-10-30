@@ -16,7 +16,7 @@ export const studioOperationContracts={
  context:spec(),open:spec(),list:spec([],paging),assets:spec([],['assetQuery']),
  source:spec(['sourceRequest'],[...paging,'sourceSection']),materials:spec(['materialRequest']),
  create:spec([],['title','options','templateName']),read:spec(['draftId'],paging),
- 'read-material':spec(['artifactId'],paging),'read-scene':spec(scene,['section',...paging]),'read-preparation':spec(draft,['briefSection',...paging]),
+ 'read-material':spec(['artifactId'],paging),'read-scene':spec(scene,['section','citationIndex',...paging]),'read-preparation':spec(draft,['briefSection',...paging]),
  'read-document':spec(draft),compatibility:spec(draft),'migrate-document':spec(draft),'validate-edit':spec([...draft,'edit']),'apply-edit':spec([...draft,'edit']),
  update:spec([...draft,'draft']),delete:spec(draft),restore:spec([...draft,'draft','snapshotProof']),
  'review-status':spec(draft,paging),'record-export-review':spec(draft,['exportReview','exportReviewBatch','sceneId']),

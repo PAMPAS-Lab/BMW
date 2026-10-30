@@ -18,7 +18,9 @@ export async function prepareSourceScreenshot(port:ProjectSourcePort|undefined,w
  if(!port?.recordScreenshot)throw new Error('SOURCE_SCREENSHOT_UNAVAILABLE: This Project cannot bind page captures.')
  const binding=admitBinding(raw),body=await port.readBody(binding.sourceId,binding.acquisitionId,signal),a=body.acquisition
  if((port.state?.()??port.snapshot()).revision!==binding.expectedRevision)throw new Error('SOURCE_CONFLICT: Reload the source catalog.')
- if(a.result!=='observed'||a.scope.truncated||!a.contentId||selector!==a.scope.selector||Number(index??0)!==a.scope.index)throw new Error('SOURCE_SCREENSHOT_SCOPE: Capture the exact collected body selector and index.')
+ if(a.result!=='observed')throw new Error('SOURCE_SCREENSHOT_ACQUISITION: result='+a.result+'. Screenshot binding requires an observed acquisition. Check the stored body, metadata and requested media ranges; for a genuinely text-only page, recollect its actual body and metadata without a nonexistent optional mediaSelector. Do not repeat this screenshot unchanged.')
+ if(a.scope.truncated||!a.contentId)throw new Error('SOURCE_SCREENSHOT_CONTENT: A complete untruncated collected body is required; collect a bounded original scope before binding its screenshot.')
+ if(selector!==a.scope.selector||Number(index??0)!==a.scope.index)throw new Error('SOURCE_SCREENSHOT_SCOPE: Capture the exact collected body selector and index '+JSON.stringify({selector:a.scope.selector,index:a.scope.index})+'.')
  const originalUrl=body.source.url,projectId=(port.state?.()??port.snapshot()).projectId,scope=a.scope,contentId=a.contentId
  const controller=new AbortController(),captureSignal=signal?AbortSignal.any([signal,controller.signal]):controller.signal,navigation=(_event:unknown,_url:string,_inPlace:boolean,mainFrame:boolean)=>{if(mainFrame)controller.abort(new Error('SOURCE_SCREENSHOT_NAVIGATED: Page navigated during capture.'))},gone=()=>controller.abort(new Error('SOURCE_SCREENSHOT_RENDERER_GONE: Capture page closed.'))
  wc.on('did-start-navigation',navigation);wc.on('destroyed',gone);wc.on('render-process-gone',gone)

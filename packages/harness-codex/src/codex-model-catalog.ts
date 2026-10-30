@@ -10,7 +10,7 @@ export function codexSupportsProtocolVersion(value:unknown):value is string{retu
 // This is a data-format admission list, not permission to run that CLI version.
 const verifiedCacheVersions:readonly string[]=Object.freeze(['0.160.0','0.160.1',...codexVerifiedProtocolVersions])
 
-const browserModels=new Set(['gpt-6.1-sol','gpt-6-astra','gpt-6-sol','gpt-6-luna','gpt-5.5'])
+const browserModels=new Set(['gpt-6.1-sol','gpt-6.1-terra','gpt-6-astra','gpt-6-sol','gpt-6-luna','gpt-5.5'])
 export function codexNeedsBrowserCatalog(model:string):boolean{return browserModels.has(model)}
 
 /** Official startup catalog projection; model IDs, native transport and model capabilities stay intact. */

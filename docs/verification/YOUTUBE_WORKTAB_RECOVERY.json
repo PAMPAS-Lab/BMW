@@ -1,0 +1,1504 @@
+{
+  "sequenceProof": {
+    "sameWorkTabAcrossThree": true,
+    "microduckAndThirdRetainDocument": true,
+    "sequenceNavigationMs": [
+      148823,
+      43723,
+      5195
+    ],
+    "sequenceMethods": [
+      "cold",
+      "reload-fallback",
+      "in-page-search"
+    ],
+    "thirdActualSiteSwitchMs": 3551,
+    "thirdTargetReadyMs": 5195,
+    "separateSupplementalColdNavigationMs": 102255
+  },
+  "additionalCodeHashes": {
+    "packages/media-native/src/youtube-sabr-clock.ts": {
+      "publicSnapshot": "22356edeac419b8bfd0f7eb023afca0d483045fff1634cb08c09516c2dccc169",
+      "finalVerificationSnapshot": "22356edeac419b8bfd0f7eb023afca0d483045fff1634cb08c09516c2dccc169"
+    },
+    "packages/media-native/src/youtube-sabr-response.ts": {
+      "publicSnapshot": "b59053d223a3aba1f6e36c213d775e3fc20e9d64be3ba259fd8742d8500bd3f0",
+      "finalVerificationSnapshot": "7ab5345f2a1aabc5dae06da06ba6b98ac91509ea4fe6ae8ee579aaae1d3f4abe"
+    },
+    "packages/media-native/src/youtube-sabr-worker.ts": {
+      "publicSnapshot": "404ca15d46e0903631d0c014d4ba42468a35124c0df0130a1784b476a7fbe6da",
+      "finalVerificationSnapshot": "404ca15d46e0903631d0c014d4ba42468a35124c0df0130a1784b476a7fbe6da"
+    }
+  },
+  "sourceIntegrity": {
+    "at": "2026-10-29T13:38:37.839871+00:00",
+    "workspace": ".bmw-runtime/youtube-recovery-20261029/frozen-replay",
+    "sourceCount": 651,
+    "outputCount": 617,
+    "sourceChanges": [],
+    "outputChanges": []
+  },
+  "finalVerificationSourceIntegrity": {
+    "at": "2026-10-29T13:38:37.839871+00:00",
+    "workspace": ".bmw-runtime/youtube-recovery-20261029/frozen-monotonic",
+    "sourceCount": 651,
+    "outputCount": 617,
+    "sourceChangesDuringVerification": [],
+    "outputChangesDuringVerification": [],
+    "sharedCheckoutDifferences": [
+      {
+        "file": "packages/feature-video/src/studio-tool-guide.ts",
+        "validatedSourceSha256": "cab63fdd5be57aa8e0440ad597b5fb7e849b290553666ef9e4b6ed5dd4fbf760",
+        "sharedCheckoutSha256": "cade65958024d76f66f40a6a9a3d60d13136268a1b6a404641958a4bdd117091"
+      },
+      {
+        "file": "packages/feature-video/src/video-edit-contract.ts",
+        "validatedSourceSha256": "cc97b84857625176c425d8987f9c817d2d49dbb24c506fd916e066ab3c213251",
+        "sharedCheckoutSha256": "b49f79ac2cfec0c7ee6577a5e83435ca6431cd100f634bf9bb5c9a1cee786e65"
+      },
+      {
+        "file": "packages/feature-video/src/video-edit.ts",
+        "validatedSourceSha256": "a5c4d09232c0b8848b1f74b7a2997506fd015d6c596fb6fbfdd50194332193df",
+        "sharedCheckoutSha256": "afa6d1fca594f9c636dc27b79d2681c13886378a0cd12857fc5eed47d3a77287"
+      },
+      {
+        "file": "packages/feature-video/test/video-document.test.ts",
+        "validatedSourceSha256": "81e43dcd702f28fc4cde84e3cd2f71587dd88418cb5a0a510f2aa20f078ae503",
+        "sharedCheckoutSha256": "7e776091a4565bf83208461f2a6243c20c0e469c74a731348180807131bce6d0"
+      },
+      {
+        "file": "docs/FUNCTIONAL_SPEC.md",
+        "validatedSourceSha256": "b1506d8350d15a7915d46860a79d9213ed5b41b88c55517f02ce6a1f381d8132",
+        "sharedCheckoutSha256": "a3f916e64188ade6e5d522d61bdb4f0a5405d60f91f50e6aad368cab5810a0d8"
+      }
+    ],
+    "differencesFromPublicLiveSnapshot": [
+      {
+        "file": "packages/agent-contract/src/video-identity.ts",
+        "publicLiveSourceSha256": "8b0353338d443d78aee5beb4610452669726de6f55900899adb2469488352929",
+        "finalVerificationSourceSha256": "5981f09126992ebe1e004aa3e5e3fd85ae5d1254bda8e5b606596f5dd1db4b8e"
+      },
+      {
+        "file": "packages/browser-capability/src/browser-kernel.ts",
+        "publicLiveSourceSha256": "2f565126a73fe3627174c7a948ca9c4e119ad40d5ab02e9ecf444e532a1670b0",
+        "finalVerificationSourceSha256": "523fb91e3cb612fafd4dd242f8894576cb9d8b001e522fb6be2e6b33bb5edec6"
+      },
+      {
+        "file": "packages/media-native/src/youtube-sabr-response.ts",
+        "publicLiveSourceSha256": "b59053d223a3aba1f6e36c213d775e3fc20e9d64be3ba259fd8742d8500bd3f0",
+        "finalVerificationSourceSha256": "7ab5345f2a1aabc5dae06da06ba6b98ac91509ea4fe6ae8ee579aaae1d3f4abe"
+      },
+      {
+        "file": "packages/media-native/test/youtube-sabr.test.ts",
+        "publicLiveSourceSha256": "fcfd6934b52c75393a2c9f11f25ec90bd87cadb02d6d71aa8e11d421c2b2ec48",
+        "finalVerificationSourceSha256": "b1e59b00b317372b74d248d4e592a164a3a2d4eb653608466e6054e4a87f9155"
+      },
+      {
+        "file": "scripts/video-identity-smoke.ts",
+        "publicLiveSourceSha256": "57f0a38591262b517036f6fa67a58f22cad061a7be2bca2aeaeb64be430445d1",
+        "finalVerificationSourceSha256": "b1c2d57e4d5edc5f334c6ffcc46dc99382743ece2f28136f491b69daf02741db"
+      },
+      {
+        "file": "scripts/youtube-worktab-smoke.ts",
+        "publicLiveSourceSha256": "470456475604377b43e7610153c632365f5c560d1fdf100ac3c8ac3c9579524f",
+        "finalVerificationSourceSha256": "92db463c37521ba5d0670255af7ed7d0ed273d54be60f712e85eb4f42133e88f"
+      },
+      {
+        "file": "docs/FUNCTIONAL_SPEC.md",
+        "publicLiveSourceSha256": "a0058bcfd9a810c8e554cbbae09199186fce9d066584ef9ed3767545d88256f6",
+        "finalVerificationSourceSha256": "b1506d8350d15a7915d46860a79d9213ed5b41b88c55517f02ce6a1f381d8132"
+      }
+    ],
+    "interpretation": "Public files were obtained with frozen-replay. Final build/check/offline/native acceptance uses frozen-monotonic, which additionally includes concurrent generic visible/lazy-source discovery, preservation of semantic watch URL parameters, and monotonic replay progress throttling/test timing. These versions are explicitly distinct; no claim of an identical final-build external replay trial. All public requests are simple watch URLs; the successful final public transfers did not need retries.",
+    "offline": {
+      "passed": 135,
+      "failed": 0,
+      "not-run": 104
+    },
+    "native": [
+      {
+        "id": "identity",
+        "code": 0,
+        "elapsedMs": 720,
+        "log": "../monotonic-runtime/identity/run.log"
+      },
+      {
+        "id": "background",
+        "code": 0,
+        "elapsedMs": 4729,
+        "log": "../monotonic-runtime/background/run.log"
+      },
+      {
+        "id": "dsh",
+        "code": 0,
+        "elapsedMs": 14182,
+        "log": "../monotonic-runtime/dsh/run.log"
+      },
+      {
+        "id": "worktab",
+        "code": 0,
+        "elapsedMs": 29531,
+        "log": "../monotonic-runtime/worktab/run.log"
+      },
+      {
+        "id": "tab-lifecycle",
+        "code": 0,
+        "elapsedMs": 41891,
+        "log": "../monotonic-runtime/tab-lifecycle/run.log"
+      },
+      {
+        "id": "capture",
+        "code": 0,
+        "elapsedMs": 35811,
+        "log": "../monotonic-runtime/capture/run.log"
+      },
+      {
+        "id": "acquisition",
+        "code": 0,
+        "elapsedMs": 5951,
+        "log": "../monotonic-runtime/acquisition/run.log"
+      },
+      {
+        "id": "http-hls",
+        "code": 0,
+        "elapsedMs": 432,
+        "log": "../monotonic-runtime/http-hls/run.log"
+      },
+      {
+        "id": "processing",
+        "code": 0,
+        "elapsedMs": 24648,
+        "log": "../monotonic-runtime/processing/run.log"
+      },
+      {
+        "id": "source-studio",
+        "code": 0,
+        "elapsedMs": 22722,
+        "log": "../monotonic-runtime/source-studio/run.log"
+      },
+      {
+        "id": "studio",
+        "code": 0,
+        "elapsedMs": 62729,
+        "log": "../monotonic-runtime/studio/run.log"
+      },
+      {
+        "id": "video",
+        "code": 0,
+        "elapsedMs": 41908,
+        "log": "../monotonic-runtime/video/run.log"
+      },
+      {
+        "id": "narration",
+        "code": 0,
+        "elapsedMs": 1437,
+        "log": "../monotonic-runtime/narration/run.log"
+      },
+      {
+        "id": "desktop",
+        "code": 0,
+        "elapsedMs": 24961,
+        "log": "../monotonic-runtime/desktop/run.log"
+      }
+    ]
+  },
+  "versionDifferences": {
+    "at": "2026-10-29T13:38:37.839871+00:00",
+    "userDecision": "Continue isolated validation and retain version differences; no cross-conversation messages sent",
+    "differences": [
+      {
+        "file": "packages/agent-contract/src/video-identity.ts",
+        "publicLiveSourceSha256": "8b0353338d443d78aee5beb4610452669726de6f55900899adb2469488352929",
+        "finalVerificationSourceSha256": "5981f09126992ebe1e004aa3e5e3fd85ae5d1254bda8e5b606596f5dd1db4b8e"
+      },
+      {
+        "file": "packages/browser-capability/src/browser-kernel.ts",
+        "publicLiveSourceSha256": "2f565126a73fe3627174c7a948ca9c4e119ad40d5ab02e9ecf444e532a1670b0",
+        "finalVerificationSourceSha256": "523fb91e3cb612fafd4dd242f8894576cb9d8b001e522fb6be2e6b33bb5edec6"
+      },
+      {
+        "file": "packages/media-native/src/youtube-sabr-response.ts",
+        "publicLiveSourceSha256": "b59053d223a3aba1f6e36c213d775e3fc20e9d64be3ba259fd8742d8500bd3f0",
+        "finalVerificationSourceSha256": "7ab5345f2a1aabc5dae06da06ba6b98ac91509ea4fe6ae8ee579aaae1d3f4abe"
+      },
+      {
+        "file": "packages/media-native/test/youtube-sabr.test.ts",
+        "publicLiveSourceSha256": "fcfd6934b52c75393a2c9f11f25ec90bd87cadb02d6d71aa8e11d421c2b2ec48",
+        "finalVerificationSourceSha256": "b1e59b00b317372b74d248d4e592a164a3a2d4eb653608466e6054e4a87f9155"
+      },
+      {
+        "file": "scripts/video-identity-smoke.ts",
+        "publicLiveSourceSha256": "57f0a38591262b517036f6fa67a58f22cad061a7be2bca2aeaeb64be430445d1",
+        "finalVerificationSourceSha256": "b1c2d57e4d5edc5f334c6ffcc46dc99382743ece2f28136f491b69daf02741db"
+      },
+      {
+        "file": "scripts/youtube-worktab-smoke.ts",
+        "publicLiveSourceSha256": "470456475604377b43e7610153c632365f5c560d1fdf100ac3c8ac3c9579524f",
+        "finalVerificationSourceSha256": "92db463c37521ba5d0670255af7ed7d0ed273d54be60f712e85eb4f42133e88f"
+      },
+      {
+        "file": "docs/FUNCTIONAL_SPEC.md",
+        "publicLiveSourceSha256": "a0058bcfd9a810c8e554cbbae09199186fce9d066584ef9ed3767545d88256f6",
+        "finalVerificationSourceSha256": "b1506d8350d15a7915d46860a79d9213ed5b41b88c55517f02ce6a1f381d8132"
+      }
+    ],
+    "sharedCheckoutDifferences": [
+      {
+        "file": "packages/feature-video/src/studio-tool-guide.ts",
+        "validatedSourceSha256": "cab63fdd5be57aa8e0440ad597b5fb7e849b290553666ef9e4b6ed5dd4fbf760",
+        "sharedCheckoutSha256": "cade65958024d76f66f40a6a9a3d60d13136268a1b6a404641958a4bdd117091"
+      },
+      {
+        "file": "packages/feature-video/src/video-edit-contract.ts",
+        "validatedSourceSha256": "cc97b84857625176c425d8987f9c817d2d49dbb24c506fd916e066ab3c213251",
+        "sharedCheckoutSha256": "b49f79ac2cfec0c7ee6577a5e83435ca6431cd100f634bf9bb5c9a1cee786e65"
+      },
+      {
+        "file": "packages/feature-video/src/video-edit.ts",
+        "validatedSourceSha256": "a5c4d09232c0b8848b1f74b7a2997506fd015d6c596fb6fbfdd50194332193df",
+        "sharedCheckoutSha256": "afa6d1fca594f9c636dc27b79d2681c13886378a0cd12857fc5eed47d3a77287"
+      },
+      {
+        "file": "packages/feature-video/test/video-document.test.ts",
+        "validatedSourceSha256": "81e43dcd702f28fc4cde84e3cd2f71587dd88418cb5a0a510f2aa20f078ae503",
+        "sharedCheckoutSha256": "7e776091a4565bf83208461f2a6243c20c0e469c74a731348180807131bce6d0"
+      },
+      {
+        "file": "docs/FUNCTIONAL_SPEC.md",
+        "validatedSourceSha256": "b1506d8350d15a7915d46860a79d9213ed5b41b88c55517f02ce6a1f381d8132",
+        "sharedCheckoutSha256": "a3f916e64188ade6e5d522d61bdb4f0a5405d60f91f50e6aad368cab5810a0d8"
+      }
+    ],
+    "interpretation": "Public files were obtained with frozen-replay. Final build/check/offline/native acceptance uses frozen-monotonic, which additionally includes concurrent generic visible/lazy-source discovery, preservation of semantic watch URL parameters, and monotonic replay progress throttling/test timing. These versions are explicitly distinct; no claim of an identical final-build external replay trial. All public requests are simple watch URLs; the successful final public transfers did not need retries."
+  },
+  "interruption": {
+    "observedAt": "2026-10-29T12:49:26.761369+00:00",
+    "interruptedProcessId": 15142,
+    "cause": "Independent BMW restart executed kill -TERM 15142; no protocol result for the final sample",
+    "lastRecordedStageAt": "2026-10-29T12:40:02.157Z",
+    "completedSamplesPreserved": [
+      "jNQXAC9IVRw",
+      "zHBrUVyQJWc"
+    ],
+    "removedIncompleteTracksAfterProcessExit": [
+      {
+        "name": "preserved-186e87b4-070a-4cd0-9f42-a0f8d0ab81bb-original-video.mp4",
+        "bytes": 906,
+        "sha256": "32dbb99e45a4ee7dc4540e3b8f86fc990d22cf250e166d9344c5e1e72e3711d3"
+      },
+      {
+        "name": "preserved-186e87b4-070a-4cd0-9f42-a0f8d0ab81bb-original-audio.mp4",
+        "bytes": 839,
+        "sha256": "df153a2fd44f65e8d3d0c0f08c01ae29c7351b2fac2a20ddb7b61c89b0c04bc4"
+      }
+    ]
+  },
+  "supplement": {
+    "run": "live-third-final",
+    "environment": {
+      "profile": "disposable signed-out",
+      "mockKeychain": true,
+      "mode": "resident",
+      "http1Compatibility": true,
+      "transferBudgetMs": 3600000,
+      "modelCalls": 0,
+      "externalDownloader": false
+    },
+    "sourceUnchanged": true,
+    "note": "Only the third sample was reacquired after an independent restart terminated the original three-video sequence; cold reload timing is distinct from the retained-document 5.195-second switch already measured in that sequence."
+  },
+  "date": "2026-10-29",
+  "status": "three samples and checks passed",
+  "scope": "YouTube resident worktab initialization, actual site navigation and native encoded-track preservation; no yt-dlp; HTTP/HLS retained",
+  "environment": {
+    "profile": "disposable signed-out",
+    "mockKeychain": true,
+    "mode": "resident",
+    "http1Compatibility": true,
+    "transferBudgetMs": 2700000,
+    "modelCalls": 0,
+    "externalDownloader": false
+  },
+  "sourceUnchanged": true,
+  "sourceSha256": {
+    "packages/browser-capability/src/browser-kernel.ts": "2f565126a73fe3627174c7a948ca9c4e119ad40d5ab02e9ecf444e532a1670b0",
+    "packages/browser-capability/src/browser-kernel.js": "39a9b971fc1c140c5990c9761ff80e1bf648fb0a0672510d373fe01e5aea7925",
+    "packages/browser-capability/src/page-navigation.ts": "c1637bc00e50a3786fc8d9c0700f31597811cf23a53b1f10386e91ae527d3a1c",
+    "packages/browser-capability/src/page-navigation.js": "6e469656b5dc8f7731c79534aa2ce2dab7a911774a6ab77fa16362c658a41dcc",
+    "packages/browser-capability/src/video-target.ts": "a52f25aaefa6ac8a0eda9b612823855b5a58b86fab41678a95dc51e9747326a2",
+    "packages/browser-capability/src/video-target.js": "3317d2124bfb2d16c1c10ba608e2816b9f1fe120c8aa7c4c360928ad7c4d12d0",
+    "packages/browser-capability/src/youtube-sabr-observation.ts": "786fe8b58a5b79ffd7b49009c614ad668120f17b23311eb6efd8426e5d6469d2",
+    "packages/browser-capability/src/youtube-sabr-observation.js": "a86e9132a239cd1647d1fe4d9715c7045bfba7bcf64396aa3e585f5c99e8468a",
+    "packages/media-native/src/youtube-sabr.ts": "d71a73f38ab4569b832f197112c9ceba8a50aaf1ca0514a2936d486194c032db",
+    "packages/media-native/src/youtube-sabr.js": "931a2f2bcba70c29a5b23e698545b4c46a9e5a3df52d5c53df56cde04fd3c47e",
+    "packages/media-native/src/youtube-sabr-response.ts": "b59053d223a3aba1f6e36c213d775e3fc20e9d64be3ba259fd8742d8500bd3f0",
+    "packages/media-native/src/youtube-sabr-response.js": "56e44e9522303c7c7c4f668086caec0707eff589ae3d5813ae143bace7ea6755",
+    "packages/media-native/src/youtube-sabr-worker.ts": "404ca15d46e0903631d0c014d4ba42468a35124c0df0130a1784b476a7fbe6da",
+    "packages/media-native/src/youtube-sabr-worker.js": "d7acee652fd2ee0ba13a0e98a8a43e561e85b53e4f41a7d3324d1e4f7ec33a82",
+    "packages/platform/src/global-settings-store.ts": "70773a596ae830ab60c68b56db4a9fddf1fd8c4bedd6c55a31cd82d6e0eab03e",
+    "packages/platform/src/global-settings-store.js": "8193844d20f3b2724907ad0f3bcd316634521f6047f46f42badc398e9e25edba",
+    "packages/browser-capability/src/youtube-worktabs.ts": "c6ffce2198d1773c8e16962f91bf137a603304b91dc5c7d385a883db2cd0e976",
+    "packages/browser-capability/src/youtube-worktabs.js": "5b0ab748207ef0bf6ae16e1f75f3ff5d9101671980fa8c210c8bdb18968cf841",
+    "packages/browser-capability/src/youtube-switch.ts": "150f4b005766aa74c2956bec513f6ce3f22ba53efcdf2676198d99896a607488",
+    "packages/browser-capability/src/youtube-switch.js": "f8c94a92cb98905dbd5df00d00601248f2122f4fce6a9109db81447e378ecae9",
+    "packages/browser-capability/src/video-capture-ready.ts": "167178db8b7e3f03cc8c264bc76b1cbc0cb233fdc75bef5103e232444404b4bb",
+    "packages/browser-capability/src/video-capture-ready.js": "6424bf62069d6a640cb26d2123e7a4b46e101a1f32333695961dea74c8c6c4f9",
+    "packages/browser-capability/src/browser-deadline.ts": "f66f4fa99240fbee553602c3b8771731ceb3b8dbb66d50923227a673d959c2bf",
+    "packages/browser-capability/src/browser-deadline.js": "49d8da9acc17d27b389ed84eaa23738f1c3502da0c0324ba7a4bf86fb2e74fb3",
+    ".bmw-runtime/youtube-background-case/case.ts": "3c6c22a1ddc80ca46c095b9383cbe74ed8cd190718f4c3e3d6e7cae624cd6610",
+    ".bmw-runtime/youtube-background-case/case.js": "ec7c5ec1221ac903ee49063f2cd5c179b27a70bf2efb4c6a63632c4799352af4"
+  },
+  "results": [
+    {
+      "validationRun": "live-replay-accepted",
+      "id": "jNQXAC9IVRw",
+      "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+      "title": "Me at the zoo - YouTube",
+      "ok": true,
+      "navigationOk": true,
+      "navigationMs": 148823,
+      "navigation": {
+        "method": "cold",
+        "elapsedMs": 148808,
+        "retainedDocument": false,
+        "bootstrapReady": true,
+        "budgetMs": 180000,
+        "activationMs": 4051
+      },
+      "tabId": "430d7b60-24b3-4049-abaf-f5013aa3144b",
+      "documentTimeOrigin": 1793276506784.1,
+      "transferMs": 36726,
+      "bytes": 741237,
+      "artifactId": "preserved-b8389b09-e858-42c7-b3b8-0323a37f015b-delivery.mp4",
+      "videoIdentity": {
+        "version": 1,
+        "platform": "youtube",
+        "targetId": "jNQXAC9IVRw",
+        "resourceId": "jNQXAC9IVRw"
+      },
+      "inspection": {
+        "sourceArtifactId": "preserved-b8389b09-e858-42c7-b3b8-0323a37f015b-delivery.mp4",
+        "sourceBytes": 741237,
+        "engine": "mediabunny-webcodecs",
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.4d400c, mp4a.40.2\"",
+        "durationSeconds": 19.06358276643991,
+        "firstTimestampSeconds": 0,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "canDecode": true,
+            "width": 320,
+            "height": 240,
+            "rotation": 0,
+            "startSeconds": 0,
+            "endSeconds": 18.933333333333334,
+            "canBeTransparent": false
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "canDecode": true,
+            "channels": 2,
+            "sampleRate": 44100,
+            "startSeconds": 0,
+            "endSeconds": 19.06358276643991
+          }
+        ],
+        "captureTimeline": {
+          "status": "unavailable",
+          "reason": "No capture-time source frame index exists for this artifact. File PTS cannot be treated as source PTS."
+        }
+      },
+      "decode": {
+        "sourceArtifactId": "preserved-b8389b09-e858-42c7-b3b8-0323a37f015b-delivery.mp4",
+        "sourceBytes": 741237,
+        "engine": "mediabunny-webcodecs",
+        "kind": "decoding",
+        "completeFile": true,
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.4d400c, mp4a.40.2\"",
+        "durationSeconds": 19.06358276643991,
+        "firstTimestampSeconds": 0,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "sampleCount": 284,
+            "startSeconds": 0,
+            "endSeconds": 18.933333333333334
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 821,
+            "startSeconds": 0,
+            "endSeconds": 19.063582766439907
+          }
+        ]
+      },
+      "preservation": {
+        "basis": "YouTube-SABR-encoded-tracks",
+        "reencoded": false,
+        "completeVod": true,
+        "completeSeparatedTracks": true,
+        "selectedFormats": {
+          "policy": "Highest compatible AVC up to 1080p and default-language AAC within archive/free-space budget; complete range, never capture fallback.",
+          "estimatedBytes": 742369,
+          "sourceByteBudget": 3312559941,
+          "video": {
+            "itag": 133,
+            "width": 320,
+            "height": 240,
+            "bitrate": 183848
+          },
+          "audio": {
+            "itag": 140,
+            "bitrate": 130171,
+            "languageGroup": "default"
+          }
+        },
+        "transport": {
+          "responses": [
+            {
+              "bytes": 743278,
+              "sha256": "7b0b011573f54adbc852e9518c4fd5baf0169b4dfdc7d36777add1200dcd0e6b",
+              "attempts": 1,
+              "replayedBytes": 0
+            }
+          ],
+          "formats": [
+            {
+              "type": "video",
+              "itag": 133,
+              "lastModified": "1767107069601671",
+              "segments": 3,
+              "initializations": 1,
+              "startMs": 0,
+              "endMs": 18934,
+              "expectedEndMs": 18933
+            },
+            {
+              "type": "audio",
+              "itag": 140,
+              "lastModified": "1767107011597808",
+              "segments": 2,
+              "initializations": 1,
+              "startMs": 0,
+              "endMs": 19064,
+              "expectedEndMs": 19063
+            }
+          ],
+          "serverBackoffMs": 0
+        },
+        "resources": [
+          {
+            "artifactId": "preserved-b8389b09-e858-42c7-b3b8-0323a37f015b-original-video.mp4",
+            "track": "video",
+            "bytes": 433081,
+            "sha256": "4dbe319113ef43a7c0581717578d1e4852dae65b2950a20a3897347dafc8e9aa"
+          },
+          {
+            "artifactId": "preserved-b8389b09-e858-42c7-b3b8-0323a37f015b-original-audio.mp4",
+            "track": "audio",
+            "bytes": 309288,
+            "sha256": "a01b38c896d27707ef852301f1ccc6c39cebe792852c868109e85753ef159e47"
+          }
+        ],
+        "proofArtifactId": "preserved-b8389b09-e858-42c7-b3b8-0323a37f015b-0-preservation.json",
+        "proofSha256": "7ee79cd7dd94e5d907dcec5fda74e8c7989d2c5fbe4ace81069d15531952df3b"
+      },
+      "navigationDiagnostics": [
+        {
+          "type": "navigation",
+          "url": "https://www.youtube.com/watch",
+          "phase": "complete",
+          "reason": "load",
+          "elapsedMs": 137538,
+          "progress": {
+            "committed": true,
+            "domReady": true,
+            "loadFinished": true,
+            "mainFrameErrorCode": null
+          },
+          "document": {
+            "status": 200,
+            "receivedBytes": 1369073,
+            "completed": true,
+            "failed": false
+          },
+          "playerState": "ready",
+          "at": 1793276644320
+        },
+        {
+          "type": "youtube-navigation-surface",
+          "ready": true,
+          "at": 1793276644325
+        },
+        {
+          "type": "youtube-bootstrap-activation",
+          "method": "in-page-search",
+          "elapsedMs": 4051,
+          "retainedDocument": true,
+          "at": 1793276648377
+        },
+        {
+          "type": "youtube-verification-playback",
+          "quality": "tiny",
+          "state": "playing",
+          "at": 1793276651120
+        }
+      ],
+      "visualReview": {
+        "run": "live-replay-accepted",
+        "checkedAt": "2026-10-29",
+        "framesSeconds": [
+          0,
+          9.466667,
+          18.8
+        ],
+        "result": "首中尾均为同一原片人物与象园背景，无广告或其他视频；此记录是抽帧目视复核，完整时域解码另记，人工听感未做。"
+      },
+      "audioTechnicalQa": {
+        "id": "jNQXAC9IVRw",
+        "ok": true,
+        "completeAudioRange": [
+          0,
+          19.06358276643991
+        ],
+        "humanListening": "not performed",
+        "windows": [
+          {
+            "startSeconds": 0,
+            "endSeconds": 8,
+            "sampleRate": 44100,
+            "channels": 2,
+            "frames": 352800,
+            "peak": 0.3794347941875458,
+            "rms": 0.06519205494983892,
+            "missingFrames": 0,
+            "sourceSha256": "63c0319337c9ca219497fbd7239a91df3d64d0918869198845688a2ec2ccb861",
+            "pcmSha256": "55a89721751a8ddc5b2e11e33dacbea8f1402ec42e0276b53d2b2c17c0fbfa6a"
+          },
+          {
+            "startSeconds": 8,
+            "endSeconds": 16,
+            "sampleRate": 44100,
+            "channels": 2,
+            "frames": 352800,
+            "peak": 0.4721429944038391,
+            "rms": 0.061138615566332405,
+            "missingFrames": 0,
+            "sourceSha256": "63c0319337c9ca219497fbd7239a91df3d64d0918869198845688a2ec2ccb861",
+            "pcmSha256": "ae657686067a656d738ad2bbb9e2731a8e8169b6b56b3454ffc11ed2cd4e1ed8"
+          },
+          {
+            "startSeconds": 16,
+            "endSeconds": 19.06358276643991,
+            "sampleRate": 44100,
+            "channels": 2,
+            "frames": 135104,
+            "peak": 0.3571307957172394,
+            "rms": 0.06531734348968393,
+            "missingFrames": 0,
+            "sourceSha256": "63c0319337c9ca219497fbd7239a91df3d64d0918869198845688a2ec2ccb861",
+            "pcmSha256": "95dc84925ef55d5cd0632105ce7762a92b914215a95981e02ed85a5ac9ef6e45"
+          }
+        ]
+      },
+      "humanListening": "not performed"
+    },
+    {
+      "validationRun": "live-replay-accepted",
+      "id": "zHBrUVyQJWc",
+      "url": "https://www.youtube.com/watch?v=zHBrUVyQJWc",
+      "title": "RTX Spark Brings Microducks to Life | NVIDIA GTC Berlin 2026 Keynote - YouTube",
+      "ok": true,
+      "navigationOk": true,
+      "navigationMs": 43723,
+      "navigation": {
+        "method": "reload-fallback",
+        "elapsedMs": 43715,
+        "retainedDocument": false,
+        "switchMs": 30001,
+        "bootstrapReady": true,
+        "budgetMs": 90000,
+        "activationMs": 161
+      },
+      "tabId": "430d7b60-24b3-4049-abaf-f5013aa3144b",
+      "documentTimeOrigin": 1793276730357.7,
+      "transferMs": 793713,
+      "bytes": 9321725,
+      "artifactId": "preserved-c3d70a8d-9da2-4bab-8b31-9ac2d7077ea9-delivery.mp4",
+      "videoIdentity": {
+        "version": 1,
+        "platform": "youtube",
+        "targetId": "zHBrUVyQJWc",
+        "resourceId": "zHBrUVyQJWc"
+      },
+      "inspection": {
+        "sourceArtifactId": "preserved-c3d70a8d-9da2-4bab-8b31-9ac2d7077ea9-delivery.mp4",
+        "sourceBytes": 9321725,
+        "engine": "mediabunny-webcodecs",
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.64002a, mp4a.40.2\"",
+        "durationSeconds": 28.305124716553287,
+        "firstTimestampSeconds": 0,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "canDecode": true,
+            "width": 1920,
+            "height": 1080,
+            "rotation": 0,
+            "startSeconds": 0,
+            "endSeconds": 28.25,
+            "canBeTransparent": false
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "canDecode": true,
+            "channels": 2,
+            "sampleRate": 44100,
+            "startSeconds": 0,
+            "endSeconds": 28.305124716553287
+          }
+        ],
+        "captureTimeline": {
+          "status": "unavailable",
+          "reason": "No capture-time source frame index exists for this artifact. File PTS cannot be treated as source PTS."
+        }
+      },
+      "decode": {
+        "sourceArtifactId": "preserved-c3d70a8d-9da2-4bab-8b31-9ac2d7077ea9-delivery.mp4",
+        "sourceBytes": 9321725,
+        "engine": "mediabunny-webcodecs",
+        "kind": "decoding",
+        "completeFile": true,
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.64002a, mp4a.40.2\"",
+        "durationSeconds": 28.305124716553287,
+        "firstTimestampSeconds": 0,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "sampleCount": 1695,
+            "startSeconds": 0,
+            "endSeconds": 28.25
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 1219,
+            "startSeconds": 0,
+            "endSeconds": 28.305124716553287
+          }
+        ]
+      },
+      "preservation": {
+        "basis": "YouTube-SABR-encoded-tracks",
+        "reencoded": false,
+        "completeVod": true,
+        "completeSeparatedTracks": true,
+        "selectedFormats": {
+          "policy": "Highest compatible AVC up to 1080p and default-language AAC within archive/free-space budget; complete range, never capture fallback.",
+          "estimatedBytes": 9328353,
+          "sourceByteBudget": 3302636450,
+          "video": {
+            "itag": 299,
+            "width": 1920,
+            "height": 1080,
+            "bitrate": 2931351
+          },
+          "audio": {
+            "itag": 140,
+            "bitrate": 130163,
+            "languageGroup": "en-US.4"
+          }
+        },
+        "transport": {
+          "responses": [
+            {
+              "bytes": 7241836,
+              "sha256": "5f089ba71f526ba3fb102faeb4b78027ccf76307ad0d985e54281f797d06c9d2",
+              "attempts": 1,
+              "replayedBytes": 0
+            },
+            {
+              "bytes": 2089621,
+              "sha256": "1e00649a72e9785217adb1508e46bd8e27976d4cd3928d1111a6ec566164c35e",
+              "attempts": 1,
+              "replayedBytes": 0
+            }
+          ],
+          "formats": [
+            {
+              "type": "video",
+              "itag": 299,
+              "lastModified": "1792601751248980",
+              "segments": 5,
+              "initializations": 1,
+              "startMs": 0,
+              "endMs": 28250,
+              "expectedEndMs": 28250
+            },
+            {
+              "type": "audio",
+              "itag": 140,
+              "lastModified": "1792601715687290",
+              "segments": 3,
+              "initializations": 1,
+              "startMs": 0,
+              "endMs": 28305,
+              "expectedEndMs": 28305
+            }
+          ],
+          "serverBackoffMs": 0
+        },
+        "resources": [
+          {
+            "artifactId": "preserved-c3d70a8d-9da2-4bab-8b31-9ac2d7077ea9-original-audio.mp4",
+            "track": "audio",
+            "bytes": 458860,
+            "sha256": "1773b4ff7f78fbb8d0e1eca669d588ecbc89612882aecdcfb6b8481b9fbafeb2"
+          },
+          {
+            "artifactId": "preserved-c3d70a8d-9da2-4bab-8b31-9ac2d7077ea9-original-video.mp4",
+            "track": "video",
+            "bytes": 8869493,
+            "sha256": "a923b40cbfc57c862e06ce3ba0d5934aa88a5589772aa613a0fdb95a4c5cb990"
+          }
+        ],
+        "proofArtifactId": "preserved-c3d70a8d-9da2-4bab-8b31-9ac2d7077ea9-0-preservation.json",
+        "proofSha256": "9f2924bfec4b64fc61f6f25a6b7072eaa3f1138868d68af7c0666ecaff2f8cdf"
+      },
+      "navigationDiagnostics": [
+        {
+          "type": "youtube-bootstrap-activation",
+          "method": "in-page-search",
+          "elapsedMs": 4051,
+          "retainedDocument": true,
+          "at": 1793276648377
+        },
+        {
+          "type": "youtube-verification-playback",
+          "quality": "tiny",
+          "state": "playing",
+          "at": 1793276651120
+        },
+        {
+          "type": "navigation-start",
+          "url": "https://www.youtube.com/watch",
+          "budgetMs": 90000,
+          "at": 1793276700350
+        },
+        {
+          "type": "youtube-switch",
+          "method": "unavailable",
+          "elapsedMs": 30001,
+          "retainedDocument": false,
+          "at": 1793276730351
+        },
+        {
+          "type": "main-navigation",
+          "url": "https://www.youtube.com/watch",
+          "sameRequestedTarget": true,
+          "generation": 1,
+          "at": 1793276730358
+        },
+        {
+          "type": "navigation",
+          "url": "https://www.youtube.com/watch",
+          "phase": "complete",
+          "reason": "load",
+          "elapsedMs": 10486,
+          "progress": {
+            "committed": true,
+            "domReady": true,
+            "loadFinished": true,
+            "mainFrameErrorCode": null
+          },
+          "document": {
+            "status": 200,
+            "receivedBytes": 1374460,
+            "completed": true,
+            "failed": false
+          },
+          "playerState": "ready",
+          "at": 1793276740837
+        },
+        {
+          "type": "youtube-navigation-surface",
+          "ready": true,
+          "at": 1793276740842
+        },
+        {
+          "type": "youtube-bootstrap-activation",
+          "method": "site-history",
+          "elapsedMs": 161,
+          "retainedDocument": true,
+          "at": 1793276741004
+        },
+        {
+          "type": "youtube-verification-playback",
+          "quality": "hd1080",
+          "state": "playing",
+          "at": 1793276741010
+        }
+      ],
+      "visualReview": {
+        "run": "live-replay-accepted",
+        "checkedAt": "2026-10-29",
+        "framesSeconds": [
+          0,
+          14.15,
+          28.1
+        ],
+        "result": "首中尾为同一Microduck舞台演示；完整音视频解码另记，人工听感未做。"
+      },
+      "audioTechnicalQa": {
+        "id": "zHBrUVyQJWc",
+        "ok": true,
+        "completeAudioRange": [
+          0,
+          28.305124716553287
+        ],
+        "humanListening": "not performed",
+        "windows": [
+          {
+            "startSeconds": 0,
+            "endSeconds": 8,
+            "sampleRate": 44100,
+            "channels": 2,
+            "frames": 352800,
+            "peak": 0.6939254403114319,
+            "rms": 0.11441543220226652,
+            "missingFrames": 0,
+            "sourceSha256": "801a7a4fb7f929db2fbb7976b7645f3793c2bbcb5e1c8e60023862e1e1fbd97a",
+            "pcmSha256": "31e366dd0bf90c53af5e5276282c6b40765f0706f383449fec1229f2d6a1d5e0"
+          },
+          {
+            "startSeconds": 8,
+            "endSeconds": 16,
+            "sampleRate": 44100,
+            "channels": 2,
+            "frames": 352800,
+            "peak": 0.7011841535568237,
+            "rms": 0.10786217154382963,
+            "missingFrames": 0,
+            "sourceSha256": "801a7a4fb7f929db2fbb7976b7645f3793c2bbcb5e1c8e60023862e1e1fbd97a",
+            "pcmSha256": "e995fd9a7043167358429d14d0b263325316796ce55da068497d3611d7dccb17"
+          },
+          {
+            "startSeconds": 16,
+            "endSeconds": 24,
+            "sampleRate": 44100,
+            "channels": 2,
+            "frames": 352800,
+            "peak": 0.6871154308319092,
+            "rms": 0.11124979858205677,
+            "missingFrames": 0,
+            "sourceSha256": "801a7a4fb7f929db2fbb7976b7645f3793c2bbcb5e1c8e60023862e1e1fbd97a",
+            "pcmSha256": "0092c88d0e538ee0d51a45924d02e9e916656b9f1a6c80211bd25e75dbd72c14"
+          },
+          {
+            "startSeconds": 24,
+            "endSeconds": 28.305124716553287,
+            "sampleRate": 44100,
+            "channels": 2,
+            "frames": 189856,
+            "peak": 0.46242812275886536,
+            "rms": 0.07355609795107582,
+            "missingFrames": 0,
+            "sourceSha256": "801a7a4fb7f929db2fbb7976b7645f3793c2bbcb5e1c8e60023862e1e1fbd97a",
+            "pcmSha256": "7f4b813ffed64a9f0c4ff7e985326913bd565f63ee5148183142917c3b45b5f1"
+          }
+        ]
+      },
+      "humanListening": "not performed"
+    },
+    {
+      "validationRun": "live-third-final",
+      "sequenceNavigation": {
+        "method": "in-page-search",
+        "elapsedMs": 5173,
+        "retainedDocument": true,
+        "switchMs": 3551,
+        "bootstrapReady": true,
+        "budgetMs": 90000
+      },
+      "sequenceNavigationMs": 5195,
+      "sequenceInterrupted": true,
+      "id": "a9LDPn-MO4I",
+      "url": "https://www.youtube.com/watch?v=a9LDPn-MO4I",
+      "title": "UHDTV TEST 8K VIDEO.mp4 - YouTube",
+      "ok": true,
+      "navigationOk": true,
+      "navigationMs": 102255,
+      "navigation": {
+        "method": "cold",
+        "elapsedMs": 102237,
+        "retainedDocument": false,
+        "bootstrapReady": true,
+        "budgetMs": 180000,
+        "activationMs": 5416
+      },
+      "tabId": "84a3fdd1-6673-4550-8543-42d995af7f05",
+      "documentTimeOrigin": 1793278295074.7,
+      "transferMs": 2117098,
+      "bytes": 20799322,
+      "artifactId": "preserved-596d8c83-fed3-4a3f-b14f-e7327c2bede7-delivery.mp4",
+      "videoIdentity": {
+        "version": 1,
+        "platform": "youtube",
+        "targetId": "a9LDPn-MO4I",
+        "resourceId": "a9LDPn-MO4I"
+      },
+      "inspection": {
+        "sourceArtifactId": "preserved-596d8c83-fed3-4a3f-b14f-e7327c2bede7-delivery.mp4",
+        "sourceBytes": 20799322,
+        "engine": "mediabunny-webcodecs",
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.640028, mp4a.40.2\"",
+        "durationSeconds": 60.04680272108843,
+        "firstTimestampSeconds": 0,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "canDecode": true,
+            "width": 1920,
+            "height": 1080,
+            "rotation": 0,
+            "startSeconds": 0,
+            "endSeconds": 60,
+            "canBeTransparent": false
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "canDecode": true,
+            "channels": 2,
+            "sampleRate": 44100,
+            "startSeconds": 0,
+            "endSeconds": 60.04680272108843
+          }
+        ],
+        "captureTimeline": {
+          "status": "unavailable",
+          "reason": "No capture-time source frame index exists for this artifact. File PTS cannot be treated as source PTS."
+        }
+      },
+      "decode": {
+        "sourceArtifactId": "preserved-596d8c83-fed3-4a3f-b14f-e7327c2bede7-delivery.mp4",
+        "sourceBytes": 20799322,
+        "engine": "mediabunny-webcodecs",
+        "kind": "decoding",
+        "completeFile": true,
+        "container": "MP4",
+        "contentType": "video/mp4; codecs=\"avc1.640028, mp4a.40.2\"",
+        "durationSeconds": 60.04680272108843,
+        "firstTimestampSeconds": 0,
+        "tracks": [
+          {
+            "id": 1,
+            "type": "video",
+            "codec": "avc",
+            "sampleCount": 1500,
+            "startSeconds": 0,
+            "endSeconds": 60
+          },
+          {
+            "id": 2,
+            "type": "audio",
+            "codec": "aac",
+            "sampleCount": 2586,
+            "startSeconds": 0,
+            "endSeconds": 60.04680272108843
+          }
+        ]
+      },
+      "preservation": {
+        "basis": "YouTube-SABR-encoded-tracks",
+        "reencoded": false,
+        "completeVod": true,
+        "completeSeparatedTracks": true,
+        "selectedFormats": {
+          "policy": "Highest compatible AVC up to 1080p and default-language AAC within archive/free-space budget; complete range, never capture fallback.",
+          "estimatedBytes": 20805142,
+          "sourceByteBudget": 3373355752,
+          "video": {
+            "itag": 137,
+            "width": 1920,
+            "height": 1080,
+            "bitrate": 4334661
+          },
+          "audio": {
+            "itag": 140,
+            "bitrate": 135654,
+            "languageGroup": "default"
+          }
+        },
+        "transport": {
+          "responses": [
+            {
+              "bytes": 10023838,
+              "sha256": "1c9cf8012ca7380c4ec3daae047641bedb20aabf9e178dbd0e36d5a132c40267",
+              "attempts": 1,
+              "replayedBytes": 0
+            },
+            {
+              "bytes": 5007905,
+              "sha256": "3c44d76a0a6eebb5e9ff6f8b20785f4a97dac2a7b621dd00b2efc27b5a51eadd",
+              "attempts": 1,
+              "replayedBytes": 0
+            },
+            {
+              "bytes": 5778670,
+              "sha256": "e0d23bee8e1ae171aa6ceed70d62dd450ebf1ca51a8c9764cc66b7be1533fc9d",
+              "attempts": 1,
+              "replayedBytes": 0
+            }
+          ],
+          "formats": [
+            {
+              "type": "video",
+              "itag": 137,
+              "lastModified": "1733281122253397",
+              "segments": 11,
+              "initializations": 1,
+              "startMs": 0,
+              "endMs": 60000,
+              "expectedEndMs": 60000
+            },
+            {
+              "type": "audio",
+              "itag": 140,
+              "lastModified": "1733280525142685",
+              "segments": 7,
+              "initializations": 1,
+              "startMs": 0,
+              "endMs": 60047,
+              "expectedEndMs": 60046
+            }
+          ],
+          "serverBackoffMs": 0
+        },
+        "resources": [
+          {
+            "artifactId": "preserved-596d8c83-fed3-4a3f-b14f-e7327c2bede7-original-audio.mp4",
+            "track": "audio",
+            "bytes": 972659,
+            "sha256": "d96ff2a5eb4e95c30df62cc73bc558fbf50955beaf8683d10c65c5c9ab2c6ca2"
+          },
+          {
+            "artifactId": "preserved-596d8c83-fed3-4a3f-b14f-e7327c2bede7-original-video.mp4",
+            "track": "video",
+            "bytes": 19832483,
+            "sha256": "c7d096782304c1674adfcb3598cb3c4ec29f790bd551f1dde4dce71c785b6884"
+          }
+        ],
+        "proofArtifactId": "preserved-596d8c83-fed3-4a3f-b14f-e7327c2bede7-0-preservation.json",
+        "proofSha256": "221d059d658856cdf5f035e36aff697852752c93e492e67311dd3703bd812f71"
+      },
+      "navigationDiagnostics": [
+        {
+          "type": "navigation",
+          "url": "https://www.youtube.com/watch",
+          "phase": "complete",
+          "reason": "load",
+          "elapsedMs": 86567,
+          "progress": {
+            "committed": true,
+            "domReady": true,
+            "loadFinished": true,
+            "mainFrameErrorCode": null
+          },
+          "document": {
+            "status": 200,
+            "receivedBytes": 1288610,
+            "completed": true,
+            "failed": false
+          },
+          "playerState": "ready",
+          "at": 1793278381639
+        },
+        {
+          "type": "youtube-navigation-surface",
+          "ready": true,
+          "at": 1793278381642
+        },
+        {
+          "type": "youtube-bootstrap-activation",
+          "method": "in-page-search",
+          "elapsedMs": 5416,
+          "retainedDocument": true,
+          "at": 1793278387058
+        },
+        {
+          "type": "youtube-verification-playback",
+          "quality": "hd1080",
+          "state": "playing",
+          "at": 1793278387065
+        }
+      ],
+      "visualReview": {
+        "run": "live-third-final",
+        "checkedAt": "2026-10-29T13:38:37.839871+00:00",
+        "framesSeconds": [
+          0,
+          30,
+          59.84
+        ],
+        "result": "首帧香港街景，中段及末尾球赛画面；同一绑定UHD测试片的内容，非站点错误动画或另一个播放器。全片双轨解码及原始AAC对照另记，人工听感未做。"
+      },
+      "audioTechnicalQa": {
+        "id": "a9LDPn-MO4I",
+        "ok": true,
+        "completeAudioRange": [
+          0,
+          60.04680272108843
+        ],
+        "humanListening": "not performed",
+        "signalStatus": "original track is silent throughout",
+        "allWindowsEqualOriginal": true,
+        "windows": [
+          {
+            "startSeconds": 0,
+            "endSeconds": 8,
+            "sampleRate": 44100,
+            "channels": 2,
+            "frames": 352800,
+            "peak": 0,
+            "rms": 0,
+            "missingFrames": 0,
+            "sourceSha256": "fa0b4e275e618fe4bd5c0dbf06112cd1b6998289f666a1f087a836b029c113e0",
+            "pcmSha256": "1918846628d4d25823f9b32c75503e1167c680c3cc0821dd950d41b9c8fdd0c7",
+            "originalAudioPcmSha256": "1918846628d4d25823f9b32c75503e1167c680c3cc0821dd950d41b9c8fdd0c7",
+            "pcmEqualToOriginal": true
+          },
+          {
+            "startSeconds": 8,
+            "endSeconds": 16,
+            "sampleRate": 44100,
+            "channels": 2,
+            "frames": 352800,
+            "peak": 0,
+            "rms": 0,
+            "missingFrames": 0,
+            "sourceSha256": "fa0b4e275e618fe4bd5c0dbf06112cd1b6998289f666a1f087a836b029c113e0",
+            "pcmSha256": "1918846628d4d25823f9b32c75503e1167c680c3cc0821dd950d41b9c8fdd0c7",
+            "originalAudioPcmSha256": "1918846628d4d25823f9b32c75503e1167c680c3cc0821dd950d41b9c8fdd0c7",
+            "pcmEqualToOriginal": true
+          },
+          {
+            "startSeconds": 16,
+            "endSeconds": 24,
+            "sampleRate": 44100,
+            "channels": 2,
+            "frames": 352800,
+            "peak": 0,
+            "rms": 0,
+            "missingFrames": 0,
+            "sourceSha256": "fa0b4e275e618fe4bd5c0dbf06112cd1b6998289f666a1f087a836b029c113e0",
+            "pcmSha256": "1918846628d4d25823f9b32c75503e1167c680c3cc0821dd950d41b9c8fdd0c7",
+            "originalAudioPcmSha256": "1918846628d4d25823f9b32c75503e1167c680c3cc0821dd950d41b9c8fdd0c7",
+            "pcmEqualToOriginal": true
+          },
+          {
+            "startSeconds": 24,
+            "endSeconds": 32,
+            "sampleRate": 44100,
+            "channels": 2,
+            "frames": 352800,
+            "peak": 0,
+            "rms": 0,
+            "missingFrames": 0,
+            "sourceSha256": "fa0b4e275e618fe4bd5c0dbf06112cd1b6998289f666a1f087a836b029c113e0",
+            "pcmSha256": "1918846628d4d25823f9b32c75503e1167c680c3cc0821dd950d41b9c8fdd0c7",
+            "originalAudioPcmSha256": "1918846628d4d25823f9b32c75503e1167c680c3cc0821dd950d41b9c8fdd0c7",
+            "pcmEqualToOriginal": true
+          },
+          {
+            "startSeconds": 32,
+            "endSeconds": 40,
+            "sampleRate": 44100,
+            "channels": 2,
+            "frames": 352800,
+            "peak": 0,
+            "rms": 0,
+            "missingFrames": 0,
+            "sourceSha256": "fa0b4e275e618fe4bd5c0dbf06112cd1b6998289f666a1f087a836b029c113e0",
+            "pcmSha256": "1918846628d4d25823f9b32c75503e1167c680c3cc0821dd950d41b9c8fdd0c7",
+            "originalAudioPcmSha256": "1918846628d4d25823f9b32c75503e1167c680c3cc0821dd950d41b9c8fdd0c7",
+            "pcmEqualToOriginal": true
+          },
+          {
+            "startSeconds": 40,
+            "endSeconds": 48,
+            "sampleRate": 44100,
+            "channels": 2,
+            "frames": 352800,
+            "peak": 0,
+            "rms": 0,
+            "missingFrames": 0,
+            "sourceSha256": "fa0b4e275e618fe4bd5c0dbf06112cd1b6998289f666a1f087a836b029c113e0",
+            "pcmSha256": "1918846628d4d25823f9b32c75503e1167c680c3cc0821dd950d41b9c8fdd0c7",
+            "originalAudioPcmSha256": "1918846628d4d25823f9b32c75503e1167c680c3cc0821dd950d41b9c8fdd0c7",
+            "pcmEqualToOriginal": true
+          },
+          {
+            "startSeconds": 48,
+            "endSeconds": 56,
+            "sampleRate": 44100,
+            "channels": 2,
+            "frames": 352800,
+            "peak": 0,
+            "rms": 0,
+            "missingFrames": 0,
+            "sourceSha256": "fa0b4e275e618fe4bd5c0dbf06112cd1b6998289f666a1f087a836b029c113e0",
+            "pcmSha256": "1918846628d4d25823f9b32c75503e1167c680c3cc0821dd950d41b9c8fdd0c7",
+            "originalAudioPcmSha256": "1918846628d4d25823f9b32c75503e1167c680c3cc0821dd950d41b9c8fdd0c7",
+            "pcmEqualToOriginal": true
+          },
+          {
+            "startSeconds": 56,
+            "endSeconds": 60.04680272108843,
+            "sampleRate": 44100,
+            "channels": 2,
+            "frames": 178464,
+            "peak": 0,
+            "rms": 0,
+            "missingFrames": 0,
+            "sourceSha256": "fa0b4e275e618fe4bd5c0dbf06112cd1b6998289f666a1f087a836b029c113e0",
+            "pcmSha256": "bf4c362357dab44f2818e998d9b2be119fee4afc75ca5673c029e3ce3c12ead6",
+            "originalAudioPcmSha256": "bf4c362357dab44f2818e998d9b2be119fee4afc75ca5673c029e3ce3c12ead6",
+            "pcmEqualToOriginal": true
+          }
+        ]
+      },
+      "humanListening": "not performed"
+    }
+  ],
+  "guardTiming": [
+    {
+      "at": "2026-10-29T12:24:59.058Z",
+      "ms": 192797,
+      "stage": "preservation-guard-summary",
+      "elapsedMs": 36716,
+      "guardCalls": 3758,
+      "guardMs": 156,
+      "maxGuardMs": 4
+    },
+    {
+      "at": "2026-10-29T12:39:04.796Z",
+      "ms": 1038539,
+      "stage": "preservation-guard-summary",
+      "elapsedMs": 793706,
+      "guardCalls": 11618,
+      "guardMs": 3067,
+      "maxGuardMs": 15
+    }
+  ],
+  "offline": {
+    "passed": 135,
+    "failed": 0,
+    "notRun": 104,
+    "report": ".bmw-runtime/youtube-recovery-20261029/monotonic-unit-contract-boundary/result.json"
+  },
+  "native": {
+    "workspace": ".bmw-runtime/youtube-recovery-20261029/frozen-monotonic",
+    "profiles": "disposable; mock keychain; no paid-model calls",
+    "results": [
+      {
+        "id": "identity",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 720,
+        "log": "../monotonic-runtime/identity/run.log"
+      },
+      {
+        "id": "background",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 4729,
+        "log": "../monotonic-runtime/background/run.log"
+      },
+      {
+        "id": "dsh",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 14182,
+        "log": "../monotonic-runtime/dsh/run.log"
+      },
+      {
+        "id": "worktab",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 29531,
+        "log": "../monotonic-runtime/worktab/run.log"
+      },
+      {
+        "id": "tab-lifecycle",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 41891,
+        "log": "../monotonic-runtime/tab-lifecycle/run.log"
+      },
+      {
+        "id": "capture",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 35811,
+        "log": "../monotonic-runtime/capture/run.log"
+      },
+      {
+        "id": "acquisition",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 5951,
+        "log": "../monotonic-runtime/acquisition/run.log"
+      },
+      {
+        "id": "http-hls",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 432,
+        "log": "../monotonic-runtime/http-hls/run.log"
+      },
+      {
+        "id": "processing",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 24648,
+        "log": "../monotonic-runtime/processing/run.log"
+      },
+      {
+        "id": "source-studio",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 22722,
+        "log": "../monotonic-runtime/source-studio/run.log"
+      },
+      {
+        "id": "studio",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 62729,
+        "log": "../monotonic-runtime/studio/run.log"
+      },
+      {
+        "id": "video",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 41908,
+        "log": "../monotonic-runtime/video/run.log"
+      },
+      {
+        "id": "narration",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 1437,
+        "log": "../monotonic-runtime/narration/run.log"
+      },
+      {
+        "id": "desktop",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 24961,
+        "log": "../monotonic-runtime/desktop/run.log"
+      }
+    ]
+  },
+  "rootCauseEvidence": {
+    "applicationBundle": "Player can be ready before the 9.7 MB uncompressed application bundle finishes; an observed full load took 72.945 seconds. Never early-stop a YouTube document based on visible controls.",
+    "component": "Search button is outside the inner form, within yt-searchbox. Select component before form.",
+    "unlisted": {
+      "id": "zHBrUVyQJWc",
+      "isUnlisted": true,
+      "exactTargetInSearch": false,
+      "siteHistoryProbeMs": 168,
+      "retainedDocument": true,
+      "websiteVerificationRequestObserved": true
+    },
+    "slowTransfer": {
+      "http1TrialLimitMs": 600000,
+      "trialFailed": true,
+      "guardMs": 2146,
+      "maxGuardMs": 13,
+      "completeOriginal": false
+    },
+    "replayIdle": {
+      "observedOriginalPrefixBytes": 5739419,
+      "observedReplayWireBytes": 1083968,
+      "parserIdleMs": 30004,
+      "nativeLastByteAgoMs": 14,
+      "root": "Native prefix replay is withheld until its complete hash matches, while the protocol library only measures parser-visible bytes.",
+      "fix": "Refresh the same pinned library idle clock only from actual same-request bounded replay wire progress. No synthetic media or timer heartbeat. No-wire 30s deadline and outer cancellation/budgets remain.",
+      "dependency": "googlevideo@5.0.0; narrow validated private clock adapter, covered by the real worker regression."
+    },
+    "nullablePlayer": "A same-document switch can return a transient null player response; continue waiting under the deadline."
+  },
+  "priorHttp1Trial": {
+    "sourceUnchanged": false,
+    "results": [
+      {
+        "id": "jNQXAC9IVRw",
+        "ok": true,
+        "navigation": {
+          "method": "cold",
+          "elapsedMs": 81628,
+          "retainedDocument": false,
+          "bootstrapReady": true,
+          "budgetMs": 180000,
+          "activationMs": 3481
+        },
+        "navigationMs": 81642
+      },
+      {
+        "id": "zHBrUVyQJWc",
+        "ok": false,
+        "error": "Error: YOUTUBE_PLAYER_ACTIVATION: The initialized site did not activate the requested video.",
+        "newFilesAfterFailure": []
+      },
+      {
+        "id": "a9LDPn-MO4I",
+        "ok": false,
+        "navigation": {
+          "method": "cold",
+          "elapsedMs": 68566,
+          "retainedDocument": false,
+          "bootstrapReady": true,
+          "budgetMs": 180000,
+          "activationMs": 4295
+        },
+        "navigationMs": 68593,
+        "error": "TimeoutError: The operation was aborted due to timeout",
+        "newFilesAfterFailure": []
+      }
+    ],
+    "note": "Development trial; code was subsequently changed. Retained as failure evidence, not final-build acceptance."
+  },
+  "boundaries": [
+    "Requested URL/player/response IDs, actual CPN/config, format version and complete ranges remain bound.",
+    "Only visible site links/search/home controls and one verified native history return; no fabricated links, history replacement or private site API.",
+    "Timeout, actual native cleanup, FIFO, Project ownership, rollback and quarantine remain.",
+    "Disposable signed-out profiles and mock Keychain; no paid model or production-profile acceptance.",
+    "No artificial quality reduction. Full-file decoding and manual listening are separate."
+  ],
+  "localEvidence": ".bmw-runtime/youtube-recovery-20261029/"
+}

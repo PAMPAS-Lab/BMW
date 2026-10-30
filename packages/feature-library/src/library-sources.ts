@@ -9,12 +9,30 @@ import type {SourceMediaState,SourceCaptureGuard,VideoIdentity} from '@bmw-agent
 import {assertSourceRequest,assertSourceCatalog,assertSourceObservation,assertSourceCaptureEvidence,assertSourceDeliveryRange,assertVideoIdentity,sameVideoIdentity} from '@bmw-agent/media-native/sources'
 import type {ProjectSourcePort,SourceCitation} from '@bmw-agent/media-native/sources'
 import type {BrowserFeatureHost} from '@bmw-agent/browser-capability/host'
+import {sameVideoSourcePage} from '@bmw-agent/agent-contract/video-identity'
 /** Accept SABR evidence only for the confirmed YouTube target and both complete encoded tracks. */
 export function assertSourcePreservationBasis(proof:Record<string,unknown>,expected:VideoIdentity|undefined,observed:unknown):'HTTP-delivery-bytes'|'YouTube-SABR-encoded-tracks'{
  if(proof.reencoded!==false)throw new Error('Invalid preservation proof.')
  if(proof.basis==='HTTP-delivery-bytes')return proof.basis
  if(proof.basis==='YouTube-SABR-encoded-tracks'&&expected?.platform==='youtube'&&proof.completeVod===true&&proof.completeSeparatedTracks===true&&observed!==undefined&&sameVideoIdentity(expected,assertVideoIdentity(observed)))return proof.basis
  throw new Error('Invalid identity-bound preservation basis.')
+}
+/** Resolve the saved source within the active Project; never fall back to the user's active tab. */
+export function sourceAcquisitionTab(pages:readonly {id:string;url:string}[],pageUrl:string,requested?:string,identity?:VideoIdentity):string {
+ const canonical=(value:string)=>{try{const u=new URL(value);u.hash='';return ['https:','http:'].includes(u.protocol)?u.href:null}catch{return null}}
+ const expected=canonical(pageUrl)
+ if(!expected)throw new Error('SOURCE_TAB_UNAVAILABLE: Saved source has no HTTP(S) page.')
+ const matches=pages.filter(page=>sameVideoSourcePage(expected,page.url,identity))
+ if(requested){if(!matches.some(page=>page.id===requested))throw new Error('SOURCE_TAB_CHANGED: The requested tab is not the saved source page.');return requested}
+ if(matches.length!==1)throw new Error(matches.length?'SOURCE_TAB_AMBIGUOUS: Multiple source pages are open; pass the exact tabId.':'SOURCE_TAB_UNAVAILABLE: Open the saved source page before acquiring media.')
+ return matches[0]!.id
+}
+/** An explicit archive failure must not be mistaken for player failure. The
+ * ordinary news path uses auto in one native job; archive recovery skips the
+ * already failed download and carries the new revision plus original scope. */
+export function sourceCaptureRecovery(request:Extract<import('@bmw-agent/media-native/sources').SourceRequest,{operation:'acquire'}>,scope:SourceCaptureGuard['scope'],revision:number,tabId:string,error:string){
+ if(request.method!=='preserve'||/VIDEO_IDENTITY|SOURCE_CONFLICT|changed|quarantin|cleanup|login|access.denied/i.test(error))return null
+ return {action:'library.sources' as const,sourceRequest:assertSourceRequest({operation:'acquire',expectedRevision:revision,sourceId:request.sourceId,acquisitionId:request.acquisitionId,candidateId:request.candidateId,method:'capture',tabId,videoSelector:scope.selector,videoIndex:scope.index,fromStart:false,maxDurationMs:29000}),meaning:'Explicit native capture after actual cleanup; requested archive preview offsets are not transferred. Verify the returned actual source range.'}
 }
 /** Invoked within the existing Browser FIFO; never recursively executes a tool. */
 export class LibrarySources {
@@ -50,12 +68,13 @@ export class LibrarySources {
   if(request.method==='preserve'&&(candidate.durationSeconds??0)>1800)throw new Error('Long delivery storage and decoded acquisition are separate: use media.preserve on the observed candidate URL to archive the complete delivery, then media.segment for bounded local processing. A preview request does not permit decoding the whole long input; this acquisition endpoint must not download and delete a long archive after a decode-limit failure.')
   if(body.acquisition.access==='login-required')return {catalog:await port.recordMedia(body.source.id,body.acquisition.id,candidate.id,{state:'login-required',error:body.acquisition.accessText},request.expectedRevision,signal),state:'login-required'}
   if(request.method==='download'&&!this.kernel.downloadSource||request.method==='capture'&&!this.kernel.captureSource||request.method==='preserve'&&!this.kernel.preserveSource||request.method==='auto'&&!this.kernel.acquireSource)throw new Error('Source media acquisition is unavailable.')
-  const directory=await fs.realpath(path.join(project.directory,'artifacts')),identity=await fs.stat(directory);let created:string|undefined;const related:string[]=[]
+  const directory=await fs.realpath(path.join(project.directory,'artifacts')),identity=await fs.stat(directory);let created:string|undefined,resolvedTabId:string|undefined,stage='resolve-source-tab';const related:string[]=[]
   const guard=async()=>{signal?.throwIfAborted();if(this.kernel.projectStore.active().id!==project.id)throw new Error('Source Project changed during media acquisition.');const stat=await fs.lstat(directory);if(!stat.isDirectory()||stat.isSymbolicLink()||stat.dev!==identity.dev||stat.ino!==identity.ino||await fs.realpath(path.join(project.directory,'artifacts'))!==directory)throw new Error('Source artifact directory changed.')}
   const cleanup=async()=>{if(!created)return;const stat=await fs.lstat(directory);if(stat.isDirectory()&&stat.dev===identity.dev&&stat.ino===identity.ino&&await fs.realpath(path.join(project.directory,'artifacts'))===directory)for(const artifactId of [created,...related])await fs.rm(path.join(directory,artifactId),{force:true})}
   try{
    await guard()
-   const shared={filename:'source-'+crypto.randomUUID(),...(request.tabId?{tabId:request.tabId}:{}),...(isVideo?{sourceGuard}:{})},captureRequest={...shared,sourceGuard,videoSelector:request.videoSelector!,videoIndex:request.videoIndex,fromStart:request.fromStart,maxDurationMs:request.maxDurationMs}
+   const tabId=sourceAcquisitionTab(this.kernel.sourcePages?.()??[],body.source.url,request.tabId,isVideo&&['auto','preserve'].includes(request.method)?candidate.videoIdentity:undefined);resolvedTabId=tabId;stage='native-transfer'
+   const shared={filename:'source-'+crypto.randomUUID(),tabId,...(isVideo?{sourceGuard}:{})},captureRequest={...shared,sourceGuard,videoSelector:request.videoSelector!,videoIndex:request.videoIndex,fromStart:request.fromStart??false,maxDurationMs:request.preview?Math.min(request.maxDurationMs??29000,29000,Math.max(1000,Math.floor((request.preview.endSeconds-request.preview.startSeconds)*1000))):request.maxDurationMs}
    const auto=request.method==='auto'?mediaRecord(await this.kernel.acquireSource!(captureRequest,signal)):undefined
    const method=auto?auto.method:request.method
    if(!['download','capture','preserve'].includes(String(method)))throw new Error('Invalid native acquisition method.')
@@ -75,8 +94,8 @@ export class LibrarySources {
     if(!owned.includes(assertArtifactId(preservation.proofArtifactId))||typeof preservation.proofSha256!=='string'||!/^[a-f0-9]{64}$/.test(preservation.proofSha256))throw new Error('Invalid preservation proof.')
     delivery={basis,reencoded:false,proofArtifactId:preservation.proofArtifactId,proofSha256:preservation.proofSha256,originalArtifactId:created,originalSha256:raw.sha256}
    }
-   const deliveryRange=request.preview?assertSourceDeliveryRange({...request.preview,kind:'delivery-file-pts',reencoded:true}):undefined
-   if(deliveryRange){
+   const deliveryRange=request.preview&&method==='preserve'?assertSourceDeliveryRange({...request.preview,kind:'delivery-file-pts',reencoded:true}):undefined
+   if(deliveryRange){stage='preview-conversion'
     await guard();const converted=mediaRecord(await this.kernel.recordingController.processArtifact({action:'media.convert',artifactId:created,outputFormat:'mp4',trimStartSeconds:deliveryRange.startSeconds,trimEndSeconds:deliveryRange.endSeconds},signal))
     related.push(created);created=assertArtifactId(converted.artifactId);related.push(assertArtifactId(created+'.derivation.json'))
     const range=mediaRecord(converted.requestedSourceRange)
@@ -86,6 +105,7 @@ export class LibrarySources {
    await guard();const input=await ArtifactJobIO.open(directory,{action:'media.inspect',artifactId:created}),hash=crypto.createHash('sha256')
    try{for(let at=0;at<input.bytes;at+=1024*1024){signal?.throwIfAborted();hash.update(await input.read(at,Math.min(1024*1024,input.bytes-at)))}}finally{await input.close()}
    const contentId=hash.digest('hex');let state:SourceMediaState,proof:unknown,startSeconds:number|undefined,endSeconds:number|undefined
+   stage='decode-verification'
    if(candidate.kind==='image'||candidate.kind==='poster'){proof=assertImageInspection(await this.kernel.recordingController.processArtifact({action:'media.image.inspect',artifactId:created},signal));state='image-decoded'}
    else{const decoded=assertFullMediaDecode(await this.kernel.recordingController.processArtifact({action:'media.decode.check',artifactId:created},signal));if(!decoded.tracks.some(track=>track.type==='video'))throw new Error('The video candidate did not yield a decoded video track.');proof=delivery?{...decoded,delivery}:decoded;startSeconds=0;endSeconds=decoded.durationSeconds
     if(deliveryRange&&Math.abs(decoded.durationSeconds-(deliveryRange.endSeconds-deliveryRange.startSeconds))>.25)throw new Error('Decoded preview duration does not match the delivery range.')
@@ -93,15 +113,17 @@ export class LibrarySources {
     // Element duration may itself be a trial; it is not a platform whole-video proof.
     state=deliveryRange||body.acquisition.access==='preview'||capture&&capture.stopReason!=='ended'||expected!==null&&decoded.durationSeconds<expected-.25?'partial-preview':'decoded-file'
    }
-   if(isVideo&&this.kernel.verifySourceVideo){const identity=await this.kernel.verifySourceVideo({...sourceGuard,tabId:request.tabId},signal);if(raw.videoIdentity!==undefined&&!sameVideoIdentity(assertVideoIdentity(raw.videoIdentity),identity))throw new Error('VIDEO_IDENTITY_CHANGED: Acquired resource differs from the current target.');proof={...mediaRecord(proof),videoIdentity:identity}}
+   stage='identity-commit'
+   if(isVideo&&this.kernel.verifySourceVideo){const identity=await this.kernel.verifySourceVideo({...sourceGuard,tabId},signal);if(raw.videoIdentity!==undefined&&!sameVideoIdentity(assertVideoIdentity(raw.videoIdentity),identity))throw new Error('VIDEO_IDENTITY_CHANGED: Acquired resource differs from the current target.');proof={...mediaRecord(proof),videoIdentity:identity}}
    if(auto)proof={...mediaRecord(proof),acquisition:auto.acquisition}
    await guard();const catalog=await port.recordMedia(body.source.id,body.acquisition.id,candidate.id,{state,artifactId:created,contentId,proof,...(capture?{capture}:{}),...(deliveryRange?{deliveryRange}:{}),...(startSeconds===undefined?{}:{startSeconds,endSeconds})},request.expectedRevision,signal)
    const saved=catalog.sources.find(source=>source.id===body.source.id)!.acquisitions.find(acquisition=>acquisition.id===body.acquisition.id)!.media.at(-1)!
    if(saved.artifactId!==created&&method!=='preserve'){try{await cleanup()}catch(error){return {catalog,state,artifactId:saved.artifactId,verification:proof,cleanupWarning:'Duplicate download could not be removed; saved evidence is preserved.'}}}
-   return {catalog,state,artifactId:saved.artifactId,verification:proof}
+   return {catalog,state,artifactId:saved.artifactId,verification:proof,...(request.preview?{previewApplied:method==='preserve',...(method==='capture'?{actualCaptureSourceRange:{startSeconds:capture!.sourceStartSeconds,endSeconds:capture!.sourceEndSeconds},note:'Download failed; bounded capture uses its measured actual source position, not requested delivery preview offsets.'}:{})}:{})}
   }catch(error){await cleanup();signal?.throwIfAborted();if(this.kernel.projectStore.active().id!==project.id)throw error;const message=(error instanceof Error?error.message:String(error)).slice(0,2000)
    // The old original, confirmation and earlier successful media remain immutable.
-   return {catalog:await port.recordMedia(body.source.id,body.acquisition.id,candidate.id,{state:'failed',error:message},request.expectedRevision,signal),state:'failed',error:message}
+   const catalog=await port.recordMedia(body.source.id,body.acquisition.id,candidate.id,{state:'failed',error:message},request.expectedRevision,signal),recovery=isVideo&&stage==='native-transfer'&&resolvedTabId?sourceCaptureRecovery(request,body.acquisition.mediaScope,sourceState(port).revision,resolvedTabId,message):null
+   return {catalog,state:'failed',error:message,failure:{stage,code:/\b(?:SOURCE|VIDEO|MEDIA|YOUTUBE|BMW)_[A-Z_]+/.exec(message)?.[0]??'SOURCE_ACQUISITION_FAILED',...(resolvedTabId?{tabId:resolvedTabId}:{}),requiresFreshRevision:true,...(recovery?{nextMethod:'capture',recovery,note:'Download failure is not a player failure. Apply this one explicit bounded native fallback in the same input after cleanup; do not restart research. Source identity/ad/cleanup gates remain mandatory.'}:{})}}
   }
  }
  async citation(citation:SourceCitation,signal?:AbortSignal){

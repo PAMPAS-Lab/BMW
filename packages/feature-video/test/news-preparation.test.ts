@@ -17,9 +17,11 @@ import type {NewsScenePreparation} from '../src/news-preparation-contract.js'
 import type {StudioKernel} from '../src/studio-service.js'
 import {VideoStudioService} from '../src/studio-service.js'
 import {applyVideoEdit} from '../src/video-edit.js'
-import {studioAgentResult} from '../src/studio-agent-result.js'
+import {studioSceneProjection,studioAgentResult} from '../src/studio-agent-result.js'
 import {saveNativeVideoOrigin,saveMediaDerivation} from '../../media-native/src/media-derivation.js'
 import {externalVideoVisual} from '../src/news-visual-source.js'
+import {defaultResearchDiagram} from '../../media-native/src/research-diagrams.js'
+import {diagramPreparationPlan} from '../src/diagram-preparation.js'
 const hash=(v:string)=>crypto.createHash('sha256').update(v).digest('hex')
 async function fixture(){
  const root=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'bmw-news-prepare-'))),directory=path.join(root,'artifacts');fs.mkdirSync(directory)
@@ -79,6 +81,8 @@ test('Native track-bound inspection does not invalidate observed preparation thr
   containerDuration=10.005;assert.equal((await f.service().preflight()).ready,true,'container metadata does not change the fixed video/audio track boundaries')
   draft=f.store.read(draft.id);draft.scenes[0].captions![0].translationOrigin='user-edited';draft=f.store.update(draft.id,draft.revision,draft)
   assert.equal((await f.service().preflight()).ready,true,'translation ownership alone does not change rendered text or observed footage')
+  draft=f.store.read(draft.id);draft.scenes[0].captions=[{startSeconds:.1,endSeconds:1.4,text:'A verified ',translationText:'已核对的'},{startSeconds:1.4,endSeconds:2.9,text:'primary claim.',translationText:'原话。'}];draft=f.store.update(draft.id,draft.revision,draft)
+  const retimed=await f.service().preflight();assert.equal(retimed.ready,true,'cue splitting and timing retain the same editorial words and source preparation');assert.equal(retimed.scenes[0].actualDateLabel,draft.scenes[0].label)
   const unchanged=f.store.read(draft.id);draft=structuredClone(unchanged);draft.scenes[0].captions![0].translationText='A different claim.';f.store.update(draft.id,draft.revision,draft)
   assert.ok((await f.service().preflight()).issues.some(i=>i.code==='checklist-stale'),'rendered caption or translation edits still invalidate the observed script')
   const currentRevision=f.store.read(unchanged.id).revision;f.store.update(unchanged.id,currentRevision,{...unchanged,revision:currentRevision})
@@ -327,5 +331,60 @@ test('External provenance follows only hash-verified native derivation, never an
   assert.equal(await externalVideoVisual(f.kernel.projectSources!(),f.directory,'cut.mp4'),true)
   fs.writeFileSync(path.join(f.directory,'generated.mp4'),'generated text animation');assert.equal(await externalVideoVisual(f.kernel.projectSources!(),f.directory,'generated.mp4'),false)
   fs.writeFileSync(path.join(f.directory,'robot.mp4'),'changed root bytes');await assert.rejects(externalVideoVisual(f.kernel.projectSources!(),f.directory,'cut.mp4'),/changed/i)
+ }finally{f.close()}
+})
+
+test('Native diagram preparation pins three frames in a private journal, preserves opening video and rejects changed proof',async()=>{
+ const f=await fixture();try{
+  let draft=f.store.read(f.draft.id),last=draft.scenes.at(-1)!;delete last.videoArtifactId;last.keepSourceAudio=false;last.label='机制图解｜发布2026-10-21';last.durationSeconds=7.5
+  const spec=defaultResearchDiagram('events');if(spec.kind!=='events')throw new Error('fixture');last.layers=[{id:'native-events',title:'Native mechanism',kind:'diagram',startSeconds:0,durationSeconds:7.5,fadeInSeconds:0,fadeOutSeconds:0,x:.05,y:.25,width:.9,height:.4,opacity:1,zIndex:0,hidden:false,locked:false,color:'#ffffff',science:spec}];draft=f.store.update(draft.id,draft.revision,draft)
+  let serial=0,modifyDuringCompose=false
+  const inspect=f.kernel.recordingController.processArtifact
+  f.kernel.recordingController.compose=async()=>{const artifactId=`preview-${serial++}.mp4`;fs.writeFileSync(path.join(f.directory,artifactId),'native controlled encode');if(modifyDuringCompose){const changed=f.store.read(draft.id);changed.title='Concurrent user edit';f.store.update(changed.id,changed.revision,changed)}return {artifactId}}
+  f.kernel.recordingController.processArtifact=async(raw,signal)=>{const r=raw as {action:string;timestampsSeconds:number[]};if(r.action!=='media.frames.sample')return inspect(raw,signal);return {frames:r.timestampsSeconds.map((seconds,index)=>{const artifactId=`diagram-${serial}-${index}.png`;fs.writeFileSync(path.join(f.directory,artifactId),'controlled PNG '+serial+' '+index);return {artifactId,type:'screenshot',contentType:'image/png',outputIndex:index,requestedTimestampSeconds:seconds,timestampSeconds:seconds,width:640,height:360}})}}
+  const prepared=await f.service().execute({operation:'prepare-diagram',sceneId:last.id},'agent') as {evidence:{id:string;frames:{artifactId:string}[]}}
+  assert.equal(fs.readdirSync(f.directory).some(id=>id.endsWith('.mp4')&&id.startsWith('preview')),false,'temporary encode removed')
+  const before=await f.service().preflight();assert.equal(before.ready,false,'native pixels do not auto-approve declarations')
+  const declarations=before.scenes.map(row=>({sceneId:row.sceneId,fingerprint:row.fingerprint,intent:'Explain observed evidence.',dateLabel:draft.scenes.find(s=>s.id===row.sceneId)!.label!,materials:row.sceneId===last.id?[]:[{artifactId:'robot.mp4',referenceId:'ref',kind:'real-footage' as const,observation:'Controlled source object moves.',relation:'Supports source claim.'}],...(row.sceneId===last.id?{diagramEvidenceId:prepared.evidence.id,diagramObservations:[0,1,2].map(frameIndex=>({frameIndex,observation:'Controlled state '+frameIndex}))}:{}),originalSpeech:{mode:'not-used' as const,quote:'',translation:'',reason:'No speech excerpt in this fixture.'}}))
+  await f.service().execute({operation:'record-scenes',expectedChecklistRevision:f.service().journal.read().revision,scenes:declarations},'agent')
+  assert.equal((await f.service().preflight()).ready,true)
+  fs.writeFileSync(path.join(f.directory,prepared.evidence.frames[0].artifactId),'tampered');assert.equal((await f.service().preflight()).ready,false)
+  await assert.rejects(f.service().execute({operation:'read-diagram',sceneId:last.id},'agent'),/DIAGRAM_STALE/)
+  const replaced=await f.service().execute({operation:'prepare-diagram',sceneId:last.id},'agent') as {evidence:{id:string}};assert.notEqual(replaced.evidence.id,prepared.evidence.id,'explicit prepare creates fresh evidence after PNG corruption');assert.equal((await f.service().preflight()).ready,false,'prior observations cannot approve replacement PNGs');
+  draft=f.store.read(draft.id);draft.scenes.at(-1)!.layers![0].science!.title='Changed diagram';draft=f.store.update(draft.id,draft.revision,draft)
+  await assert.rejects(f.service().execute({operation:'read-diagram',sceneId:last.id},'agent'),/DIAGRAM_STALE/)
+  modifyDuringCompose=true;const journal=f.service().journal.read();await assert.rejects(f.service().execute({operation:'prepare-diagram',sceneId:last.id},'agent'),/NEWS_PREPARATION_STALE/);assert.deepEqual(f.service().journal.read(),journal,'concurrent edit commits no evidence')
+  assert.equal(fs.readdirSync(f.directory).filter(id=>id.startsWith('diagram-')).length,6,'failed CAS cleans its PNGs and retains prior ones')
+  assert.throws(()=>new NewsPreparationJournal(f.root,{...f.owner,sessionId:'foreign',draftId:draft.id}).read(),/Foreign/)
+ }finally{f.close()}
+})
+test('Diagram capability rejects static, text-only, out-of-window, media-backed and non-final scenes',async()=>{
+ const f=await fixture();try{
+  const draft=f.store.read(f.draft.id),scene=draft.scenes.at(-1)!;delete scene.videoArtifactId;scene.label='机制图解｜发布2026-10-21';scene.durationSeconds=7.5
+  const spec=defaultResearchDiagram('events');if(spec.kind!=='events')throw new Error('fixture');scene.layers=[{id:'native',title:'Mechanism',kind:'diagram',startSeconds:0,durationSeconds:7.5,fadeInSeconds:0,fadeOutSeconds:0,x:.05,y:.25,width:.9,height:.4,opacity:1,zIndex:0,hidden:false,locked:false,color:'#ffffff',science:spec}]
+  assert.doesNotThrow(()=>diagramPreparationPlan(draft,scene));assert.throws(()=>diagramPreparationPlan(draft,draft.scenes[0]),/DIAGRAM_SCOPE/)
+  spec.events=[];assert.throws(()=>diagramPreparationPlan(draft,scene),/DIAGRAM_STATIC/)
+  spec.events=[{id:'text',atSeconds:1,changes:[{targetId:'stage-0',text:'Only text changes'}]}];assert.throws(()=>diagramPreparationPlan(draft,scene),/DIAGRAM_STATIC/)
+  spec.events=[{id:'late',atSeconds:8,changes:[{targetId:'stage-0',active:false}]}];assert.throws(()=>diagramPreparationPlan(draft,scene),/DIAGRAM_STATIC/)
+  scene.videoArtifactId='robot.mp4';assert.throws(()=>diagramPreparationPlan(draft,scene),/DIAGRAM_STATIC|DIAGRAM_SCOPE/)
+  assert.throws(()=>assertNewsPreparationRequest({operation:'prepare-diagram',sceneId:'closing',passed:true}),/Unsupported/)
+  assert.throws(()=>assertNewsPreparationRequest({operation:'record-scene',expectedChecklistRevision:0,scene:{...scene,fingerprint:'0'.repeat(64),diagramEvidenceId:'fake',diagramObservations:[]}}))
+ }finally{f.close()}
+})
+
+
+test('Long scene citations retain exact bindings and round-trip every UTF16 quote part without output-budget dead ends',async()=>{
+ const f=await fixture();try{
+  const d=f.store.read(f.draft.id),scene=d.scenes.at(-1)!,quote='甲'.repeat(599)+'😀'+'乙'.repeat(3000)
+  scene.citations![0]={...scene.citations![0],startCharacter:20,endCharacter:20+quote.length,quote}
+  const request={operation:'read-scene' as const,draftId:d.id,expectedRevision:d.revision,sceneId:scene.id,section:'sources' as const,pageLimit:1}
+  const summary=studioSceneProjection(d,request) as {citations:{items:{quote?:string;quoteOmitted:boolean;startCharacter:number;endCharacter:number;quoteSha256:string;readQuote:{citationIndex:number}}[]}}
+  const metadata=summary.citations.items[0];assert.equal(metadata.quote,undefined);assert.equal(metadata.quoteOmitted,true);assert.equal(metadata.startCharacter,20);assert.equal(metadata.endCharacter,20+quote.length);assert.equal(metadata.quoteSha256,hash(quote));assert.equal(metadata.readQuote.citationIndex,0)
+  let offset=0,joined=''
+  for(let n=0;n<20;n++){
+   const read=assertStudioRequest({...request,citationIndex:0,pageOffset:offset}),part=(studioSceneProjection(d,read) as {quotePart:{text:string;offset:number;startCharacter:number;endCharacter:number;nextOffset:number|null}}).quotePart
+   assert.equal(part.offset,offset);assert.equal(part.startCharacter,20+offset);assert.equal(part.endCharacter,20+offset+part.text.length);assert.ok(part.text.length<=600);assert.ok(!/[\uD800-\uDBFF]$/.test(part.text));assert.ok(!/^[\uDC00-\uDFFF]/.test(part.text));joined+=part.text;if(part.nextOffset===null)break;offset=part.nextOffset
+  }
+  assert.equal(joined,quote);assert.throws(()=>assertStudioRequest({...request,section:'content',citationIndex:0}),/citationIndex/);assert.throws(()=>studioSceneProjection(d,{...request,citationIndex:5}),/citation index/)
  }finally{f.close()}
 })

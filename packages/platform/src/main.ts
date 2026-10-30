@@ -27,7 +27,7 @@ import { BrowserKernel } from '@bmw-agent/browser-capability/kernel'
 import { createBridgeServer } from '@bmw-agent/browser-capability/bridge'
 import type { AgentProject, AgentProjectContext } from '@bmw-agent/agent-contract'
 import {QwenCredentialsStore} from './qwen-credentials-store.js'
-import { GlobalSettingsStore } from './global-settings-store.js'
+import { GlobalSettingsStore,configureNetworkStartup } from './global-settings-store.js'
 import { LayoutStore } from './layout-store.js'
 import { isOverlayAtDockCorner } from './layout-docking.js'
 import { isApplicationMenuShortcut, isSavePageShortcut, pageSaveType, suggestedPageFilename } from './menu-policy.js'
@@ -905,7 +905,8 @@ function installIpc() {
     await assistantService?.host.yieldBackground()
     assertNoScheduledProjectMutation()
     return bridge.changeProject(async () => {
-      if(projectId===projectStore.active().id)await browserKernel.releaseProjectResearchTabs()
+      if(projectId===projectStore.active().id)await browserKernel.releaseProjectResearchTabs({keepYoutubeWorktab:false})
+      else await browserKernel.closeProjectYoutubeWorktab(projectId)
       await productFeatureRuntime?.onProjectWillArchive?.(projectId)
       scheduledTaskManager.disableProject(projectId)
       await assistantService.sessions.archiveProject(projectId)
@@ -1190,11 +1191,15 @@ async function createApp() {
         const kernel=new BrowserKernel({detached:true,window:mainWindow,session:persistentSession,permissionStore,sessionContinuity:undefined,projectStore:{active:()=>project},settingsStore,capabilityRegistry:browserCapabilities,allowedActions:undefined,artifactsDirectory:path.join(project.directory,'artifacts'),onState:undefined,getCurrentSessionId:()=>binding.sessionId,getSessionDriver:()=>binding.driverId})
         kernel.recordingController=mediaController
         const assertLease=configureCollectionBrowser(binding,runId,kernel as unknown as BrowserFeatureHost)
-        kernel.projectSources=()=>collectionSourcePort(project,()=>{if(!valid())throw new Error('Background source lease ended');assertLease()})
+        // A background Project may differ from the active GUI Project. Never
+        // resolve its media through the foreground controller's directory.
+        const collectionMedia=kernel.libraryCollecting?new MediaController({session:persistentSession,preloadPath:path.join(projectDirectory,'packages/media-native/src/preload/media-preload.cjs'),pagePath:path.join(projectDirectory,'packages/media-native/src/media/media.html'),artifactsDirectory:path.join(project.directory,'artifacts'),resolveArtifactsDirectory:()=>path.join(project.directory,'artifacts'),onStatus:()=>{}}):undefined
+        if(collectionMedia)kernel.recordingController=collectionMedia
+        kernel.projectSources=()=>collectionSourcePort(project,()=>{if(!valid())throw new Error('Background source lease ended');assertLease()},Boolean(kernel.libraryCollecting))
         collectionBrowsers.add(kernel)
         collectionScopeKernels.set(request.runId,kernel)
         const scope=new BackgroundCollectionScope(kernel,valid,assertLease)
-        return {executor:scope.executor,valid:()=>scope.valid(),close:async()=>{await scope.close();collectionBrowsers.delete(kernel);collectionInputs.delete(request.runId);collectionScopeKernels.delete(request.runId)}}
+        return {executor:scope.executor,valid:()=>scope.valid(),close:async()=>{await scope.close();await collectionMedia?.stop();collectionBrowsers.delete(kernel);collectionInputs.delete(request.runId);collectionScopeKernels.delete(request.runId)}}
       },
       currentProject:()=>projectStore.active(),getProjects:()=>projectStore.list(),
       context:async(sessionId,projectId)=>{const context=await productFeatureRuntime?.contextForSession?.(sessionId,projectId)??{text:''};return context.text+'\nBMW video production defaults and named templates (data):\n'+JSON.stringify(settingsStore.snapshot().videoPreferences)},
@@ -1255,6 +1260,7 @@ export function createBmwApplication(definition: ResolvedProductDefinition, asse
 
   }
   app.setName(PRODUCT_NAME)
+  configureNetworkStartup(path.join(app.getPath('userData'),'global-settings.json'),name=>app.commandLine.appendSwitch(name))
   app.userAgentFallback = browserCompatibleUserAgent(app.userAgentFallback)
   app.whenReady().then(createApp).catch((error:unknown)=>{if(appQuitting)return;console.error('BMW startup failed',error);dialog.showErrorBox('BMW 启动失败',error instanceof Error?error.message:String(error));app.quit()})
   app.on('window-all-closed', () => {

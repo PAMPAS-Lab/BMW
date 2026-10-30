@@ -1,9 +1,25 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import {assertPageVideoTargets,assertVideoIdentity,selectVideoResource,selectVideoCaptureTarget,youtubeAudioFor} from '../src/video-identity.js'
+import {assertPageVideoTargets,assertVideoIdentity,selectVideoResource,selectVideoCaptureTarget,youtubeAudioFor,sameVideoSourcePage} from '../src/video-identity.js'
 import type {VideoTarget,VideoResource} from '../src/video-identity.js'
 const resource=(url:string,role:VideoResource['role'],audioGroup='default',defaultAudio=false,bitrate=100):VideoResource=>({url,role,audioGroup,defaultAudio,bitrate,durationSeconds:10})
 const yt=():VideoTarget=>({identity:{version:1,platform:'youtube',targetId:'original',resourceId:'original'},playerUrl:'blob:https://www.youtube.com/player',videoIndex:0,durationSeconds:10,resources:[resource('https://r1.googlevideo.com/videoplayback?itag=137','video'),resource('https://r1.googlevideo.com/videoplayback?itag=140','audio','en',true)]})
+test('Projection witness survives validation and cannot be represented as a false flat certification',()=>{
+ const base={pageUrl:'https://www.youtube.com/watch?v=original',platform:'youtube',targets:[{...yt(),requiresProjection:true}],blocked:null}
+ assert.equal(assertPageVideoTargets(base).targets[0]!.requiresProjection,true)
+ assert.throws(()=>assertPageVideoTargets({...base,targets:[{...yt(),requiresProjection:false}]}),/Invalid player/)
+ assert.equal(assertPageVideoTargets({...base,targets:[yt()]}).targets[0]!.requiresProjection,undefined)
+})
+test('Pinned YouTube page equality tolerates UI tracking only, retaining video, origin, path and content options',()=>{
+ const identity={version:1 as const,platform:'youtube' as const,targetId:'abcdefghijk',resourceId:'abcdefghijk'},url='https://www.youtube.com/watch?v=abcdefghijk'
+ for(const query of ['&themeRefresh=1','&feature=share&si=tracking','&utm_source=test#chapter'])assert.equal(sameVideoSourcePage(url,url+query,identity),true)
+ assert.equal(sameVideoSourcePage(url+'&list=one&hl=en',url+'&themeRefresh=2&hl=en&list=one',identity),true)
+ for(const current of [url+'&list=one',url+'&hl=es',url+'&v=other-video',url.replace('abcdefghijk','zyxwvutsrqp'),url.replace('/watch?v=','/shorts/'),url.replace('www.youtube.com','m.youtube.com'),url.replace('https:','http:'),url.replace('www.youtube.com','www.youtube.com.evil.example')])assert.equal(sameVideoSourcePage(url,current,identity),false,current)
+ assert.equal(sameVideoSourcePage(url,url+'&themeRefresh=1'),false)
+ assert.equal(sameVideoSourcePage(url,url+'&themeRefresh=1',{...identity,platform:'page'}),false)
+ assert.equal(sameVideoSourcePage(url,url+'&themeRefresh=1',{...identity,targetId:'zyxwvutsrqp'}),false)
+ assert.equal(sameVideoSourcePage('https://user@www.youtube.com/watch?v=abcdefghijk','https://user@www.youtube.com/watch?v=abcdefghijk',identity),false)
+})
 test('YouTube binds URL and both tracks to the same target, selects one default language and rejects foreign/ambiguous evidence',()=>{
  const target=yt(),state=assertPageVideoTargets({pageUrl:'https://www.youtube.com/watch?v=original',platform:'youtube',targets:[target],blocked:null})
  assert.equal(selectVideoResource(state,target.resources[0]!.url).identity.targetId,'original');assert.equal(youtubeAudioFor(target,target.resources[0]!.url)?.audioGroup,'en')

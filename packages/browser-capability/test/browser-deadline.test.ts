@@ -21,6 +21,6 @@ test('browser requests are finite while media jobs retain their long budget', ()
 
 test('Source acquisition budget includes bounded download, capture, cleanup and decode',()=>{assert.equal(browserDeadlineMs({action:'library.sources',sourceRequest:{operation:'acquire',method:'auto'}}),1_860_000);assert.equal(browserDeadlineMs({action:'library.sources',sourceRequest:{operation:'read'}}),60_000)})
 
-test('YouTube player navigation allows bounded initialization while unrelated hosts keep the normal budget',()=>{for(const action of ['navigate','tabs.open']){assert.equal(browserDeadlineMs({action,url:'https://www.youtube.com/watch?v=zHBrUVyQJWc'}),100_000);assert.equal(browserDeadlineMs({action,url:'https://youtube.com.evil.test/watch?v=zHBrUVyQJWc'}),60_000)}})
+test('YouTube navigation covers bounded cold application initialization and cleanup while unrelated hosts keep the normal budget',()=>{for(const action of ['navigate','tabs.open']){assert.equal(browserDeadlineMs({action,url:'https://www.youtube.com/watch?v=zHBrUVyQJWc'}),200_000);assert.equal(browserDeadlineMs({action,url:'https://youtube.com.evil.test/watch?v=zHBrUVyQJWc'}),60_000)}})
 
 test('Bounded local speech gets processing plus cleanup transport time',()=>{assert.equal(browserDeadlineMs({action:'media.speech.align'}),660_000)})

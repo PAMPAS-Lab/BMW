@@ -63,6 +63,7 @@ export interface AgentEvent {
   createdAt: number
   event: AgentDriverEvent
 }
+export interface AgentRuntimeObservation {phase:'reasoning.started'|'reasoning.completed'|'compaction.started'|'compaction.completed'|'usage';messageId?:string;inputTokens?:number;cachedInputTokens?:number;outputTokens?:number;reasoningTokens?:number}
 export interface AgentRunRequest {
   sessionId: string
   externalSessionId: string | null
@@ -72,6 +73,8 @@ export interface AgentRunRequest {
   text: string
   context: string
   signal: AbortSignal
+  /** Metadata only; observation cannot affect admission or runtime cleanup. */
+  observeRuntime?:(point:AgentRuntimeObservation)=>void
 }
 export interface AgentRunResult { outcome: 'success' | 'interrupted' | 'failed'; message: string }
 /** Implementations own their Agent loop. A run resolves only after tools drain. */

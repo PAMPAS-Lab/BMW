@@ -17,10 +17,11 @@ import type {ExportReviewSnapshot} from './export-review-journal.js'
 
 const POLICY=7
 import {AI_NEWS_EDITORIAL_REVIEW_POLICY,VIDEO_VISUAL_REVIEW_POLICY,sparseClosingScenes} from './video-review-policy.js'
-export type VideoReviewRequest={operation:'start';draftId:string;expectedRevision:number}|{operation:'status';runId:string;pageOffset?:number}
+export type VideoReviewRequest={operation:'start';draftId:string;expectedRevision:number;recheckNeedsFix?:boolean}|{operation:'status';runId:string;pageOffset?:number}
 export function assertVideoReviewRequest(raw:unknown):VideoReviewRequest {
  const v=mediaRecord(raw)
- if(v.operation==='start'&&Object.keys(v).every(k=>['operation','draftId','expectedRevision'].includes(k)))return {operation:v.operation,draftId:studioId(v.draftId),expectedRevision:finiteNumber(v.expectedRevision,'review revision',1,1_000_000,true)}
+ if(v.recheckNeedsFix!==undefined&&(v.operation!=='start'||typeof v.recheckNeedsFix!=='boolean'))throw new TypeError('recheckNeedsFix is an explicit start-only boolean.');
+ if(v.operation==='start'&&Object.keys(v).every(k=>['operation','draftId','expectedRevision','recheckNeedsFix'].includes(k)))return {operation:v.operation,draftId:studioId(v.draftId),expectedRevision:finiteNumber(v.expectedRevision,'review revision',1,1_000_000,true),...(v.recheckNeedsFix===undefined?{}:{recheckNeedsFix:v.recheckNeedsFix as boolean})}
  if(v.operation==='status'&&Object.keys(v).every(k=>['operation','runId','pageOffset'].includes(k)))return {operation:v.operation,runId:studioId(v.runId),...(v.pageOffset===undefined?{}:{pageOffset:finiteNumber(v.pageOffset,'review offset',0,96,true)})}
  throw new TypeError('video.review requires start {draftId,expectedRevision} or status {runId,pageOffset?}; driver, model, actor and conclusions are Host-owned.')
 }
@@ -62,13 +63,16 @@ export async function executeVideoReview(host:Pick<FeatureHost,'assistantTasks'|
   guard(draft)
   t={policy:POLICY,draftId:draft.id,revision:draft.revision,fingerprint:context.output.fingerprint!,artifactId:context.output.artifactId,sha256,baseline:reviewBaseline(context.journal.current(context.snapshot))}
   const key=crypto.createHash('sha256').update(JSON.stringify({policy:POLICY,draftId:t.draftId,revision:t.revision,fingerprint:t.fingerprint})).digest('hex')
-  // Only an explicit start after real drain and a Host-verified incomplete
-  // current review may recover a successful turn without saved verdicts.
+  // Explicit start after real drain may recover missing verdicts. A separate
+  // explicit recheck flag permits another independent judgment after a
+  // Host-verified needs-fix result, e.g. after repairing an evidence-read tool.
+  // Active/unknown/passed work is never replayed by this flag.
   const previous=tasks.find(owner,key)
   let restartIncompleteRunId:string|undefined
   if(previous?.state==='success'&&previous.drained){
    const state=mediaRecord(await exportReviewState(store,draft,{operation:'review-status',draftId:draft.id,expectedRevision:draft.revision},directory,()=>guard(draft),'agent',signal))
-   if(videoReviewConclusion(previous,target(JSON.parse(previous.payload)),state,[]).status==='incomplete')restartIncompleteRunId=previous.runId
+   const assessment=videoReviewConclusion(previous,target(JSON.parse(previous.payload)),state,[]).status
+   if(assessment==='incomplete'||request.recheckNeedsFix===true&&assessment==='needs-fix')restartIncompleteRunId=previous.runId
   }
   const sources=host.browserKernel?new StudioSources(host.browserKernel):undefined
   const packet=await videoReviewPacket(draft,t.fingerprint,async citation=>{if(!sources)throw new Error('Source binding unavailable; inspect this source separately.');const c=await sources.citation(citation,signal);return {url:c.url,title:c.title,author:c.author,publishedAt:c.publishedAt,capturedAt:c.capturedAt,contentId:c.contentId}},()=>guard(draft))
@@ -86,8 +90,8 @@ export async function executeVideoReview(host:Pick<FeatureHost,'assistantTasks'|
  return {task:receipt,target:t,assessment:videoReviewConclusion(task,t,state,sparseClosingScenes(draft)),review:{...summary,scenes:scenes.slice(offset,offset+8),scenePage:{offset,total:scenes.length,nextOffset:offset+8<scenes.length?offset+8:null}},automaticReplay:false,next:task.drained?null:{action:'video.review',reviewRequest:{operation:'status',runId:task.runId}},callerMustYield:!task.drained}
 }
 export const videoReviewAction:BrowserActionDefinition={
- action:'video.review',description:'Start a complete BMW internal audit of the current owned Studio MP4 using its Session official harness and selected model. Asynchronous: returns a durable input receipt; end the caller turn so FIFO can run the reviewer, then status retrieves technical/scene/film findings, stale/incomplete/uncertain states and separate pending human listening. Active, completed and unknown targets deduplicate; explicit restart after drained interruption or confirmed failure before provider acceptance or successful turns with Host-confirmed incomplete judgments may create a new attempt. Never auto replay. Does not edit or render. Only the BMW browser tool is used.',
- inputSchema:{type:'object',additionalProperties:false,required:['reviewRequest'],properties:{reviewRequest:{oneOf:[{type:'object',additionalProperties:false,required:['operation','draftId','expectedRevision'],properties:{operation:{const:'start'},draftId:{type:'string',pattern:'^[a-zA-Z0-9-]{1,80}$'},expectedRevision:{type:'integer',minimum:1,maximum:1000000}}},{type:'object',additionalProperties:false,required:['operation','runId'],properties:{operation:{const:'status'},runId:{type:'string',pattern:'^[a-zA-Z0-9-]{1,80}$'},pageOffset:{type:'integer',minimum:0,maximum:96}}}]}}},
+ action:'video.review',description:'Start a complete BMW internal audit of the current owned Studio MP4 using its Session official harness and selected model. Asynchronous: returns a durable input receipt; end the caller turn so FIFO can run the reviewer, then status retrieves technical/scene/film findings, stale/incomplete/uncertain states and separate pending human listening. Active, completed and unknown targets deduplicate; explicit restart after drained interruption or confirmed failure before provider acceptance or successful turns with Host-confirmed incomplete judgments may create a new attempt. After a fully drained needs-fix result, start with recheckNeedsFix:true explicitly requests a fresh independent audit of the unchanged MP4; passed/active/uncertain targets still deduplicate. Never auto replay. Does not edit or render. Only the BMW browser tool is used.',
+ inputSchema:{type:'object',additionalProperties:false,required:['reviewRequest'],properties:{reviewRequest:{oneOf:[{type:'object',additionalProperties:false,required:['operation','draftId','expectedRevision'],properties:{recheckNeedsFix:{type:'boolean',description:'Explicit fresh review of an unchanged MP4 only after Host confirms a drained needs-fix result; not automatic replay.'},operation:{const:'start'},draftId:{type:'string',pattern:'^[a-zA-Z0-9-]{1,80}$'},expectedRevision:{type:'integer',minimum:1,maximum:1000000}}},{type:'object',additionalProperties:false,required:['operation','runId'],properties:{operation:{const:'status'},runId:{type:'string',pattern:'^[a-zA-Z0-9-]{1,80}$'},pageOffset:{type:'integer',minimum:0,maximum:96}}}]}}},
  async execute({browserKernel,sessionOwner,signal,actor},input){
   if(Object.keys(input).some(k=>!['action','reviewRequest'].includes(k)))throw new TypeError('Unsupported video.review property')
   const request=assertVideoReviewRequest(input.reviewRequest)

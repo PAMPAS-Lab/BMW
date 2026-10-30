@@ -10,6 +10,7 @@
     "model": "gpt-6-astra",
     "cliVersion": "0.160.1",
     "binary": "<workdir>/.bmw-runtime/codex-cli-0.160.1/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+    "binaryRetention": "Historical path only: the isolated 0.160.1 CLI was removed on 2026-10-28; its recorded version and hash describe the original run.",
     "binarySha256": "09fa44fdc37a5fc70dc1ace31235f90468a2e193d0e85f7552eab068ea2582be",
     "profile": "disposable",
     "root": "<workdir>/.bmw-runtime/dsh-news/2026-10-18T03-35-30-647Z",

@@ -61,8 +61,10 @@ test('Internal video action binds the actual native export, rejects stale owners
   assert.equal(result.assessment.status,'needs-fix');assert.equal(result.review.scenes[0].agent.runId,'review-run');assert.ok(result.review.scenes.every(s=>s.agent.runId==='review-run'),'The Host binds every batch scene to the independent review run')
   await assert.rejects(executeVideoReview(host,{...owner,sessionId:'foreign'},{operation:'status',runId:'review-run'}),/Session/)
   assert.match(videoReviewPrompt(JSON.parse(task!.payload)),/scope expires when this input finishes or is cancelled and drained/)
+  findPrevious=true;await executeVideoReview(host,owner,{operation:'start',draftId:draft.id,expectedRevision:draft.revision,recheckNeedsFix:true});assert.equal(restartRequested,'review-run','Explicit needs-fix recheck uses a Host-verified drained run, preserving the unchanged MP4');findPrevious=false
+  assert.throws(()=>assertVideoReviewRequest({operation:'start',draftId:draft.id,expectedRevision:draft.revision,recheckNeedsFix:'yes'}),/boolean/)
   draft.title='Authorized rework after audit drain';draft=await service.execute({operation:'update',draftId:draft.id,expectedRevision:draft.revision,draft},undefined,owner) as typeof draft
   assert.equal(store.read(draft.id).title,'Authorized rework after audit drain')
-  assert.equal((await executeVideoReview(host,owner,{operation:'status',runId:'review-run'}) as {assessment:{status:string}}).assessment.status,'stale');assert.equal(calls,2)
+  assert.equal((await executeVideoReview(host,owner,{operation:'status',runId:'review-run'}) as {assessment:{status:string}}).assessment.status,'stale');assert.equal(calls,3)
  }finally{fs.rmSync(root,{recursive:true,force:true})}
 })

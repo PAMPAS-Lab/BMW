@@ -130,6 +130,7 @@ export class AgentHost {
     // A UI submission may never await the result. Keep failures available to wait().
     void settled.catch(() => {})
     const pending: PendingRun = { request: { sessionId, externalSessionId: row.externalSessionId, runId, messageId, project: structuredClone(project), text, context: '', signal: controller.signal }, backend, frozenContext, background, controller, settled, resolve: resolve!, reject: reject! }
+    pending.request.observeRuntime=point=>this.timing(pending.request,{...point,phase:('runtime.'+point.phase) as AgentTimingPoint['phase']})
     this.pending.set(runId, pending)
     this.timing(pending.request,{phase:'queued',modelId:this.options.model?.(row.driverId)??null})
     if(!background)for(const earlier of this.pending.values())if(earlier.background&&!earlier.controller.signal.aborted){earlier.controller.abort();if(this.active===earlier)void earlier.backend.interrupt(earlier.request.sessionId,earlier.request.runId).catch(()=>{})}

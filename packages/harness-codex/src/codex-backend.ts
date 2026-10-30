@@ -145,7 +145,7 @@ export class CodexBackend implements AgentBackend {
   async drainSettings():Promise<void>{await this.settingsPort?.drain()}
   private async notification(run: Run, method: string, raw: unknown): Promise<void> {
     if (!run.released || !run.emit) return
-    if (!['item/agentMessage/delta', 'item/started', 'item/completed', 'turn/completed', 'error'].includes(method)) return
+    if (!['item/agentMessage/delta', 'item/started', 'item/completed', 'turn/completed', 'error','thread/tokenUsage/updated'].includes(method)) return
     const value = agentRecord(raw, 'Codex notification')
     if (value.threadId !== run.threadId) throw new Error('Codex notification belongs to another provider Session')
     await run.accepted
@@ -159,6 +159,9 @@ export class CodexBackend implements AgentBackend {
       await run.emit({ type: 'message.delta', messageId: run.request.runId + ':' + id, text })
     } else if (method === 'item/started' || method === 'item/completed') {
       const item = agentRecord(value.item)
+      if(item.type==='reasoning'||item.type==='contextCompaction'){
+        try{run.request.observeRuntime?.({phase:(item.type==='reasoning'?'reasoning.':'compaction.')+(method==='item/started'?'started':'completed') as 'reasoning.started'|'reasoning.completed'|'compaction.started'|'compaction.completed',messageId:agentIdentifier(item.id)})}catch{/* Observation cannot change official runtime behavior. */}
+      }
       if (['commandExecution', 'fileChange', 'mcpToolCall', 'webSearch', 'imageGeneration', 'collabAgentToolCall'].includes(String(item.type))) throw new Error('Codex emitted a tool outside BMW browser admission')
       if (item.type === 'dynamicToolCall' && item.tool !== 'browser') throw new Error('Codex emitted a foreign dynamic tool')
       if (method === 'item/completed' && item.type === 'agentMessage') {
@@ -167,6 +170,8 @@ export class CodexBackend implements AgentBackend {
         run.completedMessages.add(id)
         await run.emit({ type: 'message.completed', messageId: run.request.runId + ':' + id, text })
       }
+    } else if(method==='thread/tokenUsage/updated'){
+      try{const usage=agentRecord(agentRecord(value.tokenUsage).last),values=[usage.inputTokens,usage.cachedInputTokens,usage.outputTokens,usage.reasoningOutputTokens];if(values.every(n=>typeof n==='number'&&Number.isSafeInteger(n)&&n>=0))run.request.observeRuntime?.({phase:'usage',inputTokens:usage.inputTokens as number,cachedInputTokens:usage.cachedInputTokens as number,outputTokens:usage.outputTokens as number,reasoningTokens:usage.reasoningOutputTokens as number})}catch{/* No usage text or unknown fields enter Host diagnostics. */}
     } else if (method === 'error') {
       if (value.willRetry !== true) throw new Error('Codex runtime failed during the Agent turn')
     } else {

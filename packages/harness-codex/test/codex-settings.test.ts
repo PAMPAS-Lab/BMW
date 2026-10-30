@@ -13,7 +13,7 @@ function fixture(t:import('node:test').TestContext,authenticated=true){
     calls.push({method,params})
     if(method==='initialize')return {}
     if(method==='account/read')return {account:authenticated?{type:'chatgpt',email:'never-projected@example.invalid'}:null,requiresOpenaiAuth:true}
-    if(method==='model/list'){const cursor=(params as {cursor:string|null}).cursor;return {data:cursor?[{model:'gpt-5.5',displayName:'GPT-5.5',description:'Official model'},{model:'future-unsupported',displayName:'Future',description:'Not admitted'}]:[{model:'gpt-6.1-sol',displayName:'GPT-6.1 Sol',description:'Official model'}],nextCursor:cursor?null:'page-2'}}
+    if(method==='model/list'){const cursor=(params as {cursor:string|null}).cursor;return {data:cursor?[{model:'gpt-5.5',displayName:'GPT-5.5',description:'Official model'},{model:'future-unsupported',displayName:'Future',description:'Not admitted'}]:[{model:'gpt-6.1-sol',displayName:'GPT-6.1 Sol',description:'Official model'},{model:'gpt-6.1-terra',displayName:'GPT-6.1 Terra',description:'Official model'}],nextCursor:cursor?null:'page-2'}}
     if(method==='account/login/start'){for(const listener of notifications)listener('account/login/completed',{loginId:'other',success:false});return {type:'chatgpt',loginId:'login-1',authUrl:'https://auth.openai.com/authorize?fixture=1'}}
     if(method==='account/login/cancel'||method==='account/logout')return {}
     assert.fail('No turn or arbitrary RPC may run in settings: '+method)
@@ -23,7 +23,7 @@ function fixture(t:import('node:test').TestContext,authenticated=true){
 }
 test('Codex settings project official paginated models and account status without model input or account metadata',async t=>{
   const f=fixture(t),state=await f.port.execute({action:'refresh'},{signal:new AbortController().signal,openExternal:async()=>assert.fail('Refresh cannot open login')})
-  assert.deepEqual(state.models.map(row=>row.id),['gpt-6.1-sol','gpt-5.5']);assert.ok(state.models.every(row=>row.availability==='verified'));assert.equal(state.authentication.state,'ready');assert.equal(state.selectedModel,null)
+  assert.deepEqual(state.models.map(row=>row.id),['gpt-6.1-sol','gpt-6.1-terra','gpt-5.5']);assert.ok(state.models.every(row=>row.availability==='verified'));assert.equal(state.authentication.state,'ready');assert.equal(state.selectedModel,null)
   assert.equal(JSON.stringify(state).includes('example.invalid'),false);assert.equal(f.closed(),0)
   await f.port.drain();assert.equal(f.closed(),1)
   assert.deepEqual(f.calls.map(row=>row.method),['initialize','account/read','model/list','model/list'])
@@ -38,7 +38,7 @@ test('Codex selects maintained supported models without user preflight and rejec
   const f=fixture(t),context={signal:new AbortController().signal,openExternal:async()=>{}}
   await assert.rejects(f.port.execute({action:'model.select',modelId:'foreign'},context),/unavailable/);await f.port.drain();assert.equal(f.selected(),null)
   await assert.rejects(f.port.execute({action:'model.select',modelId:'future-unsupported'},context),/unavailable/);await f.port.drain();assert.equal(f.selected(),null)
-  const accepted=await f.port.execute({action:'model.select',modelId:'gpt-5.5'},context);assert.equal(f.selected(),'gpt-5.5');assert.equal(accepted.models[1].availability,'verified');await f.port.drain();assert.equal(f.verifications(),0)
+  const accepted=await f.port.execute({action:'model.select',modelId:'gpt-6.1-terra'},context);assert.equal(f.selected(),'gpt-6.1-terra');assert.equal(accepted.models[1].availability,'verified');await f.port.drain();assert.equal(f.verifications(),0)
 })
 test('Codex browser login completes only for its login ID and admits an official origin',async t=>{
   const f=fixture(t,false),context={signal:new AbortController().signal,openExternal:async()=>{}}
@@ -50,7 +50,7 @@ test('Codex browser login completes only for its login ID and admits an official
     for(const listener of f.notifications){listener('account/login/completed',{loginId:'other',success:false});listener('account/login/completed',{loginId:'login-1',success:true})}
   }})
   assert.equal(state.authentication.state,'ready');assert.equal(f.calls.some(row=>row.method==='account/login/cancel'),false);await f.port.drain()
-  assert.deepEqual(state.models.map(row=>row.id),['gpt-6.1-sol','gpt-5.5'])
+  assert.deepEqual(state.models.map(row=>row.id),['gpt-6.1-sol','gpt-6.1-terra','gpt-5.5'])
   await f.port.execute({action:'model.select',modelId:'gpt-5.5'},context);await f.port.drain();assert.equal(f.selected(),'gpt-5.5');assert.equal(f.verifications(),0)
 })
 test('Cancelling Codex login cancels the native operation and never selects a model',async t=>{

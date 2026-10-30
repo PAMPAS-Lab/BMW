@@ -1,9 +1,22 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {EventEmitter} from 'node:events'
-import {navigatePage,closeNavigationPage,withNativePageRead,documentReadGraceMs} from '../src/page-navigation.js'
+import {navigatePage,closeNavigationPage,withNativePageRead,documentReadGraceMs,observeNativePageLoad} from '../src/page-navigation.js'
 import type {NavigationPage} from '../src/page-navigation.js'
 import {SessionOperations} from '../src/session-operations.js'
+test('A site continuation observes the actual committed load without replaying loadURL',async()=>{
+ const events=new EventEmitter(),steps:string[]=[];let loading=true,committed=false
+ const page=Object.assign(events,{isDestroyed:()=>false,isLoading:()=>loading,loadURL:async()=>{throw new Error('Input must not be replayed')},stop:()=>{steps.push('stop');loading=false;events.emit('did-stop-loading')},close:()=>{throw new Error('Ready continuation should not close')}}) as unknown as NavigationPage&{isLoading:()=>boolean}
+ const operation=navigatePage(page,'https://www.youtube.com/watch?v=jNQXAC9IVRw',undefined,1000,10,true,async()=>committed,undefined,()=>observeNativePageLoad(page,()=>committed))
+ await new Promise(resolve=>setImmediate(resolve));events.emit('dom-ready');await new Promise(resolve=>setTimeout(resolve,170));assert.deepEqual(steps,[],'Old DOM-ready cannot certify a new uncommitted page')
+ committed=true;events.emit('did-navigate');await operation;assert.deepEqual(steps,['stop']);assert.equal(events.eventNames().length,0)
+})
+test('Continuation cancellation awaits actual stop and removes every observer before releasing FIFO',async()=>{
+ const events=new EventEmitter(),controller=new AbortController(),steps:string[]=[];let loading=true
+ const page=Object.assign(events,{isDestroyed:()=>false,isLoading:()=>loading,loadURL:async()=>{throw new Error('No replay')},stop:()=>{steps.push('stop');setTimeout(()=>{loading=false;events.emit('did-stop-loading')},15)},close:()=>{throw new Error('Stop should settle')}}) as unknown as NavigationPage&{isLoading:()=>boolean}
+ const operation=navigatePage(page,'https://www.youtube.com/watch?v=jNQXAC9IVRw',controller.signal,1000,100,true,undefined,undefined,()=>observeNativePageLoad(page))
+ await new Promise(resolve=>setImmediate(resolve));controller.abort(new Error('cancel continuation'));await assert.rejects(operation,/cancel continuation/);assert.equal(loading,false);assert.deepEqual(steps,['stop']);assert.equal(events.eventNames().length,0)
+})
 function fixture(stopSettles=true,closeDestroys=true){
  const events=new EventEmitter(),steps:string[]=[];let gone=false,rejectLoad:(reason:unknown)=>void=()=>{},resolveLoad:()=>void=()=>{}
  const pending=new Promise<void>((resolve,reject)=>{resolveLoad=resolve;rejectLoad=reject}),page=Object.assign(events,{isDestroyed:()=>gone,loadURL:async()=>{steps.push('load');return pending},stop:()=>{steps.push('stop');if(stopSettles)rejectLoad(new Error('ERR_ABORTED'))},close:()=>{steps.push('close');if(closeDestroys){gone=true;events.emit('destroyed')}}}) as unknown as NavigationPage
@@ -11,6 +24,16 @@ function fixture(stopSettles=true,closeDestroys=true){
 }
 test('Navigation deadline stops and drains the real pending operation before the FIFO admits another action',async()=>{
  const f=fixture(),queue=new SessionOperations(),first=queue.run(()=>{},()=>navigatePage(f.page,'https://example.org',undefined,5,5)),failed=assert.rejects(first,/NAVIGATION_TIMEOUT/),next=queue.run(()=>{},async()=>{assert.deepEqual(f.steps,['load','stop']);f.steps.push('next')});await failed;await next;await queue.drain();assert.equal(queue.busy,false);assert.equal(f.events.eventNames().length,0)
+})
+test('Navigation deadline snapshots real pre-stop milestones rather than certifying a stopped empty document as loaded',async()=>{
+ const f=fixture(),trace:import('../src/page-navigation.js').NavigationTrace[]=[]
+ const original=f.page.stop;f.page.stop=()=>{f.events.emit('did-finish-load');original()}
+ const operation=navigatePage(f.page,'https://example.org',undefined,20,5,true,async()=>false,entry=>trace.push(entry)),rejected=assert.rejects(operation,/NAVIGATION_TIMEOUT/)
+ await new Promise(resolve=>setImmediate(resolve));f.events.emit('did-navigate',{},'https://example.org');await rejected
+ assert.deepEqual(trace[0]?.progress,{committed:true,domReady:false,loadFinished:false,mainFrameErrorCode:null});assert.equal(trace[0]?.reason,'deadline');assert.equal(f.events.eventNames().length,0)
+ const failed=fixture(),errors:import('../src/page-navigation.js').NavigationTrace[]=[]
+ const pending=navigatePage(failed.page,'https://example.org',undefined,20,5,true,undefined,entry=>errors.push(entry)),failure=assert.rejects(pending,/NAVIGATION_TIMEOUT/)
+ await new Promise(resolve=>setImmediate(resolve));failed.events.emit('did-fail-load',{},-105,'DNS failure','https://example.org',true);await failure;assert.equal(errors[0]?.progress?.mainFrameErrorCode,-105);assert.equal(failed.events.eventNames().length,0)
 })
 test('Cancellation whose stop never settles closes the actual page before returning, with no late continuation',async()=>{
  const f=fixture(false),controller=new AbortController(),pending=navigatePage(f.page,'https://example.org',controller.signal,1000,5),failed=assert.rejects(pending,/explicit cancel/);await new Promise(resolve=>setImmediate(resolve));controller.abort(new Error('explicit cancel'));await failed;assert.equal(f.page.isDestroyed(),true);assert.deepEqual(f.steps,['load','stop','close']);f.resolveLoad();await new Promise(resolve=>setImmediate(resolve));assert.equal(f.events.eventNames().length,0)

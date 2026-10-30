@@ -6,6 +6,7 @@ import type {CollectionPlan,CollectionNotice,CollectionScheduleState,CollectionS
 import type {LibraryService} from './library-service.js'
 import {RollingStore,RollingService} from './rolling-service.js'
 import type {CollectionRun} from './rolling-contract.js'
+import {waitingVideos} from './video-watch-service.js'
 export class CollectionAdmissionDeferred extends Error {}
 const live=(run:CollectionRun)=>run.status==='uncertain'||run.status==='sent'
 export function collectionBackoff(planId:string,failures:number):number{const jitter=parseInt(crypto.createHash('sha256').update(planId+':'+failures).digest('hex').slice(0,4),16)%60000;return Math.min(24*60*60*1000,5*60*1000*2**Math.min(12,Math.max(0,failures-1))+jitter)}
@@ -26,9 +27,9 @@ export class CollectionScheduler {
  /** Old ledgers retain receipts and cursors. Unattributed legacy plan backoff is not copied to unrelated sources. */
  private sources(plan:CollectionPlan):CollectionSourceState[]{return plan.sourceStates??=[]}
  private source(plan:CollectionPlan,id:string):CollectionSourceState {const states=this.sources(plan);let source=states.find(s=>s.subscriptionId===id);if(!source){source={subscriptionId:id,nextAt:this.stamp(),failures:0,lastStatus:'waiting',lastProgressAt:null};states.push(source)}return source}
- private due(plan:CollectionPlan):void {const remaining=plan.cycle?.remaining??plan.subscriptionIds;plan.nextAt=new Date(Math.min(...remaining.map(id=>Date.parse(this.source(plan,id).nextAt)))).toISOString();plan.failures=Math.max(0,...this.sources(plan).map(s=>s.failures))}
+ private due(plan:CollectionPlan):void {const remaining=plan.cycle?.remaining??plan.subscriptionIds,project=this.library.project(plan.projectId),store=new RollingStore(project.directory,project.id);plan.nextAt=new Date(Math.min(...remaining.map(id=>{const source=this.source(plan,id);if(!source.failures){const dates=waitingVideos(store,id,this.now()).map(l=>Date.parse(l.videoWatch.nextCheckAt!)).filter(at=>at>Date.parse(plan.lastStartedAt??'1970-01-01'));if(dates.length)source.nextAt=new Date(Math.min(Date.parse(source.nextAt),...dates)).toISOString()}return Date.parse(source.nextAt)}))).toISOString();plan.failures=Math.max(0,...this.sources(plan).map(s=>s.failures))}
  /** Compare actual persisted evidence with the immutable pre-dispatch snapshot, never Agent claims or subset digests. */
- private progress(store:RollingStore,run:CollectionRun,sequence:number|undefined):boolean {if(sequence===undefined)return false;return run.leadIds.some(id=>{const lead=store.entity(id,'lead');if(lead.runId!==run.id)return false;const previous=sequence===0?undefined:store.records.getAt(id,sequence);return !previous||previous.kind==='lead'&&(previous.evidence.url!==lead.evidence.url||previous.evidence.bodySha256!==lead.evidence.bodySha256)})}
+ private progress(store:RollingStore,run:CollectionRun,sequence:number|undefined):boolean {if(sequence===undefined)return false;return [...run.leadIds,...(run.videoLeadIds??[])].some(id=>{const lead=store.entity(id,'lead'),previous=sequence===0?undefined:store.records.getAt(id,sequence);if(lead.videoWatch?.lastRunId===run.id&&previous?.kind==='lead'&&lead.videoWatch.checks>(previous.videoWatch?.checks??0))return true;if(lead.runId!==run.id)return false;return !previous||previous.kind==='lead'&&(previous.evidence.url!==lead.evidence.url||previous.evidence.bodySha256!==lead.evidence.bodySha256)})}
  private settleSource(state:CollectionScheduleState,plan:CollectionPlan,run:CollectionRun,store:RollingStore,success:boolean,yielded:boolean,sequence:number|undefined):void {
    const source=this.source(plan,run.subscriptionId),productive=run.status==='partial'&&success&&this.progress(store,run,sequence)
    source.lastStatus=run.status

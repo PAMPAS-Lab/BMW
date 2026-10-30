@@ -366,6 +366,30 @@ test('card documents persist their only content authority in 2.1 while old 2.0 s
 })
 const owner={projectId:'project',sessionId:'schema-session'}
 function fixture(){const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-schema-'));fs.mkdirSync(path.join(root,'artifacts'));const store=new VideoStudioStore(root,owner.sessionId);return {root,store,close:()=>fs.rmSync(root,{recursive:true,force:true})}}
+test('Bounded scene removal drops owned tracks and preserves other content with atomic owner and revision checks',async()=>{
+ const f=fixture();try{
+  let d=addStudioLayer(draft(f.store),'one','text').draft
+  d=addStudioLayer(d,undefined,'text').draft
+  d.scenes[0].audioArtifactId='old-voice.wav';d.scenes[0].audioText='Old closing sentence';d.scenes[0].narration=''
+  const untouched=structuredClone(d.scenes[1]),globalLayers=structuredClone(d.layers),exports=structuredClone(d.exports),before=JSON.stringify(d)
+  const edit={version:1 as const,commands:[{op:'scene.remove' as const,sceneId:'one'}]}
+  assert.equal(new Ajv2020({strict:false}).compile(videoEditSchema)(edit),true)
+  const removed=applyVideoEdit(d,edit)
+  assert.deepEqual(removed.scenes,[untouched]);assert.deepEqual(removed.layers,globalLayers);assert.deepEqual(removed.exports,exports)
+  assert.ok(videoDocumentFromDraft(removed).content.timeline.tracks.every(t=>t.sceneId!=='one'))
+  assert.equal(JSON.stringify(d),before)
+  assert.throws(()=>assertVideoEdit({version:1,commands:[{op:'scene.remove',sceneId:'one',deleteMedia:true}]}),/Unsupported/)
+  const kernel:StudioKernel={projectStore:{active:()=>({id:owner.projectId,name:'P',directory:f.root})},videoStudioContext:()=>({view:{mode:'advanced'}}),execute:async()=>({}),recordingController:{processArtifact:async()=>({}),narrate:async()=>({}),compose:async()=>({})}}
+  const service=new VideoStudioService(kernel);d=f.store.update(d.id,d.revision,d)
+  const file=path.join(f.store.directory,d.id+'.json'),saved=fs.readFileSync(file,'utf8')
+  await assert.rejects(service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit:{version:1,commands:[...edit.commands,{op:'scene.remove',sceneId:'missing'}]}},undefined,owner),/Unknown scene/)
+  assert.equal(fs.readFileSync(file,'utf8'),saved)
+  await assert.rejects(service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit},undefined,{...owner,sessionId:'foreign'}),/MISMATCH/)
+  await service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit},undefined,owner)
+  await assert.rejects(service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit},undefined,owner),/CONFLICT/)
+  assert.deepEqual(f.store.read(d.id).scenes,[untouched])
+ }finally{f.close()}
+})
 function draft(store:VideoStudioStore):VideoDraft{const d=store.create('Schema');d.scenes=[newStudioScene('one'),newStudioScene('two')];return assertVideoDraft(d)}
 const plain=(v:unknown):unknown=>JSON.parse(JSON.stringify(v))
 function same(a:VideoDraft,b:VideoDraft):void{assert.deepEqual(plain(a),plain(b));assert.equal(studioDraftContentKey(a),studioDraftContentKey(b))}
@@ -466,4 +490,26 @@ test('Editorial batch discovery returns exact preparation branch and translation
  assert.ok(help.subOperations.includes('record-scenes'));assert.ok(JSON.stringify(help).includes('observation'));assert.equal(JSON.stringify(help).includes('prepare-shots'),true,'sub-operation names remain available for exact discovery')
  assert.equal(JSON.stringify(help).includes('startCharacter'),false,'unrelated citation/source schemas are omitted')
  assert.ok(JSON.stringify(studioToolGuide().examples.translateSceneGroup).includes('captions.translate'))
+})
+
+test('Explicit card clearing is atomic and preserves footage, measured audio, captions and other scene content',async()=>{
+ const f=fixture();try{
+  let d=draft(f.store);d.scenes[0].narration='保留既有配音。';d.scenes[0].videoArtifactId='demo.mp4';d.scenes[0].sourceDurationSeconds=20;d.scenes[0].audioArtifactId='voice.wav';d.scenes[0].audioDurationSeconds=4
+  d.scenes[0].captions=[{startSeconds:0,endSeconds:3,text:'保留字幕',translationText:'Human translation',translationOrigin:'user-edited'}]
+  d.scenes[0].cardSpec={version:1,templateId:'media/sequence',motion:'none'};d.scenes[0].speechLinks={bullets:[],focus:[],cards:[]}
+  d=f.store.update(d.id,d.revision,d)
+  const kernel:StudioKernel={projectStore:{active:()=>({id:owner.projectId,name:'P',directory:f.root})},videoStudioContext:()=>({view:{mode:'advanced'}}),execute:async()=>({}),recordingController:{processArtifact:async()=>({}),narrate:async()=>({}),compose:async()=>({})}},service=new VideoStudioService(kernel)
+  const edit={version:1,commands:[{op:'card.clear',sceneId:'one'}]},validate=new Ajv2020({strict:false}).compile(videoEditSchema)
+  assert.equal(validate(edit),true,JSON.stringify(validate.errors))
+  const file=path.join(f.store.directory,d.id+'.json'),before=fs.readFileSync(file,'utf8')
+  await assert.rejects(service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit:{version:1,commands:[{op:'card.clear',sceneId:'one'},{op:'card.clear',sceneId:'missing'}]}},undefined,owner),/Unknown scene/)
+  assert.equal(fs.readFileSync(file,'utf8'),before)
+  await assert.rejects(service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision-1,edit},undefined,owner),/CONFLICT/)
+  const original=structuredClone(d.scenes[0]),result=await service.execute({operation:'apply-edit',draftId:d.id,expectedRevision:d.revision,edit},undefined,owner) as VideoDraft
+  delete original.cardSpec;delete original.sceneTemplate
+  assert.deepEqual(result.scenes[0],original);assert.equal(result.revision,d.revision+1)
+  assert.throws(()=>assertVideoEdit({version:1,commands:[{op:'card.clear',sceneId:'one',cardSpec:{}}]}),/FIELD/)
+  const legacy=structuredClone(result);legacy.scenes[0].sceneTemplate={kind:'summary'}
+  assert.equal(applyVideoEdit(legacy,assertVideoEdit(edit)).scenes[0].sceneTemplate,undefined)
+ }finally{f.close()}
 })

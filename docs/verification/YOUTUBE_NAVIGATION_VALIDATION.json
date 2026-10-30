@@ -1,0 +1,489 @@
+{
+  "date": "2026-10-29",
+  "status": "navigation fixed and three public samples retested; streaming attestation remains restricted for two samples",
+  "scope": "Disposable signed-out Profiles only; no paid-model, production Profile, cookie export, yt-dlp or FFmpeg CLI coverage",
+  "rootCause": {
+    "observed": "On this configured local HTTP proxy, HTTP/2 delivered HTTP 200 but delayed parser-blocking resources beyond the former 45-second readiness limit. Stopping then left an empty/incomplete document.",
+    "comparison": {
+      "sameVideo": "jNQXAC9IVRw",
+      "http2": {
+        "status": 200,
+        "firstPlayerMs": 65346,
+        "domReadyMs": 65413,
+        "loadFinishedMs": 82077
+      },
+      "http1": {
+        "status": 200,
+        "firstPlayerMs": 10189,
+        "domReadyMs": 9649,
+        "loadFinishedMs": 12851
+      }
+    },
+    "limits": "A comparison on this proxy/network, not proof that HTTP/2 or YouTube is generally broken. Direct transport and other proxies were not tested."
+  },
+  "changes": {
+    "readiness": "YouTube native readiness budget 90 seconds within the existing 100-second outer transport deadline; unrelated hosts unchanged. Original video/ad checks and cleanup retained.",
+    "diagnostics": "Pre-stop committed/DOM-ready/load-finished/main-frame error code, document HTTP status/bytes/completion/failure and original-player state. Iframe document responses cannot overwrite the main document. No request body, cookies or verification values logged.",
+    "compatibility": "Optional http1Compatibility boolean, default false in current version2 settings. Trusted Settings > Browser toggle takes effect after restart. Read-only early startup validation appends disable-http2 and disable-quic only when enabled; normal protocol negotiation remains default. TLS verification and permission boundaries unchanged.",
+    "reproducibility": "Registered opt-in scripts/youtube-navigation-case.ts records startup, proxy, per-page navigation/resources, native preservation, decode and cleanup. The logger validates CDP event shape; uncaught errors abort and clean up instead of opening a blocking Electron error dialog."
+  },
+  "publicValidation": {
+    "environment": {
+      "profile": "disposable signed-out",
+      "mockKeychain": true,
+      "http1Compatibility": true,
+      "modelCalls": 0,
+      "externalDownloader": false
+    },
+    "navigationPassed": 3,
+    "downloadPassed": 1,
+    "downloadAttempted": 3,
+    "sourceUnchanged": true,
+    "samples": [
+      {
+        "id": "jNQXAC9IVRw",
+        "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+        "title": "Me at the zoo - YouTube",
+        "ok": true,
+        "navigationMs": 12864,
+        "advertisedSeconds": 19,
+        "transferMs": 14519,
+        "bytes": 741237,
+        "error": null,
+        "newFilesAfterFailure": null,
+        "downloadStageMs": 14519,
+        "inspection": {
+          "sourceArtifactId": "preserved-096ccb68-2647-45b4-ab8b-d0a88aa9a75f-delivery.mp4",
+          "sourceBytes": 741237,
+          "engine": "mediabunny-webcodecs",
+          "container": "MP4",
+          "contentType": "video/mp4; codecs=\"avc1.4d400c, mp4a.40.2\"",
+          "durationSeconds": 19.06358276643991,
+          "firstTimestampSeconds": 0,
+          "tracks": [
+            {
+              "id": 1,
+              "type": "video",
+              "codec": "avc",
+              "canDecode": true,
+              "width": 320,
+              "height": 240,
+              "rotation": 0,
+              "startSeconds": 0,
+              "endSeconds": 18.933333333333334,
+              "canBeTransparent": false
+            },
+            {
+              "id": 2,
+              "type": "audio",
+              "codec": "aac",
+              "canDecode": true,
+              "channels": 2,
+              "sampleRate": 44100,
+              "startSeconds": 0,
+              "endSeconds": 19.06358276643991
+            }
+          ],
+          "captureTimeline": {
+            "status": "unavailable",
+            "reason": "No capture-time source frame index exists for this artifact. File PTS cannot be treated as source PTS."
+          }
+        },
+        "completeDualTrackDecode": true,
+        "humanListening": "pending",
+        "navigationDiagnostics": [
+          {
+            "type": "navigation-start",
+            "url": "",
+            "budgetMs": 25000,
+            "at": 1793237342490
+          },
+          {
+            "type": "navigation",
+            "url": "",
+            "phase": "complete",
+            "reason": "load",
+            "elapsedMs": 31,
+            "progress": {
+              "committed": true,
+              "domReady": true,
+              "loadFinished": true,
+              "mainFrameErrorCode": null
+            },
+            "document": null,
+            "playerState": "waiting",
+            "at": 1793237342522
+          },
+          {
+            "type": "navigation-start",
+            "url": "https://www.youtube.com/watch",
+            "budgetMs": 90000,
+            "at": 1793237342528
+          },
+          {
+            "type": "navigation",
+            "url": "https://www.youtube.com/watch",
+            "phase": "stop",
+            "reason": "dom-ready",
+            "elapsedMs": 12848,
+            "progress": {
+              "committed": true,
+              "domReady": true,
+              "loadFinished": false,
+              "mainFrameErrorCode": null
+            },
+            "document": {
+              "status": 200,
+              "receivedBytes": 1337128,
+              "completed": true,
+              "failed": false
+            },
+            "playerState": "ready",
+            "at": 1793237355376
+          },
+          {
+            "type": "navigation",
+            "url": "https://www.youtube.com/watch",
+            "phase": "complete",
+            "reason": "dom-ready",
+            "elapsedMs": 12853,
+            "progress": {
+              "committed": true,
+              "domReady": true,
+              "loadFinished": false,
+              "mainFrameErrorCode": -3
+            },
+            "document": {
+              "status": 200,
+              "receivedBytes": 1337128,
+              "completed": true,
+              "failed": false
+            },
+            "playerState": "ready",
+            "at": 1793237355381
+          }
+        ]
+      },
+      {
+        "id": "zHBrUVyQJWc",
+        "url": "https://www.youtube.com/watch?v=zHBrUVyQJWc",
+        "title": "RTX Spark Brings Microducks to Life | NVIDIA GTC Berlin 2026 Keynote - YouTube",
+        "ok": false,
+        "navigationMs": 8019,
+        "advertisedSeconds": 28,
+        "transferMs": null,
+        "bytes": null,
+        "error": "Error: YOUTUBE_SABR_ATTESTATION: No updated same-player browser verification was observed before the bounded refresh deadline.",
+        "newFilesAfterFailure": [],
+        "downloadStageMs": 15828,
+        "inspection": null,
+        "completeDualTrackDecode": false,
+        "humanListening": "pending",
+        "navigationDiagnostics": [
+          {
+            "type": "navigation-start",
+            "url": "",
+            "budgetMs": 25000,
+            "at": 1793237378104
+          },
+          {
+            "type": "navigation",
+            "url": "",
+            "phase": "complete",
+            "reason": "load",
+            "elapsedMs": 5,
+            "progress": {
+              "committed": true,
+              "domReady": true,
+              "loadFinished": true,
+              "mainFrameErrorCode": null
+            },
+            "document": null,
+            "playerState": "waiting",
+            "at": 1793237378109
+          },
+          {
+            "type": "navigation-start",
+            "url": "https://www.youtube.com/watch",
+            "budgetMs": 90000,
+            "at": 1793237378111
+          },
+          {
+            "type": "navigation",
+            "url": "https://www.youtube.com/watch",
+            "phase": "stop",
+            "reason": "dom-ready",
+            "elapsedMs": 8008,
+            "progress": {
+              "committed": true,
+              "domReady": true,
+              "loadFinished": false,
+              "mainFrameErrorCode": null
+            },
+            "document": {
+              "status": 200,
+              "receivedBytes": 1341747,
+              "completed": true,
+              "failed": false
+            },
+            "playerState": "ready",
+            "at": 1793237386119
+          },
+          {
+            "type": "navigation",
+            "url": "https://www.youtube.com/watch",
+            "phase": "complete",
+            "reason": "dom-ready",
+            "elapsedMs": 8010,
+            "progress": {
+              "committed": true,
+              "domReady": true,
+              "loadFinished": false,
+              "mainFrameErrorCode": -3
+            },
+            "document": {
+              "status": 200,
+              "receivedBytes": 1341747,
+              "completed": true,
+              "failed": false
+            },
+            "playerState": "ready",
+            "at": 1793237386121
+          }
+        ]
+      },
+      {
+        "id": "a9LDPn-MO4I",
+        "url": "https://www.youtube.com/watch?v=a9LDPn-MO4I",
+        "title": "UHDTV TEST 8K VIDEO.mp4 - YouTube",
+        "ok": false,
+        "navigationMs": 20690,
+        "advertisedSeconds": 60,
+        "transferMs": null,
+        "bytes": null,
+        "error": "Error: YOUTUBE_SABR_ATTESTATION: No updated same-player browser verification was observed before the bounded refresh deadline.",
+        "newFilesAfterFailure": [],
+        "downloadStageMs": 20156,
+        "inspection": null,
+        "completeDualTrackDecode": false,
+        "humanListening": "pending",
+        "navigationDiagnostics": [
+          {
+            "type": "navigation-start",
+            "url": "",
+            "budgetMs": 25000,
+            "at": 1793237409085
+          },
+          {
+            "type": "navigation",
+            "url": "",
+            "phase": "complete",
+            "reason": "load",
+            "elapsedMs": 6,
+            "progress": {
+              "committed": true,
+              "domReady": true,
+              "loadFinished": true,
+              "mainFrameErrorCode": null
+            },
+            "document": null,
+            "playerState": "waiting",
+            "at": 1793237409091
+          },
+          {
+            "type": "navigation-start",
+            "url": "https://www.youtube.com/watch",
+            "budgetMs": 90000,
+            "at": 1793237409093
+          },
+          {
+            "type": "navigation",
+            "url": "https://www.youtube.com/watch",
+            "phase": "stop",
+            "reason": "dom-ready",
+            "elapsedMs": 20679,
+            "progress": {
+              "committed": true,
+              "domReady": true,
+              "loadFinished": false,
+              "mainFrameErrorCode": null
+            },
+            "document": {
+              "status": 200,
+              "receivedBytes": 1477606,
+              "completed": true,
+              "failed": false
+            },
+            "playerState": "ready",
+            "at": 1793237429772
+          },
+          {
+            "type": "navigation",
+            "url": "https://www.youtube.com/watch",
+            "phase": "complete",
+            "reason": "dom-ready",
+            "elapsedMs": 20682,
+            "progress": {
+              "committed": true,
+              "domReady": true,
+              "loadFinished": false,
+              "mainFrameErrorCode": -3
+            },
+            "document": {
+              "status": 200,
+              "receivedBytes": 1477606,
+              "completed": true,
+              "failed": false
+            },
+            "playerState": "ready",
+            "at": 1793237429775
+          }
+        ]
+      }
+    ],
+    "framesReviewed": "First/middle/last frames of the successful 19-second original were visually inspected; same person/elephant scene, no ad or error-animation substitution.",
+    "failures": "zHBrUVyQJWc and a9LDPn-MO4I reached the exact original player and then required updated SABR attestation. No new eligible same-player verification value appeared within the bounded refresh window. Repeating with normal muted playback did not resolve it. No recording fallback was used. Failed attempts left no new media files."
+  },
+  "verification": {
+    "build": "passed",
+    "staticCheck": "passed; final-check.log",
+    "targetedCases": {
+      "passed": 26,
+      "failed": 0
+    },
+    "tabLifecycle": "passed including iframe401/main200 and actual pause/cancel/quarantine",
+    "dsh": "passed catalog-only compatibility in disposable Home/Workspace",
+    "classifiedChecks": {
+      "passed": 134,
+      "failed": 0,
+      "scope": "unit,contract,boundary plus build/source-policy/inventory/architecture gates",
+      "report": ".bmw-runtime/youtube-navigation-20261029/final-unit-contract-boundary/result.json"
+    },
+    "nativeSuites": [
+      {
+        "id": "acquisition",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 6941,
+        "log": ".bmw-runtime/youtube-navigation-20261029/runtime/acquisition/run.log"
+      },
+      {
+        "id": "http-hls",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 1327,
+        "log": ".bmw-runtime/youtube-navigation-20261029/runtime/http-hls/run.log"
+      },
+      {
+        "id": "processing",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 26682,
+        "log": ".bmw-runtime/youtube-navigation-20261029/runtime/processing/run.log"
+      },
+      {
+        "id": "source-studio",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 17108,
+        "log": ".bmw-runtime/youtube-navigation-20261029/runtime/source-studio/run.log"
+      },
+      {
+        "id": "studio",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 71902,
+        "log": ".bmw-runtime/youtube-navigation-20261029/runtime/studio/run.log"
+      },
+      {
+        "id": "video",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 41534,
+        "log": ".bmw-runtime/youtube-navigation-20261029/runtime/video/run.log"
+      },
+      {
+        "id": "narration",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 1492,
+        "log": ".bmw-runtime/youtube-navigation-20261029/runtime/narration/run.log"
+      },
+      {
+        "id": "desktop",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 22640,
+        "log": ".bmw-runtime/youtube-navigation-20261029/runtime/desktop/run.log"
+      }
+    ],
+    "postPublicValidationChange": "Separated actual DOM-ready logging from the unchanged early-readiness eligibility flag; only diagnostic accuracy changed. Final unit and native lifecycle/acquisition regressions cover this distinction.",
+    "finalNativeLifecycle": "passed; final-tab-lifecycle.log",
+    "finalNativeAcquisition": "passed; final-acquisition.log"
+  },
+  "evidence": {
+    "baseline": ".bmw-runtime/youtube-navigation-20261029/probe-manual-http2-long.jsonl",
+    "http1Comparison": ".bmw-runtime/youtube-navigation-20261029/probe-manual-http1.jsonl",
+    "publicResults": ".bmw-runtime/youtube-navigation-20261029/accepted-http1-v2/results.json",
+    "publicStages": ".bmw-runtime/youtube-navigation-20261029/accepted-http1-v2/stages.jsonl"
+  },
+  "pending": [
+    "Website streaming-attestation acceptance for the two restricted public samples",
+    "Human audio listening",
+    "Other proxies, accounts and broad long-video coverage"
+  ],
+  "defaultProtocolValidation": {
+    "environment": {
+      "profile": "disposable signed-out",
+      "mockKeychain": true,
+      "http1Compatibility": false,
+      "modelCalls": 0,
+      "externalDownloader": false
+    },
+    "navigationPassed": 3,
+    "downloadPassed": 1,
+    "sourceUnchanged": true,
+    "samples": [
+      {
+        "id": "jNQXAC9IVRw",
+        "title": "Me at the zoo - YouTube",
+        "ok": true,
+        "navigationMs": 54252,
+        "transferMs": 10545,
+        "bytes": 741237,
+        "error": null,
+        "newFilesAfterFailure": null
+      },
+      {
+        "id": "zHBrUVyQJWc",
+        "title": "RTX Spark Brings Microducks to Life | NVIDIA GTC Berlin 2026 Keynote - YouTube",
+        "ok": false,
+        "navigationMs": 13606,
+        "transferMs": null,
+        "bytes": null,
+        "error": "Error: YOUTUBE_SABR_ATTESTATION: No updated same-player browser verification was observed before the bounded refresh deadline.",
+        "newFilesAfterFailure": []
+      },
+      {
+        "id": "a9LDPn-MO4I",
+        "title": "UHDTV TEST 8K VIDEO.mp4 - YouTube",
+        "ok": false,
+        "navigationMs": 60356,
+        "transferMs": null,
+        "bytes": null,
+        "error": "Error: YOUTUBE_SABR_ATTESTATION: No updated same-player browser verification was observed before the bounded refresh deadline.",
+        "newFilesAfterFailure": []
+      }
+    ],
+    "evidence": ".bmw-runtime/youtube-navigation-20261029/accepted-default/results.json"
+  },
+  "finalSourceSha256": {
+    "packages/browser-capability/src/browser-kernel.ts": "542c5c1bca10a37f6852fc07593ff3610b7c7dd1ca6e3cade8105d99ee99791c",
+    "packages/browser-capability/src/page-navigation.ts": "f34add7100418300c558a37044fea0adb42e0fd8c90b1a7f96645423ffe5f08e",
+    "packages/platform/src/global-settings-store.ts": "70773a596ae830ab60c68b56db4a9fddf1fd8c4bedd6c55a31cd82d6e0eab03e",
+    "packages/platform/src/main.ts": "ce8bc1f5b7bc805dd09e275736f7e9fb898c73ddac87779c5089831e4da3fdbc",
+    "packages/platform/src/renderer/shell.ts": "b8da0599443359ecea0047f61f8a756fc8078fc1e943a8b1ff88d74fd8a06850",
+    "packages/platform/src/renderer/shell.html": "ca0e6638e34578e42a0d8f9ef0a7b045b933a09b0b192fbc0f0812976e2d6a00",
+    "scripts/youtube-navigation-case.ts": "8893c01fb40d89fafb0d52a5bec3960d0b62e287454b17e3162075ad98aacffd"
+  }
+}

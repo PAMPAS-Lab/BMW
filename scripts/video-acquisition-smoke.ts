@@ -19,7 +19,7 @@ const server=createServer((req,res)=>{
   const range=/bytes=(\d+)-(\d*)/.exec(req.headers.range??''),start=range?Number(range[1]):0,end=range&&range[2]?Math.min(bytes.length-1,Number(range[2])):bytes.length-1
   res.writeHead(range?206:200,{'content-type':'video/mp4','accept-ranges':'bytes','content-length':end-start+1,...(range?{'content-range':`bytes ${start}-${end}/${bytes.length}`}:{})});res.end(bytes.subarray(start,end+1));return
  }
- res.writeHead(200,{'content-type':'text/html'});res.end('<title>Native acquisition fixture</title><video id="source" src="/clip.mp4" preload="auto" controls style="width:640px;height:360px"></video>')
+ res.writeHead(200,{'content-type':'text/html'});res.end(req.url==='/lazy'?'<title>Lazy official MP4 fixture</title><video id="source" preload="none" controls style="width:640px;height:360px"><source src="/clip.mp4" type="video/mp4"></video>':'<title>Native acquisition fixture</title><video id="source" src="/clip.mp4" preload="auto" controls style="width:640px;height:360px"></video>')
 })
 async function run(){
  await app.whenReady();const pages=session.fromPartition('acquire-native-'+process.pid)
@@ -38,13 +38,22 @@ async function run(){
  const state=await readVideoTargets(wc,{selector:'#source',index:0}),target=state.targets[0];assert.ok(target&&!state.blocked)
  const request={sourceGuard:{pageUrl:state.pageUrl,candidateUrl:url+'/clip.mp4',videoIdentity:target.identity,scope:{selector:'#source',index:0,excludeSelectors:[],characterUnit:'utf16' as const,extraction:'visible-text-nodes' as const,truncated:false,status:'observed' as const}},videoSelector:'#source',filename:'fixture',fromStart:true,maxDurationMs:10000,tabId:tab.id}
  const original=mediaRecord(await kernel.acquireSource(request,AbortSignal.timeout(20000)));assert.equal(original.method,'preserve');assert.equal(mediaRecord(original.acquisition).reencoded,false);assert.equal(deliveryRequests,1)
- denyDelivery=true
+ denyDelivery=true;kernel.setBrowserVisible(false)
  const acquired=mediaRecord(await kernel.acquireSource(request,AbortSignal.timeout(25000))),raw=mediaRecord(acquired.result),capture=mediaRecord(raw.capture);assert.equal(acquired.method,'capture');assert.equal(capture.stopReason,'ended');assert.ok(Number(capture.sourceStartSeconds)<.1);assert.ok(Number(capture.sourceEndSeconds)>2)
- assert.equal(mediaRecord((mediaRecord(acquired.acquisition).attempts as unknown[])[0]).reason,'HTTP_403');assert.equal(media.isCaptureActive(),false)
+ assert.equal(mediaRecord((mediaRecord(acquired.acquisition).attempts as unknown[])[0]).reason,'HTTP_403');assert.equal(media.isCaptureActive(),false);kernel.setBrowserVisible(true)
  const decoded=mediaRecord(await media.processArtifact({action:'media.decode.check',artifactId:raw.artifactId})),info=mediaRecord(await media.processArtifact({action:'media.inspect',artifactId:raw.artifactId})),tracks=info.tracks as Record<string,unknown>[]
  assert.equal(decoded.completeFile,true);assert.deepEqual(tracks.map(t=>t.type).sort(),['audio','video']);assert.equal(tracks.find(t=>t.type==='video')?.width,1280)
  assert.ok(Number(info.durationSeconds)<3,'Prebuffering must not record a long blank warmup')
  assert.equal(await wc.mainFrame.executeJavaScript('document.querySelector("video").paused'),true)
+ const lazyTab=await kernel.openTab({url:url+'/lazy',foreground:true,reuse:false}),lazyWc=kernel.requireTab(lazyTab.id).view.webContents
+ assert.equal(await lazyWc.mainFrame.executeJavaScript('document.querySelector("video").readyState'),0,'preload=none must begin without decoded tracks')
+ const lazyState=await readVideoTargets(lazyWc,{selector:'#source',index:0}),lazyTarget=lazyState.targets[0];assert.ok(lazyTarget)
+ const lazyCaptured=mediaRecord(await kernel.captureSource({...request,tabId:lazyTab.id,fromStart:true,maxDurationMs:1000,sourceGuard:{...request.sourceGuard,pageUrl:lazyState.pageUrl,videoIdentity:lazyTarget.identity}},AbortSignal.timeout(20000)))
+ const lazyInfo=mediaRecord(await media.processArtifact({action:'media.inspect',artifactId:lazyCaptured.artifactId}))
+ assert.ok(Number(lazyInfo.durationSeconds)>.5,'Lazy playback must yield actual frames, not just a successful container')
+ assert.equal(await lazyWc.mainFrame.executeJavaScript('document.querySelector("video").preload'),'none','Native warmup must restore preload policy')
+ assert.equal(await lazyWc.mainFrame.executeJavaScript('document.querySelector("video").paused'),true)
+ assert.equal(media.isCaptureActive(),false);await kernel.closeTab(lazyTab.id)
  // Simulate a player replacing its delivery during native warmup. The
  // original identity guard must reject capture, but cleanup must still pause
  // the scoped player and preserve that error rather than quarantine it.

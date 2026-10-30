@@ -41,7 +41,8 @@
     "./card-cues": "./src/card-cues.js",
     "./speech-range": "./src/speech-range.js",
     "./research-diagrams": "./src/research-diagrams.js",
-    "./precomposition": "./src/precomposition-contract.js"
+    "./precomposition": "./src/precomposition-contract.js",
+    "./diagram-preview": "./src/diagram-preview.js"
   },
   "dependencies": {
     "@bmw-agent/agent-contract": "*",

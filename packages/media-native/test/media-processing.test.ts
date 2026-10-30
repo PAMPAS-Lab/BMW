@@ -161,6 +161,17 @@ test('Drawing validation identifies wrong action fields and nested property path
 })
 
 
+test('Motion coverage accepts timestamp arithmetic roundoff without rewriting evidence or admitting real missing boundaries',()=>{
+ for(const [start,end]of [[0,37.958333333333336],[13.75,19.925],[1796,1799.9583333333333]]){
+  const request=assertMotionRequest({action:'media.video.motion',artifactId:'film.mp4',startSeconds:start,endSeconds:end,region:{x:0,y:0,width:1,height:1}})
+  const window=(last:number)=>({startSeconds:start,endSeconds:last,frameCount:100,coveredStartSeconds:start===0?0:start+Number.EPSILON*Math.max(1,start),coveredEndSeconds:last-Number.EPSILON*Math.max(1,last),maximumFrameHoldSeconds:.04,maximumDecodeGapSeconds:0,maximumNearStaticSeconds:.1,changedFramePairs:99,nearStaticRuns:[]})
+  const report={method:'all-decoded-frames/64x64-RGB-mean-absolute-difference',threshold:.5,region:request.region,windows:[window(end),window(Math.min(end,start+3))],semanticMotionVerified:false,audioAuditioned:false}
+  assert.equal(assertMotionReport(report,request),report)
+  for(const bad of [{coveredStartSeconds:start+.000001},{coveredEndSeconds:end-.000001},{coveredEndSeconds:NaN},{coveredEndSeconds:Infinity}])assert.throws(()=>assertMotionReport({...report,windows:[{...report.windows[0],...bad},report.windows[1]]},request))
+  assert.throws(()=>assertMotionReport({...report,semanticMotionVerified:true},request))
+ }
+})
+
 test('complete motion evidence detects static video, changes, decode gaps and missing boundaries without semantic approval',()=>{
  const pixels=(n:number)=>new Uint8ClampedArray([n,n,n,255])
  const still=new MotionAccumulator(0,2);for(let i=0;i<20;i++)still.add(i/10,.1,pixels(20));assert.ok(still.finish().maximumNearStaticSeconds>=1.99)

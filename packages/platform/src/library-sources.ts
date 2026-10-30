@@ -28,7 +28,7 @@ export function librarySourcePort(project:{id:string;directory:string},writable:
 }
 
 /** Lease checks also surround asynchronous DOM reads before their writes commit. */
-export function collectionSourcePort(project:{id:string;directory:string},guard:()=>void):ProjectSourcePort {
+export function collectionSourcePort(project:{id:string;directory:string},guard:()=>void,allowVideo=false):ProjectSourcePort {
  const port=new ProjectSourceStore(project.directory,project.id,guard)
  const deny=():never=>{throw new Error('Background source mutation is unavailable')}
  return {
@@ -39,6 +39,6 @@ export function collectionSourcePort(project:{id:string;directory:string},guard:
   snapshot(){guard();return port.snapshot()},
   collect(observation,revision,signal){guard();return port.collect(observation,revision,signal)},
   readBody(sourceId,acquisitionId,signal){guard();return port.readBody(sourceId,acquisitionId,signal)},
-  confirm:deny,recordMedia:deny
+  confirm(...args){guard();return allowVideo?port.confirm(...args):deny()},recordMedia(...args){guard();return allowVideo?port.recordMedia(...args):deny()}
  }
 }

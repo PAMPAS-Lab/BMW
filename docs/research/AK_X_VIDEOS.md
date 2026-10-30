@@ -10,7 +10,7 @@
 
 这是开发侧对已复制公开视频的分析，未修改生产 Project；不是 BMW Agent 已完成十条分析的产品验收，也不是十条可编辑复刻已通过。已有素材时，基础制作链大体具备；共同增量集中在**事件状态联动、科研图表和密集视频墙的受限预合成**。从零得到三维／新视角内容属于额外素材依赖，不能把论文模型本身列为剪辑器必须实现的功能。
 
-原始 [可播放报告](../../.bmw-runtime/akhaliq-analysis/report.html)、[完整解码与抽样结果](../../.bmw-runtime/akhaliq-analysis/result.json)、[视觉审阅账本](../../.bmw-runtime/akhaliq-analysis/review-ledger.json)仅在本机可用；[可移植证据摘要](AK_X_VIDEOS_EVIDENCE.json)保存原帖、来源 SHA、时长、解码／抽样计数、观察和原始报告 SHA。摘要已纳入 Git，视频和联系表未上传，换机不能只凭摘要重做视觉验收。
+原始 [分析报告](../../.bmw-runtime/akhaliq-analysis/report.html)、[完整解码与抽样结果](../../.bmw-runtime/akhaliq-analysis/result.json)、[视觉审阅账本](../../.bmw-runtime/akhaliq-analysis/review-ledger.json)仅在本机可用；[可移植证据摘要](AK_X_VIDEOS_EVIDENCE.json)保存原帖、来源 SHA、时长、解码／抽样计数、观察和原始报告 SHA。2026-10-28 清理了分析工程中视频、音频及重复 ASR 模型，保留报告、联系表、抽样图片和结果；报告中的原视频不再可播放，无法依靠原文件重做完整视觉或音频核验。正式 ASR 模型缓存保留。摘要已纳入 Git，联系表未上传。
 
 ## 样本索引
 

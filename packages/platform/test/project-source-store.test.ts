@@ -147,10 +147,14 @@ test('Discovery checkpoints preserve excerpt domain and cannot be promoted to fu
  }finally{fs.rmSync(root,{recursive:true,force:true})}
 })
 
- test('Automatic finite video acquisition requires a confirmed-player selector and rejects archive preview options',()=>{
+ test('Automatic finite video acquisition binds a confirmed player and validates delivery preview separately from capture',()=>{
  const base={operation:'acquire',sourceId:'s',acquisitionId:'a',candidateId:'c',expectedRevision:0,method:'auto',videoSelector:'#player'}
  assert.equal(assertSourceRequest(base).operation,'acquire')
  assert.throws(()=>assertSourceRequest({...base,videoSelector:undefined}),/selector/)
- assert.throws(()=>assertSourceRequest({...base,preview:{startSeconds:0,endSeconds:10}}),/preserve/)
+ const preview=assertSourceRequest({...base,preview:{startSeconds:0,endSeconds:10}})
+ if(preview.operation!=='acquire')throw new Error('Expected acquisition request')
+ assert.deepEqual(preview.preview,{startSeconds:0,endSeconds:10})
+ for(const method of ['capture','download'])assert.throws(()=>assertSourceRequest({...base,method,videoSelector:method==='capture'?base.videoSelector:undefined,preview:{startSeconds:0,endSeconds:10}}),/preserve or auto/)
+ assert.throws(()=>assertSourceRequest({...base,preview:{startSeconds:0,endSeconds:31}}),/preview|range|30/i)
  assert.throws(()=>assertSourceRequest({...base,downloadBudgetMs:999999}),/Unsupported/)
  })

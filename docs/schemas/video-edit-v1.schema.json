@@ -3661,6 +3661,23 @@
             "additionalProperties": false,
             "properties": {
               "op": {
+                "const": "card.clear"
+              },
+              "sceneId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9-]{1,80}$"
+              }
+            },
+            "required": [
+              "op",
+              "sceneId"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
                 "const": "scene.set"
               },
               "sceneId": {
@@ -3895,6 +3912,23 @@
               "op",
               "sceneId",
               "patch"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "scene.remove"
+              },
+              "sceneId": {
+                "type": "string",
+                "pattern": "^[a-zA-Z0-9-]{1,80}$"
+              }
+            },
+            "required": [
+              "op",
+              "sceneId"
             ]
           },
           {

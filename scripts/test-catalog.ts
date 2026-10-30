@@ -13,6 +13,8 @@ function node(id:string,file:string,layer:TestLayer,module:ModuleId,watch?:reado
 }
 const p='packages/'
 export const tests: readonly TestDefinition[] = [
+  node('browser.youtube-worktabs',p+'browser-capability/test/youtube-worktabs.test.ts','contract','browser-capability'),
+  {id:'browser.youtube-worktab-runtime',file:'scripts/youtube-worktab-smoke.ts',layer:'integration',modules:['browser-capability','media-native'],runner:'electron',watch:['packages/browser-capability/src/youtube-worktabs.ts','packages/browser-capability/src/youtube-switch.ts','packages/browser-capability/src/browser-kernel.ts','packages/browser-capability/src/tab-policy.ts']},
   {id:'browser.video-acquisition-runtime',file:'scripts/video-acquisition-smoke.ts',layer:'integration',modules:['browser-capability','media-native'],runner:'electron',watch:['packages/browser-capability/src/video-acquisition.ts','packages/browser-capability/src/video-capture-ready.ts','packages/browser-capability/src/browser-kernel.ts']},
   node('browser.capture-ready',p+'browser-capability/test/video-capture-ready.test.ts','contract','browser-capability'),
   node('browser.video-acquisition',p+'browser-capability/test/video-acquisition.test.ts','contract','browser-capability',['packages/browser-capability/src/video-acquisition.ts','packages/browser-capability/src/browser-kernel.ts','packages/feature-library/src/library-sources.ts']),
@@ -38,6 +40,7 @@ export const tests: readonly TestDefinition[] = [
   node('video.production-assessment',p+'feature-video/test/production-assessment.test.ts','contract','feature-video'),
   node('video.source-transcript',p+'feature-video/test/source-transcript.test.ts','contract','feature-video'),
   node('video.scene-reference-preparation',p+'feature-video/test/scene-reference-preparation.test.ts','contract','feature-video'),
+  {id:'studio.native-diagram',file:'scripts/native-diagram-smoke.ts',layer:'media',modules:['feature-video','media-native'],runner:'electron',watch:['packages/feature-video/src/diagram-preparation.ts','packages/feature-video/src/news-preparation','packages/media-native/src/diagram-preview.ts']},
   node('video.news-preparation',p+'feature-video/test/news-preparation.test.ts','contract','feature-video'),
   node('video.preparation-fingerprint',p+'feature-video/test/preparation-fingerprint.test.ts','contract','feature-video'),
   node('video.production',p+'feature-video/test/production.test.ts','contract','feature-video'),
@@ -53,6 +56,8 @@ export const tests: readonly TestDefinition[] = [
   node('media.preservation',p+'media-native/test/media-preservation.test.ts','contract','media-native'),
   node('media.youtube-sabr',p+'media-native/test/youtube-sabr.test.ts','contract','media-native',['packages/media-native/src/youtube-sabr','packages/media-native/src/media-preservation.ts','packages/agent-contract/src/video-identity.ts']),
   node('browser.youtube-sabr',p+'browser-capability/test/youtube-sabr-observation.test.ts','contract','browser-capability',['packages/browser-capability/src/youtube-sabr-observation.ts','packages/agent-contract/src/video-identity.ts']),
+  {id:'external.youtube-navigation',file:'scripts/youtube-navigation-case.ts',layer:'external',modules:['browser-capability','media-native','platform'],runner:'electron',optIn:'BMW_YOUTUBE_NAVIGATION_CASE=1; optional BMW_YOUTUBE_HTTP1=1; public signed-out disposable Profile'},
+  {id:'external.youtube-worktab',file:'scripts/youtube-worktab-case.ts',layer:'external',modules:['browser-capability','media-native','platform'],runner:'electron',optIn:'BMW_YOUTUBE_WORKTAB_CASE=1 BMW_YOUTUBE_WORKTAB_MODE=cold|resident; optional BMW_YOUTUBE_HTTP1=1; same three public videos; disposable signed-out Profile'},
   node('browser.bridge-http',p+'browser-capability/test/bridge-http.test.ts','contract','browser-capability',['packages/browser-capability/src/bridge-http.ts','packages/browser-capability/src/browser-mcp-server.ts']),
   node('video.material-index',p+'feature-video/test/material-index.test.ts','contract','feature-video'),
   node('video.source-analysis',p+'feature-video/test/source-analysis.test.ts','contract','feature-video'),
@@ -134,6 +139,8 @@ export const tests: readonly TestDefinition[] = [
   node('library.schedules',p+'feature-library/test/collection-scheduler.test.ts','contract','feature-library',['packages/feature-library/src/collection-schedul','packages/platform/src/agent-host.ts','packages/platform/src/feature-contract.ts']),
   node('library.recommendations',p+'feature-library/test/recommendations.test.ts','contract','feature-library',['packages/feature-library/src/recommendation-','packages/feature-library/src/news-','packages/feature-video/src/news-service.ts','packages/platform/src/project-record-store.ts']),
   node('library.rolling',p+'feature-library/test/rolling.test.ts','contract','feature-library',['packages/feature-library/src/rolling-','packages/platform/src/project-record-store.ts']),
+  node('library.video-watch',p+'feature-library/test/video-watch.test.ts','contract','feature-library',['packages/feature-library/src/video-watch','packages/feature-library/src/rolling-']),
+  {id:'library.video-watch-desktop',file:'scripts/library-video-watch-smoke.ts',layer:'desktop',modules:['feature-library','platform','browser-capability','media-native'],runner:'electron',watch:['packages/feature-library/','packages/platform/src/background-collection.ts','packages/platform/src/library-sources.ts']},
   node('library.streams',p+'feature-library/test/streams.test.ts','contract','feature-library',['packages/feature-library/src/event-store.ts','packages/feature-library/src/stream-service.ts','packages/feature-library/src/news-research-service.ts','packages/platform/src/project-record-store.ts','packages/platform/src/source-archive.ts']),
   node('platform.record-capacity',p+'platform/test/record-capacity.test.ts','contract','platform',['packages/platform/src/project-record-store.ts','packages/platform/src/project-source-store.ts','packages/platform/src/source-archive.ts','packages/media-native/src/source-contract.ts']),
   node('library.exports',p+'feature-library/test/exports.test.ts','contract','feature-library',['packages/feature-library/src/export-','packages/feature-video/src/studio-service.ts','packages/feature-video/src/studio-store.ts','packages/feature-video/index.ts']),

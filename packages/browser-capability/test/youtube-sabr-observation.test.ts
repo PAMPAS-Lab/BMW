@@ -4,6 +4,7 @@ import {EventEmitter} from 'node:events'
 import vm from 'node:vm'
 import type {Session,WebContents} from 'electron'
 import {YoutubeSabrObservationStore,registerYoutubeSabrPage,bindYoutubeSabrPage,assertFiniteYoutubeProgram} from '../src/youtube-sabr-observation.js'
+import {prepareVideoTransfer} from '../src/video-target.js'
 
 test('SABR observations are private, bounded to registered page identity/session nonce, expire and clear on navigation',()=>{
  const store=new YoutubeSabrObservationStore(),base={pageId:1,pageUrl:'https://www.youtube.com/watch?v=abcdefghijk',url:'https://r1.googlevideo.com/videoplayback?id=current&sabr=1&cpn=one',body:new Uint8Array([1,2,3]),at:Date.now()}
@@ -23,17 +24,37 @@ test('Same-video theme navigation retains the native witness; target changes and
  let hook:Hook|undefined,url='https://www.youtube.com/watch?v=abcdefghijk'
  const session={webRequest:{onBeforeRequest:(_filter:unknown,listener?:Hook)=>{hook=listener}}} as unknown as Session
  const endpoint='https://r1.googlevideo.com/videoplayback?id=current&sabr=1',snapshot={cpn:'same-player',url:endpoint,seconds:1,config:'fixture',formats:[],program:{liveContent:false,liveNow:false,upcoming:false,duration:1,seekableRanges:1,seekableStart:0,seekableEnd:1}}
- const page=Object.assign(new EventEmitter(),{id:17,session,getURL:()=>url,isDestroyed:()=>false,mainFrame:{executeJavaScript:async()=>snapshot}}) as unknown as WebContents
+ const page=Object.assign(new EventEmitter(),{id:17,session,getURL:()=>url,isDestroyed:()=>false,mainFrame:{executeJavaScript:async()=>structuredClone(snapshot)}}) as unknown as WebContents
  const target={identity:{version:1 as const,platform:'youtube' as const,targetId:'abcdefghijk',resourceId:'abcdefghijk'},playerUrl:'blob:https://www.youtube.com/player',videoIndex:0,durationSeconds:1,resources:[]}
  const dispose=registerYoutubeSabrPage(session,page)
  const observe=()=>hook!({webContentsId:page.id,method:'POST',url:endpoint+'&cpn=same-player',uploadData:[{bytes:Buffer.from([1,2,3])}]},result=>assert.equal(result.cancel,false))
  observe();url+='&themeRefresh=1';page.emit('did-start-navigation',{},url,true,true)
- assert.ok((await bindYoutubeSabrPage(page,target,endpoint,{})).delivery)
+ const binding=await bindYoutubeSabrPage(page,target,endpoint,{})
+ assert.ok(binding.delivery)
+ url+='&feature=share';page.emit('did-start-navigation',{},url,true,true)
+ await binding.check(true);assert.ok(await binding.refresh(new AbortController().signal))
+ snapshot.cpn='changed-player';await assert.rejects(binding.check(true),/IDENTITY_CHANGED/);snapshot.cpn='same-player'
+ snapshot.config='changed-config';await assert.rejects(binding.check(true),/IDENTITY_CHANGED/);snapshot.config='fixture'
+ snapshot.url=endpoint+'&changed=1';await assert.rejects(binding.check(true),/IDENTITY_CHANGED/);snapshot.url=endpoint
+ url+='&list=changed';await assert.rejects(binding.check(true),/IDENTITY_CHANGED/)
  url='https://www.youtube.com/watch?v=other-video';page.emit('did-start-navigation',{},url,true,true)
  await assert.rejects(bindYoutubeSabrPage(page,target,endpoint,{}),/OBSERVATION_REQUIRED/)
  url='https://www.youtube.com/watch?v=abcdefghijk';observe();page.emit('did-start-navigation',{},url,false,true)
  await assert.rejects(bindYoutubeSabrPage(page,target,endpoint,{}),/OBSERVATION_REQUIRED/)
  dispose();assert.equal(hook,undefined)
+})
+
+test('Transfer admission keeps exact SABR resources and audio while ignoring only pinned-page tracking changes',async()=>{
+ const original='https://www.youtube.com/watch?v=abcdefghijk',endpoint='https://r1.googlevideo.com/videoplayback?id=current&sabr=1'
+ let url=original,resource=endpoint,blocked:string|null=null
+ const identity={version:1 as const,platform:'youtube' as const,targetId:'abcdefghijk',resourceId:'abcdefghijk'}
+ const page=Object.assign(new EventEmitter(),{getURL:()=>url,isDestroyed:()=>false,mainFrame:{executeJavaScript:async()=>({pageUrl:url,platform:'youtube',blocked,targets:[{identity,playerUrl:'blob:https://www.youtube.com/player',videoIndex:0,durationSeconds:1,resources:[{url:resource,role:'sabr',durationSeconds:1,bitrate:0,audioGroup:'',defaultAudio:false}]}]})}}) as unknown as WebContents
+ const admission=await prepareVideoTransfer(page,endpoint)
+ url+='&themeRefresh=2';await admission.finish()
+ resource=endpoint+'&rotated=1';await assert.rejects(admission.finish(),/UNBOUND/);resource=endpoint
+ blocked='Advertisement';await assert.rejects(admission.finish(),/IDENTITY_CHANGED/);blocked=null
+ url=original+'&hl=es';await assert.rejects(admission.finish(),/IDENTITY_CHANGED/)
+ url=original.replace('abcdefghijk','zyxwvutsrqp');await assert.rejects(admission.finish(),/IDENTITY_CHANGED/)
 })
 
 test('Finite completed broadcasts require a past end and a complete seekable window; active and incomplete streams remain refused',()=>{

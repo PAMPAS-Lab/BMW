@@ -9,6 +9,7 @@ import {assertVideoIdentity,youtubeSabrUrl,YOUTUBE_SABR_REQUEST_BYTES} from '@bm
 import type {VideoIdentity} from '@bmw-agent/agent-contract/video-identity'
 import {ARCHIVE_LIMITS} from './archive-limits.js'
 import {sabrBytePipe} from './youtube-sabr-pipe.js'
+import {relayYoutubeSabrResponse} from './youtube-sabr-response.js'
 
 export {youtubeSabrUrl,YOUTUBE_SABR_REQUEST_BYTES} from '@bmw-agent/agent-contract/video-identity'
 const record=(value:unknown):Record<string,unknown>=>value&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:{}
@@ -55,7 +56,7 @@ export function selectYoutubeSabrFormats(delivery:YoutubeSabrDelivery,maxBytes:n
 }
 
 interface Segment {header:Header;bytes:number;hash:ReturnType<typeof crypto.createHash>}
-export interface YoutubeSabrProof {transport:'YouTube-SABR/UMP';formats:{type:'video'|'audio';itag:number;lastModified:string;segments:number;initializations:number;startMs:number;endMs:number;expectedEndMs:number}[];responses:{bytes:number;sha256:string}[];serverBackoffMs:number;selection?:{policy:string;estimatedBytes:number;sourceByteBudget:number;video:{itag:number;width?:number;height?:number;bitrate:number};audio:{itag:number;bitrate:number;languageGroup:string}}}
+export interface YoutubeSabrProof {transport:'YouTube-SABR/UMP';formats:{type:'video'|'audio';itag:number;lastModified:string;segments:number;initializations:number;startMs:number;endMs:number;expectedEndMs:number}[];responses:{bytes:number;sha256:string;attempts:number;replayedBytes:number}[];serverBackoffMs:number;selection?:{policy:string;estimatedBytes:number;sourceByteBudget:number;video:{itag:number;width?:number;height?:number;bitrate:number};audio:{itag:number;bitrate:number;languageGroup:string}}}
 /** Strict media-envelope validation in front of the library's protocol state machine. */
 export class YoutubeUmpValidator {
  private readonly headers=new Map<number,Segment>()
@@ -84,7 +85,7 @@ export class YoutubeUmpValidator {
  dispose(){this.headers.clear();this.completed.clear();this.ranges.clear();this.reader.dispose()}
 }
 export interface YoutubeSabrTransfer {video:ReadableStream<ArrayBufferView<ArrayBufferLike>>;audio:ReadableStream<ArrayBufferView<ArrayBufferLike>>;formats:{video:YoutubeSabrFormat;audio:YoutubeSabrFormat};proof:()=>Promise<YoutubeSabrProof>;close:()=>Promise<void>}
-export function openYoutubeSabrTransfer(delivery:YoutubeSabrDelivery,fetchImpl:(url:string,init?:RequestInit)=>Promise<Response>,signal:AbortSignal,guard:()=>Promise<void>,maxBytes:number=ARCHIVE_LIMITS.bytes,refreshWitness?:(signal:AbortSignal)=>Promise<YoutubeSabrWitness>):YoutubeSabrTransfer {
+export function openYoutubeSabrTransfer(delivery:YoutubeSabrDelivery,fetchImpl:((url:string,init?:RequestInit)=>Promise<Response>)&{waitForIdle?:()=>Promise<void>},signal:AbortSignal,guard:()=>Promise<void>,maxBytes:number=ARCHIVE_LIMITS.bytes,refreshWitness?:(signal:AbortSignal)=>Promise<YoutubeSabrWitness>):YoutubeSabrTransfer {
  const selected=selectYoutubeSabrFormats(delivery,maxBytes),validator=new YoutubeUmpValidator(delivery.videoIdentity,selected),controller=new AbortController(),combined=AbortSignal.any([signal,controller.signal]),jobs=new Set<Promise<void>>(),requests=new Map<number,AbortController>(),acks=new Map<number,()=>void>()
  validator.proof.selection={policy:'Highest compatible AVC up to 1080p and default-language AAC within archive/free-space budget; complete range, never capture fallback.',estimatedBytes:selected.estimatedBytes,sourceByteBudget:selected.maxBytes,video:{itag:selected.video.itag,width:selected.video.width,height:selected.video.height,bitrate:selected.video.bitrate},audio:{itag:selected.audio.itag,bitrate:selected.audio.bitrate,languageGroup:selected.audio.audioTrackId??'default'}}
  const worker=new Worker(new URL('./youtube-sabr-worker.js',import.meta.url),{workerData:{delivery,video:selected.video,audio:selected.audio,refreshAttestation:!!refreshWitness},resourceLimits:{maxOldGenerationSizeMb:96}})
@@ -97,17 +98,20 @@ export function openYoutubeSabrTransfer(delivery:YoutubeSabrDelivery,fetchImpl:(
  worker.on('error',fail);worker.on('exit',code=>{if(!closing&&!finished)fail(new Error('YOUTUBE_SABR_WORKER: Protocol worker exited before completion ('+code+').'))})
  const post=(value:unknown)=>{if(!closing)worker.postMessage(value)}
  const fetchRequest=async(event:Record<string,unknown>)=>{
-  const id=Number(event.id),request=new AbortController();let reader:ReadableStreamDefaultReader<Uint8Array>|undefined
+  const id=Number(event.id),request=new AbortController()
   try{
-   combined.throwIfAborted();await guard();const target=youtubeSabrUrl(String(event.url));if(!Number.isSafeInteger(id)||id<1||requests.has(id)||++requestCount>2000||!(event.body instanceof Uint8Array)||!event.body.length||event.body.byteLength>YOUTUBE_SABR_REQUEST_BYTES||target.searchParams.get('id')!==youtubeSabrUrl(delivery.streamUrl).searchParams.get('id'))throw new Error('YOUTUBE_SABR_REQUEST: Unbound or oversized protocol request.')
+   combined.throwIfAborted();await guard();const target=youtubeSabrUrl(String(event.url));if(!Number.isSafeInteger(id)||id<1||requests.has(id)||!(event.body instanceof Uint8Array)||!event.body.length||event.body.byteLength>YOUTUBE_SABR_REQUEST_BYTES||target.searchParams.get('id')!==youtubeSabrUrl(delivery.streamUrl).searchParams.get('id'))throw new Error('YOUTUBE_SABR_REQUEST: Unbound or oversized protocol request.')
    requests.set(id,request)
-   const response=await fetchImpl(target.href,{method:'POST',body:event.body as BodyInit,headers:{'content-type':'application/x-protobuf',accept:'application/vnd.yt-ump','accept-encoding':'identity'},credentials:'include',redirect:'error',signal:AbortSignal.any([combined,request.signal])})
-   if(response.status!==200||!response.body||response.headers.get('content-type')?.split(';')[0]!=='application/vnd.yt-ump'){await response.body?.cancel();throw new Error('YOUTUBE_SABR_HTTP: Expected HTTP 200 UMP response; got '+response.status+'.')}
-   post({type:'response',id,status:200,headers:[...response.headers]});reader=response.body.getReader();const hash=crypto.createHash('sha256');let length=0
-   while(true){combined.throwIfAborted();request.signal.throwIfAborted();await guard();const item=await reader.read();if(item.done)break;length+=item.value.length;bytes+=item.value.length;if(bytes>ARCHIVE_LIMITS.bytes)throw new Error('YOUTUBE_SABR_BUDGET: Archive byte budget exceeded.');hash.update(item.value);await validator.reader.feed(item.value);const data=new Uint8Array(item.value);await new Promise<void>(resolve=>{acks.set(id,resolve);post({type:'response-data',id,data})})}
-   validator.proof.responses.push({bytes:length,sha256:hash.digest('hex')});post({type:'response-end',id})
+   let announced=false
+   const proof=await relayYoutubeSabrResponse({signal:AbortSignal.any([combined,request.signal]),guard,replayProgress:progress=>post({type:'replay-progress',id,...progress}),fetch:()=>{if(++requestCount>2000)throw new Error('YOUTUBE_SABR_BUDGET: Native request budget exceeded.');return fetchImpl(target.href,{method:'POST',body:event.body as BodyInit,headers:{'content-type':'application/x-protobuf',accept:'application/vnd.yt-ump','accept-encoding':'identity'},credentials:'include',redirect:'error',signal:AbortSignal.any([combined,request.signal])})},account:length=>{bytes+=length;if(bytes>ARCHIVE_LIMITS.bytes)throw new Error('YOUTUBE_SABR_BUDGET: Archive byte budget exceeded.')},chunk:async chunk=>{
+    await validator.reader.feed(chunk)
+    if(!announced){post({type:'response',id,status:200,headers:[['content-type','application/vnd.yt-ump']]});announced=true}
+    const data=new Uint8Array(chunk);await new Promise<void>(resolve=>{acks.set(id,resolve);post({type:'response-data',id,data})})
+   }})
+   if(!announced)throw new Error('YOUTUBE_SABR_HTTP: Empty UMP response.')
+   validator.proof.responses.push(proof);post({type:'response-end',id})
   }catch(error){post({type:'response-error',id,error:error instanceof Error?error.message.slice(0,700):'YouTube native transport failed.'});if(!request.signal.aborted&&!combined.aborted)fail(error)}
-  finally{await reader?.cancel().catch(()=>{});reader?.releaseLock();requests.delete(id);acks.delete(id)}
+  finally{requests.delete(id);acks.delete(id)}
  }
  const refreshRequest=async(event:Record<string,unknown>)=>{
   const id=Number(event.id),request=new AbortController(),expiresAt=Date.now()+15000

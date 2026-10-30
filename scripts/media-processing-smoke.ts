@@ -42,6 +42,7 @@ const timeout = setTimeout(() => { process.stderr.write('Media processing smoke 
 
 async function run(): Promise<void> {
 try {
+  let adaptiveRecordingStarted:(()=>void)|undefined
   await app.whenReady()
   const browserSession = session.fromPartition(`bmw-media-processing-${process.pid}`)
   source = new BrowserWindow({ show: false, webPreferences: { session: browserSession, sandbox: true, contextIsolation: true, nodeIntegration: false, backgroundThrottling: false } })
@@ -49,7 +50,7 @@ try {
   const media = new MediaController({ session: browserSession,
     preloadPath: path.resolve('packages/media-native/src/preload/media-preload.cjs'),
     pagePath: path.resolve('packages/media-native/src/media/media.html'), artifactsDirectory: artifacts,
-    resolveArtifactsDirectory: () => artifacts, onStatus: (value: { progress?: number; action?: string; active?: boolean }) => { if(value.action==='media.image.inspect')imageInspectActive=Boolean(value.active); if(value.active&&value.action==='video.cover')cancelCover?.abort(new Error('Cover cancellation')); if(value.active&&(value.action==='media.image.draw'||value.action==='media.image.annotate'))cancelDrawing?.abort(new Error('Drawing cancellation')); if(value.active&&value.action==='media.image.inspect')cancelImage?.abort(new Error('Image cancellation')); if ((value.progress ?? 0) > 0) cancelOnProgress?.abort(new Error('E2E cancellation')) } })
+    resolveArtifactsDirectory: () => artifacts, onStatus: (value: { progress?: number; action?: string; active?: boolean;kind?:string;state?:string }) => { if(value.active&&value.kind==='video-element'&&value.state==='recording')adaptiveRecordingStarted?.();if(value.action==='media.image.inspect')imageInspectActive=Boolean(value.active); if(value.active&&value.action==='video.cover')cancelCover?.abort(new Error('Cover cancellation')); if(value.active&&(value.action==='media.image.draw'||value.action==='media.image.annotate'))cancelDrawing?.abort(new Error('Drawing cancellation')); if(value.active&&value.action==='media.image.inspect')cancelImage?.abort(new Error('Image cancellation')); if ((value.progress ?? 0) > 0) cancelOnProgress?.abort(new Error('E2E cancellation')) } })
   const registry = new BrowserCapabilityRegistry(bmwProduct)
   const fixtureCodec = process.env.BMW_MEDIA_FIXTURE_CODEC === 'vp9' ? 'vp9' : 'vp8'
   const kernel = new BrowserKernel({ window: source, session: browserSession, capabilityRegistry: registry,
@@ -383,9 +384,10 @@ try {
     const before=fs.readdirSync(artifacts).sort();await assert.rejects(bridgeCall({action:'media.audio.sample',artifactId,startSeconds:0,endSeconds:11}),/audio end/);await assert.rejects(bridgeCall({action:'media.audio.sample',artifactId:converted.artifactId,startSeconds:1,endSeconds:2}),/outside/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
   })
   await stage('actual adaptive canvas stream keeps mapped capture through resolution/aspect changes',async()=>{
-    const id='adaptive-fixture';await source!.webContents.executeJavaScript(`(async()=>{const c=document.createElement('canvas');c.id='adaptive-canvas';c.width=320;c.height=180;document.body.append(c);const v=document.createElement('video');v.id='adaptive-video';v.muted=true;document.body.append(v);v.srcObject=c.captureStream(30);let count=0;globalThis.adaptiveTimer=setInterval(()=>{if(count===10){c.width=640;c.height=360}if(count===25){c.width=320;c.height=320}const x=c.getContext('2d');x.fillStyle=count<20?'red':'blue';x.fillRect(0,0,c.width,c.height);count++},30);await v.play();await new Promise(r=>setTimeout(r,100))})()`)
+    const id='adaptive-fixture';await source!.webContents.executeJavaScript(`(async()=>{const c=document.createElement('canvas');c.id='adaptive-canvas';c.width=320;c.height=180;document.body.append(c);const v=document.createElement('video');v.id='adaptive-video';v.muted=true;document.body.append(v);v.srcObject=c.captureStream(30);let count=0;globalThis.adaptiveAdmitted=false;globalThis.adaptiveTimer=setInterval(()=>{if(count===10){c.width=640;c.height=360}if(count===25){c.width=320;c.height=320}const x=c.getContext('2d');x.fillStyle=count<20?'red':'blue';x.fillRect(0,0,c.width,c.height);if(globalThis.adaptiveAdmitted)count++},30);await v.play();await new Promise(r=>setTimeout(r,100))})()`)
     kernel.tabs.set(id,{id,title:'Adaptive fixture',url:source!.webContents.getURL(),projectId:project.id,view:{webContents:source!.webContents}});kernel.activeTabId=id
     try{
+      adaptiveRecordingStarted=()=>{void source!.webContents.executeJavaScript('globalThis.adaptiveAdmitted=true;true')}
       const result=(await bridgeCall({action:'media.video.capture',selector:'#adaptive-video',fromStart:false,maxDurationMs:1600})).result as {artifactId:string;complete:boolean;stopReason:string;captureTimeline:{sourceResolutionChanges:{width:number;height:number}[]}}
       assert.equal(result.complete,false);assert.equal(result.stopReason,'maximum-duration');assert.deepEqual(result.captureTimeline.sourceResolutionChanges.map(r=>[r.width,r.height]),[[320,180],[640,360],[320,320]])
       const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean};assert.equal(decoded.completeFile,true)
@@ -393,7 +395,7 @@ try {
       const last=index.frames.at(-1),sample=(await bridgeCall({action:'media.capture.frames.sample',artifactId:result.artifactId,sourceTimestampsSeconds:[last.sourceTimestampSeconds]})).result as Frames;assert.equal(sample.frames[0]!.width,320);assert.equal(sample.frames[0]!.height,180)
       const pixels=await source!.webContents.executeJavaScript(`(async()=>{const image=new Image();image.src=${JSON.stringify('data:image/png;base64,'+fs.readFileSync(sample.frames[0]!.path).toString('base64'))};await image.decode();const c=document.createElement('canvas');c.width=320;c.height=180;const x=c.getContext('2d');x.drawImage(image,0,0);return [[...x.getImageData(160,90,1,1).data],[...x.getImageData(10,10,1,1).data]]})()`) as number[][]
       assert.ok(pixels[0]![2]!>180&&pixels[0]![0]!<30,'Adaptive final frame must retain blue content');assert.ok(pixels[1]!.slice(0,3).every(c=>c<15),'Aspect change must have explicit black letterboxing')
-    }finally{kernel.tabs.delete(id);kernel.activeTabId=null;await source!.webContents.executeJavaScript(`clearInterval(globalThis.adaptiveTimer);const v=document.querySelector('#adaptive-video');v.srcObject.getTracks().forEach(t=>t.stop());v.remove();document.querySelector('#adaptive-canvas').remove()`)}
+    }finally{adaptiveRecordingStarted=undefined;kernel.tabs.delete(id);kernel.activeTabId=null;await source!.webContents.executeJavaScript(`clearInterval(globalThis.adaptiveTimer);const v=document.querySelector('#adaptive-video');v.srcObject.getTracks().forEach(t=>t.stop());v.remove();document.querySelector('#adaptive-canvas').remove()`)}
   })
   await stage('finite AV capture freezes EOF before page replay, verifies first/last pixels and rejects guessed fields through Bridge',async()=>{
     source!.showInactive()
@@ -413,7 +415,10 @@ try {
     const id='finite-capture-tab';kernel.tabs.set(id,{id,projectId:project.id,title:'Finite AV fixture',url:source!.webContents.getURL(),source:'agent',view:{webContents:source!.webContents}});kernel.activeTabId=id
     try{
       const captured=(await bridgeCall({action:'media.video.capture',tabId:id,selector:'#finite-capture',fromStart:true,maxDurationMs:7000,playbackPlan:[{sourceSeconds:.4,pauseMs:700,rate:.5},{sourceSeconds:1.2,rate:2}]})).result as {artifactId:string;path:string;complete:boolean;stopReason:string;sourceStartSeconds:number;sourceEndSeconds:number}
-      assert.equal(captured.complete,true);assert.equal(captured.stopReason,'ended');assert.equal(captured.sourceStartSeconds,0);assert.ok(Math.abs(captured.sourceEndSeconds-duration)<.001)
+      assert.equal(captured.complete,true);assert.equal(captured.stopReason,'ended')
+      // Preserve the actual ready playback clock instead of claiming exact zero
+      // after the first source frame has already been presented.
+      assert.ok(captured.sourceStartSeconds>=0&&captured.sourceStartSeconds<.1);assert.ok(Math.abs(captured.sourceEndSeconds-duration)<.001)
       const decoded=await media.processArtifact({action:'media.decode.check',artifactId:captured.artifactId}) as {completeFile:boolean;tracks:{type:string;endSeconds:number}[]}
       assert.equal(decoded.completeFile,true);assert.deepEqual(decoded.tracks.map(track=>track.type).sort(),['audio','video']);assert.ok(decoded.tracks.every(track=>track.endSeconds>duration+.4))
       const inspected=(await bridgeCall({action:'media.inspect',artifactId:captured.artifactId})).result as MediaInfo&{captureTimeline:{status:string;sourceEndSeconds:number;fileTimestampMapping:string;playbackEvents:{kind:string;sourceSeconds:number;fileSeconds:number;rate:number}[]}}

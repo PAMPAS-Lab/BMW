@@ -43,10 +43,23 @@ try {
     view = undefined
     const live = new BrowserKernel({ window: host, session: isolated, permissionStore: { hasAgentControl: () => true }, sessionContinuity: null, projectStore: null, settingsStore: null, capabilityRegistry: null, allowedActions: undefined, artifactsDirectory: root, onState: () => {} })
     const active = await live.openTab({ url: 'about:blank', foreground: true, source: 'user' })
-    const fixtureUrl = 'data:text/html,' + encodeURIComponent('<style>body{margin:0}article{margin-top:1500px;width:560px;height:380px;background:rgb(49,170,119)}</style><article data-testid="tweet">Background post<img src="https://example.com/picture.png"></article>')
+    const fixtureUrl = 'data:text/html,' + encodeURIComponent('<style>body{margin:0}article{margin-top:1500px;width:560px;height:380px;background:rgb(0,255,0)}[data-testid^="color-"]{position:fixed;top:30px;width:16px;height:16px}[data-testid="color-green"]{left:650px;background:rgb(0,255,0)}[data-testid="color-red"]{left:680px;background:rgb(255,0,0)}</style><div data-testid="color-green"></div><div data-testid="color-red"></div><article data-testid="tweet">Background post<img src="https://example.com/picture.png"></article>')
     const background = await live.openTab({ url: fixtureUrl, source: 'agent', reuse: false })
     view = live.tabs.get(background.id).view
     assert.equal(view.getBounds().width, 900)
+    // Independent CSS markers retain an exact comparison in the same native
+    // color space. ICC conversion may map CSS green to [1,255,5] on macOS;
+    // this regression concerns crop/visibility, not display color fidelity.
+    const colorControls: number[][]=[]
+    for(const name of ['green','red']){
+      const control=await live.execute({action:'media.screenshot',tabId:background.id,selector:`[data-testid="color-${name}"]`})
+      assert.equal(control.width,16*screen.getDisplayMatching(host.getBounds()).scaleFactor)
+      const bitmap=nativeImage.createFromPath(control.path).toBitmap()
+      colorControls.push([...bitmap.subarray(bitmap.length-4)])
+    }
+    const [expectedGreen,redControl]=colorControls
+    assert.ok(expectedGreen[3]===255&&expectedGreen[1]>200&&expectedGreen[0]<30&&expectedGreen[2]<30,JSON.stringify(colorControls))
+    assert.ok(redControl[3]===255&&redControl[1]<30&&Math.max(redControl[0],redControl[2])>200&&Math.min(redControl[0],redControl[2])<30,JSON.stringify(colorControls))
     console.log('Background phase: detached selector screenshot')
     const artifact = await live.execute({ action: 'media.screenshot', tabId: background.id, selector: 'article[data-testid="tweet"]' })
     const scale = screen.getDisplayMatching(host.getBounds()).scaleFactor
@@ -54,7 +67,16 @@ try {
     assert.equal(artifact.height, 380 * scale)
     assert.ok(fs.statSync(artifact.path).size > 500)
     const pixels = nativeImage.createFromPath(artifact.path).toBitmap()
-    assert.deepEqual([...pixels.subarray(pixels.length - 4, pixels.length)], [119, 170, 49, 255])
+    const sample=[...pixels.subarray(pixels.length-4,pixels.length)]
+    const green=sample[3]===255&&sample.slice(0,3).every((value,index)=>Math.abs(value-expectedGreen[index]!)<=2)
+    const center=(Math.floor(artifact.height/2)*artifact.width+Math.floor(artifact.width/2))*4
+    const pixelWitness={corner:sample,center:[...pixels.subarray(center,center+4)],expectedGreen,redControl,scale,width:artifact.width,height:artifact.height,bounds:view.getBounds()}
+    if(!green&&process.env.BMW_VALIDATION_DIR){
+      fs.mkdirSync(process.env.BMW_VALIDATION_DIR,{recursive:true})
+      fs.copyFileSync(artifact.path,path.join(process.env.BMW_VALIDATION_DIR,'background-selector-failure.png'))
+      fs.writeFileSync(path.join(process.env.BMW_VALIDATION_DIR,'background-selector-failure.json'),JSON.stringify(pixelWitness,null,2)+'\n')
+    }
+    assert.equal(sample[3],255,JSON.stringify(pixelWitness));assert.ok(green,JSON.stringify(pixelWitness))
     assert.equal(await view.webContents.executeJavaScript('scrollY'), 0)
     assert.equal(live.activeTabId, active.id)
     assert.equal(host.contentView.children.includes(view), false)

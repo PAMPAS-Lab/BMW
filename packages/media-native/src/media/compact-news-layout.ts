@@ -39,12 +39,20 @@ export function compactCue(context:CompactMeasure,cue:NonNullable<CompositionSce
  const translated=Boolean(cue.translationText?.trim()),chinese=display==='original'?cue.text:translated?cue.translationText!:display==='translation'?'':cue.text,english=translated&&display!=='translation'&&display!=='original'?cue.text:''
  return {chinese:compactText(context,chinese,42,2),english:compactText(context,english,30,2)}
 }
+/** Native diagrams occupy only the same picture slot; no caption/title overlays. */
+export function compactDiagramScene(scene:CompositionScene):boolean {
+ if(scene.videoArtifactId||scene.imageArtifactId||scene.visualSegments?.length||!scene.label.includes('机制图解'))return false
+ const layers=(scene.layers??[]).filter(l=>!l.hidden&&l.opacity>0),diagrams=layers.filter(l=>l.kind==='diagram'&&l.science&&l.startSeconds===0&&l.durationSeconds>=scene.durationSeconds&&l.width*l.height>=.2),box=compactGeometry().media
+ if(diagrams.length!==1||layers.some(l=>!['diagram','rectangle','text'].includes(l.kind)))return false
+ return layers.every(l=>[l,...(l.keyframes??[])].every(k=>{const x='x'in k?k.x:l.x,y='y'in k?k.y:l.y,width='width'in k?k.width:l.width,height='height'in k?k.height:l.height;return x*720>=box.x-1&&y*1280>=box.y-1&&(x+width)*720<=box.x+box.width+1&&(y+height)*1280<=box.y+box.height+1}))
+}
 export function compactSceneIssues(context:CompactMeasure,scene:CompositionScene,title:string,narrationDuration:number):string[]{
  const issues:string[]=[],label=scene.label.split(/[｜|\n]/),head=label.shift()??'',footer=label.join(' · ')
  if(compactText(context,title,48,2).overflow)issues.push('标题最多2行/48px，请缩短标题。')
  if(compactText(context,head,30,1).overflow||compactText(context,footer,30,2).overflow)issues.push('来源标识或日期超出固定区域；用 label 的｜分隔标识与来源日期。')
- if(scene.cardSpec||scene.sceneTemplate||scene.bullets.length||scene.layers?.some(l=>!l.hidden&&l.opacity>0))issues.push('紧凑模板自带标题/来源/字幕区；请移除手工卡片和可见叠层，避免覆盖保留区域。')
- if(!scene.videoArtifactId&&(!scene.visualSegments?.length||scene.visualSegments.some(v=>!v.videoArtifactId)))issues.push('紧凑新闻需要实际横屏主视频，不能用空卡或静图填充。')
+ const nativeDiagram=compactDiagramScene(scene)
+ if(scene.cardSpec||scene.sceneTemplate||scene.bullets.length||!nativeDiagram&&scene.layers?.some(l=>!l.hidden&&l.opacity>0))issues.push('紧凑模板自带标题/来源/字幕区；请移除手工卡片和可见叠层，避免覆盖保留区域。')
+ if(!nativeDiagram&&!scene.videoArtifactId&&(!scene.visualSegments?.length||scene.visualSegments.some(v=>!v.videoArtifactId)))issues.push('紧凑新闻需要实际横屏主视频，或符合原生图解约束的末镜。图解所有可见对象/关键帧须在720×1280画布x40–680、y332–692区域内，至少一个diagram覆盖20%画布；字幕/来源区不可叠层。')
  for(const [index,cue]of(scene.captions??estimatedCaptionCues(scene,720,1280,narrationDuration)).entries()){
   const blocks=compactCue(context,cue,scene.captionDisplay)
   if(blocks.chinese.overflow||blocks.english.overflow)issues.push(`字幕${index+1}需按语义和真实句界拆cue：中文42px最多2行，英文30px最多2行，宽640px；保留完整文字，不缩字或隐藏。`)
@@ -53,8 +61,9 @@ export function compactSceneIssues(context:CompactMeasure,scene:CompositionScene
 }
 /** Preview and export share this exact primary-picture/caption geometry. */
 export function paintCompactNews(context:CanvasRenderingContext2D,scene:CompositionScene,frame:{canvas:HTMLCanvasElement|OffscreenCanvas}|null,time:number,narrationDuration:number,output:Pick<MediaComposition,'width'|'height'|'title'|'style'|'watermark'>,onTitle?:(text:string,x:number,y:number,width:number,height:number)=>void):void{
- if(!frame)throw new Error('STUDIO_COMPACT_MEDIA: 缺少可解码横屏视频。')
- const visual=visualAtTime(scene,time),framing=visual?.segment??scene,crop=focusFraming(framing,visual?.localSeconds??time).crop,zoom=visualZoom(framing,visual?.localSeconds??time),sourceWidth=frame.canvas.width*crop.width/zoom,sourceHeight=frame.canvas.height*crop.height/zoom,layout=compactGeometry(sourceWidth/sourceHeight)
+ const nativeDiagram=compactDiagramScene(scene)
+ if(!frame&&!nativeDiagram)throw new Error('STUDIO_COMPACT_MEDIA: 缺少可解码横屏视频。')
+ const visual=visualAtTime(scene,time),framing=visual?.segment??scene,crop=focusFraming(framing,visual?.localSeconds??time).crop,zoom=visualZoom(framing,visual?.localSeconds??time),sourceWidth=frame?frame.canvas.width*crop.width/zoom:640,sourceHeight=frame?frame.canvas.height*crop.height/zoom:360,layout=compactGeometry(sourceWidth/sourceHeight)
  const problems=compactSceneIssues(context,scene,output.title,narrationDuration);if(problems.length)throw new Error('STUDIO_TEXT_LAYOUT: '+problems.join('；'))
  const light=output.style==='clean-light',paper=light?'#f7f8fa':'#19212b',ink=light?'#172536':'#edf2f7',muted=light?'#586a7e':'#b4c0cf',label=scene.label.split(/[｜|\n]/),meta=label.shift()??'',footer=label.join(' · ')
  context.save();try{
@@ -63,7 +72,7 @@ export function paintCompactNews(context:CanvasRenderingContext2D,scene:Composit
   if(output.watermark?.enabled){context.save();context.globalAlpha=output.watermark.opacity;draw(output.watermark.text,40,82,30,muted);context.restore()}
   for(const [index,line]of compactText(context,output.title,48,2).lines.entries()){draw(line,40,146+index*58,48,ink);onTitle?.(line,40/720,(146+index*58)/1280,640/720,58/1280)}
   draw(meta,40,278,30,muted)
-  const m=layout.media;context.save();context.filter=visualEffectFilter(framing.effects);context.globalAlpha=visual?.opacity??1;context.drawImage(frame.canvas,frame.canvas.width*crop.x+(frame.canvas.width*crop.width-sourceWidth)/2,frame.canvas.height*crop.y+(frame.canvas.height*crop.height-sourceHeight)/2,sourceWidth,sourceHeight,m.x,m.y,m.width,m.height);context.restore()
+  const m=layout.media;context.save();context.filter=visualEffectFilter(framing.effects);context.globalAlpha=visual?.opacity??1;if(frame)context.drawImage(frame.canvas,frame.canvas.width*crop.x+(frame.canvas.width*crop.width-sourceWidth)/2,frame.canvas.height*crop.y+(frame.canvas.height*crop.height-sourceHeight)/2,sourceWidth,sourceHeight,m.x,m.y,m.width,m.height);context.restore()
   const cue=(scene.captions??estimatedCaptionCues(scene,output.width,output.height,narrationDuration)).find(c=>time>=c.startSeconds&&time<c.endSeconds)
   if(cue){const blocks=compactCue(context,cue,scene.captionDisplay);withCanvasPaintRole(context,'caption',()=>{blocks.chinese.lines.forEach((line,i)=>draw(line,40,layout.captionY+i*54,42,ink));blocks.english.lines.forEach((line,i)=>draw(line,40,layout.englishY+i*40,30,muted))})}
   compactText(context,footer,30,2).lines.forEach((line,i)=>draw(line,40,layout.footerY+i*34,30,muted))

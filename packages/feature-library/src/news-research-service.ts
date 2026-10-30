@@ -11,6 +11,7 @@ import {newsFresh,newsPublication} from './news-contract.js'
 import type {NewsTopicCandidate,NewsTopic,NewsBatch} from './news-contract.js'
 import {NewsJournal,newsFingerprint} from './news-store.js'
 import {LibrarySources} from './library-sources.js'
+import {RollingStore} from './rolling-service.js'
 export interface NewsResearchRequest {operation:'news-topics'|'propose-news-topics';expectedTopicRevision?:number;newsCandidates?:NewsTopicCandidate[];closeNewsTask?:boolean}
 export class NewsResearchService {
  readonly journal:NewsJournal
@@ -33,8 +34,17 @@ export class NewsResearchService {
  }
  protected async currentTopic(t:NewsTopic,signal?:AbortSignal):Promise<string[]>{try{const now=await this.verify(t.candidate,signal);const {checkedAt:_old,...a}=t.facts,{checkedAt:_new,...b}=now.facts;return JSON.stringify(a)===JSON.stringify(b)?[]:['原文、日期或预览已变化，请重新推荐。']}catch(error){signal?.throwIfAborted();return [error instanceof Error?error.message:String(error)]}}
  protected admission(b:NewsBatch){return new RecommendationStore(this.directory,this.owner.projectId).admission(this.owner.sessionId,b)}
- protected assertSelectionFresh(b:NewsBatch,t:NewsTopic):void{const hours=this.admission(b)?.windowHours??72;try{const date=newsPublication(t.facts.publishedAt,this.now());if(date.earliest>=this.now()-hours*3600000&&date.latest<=this.now()&&date.earliest<=this.now())return}catch{}throw new Error('NEWS_EXPIRED: 原始发布时间不在当前'+hours+'小时策略窗口内。')}
- async selectionIssues(b:NewsBatch,t:NewsTopic,signal?:AbortSignal):Promise<string[]>{const admission=this.admission(b),issues=await this.currentTopic(t,signal),hours=admission?.windowHours??72;try{const date=newsPublication(t.facts.publishedAt,this.now());if(date.earliest<this.now()-hours*3600000||date.latest>this.now()||date.earliest>this.now())issues.push('原始发布时间不在当前'+hours+'小时策略窗口内。')}catch{issues.push('原始发布日期不可核对。')}if(admission){if(!this.kernel.libraryRecommendationValidity)issues.push('快照准入校验服务不可用。');else issues.push(...await this.kernel.libraryRecommendationValidity(admission,t,signal))}return issues}
+ /** Later video publication never extends an enrolled event's selection window. */
+ protected videoWatchWindowIssue(t:NewsTopic,hours:number):string|undefined{
+  const store=new RollingStore(this.directory,this.owner.projectId)
+  if(!store.records.state().sequence)return
+  const row=store.records.page({terms:['video-event:'+t.candidate.eventKey],limit:1}).items[0]?.value
+  if(row?.kind!=='lead'||!row.videoWatch)return
+  const date=newsPublication(row.videoWatch.publishedAt,this.now())
+  if(date.earliest<this.now()-hours*3600000||date.latest>this.now())return 'NEWS_EVENT_EXPIRED: 待选池原始事件日期不在当前'+hours+'小时窗口；新视频上传日期不刷新事件时效。'
+ }
+ protected assertSelectionFresh(b:NewsBatch,t:NewsTopic):void{const hours=this.admission(b)?.windowHours??72,issue=this.videoWatchWindowIssue(t,hours);if(issue)throw new Error(issue);try{const date=newsPublication(t.facts.publishedAt,this.now());if(date.earliest>=this.now()-hours*3600000&&date.latest<=this.now()&&date.earliest<=this.now())return}catch{}throw new Error('NEWS_EXPIRED: 原始发布时间不在当前'+hours+'小时策略窗口内。')}
+ async selectionIssues(b:NewsBatch,t:NewsTopic,signal?:AbortSignal):Promise<string[]>{const admission=this.admission(b),issues=await this.currentTopic(t,signal),hours=admission?.windowHours??72,eventIssue=this.videoWatchWindowIssue(t,hours);if(eventIssue)issues.push(eventIssue);try{const date=newsPublication(t.facts.publishedAt,this.now());if(date.earliest<this.now()-hours*3600000||date.latest>this.now()||date.earliest>this.now())issues.push('原始发布时间不在当前'+hours+'小时策略窗口内。')}catch{issues.push('原始发布日期不可核对。')}if(admission){if(!this.kernel.libraryRecommendationValidity)issues.push('快照准入校验服务不可用。');else issues.push(...await this.kernel.libraryRecommendationValidity(admission,t,signal))}return issues}
  async topics(signal?:AbortSignal){const b=this.journal.read(),admission=this.admission(b),topics=[];for(const t of b.topics){const issues=admission&&b.selection?.topicId===t.candidate.id?await this.currentTopic(t,signal):await this.selectionIssues(b,t,signal);topics.push({...t,eligible:!issues.length,issues})}return {...b,topics,fingerprint:newsFingerprint(b.topics),asOf:new Date(this.now()).toISOString(),windowStart:new Date(this.now()-(admission?.windowHours??72)*3600000).toISOString(),...(admission?{recommendation:{snapshotId:admission.snapshotId,windowHours:admission.windowHours,acceptedShortage:admission.acceptedShortage}}:{}),awaitingSelection:!b.closed&&!b.selection,selectedDraftId:b.selection?.draftId??null}}
  async executeResearch(r:NewsResearchRequest,actor:'agent'|'user',signal?:AbortSignal):Promise<unknown>{
   signal?.throwIfAborted();this.guard();if(r.operation==='news-topics')return this.topics(signal)

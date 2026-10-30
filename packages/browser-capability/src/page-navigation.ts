@@ -1,6 +1,18 @@
 import type {WebContents} from 'electron'
-export interface NavigationTrace {phase:'stop'|'complete';reason:'dom-ready'|'load'|'deadline'|'cancelled'|'snapshot'|'failure';elapsedMs:number}
+export interface NavigationProgress {committed:boolean;domReady:boolean;loadFinished:boolean;mainFrameErrorCode:number|null}
+export interface NavigationTrace {phase:'stop'|'complete';reason:'dom-ready'|'load'|'deadline'|'cancelled'|'snapshot'|'failure';elapsedMs:number;progress?:NavigationProgress}
 export type NavigationPage=Pick<WebContents,'loadURL'|'stop'|'close'|'isDestroyed'|'on'|'removeListener'>
+/** Observe a site-owned continuation without submitting the input URL again.
+ * Cancellation is owned by navigatePage: stop, await this real load, then close
+ * if the renderer does not settle. No timer can turn a pending load into success. */
+export function observeNativePageLoad(page:NavigationPage&Pick<WebContents,'isLoading'>,canComplete:()=>boolean=()=>true):Promise<void>{
+ return new Promise((resolve,reject)=>{
+  const cleanup=()=>{page.removeListener('did-stop-loading',check);page.removeListener('did-navigate',check);page.removeListener('did-start-navigation',check);page.removeListener('destroyed',gone)}
+  const gone=()=>{cleanup();reject(failure('BMW_BROWSER_PAGE_CHANGED','Site continuation renderer closed.'))}
+  const check=()=>{try{if(page.isDestroyed()){gone();return}if(canComplete()&&!page.isLoading()){cleanup();resolve()}}catch(error){cleanup();reject(error)}}
+  page.on('did-stop-loading',check);page.on('did-navigate',check);page.on('did-start-navigation',check);page.on('destroyed',gone);check()
+ })
+}
 export interface DocumentTransfer {url:string;status:number;receivedBytes:number;lastDataAt:number;completed:boolean;failed:boolean}
 /** Only an actively arriving, successful same-document HTML response gets a
  * bounded completion lease. Headers, stale bytes and unrelated requests do not
@@ -54,26 +66,29 @@ export async function closeNavigationPage(page:NavigationPage,timeoutMs=3000):Pr
  const gone=destroyed(page,timeoutMs);try{page.close({waitForBeforeUnload:false})}catch{}
  if(!await gone)throw failure('BMW_BROWSER_NAVIGATION_CLEANUP_FAILED','Page did not close; browser resources remain quarantined until explicit close recovery succeeds.')
 }
-export async function navigatePage(page:NavigationPage,url:string,signal?:AbortSignal,timeoutMs=25000,cleanupMs=3000,allowClose=true,earlyReady?:()=>Promise<boolean>,trace?:(entry:NavigationTrace)=>void):Promise<void>{
+export async function navigatePage(page:NavigationPage,url:string,signal?:AbortSignal,timeoutMs=25000,cleanupMs=3000,allowClose=true,earlyReady?:()=>Promise<boolean>,trace?:(entry:NavigationTrace)=>void,start?:()=>Promise<void>):Promise<void>{
  const startedAt=Date.now()
  signal?.throwIfAborted();if(page.isDestroyed())throw failure('BMW_BROWSER_RENDERER_GONE','Navigation target is closed.')
- let early=false,closed=false,domReady=false,probe:Promise<void>|undefined,poll:NodeJS.Timeout|undefined
- const dom=()=>{domReady=true},checkEarly=()=>{if(closed||!domReady||probe||!earlyReady)return;probe=(async()=>{try{if(await earlyReady()){if(!closed){early=true;release(undefined)}}}catch{/* A failed probe cannot certify readiness; original deadline remains. */}})().finally(()=>{probe=undefined})}
+ let early=false,closed=false,domReady=false,canProbe=false,committed=false,loadFinished=false,mainFrameErrorCode:number|null=null,probe:Promise<void>|undefined,poll:NodeJS.Timeout|undefined
+ const report=(phase:NavigationTrace['phase'],reason:NavigationTrace['reason'])=>trace?.({phase,reason,elapsedMs:Date.now()-startedAt,progress:{committed,domReady,loadFinished,mainFrameErrorCode}})
+ const commit=()=>{committed=true;canProbe=true},loaded=()=>{loadFinished=true},failed=(_event:unknown,code:number,_description:string,_url:string,main:boolean)=>{if(main&&Number.isSafeInteger(code))mainFrameErrorCode=code}
+ const dom=()=>{domReady=true;canProbe=true},checkEarly=()=>{if(closed||!canProbe||probe||!earlyReady)return;probe=(async()=>{try{if(await earlyReady()){if(!closed){early=true;release(undefined)}}}catch{/* A failed probe cannot certify readiness; original deadline remains. */}})().finally(()=>{probe=undefined})}
  let settled=false,cancelled:unknown,timer:NodeJS.Timeout|undefined,release:(reason:unknown)=>void=()=>{}
  const stopped=new Promise<unknown>(resolve=>{release=resolve}),abort=()=>{cancelled=signal?.reason??failure('BMW_BROWSER_CANCELLED','Navigation cancelled.');release(cancelled)}
- if(earlyReady){page.on('dom-ready',dom);page.on('did-navigate',dom);poll=setInterval(checkEarly,150)}
+ page.on('dom-ready',dom);page.on('did-navigate',commit);page.on('did-finish-load',loaded);page.on('did-fail-load',failed)
+ if(earlyReady)poll=setInterval(checkEarly,150)
  signal?.addEventListener('abort',abort,{once:true});timer=setTimeout(()=>{cancelled=failure('BMW_BROWSER_NAVIGATION_TIMEOUT','Navigation exceeded its native deadline.');release(cancelled)},timeoutMs)
- const pending=Promise.resolve().then(()=>{signal?.throwIfAborted();return page.loadURL(url)}).then(()=>{settled=true;return {ok:true as const}},(error:unknown)=>{settled=true;return {ok:false as const,error}})
+ const pending=Promise.resolve().then(()=>{signal?.throwIfAborted();return start?start():page.loadURL(url)}).then(()=>{settled=true;return {ok:true as const}},(error:unknown)=>{settled=true;return {ok:false as const,error}})
  try{
   const outcome=await Promise.race([pending,stopped.then(reason=>({ok:false as const,error:reason}))])
-  if(cancelled||early){trace?.({phase:'stop',reason:early?'dom-ready':signal?.aborted?'cancelled':'deadline',elapsedMs:Date.now()-startedAt});try{if(!page.isDestroyed())page.stop()}catch{}
+  if(cancelled||early){report('stop',early?'dom-ready':signal?.aborted?'cancelled':'deadline');try{if(!page.isDestroyed())page.stop()}catch{}
    let cleanupTimer:NodeJS.Timeout|undefined;await Promise.race([pending,new Promise<void>(resolve=>{cleanupTimer=setTimeout(resolve,cleanupMs)})]);if(cleanupTimer)clearTimeout(cleanupTimer)
    if(!settled&&!page.isDestroyed()){if(!allowClose)throw failure('BMW_BROWSER_NAVIGATION_CLEANUP_FAILED','User page retained; explicit user close is required before browser work resumes.');await closeNavigationPage(page,cleanupMs)}
    if(cancelled)throw cancelled
    if(page.isDestroyed())throw failure('BMW_BROWSER_PAGE_CHANGED','Collection page closed before its DOM could be observed.')
-   trace?.({phase:'complete',reason:'dom-ready',elapsedMs:Date.now()-startedAt});return
+   report('complete','dom-ready');return
   }
-  if('error'in outcome)throw outcome.error
-  trace?.({phase:'complete',reason:'load',elapsedMs:Date.now()-startedAt})
- }finally{closed=true;if(timer)clearTimeout(timer);if(poll)clearInterval(poll);if(earlyReady){page.removeListener('dom-ready',dom);page.removeListener('did-navigate',dom)};await probe;signal?.removeEventListener('abort',abort)}
+  if('error'in outcome){report('complete','failure');throw outcome.error}
+  report('complete','load')
+ }finally{closed=true;if(timer)clearTimeout(timer);if(poll)clearInterval(poll);page.removeListener('dom-ready',dom);page.removeListener('did-navigate',commit);page.removeListener('did-finish-load',loaded);page.removeListener('did-fail-load',failed);await probe;signal?.removeEventListener('abort',abort)}
 }

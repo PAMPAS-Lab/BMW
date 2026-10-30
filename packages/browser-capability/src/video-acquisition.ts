@@ -12,6 +12,7 @@ export interface VideoAcquisitionPort {
  * once; fallback starts only after preservation has actually drained. */
 export async function acquireVideoDelivery(target:VideoTarget,port:VideoAcquisitionPort,signal:AbortSignal,downloadBudgetMs=60000){
  signal.throwIfAborted()
+ if(target.requiresProjection)throw new Error('MEDIA_ACQUIRE_PROJECTION_UNSUPPORTED: This player declares spherical/360 video. Raw video-element frames require projection processing before flat news use; select an ordinary flat video. Explicit archival preservation remains available.')
  if(!Number.isInteger(downloadBudgetMs)||downloadBudgetMs<1||downloadBudgetMs>60000)throw new TypeError('Invalid native acquisition budget.')
  if(!Number.isFinite(target.durationSeconds)||!target.durationSeconds||target.durationSeconds>1800)throw new Error('MEDIA_ACQUIRE_FINITE: Use explicit archive preservation for long or unknown-duration sources.')
  const rank=(r:VideoResource)=>r.role==='sabr'?5:r.role==='hls'?4:r.role==='video'?3:r.role==='muxed'?2:0

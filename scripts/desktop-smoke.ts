@@ -290,6 +290,8 @@ try {
   await click('#scheduled-task-close')
   const initialTheme=(await shell.executeJavaScript('window.bmw.globalSettings()')).theme
   await click('#more-button'); await visible('#more-menu'); await click('#settings-button'); await visible('#settings-overlay')
+  assert.equal(await shell.executeJavaScript("document.getElementById('settings-http1-compatibility').checked"),false)
+  await shell.executeJavaScript("document.getElementById('settings-http1-compatibility').checked=true;true")
   await shell.executeJavaScript("document.querySelector('#settings-theme').value='light';true")
   await click('[data-settings-category="assistant"]')
   assert.equal(await shell.executeJavaScript("document.querySelector('[data-settings-section=browser]').classList.contains('hidden')"), true)
@@ -308,6 +310,7 @@ try {
   await click('#settings-video-template-save');await saveShell('video-settings-template.png');await click('#settings-save')
   await waitFor(async()=>await shell.executeJavaScript("document.querySelector('#settings-message').textContent.startsWith('Saved.')")?true:null);await click('#settings-close')
   const videoSettings=await shell.executeJavaScript('window.bmw.globalSettings()')
+  assert.equal(videoSettings.http1Compatibility,true,'Trusted settings must persist opt-in network compatibility for restart')
   assert.equal(videoSettings.qwenNarrationEnabled,true);assert.equal(videoSettings.videoPreferences.defaults.aspectRatio,'9:16');assert.equal(videoSettings.videoPreferences.templates[0].name,'竖屏解读');assert.equal(videoSettings.videoPreferences.templates[0].options.watermark.text,'测试品牌');assert.equal(videoSettings.videoPreferences.templates[0].options.tts.voice,'zh-CN-XiaoxiaoNeural');assert.equal(videoSettings.videoPreferences.templates[0].options.tts.ratePercent,10)
   await click('#more-button');await visible('#more-menu');await click('#settings-button');await visible('#settings-overlay');await click('[data-settings-category="video"]')
   assert.equal(await shell.executeJavaScript("document.getElementById('settings-video-ratio').value"),'9:16')

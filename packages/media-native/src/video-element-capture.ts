@@ -41,7 +41,8 @@ async function initializeRenderer(key:string,request:{selector:string;index:numb
  admission()
  const captureStream=(video as HTMLVideoElement&{captureStream?:()=>MediaStream}).captureStream
  if(typeof captureStream!=='function'||typeof VideoEncoder!=='function'||typeof video.requestVideoFrameCallback!=='function')return {ok:false,reason:'Native capture requires captureStream, requestVideoFrameCallback and WebCodecs VideoEncoder.'}
- const initial={currentTime:video.currentTime,loop:video.loop,playbackRate:video.playbackRate}
+ const initial={currentTime:video.currentTime,loop:video.loop,playbackRate:video.playbackRate,preload:video.preload}
+ let adjustedPreload=false
  const state={cancelled:false,restored:false,audioReady:new Map<number,string>(),videoReady:new Map<number,CaptureEncodedPacket>(),nextAudio:0,pullAudio:0,nextVideo:0,pullVideo:0,pending:0,bufferBytes:0,done:false,error:'',reason:'',recorder:undefined as MediaRecorder|undefined,encoder:undefined as VideoEncoder|undefined,stream:undefined as MediaStream|undefined,timer:0,frameRequest:0,sourceStartSeconds:0,sourceEndSeconds:0,lastSourceSeconds:0,started:false,sourceDurationSeconds:null as number|null,startedAt:0,held:undefined as PendingFrame,encoded:new Map<number,CaptureFrameMapping>(),events:[] as CapturePlaybackEvent[],width:0,height:0,frames:0,lastKeySeconds:-10,planIndex:0,resumeTimer:0,readers:new Set<FileReader>()}
  let resolveCancelled:()=>void;const cancelled=new Promise<void>(resolve=>resolveCancelled=resolve)
  let resolveStopped:()=>void;const stopped=new Promise<void>(resolve=>resolveStopped=resolve)
@@ -80,7 +81,7 @@ async function initializeRenderer(key:string,request:{selector:string;index:numb
  }
  const ended=(event:Event)=>{if(!event.isTrusted)return;observeTime();const duration=video.duration
   if(!Number.isFinite(duration)||duration<=0||state.lastSourceSeconds<duration-.5){state.error='Video ended without observed progress to its finite endpoint.';stop('error');return}stop('ended',duration)}
- const seeking=()=>{if(state.started&&!state.reason){state.error='Video playback position changed during capture.';stop('error')}}
+ const seeking=()=>{if(state.started&&!state.reason){state.error='Video playback position changed during capture. start='+state.sourceStartSeconds.toFixed(6)+', lastFrame='+state.lastSourceSeconds.toFixed(6)+', current='+video.currentTime.toFixed(6)+'. Retry only after the player settles; use fromStart:false for current-position source capture.';stop('error')}}
  let resized:OffscreenCanvas|undefined
  const frame=(_now:number,metadata:VideoFrameCallbackMetadata)=>{
   if(state.restored||state.reason)return
@@ -111,7 +112,7 @@ async function initializeRenderer(key:string,request:{selector:string;index:numb
   }
   if(!state.reason)state.frameRequest=video.requestVideoFrameCallback(frame)
  }
- const restore=()=>{if(state.restored)return;state.restored=true;clearTimeout(state.timer);clearTimeout(state.resumeTimer);if(state.frameRequest)video.cancelVideoFrameCallback(state.frameRequest);state.held?.frame.close();state.held=undefined;if(state.encoder?.state!=='closed')state.encoder?.close();video.removeEventListener('ended',ended,true);video.removeEventListener('timeupdate',observeTime,true);video.removeEventListener('seeking',seeking,true);for(const kind of ['play','pause','ratechange'])video.removeEventListener(kind,playback,true);for(const track of state.stream?.getTracks()??[])track.stop();video.loop=initial.loop;video.playbackRate=initial.playbackRate;try{video.currentTime=initial.currentTime}catch{}video.pause();if(globals[key]===session)delete globals[key]}
+ const restore=()=>{if(state.restored)return;state.restored=true;clearTimeout(state.timer);clearTimeout(state.resumeTimer);if(state.frameRequest)video.cancelVideoFrameCallback(state.frameRequest);state.held?.frame.close();state.held=undefined;if(state.encoder?.state!=='closed')state.encoder?.close();video.removeEventListener('ended',ended,true);video.removeEventListener('timeupdate',observeTime,true);video.removeEventListener('seeking',seeking,true);for(const kind of ['play','pause','ratechange'])video.removeEventListener(kind,playback,true);for(const track of state.stream?.getTracks()??[])track.stop();if(adjustedPreload)video.preload=initial.preload;video.loop=initial.loop;video.playbackRate=initial.playbackRate;try{video.currentTime=initial.currentTime}catch{}video.pause();if(globals[key]===session)delete globals[key]}
  const session:RendererSession={stop,pull:()=>{
   if(!state.cancelled)admission()
   const chunks:string[]=[],videoPackets:CaptureEncodedPacket[]=[]
@@ -123,9 +124,20 @@ async function initializeRenderer(key:string,request:{selector:string;index:numb
  const check=()=>{if(state.cancelled)throw new Error('Capture cancelled during initialization.');admission()}
  const wait=async(event:string,ms:number)=>{let listener:()=>void,timer:ReturnType<typeof setTimeout>;const eventOrTime=new Promise<void>(resolve=>{listener=resolve;video.addEventListener(event,listener,{once:true});timer=setTimeout(resolve,ms)});try{await Promise.race([eventOrTime,cancelled]);check()}finally{video.removeEventListener(event,listener!);clearTimeout(timer!)}}
  try{
+  // A source-bound lazy HTTP player cannot emit loadeddata while preload=none
+  // deliberately suppresses its media request. Warm only that same admitted
+  // player, without calling load(), changing its source or restarting playback.
+  // This remains preparation: no stream, encoder or recording clock exists yet.
+  if(video.readyState<2&&video.preload==='none'&&!video.srcObject&&request.videoIdentity?.platform==='page'&&/^https?:/.test(request.videoIdentity.resourceId)){
+   adjustedPreload=true;video.preload='auto'
+  }
   if(video.readyState<2)await wait('loadeddata',8000)
+  if(video.readyState<2)throw new Error('MEDIA_CAPTURE_NOT_READY: The admitted player did not load an actual source frame within 8s; no recording was started. readyState='+video.readyState+', dimensions='+video.videoWidth+'x'+video.videoHeight)
   if(video.seeking){await wait('seeked',3000);if(video.seeking)throw new Error('Video seek did not settle before capture.')}
-  check();video.pause();video.loop=false;video.playbackRate=1
+  // A current-position capture must not restart an already-playing website
+  // player. Its play handler may restore a saved position, creating a seek
+  // that our own unnecessary pause/play cycle would then correctly reject.
+  check();if(request.fromStart)video.pause();video.loop=false;video.playbackRate=1
   if(request.fromStart&&Number.isFinite(video.duration)&&video.duration>0&&(video.currentTime>0||video.ended)){video.currentTime=0;await wait('seeked',3000);if(video.seeking||video.currentTime>.001)throw new Error('Video could not seek to its start.')}
   check();state.stream=captureStream.call(video);if(state.stream.getVideoTracks().length!==1||state.stream.getAudioTracks().length>1)throw new Error('Video capture requires one video and at most one audio track.')
   state.width=video.videoWidth;state.height=video.videoHeight
@@ -147,10 +159,47 @@ async function initializeRenderer(key:string,request:{selector:string;index:numb
    recorder.onerror=()=>{state.error='Browser audio MediaRecorder failed.';stop('error')};recorder.onstop=()=>resolveAudio()
   }
   video.addEventListener('ended',ended,true);video.addEventListener('timeupdate',observeTime,true);video.addEventListener('seeking',seeking,true);for(const kind of ['play','pause','ratechange'])video.addEventListener(kind,playback,true)
+  // Buffering is preparation, not recorded silence or a held first frame.
+  // Admission/cancellation remain active before both real playback and a
+  // presented source frame exist. No recording clock has started yet.
+  let frameTimer:ReturnType<typeof setTimeout>,playTimer:ReturnType<typeof setTimeout>
+  const presented=new Promise<void>((resolve,reject)=>{
+   state.frameRequest=video.requestVideoFrameCallback(()=>{state.frameRequest=0;resolve()})
+   frameTimer=setTimeout(()=>reject(new Error('Video did not present a source frame within 30s.')),30000)
+  })
+  // Observe the rejection immediately while playback itself may still buffer.
+  void presented.catch(()=>{})
+  try{
+   await Promise.race([video.play(),cancelled,new Promise<never>((_resolve,reject)=>{playTimer=setTimeout(()=>reject(new Error('Video playback did not start within 30s.')),30000)})]);check()
+   await Promise.race([presented,cancelled]);check()
+   // Website play handlers can restore a saved position after the first frame.
+   // Keep that startup seek outside the recording clock, then require a fresh
+   // frame. Never tolerate a seek once actual recording has been admitted.
+   let quietTimer:ReturnType<typeof setTimeout>,settleTimer:ReturnType<typeof setTimeout>
+   let seekingStartup:()=>void=()=>{}
+   try{
+    const quiet=new Promise<void>((resolve,reject)=>{
+     seekingStartup=()=>{clearTimeout(quietTimer);quietTimer=setTimeout(()=>{if(!video.seeking)resolve()},200)}
+     video.addEventListener('seeking',seekingStartup);video.addEventListener('seeked',seekingStartup)
+     settleTimer=setTimeout(()=>reject(new Error('MEDIA_CAPTURE_START_UNSTABLE: Website playback position did not settle before recording.')),3000)
+     seekingStartup()
+    })
+    await Promise.race([quiet,cancelled]);check()
+   }finally{clearTimeout(quietTimer!);clearTimeout(settleTimer!);video.removeEventListener('seeking',seekingStartup);video.removeEventListener('seeked',seekingStartup)}
+   // An explicit restart must not lose its opening speech to the quiet window.
+   // Seek once while already playing; do not manufacture another play event
+   // which would trigger the website's saved-position handler again.
+   if(request.fromStart&&video.currentTime>.05){video.currentTime=0;await wait('seeked',3000);if(video.seeking||video.currentTime>.1)throw new Error('MEDIA_CAPTURE_START_UNSTABLE: Website did not retain the explicitly requested start position.')}
+   let freshTimer:ReturnType<typeof setTimeout>
+   try{
+    const fresh=new Promise<void>((resolve,reject)=>{state.frameRequest=video.requestVideoFrameCallback(()=>{state.frameRequest=0;resolve()});freshTimer=setTimeout(()=>reject(new Error('MEDIA_CAPTURE_START_UNSTABLE: No fresh source frame after startup settled.')),3000)})
+    await Promise.race([fresh,cancelled]);check()
+   }finally{clearTimeout(freshTimer!)}
+   if(video.seeking)throw new Error('Video seek did not settle before the first captured frame.')
+  }finally{clearTimeout(playTimer!);clearTimeout(frameTimer!)}
   const sourceStartSeconds=video.currentTime;state.sourceStartSeconds=sourceStartSeconds;state.lastSourceSeconds=sourceStartSeconds;state.startedAt=performance.now();state.started=true;state.recorder?.start(500)
   state.timer=setTimeout(()=>stop('maximum-duration'),request.maxDurationMs) as unknown as number
   state.frameRequest=video.requestVideoFrameCallback(frame)
-  let playTimer:ReturnType<typeof setTimeout>;try{await Promise.race([video.play(),cancelled,new Promise<never>((_resolve,reject)=>{playTimer=setTimeout(()=>reject(new Error('Video playback did not start within 8s.')),8000)})]);check()}finally{clearTimeout(playTimer!)}
   return {ok:true,mimeType:'video/webm',duration:Number.isFinite(video.duration)?video.duration:null,sourceStartSeconds,videoTracks:1,audioTracks:audioTracks.length,muted:video.muted,width:state.width,height:state.height,codec:config.codec}
  }catch(error){state.error=error instanceof Error?error.message:String(error);await session.cancel();return {ok:false,reason:state.error}}
 }
@@ -180,11 +229,11 @@ export class VideoElementCapture {
   const abort=()=>controller.abort(signal?.reason??new Error('Video capture cancelled.')),gone=()=>controller.abort(new Error('Video capture page closed or renderer failed.')),navigate=(_event:unknown,_url:string,inPlace:boolean,mainFrame:boolean)=>{if(mainFrame&&!inPlace)controller.abort(new Error('Video capture page navigated.'))}
   const guard=async()=>{controller.signal.throwIfAborted();const stat=await fs.lstat(this.directory);if(!stat.isDirectory()||stat.dev!==identity.dev||stat.ino!==identity.ino||await fs.realpath(path.dirname(this.filePath))!==this.directory)throw new Error('Video capture Project directory changed.')}
   signal?.addEventListener('abort',abort,{once:true});wc.on('destroyed',gone);wc.on('render-process-gone',gone);wc.on('did-start-navigation',navigate)
-  const deadline=setTimeout(()=>controller.abort(new Error('Video capture exceeded its host deadline.')),this.request.maxDurationMs+20000),startedAt=new Date().toISOString(),sidecars:string[]=[];let handle:FileHandle|undefined,spool:FileHandle|undefined,created=false,completed=false,initializationSettled=false,initializing:Promise<Initialization>|undefined
+  const deadline=setTimeout(()=>controller.abort(new Error('Video capture exceeded its host deadline.')),this.request.maxDurationMs+60000),startedAt=new Date().toISOString(),sidecars:string[]=[];let handle:FileHandle|undefined,spool:FileHandle|undefined,created=false,completed=false,initializationSettled=false,initializing:Promise<Initialization>|undefined
   try{
    await guard();handle=await fs.open(this.filePath+'.audio.webm','wx+',0o600);sidecars.push(this.filePath+'.audio.webm');spool=await fs.open(this.filePath+'.packets','wx+',0o600);sidecars.push(this.filePath+'.packets');const mux=new CaptureMux(spool);this.status?.({active:true,id:this.id,tabId:this.tab.id,state:'starting',kind:'video-element'});await guard()
    initializing=wc.executeJavaScript(`(${initializeRenderer.toString()})(${JSON.stringify(this.key)},${JSON.stringify(this.request)},${inspectPageVideoTargets.toString()})`,true) as Promise<Initialization>;void initializing.then(()=>{initializationSettled=true},()=>{initializationSettled=true})
-   const initial=await this.phase('initialize',()=>initializing!,controller.signal);if(!initial.ok)throw new Error(initial.reason??'Video capture could not start.')
+   const initial=await this.phase('initialize',()=>initializing!,controller.signal,45000);if(!initial.ok)throw new Error(initial.reason??'Video capture could not start.')
    await guard();this.status?.({active:true,id:this.id,tabId:this.tab.id,state:'recording',kind:'video-element',...initial});if(this.requestedStop)await this.stop()
    let audioBytes=0,packet:Packet
    while(true){

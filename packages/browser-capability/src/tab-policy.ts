@@ -48,7 +48,7 @@ export function reusableTab<T extends PolicyTab>(tabs:T[],{projectId,targetUrl,r
  const agent=candidates.filter(tab=>tab.source==='agent'&&origin(tab.url)===targetOrigin).sort(recent)[0]
  return agent?{tab:agent,navigate:true,reason:'same-origin-agent'}:null
 }
-export function agentTabsToClose<T extends PolicyTab>(tabs:T[],{projectId,activeTabId,keepTabId,limit=MAX_AGENT_TABS_PER_PROJECT}:{projectId:string|null;activeTabId?:string|null;keepTabId?:string;limit?:number}):T[]{
+export function agentTabsToClose<T extends PolicyTab>(tabs:T[],{projectId,activeTabId,keepTabId,protectedTabIds=[],limit=MAX_AGENT_TABS_PER_PROJECT}:{projectId:string|null;activeTabId?:string|null;keepTabId?:string;protectedTabIds?:readonly string[];limit?:number}):T[]{
  const agentTabs=tabs.filter(tab=>tab.projectId===projectId&&tab.source==='agent'),overflow=Math.max(0,agentTabs.length-limit)
- return agentTabs.filter(tab=>tab.id!==activeTabId&&tab.id!==keepTabId).sort((a,b)=>stamp(a)-stamp(b)).slice(0,overflow)
+ return agentTabs.filter(tab=>tab.id!==activeTabId&&tab.id!==keepTabId&&!protectedTabIds.includes(tab.id)).sort((a,b)=>stamp(a)-stamp(b)).slice(0,overflow)
 }

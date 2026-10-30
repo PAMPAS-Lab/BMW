@@ -27,7 +27,7 @@ test('Codex effective catalog reads Responses and Responses Lite additional_tool
 })
 test('Codex admits the pinned official runtime and preserves shared-cache projection without extra tools',()=>{
   const source={...officialCatalog(),client_version:'0.164.0'},before=structuredClone(source)
-  const projected=codexBrowserModelCatalog(source,'gpt-6.1-sol')
+  const projected=codexBrowserModelCatalog(source,'gpt-6.1-terra')
   assert.deepEqual(source,before)
   assert.equal(projected.models[0].slug,'gpt-6.1-sol')
   assert.equal(projected.models[0].use_responses_lite,true)
@@ -92,11 +92,12 @@ test('Codex discovery instructions derive action names from the admitted browser
   assert.match(String(params.developerInstructions),/limit stop is partial/)
   delete params.dynamicTools
   assert.match(String(params.developerInstructions),/Fresh Project context/)
+  assert.equal((params.config as Record<string,unknown>).model_auto_compact_token_limit,200000)
   assert.ok(!String(codexThreadParameters('/disposable/project','gpt-6.1-sol',{...definition,inputSchema:{properties:{action:{enum:['status']}}}},'').developerInstructions).includes('"action":"help"'))
 })
 
 function officialCatalog(){return {client_version:'0.160.0',identity:{account:'private-account'},models:[
-  ...['gpt-6.1-sol','gpt-6-astra','gpt-6-sol','gpt-6-luna'].map(slug=>({slug,tool_mode:'code_mode_only',multi_agent_version:'v2',multi_agent_reasoning_effort:'high',experimental_supported_tools:['clock','send_user_message_async'],use_responses_lite:true,context_window:400000,supported_reasoning_levels:[{effort:'high',description:'Native reasoning'}],input_modalities:['text','image'],model_messages:{instructions:'Native instructions'}})),
+  ...['gpt-6.1-sol','gpt-6.1-terra','gpt-6-astra','gpt-6-sol','gpt-6-luna'].map(slug=>({slug,tool_mode:'code_mode_only',multi_agent_version:'v2',multi_agent_reasoning_effort:'high',experimental_supported_tools:['clock','send_user_message_async'],use_responses_lite:true,context_window:400000,supported_reasoning_levels:[{effort:'high',description:'Native reasoning'}],input_modalities:['text','image'],model_messages:{instructions:'Native instructions'}})),
   {slug:'gpt-5.5',tool_mode:null,use_responses_lite:false},
   {slug:'gpt-6-future',tool_mode:'code_mode_only',experimental_supported_tools:['clock']}
 ]}}
@@ -116,12 +117,12 @@ test('Codex raw catalog cache avoids repeated refresh but rechecks fingerprints,
 test('GPT-6 startup catalog changes only tool metadata and preserves native model capabilities and transport',()=>{
   const source=officialCatalog(),before=structuredClone(source),projected=codexBrowserModelCatalog(source,'gpt-6.1-sol')
   assert.deepEqual(source,before);assert.deepEqual(Object.keys(projected),['models'])
-  for(let i=0;i<5;i++){
+  for(let i=0;i<6;i++){
     const expected:Record<string,unknown>={...source.models[i],experimental_supported_tools:[],apply_patch_tool_type:null}
     delete expected.tool_mode;delete expected.multi_agent_version;delete expected.multi_agent_reasoning_effort
     assert.deepEqual(projected.models[i],expected)
   }
-  assert.deepEqual(projected.models.slice(5),source.models.slice(5))
+  assert.deepEqual(projected.models.slice(6),source.models.slice(6))
   for(const value of [{...source,client_version:'future'},{...source,models:[]},{...source,models:[...source.models,source.models[0]]},{...source,models:[{}]}])assert.throws(()=>codexBrowserModelCatalog(value,'gpt-6.1-sol'),/catalog/)
   assert.throws(()=>codexBrowserModelCatalog(source,'absent'),/absent/)
 })

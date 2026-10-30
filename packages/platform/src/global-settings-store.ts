@@ -31,6 +31,7 @@ const DEFAULTS = Object.freeze({
   proxyMode: 'system',
   proxyRules: '',
   proxyBypassRules: '<local>',
+  http1Compatibility: false,
   searchEngine: 'google',
   customSearchUrl: '',
   newTabPage: 'search',
@@ -56,6 +57,7 @@ function normalizeCustomSearchUrl(value) {
 }
 
 function normalize(input: Record<string, any> = {}) {
+  if(input.http1Compatibility!==undefined&&typeof input.http1Compatibility!=='boolean')throw new Error('Invalid HTTP/1.1 compatibility setting.')
   const proxyMode = ['system', 'direct', 'manual'].includes(input.proxyMode) ? input.proxyMode : DEFAULTS.proxyMode
   const searchEngine = input.searchEngine === 'custom' || Object.hasOwn(SEARCH_ENGINES, input.searchEngine)
     ? input.searchEngine
@@ -70,6 +72,7 @@ function normalize(input: Record<string, any> = {}) {
     proxyMode,
     proxyRules,
     proxyBypassRules: cleanSingleLine(input.proxyBypassRules ?? DEFAULTS.proxyBypassRules),
+    http1Compatibility: input.http1Compatibility === true,
     searchEngine,
     customSearchUrl,
     newTabPage: input.newTabPage === 'blank' ? 'blank' : 'search',
@@ -88,13 +91,21 @@ function writeAtomically(filePath, state) {
 
 export function parseGlobalSettingsState(raw:unknown) {
       const saved = stateRecord(raw)
-      if(Object.keys(saved).some(key=>!['version','videoPreferences','proxyMode','proxyRules','proxyBypassRules','searchEngine','customSearchUrl','newTabPage','theme','edgeNarrationEnabled','qwenNarrationEnabled'].includes(key)))throw new Error('Unknown global settings field; explicit migration is required.')
+      if(Object.keys(saved).some(key=>!['version','videoPreferences','proxyMode','proxyRules','proxyBypassRules','http1Compatibility','searchEngine','customSearchUrl','newTabPage','theme','edgeNarrationEnabled','qwenNarrationEnabled'].includes(key)))throw new Error('Unknown global settings field; explicit migration is required.')
       // Existing data must match the current format; use the explicit migration tool for old Profiles.
       if (saved.version !== 2) throw new Error('Unsupported settings version.')
-      for(const key of ['edgeNarrationEnabled','qwenNarrationEnabled'])if(saved[key]!==undefined&&typeof saved[key]!=='boolean')throw new Error('Invalid saved boolean setting: '+key)
+      for(const key of ['edgeNarrationEnabled','qwenNarrationEnabled','http1Compatibility'])if(saved[key]!==undefined&&typeof saved[key]!=='boolean')throw new Error('Invalid saved boolean setting: '+key)
       for(const key of ['proxyRules','proxyBypassRules','customSearchUrl'])if(saved[key]!==undefined&&typeof saved[key]!=='string')throw new Error('Invalid saved text setting: '+key)
       for(const [key,allowed] of Object.entries({proxyMode:['system','direct','manual'],theme:['dark','light','system'],searchEngine:['google','bing','duckduckgo','baidu','custom'],newTabPage:['search','blank']}))if(saved[key]!==undefined&&!allowed.includes(String(saved[key])))throw new Error('Invalid saved setting: '+key)
       return { saved, state: normalize({ ...DEFAULTS, ...saved }) }
+}
+
+/** Chromium transport flags must be applied before ready/network contexts.
+ * Read only the current settings format; do not create, rewrite or migrate it. */
+export function configureNetworkStartup(filePath:string,appendSwitch:(name:'disable-http2'|'disable-quic')=>void):boolean {
+ const enabled=readStateFile(filePath,parseGlobalSettingsState)?.state.http1Compatibility===true
+ if(enabled){appendSwitch('disable-http2');appendSwitch('disable-quic')}
+ return enabled
 }
 
 export class GlobalSettingsStore {

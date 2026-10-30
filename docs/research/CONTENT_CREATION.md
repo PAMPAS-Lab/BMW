@@ -12,7 +12,7 @@ BMW 已能通过官方 Codex + GPT-6.1-Sol、唯一 `browser` 工具完成公开
 
 研究文字可保存在 Studio 准备资料和 Project 记忆中；本次可阅读 HTML、CSV 和交付页还包含开发侧对原生资料的导出整理，不能据此宣称 BMW 已有原生图文长篇产品。现有 Project 文档编辑也不等于具备长篇文章的编排、引用与成品导出工作流。
 
-本机案例入口为 [V1 与研究报告](../../.bmw-runtime/simon-pelicans/index.html)、[V2 与重写稿](../../.bmw-runtime/simon-pelicans-v2/index.html)，适用范围见 [VERIFICATION.md](../VERIFICATION.md#simon-研究与叙事重剪)。这些运行产物被 Git 忽略，换机需单独保存。
+2026-10-28 清理了两份本机运行目录及原调用账本；[案例经验](SIMON_PELICAN_LEARNINGS.md)保留错误、制作与验收边界，适用范围见 [VERIFICATION.md](../VERIFICATION.md#simon-研究与叙事重剪)。两版成片在主 Project 中的副本经 SHA-256 核对一致；原运行目录链接不再可用，摘要不能替代完整日志或媒体证据。
 
 ## 调研来源与可采用结论
 

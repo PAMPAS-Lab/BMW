@@ -1,0 +1,161 @@
+{
+  "date": "2026-10-28",
+  "status": "implemented; public-site acceptance pending",
+  "implementation": {
+    "pageBinding": "For a confirmed YouTube identity, ignore only themeRefresh/feature/si/utm_* and fragments. Keep HTTPS origin, path, video, playlist/language and all other options exact. Apply to Library source-tab selection, native admission, transfer and final identity commit.",
+    "transportRecovery": "At most two retries of the identical observed POST for selected transient network errors and HTTP 500/502/503/504. Replay must reproduce the complete admitted prefix SHA-256 before either UMP parser receives any new bytes. Changed/short prefixes fail closed.",
+    "budgetsAndCleanup": "Retransmitted bytes and every actual POST count against existing budgets. Keep original deadline, identity and protocol checks. Cancel/release old response bodies; wait for actual native network/worker/file cleanup before admission release.",
+    "preserved": [
+      "native HTTP/HLS",
+      "same-player CPN/config and exact delivery/track binding",
+      "default-language AVC/AAC packet-copy remux and independent payload/PTS verification",
+      "existing Project resources",
+      "no yt-dlp, FFmpeg CLI, extra model tools or TikTok adapter"
+    ]
+  },
+  "verification": {
+    "build": "passed",
+    "check": "passed",
+    "targetedCases": {
+      "passed": 31,
+      "failed": 0,
+      "log": ".bmw-runtime/youtube-improvement-unit.log"
+    },
+    "classifiedChecks": {
+      "passed": 134,
+      "failed": 0,
+      "layers": [
+        "unit",
+        "contract",
+        "boundary"
+      ],
+      "includes": [
+        "fresh build receipt",
+        "source policy",
+        "feature/test inventory",
+        "architecture and final source-integrity check"
+      ],
+      "report": ".bmw-runtime/youtube-native-recovery-20261028/unit-contract-boundary-accepted/result.json"
+    },
+    "nativeSuites": [
+      {
+        "id": "acquisition",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 7580,
+        "log": ".bmw-runtime/youtube-native-recovery-20261028/runtime/acquisition/run.log"
+      },
+      {
+        "id": "http-hls",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 341,
+        "log": ".bmw-runtime/youtube-native-recovery-20261028/runtime/http-hls/run.log"
+      },
+      {
+        "id": "processing",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 21706,
+        "log": ".bmw-runtime/youtube-native-recovery-20261028/runtime/processing/run.log"
+      },
+      {
+        "id": "source-studio",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 14378,
+        "log": ".bmw-runtime/youtube-native-recovery-20261028/runtime/source-studio/run.log"
+      },
+      {
+        "id": "studio",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 60362,
+        "log": ".bmw-runtime/youtube-native-recovery-20261028/runtime/studio/run.log"
+      },
+      {
+        "id": "video",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 37903,
+        "log": ".bmw-runtime/youtube-native-recovery-20261028/runtime/video/run.log"
+      },
+      {
+        "id": "narration",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 1260,
+        "log": ".bmw-runtime/youtube-native-recovery-20261028/runtime/narration/run.log"
+      },
+      {
+        "id": "desktop",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 22812,
+        "log": ".bmw-runtime/youtube-native-recovery-20261028/runtime/desktop/run.log"
+      }
+    ],
+    "afterFinalLibraryGateChange": [
+      "video-identity-smoke: passed",
+      "source-studio-smoke: passed",
+      "video-acquisition-smoke: passed"
+    ],
+    "dsh": "catalog-only compatibility passed; disposable Home/Workspace; no paid-model generation"
+  },
+  "publicSiteValidation": {
+    "environment": "disposable signed-out Profile, mock keychain; no production Profile or authentication",
+    "rounds": 2,
+    "uniqueSamples": 3,
+    "downloadAttempts": 0,
+    "downloadSuccessRate": null,
+    "samples": [
+      {
+        "id": "jNQXAC9IVRw",
+        "url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+        "navigationNotice": "Error: BMW_BROWSER_NAVIGATION_TIMEOUT: Navigation exceeded its native deadline.",
+        "ok": false,
+        "error": "Error: No unique original SABR target: The original target player is unavailable, showing an ad, restricted, or differs from the page video identity.",
+        "totalMs": 57133
+      },
+      {
+        "id": "zHBrUVyQJWc",
+        "url": "https://www.youtube.com/watch?v=zHBrUVyQJWc",
+        "navigationNotice": "Error: BMW_BROWSER_NAVIGATION_TIMEOUT: Navigation exceeded its native deadline.",
+        "ok": false,
+        "error": "Error: No unique original SABR target: null",
+        "totalMs": 57108
+      },
+      {
+        "id": "a9LDPn-MO4I",
+        "url": "https://www.youtube.com/watch?v=a9LDPn-MO4I",
+        "navigationNotice": "Error: BMW_BROWSER_NAVIGATION_TIMEOUT: Navigation exceeded its native deadline.",
+        "ok": false,
+        "error": "Error: No unique original SABR target: null",
+        "totalMs": 57120
+      }
+    ],
+    "conclusion": "No qualified original player was observed; navigation timed out or returned an empty document. This is access/readiness failure, not a measured download failure or a new success. No recording was substituted.",
+    "log": ".bmw-runtime/youtube-native-recovery-20261028/live-results.json",
+    "diagnostic": "A further disposable native connectivity probe exceeded its hard deadline. Root cause is unconfirmed; temporary test processes/resources were cleaned."
+  },
+  "pending": [
+    "Real-site short/news and midlength samples on an accessible disposable browser",
+    "Actual network recovery acceptance: identical POSTs may legitimately differ; prefix mismatch must remain a failure",
+    "Website streaming-attestation refusal and rotated delivery/session restart remain outside this recovery mechanism",
+    "Human listening and broader long-video acceptance"
+  ],
+  "sourceSha256": {
+    "packages/agent-contract/src/video-identity.ts": "53d4b077d026722e1bc8e1e4559be71db7c7def68308ea29b1f7ce650dda1cf9",
+    "packages/browser-capability/src/video-target.ts": "a52f25aaefa6ac8a0eda9b612823855b5a58b86fab41678a95dc51e9747326a2",
+    "packages/browser-capability/src/youtube-sabr-observation.ts": "786fe8b58a5b79ffd7b49009c614ad668120f17b23311eb6efd8426e5d6469d2",
+    "packages/browser-capability/src/browser-kernel.ts": "682b3ea8ca2f49f8f98778ab7ad1ecdd816ba7b07174866db1569332446a4d5e",
+    "packages/feature-library/src/library-sources.ts": "bb9285c87730b520c12b0b8604c49a7e9a50f4b0fe0b461380360ec0c9e1f628",
+    "packages/media-native/src/youtube-sabr.ts": "385095ab88865880ee7c03dae71a8b716b726c51698cceb0f6c56b4203cf2aa6",
+    "packages/media-native/src/youtube-sabr-response.ts": "6a154d8e481293bce379de79259b653d618168d394f19d4fefb3bca22cf91070"
+  },
+  "followup": {
+    "date": "2026-10-29",
+    "report": "docs/verification/YOUTUBE_NAVIGATION_VALIDATION.json",
+    "result": "Navigation reproduced and fixed: all three original samples now reach the exact original player in default and HTTP/1.1 compatibility modes. One completes native AV preservation/decode; two fail bounded streaming attestation. The earlier navigation-only failure remains historical evidence."
+  }
+}

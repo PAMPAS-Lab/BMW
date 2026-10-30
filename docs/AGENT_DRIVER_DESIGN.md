@@ -63,6 +63,6 @@ BMW 只使用自有 Host 与 Assistant；已移除旧 DSH 客户端/DOM 选择�
 
 四个引擎按各自范围分别验收：只暴露 browser、真实页面操作、真实截图读图、正确 Studio owner/版本、关闭原生进程后同一 Session 续聊、取消及清理、跨 Project 拒绝、计划任务固定绑定，以及损坏保存数据的重试/退出。WorkBuddy 当前通过官方 CLI＋本机模型夹具的目录／续聊／Bridge 检查，另有[单次真实调用记录](research/WORKBUDDY_BROWSER_DELIVERY.json)；其他模型、图片语义与完整制作不能沿用三驱动历史验收。
 
-三驱动默认入口、登录/模型设置、跨进程恢复与固定调度已实现并验收。当时 Codex App Server 0.160.0 通过官方启动模型目录投影，为 GPT-6.1 Sol、GPT-6 Astra、GPT-6 Sol 和 GPT-6 Luna 提供直接 browser 调用；保留原模型身份、原生传输和能力，并以实际有效目录继续要求唯一工具。四个型号与 GPT-5.5 均完成两轮真实截图、Studio 和原生续聊验收。新增未知型号不自动获得准入，账号列表也不证明推理可用性。当前代码明确准入 0.160.0 与 0.160.1，其他版本仍拒绝；当时的模型验收不代表新版重做了付费模型验证。当前源码、受保护合入及验证记录见 [实施状态](history/agent-drivers/IMPLEMENTATION.md)。
+三驱动默认入口、登录/模型设置、跨进程恢复与固定调度已实现并验收。当时 Codex App Server 0.160.0 通过官方启动模型目录投影，为 GPT-6.1 Sol、GPT-6 Astra、GPT-6 Sol 和 GPT-6 Luna 提供直接 browser 调用；保留原模型身份、原生传输和能力，并以实际有效目录继续要求唯一工具。四个型号与 GPT-5.5 均完成两轮真实截图、Studio 和原生续聊验收。新增未知型号不自动获得准入，账号列表也不证明推理可用性。当前执行协议锁定 0.164.0，旧版本模型缓存的兼容范围见 [功能规范](FUNCTIONAL_SPEC.md)；历史模型验收不代表新版重做了付费模型验证。当前源码、受保护合入及验证记录见 [实施状态](history/agent-drivers/IMPLEMENTATION.md)。
 
 官方接口参考：[Codex App Server](https://learn.chatgpt.com/docs/app-server)、[Qoder SDK 会话控制](https://docs.qoder.cn/cli/sdk/session-control)、[Qoder SDK MCP](https://docs.qoder.cn/cli/sdk/mcp)。

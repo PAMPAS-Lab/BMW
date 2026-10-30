@@ -80,6 +80,17 @@ async function run():Promise<void>{
   const studio=await wait(async()=>webContents.getAllWebContents().find(wc=>wc.getURL().endsWith('/studio.html')&&!wc.isLoading()),'real Studio page') as WebContents
   await wait(()=>studio.executeJavaScript('document.getElementById("draft-select").value==='+JSON.stringify(draft.id)),'selected draft visible in Studio')
   await runtime.setMode!('library');await wait(()=>script("!document.getElementById('news-history').disabled"),'library resumed');const history=mediaRecord(await script("window.bmwLibrary.news({operation:'history'})"));assert.equal(Number(history.total),1)
+  // Opening an archived board must survive the activity refresh emitted by
+  // read-batch itself. Only explicit refresh returns to the live board.
+  const archivedId=crypto.randomUUID(),archivedJournal=new NewsJournal(project.directory,{projectId:project.id,sessionId},archivedId),archivedTitle='历史研究候选保持可选'
+  archivedJournal.write(archivedJournal.read(),{...journal.read(),id:archivedId,selection:undefined,topics:journal.read().topics.map(topic=>({...topic,candidate:{...topic.candidate,title:archivedTitle}}))})
+  await script("document.getElementById('news-history').click();true");await wait(()=>script("Array.from(document.querySelectorAll('#news-batches button')).some(b=>b.textContent.includes('历史研究候选保持可选'))"),'archived research shown')
+  await script("Array.from(document.querySelectorAll('#news-batches button')).find(b=>b.textContent.includes('历史研究候选保持可选')).click();true")
+  await wait(()=>script("document.querySelector('#news-topics h3')?.textContent==='历史研究候选保持可选'"),'archived board opened')
+  await script("document.querySelector('[data-news-select]').dataset.pinnedHistory='retained';true");runtime.onAssistantChanged?.();await new Promise(resolve=>setTimeout(resolve,1100))
+  assert.equal(await script("document.querySelector('#news-topics h3')?.textContent"),archivedTitle)
+  assert.equal(await script("document.querySelector('[data-news-select]')?.dataset.pinnedHistory"),'retained','Background refresh must retain the actual archived choice control')
+  await script("document.getElementById('news-refresh').click();true");await wait(()=>script("document.querySelector('#news-topics h3')?.textContent==='新的大学 AI 研究结果'"),'explicit refresh returns to live board')
   // Source/event stream UI reads the same native SQLite index used by Host workflows.
   for(let n=0;n<24;n++)await sources.collect({url:'https://example.org/saved/'+n,title:'已存资料 '+n,author:'Fixture publisher',publishedAt:null,scope,text:'隔离资料索引 '+n,mediaScope:scope,mediaTruncated:false,candidates:[],access:'unknown',accessText:'',result:'observed',error:null},sources.state().revision)
   await script("document.querySelector('[data-category=source-stream]').click();true");await wait(()=>script("document.body.dataset.libraryBusy==='false'&&document.querySelectorAll('#stream-page .stream-record').length===20"),'source stream first stable page')
