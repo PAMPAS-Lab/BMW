@@ -1,0 +1,772 @@
+{
+  "dateUTC": "2026-10-31T10:16:59.773099+00:00",
+  "note": "Google News search feeds, not publisher RSS. Title indicators only; source pages not individually verified.",
+  "sources": {
+    "Reuters": {
+      "feed": "https://news.google.com/rss/search?q=site%3Areuters.com%2Ftechnology%2F+when%3A7d&hl=en-US&gl=US&ceid=US%3Aen",
+      "items": [
+        {
+          "title": "EXCLUSIVE: Pentagon treating military base freezer malfunctions as suspected cyberattack, officials say - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxNZWtDa2JmUnFRRENlQ0RoX2hseFpyajltZE5vbjUwdnlDeTQ5M01zanFrNTBJcE1NV0RwZGFCd29LQXZQN2RYd3pBZnhNbU91eEdZalRSbVpXbTdnS2VXMXNaWE9ZdV9tSHVub29PUy1kX3BFYTNZUWM2NFpTLTZTWGdLX2hTXzYxR2JPanVaeVowcVZmMTZubVZxZE9QSjFPYmVuQjJFVVZqTUJKRUlMclM0NGM4YTNzMmR0ZUdR?oc=5",
+          "date": "Thu, 29 Oct 2026 22:39:05 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Nvidia in talks to give credit support for Nscale's deal with Anthropic, The Information reports - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOeFZKQnF5QVdNQlBQRzNMTE5PbjhUSXF0Y0NzYXpyaVJFeGplang3clhEYUtGUF9Fd2tPRjE0VllQVjV0cncwdU9za2RGZkFjQ2ZSTGdpQ3hXSkRBSjVtY2tvTzhEVTYtUkxYQjdfc1A3blJMd0c2ajJTUFp0eGMtOEtMbEk2NGl2Y2hrRFVlSHVaT1VQWi1qaGhLTkoyZVhXWFVFaXpDVEpZQV90MFNSZzN2dTl0WXJWZEhBRzJmUFVpNzI2Smc?oc=5",
+          "date": "Fri, 30 Oct 2026 01:26:00 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Bitcoin, cryptocurrency prices fall after Binance reports security issue - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxQbl9LV3Z6eEFpLVBKcmR2ZG9YM1lNRmZBTGRQUF9qeVRLVmlaYnc2ZDdkNERRd3VPTTNtQ0dkRGluRG56czhmbUJKaFNYU1NSX1k0VllaY2l3bGxpNTBOOG1acWdmcW90ZW5UMVF1OU11OG1HOXhZaEF3b0lucWZpLUpQaldUMEV0V1BXU3lKUXBndXBBMGtyMzJDLVFzSzZ0MGViYlNhMGJETXFUd1l0Q0s2TmNGeDFHS2c?oc=5",
+          "date": "Fri, 30 Oct 2026 00:35:00 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Walmart commits $6 billion to expand Symbotic deal - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxQSUlrYUJ1UEEyM3RVbXZiajFZSFZWQnROTDdwQkFMRkJsSmZKdzJGaEFvU3NSVk5kMGZpWEcwVl9KRnM3NjJyZXp4azlzcVpxY1JnRU9tekt3MlJycTFhM194RV8yWjEtRmFRdDBoQmg5OGs2TFhvYU1NOF9adjVJejhTMy1RaVBCYVFHbUhaSmhqMUwtc3VxXw?oc=5",
+          "date": "Thu, 29 Oct 2026 20:45:50 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "COMMENTARY: AI’s rewiring of US warfare may be only the beginning - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxNRkQ0Yk1sYXhtUVJUYmt6NzlmMTBMUmhURDNGbjVWTkctZF9wZ0dmZENrVUJhZHdpaWE5QVQyNDRRRTJWVjlDMzRhNER0eFQwRDIzeHpIN1d5OEhPT1RGUXZ5OE9NZ3pCREgzclV6VGFMMTNwc3R0bnVEUkpaRFRJSm8xU0FPYjdWbEZiTjVXN1ZwekJqcXd4emlndmZxMURwTTdpdFJwOFVLXzdxcXdwNXEzZmtTbnM?oc=5",
+          "date": "Fri, 30 Oct 2026 09:11:13 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Intel to buy quantum firm Classiq for about $2.3 billion, Bloomberg News reports - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPaTdHSjA0a084VVdlSGgzTnpvd0RaZzhYUi1jZGt4YVZCc0M2WW9yczNFaUpEbFR0ajhXZXhLRUpYWUZMZEk5WXJyd0hZMU95dTZnLVdWZjBvdzQyZHJzOFc5ZF9OSXctNFdjT0o4MFpza1htNURQVjNzTld4bHZNREotLXlkenVLNHFXUlU0SUlHTWNPQVVJbVo1My1lajlxN3B4ZGRUNkxUZkE3SDRES1R2aGk5dzRP?oc=5",
+          "date": "Tue, 27 Oct 2026 17:05:23 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Reddit puts logged in experience first as Google AI hits traffic - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxNU0Iwc2FJaWJ3bFdiRm1XamdXdmlIeTY5cHNmalZUQUxDQ2JPQ3hnV1JNMG9JSFU4SVdXakxSaWRrVV83anVKNDJET194MW1IMVdFZERZUHc0M1Awek5VcTJ4RDVHTkU1OEVtbDlQc3gwSXI5dEFkQ1A3cFBVZkx0NE9YblRBN2JaM0NkR2gxRkR6UEFYdlNpTmJiLTZtek5YUG5id2VfN3JqdGdiN3FUX1c0eXB2clpJYXdLVw?oc=5",
+          "date": "Thu, 29 Oct 2026 23:41:53 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "DeepSeek, Moonshot used OpenAI's GPT-6 Astra to train latest models, The Information reports - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxOZWxreXdWZGhvNFRiam1WcVA1WGMtNnl3NVpEWjIyVV9IR0xReTYwTFU2Ulhnek5QbVlzc1prUlBwYlVYNmpFaXJLdTNRU3NnbkhWSFlzZllyN1lma0RydHM5bEFab2xIRW5aOUllWGtiMzRaOG1HT1M3Z3ZIN1NwVmFFZ2NlUFo5WUNYaTRZSm9waDl6cE03bE1NMEtIM2VORTVVUDN3Y01ER3drXzFwNkMyNFZ0N3F5MC1idTVR?oc=5",
+          "date": "Thu, 29 Oct 2026 02:11:00 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Google launches Gemini 4 Carbon AI model with cybersecurity focus - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxNLXQyWUp5N0QwdVRZWXFkd1M5b2RrcExtNVBJS0JKaDdhaG1DQThXeEVlUWVWQUNPTjNOak9ZSnZlQjhDUkNIT2oxSlJrSjlJSkVSMVZFMW5acXV1N0l5bWxKTU1CNmtzZVM3U2dZVE5RbHlrZ2k5LTljM2FnNDVLM3NFbGI4N1hSMVIyQ2FNZXZYY0ZuNV9KR0lQYzdxT2RGdzkxamkzLXloVUVmLUhmdUZ3?oc=5",
+          "date": "Wed, 28 Oct 2026 18:12:49 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Software stocks slide as Fortinet, ServiceNow fail to meet lofty investor expectations - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxOQXYxUGkybjhZNGUydzJvN0pjTjROMkF2djdManFSLWgxZmtYZW96c0RfRjZMOTItME8taHdxeHpubG9KMUpzX09yS2VGTjVDQVJEUVJ3YWtMU2NIYnFBbnNGMW81eWZTYTBEdFAtNllDS2ZxNUtzNkt5dTJNb2djVUZ5LUhacFNfZkI0VFpRZXJzZF9GSk5PQWFsa2p1ak9WQ24zajN5TWpwSWxESHRQUWtuQ1oxanBMeTE3RTNHdFpoWXIt?oc=5",
+          "date": "Thu, 29 Oct 2026 14:15:55 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Amazon unveils new lineup of Alexa devices including redesigned Echo Show - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQNWNGZUlvRHlNNjBxNE5PR2Z4OWxPS2E1ZWtJZTFFRFJTUS0wcmxMM3JOTVFVMTNpTXNBd1ljbGYydC04T042aFJkbzlpQWMxXzhkVXRycFhXUzBrNWZJM2JHX2NKeVBBUi1FTW40STdzWGNjdTk4VnZTZmUyajVxYlJ3X0dNS0JzLXhDMDFMdmpxSm9YUVhTZ2I2eDBCTE01clVCa2xKTXY3NlY1MlJtd2VDbFh4R2xm?oc=5",
+          "date": "Wed, 28 Oct 2026 17:41:15 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "German startup NVision shows new path to quantum computing chips in Nature paper - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxPQkFDOVg0dTRuVTFVb0R1dmlMYjBWZ3dHekpEYmp5MjNvTmpJRFphUDZHRUlRdUN0ZVRHWU45d2ZqVk0wZ2RaT0Uwb2JhQTZmZ3ZDNzJhSmNHR3BoYnhTZ1lRWFpCaFdLcFN4VnB1N1pkaDZXWFY2U19TU1laZXNWeEt6WXJrNEh5aS1GQXo5STZLbW43eWRRYXhVcERyWUxEUGlDbmV4VGRyeVNjeXU0RUdYQ3k1bkQ2MzdsZGtn?oc=5",
+          "date": "Wed, 28 Oct 2026 17:29:43 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "NEWSLETTER: Should you invest in Anthropic? Five takeaways from its S-1 - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQc0k1aFM3cXppSjREQmI3Y3phQzItVW5CdXQ2Y21sN3pnRDd0YWp5YjdWNFJieVFwa2daeVhpV1NTWHNYT21CSm9LOW9hVDByaF9mSlY3VU9NNnliWW9vak43OGwzRnZTa2FVeXdob3hZejZ1R3BWSHpRTFljY0RTaWhnRUNmZ1J5M1B6eDNoSV92LTAxTFpsVi12OHVScWdKc0RXbDJUWF9SX3lzZEZjSWptSmtDRVJ2cXFxcDN3?oc=5",
+          "date": "Wed, 28 Oct 2026 21:16:00 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "EXCLUSIVE: Hackers target US FEC system, disrupting campaign finance disclosures days before midterms - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPbDV3WWJ5Ulh3Q05tT203WGNGVE1UNmFvZ2ZoclFXemtrWXFhNlRhUmtabmlPZXRaYU1sQ251VWhSSWJMODNJQkRrMk9MNFdfb1RVT2VJQTR4akpfM0JQNk9wMkpMV2tFY2tHc2ZpTGMwcHlLNFU3UDBrZk5MbGFrb2ZqX25XRVZCQmI5Z29LbDI5cjF2S0JodjVNcVVmV3RyUFR1SW5RZUwwY2JlSWJrRUMyNEgta3dl?oc=5",
+          "date": "Tue, 27 Oct 2026 18:44:00 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Microsoft offers buyouts to around 60,000 employees to contain costs - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxOY3V6RnhJNUdQRC1uU19vNFk4YUR3MVlHbmpOdnUxMGo4R2RoWVhvXzAzTGczekw4akxaVjB3VzF4bHRhRFZFTFJ5eGY0ZGFOZ2NtcTBQa0RqZlgzVHlQb0pUcVJjN3RBM3lZTFhjaTNCM3JXLWxzR1F3NTZDLU0teHZyb2FpX2xzajM1UlpVVFRDTmhTRFhpeVR1WWxaT1dva0E0TEVoTjllb3hMSDVFVkRYTnpaQXRhZ0w3ZU9vR1hhQQ?oc=5",
+          "date": "Mon, 26 Oct 2026 21:44:09 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Visa results beat estimates as resilient customers keep up spending - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxNTks0TEhNcDhhU2VhLXNYanZDVXI2eWRLVVVULUd4M3JueFQ1TDNCTFJ6YkxFVjk0SW1iblY5Q21oRDJaczVBTTBtYXA1dmR3WHFNT1dtQm1vSUg2Z3RxcDMxSjBzMk9yR3JiaDdKNmpKMnMwRWl6Y3Y1RWRxcDlZQWhFYk1zdDRYY1llZy1iUGlJWGwtSVA0MVBYMnpHVkFkTnBTRw?oc=5",
+          "date": "Tue, 27 Oct 2026 22:52:01 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Big Tech earnings to test AI boom amid market turmoil - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxNRXF6SzRzQjFlSVJ4Wjk2OEdySTRrS0F3eWlZcXQtRDdXN3hYZ1Z1YmVqbUJzbURWRW9zZHBEcmd3QWNxRGp4QWZuX0VfT1dQNVBJNDNMaXVYSDFHY3NTb2ZvNlJfdjZuUmluNERuS3FIeF92cV9uWVFyQ29zU29ybEFHRU92SDR3ODZvWXpvQU5NZ3dfZGFQcy1iQVhudw?oc=5",
+          "date": "Tue, 27 Oct 2026 15:26:13 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Robinhood CEO's AI startup Harmonic expands into software, chip design verification - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxNVnhBbVF1VllNeUN0OHo0MzQ0SHd4RUhGRkk5MllHOG5yMm84Zm1qMlNCSTdOMlhyd28zcUM2NkgtbEY5ZlFfQ0toelRsSUlvdFVURmZ4NFpiMGlXLUxTek5UNFZpWTBVTjMxY2txTVJDcFNNT0FPWk5HYTh6Znh6QlgtZFlCLTdkb1F0NjV0SXRvYk1URlNpdkJUbTlDandaZ1dSa0tPcDFPVnNBT29HMk9KTXhhQQ?oc=5",
+          "date": "Tue, 27 Oct 2026 19:56:33 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Who controls powerful AI? Anthropic has a plan for long after its leaders depart - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxQWjdLMFpXUmh5WjlTQUxaOExSbmM0bTV2bGRRY05iSnNfT1BnZ3l6OWFON2hYMlh0MnNyeDV3c2NGN2dHUl9xbVo0SHJzdkFHUWFfNHdNU2g0RktoYnZPdXc4ZEcxNW5SRzU3Njg4VzhscE14ODk3T0tONHBSYnFMNk5IYXdvSDktY2FNZDR2Tnd0dG82NHBuQUV0d3lVWVBoYkpNM1dwcjJCVDRseTVwQkxZWEpFNkhHOUFTRA?oc=5",
+          "date": "Tue, 27 Oct 2026 14:45:58 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "SoFi's shares jump after fintech beats estimates, raises revenue forecast - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxQaU82LXUyNm5pOUJ0TmJfSFltNkc1WHhjbW1sTmV2WnhFQWRVZkh1MWRqOHpoZ0oyUC0xaFFLU25pekJIVlNaS19YblduZ0dEYzB6YzBDb3l6VHNRM0RZQmNxaFFHaXBzN2Itd0lLYmxvSVJoLXowdkJUb0tNcUlvX0lKY255ZGpsRDIzVjBIQ3ZlcU9EMWNpa2ZEOHcyV0dycFVRZWJ5azExay1URlg4QVMzSVBBc1dCUXc?oc=5",
+          "date": "Tue, 27 Oct 2026 11:57:34 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "PHP Foundation 'under-funded' with one full-time staff member, director says - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxNd0F1M2JpV18ycDZBTzdodjMzcDMyQUQ1QmpZZk41emRob2VIbXdkWHN4SThaWGVtQ0R5VkdhUl9LRW5SQktkNENWVG4xVXZJaGtnOElZZ194c2tNSG9sTjVUaG1NYzFSeEdTV2ZsTTlIbmozV1NMYWlQNGNNTTRZM2d2MU1tTTFac1VFU2l0dU1jM05XbTdmSEFjaVlkaDN3UGJINGtXQjNEaVBib0kwM1JlVVc1cUYwckNOVQ?oc=5",
+          "date": "Wed, 28 Oct 2026 07:00:00 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Dassault Systèmes raises 2026 targets - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMikwFBVV95cUxPeXBLX2hPRUpza1h4dldlNEFPekZzQk5YdmhkcTl0Tk1LdFhuMWFzcUhmSDFOV2xkLUp0TDJQdkc4RWhqd0NmWjNpeXdod2V3bG1hdzZvWnNIX1lNR1lTVVE4ZWZlMzhMdWxEd3pseHRWVjlvNUYtSl9NSWVGVGFmSVoyUXoxNk9sUjJnNzIwMm5TelU?oc=5",
+          "date": "Wed, 28 Oct 2026 06:04:00 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Gen Digital raises annual revenue forecast on strong cybersecurity demand - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQTGcyQTl6UzdkLUFUa2xBN2l6bmM1ZW1zdlBJd1BkdDhNVlF4NUdBUVRxRXZRMWhYYXdDNm5LMlZrSHUzaUROUFNmb0JmZEcwUHMydlBqc2lCTk9UYTdPRTdIYjZlZ2Fqd0dqeDMtNkZBYlpfUHhtRjdTdTdJWFR4dHB1aWtmSjR4SlJ4YVhYX2RCVHVlaXVGRGhCUWdmeE4tZGhOeU14MmRlSkR3NENyZXJjemNNU3RO?oc=5",
+          "date": "Wed, 28 Oct 2026 20:19:24 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Temenos raises full-year profit outlook on \"continued momentum\" - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxPaVh6azhkMnkxOEVvbF9WYVVtbkxvaFJIczF0eS1VQ3VLTmZUd0Z1R2Y3aWxDdUtLcWJRVE9NTGtUSEt5Mjdnd0RTNVNwbDJtY2d5ODNEVDMzT0tTcUt3bnlWazROWmRVRTQtRktJb0NoYVUyNU1YYUtmdFJwTW9MOVlvTEpfVU9PdVlNMkFqZkZHUlduYnB5RGVSNzdhaVducEx4SjJDVTM?oc=5",
+          "date": "Tue, 27 Oct 2026 17:26:24 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Anthropic's path from AI startup to industry-defining IPO - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxPT2ZsWlY5ZUdaTFJOS0c0OHU5MGtpM2FobkVWZ2VNYWVmR21TcVllblBxM2NTTU9VbXgwbDFVVGgzZkY1YnFXUEQzcmlVbkJXZmRjUWxmUlhQZXZDTnRLNjRzM2JWM20xXzEyLVFmVjh5M01pclJQOFAwaUV2U0ZMZUFwYnFhbGdyaHdic0NBdkhQM29WZDlhWEI4MA?oc=5",
+          "date": "Mon, 26 Oct 2026 07:00:00 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Nvidia, Meta deepen AI ties with $3 billion investment deal - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxPS2Q3RzNwUk5IQWZ1NjIwYmxWV2xCVjZRQVk2OUQ3a1B5MWhKanZMZ3JyMHVRQ2MwSzRzZVZ4VmxNTGNKWDljd084OTRUSWcwNHdFYmduNTJ1RTAtcW0xRHVobW1BcVNQakJrT3paQkdQODl0dVoxZHNwYXhiVFJpclpNaVZrQ2lqRk5oMnBZYzlPOGc2alc3Q2szb2pDOWJhUDJXUA?oc=5",
+          "date": "Tue, 27 Oct 2026 06:13:41 GMT",
+          "aiTitleMatch": true
+        }
+      ]
+    },
+    "Yahoo Finance": {
+      "feed": "https://news.google.com/rss/search?q=site%3Afinance.yahoo.com+when%3A1d&hl=en-US&gl=US&ceid=US%3Aen",
+      "items": [
+        {
+          "title": "Intel stock plunges nearly 29%, its worst day since 1974 - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxQQ05GUVBJSzZLZlMzb01mX0lvT1VNRlowa0dLWUZzRU9xWXJLRzRyVm51aVFvVWJBSVBiOGY3RG9faDJjaHVDcWtycktJbUhBSXBJcUdlcU1GRmRTRjZVdlBrZlJWaTJFN1FxR3AwdkxZMmw1ZDZtVjVaeHRyM0xhTFFkaTJXV2dNVjNRQ1d1RkZxRTJQT0Q2QkxfQzBpZHJFNWVVZ2NVaFpZTjQyVlBGYQ?oc=5",
+          "date": "Fri, 30 Oct 2026 20:59:55 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Amazon's AI build-out just pushed its cash burn to a record: Chart of the Day - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxPS3ZnYlBzUUtoS19uZmZrRlRtT28tVTZybEkxVzBTNlNNX3MyMDNjRFF1b05lZzFtOVNOR05vT1RacUkwM0N5MU5MWTVwU1JVdlhvRzY1VWJ0OTZ5WHBaOW9OY2U0VEZ2bUhVSlJObzJGRkdzYzlxUy0zbTlFM09DTTRrZ1VjSE50Y1V4LXV5RmdkRXh3d3ljZlphcnpDaXRSODBTVFN6RFJHcjlXS3hudnlXaXpKbFphMEJDeVJ5MUROLU5VR2dYVEp4bHk?oc=5",
+          "date": "Fri, 30 Oct 2026 11:28:51 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Intel’s drop on Friday shaves the US government’s equity stake by about $10 billion. It’s still up 3x since last August. - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxNVHpKeS1HcWhLcmZrOTlaa3BRTEZhTjZyX0hldzhRMWNnUTdaN29Oa0x3NjZocjFNSUMyaFpZYnNWbEp0TFNtWjE4M1MxNC1UYzVhWG9TNlpNR2ZJcGh0dllWbzhvUmVRbHNVT19MY2VRNUpyZjRuMmJFMGRSaXppX25BWnVPaEswbmpDQkxNMWZMYmw0RjdNN2FoRG0yU3RrNENGWXJpRFpVdVM3VTdrNnRYZ2RxYkx2anNnMWtqdEFuN3VuMWtmcWhFNFZfWFU0VTlJ?oc=5",
+          "date": "Fri, 30 Oct 2026 20:33:18 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "'Sentiment will take a hit': Binance $6.3 billion hack rattles bitcoin, crypto market - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMi8AFBVV95cUxNdXEteERGNzZqUkNkZnl6WkJCamVlMExXMWlVWkh6blllVnJJVHg1a0tFdWFBR3N4a2VUZmUwY0cybDhDRGtPbm1tT3lzcHZKRVN4VHRwS1dsM0J5VUJnS0trd1dpX292VWJtUlZINW0xeVBjZUpldG10dUdHQ0txNGdRclRtbW1GRE1RWUVPdERCRmdvS055S3dQRlpiRm12RWR1UWtJUU1qd180Qk1KY1FLSnFtM0NyQ05sN0FnV2JIZTY3b0RydkdLeUJCNnItbVJlc0tXeV80dWZpblhIc2U1dnB2VkZLMHZwMFZ2MEQ?oc=5",
+          "date": "Fri, 30 Oct 2026 19:09:20 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Binance seeks to shore up confidence after record $6.3 billion heist - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMilAFBVV95cUxOUk91M0NvMWF6S2xLUktmbkcxQ1VBVDBDSnRZSVZZcjJxNVJ3a3VLZ3RxaWFTYWNlRE16bTRnV0VFRnM5b09LUnIzTVV5Slk2VDRaZ0Q5alFvclowelhHWUFXcXNwRUs3RmlxTkNDS0dBeHRCM2FyOXJtRmZicmJWSWZhNnR3QUJwWHU5UWU0OVZIY25S?oc=5",
+          "date": "Fri, 30 Oct 2026 22:00:07 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "How investors should approach crypto after Binance's $6.3B hack - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxOcDlLeTAtSjdVOFBaVS03MWtnWVluX1dhWk1RVEQtYmZKdk10U1hVTThjM2tHRnJtSUNjSzMzTWRrX0Q5bTJFd1hkLWVrazBDSlBxYXJUbGJGYnBGN0U2VlFia1M5eFBEaUNYZVFtODhKTlpmU0hTcnl3Ujk4Z2lOR1Y5S2pwNFdzOWhBXzFFSUxvMTEyWGJUSEJ6amU2eUc5dVVXZ0Y2ZzNGb3M?oc=5",
+          "date": "Fri, 30 Oct 2026 14:17:00 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Rates need to be higher, 3 Fed members say. The question is how much. - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiygFBVV95cUxQeDZEZjlNVkVmT3QydUZXYTlkOEs5dGxCSHBqb3VKVWJwVFA3dVB2MTh3NDk5ZWxVdTdaOUlrZUQycnp6OEw2MXNwSnVTaGZmdjNJYWJHdl90YjBNem5SSWFJSFNsRmQ5bC1kdnVXSWFDUmt3S3BPSzhGTkZYZVJMdUQ4dzZicFhEOHZKRnFfWGxWR2xERzJXX1FSOU5pQVhpSjRLY0lEZWxnZXc0a1hSSmpJX1VqMFY3NHk4X1FBdm5hQkJHbUNaOW1n?oc=5",
+          "date": "Fri, 30 Oct 2026 17:37:55 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Binance Hack Sparks Bitcoin Sell-Off, $1.6B In Liquidations: Exchange Uncovers ‘Additional Points Of Breach’ - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxOenVLQkoyY3R3bzNXMlNMQ29yYnZpeW91VUl6cnpPR1JtSDMybVdiVE1qY2txdzU5ZXVrUEQ3NUFqaldEZlBjcXBORnlTR3BnMmhZQW40TU5GZ01DSEVaT0M0ZWg2dldzcENVSkhEU1RjVURrZWhsYmVpdmRraXRLZFNmTlJEVjRaYkxCUHZibzdyRkFpN3RBM1hLeko0UQ?oc=5",
+          "date": "Fri, 30 Oct 2026 13:12:40 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Alphabet loses $475 billion in market value, the biggest drop in its history - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMi0wFBVV95cUxOb0pfRGxYakdFTWU5eXlYYTd5cGVuVmpzMDFiMDBuX2ZOQVB5aFV1Qmk1dEhXQWwtSVNtU2ZOSTNfVDMxS2NoMUpTbmJ3a0hYOGtvOGJldXlkU3k2N3djaVhDMUNGN0g5Q1J2SzRXMkhXbzI3MUxqd2t5SEszX0JEZWZPUmRSd3VZQmYyZzZZeDNvY0hKaExMcnNTbHhzeTItckpZaEJmbWxodHVla2FKTTN4cmdFY2VjWk96cjdwLUtjX3FMRmZwLVp3SHJiX2xNajBR?oc=5",
+          "date": "Fri, 30 Oct 2026 16:17:34 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "What Binance users should do right now following $6.3 billion hack - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxQT01fVFNJdm84cFFIa04tYU5MT3lrRDRnNnlPcE5SUmtQdFktY1l0VEhJanpkUVJ6VVhNRDFLSEs5T3NyZ09yWkdzcTNCQkV3Ym1xRmlXXzZGLXVlN3J3UGpZY2toRlllZVp1N1Z6V2hHQVduQ1hhajZUWDNaZC1NUFM2ZFp3X3FVdW02bzFDRHpMbjBMMkpVS2J5TVk3VUVqeEJHX18yWVhFWUoydEpGeENWZWFiN3l5eGlMamJmUzYzTGhjQ1BpZGZla19GSEhWcENFakJfcw?oc=5",
+          "date": "Fri, 30 Oct 2026 15:22:39 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Google stock keeps falling after 12% plunge on Q3 earnings miss - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxORFB0eUlHUndiMWdzRDRqWExlUGI0ZHdwM0FMeVRSNHVla0I2QS10aUxmdWV2VHpMUkZLUVZTb1NvcFJ1SnJiVjlkc0ltTjFGRjRacTE0NDNCemZqSHNzeUI5TmxncHhQLTFac1I1cUFPRm5ySFB0THFJc0JEb0xNMTB1S0t3d3lMNzNJRmRXWU9KU2phb0tEQnp5VU5SOEZpUjlqWEU2cm5udXoxdVNqV0Rxaw?oc=5",
+          "date": "Fri, 30 Oct 2026 16:32:47 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Stock Market Today (Oct. 30, 2026): S&P 500 sinks as Amazon, Intel losses shake Wall Street - Yahoo Finance Australia",
+          "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE1DSnIzc2o0LUFZQmtKVkQ3N2U1bHBmZ1pUS29rZ0pJSURyVjNPcE9tbXd3Q1VGbndqYlFLODgtYlhjaWpVV1h0ZjdqZU9TMElVTUtxV0NXZzVUdmt1aXlHUmlhNE5ZTUdFelQzNko1Y0F0b0U1c0RzUjdsRmJLRWc?oc=5",
+          "date": "Fri, 30 Oct 2026 14:11:42 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Gold price today, Friday, October 30, 2026: Gold slips below $4,000 as Mid-East concerns mount - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMi9wFBVV95cUxONDZKVXFEUEtkWm8xRm1EWDNURkFBdjdQX212NzZGZk1lbHJwWEFUTkZFVWxnOG53MmstWTBwMmk1eUg3XzRMeXBpNFhKVUVMYmF5QWNwdFo4a3AwaWxkVXg4TmltM0QwSDMwTWJad2JBUnJaRXE1Qk5wTEI0OWNEQi1kZDFJRzRObHhLcVB5U3hXZ2czalI4a3BwLW43LVpDeEFpZ0tBRVNuMEE1Rk82RUtialg5aHc3UTctNzBPbmxTTkFOWFFLU1ByazNjLTBRSkR0Z0IyMjVteEktT1RJQVNQamttTHpPbDJjc0xWYlhodWxSZ3RB?oc=5",
+          "date": "Fri, 30 Oct 2026 11:14:51 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Reddit, Pinterest, and Roblox stocks tank after Q3 earnings - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMitAFBVV95cUxQd0JGSVV4ZGprNjZ5MVhfQ0NkYmJhdXZMSi1QcF9kY29rakNqa2t3dmZKR3lNaVhHMzJpTUlhREE2akw3Y09fcThnZThuWHZYRTFuNGFPQlUzaWRCOEpTMUlpTjhKX3JRbFM1MzJ3V3ZVNnBWQ3JiejFVbU9oTmdJTThpVEhMZGx0bkI3U3UzclJ3SklMZjZ3SWJjVE9xazAxUmV5akU5TWw4NmJSNEZRQldVZms?oc=5",
+          "date": "Fri, 30 Oct 2026 13:40:09 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "SanDisk stock tumbles as Kioxia warns on NAND price surge - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMioAFBVV95cUxONzdCLXQtTVJ4N3lDWVNlRGhreERSaTFsbzJPQTdWZENQelJqV1VJRG5BU0c2V2Z1YXpjZXRKLS11MlNnVl9DQkxsY3E0ZmZCUzJtNHRydXoxZVVLUkgzQjl2QVQwTjJnamVmbVhRay02N0NWYldZdUZtMmZVTVZOdDJSakgwZU9SS2JlcmNDTFRqVkJtWkNxdGptRlBRLTlY?oc=5",
+          "date": "Fri, 30 Oct 2026 16:18:34 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Earnings from Exxon, Chevron, and BP: What to Watch - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxOQ0FkdVVHcHZuNTBtSU1WVHRVNmVNcy11cERmamlJUm94Qml3bDhibkhXeXB4UF9odE5SX1FYVTItM3lWbllodHljYm5XWHlxSllUSXk1aU5kVkcwYkgtMjRNQkJmdndpRlBYNWVRTWVxNm5FS1Nhd3pGZnFGODVNS1NaLVRFbUI3c00tOTdGNURQUV9rMm1xbTJ6OA?oc=5",
+          "date": "Fri, 30 Oct 2026 12:00:00 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Nasdaq hits near three-month low as Amazon, Intel rattle AI trade - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxPUTZNOWZiRzFmQUxta25VWEhIT0dYTFVnZ2VLUWlNTDlleE9hTmF6ODNaeXRCSnRXMEdOVENiTVQtNndFUUNWZDdmY0M0UUVaUVR6c0tMdktWcmxJMDItT3dPbl8tcGhSSm0wZ2lRa0RjLW81Ri1RTUlRX0tOUDRHakNwUDdIVFZIc1hMUVBrVi1CY0RRNU9xZmZVU202QQ?oc=5",
+          "date": "Fri, 30 Oct 2026 16:42:46 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Silver price today, Friday, October 30, 2026: Silver prices fall to 11-month lows amid inflation concerns - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiiAJBVV95cUxPRGhLVHdCY3dzdk9FM0stMmN1dnNZNVhOa1RSbk1zdk5pSThMTFRWY2pWQ3QwUkRtTTZBZFJMSmZDNm9KbGRSak8wNS1kMmVpS2dORkJTeW5sWDJ6SkRUM3lVdjlJWWxaRGpfd0J1SGNleWpBZFFFaURILUhRX09NamhFTUtKaE5EUy1paFAySXhoN2taODR0R1ExcW5YM1lVUWd5Z1IwclFJbWNEdmFLaVU2cjJ3MnI2QkpMUDJ1TGRkTktxbjdVSEc2SGh6Y2RoeGlONmxIQm5EYXZRRXhqLTJGOU8xZmhDMG1ZSTM0Mmx6TEZxaFN1dlpWZDNFNkh2Y1VSVFVicWw?oc=5",
+          "date": "Fri, 30 Oct 2026 11:25:21 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "SpaceX has lost more than $500 billion in market value in less than a month - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiywFBVV95cUxQUjIzTnREODk0SVA3WEdBTnoycWlTN3ptYzZLRWlycE4yMmpfNjVPNzVNWm42Q18wT3JzVEVoVmZPbk9pR0lncVltMGZuWk5acnJ6Z2psVmtxazBDWEt1RTdEakQwa3l4WE5ZcTh1dXIxbUlCQVVxYWg0WjhwUTF5bnBuVzVNZUZIVlJWVGhwcEpNdndtcEVaVE1uYjR5amFEUlVtc3p4TUZySXhQaU1tV0RwNkZtalYtdW1PcDV0ei1jRHZ4azkzeTJCSQ?oc=5",
+          "date": "Fri, 30 Oct 2026 21:38:55 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Binance hacked, and withdrawals are now on hold, plus Nasdaq wants tokenization on its own terms - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxPamlmZ2JQQk5PckRIYlAxcVkzSjNTczBnUFV6VWJLU1JETjhVYjI4VTYwZ25neUp2WmRObklOSFJZbElDS1VFRnlHT3Y4Qkh5OXVvNjVXV0NoZGFSU19peVNfcVVZZUFqMm9RbXJUSVRVNTl5WlNfNVgyMVRCaG5yTlRmQmtKVE13amo4LWNVQXd4cGIwN3RCVzd5UThlbW1HSVQ2d1IwMnB5X3VZMEYtQVY2OWhkY3RWT2tVN1NhUk9pQUJEZlpIN3lRcTNUd0tBUkI5Zy1hWmU?oc=5",
+          "date": "Fri, 30 Oct 2026 15:53:54 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Nvidia's relationship with China just got even more complicated as report says Jensen Huang was target of spy plot - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMigwJBVV95cUxQZEtab0tTUzA0MEtoX2xaenB3THdSLUFwNF94eUUtLWtZbG9BUm5TajVNZTBURlNfb0wxWExIcmFQSFJGV3h1YktYNXlCVjJpOWVzT3EzRjdSVV9jakZETlNQU1hyS1p3SERyVU93QzJZZmE5TXRGSlFoU1E1cFFSeW9RbFBIR0FlVXhwZW1lWTgwTU1JX3NTQm4tanVVdEEtd0VOSjJmZ3dVaXk5T2dvUC1tWDlGZGpWT1A5YVp3blczSEJIOHlGblFfOS1ubEdUbFpxejZwYVJaMld2XzVTM3J2NTBMc2N3ZHVNeHc0RURmdGpPTVZQZE10bXZSZUtUcFpN?oc=5",
+          "date": "Fri, 30 Oct 2026 11:16:08 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Starbucks posts slight revenue miss, earnings beat in Q4 results as CEO says turnaround plan 'is working' - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMi-gFBVV95cUxNbndYc1pSVml3aVhHeDJCMXV0cUpxaTZHRUlQN2tjcHdINlBJa28yZmlERWNEUzVDdENfNHc2R3l3T1NQODBwcmU3dWswVURYSXRxVS1FdmpQZVkxSDQ4Q2JtRm9ZOGhRZzJXeS1INzRLNmFaenRwajBqcmE0dHptTnVHVmVGb1NBU0pLR0lBaFN5Y3lJeHczQlhrSVFpbEpab1RLZTRURzF1T0lodHZuYUdqNXhtNkFsLVByYXB4OG1pby0zWVdjMlVmeVM3TWtjMnJMaFg2aEtNOE9XY3N2Qy16OWNuYmFKWTZNOGNnSTdydzQ2MmYxVk9R?oc=5",
+          "date": "Fri, 30 Oct 2026 12:37:37 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Intel's AI Business Grew 78%. So Why Did the Stock Just Crash 30%? - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMilgFBVV95cUxPcWxCRjRnR0gzY0dTZWMtZWR4Q3kwMFVIR0pocUxaOWFqa2FZTXNSaHIzbzh2VV9nSldhUnFpMWgwVUNTbzFKR1NqWW9fb3lodGg5bVUyTmRJYTBGUG9rRU1NcXJuWE43UW11cGhCNkNCem90UTNtMHBUVHk3MHdQckxReW0tZ2R5U2hnN2hRRmVLYnZwWlE?oc=5",
+          "date": "Fri, 30 Oct 2026 14:49:07 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Intel, Amazon lead tech lower, crypto markets rattled amid $6.3 billion Binance hack: AlphaCheck - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMi6gFBVV95cUxNV2U3LXcxZ1JXeURUOWlqTF9jY21tZmE3cGtUeHl1RUdrQzk3LU5yMVcwQjFLR25CLWN6bFdYczRjcXJTTTVlaUJkaG4wejFIaFBxY0RCTnpXbUE5WnlrS2xtR0g3VVZWcVU1MHlVV01sV1hCSkg0YnFNQnF5YS12OFc4dHR0dHhwUDZ3NzVaMU9rTzBBblQxVlVDTER4VlFiLXJIZURXNW1kUUtNQk1RMTJleXVock53NER6UUNLeFBEVk5yMHBzRUdBdmpPMDZNUURhcTh6M1FubTlvMG9uSnByeURNbkxIc2c?oc=5",
+          "date": "Fri, 30 Oct 2026 13:56:24 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Alphabet’s October wipeout hits $758 billion, its worst month ever - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxNRDY5bm1Fb1ljRUR2TmwyOE43LVFTWS03bkhBNHJORkZfM3BZMjZQbjZyd2wyZFd4NXhYRDJsUWRFck9wQ0VkVkRMb1Nhb1pmUktpXzhsd2tVN2FKT0x6blhXQldjWTdzM2d0b2lUNHFkNHJLZ3RzZTZ0NE9rcWRxUGx2RjJ2TGVXMWFWdlR3c2xEcHRGdVhBZ3MyakRhejJrZEk1UWZFN3BrbVBfLUJrUFJ0YmpwVEdyTWZhUQ?oc=5",
+          "date": "Fri, 30 Oct 2026 21:15:21 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Starbucks wants to trial a 'fast pass' drive-through with AI - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMivwFBVV95cUxOVjltcEVDNE5UbGtLQTJseEVvOVBYVVpWRFpxVlMxOW1oOWNYcjE1M0cyc2Y5YXhveUZFaHFEMHd0UVBVbHQ2QmJLRmFXVjY2UlFnTzFWcHVKRFVGZkhpQndwVldsX2FJYnhlbkZzMkdJelJYTTRvQmRYUmdaMHdWRzBmWkhUcTdlM01RaTZQaWJjcjFRdU5LajUzb29tN0M1bURBV011c2pyaGlhNFZodnJEWmV1R1Q3OE5WU2RpOA?oc=5",
+          "date": "Fri, 30 Oct 2026 21:11:28 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Amazon and Intel earnings lead to a tech sell-off, and Binance is hacked for $6.3B - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxNcVJ0VXVsbVZSbXI2V3Y5MUZuYXpNa1pxYnVWMnJoQTMydGhuS1VUclVTdDc1d1h2WU9ZQklfWFA2M28xalhPOTRwblFPbjUxdVZNd2ROXzRwYVBjbGlZMXlVd25STFhqWTNQYWx6Q01GRC1EMndmMWdCcHBkZGs5ZUgxVEVVYUo0Q1BxdlVyaUV1ZnJIMFZsTjhvcnVacHhXaFA4WFBkb3RQTTVEUWJSOWhxZ2Q1NEhpSEZpMGt5ai1yU3dO?oc=5",
+          "date": "Fri, 30 Oct 2026 13:41:00 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Binance Hack: Why Bitcoin Didn't Crash Like It Did in 2018 - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxPWUNrWG93aU9MVnF2R0QtV0tZdHBzeThRNWNFTTlCdzJBZVpkdGQ2S1FzNU9wVlVoTHZEX2RHN0t6LW1XWnJaVE85LTBoajMtZVh1ZV9xcUNrZU02Q1VRTlFYWk1XVUpvMTBlZEFuQ1Q5aVJJNmhUWmhMLW9oSm14Rm9GaVhPUlJBX3I0cDdfWGJjNVYtMmFFQVR6OA?oc=5",
+          "date": "Fri, 30 Oct 2026 18:45:03 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Stocks fall on AI cash burn worries while bonds rally with oil - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMilgFBVV95cUxQSzZnTkxtZ0FGMHoyYTFxbVg4dmF3TXI3LVhrN2tNMm0zWVN6QWxiSW8xSUg0SHlXckF4ODNiZHBMWlQ0ZVpEXzBmclhOdWVKSlRXYXF5bG5oVEw3SkgxZEtLSkMwcElpcW0xVnBDLThldnlIX2ZQWVZkaHFTU0VHU18wTVl6SUladjd1aUw1OHFPRElLSVE?oc=5",
+          "date": "Fri, 30 Oct 2026 21:33:43 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Polymarket Hack Drains $2.7M From 700 Users as Third-Party Breach Forces Trading Halt - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMilwFBVV95cUxOTk81ZnJLVzBGN0dnVV9YTTU4OVRNcTJ1QV9EVXI0c1F3TWdPNnNCOVhQalJvWV84aFIyU0czcnR1dVhFN24waE1ZR3F1TkRXSFh3bHRMdDduVDBfc3NhVGdOTm0xVWZ3Qi1iOEd1dmlHY29MR2JWWFdIWHNMOUVvMXBFOURXN3g2WlB2VUhTMWFvRmUzZlhn?oc=5",
+          "date": "Fri, 30 Oct 2026 12:02:15 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Rivian’s R2 Could Fill A ‘Relatively Unique Position And Product Void’ Between Tesla And Ford, Says Jefferies – Sees 45% Upside Potential - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMinAFBVV95cUxNMzhHbGRhXzEyQ21PcTNadTJfQzZSYVJzUmtfNW1jRGpYNER0TDNDMTJyWDJzT2xIRXFpZVYxVVF1RjFYNThobkI1dE1RMnlXRlFrWXdtTkM4bGxkbHpnXzJxZy1tb0x6Z2g5LTlRRjdTdFlUWFNENlhGWXpyS1hCU1h4TTNMaTU1ZkxRWjhxZGhVdkhWQU1pZFhQN2s?oc=5",
+          "date": "Fri, 30 Oct 2026 15:34:54 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "BofA cuts Intel to Neutral, says turnaround pushed out by PC weakness - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxNMk9zUlhycW1pV1dNRWxWYThDSzhhU3FoNWJ6bUY5V1IyMDJ3M2lHRDVVWG9hd2cxMVZUMTloTmRxNGQzV1NzVGV1Wnk4c2VCUWxwWWJFd1ppc2wzbXZnYTBENGtYdklBUC1BN1VvZHpyT2QwUjFYNXpIS0xHZjFKOGpNdTNVY0hSdHRTSWtZNjYtUFg5WG0wYQ?oc=5",
+          "date": "Fri, 30 Oct 2026 11:33:47 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Cracks are emerging in the AI spending boom - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMinAFBVV95cUxOaTN4RDlFMk4taFlSNEdBcHJnXy02cXl3UDliQ01pT3pZQjA5UDI4Z1lxN2FubzMtRXlRV1FNNGhxbEVGaTZXQ1cwNFUyLTVPZkxvSmNLTkxaTlktMnFjSmVoYW1mTS1laEkyRW1leHpCVmtua0phNXBNT2JEcHBhZXdKbXlmM0FkcVZZWTZJcE5rMkZYdnhVa1pmREM?oc=5",
+          "date": "Fri, 30 Oct 2026 21:17:40 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Alphabet stock crash leaves this trading metric at a level not seen in more than a decade - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMi6AFBVV95cUxNZ0xtV0l0cGJDWmZVTTJHdU8tMkNPZ2plb3U5WlQ1eDNOTVVZcmlvbzF4ZGpWRmstb1IzNXZnaEM4ai1CMDZ5MnpDRExhdUlTQWoxaEpmdldNNnBjYk5zQVozMWZfQWJSZXJGWHFqNzFEOEdQcEdVN0JsVDRWY25yRW00OWkxVkdqMWZTcW01YUlRbnNlRHVKLXhiZGdncElmYnhvUDBsMWl2WDdSMlo3S2J5dDhOMXVDTHB2RE1ldi15Y3dMWUI3dlNjcVo5OGtUbjNYZ3JiSlNDWUZ1NTlldWF6ejJVTHcz?oc=5",
+          "date": "Fri, 30 Oct 2026 12:50:26 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Intel Just Warned It Probably Won’t Generate Free Cash Flow Next Year - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxORWxJaDRpdUl4bmI3eVJ5blB0QlFBNEdsSWlsdnAzTXVqc2Y1ZE84SktfUWhvR052WFExNU9SR1RUTjhvVjRkdFJjYU5SdnNaaFJpeXI5YVg0T0ExTTJyeTRmYU10cTN2SVlkYWQ0SjlmNlBPZkhmVTJsUjRLMGpxMlZ0RUhTdzVSSjlmZG1MMGtpTGx1Z2R1TmFfMA?oc=5",
+          "date": "Fri, 30 Oct 2026 11:18:10 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Beloved seafood restaurant suddenly closes all locations after 98 years - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiqwFBVV95cUxOdTNYY3ROTU1WbmFvSDRaQmJ4cGtSSTJWMFQ0akljUlRZMG85VTFVU1NJbXFFYWJXZFpENVRIYVlsR0I5NHZoRGdFb0xBb045Z0syR0xLTVItY1dZVDFUdDNDZFlYMnFkWF9uU0lPeTA1LXhLNmlZUlhaMklWRW03QlhvTzJ1RHN2d1hZVm9XbC1WNzNVN3hlZzRZVUUzN2VqRDU5ODRRLW55RkU?oc=5",
+          "date": "Sat, 31 Oct 2026 00:03:00 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Burger King's chicken nuggets just got a Whopper-like makeover — fries are next - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMizwFBVV95cUxQN1hQRUdScHBKWE1PZUxQalYyWTJtbU9sanpjcmRMMmcwVFFaSzNkQmZzOHJCbGI3ZUNvWk5vekswYlVLMGR4QzRJYkE0RE5iWTFsSzZjSDJXT29Vb3Ftc2EzU3gtdFZ6UW00QWVEUWR1M3FnaUliNWJrejJPRnlGS2tvRWp5VXZqb3FraDFIVm1wVGY1czBiU3lNeFlEWWRFNXI5X2F3Q0IxNzFlajZ0dGlUWkc4UXdYUFB2TjRsUjRTdm41d1VVVVY1WDV1NVU?oc=5",
+          "date": "Fri, 30 Oct 2026 15:46:50 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Chip stocks end in a sea of red, dragging down Nasdaq and S&P 500 - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiekFVX3lxTFAwWEw1UEphMDlsdU1VcnB1Y18wYmI5c2d2R3F6MU5TYVVacHhVXzNBdWItVHZxTXJWUU5ZaTNPMlFNcTFfVHBMWjlKajNFb0ZacnJjTzBuQ0NzbS1zUmdDU2dpakxsLVBQb3E1SGk2TGpKSUlEdEEzQjRB?oc=5",
+          "date": "Fri, 30 Oct 2026 20:13:00 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Tesla owner's $8,000 tax warning to EV drivers as 'only downside' exposed - Yahoo Finance Australia",
+          "url": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxQWkpWZW90Mk1nY1N2UGh1bUdCelUwNHZwYnFDV0JpWFItSl92YV90eUxval9NQTNXMUhKVXR5VkwxRzF6ODM3aWxOdDV3THAyV2lRbi1ET3I2TG02bmZGaWVnd1BLZkM0eGxsZUljQWRscnVsWDdXOTNMQmRCSGZ2M1hGTUk3SHFoWERVdzlZZ2NqUlZ1dDBVRmpzcXJGRmhWeE1pV1IzNV9MOEJWRzhGeHNCQ1h5V1pTZEp4UUtQQTZOSi03LVN4VDBqZEtUZUVZVkYzVzE1NW0?oc=5",
+          "date": "Fri, 30 Oct 2026 18:00:00 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "US Awards Last of Trump’s Massive Strategic Oil Reserve Drawdown - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxOVHpfclVLa25EakZjb21jb0s5anI2TUU5Z3BIa0JmUFRpbHItNVdkTTBBSDBfY09hUHpVUmt6eU9VQ0wxbHduVWdTOHBPLWZpZUxCQ3ZJS2Vfck4yTDBvOFU0cWVNSHNZajRqZW5RREZsalg4UC1jQ3hOUnVHV2E3SE5sWWFCamctSDdiS29R?oc=5",
+          "date": "Fri, 30 Oct 2026 14:29:45 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "The Binance hack is way bigger than any other known heist in the crypto world - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMizwFBVV95cUxPWk5TRVYyZ2ltNHlTS3YwcWtqQUlpc1p3OFpvYldLMUMzMDJ1UUptUDRtMlEybDdIZ0hTbjhDbjhVQTBkMVhpeHVPR1pHNmRuY29rT2NBUUFoamgyNElFYmRGQVRMWWZLd2ZOSzhWZkJ0OW4yVHNmM1EyWWtlbDIzVUJ4TmFmZHpxd1dYQVJMNldlTkdGUHhRQ3NwSm54MEVvTW1wTFFBTTJWSVJJMXRCS01uc0VIU1NOcEpUaTg5eUsxT29mS2k5R0hBQjhXMlk?oc=5",
+          "date": "Fri, 30 Oct 2026 17:58:21 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Why Intel Stock Crashed on Friday - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxQV3JCcnpwZnhyTG13dWRuc0dMWXFXd0hWOWpFaTJjYmxUSEZYYWtFRHBDLTEzMHJaTDczY24xZ0w2ZGdCbnV2UTJfWGR6SlRJejlXbGg2OHRBbUQyZVlzSS1wNjBtMnhOSnlubUhZS2JnaUQ0NVVQY1BGNDc4M1BQWWNEX0ZOdThUVG1yeVhQV0t0VVd0X1pRNUpXSQ?oc=5",
+          "date": "Sat, 31 Oct 2026 02:41:00 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Netflix's Problem Isn't Profits. It's Viewing Time. - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxNUkI4X0RpN3VILXY2MExJTlctZGZ5dWk5MDhqRTZDc2JJdzdiclBEcVNLNFI4YktGVWRzbGx0aUQyeGMxamNwNU8tOEF6aFJZR1l3SUtiZ0JqMDAxSEdqTFFhaGFGdmVGNm5YWkN2QVNub0ZXa3RFVEJ4bldTSnRTMFROSVdFZEZWaUpFdGw5SEl5MEktWWJYbnpiX1VfNXE5QVEtUw?oc=5",
+          "date": "Sat, 31 Oct 2026 05:50:00 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Yahoo Finance - Stock Market Live, Quotes, Business & Finance News - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiP0FVX3lxTFBBTy1pM1poaEROWTVTNDVTYVdvTDZEWmM1VDhGdlUzWW1OUXNvQ3RmZTVZQ3BGVlhvbTlWNFNhUQ?oc=5",
+          "date": "Fri, 30 Oct 2026 21:44:20 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "META_TITLE_QUOTE - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE51cTBUdmJTdWRuVFN1QjQxcDh1ZzMtcElOUHNJck5hcVpNSXNzbE9yYjFOakNHMzBDa3Z6ektnUEV4MkYyU1FkNzZ3TXM1S3M?oc=5",
+          "date": "Sat, 31 Oct 2026 09:40:55 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "NASDAQ Composite (^IXIC) Charts, Data & News - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE9aSUhWeElNUGdhSS1RWWFWU2IzelpJYUdjTVh2TkV1RFhkbU5ydnNTaGV2eGxfRVJJVnM1OU9rcVVvTzVaSTNrWGhnRzdYNVowSHc?oc=5",
+          "date": "Fri, 30 Oct 2026 17:06:32 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "META_TITLE_QUOTE - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTE9hMVhSZTNNbVFQYkpENUFjWWtkZi1xRUxYR1ZMYlROeW05UFdPUFRBSkVESURyU19EZlVhekZPalBZNVNVSEJKMTZMT3Y?oc=5",
+          "date": "Sat, 31 Oct 2026 07:58:06 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "META_TITLE_QUOTE - Yahoo",
+          "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE9vUTlrYlk4cXZYeW54em1yNXRpVEZBYWJUYmM4Q0lpU3FQeWwxMGczZE85V2E1dnBFcmowUjRRN1V3N0xaamdsblRMaVpMdw?oc=5",
+          "date": "Sat, 31 Oct 2026 06:23:32 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "S&P 500 (^GSPC) Charts, Data & News - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE05Vm8yM2lLRXFrWEhqVUdJZ3JhRWpCbjNiN3lDWGxXWkxXR1pNSzQ5S3lPcmIwYWxjRVVRN2p1Tkt6X29rWDIyaG1OLWxuODNmWFE?oc=5",
+          "date": "Sat, 31 Oct 2026 08:43:55 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "META_TITLE_QUOTE - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTFB3TUlCLXJLcUl2b2Rkd2RyNDliQUFOS05hTWpQYTIyY1VWYTNBNjNkdy1ZdUU5ekx2aTZqdWpBaW1LX2tWbWxYMF9rS0Q?oc=5",
+          "date": "Sat, 31 Oct 2026 02:01:59 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "META_TITLE_QUOTE - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE5NVGllZWRtZGN1UXlVd1VlMnZLZUxYcjFjTWxFRkxmMFhqdkRlTms2em5mOUtuT1VoR2J3Nkt6MDZBRkl2TURVYVhvWEJuQQ?oc=5",
+          "date": "Sat, 31 Oct 2026 08:03:20 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Intel’s Earnings Fallout Is Hitting Your Index Funds Too - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxNQ1FCbUtNcmJUcXJ0R1RzNFU4clFFbmhrSmNLSDc1Y3BrQ0p5eTNkZldMZHBvc3hDVGwxREhuVy0wcTVFTVluODduaS1aY21odXp0elUtZExsSlB1Z1YxbnZKZ2RGNW1nVUFPTi1MQV9vVTcyeDBwMUpld25fNmRiaEJBeWFwaTdBdjVOdk5CeExLbkFrbW45R0M5V1RCU2lmQXdR?oc=5",
+          "date": "Fri, 30 Oct 2026 16:21:11 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Google's AI is winning. Search is paying for it. - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxNLU5ORHpRNzlNWnZLamJIU0Z6Qm9fcFQzRHUyeDZkLVFDTkJZTm0tVU5sNVNEX25OZEtDTGxPWHdWdlR4WElyTjhJX0otYlN1MXJ5S2RBaVdzOHhRdHVqb3ZwekxEMXRDRHFDekhnMHJ6Y0ZCMXdFUFFTVElhYkx0WjZVY0RuQQ?oc=5",
+          "date": "Fri, 30 Oct 2026 11:00:00 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Intel and Sandisk have very different views about what's going on in memory chips - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMi1wFBVV95cUxPSC03VVRKSzFTSzVXTE4zVlBQVGJXRmltdHJFandFSHpXd2hvTnlIb2hGY1ZpY2dSbmNOWVE3bjU3b08tU3AwQXZVMkFqWUsyWUJySWdHTWdvMGJPQXhtdHFvMVlTZTV5YkI4XzY1Sk5aczJ5VFlzbDhFNnEzekFZRFpmY1A4ckJNcjY5Q0Y5d0tac25tM2pUa0RZWjBEREY0S1lEOXlwQThGVVRSQWZmMVA1VC1fQThLN1YxZ2Q3T3pLLWE5Z2hCM0RTNDZySXUxSXpMOFJVTQ?oc=5",
+          "date": "Fri, 30 Oct 2026 11:46:38 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "The Tech Sell-Off is Putting the AI Trade on Notice. An Expert is Questioning Whether the Spending is Justified. - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxPQThmX3d2X2Rhc1IzR29Xb1JYcHIyaVRjUE5IT0t3TGlabTkwT3h5VW5iR0lpbnQxZVNGVDBYMGdaRzRNTFZobjRZdWNZZnRBZ04yNmFLN2ZiY2xVal9NVDNiTm5IMGo2U0tRTFRGeGJlSEc3OTNiamVFeUJqUGg1bjl4Yi14V3ZHaktsUTFQRmkyQQ?oc=5",
+          "date": "Fri, 30 Oct 2026 19:14:16 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Bill Ackman’s Test for a Great Stock: Should Be 'Enormously Valuable' Even if Markets Shut for 20 Years - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxNTG40V1ZBa1RJaXVuSDlMLXVKaGI5b0hXU2tzTl8tc3BUMzhYNllZbDdNSkZneGk0Zm9GazFqeUlvc2Q5MHZGQ1AzcDFuSUY3cVNwY2NPRElsb2o1ZGxCZXBZTDFaeVdFMmJGNGZ6SHZwZkc0aDROVzZrYkYxTmUzOHE3MWFiS21HOEFSU3B1MTdLTG9PdGVJNA?oc=5",
+          "date": "Fri, 30 Oct 2026 23:30:05 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "META_TITLE_QUOTE - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE1OWHhRN2s0MEtlRGNGV3hZQ3JxZzNSTkd0Mi1NWEY3YWVpb0RFcTVpeExHdDd2cnQzd1R0UUxPUDYyX05LZjFwRFRwRmdXdw?oc=5",
+          "date": "Sat, 31 Oct 2026 06:38:23 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Buy, Sell, or Hold? Today’s Top Upgrades and Downgrades: Boston Scientific, DoorDash, GE Vernova, Honeywell Aerospace, Incyte. Intel, Reddit, Rivian Automotive, and More - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxPd2NtVHEyUlA5OFRsekY0ZkhuZTU1ME1fZ251LVdoR2tiS0hnY1EzSzZ4Ty16ZTkyMGExV3A2RG8ybnFvbE5odDdfR3JHNkQwRUpiR1JaWDU5MGhOMjh4clh6OGJKUF96VHZCZ1ZIbmUxMXJEdXZsNVVkNTEwenJ3eVlpM1V6X2tVTGFEbXJzS0lzdw?oc=5",
+          "date": "Fri, 30 Oct 2026 12:14:41 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Why Is Rivian Automotive Stock Surging 7.2% Today? - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxQQWxJaGxuNENxS3NWTGE3NmRLMmctUmltUlRHc2tIR0RwOW91UHJDdXRnczBJUmhPYTZ6OVdmZFg3TklzWkxMdl82U0cwZ1NoV3ZyUEtXSjEzREtBMEJFbGdJMTlnNjFBellYSVZTSnB5cFdVUm5qcXExQ0lkV08xeWU5OWRxbEM1aTBHOGc2by1jVWtNSC1FbDNuRHg1ZjIzNEE?oc=5",
+          "date": "Fri, 30 Oct 2026 10:46:40 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "META_TITLE_QUOTE - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiTkFVX3lxTE15WWRlX2lwc3VzRUxRU0sza3dPeHozcGtneWx0TXhmNUl5dzFqeEFNUGFoSm1HdWJkRDBSQ1JqSmZ3UHM0LW1hWU5QOFp3dw?oc=5",
+          "date": "Fri, 30 Oct 2026 22:14:05 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Starbucks CEO Brian Niccol: 'The turn has occurred' — now it's in growth mode - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxOUThaWFpIOEctOHd4MldldlJEaG14RlJZSUxBeERvM1VreDhMb0F6aGxkc3g5a0llMjFQSVJlU1M4M1lFQWR6MVM2V1MwaFI0eVE3ekplR0NFeUpmam1RSGNtN0dWdzFwa2pydXhrMWR0MXpMMlpYUDVmNFZzbnFLRjR4SWh2S3NheEk2a1I5cEVSa0x6V0g2Nk5oZlQwS2ZjMzAtc1hZeXljOEV0TW0tekYxazdJajBPWUpRa19iV2FaajVFOElCUg?oc=5",
+          "date": "Fri, 30 Oct 2026 14:56:54 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "What to expect from Apple's Q4 earnings this Monday - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxQaURMUXhGVzhlVVlyZmJ6V2dUdHUzc1A1UXZCM1N5WHJtamRTcU9XZ0hrdmlpdUVBc3l6bXI4YmE0a0kzSzZXZzVxVFIyUjRUMXNLSDRnbG1WZXN3NTNsREhJM0U1enBITW9OTGNkUVA5emxmNG5EbE5OVW53cDNCcE5oN2dHWUZjMVpKd2dyVDRYaVZBU2RuZWJGNGROdw?oc=5",
+          "date": "Fri, 30 Oct 2026 20:23:02 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "‘Hard to Know If We’re in an AI Bubble’ Jeff Bezos Says, But Should a Retiree Buy AI Stocks? — ‘I Would Usually Tell a Retiree to Buy the S&P 500’ - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMikwFBVV95cUxOQ0tacy16b01Pb1huWE85VVU5WXJiZUkxZVVod04tVjJVTnk1M2pfVTdUUTdWNU9Bb0E5VXJ0OV9xdVpIVkpMbk96Ykxsc3hMaDZoTElvU1FObTk3VEJLRjNoblhCYTNIRUF1dnJPYkpmRUd2cWRMSVhRRHp6MVl0X1Q2YkdjMEthSm9aZDliaTc2dWM?oc=5",
+          "date": "Sat, 31 Oct 2026 01:30:00 GMT",
+          "aiTitleMatch": true
+        },
+        {
+          "title": "Amazon, Intel Earnings Drag Down US Equity Futures Pre-Bell - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMinAFBVV95cUxNcVZSRXJGNHF4RV9yOWdsSkpndFZTeWMySGhtbURYX0FfRDhXSG9KYVRBc29fSl9IY2VGQmpFOEJmLTNoUloyQ3hfclQ2bjdwM1pZZ28zZHl5bmlWQ0M5UDVKODVVTnpKOHZwdlVpeEdJcUNjbTBReFdOY1hBT2ZGdFhEUDZfZzBxREZNVF9mdUw0M1dGYjB2NkZWNUc?oc=5",
+          "date": "Fri, 30 Oct 2026 12:08:29 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "EXEL Industries SA (EXE.PA) Seasonal Returns Chart - Yahoo Finance - Yahoo! Finance Canada",
+          "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE1nQ2ZpMF8xMFBNQlBKNUtiZGl6WHkwTGlqOUV4b1ZwVHQ2YnZWMHgwVEdkQ002X1R1N0NqNFRyZWhydUx6OGU1MTNTa1ZJZGtWZDBoNVN2d0R1V1BmMEgwSjM1b1E?oc=5",
+          "date": "Fri, 30 Oct 2026 21:29:49 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "What One97 Communications Holders Got Right - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxNVTRNbkp4LU05cHFTY1dUYUhUVmtrR2ZBcUx1VEVhZXE3TUVxNG1IMFNYTGRhXzhfMVhFbS1vcmhjTlgwbTYyblNnSVhkWWlRMzVmXzVGempxV0d0TXJxNkFITms3UmNjaG9nM3JkcG1mT1piU0JXakNEWlhFTHM2RkFqOU5PWVRiSEF3NjB0OHF3dWR6SGljcGRnRF9tZw?oc=5",
+          "date": "Sat, 31 Oct 2026 01:14:00 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Koninklijke Vopak N.V. (VPK.AS) Seasonal returns chart - Yahoo Finance Australia",
+          "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE16OFpHODlWZXZ6Z3VKd0FYR1duVTZGMnMyNjBWVml2SmhFdm5nVFprWDdpbzZiSjB0cnZhWUFFUUxpbmtTZ2E3UFBDQ3JYTDU0dWd6MU5jN3djMTlYcDdIOU1Eamk?oc=5",
+          "date": "Fri, 30 Oct 2026 21:02:38 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Q2 Holdings, Inc. (QTWO) Seasonal returns chart - Yahoo Finance Australia",
+          "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE1LZGNNbWlsYUNFWmNSd3F2UDV1TElodFZuZlNyLVdUSkM0MktpcDRHZ2N0YWdwdWhyUW9UT0pUc2I0Y1FSMTlvTU9fb1FiNkhITXJTSzZQc29RaGNoNklobU13?oc=5",
+          "date": "Fri, 30 Oct 2026 20:40:20 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "McCormick & Company, Incorporated (MKC) Seasonal returns chart - Yahoo Finance Australia",
+          "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE8tTjZJLW9sZ0FSb3puSlhNYWlFaGkzdVNUTE1GdnkybXFNWnBzaTNnaEwwcEVybExhZ2wtY3UzYXhEUGJ6dFVOMjlyb2JscEtacVlMQXlzQzd4SHhtVkhUUw?oc=5",
+          "date": "Fri, 30 Oct 2026 21:06:56 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "(WXX-P.V) Seasonal Returns Chart - Yahoo Finance - Yahoo! Finance Canada",
+          "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE1WdWxndDQzVFhoTENBbnFzNjc1V1BMVUJra1IxRHY5enc1TmhwZXdZZU1IOEdObnlsZ1otMjhtSm4ybDlub1hvLTV3MU5KMkl5Qms5aHo5SGVYOFFUNHdWekNScUhmUQ?oc=5",
+          "date": "Fri, 30 Oct 2026 21:59:37 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Jyong Biotech Ltd. (MENS) Seasonal returns chart - Yahoo Finance UK",
+          "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTFBydTk4aHExcDFEclNJYmJpQ3Z1MEdqQkZ6ak41NU80clFzZ3ZXREJiT2daTTQtNXd0U3lvaVFXbmhqanRJclJTTk0tZGE5X3hodGFmVmx3TVlDWlNhakM0cDhn?oc=5",
+          "date": "Fri, 30 Oct 2026 20:39:32 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "TBN DEF 14A & SEC Filings - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE5DcVozUXlFSE9uMDBmT3V1UXg3Tl85clFZWjF5N0VUQXpfa3Y1aU4zNm9OMktIc01PZjFmVjh2MzFfNlZITGVWaEhMQUtCNUIwdmo0OFpXbU82RGRGNzIyaWVtWXpwSTBsaHBxV1UxUnhLN09XYmp6Ng?oc=5",
+          "date": "Fri, 30 Oct 2026 20:29:38 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Alcon Inc. (ALC) Seasonal Returns Chart - Yahoo Finance - Yahoo! Finance Canada",
+          "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5LYnkzX1BhY29RYTNUZUZsZklwc2lidkFGNDl1bEk4bGVmUTN4MG92dnpqWHIyWnFFaXBhVkpNcnVuWm9fSTRYX0xqYnFmeHFaaEVQVWJBck9iUHZEM1BZeQ?oc=5",
+          "date": "Fri, 30 Oct 2026 20:39:50 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "XRX S-3 & SEC Filings - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTFBPRzQ3blltVHZ2Skg2d2xWaGptWVFOVDJBN29SZW5YTUMwNksxZy1Xbk9pUGxhZmVIR3lGaEtMT0d4a1lwNzBNR0MzNXp0OGhid1NoZ1ZJZ2RpdWJ2X0NBUzZiRkNWb25vcXRkZkhoaUgzV1g1UGJidA?oc=5",
+          "date": "Fri, 30 Oct 2026 20:34:53 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Tenet Fintech Group Inc. (PKKFF) Seasonal Returns Chart - Yahoo Finance - Yahoo! Finance Canada",
+          "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE1wVDBiOE1mbzhsTVRHUjVfUnJEaDVCNjU0WFZmTkJ0ci1pUWFweGtGbDd5cEVXbm83Vnp0THdsMm84azl1V1VnbmpSSnlEemRieWpNWjM1WG94V2RWUS1JV2I0aw?oc=5",
+          "date": "Fri, 30 Oct 2026 20:30:09 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "RBC 8-K & SEC Filings - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTFBJNF9kWl9Tc3NjQUprVjhRN1Boc014NUt4eVZBbWZaak9PeTNPZ3B4SUMzVXlMVE41cTh4SDljOXZSeXNJdVBEc2hlZjNiQWZGaDNudDhYeDlVeVVXV1B6RmxaRFBmRk5La1lVQWN6SGtrU0pRRl8xSA?oc=5",
+          "date": "Sat, 31 Oct 2026 00:26:04 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Publicis Groupe S.A. (PGPEF) Seasonal Returns Chart - Yahoo Finance - Yahoo! Finance Canada",
+          "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE1BNU1Oa1BZZmx5ZlBFc1A5eUJMT2FNTWdBbnhGdTlfeTUyV1dFM0pvc0E3bTJPWjNMRFc2LTdNMTJUcDBJanZNQnc3TjQ1NldRakpGMXY4SW14aWFmM1ZMOEJiYw?oc=5",
+          "date": "Fri, 30 Oct 2026 20:33:47 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "BNY 10-Q & SEC Filings - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE1SbXdWVzBJR3JNajY2cWtxYTFmX25RdnJacEVWaGk3Y21OZXNWdnFYS0lOdWdJNVlDVFNkVzZncmNsYWNRb1liT3E4dkJsY2pmMjNQRjRFdExYYzJkdEJwV0JXbnViandodW9FVzQ3MTA3eW9HSU1pMg?oc=5",
+          "date": "Fri, 30 Oct 2026 20:10:31 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Chocoladefabriken Lindt & Sprüngli AG (LISN.SW) Seasonal returns chart - Yahoo Finance UK",
+          "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE5iek1mcmR6UEl4M3E5a2lKUnJTX3o1Nl90U2VERkxJcTYwRkYyeDFBVURmNUZEUk1fOUdYU09LMG4tSnEwdmNRNE51aUdFN1kxY0JZUnpwcmltaUktbkktZUJNZ1RBUQ?oc=5",
+          "date": "Fri, 30 Oct 2026 20:42:49 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Lyft, Inc. (LYFT) Seasonal Returns Chart - Yahoo Finance - Yahoo! Finance Canada",
+          "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE43TlpxZ05BZEV1NjFERlF6ZlZpOXJyeXRkbEI4REJxRWtDdndzUU85dEZZY1FLLUU3OFM3WlpfQS1HRERZRWdnYlFoeVZEMVZvdFdGajBNaXJzVUdjejFMb0Jn?oc=5",
+          "date": "Fri, 30 Oct 2026 20:30:22 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "PEBO : 8-K : Corporate Changes & Voting Matters - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE12bVNCOVkzY3I0TURlc0gtYVZhTjA0QUVwY3NUeW1QZVlPSzJfWFJKVFdWNkhhTEpmS0FXc2xiME16RktoSmJjVjVEdTJQbW5zRXcyanpBQUxuUG1mMnJKcVhZSDF1RkpsR044Y3BFS0x6SVVyb1B3cg?oc=5",
+          "date": "Sat, 31 Oct 2026 04:33:31 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Palo Alto Networks, Inc. (PANW) Seasonal returns chart - Yahoo Finance UK",
+          "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTFBPdjR0QkJYdGZ2SXhiUUVsTnRlbzhWSkdYT1F0dm4wc3ZPdXI3U3E0THdVVVZsUk1hWW9PUVBoRHRpMkpWWlFWNklZVk9DQVhDa3dEcHRTa3JyTU9CQ1lmZ1Bn?oc=5",
+          "date": "Fri, 30 Oct 2026 20:40:10 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Ameriprise Financial, Inc. (AMP) Seasonal Returns Chart - Yahoo Finance - Yahoo! Finance Canada",
+          "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1XTmtxcnlEREVPU1RzZVpQWndQYVZXZkZCMHdBUFhCY1ZNN0phMXlVdXdRTEdNWmFCaFRTQlJJRElTWHUydk5vN1NSZTBrQmt3NDlfZG9Yd2NMdWx6dnh0OQ?oc=5",
+          "date": "Fri, 30 Oct 2026 21:11:22 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Redwire Corporation (RDW) Seasonal Returns Chart - Yahoo Finance - Yahoo! Finance Canada",
+          "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFBGRlViNGhHN2lRUFdpLWNwMXl6ZmtLYTNYLU1ZbE9SanVBOFg1dHJBY0E3dXc0ODNQbTBFeFBVSW9WbDB5c3VzZUMzNTdwV0xlYWZJTGtZaGRfVjItNjViYQ?oc=5",
+          "date": "Fri, 30 Oct 2026 20:27:49 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Grainger plc (GRI.L) Seasonal returns chart - Yahoo Finance UK",
+          "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE5PNlNXTnlrTEFsUEZhb21IdWh3NEl3NEk5TnhmLTNvRV9RaWh6czRyYlJhbU54VUp4Y0xQMnlXa3JrNkFqU2x5c09ZamRhOS15UmJqRGcwYmJ0MzQ1cmZzeWFTaw?oc=5",
+          "date": "Fri, 30 Oct 2026 18:07:49 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Intact Financial Corporation (IFC.TO) Seasonal Returns Chart - Yahoo Finance - Yahoo! Finance Canada",
+          "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTFBjOTVfS0NTamJ4c3ZoRUpiTWtPcmJqLVZralF3aS1ZbTk5aXRGSG8tUTQ1N1FOUWU0RDRVN2dvVm83YmNsMVNNTHNoY0pXMFItbmw3b2RDUmNFa2hWc0JBdzhlWkM?oc=5",
+          "date": "Fri, 30 Oct 2026 20:16:06 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "GILD 10-Q & SEC Filings - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE05aWJRaG1uZUphZ2V5dXNTcjZxemZVNGFTdDdFVWhNaDcxZmhCS1F5UHVfUGdwdnpUV2xQUm0tUGowbC13cDk3bU84eklMc21hNHB5LURDTnU2bGQ1NmJrbUd3RXJmVEd0OVRyWmdJN3pRaFdyb1hmdQ?oc=5",
+          "date": "Fri, 30 Oct 2026 21:10:13 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Golden Throat Holdings Group Company Limited (6896.HK) Seasonal returns chart - Yahoo Finance UK",
+          "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE05ejc0QllBZ3RBN1kxQ2dJNUxZWXR3TXB3WWtwTmZvbG50b013T1N6dHBkcjhuLVBxRDd4ZVNLS0ZNWWdVS2c4dE5qVEg4MzlrZTFqZ1hJWWNtWUlTWUFiMlh1ckw1QQ?oc=5",
+          "date": "Fri, 30 Oct 2026 20:33:40 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "FTNT 10-Q & SEC Filings - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiekFVX3lxTE1wTHhBaWxVSDI0Wk9JLU9KRU9NVUNoanBHQ2RfSmQydVE1X3NSOXR0T0lKenY1N29jOEFfZUhEYlBZZHZvNnVoMmRCWWNyNUZ3eUhOMGl0ZWJyblc2a0IxOHJ3cWRVb2pTb1Y1eTR2UjlUYzg1WWRMZmp3?oc=5",
+          "date": "Fri, 30 Oct 2026 20:26:18 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "LH 10-Q & SEC Filings - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTE5zOTBXY2tNRXp2bGVNQ3d4OVFHUGFXZ0JiendlTEQzQ3F1NGQ2VEFnMWRWbVpZVmIxdk9WMndobmdWbGlQR3RXV2lsQnZzdVRsX1F6R1dUWXZGSnpMM0huMnU1a3ZzRmpLLU5fQmV1d2lIanhMTkE?oc=5",
+          "date": "Sat, 31 Oct 2026 04:31:12 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Fidelity National Financial, Inc. (FNF) Seasonal Returns Chart - Yahoo Finance - Yahoo! Finance Canada",
+          "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE8xR1pVTlM0WmwxS0Ywby1iaV9wdS00cmg5SVNmMWp4RDFERXFZcHhPWHpSWHRycHJ6UWVSQ25SMVNNeTJuMy1aRWplSVdKMElkbmZOLUd3cEJDYWhJMDlKcg?oc=5",
+          "date": "Fri, 30 Oct 2026 20:42:51 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "TWLO 10-Q & SEC Filings - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiekFVX3lxTE9ka18zNGxoYVFXWlhvaE9BRWE3MENFWXVRNGRNOHNxUk1oS3FYRzFXTUVDM05rR2p3U2x4QVh2aGVlTkR5U19ISjQtbEFjNnRsQ0ZCRnhPVW1mdWVVMm0tLXZjSXNJR09RazdNcUFObWVtajNuNEJXeVN3?oc=5",
+          "date": "Sat, 31 Oct 2026 04:07:56 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "BAER 8-K & SEC Filings - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiekFVX3lxTE9DSDFFdXp2S0k1SlBGbzRKdnhvcGtMVVcxUGlHczNBdEZPVnd0V2NCNkNPNVkxRENxNGRRYk1TUzd2ek9ZckMtcU9DMjJZNEVwdE1OYndMb0w3YXdaZlJxNnFJcUppSEprVFQwU21PLTNReVA4OVRjSVhn?oc=5",
+          "date": "Sat, 31 Oct 2026 04:26:39 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Formula One Group (FWONA) Seasonal Returns Chart - Yahoo Finance - Yahoo! Finance Canada",
+          "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE9STDl5aEtqU3QydjJ1TVJoR3N4S05Ec25VS2QydV9najR1RDEzektHU1U3YlplamNHYUxxSFZ2VTdHWnhPQ0xzOGtFdFRkNmJ4ZTd5ek95UjJBOXdMc2FZbXY1bw?oc=5",
+          "date": "Fri, 30 Oct 2026 20:33:44 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Hemogenyx Pharmaceuticals Plc (HEMO.L) Seasonal Returns Chart - Yahoo Finance - Yahoo! Finance Canada",
+          "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE01UnE0dDNKWlhhc2dnbW1HcWVEa0RYZ21nX2NoNGFQd25QX0drSEt5bnpwdExoRTNIRWZ5QzRlbUxWSHdwdVYtRGdfWkVKVUM1S2lmVG9Qbm5kU0gzT01COU1Sekc?oc=5",
+          "date": "Fri, 30 Oct 2026 20:33:45 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "Helen of Troy Limited (HELE) Seasonal returns chart - Yahoo Finance UK",
+          "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE5Jc0JsaVJUMnlMYmlRdDE0VDREd3Bxbm1XQUFnTmhzdzltc29Mdy1SQ25MZHhILUxhR3RPajdPTnJEbUQ0TWd5a3BMNDQzLXFzdk0taVJJSXlYTnA5VmJ1VEZB?oc=5",
+          "date": "Fri, 30 Oct 2026 21:29:49 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "D 10-Q & SEC Filings - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTFBLMi1scjRmTlAzdWVpNmU1ZnNUTnhDc05MU080eFlXRUhyeDU0Nm1TT2poaWp0V0FGeXVGNE1jaXhyb25qOEZDVVpUcXhzck4tSXRIRUdBN0hCeVBzYi15dFZBUFVhdVBHdF8zenU4V3htc2hW?oc=5",
+          "date": "Sat, 31 Oct 2026 00:37:05 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "AMZN 10-Q & SEC Filings - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiekFVX3lxTE5BcmVnRWNXQnM1ODVvMEJTdWY5bEhWNHl3ZEdPV0pZN3lzV1pETlkxbU5SR240VW5JZDhBZkltVWlQZVRocEJDMk9USVUydEFHWTQ2S09PdXFFRGNkUk5EaGY4MmdGNWNjZ0xGNmF3NEM2TG83LWgyeE13?oc=5",
+          "date": "Fri, 30 Oct 2026 20:32:28 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "AWRE 10-Q & SEC Filings - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMiekFVX3lxTE9aZXNvTE5VMzRmWGVXNV9OWFA2Z1lTelhLM0g5cmQ0QWVSOHg1UmhTeER4b3hPQlBGdHFKUk95UU54T2hxQWtWMzJhUElEa0p0NHgzQjJUTTFXY1RRcU94WTRQVUlfY3kyVHFIbm9QOFkwZ0MyeThnZkJR?oc=5",
+          "date": "Sat, 31 Oct 2026 04:07:11 GMT",
+          "aiTitleMatch": false
+        },
+        {
+          "title": "NIC 10-Q & SEC Filings - Yahoo Finance",
+          "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTFBHZXhIbjc5MElxVWd5Sms5djFEOEJsS1lGelFiYjRXWEl2RHZVYUFRb0dPTEE5Rlh2eW1KcEsxX2JFdk1ycVo5YW44TE5LOEV1TjJoWWliWl9qX3ZMQ2NtVE9CRlFrVy1mZVNDUERPajh0ajFQaWd1OQ?oc=5",
+          "date": "Sat, 31 Oct 2026 04:25:37 GMT",
+          "aiTitleMatch": false
+        }
+      ]
+    }
+  }
+}

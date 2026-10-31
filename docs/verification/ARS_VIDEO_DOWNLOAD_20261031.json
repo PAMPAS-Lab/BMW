@@ -1,0 +1,53 @@
+{
+  "at": "2026-10-31T09:51:17.730Z",
+  "environment": {
+    "electron": "44.5.1",
+    "chromium": "152.0.7977.130",
+    "profiles": "disposable, signed out",
+    "resolver": "live BMW page/player observations only",
+    "externalDownloader": false,
+    "pageTheme": "dark"
+  },
+  "sourcePage": "https://arstechnica.com/video/watch/bina48-robot-talks-to-siri/",
+  "result": "native-preserve-and-complete-decode",
+  "identity": {
+    "version": 1,
+    "platform": "page",
+    "targetId": "https://arstechnica.com/video/watch/bina48-robot-talks-to-siri/",
+    "resourceId": "ars:bina48-robot-talks-to-siri"
+  },
+  "transferMs": 4266,
+  "bytes": 11217400,
+  "sha256": "347064087b08819795c5fd20695e92cde6eef6733d50af33ec5b4095efa0a431",
+  "decode": {
+    "sourceArtifactId": "preserved-387f2ede-fe0e-41b2-9249-c21407d8b340-delivery.mp4",
+    "sourceBytes": 11217400,
+    "engine": "mediabunny-webcodecs",
+    "kind": "decoding",
+    "completeFile": true,
+    "container": "MP4",
+    "contentType": "video/mp4; codecs=\"avc1.42c01e, mp4a.40.2\"",
+    "durationSeconds": 153.77066666666667,
+    "firstTimestampSeconds": 0,
+    "tracks": [
+      {
+        "id": 1,
+        "type": "video",
+        "codec": "avc",
+        "sampleCount": 3686,
+        "startSeconds": 0,
+        "endSeconds": 153.73690972222224
+      },
+      {
+        "id": 2,
+        "type": "audio",
+        "codec": "aac",
+        "sampleCount": 7208,
+        "startSeconds": 0,
+        "endSeconds": 153.77066666666667
+      }
+    ]
+  },
+  "humanListening": "not performed",
+  "scope": "Single historical public video; no whole-site stability or production profile claim."
+}

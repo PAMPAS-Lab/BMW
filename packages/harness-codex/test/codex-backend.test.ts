@@ -9,11 +9,14 @@ import type { CodexRpc } from '../src/codex-rpc.js'
 
 function fixture(model='gpt-5.4') {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-codex-backend-'))
+  const rollout=path.join(root,'rollout-fixture.jsonl');fs.writeFileSync(rollout,'');fs.truncateSync(rollout,9*1024*1024)
   const controller = new AbortController()
   const request: AgentRunRequest = { sessionId: 'bmw', externalSessionId: 'provider', runId: 'run', messageId: 'input', project: { id: 'project', name: 'Disposable', directory: root }, text: 'hello', context: 'owned context', signal: controller.signal }
-  let listener: ((method: string, params: unknown) => void) | null = null
+  const listeners=new Set<(method:string,params:unknown)=>void>()
+  const listener=(method:string,params:unknown)=>{for(const callback of [...listeners])callback(method,params)}
   let handler: ((method: string, params: unknown) => Promise<unknown>) | null = null
   let turn: (() => Promise<unknown>) | null = null
+  let beforeTurn:(()=>void)|undefined
   let interruption: (() => Promise<unknown>) | null = null
   let ended = 0
   let authenticated=true,modelAvailable=true
@@ -24,16 +27,18 @@ function fixture(model='gpt-5.4') {
       if(method==='config/read')return {config:{mcp_servers:{'foreign-node':{command:'unavailable',env:{TOKEN:'private-fixture'}},'foreign-computer':{url:'https://invalid.test'}}}}
       if(method==='account/read')return {account:authenticated?{type:'chatgpt'}:null,requiresOpenaiAuth:true}
       if(method==='model/list')return {data:modelAvailable?[{model,displayName:'Fixture model',description:'Official test catalog'}]:[],nextCursor:null}
-      if (method === 'thread/resume' || method === 'thread/start') return { thread: { id: 'provider' }, model }
-      if (method === 'turn/start') { listener?.('turn/started', { threadId: 'provider', turn: { id: 'turn' } }); return turn ? turn() : { turn: { id: 'turn' } } }
+      if (method === 'thread/resume' || method === 'thread/start') return { thread: { id: 'provider',path:rollout }, model }
+      if(method==='thread/compact/start'){queueMicrotask(()=>listener('turn/completed',{threadId:'provider',turn:{id:'compact',status:'completed'}}));return {}}
+      if (method === 'turn/start') { beforeTurn?.();listener?.('turn/started', { threadId: 'provider', turn: { id: 'turn' } }); return turn ? turn() : { turn: { id: 'turn' } } }
       if (method === 'turn/interrupt') return interruption ? interruption() : {}
       return {}
     },
-    notify() {}, onNotification(value) { listener = value; return () => { listener = null } }, onRequest(value) { handler = value }, onFailure() {}, async close() { ended++ }
+    notify() {}, onNotification(value) { listeners.add(value); return () => { listeners.delete(value) } }, onRequest(value) { handler = value }, onFailure() {}, async close() { ended++ }
   }
   return { root, controller, request, calls, rpc, ended: () => ended,
     event(method: string, params: unknown) { listener?.(method, params) },
     tool(params: unknown) { return handler!('item/tool/call', params) },
+    setBeforeTurn(value:()=>void){beforeTurn=value},
     setTurn(value: () => Promise<unknown>) { turn = value }, setInterruption(value: () => Promise<unknown>) { interruption = value }
     ,setAccount(ready:boolean,available=true){authenticated=ready;modelAvailable=available}
   }
@@ -51,18 +56,15 @@ test('Codex resumes the same anchor with fresh input scope after an audit and pr
  const resumed=f.calls.filter(row=>row.method==='thread/resume').map(row=>row.params as {threadId:string;developerInstructions:string;config:{features:{shell_tool:boolean}}})
  assert.equal(resumed.length,2);assert.ok(resumed.every(row=>row.threadId==='provider'))
  assert.match(resumed[0].developerInstructions,/Pinned target: fixture-film/)
- assert.match(resumed[1].developerInstructions,/replace earlier input-specific developer context/)
- assert.match(resumed[1].developerInstructions,/do not restrict later user-authorized production or rework/)
- assert.match(resumed[1].developerInstructions,/Current Studio: user authorized title and subtitle rework/)
- assert.doesNotMatch(resumed[1].developerInstructions,/Pinned target: fixture-film/)
+ assert.match(resumed[1].developerInstructions,/Current Studio:/)
  assert.equal(resumed[1].config.features.shell_tool,false)
  const injected=f.calls.filter(row=>row.method==='thread/inject_items').map(row=>row.params as {threadId:string;items:{role:string;content:{text:string}[]}[]})
- assert.equal(injected.length,2);assert.ok(injected.every(row=>row.threadId==='provider'&&row.items[0].role==='developer'))
- assert.match(injected[0].items[0].content[0].text,/Pinned target: fixture-film/)
- assert.match(injected[1].items[0].content[0].text,/Current Studio: user authorized title and subtitle rework/)
- assert.doesNotMatch(injected[1].items[0].content[0].text,/Pinned target: fixture-film/)
+ assert.equal(injected.length,1);assert.ok(injected.every(row=>row.threadId==='provider'&&row.items[0].role==='developer'))
+ assert.equal(f.calls.filter(row=>row.method==='thread/compact/start').length,1,'Legacy anchor compacts once, not every input')
+ assert.match(injected[0].items[0].content[0].text,/Current Studio: user authorized title and subtitle rework/)
+ assert.doesNotMatch(injected[0].items[0].content[0].text,/Pinned target: fixture-film/)
  const firstTurn=f.calls.findIndex(row=>row.method==='turn/start')
- assert.ok(f.calls.findIndex(row=>row.method==='thread/inject_items')<firstTurn)
+ assert.ok(f.calls.findIndex(row=>row.method==='thread/compact/start')<firstTurn)
  await backend.close()
 })
 test('GPT-6 uses the exact admitted startup catalog when resuming its native Session before dispatch',async t=>{
@@ -159,9 +161,73 @@ test('Codex cancellation racing the input receipt sends one interrupt after the 
 test('Codex records bounded reasoning/compaction lifecycle and usage metadata without content or extra model tools',async t=>{
  const f=fixture();t.after(()=>fs.rmSync(f.root,{recursive:true,force:true}));const observed:unknown[]=[];f.request.observeRuntime=p=>{observed.push(p)}
  const backend=new CodexBackend({executable:'/disposable/codex',configDirectory:f.root,model:'gpt-5.4',catalogGate:{async verify(){}},rpcFactory:()=>f.rpc,connection:async()=>({definition,async execute(){assert.fail('No tool expected')}})})
- await backend.prepare(f.request);const running=backend.run(f.request,async()=>{});await new Promise(resolve=>setImmediate(resolve))
+ await backend.prepare(f.request);assert.deepEqual(observed.splice(0),[{phase:'compaction.started'},{phase:'compaction.completed'}]);const running=backend.run(f.request,async()=>{});await new Promise(resolve=>setImmediate(resolve))
  for(const type of ['reasoning','contextCompaction'])for(const method of ['item/started','item/completed'])f.event(method,{threadId:'provider',turnId:'turn',item:{type,id:type,content:['PRIVATE NOT LOGGED'],summary:['PRIVATE NOT LOGGED']}})
  f.event('thread/tokenUsage/updated',{threadId:'provider',turnId:'turn',tokenUsage:{last:{inputTokens:200,cachedInputTokens:150,outputTokens:30,reasoningOutputTokens:10}}})
+ f.event('error',{threadId:'provider',turnId:'turn',willRetry:true,error:{message:'PRIVATE NOT LOGGED',additionalDetails:'PRIVATE NOT LOGGED'}})
+ const retryCases:[unknown,Record<string,unknown>][]=[
+  ['unauthorized',{failureCategory:'authentication'}],
+  [{responseStreamDisconnected:{httpStatusCode:502,secret:'PRIVATE NOT LOGGED'}},{failureCategory:'stream',httpStatus:502}],
+  [{httpConnectionFailed:{httpStatusCode:null}},{failureCategory:'connection'}],
+  [{responseStreamConnectionFailed:{httpStatusCode:999}},{failureCategory:'connection'}],
+  ['PRIVATE NOT LOGGED',{failureCategory:'other'}],
+  [{unknown:'PRIVATE NOT LOGGED'},{failureCategory:'other'}]
+ ]
+ for(const [codexErrorInfo] of retryCases)f.event('error',{threadId:'provider',turnId:'turn',willRetry:true,error:{message:'PRIVATE NOT LOGGED',additionalDetails:'PRIVATE NOT LOGGED',codexErrorInfo}})
  f.event('turn/completed',{threadId:'provider',turn:{id:'turn',status:'completed'}});await running
- assert.equal(observed.length,5);assert.equal(JSON.stringify(observed).includes('PRIVATE'),false);assert.deepEqual(observed.at(-1),{phase:'usage',inputTokens:200,cachedInputTokens:150,outputTokens:30,reasoningTokens:10});await backend.close()
+ assert.equal(observed.length,6+retryCases.length);assert.equal(JSON.stringify(observed).includes('PRIVATE'),false);assert.deepEqual(observed[4],{phase:'usage',inputTokens:200,cachedInputTokens:150,outputTokens:30,reasoningTokens:10});assert.deepEqual(observed[5],{phase:'retry'});assert.deepEqual(observed.slice(6),retryCases.map(([,expected])=>({phase:'retry',...expected})));assert.equal(f.calls.filter(row=>row.method==='turn/start').length,1,'Retry observation must not submit another turn');await backend.close()
+})
+
+test('Codex retention ledger deduplicates scope across processes and accounts images without retaining payloads',async t=>{
+ const {CodexContextLedger}=await import('../src/codex-context.js')
+ const f=fixture();t.after(()=>fs.rmSync(f.root,{recursive:true,force:true}))
+ const first=new CodexContextLedger(f.root,'project','bmw','provider')
+ assert.equal(first.needsCompaction(true),true);assert.equal(first.needsCompaction(false),false)
+ first.compacted();assert.equal(first.instructions('scope A','guide'),'guide\nscope A')
+ first.acknowledged('scope A','guide',13)
+ const second=new CodexContextLedger(f.root,'project','bmw','provider')
+ assert.equal(second.instructions('scope A','guide'),null)
+ assert.equal(second.instructions('scope B','guide'),'scope B')
+ assert.equal(second.instructions('scope B','changed guide'),'changed guide\nscope B')
+ second.imagesDelivered(Array.from({length:24},()=>({data:'private-image'})))
+ assert.equal(new CodexContextLedger(f.root,'project','bmw','provider').needsCompaction(true),true)
+ assert.equal(new CodexContextLedger(f.root,'other-project','bmw','provider').legacy,true)
+ const files=fs.readdirSync(path.join(f.root,'bmw-context'))
+ for(const file of files)assert.doesNotMatch(fs.readFileSync(path.join(f.root,'bmw-context',file),'utf8'),/private-image|scope A|changed guide/)
+})
+test('Codex compaction requires actual completion and respects cancellation without replay',async()=>{
+ const {compactCodexContext}=await import('../src/codex-context.js')
+ const listeners=new Set<(method:string,params:unknown)=>void>(),calls:string[]=[]
+ const rpc:CodexRpc={async call(method){calls.push(method);return {}},notify(){},onNotification(callback){listeners.add(callback);return ()=>{listeners.delete(callback)}},onRequest(){},onFailure(){},async close(){}}
+ const controller=new AbortController(),phases:string[]=[]
+ const pending=compactCodexContext(rpc,'anchor',controller.signal,phase=>phases.push(phase))
+ for(const listener of listeners)listener('turn/completed',{threadId:'other',turn:{status:'completed'}})
+ controller.abort();await assert.rejects(pending,/cancelled/)
+ assert.deepEqual(calls,['thread/compact/start']);assert.deepEqual(phases,['compaction.started']);assert.equal(listeners.size,0)
+})
+
+
+test('Codex ignores a resumed previous-turn usage notification queued before current acceptance, without admitting foreign work',async t=>{
+ const f=fixture();t.after(()=>fs.rmSync(f.root,{recursive:true,force:true}));const observed:unknown[]=[];f.request.observeRuntime=p=>observed.push(p)
+ const backend=new CodexBackend({executable:'/disposable/codex',configDirectory:f.root,model:'gpt-5.4',catalogGate:{async verify(){}},rpcFactory:()=>f.rpc,connection:async()=>({definition,async execute(){assert.fail('No tool requested')}})})
+ const usage={last:{inputTokens:5,cachedInputTokens:1,outputTokens:2,reasoningOutputTokens:0}}
+ await backend.prepare(f.request);observed.length=0
+ f.setBeforeTurn(()=>f.event('thread/tokenUsage/updated',{threadId:'provider',turnId:'previous-completed-turn',tokenUsage:usage}))
+ const running=backend.run(f.request,async()=>{});await new Promise(resolve=>setImmediate(resolve))
+ f.event('thread/tokenUsage/updated',{threadId:'provider',turnId:'turn',tokenUsage:usage})
+ f.event('turn/completed',{threadId:'provider',turn:{id:'turn',status:'completed'}})
+ assert.equal((await running).outcome,'success');assert.deepEqual(observed,[{phase:'usage',inputTokens:5,cachedInputTokens:1,outputTokens:2,reasoningTokens:0}])
+ assert.equal(f.calls.filter(c=>c.method==='turn/start').length,1);await backend.close()
+})
+test('Codex still rejects foreign-thread usage and wrong-turn messages or completions',async t=>{
+ for(const [method,params]of [
+  ['thread/tokenUsage/updated',{threadId:'foreign',turnId:'previous',tokenUsage:{last:{inputTokens:1,cachedInputTokens:0,outputTokens:0,reasoningOutputTokens:0}}}],
+  ['item/agentMessage/delta',{threadId:'provider',turnId:'previous',itemId:'foreign-message',delta:'must not be emitted'}],
+  ['turn/completed',{threadId:'provider',turn:{id:'previous',status:'completed'}}]
+ ] as const){
+  const f=fixture();t.after(()=>fs.rmSync(f.root,{recursive:true,force:true}));const messages:AgentDriverEvent[]=[]
+  const backend=new CodexBackend({executable:'/disposable/codex',configDirectory:f.root,model:'gpt-5.4',catalogGate:{async verify(){}},rpcFactory:()=>f.rpc,connection:async()=>({definition,async execute(){assert.fail('No foreign work')}})})
+  await backend.prepare(f.request);const running=backend.run(f.request,async e=>{messages.push(e)});await new Promise(resolve=>setImmediate(resolve));f.event(method,params)
+  await assert.rejects(running,/another (?:provider Session|turn)/);assert.equal(messages.filter(e=>e.type==='message.delta').length,0);await backend.close()
+ }
 })

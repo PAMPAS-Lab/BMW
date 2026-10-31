@@ -3,8 +3,8 @@ import type {Input} from 'mediabunny'
 import type {AudioEvidence} from '../audio-evidence-contract.js'
 /** Decode a bounded interval without gain, resampling or channel mixing. This does not perform perceptual listening. */
 export async function sampleAudioEvidence(input:Input,startSeconds:number,endSeconds:number):Promise<{data:Uint8Array;info:AudioEvidence}>{
- const tracks=await input.getAudioTracks();if(tracks.length!==1||!await tracks[0]!.canDecode())throw new Error('Audio evidence requires exactly one decodable audio track; silence is not inferred from a missing track.')
- const track=tracks[0]!,sampleRate=await track.getSampleRate(),channels=await track.getNumberOfChannels(),end=await track.computeDuration(),first=await track.getFirstTimestamp()
+ const tracks=await input.getAudioTracks(),track=await input.getPrimaryAudioTrack();if(!track||tracks.length>15||!await track.canDecode())throw new Error('Audio evidence requires a decodable primary audio track within the fifteen-track archive contract; silence is not inferred from a missing track.')
+ const sampleRate=await track.getSampleRate(),channels=await track.getNumberOfChannels(),end=await track.computeDuration(),first=await track.getFirstTimestamp()
  if(startSeconds<Math.max(0,first)||endSeconds>end||sampleRate<8000||sampleRate>96000||channels<1||channels>8)throw new Error('Audio evidence interval or native format is outside its bounded track.')
  const frames=Math.round((endSeconds-startSeconds)*sampleRate),data=new Uint8Array(44+frames*channels*2),view=new DataView(data.buffer),written=new Uint8Array(frames),values=new Float32Array(frames*channels)
  if(frames<1||frames*channels>8*96000*10)throw new Error('Audio evidence sample budget exceeded.')
@@ -23,5 +23,5 @@ export async function sampleAudioEvidence(input:Input,startSeconds:number,endSec
   for(let frame=from;frame<to;frame++){if(!written[frame])missingFrames++;for(let channel=0;channel<channels;channel++){const at=frame*channels+channel,value=values[at]!,absolute=Math.abs(value);if(absolute>1)clippedSamples++;peak=Math.max(peak,absolute);sum+=value*value;windowPeak=Math.max(windowPeak,absolute);windowSum+=value*value;const v=Math.max(-1,Math.min(1,value));view.setInt16(44+at*2,Math.round(v*(v<0?32768:32767)),true)}}
   windows.push({startSeconds:startSeconds+from/sampleRate,endSeconds:startSeconds+to/sampleRate,rms:Math.sqrt(windowSum/((to-from)*channels)),peak:windowPeak})
  }
- return {data,info:{startSeconds,endSeconds,sampleRate,channels,frames,peak,rms:Math.sqrt(sum/(frames*channels)),clippedSamples,missingFrames,windows,listeningStatus:'not-performed',processing:'native-rate-and-channels; PCM16 quantization; no gain/resampling',timebase:'input-file-PTS'}}
+ return {data,info:{inputAudioTrackId:track.id,inputAudioTrackCount:tracks.length,audioSelection:'primary-audio-track',startSeconds,endSeconds,sampleRate,channels,frames,peak,rms:Math.sqrt(sum/(frames*channels)),clippedSamples,missingFrames,windows,listeningStatus:'not-performed',processing:'native-rate-and-channels; PCM16 quantization; no gain/resampling',timebase:'input-file-PTS'}}
 }

@@ -5,6 +5,8 @@ import {Input,CustomSource,MP4,WEBM,MPEG_TS,EncodedPacketSink,Output,AppendOnlyS
 import {preservationPacketParts,preservationPacketFormat,PreservationPacketTimeline,hashPreservationPacket} from './preservation-packets.js'
 import {assemblePreservedVtt,parsePreservedVtt,SUBTITLE_LIMITS} from './hls-subtitles.js'
 import type {SubtitleSegmentInput} from './hls-subtitles.js'
+import {encodePreservationEvidence,assertPreservationEvidencePlan} from './preservation-evidence.js'
+import {orderedPreservationTransfer} from './preservation-transfer.js'
 import {ArtifactJobIO} from './artifact-job-io.js'
 import {MEDIA_LIMITS} from './media-contract.js'
 import {ARCHIVE_LIMITS} from './archive-limits.js'
@@ -167,13 +169,15 @@ export async function preserveMedia(input:PreservationInput){
     playlist=await fetchPlaylist(selectedVariant.url,'video')
    }
    reserve(playlist)
+   const audiovisualInputs:{track:string;p:HlsPlaylist;rendition?:HlsRendition;outputDefault?:boolean}[]=[{track:'video',p:playlist},...audioPlaylists.map((a,i)=>({track:'audio-'+i,p:a.playlist,rendition:a.rendition,outputDefault:a.outputDefault}))]
+   assertPreservationEvidencePlan(root,prefix,resources,[...subtitleInputs.flatMap((s,i)=>s.playlist.segments.map(item=>({url:item.url,track:'subtitle-'+i,durationSeconds:item.duration}))),...audiovisualInputs.flatMap(({track,p})=>[...(p.initialization?[{url:p.initialization,track}]:[]),...p.segments.map(item=>({url:item.url,track,durationSeconds:item.duration}))])])
    // Validate small subtitle inputs before downloading large AV tracks. They
    // remain original, hashed resources; timing is resolved after AV PTS is known.
    for(const [index,subtitle]of subtitleInputs.entries()){
     if(Math.abs(subtitle.playlist.duration-playlist.duration)>.35)throw new Error('Subtitle playlist does not cover the complete selected VOD.')
     let elapsed=0
-    for(const item of subtitle.playlist.segments){
-     const response=await fetchBytes(item.url,SUBTITLE_LIMITS.segmentBytes);subtitleBytes+=response.data.length
+    for await(const {item,response}of orderedPreservationTransfer(subtitle.playlist.segments,async item=>({item,response:await fetchBytes(item.url,SUBTITLE_LIMITS.segmentBytes)}),guard,error=>controller.abort(error))){
+     subtitleBytes+=response.data.length
      if(subtitleBytes>SUBTITLE_LIMITS.bytes)throw new Error('Combined subtitle byte budget exceeded.')
      subtitleCues+=parsePreservedVtt(response.data).cues.length
      if(subtitleCues>SUBTITLE_LIMITS.cues)throw new Error('Combined subtitle cue budget exceeded.')
@@ -182,11 +186,10 @@ export async function preserveMedia(input:PreservationInput){
      subtitle.segments.push({artifactId:saved.artifactId,data:response.data,elapsedSeconds:elapsed,durationSeconds:item.duration});elapsed+=item.duration
     }
    }
-   const audiovisualInputs:{track:string;p:HlsPlaylist;rendition?:HlsRendition;outputDefault?:boolean}[]=[{track:'video',p:playlist},...audioPlaylists.map((a,i)=>({track:'audio-'+i,p:a.playlist,rendition:a.rendition,outputDefault:a.outputDefault}))]
    for(const [index,{track,p,rendition,outputDefault}]of audiovisualInputs.entries()){
     const artifactId=prefix+'-'+track+(p.initialization?'.mp4':'.ts'),file=path.join(root,artifactId),handle=await fs.open(file,'wx',0o600);created.push(file)
     try{
-     for(const item of [...(p.initialization?[{url:p.initialization,duration:undefined}]:[]),...p.segments]){const r=await fetchBytes(item.url,32*1024*1024),saved=await save(r.data,item.duration===undefined?'init.bin':'segment.bin');resources.push({...saved,url:r.url,role:item.duration===undefined?'initialization':'segment',track,...(item.duration===undefined?{}:{durationSeconds:item.duration})});await guard();await handle.writeFile(r.data)}
+     for await(const {item,r}of orderedPreservationTransfer([...(p.initialization?[{url:p.initialization,duration:undefined}]:[]),...p.segments],async item=>({item,r:await fetchBytes(item.url,32*1024*1024)}),guard,error=>controller.abort(error))){const saved=await save(r.data,item.duration===undefined?'init.bin':'segment.bin');resources.push({...saved,url:r.url,role:item.duration===undefined?'initialization':'segment',track,...(item.duration===undefined?{}:{durationSeconds:item.duration})});await guard();await handle.writeFile(r.data)}
      await handle.sync();await guard();sources.push(artifactId);playlistDurations.push({track,artifactId,durationSeconds:p.duration})
      if(index>0&&rendition)audioInputs.push({artifactId,rendition,outputDefault:outputDefault===true})
     }finally{await handle.close()}
@@ -207,7 +210,7 @@ export async function preserveMedia(input:PreservationInput){
    for(const track of subtitleTracks)for(const [id,hash]of [[track.artifactId,track.sha256],[track.indexArtifactId,track.indexSha256]]){const io=await ArtifactJobIO.openArchive(root,id!);try{if(await io.fingerprint(signal)!==hash)throw new Error('Preserved subtitle or timestamp index changed.')}finally{await io.close()}}
    const audioRenditions=audioInputs.map(a=>({artifactId:a.artifactId,group:a.rendition.group,name:a.rendition.name,language:a.rendition.language,manifestDefault:a.rendition.default,outputDefault:a.outputDefault}))
    const proof={version:1,basis:'HTTP-delivery-bytes',uploadedOriginal:'unknown',pageUrl:input.pageUrl,videoIdentity,requestedUrl:input.url,selectedVariant,selectionPolicy:'highest-bandwidth-video/all-declared-audio-and-subtitles/default-from-selected-audio-group-or-first',audioRenditions,subtitleTracks,completeSubtitles:true,resources,assembledTrackArtifactIds:sources,playlistDurations,...(input.completeProgram?{completeProgram:input.completeProgram}:{}),remux:{...remux,kind:'packet-copy',reencoded:false},capturedAt:new Date().toISOString()}
-   const proofData=Buffer.from(JSON.stringify(proof,null,2)+'\n');if(proofData.length>1024*1024)throw new Error('Preservation evidence exceeds 1 MiB.');const evidence=await save(proofData,'preservation.json');await guard(true);success=true
+   const evidence=await save(encodePreservationEvidence(proof),'preservation.json');await guard(true);success=true
    return {...remux,ownedArtifactIds:created.map(file=>path.basename(file)),type:'video',contentType:'video/mp4',videoIdentity,preservation:{basis:proof.basis,uploadedOriginal:'unknown',reencoded:false,completeVod:true,completeSubtitles:true,subtitleTracks,audioRenditions,selectionPolicy:proof.selectionPolicy,resources,assembledTrackArtifactIds:sources,selectedVariant,playlistDurations,proofArtifactId:evidence.artifactId,proofSha256:evidence.sha256},timebase:'delivery-file-PTS; AV MP4 plus complete external WebVTT sidecars, not inferred player source time'}
   }
   if(!/^(video|audio)\//.test(first.mime))throw new Error('Direct preservation requires a video/audio response or complete HLS VOD.')

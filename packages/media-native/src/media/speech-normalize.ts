@@ -7,8 +7,9 @@ import type {SpeechSourceRange} from '../speech-range.js'
 /** Fixed downmix and WebAudio resampling. Gaps retain silence; no gain or speed change; PCM16 saturation is reported. */
 export async function normalizeSpeech(input:Input,requestedRange?:SpeechSourceRange):Promise<{data:Uint8Array;info:SpeechNormalization}> {
  const tracks=await input.getAudioTracks()
- if(tracks.length!==1||!await tracks[0].canDecode())throw new Error('Speech normalization requires exactly one decodable audio track.')
- const track=tracks[0],rate=await track.getSampleRate(),channels=await track.getNumberOfChannels(),duration=await track.computeDuration(),codec=await track.getCodec()
+ const track=await input.getPrimaryAudioTrack()
+ if(!track||tracks.length>15||!await track.canDecode())throw new Error('Speech normalization requires a decodable primary audio track within the fifteen-track archive contract.')
+ const rate=await track.getSampleRate(),channels=await track.getNumberOfChannels(),duration=await track.computeDuration(),codec=await track.getCodec()
  const range=requestedRange?assertSpeechSourceRange(requestedRange):undefined,sourceStart=range?.startSeconds??0,sourceEnd=range?.endSeconds??duration,span=sourceEnd-sourceStart
  if(!Number.isSafeInteger(rate)||rate<8000||rate>96000||!Number.isSafeInteger(channels)||channels<1||channels>8||!Number.isFinite(duration)||duration<=0||duration>(range?1800:180)||sourceEnd>duration||sourceStart>=sourceEnd)throw new Error('Speech input requires an actual source interval of at most 180 seconds, within a file of at most thirty minutes.')
  const mono=new AudioBuffer({numberOfChannels:1,sampleRate:rate,length:Math.ceil(span*rate)}),target=mono.getChannelData(0)
@@ -33,5 +34,5 @@ export async function normalizeSpeech(input:Input,requestedRange?:SpeechSourceRa
  const text=(offset:number,value:string)=>{for(let index=0;index<value.length;index++)data[offset+index]=value.charCodeAt(index)}
  text(0,'RIFF');view.setUint32(4,data.length-8,true);text(8,'WAVE');text(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);view.setUint32(24,16000,true);view.setUint32(28,32000,true);view.setUint16(32,2,true);view.setUint16(34,16,true);text(36,'data');view.setUint32(40,frames*2,true)
  for(let index=0;index<frames;index++){if(Math.abs(samples[index])>1)clippedSamples++;const sample=Math.max(-1,Math.min(1,samples[index]));view.setInt16(44+index*2,Math.round(sample*(sample<0?32768:32767)),true)}
- return {data,info:{kind:'speech-pcm',sampleRate:16000,channels:1,sampleType:'pcm-s16le',frames,durationSeconds:frames/16000,inputSampleRate:rate,inputChannels:channels,decodedStartSeconds:first,decodedEndSeconds:end,clippedSamples,downmix:'channel-mean',discardedTailFrames,discardedHeadFrames,...(range?{sourceRange:range,sourceDurationSeconds:duration}:{})}}
+ return {data,info:{inputAudioTrackId:track.id,inputAudioTrackCount:tracks.length,audioSelection:'primary-audio-track',kind:'speech-pcm',sampleRate:16000,channels:1,sampleType:'pcm-s16le',frames,durationSeconds:frames/16000,inputSampleRate:rate,inputChannels:channels,decodedStartSeconds:first,decodedEndSeconds:end,clippedSamples,downmix:'channel-mean',discardedTailFrames,discardedHeadFrames,...(range?{sourceRange:range,sourceDurationSeconds:duration}:{})}}
 }

@@ -76,3 +76,8 @@ test('Clipped metadata remains explicitly truncated rather than silently admitte
  const result=await collectPageSource(f.wc,{bodySelector:'article',authorSelector:'.author',publishedSelector:'.date'},async()=>({items:[],range:scope,truncated:false}))
  assert.equal(result.author?.length,280);assert.equal(result.publishedAt?.length,80);assert.equal(result.result,'truncated');assert.match(result.error!,/author, publishedAt/);assert.equal(result.scope.truncated,false)
 })
+
+test('Published TIME preserves an explicit basic ISO offset instead of falling back to a date-only label',async()=>{
+ const f=fixture(async()=>({text:'Published Wed, Oct 28 2026',range:scope,dateTime:'2026-10-28T16:13:00-0400'})),result=await collectPageSource(f.wc,{bodySelector:'article',publishedSelector:'time'},async()=>({items:[],range:scope,truncated:false}));assert.equal(result.publishedAt,'2026-10-28T16:13:00-04:00');assert.equal(result.result,'observed')
+ for(const value of ['2026-10-28T16:13:00','2026-10-28T16:13:00-CST']){const f=fixture(async()=>({text:'Oct 28, 2026',range:scope,dateTime:value}));assert.equal((await collectPageSource(f.wc,{bodySelector:'article',publishedSelector:'time'},async()=>({items:[],range:scope,truncated:false}))).publishedAt,'Oct 28, 2026')}
+})

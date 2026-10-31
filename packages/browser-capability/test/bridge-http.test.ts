@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import http from 'node:http'
 import {once} from 'node:events'
+import type {Socket} from 'node:net'
 import test from 'node:test'
 import {Agent,fetch,getGlobalDispatcher,setGlobalDispatcher} from 'undici'
 import {createBridgeHttp} from '../src/bridge-http.js'
@@ -25,4 +26,23 @@ test('Private Bridge transport never follows an authenticated redirect',async()=
  const destination=http.createServer((_request,response)=>{received++;response.end('unexpected')});destination.listen(0,'127.0.0.1');await once(destination,'listening');const address=destination.address();if(!address||typeof address==='string')throw new Error('Expected fixture')
  const server=http.createServer((_request,response)=>{response.writeHead(302,{location:'http://127.0.0.1:'+address.port+'/execute'});response.end()});server.listen(0,'127.0.0.1');await once(server,'listening');const source=server.address();if(!source||typeof source==='string')throw new Error('Expected fixture');const client=createBridgeHttp('http://127.0.0.1:'+source.port)
  try{await assert.rejects(client.request('execute',{method:'POST',headers:{authorization:'Bearer fixture-not-a-secret'},body:'{}',signal:AbortSignal.timeout(1000)}));assert.equal(received,0)}finally{await client.close();server.closeAllConnections();destination.closeAllConnections();await Promise.all([new Promise<void>(resolve=>server.close(()=>resolve())),new Promise<void>(resolve=>destination.close(()=>resolve()))])}
+})
+
+test('Private Bridge idle-close races retain every write reply without replaying an executed job',async()=>{
+ const sockets=new Set<Socket>(),executions=new Map<string,number>()
+ const server=http.createServer(async(request,response)=>{let body='';for await(const chunk of request)body+=chunk;const id=String(JSON.parse(body).id);executions.set(id,(executions.get(id)??0)+1);response.on('error',()=>{});response.end('{"ok":true}')})
+ server.on('connection',socket=>{sockets.add(socket);socket.on('close',()=>sockets.delete(socket));socket.on('error',()=>{})})
+ server.listen(0,'127.0.0.1');await once(server,'listening');const address=server.address();if(!address||typeof address==='string')throw new Error('Expected loopback fixture')
+ const client=createBridgeHttp('http://127.0.0.1:'+address.port)
+ try{
+  const call=async(id:string)=>{const result=await client.request('execute',{method:'POST',headers:{authorization:'Bearer fixture-not-a-secret'},body:JSON.stringify({id}),signal:AbortSignal.timeout(3000)});assert.deepEqual(await result.json(),{ok:true})}
+  for(let i=0;i<20;i++){
+   await call('warm-'+i);await new Promise<void>(resolve=>setImmediate(resolve))
+   for(const socket of sockets)socket.end()
+   await call('write-'+i)
+   await new Promise<void>(resolve=>setTimeout(resolve,2))
+  }
+  assert.equal(executions.size,40)
+  assert.ok([...executions.values()].every(count=>count===1),'Non-idempotent jobs must never be transparently replayed')
+ }finally{await client.close();server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()))}
 })

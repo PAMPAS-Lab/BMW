@@ -1,0 +1,139 @@
+{
+  "verifiedAt": "2026-10-31T11:49:46.849Z",
+  "baseCommit": "6ca08fbf89669ad9c6f637582c83d98adaab025e",
+  "build": "passed",
+  "check": "passed",
+  "diffCheck": "passed",
+  "functionalCoverage": "regenerated and checked",
+  "classified": {
+    "baseline": {
+      "not-run": 104,
+      "passed": 137
+    },
+    "finalUnitBoundary": {
+      "not-run": 212,
+      "passed": 29
+    },
+    "baselineSourceDrift": [
+      "scripts/assistant-application-smoke.ts"
+    ],
+    "scope": "137 unit/contract/boundary entries passed. Only assistant fixture changed afterward; final29 unit/boundary checks and the changed native fixture passed against current hashes."
+  },
+  "native": {
+    "isolated": true,
+    "paidModel": false,
+    "productionProfile": false,
+    "cases": [
+      {
+        "name": "identity",
+        "initialExitCode": 0,
+        "initialElapsedMs": 1754.5019579999998,
+        "finalStatus": "passed"
+      },
+      {
+        "name": "driver",
+        "initialExitCode": 0,
+        "initialElapsedMs": 3485.338667,
+        "finalStatus": "passed"
+      },
+      {
+        "name": "dsh",
+        "initialExitCode": 0,
+        "initialElapsedMs": 14065.525417,
+        "finalStatus": "passed"
+      },
+      {
+        "name": "desktop",
+        "initialExitCode": 0,
+        "initialElapsedMs": 25976.872958000004,
+        "finalStatus": "passed"
+      },
+      {
+        "name": "studio",
+        "initialExitCode": 0,
+        "initialElapsedMs": 66312.596291,
+        "finalStatus": "passed"
+      },
+      {
+        "name": "browser",
+        "initialExitCode": 0,
+        "initialElapsedMs": 3245.6297500000073,
+        "finalStatus": "passed"
+      },
+      {
+        "name": "capture",
+        "initialExitCode": 0,
+        "initialElapsedMs": 35407.06937500001,
+        "finalStatus": "passed"
+      },
+      {
+        "name": "media",
+        "initialExitCode": 0,
+        "initialElapsedMs": 25569.629042000015,
+        "finalStatus": "passed"
+      },
+      {
+        "name": "video",
+        "initialExitCode": 0,
+        "initialElapsedMs": 40729.72195800001,
+        "finalStatus": "passed"
+      },
+      {
+        "name": "narration",
+        "initialExitCode": 0,
+        "initialElapsedMs": 1638.710625000007,
+        "finalStatus": "passed"
+      },
+      {
+        "name": "assistant",
+        "initialExitCode": 1,
+        "initialElapsedMs": 31529.09591600002,
+        "finalStatus": "passed",
+        "initialFailure": "settings cancellation waits for native cleanup timeout",
+        "fix": "Wait until fixture provider actually enters its native login hold before testing cancellation; preserve cleanup assertions, no timeout increase or production change",
+        "rerunLogSha256": "e8c3801f8bb6ac18efcee1a62d08d39b2d955d1612bcd4dc41a6fba180312905"
+      }
+    ]
+  },
+  "sourceHashes": {
+    "docs/FUNCTIONAL_SPEC.md": "7763a5cb7dfd83b5c7e84fad079ed972c8dc76ec5240abce0133afb20e092f9e",
+    "docs/NEWS_DAILY.md": "d74742fc0bf3af7fa461669f518a6ab538a05ee52311a6f8e3faaeb67ca6ecdb",
+    "packages/agent-contract/index.ts": "1f96728943ad798060e9bbceb31b65dbd64465f71742d043b41c9c73e0981322",
+    "packages/agent-contract/src/conversation.ts": "1cd74af282f285f8d89a9db7b0ceb43d3f502b0d260ff96eaef695769aa5f5a2",
+    "packages/browser-capability/src/bridge-http.ts": "7e31067f49d86a60dff9af8d014f88ae6aa7cf70535da3c27e91970a78c72053",
+    "packages/browser-capability/src/bridge-server.ts": "e8d2404ba38e27af85419f3a36f0e99fb23add1572680a4d5d0426823c3751f4",
+    "packages/browser-capability/src/browser-kernel.ts": "78cd22f85fb0b1b90ffddfb25ab16ed61e3930bfe265fbafa83db2e08939aa17",
+    "packages/browser-capability/src/browser-schema.ts": "df7fc13dd23f080e433b94395fd0f59a29cdc6f3eb5a9e7b7579ab5278c339d3",
+    "packages/browser-capability/src/collect-page-source.ts": "14d451a36ba14f5e59d363ad438df097350083ad4216ef184b5035f3b4fba208",
+    "packages/browser-capability/src/publisher-video.ts": "7cb7a610678be8c8a22836e7112d7faa5eb107b79076d16878ec7f0d96389d22",
+    "packages/browser-capability/test/bridge-http.test.ts": "226dc2c49ef7075c385296e07c0ffd90c98baa135c82bb18f603e1e3f04ee921",
+    "packages/browser-capability/test/collect-page-source.test.ts": "9d9b4dc5d3873976a3f6f891a147454c415849b468518d7162e436ca6f9a4825",
+    "packages/browser-capability/test/publisher-video.test.ts": "270007b89be61c94cbaf99b21bc7968502061743f71c58da53519319f864671c",
+    "packages/harness-codex/src/codex-backend.ts": "d89bcd433b8bc733c5ddeabd5fdf9c6bfd2836dd9a6784ba98db659a34efb24e",
+    "packages/harness-codex/src/codex-policy.ts": "732355e91041056df8e533d1fec7810538f01aaa060494e185aa28e48581c05a",
+    "packages/harness-codex/test/codex-backend.test.ts": "aaa9d64aa028115ead5c9033b4f3874bf2af1896f389bc4faaad89627a2822de",
+    "packages/media-native/src/archive-limits.ts": "effa406b1541172f5e7329864b69a5f391a45fef2b7912e05dd3a93ab962b0bf",
+    "packages/media-native/src/audio-evidence-contract.ts": "130f015113a620481060524950748684eb0d67add294713b4f36e538aa31094a",
+    "packages/media-native/src/media-archive-segment.ts": "ff538b51c2fb4b4d2c700b483d5436e2385fa6ca53af1be8976007be993a6dcc",
+    "packages/media-native/src/media-contract.ts": "e9c7fbbab02b79898a82074c6908d8b75a00175e3e4b8bc0b39c6d350c60ae08",
+    "packages/media-native/src/media-preservation.ts": "f337d451751496f0646e25c66c31eee59579b25552be22b17e0f9ed1dba60710",
+    "packages/media-native/src/media/audio-evidence.ts": "d29932f7dbc1b7d88c431ef1e1cd9d746c5537fd7d99e0b2442f2f99f468c992",
+    "packages/media-native/src/media/speech-normalize.ts": "3d34e4edea5b05b0e099818f6d84afff1137a8ed27ae9239a67f7cb808a53dcf",
+    "packages/media-native/src/speech-contract.ts": "59a5c37ea03467bf2bcb59330dfc7905bd6d08591580fb042e1a4b2598d228b1",
+    "packages/media-native/test/media-preservation.test.ts": "c541358ebb9baf90c496e52d1df40c0ce5816bf74ea708d5d2e70b7cc696959b",
+    "packages/media-native/test/speech.test.ts": "75f027b407f6c032856f8d8772fcdbf4df66e5ef3f9e9596b7b3a82605ba6975",
+    "packages/platform/src/agent-history-store.ts": "53bdfc39fde210a014a0e1a345b347c0aa681127ff6cda13d0c837e39ede6737",
+    "packages/platform/src/assistant-service.ts": "543dd1171104a0131dd99f71924dbe3516b1292807768eca2094e6fb194a9f80",
+    "packages/platform/test/agent-history-store.test.ts": "c8df4ec793a28684784e68c1667f98c25733e64fcfbca4137145450862eb7ac2",
+    "scripts/assistant-application-smoke.ts": "7488830d46feade1ca2529e5332ba18df81f77c93b5fe025e9067d55b527244e",
+    "scripts/media-processing-smoke.ts": "012798d03a2efbbadf6528498e6e7ceb2567fb392833da57c1c22bbd6a27906d",
+    "scripts/video-identity-smoke.ts": "b76a0634524bdfe675846b8be6b99216a5395555afdddca74343f8b2d77f4263"
+  },
+  "buildSourceCount": 659,
+  "buildOutputCount": 625,
+  "limitations": [
+    "No paid-model or production-profile claim from isolated verification.",
+    "Public-site sample reports retain restricted, advertising, timeout and incomplete results; not whole-site availability guarantees.",
+    "Ignored runtime ledgers, profiles, credentials and media are not included in the commit."
+  ]
+}

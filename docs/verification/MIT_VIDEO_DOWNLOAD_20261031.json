@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-31T10:14:08.195Z",
+  "scope": "One public MIT Technology Review article and its attached Brightcove player; signed-out disposable profile and Project. Identity binding succeeded before the final ad-state evidence representation adjustment. Complete preservation did not finish.",
+  "page": "https://www.technologyreview.com/2023/05/03/1072589/video-geoffrey-hinton-google-ai-risk-ethics/",
+  "identity": {
+    "version": 1,
+    "platform": "page",
+    "targetId": "https://www.technologyreview.com/2023/05/03/1072589/video-geoffrey-hinton-google-ai-risk-ethics/",
+    "resourceId": "mit-tr:6326759990112"
+  },
+  "durationSeconds": 2306.738000000004,
+  "resourceRole": [
+    "hls"
+  ],
+  "outcome": "timeout",
+  "timeoutMs": 60000,
+  "cleanup": "no artifact files remained",
+  "humanListening": "not performed"
+}

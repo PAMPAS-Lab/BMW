@@ -110,3 +110,11 @@ test('A single AAC buffer crossing source zero may retain bounded preroll eviden
  for(const [start,end,codec]of [[-.1,.01,'aac'],[-.01,-.001,'aac'],[-.01,.1,'aac'],[-.01,.01,'opus'],[-.01,.01,'pcm-s16']] as const)assert.throws(()=>speechDecodedRange(start,end,900,44100,codec))
  const proof=evidence();assertSpeechEvidence({...proof,normalization:{...proof.normalization,discardedHeadFrames:784}});assert.throws(()=>assertSpeechEvidence({...proof,normalization:{...proof.normalization,discardedHeadFrames:2048}}))
 })
+
+test('Primary audio selection is explicit and bounded while legacy single-track evidence stays valid',()=>{
+ const value=evidence(),selection={inputAudioTrackId:2,inputAudioTrackCount:3,audioSelection:'primary-audio-track'}
+ assertSpeechEvidence(value);assertSpeechEvidence({...value,normalization:{...normalization,...selection}})
+ const request={action:'media.speech.normalize',artifactId:'voice.wav'} as const
+ assertMediaWorkerResult({kind:'speech-pcm',info:{...normalization,...selection}},request)
+ for(const bad of [{inputAudioTrackId:2},{...selection,inputAudioTrackCount:16},{...selection,inputAudioTrackId:0},{...selection,audioSelection:'all'}]){assert.throws(()=>assertSpeechEvidence({...value,normalization:{...normalization,...bad}}));assert.throws(()=>assertMediaWorkerResult({kind:'speech-pcm',info:{...normalization,...bad}},request))}
+})

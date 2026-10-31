@@ -1,8 +1,9 @@
+import {CodexContextLedger,compactCodexContext,legacyCodexContextHeavy} from './codex-context.js'
 import fs from 'node:fs'
 import path from 'node:path'
 import { agentIdentifier, agentRecord, agentText } from '@bmw-agent/agent-contract'
-import type { AgentBackend, AgentDriverDescription, AgentDriverEvent, AgentRunRequest, AgentRunResult } from '@bmw-agent/agent-contract'
-import { CodexCatalogGate, codexThreadParameters, codexDisabledMcpServers, initializeCodex } from './codex-policy.js'
+import type { AgentBackend, AgentDriverDescription, AgentDriverEvent, AgentRunRequest, AgentRunResult, AgentRuntimeObservation, AgentRuntimeFailureCategory } from '@bmw-agent/agent-contract'
+import { CodexCatalogGate, codexThreadParameters,codexToolInstructions,codexInputScope, codexDisabledMcpServers, initializeCodex } from './codex-policy.js'
 import type { CodexBrowserDefinition } from './codex-policy.js'
 import { createCodexRpc } from './codex-rpc.js'
 import type { CodexRpc } from './codex-rpc.js'
@@ -10,6 +11,28 @@ import {CodexSettings,codexAccountModels} from './codex-settings.js'
 import {findCodexExecutable,rememberCodexExecutable} from './codex-installation.js'
 import {codexNeedsBrowserCatalog,codexVerifiedProtocolVersions} from './codex-model-catalog.js'
 import type {AgentSettingsRequest,AgentSettingsContext,AgentDriverSettings} from '@bmw-agent/agent-contract'
+
+/** Normalize only official structured codes. Never inspect error messages/details. */
+function retryObservation(raw:unknown):AgentRuntimeObservation {
+ const point:AgentRuntimeObservation={phase:'retry'}
+ if(!raw||typeof raw!=='object'||Array.isArray(raw))return point
+ const info=(raw as Record<string,unknown>).codexErrorInfo
+ const categories:Readonly<Record<string,AgentRuntimeFailureCategory>>={contextWindowExceeded:'context-limit',sessionBudgetExceeded:'budget',usageLimitExceeded:'budget',rateLimitExceeded:'rate-limit',flexUnavailable:'capacity',serverOverloaded:'capacity',unauthorized:'authentication',badRequest:'request',internalServerError:'internal',cyberPolicy:'policy',misalignmentPolicyViolation:'policy',tooManyDenials:'policy',other:'other'}
+ if(typeof info==='string'){point.failureCategory=Object.hasOwn(categories,info)?categories[info]:'other';return point}
+ if(!info||typeof info!=='object'||Array.isArray(info))return point
+ const row=info as Record<string,unknown>
+ for(const [key,category] of [['httpConnectionFailed','connection'],['responseStreamConnectionFailed','connection'],['responseStreamDisconnected','stream'],['responseTooManyFailedAttempts','connection']] as const){
+  if(!Object.hasOwn(row,key))continue
+  point.failureCategory=category
+  const detail=row[key]
+  if(detail&&typeof detail==='object'&&!Array.isArray(detail)){
+   const status=(detail as Record<string,unknown>).httpStatusCode
+   if(typeof status==='number'&&Number.isInteger(status)&&status>=100&&status<=599)point.httpStatus=status
+  }
+  return point
+ }
+ point.failureCategory='other';return point
+}
 
 export interface CodexBrowserConnection {
   definition: CodexBrowserDefinition
@@ -33,6 +56,7 @@ interface Run {
   rpc: CodexRpc
   connection: CodexBrowserConnection
   threadId: string
+  contextLedger?:CodexContextLedger
   turnId: string | null
   released: boolean
   accepted: Promise<void>
@@ -114,7 +138,7 @@ export class CodexBackend implements AgentBackend {
       const catalog=await codexAccountModels(rpc)
       if(catalog.authentication.state!=='ready'||!catalog.models.some(row=>row.id===model))throw new Error('Codex model is unavailable for the signed-in account; open Agent settings')
       request.signal.throwIfAborted()
-      const params = codexThreadParameters(request.project.directory, model, connection.definition, agentText(request.context, 16384),await codexDisabledMcpServers(rpc))
+      const params = codexThreadParameters(request.project.directory, model, connection.definition, agentText(request.context,16384),await codexDisabledMcpServers(rpc))
       let started: Record<string, unknown>
       if (request.externalSessionId) {
         // Dynamic tools persist in official rollout metadata. Resume never adopts
@@ -127,10 +151,22 @@ export class CodexBackend implements AgentBackend {
       run.threadId = agentIdentifier(agentRecord(started.thread).id)
       if (request.externalSessionId && run.threadId !== request.externalSessionId) throw new Error('Codex resumed a different provider Session')
       if (started.model !== model) throw new Error('Codex changed the model after catalog verification')
-      // Resume configuration does not replace developer items already retained
-      // in native history. Append this input's scope after that history through
-      // the official protocol so the latest Host context is model-visible.
-      await rpc.call('thread/inject_items',{threadId:run.threadId,items:[{type:'message',role:'developer',content:[{type:'input_text',text:params.developerInstructions}]}]})
+      const ledger=new CodexContextLedger(this.options.configDirectory,request.project.id,request.sessionId,run.threadId)
+      run.contextLedger=ledger
+      const scope=codexInputScope(agentText(request.context,16384)),guide=codexToolInstructions(connection.definition)
+      if(ledger.needsCompaction(Boolean(request.externalSessionId),legacyCodexContextHeavy(agentRecord(started.thread)))){
+        ledger.maintenanceStarted()
+        const maintenance=new AbortController()
+        try{await Promise.race([compactCodexContext(rpc,run.threadId,AbortSignal.any([request.signal,maintenance.signal]),phase=>{try{request.observeRuntime?.({phase})}catch{/* Diagnostic only. */}}),run.done.then(()=>{throw new Error('Codex ended during context maintenance')})])}finally{maintenance.abort()}
+        ledger.compacted()
+        // Official compaction reinstalls the current runtime developer instructions.
+        ledger.acknowledged(scope,guide,0)
+      }else if(!request.externalSessionId){ledger.acknowledged(scope,guide,0)}
+      const instructions=ledger.instructions(scope,guide)
+      if(instructions!==null){
+        await rpc.call('thread/inject_items',{threadId:run.threadId,items:[{type:'message',role:'developer',content:[{type:'input_text',text:instructions}]}]})
+        ledger.acknowledged(scope,guide,Buffer.byteLength(instructions))
+      }
       request.signal.throwIfAborted()
       return { ...this.description, capabilities: { ...this.description.capabilities, browserOnly: true } }
     } catch (error: unknown) { await this.cleanup(run); throw error }
@@ -150,7 +186,11 @@ export class CodexBackend implements AgentBackend {
     if (value.threadId !== run.threadId) throw new Error('Codex notification belongs to another provider Session')
     await run.accepted
     const turnId = method === 'turn/completed' ? agentRecord(value.turn).id : value.turnId
-    if (turnId && turnId !== run.turnId) throw new Error('Codex notification belongs to another turn')
+    // Resume can publish the previous turn's cumulative usage just before
+    // turn/started. This handler may be awaiting the current acceptance while
+    // that turn starts. Statistics do not authorize work or identify a result.
+    if (method === 'thread/tokenUsage/updated' && turnId && turnId !== run.turnId) return
+    if (turnId && turnId !== run.turnId) throw new Error('Codex notification belongs to another turn ('+method+')')
     if (run.terminal) throw new Error('Codex emitted work after turn completion')
     if (method === 'item/agentMessage/delta') {
       const id = agentIdentifier(value.itemId), text = agentText(value.delta, 2 * 1024 * 1024)
@@ -159,6 +199,7 @@ export class CodexBackend implements AgentBackend {
       await run.emit({ type: 'message.delta', messageId: run.request.runId + ':' + id, text })
     } else if (method === 'item/started' || method === 'item/completed') {
       const item = agentRecord(value.item)
+      if(item.type==='contextCompaction'&&method==='item/completed')run.contextLedger?.compacted()
       if(item.type==='reasoning'||item.type==='contextCompaction'){
         try{run.request.observeRuntime?.({phase:(item.type==='reasoning'?'reasoning.':'compaction.')+(method==='item/started'?'started':'completed') as 'reasoning.started'|'reasoning.completed'|'compaction.started'|'compaction.completed',messageId:agentIdentifier(item.id)})}catch{/* Observation cannot change official runtime behavior. */}
       }
@@ -174,6 +215,9 @@ export class CodexBackend implements AgentBackend {
       try{const usage=agentRecord(agentRecord(value.tokenUsage).last),values=[usage.inputTokens,usage.cachedInputTokens,usage.outputTokens,usage.reasoningOutputTokens];if(values.every(n=>typeof n==='number'&&Number.isSafeInteger(n)&&n>=0))run.request.observeRuntime?.({phase:'usage',inputTokens:usage.inputTokens as number,cachedInputTokens:usage.cachedInputTokens as number,outputTokens:usage.outputTokens as number,reasoningTokens:usage.reasoningOutputTokens as number})}catch{/* No usage text or unknown fields enter Host diagnostics. */}
     } else if (method === 'error') {
       if (value.willRetry !== true) throw new Error('Codex runtime failed during the Agent turn')
+      // The official runtime owns the retry. Observe only its explicit signal;
+      // error bodies can contain account metadata and must not enter Host logs.
+      try { run.request.observeRuntime?.(retryObservation(value.error)) } catch { /* Diagnostics never change delivery or retry behavior. */ }
     } else {
       const turn = agentRecord(value.turn), status = turn.status
       if (!['completed', 'interrupted', 'failed'].includes(String(status))) throw new Error('Invalid Codex terminal status')
@@ -205,6 +249,7 @@ export class CodexBackend implements AgentBackend {
           if (image.type !== 'image' || image.mimeType !== 'image/png' || image.data.length > 28 * 1024 * 1024 || !/^[a-zA-Z0-9+/]+={0,2}$/u.test(image.data)) throw new Error('Invalid admitted BMW PNG image')
           contentItems.push({ type: 'inputImage', imageUrl: 'data:image/png;base64,' + image.data })
         }
+        if(reply.images?.length)run.contextLedger?.imagesDelivered(reply.images)
         message = resultText.length<=16384?resultText:JSON.stringify({resultTruncated:true,resultCharacters:resultText.length,preview:resultText.slice(0,2000)})
         success = true
         return { success, contentItems }

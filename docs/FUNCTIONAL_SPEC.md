@@ -158,6 +158,8 @@ Shell 运行时徽章从自有 Assistant 状态发布，显示等待、执行和
 
 普通 `video.compose` 在有宿主验证的 BMW 会话时，成功后原子保存该会话所属的新 Studio 草稿、原始分镜及已有 MP4；返回 `studioDraft` 并通知已打开的工作区，不覆盖已有草稿。已有音频保留为导入素材，不推断 TTS 生成参数。直接 `bulletRevealSeconds` 无法无损表示为 Studio 语音锚点时，保留独立成片并明确返回 `studioWarning`；没有会话的宿主调用仍只合成媒体。失败、取消、所属 Project 变化不登记新草稿。Studio 无草稿时显示明确空状态，加载完成后不继续显示“加载中”。
 
+Codex 输入交接保留同一原生恢复锚点，由官方 `thread/compact/start` 管理上下文；不重写 rollout、不重放用户或工具输入。旧锚点首次接入且官方返回的rollout元数据达到8MiB时执行一次有界维护（仅stat，不读历史正文）；之后仅在累计交付图片达到24张、内联图片编码达到6MiB或注入说明达到48KiB时，在下一次输入释放前压缩。200000-token自动压缩阈值保持不变。当前输入期间不按此预算删除图片，Project原片、当前草稿及准备/审片证据仍完整保存；压缩后按当前ID重新读取，不能沿用旧成片语义passed。维护等待真实官方终态、计入Host compaction时序；失败/取消/超时不释放用户输入，不自动重投。当前开发者范围保留在运行时配置供官方压缩重建，相同范围与工具说明按Project/Session/原生锚点绑定的SHA去重；变更范围仅追加本次范围，工具说明仅目录变化时补发。原生自动压缩完成后失效去重缓存，下次重新确立当前范围。harness私有账本只存绑定哈希、范围/说明哈希和图片/说明字节计数，不保存正文、图片、凭据或推理内容；不改变唯一browser和Host权限门禁。
+
 ## 全局素材库与三个工作区
 
 新闻历史批次打开后，普通活动／媒体状态刷新保留当前历史批次及其实际选题控件，不重载当前会话的活动选题板；点击“刷新候选”、启动／结束研究或切换Project/Session才按原路径返回当前板。历史选题仍携带原批次revision与fingerprint，经可信UI与Host原门禁选择，不借视图固定扩大制作授权。
@@ -317,6 +319,8 @@ Bridge 验证认证、Session、Project 及目录，按 FIFO 执行；Project �
 
 `observe` 可使用 selector/index 限定正文范围，并以最多 16 个 excludeSelectors 排除推荐、头像和推广。返回正文范围、UTF-16 字符口径、可见文本节点提取方式和截断状态（最多 50,000 字符/10,000 文本节点）；范围不存在返回 element-not-found 与空正文，不回退整页。输入控件/隐藏/script/style 内容不进入正文。结构化交互元素仍保留可见控件。
 
+`page.media.list` 还在选定范围内发现至多16个可见 YouTube iframe，返回规范 watch 页面候选与截断状态；它不携带可下载媒体或来源绑定，必须打开并重新核验播放器，不从隐藏、排除或范围外 Frame 推导。
+
 `page.media.list` 指定范围时只返回该范围 DOM 与目标播放器绑定的分发候选，支持同样的排除项；网络 URL 仅在匹配该播放器的原帖媒体 ID 或精确资源见证时进入该范围，不拼入无关联的全页 performance/网络媒体。返回 candidateOnly、范围与候选截断；发现 URL 不代表获取或解码成功。未限定范围的既有全页发现保留。
 
 `page.media.list.playerCandidates` 提供最多64个当前主文档播放器的原始 `video` 选择器索引、CSS/祖先可见性、标签、已选择资源与readyState、声明源数量和就绪状态，明确仅用于页面发现，不扩大所选媒体范围的身份授权。CSS隐藏的语言副本不再以可下载视频/子source列入媒体项；可按返回的可见索引精确重读。空currentSrc/src不解析为文章地址。通用网页中，可见且非广告的播放器即使preload=none，只有一个实际适用且可播放的HTTP(S)子source时可原生绑定该精确资源；多个未选资源、隐藏/排除播放器、广告、源变更仍拒绝。YouTube/X/微博的专用身份条件不使用此回退。该能力只补来源证明，不证明日期、声音、解码、运动或编辑质量合格，获取与独立审片要求保持。
@@ -349,7 +353,15 @@ YouTube 已确认目标的页面比较仅忽略 `themeRefresh`、`feature`、`si
 
 公开 `media.preserve` 回复仅返回前20份资源及所属 Artifact ID，另列总数和截断标记；完整资源账本保存在 `proofArtifactId`，不会将20000个分段回灌模型上下文。内部来源获取保留完整所属列表和清理能力，不使用公开摘要进行回滚。
 
-内部 MCP 到认证 loopback Bridge 的 HTTP 使用专属有界传输，响应头/正文不继承通用客户端的五分钟等待上限；每次动作的 AbortSignal 仍统一执行默认、分段或存档期限及取消。只允许本机明确 Bridge origin 的 tool/execute，拒绝重定向；不会把该 HTTP 客户端作为模型能力。Qoder 官方 stdio 工具调用配套设122分钟上限，超过 BMW 最长121分钟通信期限，避免默认空闲监控提前截断两小时存档；连接/目录预检仍独立短限。EOF 中止未完成调用并排空私有 HTTP 连接。
+内部 MCP 到认证 loopback Bridge 的 HTTP 使用专属有界传输，响应头/正文不继承通用客户端的五分钟等待上限；每次动作的 AbortSignal 仍统一执行默认、分段或存档期限及取消。私有认证任务逐次建立新的loopback连接，不复用空闲socket，避免服务端空闲关闭与下一个非幂等任务竞态造成“动作已执行但回执丢失”。本机连接握手开销不承担模型等待；不通过自动重放弥补断线。调用期限、取消、唯一browser目录、认证与禁止重定向保持。只允许本机明确 Bridge origin 的 tool/execute，拒绝重定向；不会把该 HTTP 客户端作为模型能力。Qoder 官方 stdio 工具调用配套设122分钟上限，超过 BMW 最长121分钟通信期限，避免默认空闲监控提前截断两小时存档；连接/目录预检仍独立短限。EOF 中止未完成调用并排空私有 HTTP 连接。
+
+AssistantService 的直连动态工具路径（包括 Codex）复用同一专用 loopback 传输，不再使用全局 fetch 的响应头计时器。每次 execute 叠加既有 browser 动作期限及所属输入取消信号；客户端随 AssistantService 在 Host 实际排空后关闭。传输失败只返回动作名及闭合网络错误码，不输出鉴权头、URL或正文；来源身份、完整音轨字幕、原生worker清理、Session/FIFO及图片准入不变。隔离 Assistant application 夹具将全局客户端头/正文上限缩为20ms，实际直连1300ms原生任务仍须成功，以覆盖不能仅靠stdio传输测试证明的这条路径。
+
+完整HLS归档的私有证据文件采用独立16MiB有界预算，保留全部资源URL、SHA、轨道、字幕与逐包验证记录；它不等同于模型回执的20项预览预算。读取全部清单后、下载大分段前，按完整资源计划和实际目录/URL做保守证据容量检查，超预算提前拒绝；最终序列化仍复核上限。视频、音轨和字幕分段使用最多3个并发请求、按原清单顺序收养；沿用单段32MiB上限，含提交缓冲最多128MiB，不缓存全节目。任一错误、取消或消费者提前退出先取消全部在途请求并等待真实结束，再执行原有清理；不丢轨、不丢证据、不自动重试失败分段，不改变完整性和来源门禁。
+
+MIT Technology Review 的有限公开视频文章仅绑定可见原文范围内唯一官方 Brightcove iframe；核对固定账号、播放器和视频 ID，再读取实际附着子 Frame 的节目元数据、时长、图片资产与同一资产 HLS，重新核父页和 Frame。此绑定不将 Frame 操作或自定义网络头暴露给模型，亦不允许借其他主页面播放器录制；受保护或缺少完整身份的内容保持不可用。
+
+Ars Technica 的 HTTPS `/video/watch/slug` 页面仅在可见范围内的唯一标题与唯一 VideoObject 名称匹配、规范地址与当前路径一致、声明有限时长且原始 MP4 属于固定发布者 CDN 路径时绑定；此声明目标不允许回退录制其他播放器。保全前后重核页面与资源，完整音视频使用原生解码检查；不代表所有 Ars 页面均可获取。
 
 CNBC 的 HTTPS 单条 `/video/YYYY/MM/DD/*.html` 页面及 Fox News 的 HTTPS `/video/数字ID` 页面采用固定发布者身份读取。CNBC 同时核对正文标题、JSON-LD、当前 JW Player 的容器／mediaid／canonical URL／时长与广告状态；Fox 仅读取正文选中范围内、同页面目标 ID 的非 gated 官方 iframe，核对父页 JSON-LD 的 MP4、实际附着 Frame、AMP 当前 guid／素材 account+asset／时长和非广告状态，并在读取后重核父页与 Frame。资源只来自这些精确关联的声明，候选同时包含显式 MP4 与已绑定 HLS，自动获取按既有 HLS 优先顺序；完整轨道错误终止，其他可恢复错误仍在同一下载预算内回退 HTTP；不以全页第一个网络视频补位，不新增 Frame 操作工具。跨域 iframe 目标的下载失败不回退录制其他主 Frame 播放器。发布者完整节目保全另以宿主固定的时长与有声要求验证一个视频和全部声明音频轨道、包覆盖及 AV 首尾同步；HTTP 原件另存且无重编码重封装，HTTP/HLS 均写入期望和编码包证明，失败清理本次全部文件。通用 HTTP 结束仍不单独证明完整节目。该适配不承诺直播、订阅内容、DRM 或其他发布者均可用。 CNN 的 HTTPS 单条日期／栏目／video 页面另由固定主 Frame 程序核对可见正文范围、标题、唯一公开 VideoObject、正文 primary media/video ID、canonical 路径和 fave embed 的同一内容 ID；只接纳页面实际声明、素材数字 ID 相符的 CNN clips CDN MP4。声明原片独立于广告播放器，目标 videoIndex=-1，不授权录制其他播放器；直播、订阅标记、范围外、重复或变更身份拒绝。正式 `page.media.list`、`media.preserve`、来源保全沿用相同准入、Project 归属及提交前重核。
 
@@ -962,6 +974,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 - `Private Bridge jobs bypass the global header/body timer but retain caller cancellation and closed loopback destinations`
 - `Private Bridge transport never follows an authenticated redirect`
+- `Private Bridge idle-close races retain every write reply without replaying an executed job`
 
 #### `packages/browser-capability/test/bridge-shutdown.test.ts`
 
@@ -1005,6 +1018,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Missing source range never invokes media fallback; truncation, visible trial evidence and missing explicit media range remain explicit`
 - `Navigation across collection phases yields navigated evidence; cancellation leaves no late candidate admission or listeners`
 - `Clipped metadata remains explicitly truncated rather than silently admitted as complete author/date evidence`
+- `Published TIME preserves an explicit basic ISO offset instead of falling back to a date-only label`
 
 #### `packages/browser-capability/test/collection-page-pool.test.ts`
 
@@ -1078,6 +1092,8 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Foreign publisher, ad, frame origin, parent reference, asset version and short replacement never bind`
 - `CNN original declaration pins canonical path, public content ID and exact CDN asset independently of ad playback`
 - `Yahoo original HLS pins UUID, canonical, embed and CDN declaration independently of ad playback`
+- `Ars original declaration pins canonical page and finite publisher asset`
+- `MIT Brightcove original requires attached publisher frame and matching asset`
 
 #### `packages/browser-capability/test/renderer-read.test.ts`
 
@@ -1608,6 +1624,10 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Codex rejects a foreign tool scope and waits for transport cleanup`
 - `Codex cancellation racing the input receipt sends one interrupt after the turn becomes known`
 - `Codex records bounded reasoning/compaction lifecycle and usage metadata without content or extra model tools`
+- `Codex retention ledger deduplicates scope across processes and accounts images without retaining payloads`
+- `Codex compaction requires actual completion and respects cancellation without replay`
+- `Codex ignores a resumed previous-turn usage notification queued before current acceptance, without admitting foreign work`
+- `Codex still rejects foreign-thread usage and wrong-turn messages or completions`
 
 #### `packages/harness-codex/test/codex-installation.test.ts`
 
@@ -1804,6 +1824,9 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 
 #### `packages/media-native/test/media-preservation.test.ts`
 
+- `Complete long-program evidence retains thousands of source resources beyond the short receipt budget and rejects an oversized plan before transfer`
+- `Bounded HLS prefetch keeps playlist order while overlapping three independent transfers`
+- `Failed or abandoned HLS prefetch cancels and actually drains every started transfer without scheduling later segments`
 - `HLS preservation selects explicit media, resolves relative URLs, and rejects live/encrypted/ranged/gapped input`
 - `HTTP preservation keeps exact delivery bytes and hashes, never claims the author original or full video range`
 - `Preservation fails closed and rolls back all owned resources on unsupported playlists, partial responses and cancellation`
@@ -1866,6 +1889,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Speech language is an explicit fixed choice and English or automatic ASR retains source language`
 - `Opus final packet padding is bounded and recorded without moving the original audio clock`
 - `A single AAC buffer crossing source zero may retain bounded preroll evidence without skipping source time`
+- `Primary audio selection is explicit and bounded while legacy single-track evidence stays valid`
 
 #### `packages/media-native/test/video-element-capture.test.ts`
 
@@ -2407,7 +2431,7 @@ Codex 0.164.0 的官方账号模型目录包含 GPT-6.1 Terra 时，BMW 登录�
 
 原browser的tabs.close支持tabIds数组1–12项，与tabId互斥；预先检查所有页属于当前Project且source=agent，批量不接受用户页，逐项等待真实清理并返回closed和当前state。单页行为保持。点击已返回destinationTab时直接使用，不再额外tabs.list。
 
-Codex每线程采用官方model_auto_compact_token_limit=200000，仍由官方运行时压缩历史，保留BMW Session与原生resume anchor，不清空生产历史或换会话。新增只读observeRuntime元数据回调，记录官方reasoning/contextCompaction开始结束及thread/tokenUsage/updated的输入、缓存、输出、reasoning计数；不保存推理正文、提示词或回复，不参与投递/准入/清理判定。Host时序新增runtime.reasoning.*、runtime.compaction.*、runtime.usage。这些是可见生命周期，不等同服务器纯推理或排队时长；部署前未知间隔不倒填。
+Codex每线程采用官方model_auto_compact_token_limit=200000，仍由官方运行时压缩历史，保留BMW Session与原生resume anchor，不清空生产历史或换会话。只读observeRuntime元数据回调记录官方reasoning/contextCompaction开始结束及thread/tokenUsage/updated的输入、缓存、输出、reasoning计数；不保存推理正文、提示词或回复，不参与投递/准入/清理判定。Host时序包含runtime.reasoning.*、runtime.compaction.*、runtime.usage；收到同线程/同turn的官方error且willRetry严格为true时追加runtime.retry，仅从官方codexErrorInfo结构化码归一为跨驱动闭合failureCategory，并在协议提供有效100–599状态时记录httpStatus；未知码归other，缺失状态保持缺失。不读取或记录原始错误正文、additionalDetails、账户信息，不从正文猜原因，不由BMW重投。connection/stream等归类只描述官方可见错误，不证明具体代理、额度或服务根因。非重试错误仍按原终态处理；观察回调失败不影响官方执行。这些是可见生命周期，不等同服务器纯推理或排队时长；部署前未知间隔不倒填，没有retry记录也不能推断没有服务器内部重试。
 
 原生auto短窗预热要求当前位置有至多3秒的实际前向缓存（请求不足3秒时按请求），不要求流式播放器预先缓存整个29秒片段。YouTube可用档位优先hd720，其次hd1080，再向较低已公布档位选择；输出匹配不等于暗中承诺质量通过。预热预算30秒；失败返回实际位置、缓存区间、时长、readyState及尺寸，播到末尾不能准入。预热不是完整覆盖证明，录制阶段真实源时钟、跳位、持帧及实际区间和原声验证保持，不以成功容器替代有效动态。
 
@@ -2431,3 +2455,13 @@ Codex每线程采用官方model_auto_compact_token_limit=200000，仍由官方�
 ### 新闻作者音轨与交审约定
 
 作者v2.7在既有闭合编辑能力内区分中文旁白镜与原声镜：primary visual的clip.mute仅切换来源音轨，保留画面和旁白；无关访谈声不压在TTS下，用户明确的音乐/环境声设计仍保留。已选图文的完整精确引用与独立原视频分别绑定，选题截图不强制进入成片。作者交审最终只输出“已交审”，由操作者从Host回执读取实际身份；policy7完整独立审片、源身份与清理门禁不变。
+
+原生归档工作段 `media.segment` 与完整HLS归档采用同一有界音轨合同：一个视频及最多15条音轨，全部编码包复制并逐轨核类型/codec，不隐式选轨或丢弃多语言音轨；短段仍受512MiB/29分钟、原始区间和标准SHA派生链约束。隔离原生回归覆盖三条音轨的分段、全轨解码及来源链。
+
+多音轨来源的语音标准化和原生PCM采样只分析实际primary音轨（与播放/合成的主音轨一致），不混合不同语言音轨、不删除完整归档轨道；结果记录实际inputAudioTrackId、inputAudioTrackCount及primary-audio-track选择，旧单轨凭据兼容，新增部分选择元数据或超过15轨拒绝。音轨可解码、时间窗、PCM/ASR及试听状态门禁不变。
+
+来源采集的可见发布日期TIME元素可保留ISO8601 basic数值时区（如-0400），仅规范为等价-04:00后按原明确时区校验，不退化为日期标签；无时区、含糊时区缩写、Updated/录制标签仍不增加时间精度。
+
+CNBC原片身份绑定从页面公开canonical元数据的节目标题匹配唯一可见h1，忽略前置栏目标题（如TechCheck）和隐藏标题；重复可见同名标题、标题不符或仅有隐藏匹配仍拒绝。节目ID、canonical URL、当前可见scoped播放器、SDK节目/资源身份、广告状态、时长和原生传输重核保持不变；不以页面标题或URL替代原片身份。
+
+Codex恢复会话时，上一turn的迟到thread/tokenUsage/updated只作为过期统计丢弃，不改变当前turn身份、用量计数、完成回执或工具授权；即使通知先于新turn/started并在当前接收回执后出队，也不使新输入断连。其他thread的统计、不同turn的正文/完成通知及任何不匹配工具调用仍拒绝，不自动重投。

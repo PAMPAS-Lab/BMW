@@ -1,0 +1,1135 @@
+{
+  "observedAtUTC": "2026-10-31T09:50:05.629919+00:00",
+  "method": "以正文核心主题人工分类；多主题节目单独标为 mixed；商业赞助明确标识；无法读正文标记 unknown，不以推荐链接判定。",
+  "sources": {
+    "TechCrunch": {
+      "feed": "https://techcrunch.com/category/artificial-intelligence/feed/",
+      "error": null,
+      "items": [
+        {
+          "title": "Nvidia weighs playing the cosigner for Nscale’s AI data center in West Virginia",
+          "url": "https://techcrunch.com/2026/10/30/nvidia-weighs-playing-the-cosigner-for-nscales-ai-data-center-in-west-virginia/",
+          "publishedAt": "Sat, 31 Oct 2026 01:20:05 +0000",
+          "status": "ai_primary",
+          "category": "算力与融资",
+          "verification": "ok"
+        },
+        {
+          "title": "Ollie, a privacy-focused AI assistant, is shutting down",
+          "url": "https://techcrunch.com/2026/10/30/ollie-a-privacy-focused-ai-assistant-is-shutting-down/",
+          "publishedAt": "Fri, 30 Oct 2026 22:56:13 +0000",
+          "status": "ai_primary",
+          "category": "助手产品",
+          "verification": "ok"
+        },
+        {
+          "title": "Intel’s stock crashes, knocking $12B from government’s stake",
+          "url": "https://techcrunch.com/2026/10/30/intels-stock-crashes-knocking-12b-from-governments-stake/",
+          "publishedAt": "Fri, 30 Oct 2026 21:54:34 +0000",
+          "status": "ai_primary",
+          "category": "算力与供应链",
+          "verification": "ok"
+        },
+        {
+          "title": "Anthropic expected to receive high ‘junk’ rating from credit agencies following IPO, FT report says",
+          "url": "https://techcrunch.com/2026/10/30/anthropic-expected-to-receive-high-junk-rating-from-credit-agencies-following-ipo-report-says/",
+          "publishedAt": "Fri, 30 Oct 2026 21:52:03 +0000",
+          "status": "ai_primary",
+          "category": "融资与财务",
+          "verification": "ok"
+        },
+        {
+          "title": "Last-minute Halloween costumes for tech nerds",
+          "url": "https://techcrunch.com/2026/10/30/last-minute-halloween-costumes-for-tech-nerds/",
+          "publishedAt": "Fri, 30 Oct 2026 21:26:59 +0000",
+          "status": "ai_mixed",
+          "category": "AI 服装话题为次要内容",
+          "verification": "ok"
+        },
+        {
+          "title": "Cracks are emerging in the AI spending boom",
+          "url": "https://techcrunch.com/2026/10/30/cracks-are-emerging-in-the-ai-spending-boom/",
+          "publishedAt": "Fri, 30 Oct 2026 21:17:40 +0000",
+          "status": "ai_primary",
+          "category": "投资与算力",
+          "verification": "ok"
+        },
+        {
+          "title": "Zest’s new AI agent finds restaurants and books reservations over text",
+          "url": "https://techcrunch.com/2026/10/30/zests-new-ai-agent-finds-restaurants-and-books-reservations-over-text/",
+          "publishedAt": "Fri, 30 Oct 2026 17:47:12 +0000",
+          "status": "ai_primary",
+          "category": "Agent 应用",
+          "verification": "ok"
+        },
+        {
+          "title": "Google’s first data center satellite is online and writing poetry",
+          "url": "https://techcrunch.com/2026/10/30/googles-first-data-center-satellite-is-online-and-writing-poetry/",
+          "publishedAt": "Fri, 30 Oct 2026 17:00:00 +0000",
+          "status": "ai_primary",
+          "category": "算力基础设施",
+          "verification": "ok"
+        },
+        {
+          "title": "Theranos whistleblower Tyler Shultz warns that the AI boom is ‘a great opportunity to go deceive people’",
+          "url": "https://techcrunch.com/2026/10/30/theranos-whistleblower-tyler-shultz-warns-that-the-ai-boom-is-a-great-opportunity-to-go-deceive-people/",
+          "publishedAt": "Fri, 30 Oct 2026 16:03:45 +0000",
+          "status": "ai_primary",
+          "category": "行业风险与欺诈",
+          "verification": "ok"
+        },
+        {
+          "title": "Skip the small talk: Make game-changing connections at TechCrunch Founder Summit with Braindate",
+          "url": "https://techcrunch.com/2026/10/30/skip-the-small-talk-make-game-changing-connections-at-techcrunch-founder-summit-with-braindate/",
+          "publishedAt": "Fri, 30 Oct 2026 14:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "DoorDash said it’s only received ‘several hundred’ orders from AI agents",
+          "url": "https://techcrunch.com/2026/10/30/doordash-said-its-only-received-several-hundred-orders-from-ai-agents/",
+          "publishedAt": "Fri, 30 Oct 2026 13:54:25 +0000",
+          "status": "ai_primary",
+          "category": "Agent 应用",
+          "verification": "ok"
+        },
+        {
+          "title": "5 days left: Your last chance to connect, scale, and save at TechCrunch Founder Summit 2026",
+          "url": "https://techcrunch.com/2026/10/30/5-days-left-your-last-chance-to-connect-scale-and-save-at-techcrunch-founder-summit-2026/",
+          "publishedAt": "Fri, 30 Oct 2026 13:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Can AI data centers be mass-produced like cars? This startup aims to find out",
+          "url": "https://techcrunch.com/2026/10/30/can-ai-data-centers-be-mass-produced-like-cars-and-online-in-48-hours-this-startup-aims-to-find-out/",
+          "publishedAt": "Fri, 30 Oct 2026 13:00:00 +0000",
+          "status": "ai_primary",
+          "category": "算力基础设施",
+          "verification": "ok"
+        },
+        {
+          "title": "You don’t need to believe in a god to get a religious exemption from using AI at work",
+          "url": "https://techcrunch.com/2026/10/29/you-dont-need-to-believe-in-a-god-to-get-a-religious-exemption-from-using-ai-at-work/",
+          "publishedAt": "Fri, 30 Oct 2026 01:20:48 +0000",
+          "status": "ai_primary",
+          "category": "劳动与信仰",
+          "verification": "ok"
+        },
+        {
+          "title": "AWS will be a $1T business, Jassy says — but first, it will spend big",
+          "url": "https://techcrunch.com/2026/10/29/aws-will-be-a-1t-business-jassy-says-but-first-it-will-spend-big/",
+          "publishedAt": "Thu, 29 Oct 2026 23:42:22 +0000",
+          "status": "ai_primary",
+          "category": "算力与财务",
+          "verification": "ok"
+        },
+        {
+          "title": "As search traffic dries up, Reddit announces it’s shifting to a logged-in experience",
+          "url": "https://techcrunch.com/2026/10/29/as-search-traffic-dries-up-reddit-announces-its-shifting-to-a-logged-in-experience/",
+          "publishedAt": "Thu, 29 Oct 2026 20:08:31 +0000",
+          "status": "ai_primary",
+          "category": "内容平台与搜索",
+          "verification": "ok"
+        },
+        {
+          "title": "Rivian expands joint venture with VW to include AI assistant",
+          "url": "https://techcrunch.com/2026/10/29/rivian-expands-joint-venture-with-vw-to-include-ai-assistant/",
+          "publishedAt": "Thu, 29 Oct 2026 20:05:47 +0000",
+          "status": "ai_primary",
+          "category": "汽车助手",
+          "verification": "ok"
+        },
+        {
+          "title": "OpenAI-backed Thrive Holdings acquires ADT",
+          "url": "https://techcrunch.com/2026/10/29/openai-backed-thrive-holdings-acquires-adt/",
+          "publishedAt": "Thu, 29 Oct 2026 19:56:19 +0000",
+          "status": "ai_primary",
+          "category": "收购与安防应用",
+          "verification": "ok"
+        },
+        {
+          "title": "Meta quietly launches an AI fashion app called Style Sketch",
+          "url": "https://techcrunch.com/2026/10/29/meta-quietly-launches-an-ai-fashion-app-called-style-sketch/",
+          "publishedAt": "Thu, 29 Oct 2026 19:14:36 +0000",
+          "status": "ai_primary",
+          "category": "消费产品",
+          "verification": "ok"
+        },
+        {
+          "title": "Granola crunches up a dictation feature to compete with Wispr",
+          "url": "https://techcrunch.com/2026/10/29/granola-crunches-up-a-dictation-feature-to-compete-with-wispr/",
+          "publishedAt": "Thu, 29 Oct 2026 17:54:38 +0000",
+          "status": "ai_primary",
+          "category": "语音应用",
+          "verification": "ok"
+        }
+      ]
+    },
+    "The Verge": {
+      "feed": "https://www.theverge.com/rss/index.xml",
+      "error": null,
+      "items": [
+        {
+          "title": "Apple Intelligence is finally coming to China with iOS 27.3",
+          "url": "https://www.theverge.com/tech/1023974/apple-intelligence-china-ios-27-3",
+          "publishedAt": "2026-10-30T18:32:53-04:00",
+          "status": "ai_primary",
+          "category": "消费产品",
+          "verification": "ok"
+        },
+        {
+          "title": "Exclusive details about Akai’s MPC Sample Key",
+          "url": "https://www.theverge.com/gadgets/1023649/akai-mpc-sample-key-exclusive",
+          "publishedAt": "2026-10-30T17:01:32-04:00",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Sam Altman says it’s better for RAM to be in a data center than on your desk",
+          "url": "https://www.theverge.com/ai-artificial-intelligence/1023820/sam-altman-ram-shortage-cloud-servers",
+          "publishedAt": "2026-10-30T16:48:43-04:00",
+          "status": "ai_primary",
+          "category": "算力与供应链",
+          "verification": "ok"
+        },
+        {
+          "title": "The biggest names in AI are backing a new way to opt out of scraping",
+          "url": "https://www.theverge.com/tech/1023763/openai-google-microsoft-ai-scraping-standard-opt-out",
+          "publishedAt": "2026-10-30T16:26:10-04:00",
+          "status": "ai_primary",
+          "category": "版权与训练数据",
+          "verification": "ok"
+        },
+        {
+          "title": "Google’s satellite AI server transmits its first response to Earth",
+          "url": "https://www.theverge.com/tech/1023528/google-project-suncatcher-ai-satellite-transmission",
+          "publishedAt": "2026-10-30T14:21:38-04:00",
+          "status": "ai_primary",
+          "category": "算力基础设施",
+          "verification": "ok"
+        },
+        {
+          "title": "Starbucks wants to use AI to show you a ‘personalized digital menu’ at the drive-thru",
+          "url": "https://www.theverge.com/ai-artificial-intelligence/1023440/starbucks-ai-personalized-menu-drive-thru",
+          "publishedAt": "2026-10-30T13:38:04-04:00",
+          "status": "ai_primary",
+          "category": "零售应用",
+          "verification": "ok"
+        },
+        {
+          "title": "The delightfully messy state of Apple gadgets",
+          "url": "https://www.theverge.com/podcast/1023194/the-delightfully-messy-state-of-apple-gadgets",
+          "publishedAt": "2026-10-30T13:25:20-04:00",
+          "status": "ai_mixed",
+          "category": "多话题播客，含 AI",
+          "verification": "ok"
+        },
+        {
+          "title": "Rivian’s autonomy gamble faces its first real test",
+          "url": "https://www.theverge.com/transportation/1023143/rivian-autonomy-point-to-point-robotaxi-q3-2026",
+          "publishedAt": "2026-10-30T13:16:09-04:00",
+          "status": "ai_mixed",
+          "category": "自动驾驶业务，AI 为相关技术",
+          "verification": "ok"
+        },
+        {
+          "title": "Vizio’s discounted Mini LED TV lets you skip the sign-ups and smarts",
+          "url": "https://www.theverge.com/gadgets/1022794/vizio-mini-led-quantum-tv-65-inch-walmart-deal-sale",
+          "publishedAt": "2026-10-30T13:01:07-04:00",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Google’s latest Nest Learning Thermostat is $60 off just in time for sweater weather",
+          "url": "https://www.theverge.com/gadgets/1022819/google-nest-learning-thermostat-4th-gen-casio-ws-b1000-watch-deal-sale",
+          "publishedAt": "2026-10-30T11:29:02-04:00",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        }
+      ]
+    },
+    "Ars Technica": {
+      "feed": "https://feeds.arstechnica.com/arstechnica/index",
+      "error": null,
+      "items": [
+        {
+          "title": "Once again, NASA is asking for ideas to rescue Hubble from certain death",
+          "url": "https://arstechnica.com/space/2026/10/think-you-can-save-the-hubble-space-telescope-nasa-wants-to-know/",
+          "publishedAt": "Sat, 31 Oct 2026 00:07:22 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Flesh-eating screwworms spread to third state and are attacking pets",
+          "url": "https://arstechnica.com/health/2026/10/flesh-eating-screwworms-are-feasting-on-pets-4-dogs-and-cat-attacked-this-week/",
+          "publishedAt": "Fri, 30 Oct 2026 22:36:41 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Oh captain, our captain: Ars staff remembers Patrick Stewart",
+          "url": "https://arstechnica.com/culture/2026/10/oh-captain-our-captain-ars-staff-remembers-patrick-stewart/",
+          "publishedAt": "Fri, 30 Oct 2026 22:21:05 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Supersonic airliner in doubt as company shifts to powering AI data centers",
+          "url": "https://arstechnica.com/gadgets/2026/10/united-airlines-ceo-doubts-supersonic-airliner-from-boom-will-be-ready-by-2029/",
+          "publishedAt": "Fri, 30 Oct 2026 21:41:54 +0000",
+          "status": "ai_primary",
+          "category": "算力基础设施",
+          "verification": "ok"
+        },
+        {
+          "title": "Anthropic VS code extension on Cursor backdoored for nearly 12 hours",
+          "url": "https://arstechnica.com/security/2026/10/anthropic-vs-code-extension-on-cursor-backdoored-for-nearly-12-hours/",
+          "publishedAt": "Fri, 30 Oct 2026 21:09:54 +0000",
+          "status": "ai_primary",
+          "category": "AI 软件供应链安全",
+          "verification": "ok"
+        },
+        {
+          "title": "Dartmouth's provost warned us about AI cheating—but his own AI use cost him his job",
+          "url": "https://arstechnica.com/tech-policy/2026/10/dartmouths-provost-warned-us-about-ai-cheating-but-his-own-ai-use-cost-him-his-job/",
+          "publishedAt": "Fri, 30 Oct 2026 20:40:13 +0000",
+          "status": "ai_primary",
+          "category": "教育与学术诚信",
+          "verification": "ok"
+        },
+        {
+          "title": "Over 25% of people lie to get antibiotics—and their lies aren't even good",
+          "url": "https://arstechnica.com/health/2026/10/over-25-of-people-lie-to-get-antibiotics-and-their-lies-arent-even-good/",
+          "publishedAt": "Fri, 30 Oct 2026 20:17:50 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Basically no one is using AI agents for their DoorDash orders",
+          "url": "https://arstechnica.com/ai/2026/10/doordash-says-outside-ai-agents-have-only-led-to-hundreds-of-orders-so-far/",
+          "publishedAt": "Fri, 30 Oct 2026 19:30:52 +0000",
+          "status": "ai_primary",
+          "category": "Agent 应用",
+          "verification": "ok"
+        },
+        {
+          "title": "Rare meteorite from Mars gives us a view into its ancient crust",
+          "url": "https://arstechnica.com/science/2026/10/rare-meteorite-from-mars-gives-us-a-view-into-its-ancient-crust/",
+          "publishedAt": "Fri, 30 Oct 2026 18:13:42 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Fujifilm to boost tape production 5x as AI fuels archiving demand",
+          "url": "https://arstechnica.com/gadgets/2026/10/fujifilm-to-boost-tape-production-5x-as-ai-fuels-archiving-demand/",
+          "publishedAt": "Fri, 30 Oct 2026 17:38:19 +0000",
+          "status": "ai_primary",
+          "category": "存储与算力",
+          "verification": "ok"
+        },
+        {
+          "title": "Thousands of “ghost students” use AI to steal millions in student loans, DOJ says",
+          "url": "https://arstechnica.com/tech-policy/2026/10/doj-exposes-ghost-students-using-ai-to-complete-courses-steal-student-loans/",
+          "publishedAt": "Fri, 30 Oct 2026 16:53:49 +0000",
+          "status": "ai_primary",
+          "category": "AI 辅助欺诈",
+          "verification": "ok"
+        },
+        {
+          "title": "Analysts find looming launch crisis is \"more severe\" than anticipated",
+          "url": "https://arstechnica.com/space/2026/10/analysts-find-looming-launch-crisis-is-more-severe-than-anticipated/",
+          "publishedAt": "Fri, 30 Oct 2026 16:12:59 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "GM to pay $220 million after selling customer Smart Driver data",
+          "url": "https://arstechnica.com/cars/2026/10/gm-to-pay-220-million-after-selling-customer-smart-driver-data/",
+          "publishedAt": "Fri, 30 Oct 2026 13:53:20 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Hackers steal $6.3 billion from Binance in record crypto heist",
+          "url": "https://arstechnica.com/security/2026/10/hackers-steal-6-3-billion-from-binance-in-record-crypto-heist/",
+          "publishedAt": "Fri, 30 Oct 2026 13:46:39 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "2027 Nissan Rogue Hybrid: Drives like an EV, but there's no plug involved",
+          "url": "https://arstechnica.com/cars/2026/10/2027-nissan-rogue-hybrid-drives-like-an-ev-but-theres-no-plug-involved/",
+          "publishedAt": "Fri, 30 Oct 2026 12:00:18 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Review: You Can See Everything blurs the view of Elizabeth Holmes' deceit",
+          "url": "https://arstechnica.com/culture/2026/10/review-you-can-see-everything-blurs-the-view-of-elizabeth-holmes-deceit/",
+          "publishedAt": "Fri, 30 Oct 2026 11:30:01 +0000",
+          "status": "ai_mixed",
+          "category": "纪录片中有 AI 数字形象",
+          "verification": "ok"
+        },
+        {
+          "title": "Rocket Report: Winter is coming for Themis; Cowboy Space adds iron to the fire",
+          "url": "https://arstechnica.com/space/2026/10/rocket-report-winter-is-coming-for-themis-cowboy-space-adds-iron-to-the-fire/",
+          "publishedAt": "Fri, 30 Oct 2026 11:00:35 +0000",
+          "status": "ai_mixed",
+          "category": "航天汇总含太空 AI",
+          "verification": "ok"
+        },
+        {
+          "title": "Reddit is moving to “a logged-in-only experience,” CEO says",
+          "url": "https://arstechnica.com/gadgets/2026/10/reddit-will-require-you-to-log-in-eventually-ceo-confirms/",
+          "publishedAt": "Thu, 29 Oct 2026 21:47:57 +0000",
+          "status": "ai_mixed",
+          "category": "登录限制与 AI 抓取相关",
+          "verification": "ok"
+        },
+        {
+          "title": "Microsoft fixes a Windows 11 annoyance as PC revenue declines",
+          "url": "https://arstechnica.com/gadgets/2026/10/windows-11-gets-right-click-menu-improvements-as-pc-revenue-slides/",
+          "publishedAt": "Thu, 29 Oct 2026 20:18:49 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Pentagon IG refuses to investigate Starlink/Starshield slowdown in Ukraine",
+          "url": "https://arstechnica.com/tech-policy/2026/10/pentagon-ig-refuses-to-investigate-starlink-starshield-slowdown-in-ukraine/",
+          "publishedAt": "Thu, 29 Oct 2026 20:08:10 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        }
+      ]
+    },
+    "MIT Technology Review": {
+      "feed": "https://www.technologyreview.com/feed/",
+      "error": null,
+      "items": [
+        {
+          "title": "The Download: GLP-1s and eating disorders, self-aware cities, and forever chemicals",
+          "url": "https://www.technologyreview.com/2026/10/30/1147843/the-download-glp-1s-eating-disorders-forever-chemicals/",
+          "publishedAt": "Fri, 30 Oct 2026 11:30:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Eating disorders are on the rise. GLP-1s could make things worse.",
+          "url": "https://www.technologyreview.com/2026/10/30/1147838/eating-disorders-rise-glp-1s-weight-loss-drugs/",
+          "publishedAt": "Fri, 30 Oct 2026 09:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "The Download: AI agent tracking and climate feedback loops",
+          "url": "https://www.technologyreview.com/2026/10/29/1147830/the-download-monitoring-ai-agents-climate-feedback-loops/",
+          "publishedAt": "Thu, 29 Oct 2026 12:10:00 +0000",
+          "status": "ai_mixed",
+          "category": "多话题通讯，含 Agent",
+          "verification": "ok"
+        },
+        {
+          "title": "We urgently need to monitor AI agents’ actions in real time",
+          "url": "https://www.technologyreview.com/2026/10/29/1147824/monitor-ai-agents-actions-real-time/",
+          "publishedAt": "Thu, 29 Oct 2026 10:11:12 +0000",
+          "status": "ai_primary",
+          "category": "Agent 安全",
+          "verification": "ok"
+        },
+        {
+          "title": "Our climate models have a big, dangerous blind spot",
+          "url": "https://www.technologyreview.com/2026/10/29/1147735/climate-models-blind-spot/",
+          "publishedAt": "Thu, 29 Oct 2026 10:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Creating AI value with enterprise context",
+          "url": "https://www.technologyreview.com/2026/10/28/1147709/creating-ai-value-with-enterprise-context/",
+          "publishedAt": "Wed, 28 Oct 2026 20:32:02 +0000",
+          "status": "ai_primary",
+          "category": "企业应用（赞助）",
+          "verification": "ok"
+        },
+        {
+          "title": "The Download: dead startups fueling AI and interspecies communication",
+          "url": "https://www.technologyreview.com/2026/10/28/1147767/the-download-dead-startups-fueling-ai-interspecies-communication/",
+          "publishedAt": "Wed, 28 Oct 2026 12:10:00 +0000",
+          "status": "ai_mixed",
+          "category": "多话题通讯，含 AI",
+          "verification": "ok"
+        },
+        {
+          "title": "Pairing industrial AI autonomy and human control",
+          "url": "https://www.technologyreview.com/2026/10/28/1147637/pairing-industrial-ai-autonomy-and-human-control/",
+          "publishedAt": "Wed, 28 Oct 2026 12:00:00 +0000",
+          "status": "ai_primary",
+          "category": "工业应用（合作）",
+          "verification": "ok"
+        },
+        {
+          "title": "The Download: Anthropic’s IPO, smarter power grids, and exercise pills",
+          "url": "https://www.technologyreview.com/2026/10/27/1147693/the-download-anthropic-ipo-smarter-power-grids-exercise-pills/",
+          "publishedAt": "Tue, 27 Oct 2026 12:10:00 +0000",
+          "status": "ai_mixed",
+          "category": "多话题通讯，含 AI 公司",
+          "verification": "ok"
+        },
+        {
+          "title": "Industrial Intelligence: The next growth opportunity for manufacturing",
+          "url": "https://www.technologyreview.com/2026/10/27/1147142/industrial-intelligence-the-next-growth-opportunity-for-manufacturing/",
+          "publishedAt": "Tue, 27 Oct 2026 11:19:18 +0000",
+          "status": "ai_mixed",
+          "category": "赞助内容：工业智能，AI 为相关工具",
+          "verification": "ok"
+        }
+      ]
+    },
+    "WIRED": {
+      "feed": "https://www.wired.com/feed/rss",
+      "error": null,
+      "items": [
+        {
+          "title": "Keurig Alta Brewer Review: Brand-New Tech, Classically Good Coffee",
+          "url": "https://www.wired.com/review/keurig-alta-brewer/",
+          "publishedAt": "Sat, 31 Oct 2026 09:35:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Are Memories Transferable? Meet the Scientists Replicating an Infamous Study to Find Out",
+          "url": "https://www.wired.com/story/are-memories-transferable-meet-the-scientists-replicating-an-infamous-study-to-find-out/",
+          "publishedAt": "Sat, 31 Oct 2026 09:30:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Best Sunrise Alarm Clock (2026): Hatch, Lumie",
+          "url": "https://www.wired.com/story/should-you-get-a-sunrise-alarm-clock/",
+          "publishedAt": "Sat, 31 Oct 2026 09:01:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "White Dwarfs Aren’t Just White. Scientists Discover Dying Stars Turning Pink and Green",
+          "url": "https://www.wired.com/story/white-dwarfs-arent-just-white-scientists-discover-dying-stars-turning-pink-and-green/",
+          "publishedAt": "Sat, 31 Oct 2026 09:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Wayfair Coupons: Up to 80% Off November 2026",
+          "url": "https://www.wired.com/story/wayfair-promo-code/",
+          "publishedAt": "Sat, 31 Oct 2026 05:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Google Pixel Watch 5 Sale: Its Lowest Price Yet (2026)",
+          "url": "https://www.wired.com/story/googles-pixel-watch-5-is-down-to-its-lowest-price-yet/",
+          "publishedAt": "Fri, 30 Oct 2026 22:15:06 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "How a Contractor’s Claude Agent Got Into the Pentagon",
+          "url": "https://www.wired.com/story/uncanny-valley-podcast-how-a-contractors-claude-agent-got-into-the-pentagon/",
+          "publishedAt": "Fri, 30 Oct 2026 21:19:26 +0000",
+          "status": "ai_primary",
+          "category": "Agent 与国防安全（播客）",
+          "verification": "ok"
+        },
+        {
+          "title": "A Supply Chain Attack Put Malicious Anthropic Claude Extensions on Thousands of Devices",
+          "url": "https://www.wired.com/story/trojan-malware-targets-thousands-of-anthropic-claude-developer-systems/",
+          "publishedAt": "Fri, 30 Oct 2026 20:38:46 +0000",
+          "status": "ai_primary",
+          "category": "AI 软件供应链安全",
+          "verification": "ok"
+        },
+        {
+          "title": "People Are Creating ‘Survival Guides’ to Cope With the ‘AO3 Apocalypse’",
+          "url": "https://www.wired.com/story/people-are-creating-survival-guides-to-cope-with-the-ao3-apocalypse/",
+          "publishedAt": "Fri, 30 Oct 2026 15:57:35 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "I Spent 30 Minutes With Apple’s CEO. Now I Know Why John Ternus Got the Job",
+          "url": "https://www.wired.com/story/i-spent-30-minutes-with-apples-ceo-now-i-know-why-john-ternus-got-the-job/",
+          "publishedAt": "Fri, 30 Oct 2026 15:00:00 +0000",
+          "status": "ai_mixed",
+          "category": "CEO 采访讨论 AI 等多个主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Mattress Deals: Save Over $600 Before Black Friday 2026",
+          "url": "https://www.wired.com/story/best-early-bfcm-mattress-deals-10-30-2026/",
+          "publishedAt": "Fri, 30 Oct 2026 13:34:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "The $6.3 Billion Binance Hack Was Pulled Off in Just 20 Minutes",
+          "url": "https://www.wired.com/story/the-dollar63-billion-binance-hack-was-pulled-off-in-just-20-minutes/",
+          "publishedAt": "Fri, 30 Oct 2026 11:36:52 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "This App Brutally Shames You by Tracking How Many Hours You’ve Lost to Scrolling",
+          "url": "https://www.wired.com/story/oh-my-hours-ios-app/",
+          "publishedAt": "Fri, 30 Oct 2026 11:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Elon Musk’s Ties to Texas Republicans Go Much Deeper Than the Midterms",
+          "url": "https://www.wired.com/story/elon-musks-ties-to-texas-republicans-go-much-deeper-than-the-midterms/",
+          "publishedAt": "Fri, 30 Oct 2026 10:45:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "The Best Handheld Translators for Work and Travel (2026)",
+          "url": "https://www.wired.com/story/why-you-need-a-handheld-translator-for-travel/",
+          "publishedAt": "Fri, 30 Oct 2026 10:30:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Male Insecurity Over Penis Size Is a Booming Business",
+          "url": "https://www.wired.com/story/male-insecurity-over-penis-size-is-a-booming-business/",
+          "publishedAt": "Fri, 30 Oct 2026 10:30:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "It Sure Looks Like the Department of Education Is Promoting a Right-Wing ‘Harry Potter’ Meme",
+          "url": "https://www.wired.com/story/it-sure-looks-like-the-department-of-education-is-promoting-a-right-wing-harry-potter-meme/",
+          "publishedAt": "Fri, 30 Oct 2026 10:15:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Samsung S95H OLED TV Review (2026)",
+          "url": "https://www.wired.com/review/samsung-s95h/",
+          "publishedAt": "Fri, 30 Oct 2026 10:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Crematoria Are Being Used to Heat Homes and Swimming Pools",
+          "url": "https://www.wired.com/story/crematoria-heat-homes-and-swimming-pools/",
+          "publishedAt": "Fri, 30 Oct 2026 10:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Gift Ideas for Friends (2026): Wellness Tech, Kitchen Essentials",
+          "url": "https://www.wired.com/story/gifts-for-friends/",
+          "publishedAt": "Fri, 30 Oct 2026 09:33:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "The Best Leaf Blower We’ve Tested Is Ready for Halloween",
+          "url": "https://www.wired.com/story/ego-blower-sale-tp-cannon-october-2026/",
+          "publishedAt": "Fri, 30 Oct 2026 09:01:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "The Iran War’s Impact on Oil Is Hitting Key Senate Races Hard",
+          "url": "https://www.wired.com/story/iran-war-impact-on-oil-hits-key-senate-races/",
+          "publishedAt": "Fri, 30 Oct 2026 09:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "What to Know About China’s Top-Secret Spaceplane",
+          "url": "https://www.wired.com/story/what-to-know-about-chinas-top-secret-spaceplane/",
+          "publishedAt": "Thu, 29 Oct 2026 20:45:36 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Polymarket Halted International Trading After Hackers Drained Accounts",
+          "url": "https://www.wired.com/story/polymarket-flagship-platform-hack-traders-lose-money/",
+          "publishedAt": "Thu, 29 Oct 2026 19:51:56 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Nothing Headphones Sale: Stylish and Up to 41% Off",
+          "url": "https://www.wired.com/story/nothing-cmf-deals-october-2026/",
+          "publishedAt": "Thu, 29 Oct 2026 19:41:36 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "A Defense Contractor Gave Their Personal AI Agent Access to a Secure Pentagon System",
+          "url": "https://www.wired.com/story/a-defense-contractor-gave-their-personal-ai-agent-access-to-a-secure-pentagon-system/",
+          "publishedAt": "Thu, 29 Oct 2026 18:39:43 +0000",
+          "status": "ai_primary",
+          "category": "Agent 与国防安全",
+          "verification": "ok"
+        },
+        {
+          "title": "Go Minimal—the Ridge Wallet is 20 Percent Off Right Now",
+          "url": "https://www.wired.com/story/ridge-wallet-deal-october-2026/",
+          "publishedAt": "Thu, 29 Oct 2026 17:41:36 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "The ‘Pain in the Ass’ Math That Could Save Vibe Coding From Itself",
+          "url": "https://www.wired.com/story/software-verification-is-the-hot-new-answer-to-the-ai-safety-crisis/",
+          "publishedAt": "Thu, 29 Oct 2026 15:00:00 +0000",
+          "status": "ai_primary",
+          "category": "AI 编程与形式化验证",
+          "verification": "ok"
+        },
+        {
+          "title": "Mistral Says Its AI Model ‘Le Chonk’ Has Leapfrogged China in the Open-Weight Race",
+          "url": "https://www.wired.com/story/mistral-says-le-chonk-surpasses-chinese-models-cybersecurity/",
+          "publishedAt": "Thu, 29 Oct 2026 14:00:00 +0000",
+          "status": "ai_primary",
+          "category": "模型竞争",
+          "verification": "ok"
+        },
+        {
+          "title": "Petkit Automatic Cat Litter Box Sale (2026)",
+          "url": "https://www.wired.com/story/petkit-sale-october-2026/",
+          "publishedAt": "Thu, 29 Oct 2026 13:41:26 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "The Kindle Accessories I Never Want to Read Without (2026)",
+          "url": "https://www.wired.com/story/best-kindle-accessories/",
+          "publishedAt": "Thu, 29 Oct 2026 11:03:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "An AI Breakthrough Has Made Decades of Computer Science Research ‘Irrelevant’",
+          "url": "https://www.wired.com/story/ai-made-decades-of-computer-science-research-irrelevant/",
+          "publishedAt": "Thu, 29 Oct 2026 10:45:00 +0000",
+          "status": "ai_primary",
+          "category": "AI 与科学研究",
+          "verification": "ok"
+        },
+        {
+          "title": "Hisense UR8 RGB MiniLED TV: Midrange Quality, Upscale Color Accuracy",
+          "url": "https://www.wired.com/review/review-hisense-ur8/",
+          "publishedAt": "Thu, 29 Oct 2026 10:30:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "A Hacker Targeted High-Stakes Poker Players With Malware That Exposed Their Cards",
+          "url": "https://www.wired.com/story/a-hacker-targeted-high-stakes-poker-players-with-malware-that-exposed-their-cards/",
+          "publishedAt": "Thu, 29 Oct 2026 10:30:00 +0000",
+          "status": "ai_mixed",
+          "category": "网络犯罪报道中 AI Agent 发现恶意软件",
+          "verification": "ok"
+        },
+        {
+          "title": "I Did Push-Ups With Snap’s Chunky AR Glasses",
+          "url": "https://www.wired.com/story/i-did-push-ups-with-snaps-chunky-ar-glasses/",
+          "publishedAt": "Thu, 29 Oct 2026 10:15:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "I Gave My Blood to the AI Death Clock",
+          "url": "https://www.wired.com/story/i-gave-an-ai-death-clock-my-blood/",
+          "publishedAt": "Thu, 29 Oct 2026 10:00:00 +0000",
+          "status": "ai_primary",
+          "category": "健康应用",
+          "verification": "ok"
+        },
+        {
+          "title": "Reencle Essential Review: Same Scraps, Lower Price",
+          "url": "https://www.wired.com/review/reencle-essential-electric-composter/",
+          "publishedAt": "Thu, 29 Oct 2026 10:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Law Firm Linked to Elon Musk Started an ‘Election Integrity’ Organization",
+          "url": "https://www.wired.com/story/law-firm-linked-to-elon-musk-started-an-election-integrity-organization/",
+          "publishedAt": "Thu, 29 Oct 2026 09:45:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Liquid Glass Finally Makes Sense on the iPhone Duo",
+          "url": "https://www.wired.com/story/liquid-glass-finally-makes-sense-on-the-iphone-duo/",
+          "publishedAt": "Thu, 29 Oct 2026 09:30:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Astronomers Discover a Possible New Dwarf Planet in Our Solar System",
+          "url": "https://www.wired.com/story/astronomers-discover-a-possible-new-dwarf-planet-in-our-solar-system/",
+          "publishedAt": "Thu, 29 Oct 2026 09:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Norton Coupon Codes: Up to 58% Off",
+          "url": "https://www.wired.com/story/norton-coupon-code/",
+          "publishedAt": "Thu, 29 Oct 2026 05:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Hungryroot Coupon Codes: 30% Off This November 2026",
+          "url": "https://www.wired.com/story/hungryroot-promo-code/",
+          "publishedAt": "Thu, 29 Oct 2026 05:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "NZXT Discount Codes: 50% Off in November 2026",
+          "url": "https://www.wired.com/story/nzxt-discount-code/",
+          "publishedAt": "Thu, 29 Oct 2026 05:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Loop Earplugs Discount Codes: 40% Off",
+          "url": "https://www.wired.com/story/loop-earplugs-discount-code/",
+          "publishedAt": "Thu, 29 Oct 2026 05:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Govee Discount Codes and Deals: 30% Off",
+          "url": "https://www.wired.com/story/govee-discount-code/",
+          "publishedAt": "Thu, 29 Oct 2026 05:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "30% Off Tempur-Pedic Promo Codes | November 2026",
+          "url": "https://www.wired.com/story/tempur-pedic-promo-code/",
+          "publishedAt": "Thu, 29 Oct 2026 05:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Petlibro Offers: 30% Off in November 2026",
+          "url": "https://www.wired.com/story/petlibro-discount-code/",
+          "publishedAt": "Thu, 29 Oct 2026 05:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Pura Promo Codes: $20 Off November 2026",
+          "url": "https://www.wired.com/story/pura-promo-code/",
+          "publishedAt": "Thu, 29 Oct 2026 05:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Dermstore Coupons: 25% Off for November 2026",
+          "url": "https://www.wired.com/story/dermstore-promo-code/",
+          "publishedAt": "Thu, 29 Oct 2026 05:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        },
+        {
+          "title": "Skullcandy Discount Code: 30% Off | November 2026",
+          "url": "https://www.wired.com/story/skullcandy-discount-code/",
+          "publishedAt": "Thu, 29 Oct 2026 05:00:00 +0000",
+          "status": "other",
+          "category": "非 AI 主要主题",
+          "verification": "ok"
+        }
+      ]
+    },
+    "Reuters (Google News)": {
+      "feed": "https://news.google.com/rss/search?q=site%3Areuters.com%2Ftechnology%2F+when%3A7d&hl=en-US&gl=US&ceid=US%3Aen",
+      "error": null,
+      "items": [
+        {
+          "title": "EXCLUSIVE: Pentagon treating military base freezer malfunctions as suspected cyberattack, officials say - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxNZWtDa2JmUnFRRENlQ0RoX2hseFpyajltZE5vbjUwdnlDeTQ5M01zanFrNTBJcE1NV0RwZGFCd29LQXZQN2RYd3pBZnhNbU91eEdZalRSbVpXbTdnS2VXMXNaWE9ZdV9tSHVub29PUy1kX3BFYTNZUWM2NFpTLTZTWGdLX2hTXzYxR2JPanVaeVowcVZmMTZubVZxZE9QSjFPYmVuQjJFVVZqTUJKRUlMclM0NGM4YTNzMmR0ZUdR?oc=5",
+          "publishedAt": "Thu, 29 Oct 2026 22:39:05 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Nvidia in talks to give credit support for Nscale's deal with Anthropic, The Information reports - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxOeFZKQnF5QVdNQlBQRzNMTE5PbjhUSXF0Y0NzYXpyaVJFeGplang3clhEYUtGUF9Fd2tPRjE0VllQVjV0cncwdU9za2RGZkFjQ2ZSTGdpQ3hXSkRBSjVtY2tvTzhEVTYtUkxYQjdfc1A3blJMd0c2ajJTUFp0eGMtOEtMbEk2NGl2Y2hrRFVlSHVaT1VQWi1qaGhLTkoyZVhXWFVFaXpDVEpZQV90MFNSZzN2dTl0WXJWZEhBRzJmUFVpNzI2Smc?oc=5",
+          "publishedAt": "Fri, 30 Oct 2026 01:26:00 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Walmart commits $6 billion to expand Symbotic deal - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxQSUlrYUJ1UEEyM3RVbXZiajFZSFZWQnROTDdwQkFMRkJsSmZKdzJGaEFvU3NSVk5kMGZpWEcwVl9KRnM3NjJyZXp4azlzcVpxY1JnRU9tekt3MlJycTFhM194RV8yWjEtRmFRdDBoQmg5OGs2TFhvYU1NOF9adjVJejhTMy1RaVBCYVFHbUhaSmhqMUwtc3VxXw?oc=5",
+          "publishedAt": "Thu, 29 Oct 2026 20:45:50 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Bitcoin, cryptocurrency prices fall after Binance reports security issue - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxQbl9LV3Z6eEFpLVBKcmR2ZG9YM1lNRmZBTGRQUF9qeVRLVmlaYnc2ZDdkNERRd3VPTTNtQ0dkRGluRG56czhmbUJKaFNYU1NSX1k0VllaY2l3bGxpNTBOOG1acWdmcW90ZW5UMVF1OU11OG1HOXhZaEF3b0lucWZpLUpQaldUMEV0V1BXU3lKUXBndXBBMGtyMzJDLVFzSzZ0MGViYlNhMGJETXFUd1l0Q0s2TmNGeDFHS2c?oc=5",
+          "publishedAt": "Fri, 30 Oct 2026 00:35:00 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "COMMENTARY: AI’s rewiring of US warfare may be only the beginning - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMitwFBVV95cUxNRkQ0Yk1sYXhtUVJUYmt6NzlmMTBMUmhURDNGbjVWTkctZF9wZ0dmZENrVUJhZHdpaWE5QVQyNDRRRTJWVjlDMzRhNER0eFQwRDIzeHpIN1d5OEhPT1RGUXZ5OE9NZ3pCREgzclV6VGFMMTNwc3R0bnVEUkpaRFRJSm8xU0FPYjdWbEZiTjVXN1ZwekJqcXd4emlndmZxMURwTTdpdFJwOFVLXzdxcXdwNXEzZmtTbnM?oc=5",
+          "publishedAt": "Fri, 30 Oct 2026 09:11:13 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Intel to buy quantum firm Classiq for about $2.3 billion, Bloomberg News reports - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPaTdHSjA0a084VVdlSGgzTnpvd0RaZzhYUi1jZGt4YVZCc0M2WW9yczNFaUpEbFR0ajhXZXhLRUpYWUZMZEk5WXJyd0hZMU95dTZnLVdWZjBvdzQyZHJzOFc5ZF9OSXctNFdjT0o4MFpza1htNURQVjNzTld4bHZNREotLXlkenVLNHFXUlU0SUlHTWNPQVVJbVo1My1lajlxN3B4ZGRUNkxUZkE3SDRES1R2aGk5dzRP?oc=5",
+          "publishedAt": "Tue, 27 Oct 2026 17:05:23 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Reddit puts logged in experience first as Google AI hits traffic - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxNU0Iwc2FJaWJ3bFdiRm1XamdXdmlIeTY5cHNmalZUQUxDQ2JPQ3hnV1JNMG9JSFU4SVdXakxSaWRrVV83anVKNDJET194MW1IMVdFZERZUHc0M1Awek5VcTJ4RDVHTkU1OEVtbDlQc3gwSXI5dEFkQ1A3cFBVZkx0NE9YblRBN2JaM0NkR2gxRkR6UEFYdlNpTmJiLTZtek5YUG5id2VfN3JqdGdiN3FUX1c0eXB2clpJYXdLVw?oc=5",
+          "publishedAt": "Thu, 29 Oct 2026 23:41:53 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "DeepSeek, Moonshot used OpenAI's GPT-6 Astra to train latest models, The Information reports - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxOZWxreXdWZGhvNFRiam1WcVA1WGMtNnl3NVpEWjIyVV9IR0xReTYwTFU2Ulhnek5QbVlzc1prUlBwYlVYNmpFaXJLdTNRU3NnbkhWSFlzZllyN1lma0RydHM5bEFab2xIRW5aOUllWGtiMzRaOG1HT1M3Z3ZIN1NwVmFFZ2NlUFo5WUNYaTRZSm9waDl6cE03bE1NMEtIM2VORTVVUDN3Y01ER3drXzFwNkMyNFZ0N3F5MC1idTVR?oc=5",
+          "publishedAt": "Thu, 29 Oct 2026 02:11:00 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Google launches Gemini 4 Carbon AI model with cybersecurity focus - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMisgFBVV95cUxNLXQyWUp5N0QwdVRZWXFkd1M5b2RrcExtNVBJS0JKaDdhaG1DQThXeEVlUWVWQUNPTjNOak9ZSnZlQjhDUkNIT2oxSlJrSjlJSkVSMVZFMW5acXV1N0l5bWxKTU1CNmtzZVM3U2dZVE5RbHlrZ2k5LTljM2FnNDVLM3NFbGI4N1hSMVIyQ2FNZXZYY0ZuNV9KR0lQYzdxT2RGdzkxamkzLXloVUVmLUhmdUZ3?oc=5",
+          "publishedAt": "Wed, 28 Oct 2026 18:12:49 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Software stocks slide as Fortinet, ServiceNow fail to meet lofty investor expectations - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxOQXYxUGkybjhZNGUydzJvN0pjTjROMkF2djdManFSLWgxZmtYZW96c0RfRjZMOTItME8taHdxeHpubG9KMUpzX09yS2VGTjVDQVJEUVJ3YWtMU2NIYnFBbnNGMW81eWZTYTBEdFAtNllDS2ZxNUtzNkt5dTJNb2djVUZ5LUhacFNfZkI0VFpRZXJzZF9GSk5PQWFsa2p1ak9WQ24zajN5TWpwSWxESHRQUWtuQ1oxanBMeTE3RTNHdFpoWXIt?oc=5",
+          "publishedAt": "Thu, 29 Oct 2026 14:15:55 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Amazon unveils new lineup of Alexa devices including redesigned Echo Show - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQNWNGZUlvRHlNNjBxNE5PR2Z4OWxPS2E1ZWtJZTFFRFJTUS0wcmxMM3JOTVFVMTNpTXNBd1ljbGYydC04T042aFJkbzlpQWMxXzhkVXRycFhXUzBrNWZJM2JHX2NKeVBBUi1FTW40STdzWGNjdTk4VnZTZmUyajVxYlJ3X0dNS0JzLXhDMDFMdmpxSm9YUVhTZ2I2eDBCTE01clVCa2xKTXY3NlY1MlJtd2VDbFh4R2xm?oc=5",
+          "publishedAt": "Wed, 28 Oct 2026 17:41:15 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "German startup NVision shows new path to quantum computing chips in Nature paper - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxPQkFDOVg0dTRuVTFVb0R1dmlMYjBWZ3dHekpEYmp5MjNvTmpJRFphUDZHRUlRdUN0ZVRHWU45d2ZqVk0wZ2RaT0Uwb2JhQTZmZ3ZDNzJhSmNHR3BoYnhTZ1lRWFpCaFdLcFN4VnB1N1pkaDZXWFY2U19TU1laZXNWeEt6WXJrNEh5aS1GQXo5STZLbW43eWRRYXhVcERyWUxEUGlDbmV4VGRyeVNjeXU0RUdYQ3k1bkQ2MzdsZGtn?oc=5",
+          "publishedAt": "Wed, 28 Oct 2026 17:29:43 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "NEWSLETTER: Should you invest in Anthropic? Five takeaways from its S-1 - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQc0k1aFM3cXppSjREQmI3Y3phQzItVW5CdXQ2Y21sN3pnRDd0YWp5YjdWNFJieVFwa2daeVhpV1NTWHNYT21CSm9LOW9hVDByaF9mSlY3VU9NNnliWW9vak43OGwzRnZTa2FVeXdob3hZejZ1R3BWSHpRTFljY0RTaWhnRUNmZ1J5M1B6eDNoSV92LTAxTFpsVi12OHVScWdKc0RXbDJUWF9SX3lzZEZjSWptSmtDRVJ2cXFxcDN3?oc=5",
+          "publishedAt": "Wed, 28 Oct 2026 21:16:00 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "EXCLUSIVE: Hackers target US FEC system, disrupting campaign finance disclosures days before midterms - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxPbDV3WWJ5Ulh3Q05tT203WGNGVE1UNmFvZ2ZoclFXemtrWXFhNlRhUmtabmlPZXRaYU1sQ251VWhSSWJMODNJQkRrMk9MNFdfb1RVT2VJQTR4akpfM0JQNk9wMkpMV2tFY2tHc2ZpTGMwcHlLNFU3UDBrZk5MbGFrb2ZqX25XRVZCQmI5Z29LbDI5cjF2S0JodjVNcVVmV3RyUFR1SW5RZUwwY2JlSWJrRUMyNEgta3dl?oc=5",
+          "publishedAt": "Tue, 27 Oct 2026 18:44:00 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Microsoft offers buyouts to around 60,000 employees to contain costs - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxOY3V6RnhJNUdQRC1uU19vNFk4YUR3MVlHbmpOdnUxMGo4R2RoWVhvXzAzTGczekw4akxaVjB3VzF4bHRhRFZFTFJ5eGY0ZGFOZ2NtcTBQa0RqZlgzVHlQb0pUcVJjN3RBM3lZTFhjaTNCM3JXLWxzR1F3NTZDLU0teHZyb2FpX2xzajM1UlpVVFRDTmhTRFhpeVR1WWxaT1dva0E0TEVoTjllb3hMSDVFVkRYTnpaQXRhZ0w3ZU9vR1hhQQ?oc=5",
+          "publishedAt": "Mon, 26 Oct 2026 21:44:09 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Visa results beat estimates as resilient customers keep up spending - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxNTks0TEhNcDhhU2VhLXNYanZDVXI2eWRLVVVULUd4M3JueFQ1TDNCTFJ6YkxFVjk0SW1iblY5Q21oRDJaczVBTTBtYXA1dmR3WHFNT1dtQm1vSUg2Z3RxcDMxSjBzMk9yR3JiaDdKNmpKMnMwRWl6Y3Y1RWRxcDlZQWhFYk1zdDRYY1llZy1iUGlJWGwtSVA0MVBYMnpHVkFkTnBTRw?oc=5",
+          "publishedAt": "Tue, 27 Oct 2026 22:52:01 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Big Tech earnings to test AI boom amid market turmoil - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxNRXF6SzRzQjFlSVJ4Wjk2OEdySTRrS0F3eWlZcXQtRDdXN3hYZ1Z1YmVqbUJzbURWRW9zZHBEcmd3QWNxRGp4QWZuX0VfT1dQNVBJNDNMaXVYSDFHY3NTb2ZvNlJfdjZuUmluNERuS3FIeF92cV9uWVFyQ29zU29ybEFHRU92SDR3ODZvWXpvQU5NZ3dfZGFQcy1iQVhudw?oc=5",
+          "publishedAt": "Tue, 27 Oct 2026 15:26:13 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Robinhood CEO's AI startup Harmonic expands into software, chip design verification - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxNVnhBbVF1VllNeUN0OHo0MzQ0SHd4RUhGRkk5MllHOG5yMm84Zm1qMlNCSTdOMlhyd28zcUM2NkgtbEY5ZlFfQ0toelRsSUlvdFVURmZ4NFpiMGlXLUxTek5UNFZpWTBVTjMxY2txTVJDcFNNT0FPWk5HYTh6Znh6QlgtZFlCLTdkb1F0NjV0SXRvYk1URlNpdkJUbTlDandaZ1dSa0tPcDFPVnNBT29HMk9KTXhhQQ?oc=5",
+          "publishedAt": "Tue, 27 Oct 2026 19:56:33 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Who controls powerful AI? Anthropic has a plan for long after its leaders depart - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxQWjdLMFpXUmh5WjlTQUxaOExSbmM0bTV2bGRRY05iSnNfT1BnZ3l6OWFON2hYMlh0MnNyeDV3c2NGN2dHUl9xbVo0SHJzdkFHUWFfNHdNU2g0RktoYnZPdXc4ZEcxNW5SRzU3Njg4VzhscE14ODk3T0tONHBSYnFMNk5IYXdvSDktY2FNZDR2Tnd0dG82NHBuQUV0d3lVWVBoYkpNM1dwcjJCVDRseTVwQkxZWEpFNkhHOUFTRA?oc=5",
+          "publishedAt": "Tue, 27 Oct 2026 14:45:58 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "SoFi's shares jump after fintech beats estimates, raises revenue forecast - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxQaU82LXUyNm5pOUJ0TmJfSFltNkc1WHhjbW1sTmV2WnhFQWRVZkh1MWRqOHpoZ0oyUC0xaFFLU25pekJIVlNaS19YblduZ0dEYzB6YzBDb3l6VHNRM0RZQmNxaFFHaXBzN2Itd0lLYmxvSVJoLXowdkJUb0tNcUlvX0lKY255ZGpsRDIzVjBIQ3ZlcU9EMWNpa2ZEOHcyV0dycFVRZWJ5azExay1URlg4QVMzSVBBc1dCUXc?oc=5",
+          "publishedAt": "Tue, 27 Oct 2026 11:57:34 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "PHP Foundation 'under-funded' with one full-time staff member, director says - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMivAFBVV95cUxNd0F1M2JpV18ycDZBTzdodjMzcDMyQUQ1QmpZZk41emRob2VIbXdkWHN4SThaWGVtQ0R5VkdhUl9LRW5SQktkNENWVG4xVXZJaGtnOElZZ194c2tNSG9sTjVUaG1NYzFSeEdTV2ZsTTlIbmozV1NMYWlQNGNNTTRZM2d2MU1tTTFac1VFU2l0dU1jM05XbTdmSEFjaVlkaDN3UGJINGtXQjNEaVBib0kwM1JlVVc1cUYwckNOVQ?oc=5",
+          "publishedAt": "Wed, 28 Oct 2026 07:00:00 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Dassault Systèmes raises 2026 targets - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMikwFBVV95cUxPeXBLX2hPRUpza1h4dldlNEFPekZzQk5YdmhkcTl0Tk1LdFhuMWFzcUhmSDFOV2xkLUp0TDJQdkc4RWhqd0NmWjNpeXdod2V3bG1hdzZvWnNIX1lNR1lTVVE4ZWZlMzhMdWxEd3pseHRWVjlvNUYtSl9NSWVGVGFmSVoyUXoxNk9sUjJnNzIwMm5TelU?oc=5",
+          "publishedAt": "Wed, 28 Oct 2026 06:04:00 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Gen Digital raises annual revenue forecast on strong cybersecurity demand - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQTGcyQTl6UzdkLUFUa2xBN2l6bmM1ZW1zdlBJd1BkdDhNVlF4NUdBUVRxRXZRMWhYYXdDNm5LMlZrSHUzaUROUFNmb0JmZEcwUHMydlBqc2lCTk9UYTdPRTdIYjZlZ2Fqd0dqeDMtNkZBYlpfUHhtRjdTdTdJWFR4dHB1aWtmSjR4SlJ4YVhYX2RCVHVlaXVGRGhCUWdmeE4tZGhOeU14MmRlSkR3NENyZXJjemNNU3RO?oc=5",
+          "publishedAt": "Wed, 28 Oct 2026 20:19:24 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Temenos raises full-year profit outlook on \"continued momentum\" - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxPaVh6azhkMnkxOEVvbF9WYVVtbkxvaFJIczF0eS1VQ3VLTmZUd0Z1R2Y3aWxDdUtLcWJRVE9NTGtUSEt5Mjdnd0RTNVNwbDJtY2d5ODNEVDMzT0tTcUt3bnlWazROWmRVRTQtRktJb0NoYVUyNU1YYUtmdFJwTW9MOVlvTEpfVU9PdVlNMkFqZkZHUlduYnB5RGVSNzdhaVducEx4SjJDVTM?oc=5",
+          "publishedAt": "Tue, 27 Oct 2026 17:26:24 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Anthropic's path from AI startup to industry-defining IPO - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMimwFBVV95cUxPT2ZsWlY5ZUdaTFJOS0c0OHU5MGtpM2FobkVWZ2VNYWVmR21TcVllblBxM2NTTU9VbXgwbDFVVGgzZkY1YnFXUEQzcmlVbkJXZmRjUWxmUlhQZXZDTnRLNjRzM2JWM20xXzEyLVFmVjh5M01pclJQOFAwaUV2U0ZMZUFwYnFhbGdyaHdic0NBdkhQM29WZDlhWEI4MA?oc=5",
+          "publishedAt": "Mon, 26 Oct 2026 07:00:00 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        },
+        {
+          "title": "Nvidia, Meta deepen AI ties with $3 billion investment deal - Reuters",
+          "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxPS2Q3RzNwUk5IQWZ1NjIwYmxWV2xCVjZRQVk2OUQ3a1B5MWhKanZMZ3JyMHVRQ2MwSzRzZVZ4VmxNTGNKWDljd084OTRUSWcwNHdFYmduNTJ1RTAtcW0xRHVobW1BcVNQakJrT3paQkdQODl0dVoxZHNwYXhiVFJpclpNaVZrQ2lqRk5oMnBZYzlPOGc2alc3Q2szb2pDOWJhUDJXUA?oc=5",
+          "publishedAt": "Tue, 27 Oct 2026 06:13:41 GMT",
+          "status": "unknown",
+          "category": "原文不可用",
+          "verification": "ok"
+        }
+      ]
+    },
+    "Yahoo Finance": {
+      "feed": "https://finance.yahoo.com/news/rssindex",
+      "error": "HTTP Error 404: Not Found",
+      "items": []
+    }
+  }
+}

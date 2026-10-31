@@ -38,6 +38,7 @@ export const codexBrowserConfig: Readonly<Record<string, unknown>> = Object.free
   features: {
     shell_tool: false, unified_exec: false, view_image: false, sleep_tool: false, code_mode: false, code_mode_only: false,
     multi_agent: false, multi_agent_v2: false, apps: false, plugins: false, hooks: false, memories: false, goals: false,
+    retain_client_developer_messages: false, retain_client_tool_outputs: false,
     current_time_reminder: false, token_budget: false, rollout_budget: false, deferred_executor: false, request_permissions_tool: false,
     image_generation: false, browser_use: false, browser_use_external: false, computer_use: false, skill_search: false,
     tool_suggest: false, workspace_dependencies: false, skill_mcp_dependency_install: false, recommended_plugins: false,
@@ -56,13 +57,20 @@ export async function codexDisabledMcpServers(rpc:Pick<CodexRpc,'call'>):Promise
   if(names.length>1000||names.some(name=>!name||name.length>200))throw new Error('Invalid Codex inherited MCP catalog')
   return Object.fromEntries(names.map(name=>[name,{enabled:false as const}]))
 }
+export function codexToolInstructions(definition:CodexBrowserDefinition):string {
+  return codexThreadParameters('','',definition,'').developerInstructions as string
+}
+export function codexInputScope(context:string):string {
+  return 'Current BMW input scope (replaces earlier input-specific scope; old audit-only restrictions do not restrict later authorized production). Host permissions, ownership and cleanup remain enforced. Current Project context:\n'+context
+}
 export function codexThreadParameters(directory: string, model: string, definition: CodexBrowserDefinition, context: string,disabledMcpServers:Record<string,{enabled:false}>={}): Record<string, unknown> {
   const properties=definition.inputSchema.properties as Record<string,unknown>|undefined
   const action=properties?.action as {enum?:unknown}|undefined
   const actions=Array.isArray(action?.enum)?action.enum.filter((value):value is string=>typeof value==='string'):[]
   const guide=actions.length?' Browser action index (current authenticated catalog): '+actions.join(', ')+'.'+(actions.includes('help')?' Start page research with browser {"action":"observe"}. To discover or recover, call browser {"action":"help"}, or {"action":"help","forAction":"EXACT_ACTION"} for its closed input schema. Reuse previously discovered contracts across inputs while this catalog is unchanged; a new input scope does not invalidate tool contracts. For Studio use help with forOperation and, when needed, describe-edit editOperations (up to8) to discover a group once. Continue an authorized production through its requested deliverables; use exact recovery for a correctable argument error rather than treating it as missing permission or ending at an intermediate milestone. Never replay uncertain work or bypass real evidence/cleanup gates. Do not guess aliases. On a validation failure, follow its recovery contract and correct the request; unknown fields are rejected before execution. Collect finite video to its ended event with a safety limit longer than the source duration; a limit stop is partial.':''):''
   return { cwd: directory, model, config: {...structuredClone(codexBrowserConfig),model_auto_compact_token_limit:200000,mcp_servers:structuredClone(disabledMcpServers)}, environments: [], sandbox: 'read-only', approvalPolicy: 'never',
-    dynamicTools: [definition], developerInstructions: 'You are BMW Assistant. Use browser for Project pages, images, media and Video Studio. BMW owns resource and Session scope.'+guide+' These are the current BMW input instructions and replace earlier input-specific developer context in this resumed Session. Task-specific restrictions, including audit-only scope, apply only to the input for which they were supplied; they do not restrict later user-authorized production or rework. Apply the current context below for this input only. Browser permissions, ownership checks, active audit write restrictions and cleanup requirements remain enforced by BMW Host. Current Project context:\n' + context }
+    dynamicTools: [definition], developerInstructions: 'You are BMW Assistant. Use browser for Project pages, images, media and Video Studio. BMW owns resource and Session scope.'+guide+' Current input-specific scope is supplied separately by BMW Host; later scope replaces earlier scope, including audit-only restrictions. Project evidence and native resume anchors remain authoritative. After context compaction, re-read the current draft and its pinned source/evidence IDs before changing it; old semantic review conclusions never authorize a new MP4. '+(context?'Current Project context:\n'+context:'') }
+
 }
 export function codexProtocolVersion(output:string):string {
   const value=output.startsWith('codex-cli ')?output.slice('codex-cli '.length):undefined

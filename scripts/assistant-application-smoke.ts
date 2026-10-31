@@ -7,6 +7,7 @@ import os from 'node:os'
 import path from 'node:path'
 import http from 'node:http'
 import crypto from 'node:crypto'
+import {Agent,getGlobalDispatcher,setGlobalDispatcher} from 'undici'
 import { app, ipcMain, webContents,dialog,BrowserWindow } from 'electron'
 import type {WebContentsView} from 'electron'
 import type { AgentBackend, AgentRunRequest, AssistantState,AgentDriverSettings } from '@bmw-agent/agent-contract'
@@ -95,6 +96,14 @@ const backend: AgentBackend = {
       imageCount += reply.images?.length ?? 0
       await emit({ type: 'tool.completed', callId, success: true, message: '' }); return agentRecord(reply.result)
     }
+    // Exercise the real AssistantService dynamic-tool connection, not just the
+    // stdio adapter: a long native job must outlive a generic HTTP header timer.
+    const previousDispatcher=getGlobalDispatcher(),shortDispatcher=new Agent({headersTimeout:20,bodyTimeout:20})
+    try{
+      setGlobalDispatcher(shortDispatcher)
+      const delayed=await connection!.execute({action:'wait',milliseconds:1300},request.signal)
+      assert.equal(agentRecord(delayed.result).waited,1300)
+    }finally{setGlobalDispatcher(previousDispatcher);await shortDispatcher.close()}
     await emit({type:'message.completed',messageId:'progress-open-'+request.runId,text:'Inspecting the Project page'})
     const tab = await browser({ action: 'tabs.open', url: pageUrl, foreground: false, reuse: false })
     await emit({type:'message.delta',messageId:'progress-capture-'+request.runId,text:'Capturing '})
@@ -269,6 +278,10 @@ try {
     assert.equal(await assistant.executeJavaScript('document.getElementById("send").disabled'),true)
     assert.equal(JSON.stringify(await snapshot()).includes('fixture-one-shot-secret'),false)
     assert.equal(latestRequest,null,'Settings must not send a model turn')
+    // Host admission becomes busy before the fixture's async provider enters
+    // its login hold. Cancel only after that hold exists so this case actually
+    // exercises awaited native cleanup, rather than cancellation before login.
+    await waitFor(async()=>finishSettingsCleanup?true:null,'fixture login entered native cleanup hold')
     await assistant.executeJavaScript('document.getElementById("agent-settings-driver").value="fixture-login";document.getElementById("agent-settings-driver").dispatchEvent(new Event("change"))')
     await waitFor(async()=>settingsCleanupStarted?true:null,'settings cancellation waits for native cleanup')
     await assert.rejects(shell.executeJavaScript('window.bmw.createProject({name:"must not switch during settings cleanup",homeUrl:""})'),/Stop and drain/)

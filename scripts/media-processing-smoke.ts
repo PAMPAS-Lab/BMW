@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { app, BrowserWindow, session } from 'electron'
+import {MediaProcessor} from '../packages/media-native/src/media-processor.js'
 import { MediaController } from '../packages/media-native/src/media-controller.js'
 import { ArtifactJobIO } from '../packages/media-native/src/artifact-job-io.js'
 import {readMediaDerivation} from '../packages/media-native/src/media-derivation.js'
@@ -15,7 +16,7 @@ import type { MediaInfo } from '../packages/media-native/src/media-contract.js'
 import {mediaRecord} from '../packages/media-native/src/media-contract.js'
 import {createServer} from 'node:http'
 import crypto from 'node:crypto'
-import {Input,BufferSource,MP4,Output,BufferTarget,Mp4OutputFormat,MpegTsOutputFormat,Conversion} from 'mediabunny'
+import {Input,BufferSource,MP4,Output,BufferTarget,Mp4OutputFormat,MpegTsOutputFormat,Conversion,EncodedVideoPacketSource,EncodedAudioPacketSource,EncodedPacketSink} from 'mediabunny'
 
 const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-media-processing-')))
 const project = { id: 'media-job-project', name:'Isolated media fixture', directory: path.join(root, 'project') }
@@ -313,6 +314,26 @@ try {
     try{fs.appendFileSync(converted.path,'changed');await assert.rejects(readMediaDerivation(artifacts,result.artifactId),/bytes changed/)}finally{fs.writeFileSync(converted.path,originalBytes)}
     const proof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/media-preservation-validation';fs.mkdirSync(proof,{recursive:true});fs.copyFileSync(path.join(artifacts,result.proofArtifactId),path.join(proof,'archive-segment.json'))
     const before=fs.readdirSync(artifacts).sort(),cancel=new AbortController();cancel.abort(new Error('cancel archive segment'));await assert.rejects(media.processArtifact({action:'media.segment',artifactId:converted.artifactId,segmentRange:{startSeconds:0,endSeconds:1}},cancel.signal),/cancel archive segment/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);assert.equal(media.isCaptureActive(),false)
+  })
+  await stage('archive segment preserves multiple audio renditions and native lineage',async()=>{
+    const original=new Input({formats:[MP4],source:new BufferSource(fs.readFileSync(converted.path))}),target=new BufferTarget(),output=new Output({format:new Mp4OutputFormat(),target})
+    try{
+      const video=(await original.getPrimaryVideoTrack())!,audio=(await original.getPrimaryAudioTrack())!,videoSource=new EncodedVideoPacketSource((await video.getCodec())!),audioSources=Array.from({length:3},()=>new EncodedAudioPacketSource('aac'))
+      output.addVideoTrack(videoSource);for(const source of audioSources)output.addAudioTrack(source)
+      await output.start()
+      const videoConfig=(await video.getDecoderConfig())!,audioConfig=(await audio.getDecoderConfig())!
+      await Promise.all([(async()=>{for await(const packet of new EncodedPacketSink(video).packets())await videoSource.add(packet,{decoderConfig:videoConfig});videoSource.close()})(),...audioSources.map(async source=>{for await(const packet of new EncodedPacketSink(audio).packets())await source.add(packet,{decoderConfig:audioConfig});source.close()})])
+      await output.finalize()
+    }finally{original.dispose()}
+    const sourceId='multi-audio-archive.mp4';fs.writeFileSync(path.join(artifacts,sourceId),Buffer.from(target.buffer!))
+    const result=await media.processArtifact({action:'media.segment',artifactId:sourceId,segmentRange:{startSeconds:.1,endSeconds:1.2}}) as {artifactId:string;sha256:string;actualSourceRange:{startSeconds:number;endSeconds:number};tracks:{type:string}[]}
+    assert.deepEqual(result.tracks.map(t=>t.type).sort(),['audio','audio','audio','video'])
+    const lineage=await readMediaDerivation(artifacts,result.artifactId);assert.equal(lineage?.sha256,result.sha256);assert.deepEqual(lineage?.sourceRange,result.actualSourceRange)
+    const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{type:string;sampleCount:number}[]};assert.equal(decoded.completeFile,true);assert.equal(decoded.tracks.length,4);assert.ok(decoded.tracks.every(t=>t.sampleCount>0))
+    const sample=mediaRecord(await media.processArtifact({action:'media.audio.sample',artifactId:result.artifactId,startSeconds:.1,endSeconds:.5})),evidence=mediaRecord(sample.evidence)
+    assert.equal(evidence.inputAudioTrackCount,3);assert.equal(evidence.audioSelection,'primary-audio-track');assert.ok(Number(evidence.inputAudioTrackId)>0)
+    const processor=new MediaProcessor({session:browserSession,pagePath:path.resolve('packages/media-native/src/media/processing.html'),preloadPath:path.resolve('packages/media-native/src/preload/processing-preload.cjs')}),normalized=mediaRecord(await processor.process({action:'media.speech.normalize',artifactId:result.artifactId},artifacts)),normalization=mediaRecord(normalized.normalization)
+    assert.equal(normalization.inputAudioTrackCount,3);assert.equal(normalization.audioSelection,'primary-audio-track');assert.equal(normalization.inputAudioTrackId,evidence.inputAudioTrackId);assert.ok(Number(normalization.frames)>0)
   })
   await stage('preserve observed HLS delivery bytes, remux encoded packets without loss and verify every track/range',async()=>{
     const input=new Input({formats:[MP4],source:new BufferSource(fs.readFileSync(converted.path))}),target=new BufferTarget(),output=new Output({format:new Mp4OutputFormat({fastStart:'fragmented',minimumFragmentDuration:.4}),target})

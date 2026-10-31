@@ -4,6 +4,8 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { SessionOperations } from './session-operations.js'
 import type { AddressInfo } from 'node:net'
+export {createBridgeHttp} from './bridge-http.js'
+export {browserDeadlineMs} from './browser-deadline.js'
 
 export interface BrowserExecutor {
   readonly busy?:boolean

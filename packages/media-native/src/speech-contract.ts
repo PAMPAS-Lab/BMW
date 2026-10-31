@@ -21,7 +21,7 @@ export interface SpeechEvidence {
  timeDomain:'audio-file-seconds'|'normalized-interval-seconds';durationSeconds:number;elapsedSeconds:number;createdAt:string;segments:SpeechSegment[]
  automaticTimingApproved:false;wordTimingAvailable:false
 }
-export interface SpeechNormalization {kind:'speech-pcm';sampleRate:16000;channels:1;sampleType:'pcm-s16le';frames:number;durationSeconds:number;inputSampleRate:number;inputChannels:number;decodedStartSeconds:number;decodedEndSeconds:number;clippedSamples:number;downmix:'channel-mean';discardedTailFrames?:number;discardedHeadFrames?:number;sourceRange?:SpeechSourceRange;sourceDurationSeconds?:number}
+export interface SpeechNormalization {inputAudioTrackId?:number;inputAudioTrackCount?:number;audioSelection?:'primary-audio-track';kind:'speech-pcm';sampleRate:16000;channels:1;sampleType:'pcm-s16le';frames:number;durationSeconds:number;inputSampleRate:number;inputChannels:number;decodedStartSeconds:number;decodedEndSeconds:number;clippedSamples:number;downmix:'channel-mean';discardedTailFrames?:number;discardedHeadFrames?:number;sourceRange?:SpeechSourceRange;sourceDurationSeconds?:number}
 function closed(value:Record<string,unknown>,keys:readonly string[]){if(Object.keys(value).some(key=>!keys.includes(key)))throw new TypeError('Unsupported speech evidence property.')}
 export function speechSha(value:unknown):string {if(typeof value!=='string'||!/^[a-f0-9]{64}$/.test(value))throw new TypeError('Invalid speech SHA-256.');return value}
 /** Preserve actual segment boundaries. Tokens are BPE units, never Chinese words/characters. */
@@ -61,7 +61,8 @@ export function assertSpeechEvidence(raw:unknown):SpeechEvidence {
  finiteNumber(value.elapsedSeconds,'ASR elapsed',0,SPEECH_LIMITS.jobTimeoutMs/1000)
  if(typeof value.createdAt!=='string'||!/^\d{4}-\d\d-\d\dT/.test(value.createdAt)||!Number.isFinite(Date.parse(value.createdAt)))throw new TypeError('Invalid speech capture time.')
  const normalization=mediaRecord(value.normalization)
- closed(normalization,['kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix','discardedTailFrames','discardedHeadFrames','sourceRange','sourceDurationSeconds'])
+ closed(normalization,['inputAudioTrackId','inputAudioTrackCount','audioSelection','kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix','discardedTailFrames','discardedHeadFrames','sourceRange','sourceDurationSeconds'])
+ if(normalization.audioSelection!==undefined||normalization.inputAudioTrackId!==undefined||normalization.inputAudioTrackCount!==undefined){if(normalization.audioSelection!=='primary-audio-track')throw new TypeError('Invalid speech audio selection.');finiteNumber(normalization.inputAudioTrackId,'selected audio track',1,Number.MAX_SAFE_INTEGER,true);finiteNumber(normalization.inputAudioTrackCount,'input audio track count',1,15,true)}
  assertSpeechRangeEvidence(normalization)
  if(value.timeDomain!==(normalization.sourceRange===undefined?'audio-file-seconds':'normalized-interval-seconds'))throw new TypeError('Speech interval uses the wrong time domain.')
  if(normalization.kind!=='speech-pcm'||normalization.sampleRate!==16000||normalization.channels!==1||normalization.sampleType!=='pcm-s16le'||normalization.downmix!=='channel-mean'||normalization.durationSeconds!==duration)throw new TypeError('Invalid speech normalization provenance.')

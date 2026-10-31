@@ -24,7 +24,7 @@ export async function segmentArchivedMedia(directory:string,raw:unknown,signal?:
  const input=new Input({formats:[MP4,WEBM,MATROSKA,MPEG_TS],source:source(io)});let output:Output|undefined,conversion:Conversion|undefined,handle:Awaited<ReturnType<typeof fs.open>>|undefined,success=false
  try{
   const sourceSha256=await io.fingerprint(abort),duration=await input.computeDuration(),tracks=await input.getTracks(),video=await input.getPrimaryVideoTrack()
-  if(!video||tracks.some(t=>!t.isVideoTrack()&&!t.isAudioTrack())||tracks.filter(t=>t.isVideoTrack()).length!==1||tracks.filter(t=>t.isAudioTrack()).length>1||!Number.isFinite(duration)||duration>ARCHIVE_LIMITS.durationSeconds||request.endSeconds>duration)throw new Error('Segment requires a finite archive with one video and at most one audio track; requested range must exist.')
+  if(!video||tracks.some(t=>!t.isVideoTrack()&&!t.isAudioTrack())||tracks.filter(t=>t.isVideoTrack()).length!==1||tracks.filter(t=>t.isAudioTrack()).length>15||!Number.isFinite(duration)||duration>ARCHIVE_LIMITS.durationSeconds||request.endSeconds>duration)throw new Error('Segment requires a finite archive with one video and at most fifteen preserved audio tracks; requested range must exist.')
   const key=await new EncodedPacketSink(video).getKeyPacket(request.startSeconds,{metadataOnly:true}),base=Math.max(0,key?.timestamp??request.startSeconds)
   if(request.startSeconds-base>30)throw new Error('Archive key-frame expansion exceeds thirty seconds; no incomplete segment published.')
   await guard();handle=await fs.open(file,'wx+',0o600);created.push(file);let bytes=0

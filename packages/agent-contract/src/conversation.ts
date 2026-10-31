@@ -63,7 +63,9 @@ export interface AgentEvent {
   createdAt: number
   event: AgentDriverEvent
 }
-export interface AgentRuntimeObservation {phase:'reasoning.started'|'reasoning.completed'|'compaction.started'|'compaction.completed'|'usage';messageId?:string;inputTokens?:number;cachedInputTokens?:number;outputTokens?:number;reasoningTokens?:number}
+export const agentRuntimeFailureCategories=['connection','stream','rate-limit','capacity','authentication','context-limit','budget','policy','request','internal','other'] as const
+export type AgentRuntimeFailureCategory=typeof agentRuntimeFailureCategories[number]
+export interface AgentRuntimeObservation {phase:'reasoning.started'|'reasoning.completed'|'compaction.started'|'compaction.completed'|'usage'|'retry';messageId?:string;inputTokens?:number;cachedInputTokens?:number;outputTokens?:number;reasoningTokens?:number;failureCategory?:AgentRuntimeFailureCategory;httpStatus?:number}
 export interface AgentRunRequest {
   sessionId: string
   externalSessionId: string | null

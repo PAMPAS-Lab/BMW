@@ -2,18 +2,21 @@ import type {WebContents} from 'electron'
 import type {PageVideoTargets,VideoTargetScope,VideoTarget} from '@bmw-agent/agent-contract/video-identity'
 import {readRendererPhase} from './renderer-read.js'
 
-export type PublisherVideoSite='cnbc'|'fox'|'cnn'|'yahoo-finance'
+export type PublisherVideoSite='cnbc'|'fox'|'cnn'|'yahoo-finance'|'ars'|'mit-tr'
 export function publisherVideoSite(address:string):PublisherVideoSite|undefined {
  try{const u=new URL(address);if(u.protocol!=='https:'||u.username||u.password||u.port)return
   if(['www.cnbc.com','cnbc.com'].includes(u.hostname)&&/^\/video\/\d{4}\/\d{2}\/\d{2}\/[^/]+\.html$/.test(u.pathname))return 'cnbc'
   if(['www.cnn.com','edition.cnn.com','cnn.com'].includes(u.hostname)&&/^\/\d{4}\/\d{2}\/\d{2}\/[a-z0-9/-]+\/video\/[a-z0-9-]+$/.test(u.pathname))return 'cnn'
   if(['finance.yahoo.com','ca.finance.yahoo.com'].includes(u.hostname)&&/^\/video\/[a-z0-9-]+-\d{6,15}\.html\/?$/.test(u.pathname))return 'yahoo-finance'
+  if(['www.technologyreview.com','technologyreview.com'].includes(u.hostname)&&/^\/\d{4}\/\d{2}\/\d{2}\/\d+\/[a-z0-9-]+\/?$/.test(u.pathname))return 'mit-tr'
+  if(['arstechnica.com','www.arstechnica.com'].includes(u.hostname)&&/^\/video\/watch\/[a-z0-9-]+\/?$/.test(u.pathname))return 'ars'
   if(['www.foxnews.com','foxnews.com'].includes(u.hostname)&&/^\/video\/\d+$/.test(u.pathname))return 'fox'
  }catch{/* Not an admitted publisher video page. */}
 }
-interface ParentWitness {pageUrl:string;publisher:PublisherVideoSite;contentId:string;title:string;durationSeconds:number;playerUrl:string;videoIndex:number;mp4:string;hls:string;frameUrl:string;assetKey:string;cnnCanonical?:string;cnnEmbed?:string;yahooCanonical?:string;yahooEmbed?:string}
+interface ParentWitness {pageUrl:string;publisher:PublisherVideoSite;contentId:string;title:string;durationSeconds:number;playerUrl:string;videoIndex:number;mp4:string;hls:string;frameUrl:string;assetKey:string;cnnCanonical?:string;cnnEmbed?:string;yahooCanonical?:string;yahooEmbed?:string;arsCanonical?:string;mitVideoId?:string}
 interface PublisherUnavailable {blocked:string}
 interface FrameWitness {contentId:string;durationSeconds:number;playerUrl:string;hls:string;assetKey:string;adInProgress:false}
+interface MitFrameWitness {contentId:string;durationSeconds:number;playerUrl:string;hls:string;assetKey:string;adState:'clear'|'not-observed'}
 const object=(value:unknown):Record<string,unknown>=>value&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:{}
 const text=(value:unknown,max=8192)=>typeof value==='string'&&value.length<=max?value:''
 const finite=(value:unknown)=>typeof value==='number'&&Number.isFinite(value)&&value>0&&value<=86400
@@ -31,8 +34,11 @@ function yahooBinding(pageUrl:string,id:string,canonical:string,embed:string):bo
   return /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(id)&&publisherVideoSite(pageUrl)==='yahoo-finance'&&[c,e].every(u=>u.protocol==='https:'&&['finance.yahoo.com','ca.finance.yahoo.com'].includes(u.hostname)&&!u.username&&!u.password&&!u.port&&!u.hash&&path(u)===path(p))&&!c.search&&[...e.searchParams.keys()].every(k=>k==='format')&&e.searchParams.getAll('format').length<=1
  }catch{return false}
 }
+function mitEmbedUrl(value:string,id:string):boolean {try{const u=new URL(value);return u.origin==='https://players.brightcove.net'&&u.pathname==='/6057955865001/XFAlB9SHg_default/index.html'&&!u.username&&!u.password&&!u.port&&!u.hash&&u.searchParams.getAll('videoId').length===1&&u.searchParams.get('videoId')===id&&[...u.searchParams.keys()].every(k=>k==='videoId')}catch{return false}}
 const delivery=(value:string,site:PublisherVideoSite,role:'mp4'|'hls',id:string,asset='')=>{
  try{const u=new URL(value);if(value.length>8192||u.username||u.password||u.port)return false
+  if(site==='mit-tr'){const m=/^\/manifest\/v[12]\/hls\/v[0-9]+\/clear\/(?:avc1_mp4a\/)?(6057955865001\/[a-f0-9-]{36})\/10s\/master\.m3u8$/.exec(u.pathname);return role==='hls'&&u.protocol==='https:'&&u.hostname==='manifest.prod.boltdns.net'&&!!m&&m[1]===asset&&!u.hash}
+  if(site==='ars')return role==='mp4'&&u.protocol==='https:'&&u.hostname==='dp8hsntg6do36.cloudfront.net'&&/^\/[a-f0-9]{24}\/[a-f0-9-]{36}(?:low|high|med)\.mp4$/.test(u.pathname)&&u.pathname===asset&&!u.search&&!u.hash
   if(site==='cnn'){const m=/^\/cnn\/clips\/\d{4}-\d{2}\/(\d+)-[a-f0-9]{32}\/mp4\/([a-z0-9_-]+)\.mp4$/.exec(u.pathname);return role==='mp4'&&u.protocol==='https:'&&u.hostname==='clips-media-aka.warnermediacdn.com'&&!!m&&m[1]===asset&&m[2]!.includes('-'+asset+'-')}
   if(site==='yahoo-finance')return role==='hls'&&u.origin==='https://video.media.yql.yahoo.com'&&u.pathname==='/v1/video/sapi/hlsstreams/'+id+'.m3u8'&&!u.hash&&[...u.searchParams.keys()].every(k=>['site','region','lang','devtype'].includes(k)&&u.searchParams.getAll(k).length===1&&(u.searchParams.get(k)?.length??0)<=128)
   if(site==='cnbc')return u.protocol==='https:'&&(role==='mp4'?u.hostname==='pdl-iphone-cnbc-com.akamaized.net'&&u.pathname.startsWith('/'+id+'/')&&u.pathname.endsWith('.mp4'):u.hostname==='cnbcawsmpvod.akamaized.net'&&u.pathname.startsWith('/out/v1/')&&u.pathname.endsWith('.m3u8'))
@@ -43,9 +49,15 @@ const delivery=(value:string,site:PublisherVideoSite,role:'mp4'|'hls',id:string,
 /** Strict Host validation of fixed renderer witnesses, never a network-first resolver. */
 export function publisherTarget(pageUrl:string,parentRaw:unknown,frameRaw?:unknown):VideoTarget {
  const p=object(parentRaw),site=publisherVideoSite(pageUrl),id=text(p.contentId,80),duration=p.durationSeconds
- if(!site||p.publisher!==site||p.pageUrl!==pageUrl||(site==='cnn'?!/^me[a-f0-9]{32,64}$/.test(id):site==='yahoo-finance'?!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(id):!/^\d{1,20}$/.test(id))||!finite(duration)||!text(p.title,1000)||!Number.isInteger(p.videoIndex)||Number(p.videoIndex)<-1||Number(p.videoIndex)>10000)throw new Error('VIDEO_IDENTITY_UNAVAILABLE: Publisher metadata does not identify one finite original.')
+ if(!site||p.publisher!==site||p.pageUrl!==pageUrl||(site==='mit-tr'?!/^\d{1,20}$/.test(id):site==='ars'?!/^[a-z0-9-]{1,80}$/.test(id):site==='cnn'?!/^me[a-f0-9]{32,64}$/.test(id):site==='yahoo-finance'?!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(id):!/^\d{1,20}$/.test(id))||!finite(duration)||!text(p.title,1000)||!Number.isInteger(p.videoIndex)||Number(p.videoIndex)<-1||Number(p.videoIndex)>10000)throw new Error('VIDEO_IDENTITY_UNAVAILABLE: Publisher metadata does not identify one finite original.')
  const asset=text(p.assetKey,100),resources:VideoTarget['resources']=[]
  let playerUrl=text(p.playerUrl),seconds=Number(duration),hls=text(p.hls),index=Number(p.videoIndex)
+ if(site==='mit-tr'){
+  if(index!==-1||p.mp4||!mitEmbedUrl(text(p.frameUrl),id)||!/^6057955865001\/[a-f0-9-]{36}$/.test(asset))throw new Error('VIDEO_IDENTITY_UNAVAILABLE: Missing original MIT embed binding.')
+  const f=object(frameRaw);if(f.contentId!==id||f.assetKey!==asset||!['clear','not-observed'].includes(String(f.adState))||!finite(f.durationSeconds)||!close(Number(f.durationSeconds),seconds))throw new Error('VIDEO_IDENTITY_UNAVAILABLE: MIT original frame changed or unavailable.')
+  hls=text(f.hls);playerUrl=hls;seconds=Number(f.durationSeconds)
+ }
+ if(site==='ars'){let canonical:URL;try{canonical=new URL(text(p.arsCanonical))}catch{throw new Error('VIDEO_IDENTITY_UNAVAILABLE: Missing Ars canonical URL.')}const page=new URL(pageUrl),normal=(v:string)=>v.replace(/\/$/,'');if(index!==-1||!['arstechnica.com','www.arstechnica.com'].includes(canonical.hostname)||canonical.protocol!=='https:'||canonical.username||canonical.password||canonical.port||canonical.search||canonical.hash||normal(canonical.pathname)!==normal(page.pathname)||id!==page.pathname.split('/').filter(Boolean).at(-1)||p.playerUrl!==p.mp4||hls||p.frameUrl)throw new Error('VIDEO_IDENTITY_UNAVAILABLE: Missing canonical Ars original declaration.')}
  if(site==='cnn'&&(index!==-1||!cnnBinding(pageUrl,id,text(p.cnnCanonical),text(p.cnnEmbed))||p.playerUrl!==p.mp4||hls||p.frameUrl||!/^\d+$/.test(asset)))throw new Error('VIDEO_IDENTITY_UNAVAILABLE: Missing canonical CNN original declaration.');
  if(site==='yahoo-finance'&&(index!==-1||!yahooBinding(pageUrl,id,text(p.yahooCanonical),text(p.yahooEmbed))||p.playerUrl!==hls||p.mp4||p.frameUrl||asset!==id))throw new Error('VIDEO_IDENTITY_UNAVAILABLE: Missing canonical Yahoo Finance original declaration.')
  if(site==='fox'){
@@ -73,9 +85,33 @@ export function inspectPublisherParent(scope:VideoTargetScope={}):ParentWitness|
  const duration=(v:unknown)=>{if(typeof v!=='string')return 0;const m=/^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/.exec(v);return m?Number(m[1]??0)*3600+Number(m[2]??0)*60+Number(m[3]??0):0}
  const page=new URL(location.href);page.hash='';const root=scope.selector?document.querySelectorAll(scope.selector)[scope.index??0]:document;if(!root)return unavailable()
  const excluded=['[hidden]','[aria-hidden="true"]',...(scope.excludeSelectors??[])],allowed=(e:Element)=>root.contains(e)&&visible(e)&&!excluded.some(s=>e.closest(s))
- const heading=normalize(document.querySelector('h1')?.textContent);if(!heading)return unavailable()
+ // CNBC may put a section H1 (e.g. TechCheck) before the program H1.
+ // Match one visible heading to public canonical metadata, never the first H1
+ // or an arbitrary page title. Scoped player, ID, ad and SDK checks remain below.
+ let heading=normalize(document.querySelector('h1')?.textContent)
+ if(['www.cnbc.com','cnbc.com'].includes(page.hostname)){
+  phase='CNBC unique visible program heading'
+  const declaredTitle=normalize(rec(win.__CNBC_META_DATA).title),headings=[...document.querySelectorAll('h1')]
+  if(!declaredTitle||headings.length>64)return unavailable()
+  const matches=headings.filter(node=>visible(node)&&!excluded.some(selector=>node.closest(selector))&&normalize(node.textContent)===declaredTitle)
+  if(matches.length!==1)return unavailable()
+  heading=normalize(matches[0]!.textContent)
+ }
+ if(!heading)return unavailable()
  const objects:Record<string,unknown>[]=[];for(const s of [...document.querySelectorAll('script[type="application/ld+json"]')].slice(0,16)){if((s.textContent??'').length>256*1024)continue;try{const j:unknown=JSON.parse(s.textContent??''),r=rec(j),items=Array.isArray(j)?j:Array.isArray(r['@graph'])?r['@graph']:[j];for(const item of items.slice(0,64)){const o=rec(item);if(o['@type']==='VideoObject'&&normalize(o.name)===heading)objects.push(o)}}catch{/* Invalid metadata cannot grant a resource. */}}
  const vids=[...document.querySelectorAll('video')]
+ if(['www.technologyreview.com','technologyreview.com'].includes(page.hostname)){
+  phase='MIT scoped original Brightcove frame';const h1=document.querySelector('h1');if(!h1||!allowed(h1))return unavailable()
+  const frames=[...document.querySelectorAll('iframe[src]')].filter(e=>allowed(e)&&(()=>{try{const u=new URL((e as HTMLIFrameElement).src);return u.origin==='https://players.brightcove.net'&&u.pathname==='/6057955865001/XFAlB9SHg_default/index.html'&&/^\d{1,20}$/.test(u.searchParams.get('videoId')??'')}catch{return false}})()) as HTMLIFrameElement[]
+  if(frames.length!==1)return unavailable();const frameUrl=url(frames[0]!.src),contentId=new URL(frameUrl).searchParams.get('videoId')??''
+  return {pageUrl:page.href,publisher:'mit-tr',contentId,title:heading,durationSeconds:1,playerUrl:'',videoIndex:-1,mp4:'',hls:'',frameUrl,assetKey:''}
+ }
+ if(['arstechnica.com','www.arstechnica.com'].includes(page.hostname)){
+  phase='Ars scoped canonical original declaration';const h1=document.querySelector('h1');if(objects.length!==1||!h1||!allowed(h1))return unavailable()
+  const data=objects[0]!,mp4=url(data.contentUrl),arsCanonical=url(data.url),seconds=duration(data.duration),id=page.pathname.split('/').filter(Boolean).at(-1)??'';let assetKey='';try{assetKey=new URL(mp4).pathname}catch{return unavailable()}
+  if(!mp4||!arsCanonical||!seconds||seconds>86400)return unavailable()
+  return {pageUrl:page.href,publisher:'ars',contentId:id,title:heading,durationSeconds:seconds,playerUrl:mp4,videoIndex:-1,mp4,hls:'',frameUrl:'',assetKey,arsCanonical}
+ }
  if(['finance.yahoo.com','ca.finance.yahoo.com'].includes(page.hostname)){
   phase='Yahoo Finance scoped canonical original declaration'
   const h1=document.querySelector('h1')
@@ -126,6 +162,20 @@ export function inspectPublisherParent(scope:VideoTargetScope={}):ParentWitness|
  return {pageUrl:page.href,publisher:'fox',contentId:id,title:heading,durationSeconds:seconds,playerUrl:'',videoIndex:-1,mp4,hls:'',frameUrl,assetKey}
 }
 
+/** Fixed inspection of MIT's one attached official Brightcove player. */
+export function inspectMitPlayer(contentId:string):MitFrameWitness|PublisherUnavailable {
+ const unavailable=():PublisherUnavailable=>({blocked:'MIT Brightcove original player identity'})
+ const rec=(v:unknown):Record<string,unknown>=>v&&typeof v==='object'&&!Array.isArray(v)?v as Record<string,unknown>:{},win=window as unknown as Record<string,unknown>,factory=win.videojs,get=typeof factory==='function'?Reflect.get(factory,'getPlayers'):undefined
+ if(typeof get!=='function')return unavailable();const players=Object.values(rec(Reflect.apply(get,factory,[]))).map(rec);if(players.length!==1)return unavailable()
+ const p=players[0]!,m=rec(p.mediainfo),video=document.querySelector('video'),ads=rec(p.ads)
+ if(!(video instanceof HTMLVideoElement)||!video.getClientRects().length||String(m.id)!==contentId||String(m.accountId??m.account_id)!=='6057955865001'||!Number.isFinite(video.duration)||video.duration<=0||video.duration>86400||!Number.isFinite(Number(m.duration))||Math.abs(video.duration-Number(m.duration))>Math.max(.5,video.duration*.01))return unavailable()
+ if(typeof ads.isInAdMode==='function'&&Reflect.apply(ads.isInAdMode,ads,[])===true)return unavailable()
+ let assetKey='';try{const u=new URL(String(m.poster));if(u.hostname!=='cf-images.us-east-1.prod.boltdns.net')return unavailable();assetKey=/^\/v1\/jit\/(6057955865001\/[a-f0-9-]{36})\//.exec(u.pathname)?.[1]??''}catch{return unavailable()}
+ const sources=Array.isArray(m.sources)?m.sources:Array.isArray(m.rawSources_)?m.rawSources_:[],candidates=[...new Set(sources.map(rec).map(x=>typeof x.src==='string'?x.src:'').filter(value=>{try{const u=new URL(value);return u.protocol==='https:'&&u.hostname==='manifest.prod.boltdns.net'&&u.pathname.includes('/'+assetKey+'/')&&u.pathname.endsWith('/master.m3u8')&&/\/hls\//.test(u.pathname)}catch{return false}}))]
+ if(!assetKey||candidates.length===0)return unavailable();const current=typeof p.currentSrc==='function'?Reflect.apply(p.currentSrc,p,[]):'',hls=candidates.includes(String(current))?String(current):candidates[0]!
+ return {contentId,durationSeconds:video.duration,playerUrl:hls,hls,assetKey,adState:typeof ads.isInAdMode==='function'?'clear':'not-observed'}
+}
+
 /** The only admitted child is the actual scoped Fox embed, never ad/reply frames. */
 export function inspectFoxPlayer(contentId:string):FrameWitness|PublisherUnavailable {
  let phase='Fox SDK current player/ad/content identity';const unavailable=():PublisherUnavailable=>({blocked:phase})
@@ -142,6 +192,14 @@ export async function readPublisherVideoTargets(wc:WebContents,pageUrl:string,sc
  const readParent=()=>readRendererPhase<unknown>(wc,'media.identity','publisher-parent',()=>wc.mainFrame.executeJavaScript(`(${inspectPublisherParent.toString()})(${JSON.stringify(scope)})`,true),signal)
  const raw=await readParent();if(!raw)return unavailable('no unique visible original metadata/player')
  const parent=object(raw);if(typeof parent.blocked==='string')return unavailable(parent.blocked);let frameRaw:unknown
+ if(parent.publisher==='mit-tr'){
+  const frameUrl=text(parent.frameUrl),id=text(parent.contentId,32);if(!mitEmbedUrl(frameUrl,id))return unavailable('foreign MIT embed')
+  const frames=wc.mainFrame.framesInSubtree.filter(f=>!f.detached&&f!==wc.mainFrame&&f.parent===wc.mainFrame&&f.url===frameUrl);if(frames.length!==1)return unavailable('no unique attached MIT embed')
+  const frame=frames[0]!,token=frame.frameToken;frameRaw=await readRendererPhase<unknown>(wc,'media.identity','mit-frame',()=>frame.executeJavaScript(`(${inspectMitPlayer.toString()})(${JSON.stringify(id)})`,true),signal)
+  const found=object(frameRaw);if(typeof found.blocked==='string')return unavailable(found.blocked)
+  const again=object(await readParent());if(frame.detached||frame.frameToken!==token||frame.url!==frameUrl||again.contentId!==id||again.frameUrl!==frameUrl||again.title!==parent.title)return unavailable('MIT embed changed during observation')
+  parent.durationSeconds=found.durationSeconds;parent.assetKey=found.assetKey
+ }
  if(parent.publisher==='fox'){
   const frameUrl=text(parent.frameUrl);if(!foxEmbedUrl(frameUrl,pageUrl,text(parent.contentId,32)))return unavailable('foreign embed URL')
   const frames=wc.mainFrame.framesInSubtree.filter(f=>!f.detached&&f!==wc.mainFrame&&f.parent===wc.mainFrame&&f.url===frameUrl)

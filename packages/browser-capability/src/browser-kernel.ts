@@ -1276,7 +1276,7 @@ export class BrowserKernel {
   async listMedia(tab, request, signal?:AbortSignal) {
     const {selector,index,excludeSelectors}=assertPageScope(request)
     const maxItems = Math.min(Math.max(Math.floor(Number(request.maxItems) || 80), 1), 240)
-    const result = await readRendererPhase<{ok:boolean;reason?:string;items:Record<string,unknown>[];players:Record<string,unknown>[];matches:number;selectedIndex:number;text:string;range:unknown}>(tab.view.webContents, 'page.media.list', 'dom', () => tab.view.webContents.mainFrame.executeJavaScript(`(async () => {
+    const result = await readRendererPhase<{ok:boolean;reason?:string;items:Record<string,unknown>[];players:Record<string,unknown>[];embeddedPages:{url:string;title:string}[];embeddedPagesTruncated:boolean;matches:number;selectedIndex:number;text:string;range:unknown}>(tab.view.webContents, 'page.media.list', 'dom', () => tab.view.webContents.mainFrame.executeJavaScript(`(async () => {
       const selector = ${JSON.stringify(selector)}
       const {text:bodyText,range:bodyRange}=${pageRangeExpression(assertPageScope({...request,maxCharacters:5000}))}
       const index = ${index}
@@ -1313,6 +1313,14 @@ export class BrowserKernel {
         }).filter(Boolean).sort((left, right) => right.score - left.score)
         return candidates[0]?.url || absolute(image.currentSrc || image.src)
       }
+      // An embedded page is a discovery hint, not a media URL or proof that
+      // its current player is the original. It must be opened and reverified.
+      const youtubeFrames = descendants('iframe[src]').filter(visible).flatMap(frame=>{
+        try {const u=new URL(frame.src,location.href),match=/^\\/embed\\/([A-Za-z0-9_-]{11})\\/?$/.exec(u.pathname)
+          if(u.protocol!=='https:'||!['www.youtube.com','youtube.com','www.youtube-nocookie.com'].includes(u.hostname)||u.port||u.username||u.password||!match)return []
+          return [{url:'https://www.youtube.com/watch?v='+match[1],title:(frame.getAttribute('title')||'').slice(0,200)}]
+        } catch { return [] }
+      })
       const images = descendants('img').map((image) => ({
         kind: 'image',
         url: bestSrcset(image),
@@ -1352,6 +1360,7 @@ export class BrowserKernel {
         text: bodyText,
         range:bodyRange,
         players,
+        embeddedPages: youtubeFrames.slice(0,16), embeddedPagesTruncated: youtubeFrames.length>16,
         items: [...images, ...videos, ...sources, ...(selector?[]:performanceMedia)]
       }
     })()`, true), signal)
@@ -1387,6 +1396,8 @@ export class BrowserKernel {
       candidateOnly:true,
       playerCandidates:result.players,
       playerCandidateScope:'page discovery only; media identity remains restricted to the selected range',
+      embeddedPages:result.embeddedPages.map(item=>({...item,kind:'youtube-embed',candidateOnly:true,downloadable:false,help:'Open the linked YouTube page and verify its player before acquiring; this link does not bind the original article or authorize media download.'})),
+      embeddedPagesTruncated:result.embeddedPagesTruncated,
       playbackPolicy:{allowed:this.playbackAllowed(tab),reason:this.playbackAllowed(tab)?'selected-or-native-acquisition':'background-policy-paused',recovery:'A paused background player may remain at 0:00. Use explicit source acquisition method auto for bounded native playback; do not loop manual play clicks.'},
       videoIdentityStatus:identities.blocked??(identities.targets.length?'bound':'unavailable'),
       videoTargets:identities.targets.map(target=>({videoIdentity:target.identity,durationSeconds:target.durationSeconds,directResources:target.resources.filter(r=>r.role!=='audio'&&r.role!=='sabr').length,nativeSabr:target.resources.some(r=>r.role==='sabr'),...(target.requiresProjection?{projection:'spherical',flatVideoSuitable:false,deliveryIssue:'MEDIA_ACQUIRE_PROJECTION_UNSUPPORTED: Raw spherical frames require projection processing; choose flat footage before download/capture.'}:{}),...(target.identity.platform==='youtube'&&!target.resources.length?{deliveryIssue:'YOUTUBE_DIRECT_DELIVERY_UNAVAILABLE: no supported HTTP/HLS or same-player SABR delivery; signature-only formats cannot authorize acquisition.'}:{})})),

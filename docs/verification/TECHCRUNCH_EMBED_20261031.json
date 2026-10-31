@@ -1,0 +1,17 @@
+{
+  "observedAtUTC": "2026-10-31T10:34:45.150Z",
+  "sourcePage": "https://techcrunch.com/video/colin-kaepernick-helps-creators-own-their-story-with-lumi-his-ai-startup/",
+  "testEnvironment": "disposable, signed out BMW/Electron profile and Project",
+  "frameUrl": "https://www.youtube.com/embed/B-oAv4__Zt4?feature=oembed",
+  "playButtonClicked": true,
+  "youtubePlayability": "OK",
+  "playableInEmbed": true,
+  "originalVideoId": "B-oAv4__Zt4",
+  "originalDurationSeconds": "1815",
+  "advertisementVisible": true,
+  "playerVideoDurationSeconds": 15.041,
+  "download": "not performed; current player was advertising",
+  "loginRequiredObserved": false,
+  "botChallengeObserved": false,
+  "note": "One public sample and one environment; no conclusion about all TechCrunch videos."
+}

@@ -2,6 +2,7 @@ import path from 'node:path'
 import { agentRecord, agentText } from '@bmw-agent/agent-contract'
 import type { AgentBackend, AgentRunRequest,AgentProject } from '@bmw-agent/agent-contract'
 import type { BrowserExecutor,createBridgeServer } from '@bmw-agent/browser-capability/bridge'
+import {createBridgeHttp,browserDeadlineMs} from '@bmw-agent/browser-capability/bridge'
 import { AgentHost } from './agent-host.js'
 import { ConversationStore } from './conversation-store.js'
 import { AgentHistoryStore } from './agent-history-store.js'
@@ -66,7 +67,9 @@ export class AssistantService {
   readonly settings:AgentSettingsController
   private readonly leases = new Map<string, {binding:string|null;scope?:{close():Promise<void>}}>()
   private readonly unsubscribe: () => void
+  private readonly bridgeHttp:ReturnType<typeof createBridgeHttp>
   constructor(private readonly options: AssistantServiceOptions) {
+    this.bridgeHttp=createBridgeHttp(options.bridge.url)
     const stores=options.stores??loadAssistantStores(options.userDataDirectory,options.assembly.defaultDriverId,options.onState)
     this.conversations = stores.conversations
     this.history = stores.history
@@ -109,7 +112,16 @@ export class AssistantService {
       attachProviderSession: externalSessionId => { const row=this.conversations.get(request.sessionId,request.project.id);this.options.bridge.attachProviderSession(binding,row.driverId,externalSessionId) },
       execute: async (argumentsValue, signal) => {
         if (Object.hasOwn(argumentsValue, '__bmwSession')) throw new Error('BMW Session scope is owned by the host')
-        const response = await fetch(bridgeUrl + '/execute', { method: 'POST', headers: { authorization: 'Bearer ' + bridgeToken, 'content-type': 'application/json' }, body: JSON.stringify({ binding, arguments: argumentsValue }), signal })
+        const deadlineMs=browserDeadlineMs(argumentsValue),deadline=AbortSignal.timeout(deadlineMs)
+        let response:Awaited<ReturnType<typeof this.bridgeHttp.request>>
+        try{
+          response=await this.bridgeHttp.request('execute',{method:'POST',headers:{authorization:'Bearer '+bridgeToken,'content-type':'application/json'},body:JSON.stringify({binding,arguments:argumentsValue}),signal:AbortSignal.any([signal,deadline])})
+        }catch(error:unknown){
+          if(signal.aborted)throw new Error('BMW_BROWSER_CANCELLED: browser request cancelled')
+          if(deadline.aborted)throw new Error('BMW_BROWSER_TIMEOUT: '+String(argumentsValue.action??'unknown')+' bridge response exceeded '+deadlineMs+'ms')
+          if(error instanceof TypeError){const cause=error.cause,code=cause&&typeof cause==='object'&&'code' in cause&&typeof cause.code==='string'&&/^[A-Z_]{1,80}$/.test(cause.code)?' ('+cause.code+')':'';throw new Error('BMW_BROWSER_TRANSPORT: '+String(argumentsValue.action??'unknown')+': request failed'+code)}
+          throw error
+        }
         const value = agentRecord(await response.json())
         if (!response.ok || value.ok !== true) throw new Error(typeof value.error === 'string' ? value.error : 'BMW browser request failed')
         const images: { type: 'image'; mimeType: 'image/png'; data: string }[] = []
@@ -125,5 +137,5 @@ export class AssistantService {
       }
     }
   }
-  async close(): Promise<void> { this.unsubscribe(); await this.settings.close();await this.host.close() }
+  async close(): Promise<void> { this.unsubscribe(); await this.settings.close();await this.host.close();await this.bridgeHttp.close() }
 }

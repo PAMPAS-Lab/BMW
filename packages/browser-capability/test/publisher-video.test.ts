@@ -30,3 +30,18 @@ test('Yahoo original HLS pins UUID, canonical, embed and CDN declaration indepen
  assert.equal(publisherVideoSite(yahoo),'yahoo-finance');const target=publisherTarget(yahoo,yahooWitness);assert.equal(target.identity.resourceId,'yahoo-finance:'+uuid);assert.equal(target.videoIndex,-1);assert.deepEqual(target.resources.map(r=>r.role),['hls'])
  for(const override of [{contentId:uuid.replace('0c1b','1c1b')},{assetKey:'other'},{yahooCanonical:yahoo+'/other'},{yahooCanonical:yahoo+'?other=1'},{yahooEmbed:yahoo.replace('ca.finance.yahoo.com','evil.example')},{yahooEmbed:yahoo+'?video=other'},{hls:yahooHls.replace(uuid,'00000000-0000-0000-0000-000000000000')},{hls:yahooHls+'&site=other'},{playerUrl:'blob:https://ca.finance.yahoo.com/ad'},{mp4:'https://ads.example/ad.mp4'},{videoIndex:0}])assert.throws(()=>publisherTarget(yahoo,{...yahooWitness,...override}),/UNAVAILABLE|UNBOUND/)
 })
+
+test('Ars original declaration pins canonical page and finite publisher asset',()=>{
+ const page='https://arstechnica.com/video/watch/bina48-robot-talks-to-siri/',mp4='https://dp8hsntg6do36.cloudfront.net/56003d8861646d776f00000c/38d2c2ee-c75c-4f49-ab0a-babe88eb4030low.mp4'
+ const witness={pageUrl:page,publisher:'ars',contentId:'bina48-robot-talks-to-siri',title:'Bina48 Robot Talks to Siri',durationSeconds:153,playerUrl:mp4,videoIndex:-1,mp4,hls:'',frameUrl:'',assetKey:new URL(mp4).pathname,arsCanonical:'https://www.arstechnica.com/video/watch/bina48-robot-talks-to-siri'}
+ assert.equal(publisherVideoSite(page),'ars');const target=publisherTarget(page,witness);assert.equal(target.resources[0]?.url,mp4);assert.equal(target.videoIndex,-1)
+ for(const override of [{arsCanonical:'https://arstechnica.com/video/watch/other'},{contentId:'other'},{mp4:mp4.replace('dp8hsntg6do36.cloudfront.net','attacker.example')},{assetKey:'/different'},{videoIndex:0},{hls:'https://attacker.example/video.m3u8'},{durationSeconds:0}])assert.throws(()=>publisherTarget(page,{...witness,...override}),/UNAVAILABLE|UNBOUND/)
+})
+
+test('MIT Brightcove original requires attached publisher frame and matching asset',()=>{
+ const page='https://www.technologyreview.com/2023/05/03/1072589/video-geoffrey-hinton-google-ai-risk-ethics/',id='6326759990112',asset='6057955865001/daaec5fd-3d97-4971-bd85-f528dfbf9e9d',hls=`https://manifest.prod.boltdns.net/manifest/v2/hls/v7/clear/avc1_mp4a/${asset}/10s/master.m3u8?fastly_token=example`,frameUrl=`https://players.brightcove.net/6057955865001/XFAlB9SHg_default/index.html?videoId=${id}`
+ const parent={pageUrl:page,publisher:'mit-tr',contentId:id,title:'Original',durationSeconds:120,playerUrl:'',videoIndex:-1,mp4:'',hls:'',frameUrl,assetKey:asset},frame={contentId:id,durationSeconds:120,assetKey:asset,playerUrl:hls,hls,adState:'clear'}
+ assert.equal(publisherVideoSite(page),'mit-tr');assert.equal(publisherTarget(page,parent,frame).resources[0]?.url,hls)
+ for(const override of [{contentId:'111'},{assetKey:asset.replace('daaec5fd','baaec5fd')},{adState:'active'},{hls:hls.replace('manifest.prod.boltdns.net','ads.example')},{durationSeconds:30}])assert.throws(()=>publisherTarget(page,parent,{...frame,...override}),/UNAVAILABLE|UNBOUND/)
+ assert.throws(()=>publisherTarget(page,{...parent,frameUrl:frameUrl.replace('players.brightcove.net','evil.example')},frame),/UNAVAILABLE/)
+})

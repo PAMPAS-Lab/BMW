@@ -8,6 +8,34 @@ import {parsePreservationPlaylist,preserveMedia} from '../src/media-preservation
 import {ArtifactJobIO} from '../src/artifact-job-io.js'
 import {ARCHIVE_LIMITS} from '../src/archive-limits.js'
 import {assertArchiveSegment} from '../src/media-archive-segment.js'
+import {encodePreservationEvidence,assertPreservationEvidencePlan} from '../src/preservation-evidence.js'
+import {orderedPreservationTransfer} from '../src/preservation-transfer.js'
+
+test('Complete long-program evidence retains thousands of source resources beyond the short receipt budget and rejects an oversized plan before transfer',()=>{
+ const resources=Array.from({length:2300},(_,i)=>({artifactId:'preserved-'+i,path:'/isolated/project/artifacts/preserved-'+i,url:'https://video.example/'+i+'?source='+('x'.repeat(400)),sha256:'a'.repeat(64),bytes:3000000,role:'segment',track:i<500?'video':'audio-0',durationSeconds:6}))
+ const encoded=encodePreservationEvidence({resources,subtitleTracks:[{language:'en'},{language:'en-US'}]})
+ assert.ok(encoded.length>1024*1024);assert.ok(encoded.length<ARCHIVE_LIMITS.evidenceBytes)
+ assert.deepEqual(JSON.parse(encoded.toString()).resources,resources)
+ assert.doesNotThrow(()=>assertPreservationEvidencePlan('/isolated/project/artifacts','preserved-fixture',[],resources))
+ assert.throws(()=>assertPreservationEvidencePlan('/isolated/project/artifacts','preserved-fixture',[],Array.from({length:3000},()=>({url:'https://video.example/'+('x'.repeat(7800)),track:'audio-0'}))),/before segment transfer/)
+ assert.throws(()=>encodePreservationEvidence({oversized:'x'.repeat(ARCHIVE_LIMITS.evidenceBytes)}),/EVIDENCE_BUDGET/)
+})
+
+test('Bounded HLS prefetch keeps playlist order while overlapping three independent transfers',async()=>{
+ let active=0,maximum=0;const completed:number[]=[],adopted:number[]=[]
+ for await(const n of orderedPreservationTransfer([0,1,2,3,4,5],async n=>{active++;maximum=Math.max(maximum,active);try{await new Promise(resolve=>setTimeout(resolve,n===0?30:2));completed.push(n);return n}finally{active--}},async()=>{},()=>{throw Error('Unexpected abort')}))adopted.push(n)
+ assert.deepEqual(adopted,[0,1,2,3,4,5]);assert.equal(maximum,3);assert.notDeepEqual(completed,adopted);assert.equal(active,0)
+})
+
+test('Failed or abandoned HLS prefetch cancels and actually drains every started transfer without scheduling later segments',async()=>{
+ for(const mode of ['failure','consumer']){
+  const controller=new AbortController(),started:number[]=[],settled:number[]=[];let adopted=0
+  const iterator=orderedPreservationTransfer([0,1,2,3,4,5],async n=>{started.push(n);try{await new Promise<void>((resolve,reject)=>{const timer=setTimeout(resolve,n===0?5:40);controller.signal.addEventListener('abort',()=>{clearTimeout(timer);reject(controller.signal.reason)},{once:true});if(mode==='failure'&&n===1){clearTimeout(timer);reject(new Error('segment fixture failure'))}});return n}finally{settled.push(n)}},async()=>controller.signal.throwIfAborted(),error=>controller.abort(error))
+  if(mode==='failure')await assert.rejects(async()=>{for await(const _ of iterator)adopted++},/segment fixture failure/)
+  else for await(const _ of iterator){adopted++;break}
+  assert.equal(controller.signal.aborted,true);assert.deepEqual([...settled].sort(),[...started].sort());assert.deepEqual(started,[0,1,2]);assert.equal(adopted,mode==='failure'?0:1)
+ }
+})
 
 test('HLS preservation selects explicit media, resolves relative URLs, and rejects live/encrypted/ranged/gapped input',()=>{
  const url='https://video.example/path/master.m3u8',master=parsePreservationPlaylist('#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="a",DEFAULT=YES,URI="../audio.m3u8"\n#EXT-X-STREAM-INF:BANDWIDTH=200000,AUDIO="a"\nvideo.m3u8\n',url)

@@ -142,10 +142,11 @@ export function assertMediaWorkerResult(value: unknown, request: NativeProcessin
   else if(request.action==='media.audio.sample'&&result.kind==='audio-evidence')assertAudioEvidence(result.info,request.startSeconds,request.endSeconds)
   else if(request.action==='media.speech.normalize'&&result.kind==='speech-pcm'){
     const info=mediaRecord(result.info),frames=finiteNumber(info.frames,'speech samples',160,180*16000,true)
-    if(Object.keys(info).some(key=>!['kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix','discardedTailFrames','discardedHeadFrames','sourceRange','sourceDurationSeconds'].includes(key)))throw new TypeError('Unsupported speech normalization evidence.')
+    if(Object.keys(info).some(key=>!['inputAudioTrackId','inputAudioTrackCount','audioSelection','kind','sampleRate','channels','sampleType','frames','durationSeconds','inputSampleRate','inputChannels','decodedStartSeconds','decodedEndSeconds','clippedSamples','downmix','discardedTailFrames','discardedHeadFrames','sourceRange','sourceDurationSeconds'].includes(key)))throw new TypeError('Unsupported speech normalization evidence.')
     if(info.kind!=='speech-pcm'||info.sampleRate!==16000||info.channels!==1||info.sampleType!=='pcm-s16le'||info.downmix!=='channel-mean'||info.durationSeconds!==frames/16000)throw new TypeError('Invalid normalized speech metadata.')
     assertSpeechRangeEvidence(info,request.sourceRange);if(!request.sourceRange&&info.sourceRange!==undefined)throw new TypeError('Unrequested speech source interval.');
     finiteNumber(info.clippedSamples,'PCM saturation samples',0,frames,true)
+    if(info.audioSelection!==undefined||info.inputAudioTrackId!==undefined||info.inputAudioTrackCount!==undefined){if(info.audioSelection!=='primary-audio-track')throw new TypeError('Invalid speech audio selection.');finiteNumber(info.inputAudioTrackId,'selected audio track',1,Number.MAX_SAFE_INTEGER,true);finiteNumber(info.inputAudioTrackCount,'input audio track count',1,15,true)}
     if(info.discardedTailFrames!==undefined)finiteNumber(info.discardedTailFrames,'discarded Opus padding frames',0,Math.ceil(Number(info.inputSampleRate)*.12)+2,true)
     if(info.discardedHeadFrames!==undefined)finiteNumber(info.discardedHeadFrames,'discarded first AAC preroll frames',0,1026,true)
     finiteNumber(info.inputSampleRate,'speech input rate',8000,96000,true);finiteNumber(info.inputChannels,'speech input channels',1,8,true)

@@ -107,7 +107,7 @@ export const BROWSER_CORE_ACTION_DEFINITIONS: readonly BrowserActionDefinition[]
     text: { type: 'string' }
   }),
   action('page.diagnostics', 'Collect page console and network diagnostics and an image screenshot.'),
-  action('page.media.list', 'List downloadable images, video sources, posters, and observed media responses within a page or selected element.', {
+  action('page.media.list', 'List images, video sources, posters, and observed media responses within a page or selected element. embeddedPages are bounded YouTube page hints only: open and verify the player before acquisition; they are not downloadable media or an article binding.', {
     selector: { type: 'string' },
     index: { type: 'number', description: 'Zero-based match when selector identifies multiple page elements.' },
     maxItems: { type: 'number', description: 'Maximum media items to return.' },

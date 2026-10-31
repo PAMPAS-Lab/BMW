@@ -1,12 +1,12 @@
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import { agentIdentifier, agentRecord, agentText, parseAgentEvent } from '@bmw-agent/agent-contract'
-import type { AgentEvent, AgentMessage, AgentInteraction,AgentConversation } from '@bmw-agent/agent-contract'
+import { agentIdentifier, agentRecord, agentText, parseAgentEvent,agentRuntimeFailureCategories } from '@bmw-agent/agent-contract'
+import type { AgentEvent, AgentMessage, AgentInteraction,AgentConversation,AgentRuntimeFailureCategory } from '@bmw-agent/agent-contract'
 import { readStateFile,StateLoadError } from './state-load.js'
 
-export type AgentTimingPhase='queued'|'dispatch'|'context.started'|'context.completed'|'prepare.started'|'prepare.completed'|'runtime.started'|'runtime.returned'|'runtime.failed'|'input.accepted'|'output.started'|'output.completed'|'tool.started'|'tool.completed'|'cleanup.started'|'cleanup.completed'|'cleanup.failed'|'settled'|'cancel.requested'|'runtime.reasoning.started'|'runtime.reasoning.completed'|'runtime.compaction.started'|'runtime.compaction.completed'|'runtime.usage'
-export interface AgentTimingPoint {phase:AgentTimingPhase;callId?:string;messageId?:string;action?:string;component?:'driver'|'browser';elapsedMs?:number;outsideToolGapMs?:number|null;success?:boolean;outcome?:'success'|'failed'|'interrupted'|'uncertain';modelId?:string|null;inputTokens?:number;cachedInputTokens?:number;outputTokens?:number;reasoningTokens?:number}
+export type AgentTimingPhase='queued'|'dispatch'|'context.started'|'context.completed'|'prepare.started'|'prepare.completed'|'runtime.started'|'runtime.returned'|'runtime.failed'|'input.accepted'|'output.started'|'output.completed'|'tool.started'|'tool.completed'|'cleanup.started'|'cleanup.completed'|'cleanup.failed'|'settled'|'cancel.requested'|'runtime.reasoning.started'|'runtime.reasoning.completed'|'runtime.compaction.started'|'runtime.compaction.completed'|'runtime.usage'|'runtime.retry'
+export interface AgentTimingPoint {phase:AgentTimingPhase;callId?:string;messageId?:string;action?:string;component?:'driver'|'browser';elapsedMs?:number;outsideToolGapMs?:number|null;success?:boolean;outcome?:'success'|'failed'|'interrupted'|'uncertain';modelId?:string|null;inputTokens?:number;cachedInputTokens?:number;outputTokens?:number;reasoningTokens?:number;failureCategory?:AgentRuntimeFailureCategory;httpStatus?:number}
 
 export interface AgentTaskReceipt {kind:'video-review';key:string;payload:string;modelId:string|null}
 export function parseAgentTaskReceipt(raw:unknown):AgentTaskReceipt {
@@ -92,11 +92,13 @@ export class AgentHistoryStore {
     try{
       agentIdentifier(runId);const history=this.read(sessionId)
       if(!history.receipts.some(r=>r.runId===runId))throw new Error('Timing requires a persisted input receipt')
-      const allowed=['phase','callId','messageId','action','component','elapsedMs','outsideToolGapMs','success','outcome','modelId','inputTokens','cachedInputTokens','outputTokens','reasoningTokens']
+      const allowed=['phase','callId','messageId','action','component','elapsedMs','outsideToolGapMs','success','outcome','modelId','inputTokens','cachedInputTokens','outputTokens','reasoningTokens','failureCategory','httpStatus']
       if(Object.keys(point).some(k=>!allowed.includes(k)))throw new Error('Timing accepts metadata only')
-      if(!['queued','dispatch','context.started','context.completed','prepare.started','prepare.completed','runtime.started','runtime.returned','runtime.failed','input.accepted','output.started','output.completed','tool.started','tool.completed','cleanup.started','cleanup.completed','cleanup.failed','settled','cancel.requested','runtime.reasoning.started','runtime.reasoning.completed','runtime.compaction.started','runtime.compaction.completed','runtime.usage'].includes(point.phase))throw new Error('Unknown timing phase')
+      if(!['queued','dispatch','context.started','context.completed','prepare.started','prepare.completed','runtime.started','runtime.returned','runtime.failed','input.accepted','output.started','output.completed','tool.started','tool.completed','cleanup.started','cleanup.completed','cleanup.failed','settled','cancel.requested','runtime.reasoning.started','runtime.reasoning.completed','runtime.compaction.started','runtime.compaction.completed','runtime.usage','runtime.retry'].includes(point.phase))throw new Error('Unknown timing phase')
       for(const value of [point.elapsedMs,point.outsideToolGapMs])if(value!==undefined&&value!==null&&(!Number.isFinite(value)||value<0))throw new Error('Invalid timing duration')
       for(const value of [point.inputTokens,point.cachedInputTokens,point.outputTokens,point.reasoningTokens])if(value!==undefined&&(!Number.isSafeInteger(value)||value<0))throw new Error('Invalid runtime token metadata')
+      if(point.failureCategory!==undefined&&!agentRuntimeFailureCategories.includes(point.failureCategory))throw new Error('Invalid runtime failure category')
+      if(point.httpStatus!==undefined&&(!Number.isInteger(point.httpStatus)||point.httpStatus<100||point.httpStatus>599))throw new Error('Invalid runtime HTTP status')
       const row={version:1,at:Date.now(),monotonicMs:performance.now(),bootId:this.timingBootId,projectId:history.owner.projectId,sessionId,runId,driverId:history.owner.driverId,...point,...(point.action?{action:/^[a-z][a-z0-9.-]{0,100}$/.test(point.action)?point.action:'unknown'}:{}),measurement:'host-observed; server-inference-and-queue-unavailable'}
       const line=JSON.stringify(row)+'\n';if(Buffer.byteLength(line)>4096)throw new Error('Timing row exceeds budget')
       const directory=path.join(this.directory,'timings');fs.mkdirSync(directory,{recursive:true,mode:0o700})
