@@ -244,10 +244,11 @@ export class AgentHistoryStore {
     return path.join(this.directory, crypto.createHash('sha256').update(sessionId).digest('hex') + '.json')
   }
   private read(sessionId: string): AgentHistory {
+    const file = this.file(sessionId)
     let value = this.cache.get(sessionId)
     if (!value) {
       const row = this.conversation(sessionId)
-      value = readStateFile(this.file(sessionId), raw => parseAgentHistory(raw, sessionId)) ?? {
+      value = readStateFile(file, raw => parseAgentHistory(raw, sessionId)) ?? {
         version: 2,
         sessionId,
         revision: 0,
@@ -258,6 +259,16 @@ export class AgentHistoryStore {
         owner: { projectId: row.projectId, driverId: row.driverId, externalSessionId: row.externalSessionId }
       }
       this.cache.set(sessionId, value)
+      return value
+    }
+    try {
+      const disk = readStateFile(file, raw => parseAgentHistory(raw, sessionId))
+      if (disk && disk.revision > value.revision) {
+        this.cache.set(sessionId, disk)
+        return disk
+      }
+    } catch {
+      /* Retain in-memory snapshot if disk state is mid-transition after initial load. */
     }
     return value
   }
@@ -399,29 +410,44 @@ export class AgentHistoryStore {
       )
   }
   private commit(sessionId: string, change: (next: AgentHistory) => void): void {
-    const before = this.read(sessionId),
-      next = structuredClone(before)
-    change(next)
-    next.revision++
-    parseAgentHistory(next, sessionId)
-    const body = JSON.stringify(next)
-    if (Buffer.byteLength(body) > 64 * 1024 * 1024) throw new Error('BMW Agent history exceeds its storage budget')
     fs.mkdirSync(this.directory, { recursive: true, mode: 0o700 })
     const file = this.file(sessionId),
       temporary = file + '.tmp-' + crypto.randomUUID(),
       lock = file + '.lock'
-    const handle = fs.openSync(lock, 'wx', 0o600)
+    let handle: number
     try {
-      const current = readStateFile(file, raw => parseAgentHistory(raw, sessionId))
-      if ((current?.revision ?? 0) !== before.revision)
-        throw new Error('Agent history changed in another writer; reload before saving')
+      handle = fs.openSync(lock, 'wx', 0o600)
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException)?.code === 'EEXIST') {
+        try {
+          if (Date.now() - fs.statSync(lock).mtimeMs > 5000) fs.unlinkSync(lock)
+        } catch {
+          /* ignore stale lock inspection errors */
+        }
+      }
+      handle = fs.openSync(lock, 'wx', 0o600)
+    }
+    try {
+      const cached = this.read(sessionId),
+        current = readStateFile(file, raw => parseAgentHistory(raw, sessionId)),
+        before = current && current.revision >= cached.revision ? current : cached,
+        next = structuredClone(before)
+      change(next)
+      next.revision = Math.max(cached.revision, current?.revision ?? 0) + 1
+      parseAgentHistory(next, sessionId)
+      const body = JSON.stringify(next)
+      if (Buffer.byteLength(body) > 64 * 1024 * 1024) throw new Error('BMW Agent history exceeds its storage budget')
       fs.writeFileSync(temporary, body + '\n', { mode: 0o600, flag: 'wx' })
       fs.renameSync(temporary, file)
       this.cache.set(sessionId, next)
     } finally {
       fs.closeSync(handle)
       fs.rmSync(temporary, { force: true })
-      fs.unlinkSync(lock)
+      try {
+        fs.unlinkSync(lock)
+      } catch {
+        /* ignore lock removal errors */
+      }
     }
   }
   prepare(sessionId: string, runId: string, messageId: string, text: string, task?: AgentTaskReceipt): void {

@@ -148,7 +148,12 @@ const newsEditor = new StudioNews(
             Boolean(
               workflow.activity &&
               ['queued', 'running', 'waiting-user', 'waiting-approval', 'cancelling'].includes(workflow.activity.status)
-            )
+            ),
+          assistantBusy: Boolean(
+            workflow.activity &&
+            ['queued', 'running', 'waiting-user', 'waiting-approval', 'cancelling'].includes(workflow.activity.status)
+          ),
+          cancelling: workflow.activity?.status === 'cancelling'
         }
       : undefined,
   () => flushEdits(),

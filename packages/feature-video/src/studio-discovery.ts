@@ -1,7 +1,7 @@
 import type { StudioRequest } from './studio-contract.js'
 import type { BrowserHelpQuery, JsonSchema } from '../../browser-capability/src/browser-schema.js'
 import { sourceOperationContracts, sourceRequestSchema } from '../../media-native/src/source-contract.js'
-import { materialIndexRequestSchema } from './material-index-contract.js'
+import { materialIndexRequestSchema } from '../../feature-library/src/material-index-contract.js'
 import { newsPreparationRequestSchema } from './news-preparation-contract.js'
 type Spec = { required: readonly string[]; optional: readonly string[] }
 const spec = (required: readonly string[] = [], optional: readonly string[] = []): Spec => ({ required, optional })

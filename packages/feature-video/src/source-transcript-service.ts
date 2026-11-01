@@ -4,9 +4,12 @@ import { ArtifactJobIO } from '../../media-native/src/artifact-job-io.js'
 import { assertArtifactId, finiteNumber, mediaRecord } from '../../media-native/src/media-contract.js'
 import { assertArchiveMediaInspection } from '../../media-native/src/media-port.js'
 import { SOURCE_TRANSCRIPT_LIMITS } from '@bmw-agent/feature-library/material-index-contract'
-import type { SourceTranscriptBatch, SourceTranscriptUnit } from '@bmw-agent/feature-library/material-index-contract'
-import type { MaterialIndexRequest } from './material-index-contract.js'
-import { MaterialIndexStore } from './material-index-store.js'
+import type {
+  SourceTranscriptBatch,
+  SourceTranscriptUnit,
+  MaterialIndexRequest
+} from '@bmw-agent/feature-library/material-index-contract'
+import { MaterialIndexStore } from '@bmw-agent/feature-library/material-index-store'
 import { pendingMaterialRanges } from './material-index-service.js'
 import { readSpeechEvidence } from './studio-speech.js'
 import type { StudioKernel } from './studio-service.js'

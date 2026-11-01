@@ -1,7 +1,7 @@
 import { sourceBindings, sourceLookup } from '@bmw-agent/media-native/sources'
-import { NEWS_RESEARCH_PROMPT, newsProductionPrompt } from './news-contract.js'
+import { NEWS_RESEARCH_PROMPT, newsProductionPrompt } from '@bmw-agent/feature-library/news-contract'
 import { executeVideoReview } from './video-review.js'
-import { NewsJournal, newsFingerprint } from './news-store.js'
+import { NewsJournal, newsFingerprint } from '@bmw-agent/feature-library/news-store'
 import { requireSimpleVideo } from './studio-compatibility.js'
 import { studioAssistantRequest, studioAssistantPrompt } from './studio-assistant.js'
 import {
@@ -626,6 +626,7 @@ export class VideoStudioRuntime implements FeatureRuntime {
       )
         throw new Error('No active Assistant task in this Session.')
       await config.cancelAssistant(owner.sessionId)
+      await config.browserKernel.cleanupResearchTabs?.({ projectId: owner.projectId, keepYoutubeWorktab: false })
       this.authorize(event)
       return { cancelled: true }
     })
@@ -796,6 +797,7 @@ export class VideoStudioRuntime implements FeatureRuntime {
           throw new Error('News research remains restricted until actual Assistant cleanup can be confirmed.')
         await config.cancelAssistant(owner.sessionId)
       }
+      await config.browserKernel.cleanupResearchTabs?.({ projectId: owner.projectId, keepYoutubeWorktab: false })
       this.authorize(event)
       const journal = new NewsJournal(config.projectStore.active().directory, owner)
       return config.browserKernel.execute(

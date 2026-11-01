@@ -1300,10 +1300,6 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `material index paths, cursors and intervals stay closed and symlink catalogs are never replaced`
 - `one bounded OR search returns exact reusable pins and oversized sources cannot trap its cursor`
 
-#### `packages/feature-video/test/news-delivery.test.ts`
-
-- `Operator delivery packages only fresh pinned independent passes; rejects queued, changed frames/output and existing destinations`
-
 #### `packages/feature-video/test/news-preparation.test.ts`
 
 - `News preparation gates narration/render on actual current scene evidence and preserves generic Studio behavior`
@@ -1671,6 +1667,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `DSH rejects malformed native membership before creating a Session or submitting input`
 - `DSH stop retains the native process until an actual exit event, including legacy lifecycle callers`
 - `DSH child errors cannot masquerade as physical cleanup and a later exit permits recovery`
+- `DshEvents skips late tool calls observed after cancellation and settles cleanly on aborted turn/end`
 
 #### `packages/harness-dsh/test/dsh-events.test.ts`
 
@@ -1720,11 +1717,6 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 #### `packages/harness-dsh/test/project-bindings.test.ts`
 
 - `DSH owns immutable native Workspace mappings while BMW Projects retain only their own identity`
-
-#### `packages/harness-dsh/test/video-case-log.test.ts`
-
-- `video case export preserves prompts and observable reasoning while redacting credentials and inline media`
-- `video case export reads complete paginated history and rejects duplicate or missing event sequences`
 
 #### `packages/harness-dsh/test/workspace-context.test.ts`
 
@@ -1998,6 +1990,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Host timing survives restart, rotates without deletion, excludes content and cannot change receipts on logging failure`
 - `history never admits foreign, out-of-order or terminal-late events and preserves corrupt saved files`
 - `explicitly ending an unknown receipt preserves evidence, active interactions and restart audit without replay`
+- `AgentHistoryStore reloads newer disk revisions and cleans stale locks without throwing another-writer errors`
 
 #### `packages/platform/test/agent-host.test.ts`
 

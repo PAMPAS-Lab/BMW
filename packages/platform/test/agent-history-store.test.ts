@@ -318,3 +318,29 @@ test('explicitly ending an unknown receipt preserves evidence, active interactio
   )
   assert.throws(() => store.prepare('session', 'old', 'replay', 'original input'), /already been used/)
 })
+test('AgentHistoryStore reloads newer disk revisions and cleans stale locks without throwing another-writer errors', t => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-history-sync-'))
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }))
+  const writerA = new AgentHistoryStore(directory, owner),
+    writerB = new AgentHistoryStore(directory, owner)
+  writerA.prepare('session', 'run-1', 'msg-1', 'first')
+  assert.equal(writerB.snapshot('session').revision, 1)
+  writerB.append({
+    sessionId: 'session',
+    runId: 'run-1',
+    sequence: 1,
+    createdAt: 1,
+    event: { type: 'input.accepted', receiptId: 'r-1' }
+  })
+  // writerA had revision 1 cached, while disk is now at revision 2.
+  assert.equal(writerA.snapshot('session').revision, 2)
+  writerA.append({
+    sessionId: 'session',
+    runId: 'run-1',
+    sequence: 2,
+    createdAt: 2,
+    event: { type: 'turn.completed', outcome: 'interrupted', message: 'Stopped by user' }
+  })
+  assert.equal(writerA.snapshot('session').revision, 3)
+  assert.equal(writerB.snapshot('session').receipts[0].outcome, 'interrupted')
+})

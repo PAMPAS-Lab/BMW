@@ -33,7 +33,7 @@ import { videoDocumentSchema, videoDocumentFromDraft } from './video-document.js
 import { applyVideoEdit, videoEditSchema } from './video-edit.js'
 import { studioCompatibility, requireSimpleVideoEdit, requireSimpleVideo } from './studio-compatibility.js'
 import { MaterialIndexService } from './material-index-service.js'
-import { assertMaterialIndexRequest } from './material-index-contract.js'
+import { assertMaterialIndexRequest } from '@bmw-agent/feature-library/material-index-contract'
 import { sourceNarrationDraft } from './source-narration-recipe.js'
 import { reviewStudioExport } from './studio-export-review.js'
 import { referenceOperation } from './studio-reference.js'

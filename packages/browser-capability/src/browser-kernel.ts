@@ -1351,7 +1351,7 @@ export class BrowserKernel {
   }
 
   scheduleTabStateSave() {
-    if (this.detached || !this.projectStore || this.restoringTabState) return
+    if (this.detached || typeof this.projectStore?.updateTabState !== 'function' || this.restoringTabState) return
     clearTimeout(this.tabStateTimer)
     this.tabStateTimer = setTimeout(() => {
       const project = this.projectStore.active()
@@ -1361,7 +1361,7 @@ export class BrowserKernel {
   }
 
   saveTabState(projectId) {
-    if (this.detached || !this.projectStore || !projectId) return
+    if (this.detached || typeof this.projectStore?.updateTabState !== 'function' || !projectId) return
     const tabs = [...this.tabs.values()].filter(tab => tab.projectId === projectId)
     const active = this.tabs.get(this.activeTabId)
     this.projectStore.updateTabState(projectId, {
@@ -1400,6 +1400,48 @@ export class BrowserKernel {
     } finally {
       this.restoringTabState = false
     }
+  }
+
+  /** Reclaim temporary background research tabs opened by the Agent in the active Project. */
+  async cleanupResearchTabs({
+    projectId = this.projectStore?.active().id,
+    keepYoutubeWorktab = false
+  }: { projectId?: string; keepYoutubeWorktab?: boolean } = {}): Promise<{ closedTabIds: string[] }> {
+    if (!projectId) return { closedTabIds: [] }
+    const closedTabIds: string[] = []
+    for (const tab of [...this.tabs.values()].filter(
+      tab =>
+        tab.projectId === projectId &&
+        tab.source === 'agent' &&
+        (!keepYoutubeWorktab || !this.youtubeWorktabs.owns(tab.id))
+    )) {
+      try {
+        await this.applyPlayback(tab, false, true)
+      } catch {
+        /* best-effort pause before destroy */
+      }
+      await this.destroyTab(tab)
+      closedTabIds.push(tab.id)
+    }
+    if (closedTabIds.length && (!this.activeTabId || !this.tabs.has(this.activeTabId))) {
+      this.activeTabId = null
+      const next = [...this.tabs.values()]
+        .filter(candidate => candidate.projectId === projectId)
+        .sort(
+          (left, right) =>
+            Number(right.lastUsedAt || right.createdAt || 0) - Number(left.lastUsedAt || left.createdAt || 0)
+        )[0]
+      if (next) await this.showTab(next.id)
+      else if (!this.detached && typeof this.projectStore?.updateTabState === 'function')
+        await this.openPageTab({ url: PROJECT_BLANK_URL, foreground: this.browserVisible, source: 'user' })
+    }
+    if (this.collectionPagePoolQuarantined && !this.collectionPagePoolRunning)
+      await this.recoverCollectionPages().catch(() => {})
+    if (closedTabIds.length) {
+      this.emitState()
+      this.scheduleTabStateSave()
+    }
+    return { closedTabIds }
   }
 
   /** Trusted Host archive hook, under Project-transition exclusion. */

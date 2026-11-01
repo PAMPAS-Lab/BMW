@@ -8,7 +8,7 @@ import { ProjectSourceStore } from '../packages/platform/src/project-source-stor
 import { collectPageSource } from '../packages/browser-capability/src/collect-page-source.js'
 import type { BrowserKernel } from '../packages/browser-capability/src/browser-kernel.js'
 import { mediaRecord } from '../packages/media-native/src/media-contract.js'
-import { NewsJournal } from '../packages/feature-video/src/news-store.js'
+import { NewsJournal } from '@bmw-agent/feature-library/news-store'
 import { newStudioScene } from '../packages/feature-video/src/studio-contract.js'
 import type { VideoStudioStore } from '../packages/feature-video/src/studio-store.js'
 export async function verifyNewsStudio(

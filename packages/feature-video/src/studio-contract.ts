@@ -1,7 +1,7 @@
 import { assertNewsPreparationRequest } from './news-preparation-contract.js'
 import type { NewsPreparationRequest } from './news-preparation-contract.js'
-import { assertNewsCandidates, newsId } from './news-contract.js'
-import type { NewsTopicCandidate } from './news-contract.js'
+import { assertNewsCandidates, newsId } from '../../feature-library/src/news-contract.js'
+import type { NewsTopicCandidate } from '../../feature-library/src/news-contract.js'
 import { assertProductionAssessment, assessmentRevision } from './production-assessment-contract.js'
 import type { ProductionAssessment } from './production-assessment-contract.js'
 import { assertGridRecipe } from '../../media-native/src/precomposition-contract.js'
@@ -191,8 +191,8 @@ export interface StudioState {
   snapshotProofs?: Record<string, string>
 }
 import { assertSourceNarrationRecipe } from './source-narration-recipe.js'
-import { assertMaterialIndexRequest } from './material-index-contract.js'
-import type { MaterialIndexRequest } from './material-index-contract.js'
+import { assertMaterialIndexRequest } from '../../feature-library/src/material-index-contract.js'
+import type { MaterialIndexRequest } from '../../feature-library/src/material-index-contract.js'
 import { assertExportReviewVerdict, assertExportReviewBatch } from './export-review-contract.js'
 import { assertAssetQuery, SCENE_SECTIONS } from './studio-read-contract.js'
 export interface StudioRequest {

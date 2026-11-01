@@ -1,7 +1,7 @@
 import { mediaRecord } from '../../../media-native/src/media-contract.js'
 import type { VideoDraft, StudioAsset } from '../studio-contract.js'
-import { NEWS_MAX_TOPICS } from '../news-contract.js'
-import type { NewsTopicCandidate, NewsTopicFacts } from '../news-contract.js'
+import { NEWS_MAX_TOPICS } from '../../../feature-library/src/news-contract.js'
+import type { NewsTopicCandidate, NewsTopicFacts } from '../../../feature-library/src/news-contract.js'
 import type { StudioBridge } from './studio-preview.js'
 const categoryLabels: Record<NewsTopicCandidate['category'], string> = {
   technology: '科技人物',
@@ -48,6 +48,9 @@ export class StudioNews {
   private urls: string[] = []
   private loading?: Promise<void>
   private reload = false
+  private collecting = false
+  private sawActiveAssistant = false
+  private stoppedMessage?: string
   private root = document.getElementById('news-workspace')!
   private cards = document.getElementById('news-topics')!
   private progress = document.getElementById('news-guide')!
@@ -55,13 +58,24 @@ export class StudioNews {
   constructor(
     private api: StudioBridge,
     private state: () =>
-      | { projectId: string; sessionId?: string; assets: StudioAsset[]; draft?: VideoDraft; disabled: boolean }
+      | {
+          projectId: string
+          sessionId?: string
+          assets: StudioAsset[]
+          draft?: VideoDraft
+          disabled: boolean
+          assistantBusy?: boolean
+          cancelling?: boolean
+        }
       | undefined,
     private flush: () => Promise<void>,
     private choose: (id: string) => Promise<void>,
     private jump: (sceneId: string, kind: string) => Promise<void>
   ) {
     document.getElementById('news-close')!.onclick = () => {
+      this.collecting = false
+      this.sawActiveAssistant = false
+      this.stoppedMessage = undefined
       void this.api
         .closeNews()
         .then(() => this.load())
@@ -80,9 +94,23 @@ export class StudioNews {
   render(): void {
     const s = this.state(),
       key = s?.projectId + ':' + s?.sessionId + ':' + s?.draft?.id + ':' + s?.draft?.revision
+    if (s?.assistantBusy) this.sawActiveAssistant = true
+    else if (this.sawActiveAssistant) {
+      this.collecting = false
+      this.sawActiveAssistant = false
+    }
+    const isCollecting = this.collecting || Boolean(s?.assistantBusy)
     this.root.hidden = !s?.sessionId || (this.cards.hidden && !this.view?.selection)
     for (const b of this.root.querySelectorAll<HTMLButtonElement>('button'))
       b.disabled = this.pending || !s?.sessionId || s.disabled
+    const recommendBtn = document.getElementById('news-recommend') as HTMLButtonElement | null
+    if (recommendBtn) {
+      recommendBtn.textContent = isCollecting ? '停止采选' : '推荐新闻选题'
+      recommendBtn.classList.toggle('danger', isCollecting)
+      recommendBtn.dataset.mode = isCollecting ? 'stop' : 'start'
+      recommendBtn.disabled =
+        this.pending || !s?.sessionId || Boolean(s?.cancelling) || (!isCollecting && Boolean(s?.disabled))
+    }
     for (const b of this.root.querySelectorAll<HTMLButtonElement>('[data-news-select]')) {
       const t = this.view?.topics.find(t => t.candidate.id === b.dataset.newsSelect)
       b.disabled =
@@ -98,11 +126,34 @@ export class StudioNews {
   }
   async recommend(): Promise<void> {
     if (this.pending) return
+    const s = this.state(),
+      stopping = this.collecting || Boolean(s?.assistantBusy)
     this.pending = true
+    if (!stopping) {
+      this.stoppedMessage = undefined
+      this.collecting = true
+      this.sawActiveAssistant = false
+    }
     this.render()
     try {
+      if (stopping) {
+        if (s?.assistantBusy) await this.api.cancelTask()
+        this.collecting = false
+        this.sawActiveAssistant = false
+        await this.load()
+        const count = this.view?.topics.length ?? 0
+        this.stoppedMessage = `已由用户停止采选，已保留当前已发现的 ${count} 条线索`
+        this.status.textContent = this.stoppedMessage
+        return
+      }
       await this.flush()
-      await this.api.recommendNews()
+      try {
+        await this.api.recommendNews()
+      } catch (e) {
+        this.collecting = false
+        this.sawActiveAssistant = false
+        throw e
+      }
       this.status.textContent = 'Assistant正在核对近72小时新闻；这里只收集候选，确认前不配音或合成。'
       await this.load()
     } finally {
@@ -164,11 +215,13 @@ export class StudioNews {
       await this.guide(generation)
       return
     }
-    this.status.textContent = v.closed
-      ? '新闻选题已退出；原来源、选题记录和草稿保留。'
-      : v.topics.length
-        ? `资料核验截至 ${new Date(v.asOf).toLocaleString()} · ${v.topics.length} 个候选${v.selection ? ' · 选题已确认，任务状态：' + (dispatchLabels[v.selection.dispatch] ?? v.selection.dispatch) : ' · 请选一个题目再制作'}`
-        : '暂无合格候选；可推荐新闻选题，不以旧闻凑数。'
+    this.status.textContent =
+      this.stoppedMessage ??
+      (v.closed
+        ? '新闻选题已退出；原来源、选题记录和草稿保留。'
+        : v.topics.length
+          ? `资料核验截至 ${new Date(v.asOf).toLocaleString()} · ${v.topics.length} 个候选${v.selection ? ' · 选题已确认，任务状态：' + (dispatchLabels[v.selection.dispatch] ?? v.selection.dispatch) : ' · 请选一个题目再制作'}`
+          : '暂无合格候选；可推荐新闻选题，不以旧闻凑数。')
     for (const t of v.topics) {
       const card = document.createElement('article')
       card.className = 'news-card'

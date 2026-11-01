@@ -5,8 +5,11 @@ import os from 'node:os'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { MaterialIndexService } from '../src/material-index-service.js'
-import { MaterialIndexStore } from '../src/material-index-store.js'
-import { assertMaterialIndexRequest, materialIndexRequestSchema } from '../src/material-index-contract.js'
+import { MaterialIndexStore } from '@bmw-agent/feature-library/material-index-store'
+import {
+  assertMaterialIndexRequest,
+  materialIndexRequestSchema
+} from '@bmw-agent/feature-library/material-index-contract'
 import { LOCAL_ASR_MODELS, LOCAL_ASR_MODEL_REVISION } from '../../media-native/src/local-asr-assets.js'
 import { mediaRecord } from '../../media-native/src/media-contract.js'
 import type { StudioKernel } from '../src/studio-service.js'

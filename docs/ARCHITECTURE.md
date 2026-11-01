@@ -158,7 +158,6 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | browser.preservation-result | contract | browser-capability | packages/browser-capability/test/preservation-result.test.ts | 默认 |
 | platform.assistant-tasks | contract | platform | packages/platform/test/assistant-tasks.test.ts | 默认 |
 | video.review-packet | contract | feature-video | packages/feature-video/test/video-review-packet.test.ts | 默认 |
-| video.news-delivery | contract | feature-video | packages/feature-video/test/news-delivery.test.ts | 默认 |
 | video.review | contract | feature-video | packages/feature-video/test/video-review.test.ts | 默认 |
 | external.social-download.live | external (opt-in) | browser-capability, media-native, agent-contract | scripts/social-download-live-validation.ts | opt-in: BMW_LIVE_SOCIAL=1; public videos in disposable signed-out Profile only |
 | external.library.live-sources | external (opt-in) | feature-library, platform, browser-capability, media-native | scripts/ai-news-live-validation.ts | opt-in: BMW_LIVE_NEWS=1; public-network read-only validation in disposable Profile only |
@@ -180,7 +179,6 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | video.news-preparation | contract | feature-video | packages/feature-video/test/news-preparation.test.ts | 默认 |
 | video.preparation-fingerprint | contract | feature-video | packages/feature-video/test/preparation-fingerprint.test.ts | 默认 |
 | video.production | contract | feature-video | packages/feature-video/test/production.test.ts | 默认 |
-| external.production.qoder-deepseek-flash | external (opt-in) | harness-qoder, platform, feature-video, media-native | scripts/qoder-production-case.ts | opt-in: BMW_QODER_TASK_FILE + BMW_QODER_AUTH_DIRECTORY explicitly authorized; optional BMW_QODER_INPUT_INDEX |
 | media.research-video | media | media-native, feature-video | scripts/research-video-smoke.ts | 默认 |
 | media.precomposition | contract | media-native | packages/media-native/test/precomposition.test.ts | 默认 |
 | media.research-diagrams | contract | media-native | packages/media-native/test/research-diagrams.test.ts | 默认 |
@@ -206,9 +204,6 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | studio.science | desktop | media-native, feature-video, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_SCIENCE_CASE=1 |
 | studio.layer-packaging | desktop | media-native, feature-video, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_PACKAGING_CASE=1 |
 | studio.text-treatment | desktop | media-native, feature-video, browser-capability | scripts/video-studio-smoke.ts | BMW_STUDIO_TEXT_CASE=1 |
-| video.qbit-playback | media (opt-in) | media-native | scripts/qbit-playback-audit.ts | opt-in: Explicit local sample playback review |
-| video.qbit-stage4-samples | media (opt-in) | media-native, feature-video, browser-capability | scripts/qbit-stage4-samples.ts | opt-in: BMW_QBIT_SOURCE_INDEX=<explicit authorized local public-video index> |
-| video.qbit-stage3-samples | media (opt-in) | media-native, feature-video, browser-capability | scripts/qbit-stage3-samples.ts | opt-in: BMW_QBIT_SOURCE_INDEX=<explicit authorized local public-video index> |
 | media.science-diagrams | media | media-native, feature-video | scripts/science-diagram-smoke.ts | 默认 |
 | media.layer-packaging | media | media-native, feature-video | scripts/layer-packaging-smoke.ts | 默认 |
 | media.text-treatment | media | media-native, feature-video | scripts/text-treatment-smoke.ts | 默认 |
@@ -267,7 +262,6 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | dsh.dsh-preset | contract | harness-dsh | packages/harness-dsh/test/dsh-preset.test.ts | 默认 |
 | dsh.browser-failure-guard | unit | harness-dsh | packages/harness-dsh/test/browser-failure-guard.test.ts | 默认 |
 | dsh.workspace-context | contract | harness-dsh | packages/harness-dsh/test/workspace-context.test.ts | 默认 |
-| dsh.video-case-log | unit | harness-dsh | packages/harness-dsh/test/video-case-log.test.ts | 默认 |
 | media.controller | contract | media-native | packages/media-native/test/media-controller.test.ts | 默认 |
 | media.processing | contract | media-native | packages/media-native/test/media-processing.test.ts | 默认 |
 | media.production | contract | media-native | packages/media-native/test/video-production.test.ts | 默认 |

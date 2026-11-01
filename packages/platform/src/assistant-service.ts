@@ -185,6 +185,13 @@ export class AssistantService {
     this.leases.set(request.runId, lease)
     const binding = this.options.bridge.registerSession(request.sessionId, request.project.directory, scope)
     lease.binding = binding
+    request.signal.addEventListener(
+      'abort',
+      () => {
+        if (lease.binding) void this.options.bridge.releaseSession(lease.binding).catch(() => {})
+      },
+      { once: true }
+    )
     const bridgeUrl = this.options.bridge.url,
       bridgeToken = this.options.bridge.token
     return {

@@ -12,7 +12,7 @@ BMW 是以浏览器为能力边界、以媒体为原生数据的桌面 Agent 工
 
 ## 运行
 
-需要 Node.js 24+。BMW Assistant 可选择 DSH、Codex、Qoder CN 或 WorkBuddy；各引擎使用官方运行时和独立认证配置。默认入口已装配四驱动；新 Profile 默认选择 DSH，之后按 Project 保存所选驱动。WorkBuddy 使用系统加密的 API Key，每轮输入前验证实际 browser 目录；配置 Key 不代表服务权限已验证，刷新不产生付费调用。当前状态见 [PROJECT_STATUS.md](docs/PROJECT_STATUS.md)，分阶段验收和真实模型证据见 [实施记录](docs/history/agent-drivers/IMPLEMENTATION.md)。DSH 适配基线为 `0.2.1-rc.2`，Electron 为 `44.5.1`，Mediabunny 为 `1.61.0`。
+需要 Node.js 24+。BMW Assistant 可选择 DSH、Codex、Qoder CN 或 WorkBuddy；各引擎使用官方运行时和独立认证配置。默认入口已装配四驱动；新 Profile 默认选择 DSH，之后按 Project 保存所选驱动。WorkBuddy 使用系统加密的 API Key，每轮输入前验证实际 browser 目录；配置 Key 不代表服务权限已验证，刷新不产生付费调用。当前状态见 [PROJECT_STATUS.md](docs/PROJECT_STATUS.md)。DSH 适配基线为 `0.2.1-rc.2`，Electron 为 `44.5.1`，Mediabunny 为 `1.61.0`。
 
 ```bash
 git clone https://github.com/pampas-lab/BMW.git
@@ -20,8 +20,6 @@ cd BMW
 npm ci
 npm start
 ```
-
-DSH `0.2.1-rc.2` 为当前官方候选版，随BMW锁文件安装；本机已用该版与 `deepseek-flash` 完成[SI新闻](docs/research/DSH_SI_DELIVERY.json)及[科普／学术主片重制](docs/research/DSH_SCIENCE_RESEARCH_DELIVERY.json)。预设内使用官方上下文压缩，实际模型、成片、原声复用及验证范围分别登记，原Qoder版本保留。
 
 Codex CLI `0.164.0`、DSH `0.2.1-rc.2`、Qoder CN SDK `1.0.56` / Worker `1.1.78`、WorkBuddy CLI `2.176.0` 均由npm锁文件安装。BMW优先解析自己的官方运行时，Codex显式 `BMW_CODEX_EXECUTABLE` 仍可用于受版本门禁约束的恢复。BMW在自己的 `dsh-home` 安装预设，并在首次初始化时从 `DSH_HOME` 或 `~/.dsh` 复制已有普通CLI凭据，后续写入不修改原文件。无需先进入DSH界面配置模型，可在BMW登录框填写DeepSeek API Key。切换 Assistant 驱动会读取认证；缺少凭据时自动打开登录框，可登录或改选其他驱动。DSH 提供 DeepSeek API Key，Codex 提供 ChatGPT 浏览器登录，Qoder CN 使用官方 CLI 浏览器授权。登录后只显示维护的支持名单中由官方目录提供的模型，点击“确认选择”保存；不要求用户发起模型验证或测试对话。Codex API Key 认证可由其独立 CLI 配置识别，BMW 当前没有 API Key 输入表单；未安装时显示安装状态。实际输入前仍自动验证唯一 `browser`。依赖版本由 `package-lock.json` 固定；首次启动自动构建。
 
@@ -39,9 +37,7 @@ BMW_USER_DATA_DIR=/tmp/bmw-disposable npm start
 
 新闻速递可在Studio展开“新闻速递 · 选题与制作”，点击“推荐新闻选题”。Assistant核对近72小时的中美及全球AI消息，覆盖个人、公司机构、学术界和非AI人士的重要AI表态；最多推荐十题，不以旧闻凑数。优先推荐能直接观看变化的演示、同题作品对照、采访和演讲，并解释视频表达价值；纯文字公告也可用绑定来源版本的原页截图作为真实预览。查看原始来源与真实素材预览后，点击“选此题并制作”，同一Assistant再完成稿件、证据画面、配音字幕和新闻初稿。默认Qwen安明远男声，需先完成下方Qwen配置；新闻选题记录不等于事实、听感或内容验收。可退出选题，原素材与已有草稿保留。
 
-本系列日常使用优先BMW＋Qoder CN／DeepSeek-Flash、Qwen龙安朗与AIpardonSI News，按[新闻速递手册](docs/NEWS_DAILY.md)操作；先给候选，用户选题后制作，收工暂停播放器并回收研究页。原生媒体争用与采集终帧修复及完整回归见[验证摘要](docs/verification/CURRENT.json)。
-
-NEWS-01已用BMW＋官方Codex完成54.61秒最新新闻并获用户接受，显式采用Qwen龙安朗男声；[验收记录](docs/research/CODEX_NEWS_REWORK.json)区分技术检查、Agent画面意见、人工声音反馈和最终接受。后续按新闻、科普、学术顺序改进，见[下一步计划](docs/plans/NEXT_STEPS.md)。
+本系列日常使用可按[新闻速递手册](docs/NEWS_DAILY.md)操作；先给候选，用户选题后制作，收工暂停播放器并回收研究页。核心提示词、信源预设与实战经验归档见[提示词与预设配置](docs/prompts-and-presets/README.md)。后续按新闻、科普、学术顺序改进，见[下一步计划](docs/plans/NEXT_STEPS.md)。
 
 当前已包含手机原图阅读、句级卡片引用、素材索引与区间语音检索、原声转解说及录屏整理。正式全片分析支持2fps分页和选定区间8fps加密；视频支持720秒／96分镜、有界混音、原生文字包装和有限科学图解。专用 AI 图片／视频素材生成暂缓；当前范围见 [Studio 范围](docs/VIDEO_STUDIO_SCOPE.md)。
 
@@ -114,7 +110,7 @@ npm run test:tts-e2e
 
 新闻网站下载的当前样本覆盖见[完整音视频与外置字幕验证](docs/verification/NEWS_HLS_SUBTITLES_DOWNLOADS.json)：Fox 720p、2音轨和1条字幕，Yahoo Finance 1080p、3音轨和2条字幕均通过正式入口、完整解码与独立字幕复核；字幕以独立 WebVTT 交付。CNBC／CNN 的对应样本另见[发布者验证](docs/verification/NEWS_HLS_CNN_DOWNLOADS.json)，不据此承诺全站或受限内容可用。
 
-全仓检查的源码身份、逐项结果、资源缺项复测及未运行范围见[CURRENT](docs/verification/CURRENT.json)与[验证说明](docs/VERIFICATION.md)。测试使用一次性Profile，不计入付费模型或真实在线服务覆盖；真实社媒取材结果[单独登记](docs/research/SOCIAL_DOWNLOAD_VALIDATION.md)，YouTube原生获取方案与未覆盖项见[计划](docs/plans/YOUTUBE_NATIVE_ACQUISITION.md)。已准备BMW＋DSH／DeepSeek Flash日常Project并通过实际只读连通；[使用流程](docs/AGENT_VIDEO_EDITING.md#日常新闻使用)与[就绪范围](docs/research/NEWS_DAILY_READINESS.json)明确选题确认、龙安朗和资源边界。已接受的43.03秒Chuck Lorre片保留，下一内容主线仍是科普、再学术。
+全仓检查的源码身份、逐项结果、资源缺项复测及未运行范围见[CURRENT](docs/verification/CURRENT.json)与[验证说明](docs/VERIFICATION.md)。测试使用一次性Profile，不计入付费模型或真实在线服务覆盖；真实社媒取材结果[单独登记](docs/research/SOCIAL_DOWNLOAD_VALIDATION.md)，YouTube原生获取方案与未覆盖项见[计划](docs/plans/YOUTUBE_NATIVE_ACQUISITION.md)。日常新闻使用流程见[视频编辑接口](docs/AGENT_VIDEO_EDITING.md#日常新闻使用)。
 
 局部改动默认先用下方 `test:plan` / `test:affected -- --files ...` 查看并执行本次范围；既有未提交工作不应混入本次文件列表。`verify:stability` 显式使用 `--all`，执行全部非 opt-in 分类；六项专用本地素材夹具和六项外部服务／模型测试仍需单独启用，不计为通过。完整串行验证：`npm run verify:stability`，并单独执行 `npm run check` 检查完整编译／Schema与生成文档一致性。完整入口构建一次，再执行源码／清单门禁、单元/边界及运行时回归；记录源码哈希、依赖版本和通过/失败/未执行结果。桌面工作区测试分为工作区、Project/会话（含实际重启）、设置、原生焦点/键盘四组；Studio 各专用环境分支另由分类目录逐项执行，单组失败不阻止其余组运行。新证据在 `.bmw-runtime/classified-tests/`，既有证据保留。
 

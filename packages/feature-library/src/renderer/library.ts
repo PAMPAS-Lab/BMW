@@ -174,16 +174,31 @@ function run(operation: () => Promise<unknown>): void {
       updateBusy()
     })
 }
+let newsCollecting = false,
+  sawActiveNewsAssistant = false,
+  stoppedNewsMessage: string | undefined
+function isAssistantBusy(): boolean {
+  return ['queued', 'running', 'waiting-user', 'waiting-approval', 'cancelling'].includes(state?.activity?.status ?? '')
+}
 function updateBusy(): void {
   document.body.dataset.libraryBusy = String(pending)
   for (const control of document.querySelectorAll(
     '[data-bulk-action],#bulk-toggle,[data-category]'
   ) as HTMLButtonElement[])
     control.disabled = pending
-  const busy = ['queued', 'running', 'waiting-user', 'waiting-approval', 'cancelling'].includes(
-    state?.activity?.status ?? ''
-  )
-  node<HTMLButtonElement>('news-start').disabled = pending || busy || !state?.sessionId
+  const busy = isAssistantBusy()
+  if (busy) sawActiveNewsAssistant = true
+  else if (sawActiveNewsAssistant) {
+    newsCollecting = false
+    sawActiveNewsAssistant = false
+  }
+  const collecting = newsCollecting || busy,
+    startBtn = node<HTMLButtonElement>('news-start')
+  startBtn.textContent = collecting ? '停止采选' : '推荐新闻选题'
+  startBtn.classList.toggle('primary', !collecting)
+  startBtn.classList.toggle('danger', collecting)
+  startBtn.dataset.mode = collecting ? 'stop' : 'start'
+  startBtn.disabled = pending || !state?.sessionId || state?.activity?.status === 'cancelling'
   for (const b of document.querySelectorAll('[data-news-select]') as HTMLButtonElement[])
     b.disabled = pending || busy || b.dataset.ineligible === 'true'
   node('collection-context').textContent = state
@@ -229,6 +244,9 @@ async function refresh(forceStream = false): Promise<void> {
     newsOrigin = undefined
     newsView = undefined
     newsRenderKey = ''
+    newsCollecting = false
+    sawActiveNewsAssistant = false
+    stoppedNewsMessage = undefined
   }
   updateBusy()
   showCategory()
@@ -633,6 +651,7 @@ function renderNews(): void {
       ? '来自冻结推荐 · ' + view.recommendation.windowHours + '小时窗口 · 原始来源与真实预览 · 先选题后制作'
       : '近72小时 · 最多十题 · 原始来源与真实预览 · 先收集，选定后制作'
   node('news-status').textContent =
+    stoppedNewsMessage ??
     `${view.topics.length} 个候选 · ${view.closed ? '研究已结束' : view.selection ? '已有制作记录，可查看草稿或继续选择其他题目' : '先核对预览，再选择题目制作'}${view.recommendation ? ' · 冻结快照 · ' + view.recommendation.windowHours + '小时窗口' + (view.recommendation.acceptedShortage ? ' · 用户接受不足十题' : '') : ''}${view.asOf ? ' · 核验截至 ' + new Date(view.asOf).toLocaleString() : ''}`
   const key = JSON.stringify({
     origin: newsOrigin,
@@ -840,20 +859,56 @@ node('refresh').onclick = () => run(() => refresh(true))
 node('collect').onclick = () => run(() => api.openBrowser())
 node('cancel').onclick = () => {
   bulkCancelled = true
+  const wasCollecting = newsCollecting || isAssistantBusy()
+  newsCollecting = false
+  sawActiveNewsAssistant = false
   void api
     .cancel()
-    .then(() => say('正在停止操作并清理…'))
+    .then(async () => {
+      if (wasCollecting) {
+        await loadNews().catch(() => {})
+        const count = newsView?.topics.length ?? 0
+        stoppedNewsMessage = `已由用户停止采选，已保留当前已发现的 ${count} 条线索`
+        say(stoppedNewsMessage)
+        node('news-status').textContent = stoppedNewsMessage
+      } else say('正在停止操作并清理…')
+      updateBusy()
+    })
     .catch(error => say(String(error)))
 }
 node('news-start').onclick = () =>
   run(async () => {
-    await api.news({ operation: 'start', instructions: node<HTMLTextAreaElement>('news-instructions').value })
+    if (newsCollecting || isAssistantBusy()) {
+      const result = mediaRecord(await api.news({ operation: 'stop' }))
+      newsCollecting = false
+      sawActiveNewsAssistant = false
+      await loadNews()
+      const count = typeof result.retainedCount === 'number' ? result.retainedCount : (newsView?.topics.length ?? 0)
+      stoppedNewsMessage = `已由用户停止采选，已保留当前已发现的 ${count} 条线索`
+      say(stoppedNewsMessage)
+      node('news-status').textContent = stoppedNewsMessage
+      return
+    }
+    stoppedNewsMessage = undefined
+    newsCollecting = true
+    sawActiveNewsAssistant = false
+    updateBusy()
+    try {
+      await api.news({ operation: 'start', instructions: node<HTMLTextAreaElement>('news-instructions').value })
+    } catch (error) {
+      newsCollecting = false
+      sawActiveNewsAssistant = false
+      throw error
+    }
     say('已开始收集近72小时新闻，合格资料会逐批保存。')
     await loadNews()
   })
 node('news-refresh').onclick = () => run(loadNews)
 node('news-close').onclick = () =>
   run(async () => {
+    newsCollecting = false
+    sawActiveNewsAssistant = false
+    stoppedNewsMessage = undefined
     await api.news({ operation: 'close' })
     await loadNews()
   })

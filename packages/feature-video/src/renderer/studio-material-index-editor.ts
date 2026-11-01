@@ -1,5 +1,5 @@
-import { assertMaterialIndex, materialText } from '../material-index-contract.js'
-import type { MaterialIndex, MaterialIndexRequest } from '../material-index-contract.js'
+import { assertMaterialIndex, materialText } from '../../../feature-library/src/material-index-contract.js'
+import type { MaterialIndex, MaterialIndexRequest } from '../../../feature-library/src/material-index-contract.js'
 import { mediaRecord, finiteNumber } from '../../../media-native/src/media-contract.js'
 import type { StudioAsset } from '../studio-contract.js'
 interface Options {

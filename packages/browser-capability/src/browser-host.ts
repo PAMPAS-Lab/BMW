@@ -104,6 +104,9 @@ export interface BrowserFeatureHost {
     signal?: AbortSignal
   ): Promise<T>
   recoverCollectionPages?(): Promise<void>
+  cleanupResearchTabs?(options?: { projectId?: string; keepYoutubeWorktab?: boolean }): Promise<{
+    closedTabIds: string[]
+  }>
   execute(request: unknown, options?: BrowserExecutionOptions): Promise<unknown>
   videoStudioOpen?: (owner: BrowserSessionOwner) => Promise<unknown>
   videoStudioSelect?: (
@@ -206,6 +209,7 @@ export function assertBrowserFeatureHost(raw: unknown): BrowserFeatureHost {
     'collectSource',
     'collectPageBatch',
     'recoverCollectionPages',
+    'cleanupResearchTabs',
     'downloadSource',
     'preserveSource',
     'acquireSource',

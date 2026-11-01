@@ -22,7 +22,7 @@ import { STUDIO_EXPORT_RENDERER_VERSION } from './studio-store.js'
 import type { VideoStudioStore } from './studio-store.js'
 import type { StudioKernel } from './studio-service.js'
 import { StudioSources } from './studio-sources.js'
-import { NewsJournal } from './news-store.js'
+import { NewsJournal } from '@bmw-agent/feature-library/news-store'
 import type { NewsPreparationState } from './news-preparation-journal.js'
 
 interface Issue {

@@ -7,15 +7,15 @@ import crypto from 'node:crypto'
 import { Ajv2020 as Ajv } from 'ajv/dist/2020.js'
 import { ProjectSourceStore } from '../../platform/src/project-source-store.js'
 import { NewsService, requireNewsSelection } from '../src/news-service.js'
-import { NewsJournal, newsFingerprint } from '../src/news-store.js'
+import { NewsJournal, newsFingerprint } from '@bmw-agent/feature-library/news-store'
 import {
   assertNewsCandidates,
   newsCandidateSchema,
   newsFresh,
   newsPublication,
   NEWS_WINDOW_MS
-} from '../src/news-contract.js'
-import type { NewsTopicCandidate } from '../src/news-contract.js'
+} from '@bmw-agent/feature-library/news-contract'
+import type { NewsTopicCandidate } from '@bmw-agent/feature-library/news-contract'
 import { VideoStudioService } from '../src/studio-service.js'
 import type { StudioKernel } from '../src/studio-service.js'
 import { VideoStudioStore } from '../src/studio-store.js'

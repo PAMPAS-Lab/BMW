@@ -1654,7 +1654,11 @@ async function createApp() {
         ? { ...activity, status: 'background', dispatchBlocked: false }
         : activity
     },
-    cancelAssistant: sessionId => assistantService.controller.invoke({ action: 'message.cancel', sessionId }),
+    cancelAssistant: async sessionId => {
+      const result = await assistantService.controller.invoke({ action: 'message.cancel', sessionId })
+      await browserKernel.cleanupResearchTabs({ projectId: projectStore.active().id, keepYoutubeWorktab: false })
+      return result
+    },
     sendToAgent,
     sendToShell,
     synchronizeAgentProject,

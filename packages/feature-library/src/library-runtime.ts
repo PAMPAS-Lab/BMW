@@ -281,6 +281,10 @@ export class LibraryRuntime implements FeatureRuntime {
       if (!host.cancelAssistant) throw new Error('Actual Assistant cleanup unavailable.')
       await host.cancelAssistant(run.sessionId)
     }
+    await host.browserKernel.cleanupResearchTabs?.({
+      projectId: host.projectStore.active().id,
+      keepYoutubeWorktab: false
+    })
     this.clearCollectionTimer(run.id)
   }
   private async startCollection(run: CollectionRun, signal?: AbortSignal): Promise<string> {
@@ -682,14 +686,30 @@ export class LibraryRuntime implements FeatureRuntime {
         }
       })
     )
-    ipc.handle('library-cancel', event => {
-      this.authorize(event)
+    ipc.handle('library-cancel', async event => {
+      const host = this.authorize(event)
       for (const controller of this.work.keys()) controller.abort(new Error('Library operation cancelled.'))
+      const sessionId = host.getCurrentSessionId?.()
+      if (
+        sessionId &&
+        ['queued', 'running', 'waiting-user', 'waiting-approval', 'cancelling'].includes(
+          host.getAssistantActivity?.().status ?? ''
+        )
+      )
+        await host.cancelAssistant?.(sessionId)
+      await host.browserKernel.cleanupResearchTabs?.({
+        projectId: host.projectStore.active().id,
+        keepYoutubeWorktab: false
+      })
       return { cancelling: true }
     })
     ipc.handle('library-news', async (event, raw: unknown) => {
       const host = this.authorize(event),
         request = mediaRecord(raw)
+      if (request.operation === 'stop') {
+        for (const controller of this.work.keys()) controller.abort(new Error('News collection stopped by user.'))
+        return this.stopNews(event, raw)
+      }
       if (
         request.operation === 'select' &&
         request.targetProjectId !== undefined &&
@@ -715,6 +735,33 @@ export class LibraryRuntime implements FeatureRuntime {
       await host.openWorkspace?.('browser')
       return { opened: true }
     })
+  }
+  private async stopNews(event: IpcMainInvokeEvent, raw: unknown): Promise<unknown> {
+    const host = this.authorize(event),
+      owner = this.scope(),
+      r = mediaRecord(raw)
+    if (Object.keys(r).some(k => k !== 'operation')) throw new Error('Unexpected news stop field.')
+    if (
+      ['queued', 'running', 'waiting-user', 'waiting-approval', 'cancelling'].includes(
+        host.getAssistantActivity?.().status ?? ''
+      )
+    ) {
+      if (!host.cancelAssistant) throw new Error('Actual Assistant cleanup must finish before stopping research.')
+      await host.cancelAssistant(owner.sessionId)
+    }
+    const closedTabs = await host.browserKernel.cleanupResearchTabs?.({
+      projectId: owner.projectId,
+      keepYoutubeWorktab: false
+    })
+    this.authorize(event)
+    const journal = new NewsJournal(host.projectStore.active().directory, owner).read(),
+      retainedCount = journal.topics.length
+    return {
+      stopped: true,
+      retainedCount,
+      topics: retainedCount,
+      closedTabIds: closedTabs?.closedTabIds ?? []
+    }
   }
   private async news(event: IpcMainInvokeEvent, raw: unknown, signal: AbortSignal): Promise<unknown> {
     const host = this.authorize(event),
@@ -838,6 +885,7 @@ export class LibraryRuntime implements FeatureRuntime {
         if (!host.cancelAssistant) throw new Error('Actual Assistant cleanup must finish before closing research.')
         await host.cancelAssistant(owner.sessionId)
       }
+      await host.browserKernel.cleanupResearchTabs?.({ projectId: owner.projectId, keepYoutubeWorktab: false })
       this.authorize(event)
       const journal = new NewsJournal(host.projectStore.active().directory, owner)
       return execute({

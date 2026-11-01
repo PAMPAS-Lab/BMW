@@ -28,9 +28,14 @@ export function dshBrowserCatalog(raw: unknown, sessionId: string, directory: st
 export class DshEvents {
   private cursor = -1
   private readonly tools = new Set<string>()
+  private readonly skippedCancelledTools = new Set<string>()
   private prune: { sequence: number; target: number } | undefined
   constructor(private readonly runId: string) {}
-  async receive(raw: unknown, emit: (event: AgentDriverEvent) => Promise<void>): Promise<AgentRunResult | null> {
+  async receive(
+    raw: unknown,
+    emit: (event: AgentDriverEvent) => Promise<void>,
+    cancelling = false
+  ): Promise<AgentRunResult | null> {
     const event = agentRecord(raw),
       seq = Number(event.seq)
     if (!Number.isSafeInteger(seq) || seq < 0) throw new Error('Invalid DSH event sequence')
@@ -74,7 +79,12 @@ export class DshEvents {
       if (data.name !== 'browser') throw new Error('DSH requested a tool outside BMW browser')
       const callId = this.runId + ':' + agentIdentifier(data.callId),
         args = agentRecord(JSON.parse(agentText(data.arguments, 1000000)))
-      if (this.tools.has(callId)) throw new Error('DSH repeated a browser call identity')
+      if (this.tools.has(callId) || this.skippedCancelledTools.has(callId))
+        throw new Error('DSH repeated a browser call identity')
+      if (cancelling) {
+        this.skippedCancelledTools.add(callId)
+        return null
+      }
       this.tools.add(callId)
       await emit({ type: 'tool.started', callId, name: 'browser', action: agentText(args.action, 200) })
     }
@@ -98,12 +108,14 @@ export class DshEvents {
           !Array.isArray(event.sourceEventSeqs) ||
           event.sourceEventSeqs.length !== 1 ||
           event.sourceEventSeqs[0] !== prune.target ||
-          this.tools.has(callId)
+          this.tools.has(callId) ||
+          this.skippedCancelledTools.has(callId)
         )
           throw new Error('Invalid DSH pruned tool-result replacement')
         // Official pruning replaces an old display result; it executes no tool.
         return null
       }
+      if (this.skippedCancelledTools.delete(callId)) return null
       if (!this.tools.delete(callId)) throw new Error('DSH browser result has no running call')
       await emit({
         type: 'tool.completed',
@@ -113,7 +125,7 @@ export class DshEvents {
       })
     }
     if (event.type === 'turn/end') {
-      if (this.tools.size) throw new Error('DSH ended before browser calls returned')
+      if (this.tools.size || this.skippedCancelledTools.size) throw new Error('DSH ended before browser calls returned')
       const reason = agentRecord(data.reason)
       if (reason.kind === 'error')
         return { outcome: 'failed', message: agentText(agentRecord(reason.error).message, 16384) }

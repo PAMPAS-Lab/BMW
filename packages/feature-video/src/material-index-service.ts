@@ -9,14 +9,14 @@ import { assertMediaInspection } from '../../media-native/src/media-port.js'
 import { assertImageInspection } from '../../media-native/src/image-contract.js'
 import { assertSpeechEvidence, speechSourceSegments } from '../../media-native/src/speech-contract.js'
 import { exportProjectText } from '../../media-native/src/text-export.js'
-import { MaterialIndexStore } from './material-index-store.js'
-import { assertMaterialIndexRequest, MATERIAL_INDEX_LIMITS } from './material-index-contract.js'
+import { MaterialIndexStore } from '@bmw-agent/feature-library/material-index-store'
+import { assertMaterialIndexRequest, MATERIAL_INDEX_LIMITS } from '@bmw-agent/feature-library/material-index-contract'
 import type {
   MaterialIndex,
   MaterialIndexRecord,
   MaterialIndexPart,
   MaterialIndexRequest
-} from './material-index-contract.js'
+} from '@bmw-agent/feature-library/material-index-contract'
 import { sceneVisuals } from '../../media-native/src/visual-segments.js'
 import { VideoStudioStore } from './studio-store.js'
 import { readSpeechEvidence } from './studio-speech.js'

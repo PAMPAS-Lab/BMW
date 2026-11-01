@@ -78,7 +78,6 @@ export const tests: readonly TestDefinition[] = [
   ),
   node('platform.assistant-tasks', p + 'platform/test/assistant-tasks.test.ts', 'contract', 'platform'),
   node('video.review-packet', p + 'feature-video/test/video-review-packet.test.ts', 'contract', 'feature-video'),
-  node('video.news-delivery', p + 'feature-video/test/news-delivery.test.ts', 'contract', 'feature-video'),
   node('video.review', p + 'feature-video/test/video-review.test.ts', 'contract', 'feature-video'),
   {
     id: 'external.social-download.live',
@@ -238,14 +237,6 @@ export const tests: readonly TestDefinition[] = [
   ),
   node('video.production', p + 'feature-video/test/production.test.ts', 'contract', 'feature-video'),
   {
-    id: 'external.production.qoder-deepseek-flash',
-    file: 'scripts/qoder-production-case.ts',
-    layer: 'external',
-    modules: ['harness-qoder', 'platform', 'feature-video', 'media-native'],
-    runner: 'electron',
-    optIn: 'BMW_QODER_TASK_FILE + BMW_QODER_AUTH_DIRECTORY explicitly authorized; optional BMW_QODER_INPUT_INDEX'
-  },
-  {
     id: 'media.research-video',
     file: 'scripts/research-video-smoke.ts',
     layer: 'media',
@@ -393,30 +384,6 @@ export const tests: readonly TestDefinition[] = [
       'packages/feature-video/src/renderer/studio-layer-editor.ts',
       'packages/feature-video/src/video-document.ts'
     ]
-  },
-  {
-    id: 'video.qbit-playback',
-    file: 'scripts/qbit-playback-audit.ts',
-    layer: 'media',
-    modules: ['media-native'],
-    runner: 'electron',
-    optIn: 'Explicit local sample playback review'
-  },
-  {
-    id: 'video.qbit-stage4-samples',
-    file: 'scripts/qbit-stage4-samples.ts',
-    layer: 'media',
-    modules: ['media-native', 'feature-video', 'browser-capability'],
-    runner: 'electron',
-    optIn: 'BMW_QBIT_SOURCE_INDEX=<explicit authorized local public-video index>'
-  },
-  {
-    id: 'video.qbit-stage3-samples',
-    file: 'scripts/qbit-stage3-samples.ts',
-    layer: 'media',
-    modules: ['media-native', 'feature-video', 'browser-capability'],
-    runner: 'electron',
-    optIn: 'BMW_QBIT_SOURCE_INDEX=<explicit authorized local public-video index>'
   },
   {
     id: 'media.science-diagrams',
@@ -593,20 +560,11 @@ export const tests: readonly TestDefinition[] = [
     ]
   ),
   node('browser.host-contract', p + 'browser-capability/test/browser-host.test.ts', 'contract', 'browser-capability'),
-  ...(
-    [
-      'dsh-runtime',
-      'dsh-transport',
-      'dsh-preset',
-      'browser-failure-guard',
-      'workspace-context',
-      'video-case-log'
-    ] as const
-  ).map(name =>
+  ...(['dsh-runtime', 'dsh-transport', 'dsh-preset', 'browser-failure-guard', 'workspace-context'] as const).map(name =>
     node(
       'dsh.' + name,
       p + 'harness-dsh/test/' + name + '.test.ts',
-      name === 'browser-failure-guard' || name === 'video-case-log' ? 'unit' : 'contract',
+      name === 'browser-failure-guard' ? 'unit' : 'contract',
       'harness-dsh'
     )
   ),

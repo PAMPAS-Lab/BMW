@@ -197,11 +197,14 @@ export class DshBackend implements AgentBackend {
         const index = history.events.findIndex(
           row => row.event.type === 'user/message' && row.event.data?.source?.rpcId === rpcId
         )
-        if (prepared.cancelPromise && (await prepared.cancelPromise))
+        if (prepared.cancelPromise && (await prepared.cancelPromise)) {
+          this.prepared = undefined
+          this.owner!.stage = 'settled'
           return { outcome: 'interrupted', message: 'DSH queued input removed before its turn started' }
+        }
         if (index >= 0)
           for (const row of history.events.slice(index + 1)) {
-            const result = await decoder.receive(row.event, emit)
+            const result = await decoder.receive(row.event, emit, request.signal.aborted || Boolean(prepared.stopping))
             if (result) {
               await this.control(prepared, 'idle')
               this.prepared = undefined

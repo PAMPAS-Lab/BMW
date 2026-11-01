@@ -7,6 +7,7 @@ import { EventEmitter } from 'node:events'
 import type { ChildProcess } from 'node:child_process'
 import type { AgentRunRequest } from '@bmw-agent/agent-contract'
 import { DshBackend } from '../src/dsh-backend.js'
+import { DshEvents } from '../src/dsh-events.js'
 import { DshRuntime } from '../src/dsh-runtime.js'
 
 function request(root: string): AgentRunRequest {
@@ -160,4 +161,50 @@ test('DSH child errors cannot masquerade as physical cleanup and a later exit pe
   fixture.signalCode = 'SIGTERM'
   fixture.emit('exit', null, 'SIGTERM')
   await drain
+})
+test('DshEvents skips late tool calls observed after cancellation and settles cleanly on aborted turn/end', async () => {
+  const decoder = new DshEvents('run-cancel')
+  const emitted: string[] = []
+  await decoder.receive(
+    {
+      seq: 1,
+      type: 'tool/call',
+      data: { name: 'browser', callId: 'call-1', arguments: JSON.stringify({ action: 'tabs.list' }) }
+    },
+    async event => {
+      emitted.push(event.type)
+    },
+    true
+  )
+  await decoder.receive(
+    {
+      seq: 2,
+      type: 'tool/result',
+      data: {
+        message: {
+          toolCallId: 'call-1',
+          isError: true,
+          source: { kind: 'tool', callId: 'call-1' },
+          content: [{ type: 'text', text: 'cancelled' }]
+        }
+      }
+    },
+    async event => {
+      emitted.push(event.type)
+    },
+    true
+  )
+  const result = await decoder.receive(
+    {
+      seq: 3,
+      type: 'turn/end',
+      data: { reason: { kind: 'aborted' } }
+    },
+    async event => {
+      emitted.push(event.type)
+    },
+    true
+  )
+  assert.deepEqual(emitted, [])
+  assert.deepEqual(result, { outcome: 'interrupted', message: 'DSH turn cancelled' })
 })

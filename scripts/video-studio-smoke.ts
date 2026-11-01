@@ -5,7 +5,7 @@ import type { FeatureAssistantActivity } from '@bmw-agent/platform/feature-contr
 import { recordingEvents } from '../packages/media-native/src/recording-contract.js'
 import { changeCardBullet } from '../packages/feature-video/src/renderer/studio-card-text.js'
 import { assertCompositionQuality } from '../packages/media-native/src/composition-quality.js'
-import { MaterialIndexStore } from '../packages/feature-video/src/material-index-store.js'
+import { MaterialIndexStore } from '@bmw-agent/feature-library/material-index-store'
 import { studioCompatibility } from '../packages/feature-video/src/studio-compatibility.js'
 import { moveStudioMain } from '../packages/feature-video/src/studio-main-edits.js'
 import { referenceCoverageGap } from '../packages/feature-video/src/reference-coverage.js'

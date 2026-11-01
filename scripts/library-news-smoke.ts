@@ -240,6 +240,13 @@ async function run(): Promise<void> {
     await wait(() => script("!document.getElementById('news-start').disabled"), 'news research enabled')
     await script("document.getElementById('news-start').click();true")
     await wait(async () => prompts.length === 1, 'one research dispatch')
+    await wait(
+      () =>
+        script(
+          "document.getElementById('news-start').textContent==='停止采选'&&document.getElementById('news-start').classList.contains('danger')&&document.getElementById('news-start').dataset.mode==='stop'"
+        ),
+      'contextual stop button active during news collection'
+    )
     assert.match(prompts[0], /不得创建草稿/)
     const png = nativeImage.createFromBitmap(Buffer.from([0, 0, 255, 255]), { width: 1, height: 1 }).toPNG()
     fs.writeFileSync(path.join(artifacts, 'news.png'), png)
@@ -347,6 +354,28 @@ async function run(): Promise<void> {
       await script("document.querySelector('.news-preview img')?.dataset.refreshProof"),
       'preserved',
       'Assistant progress must preserve the decoded preview element'
+    )
+    await kernel.execute(
+      { action: 'tabs.open', url: 'about:blank', foreground: false },
+      { actor: 'agent', sessionOwner: { projectId: project.id, sessionId } }
+    )
+    assert.equal(
+      kernel.state().tabs.some((t: { source?: string }) => t.source === 'agent'),
+      true,
+      'Agent research opened a temporary background tab'
+    )
+    await script("document.getElementById('news-start').click();true")
+    await wait(
+      () =>
+        script(
+          "document.getElementById('news-start').textContent==='推荐新闻选题'&&document.getElementById('news-start').classList.contains('primary')&&document.getElementById('news-start').dataset.mode==='start'&&document.getElementById('status').textContent.includes('已由用户停止采选，已保留当前已发现的 1 条线索')&&document.getElementById('news-status').textContent.includes('已由用户停止采选，已保留当前已发现的 1 条线索')"
+        ),
+      'stop collection restores button and reports retained clue count'
+    )
+    assert.equal(
+      kernel.state().tabs.some((t: { source?: string }) => t.source === 'agent'),
+      false,
+      'Stopping collection reclaims temporary agent research tabs'
     )
     await script(
       "document.querySelector('[data-news-select]').click();document.querySelector('[data-news-select]').click();true"
