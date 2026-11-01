@@ -12,7 +12,14 @@
 
 文档对齐：README 与 ARCHITECTURE 的模块、接口保障和实现保障计数改由 `check:architecture` 从 `module-catalog.ts` 校验（`docs:architecture` 自动刷新）；FUNCTIONAL_SPEC 的包表补上 harness-workbuddy 与 feature-library，四驱动描述和失效锚点已修正。
 
-格式化前基线与格式化后，build/check 通过，unit/contract/boundary/type 层均为 **137 passed / 0 failed / 104 outside-layer or opt-in not-run**。本轮未运行 Electron 原生、desktop、Studio、media 分类和 external opt-in，不计为通过；下次运行时改动仍须按 AGENTS 执行相关原生检查。
+格式化前基线与格式化后，build/check 通过，unit/contract/boundary/type 层均为 **137 passed / 0 failed / 104 outside-layer or opt-in not-run**。
+
+随后在格式化后的 `4795947` 上补跑完整 `npm run verify:stability`（报告 `.bmw-runtime/classified-tests/2026-11-01T07-50-41-593Z/result.json`）：**219 passed／7 failed／16 opt-in not-run**。7 项失败均与格式化无关：
+- 5 项（`studio.export-review`、`studio.next`、`media.capture`、`speech`、`localNarration`）因本地 TTS 资源缺失。`setup:local-tts` 固定的 sherpa-onnx 1.13.8 资源在上游同一 release 下已变为 126,407,853 字节，与锁定的 133,789,706 字节和 SHA-256 不符，安装脚本按设计拒绝，未绕过校验。
+- `media.science-diagrams` 报 `STUDIO_DIAGRAM_LAYOUT`，格式化前提交 `0de284d` 在同一机器上同样失败，属本机字体／排版环境差异。
+- `video` 在并发负载下两次在不同步骤超时；空闲时格式化前后各连续两次 12/12 通过，属时序抖动。
+
+另用 Prettier 内置 typescript-estree 解析器对 613 个改动文件逐一比较格式化前后 AST（忽略位置、注释、空语句和引号键名）：除上述两处测试正则修正外，其余 611 个文件 AST 完全一致。外部服务、付费模型和指定本地素材夹具（16 项 opt-in）未运行，不计为通过。
 
 ## 后台广告就绪与播放策略回归（2026-10-25）
 
