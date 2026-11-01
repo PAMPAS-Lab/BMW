@@ -6,6 +6,14 @@
 
 2026-10-29 YouTube专项[吞吐与节点对照](verification/YOUTUBE_THROUGHPUT.json)：原慢链路为几十KiB/s，本地实际原生完整处理为0.503／0.723秒。用户切换至JMS-S1后，相同冻结产品源码完整下载Microduck／UHD为17.696／18.852秒；独立临时mihomo测10个节点的相同4MiB资源，复测前三个完整候选，S801最快、S5稳定，完整范围SHA一致。S801的Microduck为5.796秒；UHD首次长诊断后唯一播放器准入失败、无产物，另新页面单条补测4.367秒成功，分别登记。四个新成功文件均全片双轨解码通过，原编码轨道SHA与此前验收一致；UHD原AAC为静音，未新增人工听审。主要瓶颈在出站节点／出口／CDN链路，未改下载实现或手动默认S1，临时子进程及私有配置均已清理。冻结源码build/check及135项离线验证通过；未重跑全部原生套件、默认协议／SPA或生产Profile，旧失败与采样局限保留。
 
+## 统一格式化与三方对齐（2026-11-01）
+
+全部作者 TypeScript 经 Prettier 3.9.10 一次性格式化（`.prettierrc.json`：120 列、单引号、无分号），只改排版、不改行为；`npm run check` 新增 `format:check` 门禁。格式化暴露并修正三处依赖紧凑排版的检查：`public-interfaces.type-test.ts` 的 `@ts-expect-error` 移到实际报错的 `script` 属性上；`project-panel-layering.test.ts` 和 `test-selection.test.ts` 的源码正则改为同时接受有无括号／空格的写法。其中后一项格式化后一度因匹配不到任何 Studio 环境分支而失败，修正后重新覆盖全部 27 个 Studio 环境分支（30 处判断）。Shell preload 的 46 项 invoke 扫描结果格式化前后一致。
+
+文档对齐：README 与 ARCHITECTURE 的模块、接口保障和实现保障计数改由 `check:architecture` 从 `module-catalog.ts` 校验（`docs:architecture` 自动刷新）；FUNCTIONAL_SPEC 的包表补上 harness-workbuddy 与 feature-library，四驱动描述和失效锚点已修正。
+
+格式化前基线与格式化后，build/check 通过，unit/contract/boundary/type 层均为 **137 passed / 0 failed / 104 outside-layer or opt-in not-run**。本轮未运行 Electron 原生、desktop、Studio、media 分类和 external opt-in，不计为通过；下次运行时改动仍须按 AGENTS 执行相关原生检查。
+
 ## 后台广告就绪与播放策略回归（2026-10-25）
 
 周期新闻实际续作暴露后台暂停策略与YouTube正常广告推进冲突。隔离回归先复现：视频已解码（64×64、1秒），4秒内19次播放均被暂停，currentTime约0.004秒，未能就绪。Host只在有界目标导航就绪阶段允许静音推进（YouTube上限90秒）；不抢前台、广告不认证内容，成功／失败／取消后撤销并暂停，恢复失败仍隔离。实际播放过程原生静音、取消清理及普通后台播放拦截均有断言。
@@ -295,7 +303,8 @@ Simon 的两册研究、98个记录组与V1/V2详见[原记录](history/2026-10-
 | 命令 | 实际范围 |
 |---|---|
 | npm run build | 编译所有作者 TypeScript、正反类型消费者，生成源码／输出哈希收据 |
-| npm run check | noEmit 编译、源语言／冻结例外检查、视频 Schema／示例、功能与架构生成清单一致性 |
+| npm run check | noEmit 编译、Prettier 格式（`format:check`）、源语言／冻结例外检查、视频 Schema／示例、功能与架构生成清单及 README／架构模块计数一致性 |
+| npm run format | 用 `.prettierrc.json` 格式化作者 TypeScript；文档、证据 JSON、HTML/CSS 和生成 JS 不在范围内 |
 | npm test | 分类 unit、contract、boundary；不是全部 runtime |
 | npm run test:contracts | contract 与 type 分类 |
 | npm run test:studio-e2e | video-studio-smoke 默认分支；不自动触发其各个专用分支 |

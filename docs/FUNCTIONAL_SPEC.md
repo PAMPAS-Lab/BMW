@@ -8,7 +8,7 @@ Studio 的有界编辑支持 `scene.remove {sceneId}`：在当前 Project/Sessio
 
 | 阅读范围 | 章节入口 |
 |---|---|
-| 应用与执行边界 | [产品与包](#产品与包边界)、[三驱动](#自有-assistant-装配三官方驱动)、[Project与会话](#桌面project-与会话)、[浏览器权限](#浏览器工具和权限) |
+| 应用与执行边界 | [产品与包](#产品与包边界)、[四驱动](#自有-assistant-装配四官方驱动)、[Project与会话](#桌面project-与会话)、[浏览器权限](#浏览器工具和权限) |
 | 媒体与来源 | [原生媒体](#原生媒体)、[Project来源](#project-来源与引用)、[全片分析](#全片来源分析任务) |
 | 视频数据与编辑 | [Studio](#video-studio)、[共享文档](#共享视频文档与编辑器兼容性)、[有界长篇](#有界长篇文档与制作) |
 | 质量与恢复 | [手机审片](#关键状态画面检查与实际成片手机审片)、[制作取消与续做](#制作取消清理与明确续做)、[测试分类](#模块接口与测试分类) |
@@ -28,19 +28,21 @@ Studio 的有界编辑支持 `scene.remove {sceneId}`：在当前 Project/Sessio
 
 | 包 | 责任 |
 |---|---|
-| apps/bmw | 组合 BMW 产品，默认入口注入三驱动装配和自有 Assistant |
+| apps/bmw | 组合 BMW 产品，默认入口注入四驱动装配和自有 Assistant |
 | product-bmw | 浏览器/媒体/视频产品定义，不依赖 DSH |
 | agent-contract | 通用 AgentBackend、BMW Project/Session、任务提交、设置及上下文契约 |
 | harness-dsh | DSH 进程、官方鉴权/传输、预设、模型配置、插件、私有 Workspace 映射及显式冷历史导出 |
 | harness-qoder | 官方 Qoder CN SDK/Worker、有效工具目录准入、原生续聊和事件转换 |
 | harness-codex | 官方 Codex App Server、模型目录预检、dynamic browser 回调与原生续聊 |
+| harness-workbuddy | 官方锁定版 WorkBuddy CodeBuddy CLI（ACP v1）、宿主 MCP Bridge、仅 browser 工具准入及 API Key 加密隔离 |
 | agent-ui | BMW 自有 sandbox Assistant 界面，仅暴露可信 Host IPC |
 | platform | 桌面 Shell、Project、设置、权限、会话协调、计划任务和应用生命周期 |
 | browser-capability | 唯一 browser 工具、Action Catalog、Bridge、浏览器页面操作和图像结果准入 |
 | media-native | 原生媒体采集、处理、旁白和合成 |
+| feature-library | 全局素材库、Project 专题与全局方向、来源订阅与周期采集、新闻研究、十题推荐及成品溯源 |
 | feature-video | Project 视频草稿、Studio 手动操作与自然语言操作 |
 
-默认入口装配 DSH `0.2.1-rc.2`、Codex App Server 和 Qoder CN SDK，由各官方运行时拥有 Agent Loop。自有 Assistant、统一设置、显式历史迁移和唯一默认入口已实现。GPT-6 封装时的完整离线快照及三驱动对应型号两轮真实验收通过；后续登录交互完成 32 项局部检查，未重新执行全量或付费模型。各报告的源码与适用范围见 [VERIFICATION.md](VERIFICATION.md)。Codex GPT-6 的独立工具封装与验收见 [实施状态](history/agent-drivers/IMPLEMENTATION.md)。核心只依赖契约，禁止直接依赖具体驱动的 RPC 名、页面存储、DOM 选择器、预设与凭据。DSH 使用官方启动 token/cookie 鉴权，日志脱敏；Workspace 和会话历史通过官方 WebSocket 快照读取，取得快照后取消订阅；修改操作留在驱动内。
+默认入口装配 DSH `0.2.1-rc.2`、Codex App Server、Qoder CN SDK 和 WorkBuddy CodeBuddy CLI，由各官方运行时拥有 Agent Loop。自有 Assistant、统一设置、显式历史迁移和唯一默认入口已实现。GPT-6 封装时的完整离线快照及三驱动对应型号两轮真实验收通过；后续登录交互完成 32 项局部检查，未重新执行全量或付费模型。各报告的源码与适用范围见 [VERIFICATION.md](VERIFICATION.md)。Codex GPT-6 的独立工具封装与验收见 [实施状态](history/agent-drivers/IMPLEMENTATION.md)。核心只依赖契约，禁止直接依赖具体驱动的 RPC 名、页面存储、DOM 选择器、预设与凭据。DSH 使用官方启动 token/cookie 鉴权，日志脱敏；Workspace 和会话历史通过官方 WebSocket 快照读取，取得快照后取消订阅；修改操作留在驱动内。
 
 驱动装配点为 `apps/bmw/product.ts`，具体创建逻辑在 `agent-assembly.ts`。所有驱动必须遵循相同归属契约，不能把 BMW 页面/媒体所有权、权限或任务队列转交给模型。现行设计见 [AGENT_DRIVER_DESIGN.md](AGENT_DRIVER_DESIGN.md)，阶段验收见 [历史实施记录](history/agent-drivers/IMPLEMENTATION.md)，未完成项见 [下一步设计](plans/NEXT_STEPS.md)。
 

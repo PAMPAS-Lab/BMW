@@ -126,7 +126,7 @@ npm run test:tts-e2e
 
 ## 模块接口与局部测试
 
-[架构与接口保障](docs/ARCHITECTURE.md)定义 12 个模块（10 个产品包、应用组装、验证工具）、公开入口、依赖方向、10 项接口保障及 3 项具体实现／装配保障。源码依赖、接口测试及分类缺失会使检查失败。
+[架构与接口保障](docs/ARCHITECTURE.md)定义 14 个模块（12 个产品包、应用组装、验证工具）、19 项接口保障和 4 项具体实现／装配保障，以及公开入口与依赖方向。源码依赖、接口测试及分类缺失会使检查失败。
 
 ```bash
 npm run test:plan -- --files packages/browser-capability/src/renderer-read.ts

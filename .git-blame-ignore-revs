@@ -1,0 +1,4 @@
+# Layout-only commits; skip in `git blame` with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# Prettier one-time format
+368600773d2ab193e3e830419385751ca6ab9b80

@@ -14,4 +14,4 @@
 
 `packages/harness-qoder/qoder-bmw/SKILL.md` 可随适配器分发给已经连接 BMW `browser` 的 Agent。单独复制 skill 不会创建连接。BMW 不导出长期 Bridge token，也不把临时 Session binding 写进用户全局 MCP 配置。接入其他外部客户端时，需要由 BMW Host 发放并撤销明确的会话租约；原生客户端的额外工具不能靠 skill 文本关闭。
 
-BMW、Project 媒体和 Studio 实现保持一份，`qoder-bmw` 不维护应用副本。三驱动默认入口和认证设置已启用，当前证据和能力限制见 [实施状态](history/agent-drivers/IMPLEMENTATION.md)。
+BMW、Project 媒体和 Studio 实现保持一份，`qoder-bmw` 不维护应用副本。四驱动默认入口和认证设置已启用，当前证据和能力限制见 [实施状态](history/agent-drivers/IMPLEMENTATION.md)。

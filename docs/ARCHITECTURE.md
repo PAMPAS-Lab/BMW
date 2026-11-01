@@ -1,6 +1,6 @@
 # BMW 模块、接口与局部验证
 
-BMW 保持一个应用、唯一 `browser` 工具，以及 DSH、Codex、Qoder CN、WorkBuddy 四个官方驱动。当前目录定义 14 个模块、19 项接口保障和 4 项具体实现／装配保障；生成表是数量与依赖的准确来源。模块目录、公开入口、依赖方向、接口保障测试与测试分类分别由 `scripts/module-catalog.ts`、各 package 的 `exports`、`scripts/test-catalog.ts` 定义。本文生成区由 `npm run docs:architecture` 刷新，`npm run check:architecture` 检查，不能只修改文档而绕过源码约束。
+BMW 保持一个应用、唯一 `browser` 工具，以及 DSH、Codex、Qoder CN、WorkBuddy 四个官方驱动。当前目录定义 14 个模块（12 个产品包、应用组装、验证工具）、19 项接口保障和 4 项具体实现／装配保障；生成表是数量与依赖的准确来源。模块目录、公开入口、依赖方向、接口保障测试与测试分类分别由 `scripts/module-catalog.ts`、各 package 的 `exports`、`scripts/test-catalog.ts` 定义。本文生成区由 `npm run docs:architecture` 刷新，`npm run check:architecture` 检查，不能只修改文档而绕过源码约束。
 
 应用入口负责选择并装配具体驱动与自有 Assistant，平台 Host 协调会话、设置和资源，不读取具体驱动协议与存储。Agent 契约是提供方无关的数据／生命周期接口；四个 harness 分别实现它，`agent-ui` 仅通过可信 Host IPC 展示对话。Browser 管理 Project 页面和受认证的操作队列，Feature 只通过具名宿主接口取得 Project、设置、媒体与浏览器执行。Media 接受未知输入后校验，返回未知的跨进程回复后再次校验；不把结构断言当作数据验证。Video Feature 管理草稿和工作流，复用媒体实现，不拥有第二套浏览器或 Agent 循环。
 
@@ -18,7 +18,7 @@ Studio 的中立 AssistantStudioTarget 扩展为可选的闭合 layer {id,kind}�
 
 ## 直接接口保障与实现保障
 
-代码依赖方向是三个 harness → `agent-contract`，Platform 将 Browser 与通用 AgentBackend 连接起来。Browser 和 AgentDriver 抽象均不依赖 DSH；接口的消费方、测试选择关系与运行时导入依赖是不同概念。
+代码依赖方向是四个 harness → `agent-contract`，Platform 将 Browser 与通用 AgentBackend 连接起来。Browser 和 AgentDriver 抽象均不依赖 DSH；接口的消费方、测试选择关系与运行时导入依赖是不同概念。
 
 接口表的“直接接口保障测试”验证提供方的契约。`browser-model` 和 `agent-driver` 使用不加载 DSH 的 `driver` 夹具：使用 Platform 注入的 Host 私有连接配置，启动 BMW MCP 适配器，以模型侧客户端完成 initialize、唯一工具发现和真实 browser action 调用，并检查 GUI 页面一致性、权限、认证、绑定和 Project 切换。夹具没有 Agent 循环或付费模型。
 

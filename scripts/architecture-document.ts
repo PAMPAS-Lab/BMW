@@ -75,4 +75,25 @@ export function checkArchitectureDocument(root: string, graph: SourceGraph, writ
   if (write) fs.writeFileSync(file, expected)
   else if (expected !== document)
     throw new Error('Stale module/interface/test documentation; run npm run docs:architecture.')
+  checkArchitectureSummaries(root, write)
+}
+
+const nonPackageModules = new Set(['application', 'validation'])
+const summaryPattern = /\d+ 个模块（\d+ 个产品包、应用组装、验证工具）、\d+ 项接口保障和 \d+ 项具体实现／装配保障/g
+/** Prose counts in README and ARCHITECTURE are derived from the module catalog, never hand-maintained. */
+export function architectureSummary(): string {
+  const packages = modules.filter(module => !nonPackageModules.has(module.id)).length
+  return `${modules.length} 个模块（${packages} 个产品包、应用组装、验证工具）、${interfaces.length} 项接口保障和 ${implementationChecks.length} 项具体实现／装配保障`
+}
+function checkArchitectureSummaries(root: string, write: boolean): void {
+  const summary = architectureSummary()
+  for (const relative of ['README.md', 'docs/ARCHITECTURE.md']) {
+    const file = path.join(root, relative),
+      document = fs.readFileSync(file, 'utf8'),
+      found = document.match(summaryPattern) ?? []
+    if (!found.length) throw new Error(`${relative} must state the catalog summary: ${summary}`)
+    if (found.every(value => value === summary)) continue
+    if (write) fs.writeFileSync(file, document.replace(summaryPattern, summary))
+    else throw new Error(`Stale module counts in ${relative}; run npm run docs:architecture.`)
+  }
 }
