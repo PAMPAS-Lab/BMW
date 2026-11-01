@@ -1674,6 +1674,7 @@ function requestExternalRefresh(): void {
         continue
       }
       await reconcileExternal(previousAssets)
+      void newsEditor.load().catch(error => message(String(error)))
     }
   })()
   externalRefresh = pending
@@ -3450,7 +3451,6 @@ api.onChange(value => {
     return
   }
 
-  void newsEditor.load().catch(error => message(String(error)))
   const changed = mediaRecord(value)
   if (changed.workspaceHidden) {
     if (!workspaceHidden && draft) {

@@ -389,9 +389,15 @@ export class StudioNews {
     const s = this.state(),
       d = s?.draft
     if (!s || !d || this.view?.selection?.draftId !== d.id) return
-    const g = mediaRecord(
-      await this.api.command(s.projectId, { operation: 'news-guide', draftId: d.id, expectedRevision: d.revision })
-    )
+    let g: Record<string, unknown>
+    try {
+      g = mediaRecord(
+        await this.api.command(s.projectId, { operation: 'news-guide', draftId: d.id, expectedRevision: d.revision })
+      )
+    } catch (error) {
+      if (String(error).includes('STUDIO_CONFLICT')) return
+      throw error
+    }
     if (generation !== this.generation || this.state()?.draft?.revision !== d.revision) return
     const heading = document.createElement('h3')
     heading.textContent = '当前新闻制作 · ' + d.title

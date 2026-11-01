@@ -176,7 +176,10 @@ function run(operation: () => Promise<unknown>): void {
 }
 let newsCollecting = false,
   sawActiveNewsAssistant = false,
-  stoppedNewsMessage: string | undefined
+  stoppedNewsMessage: string | undefined,
+  refreshing = false,
+  refreshQueued = false,
+  refreshForceStream = false
 function isAssistantBusy(): boolean {
   return ['queued', 'running', 'waiting-user', 'waiting-approval', 'cancelling'].includes(state?.activity?.status ?? '')
 }
@@ -206,70 +209,89 @@ function updateBusy(): void {
     : '正在连接素材库…'
 }
 async function refresh(forceStream = false): Promise<void> {
-  const sequence = ++refreshSequence
-  hidden = false
-  const next = (await api.state()) as State
-  if (sequence !== refreshSequence || hidden) return
-  const changed = state?.project.id !== next.project.id || state?.sessionId !== next.sessionId
-  state = next
-  document.body.dataset.theme = next.theme
-  const filter = node<HTMLSelectElement>('project-filter'),
-    old = filter.value
-  filter.replaceChildren(
-    new Option('全部 Project', ''),
-    ...next.projects.map(p => new Option(p.name + (p.archived ? '（归档）' : ''), p.id))
-  )
-  filter.value = next.projects.some(p => p.id === old) ? old : ''
-  const target = node<HTMLSelectElement>('news-target'),
-    targetOld = target.value
-  target.replaceChildren(...next.projects.filter(p => !p.archived).map(p => new Option(p.name, p.id)))
-  target.value = next.projects.some(p => p.id === targetOld && !p.archived) ? targetOld : next.project.id
-  if (changed) {
-    epoch++
-    detailEpoch++
-    organization.reset()
-    streamPanel.reset()
-    collectionPanel.reset()
-    schedulePanel.reset()
-    recommendationPanel.reset()
-    researchFilter = {}
-    bulkEntries.clear()
-    selected = undefined
-    for (const media of document.querySelectorAll('audio,video') as HTMLMediaElement[]) media.pause()
-    urls.forEach(URL.revokeObjectURL)
-    urls.clear()
-    detailUrls.forEach(URL.revokeObjectURL)
-    detailUrls.clear()
-    node('details').replaceChildren(text('p', '选择素材查看详情。'))
-    newsOrigin = undefined
-    newsView = undefined
-    newsRenderKey = ''
-    newsCollecting = false
-    sawActiveNewsAssistant = false
-    stoppedNewsMessage = undefined
+  if (refreshing) {
+    refreshQueued = true
+    if (forceStream) refreshForceStream = true
+    return
   }
-  updateBusy()
-  showCategory()
-  if (
-    changed ||
-    (!((category === 'topics' || category === 'directions') && organization.isEditing()) &&
-      !(
-        ['subscriptions', 'leads', 'video-pool', 'rolling-events', 'collection-runs'].includes(category) &&
-        collectionPanel.isEditing()
-      ) &&
-      !(category === 'recommendations' && recommendationPanel.isEditing()) &&
-      !(category === 'schedules' && schedulePanel.isEditing()) &&
-      (forceStream ||
-        ((category === 'source-stream' || category === 'event-stream') && streamPanel.needsReload()) ||
-        (category === 'recommendations' && recommendationPanel.needsReload()) ||
-        (['subscriptions', 'leads', 'video-pool', 'rolling-events', 'collection-runs'].includes(category) &&
-          collectionPanel.needsReload()) ||
-        (category !== 'source-stream' &&
-          category !== 'event-stream' &&
-          category !== 'recommendations' &&
-          !['subscriptions', 'leads', 'video-pool', 'rolling-events', 'collection-runs'].includes(category))))
-  )
-    await loadCategory(forceStream)
+  refreshing = true
+  try {
+    const sequence = ++refreshSequence
+    hidden = false
+    const next = (await api.state()) as State
+    if (sequence !== refreshSequence || hidden) return
+    const changed = state?.project.id !== next.project.id || state?.sessionId !== next.sessionId
+    state = next
+    document.body.dataset.theme = next.theme
+    const filter = node<HTMLSelectElement>('project-filter'),
+      old = filter.value
+    filter.replaceChildren(
+      new Option('全部 Project', ''),
+      ...next.projects.map(p => new Option(p.name + (p.archived ? '（归档）' : ''), p.id))
+    )
+    filter.value = next.projects.some(p => p.id === old) ? old : ''
+    const target = node<HTMLSelectElement>('news-target'),
+      targetOld = target.value
+    target.replaceChildren(...next.projects.filter(p => !p.archived).map(p => new Option(p.name, p.id)))
+    target.value = next.projects.some(p => p.id === targetOld && !p.archived) ? targetOld : next.project.id
+    if (changed) {
+      epoch++
+      detailEpoch++
+      organization.reset()
+      streamPanel.reset()
+      collectionPanel.reset()
+      schedulePanel.reset()
+      recommendationPanel.reset()
+      researchFilter = {}
+      bulkEntries.clear()
+      selected = undefined
+      for (const media of document.querySelectorAll('audio,video') as HTMLMediaElement[]) media.pause()
+      urls.forEach(URL.revokeObjectURL)
+      urls.clear()
+      detailUrls.forEach(URL.revokeObjectURL)
+      detailUrls.clear()
+      node('details').replaceChildren(text('p', '选择素材查看详情。'))
+      newsOrigin = undefined
+      newsView = undefined
+      newsRenderKey = ''
+      newsCollecting = false
+      sawActiveNewsAssistant = false
+      stoppedNewsMessage = undefined
+    }
+    updateBusy()
+    showCategory()
+    if (
+      changed ||
+      (!((category === 'topics' || category === 'directions') && organization.isEditing()) &&
+        !(
+          ['subscriptions', 'leads', 'video-pool', 'rolling-events', 'collection-runs'].includes(category) &&
+          collectionPanel.isEditing()
+        ) &&
+        !(category === 'recommendations' && recommendationPanel.isEditing()) &&
+        !(category === 'schedules' && schedulePanel.isEditing()) &&
+        (forceStream ||
+          ((category === 'source-stream' || category === 'event-stream') && streamPanel.needsReload()) ||
+          (category === 'recommendations' && recommendationPanel.needsReload()) ||
+          (['subscriptions', 'leads', 'video-pool', 'rolling-events', 'collection-runs'].includes(category) &&
+            collectionPanel.needsReload()) ||
+          (category !== 'source-stream' &&
+            category !== 'event-stream' &&
+            category !== 'recommendations' &&
+            !['subscriptions', 'leads', 'video-pool', 'rolling-events', 'collection-runs'].includes(category))))
+    )
+      await loadCategory(forceStream)
+  } finally {
+    refreshing = false
+    if (refreshQueued && !hidden) {
+      const nextForce = refreshForceStream
+      refreshQueued = false
+      refreshForceStream = false
+      void refresh(nextForce).catch(error => say(String(error)))
+    } else {
+      refreshQueued = false
+      refreshForceStream = false
+    }
+  }
 }
 async function search(): Promise<void> {
   const current = epoch,

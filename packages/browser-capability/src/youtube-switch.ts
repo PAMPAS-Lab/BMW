@@ -294,21 +294,47 @@ export async function switchYoutubeVideo(
       }
       return { method: 'unavailable', elapsedMs: Math.round(performance.now() - start), retainedDocument: false }
     }
-    let clicked = action === 'link'
+    let clicked = action === 'link',
+      fallbackHome = false,
+      returnedHistory = false
     while (performance.now() < deadline) {
       signal.throwIfAborted()
-      if (!clicked)
+      if (!clicked && !returnedHistory) {
         clicked =
           (await read<ReturnType<typeof youtubeSwitchAction>>(
             'youtube-search-result',
             `(${youtubeSwitchAction.toString()})(${JSON.stringify(url)},true)`
           )) === 'link'
+        if (!clicked && activateSameVideo && performance.now() - start >= 3500) {
+          const actual = new URL(wc.getURL()),
+            entry = wc.navigationHistory.getEntryAtIndex(historyIndex),
+            prior = entry ? youtubeWatchAddress(entry.url) : undefined
+          if (prior?.simple && prior.origin === target.origin && prior.videoId === target.videoId) {
+            if (wc.navigationHistory.getActiveIndex() === historyIndex + 1 && actual.pathname !== '/watch') {
+              wc.navigationHistory.goBack()
+              returnedHistory = true
+            } else if (!fallbackHome && wc.navigationHistory.getActiveIndex() === historyIndex) {
+              fallbackHome =
+                (await read<string>(
+                  'youtube-fallback-home',
+                  `(()=>{for(const a of document.querySelectorAll('ytd-topbar-logo-renderer a[href],a#logo[href]'))if(a instanceof HTMLAnchorElement&&a.getClientRects().length>0&&(!a.target||a.target==='_self')){const u=new URL(a.href);if(u.origin===location.origin&&u.pathname==='/'&&!u.search&&!u.hash){a.click();return 'home'}}return 'none'})()`
+                )) === 'home'
+            }
+          }
+        }
+      }
       if (
-        clicked &&
+        (clicked || returnedHistory) &&
         (await read<boolean>('youtube-switch-ready', `(${youtubeSwitchReady.toString()})(${JSON.stringify(url)})`))
       )
         return {
-          method: documentChanged ? 'site-navigation' : action === 'search' ? 'in-page-search' : 'in-page-link',
+          method: returnedHistory
+            ? 'site-history'
+            : documentChanged
+              ? 'site-navigation'
+              : action === 'search'
+                ? 'in-page-search'
+                : 'in-page-link',
           elapsedMs: Math.round(performance.now() - start),
           retainedDocument: !documentChanged
         }
