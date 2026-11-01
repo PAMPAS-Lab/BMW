@@ -4,15 +4,21 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { SessionOperations } from './session-operations.js'
 import type { AddressInfo } from 'node:net'
-export {createBridgeHttp} from './bridge-http.js'
-export {browserDeadlineMs} from './browser-deadline.js'
+export { createBridgeHttp } from './bridge-http.js'
+export { browserDeadlineMs } from './browser-deadline.js'
 
 export interface BrowserExecutor {
-  readonly busy?:boolean
-  execute(input: unknown, options?: { signal?: AbortSignal; sessionOwner?:import('./browser-host.js').BrowserSessionOwner }): Promise<unknown>
+  readonly busy?: boolean
+  execute(
+    input: unknown,
+    options?: { signal?: AbortSignal; sessionOwner?: import('./browser-host.js').BrowserSessionOwner }
+  ): Promise<unknown>
 }
 
-export interface ScopedBrowserExecution {executor:BrowserExecutor;valid():boolean}
+export interface ScopedBrowserExecution {
+  executor: BrowserExecutor
+  valid(): boolean
+}
 
 interface ErrorWithCode extends Error {
   code?: string
@@ -40,36 +46,51 @@ async function readJson(request: http.IncomingMessage): Promise<unknown> {
   return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')
 }
 
-interface Project { id: string; directory: string }
-interface BridgeOptions { productId?: string; resolveProject?: (directory: string) => Project | undefined; activeProjectId?: () => string; toolDefinition?: unknown; sessionContext?:(sessionId:string,projectId:string)=>Promise<{text:string}>|{text:string} }
+interface Project {
+  id: string
+  directory: string
+}
+interface BridgeOptions {
+  productId?: string
+  resolveProject?: (directory: string) => Project | undefined
+  activeProjectId?: () => string
+  toolDefinition?: unknown
+  sessionContext?: (sessionId: string, projectId: string) => Promise<{ text: string }> | { text: string }
+}
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Invalid browser bridge input')
   return value as Record<string, unknown>
 }
 
-export async function createBridgeServer(browserKernel: BrowserExecutor, { productId = 'bmw', resolveProject, activeProjectId, toolDefinition,sessionContext }: BridgeOptions = {}) {
+export async function createBridgeServer(
+  browserKernel: BrowserExecutor,
+  { productId = 'bmw', resolveProject, activeProjectId, toolDefinition, sessionContext }: BridgeOptions = {}
+) {
   const token = crypto.randomBytes(32).toString('hex')
   const operations = new SessionOperations()
-  const bindings = new Map<string, { project: Project; sessionId: string; scope?:ScopedBrowserExecution }>()
+  const bindings = new Map<string, { project: Project; sessionId: string; scope?: ScopedBrowserExecution }>()
   const activeCalls = new Map<AbortController, { binding: string; settled: Promise<unknown> }>()
   const providerBindings = new Map<string, string>()
-  const providerKey = (driverId: string, sessionId: string, directory: string) => JSON.stringify([driverId,sessionId,directory])
+  const providerKey = (driverId: string, sessionId: string, directory: string) =>
+    JSON.stringify([driverId, sessionId, directory])
   let closing = false
   let projectChanging = false
-  function register(sessionId: string, directory: string,scope?:ScopedBrowserExecution): string {
+  function register(sessionId: string, directory: string, scope?: ScopedBrowserExecution): string {
     if (closing || projectChanging) throw new Error('BMW browser is changing or shutting down')
-    if (!sessionId || sessionId.length > 4096 || /[\u0000-\u001f\u007f]/u.test(sessionId)) throw new Error('Invalid Agent Session identity')
+    if (!sessionId || sessionId.length > 4096 || /[\u0000-\u001f\u007f]/u.test(sessionId))
+      throw new Error('Invalid Agent Session identity')
     const project = resolveProject?.(directory)
     if (!project) throw new Error('Agent Session does not belong to an active BMW Project')
     const binding = crypto.randomBytes(32).toString('hex')
-    bindings.set(binding, { project: { ...project }, sessionId,scope })
+    bindings.set(binding, { project: { ...project }, sessionId, scope })
     return binding
   }
-  const admitted=(owner:{project:Project;scope?:ScopedBrowserExecution})=>owner.scope?owner.scope.valid():activeProjectId?.()===owner.project.id
+  const admitted = (owner: { project: Project; scope?: ScopedBrowserExecution }) =>
+    owner.scope ? owner.scope.valid() : activeProjectId?.() === owner.project.id
   async function release(binding: string): Promise<void> {
     // Revoke admission first, then wait for actual kernel/worker cleanup.
     bindings.delete(binding)
-    for(const [key,value]of providerBindings)if(value===binding)providerBindings.delete(key)
+    for (const [key, value] of providerBindings) if (value === binding) providerBindings.delete(key)
     const calls = [...activeCalls].filter(([, call]) => call.binding === binding)
     for (const [controller] of calls) controller.abort(new Error('BMW_BROWSER_CANCELLED: Session released'))
     await Promise.allSettled(calls.map(([, call]) => call.settled))
@@ -80,7 +101,10 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
       return
     }
     if (request.method === 'GET' && request.url === '/tool') {
-      if (!toolDefinition) { json(response, 503, { error: 'catalog-unavailable' }); return }
+      if (!toolDefinition) {
+        json(response, 503, { error: 'catalog-unavailable' })
+        return
+      }
       json(response, 200, toolDefinition)
       return
     }
@@ -88,7 +112,10 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
       json(response, 200, { ok: true, product: productId })
       return
     }
-    if (request.method !== 'POST' || !['/execute', '/session/register', '/session/release','/session/context'].includes(request.url || '')) {
+    if (
+      request.method !== 'POST' ||
+      !['/execute', '/session/register', '/session/release', '/session/context'].includes(request.url || '')
+    ) {
       json(response, 404, { error: 'not-found' })
       return
     }
@@ -96,11 +123,14 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
       const input = record(await readJson(request))
       if (closing) throw new Error('BMW browser bridge is shutting down')
       if (request.url === '/session/register') {
-        if (typeof input.sessionId !== 'string' || !input.sessionId || typeof input.directory !== 'string') throw new Error('Invalid Agent Session identity')
-        if(typeof input.driverId!=='string')throw new Error('BMW driver identity is required')
-        const project=resolveProject?.(input.directory)
-        const binding=project?providerBindings.get(providerKey(input.driverId,input.sessionId,project.directory)):undefined
-        if(!binding||!bindings.has(binding))throw new Error('Provider Session has no live BMW Host lease')
+        if (typeof input.sessionId !== 'string' || !input.sessionId || typeof input.directory !== 'string')
+          throw new Error('Invalid Agent Session identity')
+        if (typeof input.driverId !== 'string') throw new Error('BMW driver identity is required')
+        const project = resolveProject?.(input.directory)
+        const binding = project
+          ? providerBindings.get(providerKey(input.driverId, input.sessionId, project.directory))
+          : undefined
+        if (!binding || !bindings.has(binding)) throw new Error('Provider Session has no live BMW Host lease')
         json(response, 200, { binding })
         return
       }
@@ -114,56 +144,124 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
       if (projectChanging) throw new Error('BMW Project is changing; retry after activation finishes')
       const owner = bindings.get(binding)
       if (!owner) throw new Error('BMW browser Session has ended')
-      if(request.url==='/session/context'){
-        if(!admitted(owner))throw new Error('Activate the Session’s BMW Project before reading its context')
-        const value=await sessionContext?.(owner.sessionId,owner.project.id)??{text:''}
-        if(closing||projectChanging||bindings.get(binding)!==owner||!admitted(owner))throw new Error('Session context changed during admission')
-        if(typeof value.text!=='string'||value.text.length>16_384)throw new Error('Invalid BMW context snapshot')
-        json(response,200,value);return
+      if (request.url === '/session/context') {
+        if (!admitted(owner)) throw new Error('Activate the Session’s BMW Project before reading its context')
+        const value = (await sessionContext?.(owner.sessionId, owner.project.id)) ?? { text: '' }
+        if (closing || projectChanging || bindings.get(binding) !== owner || !admitted(owner))
+          throw new Error('Session context changed during admission')
+        if (typeof value.text !== 'string' || value.text.length > 16_384)
+          throw new Error('Invalid BMW context snapshot')
+        json(response, 200, value)
+        return
       }
       let disconnected = false
       const cancellation = new AbortController()
-      response.on('close', () => { disconnected = true; if (!response.writableEnded) cancellation.abort(new Error('Browser call cancelled.')) })
+      response.on('close', () => {
+        disconnected = true
+        if (!response.writableEnded) cancellation.abort(new Error('Browser call cancelled.'))
+      })
       const started = Date.now()
       const actionName = String(record(input.arguments).action || 'unknown')
-      const work = operations.run(() => {
-        if (closing || projectChanging || disconnected || bindings.get(binding) !== owner) throw new Error('BMW browser Session was released or cancelled')
-        if (!admitted(owner)) throw new Error('Activate the Session’s BMW Project before using browser')
-      }, async () => {
-        const result = await (owner.scope?.executor??browserKernel).execute(input.arguments, { signal: cancellation.signal, sessionOwner:{projectId:owner.project.id,sessionId:owner.sessionId} })
-        if (cancellation.signal.aborted || bindings.get(binding) !== owner || closing || projectChanging || !admitted(owner)) throw new Error('BMW_BROWSER_CANCELLED: Session changed before its browser result drained')
-        const images: { type: 'image'; mimeType: 'image/png'; data: string }[] = []
-        const action = record(input.arguments).action
-        const sourceAnalysisImages=action==='video.studio'&&record(record(input.arguments).studioRequest).operation==='analysis'&&['read','step'].includes(String(record(record(record(input.arguments).studioRequest).analysisRequest).operation))
-        const diagramImages=action==='video.studio'&&record(record(input.arguments).studioRequest).operation==='news-preparation'&&['prepare-diagram','read-diagram'].includes(String(record(record(record(input.arguments).studioRequest).preparationRequest).operation))
-        const referenceImages=diagramImages||sourceAnalysisImages||action==='video.studio'&&['prepare-reference','read-reference','review-export'].includes(String(record(record(input.arguments).studioRequest).operation))
-        if (referenceImages || action === 'media.screenshot' || action === 'page.diagnostics' || action === 'media.frames.sample'||action==='media.capture.frames.sample'||action==='media.image.annotate'||action==='media.image.draw') {
-          const value = record(result)
-          const artifacts = action === 'page.diagnostics' ? [record(value.screenshot)] : action === 'media.frames.sample'||action==='media.capture.frames.sample'||referenceImages ? value.frames : [value]
-          if (!Array.isArray(artifacts) || artifacts.length < (sourceAnalysisImages?0:1) || artifacts.length > 8) throw new Error('Invalid image artifact collection')
-          let admittedBytes = 0
-          for (const item of artifacts) {
-            const artifact = record(item)
-            if (artifact.type !== 'screenshot' || typeof artifact.path !== 'string') throw new Error('Invalid PNG artifact identity')
-            const root = await fs.realpath(path.join(owner.project.directory, 'artifacts'))
-            const file = await fs.realpath(artifact.path)
-            if (path.dirname(file) !== root) throw new Error('Screenshot is outside its Project artifacts')
-            const stat = await fs.stat(file)
-            admittedBytes += stat.size
-            if (!stat.isFile() || admittedBytes > 20 * 1024 * 1024) throw new Error('Screenshot exceeds image admission limit')
-            const bytes = await fs.readFile(file)
-            if (!bytes.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) throw new Error('Invalid PNG screenshot')
-            if((referenceImages||action==='media.capture.frames.sample')&&(typeof artifact.sha256!=='string'||!/^[a-f0-9]{64}$/.test(artifact.sha256)||crypto.createHash('sha256').update(bytes).digest('hex')!==artifact.sha256))throw new Error('Reference PNG changed before image admission')
-            cancellation.signal.throwIfAborted()
-            images.push({ type: 'image', mimeType: 'image/png', data: bytes.toString('base64') })
+      const work = operations
+        .run(
+          () => {
+            if (closing || projectChanging || disconnected || bindings.get(binding) !== owner)
+              throw new Error('BMW browser Session was released or cancelled')
+            if (!admitted(owner)) throw new Error('Activate the Session’s BMW Project before using browser')
+          },
+          async () => {
+            const result = await (owner.scope?.executor ?? browserKernel).execute(input.arguments, {
+              signal: cancellation.signal,
+              sessionOwner: { projectId: owner.project.id, sessionId: owner.sessionId }
+            })
+            if (
+              cancellation.signal.aborted ||
+              bindings.get(binding) !== owner ||
+              closing ||
+              projectChanging ||
+              !admitted(owner)
+            )
+              throw new Error('BMW_BROWSER_CANCELLED: Session changed before its browser result drained')
+            const images: { type: 'image'; mimeType: 'image/png'; data: string }[] = []
+            const action = record(input.arguments).action
+            const sourceAnalysisImages =
+              action === 'video.studio' &&
+              record(record(input.arguments).studioRequest).operation === 'analysis' &&
+              ['read', 'step'].includes(
+                String(record(record(record(input.arguments).studioRequest).analysisRequest).operation)
+              )
+            const diagramImages =
+              action === 'video.studio' &&
+              record(record(input.arguments).studioRequest).operation === 'news-preparation' &&
+              ['prepare-diagram', 'read-diagram'].includes(
+                String(record(record(record(input.arguments).studioRequest).preparationRequest).operation)
+              )
+            const referenceImages =
+              diagramImages ||
+              sourceAnalysisImages ||
+              (action === 'video.studio' &&
+                ['prepare-reference', 'read-reference', 'review-export'].includes(
+                  String(record(record(input.arguments).studioRequest).operation)
+                ))
+            if (
+              referenceImages ||
+              action === 'media.screenshot' ||
+              action === 'page.diagnostics' ||
+              action === 'media.frames.sample' ||
+              action === 'media.capture.frames.sample' ||
+              action === 'media.image.annotate' ||
+              action === 'media.image.draw'
+            ) {
+              const value = record(result)
+              const artifacts =
+                action === 'page.diagnostics'
+                  ? [record(value.screenshot)]
+                  : action === 'media.frames.sample' || action === 'media.capture.frames.sample' || referenceImages
+                    ? value.frames
+                    : [value]
+              if (
+                !Array.isArray(artifacts) ||
+                artifacts.length < (sourceAnalysisImages ? 0 : 1) ||
+                artifacts.length > 8
+              )
+                throw new Error('Invalid image artifact collection')
+              let admittedBytes = 0
+              for (const item of artifacts) {
+                const artifact = record(item)
+                if (artifact.type !== 'screenshot' || typeof artifact.path !== 'string')
+                  throw new Error('Invalid PNG artifact identity')
+                const root = await fs.realpath(path.join(owner.project.directory, 'artifacts'))
+                const file = await fs.realpath(artifact.path)
+                if (path.dirname(file) !== root) throw new Error('Screenshot is outside its Project artifacts')
+                const stat = await fs.stat(file)
+                admittedBytes += stat.size
+                if (!stat.isFile() || admittedBytes > 20 * 1024 * 1024)
+                  throw new Error('Screenshot exceeds image admission limit')
+                const bytes = await fs.readFile(file)
+                if (!bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])))
+                  throw new Error('Invalid PNG screenshot')
+                if (
+                  (referenceImages || action === 'media.capture.frames.sample') &&
+                  (typeof artifact.sha256 !== 'string' ||
+                    !/^[a-f0-9]{64}$/.test(artifact.sha256) ||
+                    crypto.createHash('sha256').update(bytes).digest('hex') !== artifact.sha256)
+                )
+                  throw new Error('Reference PNG changed before image admission')
+                cancellation.signal.throwIfAborted()
+                images.push({ type: 'image', mimeType: 'image/png', data: bytes.toString('base64') })
+              }
+            }
+            return { result, images }
           }
-        }
-        return { result, images }
-      }).catch(error => {
-        // Only operation identity and duration; never tokens, page content or arguments.
-        console.warn(`[BMW browser] ${actionName} failed after ${Date.now() - started}ms: ${error && typeof error === 'object' && 'code' in error ? String(error.code) : 'BROWSER_ACTION_FAILED'}`)
-        throw error
-      }).finally(() => activeCalls.delete(cancellation))
+        )
+        .catch(error => {
+          // Only operation identity and duration; never tokens, page content or arguments.
+          console.warn(
+            `[BMW browser] ${actionName} failed after ${Date.now() - started}ms: ${error && typeof error === 'object' && 'code' in error ? String(error.code) : 'BROWSER_ACTION_FAILED'}`
+          )
+          throw error
+        })
+        .finally(() => activeCalls.delete(cancellation))
       activeCalls.set(cancellation, { binding, settled: work })
       const value = await work
       json(response, 200, { ok: true, ...value })
@@ -183,22 +281,40 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
   const address = server.address() as AddressInfo
   return {
     server,
-    get busy() { return operations.busy || projectChanging || browserKernel.busy === true },
-    get changingProject() { return projectChanging },
+    get busy() {
+      return operations.busy || projectChanging || browserKernel.busy === true
+    },
+    get changingProject() {
+      return projectChanging
+    },
     async changeProject<T>(operation: () => Promise<T>): Promise<T> {
-      if (closing || projectChanging || operations.busy || browserKernel.busy === true) throw new Error('BMW browser is busy; Project changes resume when it finishes')
+      if (closing || projectChanging || operations.busy || browserKernel.busy === true)
+        throw new Error('BMW browser is busy; Project changes resume when it finishes')
       projectChanging = true
-      try { return await operation() } finally { projectChanging = false }
+      try {
+        return await operation()
+      } finally {
+        projectChanging = false
+      }
     },
     token,
     /** Host-private lease API. Models only receive the browser schema. */
     registerSession: register,
     attachProviderSession(binding: string, driverId: string, sessionId: string): void {
-      const owner=bindings.get(binding)
-      if(closing||projectChanging||!owner||!/^[a-z0-9-]{1,64}$/u.test(driverId)||!sessionId||sessionId.length>4096)throw new Error('Invalid provider Session lease attachment')
-      const key=providerKey(driverId,sessionId,owner.project.directory),existing=providerBindings.get(key)
-      if(existing&&existing!==binding)throw new Error('Provider Session already owns another live BMW lease')
-      providerBindings.set(key,binding)
+      const owner = bindings.get(binding)
+      if (
+        closing ||
+        projectChanging ||
+        !owner ||
+        !/^[a-z0-9-]{1,64}$/u.test(driverId) ||
+        !sessionId ||
+        sessionId.length > 4096
+      )
+        throw new Error('Invalid provider Session lease attachment')
+      const key = providerKey(driverId, sessionId, owner.project.directory),
+        existing = providerBindings.get(key)
+      if (existing && existing !== binding) throw new Error('Provider Session already owns another live BMW lease')
+      providerBindings.set(key, binding)
     },
     releaseSession: release,
     url: `http://127.0.0.1:${address.port}`,
@@ -208,7 +324,7 @@ export async function createBridgeServer(browserKernel: BrowserExecutor, { produ
       providerBindings.clear()
       for (const call of activeCalls.keys()) call.abort(new Error('BMW_BROWSER_CANCELLED: bridge shutting down'))
       await operations.drain()
-      await new Promise<void>((resolve) => server.close(() => resolve()))
+      await new Promise<void>(resolve => server.close(() => resolve()))
     }
   }
 }

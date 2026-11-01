@@ -21,7 +21,7 @@ function createStore(t, { completeSetup = true } = {}) {
   }
 }
 
-test('requires the first real Project name without leaving a default BMW Browser project', (t) => {
+test('requires the first real Project name without leaving a default BMW Browser project', t => {
   const { store } = createStore(t, { completeSetup: false })
   assert.equal(store.needsInitialSetup(), true)
   assert.equal(store.snapshot().initialSetupPending, true)
@@ -41,7 +41,7 @@ test('requires the first real Project name without leaving a default BMW Browser
   assert.throws(() => store.completeInitialSetup({ name: 'Again' }), /already complete/)
 })
 
-test('does not send existing BMW installations back through first-project setup', (t) => {
+test('does not send existing BMW installations back through first-project setup', t => {
   const { root, store } = createStore(t)
   const statePath = path.join(root, 'projects.json')
   const legacyState = JSON.parse(fs.readFileSync(statePath, 'utf8'))
@@ -57,7 +57,7 @@ test('does not send existing BMW installations back through first-project setup'
   assert.equal(reloaded.active().id, store.active().id)
 })
 
-test('creates, switches, updates and archives projects without deleting their files', (t) => {
+test('creates, switches, updates and archives projects without deleting their files', t => {
   const { store } = createStore(t)
   const first = store.active()
   const second = store.create({ name: 'Research', homeUrl: 'https://example.com/start' })
@@ -76,7 +76,7 @@ test('creates, switches, updates and archives projects without deleting their fi
   assert.equal(fs.existsSync(path.join(second.directory, 'MEMORY.md')), true)
 })
 
-test('new projects accept an empty home URL and use a blank-page preference', (t) => {
+test('new projects accept an empty home URL and use a blank-page preference', t => {
   const { store } = createStore(t)
   const project = store.create({ name: 'Blank Workspace' })
 
@@ -85,7 +85,7 @@ test('new projects accept an empty home URL and use a blank-page preference', (t
   assert.throws(() => store.update(project.id, { homeUrl: 'file:///private/data' }), /HTTP\(S\)/)
 })
 
-test('agent append is limited to memory documents and records provenance time', (t) => {
+test('agent append is limited to memory documents and records provenance time', t => {
   const { store } = createStore(t)
   const project = store.active()
   store.appendDocument(project.id, 'memory', 'Observed example.com title: Example Domain.')
@@ -96,7 +96,7 @@ test('agent append is limited to memory documents and records provenance time', 
   assert.throws(() => store.appendDocument(project.id, 'instructions', 'replace policy'), /cannot be appended/)
 })
 
-test('tab state keeps only bounded HTTP(S) URLs', (t) => {
+test('tab state keeps only bounded HTTP(S) URLs', t => {
   const { store } = createStore(t)
   const project = store.active()
   store.updateTabState(project.id, {
@@ -110,22 +110,45 @@ test('tab state keeps only bounded HTTP(S) URLs', (t) => {
   })
 })
 
-test('Project persistence contains only BMW ownership and keeps independent documents across reload',t=>{
- const {store,root}=createStore(t),first=store.active(),second=store.create({name:'Second Project'})
- store.writeDocument(first.id,'memory','First facts');store.writeDocument(second.id,'memory','Second facts')
- const saved=JSON.parse(fs.readFileSync(path.join(root,'projects.json'),'utf8'))
- assert.equal(saved.version,2)
- for(const project of saved.projects)for(const key of ['agentBindings','dshWorkspaceId','dshSessionId','connectors'])assert.equal(Object.hasOwn(project,key),false)
- const restored=new ProjectStore({filePath:store.filePath,projectsDirectory:path.join(root,'projects'),initialWorkspacePath:path.join(root,'workspace')})
- assert.equal(restored.active().id,second.id);restored.switch(first.id)
- assert.equal(restored.readDocument(first.id,'memory').content,'First facts\n')
- assert.equal(restored.readDocument(second.id,'memory').content,'Second facts\n')
+test('Project persistence contains only BMW ownership and keeps independent documents across reload', t => {
+  const { store, root } = createStore(t),
+    first = store.active(),
+    second = store.create({ name: 'Second Project' })
+  store.writeDocument(first.id, 'memory', 'First facts')
+  store.writeDocument(second.id, 'memory', 'Second facts')
+  const saved = JSON.parse(fs.readFileSync(path.join(root, 'projects.json'), 'utf8'))
+  assert.equal(saved.version, 2)
+  for (const project of saved.projects)
+    for (const key of ['agentBindings', 'dshWorkspaceId', 'dshSessionId', 'connectors'])
+      assert.equal(Object.hasOwn(project, key), false)
+  const restored = new ProjectStore({
+    filePath: store.filePath,
+    projectsDirectory: path.join(root, 'projects'),
+    initialWorkspacePath: path.join(root, 'workspace')
+  })
+  assert.equal(restored.active().id, second.id)
+  restored.switch(first.id)
+  assert.equal(restored.readDocument(first.id, 'memory').content, 'First facts\n')
+  assert.equal(restored.readDocument(second.id, 'memory').content, 'Second facts\n')
 })
 
-test('Project tab ownership persists without reclassifying research pages as user pages',t=>{
- const {store,root}=createStore(t),id=store.active().id,tabs=[{url:'https://example.org/user',source:'user'},{url:'https://example.org/research',source:'agent'}]
- store.updateTabState(id,{urls:tabs.map(t=>t.url),tabs,activeUrl:tabs[1].url})
- const restored=new ProjectStore({filePath:store.filePath,projectsDirectory:path.join(root,'projects'),initialWorkspacePath:path.join(root,'workspace')})
- assert.deepEqual(restored.active().tabState.tabs,tabs);assert.equal(restored.active().tabState.activeUrl,tabs[1].url)
- assert.throws(()=>store.updateTabState(id,{urls:[],tabs:[{url:'https://example.org',source:'bad'}]}),/ownership/)
+test('Project tab ownership persists without reclassifying research pages as user pages', t => {
+  const { store, root } = createStore(t),
+    id = store.active().id,
+    tabs = [
+      { url: 'https://example.org/user', source: 'user' },
+      { url: 'https://example.org/research', source: 'agent' }
+    ]
+  store.updateTabState(id, { urls: tabs.map(t => t.url), tabs, activeUrl: tabs[1].url })
+  const restored = new ProjectStore({
+    filePath: store.filePath,
+    projectsDirectory: path.join(root, 'projects'),
+    initialWorkspacePath: path.join(root, 'workspace')
+  })
+  assert.deepEqual(restored.active().tabState.tabs, tabs)
+  assert.equal(restored.active().tabState.activeUrl, tabs[1].url)
+  assert.throws(
+    () => store.updateTabState(id, { urls: [], tabs: [{ url: 'https://example.org', source: 'bad' }] }),
+    /ownership/
+  )
 })

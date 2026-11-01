@@ -1,38 +1,52 @@
-import {BackgroundCollectionScope,passiveCollectionUserRead} from './background-collection.js'
-import {BackgroundAdmission,backgroundDiagnostic} from './background-admission.js'
-import {assistantTasks} from './assistant-tasks.js'
-import {historicalCaptureOrigin} from './capture-history-origin.js'
-import type {CollectionBinding} from './feature-contract.js'
-import type {BrowserFeatureHost} from '@bmw-agent/browser-capability/host'
-import {assistantActivity} from './assistant-activity.js'
-import {defineProduct} from './product-definition.js'
-import type {ResolvedProductDefinition} from './product-definition.js'
-import {studioFloatingBounds} from './studio-layout.js'
-import type {StudioPresentation} from './studio-layout.js'
-import {activateWorkspaces} from './workspace-runtime.js'
-import type {WorkspaceMode} from '@bmw-agent/agent-contract'
-import type {FeatureRuntime} from './feature-contract.js'
-import {assertBrowserFeatureHost} from '@bmw-agent/browser-capability/host'
+import { BackgroundCollectionScope, passiveCollectionUserRead } from './background-collection.js'
+import { BackgroundAdmission, backgroundDiagnostic } from './background-admission.js'
+import { assistantTasks } from './assistant-tasks.js'
+import { historicalCaptureOrigin } from './capture-history-origin.js'
+import type { CollectionBinding } from './feature-contract.js'
+import type { BrowserFeatureHost } from '@bmw-agent/browser-capability/host'
+import { assistantActivity } from './assistant-activity.js'
+import { defineProduct } from './product-definition.js'
+import type { ResolvedProductDefinition } from './product-definition.js'
+import { studioFloatingBounds } from './studio-layout.js'
+import type { StudioPresentation } from './studio-layout.js'
+import { activateWorkspaces } from './workspace-runtime.js'
+import type { WorkspaceMode } from '@bmw-agent/agent-contract'
+import type { FeatureRuntime } from './feature-contract.js'
+import { assertBrowserFeatureHost } from '@bmw-agent/browser-capability/host'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import {AssistantService,loadAssistantStores} from './assistant-service.js'
-import type {AgentApplicationAssembly,AssistantStores} from './assistant-service.js'
-import {requireCurrentAgentData,acquireAgentDataLock} from './agent-data-format.js'
-import {StateLoadError} from './state-load.js'
-import {createShellIpcRegistrar} from './shell-ipc.js'
-import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, Notification, safeStorage, screen, session, shell, webContents as electronWebContents, WebContentsView } from 'electron'
+import { AssistantService, loadAssistantStores } from './assistant-service.js'
+import type { AgentApplicationAssembly, AssistantStores } from './assistant-service.js'
+import { requireCurrentAgentData, acquireAgentDataLock } from './agent-data-format.js'
+import { StateLoadError } from './state-load.js'
+import { createShellIpcRegistrar } from './shell-ipc.js'
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  Menu,
+  nativeTheme,
+  Notification,
+  safeStorage,
+  screen,
+  session,
+  shell,
+  webContents as electronWebContents,
+  WebContentsView
+} from 'electron'
 import type { MenuItemConstructorOptions, IpcMainEvent } from 'electron'
 import { BrowserKernel } from '@bmw-agent/browser-capability/kernel'
 import { createBridgeServer } from '@bmw-agent/browser-capability/bridge'
 import type { AgentProject, AgentProjectContext } from '@bmw-agent/agent-contract'
-import {QwenCredentialsStore} from './qwen-credentials-store.js'
-import { GlobalSettingsStore,configureNetworkStartup } from './global-settings-store.js'
+import { QwenCredentialsStore } from './qwen-credentials-store.js'
+import { GlobalSettingsStore, configureNetworkStartup } from './global-settings-store.js'
 import { LayoutStore } from './layout-store.js'
 import { isOverlayAtDockCorner } from './layout-docking.js'
 import { isApplicationMenuShortcut, isSavePageShortcut, pageSaveType, suggestedPageFilename } from './menu-policy.js'
-import {ProjectSourceStore} from './project-source-store.js'
-import {librarySourcePort,collectionSourcePort} from './library-sources.js'
+import { ProjectSourceStore } from './project-source-store.js'
+import { librarySourcePort, collectionSourcePort } from './library-sources.js'
 import { MediaController } from '@bmw-agent/media-native'
 import { sitePermissionDisposition } from './permission-policy.js'
 import { PermissionStore } from './permission-store.js'
@@ -52,41 +66,76 @@ const MIN_AGENT_WIDTH = 360
 
 let agentAssembly: AgentApplicationAssembly
 let assistantService: AssistantService | undefined
-const backgroundAdmission=new BackgroundAdmission()
+const backgroundAdmission = new BackgroundAdmission()
 let assistantPublishTimer: ReturnType<typeof setTimeout> | undefined
 let productDefinition: Readonly<ResolvedProductDefinition>
 
 function installApplicationMenu() {
   const template = [
-    ...(process.platform === 'darwin' ? [{
-      label: PRODUCT_NAME,
-      submenu: [
-        { role: 'about' },
-        { type: 'separator' },
-        { label: `Restart ${PRODUCT_NAME}…`, click: () => { void requestApplicationRestart() } },
-        { type: 'separator' },
-        { role: 'services' },
-        { type: 'separator' },
-        { role: 'hide' },
-        { role: 'hideOthers' },
-        { role: 'unhide' },
-        { type: 'separator' },
-        { role: 'quit' }
-      ]
-    }] : []),
+    ...(process.platform === 'darwin'
+      ? [
+          {
+            label: PRODUCT_NAME,
+            submenu: [
+              { role: 'about' },
+              { type: 'separator' },
+              {
+                label: `Restart ${PRODUCT_NAME}…`,
+                click: () => {
+                  void requestApplicationRestart()
+                }
+              },
+              { type: 'separator' },
+              { role: 'services' },
+              { type: 'separator' },
+              { role: 'hide' },
+              { role: 'hideOthers' },
+              { role: 'unhide' },
+              { type: 'separator' },
+              { role: 'quit' }
+            ]
+          }
+        ]
+      : []),
     {
       label: 'File',
       submenu: [
-        { id: 'save-page', label: 'Save Page As…', accelerator: 'CmdOrCtrl+S', enabled: false, click: () => { void saveActiveBrowserPage() } },
+        {
+          id: 'save-page',
+          label: 'Save Page As…',
+          accelerator: 'CmdOrCtrl+S',
+          enabled: false,
+          click: () => {
+            void saveActiveBrowserPage()
+          }
+        },
         { type: 'separator' },
-        ...(process.platform === 'darwin' ? [] : [
-          { label: `Restart ${PRODUCT_NAME}…`, click: () => { void requestApplicationRestart() } },
-          { type: 'separator' }
-        ]),
+        ...(process.platform === 'darwin'
+          ? []
+          : [
+              {
+                label: `Restart ${PRODUCT_NAME}…`,
+                click: () => {
+                  void requestApplicationRestart()
+                }
+              },
+              { type: 'separator' }
+            ]),
         { role: process.platform === 'darwin' ? 'close' : 'quit' }
       ]
     },
-    { label: 'Edit', submenu: [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' }] },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' }
+      ]
+    },
     {
       label: 'View',
       submenu: [
@@ -111,21 +160,25 @@ let overlayWindow
 let shellView
 let agentView
 let browserKernel
-const collectionBrowsers=new Set<BrowserKernel>()
-const collectionInputs=new Map<string,{binding:CollectionBinding;runId:string}>()
-const collectionScopeKernels=new Map<string,BrowserKernel>()
-let configureCollectionBrowser:((binding:CollectionBinding,runId:string,browser:BrowserFeatureHost)=>(()=>void))|undefined
+const collectionBrowsers = new Set<BrowserKernel>()
+const collectionInputs = new Map<string, { binding: CollectionBinding; runId: string }>()
+const collectionScopeKernels = new Map<string, BrowserKernel>()
+let configureCollectionBrowser:
+  ((binding: CollectionBinding, runId: string, browser: BrowserFeatureHost) => () => void) | undefined
 let bridge
 let mediaController
 let permissionStore
 let sessionContinuity
 let projectStore
 let layoutStore
-let qwenCredentialsStore:QwenCredentialsStore
-let qwenAudition:{controller:AbortController;pending:Promise<unknown>}|undefined
-async function cancelQwenAudition():Promise<void>{
-  const job=qwenAudition
-  if(job){job.controller.abort(new Error('Qwen 试听已取消。'));await job.pending.catch(()=>{})}
+let qwenCredentialsStore: QwenCredentialsStore
+let qwenAudition: { controller: AbortController; pending: Promise<unknown> } | undefined
+async function cancelQwenAudition(): Promise<void> {
+  const job = qwenAudition
+  if (job) {
+    job.controller.abort(new Error('Qwen 试听已取消。'))
+    await job.pending.catch(() => {})
+  }
 }
 let settingsStore
 let agentVisible = true
@@ -140,50 +193,67 @@ let layoutSaveTimer
 let overlayDocking = false
 let appQuitting = false
 let bmwSession
-let workspaceMode: WorkspaceMode='browser'
-let browserAgentVisible=true
-let studioPresentation:StudioPresentation={immersive:false,chatOpen:false}
+let workspaceMode: WorkspaceMode = 'browser'
+let browserAgentVisible = true
+let studioPresentation: StudioPresentation = { immersive: false, chatOpen: false }
 let productFeatureRuntime: FeatureRuntime | undefined
 let scheduledTaskStore
 let scheduledTaskManager
 let scheduledExecutionProjectId = null
-let releaseAgentDataLock:(()=>void)|undefined
+let releaseAgentDataLock: (() => void) | undefined
 let shutdownPromise: Promise<void> | null = null
 let restartInProgress = false
 
-let agentContextState:{state:string;context?:AgentProjectContext;message?:string}={state:'starting'}
-function publishAgentContext(value:typeof agentContextState):void{agentContextState=value;sendToShell('agent-context-state',value)}
-function agentProject(project): AgentProject {return {id:project.id,name:project.name,directory:project.directory}}
-function selectedSession(project): string|null {return assistantService?.selected(project.id)??null}
-async function withConversationMutation<T>(operation:()=>Promise<T>):Promise<T>{
- if(assistantService?.host.busy)throw new Error('Stop and drain the Agent before changing conversations')
- if(bridge?.busy)throw new Error('Finish the browser operation before changing conversations')
- publishAgentContext({state:'waiting',message:'Updating the BMW conversation…'})
- try{return await operation()}finally{await publishAssistantSelection()}
+let agentContextState: { state: string; context?: AgentProjectContext; message?: string } = { state: 'starting' }
+function publishAgentContext(value: typeof agentContextState): void {
+  agentContextState = value
+  sendToShell('agent-context-state', value)
 }
-async function selectedAgentTurnIsRunning():Promise<boolean>{return assistantService?.host.busy===true}
+function agentProject(project): AgentProject {
+  return { id: project.id, name: project.name, directory: project.directory }
+}
+function selectedSession(project): string | null {
+  return assistantService?.selected(project.id) ?? null
+}
+async function withConversationMutation<T>(operation: () => Promise<T>): Promise<T> {
+  if (assistantService?.host.busy) throw new Error('Stop and drain the Agent before changing conversations')
+  if (bridge?.busy) throw new Error('Finish the browser operation before changing conversations')
+  publishAgentContext({ state: 'waiting', message: 'Updating the BMW conversation…' })
+  try {
+    return await operation()
+  } finally {
+    await publishAssistantSelection()
+  }
+}
+async function selectedAgentTurnIsRunning(): Promise<boolean> {
+  return assistantService?.host.busy === true
+}
 
 function stopApplicationServices(): Promise<void> {
   if (shutdownPromise) return shutdownPromise
   shutdownPromise = (async () => {
     await cancelQwenAudition()
     scheduledTaskManager?.stop()
-    if(assistantPublishTimer)clearTimeout(assistantPublishTimer)
+    if (assistantPublishTimer) clearTimeout(assistantPublishTimer)
     const tasks: Promise<unknown>[] = []
-    if(assistantService)tasks.push(assistantService.close())
+    if (assistantService) tasks.push(assistantService.close())
     if (bridge) tasks.push(Promise.resolve(bridge.close()))
     if (sessionContinuity) tasks.push(Promise.resolve(sessionContinuity.stop()))
     if (productFeatureRuntime?.stop) tasks.push(Promise.resolve(productFeatureRuntime.stop()))
     const results = await Promise.allSettled(tasks)
     const failure = results.find((row): row is PromiseRejectedResult => row.status === 'rejected')
-    if(failure)throw failure.reason
+    if (failure) throw failure.reason
     try {
       bmwSession?.flushStorageData()
     } catch (error) {
       console.error('Failed to flush BMW browser storage during shutdown', error)
     }
-    releaseAgentDataLock?.();releaseAgentDataLock=undefined
-  })().catch(error=>{shutdownPromise=null;throw error})
+    releaseAgentDataLock?.()
+    releaseAgentDataLock = undefined
+  })().catch(error => {
+    shutdownPromise = null
+    throw error
+  })
   return shutdownPromise
 }
 
@@ -198,7 +268,8 @@ async function requestApplicationRestart() {
       type: 'warning',
       title: `${PRODUCT_NAME} cannot restart yet`,
       message: block.message,
-      detail: 'BMW keeps queued and approval-only work across restarts, but it will not interrupt an operation that is currently producing results.',
+      detail:
+        'BMW keeps queued and approval-only work across restarts, but it will not interrupt an operation that is currently producing results.',
       buttons: ['OK']
     })
     return { restarting: false, blocked: true, code: block.code, message: block.message }
@@ -263,7 +334,9 @@ function updateWindowThemeSurfaces() {
   const color = pageTheme === 'dark' ? '#0a0d12' : '#f4f7fa'
   mainWindow?.setBackgroundColor(color)
   overlayWindow?.setBackgroundColor(color)
-  void browserKernel?.setPageTheme(pageTheme).catch((error) => console.error('Failed to synchronize browser page theme', error))
+  void browserKernel
+    ?.setPageTheme(pageTheme)
+    .catch(error => console.error('Failed to synchronize browser page theme', error))
 }
 
 function applyProductTheme(theme) {
@@ -305,8 +378,18 @@ function sendToAgent(channel, value) {
 }
 
 function raiseProjectPanel() {
-  if(appQuitting||mainWindow?.isDestroyed()||shellView?.webContents.isDestroyed())return
-  if ((!projectPanelVisible && !layoutSetupVisible && !settingsPanelVisible && !sessionPanelVisible && !scheduledTaskPanelVisible && !toolbarPanelVisible) || !mainWindow || !shellView) return
+  if (appQuitting || mainWindow?.isDestroyed() || shellView?.webContents.isDestroyed()) return
+  if (
+    (!projectPanelVisible &&
+      !layoutSetupVisible &&
+      !settingsPanelVisible &&
+      !sessionPanelVisible &&
+      !scheduledTaskPanelVisible &&
+      !toolbarPanelVisible) ||
+    !mainWindow ||
+    !shellView
+  )
+    return
   const children = mainWindow.contentView.children
   if (children.at(-1) === shellView) {
     if (toolbarPanelVisible) shellView.webContents.focus()
@@ -338,18 +421,35 @@ function saveOverlayBoundsSoon() {
 }
 
 function dockOverlayIfNeeded() {
-  if (overlayDocking || !overlayWindow || overlayWindow.isDestroyed() || !overlayWindow.isVisible() || overlayWindow.isFullScreen()) return false
-  if (!mainWindow || mainWindow.isDestroyed() || !layoutStore || layoutStore.snapshot().mode !== 'overlay' || !agentVisible) return false
+  if (
+    overlayDocking ||
+    !overlayWindow ||
+    overlayWindow.isDestroyed() ||
+    !overlayWindow.isVisible() ||
+    overlayWindow.isFullScreen()
+  )
+    return false
+  if (
+    !mainWindow ||
+    mainWindow.isDestroyed() ||
+    !layoutStore ||
+    layoutStore.snapshot().mode !== 'overlay' ||
+    !agentVisible
+  )
+    return false
   const overlayBounds = overlayWindow.getBounds()
   const displayBounds = screen.getDisplayMatching(overlayBounds).workArea
-  const shouldDock = isOverlayAtDockCorner(overlayBounds, mainWindow.getBounds()) || isOverlayAtDockCorner(overlayBounds, displayBounds)
+  const shouldDock =
+    isOverlayAtDockCorner(overlayBounds, mainWindow.getBounds()) || isOverlayAtDockCorner(overlayBounds, displayBounds)
   if (!shouldDock) return false
 
   overlayDocking = true
   clearTimeout(layoutSaveTimer)
   layoutStore.update({ mode: 'sidebar', visible: true, overlayFullscreen: false })
   layout()
-  setTimeout(() => { overlayDocking = false }, 250).unref?.()
+  setTimeout(() => {
+    overlayDocking = false
+  }, 250).unref?.()
   console.info('[BMW] Docked floating Agent to the sidebar')
   return true
 }
@@ -379,7 +479,7 @@ function ensureOverlayWindow() {
   })
   overlayWindow.on('enter-full-screen', () => layoutStore.update({ overlayFullscreen: true }))
   overlayWindow.on('leave-full-screen', () => layoutStore.update({ overlayFullscreen: false }))
-  overlayWindow.on('close', (event) => {
+  overlayWindow.on('close', event => {
     if (appQuitting) return
     event.preventDefault()
     agentVisible = false
@@ -388,7 +488,9 @@ function ensureOverlayWindow() {
     overlayWindow.hide()
     layout()
   })
-  overlayWindow.on('closed', () => { overlayWindow = null })
+  overlayWindow.on('closed', () => {
+    overlayWindow = null
+  })
   return overlayWindow
 }
 
@@ -403,30 +505,62 @@ function attachAgentToOverlay(settings) {
 }
 
 function layout() {
-  if (appQuitting || !mainWindow || mainWindow.isDestroyed() || !browserKernel || !agentView || agentView.webContents.isDestroyed() || !shellView || shellView.webContents.isDestroyed()) return
-  const immersive=workspaceMode==='studio'&&studioPresentation.immersive
-  const minimumWidth=immersive?420:960,currentMinimum=mainWindow.getMinimumSize()
-  if(currentMinimum[0]!==minimumWidth||currentMinimum[1]!==640)mainWindow.setMinimumSize(minimumWidth,640)
-  const [outerWidth,outerHeight]=mainWindow.getSize()
-  if(!immersive&&outerWidth<minimumWidth)mainWindow.setSize(minimumWidth,Math.max(640,outerHeight))
+  if (
+    appQuitting ||
+    !mainWindow ||
+    mainWindow.isDestroyed() ||
+    !browserKernel ||
+    !agentView ||
+    agentView.webContents.isDestroyed() ||
+    !shellView ||
+    shellView.webContents.isDestroyed()
+  )
+    return
+  const immersive = workspaceMode === 'studio' && studioPresentation.immersive
+  const minimumWidth = immersive ? 420 : 960,
+    currentMinimum = mainWindow.getMinimumSize()
+  if (currentMinimum[0] !== minimumWidth || currentMinimum[1] !== 640) mainWindow.setMinimumSize(minimumWidth, 640)
+  const [outerWidth, outerHeight] = mainWindow.getSize()
+  if (!immersive && outerWidth < minimumWidth) mainWindow.setSize(minimumWidth, Math.max(640, outerHeight))
   const [width, height] = mainWindow.getContentSize()
-  const settings = layoutStore?.snapshot() || { mode: 'sidebar', opacity: 1, sidebarWidth: agentWidth, overlayFullscreen: false }
+  const settings = layoutStore?.snapshot() || {
+    mode: 'sidebar',
+    opacity: 1,
+    sidebarWidth: agentWidth,
+    overlayFullscreen: false
+  }
   agentWidth = settings.sidebarWidth
-  const shellExpanded=projectPanelVisible||layoutSetupVisible||settingsPanelVisible||sessionPanelVisible||scheduledTaskPanelVisible||toolbarPanelVisible
-  const top=immersive?0:TOP_BAR_HEIGHT
-  shellView.setVisible(!immersive||shellExpanded)
-  shellView.setBounds({x:0,y:0,width,height:shellExpanded?height:TOP_BAR_HEIGHT})
-  const sidebar=agentVisible&&!immersive&&(workspaceMode==='studio'||settings.mode==='sidebar')
+  const shellExpanded =
+    projectPanelVisible ||
+    layoutSetupVisible ||
+    settingsPanelVisible ||
+    sessionPanelVisible ||
+    scheduledTaskPanelVisible ||
+    toolbarPanelVisible
+  const top = immersive ? 0 : TOP_BAR_HEIGHT
+  shellView.setVisible(!immersive || shellExpanded)
+  shellView.setBounds({ x: 0, y: 0, width, height: shellExpanded ? height : TOP_BAR_HEIGHT })
+  const sidebar = agentVisible && !immersive && (workspaceMode === 'studio' || settings.mode === 'sidebar')
   const actualAgentWidth = sidebar ? Math.min(Math.max(agentWidth, MIN_AGENT_WIDTH), Math.floor(width * 0.55)) : 0
-  const workspaceBounds={x:0,y:top,width:width-actualAgentWidth,height:height-top}
+  const workspaceBounds = { x: 0, y: top, width: width - actualAgentWidth, height: height - top }
   browserKernel.setBounds(workspaceBounds)
-  browserKernel.setBrowserVisible(workspaceMode==='browser')
+  browserKernel.setBrowserVisible(workspaceMode === 'browser')
   // The opaque Studio View covers browser pages; keep their compositor live for capture.
-  productFeatureRuntime?.layout?.(workspaceBounds,workspaceMode!=='browser')
-  const docked=width<1000||studioPresentation.docked===true
-  const floating=studioFloatingBounds(width,height,studioPresentation.position,studioPresentation.region,docked,studioPresentation.floatHeight)
-  if(immersive&&studioPresentation.chatOpen&&!shellExpanded){
-    if(overlayWindow&&!overlayWindow.isDestroyed()){removeAgentView(overlayWindow);overlayWindow.hide()}
+  productFeatureRuntime?.layout?.(workspaceBounds, workspaceMode !== 'browser')
+  const docked = width < 1000 || studioPresentation.docked === true
+  const floating = studioFloatingBounds(
+    width,
+    height,
+    studioPresentation.position,
+    studioPresentation.region,
+    docked,
+    studioPresentation.floatHeight
+  )
+  if (immersive && studioPresentation.chatOpen && !shellExpanded) {
+    if (overlayWindow && !overlayWindow.isDestroyed()) {
+      removeAgentView(overlayWindow)
+      overlayWindow.hide()
+    }
     mainWindow.contentView.addChildView(agentView)
     agentView.setBounds(floating.bounds)
   } else if (sidebar) {
@@ -435,9 +569,21 @@ function layout() {
       overlayWindow.hide()
     }
     if (!mainWindow.contentView.children.includes(agentView)) mainWindow.contentView.addChildView(agentView)
-    agentView.setBounds({ x: width - actualAgentWidth, y: TOP_BAR_HEIGHT, width: actualAgentWidth, height: height - TOP_BAR_HEIGHT })
-  } else if (!immersive&&agentVisible&&settings.mode==='overlay') {
-    if (projectPanelVisible || layoutSetupVisible || settingsPanelVisible || sessionPanelVisible || scheduledTaskPanelVisible || toolbarPanelVisible) {
+    agentView.setBounds({
+      x: width - actualAgentWidth,
+      y: TOP_BAR_HEIGHT,
+      width: actualAgentWidth,
+      height: height - TOP_BAR_HEIGHT
+    })
+  } else if (!immersive && agentVisible && settings.mode === 'overlay') {
+    if (
+      projectPanelVisible ||
+      layoutSetupVisible ||
+      settingsPanelVisible ||
+      sessionPanelVisible ||
+      scheduledTaskPanelVisible ||
+      toolbarPanelVisible
+    ) {
       if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.hide()
     } else {
       attachAgentToOverlay(settings)
@@ -446,73 +592,115 @@ function layout() {
     removeAgentView(mainWindow)
     if (overlayWindow && !overlayWindow.isDestroyed()) overlayWindow.hide()
   }
-  agentView.webContents.send('bmw-studio-presentation',{immersive,chatOpen:immersive&&studioPresentation.chatOpen,docked,position:floating.position,travel:floating.travel})
-  productFeatureRuntime?.onStudioPresentation?.({...studioPresentation,immersive,chatOpen:immersive&&studioPresentation.chatOpen&&!shellExpanded,docked,position:floating.position,floatHeight:floating.bounds.height})
+  agentView.webContents.send('bmw-studio-presentation', {
+    immersive,
+    chatOpen: immersive && studioPresentation.chatOpen,
+    docked,
+    position: floating.position,
+    travel: floating.travel
+  })
+  productFeatureRuntime?.onStudioPresentation?.({
+    ...studioPresentation,
+    immersive,
+    chatOpen: immersive && studioPresentation.chatOpen && !shellExpanded,
+    docked,
+    position: floating.position,
+    floatHeight: floating.bounds.height
+  })
   raiseProjectPanel()
-  shellView.webContents.send('layout-state', { ...settings, agentVisible, agentWidth: actualAgentWidth, setupVisible: layoutSetupVisible,workspaceMode })
+  shellView.webContents.send('layout-state', {
+    ...settings,
+    agentVisible,
+    agentWidth: actualAgentWidth,
+    setupVisible: layoutSetupVisible,
+    workspaceMode
+  })
 }
 
 function projectState() {
   return projectStore?.snapshot() || { activeProjectId: null, projects: [] }
 }
 
-function publishAssistantState():void{
- if(!assistantService||appQuitting)return
- if(assistantPublishTimer)return
- assistantPublishTimer=setTimeout(()=>{
-  assistantPublishTimer=undefined
-  if(!assistantService||!agentView||agentView.webContents.isDestroyed())return
-  const state=assistantService.controller.snapshot()
-  agentView.webContents.send('bmw-assistant-state',state)
-  productFeatureRuntime?.onAssistantChanged?.()
-  sendToShell('project-state',projectState())
-  const driver=state.drivers.find(row=>row.id===state.driverId)
-  sendToShell('agent-status',{state:state.resourcesDisconnected?'error':state.busy?'working':'ready',version:driver?.baseline,label:driver?.label,message:state.resourcesDisconnected?'Recover Agent resource cleanup before continuing.':''})
-  if(sessionPanelVisible)void assistantService.sessions.listProjectSessions(agentProject(projectStore.active())).then(value=>sendToShell('agent-session-state',value))
- },40)
+function publishAssistantState(): void {
+  if (!assistantService || appQuitting) return
+  if (assistantPublishTimer) return
+  assistantPublishTimer = setTimeout(() => {
+    assistantPublishTimer = undefined
+    if (!assistantService || !agentView || agentView.webContents.isDestroyed()) return
+    const state = assistantService.controller.snapshot()
+    agentView.webContents.send('bmw-assistant-state', state)
+    productFeatureRuntime?.onAssistantChanged?.()
+    sendToShell('project-state', projectState())
+    const driver = state.drivers.find(row => row.id === state.driverId)
+    sendToShell('agent-status', {
+      state: state.resourcesDisconnected ? 'error' : state.busy ? 'working' : 'ready',
+      version: driver?.baseline,
+      label: driver?.label,
+      message: state.resourcesDisconnected ? 'Recover Agent resource cleanup before continuing.' : ''
+    })
+    if (sessionPanelVisible)
+      void assistantService.sessions
+        .listProjectSessions(agentProject(projectStore.active()))
+        .then(value => sendToShell('agent-session-state', value))
+  }, 40)
 }
-async function publishAssistantSelection():Promise<void>{
- if(!assistantService)return
- const project=projectStore.active(),sessionId=assistantService.selected(project.id)
- if(sessionId)publishAgentContext({state:'ready',context:await assistantService.sessions.resolveContext(sessionId,projectStore.list().map(agentProject))})
- else publishAgentContext({state:'waiting',message:'Create a BMW conversation to continue.'})
- publishAssistantState()
+async function publishAssistantSelection(): Promise<void> {
+  if (!assistantService) return
+  const project = projectStore.active(),
+    sessionId = assistantService.selected(project.id)
+  if (sessionId)
+    publishAgentContext({
+      state: 'ready',
+      context: await assistantService.sessions.resolveContext(sessionId, projectStore.list().map(agentProject))
+    })
+  else publishAgentContext({ state: 'waiting', message: 'Create a BMW conversation to continue.' })
+  publishAssistantState()
 }
-async function selectAgentSession(project,sessionId:string) {
- if(project.id!==projectStore.active().id)throw new Error('Activate the Project before selecting its conversation')
- if(assistantService.host.busy)throw new Error('Stop and drain the Agent before changing conversations')
- const changing=assistantService.selected(project.id)!==sessionId
- if(changing)await productFeatureRuntime?.onSessionWillChange?.()
- await bridge.changeProject(async()=>{assistantService.select(sessionId,project.id)})
- if(changing)await productFeatureRuntime?.onSessionChanged?.()
- await publishAssistantSelection();return sessionId
+async function selectAgentSession(project, sessionId: string) {
+  if (project.id !== projectStore.active().id) throw new Error('Activate the Project before selecting its conversation')
+  if (assistantService.host.busy) throw new Error('Stop and drain the Agent before changing conversations')
+  const changing = assistantService.selected(project.id) !== sessionId
+  if (changing) await productFeatureRuntime?.onSessionWillChange?.()
+  await bridge.changeProject(async () => {
+    assistantService.select(sessionId, project.id)
+  })
+  if (changing) await productFeatureRuntime?.onSessionChanged?.()
+  await publishAssistantSelection()
+  return sessionId
 }
 async function openAgentAdvancedSettings() {
- settingsPanelVisible=false;agentVisible=true;layoutStore.update({visible:true});layout()
- agentView.webContents.send('bmw-assistant-open-settings')
- return {opened:true}
+  settingsPanelVisible = false
+  agentVisible = true
+  layoutStore.update({ visible: true })
+  layout()
+  agentView.webContents.send('bmw-assistant-open-settings')
+  return { opened: true }
 }
-async function synchronizeAgentProject(project,{activate=false,ensureSession=false}={}) {
- if(!assistantService)return null
- const result=activate||ensureSession?await assistantService.sessions.activateProject(agentProject(project)):null
- if(activate)await publishAssistantSelection()
- return result
+async function synchronizeAgentProject(project, { activate = false, ensureSession = false } = {}) {
+  if (!assistantService) return null
+  const result =
+    activate || ensureSession ? await assistantService.sessions.activateProject(agentProject(project)) : null
+  if (activate) await publishAssistantSelection()
+  return result
 }
 
 function assertNoScheduledProjectMutation(): void {
-  if(assistantService?.host.busy)throw new Error('Stop and drain the Agent before changing Projects')
+  if (assistantService?.host.busy) throw new Error('Stop and drain the Agent before changing Projects')
   if (bridge?.busy) throw new Error('BMW is completing a browser operation. Project changes resume when it finishes.')
-  if (scheduledExecutionProjectId) throw new Error('BMW is completing a scheduled task. Project switching and archival resume when it finishes.')
+  if (scheduledExecutionProjectId)
+    throw new Error('BMW is completing a scheduled task. Project switching and archival resume when it finishes.')
 }
 
 async function activateProject(projectId, { scheduled = false } = {}) {
   await assistantService?.host.yieldBackground()
-  if(assistantService?.host.busy)throw new Error('Stop and drain the Agent before changing Projects')
-  if (bridge?.busy) throw new Error('BMW is completing a browser operation. Project switching resumes when it finishes.')
-  if (scheduledExecutionProjectId && !scheduled && projectStore.active().id !== projectId) assertNoScheduledProjectMutation()
+  if (assistantService?.host.busy) throw new Error('Stop and drain the Agent before changing Projects')
+  if (bridge?.busy)
+    throw new Error('BMW is completing a browser operation. Project switching resumes when it finishes.')
+  if (scheduledExecutionProjectId && !scheduled && projectStore.active().id !== projectId)
+    assertNoScheduledProjectMutation()
   await productFeatureRuntime?.onSessionWillChange?.()
   return bridge.changeProject(async () => {
-    if(projectId!==projectStore.active().id)await browserKernel.releaseProjectResearchTabs()
+    if (projectId !== projectStore.active().id) await browserKernel.releaseProjectResearchTabs()
     const project = projectStore.switch(projectId)
     await browserKernel.switchProject(project)
     await synchronizeAgentProject(project, { activate: true })
@@ -523,20 +711,35 @@ async function activateProject(projectId, { scheduled = false } = {}) {
   })
 }
 
-function backgroundWorkReason(kind:'hourly'|'collection',projectId:string):string|null {
- return backgroundAdmission.reason(kind,{projectId,activeProjectId:projectStore.active().id,projectChanging:bridge?.changingProject===true,browserBusy:bridge?.busy===true,hostBusy:assistantService?.host.busy!==false,mediaBusy:mediaController.isCaptureActive(),scheduledBusy:Boolean(scheduledExecutionProjectId),agentControlGranted:permissionStore.hasAgentControl()})
+function backgroundWorkReason(kind: 'hourly' | 'collection', projectId: string): string | null {
+  return backgroundAdmission.reason(kind, {
+    projectId,
+    activeProjectId: projectStore.active().id,
+    projectChanging: bridge?.changingProject === true,
+    browserBusy: bridge?.busy === true,
+    hostBusy: assistantService?.host.busy !== false,
+    mediaBusy: mediaController.isCaptureActive(),
+    scheduledBusy: Boolean(scheduledExecutionProjectId),
+    agentControlGranted: permissionStore.hasAgentControl()
+  })
 }
 
 async function executeScheduledTask(task) {
-  if(task.intervalMinutes===60){const reason=backgroundWorkReason('hourly',task.projectId);if(reason)throw new Error('Hourly task waits: '+reason);backgroundAdmission.admitted('hourly')}
-  else await assistantService.host.yieldBackground()
+  if (task.intervalMinutes === 60) {
+    const reason = backgroundWorkReason('hourly', task.projectId)
+    if (reason) throw new Error('Hourly task waits: ' + reason)
+    backgroundAdmission.admitted('hourly')
+  } else await assistantService.host.yieldBackground()
   const originalProjectId = projectStore.active().id
   const target = projectStore.get(task.projectId, { includeArchived: false })
   if (!target) throw new Error('The scheduled task Project is archived or unavailable.')
-  if(!task.sessionId||!task.driverId)throw new Error('This scheduled task has no explicit BMW Session and driver binding.')
-  const owner=assistantService.conversations.get(task.sessionId,target.id)
-  if(owner.archivedAt!==null||owner.driverId!==task.driverId)throw new Error('The saved scheduled Session or driver is unavailable. Repair its binding explicitly.')
-  const originalSessionId=assistantService.selected(originalProjectId),originalDriverId=assistantService.driverId(originalProjectId)
+  if (!task.sessionId || !task.driverId)
+    throw new Error('This scheduled task has no explicit BMW Session and driver binding.')
+  const owner = assistantService.conversations.get(task.sessionId, target.id)
+  if (owner.archivedAt !== null || owner.driverId !== task.driverId)
+    throw new Error('The saved scheduled Session or driver is unavailable. Repair its binding explicitly.')
+  const originalSessionId = assistantService.selected(originalProjectId),
+    originalDriverId = assistantService.driverId(originalProjectId)
   scheduledExecutionProjectId = target.id
   try {
     if (projectStore.active().id !== target.id) await activateProject(target.id, { scheduled: true })
@@ -544,20 +747,40 @@ async function executeScheduledTask(task) {
     if (!synchronized?.sessionId) throw new Error('Agent is unavailable for this scheduled task.')
     const sessionId = task.sessionId
     const sessions = await assistantService.sessions.listProjectSessions(agentProject(target))
-    if (!sessions.membership.includes(sessionId))throw new Error('The saved scheduled Session is unavailable. Repair its binding explicitly.')
-    {await productFeatureRuntime?.onSessionWillChange?.();await bridge.changeProject(async()=>{assistantService.select(sessionId,target.id)});await productFeatureRuntime?.onSessionChanged?.();await publishAssistantSelection()}
-    const prompt = `[BMW Scheduled Task · ${task.name}]\n\nThis Project-scoped task is running automatically on its saved schedule (${task.intervalMinutes===60?'every 60 minutes':task.schedule.time+' '+task.schedule.timeZone}).\n\nTask instructions:\n${task.prompt}\n\nUse only BMW's browser capability. Work in background tabs unless foreground visibility is required to finish the task. Save screenshots, downloaded page media, and recordings as Project-owned artifacts. Do not create, modify, or remove scheduled tasks during this run unless the saved instructions explicitly require it. Do not publish, purchase, delete user data, or expand the task beyond these instructions. ${task.intervalMinutes===60?'This is one bounded phase of at most ten minutes: reuse stored evidence, stop with explicit shortages instead of repeated discovery or retries; do not begin video production. ':''}Finish with a concise result and list the artifacts you saved.`
-    const replies = await assistantService.sessions.promptAndWait(sessionId, prompt, { timeoutMs: (task.intervalMinutes===60?10:30) * 60_000 })
+    if (!sessions.membership.includes(sessionId))
+      throw new Error('The saved scheduled Session is unavailable. Repair its binding explicitly.')
+    {
+      await productFeatureRuntime?.onSessionWillChange?.()
+      await bridge.changeProject(async () => {
+        assistantService.select(sessionId, target.id)
+      })
+      await productFeatureRuntime?.onSessionChanged?.()
+      await publishAssistantSelection()
+    }
+    const prompt = `[BMW Scheduled Task · ${task.name}]\n\nThis Project-scoped task is running automatically on its saved schedule (${task.intervalMinutes === 60 ? 'every 60 minutes' : task.schedule.time + ' ' + task.schedule.timeZone}).\n\nTask instructions:\n${task.prompt}\n\nUse only BMW's browser capability. Work in background tabs unless foreground visibility is required to finish the task. Save screenshots, downloaded page media, and recordings as Project-owned artifacts. Do not create, modify, or remove scheduled tasks during this run unless the saved instructions explicitly require it. Do not publish, purchase, delete user data, or expand the task beyond these instructions. ${task.intervalMinutes === 60 ? 'This is one bounded phase of at most ten minutes: reuse stored evidence, stop with explicit shortages instead of repeated discovery or retries; do not begin video production. ' : ''}Finish with a concise result and list the artifacts you saved.`
+    const replies = await assistantService.sessions.promptAndWait(sessionId, prompt, {
+      timeoutMs: (task.intervalMinutes === 60 ? 10 : 30) * 60_000
+    })
     return replies
   } finally {
-    try{
-    const original = projectStore.get(originalProjectId, { includeArchived: false })
-    if (original && original.id !== target.id && projectStore.active().id === target.id) {
-      await activateProject(original.id, { scheduled: true }).catch((error) => console.error('Failed to restore the Project after a scheduled task', error))
+    try {
+      const original = projectStore.get(originalProjectId, { includeArchived: false })
+      if (original && original.id !== target.id && projectStore.active().id === target.id) {
+        await activateProject(original.id, { scheduled: true }).catch(error =>
+          console.error('Failed to restore the Project after a scheduled task', error)
+        )
+      }
+      if (originalSessionId && original?.id === projectStore.active().id && !assistantService.host.busy) {
+        await productFeatureRuntime?.onSessionWillChange?.()
+        await bridge.changeProject(async () => assistantService.select(originalSessionId, original.id))
+        await productFeatureRuntime?.onSessionChanged?.()
+        await publishAssistantSelection()
+      }
+      if (original && original.id === target.id && !assistantService.host.busy)
+        assistantService.preferences.set(original.id, originalDriverId)
+    } finally {
+      scheduledExecutionProjectId = null
     }
-    if(originalSessionId&&original?.id===projectStore.active().id&&!assistantService.host.busy){await productFeatureRuntime?.onSessionWillChange?.();await bridge.changeProject(async()=>assistantService.select(originalSessionId,original.id));await productFeatureRuntime?.onSessionChanged?.();await publishAssistantSelection()}
-    if(original&&original.id===target.id&&!assistantService.host.busy)assistantService.preferences.set(original.id,originalDriverId)
-    }finally{scheduledExecutionProjectId = null}
   }
 }
 
@@ -577,7 +800,7 @@ function notifyScheduledTaskRun(run, task) {
       layout()
       mainWindow.show()
       mainWindow.focus()
-    })().catch((error) => console.error('Failed to reveal scheduled task notification', error))
+    })().catch(error => console.error('Failed to reveal scheduled task notification', error))
   })
   notification.show()
 }
@@ -592,13 +815,13 @@ function showProjectMenu() {
     return { opened: true, projects: 0, activeProjectId: projectStore.active().id }
   }
   const activeProjectId = projectStore.active().id
-  const projectItems = projectStore.list().map((project) => ({
+  const projectItems = projectStore.list().map(project => ({
     label: project.name,
     type: 'radio',
     checked: project.id === activeProjectId,
     click: () => {
       if (project.id === projectStore.active().id) return
-      void activateProject(project.id).catch((error) => {
+      void activateProject(project.id).catch(error => {
         void dialog.showMessageBox(mainWindow, {
           type: 'error',
           title: 'Project switch failed',
@@ -643,29 +866,49 @@ async function askSitePermission(webContents, permission, callback, details) {
 }
 
 function installIpc() {
-  const shellHandle = createShellIpcRegistrar(ipcMain, () => shellView?.webContents, pathToFileURL(path.join(sourceDirectory, 'renderer/shell.html')).href)
-  shellHandle('workspace-mode',async(event,mode:unknown)=>{
+  const shellHandle = createShellIpcRegistrar(
+    ipcMain,
+    () => shellView?.webContents,
+    pathToFileURL(path.join(sourceDirectory, 'renderer/shell.html')).href
+  )
+  shellHandle('workspace-mode', async (event, mode: unknown) => {
     await assistantService?.host.yieldBackground()
-    if(event.sender!==shellView?.webContents||event.senderFrame!==shellView.webContents.mainFrame||!['browser','library','studio'].includes(String(mode)))throw new Error('Invalid BMW workspace selection.')
-    if(!productFeatureRuntime?.setMode)throw new Error('Workspace modes are unavailable.')
-    if(mode!=='browser'&&mode!=='library'&&mode!=='studio')throw new TypeError('Unknown workspace mode.')
-    await productFeatureRuntime.setMode(mode);return {mode:workspaceMode}
+    if (
+      event.sender !== shellView?.webContents ||
+      event.senderFrame !== shellView.webContents.mainFrame ||
+      !['browser', 'library', 'studio'].includes(String(mode))
+    )
+      throw new Error('Invalid BMW workspace selection.')
+    if (!productFeatureRuntime?.setMode) throw new Error('Workspace modes are unavailable.')
+    if (mode !== 'browser' && mode !== 'library' && mode !== 'studio') throw new TypeError('Unknown workspace mode.')
+    await productFeatureRuntime.setMode(mode)
+    return { mode: workspaceMode }
   })
-  shellHandle('product-panel-open', (event, id:unknown) => {
-    if(event.sender!==shellView?.webContents||event.senderFrame!==shellView.webContents.mainFrame||typeof id!=='string')throw new Error('Only the BMW Shell may open product panels.')
-    if(!productFeatureRuntime?.openPanel)throw new Error('This product has no such panel.')
+  shellHandle('product-panel-open', (event, id: unknown) => {
+    if (
+      event.sender !== shellView?.webContents ||
+      event.senderFrame !== shellView.webContents.mainFrame ||
+      typeof id !== 'string'
+    )
+      throw new Error('Only the BMW Shell may open product panels.')
+    if (!productFeatureRuntime?.openPanel) throw new Error('This product has no such panel.')
     return productFeatureRuntime.openPanel(id)
   })
   shellHandle('product-info', () => ({
     id: productDefinition.id,
     name: productDefinition.name,
     features: productDefinition.featureIds,
-    agent: {label:'BMW Assistant',baseline:'官方 Agent 引擎'}
+    agent: { label: 'BMW Assistant', baseline: '官方 Agent 引擎' }
   }))
   shellHandle('browser-command', async (_event, request) => {
     await assistantService?.host.yieldBackground()
-    if(bridge?.changingProject)throw new Error('BMW Project is changing; retry after activation finishes')
-    return browserKernel.execute(request, { actor: 'user', sessionOwner:selectedSession(projectStore.active())?{projectId:projectStore.active().id,sessionId:selectedSession(projectStore.active())}:undefined })
+    if (bridge?.changingProject) throw new Error('BMW Project is changing; retry after activation finishes')
+    return browserKernel.execute(request, {
+      actor: 'user',
+      sessionOwner: selectedSession(projectStore.active())
+        ? { projectId: projectStore.active().id, sessionId: selectedSession(projectStore.active()) }
+        : undefined
+    })
   })
   shellHandle('permission-agent-control', async (_event, enabled: unknown) => {
     if (typeof enabled !== 'boolean') throw new TypeError('Agent permission must be a boolean.')
@@ -688,7 +931,8 @@ function installIpc() {
   })
   shellHandle('layout-settings', () => ({ ...layoutStore.snapshot(), setupVisible: layoutSetupVisible }))
   shellHandle('toolbar-panel', (event, visible: unknown) => {
-    if (event.sender !== shellView?.webContents || event.senderFrame !== shellView.webContents.mainFrame) throw new Error('Only the BMW Shell may display toolbar menus')
+    if (event.sender !== shellView?.webContents || event.senderFrame !== shellView.webContents.mainFrame)
+      throw new Error('Only the BMW Shell may display toolbar menus')
     if (typeof visible !== 'boolean') throw new Error('Toolbar visibility must be boolean')
     toolbarPanelVisible = visible
     layout()
@@ -722,7 +966,7 @@ function installIpc() {
   })
   shellHandle('global-settings', () => settingsStore.snapshot())
   shellHandle('global-settings-panel', async (_event, visible) => {
-    if(!visible)await cancelQwenAudition()
+    if (!visible) await cancelQwenAudition()
     settingsPanelVisible = Boolean(visible)
     if (settingsPanelVisible) {
       projectPanelVisible = false
@@ -735,36 +979,61 @@ function installIpc() {
   })
   shellHandle('global-settings-update', async (_event, input) => {
     const previous = settingsStore.snapshot()
-    if(input?.videoPreferences!==undefined&&input.videoPreferencesExpected!==undefined&&JSON.stringify(input.videoPreferencesExpected)!==JSON.stringify(previous.videoPreferences))throw new Error('VIDEO_SETTINGS_CONFLICT: 视频设置已被其他操作更新，请重新打开设置后合并。')
+    if (
+      input?.videoPreferences !== undefined &&
+      input.videoPreferencesExpected !== undefined &&
+      JSON.stringify(input.videoPreferencesExpected) !== JSON.stringify(previous.videoPreferences)
+    )
+      throw new Error('VIDEO_SETTINGS_CONFLICT: 视频设置已被其他操作更新，请重新打开设置后合并。')
     const settings = settingsStore.update(input || {})
     if (previous.theme !== settings.theme) {
       applyProductTheme(settings.theme)
     }
-    if (previous.proxyMode !== settings.proxyMode || previous.proxyRules !== settings.proxyRules || previous.proxyBypassRules !== settings.proxyBypassRules) {
+    if (
+      previous.proxyMode !== settings.proxyMode ||
+      previous.proxyRules !== settings.proxyRules ||
+      previous.proxyBypassRules !== settings.proxyBypassRules
+    ) {
       await settingsStore.applyProxy(bmwSession)
     }
     sendToShell('global-settings-state', settings)
     return settings
   })
-  shellHandle('qwen-tts-status',()=>qwenCredentialsStore.status())
-  shellHandle('qwen-tts-save',(_event,raw:unknown)=>{
-    if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new TypeError('Invalid Qwen settings.')
-    const {enabled,...credentials}=raw as Record<string,unknown>
-    if(typeof enabled!=='boolean')throw new TypeError('Qwen narration choice must be boolean.')
-    if(qwenAudition)throw new Error('请先取消试听，再修改 Qwen 配置。')
-    const status=qwenCredentialsStore.save(credentials)
-    settingsStore.update({qwenNarrationEnabled:enabled});return status
+  shellHandle('qwen-tts-status', () => qwenCredentialsStore.status())
+  shellHandle('qwen-tts-save', (_event, raw: unknown) => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new TypeError('Invalid Qwen settings.')
+    const { enabled, ...credentials } = raw as Record<string, unknown>
+    if (typeof enabled !== 'boolean') throw new TypeError('Qwen narration choice must be boolean.')
+    if (qwenAudition) throw new Error('请先取消试听，再修改 Qwen 配置。')
+    const status = qwenCredentialsStore.save(credentials)
+    settingsStore.update({ qwenNarrationEnabled: enabled })
+    return status
   })
-  shellHandle('qwen-tts-clear',async()=>{await cancelQwenAudition();const status=qwenCredentialsStore.clear();settingsStore.update({qwenNarrationEnabled:false});return status})
-  shellHandle('qwen-tts-cancel',()=>cancelQwenAudition())
-  shellHandle('qwen-tts-audition',async(_event,voice:unknown)=>{
-    if(qwenAudition)throw new Error('Qwen 试听正在生成中。')
-    if(bridge?.changingProject)throw new Error('Project 正在切换，请稍后试听。')
-    if(settingsStore.snapshot().qwenNarrationEnabled!==true)throw new Error('请开启 Qwen 在线配音并保存配置后再试听。')
-    const projectId:string=projectStore.active().id,controller=new AbortController()
-    const pending=browserKernel.runUserMediaTask(projectId,()=>mediaController.auditionQwen(voice,controller.signal),controller.signal)
-    qwenAudition={controller,pending}
-    try{return await pending}finally{qwenAudition=undefined}
+  shellHandle('qwen-tts-clear', async () => {
+    await cancelQwenAudition()
+    const status = qwenCredentialsStore.clear()
+    settingsStore.update({ qwenNarrationEnabled: false })
+    return status
+  })
+  shellHandle('qwen-tts-cancel', () => cancelQwenAudition())
+  shellHandle('qwen-tts-audition', async (_event, voice: unknown) => {
+    if (qwenAudition) throw new Error('Qwen 试听正在生成中。')
+    if (bridge?.changingProject) throw new Error('Project 正在切换，请稍后试听。')
+    if (settingsStore.snapshot().qwenNarrationEnabled !== true)
+      throw new Error('请开启 Qwen 在线配音并保存配置后再试听。')
+    const projectId: string = projectStore.active().id,
+      controller = new AbortController()
+    const pending = browserKernel.runUserMediaTask(
+      projectId,
+      () => mediaController.auditionQwen(voice, controller.signal),
+      controller.signal
+    )
+    qwenAudition = { controller, pending }
+    try {
+      return await pending
+    } finally {
+      qwenAudition = undefined
+    }
   })
   shellHandle('application-restart', () => requestApplicationRestart())
   shellHandle('agent-advanced-settings-open', () => openAgentAdvancedSettings())
@@ -777,7 +1046,9 @@ function installIpc() {
       scheduledTaskPanelVisible = false
     }
     layout()
-    return sessionPanelVisible ? assistantService.sessions.listProjectSessions(agentProject(projectStore.active())) : { visible: false }
+    return sessionPanelVisible
+      ? assistantService.sessions.listProjectSessions(agentProject(projectStore.active()))
+      : { visible: false }
   })
   shellHandle('scheduled-task-panel', (_event, visible) => {
     scheduledTaskPanelVisible = Boolean(visible)
@@ -791,21 +1062,33 @@ function installIpc() {
     return scheduledTaskPanelVisible ? scheduledTaskManager.list(projectStore.active().id) : { visible: false }
   })
   shellHandle('scheduled-task-list', () => scheduledTaskManager.list(projectStore.active().id))
-  shellHandle('scheduled-task-update', (_event, taskId, input) => scheduledTaskManager.update(projectStore.active().id, String(taskId), input || {}))
+  shellHandle('scheduled-task-update', (_event, taskId, input) =>
+    scheduledTaskManager.update(projectStore.active().id, String(taskId), input || {})
+  )
   shellHandle('scheduled-task-bind-current', (_event, taskId) => {
-    const project=projectStore.active(),task=scheduledTaskStore.getForProject(project.id,String(taskId)),sessionId=selectedSession(project)
-    if(!sessionId)throw new Error('Select a BMW Session before binding this scheduled task.')
-    const driverId=assistantService.conversations.get(sessionId,project.id).driverId
-    return scheduledTaskStore.bindSession(task.id,sessionId,driverId)
+    const project = projectStore.active(),
+      task = scheduledTaskStore.getForProject(project.id, String(taskId)),
+      sessionId = selectedSession(project)
+    if (!sessionId) throw new Error('Select a BMW Session before binding this scheduled task.')
+    const driverId = assistantService.conversations.get(sessionId, project.id).driverId
+    return scheduledTaskStore.bindSession(task.id, sessionId, driverId)
   })
-  shellHandle('scheduled-task-remove', (_event, taskId) => scheduledTaskManager.remove(projectStore.active().id, String(taskId)))
-  shellHandle('scheduled-task-run', (_event, taskId) => scheduledTaskManager.runNow(projectStore.active().id, String(taskId)))
-  shellHandle('agent-session-list', (_event, query = '') => assistantService.sessions.listProjectSessions(agentProject(projectStore.active()), query))
-  shellHandle('agent-session-create', () => withConversationMutation(async () => {
-    const project = projectStore.active()
-    await assistantService.controller.invoke({action:'session.create'})
-    return assistantService.sessions.listProjectSessions(agentProject(project))
-  }))
+  shellHandle('scheduled-task-remove', (_event, taskId) =>
+    scheduledTaskManager.remove(projectStore.active().id, String(taskId))
+  )
+  shellHandle('scheduled-task-run', (_event, taskId) =>
+    scheduledTaskManager.runNow(projectStore.active().id, String(taskId))
+  )
+  shellHandle('agent-session-list', (_event, query = '') =>
+    assistantService.sessions.listProjectSessions(agentProject(projectStore.active()), query)
+  )
+  shellHandle('agent-session-create', () =>
+    withConversationMutation(async () => {
+      const project = projectStore.active()
+      await assistantService.controller.invoke({ action: 'session.create' })
+      return assistantService.sessions.listProjectSessions(agentProject(project))
+    })
+  )
   shellHandle('agent-session-select', async (_event, sessionId) => {
     const project = projectStore.active()
     await selectAgentSession(project, String(sessionId))
@@ -815,7 +1098,7 @@ function installIpc() {
     const project = projectStore.active()
     const snapshot = await assistantService.sessions.listProjectSessions(agentProject(project))
     if (!snapshot.membership.includes(sessionId)) throw new Error('That session does not belong to this Project.')
-    await assistantService.sessions.renameSession(sessionId,String(title || ''))
+    await assistantService.sessions.renameSession(sessionId, String(title || ''))
     return assistantService.sessions.listProjectSessions(agentProject(project))
   })
   shellHandle('agent-session-fork', async (_event, sessionId) => {
@@ -831,20 +1114,20 @@ function installIpc() {
     const project = projectStore.active()
     const snapshot = await assistantService.sessions.listProjectSessions(agentProject(project))
     if (!snapshot.membership.includes(sessionId)) throw new Error('That session does not belong to this Project.')
-    await assistantService.controller.invoke({action:'session.archive',sessionId:String(sessionId)})
+    await assistantService.controller.invoke({ action: 'session.archive', sessionId: String(sessionId) })
     return assistantService.sessions.listProjectSessions(agentProject(project))
   })
   shellHandle('agent-session-move', async (_event, sessionId, direction) => {
     const project = projectStore.active()
     const snapshot = await assistantService.sessions.listProjectSessions(agentProject(project))
-    const order = snapshot.membership.filter((id) => snapshot.items.some((item) => item.sessionId === id))
+    const order = snapshot.membership.filter(id => snapshot.items.some(item => item.sessionId === id))
     const index = order.indexOf(sessionId)
     if (index < 0) throw new Error('That session does not belong to this Project.')
     if (direction === 'up' && index > 0) {
-      await assistantService.sessions.moveSession(snapshot.projectId,sessionId,order[index - 1])
+      await assistantService.sessions.moveSession(snapshot.projectId, sessionId, order[index - 1])
     } else if (direction === 'down' && index < order.length - 1) {
       const beforeSessionId = order[index + 2]
-      await assistantService.sessions.moveSession(snapshot.projectId,sessionId,beforeSessionId)
+      await assistantService.sessions.moveSession(snapshot.projectId, sessionId, beforeSessionId)
     }
     return assistantService.sessions.listProjectSessions(agentProject(project))
   })
@@ -860,7 +1143,8 @@ function installIpc() {
         cancelId: 1,
         title: `${PRODUCT_NAME} session continuity`,
         message: `Keep ${origin} signed in?`,
-        detail: 'BMW will encrypt this site’s cookies with the operating-system keychain and send an occasional background HEAD request. You can turn this off without clearing your current cookies.'
+        detail:
+          'BMW will encrypt this site’s cookies with the operating-system keychain and send an occasional background HEAD request. You can turn this off without clearing your current cookies.'
       })
       if (decision.response !== 0) return sessionContinuity.status(url)
     }
@@ -869,7 +1153,11 @@ function installIpc() {
     return result
   })
   shellHandle('project-state', () => projectState())
-  shellHandle('agent-context-state', event => {if(event.sender!==shellView?.webContents||event.senderFrame!==shellView.webContents.mainFrame)throw new Error('Only the BMW Shell may read its context');return agentContextState})
+  shellHandle('agent-context-state', event => {
+    if (event.sender !== shellView?.webContents || event.senderFrame !== shellView.webContents.mainFrame)
+      throw new Error('Only the BMW Shell may read its context')
+    return agentContextState
+  })
   shellHandle('project-menu', () => showProjectMenu())
   shellHandle('project-panel', (_event, visible) => {
     projectPanelVisible = Boolean(visible)
@@ -905,12 +1193,13 @@ function installIpc() {
     await assistantService?.host.yieldBackground()
     assertNoScheduledProjectMutation()
     return bridge.changeProject(async () => {
-      if(projectId===projectStore.active().id)await browserKernel.releaseProjectResearchTabs({keepYoutubeWorktab:false})
+      if (projectId === projectStore.active().id)
+        await browserKernel.releaseProjectResearchTabs({ keepYoutubeWorktab: false })
       else await browserKernel.closeProjectYoutubeWorktab(projectId)
       await productFeatureRuntime?.onProjectWillArchive?.(projectId)
       scheduledTaskManager.disableProject(projectId)
       await assistantService.sessions.archiveProject(projectId)
-      const next=projectStore.archive(projectId)
+      const next = projectStore.archive(projectId)
       await productFeatureRuntime?.onProjectArchived?.(projectId, next)
       await browserKernel.switchProject(next)
       await synchronizeAgentProject(next, { activate: true })
@@ -925,34 +1214,100 @@ function installIpc() {
     }
     return result
   })
-  const ownsCapture=(event:IpcMainEvent)=>mediaController?.ownsCaptureSender(event)
-  const captureRecord=(value:unknown):value is Record<string,unknown>=>Boolean(value&&typeof value==='object'&&!Array.isArray(value))
-  ipcMain.on('media-chunk',(event,data:unknown)=>{if(ownsCapture(event)&&data instanceof ArrayBuffer&&data.byteLength<=16*1024*1024)mediaController.acceptChunk(data)})
-  ipcMain.on('media-state',(event,state:unknown)=>{if(ownsCapture(event)&&captureRecord(state))mediaController.updateState(state)})
-  ipcMain.on('media-finished',(event,summary:unknown)=>{if(ownsCapture(event)&&captureRecord(summary))void mediaController.finalize(summary).catch(error=>mediaController.updateState({state:'error',message:error.message}))})
-  ipcMain.on('media-comparison',(event,result:unknown)=>{if(ownsCapture(event)&&captureRecord(result))mediaController.acceptComparison(result)})
-
+  const ownsCapture = (event: IpcMainEvent) => mediaController?.ownsCaptureSender(event)
+  const captureRecord = (value: unknown): value is Record<string, unknown> =>
+    Boolean(value && typeof value === 'object' && !Array.isArray(value))
+  ipcMain.on('media-chunk', (event, data: unknown) => {
+    if (ownsCapture(event) && data instanceof ArrayBuffer && data.byteLength <= 16 * 1024 * 1024)
+      mediaController.acceptChunk(data)
+  })
+  ipcMain.on('media-state', (event, state: unknown) => {
+    if (ownsCapture(event) && captureRecord(state)) mediaController.updateState(state)
+  })
+  ipcMain.on('media-finished', (event, summary: unknown) => {
+    if (ownsCapture(event) && captureRecord(summary))
+      void mediaController
+        .finalize(summary)
+        .catch(error => mediaController.updateState({ state: 'error', message: error.message }))
+  })
+  ipcMain.on('media-comparison', (event, result: unknown) => {
+    if (ownsCapture(event) && captureRecord(result)) mediaController.acceptComparison(result)
+  })
 }
 
-async function loadStartupStores(): Promise<{settings:GlobalSettingsStore;projects:ProjectStore;tasks:ScheduledTaskStore;permissions:PermissionStore;layout:LayoutStore;continuity:SessionContinuityManager;assistant:AssistantStores}|undefined> {
+async function loadStartupStores(): Promise<
+  | {
+      settings: GlobalSettingsStore
+      projects: ProjectStore
+      tasks: ScheduledTaskStore
+      permissions: PermissionStore
+      layout: LayoutStore
+      continuity: SessionContinuityManager
+      assistant: AssistantStores
+    }
+  | undefined
+> {
   while (!appQuitting) {
     try {
-      releaseAgentDataLock??=acquireAgentDataLock(app.getPath('userData'))
+      releaseAgentDataLock ??= acquireAgentDataLock(app.getPath('userData'))
       requireCurrentAgentData(app.getPath('userData'))
-      const settings = new GlobalSettingsStore({filePath:path.join(app.getPath('userData'),'global-settings.json'),onState:state=>{sendToShell('global-settings-state',state);browserKernel?.videoStudioChanged?.()}})
-      const projects = new ProjectStore({filePath:path.join(app.getPath('userData'),'projects.json'),projectsDirectory:path.join(app.getPath('userData'),'projects'),initialWorkspacePath:path.join(app.getPath('userData'),'agent-workspace'),onState:state=>sendToShell('project-state',state)})
-      const tasks = new ScheduledTaskStore({filePath:path.join(app.getPath('userData'),'scheduled-tasks.json'),onState:()=>{if(scheduledTaskManager&&projectStore)sendToShell('scheduled-task-state',scheduledTaskManager.list(projectStore.active().id))}})
+      const settings = new GlobalSettingsStore({
+        filePath: path.join(app.getPath('userData'), 'global-settings.json'),
+        onState: state => {
+          sendToShell('global-settings-state', state)
+          browserKernel?.videoStudioChanged?.()
+        }
+      })
+      const projects = new ProjectStore({
+        filePath: path.join(app.getPath('userData'), 'projects.json'),
+        projectsDirectory: path.join(app.getPath('userData'), 'projects'),
+        initialWorkspacePath: path.join(app.getPath('userData'), 'agent-workspace'),
+        onState: state => sendToShell('project-state', state)
+      })
+      const tasks = new ScheduledTaskStore({
+        filePath: path.join(app.getPath('userData'), 'scheduled-tasks.json'),
+        onState: () => {
+          if (scheduledTaskManager && projectStore)
+            sendToShell('scheduled-task-state', scheduledTaskManager.list(projectStore.active().id))
+        }
+      })
       const permissions = new PermissionStore(path.join(app.getPath('userData'), 'permissions.json'))
-      const layout = new LayoutStore({filePath:path.join(app.getPath('userData'),'layout-settings.json'),onState:state=>sendToShell('layout-state',{...state,agentVisible,setupVisible:layoutSetupVisible})})
-      const continuity = new SessionContinuityManager({session:bmwSession,safeStorage,configPath:path.join(app.getPath('userData'),'session-continuity.json'),snapshotPath:path.join(app.getPath('userData'),'session-cookies.enc'),onState:()=>browserKernel?.emitState()})
+      const layout = new LayoutStore({
+        filePath: path.join(app.getPath('userData'), 'layout-settings.json'),
+        onState: state => sendToShell('layout-state', { ...state, agentVisible, setupVisible: layoutSetupVisible })
+      })
+      const continuity = new SessionContinuityManager({
+        session: bmwSession,
+        safeStorage,
+        configPath: path.join(app.getPath('userData'), 'session-continuity.json'),
+        snapshotPath: path.join(app.getPath('userData'), 'session-cookies.enc'),
+        onState: () => browserKernel?.emitState()
+      })
       continuity.load()
-      const assistant=loadAssistantStores(app.getPath('userData'),agentAssembly.defaultDriverId,publishAssistantState)
-      return {settings,projects,tasks,permissions,layout,continuity,assistant}
-    } catch (error:unknown) {
-      releaseAgentDataLock?.();releaseAgentDataLock=undefined
+      const assistant = loadAssistantStores(
+        app.getPath('userData'),
+        agentAssembly.defaultDriverId,
+        publishAssistantState
+      )
+      return { settings, projects, tasks, permissions, layout, continuity, assistant }
+    } catch (error: unknown) {
+      releaseAgentDataLock?.()
+      releaseAgentDataLock = undefined
       if (!(error instanceof StateLoadError)) throw error
-      const result = await dialog.showMessageBox({type:'error',title:'BMW 无法读取保存的数据',message:'保存的数据暂时不可读，或格式不受支持。原文件已保留。',detail:error.message,buttons:['重试','退出'],defaultId:0,cancelId:1,noLink:true})
-      if (result.response !== 0) {app.quit();return undefined}
+      const result = await dialog.showMessageBox({
+        type: 'error',
+        title: 'BMW 无法读取保存的数据',
+        message: '保存的数据暂时不可读，或格式不受支持。原文件已保留。',
+        detail: error.message,
+        buttons: ['重试', '退出'],
+        defaultId: 0,
+        cancelId: 1,
+        noLink: true
+      })
+      if (result.response !== 0) {
+        app.quit()
+        return undefined
+      }
     }
   }
 }
@@ -966,7 +1321,10 @@ async function createApp() {
   bmwSession = persistentSession
   const stores = await loadStartupStores()
   if (!stores || appQuitting) return
-  qwenCredentialsStore=new QwenCredentialsStore(path.join(app.getPath('userData'),'qwen-tts-credentials.enc'),safeStorage)
+  qwenCredentialsStore = new QwenCredentialsStore(
+    path.join(app.getPath('userData'), 'qwen-tts-credentials.enc'),
+    safeStorage
+  )
   settingsStore = stores.settings
   projectStore = stores.projects
   scheduledTaskStore = stores.tasks
@@ -1011,7 +1369,7 @@ async function createApp() {
     }
   })
   shellView.webContents.on('will-navigate', event => event.preventDefault())
-  shellView.webContents.setWindowOpenHandler(() => ({action: 'deny'}))
+  shellView.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
   shellView.setBackgroundColor('#00000000')
   mainWindow.contentView.addChildView(shellView)
 
@@ -1024,8 +1382,8 @@ async function createApp() {
       nodeIntegration: false
     }
   })
-  agentView.webContents.on('will-navigate',event=>event.preventDefault())
-  agentView.webContents.setWindowOpenHandler(()=>({action:'deny'}))
+  agentView.webContents.on('will-navigate', event => event.preventDefault())
+  agentView.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
   agentView.webContents.on('did-finish-load', () => {
     void productFeatureRuntime?.onAgentLoaded?.()
     publishAssistantState()
@@ -1040,11 +1398,11 @@ async function createApp() {
     settingsStore,
     capabilityRegistry: browserCapabilities,
     getCurrentSessionId: () => selectedSession(projectStore.active()),
-    getSessionDriver: sessionId => assistantService.conversations.get(sessionId,projectStore.active().id).driverId,
+    getSessionDriver: sessionId => assistantService.conversations.get(sessionId, projectStore.active().id).driverId,
     allowedActions: browserCapabilities.allowedActions,
     artifactsDirectory: path.join(app.getPath('userData'), 'artifacts'),
     pageTheme: nativeTheme.shouldUseDarkColors ? 'dark' : 'light',
-    onState: (state) => {
+    onState: state => {
       sendToShell('browser-state', state)
       layout()
       raiseProjectPanel()
@@ -1053,27 +1411,72 @@ async function createApp() {
 
   mediaController = new MediaController({
     session: persistentSession,
-    getQwenCredentials:()=>qwenCredentialsStore.read(),
+    getQwenCredentials: () => qwenCredentialsStore.read(),
     preloadPath: path.join(projectDirectory, 'packages/media-native/src/preload/media-preload.cjs'),
     pagePath: path.join(projectDirectory, 'packages/media-native/src/media/media.html'),
     artifactsDirectory: path.join(app.getPath('userData'), 'artifacts'),
     resolveArtifactsDirectory: () => path.join(projectStore.active().directory, 'artifacts'),
-    onStatus: (state) => {sendToShell('media-status', state);productFeatureRuntime?.onMediaStatus?.(state)}
+    onStatus: state => {
+      sendToShell('media-status', state)
+      productFeatureRuntime?.onMediaStatus?.(state)
+    }
   })
-  mediaController.configureDisplayMedia(request=>{const contents=electronWebContents.fromFrame(request.frame);return contents!==null&&(browserKernel.ownsCollectionWebContents(contents)||[...collectionBrowsers].some(kernel=>kernel.ownsWebContents(contents)))})
-  browserKernel.beforeUserTask=raw=>passiveCollectionUserRead(raw)?undefined:assistantService?.host.yieldBackground()
+  mediaController.configureDisplayMedia(request => {
+    const contents = electronWebContents.fromFrame(request.frame)
+    return (
+      contents !== null &&
+      (browserKernel.ownsCollectionWebContents(contents) ||
+        [...collectionBrowsers].some(kernel => kernel.ownsWebContents(contents)))
+    )
+  })
+  browserKernel.beforeUserTask = raw =>
+    passiveCollectionUserRead(raw) ? undefined : assistantService?.host.yieldBackground()
   browserKernel.setRecordingController(mediaController)
-  browserKernel.projectSources=()=>{const project=projectStore.active();return new ProjectSourceStore(project.directory,project.id)}
-  browserKernel.capturedVideoOrigin=async(owner,artifactId,signal)=>{const project=projectStore.active();if(project.id!==owner.projectId||!assistantService)throw new Error('Capture origin Project is unavailable.');const row=assistantService.conversations.get(owner.sessionId,owner.projectId);assistantService.history.validateBinding(row);const result=await historicalCaptureOrigin(assistantService.history.snapshot(owner.sessionId),owner,path.join(project.directory,'artifacts'),artifactId,signal);if(projectStore.active().id!==project.id)throw new Error('Capture origin Project changed.');return result}
+  browserKernel.projectSources = () => {
+    const project = projectStore.active()
+    return new ProjectSourceStore(project.directory, project.id)
+  }
+  browserKernel.capturedVideoOrigin = async (owner, artifactId, signal) => {
+    const project = projectStore.active()
+    if (project.id !== owner.projectId || !assistantService) throw new Error('Capture origin Project is unavailable.')
+    const row = assistantService.conversations.get(owner.sessionId, owner.projectId)
+    assistantService.history.validateBinding(row)
+    const result = await historicalCaptureOrigin(
+      assistantService.history.snapshot(owner.sessionId),
+      owner,
+      path.join(project.directory, 'artifacts'),
+      artifactId,
+      signal
+    )
+    if (projectStore.active().id !== project.id) throw new Error('Capture origin Project changed.')
+    return result
+  }
   scheduledTaskManager = new ScheduledTaskManager({
     store: scheduledTaskStore,
-    canStart:task=>task.intervalMinutes!==60||(backgroundWorkReason('hourly',task.projectId)??true),
+    canStart: task => task.intervalMinutes !== 60 || (backgroundWorkReason('hourly', task.projectId) ?? true),
     execute: executeScheduledTask,
     onRun: notifyScheduledTaskRun
   })
   browserKernel.setScheduledTaskManager(scheduledTaskManager)
   productFeatureRuntime?.configure?.({
-    assistantTasks:assistantTasks({get host(){return assistantService.host},get history(){return assistantService.history},get conversations(){return assistantService.conversations},model:id=>assistantService.preferences.model(id),owner:()=>{const projectId=projectStore.active().id,sessionId=selectedSession(projectStore.active());return sessionId?{projectId,sessionId}:null},changing:()=>bridge?.changingProject===true}),
+    assistantTasks: assistantTasks({
+      get host() {
+        return assistantService.host
+      },
+      get history() {
+        return assistantService.history
+      },
+      get conversations() {
+        return assistantService.conversations
+      },
+      model: id => assistantService.preferences.model(id),
+      owner: () => {
+        const projectId = projectStore.active().id,
+          sessionId = selectedSession(projectStore.active())
+        return sessionId ? { projectId, sessionId } : null
+      },
+      changing: () => bridge?.changingProject === true
+    }),
     projectStore,
     browserKernel: assertBrowserFeatureHost(browserKernel),
     mediaController,
@@ -1085,78 +1488,202 @@ async function createApp() {
     getAgentWebContents: () => agentView?.webContents,
     getAgentUrl: () => pathToFileURL(agentAssembly.pagePath).href,
     getCurrentSessionId: () => selectedSession(projectStore.active()),
-    collectionRuntime:{
-      yield:()=>assistantService.host.yieldBackground(),
-      binding:()=>{const projectId=projectStore.active().id,sessionId=selectedSession(projectStore.active());return sessionId?{projectId,sessionId,driverId:assistantService.conversations.get(sessionId,projectId).driverId}:null},
-      anchor:binding=>{const row=assistantService.conversations.get(binding.sessionId,binding.projectId);if(row.archivedAt!==null||row.driverId!==binding.driverId)throw new Error('Collection anchor binding changed');return row.externalSessionId},
-      available:binding=>{
-        const project=projectStore.get(binding.projectId,{includeArchived:false})
-        if(!project)return 'Project 已归档或不可用'
-        const row=assistantService.conversations.get(binding.sessionId,binding.projectId)
-        if(row.archivedAt!==null||row.driverId!==binding.driverId)throw new Error('采集 Session 或驱动绑定已失效；请显式修复计划')
-        if(assistantService.history.snapshot(binding.sessionId).receipts.some(r=>r.state==='unknown'))throw new Error('绑定 Session 有不确定输入；请先核对并显式恢复')
-        if(!permissionStore.hasAgentControl())return '等待用户启用 Agent 浏览器控制'
-        const reason=backgroundWorkReason('collection',binding.projectId);if(reason)return '等待后台准入：'+reason
+    collectionRuntime: {
+      yield: () => assistantService.host.yieldBackground(),
+      binding: () => {
+        const projectId = projectStore.active().id,
+          sessionId = selectedSession(projectStore.active())
+        return sessionId
+          ? { projectId, sessionId, driverId: assistantService.conversations.get(sessionId, projectId).driverId }
+          : null
+      },
+      anchor: binding => {
+        const row = assistantService.conversations.get(binding.sessionId, binding.projectId)
+        if (row.archivedAt !== null || row.driverId !== binding.driverId)
+          throw new Error('Collection anchor binding changed')
+        return row.externalSessionId
+      },
+      available: binding => {
+        const project = projectStore.get(binding.projectId, { includeArchived: false })
+        if (!project) return 'Project 已归档或不可用'
+        const row = assistantService.conversations.get(binding.sessionId, binding.projectId)
+        if (row.archivedAt !== null || row.driverId !== binding.driverId)
+          throw new Error('采集 Session 或驱动绑定已失效；请显式修复计划')
+        if (assistantService.history.snapshot(binding.sessionId).receipts.some(r => r.state === 'unknown'))
+          throw new Error('绑定 Session 有不确定输入；请先核对并显式恢复')
+        if (!permissionStore.hasAgentControl()) return '等待用户启用 Agent 浏览器控制'
+        const reason = backgroundWorkReason('collection', binding.projectId)
+        if (reason) return '等待后台准入：' + reason
         return null
       },
-      enqueue:(binding,text,collectionRunId)=>{
+      enqueue: (binding, text, collectionRunId) => {
         // Synchronous check and receipt admission: a user input cannot slip between them.
-        const reason=backgroundWorkReason('collection',binding.projectId);if(reason)return {accepted:false,reason:'等待后台准入：'+reason}
-        if(!collectionRunId||!configureCollectionBrowser||!projectStore.get(binding.projectId,{includeArchived:false}))return {accepted:false,reason:'采集执行域不可用'}
-        const row=assistantService.conversations.get(binding.sessionId,binding.projectId)
-        if(row.archivedAt!==null||row.driverId!==binding.driverId||assistantService.history.snapshot(binding.sessionId).receipts.some(r=>r.state==='unknown'))return {accepted:false,reason:'采集绑定需要核对'}
-        const dispatchId=assistantService.host.enqueueBackground(binding,text).runId
+        const reason = backgroundWorkReason('collection', binding.projectId)
+        if (reason) return { accepted: false, reason: '等待后台准入：' + reason }
+        if (
+          !collectionRunId ||
+          !configureCollectionBrowser ||
+          !projectStore.get(binding.projectId, { includeArchived: false })
+        )
+          return { accepted: false, reason: '采集执行域不可用' }
+        const row = assistantService.conversations.get(binding.sessionId, binding.projectId)
+        if (
+          row.archivedAt !== null ||
+          row.driverId !== binding.driverId ||
+          assistantService.history.snapshot(binding.sessionId).receipts.some(r => r.state === 'unknown')
+        )
+          return { accepted: false, reason: '采集绑定需要核对' }
+        const dispatchId = assistantService.host.enqueueBackground(binding, text).runId
         backgroundAdmission.admitted('collection')
-        backgroundDiagnostic({kind:'collection',stage:'admitted',projectId:binding.projectId,sessionId:binding.sessionId,runId:collectionRunId,dispatchId})
-        collectionInputs.set(dispatchId,{binding:{...binding},runId:collectionRunId})
-        void assistantService.host.wait(dispatchId).catch(()=>{}).finally(()=>{if(!assistantService.host.ownsRun(dispatchId))collectionInputs.delete(dispatchId)})
-        return {accepted:true,dispatchId}
+        backgroundDiagnostic({
+          kind: 'collection',
+          stage: 'admitted',
+          projectId: binding.projectId,
+          sessionId: binding.sessionId,
+          runId: collectionRunId,
+          dispatchId
+        })
+        collectionInputs.set(dispatchId, { binding: { ...binding }, runId: collectionRunId })
+        void assistantService.host
+          .wait(dispatchId)
+          .catch(() => {})
+          .finally(() => {
+            if (!assistantService.host.ownsRun(dispatchId)) collectionInputs.delete(dispatchId)
+          })
+        return { accepted: true, dispatchId }
       },
-      recoverable:binding=>{const row=assistantService.conversations.get(binding.sessionId,binding.projectId);return row.driverId===binding.driverId&&projectStore.active().id===binding.projectId&&!assistantService.host.busy&&!bridge?.busy&&!bridge?.changingProject&&!scheduledExecutionProjectId&&!mediaController.isCaptureActive()},
-      receipt:(binding,dispatchId)=>{
-        const row=assistantService.conversations.get(binding.sessionId,binding.projectId)
-        if(row.driverId!==binding.driverId)throw new Error('Collection receipt driver mismatch')
-        const receipt=assistantService.history.snapshot(binding.sessionId).receipts.find(r=>r.runId===dispatchId),drained=!assistantService.host.ownsRun(dispatchId)
-        return {state:!receipt?'missing':receipt.state==='unknown'?'uncertain':!drained?'active':receipt.state==='finished'?(receipt.outcome==='success'?'success':receipt.outcome==='interrupted'?'interrupted':'failed'):'uncertain',drained}
+      recoverable: binding => {
+        const row = assistantService.conversations.get(binding.sessionId, binding.projectId)
+        return (
+          row.driverId === binding.driverId &&
+          projectStore.active().id === binding.projectId &&
+          !assistantService.host.busy &&
+          !bridge?.busy &&
+          !bridge?.changingProject &&
+          !scheduledExecutionProjectId &&
+          !mediaController.isCaptureActive()
+        )
       },
-      cancel:async(binding,dispatchId)=>{const row=assistantService.conversations.get(binding.sessionId,binding.projectId);if(row.driverId!==binding.driverId)throw new Error('Collection cleanup driver mismatch');await assistantService.host.cancelBackground(dispatchId)},
-      recover:async(binding,dispatchId)=>{
-        const row=assistantService.conversations.get(binding.sessionId,binding.projectId)
-        if(row.driverId!==binding.driverId||!assistantService.host.isBackground(dispatchId)||!collectionScopeKernels.has(dispatchId))throw new Error('Exact background collection cleanup is unavailable; inspect the original receipt')
+      receipt: (binding, dispatchId) => {
+        const row = assistantService.conversations.get(binding.sessionId, binding.projectId)
+        if (row.driverId !== binding.driverId) throw new Error('Collection receipt driver mismatch')
+        const receipt = assistantService.history.snapshot(binding.sessionId).receipts.find(r => r.runId === dispatchId),
+          drained = !assistantService.host.ownsRun(dispatchId)
+        return {
+          state: !receipt
+            ? 'missing'
+            : receipt.state === 'unknown'
+              ? 'uncertain'
+              : !drained
+                ? 'active'
+                : receipt.state === 'finished'
+                  ? receipt.outcome === 'success'
+                    ? 'success'
+                    : receipt.outcome === 'interrupted'
+                      ? 'interrupted'
+                      : 'failed'
+                  : 'uncertain',
+          drained
+        }
+      },
+      cancel: async (binding, dispatchId) => {
+        const row = assistantService.conversations.get(binding.sessionId, binding.projectId)
+        if (row.driverId !== binding.driverId) throw new Error('Collection cleanup driver mismatch')
+        await assistantService.host.cancelBackground(dispatchId)
+      },
+      recover: async (binding, dispatchId) => {
+        const row = assistantService.conversations.get(binding.sessionId, binding.projectId)
+        if (
+          row.driverId !== binding.driverId ||
+          !assistantService.host.isBackground(dispatchId) ||
+          !collectionScopeKernels.has(dispatchId)
+        )
+          throw new Error('Exact background collection cleanup is unavailable; inspect the original receipt')
         await collectionScopeKernels.get(dispatchId)!.recoverCollectionPages()
         await assistantService.host.recover()
-        if(assistantService.host.ownsRun(dispatchId))throw new Error('Background collection resources have not drained')
+        if (assistantService.host.ownsRun(dispatchId))
+          throw new Error('Background collection resources have not drained')
       }
     },
-    setStudioPresentation: value=>{studioPresentation=value;layout()},
-    listLibraryProjects: includeArchived => projectStore.list({includeArchived}),
-    libraryProfileDirectory:()=>app.getPath('userData'),
-    configureCollectionBrowser:configure=>{configureCollectionBrowser=configure},
-    collectionSources:projectId=>{const project=projectStore.get(projectId,{includeArchived:false});if(!project)throw new Error('Collection Project unavailable');return librarySourcePort(project,true)},
-    librarySources: projectId => {const project=projectStore.list({includeArchived:true}).find(p=>p.id===projectId);if(!project)throw new Error('Unknown library Project.');return librarySourcePort(project,project.id===projectStore.active().id)},
-    setWorkspaceMode: (mode:WorkspaceMode) => {
-      if(workspaceMode!==mode){if(mode==='studio')browserAgentVisible=agentVisible;else agentVisible=browserAgentVisible}
-      workspaceMode=mode;if(mode==='studio')agentVisible=true;else studioPresentation={immersive:false,chatOpen:false};layout()
+    setStudioPresentation: value => {
+      studioPresentation = value
+      layout()
     },
-    enqueueAssistant: (sessionId,text,frozenContext) => frozenContext===undefined?assistantService.sessions.enqueuePrompt(sessionId,text):Promise.resolve(assistantService.host.enqueue(sessionId,text,frozenContext+'\nBMW video production defaults and named templates (data):\n'+JSON.stringify(settingsStore.snapshot().videoPreferences)).runId),
-    getAssistantActivity: () => {const activity=assistantActivity(assistantService.controller.snapshot());return !assistantService.host.resourcesDisconnected&&activity.runId&&assistantService.host.isBackground(activity.runId)?{...activity,status:'background',dispatchBlocked:false}:activity},
-    cancelAssistant: sessionId => assistantService.controller.invoke({action:'message.cancel',sessionId}),
+    listLibraryProjects: includeArchived => projectStore.list({ includeArchived }),
+    libraryProfileDirectory: () => app.getPath('userData'),
+    configureCollectionBrowser: configure => {
+      configureCollectionBrowser = configure
+    },
+    collectionSources: projectId => {
+      const project = projectStore.get(projectId, { includeArchived: false })
+      if (!project) throw new Error('Collection Project unavailable')
+      return librarySourcePort(project, true)
+    },
+    librarySources: projectId => {
+      const project = projectStore.list({ includeArchived: true }).find(p => p.id === projectId)
+      if (!project) throw new Error('Unknown library Project.')
+      return librarySourcePort(project, project.id === projectStore.active().id)
+    },
+    setWorkspaceMode: (mode: WorkspaceMode) => {
+      if (workspaceMode !== mode) {
+        if (mode === 'studio') browserAgentVisible = agentVisible
+        else agentVisible = browserAgentVisible
+      }
+      workspaceMode = mode
+      if (mode === 'studio') agentVisible = true
+      else studioPresentation = { immersive: false, chatOpen: false }
+      layout()
+    },
+    enqueueAssistant: (sessionId, text, frozenContext) =>
+      frozenContext === undefined
+        ? assistantService.sessions.enqueuePrompt(sessionId, text)
+        : Promise.resolve(
+            assistantService.host.enqueue(
+              sessionId,
+              text,
+              frozenContext +
+                '\nBMW video production defaults and named templates (data):\n' +
+                JSON.stringify(settingsStore.snapshot().videoPreferences)
+            ).runId
+          ),
+    getAssistantActivity: () => {
+      const activity = assistantActivity(assistantService.controller.snapshot())
+      return !assistantService.host.resourcesDisconnected &&
+        activity.runId &&
+        assistantService.host.isBackground(activity.runId)
+        ? { ...activity, status: 'background', dispatchBlocked: false }
+        : activity
+    },
+    cancelAssistant: sessionId => assistantService.controller.invoke({ action: 'message.cancel', sessionId }),
     sendToAgent,
     sendToShell,
     synchronizeAgentProject,
-    selectAgentSession:sessionId=>selectAgentSession(projectStore.active(),sessionId),
+    selectAgentSession: sessionId => selectAgentSession(projectStore.active(), sessionId),
     activateProject,
     revealAgent: () => {
-      if(workspaceMode==='studio'&&studioPresentation.immersive)studioPresentation={...studioPresentation,chatOpen:true}
+      if (workspaceMode === 'studio' && studioPresentation.immersive)
+        studioPresentation = { ...studioPresentation, chatOpen: true }
       agentVisible = true
       layoutStore.update({ visible: true })
       layout()
     }
   })
 
-  persistentSession.on('will-download',(event,_item,contents)=>{if(browserKernel.ownsCollectionWebContents(contents)||[...collectionBrowsers].some(kernel=>kernel.ownsWebContents(contents)))event.preventDefault()})
+  persistentSession.on('will-download', (event, _item, contents) => {
+    if (
+      browserKernel.ownsCollectionWebContents(contents) ||
+      [...collectionBrowsers].some(kernel => kernel.ownsWebContents(contents))
+    )
+      event.preventDefault()
+  })
   persistentSession.setPermissionRequestHandler((webContents, permission, callback, details) => {
-    if(browserKernel.ownsCollectionWebContents(webContents)||[...collectionBrowsers].some(kernel=>kernel.ownsWebContents(webContents))){callback(false);return}
+    if (
+      browserKernel.ownsCollectionWebContents(webContents) ||
+      [...collectionBrowsers].some(kernel => kernel.ownsWebContents(webContents))
+    ) {
+      callback(false)
+      return
+    }
     const disposition = sitePermissionDisposition(permission)
     if (disposition === 'allow') {
       callback(true)
@@ -1174,56 +1701,149 @@ async function createApp() {
   await shellView.webContents.loadFile(path.join(sourceDirectory, 'renderer/shell.html'))
   await browserKernel.initialize()
   if (appQuitting) return
-  bridge = await createBridgeServer(browserKernel, { productId: productDefinition.id,
-    resolveProject: (directory) => projectStore.list().find((project) => fs.realpathSync(project.directory) === fs.realpathSync(directory)),
+  bridge = await createBridgeServer(browserKernel, {
+    productId: productDefinition.id,
+    resolveProject: directory =>
+      projectStore.list().find(project => fs.realpathSync(project.directory) === fs.realpathSync(directory)),
     toolDefinition: browserCapabilities.toolDefinition(),
     activeProjectId: () => projectStore.active().id,
-    sessionContext: async (sessionId,projectId) => {const frozen=assistantService?.host.activeContext(sessionId,projectId);if(frozen!==null&&frozen!==undefined)return {text:frozen};const context=await productFeatureRuntime?.contextForSession?.(sessionId,projectId)??{text:''};return {text:context.text+'\nBMW video production defaults and named templates (data):\n'+JSON.stringify(settingsStore.snapshot().videoPreferences)}}
+    sessionContext: async (sessionId, projectId) => {
+      const frozen = assistantService?.host.activeContext(sessionId, projectId)
+      if (frozen !== null && frozen !== undefined) return { text: frozen }
+      const context = (await productFeatureRuntime?.contextForSession?.(sessionId, projectId)) ?? { text: '' }
+      return {
+        text:
+          context.text +
+          '\nBMW video production defaults and named templates (data):\n' +
+          JSON.stringify(settingsStore.snapshot().videoPreferences)
+      }
+    }
   })
 
-  assistantService=new AssistantService({assembly:agentAssembly,stores:stores.assistant,userDataDirectory:app.getPath('userData'),nodeExecutable:process.execPath,
-      mcpServerPath:path.join(projectDirectory,'packages/browser-capability/src/browser-mcp-server.js'),definition:browserCapabilities.toolDefinition(),bridge,
-      backgroundScope:request=>{
-        const input=collectionInputs.get(request.runId)
-        if(!input||!configureCollectionBrowser)throw new Error('Background input has no explicit collection binding')
-        const {binding,runId}=input,project={...request.project}
-        const valid=()=>{const current=projectStore.get(binding.projectId,{includeArchived:false}),row=assistantService.conversations.get(binding.sessionId,binding.projectId);return !request.signal.aborted&&current?.directory===project.directory&&row.archivedAt===null&&row.driverId===binding.driverId&&permissionStore.hasAgentControl()}
-        const kernel=new BrowserKernel({detached:true,window:mainWindow,session:persistentSession,permissionStore,sessionContinuity:undefined,projectStore:{active:()=>project},settingsStore,capabilityRegistry:browserCapabilities,allowedActions:undefined,artifactsDirectory:path.join(project.directory,'artifacts'),onState:undefined,getCurrentSessionId:()=>binding.sessionId,getSessionDriver:()=>binding.driverId})
-        kernel.recordingController=mediaController
-        const assertLease=configureCollectionBrowser(binding,runId,kernel as unknown as BrowserFeatureHost)
-        // A background Project may differ from the active GUI Project. Never
-        // resolve its media through the foreground controller's directory.
-        const collectionMedia=kernel.libraryCollecting?new MediaController({session:persistentSession,preloadPath:path.join(projectDirectory,'packages/media-native/src/preload/media-preload.cjs'),pagePath:path.join(projectDirectory,'packages/media-native/src/media/media.html'),artifactsDirectory:path.join(project.directory,'artifacts'),resolveArtifactsDirectory:()=>path.join(project.directory,'artifacts'),onStatus:()=>{}}):undefined
-        if(collectionMedia)kernel.recordingController=collectionMedia
-        kernel.projectSources=()=>collectionSourcePort(project,()=>{if(!valid())throw new Error('Background source lease ended');assertLease()},Boolean(kernel.libraryCollecting))
-        collectionBrowsers.add(kernel)
-        collectionScopeKernels.set(request.runId,kernel)
-        const scope=new BackgroundCollectionScope(kernel,valid,assertLease)
-        return {executor:scope.executor,valid:()=>scope.valid(),close:async()=>{await scope.close();await collectionMedia?.stop();collectionBrowsers.delete(kernel);collectionInputs.delete(request.runId);collectionScopeKernels.delete(request.runId)}}
-      },
-      currentProject:()=>projectStore.active(),getProjects:()=>projectStore.list(),
-      context:async(sessionId,projectId)=>{const context=await productFeatureRuntime?.contextForSession?.(sessionId,projectId)??{text:''};return context.text+'\nBMW video production defaults and named templates (data):\n'+JSON.stringify(settingsStore.snapshot().videoPreferences)},
-      transition:async operation=>{
-        await assistantService.host.yieldBackground()
-        if(assistantService.host.busy||scheduledExecutionProjectId||mediaController.isCaptureActive())throw new Error('Finish the active BMW operation before changing conversations')
-        await productFeatureRuntime?.onSessionWillChange?.()
-        await bridge.changeProject(async()=>{if(assistantService.host.busy)throw new Error('Agent became busy during conversation change');await operation()})
-      },
-      onSelection:async()=>{await productFeatureRuntime?.onSessionChanged?.();await publishAssistantSelection()},onState:publishAssistantState,openExternal:url=>shell.openExternal(url)
-    })
-    const assistantHandle=createShellIpcRegistrar(ipcMain,()=>agentView?.webContents,pathToFileURL(agentAssembly.pagePath).href)
-    assistantHandle('bmw-assistant-command',async(_event,command:unknown)=>{
-      const result=await assistantService.controller.invoke(command);publishAssistantState();return result
-    })
+  assistantService = new AssistantService({
+    assembly: agentAssembly,
+    stores: stores.assistant,
+    userDataDirectory: app.getPath('userData'),
+    nodeExecutable: process.execPath,
+    mcpServerPath: path.join(projectDirectory, 'packages/browser-capability/src/browser-mcp-server.js'),
+    definition: browserCapabilities.toolDefinition(),
+    bridge,
+    backgroundScope: request => {
+      const input = collectionInputs.get(request.runId)
+      if (!input || !configureCollectionBrowser) throw new Error('Background input has no explicit collection binding')
+      const { binding, runId } = input,
+        project = { ...request.project }
+      const valid = () => {
+        const current = projectStore.get(binding.projectId, { includeArchived: false }),
+          row = assistantService.conversations.get(binding.sessionId, binding.projectId)
+        return (
+          !request.signal.aborted &&
+          current?.directory === project.directory &&
+          row.archivedAt === null &&
+          row.driverId === binding.driverId &&
+          permissionStore.hasAgentControl()
+        )
+      }
+      const kernel = new BrowserKernel({
+        detached: true,
+        window: mainWindow,
+        session: persistentSession,
+        permissionStore,
+        sessionContinuity: undefined,
+        projectStore: { active: () => project },
+        settingsStore,
+        capabilityRegistry: browserCapabilities,
+        allowedActions: undefined,
+        artifactsDirectory: path.join(project.directory, 'artifacts'),
+        onState: undefined,
+        getCurrentSessionId: () => binding.sessionId,
+        getSessionDriver: () => binding.driverId
+      })
+      kernel.recordingController = mediaController
+      const assertLease = configureCollectionBrowser(binding, runId, kernel as unknown as BrowserFeatureHost)
+      // A background Project may differ from the active GUI Project. Never
+      // resolve its media through the foreground controller's directory.
+      const collectionMedia = kernel.libraryCollecting
+        ? new MediaController({
+            session: persistentSession,
+            preloadPath: path.join(projectDirectory, 'packages/media-native/src/preload/media-preload.cjs'),
+            pagePath: path.join(projectDirectory, 'packages/media-native/src/media/media.html'),
+            artifactsDirectory: path.join(project.directory, 'artifacts'),
+            resolveArtifactsDirectory: () => path.join(project.directory, 'artifacts'),
+            onStatus: () => {}
+          })
+        : undefined
+      if (collectionMedia) kernel.recordingController = collectionMedia
+      kernel.projectSources = () =>
+        collectionSourcePort(
+          project,
+          () => {
+            if (!valid()) throw new Error('Background source lease ended')
+            assertLease()
+          },
+          Boolean(kernel.libraryCollecting)
+        )
+      collectionBrowsers.add(kernel)
+      collectionScopeKernels.set(request.runId, kernel)
+      const scope = new BackgroundCollectionScope(kernel, valid, assertLease)
+      return {
+        executor: scope.executor,
+        valid: () => scope.valid(),
+        close: async () => {
+          await scope.close()
+          await collectionMedia?.stop()
+          collectionBrowsers.delete(kernel)
+          collectionInputs.delete(request.runId)
+          collectionScopeKernels.delete(request.runId)
+        }
+      }
+    },
+    currentProject: () => projectStore.active(),
+    getProjects: () => projectStore.list(),
+    context: async (sessionId, projectId) => {
+      const context = (await productFeatureRuntime?.contextForSession?.(sessionId, projectId)) ?? { text: '' }
+      return (
+        context.text +
+        '\nBMW video production defaults and named templates (data):\n' +
+        JSON.stringify(settingsStore.snapshot().videoPreferences)
+      )
+    },
+    transition: async operation => {
+      await assistantService.host.yieldBackground()
+      if (assistantService.host.busy || scheduledExecutionProjectId || mediaController.isCaptureActive())
+        throw new Error('Finish the active BMW operation before changing conversations')
+      await productFeatureRuntime?.onSessionWillChange?.()
+      await bridge.changeProject(async () => {
+        if (assistantService.host.busy) throw new Error('Agent became busy during conversation change')
+        await operation()
+      })
+    },
+    onSelection: async () => {
+      await productFeatureRuntime?.onSessionChanged?.()
+      await publishAssistantSelection()
+    },
+    onState: publishAssistantState,
+    openExternal: url => shell.openExternal(url)
+  })
+  const assistantHandle = createShellIpcRegistrar(
+    ipcMain,
+    () => agentView?.webContents,
+    pathToFileURL(agentAssembly.pagePath).href
+  )
+  assistantHandle('bmw-assistant-command', async (_event, command: unknown) => {
+    const result = await assistantService.controller.invoke(command)
+    publishAssistantState()
+    return result
+  })
   mainWindow.on('resize', layout)
-  mainWindow.on('close', (event) => {
+  mainWindow.on('close', event => {
     if (process.platform !== 'darwin' || appQuitting) return
     event.preventDefault()
     overlayWindow?.hide()
     mainWindow.hide()
   })
   mainWindow.on('closed', () => {
-    void stopApplicationServices().catch(error=>console.error('BMW service cleanup failed',error))
+    void stopApplicationServices().catch(error => console.error('BMW service cleanup failed', error))
   })
 
   try {
@@ -1232,37 +1852,64 @@ async function createApp() {
     const activeProject = projectStore.active()
     await synchronizeAgentProject(activeProject, { activate: true })
     await productFeatureRuntime?.onAgentStarted?.(activeProject)
-    for (const project of projectStore.list().filter((candidate) => candidate.id !== activeProject.id)) {
-      await synchronizeAgentProject(project).catch((error) => console.error(`Failed to synchronize Agent workspace for ${project.name}`, error))
+    for (const project of projectStore.list().filter(candidate => candidate.id !== activeProject.id)) {
+      await synchronizeAgentProject(project).catch(error =>
+        console.error(`Failed to synchronize Agent workspace for ${project.name}`, error)
+      )
     }
     await publishAssistantSelection()
     scheduledTaskManager.start()
     layout()
-    if(process.env.BMW_OPEN_STUDIO==='1')await productFeatureRuntime?.openPanel?.('video-studio')
+    if (process.env.BMW_OPEN_STUDIO === '1') await productFeatureRuntime?.openPanel?.('video-studio')
   } catch (error) {
     if (appQuitting) return
     sendToShell('agent-status', { state: 'error', message: error.message })
-    const escape=(value:string)=>value.replace(/[&<>"']/g,character=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]))
-    await agentView.webContents.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent('<style>body{font:14px system-ui;background:#111827;color:#e5e7eb;padding:24px}</style><h2>'+escape('BMW Assistant')+' did not start</h2><p>'+escape(error.message)+'</p><p>'+escape(PRODUCT_NAME)+' browser mode remains available.</p>'))
+    const escape = (value: string) =>
+      value.replace(
+        /[&<>"']/g,
+        character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]
+      )
+    await agentView.webContents.loadURL(
+      'data:text/html;charset=utf-8,' +
+        encodeURIComponent(
+          '<style>body{font:14px system-ui;background:#111827;color:#e5e7eb;padding:24px}</style><h2>' +
+            escape('BMW Assistant') +
+            ' did not start</h2><p>' +
+            escape(error.message) +
+            '</p><p>' +
+            escape(PRODUCT_NAME) +
+            ' browser mode remains available.</p>'
+        )
+    )
   }
 }
 
 export function createBmwApplication(definition: ResolvedProductDefinition, assembly: AgentApplicationAssembly) {
-  if(!assembly?.createBackends||!assembly.pagePath||!assembly.preloadPath)throw new Error('The owned BMW Assistant assembly is required.')
+  if (!assembly?.createBackends || !assembly.pagePath || !assembly.preloadPath)
+    throw new Error('The owned BMW Assistant assembly is required.')
   if (productDefinition) throw new Error('BMW product application is already configured.')
-  agentAssembly=assembly
+  agentAssembly = assembly
   productDefinition = defineProduct(definition)
   PRODUCT_NAME = definition.name
   if (process.env.BMW_USER_DATA_DIR) {
     const isolatedUserData = path.resolve(process.env.BMW_USER_DATA_DIR)
     fs.mkdirSync(isolatedUserData, { recursive: true, mode: 0o700 })
     app.setPath('userData', isolatedUserData)
-
   }
   app.setName(PRODUCT_NAME)
-  configureNetworkStartup(path.join(app.getPath('userData'),'global-settings.json'),name=>app.commandLine.appendSwitch(name))
+  configureNetworkStartup(path.join(app.getPath('userData'), 'global-settings.json'), name =>
+    app.commandLine.appendSwitch(name)
+  )
   app.userAgentFallback = browserCompatibleUserAgent(app.userAgentFallback)
-  app.whenReady().then(createApp).catch((error:unknown)=>{if(appQuitting)return;console.error('BMW startup failed',error);dialog.showErrorBox('BMW 启动失败',error instanceof Error?error.message:String(error));app.quit()})
+  app
+    .whenReady()
+    .then(createApp)
+    .catch((error: unknown) => {
+      if (appQuitting) return
+      console.error('BMW startup failed', error)
+      dialog.showErrorBox('BMW 启动失败', error instanceof Error ? error.message : String(error))
+      app.quit()
+    })
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit()
   })
@@ -1271,18 +1918,35 @@ export function createBmwApplication(definition: ResolvedProductDefinition, asse
     mainWindow.show()
     layout()
   })
-  let cleanupFinished=false,quitCleanup:Promise<void>|undefined
+  let cleanupFinished = false,
+    quitCleanup: Promise<void> | undefined
   app.on('before-quit', event => {
-    if(cleanupFinished)return
+    if (cleanupFinished) return
     event.preventDefault()
-    if(quitCleanup)return
-    appQuitting=true
-    quitCleanup=(async()=>{
-      for(;;){
-        try{await stopApplicationServices();cleanupFinished=true;app.quit();return}
-        catch(error:unknown){
-          const choice=await dialog.showMessageBox({type:'error',title:'BMW 尚未完成资源清理',message:'退出前未能确认 Agent 和浏览器任务已停止。',detail:error instanceof Error?error.message:'资源清理失败',buttons:['重试清理','强制退出'],defaultId:0,cancelId:0,noLink:true})
-          if(choice.response===1){app.exit(1);return}
+    if (quitCleanup) return
+    appQuitting = true
+    quitCleanup = (async () => {
+      for (;;) {
+        try {
+          await stopApplicationServices()
+          cleanupFinished = true
+          app.quit()
+          return
+        } catch (error: unknown) {
+          const choice = await dialog.showMessageBox({
+            type: 'error',
+            title: 'BMW 尚未完成资源清理',
+            message: '退出前未能确认 Agent 和浏览器任务已停止。',
+            detail: error instanceof Error ? error.message : '资源清理失败',
+            buttons: ['重试清理', '强制退出'],
+            defaultId: 0,
+            cancelId: 0,
+            noLink: true
+          })
+          if (choice.response === 1) {
+            app.exit(1)
+            return
+          }
         }
       }
     })()

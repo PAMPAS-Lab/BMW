@@ -11,7 +11,7 @@ export const workbuddyModelAllowlist: readonly string[] = [
   'deepseek-v4.1-flash',
   'glm-5.3',
   'glm-5.3-flash',
-  'kimi-k2.8-preview',
+  'kimi-k2.8-preview'
 ]
 export function workbuddySupportsProtocolVersion(value: number): boolean {
   return workbuddyVerifiedProtocolVersions.includes(value)

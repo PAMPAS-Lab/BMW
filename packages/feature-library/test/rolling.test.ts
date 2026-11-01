@@ -3,79 +3,831 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import {Ajv} from 'ajv'
-import {LibraryService} from '../src/library-service.js'
-import {RollingService,RollingStore,collectionPrompt} from '../src/rolling-service.js'
-import {rollingRequestSchema,assertRollingRequest,COLLECTION_MS} from '../src/rolling-contract.js'
-import type {LibraryDirection} from '../src/research-contract.js'
-import type {SubscriptionInput,CollectionRun,RollingEntity} from '../src/rolling-contract.js'
-import {ProjectSourceStore} from '../../platform/src/project-source-store.js'
-const input=(platform:'web'|'x'|'youtube'='web'):SubscriptionInput=>({title:'Research',platform,url:platform==='x'?'https://x.com/ai':platform==='youtube'?'https://www.youtube.com/@ai':'https://example.org/feed',fallbackUrls:[],identityBasis:'Publisher account linked from original institution',region:'US',language:'en',topicIds:[],directionIds:[],status:'following'})
-function fixture(){const root=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'bmw-rolling-'))),projects=['p','foreign'].map(id=>{const directory=path.join(root,id);fs.mkdirSync(directory);return {id,name:id,directory}}),ports=projects.map(p=>new ProjectSourceStore(p.directory,p.id));let directions:LibraryDirection[]=[];let active=0,now=Date.now(),dispatches=0,cleanup=0,dispatchFail=false,cleanupFail=false;const library=new LibraryService({projects:()=>projects,active:()=>projects[active],sources:id=>ports[projects.findIndex(p=>p.id===id)],guard:()=>{},directions:()=>({version:1,revision:0,directions})}),service=new RollingService(library,{start:async()=>{dispatches++;if(dispatchFail)throw new Error('uncertain delivery');return 'official-run'},cancel:async()=>{cleanup++;if(cleanupFail)throw new Error('cleanup quarantined')}},()=>now),store=new RollingStore(projects[0].directory,'p'),owner={projectId:'p',sessionId:'s'},revision=()=>store.records.state().revision,execute=(operation:string,fields:Record<string,unknown>={},actor:'user'|'agent'='user',o=owner)=>service.execute({operation,projectId:'p',...(['list','read','cancel','rebuild'].includes(operation)?{}:{expectedRevision:revision()}),...fields},actor,o),created=async(platform:'web'|'x'|'youtube'='web')=>{const r=await execute('put-subscription',{input:input(platform)}) as {items:RollingEntity[]};return r.items[0].id},start=async(id:string)=>{const r=await execute('start',{id}) as {runId:string};return r.runId},scope={selector:'main',index:0,excludeSelectors:[],characterUnit:'utf16' as const,extraction:'visible-text-nodes' as const,truncated:false,status:'observed' as const},save=async(url:string,text='Original evidence 120 views',restricted=false)=>{const result=await ports[0].collect({url,title:'Original',author:'Publisher',publishedAt:null,scope,text,mediaScope:scope,mediaTruncated:false,candidates:[],access:restricted?'login-required':'unknown',accessText:restricted?'Login required':'',result:restricted?'login-required':'observed',error:null},ports[0].state().revision);return {sourceId:result.sourceId,acquisitionId:result.acquisitionId,quote:text,quoteStart:0}},lead=async(runId:string,url:string,extra:Record<string,unknown>={})=>{const evidence=await save(url);return execute('save-lead',{runId,title:'New lead',summary:'Observed change',missing:'Date and claims need verification',...evidence,...extra},'agent') as Promise<{id:string}>};return {root,projects,ports,library,service,store,owner,revision,execute,created,start,save,lead,setDirections:(v:LibraryDirection[])=>directions=v,setActive:(v:number)=>active=v,setNow:(v:number)=>now=v,setDispatchFail:(v:boolean)=>dispatchFail=v,setCleanupFail:(v:boolean)=>cleanupFail=v,stats:()=>({dispatches,cleanup}),close:()=>fs.rmSync(root,{recursive:true,force:true})}}
-test('Closed rolling catalog admits bounded manual operations; no model subscription, merge, dispatch or foreign evidence bypass',async()=>{const f=fixture();try{const validate=new Ajv({strict:false}).compile(rollingRequestSchema);for(const r of [{operation:'put-subscription',projectId:'p',expectedRevision:0,input:input('x')},{operation:'list',projectId:'p',kind:'lead',limit:20},{operation:'finish',projectId:'p',runId:'run',expectedRevision:1,status:'restricted',note:'Login required'}]){assert.ok(validate(r),JSON.stringify(validate.errors));assert.doesNotThrow(()=>assertRollingRequest(r))}for(const r of [{operation:'start',projectId:'p',id:'x',expectedRevision:0,shell:'x'},{operation:'list',projectId:'p',kind:'lead',limit:51},{operation:'put-subscription',projectId:'p',expectedRevision:0,input:{...input('x'),url:'https://youtube.com/watch?v=x'}}]){assert.ok(!validate(r)||r.operation==='put-subscription');assert.throws(()=>assertRollingRequest(r))}await assert.rejects(f.execute('put-subscription',{input:input()},'agent'),/USER_REQUIRED/);const sub=await f.created(),run=await f.start(sub),lead=await f.lead(run,'https://example.org/post');await assert.rejects(f.execute('save-lead',{runId:run,title:'bad',summary:'bad',missing:'',...await f.save('https://example.org/foreign')},'agent',{projectId:'p',sessionId:'other'}),/LEASE/);f.setActive(1);const read=await f.service.execute({operation:'read',projectId:'p',id:lead.id},'agent') as {item:{evidence:{quote?:string}}};assert.equal(read.item.evidence.quote,undefined);const history=await f.service.execute({operation:'list',projectId:'p',kind:'audit',historyId:lead.id},'agent');assert.ok(!JSON.stringify(history).includes('Original evidence'));await assert.rejects(f.execute('start',{id:sub}),/PROJECT/);assert.equal(fs.existsSync(path.join(f.projects[1].directory,'library')),false)
-}finally{f.close()}})
-
-test('Real social entry snapshots accept literal URL identities and empty metrics, with actionable errors for full URLs, trend labels and partial finish evidence',async()=>{
- const schema=rollingRequestSchema.oneOf.find(s=>s.properties.operation.const==='save-lead')!
- assert.match(JSON.stringify(schema),/trending -> trending/)
- for(const [platform,url,platformId,kind] of [['x','https://x.com/explore/tabs/trending','trending','trend'],['youtube','https://www.youtube.com/@OpenAI/videos','@OpenAI','account'],['youtube','https://www.youtube.com/results?search_query=AI','results','topic']] as const){const f=fixture();try{
-  const sub=await f.created(platform),run=await f.start(sub),evidence=await f.save(url,'Visible entry snapshot without counts'),request={runId:run,title:'Entry observation',summary:'Unverified entry only',missing:'No original post date or verified AI event',...evidence,metricsText:'',observationKind:kind}
-  for(const invalid of [url,'Knicks'])await assert.rejects(f.execute('save-lead',{...request,platformId:invalid},'agent'),error=>error instanceof Error&&error.message.includes('COLLECTION_IDENTITY')&&error.message.includes(platformId))
-  await assert.rejects(f.execute('save-lead',{...request,platformId,metricsText:'999 views'},'agent'),/COLLECTION_METRICS/)
-  const result=await f.execute('save-lead',{...request,platformId},'agent') as {id:string};const saved=f.store.entity(result.id,'lead');assert.equal(saved.social?.platformId,platformId);assert.equal(saved.social?.metricsText,'');assert.equal(saved.social?.observationKind,kind)
-  const partial={operation:'finish',projectId:'p',runId:run,expectedRevision:f.revision(),status:'partial',note:'Entry visible, post dates unavailable',sourceId:evidence.sourceId,acquisitionId:evidence.acquisitionId}
-  assert.throws(()=>assertRollingRequest(partial),/COLLECTION_EVIDENCE_FIELDS/);await assert.rejects(f.service.execute(partial,'agent',f.owner),/COLLECTION_EVIDENCE_FIELDS/)
-  await f.execute('finish',{runId:run,status:'partial',note:'Entry observed without individual news verification'},'agent');assert.equal(f.store.entity(sub,'subscription').cursor,'');assert.equal(f.store.entity(run,'run').leadIds.length,1)
- }finally{f.close()}}
+import { Ajv } from 'ajv'
+import { LibraryService } from '../src/library-service.js'
+import { RollingService, RollingStore, collectionPrompt } from '../src/rolling-service.js'
+import { rollingRequestSchema, assertRollingRequest, COLLECTION_MS } from '../src/rolling-contract.js'
+import type { LibraryDirection } from '../src/research-contract.js'
+import type { SubscriptionInput, CollectionRun, RollingEntity } from '../src/rolling-contract.js'
+import { ProjectSourceStore } from '../../platform/src/project-source-store.js'
+const input = (platform: 'web' | 'x' | 'youtube' = 'web'): SubscriptionInput => ({
+  title: 'Research',
+  platform,
+  url:
+    platform === 'x'
+      ? 'https://x.com/ai'
+      : platform === 'youtube'
+        ? 'https://www.youtube.com/@ai'
+        : 'https://example.org/feed',
+  fallbackUrls: [],
+  identityBasis: 'Publisher account linked from original institution',
+  region: 'US',
+  language: 'en',
+  topicIds: [],
+  directionIds: [],
+  status: 'following'
 })
-test('X and YouTube observations bind exact visible metrics, platform identities and source SHA, without claiming fact or growth',async()=>{for(const platform of ['x','youtube'] as const){const f=fixture();try{const sub=await f.created(platform),run=await f.start(sub),url=platform==='x'?'https://x.com/ai/status/12345':'https://www.youtube.com/watch?v=video123',evidence=await f.save(url);const request={runId:run,title:'Visible discussion',summary:'Unverified content',missing:'No growth baseline',...evidence,platformId:platform==='x'?'12345':'video123',metricsText:'120 views'};const first=await f.execute('save-lead',request,'agent') as {id:string};const rev=f.revision();assert.equal((await f.execute('save-lead',request,'agent') as {idempotent:boolean}).idempotent,true);assert.equal(f.revision(),rev);assert.equal(f.store.entity(first.id,'lead').social?.metricsText,'120 views');await assert.rejects(f.execute('save-lead',{...request,metricsText:'9999 views'},'agent'),/metrics/);await assert.rejects(f.execute('save-lead',{...request,platformId:'fake'},'agent'),/identity/);assert.match(collectionPrompt('p',f.store.entity(run,'run')),/不得推断增长/);assert.equal(f.store.entity(first.id,'lead').evidence.observedAt,f.ports[0].lookup(evidence.sourceId,evidence.acquisitionId)!.acquisition.capturedAt)
-}finally{f.close()}}})
-test('Only successful complete entry evidence commits a cursor; restricted, partial, corrupt evidence, cancellation and stale CAS retain it',async()=>{const f=fixture();try{const sub=await f.created();let run=await f.start(sub);const evidence=await f.save(input().url);await assert.rejects(f.execute('finish',{runId:run,status:'completed',note:'missing checkpoint',cursor:'1'},'agent'),/requires saved/);await assert.rejects(f.execute('finish',{runId:run,status:'completed',note:'wrong source',cursor:'1',...await f.save('https://example.org/not-entry')},'agent'),/configured entry/);await f.execute('finish',{runId:run,status:'completed',note:'Checked entire entry',cursor:'1',...evidence},'agent');assert.equal(f.store.entity(sub,'subscription').cursor,'1');run=await f.start(sub);await f.lead(run,'https://example.org/keep');await f.execute('finish',{runId:run,status:'partial',note:'Page budget reached',cursor:'bad'},'agent');assert.equal(f.store.entity(sub,'subscription').cursor,'1');assert.equal(f.store.entity(run,'run').leadIds.length,1);run=await f.start(sub);const restricted=await f.save(input().url,'Please login',true);await assert.rejects(f.execute('finish',{runId:run,status:'no-new',note:'blocked',cursor:'2',...restricted},'agent'),/Restricted/);await f.execute('finish',{runId:run,status:'restricted',note:'Login required',...restricted},'agent');assert.equal(f.store.entity(sub,'subscription').cursor,'1');run=await f.start(sub);const saved=await f.save(input().url),body=f.ports[0].lookup(saved.sourceId,saved.acquisitionId)!.acquisition.originalTextArtifactId!;fs.writeFileSync(path.join(f.projects[0].directory,'artifacts',body),'tampered');await assert.rejects(f.execute('finish',{runId:run,status:'completed',note:'invalid',cursor:'3',...saved},'agent'));assert.equal(f.store.entity(sub,'subscription').cursor,'1');await f.execute('cancel',{id:run});assert.equal(f.store.entity(run,'run').status,'cancelled');assert.equal(f.stats().cleanup,1);const before=f.revision();await assert.rejects(f.execute('put-subscription',{id:sub,input:input(),expectedRevision:before-1}),/CONFLICT/);assert.equal(f.revision(),before)
-}finally{f.close()}})
-test('Persisted uncertain delivery, real cleanup failures, deadlines and submission budgets never replay or drop saved leads',async()=>{const f=fixture();try{const sub=await f.created();f.setDispatchFail(true);await assert.rejects(f.start(sub),/uncertain/);const runs=f.store.page({operation:'list',projectId:'p',kind:'run'}).items as CollectionRun[],run=runs[0].id;assert.equal(runs[0].status,'uncertain');assert.equal(f.stats().dispatches,1);await assert.rejects(f.start(sub),/BUSY/);assert.equal(f.stats().dispatches,1);f.setCleanupFail(true);await assert.rejects(f.execute('cancel',{id:run}),/quarantined/);assert.equal(f.store.entity(run,'run').status,'uncertain');f.setCleanupFail(false);await f.execute('cancel',{id:run});f.setDispatchFail(false);const next=await f.start(sub),evidence=await f.save('https://example.org/post');for(let i=0;i<20;i++)await f.execute('save-lead',{runId:next,title:'Lead '+i,summary:'Same source, successive observations',missing:'',...evidence},'agent');await assert.rejects(f.execute('save-lead',{runId:next,title:'Lead 21',summary:'Over budget',missing:'',...evidence},'agent'),/BUDGET/);assert.equal(f.store.entity(next,'run').submissions.length,20);f.setNow(Date.now()+COLLECTION_MS+100);await assert.rejects(f.execute('finish',{runId:next,status:'partial',note:'late'},'agent'),/LEASE/);await f.execute('cancel',{id:next});assert.equal(f.store.entity(sub,'subscription').cursor,'');assert.ok(f.store.entity(next,'run').leadIds.length)
-}finally{f.close()}})
-test('Editorial revisions, atomic merge/split and complete evidence partition preserve originals, lineage, snapshots and audit histories',async()=>{const f=fixture();try{const sub=await f.created(),run=await f.start(sub),a=await f.lead(run,'https://example.org/a'),b=await f.lead(run,'https://example.org/b');const create=async(id:string,title:string)=>(await f.execute('put-event',{title,summary:'Saved evidence',basis:'Explicit editorial grouping',evidenceIds:[id]}) as {items:RollingEntity[]}).items[0].id,one=await create(a.id,'One'),two=await create(b.id,'Two');const before=f.store.page({operation:'list',projectId:'p',kind:'event',limit:1});await f.execute('put-event',{id:one,title:'Corrected',summary:'Correction',basis:'Corrected title only',evidenceIds:[a.id]});await assert.rejects(f.execute('merge',{id:one,otherId:one,title:'bad',summary:'bad',basis:'bad'}),/distinct/);const merged=await f.execute('merge',{id:one,otherId:two,title:'Combined',summary:'Common change',basis:'Same underlying development'}) as {items:RollingEntity[]};const mergedId=merged.items.find(e=>e.kind==='event'&&e.status==='active')!.id;assert.deepEqual(f.store.entity(one,'event').successors,[mergedId]);assert.equal(f.store.entity(two,'event').status,'merged');await assert.rejects(f.execute('put-event',{id:one,title:'overwrite',summary:'bad',basis:'bad',evidenceIds:[a.id]}),/Retired/);await assert.rejects(f.execute('split',{id:mergedId,leftIds:[a.id,b.id],title:'A',summary:'A',rightTitle:'B',rightSummary:'B',basis:'two events'}),/partition/);const abort=new AbortController();abort.abort();await assert.rejects(f.service.execute({operation:'split',projectId:'p',expectedRevision:f.revision(),id:mergedId,leftIds:[a.id],title:'A',summary:'A',rightTitle:'B',rightSummary:'B',basis:'two events'},'user',f.owner,abort.signal));assert.equal(f.store.entity(mergedId,'event').status,'active');await f.execute('split',{id:mergedId,leftIds:[a.id],title:'A',summary:'A',rightTitle:'B',rightSummary:'B',basis:'Independent results'});const retired=f.store.entity(mergedId,'event');assert.equal(retired.status,'split');assert.equal(retired.successors.length,2);for(const id of retired.successors)assert.deepEqual(f.store.entity(id,'event').parents,[mergedId]);const history=f.store.page({operation:'list',projectId:'p',kind:'audit',historyId:one});assert.equal(history.items.length,3);const pinned=f.store.page({operation:'list',projectId:'p',kind:'event',limit:1,cursor:before.pageCursor});assert.deepEqual(pinned.items,before.items);let rebuild=f.store.records.rebuild({reset:true,limit:2});while(!rebuild.done)rebuild=f.store.records.rebuild({limit:100});assert.deepEqual(f.store.page({operation:'list',projectId:'p',kind:'event',limit:1,cursor:before.pageCursor}).items,before.items);assert.equal(f.store.entity(a.id,'lead').status,'open');await f.execute('revise-lead',{id:a.id,status:'reviewed',missing:'Publication checked'});assert.equal(f.store.entity(a.id,'lead').revision,2)
-}finally{f.close()}})
-
-test('Direction pause or collection-Project rebinding invalidates the saved lease without moving old subscriptions or evidence',async()=>{const f=fixture();try{const direction:LibraryDirection={...input(),id:'direction',description:'Long-term scope',tags:[],title:'Direction',collectionProjectId:'p',status:'following',topics:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};f.setDirections([direction]);const saved=await f.execute('put-subscription',{input:{...input(),directionIds:[direction.id]}}) as {items:RollingEntity[]},sub=saved.items[0].id,run=await f.start(sub),evidence=await f.save('https://example.org/post');for(const next of [{...direction,status:'paused' as const},{...direction,collectionProjectId:'foreign'}]){f.setDirections([next]);await assert.rejects(f.execute('save-lead',{runId:run,title:'Blocked',summary:'Changed scope',missing:'',...evidence},'agent'),/Direction/);await assert.rejects(f.execute('finish',{runId:run,status:'partial',note:'Configuration changed'},'agent'),/Direction/);assert.equal(f.store.entity(sub,'subscription').cursor,'');assert.equal(f.store.entity(run,'run').status,'sent')}await f.execute('cancel',{id:run});assert.deepEqual(f.store.entity(sub,'subscription').input.directionIds,['direction']);assert.ok(!fs.existsSync(path.join(f.projects[1].directory,'library')))
-}finally{f.close()}})
-
-
-test('A fast official completion still persists its dispatch identity without overwriting the completed collection',async()=>{const f=fixture();try{const sub=await f.created();let service:RollingService;service=new RollingService(f.library,{start:async run=>{await service.execute({operation:'finish',projectId:'p',runId:run.id,expectedRevision:f.revision(),status:'partial',note:'Finished before enqueue returned'},'agent',f.owner);return 'fast-official-run'},cancel:async()=>{}});const result=await service.execute({operation:'start',projectId:'p',id:sub,expectedRevision:f.revision()},'user',f.owner) as {runId:string};const run=f.store.entity(result.runId,'run');assert.equal(run.status,'partial');assert.equal(run.dispatchId,'fast-official-run');assert.equal(f.store.entity(sub,'subscription').cursor,'')
-}finally{f.close()}})
-
-test('Social challenge originals stay inspectable but cannot become content leads or advance a successful cursor',async()=>{const f=fixture();try{
- const sub=await f.created('x'),run=await f.start(sub),challenge=await f.save(input('x').url,'Sign in to confirm you’re not a bot')
- await assert.rejects(f.execute('finish',{runId:run,status:'completed',note:'Incorrectly claimed complete',cursor:'skip',...challenge},'agent'),/COLLECTION_RESTRICTED/)
- await assert.rejects(f.execute('save-lead',{runId:run,title:'Access page',summary:'Not content',missing:'Login',platformId:'ai',...challenge},'agent'),/COLLECTION_RESTRICTED/)
- const redirected=await f.save('https://x.com/i/jf/onboarding/web?mode=login','Continue')
- await assert.rejects(f.execute('save-lead',{runId:run,title:'Access redirect',summary:'Not content',missing:'Login',platformId:'onboarding',...redirected},'agent'),/COLLECTION_RESTRICTED/)
- const post=await f.save('https://x.com/ai/status/12345')
- await assert.rejects(f.execute('save-lead',{runId:run,title:'Visible post',summary:'Unverified',missing:'',platformId:'12345',observationKind:'trend',...post},'agent'),/observation kind/)
- const saved=await f.execute('save-lead',{runId:run,title:'Visible post',summary:'Unverified',missing:'',platformId:'12345',observationKind:'post',...post},'agent') as {id:string}
- assert.equal(f.store.entity(saved.id,'lead').social?.observationKind,'post')
- await f.execute('finish',{runId:run,status:'restricted',note:'Public entry blocked',...challenge},'agent')
- assert.equal(f.store.entity(sub,'subscription').cursor,'');assert.equal(f.store.entity(sub,'subscription').health,'restricted')
- assert.equal((await f.ports[0].readBody(challenge.sourceId,challenge.acquisitionId)).text,challenge.quote)
- assert.equal(f.store.entity(run,'run').leadIds.length,1)
-}finally{f.close()}})
-
-test('Current-run read bundles bounded partial evidence reuse without granting subscription or history reads',async()=>{
- const f=fixture();try{const sub=await f.created(),previous=await f.start(sub),lead=await f.lead(previous,'https://example.org/saved');await f.execute('finish',{runId:previous,status:'partial',note:'More pages remain'},'agent');const run=await f.start(sub),before=f.revision(),read=await f.execute('read',{id:run},'agent') as {continuation:{available:boolean;fromCursor:string;previousRunId:string;leads:{leadId:string;url:string;bodySha256:string}[];note:string}};assert.equal(read.continuation.available,true);assert.equal(read.continuation.previousRunId,previous);assert.equal(read.continuation.fromCursor,'');assert.equal(read.continuation.leads[0].leadId,lead.id);assert.equal(read.continuation.leads[0].url,'https://example.org/saved');assert.equal(read.continuation.leads[0].bodySha256,f.store.entity(lead.id,'lead').evidence.bodySha256);assert.match(read.continuation.note,/not an exact/);assert.equal(f.revision(),before)
- const prompt=collectionPrompt('p',f.store.entity(run,'run'));assert.match(prompt,/read id=本轮runId/);assert.match(prompt,/不增加读取旧run\/订阅\/lead的调用/);assert.doesNotMatch(prompt,/再 read 本轮 subscriptionId/)
- for(const [id,actor,owner]of [[run,'user',f.owner],[run,'agent',{projectId:'p',sessionId:'other'}],[previous,'agent',f.owner],[sub,'agent',f.owner],[lead.id,'agent',f.owner]] as const){const result=await f.execute('read',{id},actor,owner) as {continuation?:unknown};assert.equal(result.continuation,undefined)}
- f.setActive(1);const foreign=await f.service.execute({operation:'read',projectId:'p',id:run},'agent',f.owner) as {continuation?:unknown};assert.equal(foreign.continuation,undefined)
- }finally{f.close()}
+function fixture() {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-rolling-'))),
+    projects = ['p', 'foreign'].map(id => {
+      const directory = path.join(root, id)
+      fs.mkdirSync(directory)
+      return { id, name: id, directory }
+    }),
+    ports = projects.map(p => new ProjectSourceStore(p.directory, p.id))
+  let directions: LibraryDirection[] = []
+  let active = 0,
+    now = Date.now(),
+    dispatches = 0,
+    cleanup = 0,
+    dispatchFail = false,
+    cleanupFail = false
+  const library = new LibraryService({
+      projects: () => projects,
+      active: () => projects[active],
+      sources: id => ports[projects.findIndex(p => p.id === id)],
+      guard: () => {},
+      directions: () => ({ version: 1, revision: 0, directions })
+    }),
+    service = new RollingService(
+      library,
+      {
+        start: async () => {
+          dispatches++
+          if (dispatchFail) throw new Error('uncertain delivery')
+          return 'official-run'
+        },
+        cancel: async () => {
+          cleanup++
+          if (cleanupFail) throw new Error('cleanup quarantined')
+        }
+      },
+      () => now
+    ),
+    store = new RollingStore(projects[0].directory, 'p'),
+    owner = { projectId: 'p', sessionId: 's' },
+    revision = () => store.records.state().revision,
+    execute = (operation: string, fields: Record<string, unknown> = {}, actor: 'user' | 'agent' = 'user', o = owner) =>
+      service.execute(
+        {
+          operation,
+          projectId: 'p',
+          ...(['list', 'read', 'cancel', 'rebuild'].includes(operation) ? {} : { expectedRevision: revision() }),
+          ...fields
+        },
+        actor,
+        o
+      ),
+    created = async (platform: 'web' | 'x' | 'youtube' = 'web') => {
+      const r = (await execute('put-subscription', { input: input(platform) })) as { items: RollingEntity[] }
+      return r.items[0].id
+    },
+    start = async (id: string) => {
+      const r = (await execute('start', { id })) as { runId: string }
+      return r.runId
+    },
+    scope = {
+      selector: 'main',
+      index: 0,
+      excludeSelectors: [],
+      characterUnit: 'utf16' as const,
+      extraction: 'visible-text-nodes' as const,
+      truncated: false,
+      status: 'observed' as const
+    },
+    save = async (url: string, text = 'Original evidence 120 views', restricted = false) => {
+      const result = await ports[0].collect(
+        {
+          url,
+          title: 'Original',
+          author: 'Publisher',
+          publishedAt: null,
+          scope,
+          text,
+          mediaScope: scope,
+          mediaTruncated: false,
+          candidates: [],
+          access: restricted ? 'login-required' : 'unknown',
+          accessText: restricted ? 'Login required' : '',
+          result: restricted ? 'login-required' : 'observed',
+          error: null
+        },
+        ports[0].state().revision
+      )
+      return { sourceId: result.sourceId, acquisitionId: result.acquisitionId, quote: text, quoteStart: 0 }
+    },
+    lead = async (runId: string, url: string, extra: Record<string, unknown> = {}) => {
+      const evidence = await save(url)
+      return execute(
+        'save-lead',
+        {
+          runId,
+          title: 'New lead',
+          summary: 'Observed change',
+          missing: 'Date and claims need verification',
+          ...evidence,
+          ...extra
+        },
+        'agent'
+      ) as Promise<{ id: string }>
+    }
+  return {
+    root,
+    projects,
+    ports,
+    library,
+    service,
+    store,
+    owner,
+    revision,
+    execute,
+    created,
+    start,
+    save,
+    lead,
+    setDirections: (v: LibraryDirection[]) => (directions = v),
+    setActive: (v: number) => (active = v),
+    setNow: (v: number) => (now = v),
+    setDispatchFail: (v: boolean) => (dispatchFail = v),
+    setCleanupFail: (v: boolean) => (cleanupFail = v),
+    stats: () => ({ dispatches, cleanup }),
+    close: () => fs.rmSync(root, { recursive: true, force: true })
+  }
+}
+test('Closed rolling catalog admits bounded manual operations; no model subscription, merge, dispatch or foreign evidence bypass', async () => {
+  const f = fixture()
+  try {
+    const validate = new Ajv({ strict: false }).compile(rollingRequestSchema)
+    for (const r of [
+      { operation: 'put-subscription', projectId: 'p', expectedRevision: 0, input: input('x') },
+      { operation: 'list', projectId: 'p', kind: 'lead', limit: 20 },
+      {
+        operation: 'finish',
+        projectId: 'p',
+        runId: 'run',
+        expectedRevision: 1,
+        status: 'restricted',
+        note: 'Login required'
+      }
+    ]) {
+      assert.ok(validate(r), JSON.stringify(validate.errors))
+      assert.doesNotThrow(() => assertRollingRequest(r))
+    }
+    for (const r of [
+      { operation: 'start', projectId: 'p', id: 'x', expectedRevision: 0, shell: 'x' },
+      { operation: 'list', projectId: 'p', kind: 'lead', limit: 51 },
+      {
+        operation: 'put-subscription',
+        projectId: 'p',
+        expectedRevision: 0,
+        input: { ...input('x'), url: 'https://youtube.com/watch?v=x' }
+      }
+    ]) {
+      assert.ok(!validate(r) || r.operation === 'put-subscription')
+      assert.throws(() => assertRollingRequest(r))
+    }
+    await assert.rejects(f.execute('put-subscription', { input: input() }, 'agent'), /USER_REQUIRED/)
+    const sub = await f.created(),
+      run = await f.start(sub),
+      lead = await f.lead(run, 'https://example.org/post')
+    await assert.rejects(
+      f.execute(
+        'save-lead',
+        { runId: run, title: 'bad', summary: 'bad', missing: '', ...(await f.save('https://example.org/foreign')) },
+        'agent',
+        { projectId: 'p', sessionId: 'other' }
+      ),
+      /LEASE/
+    )
+    f.setActive(1)
+    const read = (await f.service.execute({ operation: 'read', projectId: 'p', id: lead.id }, 'agent')) as {
+      item: { evidence: { quote?: string } }
+    }
+    assert.equal(read.item.evidence.quote, undefined)
+    const history = await f.service.execute(
+      { operation: 'list', projectId: 'p', kind: 'audit', historyId: lead.id },
+      'agent'
+    )
+    assert.ok(!JSON.stringify(history).includes('Original evidence'))
+    await assert.rejects(f.execute('start', { id: sub }), /PROJECT/)
+    assert.equal(fs.existsSync(path.join(f.projects[1].directory, 'library')), false)
+  } finally {
+    f.close()
+  }
 })
 
-test('Continuation rejects previous Session, subscription, input or cursor changes and omits later-mutated evidence',async()=>{
- const f=fixture();try{const sub=await f.created(),other=await f.created(),previous=await f.start(sub),lead=await f.lead(previous,'https://example.org/saved');await f.execute('finish',{runId:previous,status:'partial',note:'Incomplete'},'agent');const original=f.store.entity(previous,'run'),run=await f.start(sub)
- for(const patch of [{sessionId:'foreign-session'},{subscriptionId:other},{input:{...original.input,url:'https://example.org/other-feed'}},{fromCursor:'different-cursor'},{status:'failed' as const}]){const current=f.store.entity(previous,'run');f.store.commit([{...original,...patch,revision:current.revision+1}],f.revision(),'fixture-changed-history');const read=await f.execute('read',{id:run},'agent') as {continuation:{available:boolean;previousRunId:string|null;leads:unknown[]}};assert.equal(read.continuation.available,false);assert.equal(read.continuation.previousRunId,null);assert.deepEqual(read.continuation.leads,[])}
- const current=f.store.entity(previous,'run');f.store.commit([{...original,revision:current.revision+1}],f.revision(),'fixture-restored-binding');await f.execute('revise-lead',{id:lead.id,status:'reviewed',missing:'User changed this evidence gap'});const changed=await f.execute('read',{id:run},'agent') as {continuation:{available:boolean;changed:number;leads:unknown[];reason:string}};assert.equal(changed.continuation.available,false);assert.equal(changed.continuation.changed,1);assert.equal(changed.continuation.reason,'history-changed');assert.deepEqual(changed.continuation.leads,[])
- }finally{f.close()}
+test('Real social entry snapshots accept literal URL identities and empty metrics, with actionable errors for full URLs, trend labels and partial finish evidence', async () => {
+  const schema = rollingRequestSchema.oneOf.find(s => s.properties.operation.const === 'save-lead')!
+  assert.match(JSON.stringify(schema), /trending -> trending/)
+  for (const [platform, url, platformId, kind] of [
+    ['x', 'https://x.com/explore/tabs/trending', 'trending', 'trend'],
+    ['youtube', 'https://www.youtube.com/@OpenAI/videos', '@OpenAI', 'account'],
+    ['youtube', 'https://www.youtube.com/results?search_query=AI', 'results', 'topic']
+  ] as const) {
+    const f = fixture()
+    try {
+      const sub = await f.created(platform),
+        run = await f.start(sub),
+        evidence = await f.save(url, 'Visible entry snapshot without counts'),
+        request = {
+          runId: run,
+          title: 'Entry observation',
+          summary: 'Unverified entry only',
+          missing: 'No original post date or verified AI event',
+          ...evidence,
+          metricsText: '',
+          observationKind: kind
+        }
+      for (const invalid of [url, 'Knicks'])
+        await assert.rejects(
+          f.execute('save-lead', { ...request, platformId: invalid }, 'agent'),
+          error =>
+            error instanceof Error &&
+            error.message.includes('COLLECTION_IDENTITY') &&
+            error.message.includes(platformId)
+        )
+      await assert.rejects(
+        f.execute('save-lead', { ...request, platformId, metricsText: '999 views' }, 'agent'),
+        /COLLECTION_METRICS/
+      )
+      const result = (await f.execute('save-lead', { ...request, platformId }, 'agent')) as { id: string }
+      const saved = f.store.entity(result.id, 'lead')
+      assert.equal(saved.social?.platformId, platformId)
+      assert.equal(saved.social?.metricsText, '')
+      assert.equal(saved.social?.observationKind, kind)
+      const partial = {
+        operation: 'finish',
+        projectId: 'p',
+        runId: run,
+        expectedRevision: f.revision(),
+        status: 'partial',
+        note: 'Entry visible, post dates unavailable',
+        sourceId: evidence.sourceId,
+        acquisitionId: evidence.acquisitionId
+      }
+      assert.throws(() => assertRollingRequest(partial), /COLLECTION_EVIDENCE_FIELDS/)
+      await assert.rejects(f.service.execute(partial, 'agent', f.owner), /COLLECTION_EVIDENCE_FIELDS/)
+      await f.execute(
+        'finish',
+        { runId: run, status: 'partial', note: 'Entry observed without individual news verification' },
+        'agent'
+      )
+      assert.equal(f.store.entity(sub, 'subscription').cursor, '')
+      assert.equal(f.store.entity(run, 'run').leadIds.length, 1)
+    } finally {
+      f.close()
+    }
+  }
+})
+test('X and YouTube observations bind exact visible metrics, platform identities and source SHA, without claiming fact or growth', async () => {
+  for (const platform of ['x', 'youtube'] as const) {
+    const f = fixture()
+    try {
+      const sub = await f.created(platform),
+        run = await f.start(sub),
+        url = platform === 'x' ? 'https://x.com/ai/status/12345' : 'https://www.youtube.com/watch?v=video123',
+        evidence = await f.save(url)
+      const request = {
+        runId: run,
+        title: 'Visible discussion',
+        summary: 'Unverified content',
+        missing: 'No growth baseline',
+        ...evidence,
+        platformId: platform === 'x' ? '12345' : 'video123',
+        metricsText: '120 views'
+      }
+      const first = (await f.execute('save-lead', request, 'agent')) as { id: string }
+      const rev = f.revision()
+      assert.equal(((await f.execute('save-lead', request, 'agent')) as { idempotent: boolean }).idempotent, true)
+      assert.equal(f.revision(), rev)
+      assert.equal(f.store.entity(first.id, 'lead').social?.metricsText, '120 views')
+      await assert.rejects(f.execute('save-lead', { ...request, metricsText: '9999 views' }, 'agent'), /metrics/)
+      await assert.rejects(f.execute('save-lead', { ...request, platformId: 'fake' }, 'agent'), /identity/)
+      assert.match(collectionPrompt('p', f.store.entity(run, 'run')), /不得推断增长/)
+      assert.equal(
+        f.store.entity(first.id, 'lead').evidence.observedAt,
+        f.ports[0].lookup(evidence.sourceId, evidence.acquisitionId)!.acquisition.capturedAt
+      )
+    } finally {
+      f.close()
+    }
+  }
+})
+test('Only successful complete entry evidence commits a cursor; restricted, partial, corrupt evidence, cancellation and stale CAS retain it', async () => {
+  const f = fixture()
+  try {
+    const sub = await f.created()
+    let run = await f.start(sub)
+    const evidence = await f.save(input().url)
+    await assert.rejects(
+      f.execute('finish', { runId: run, status: 'completed', note: 'missing checkpoint', cursor: '1' }, 'agent'),
+      /requires saved/
+    )
+    await assert.rejects(
+      f.execute(
+        'finish',
+        {
+          runId: run,
+          status: 'completed',
+          note: 'wrong source',
+          cursor: '1',
+          ...(await f.save('https://example.org/not-entry'))
+        },
+        'agent'
+      ),
+      /configured entry/
+    )
+    await f.execute(
+      'finish',
+      { runId: run, status: 'completed', note: 'Checked entire entry', cursor: '1', ...evidence },
+      'agent'
+    )
+    assert.equal(f.store.entity(sub, 'subscription').cursor, '1')
+    run = await f.start(sub)
+    await f.lead(run, 'https://example.org/keep')
+    await f.execute('finish', { runId: run, status: 'partial', note: 'Page budget reached', cursor: 'bad' }, 'agent')
+    assert.equal(f.store.entity(sub, 'subscription').cursor, '1')
+    assert.equal(f.store.entity(run, 'run').leadIds.length, 1)
+    run = await f.start(sub)
+    const restricted = await f.save(input().url, 'Please login', true)
+    await assert.rejects(
+      f.execute('finish', { runId: run, status: 'no-new', note: 'blocked', cursor: '2', ...restricted }, 'agent'),
+      /Restricted/
+    )
+    await f.execute('finish', { runId: run, status: 'restricted', note: 'Login required', ...restricted }, 'agent')
+    assert.equal(f.store.entity(sub, 'subscription').cursor, '1')
+    run = await f.start(sub)
+    const saved = await f.save(input().url),
+      body = f.ports[0].lookup(saved.sourceId, saved.acquisitionId)!.acquisition.originalTextArtifactId!
+    fs.writeFileSync(path.join(f.projects[0].directory, 'artifacts', body), 'tampered')
+    await assert.rejects(
+      f.execute('finish', { runId: run, status: 'completed', note: 'invalid', cursor: '3', ...saved }, 'agent')
+    )
+    assert.equal(f.store.entity(sub, 'subscription').cursor, '1')
+    await f.execute('cancel', { id: run })
+    assert.equal(f.store.entity(run, 'run').status, 'cancelled')
+    assert.equal(f.stats().cleanup, 1)
+    const before = f.revision()
+    await assert.rejects(
+      f.execute('put-subscription', { id: sub, input: input(), expectedRevision: before - 1 }),
+      /CONFLICT/
+    )
+    assert.equal(f.revision(), before)
+  } finally {
+    f.close()
+  }
+})
+test('Persisted uncertain delivery, real cleanup failures, deadlines and submission budgets never replay or drop saved leads', async () => {
+  const f = fixture()
+  try {
+    const sub = await f.created()
+    f.setDispatchFail(true)
+    await assert.rejects(f.start(sub), /uncertain/)
+    const runs = f.store.page({ operation: 'list', projectId: 'p', kind: 'run' }).items as CollectionRun[],
+      run = runs[0].id
+    assert.equal(runs[0].status, 'uncertain')
+    assert.equal(f.stats().dispatches, 1)
+    await assert.rejects(f.start(sub), /BUSY/)
+    assert.equal(f.stats().dispatches, 1)
+    f.setCleanupFail(true)
+    await assert.rejects(f.execute('cancel', { id: run }), /quarantined/)
+    assert.equal(f.store.entity(run, 'run').status, 'uncertain')
+    f.setCleanupFail(false)
+    await f.execute('cancel', { id: run })
+    f.setDispatchFail(false)
+    const next = await f.start(sub),
+      evidence = await f.save('https://example.org/post')
+    for (let i = 0; i < 20; i++)
+      await f.execute(
+        'save-lead',
+        { runId: next, title: 'Lead ' + i, summary: 'Same source, successive observations', missing: '', ...evidence },
+        'agent'
+      )
+    await assert.rejects(
+      f.execute(
+        'save-lead',
+        { runId: next, title: 'Lead 21', summary: 'Over budget', missing: '', ...evidence },
+        'agent'
+      ),
+      /BUDGET/
+    )
+    assert.equal(f.store.entity(next, 'run').submissions.length, 20)
+    f.setNow(Date.now() + COLLECTION_MS + 100)
+    await assert.rejects(f.execute('finish', { runId: next, status: 'partial', note: 'late' }, 'agent'), /LEASE/)
+    await f.execute('cancel', { id: next })
+    assert.equal(f.store.entity(sub, 'subscription').cursor, '')
+    assert.ok(f.store.entity(next, 'run').leadIds.length)
+  } finally {
+    f.close()
+  }
+})
+test('Editorial revisions, atomic merge/split and complete evidence partition preserve originals, lineage, snapshots and audit histories', async () => {
+  const f = fixture()
+  try {
+    const sub = await f.created(),
+      run = await f.start(sub),
+      a = await f.lead(run, 'https://example.org/a'),
+      b = await f.lead(run, 'https://example.org/b')
+    const create = async (id: string, title: string) =>
+        (
+          (await f.execute('put-event', {
+            title,
+            summary: 'Saved evidence',
+            basis: 'Explicit editorial grouping',
+            evidenceIds: [id]
+          })) as { items: RollingEntity[] }
+        ).items[0].id,
+      one = await create(a.id, 'One'),
+      two = await create(b.id, 'Two')
+    const before = f.store.page({ operation: 'list', projectId: 'p', kind: 'event', limit: 1 })
+    await f.execute('put-event', {
+      id: one,
+      title: 'Corrected',
+      summary: 'Correction',
+      basis: 'Corrected title only',
+      evidenceIds: [a.id]
+    })
+    await assert.rejects(
+      f.execute('merge', { id: one, otherId: one, title: 'bad', summary: 'bad', basis: 'bad' }),
+      /distinct/
+    )
+    const merged = (await f.execute('merge', {
+      id: one,
+      otherId: two,
+      title: 'Combined',
+      summary: 'Common change',
+      basis: 'Same underlying development'
+    })) as { items: RollingEntity[] }
+    const mergedId = merged.items.find(e => e.kind === 'event' && e.status === 'active')!.id
+    assert.deepEqual(f.store.entity(one, 'event').successors, [mergedId])
+    assert.equal(f.store.entity(two, 'event').status, 'merged')
+    await assert.rejects(
+      f.execute('put-event', { id: one, title: 'overwrite', summary: 'bad', basis: 'bad', evidenceIds: [a.id] }),
+      /Retired/
+    )
+    await assert.rejects(
+      f.execute('split', {
+        id: mergedId,
+        leftIds: [a.id, b.id],
+        title: 'A',
+        summary: 'A',
+        rightTitle: 'B',
+        rightSummary: 'B',
+        basis: 'two events'
+      }),
+      /partition/
+    )
+    const abort = new AbortController()
+    abort.abort()
+    await assert.rejects(
+      f.service.execute(
+        {
+          operation: 'split',
+          projectId: 'p',
+          expectedRevision: f.revision(),
+          id: mergedId,
+          leftIds: [a.id],
+          title: 'A',
+          summary: 'A',
+          rightTitle: 'B',
+          rightSummary: 'B',
+          basis: 'two events'
+        },
+        'user',
+        f.owner,
+        abort.signal
+      )
+    )
+    assert.equal(f.store.entity(mergedId, 'event').status, 'active')
+    await f.execute('split', {
+      id: mergedId,
+      leftIds: [a.id],
+      title: 'A',
+      summary: 'A',
+      rightTitle: 'B',
+      rightSummary: 'B',
+      basis: 'Independent results'
+    })
+    const retired = f.store.entity(mergedId, 'event')
+    assert.equal(retired.status, 'split')
+    assert.equal(retired.successors.length, 2)
+    for (const id of retired.successors) assert.deepEqual(f.store.entity(id, 'event').parents, [mergedId])
+    const history = f.store.page({ operation: 'list', projectId: 'p', kind: 'audit', historyId: one })
+    assert.equal(history.items.length, 3)
+    const pinned = f.store.page({
+      operation: 'list',
+      projectId: 'p',
+      kind: 'event',
+      limit: 1,
+      cursor: before.pageCursor
+    })
+    assert.deepEqual(pinned.items, before.items)
+    let rebuild = f.store.records.rebuild({ reset: true, limit: 2 })
+    while (!rebuild.done) rebuild = f.store.records.rebuild({ limit: 100 })
+    assert.deepEqual(
+      f.store.page({ operation: 'list', projectId: 'p', kind: 'event', limit: 1, cursor: before.pageCursor }).items,
+      before.items
+    )
+    assert.equal(f.store.entity(a.id, 'lead').status, 'open')
+    await f.execute('revise-lead', { id: a.id, status: 'reviewed', missing: 'Publication checked' })
+    assert.equal(f.store.entity(a.id, 'lead').revision, 2)
+  } finally {
+    f.close()
+  }
 })
 
-test('Continuation keeps exact URL and SHA within a twelve KiB summary and reports omitted entries without new reads',async()=>{
- const f=fixture();try{const sub=await f.created(),previous=await f.start(sub);for(let i=0;i<20;i++)await f.lead(previous,'https://example.org/'+i+'-'+('x'.repeat(1400)),{missing:'m'.repeat(1900)});await f.execute('finish',{runId:previous,status:'partial',note:'Page budget reached'},'agent');const run=await f.start(sub),read=await f.execute('read',{id:run},'agent') as {continuation:{savedLeadCount:number;omitted:number;changed:number;leads:{url:string;bodySha256:string;missingExcerpt:string;missingTruncated:boolean}[]}};assert.equal(read.continuation.savedLeadCount,20);assert.ok(read.continuation.omitted>0);assert.equal(read.continuation.changed,0);assert.equal(read.continuation.leads.length+read.continuation.omitted,20);assert.ok(Buffer.byteLength(JSON.stringify(read.continuation),'utf8')<=12*1024);for(const lead of read.continuation.leads){assert.ok(lead.url.endsWith('x'.repeat(1400)));assert.equal(lead.bodySha256.length,64);assert.equal(lead.missingExcerpt.length,200);assert.equal(lead.missingTruncated,true)}assert.equal(f.store.entity(sub,'subscription').cursor,'');assert.equal(f.store.entity(previous,'run').status,'partial')
- }finally{f.close()}
+test('Direction pause or collection-Project rebinding invalidates the saved lease without moving old subscriptions or evidence', async () => {
+  const f = fixture()
+  try {
+    const direction: LibraryDirection = {
+      ...input(),
+      id: 'direction',
+      description: 'Long-term scope',
+      tags: [],
+      title: 'Direction',
+      collectionProjectId: 'p',
+      status: 'following',
+      topics: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+    f.setDirections([direction])
+    const saved = (await f.execute('put-subscription', { input: { ...input(), directionIds: [direction.id] } })) as {
+        items: RollingEntity[]
+      },
+      sub = saved.items[0].id,
+      run = await f.start(sub),
+      evidence = await f.save('https://example.org/post')
+    for (const next of [
+      { ...direction, status: 'paused' as const },
+      { ...direction, collectionProjectId: 'foreign' }
+    ]) {
+      f.setDirections([next])
+      await assert.rejects(
+        f.execute(
+          'save-lead',
+          { runId: run, title: 'Blocked', summary: 'Changed scope', missing: '', ...evidence },
+          'agent'
+        ),
+        /Direction/
+      )
+      await assert.rejects(
+        f.execute('finish', { runId: run, status: 'partial', note: 'Configuration changed' }, 'agent'),
+        /Direction/
+      )
+      assert.equal(f.store.entity(sub, 'subscription').cursor, '')
+      assert.equal(f.store.entity(run, 'run').status, 'sent')
+    }
+    await f.execute('cancel', { id: run })
+    assert.deepEqual(f.store.entity(sub, 'subscription').input.directionIds, ['direction'])
+    assert.ok(!fs.existsSync(path.join(f.projects[1].directory, 'library')))
+  } finally {
+    f.close()
+  }
+})
+
+test('A fast official completion still persists its dispatch identity without overwriting the completed collection', async () => {
+  const f = fixture()
+  try {
+    const sub = await f.created()
+    let service: RollingService
+    service = new RollingService(f.library, {
+      start: async run => {
+        await service.execute(
+          {
+            operation: 'finish',
+            projectId: 'p',
+            runId: run.id,
+            expectedRevision: f.revision(),
+            status: 'partial',
+            note: 'Finished before enqueue returned'
+          },
+          'agent',
+          f.owner
+        )
+        return 'fast-official-run'
+      },
+      cancel: async () => {}
+    })
+    const result = (await service.execute(
+      { operation: 'start', projectId: 'p', id: sub, expectedRevision: f.revision() },
+      'user',
+      f.owner
+    )) as { runId: string }
+    const run = f.store.entity(result.runId, 'run')
+    assert.equal(run.status, 'partial')
+    assert.equal(run.dispatchId, 'fast-official-run')
+    assert.equal(f.store.entity(sub, 'subscription').cursor, '')
+  } finally {
+    f.close()
+  }
+})
+
+test('Social challenge originals stay inspectable but cannot become content leads or advance a successful cursor', async () => {
+  const f = fixture()
+  try {
+    const sub = await f.created('x'),
+      run = await f.start(sub),
+      challenge = await f.save(input('x').url, 'Sign in to confirm you’re not a bot')
+    await assert.rejects(
+      f.execute(
+        'finish',
+        { runId: run, status: 'completed', note: 'Incorrectly claimed complete', cursor: 'skip', ...challenge },
+        'agent'
+      ),
+      /COLLECTION_RESTRICTED/
+    )
+    await assert.rejects(
+      f.execute(
+        'save-lead',
+        { runId: run, title: 'Access page', summary: 'Not content', missing: 'Login', platformId: 'ai', ...challenge },
+        'agent'
+      ),
+      /COLLECTION_RESTRICTED/
+    )
+    const redirected = await f.save('https://x.com/i/jf/onboarding/web?mode=login', 'Continue')
+    await assert.rejects(
+      f.execute(
+        'save-lead',
+        {
+          runId: run,
+          title: 'Access redirect',
+          summary: 'Not content',
+          missing: 'Login',
+          platformId: 'onboarding',
+          ...redirected
+        },
+        'agent'
+      ),
+      /COLLECTION_RESTRICTED/
+    )
+    const post = await f.save('https://x.com/ai/status/12345')
+    await assert.rejects(
+      f.execute(
+        'save-lead',
+        {
+          runId: run,
+          title: 'Visible post',
+          summary: 'Unverified',
+          missing: '',
+          platformId: '12345',
+          observationKind: 'trend',
+          ...post
+        },
+        'agent'
+      ),
+      /observation kind/
+    )
+    const saved = (await f.execute(
+      'save-lead',
+      {
+        runId: run,
+        title: 'Visible post',
+        summary: 'Unverified',
+        missing: '',
+        platformId: '12345',
+        observationKind: 'post',
+        ...post
+      },
+      'agent'
+    )) as { id: string }
+    assert.equal(f.store.entity(saved.id, 'lead').social?.observationKind, 'post')
+    await f.execute('finish', { runId: run, status: 'restricted', note: 'Public entry blocked', ...challenge }, 'agent')
+    assert.equal(f.store.entity(sub, 'subscription').cursor, '')
+    assert.equal(f.store.entity(sub, 'subscription').health, 'restricted')
+    assert.equal((await f.ports[0].readBody(challenge.sourceId, challenge.acquisitionId)).text, challenge.quote)
+    assert.equal(f.store.entity(run, 'run').leadIds.length, 1)
+  } finally {
+    f.close()
+  }
+})
+
+test('Current-run read bundles bounded partial evidence reuse without granting subscription or history reads', async () => {
+  const f = fixture()
+  try {
+    const sub = await f.created(),
+      previous = await f.start(sub),
+      lead = await f.lead(previous, 'https://example.org/saved')
+    await f.execute('finish', { runId: previous, status: 'partial', note: 'More pages remain' }, 'agent')
+    const run = await f.start(sub),
+      before = f.revision(),
+      read = (await f.execute('read', { id: run }, 'agent')) as {
+        continuation: {
+          available: boolean
+          fromCursor: string
+          previousRunId: string
+          leads: { leadId: string; url: string; bodySha256: string }[]
+          note: string
+        }
+      }
+    assert.equal(read.continuation.available, true)
+    assert.equal(read.continuation.previousRunId, previous)
+    assert.equal(read.continuation.fromCursor, '')
+    assert.equal(read.continuation.leads[0].leadId, lead.id)
+    assert.equal(read.continuation.leads[0].url, 'https://example.org/saved')
+    assert.equal(read.continuation.leads[0].bodySha256, f.store.entity(lead.id, 'lead').evidence.bodySha256)
+    assert.match(read.continuation.note, /not an exact/)
+    assert.equal(f.revision(), before)
+    const prompt = collectionPrompt('p', f.store.entity(run, 'run'))
+    assert.match(prompt, /read id=本轮runId/)
+    assert.match(prompt, /不增加读取旧run\/订阅\/lead的调用/)
+    assert.doesNotMatch(prompt, /再 read 本轮 subscriptionId/)
+    for (const [id, actor, owner] of [
+      [run, 'user', f.owner],
+      [run, 'agent', { projectId: 'p', sessionId: 'other' }],
+      [previous, 'agent', f.owner],
+      [sub, 'agent', f.owner],
+      [lead.id, 'agent', f.owner]
+    ] as const) {
+      const result = (await f.execute('read', { id }, actor, owner)) as { continuation?: unknown }
+      assert.equal(result.continuation, undefined)
+    }
+    f.setActive(1)
+    const foreign = (await f.service.execute({ operation: 'read', projectId: 'p', id: run }, 'agent', f.owner)) as {
+      continuation?: unknown
+    }
+    assert.equal(foreign.continuation, undefined)
+  } finally {
+    f.close()
+  }
+})
+
+test('Continuation rejects previous Session, subscription, input or cursor changes and omits later-mutated evidence', async () => {
+  const f = fixture()
+  try {
+    const sub = await f.created(),
+      other = await f.created(),
+      previous = await f.start(sub),
+      lead = await f.lead(previous, 'https://example.org/saved')
+    await f.execute('finish', { runId: previous, status: 'partial', note: 'Incomplete' }, 'agent')
+    const original = f.store.entity(previous, 'run'),
+      run = await f.start(sub)
+    for (const patch of [
+      { sessionId: 'foreign-session' },
+      { subscriptionId: other },
+      { input: { ...original.input, url: 'https://example.org/other-feed' } },
+      { fromCursor: 'different-cursor' },
+      { status: 'failed' as const }
+    ]) {
+      const current = f.store.entity(previous, 'run')
+      f.store.commit(
+        [{ ...original, ...patch, revision: current.revision + 1 }],
+        f.revision(),
+        'fixture-changed-history'
+      )
+      const read = (await f.execute('read', { id: run }, 'agent')) as {
+        continuation: { available: boolean; previousRunId: string | null; leads: unknown[] }
+      }
+      assert.equal(read.continuation.available, false)
+      assert.equal(read.continuation.previousRunId, null)
+      assert.deepEqual(read.continuation.leads, [])
+    }
+    const current = f.store.entity(previous, 'run')
+    f.store.commit([{ ...original, revision: current.revision + 1 }], f.revision(), 'fixture-restored-binding')
+    await f.execute('revise-lead', { id: lead.id, status: 'reviewed', missing: 'User changed this evidence gap' })
+    const changed = (await f.execute('read', { id: run }, 'agent')) as {
+      continuation: { available: boolean; changed: number; leads: unknown[]; reason: string }
+    }
+    assert.equal(changed.continuation.available, false)
+    assert.equal(changed.continuation.changed, 1)
+    assert.equal(changed.continuation.reason, 'history-changed')
+    assert.deepEqual(changed.continuation.leads, [])
+  } finally {
+    f.close()
+  }
+})
+
+test('Continuation keeps exact URL and SHA within a twelve KiB summary and reports omitted entries without new reads', async () => {
+  const f = fixture()
+  try {
+    const sub = await f.created(),
+      previous = await f.start(sub)
+    for (let i = 0; i < 20; i++)
+      await f.lead(previous, 'https://example.org/' + i + '-' + 'x'.repeat(1400), { missing: 'm'.repeat(1900) })
+    await f.execute('finish', { runId: previous, status: 'partial', note: 'Page budget reached' }, 'agent')
+    const run = await f.start(sub),
+      read = (await f.execute('read', { id: run }, 'agent')) as {
+        continuation: {
+          savedLeadCount: number
+          omitted: number
+          changed: number
+          leads: { url: string; bodySha256: string; missingExcerpt: string; missingTruncated: boolean }[]
+        }
+      }
+    assert.equal(read.continuation.savedLeadCount, 20)
+    assert.ok(read.continuation.omitted > 0)
+    assert.equal(read.continuation.changed, 0)
+    assert.equal(read.continuation.leads.length + read.continuation.omitted, 20)
+    assert.ok(Buffer.byteLength(JSON.stringify(read.continuation), 'utf8') <= 12 * 1024)
+    for (const lead of read.continuation.leads) {
+      assert.ok(lead.url.endsWith('x'.repeat(1400)))
+      assert.equal(lead.bodySha256.length, 64)
+      assert.equal(lead.missingExcerpt.length, 200)
+      assert.equal(lead.missingTruncated, true)
+    }
+    assert.equal(f.store.entity(sub, 'subscription').cursor, '')
+    assert.equal(f.store.entity(previous, 'run').status, 'partial')
+  } finally {
+    f.close()
+  }
 })

@@ -54,9 +54,9 @@ export function readWorkbuddyCliVersion(node: string, cli: string): Promise<stri
       {
         timeout: 20000,
         maxBuffer: 4096,
-        env: { PATH: '/usr/bin:/bin:/usr/sbin:/sbin', HOME: path.dirname(cli), ELECTRON_RUN_AS_NODE: '1' },
+        env: { PATH: '/usr/bin:/bin:/usr/sbin:/sbin', HOME: path.dirname(cli), ELECTRON_RUN_AS_NODE: '1' }
       },
-      (error, stdout) => (error ? reject(error) : resolve(stdout.trim())),
+      (error, stdout) => (error ? reject(error) : resolve(stdout.trim()))
     )
   })
 }
@@ -66,7 +66,11 @@ export async function assertWorkbuddyCliVersion(node: string, cli: string): Prom
   const version = await readWorkbuddyCliVersion(node, cli)
   if (version !== workbuddyPinnedCliVersion) {
     throw new Error(
-      'BMW 只支持 WorkBuddy CLI ' + workbuddyPinnedCliVersion + '（当前为 ' + version + '）。请通过 BMW_WORKBUDDY_EXECUTABLE 指定已固定的官方构建。',
+      'BMW 只支持 WorkBuddy CLI ' +
+        workbuddyPinnedCliVersion +
+        '（当前为 ' +
+        version +
+        '）。请通过 BMW_WORKBUDDY_EXECUTABLE 指定已固定的官方构建。'
     )
   }
 }

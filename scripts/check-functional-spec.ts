@@ -9,7 +9,7 @@ const END = '<!-- END GENERATED CAPABILITY AND TEST INVENTORY -->'
 
 function walk(directory: string): string[] {
   if (!fs.existsSync(directory)) return []
-  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
     const target = path.join(directory, entry.name)
     return entry.isDirectory() ? walk(target) : [target]
   })
@@ -21,34 +21,44 @@ function relative(filePath: string): string {
 
 function extractTestNames(source: string): string[] {
   const declarations = source.matchAll(/\btest\s*\(\s*('(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|`(?:\\.|[^`\\])*`)\s*,/g)
-  return [...declarations].map((match) => match[1].slice(1, -1).replace(/\s+/g, ' ').trim())
+  return [...declarations].map(match => match[1].slice(1, -1).replace(/\s+/g, ' ').trim())
 }
 
-async function browserActions(): Promise<{groups:Array<{group:string;actions:string[]}>;studioOperations:string[]}> {
-  const [{bmwProduct},{BrowserCapabilityRegistry}]=await Promise.all([
-    import('../packages/product-bmw/index.js'),import('../packages/browser-capability/src/browser-capability-registry.js')
+async function browserActions(): Promise<{
+  groups: Array<{ group: string; actions: string[] }>
+  studioOperations: string[]
+}> {
+  const [{ bmwProduct }, { BrowserCapabilityRegistry }] = await Promise.all([
+    import('../packages/product-bmw/index.js'),
+    import('../packages/browser-capability/src/browser-capability-registry.js')
   ])
-  const registry=new BrowserCapabilityRegistry(bmwProduct),groups=new Map<string,string[]>()
-  if(registry.toolDefinition().name!=='browser')throw new Error('BMW must publish exactly browser.')
-  for(const action of registry.allowedActions){
-    const owner=registry.ownerOf(action)
-    if(!owner)throw new Error('Browser Action has no owner: '+action)
-    const group=owner==='browser-capability'?'BMW 核心 Browser Actions':owner+' Feature Browser Actions'
-    groups.set(group,[...(groups.get(group)??[]),action])
+  const registry = new BrowserCapabilityRegistry(bmwProduct),
+    groups = new Map<string, string[]>()
+  if (registry.toolDefinition().name !== 'browser') throw new Error('BMW must publish exactly browser.')
+  for (const action of registry.allowedActions) {
+    const owner = registry.ownerOf(action)
+    if (!owner) throw new Error('Browser Action has no owner: ' + action)
+    const group = owner === 'browser-capability' ? 'BMW 核心 Browser Actions' : owner + ' Feature Browser Actions'
+    groups.set(group, [...(groups.get(group) ?? []), action])
   }
-  let operations:unknown=registry.definition('video.studio')?.inputSchema
-  for(const key of ['properties','studioRequest','properties','operation','enum']){
-    if(!operations||typeof operations!=='object'||Array.isArray(operations))throw new Error('Missing video.studio operation schema.')
-    operations=(operations as Record<string,unknown>)[key]
+  let operations: unknown = registry.definition('video.studio')?.inputSchema
+  for (const key of ['properties', 'studioRequest', 'properties', 'operation', 'enum']) {
+    if (!operations || typeof operations !== 'object' || Array.isArray(operations))
+      throw new Error('Missing video.studio operation schema.')
+    operations = (operations as Record<string, unknown>)[key]
   }
-  if(!Array.isArray(operations)||operations.some(value=>typeof value!=='string'))throw new Error('Invalid video.studio operations.')
-  return {groups:[...groups].map(([group,actions])=>({group,actions})),studioOperations:operations as string[]}
+  if (!Array.isArray(operations) || operations.some(value => typeof value !== 'string'))
+    throw new Error('Invalid video.studio operations.')
+  return {
+    groups: [...groups].map(([group, actions]) => ({ group, actions })),
+    studioOperations: operations as string[]
+  }
 }
 
 async function renderInventory(): Promise<string> {
   const testFiles = ['apps', 'packages', 'scripts']
-    .flatMap((directory) => walk(path.join(ROOT, directory)))
-    .filter((filePath) => filePath.endsWith('.test.ts'))
+    .flatMap(directory => walk(path.join(ROOT, directory)))
+    .filter(filePath => filePath.endsWith('.test.ts'))
     .sort((left, right) => relative(left).localeCompare(relative(right)))
   if (!testFiles.length) throw new Error('No authored TypeScript test files were found.')
 
@@ -60,12 +70,20 @@ async function renderInventory(): Promise<string> {
     '### 当前 Browser Action 清单',
     ''
   ]
-  const capabilities=await browserActions()
+  const capabilities = await browserActions()
   for (const catalog of capabilities.groups) {
-    lines.push(`- ${catalog.group}（${catalog.actions.length}）：${catalog.actions.map((action) => `\`${action}\``).join('、') || '无'}`)
+    lines.push(
+      `- ${catalog.group}（${catalog.actions.length}）：${catalog.actions.map(action => `\`${action}\``).join('、') || '无'}`
+    )
   }
 
-  lines.push('', `- video.studio 操作（${capabilities.studioOperations.length}）：${capabilities.studioOperations.map(operation=>`\`${operation}\``).join('、')}。字段、用户专属操作与归属检查见上方契约。`, '', '### 当前自动化测试清单', '')
+  lines.push(
+    '',
+    `- video.studio 操作（${capabilities.studioOperations.length}）：${capabilities.studioOperations.map(operation => `\`${operation}\``).join('、')}。字段、用户专属操作与归属检查见上方契约。`,
+    '',
+    '### 当前自动化测试清单',
+    ''
+  )
   for (const filePath of testFiles) {
     const file = relative(filePath)
     const tests = extractTestNames(fs.readFileSync(filePath, 'utf8'))

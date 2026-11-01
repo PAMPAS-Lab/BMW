@@ -39,10 +39,13 @@ export function createWorkbuddyAcp(options: WorkbuddyAcpOptions): WorkbuddyAcp {
     cwd: options.cwd,
     env: options.env as NodeJS.ProcessEnv,
     stdio: ['pipe', 'pipe', 'pipe'],
-    detached: process.platform !== 'win32',
+    detached: process.platform !== 'win32'
   })
   const lines = createInterface({ input: child.stdout, crlfDelay: Infinity })
-  const pending = new Map<number, { resolve(value: unknown): void; reject(error: Error): void; timer: ReturnType<typeof setTimeout> }>()
+  const pending = new Map<
+    number,
+    { resolve(value: unknown): void; reject(error: Error): void; timer: ReturnType<typeof setTimeout> }
+  >()
   const listeners = new Set<(method: string, params: unknown) => void>()
   let nextId = 0
   let closed = false
@@ -50,27 +53,54 @@ export function createWorkbuddyAcp(options: WorkbuddyAcpOptions): WorkbuddyAcp {
   let failure: Error | null = null
   let physicallyClosed = false
   const handlers = new Set<Promise<void>>()
-  const groupAlive = () => { if (process.platform === 'win32' || !child.pid) return !physicallyClosed; try { process.kill(-child.pid, 0); return true } catch (error: unknown) { if ((error as NodeJS.ErrnoException).code === 'ESRCH') return false; throw error } }
-  const terminateGroup = (signal: NodeJS.Signals) => { try { if (process.platform !== 'win32' && child.pid) process.kill(-child.pid, signal); else child.kill(signal) } catch (error: unknown) { if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error } }
-  const processClosed = new Promise<void>(resolve => child.once('close', () => { physicallyClosed = true; resolve() }))
+  const groupAlive = () => {
+    if (process.platform === 'win32' || !child.pid) return !physicallyClosed
+    try {
+      process.kill(-child.pid, 0)
+      return true
+    } catch (error: unknown) {
+      if ((error as NodeJS.ErrnoException).code === 'ESRCH') return false
+      throw error
+    }
+  }
+  const terminateGroup = (signal: NodeJS.Signals) => {
+    try {
+      if (process.platform !== 'win32' && child.pid) process.kill(-child.pid, signal)
+      else child.kill(signal)
+    } catch (error: unknown) {
+      if ((error as NodeJS.ErrnoException).code !== 'ESRCH') throw error
+    }
+  }
+  const processClosed = new Promise<void>(resolve =>
+    child.once('close', () => {
+      physicallyClosed = true
+      resolve()
+    })
+  )
   let requestHandler: ((method: string, params: unknown) => Promise<unknown>) | null = null
   let failureHandler: ((error: Error) => void) | null = null
 
   const fail = (error: Error) => {
     failure ??= error
-    for (const row of pending.values()) { clearTimeout(row.timer); row.reject(error) }
+    for (const row of pending.values()) {
+      clearTimeout(row.timer)
+      row.reject(error)
+    }
     pending.clear()
     if (!closed) failureHandler?.(error)
   }
   const write = (value: unknown) => {
-    if (closed || failure || child.exitCode !== null || child.signalCode !== null) throw failure ?? new Error('WorkBuddy ACP session is closed')
+    if (closed || failure || child.exitCode !== null || child.signalCode !== null)
+      throw failure ?? new Error('WorkBuddy ACP session is closed')
     child.stdin.write(JSON.stringify(value) + '\n')
   }
   // Drain diagnostics without exposing account detail to the UI or logs.
   child.stderr.on('data', () => {})
   child.on('error', fail)
   child.stdin.on('error', fail)
-  child.on('exit', () => { if (!closed) fail(new Error('WorkBuddy ACP process exited before transport cleanup')) })
+  child.on('exit', () => {
+    if (!closed) fail(new Error('WorkBuddy ACP process exited before transport cleanup'))
+  })
   lines.on('line', line => {
     try {
       if (line.length > 32 * 1024 * 1024) throw new Error('WorkBuddy event exceeds its transport budget')
@@ -83,7 +113,11 @@ export function createWorkbuddyAcp(options: WorkbuddyAcpOptions): WorkbuddyAcp {
               if (!requestHandler) throw new Error('BMW has not admitted WorkBuddy client requests')
               write({ jsonrpc: '2.0', id, result: await requestHandler(message.method as string, message.params) })
             } catch {
-              try { write({ jsonrpc: '2.0', id, error: { code: -32601, message: 'BMW rejected this Agent request' } }) } catch { /* Exit already owns transport failure. */ }
+              try {
+                write({ jsonrpc: '2.0', id, error: { code: -32601, message: 'BMW rejected this Agent request' } })
+              } catch {
+                /* Exit already owns transport failure. */
+              }
             }
           })()
           handlers.add(handler)
@@ -94,26 +128,48 @@ export function createWorkbuddyAcp(options: WorkbuddyAcpOptions): WorkbuddyAcp {
         if (row) {
           pending.delete(message.id)
           clearTimeout(row.timer)
-          if (message.error) row.reject(new Error('WorkBuddy rejected an official protocol operation' + errorCode(message.error)))
+          if (message.error)
+            row.reject(new Error('WorkBuddy rejected an official protocol operation' + errorCode(message.error)))
           else row.resolve(message.result)
         }
       }
-    } catch { fail(new Error('Invalid WorkBuddy transport event')) }
+    } catch {
+      fail(new Error('Invalid WorkBuddy transport event'))
+    }
   })
 
   return {
     call(method, params, timeoutMs = 30000) {
       return new Promise((resolve, reject) => {
         const id = ++nextId
-        const timer = setTimeout(() => { pending.delete(id); reject(new Error('WorkBuddy protocol timeout: ' + method)) }, timeoutMs)
+        const timer = setTimeout(() => {
+          pending.delete(id)
+          reject(new Error('WorkBuddy protocol timeout: ' + method))
+        }, timeoutMs)
         pending.set(id, { resolve, reject, timer })
-        try { write({ jsonrpc: '2.0', id, method, params }) } catch (error: unknown) { clearTimeout(timer); pending.delete(id); reject(error) }
+        try {
+          write({ jsonrpc: '2.0', id, method, params })
+        } catch (error: unknown) {
+          clearTimeout(timer)
+          pending.delete(id)
+          reject(error)
+        }
       })
     },
     notify: (method, params) => write({ jsonrpc: '2.0', method, params }),
-    onRequest(listener) { requestHandler = listener },
-    onNotification(listener) { listeners.add(listener); return () => { listeners.delete(listener) } },
-    onFailure(listener) { failureHandler = listener; if (failure) listener(failure) },
+    onRequest(listener) {
+      requestHandler = listener
+    },
+    onNotification(listener) {
+      listeners.add(listener)
+      return () => {
+        listeners.delete(listener)
+      }
+    },
+    onFailure(listener) {
+      failureHandler = listener
+      if (failure) listener(failure)
+    },
     close() {
       if (closing) return closing
       closed = true
@@ -125,8 +181,17 @@ export function createWorkbuddyAcp(options: WorkbuddyAcpOptions): WorkbuddyAcp {
           let timeout: ReturnType<typeof setTimeout> | undefined
           try {
             child.stdin.end()
-            await Promise.race([processClosed, new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error('WorkBuddy CLI cleanup is pending')), 6000) })])
-          } finally { clearTimeout(terminate); clearTimeout(kill); if (timeout) clearTimeout(timeout) }
+            await Promise.race([
+              processClosed,
+              new Promise<never>((_, reject) => {
+                timeout = setTimeout(() => reject(new Error('WorkBuddy CLI cleanup is pending')), 6000)
+              })
+            ])
+          } finally {
+            clearTimeout(terminate)
+            clearTimeout(kill)
+            if (timeout) clearTimeout(timeout)
+          }
         }
         if (groupAlive()) {
           terminateGroup('SIGTERM')
@@ -138,11 +203,14 @@ export function createWorkbuddyAcp(options: WorkbuddyAcpOptions): WorkbuddyAcp {
           }
         }
         await Promise.all([...handlers])
-        lines.close(); listeners.clear()
+        lines.close()
+        listeners.clear()
       })()
       const owned = closing
-      void owned.catch(() => { if (closing === owned) closing = null })
+      void owned.catch(() => {
+        if (closing === owned) closing = null
+      })
       return closing
-    },
+    }
   }
 }

@@ -41,32 +41,79 @@ const settingsCustomSearch = document.querySelector('#settings-custom-search')
 const settingsNewTab = document.querySelector('#settings-new-tab')
 const settingsMessage = document.querySelector('#settings-message')
 const settingsTheme = document.querySelector('#settings-theme')
-let videoPreferencesDraft:VideoPreferences=normalizeVideoPreferences(),videoPreferencesExpected:VideoPreferences=normalizeVideoPreferences(),videoPreferencesDirty=false
-const videoOptionsForm=new VideoOptionsForm(document.querySelector('#settings-video-options') as HTMLElement,'settings-video',()=>{videoPreferencesDirty=true})
-const videoTemplateSelect=document.querySelector('#settings-video-template') as HTMLSelectElement
-const videoTemplateName=document.querySelector('#settings-video-template-name') as HTMLInputElement
-const videoTemplateNote=document.querySelector('#settings-video-template-note') as HTMLElement
-function renderVideoTemplates():void{const selected=videoTemplateSelect.value;videoTemplateSelect.replaceChildren(new Option('选择模板…',''),...videoPreferencesDraft.templates.map(item=>new Option(item.name,item.name)));videoTemplateSelect.value=selected}
-const qwenWorkspace=document.querySelector('#settings-qwen-workspace') as HTMLInputElement
-const qwenKey=document.querySelector('#settings-qwen-key') as HTMLInputElement
-const qwenVoice=document.querySelector('#settings-qwen-voice') as HTMLSelectElement
-const qwenSave=document.querySelector('#settings-qwen-save') as HTMLButtonElement
-const qwenClear=document.querySelector('#settings-qwen-clear') as HTMLButtonElement
-const qwenPreview=document.querySelector('#settings-qwen-preview') as HTMLButtonElement
-const qwenCancel=document.querySelector('#settings-qwen-cancel') as HTMLButtonElement
-const qwenAudio=document.querySelector('#settings-qwen-audio') as HTMLAudioElement
-const qwenStatus=document.querySelector('#settings-qwen-status') as HTMLElement
-const qwenPreviewStatus=document.querySelector('#settings-qwen-preview-status') as HTMLElement
-let qwenConfigured=false,qwenAvailable=false,qwenBusy=false,qwenGenerating=false,qwenCredentialDirty=false,qwenSettingsGeneration=0
-function clearQwenAudio(){qwenAudio.pause();qwenAudio.removeAttribute('src');qwenAudio.load();qwenAudio.hidden=true}
-function updateQwenControls(){qwenSave.disabled=qwenBusy||!qwenAvailable;qwenClear.disabled=qwenBusy;qwenPreview.disabled=qwenBusy||!qwenAvailable||!qwenConfigured||qwenCredentialDirty;qwenCancel.disabled=!qwenGenerating;qwenKey.disabled=qwenBusy;qwenWorkspace.disabled=qwenBusy;qwenVoice.disabled=qwenBusy}
-function renderQwenStatus(value:{available:boolean;configured:boolean;workspaceId:string;state:string}){
-  qwenCredentialDirty=false;qwenAvailable=value.available;qwenConfigured=value.configured;qwenWorkspace.value=value.workspaceId;qwenKey.value=''
-  qwenKey.placeholder=value.configured?'已安全保存；留空保留原 Key':'输入 API Key'
-  const labels:Record<string,string>={ready:'Qwen 凭据已使用系统安全存储加密保存，API Key 不回显。',empty:'尚未配置 Qwen。填写北京地域凭据后保存。',unavailable:'系统安全存储不可用，无法读取或保存凭据。',unreadable:'已有凭据无法读取，原文件已保留。请恢复系统安全存储，或清除配置后重新保存。'}
-  qwenStatus.textContent=labels[value.state]??'Qwen 配置不可用。';updateQwenControls()
+let videoPreferencesDraft: VideoPreferences = normalizeVideoPreferences(),
+  videoPreferencesExpected: VideoPreferences = normalizeVideoPreferences(),
+  videoPreferencesDirty = false
+const videoOptionsForm = new VideoOptionsForm(
+  document.querySelector('#settings-video-options') as HTMLElement,
+  'settings-video',
+  () => {
+    videoPreferencesDirty = true
+  }
+)
+const videoTemplateSelect = document.querySelector('#settings-video-template') as HTMLSelectElement
+const videoTemplateName = document.querySelector('#settings-video-template-name') as HTMLInputElement
+const videoTemplateNote = document.querySelector('#settings-video-template-note') as HTMLElement
+function renderVideoTemplates(): void {
+  const selected = videoTemplateSelect.value
+  videoTemplateSelect.replaceChildren(
+    new Option('选择模板…', ''),
+    ...videoPreferencesDraft.templates.map(item => new Option(item.name, item.name))
+  )
+  videoTemplateSelect.value = selected
 }
-async function refreshQwenStatus(){const generation=qwenSettingsGeneration;const value=await api.qwenTtsStatus();if(generation===qwenSettingsGeneration)renderQwenStatus(value)}
+const qwenWorkspace = document.querySelector('#settings-qwen-workspace') as HTMLInputElement
+const qwenKey = document.querySelector('#settings-qwen-key') as HTMLInputElement
+const qwenVoice = document.querySelector('#settings-qwen-voice') as HTMLSelectElement
+const qwenSave = document.querySelector('#settings-qwen-save') as HTMLButtonElement
+const qwenClear = document.querySelector('#settings-qwen-clear') as HTMLButtonElement
+const qwenPreview = document.querySelector('#settings-qwen-preview') as HTMLButtonElement
+const qwenCancel = document.querySelector('#settings-qwen-cancel') as HTMLButtonElement
+const qwenAudio = document.querySelector('#settings-qwen-audio') as HTMLAudioElement
+const qwenStatus = document.querySelector('#settings-qwen-status') as HTMLElement
+const qwenPreviewStatus = document.querySelector('#settings-qwen-preview-status') as HTMLElement
+let qwenConfigured = false,
+  qwenAvailable = false,
+  qwenBusy = false,
+  qwenGenerating = false,
+  qwenCredentialDirty = false,
+  qwenSettingsGeneration = 0
+function clearQwenAudio() {
+  qwenAudio.pause()
+  qwenAudio.removeAttribute('src')
+  qwenAudio.load()
+  qwenAudio.hidden = true
+}
+function updateQwenControls() {
+  qwenSave.disabled = qwenBusy || !qwenAvailable
+  qwenClear.disabled = qwenBusy
+  qwenPreview.disabled = qwenBusy || !qwenAvailable || !qwenConfigured || qwenCredentialDirty
+  qwenCancel.disabled = !qwenGenerating
+  qwenKey.disabled = qwenBusy
+  qwenWorkspace.disabled = qwenBusy
+  qwenVoice.disabled = qwenBusy
+}
+function renderQwenStatus(value: { available: boolean; configured: boolean; workspaceId: string; state: string }) {
+  qwenCredentialDirty = false
+  qwenAvailable = value.available
+  qwenConfigured = value.configured
+  qwenWorkspace.value = value.workspaceId
+  qwenKey.value = ''
+  qwenKey.placeholder = value.configured ? '已安全保存；留空保留原 Key' : '输入 API Key'
+  const labels: Record<string, string> = {
+    ready: 'Qwen 凭据已使用系统安全存储加密保存，API Key 不回显。',
+    empty: '尚未配置 Qwen。填写北京地域凭据后保存。',
+    unavailable: '系统安全存储不可用，无法读取或保存凭据。',
+    unreadable: '已有凭据无法读取，原文件已保留。请恢复系统安全存储，或清除配置后重新保存。'
+  }
+  qwenStatus.textContent = labels[value.state] ?? 'Qwen 配置不可用。'
+  updateQwenControls()
+}
+async function refreshQwenStatus() {
+  const generation = qwenSettingsGeneration
+  const value = await api.qwenTtsStatus()
+  if (generation === qwenSettingsGeneration) renderQwenStatus(value)
+}
 const settingsQwenNarration = document.querySelector('#settings-qwen-narration') as HTMLInputElement
 const settingsEdgeNarration = document.querySelector('#settings-edge-narration') as HTMLInputElement
 const settingsRestart = document.querySelector('#settings-restart')
@@ -82,8 +129,8 @@ const scheduledTaskList = document.querySelector('#scheduled-task-list')
 const scheduledTaskMessage = document.querySelector('#scheduled-task-message')
 
 type ToolbarPopup = 'more' | 'site' | null
-const moreButton = (document.querySelector('#more-button') as HTMLButtonElement)
-const siteSettingsButton = (document.querySelector('#site-settings-button') as HTMLButtonElement)
+const moreButton = document.querySelector('#more-button') as HTMLButtonElement
+const siteSettingsButton = document.querySelector('#site-settings-button') as HTMLButtonElement
 let toolbarPopup: ToolbarPopup = null
 let popupUpdates: Promise<void> = Promise.resolve()
 let returnToSettings = false
@@ -97,12 +144,14 @@ function setToolbarPopup(next: ToolbarPopup): Promise<void> {
   siteSettingsButton.setAttribute('aria-expanded', String(next === 'site'))
   if (next === 'site') {
     const bounds = siteSettingsButton.getBoundingClientRect()
-    const popup = (document.querySelector('#site-settings-menu') as HTMLElement)
+    const popup = document.querySelector('#site-settings-menu') as HTMLElement
     popup.style.left = Math.max(8, Math.min(bounds.left, window.innerWidth - 328)) + 'px'
   }
-  popupUpdates = popupUpdates.catch(() => {}).then(async () => {
-    await api.toolbarPanel(next !== null)
-  })
+  popupUpdates = popupUpdates
+    .catch(() => {})
+    .then(async () => {
+      await api.toolbarPanel(next !== null)
+    })
   return popupUpdates
 }
 function chooseSettingsCategory(category: string): void {
@@ -125,7 +174,14 @@ async function restoreSettingsAfterLayout(): Promise<void> {
 let browserState: Record<string, any> = { tabs: [], activeTabId: null, agentControlGranted: false }
 let recording = false
 let agentVisible = true
-let layoutState: Record<string, any> = { configured: false, mode: 'sidebar', sidebarWidth: 460, opacity: 1, overlayFullscreen: false, setupVisible: false }
+let layoutState: Record<string, any> = {
+  configured: false,
+  mode: 'sidebar',
+  sidebarWidth: 460,
+  opacity: 1,
+  overlayFullscreen: false,
+  setupVisible: false
+}
 let agentStatusState: Record<string, any> = { state: 'starting' }
 let editingLayoutMode = 'sidebar'
 let editingOpacity = 1
@@ -139,40 +195,64 @@ let projectSavePending = false
 let documentKind = 'instructions'
 let creatingProject = false
 let initialProjectSetup = false
-let globalSettings: Record<string, any> = { proxyMode: 'system', proxyRules: '', proxyBypassRules: '<local>', searchEngine: 'google', customSearchUrl: '', newTabPage: 'search', theme: 'dark' }
+let globalSettings: Record<string, any> = {
+  proxyMode: 'system',
+  proxyRules: '',
+  proxyBypassRules: '<local>',
+  searchEngine: 'google',
+  customSearchUrl: '',
+  newTabPage: 'search',
+  theme: 'dark'
+}
 let agentSessions: Record<string, any> = { selectedSessionId: null, items: [] }
 let sessionSearchTimer
-let productInfo = { id: 'bmw', name: 'BMW', agent: {id:'',label:'Agent',baseline:''} }
+let productInfo = { id: 'bmw', name: 'BMW', agent: { id: '', label: 'Agent', baseline: '' } }
 let scheduledTaskState: Record<string, any> = { tasks: [], runs: [] }
 
-
-let contextState:AgentContextState={state:'starting'}
-function renderContext():void{
- const context=contextState.context,project=activeProject()
- const name=project?.name||'No project'
- const linked=Boolean(context&&project&&context.projectId===project.id)
- document.querySelector('#context-project').textContent='Project: '+name
- const workspace=document.querySelector('#context-workspace')
- workspace.textContent='Project: '+name
- workspace.title=linked?context.directory:'Conversations share this Project’s pages and media'
- const selected=document.querySelector('#context-session')
- selected.textContent='Conversation: '+(contextState.state==='empty'?'None selected':linked?context.sessionTitle:'Connecting…')+' ▾'
- selected.title=linked?`Selected conversation · ${context.sessionCount} sessions in this Project`:'Choose a conversation in this Project'
- const deferred=browserState.tabs.filter(tab=>tab.deferred===true).length,loaded=browserState.tabs.length-deferred,research=browserState.tabs.filter(tab=>tab.source==='agent').length
- document.querySelector('#context-pages').textContent=`${browserState.tabs.length} saved pages · ${loaded} loaded · ${deferred} deferred · ${research} research`
- const message=document.querySelector('#context-message')
- message.textContent=contextState.message||''
- message.classList.toggle('hidden',!contextState.message)
- document.querySelector('#context-strip').classList.toggle('context-error',contextState.state==='error')
- document.querySelector('#session-workspace').textContent=`Project: ${name} · ${agentSessions.items.length} sessions · shared Project pages`
+let contextState: AgentContextState = { state: 'starting' }
+function renderContext(): void {
+  const context = contextState.context,
+    project = activeProject()
+  const name = project?.name || 'No project'
+  const linked = Boolean(context && project && context.projectId === project.id)
+  document.querySelector('#context-project').textContent = 'Project: ' + name
+  const workspace = document.querySelector('#context-workspace')
+  workspace.textContent = 'Project: ' + name
+  workspace.title = linked ? context.directory : 'Conversations share this Project’s pages and media'
+  const selected = document.querySelector('#context-session')
+  selected.textContent =
+    'Conversation: ' +
+    (contextState.state === 'empty' ? 'None selected' : linked ? context.sessionTitle : 'Connecting…') +
+    ' ▾'
+  selected.title = linked
+    ? `Selected conversation · ${context.sessionCount} sessions in this Project`
+    : 'Choose a conversation in this Project'
+  const deferred = browserState.tabs.filter(tab => tab.deferred === true).length,
+    loaded = browserState.tabs.length - deferred,
+    research = browserState.tabs.filter(tab => tab.source === 'agent').length
+  document.querySelector('#context-pages').textContent =
+    `${browserState.tabs.length} saved pages · ${loaded} loaded · ${deferred} deferred · ${research} research`
+  const message = document.querySelector('#context-message')
+  message.textContent = contextState.message || ''
+  message.classList.toggle('hidden', !contextState.message)
+  document.querySelector('#context-strip').classList.toggle('context-error', contextState.state === 'error')
+  document.querySelector('#session-workspace').textContent =
+    `Project: ${name} · ${agentSessions.items.length} sessions · shared Project pages`
 }
-function receiveAgentContext(value:unknown):void{
- try{const next=parseAgentContextState(value);contextState={...next,context:next.context||contextState.context};renderContext();if(!sessionOverlay.classList.contains('hidden'))void refreshAgentSessions()}
- catch(error:unknown){contextState={...contextState,state:'error',message:error instanceof Error?error.message:String(error)};renderContext()}
+function receiveAgentContext(value: unknown): void {
+  try {
+    const next = parseAgentContextState(value)
+    contextState = { ...next, context: next.context || contextState.context }
+    renderContext()
+    if (!sessionOverlay.classList.contains('hidden')) void refreshAgentSessions()
+  } catch (error: unknown) {
+    contextState = { ...contextState, state: 'error', message: error instanceof Error ? error.message : String(error) }
+    renderContext()
+  }
 }
 
 function activeTab() {
-  return browserState.tabs.find((tab) => tab.id === browserState.activeTabId)
+  return browserState.tabs.find(tab => tab.id === browserState.activeTabId)
 }
 
 function renderAgentStatus() {
@@ -187,22 +267,30 @@ function renderAgentStatus() {
   status.textContent = base.replace('Agent', 'Assistant')
   status.title = agentStatusState.message || 'Assistant runtime status'
   agentToggle.setAttribute('aria-pressed', String(agentVisible))
-  agentToggle.title = agentVisible ? 'Hide assistant panel. Running tasks continue.' : 'Show assistant panel. Browser permission is unchanged.'
-
+  agentToggle.title = agentVisible
+    ? 'Hide assistant panel. Running tasks continue.'
+    : 'Show assistant panel. Browser permission is unchanged.'
 }
 
 function renderLayoutEditor() {
-  document.querySelectorAll('[data-layout-mode]').forEach((button) => button.classList.toggle('active', button.dataset.layoutMode === editingLayoutMode))
-  document.querySelectorAll('[data-opacity]').forEach((button) => button.classList.toggle('active', Number(button.dataset.opacity) === editingOpacity))
+  document
+    .querySelectorAll('[data-layout-mode]')
+    .forEach(button => button.classList.toggle('active', button.dataset.layoutMode === editingLayoutMode))
+  document
+    .querySelectorAll('[data-opacity]')
+    .forEach(button => button.classList.toggle('active', Number(button.dataset.opacity) === editingOpacity))
   layoutWidth.value = String(layoutState.sidebarWidth || 460)
   layoutWidthOutput.value = `${layoutWidth.value} px`
   layoutWidth.disabled = editingLayoutMode !== 'sidebar'
-  document.querySelectorAll('[data-opacity]').forEach((button) => { button.disabled = editingLayoutMode !== 'overlay' })
+  document.querySelectorAll('[data-opacity]').forEach(button => {
+    button.disabled = editingLayoutMode !== 'overlay'
+  })
   layoutFullscreen.disabled = editingLayoutMode !== 'overlay'
   layoutFullscreen.checked = editingLayoutMode === 'overlay' && layoutState.overlayFullscreen === true
-  layoutHint.textContent = editingLayoutMode === 'overlay'
-    ? 'Move and resize the BMW-owned Agent window with its native title bar and edges. Escape exits full screen.'
-    : 'Choose the Agent panel width; the browser automatically receives the remaining space.'
+  layoutHint.textContent =
+    editingLayoutMode === 'overlay'
+      ? 'Move and resize the BMW-owned Agent window with its native title bar and edges. Escape exits full screen.'
+      : 'Choose the Agent panel width; the browser automatically receives the remaining space.'
   document.querySelector('#layout-close').disabled = layoutState.configured !== true
 }
 
@@ -246,82 +334,106 @@ function renderScheduledTasks() {
     scheduledTaskList.replaceChildren(empty)
     return
   }
-  scheduledTaskList.replaceChildren(...scheduledTaskState.tasks.map((task) => {
-    const latestRun = scheduledTaskState.runs?.find((run) => run.taskId === task.id)
-    const activeRun = scheduledTaskState.runs?.find((run) => run.taskId === task.id && ['queued', 'running'].includes(run.status))
-    const row = document.createElement('article')
-    row.className = 'scheduled-task-row'
-    const main = document.createElement('div')
-    main.className = 'scheduled-task-main'
-    const heading = document.createElement('div')
-    heading.className = 'scheduled-task-name'
-    const name = document.createElement('strong')
-    name.textContent = task.name
-    const badge = document.createElement('span')
-    badge.className = `scheduled-task-badge ${activeRun?.status || task.lastRunStatus || ''}`
-    badge.textContent = activeRun?.status || (task.enabled ? 'enabled' : 'paused')
-    heading.append(name, badge)
-    const schedule = document.createElement('span')
-    schedule.className = 'scheduled-task-schedule'
-    schedule.textContent = `${task.intervalMinutes===60?'每小时（空闲时执行）':'Daily '+task.schedule.time+' · '+task.schedule.timeZone} · next ${scheduledTaskTime(task.nextRunAt)} · ${task.driverId || '未绑定驱动'} · ${task.sessionId || '未绑定会话'}`
-    const prompt = document.createElement('div')
-    prompt.className = 'scheduled-task-prompt'
-    prompt.textContent = task.prompt
-    const run = document.createElement('span')
-    run.className = 'scheduled-task-run'
-    run.textContent = latestRun
-      ? `Last run: ${latestRun.status} · ${scheduledTaskTime(latestRun.finishedAt || latestRun.startedAt || latestRun.queuedAt)}${latestRun.error ? ` · ${latestRun.error}` : ''}`
-      : 'Not run yet'
-    main.append(heading, schedule, prompt, run)
-    const actions = document.createElement('div')
-    actions.className = 'scheduled-task-actions'
-    const enabledLabel = document.createElement('label')
-    const enabled = document.createElement('input')
-    enabled.type = 'checkbox'
-    enabled.checked = task.enabled === true
-    enabled.disabled = Boolean(activeRun)
-    enabled.addEventListener('change', async () => {
-      try {
-        await api.updateScheduledTask(task.id, { enabled: enabled.checked })
-        await refreshScheduledTasks()
-      } catch (error) {
-        scheduledTaskMessage.textContent = error.message
-        enabled.checked = !enabled.checked
+  scheduledTaskList.replaceChildren(
+    ...scheduledTaskState.tasks.map(task => {
+      const latestRun = scheduledTaskState.runs?.find(run => run.taskId === task.id)
+      const activeRun = scheduledTaskState.runs?.find(
+        run => run.taskId === task.id && ['queued', 'running'].includes(run.status)
+      )
+      const row = document.createElement('article')
+      row.className = 'scheduled-task-row'
+      const main = document.createElement('div')
+      main.className = 'scheduled-task-main'
+      const heading = document.createElement('div')
+      heading.className = 'scheduled-task-name'
+      const name = document.createElement('strong')
+      name.textContent = task.name
+      const badge = document.createElement('span')
+      badge.className = `scheduled-task-badge ${activeRun?.status || task.lastRunStatus || ''}`
+      badge.textContent = activeRun?.status || (task.enabled ? 'enabled' : 'paused')
+      heading.append(name, badge)
+      const schedule = document.createElement('span')
+      schedule.className = 'scheduled-task-schedule'
+      schedule.textContent = `${task.intervalMinutes === 60 ? '每小时（空闲时执行）' : 'Daily ' + task.schedule.time + ' · ' + task.schedule.timeZone} · next ${scheduledTaskTime(task.nextRunAt)} · ${task.driverId || '未绑定驱动'} · ${task.sessionId || '未绑定会话'}`
+      const prompt = document.createElement('div')
+      prompt.className = 'scheduled-task-prompt'
+      prompt.textContent = task.prompt
+      const run = document.createElement('span')
+      run.className = 'scheduled-task-run'
+      run.textContent = latestRun
+        ? `Last run: ${latestRun.status} · ${scheduledTaskTime(latestRun.finishedAt || latestRun.startedAt || latestRun.queuedAt)}${latestRun.error ? ` · ${latestRun.error}` : ''}`
+        : 'Not run yet'
+      main.append(heading, schedule, prompt, run)
+      const actions = document.createElement('div')
+      actions.className = 'scheduled-task-actions'
+      const enabledLabel = document.createElement('label')
+      const enabled = document.createElement('input')
+      enabled.type = 'checkbox'
+      enabled.checked = task.enabled === true
+      enabled.disabled = Boolean(activeRun)
+      enabled.addEventListener('change', async () => {
+        try {
+          await api.updateScheduledTask(task.id, { enabled: enabled.checked })
+          await refreshScheduledTasks()
+        } catch (error) {
+          scheduledTaskMessage.textContent = error.message
+          enabled.checked = !enabled.checked
+        }
+      })
+      enabledLabel.append(enabled, document.createTextNode('Enabled'))
+      const cadence = document.createElement('button')
+      cadence.textContent = task.intervalMinutes === 60 ? '改为每天' : '改为每小时'
+      cadence.disabled = Boolean(activeRun)
+      cadence.onclick = async () => {
+        try {
+          await api.updateScheduledTask(task.id, { intervalMinutes: task.intervalMinutes === 60 ? null : 60 })
+          await refreshScheduledTasks()
+        } catch (error) {
+          scheduledTaskMessage.textContent = error.message
+        }
       }
+      actions.append(cadence)
+      const runNow = document.createElement('button')
+      runNow.textContent = activeRun ? activeRun.status : 'Run now'
+      runNow.disabled = Boolean(activeRun)
+      runNow.addEventListener('click', async () => {
+        try {
+          await api.runScheduledTask(task.id)
+          scheduledTaskMessage.textContent = `Queued “${task.name}”. Agent will run it in the background.`
+          await refreshScheduledTasks()
+        } catch (error) {
+          scheduledTaskMessage.textContent = error.message
+        }
+      })
+      const remove = document.createElement('button')
+      remove.className = 'danger'
+      remove.textContent = 'Delete'
+      remove.disabled = Boolean(activeRun)
+      remove.addEventListener('click', async () => {
+        if (!window.confirm(`Delete scheduled task “${task.name}”? Its existing Project artifacts remain.`)) return
+        try {
+          await api.removeScheduledTask(task.id)
+          await refreshScheduledTasks()
+        } catch (error) {
+          scheduledTaskMessage.textContent = error.message
+        }
+      })
+      const bind = document.createElement('button')
+      bind.textContent = '绑定当前会话'
+      bind.disabled = Boolean(activeRun)
+      bind.addEventListener('click', async () => {
+        try {
+          await api.bindScheduledTask(task.id)
+          await refreshScheduledTasks()
+        } catch (error) {
+          scheduledTaskMessage.textContent = error.message
+        }
+      })
+      actions.append(enabledLabel, runNow, bind, remove)
+      row.append(main, actions)
+      return row
     })
-    enabledLabel.append(enabled, document.createTextNode('Enabled'))
-    const cadence=document.createElement('button')
-    cadence.textContent=task.intervalMinutes===60?'改为每天':'改为每小时'
-    cadence.disabled=Boolean(activeRun)
-    cadence.onclick=async()=>{try{await api.updateScheduledTask(task.id,{intervalMinutes:task.intervalMinutes===60?null:60});await refreshScheduledTasks()}catch(error){scheduledTaskMessage.textContent=error.message}}
-    actions.append(cadence)
-    const runNow = document.createElement('button')
-    runNow.textContent = activeRun ? activeRun.status : 'Run now'
-    runNow.disabled = Boolean(activeRun)
-    runNow.addEventListener('click', async () => {
-      try {
-        await api.runScheduledTask(task.id)
-        scheduledTaskMessage.textContent = `Queued “${task.name}”. Agent will run it in the background.`
-        await refreshScheduledTasks()
-      } catch (error) { scheduledTaskMessage.textContent = error.message }
-    })
-    const remove = document.createElement('button')
-    remove.className = 'danger'
-    remove.textContent = 'Delete'
-    remove.disabled = Boolean(activeRun)
-    remove.addEventListener('click', async () => {
-      if (!window.confirm(`Delete scheduled task “${task.name}”? Its existing Project artifacts remain.`)) return
-      try {
-        await api.removeScheduledTask(task.id)
-        await refreshScheduledTasks()
-      } catch (error) { scheduledTaskMessage.textContent = error.message }
-    })
-    const bind=document.createElement('button');bind.textContent='绑定当前会话';bind.disabled=Boolean(activeRun)
-    bind.addEventListener('click',async()=>{try{await api.bindScheduledTask(task.id);await refreshScheduledTasks()}catch(error){scheduledTaskMessage.textContent=error.message}})
-    actions.append(enabledLabel, runNow, bind, remove)
-    row.append(main, actions)
-    return row
-  }))
+  )
 }
 
 async function refreshScheduledTasks() {
@@ -338,7 +450,9 @@ async function openScheduledTasks() {
     scheduledTaskState = await api.scheduledTaskPanel(true)
     scheduledTaskOverlay.classList.remove('hidden')
     renderScheduledTasks()
-  } catch (error) { status.textContent = error.message }
+  } catch (error) {
+    status.textContent = error.message
+  }
 }
 
 async function closeScheduledTasks() {
@@ -347,7 +461,12 @@ async function closeScheduledTasks() {
 }
 
 function renderGlobalSettings() {
-  if(!videoPreferencesDirty){videoPreferencesDraft=normalizeVideoPreferences(globalSettings.videoPreferences??{});videoPreferencesExpected=structuredClone(videoPreferencesDraft);videoOptionsForm.fill(videoPreferencesDraft.defaults);renderVideoTemplates()}
+  if (!videoPreferencesDirty) {
+    videoPreferencesDraft = normalizeVideoPreferences(globalSettings.videoPreferences ?? {})
+    videoPreferencesExpected = structuredClone(videoPreferencesDraft)
+    videoOptionsForm.fill(videoPreferencesDraft.defaults)
+    renderVideoTemplates()
+  }
   settingsTheme.value = globalSettings.theme || 'dark'
   settingsProxyMode.value = globalSettings.proxyMode
   settingsProxyRules.value = globalSettings.proxyRules || ''
@@ -360,7 +479,6 @@ function renderGlobalSettings() {
   settingsEdgeNarration.checked = globalSettings.edgeNarrationEnabled === true
   settingsProxyManual.classList.toggle('hidden', settingsProxyMode.value !== 'manual')
   settingsCustomSearchRow.classList.toggle('hidden', settingsSearchEngine.value !== 'custom')
-
 }
 
 function sessionTime(value) {
@@ -380,74 +498,125 @@ function renderAgentSessions() {
   if (!agentSessions.items?.length) {
     const empty = document.createElement('div')
     empty.className = 'session-empty'
-    empty.textContent = sessionSearch.value.trim() ? 'No matching sessions in this Project.' : 'No visible session yet. Create one to start.'
+    empty.textContent = sessionSearch.value.trim()
+      ? 'No matching sessions in this Project.'
+      : 'No visible session yet. Create one to start.'
     sessionList.replaceChildren(empty)
     return
   }
-  sessionList.replaceChildren(...agentSessions.items.map((item, index) => {
-    const row = document.createElement('article')
-    row.className = `session-row${item.sessionId === agentSessions.selectedSessionId ? ' selected' : ''}`
-    const main = document.createElement('div')
-    main.className = 'session-row-main'
-    main.tabIndex = 0
-    main.setAttribute('role', 'button')
-    main.setAttribute('aria-label', `Open ${item.title}`)
-    const titleRow = document.createElement('div')
-    titleRow.className = 'session-row-title'
-    const title = document.createElement('strong')
-    title.textContent = item.title
-    const badge = document.createElement('span')
-    badge.className = `session-badge${item.running ? ' running' : ''}`
-    badge.textContent = item.running ? 'Running' : item.sessionId === agentSessions.selectedSessionId ? 'Current' : item.blank ? 'New' : 'Idle'
-    titleRow.append(title, badge)
-    const meta = document.createElement('small')
-    meta.textContent = [item.snippet, sessionTime(item.updatedAt), item.parentSessionId ? 'Fork' : '', item.agentPreset || 'bmw'].filter(Boolean).join(' · ')
-    main.append(titleRow, meta)
-    const select = async () => {
-      if (item.sessionId === agentSessions.selectedSessionId) return
-      try {
-        setSessionMessage('Switching Agent session…')
-        agentSessions = await api.selectAgentSession(item.sessionId)
-        renderAgentSessions()
-        setSessionMessage('Selected session receives BMW input for this Project.')
-      } catch (error) { setSessionMessage(error.message, true) }
-    }
-    main.addEventListener('click', select)
-    main.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); void select() } })
-    const actions = document.createElement('div')
-    actions.className = 'session-actions'
-    const action = (label, handler, className = '') => {
-      const button = document.createElement('button')
-      button.textContent = label
-      button.className = className
-      button.addEventListener('click', handler)
-      return button
-    }
-    const move = async (direction) => {
-      try { agentSessions = await api.moveAgentSession(item.sessionId, direction); renderAgentSessions() } catch (error) { setSessionMessage(error.message, true) }
-    }
-    const up = action('↑', () => move('up'))
-    up.disabled = index === 0
-    const down = action('↓', () => move('down'))
-    down.disabled = index === agentSessions.items.length - 1
-    const rename = action('Rename', async () => {
-      const next = window.prompt('Session name', item.title)
-      if (next === null || !next.trim()) return
-      try { agentSessions = await api.renameAgentSession(item.sessionId, next); renderAgentSessions() } catch (error) { setSessionMessage(error.message, true) }
+  sessionList.replaceChildren(
+    ...agentSessions.items.map((item, index) => {
+      const row = document.createElement('article')
+      row.className = `session-row${item.sessionId === agentSessions.selectedSessionId ? ' selected' : ''}`
+      const main = document.createElement('div')
+      main.className = 'session-row-main'
+      main.tabIndex = 0
+      main.setAttribute('role', 'button')
+      main.setAttribute('aria-label', `Open ${item.title}`)
+      const titleRow = document.createElement('div')
+      titleRow.className = 'session-row-title'
+      const title = document.createElement('strong')
+      title.textContent = item.title
+      const badge = document.createElement('span')
+      badge.className = `session-badge${item.running ? ' running' : ''}`
+      badge.textContent = item.running
+        ? 'Running'
+        : item.sessionId === agentSessions.selectedSessionId
+          ? 'Current'
+          : item.blank
+            ? 'New'
+            : 'Idle'
+      titleRow.append(title, badge)
+      const meta = document.createElement('small')
+      meta.textContent = [
+        item.snippet,
+        sessionTime(item.updatedAt),
+        item.parentSessionId ? 'Fork' : '',
+        item.agentPreset || 'bmw'
+      ]
+        .filter(Boolean)
+        .join(' · ')
+      main.append(titleRow, meta)
+      const select = async () => {
+        if (item.sessionId === agentSessions.selectedSessionId) return
+        try {
+          setSessionMessage('Switching Agent session…')
+          agentSessions = await api.selectAgentSession(item.sessionId)
+          renderAgentSessions()
+          setSessionMessage('Selected session receives BMW input for this Project.')
+        } catch (error) {
+          setSessionMessage(error.message, true)
+        }
+      }
+      main.addEventListener('click', select)
+      main.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          void select()
+        }
+      })
+      const actions = document.createElement('div')
+      actions.className = 'session-actions'
+      const action = (label, handler, className = '') => {
+        const button = document.createElement('button')
+        button.textContent = label
+        button.className = className
+        button.addEventListener('click', handler)
+        return button
+      }
+      const move = async direction => {
+        try {
+          agentSessions = await api.moveAgentSession(item.sessionId, direction)
+          renderAgentSessions()
+        } catch (error) {
+          setSessionMessage(error.message, true)
+        }
+      }
+      const up = action('↑', () => move('up'))
+      up.disabled = index === 0
+      const down = action('↓', () => move('down'))
+      down.disabled = index === agentSessions.items.length - 1
+      const rename = action('Rename', async () => {
+        const next = window.prompt('Session name', item.title)
+        if (next === null || !next.trim()) return
+        try {
+          agentSessions = await api.renameAgentSession(item.sessionId, next)
+          renderAgentSessions()
+        } catch (error) {
+          setSessionMessage(error.message, true)
+        }
+      })
+      const fork = action('Fork', async () => {
+        try {
+          setSessionMessage('Forking session…')
+          agentSessions = await api.forkAgentSession(item.sessionId)
+          renderAgentSessions()
+          setSessionMessage('Fork created and selected.')
+        } catch (error) {
+          setSessionMessage(error.message, true)
+        }
+      })
+      fork.disabled = item.canFork === false || item.running
+      if (item.canFork === false) fork.title = 'This driver has not enabled verified conversation branching'
+      const archive = action(
+        'Archive',
+        async () => {
+          if (!window.confirm(`Archive “${item.title}”? Its Agent log is retained.`)) return
+          try {
+            agentSessions = await api.archiveAgentSession(item.sessionId)
+            renderAgentSessions()
+            setSessionMessage('Session archived; its log remains on disk.')
+          } catch (error) {
+            setSessionMessage(error.message, true)
+          }
+        },
+        'danger'
+      )
+      actions.append(up, down, rename, fork, archive)
+      row.append(main, actions)
+      return row
     })
-    const fork = action('Fork', async () => {
-      try { setSessionMessage('Forking session…'); agentSessions = await api.forkAgentSession(item.sessionId); renderAgentSessions(); setSessionMessage('Fork created and selected.') } catch (error) { setSessionMessage(error.message, true) }
-    })
-    fork.disabled=item.canFork===false||item.running
-    if(item.canFork===false)fork.title='This driver has not enabled verified conversation branching'
-    const archive = action('Archive', async () => {
-      if (!window.confirm(`Archive “${item.title}”? Its Agent log is retained.`)) return
-      try { agentSessions = await api.archiveAgentSession(item.sessionId); renderAgentSessions(); setSessionMessage('Session archived; its log remains on disk.') } catch (error) { setSessionMessage(error.message, true) }
-    }, 'danger')
-    actions.append(up, down, rename, fork, archive)
-    row.append(main, actions)
-    return row
-  }))
+  )
 }
 
 async function refreshAgentSessions() {
@@ -455,7 +624,9 @@ async function refreshAgentSessions() {
     agentSessions = await api.listAgentSessions(sessionSearch.value)
     renderAgentSessions()
     setSessionMessage('The selected session receives BMW input for this Project.')
-  } catch (error) { setSessionMessage(error.message, true) }
+  } catch (error) {
+    setSessionMessage(error.message, true)
+  }
 }
 
 async function openSessionCenter() {
@@ -464,7 +635,9 @@ async function openSessionCenter() {
     sessionOverlay.classList.remove('hidden')
     renderAgentSessions()
     sessionSearch.focus()
-  } catch (error) { status.textContent = error.message }
+  } catch (error) {
+    status.textContent = error.message
+  }
 }
 
 async function closeSessionCenter() {
@@ -474,25 +647,34 @@ async function closeSessionCenter() {
 
 async function openGlobalSettings() {
   try {
-    videoPreferencesDirty=false
-    qwenSettingsGeneration++;qwenKey.value='';clearQwenAudio();qwenPreviewStatus.textContent=''
+    videoPreferencesDirty = false
+    qwenSettingsGeneration++
+    qwenKey.value = ''
+    clearQwenAudio()
+    qwenPreviewStatus.textContent = ''
     globalSettings = await api.globalSettingsPanel(true)
     settingsMessage.textContent = ''
     settingsMessage.classList.remove('error')
     settingsOverlay.classList.remove('hidden')
     renderGlobalSettings()
-    qwenVoice.value=QWEN_NARRATION_VOICES.some(voice=>voice===videoPreferencesDraft.defaults.tts.voice)?videoPreferencesDraft.defaults.tts.voice:'wenhuaizhi_v3.1'
+    qwenVoice.value = QWEN_NARRATION_VOICES.some(voice => voice === videoPreferencesDraft.defaults.tts.voice)
+      ? videoPreferencesDraft.defaults.tts.voice
+      : 'wenhuaizhi_v3.1'
     await refreshQwenStatus()
   } catch (error) {
     status.textContent = error.message
   }
 }
 
-function dismissQwenSettings(){qwenSettingsGeneration++;qwenKey.value='';clearQwenAudio()}
+function dismissQwenSettings() {
+  qwenSettingsGeneration++
+  qwenKey.value = ''
+  clearQwenAudio()
+}
 async function closeGlobalSettings() {
   dismissQwenSettings()
   settingsOverlay.classList.add('hidden')
-  videoPreferencesDirty=false
+  videoPreferencesDirty = false
   await api.globalSettingsPanel(false)
 }
 
@@ -502,7 +684,13 @@ function render() {
   permissionBanner.classList.toggle('hidden', browserState.agentControlGranted)
   const continuity = browserState.sessionContinuity
   document.querySelector('#site-settings-origin').textContent = continuity?.origin || 'No HTTP(S) website selected'
-  document.querySelector('#site-settings-note').textContent = !continuity?.origin ? 'Open a website to configure saved login.' : !continuity.available ? 'OS-protected encryption is unavailable.' : continuity.enabled ? 'Saved login is enabled for this website.' : 'Saved login is off. Enabling it requires confirmation.'
+  document.querySelector('#site-settings-note').textContent = !continuity?.origin
+    ? 'Open a website to configure saved login.'
+    : !continuity.available
+      ? 'OS-protected encryption is unavailable.'
+      : continuity.enabled
+        ? 'Saved login is enabled for this website.'
+        : 'Saved login is off. Enabling it requires confirmation.'
   siteSettingsButton.classList.toggle('enabled', continuity?.enabled === true)
   siteSettingsButton.title = 'Site settings: ' + (continuity?.origin || 'current page')
   keepLoginButton.setAttribute('aria-pressed', String(continuity?.enabled === true))
@@ -512,28 +700,34 @@ function render() {
   keepLoginButton.title = continuity?.enabled
     ? `Encrypted session continuity and background keepalive are enabled for ${continuity.origin}`
     : 'Keep this site signed in using OS-protected encrypted cookies'
-  tabStrip.replaceChildren(...browserState.tabs.map((tab) => {
-    const button = document.createElement('button')
-    button.className = `tab${tab.active ? ' active' : ''}`
-    button.title = tab.url
-    const source = tab.source === 'agent' ? '<span class="tab-agent">AGENT</span>' : ''
-    button.innerHTML = `${source}<span class="tab-title"></span><span class="tab-close">×</span>`
-    button.querySelector('.tab-title').textContent = tab.deferred ? `○ ${tab.title}` : tab.loading ? `◌ ${tab.title}` : tab.title
-    button.addEventListener('click', () => api.browser({ action: 'tabs.show', tabId: tab.id }))
-    button.querySelector('.tab-close').addEventListener('click', (event) => {
-      event.stopPropagation()
-      api.browser({ action: 'tabs.close', tabId: tab.id })
+  tabStrip.replaceChildren(
+    ...browserState.tabs.map(tab => {
+      const button = document.createElement('button')
+      button.className = `tab${tab.active ? ' active' : ''}`
+      button.title = tab.url
+      const source = tab.source === 'agent' ? '<span class="tab-agent">AGENT</span>' : ''
+      button.innerHTML = `${source}<span class="tab-title"></span><span class="tab-close">×</span>`
+      button.querySelector('.tab-title').textContent = tab.deferred
+        ? `○ ${tab.title}`
+        : tab.loading
+          ? `◌ ${tab.title}`
+          : tab.title
+      button.addEventListener('click', () => api.browser({ action: 'tabs.show', tabId: tab.id }))
+      button.querySelector('.tab-close').addEventListener('click', event => {
+        event.stopPropagation()
+        api.browser({ action: 'tabs.close', tabId: tab.id })
+      })
+      return button
     })
-    return button
-  }))
+  )
 }
 
 function activeProject() {
-  return projectsState.projects.find((project) => project.id === projectsState.activeProjectId)
+  return projectsState.projects.find(project => project.id === projectsState.activeProjectId)
 }
 
 function editingProject() {
-  return projectsState.projects.find((project) => project.id === editingProjectId)
+  return projectsState.projects.find(project => project.id === editingProjectId)
 }
 
 function setProjectMessage(message, error = false) {
@@ -550,10 +744,18 @@ async function loadProjectDocument() {
   projectDocumentLoading = !creatingProject && Boolean(projectId)
   renderProjectEditor({ preserveDraft: true })
   if (!projectDocumentLoading) return
-  const current = () => request === projectDocumentRequest && projectId === editingProjectId && kind === documentKind && !creatingProject && !projectOverlay.classList.contains('hidden')
+  const current = () =>
+    request === projectDocumentRequest &&
+    projectId === editingProjectId &&
+    kind === documentKind &&
+    !creatingProject &&
+    !projectOverlay.classList.contains('hidden')
   try {
     const result = await api.readProjectDocument(projectId, kind)
-    if (current()) { projectDocument.value = result.content; projectDocumentLoaded = true }
+    if (current()) {
+      projectDocument.value = result.content
+      projectDocumentLoaded = true
+    }
   } catch (error) {
     if (current()) setProjectMessage(error.message, true)
   } finally {
@@ -571,24 +773,26 @@ function renderProjects({ preserveDraft = false } = {}) {
   const signature = JSON.stringify(projectsState.projects.map(project => [project.id, project.name, project.homeUrl]))
   if (signature !== projectListSignature) {
     projectListSignature = signature
-    projectList.replaceChildren(...projectsState.projects.map((project) => {
-      const button = document.createElement('button')
-      button.dataset.projectId = project.id
-      const title = document.createElement('strong')
-      title.textContent = project.name
-      const url = document.createElement('small')
-      url.textContent = project.homeUrl || 'Blank page'
-      button.append(title, url)
-      button.addEventListener('click', async () => {
-        if (projectSavePending || (!creatingProject && editingProjectId === project.id)) return
-        creatingProject = false
-        editingProjectId = project.id
-        setProjectMessage('')
-        renderProjects()
-        await loadProjectDocument()
+    projectList.replaceChildren(
+      ...projectsState.projects.map(project => {
+        const button = document.createElement('button')
+        button.dataset.projectId = project.id
+        const title = document.createElement('strong')
+        title.textContent = project.name
+        const url = document.createElement('small')
+        url.textContent = project.homeUrl || 'Blank page'
+        button.append(title, url)
+        button.addEventListener('click', async () => {
+          if (projectSavePending || (!creatingProject && editingProjectId === project.id)) return
+          creatingProject = false
+          editingProjectId = project.id
+          setProjectMessage('')
+          renderProjects()
+          await loadProjectDocument()
+        })
+        return button
       })
-      return button
-    }))
+    )
   }
   ;(projectList.querySelectorAll('button') as HTMLButtonElement[]).forEach(button => {
     const selected = !creatingProject && button.dataset.projectId === editingProjectId
@@ -607,20 +811,24 @@ function renderProjectEditor({ preserveDraft = false } = {}) {
     projectName.value = creatingProject ? '' : project?.name || ''
     projectHome.value = creatingProject ? '' : project?.homeUrl || ''
   }
-  const binding=document.querySelector('#project-binding')
-  binding.textContent=creatingProject?'Conversations share their Project’s pages and media.':`Project: ${project?.name||''}. ${project?.id===projectsState.activeProjectId&&contextState.context?.projectId===project.id?'Selected session: '+contextState.context.sessionTitle:'Select this Project to see its conversations.'} Sessions share this Project’s pages and media.`
+  const binding = document.querySelector('#project-binding')
+  binding.textContent = creatingProject
+    ? 'Conversations share their Project’s pages and media.'
+    : `Project: ${project?.name || ''}. ${project?.id === projectsState.activeProjectId && contextState.context?.projectId === project.id ? 'Selected session: ' + contextState.context.sessionTitle : 'Select this Project to see its conversations.'} Sessions share this Project’s pages and media.`
   projectDocument.disabled = creatingProject || projectDocumentLoading || projectSavePending
   projectName.disabled = projectSavePending
   projectHome.disabled = projectSavePending
   document.querySelector('#project-new').disabled = projectSavePending
   document.querySelector('#project-close').disabled = projectSavePending
-  document.querySelectorAll('#project-doc-tabs button').forEach((button) => {
+  document.querySelectorAll('#project-doc-tabs button').forEach(button => {
     button.disabled = creatingProject || projectSavePending
     button.classList.toggle('active', button.dataset.kind === documentKind)
   })
   document.querySelector('#project-save').textContent = creatingProject ? 'Create project' : 'Save'
-  document.querySelector('#project-save').disabled = projectDocumentLoading || projectSavePending || (!creatingProject && !projectDocumentLoaded)
-  document.querySelector('#project-archive').disabled = creatingProject || projectSavePending || !project || projectsState.projects.length === 1
+  document.querySelector('#project-save').disabled =
+    projectDocumentLoading || projectSavePending || (!creatingProject && !projectDocumentLoaded)
+  document.querySelector('#project-archive').disabled =
+    creatingProject || projectSavePending || !project || projectsState.projects.length === 1
 }
 
 async function openProjectManager({ create = false, initial = false } = {}) {
@@ -630,7 +838,9 @@ async function openProjectManager({ create = false, initial = false } = {}) {
   editingProjectId = create ? null : projectsState.activeProjectId
   creatingProject = create
   projectOverlay.classList.toggle('initial-setup', initialProjectSetup)
-  document.querySelector('#project-manager-title').textContent = initialProjectSetup ? 'Set up your first BMW Project' : 'BMW Projects'
+  document.querySelector('#project-manager-title').textContent = initialProjectSetup
+    ? 'Set up your first BMW Project'
+    : 'BMW Projects'
   document.querySelector('#project-manager-subtitle').textContent = initialProjectSetup
     ? 'Name the work this browser and its Agent session will belong to'
     : 'Browser state, instructions and durable memory'
@@ -639,9 +849,11 @@ async function openProjectManager({ create = false, initial = false } = {}) {
   renderProjects()
   await loadProjectDocument()
   if (create) {
-    setProjectMessage(initialProjectSetup
-      ? 'Your first Project becomes the browser and Agent default. Home URL is optional and defaults to a blank page.'
-      : 'Create a product-owned project with isolated browser state and memory. Home URL is optional.')
+    setProjectMessage(
+      initialProjectSetup
+        ? 'Your first Project becomes the browser and Agent default. Home URL is optional and defaults to a blank page.'
+        : 'Create a product-owned project with isolated browser state and memory. Home URL is optional.'
+    )
     projectName.focus()
   }
 }
@@ -655,14 +867,22 @@ async function closeProjectManager() {
   await api.projectPanel(false)
 }
 
-document.querySelector('#address-form').addEventListener('submit', async (event) => {
+document.querySelector('#address-form').addEventListener('submit', async event => {
   event.preventDefault()
   await api.browser({ action: 'navigate', tabId: browserState.activeTabId, url: address.value })
 })
-document.querySelector('#back').addEventListener('click', () => api.browser({ action: 'back', tabId: browserState.activeTabId }))
-document.querySelector('#forward').addEventListener('click', () => api.browser({ action: 'forward', tabId: browserState.activeTabId }))
-document.querySelector('#reload').addEventListener('click', () => api.browser({ action: 'reload', tabId: browserState.activeTabId }))
-document.querySelector('#new-tab').addEventListener('click', () => api.browser({ action: 'tabs.open', url: 'about:blank', foreground: true }))
+document
+  .querySelector('#back')
+  .addEventListener('click', () => api.browser({ action: 'back', tabId: browserState.activeTabId }))
+document
+  .querySelector('#forward')
+  .addEventListener('click', () => api.browser({ action: 'forward', tabId: browserState.activeTabId }))
+document
+  .querySelector('#reload')
+  .addEventListener('click', () => api.browser({ action: 'reload', tabId: browserState.activeTabId }))
+document
+  .querySelector('#new-tab')
+  .addEventListener('click', () => api.browser({ action: 'tabs.open', url: 'about:blank', foreground: true }))
 document.querySelector('#enable-agent').addEventListener('click', () => api.setAgentControl(true))
 agentToggle.addEventListener('click', async () => {
   agentVisible = !agentVisible
@@ -701,20 +921,36 @@ layoutButton.addEventListener('click', async () => {
   await openLayoutEditor()
   if (layoutOverlay.classList.contains('hidden')) await restoreSettingsAfterLayout()
 })
-document.querySelector('#video-studio-button')!.addEventListener('click',async()=>{
-  try {await setToolbarPopup(null);await api.openProductPanel('video-studio')}catch(error:unknown){status.textContent=String(error)}
+document.querySelector('#video-studio-button')!.addEventListener('click', async () => {
+  try {
+    await setToolbarPopup(null)
+    await api.openProductPanel('video-studio')
+  } catch (error: unknown) {
+    status.textContent = String(error)
+  }
 })
 moreButton.addEventListener('click', async () => {
-  try { await setToolbarPopup(toolbarPopup === 'more' ? null : 'more'); if (toolbarPopup === 'more') scheduledTaskButton.focus() }
-  catch (error: unknown) { status.textContent = String(error); void setToolbarPopup(null) }
+  try {
+    await setToolbarPopup(toolbarPopup === 'more' ? null : 'more')
+    if (toolbarPopup === 'more') scheduledTaskButton.focus()
+  } catch (error: unknown) {
+    status.textContent = String(error)
+    void setToolbarPopup(null)
+  }
 })
 siteSettingsButton.addEventListener('click', async () => {
-  try { await setToolbarPopup(toolbarPopup === 'site' ? null : 'site'); if (toolbarPopup === 'site') keepLoginButton.focus() }
-  catch (error: unknown) { status.textContent = String(error); void setToolbarPopup(null) }
+  try {
+    await setToolbarPopup(toolbarPopup === 'site' ? null : 'site')
+    if (toolbarPopup === 'site') keepLoginButton.focus()
+  } catch (error: unknown) {
+    status.textContent = String(error)
+    void setToolbarPopup(null)
+  }
 })
 document.querySelector('#toolbar-dismiss').addEventListener('click', () => void setToolbarPopup(null))
 document.querySelector('.chrome').addEventListener('pointerdown', (event: PointerEvent) => {
-  if (toolbarPopup && event.target instanceof Element && !event.target.closest('#more-button, #site-settings-button')) void setToolbarPopup(null)
+  if (toolbarPopup && event.target instanceof Element && !event.target.closest('#more-button, #site-settings-button'))
+    void setToolbarPopup(null)
 })
 let toolbarViewportWidth = window.innerWidth
 window.addEventListener('resize', () => {
@@ -732,9 +968,18 @@ document.addEventListener('keydown', (event: KeyboardEvent) => {
     event.preventDefault()
   }
 })
-;(document.querySelectorAll('[data-settings-category]') as HTMLButtonElement[]).forEach(button => button.addEventListener('click', () => chooseSettingsCategory(button.dataset.settingsCategory!)))
-scheduledTaskButton.addEventListener('click', async () => { await setToolbarPopup(null); await openScheduledTasks() })
-settingsButton.addEventListener('click', async () => { await setToolbarPopup(null); await openGlobalSettings(); chooseSettingsCategory('browser') })
+;(document.querySelectorAll('[data-settings-category]') as HTMLButtonElement[]).forEach(button =>
+  button.addEventListener('click', () => chooseSettingsCategory(button.dataset.settingsCategory!))
+)
+scheduledTaskButton.addEventListener('click', async () => {
+  await setToolbarPopup(null)
+  await openScheduledTasks()
+})
+settingsButton.addEventListener('click', async () => {
+  await setToolbarPopup(null)
+  await openGlobalSettings()
+  chooseSettingsCategory('browser')
+})
 document.querySelector('#settings-close').addEventListener('click', closeGlobalSettings)
 document.querySelector('#settings-agent-advanced').addEventListener('click', async () => {
   try {
@@ -763,39 +1008,133 @@ settingsRestart.addEventListener('click', async () => {
     settingsRestart.disabled = false
   }
 })
-videoTemplateSelect.addEventListener('change',()=>{const preset=videoPreferencesDraft.templates.find(item=>item.name===videoTemplateSelect.value);if(preset){videoOptionsForm.fill(preset.options);videoTemplateName.value=preset.name;videoPreferencesDirty=true;videoTemplateNote.textContent='已载入模板。保存设置后，这些参数成为新视频的默认值。'}})
-document.querySelector('#settings-video-template-save')!.addEventListener('click',()=>{try{videoPreferencesDraft=saveVideoTemplate(videoPreferencesDraft,videoTemplateName.value,videoOptionsForm.read());videoPreferencesDirty=true;renderVideoTemplates();videoTemplateSelect.value=videoTemplateName.value.trim();videoTemplateNote.textContent='模板已加入待保存设置，请点击底部保存。'}catch(error){videoTemplateNote.textContent=error instanceof Error?error.message:String(error)}})
-document.querySelector('#settings-video-template-delete')!.addEventListener('click',()=>{const index=videoPreferencesDraft.templates.findIndex(item=>item.name===videoTemplateSelect.value);if(index<0){videoTemplateNote.textContent='请先选择要删除的模板。';return}videoPreferencesDraft.templates.splice(index,1);videoPreferencesDirty=true;videoTemplateSelect.value='';renderVideoTemplates();videoTemplateNote.textContent='模板已从待保存设置移除，请点击底部保存。'})
-settingsProxyMode.addEventListener('change', () => settingsProxyManual.classList.toggle('hidden', settingsProxyMode.value !== 'manual'))
-settingsSearchEngine.addEventListener('change', () => settingsCustomSearchRow.classList.toggle('hidden', settingsSearchEngine.value !== 'custom'))
-for(const field of [qwenKey,qwenWorkspace])field.addEventListener('input',()=>{qwenCredentialDirty=true;clearQwenAudio();qwenPreviewStatus.textContent='请先保存修改后的配置，再生成试听。';updateQwenControls()})
-qwenSave.addEventListener('click',async()=>{
-  qwenBusy=true;updateQwenControls();qwenStatus.textContent='正在加密保存…'
-  try{renderQwenStatus(await api.saveQwenTts({apiKey:qwenKey.value,workspaceId:qwenWorkspace.value,enabled:settingsQwenNarration.checked}));clearQwenAudio();qwenPreviewStatus.textContent=''}
-  catch(error){qwenStatus.textContent=error instanceof Error?error.message:String(error)}
-  finally{qwenBusy=false;updateQwenControls()}
+videoTemplateSelect.addEventListener('change', () => {
+  const preset = videoPreferencesDraft.templates.find(item => item.name === videoTemplateSelect.value)
+  if (preset) {
+    videoOptionsForm.fill(preset.options)
+    videoTemplateName.value = preset.name
+    videoPreferencesDirty = true
+    videoTemplateNote.textContent = '已载入模板。保存设置后，这些参数成为新视频的默认值。'
+  }
 })
-qwenClear.addEventListener('click',async()=>{
-  qwenBusy=true;updateQwenControls();clearQwenAudio()
-  try{renderQwenStatus(await api.clearQwenTts());qwenPreviewStatus.textContent=''}
-  catch(error){qwenStatus.textContent=error instanceof Error?error.message:String(error)}
-  finally{qwenBusy=false;updateQwenControls()}
+document.querySelector('#settings-video-template-save')!.addEventListener('click', () => {
+  try {
+    videoPreferencesDraft = saveVideoTemplate(videoPreferencesDraft, videoTemplateName.value, videoOptionsForm.read())
+    videoPreferencesDirty = true
+    renderVideoTemplates()
+    videoTemplateSelect.value = videoTemplateName.value.trim()
+    videoTemplateNote.textContent = '模板已加入待保存设置，请点击底部保存。'
+  } catch (error) {
+    videoTemplateNote.textContent = error instanceof Error ? error.message : String(error)
+  }
 })
-qwenPreview.addEventListener('click',async()=>{
-  const generation=qwenSettingsGeneration
-  qwenBusy=true;qwenGenerating=true;updateQwenControls();clearQwenAudio();qwenPreviewStatus.textContent='正在生成试听…'
-  try{
-    const result=await api.auditionQwenTts(qwenVoice.value)
-    if(generation!==qwenSettingsGeneration)return
-    if(typeof result.audioDataUrl!=='string'||!/^data:audio\/wav;base64,[A-Za-z0-9+/=]+$/.test(result.audioDataUrl)||result.audioDataUrl.length>1_400_000)throw new Error('无效的试听音频。')
-    qwenAudio.src=result.audioDataUrl;qwenAudio.hidden=false
-    qwenPreviewStatus.textContent='试听已生成，'+Number(result.durationSeconds).toFixed(1)+' 秒。'
-    try{await qwenAudio.play()}catch{qwenPreviewStatus.textContent+=' 点击播放按钮收听。'}
-  }catch(error){if(generation===qwenSettingsGeneration)qwenPreviewStatus.textContent=error instanceof Error?error.message:String(error)}
-  finally{qwenBusy=false;qwenGenerating=false;updateQwenControls()}
+document.querySelector('#settings-video-template-delete')!.addEventListener('click', () => {
+  const index = videoPreferencesDraft.templates.findIndex(item => item.name === videoTemplateSelect.value)
+  if (index < 0) {
+    videoTemplateNote.textContent = '请先选择要删除的模板。'
+    return
+  }
+  videoPreferencesDraft.templates.splice(index, 1)
+  videoPreferencesDirty = true
+  videoTemplateSelect.value = ''
+  renderVideoTemplates()
+  videoTemplateNote.textContent = '模板已从待保存设置移除，请点击底部保存。'
 })
-qwenCancel.addEventListener('click',async()=>{qwenCancel.disabled=true;clearQwenAudio();try{await api.cancelQwenTts();qwenPreviewStatus.textContent='试听已取消。'}catch(error){qwenPreviewStatus.textContent=error instanceof Error?error.message:String(error)}})
-qwenVoice.addEventListener('change',()=>{clearQwenAudio();qwenPreviewStatus.textContent=''})
+settingsProxyMode.addEventListener('change', () =>
+  settingsProxyManual.classList.toggle('hidden', settingsProxyMode.value !== 'manual')
+)
+settingsSearchEngine.addEventListener('change', () =>
+  settingsCustomSearchRow.classList.toggle('hidden', settingsSearchEngine.value !== 'custom')
+)
+for (const field of [qwenKey, qwenWorkspace])
+  field.addEventListener('input', () => {
+    qwenCredentialDirty = true
+    clearQwenAudio()
+    qwenPreviewStatus.textContent = '请先保存修改后的配置，再生成试听。'
+    updateQwenControls()
+  })
+qwenSave.addEventListener('click', async () => {
+  qwenBusy = true
+  updateQwenControls()
+  qwenStatus.textContent = '正在加密保存…'
+  try {
+    renderQwenStatus(
+      await api.saveQwenTts({
+        apiKey: qwenKey.value,
+        workspaceId: qwenWorkspace.value,
+        enabled: settingsQwenNarration.checked
+      })
+    )
+    clearQwenAudio()
+    qwenPreviewStatus.textContent = ''
+  } catch (error) {
+    qwenStatus.textContent = error instanceof Error ? error.message : String(error)
+  } finally {
+    qwenBusy = false
+    updateQwenControls()
+  }
+})
+qwenClear.addEventListener('click', async () => {
+  qwenBusy = true
+  updateQwenControls()
+  clearQwenAudio()
+  try {
+    renderQwenStatus(await api.clearQwenTts())
+    qwenPreviewStatus.textContent = ''
+  } catch (error) {
+    qwenStatus.textContent = error instanceof Error ? error.message : String(error)
+  } finally {
+    qwenBusy = false
+    updateQwenControls()
+  }
+})
+qwenPreview.addEventListener('click', async () => {
+  const generation = qwenSettingsGeneration
+  qwenBusy = true
+  qwenGenerating = true
+  updateQwenControls()
+  clearQwenAudio()
+  qwenPreviewStatus.textContent = '正在生成试听…'
+  try {
+    const result = await api.auditionQwenTts(qwenVoice.value)
+    if (generation !== qwenSettingsGeneration) return
+    if (
+      typeof result.audioDataUrl !== 'string' ||
+      !/^data:audio\/wav;base64,[A-Za-z0-9+/=]+$/.test(result.audioDataUrl) ||
+      result.audioDataUrl.length > 1_400_000
+    )
+      throw new Error('无效的试听音频。')
+    qwenAudio.src = result.audioDataUrl
+    qwenAudio.hidden = false
+    qwenPreviewStatus.textContent = '试听已生成，' + Number(result.durationSeconds).toFixed(1) + ' 秒。'
+    try {
+      await qwenAudio.play()
+    } catch {
+      qwenPreviewStatus.textContent += ' 点击播放按钮收听。'
+    }
+  } catch (error) {
+    if (generation === qwenSettingsGeneration)
+      qwenPreviewStatus.textContent = error instanceof Error ? error.message : String(error)
+  } finally {
+    qwenBusy = false
+    qwenGenerating = false
+    updateQwenControls()
+  }
+})
+qwenCancel.addEventListener('click', async () => {
+  qwenCancel.disabled = true
+  clearQwenAudio()
+  try {
+    await api.cancelQwenTts()
+    qwenPreviewStatus.textContent = '试听已取消。'
+  } catch (error) {
+    qwenPreviewStatus.textContent = error instanceof Error ? error.message : String(error)
+  }
+})
+qwenVoice.addEventListener('change', () => {
+  clearQwenAudio()
+  qwenPreviewStatus.textContent = ''
+})
 document.querySelector('#settings-save').addEventListener('click', async () => {
   settingsMessage.textContent = 'Applying…'
   settingsMessage.classList.remove('error')
@@ -812,12 +1151,19 @@ document.querySelector('#settings-save').addEventListener('click', async () => {
       newTabPage: settingsNewTab.value,
       edgeNarrationEnabled: settingsEdgeNarration.checked,
       qwenNarrationEnabled: settingsQwenNarration.checked,
-      ...(videoPreferencesDirty?{videoPreferences:{...videoPreferencesDraft,defaults:videoOptionsForm.read()},videoPreferencesExpected}:{})
+      ...(videoPreferencesDirty
+        ? {
+            videoPreferences: { ...videoPreferencesDraft, defaults: videoOptionsForm.read() },
+            videoPreferencesExpected
+          }
+        : {})
     })
 
-    videoPreferencesDirty=false
+    videoPreferencesDirty = false
     renderGlobalSettings()
-    settingsMessage.textContent = networkRestartRequired ? 'Saved. Restart BMW to apply the HTTP/1.1 compatibility change.' : 'Saved. BMW Shell, Agent, compatible pages, searches and network connections use these settings.'
+    settingsMessage.textContent = networkRestartRequired
+      ? 'Saved. Restart BMW to apply the HTTP/1.1 compatibility change.'
+      : 'Saved. BMW Shell, Agent, compatible pages, searches and network connections use these settings.'
   } catch (error) {
     settingsMessage.textContent = error.message
     settingsMessage.classList.add('error')
@@ -834,26 +1180,30 @@ document.querySelector('#session-new').addEventListener('click', async () => {
     sessionSearch.value = ''
     renderAgentSessions()
     setSessionMessage('New session created and selected.')
-  } catch (error) { setSessionMessage(error.message, true) }
+  } catch (error) {
+    setSessionMessage(error.message, true)
+  }
 })
 sessionSearch.addEventListener('input', () => {
   clearTimeout(sessionSearchTimer)
   sessionSearchTimer = setTimeout(refreshAgentSessions, 250)
 })
 document.querySelector('#layout-close').addEventListener('click', closeLayoutEditor)
-document.querySelectorAll('[data-layout-mode]').forEach((button) => {
+document.querySelectorAll('[data-layout-mode]').forEach(button => {
   button.addEventListener('click', () => {
     editingLayoutMode = button.dataset.layoutMode
     renderLayoutEditor()
   })
 })
-document.querySelectorAll('[data-opacity]').forEach((button) => {
+document.querySelectorAll('[data-opacity]').forEach(button => {
   button.addEventListener('click', () => {
     editingOpacity = Number(button.dataset.opacity)
     renderLayoutEditor()
   })
 })
-layoutWidth.addEventListener('input', () => { layoutWidthOutput.value = `${layoutWidth.value} px` })
+layoutWidth.addEventListener('input', () => {
+  layoutWidthOutput.value = `${layoutWidth.value} px`
+})
 document.querySelector('#layout-apply').addEventListener('click', async () => {
   layoutMessage.textContent = ''
   try {
@@ -878,7 +1228,7 @@ document.querySelector('#project-new').addEventListener('click', () => {
   void loadProjectDocument()
   projectName.focus()
 })
-document.querySelectorAll('#project-doc-tabs button').forEach((button) => {
+document.querySelectorAll('#project-doc-tabs button').forEach(button => {
   button.addEventListener('click', async () => {
     documentKind = button.dataset.kind
     renderProjectEditor({ preserveDraft: true })
@@ -919,8 +1269,7 @@ document.querySelector('#project-save').addEventListener('click', async () => {
     setProjectMessage('Saved. AGENTS.md and MEMORY.md apply to the next fresh project session.')
   } catch (error) {
     setProjectMessage(error.message, true)
-  }
-  finally {
+  } finally {
     projectSavePending = false
     renderProjects({ preserveDraft: true })
   }
@@ -939,34 +1288,43 @@ document.querySelector('#project-archive').addEventListener('click', async () =>
   }
 })
 
-document.querySelector('#context-session').addEventListener('click',openSessionCenter)
+document.querySelector('#context-session').addEventListener('click', openSessionCenter)
 api.onAgentContext(receiveAgentContext)
-api.agentContext().then(receiveAgentContext).catch(()=>{})
-api.onBrowserState((value) => { browserState = value; render();renderContext() })
-api.onAgentStatus((value) => {
+api
+  .agentContext()
+  .then(receiveAgentContext)
+  .catch(() => {})
+api.onBrowserState(value => {
+  browserState = value
+  render()
+  renderContext()
+})
+api.onAgentStatus(value => {
   agentStatusState = value
   renderAgentStatus()
 })
-api.onAgentLog((entry) => {
+api.onAgentLog(entry => {
   if (entry.stream === 'stderr' && /error/i.test(entry.text)) status.textContent = entry.text.trim().slice(0, 180)
 })
-api.onMediaStatus((value) => {
+api.onMediaStatus(value => {
   const processing = value.kind === 'processing' && value.active === true
   if (value.kind !== 'processing') recording = value.active === true
   recordingIndicator.classList.toggle('hidden', !recording && !processing)
-  recordingIndicator.textContent = processing ? `● Processing media ${Math.round((Number(value.progress) || 0) * 100)}%` : '● Recording this BMW tab'
+  recordingIndicator.textContent = processing
+    ? `● Processing media ${Math.round((Number(value.progress) || 0) * 100)}%`
+    : '● Recording this BMW tab'
   recordButton.disabled = processing
   recordButton.textContent = processing ? 'Processing…' : recording ? '■ Stop' : '● Record'
 })
-api.onLayout((value) => {
+api.onLayout(value => {
   layoutState = { ...layoutState, ...value }
-  receiveWorkspace({mode:value.workspaceMode})
+  receiveWorkspace({ mode: value.workspaceMode })
   agentVisible = value.agentVisible
   agentToggle.classList.toggle('off', !agentVisible)
   renderAgentStatus()
   if (value.setupVisible && layoutOverlay.classList.contains('hidden')) showLayoutEditor(value)
 })
-api.onProjectState((value) => {
+api.onProjectState(value => {
   const activeChanged = projectsState.activeProjectId !== value.activeProjectId
   projectsState = value
   const selectedRemoved = !creatingProject && !value.projects.some(project => project.id === editingProjectId)
@@ -975,34 +1333,53 @@ api.onProjectState((value) => {
   if (selectedRemoved && !projectOverlay.classList.contains('hidden')) void loadProjectDocument()
   if (activeChanged && !scheduledTaskOverlay.classList.contains('hidden')) void refreshScheduledTasks()
 })
-api.onProjectManagerOpen((value) => {
-  void openProjectManager({ create: value?.mode === 'create', initial: value?.initial === true }).catch((error) => { status.textContent = error.message })
+api.onProjectManagerOpen(value => {
+  void openProjectManager({ create: value?.mode === 'create', initial: value?.initial === true }).catch(error => {
+    status.textContent = error.message
+  })
 })
-api.productInfo().then((product) => {
-  productInfo = product
-  productBrand.textContent = product.name
-  document.querySelector('#settings-agent-driver').textContent = product.agent.label+' runtime · '+product.agent.baseline
-  document.querySelector('#settings-agent-advanced').textContent = '打开当前 Agent 的登录与模型设置'
-  settingsRestart.textContent = `Restart ${product.name}…`
-  document.title = product.name
+api
+  .productInfo()
+  .then(product => {
+    productInfo = product
+    productBrand.textContent = product.name
+    document.querySelector('#settings-agent-driver').textContent =
+      product.agent.label + ' runtime · ' + product.agent.baseline
+    document.querySelector('#settings-agent-advanced').textContent = '打开当前 Agent 的登录与模型设置'
+    settingsRestart.textContent = `Restart ${product.name}…`
+    document.title = product.name
+    renderGlobalSettings()
+  })
+  .catch(() => {})
+api.browser({ action: 'status' }).then(value => {
+  browserState = value
+  render()
+})
+Promise.all([api.projectState(), api.layoutSettings()])
+  .then(async ([projectValue, layoutValue]) => {
+    projectsState = projectValue
+    editingProjectId = projectValue.activeProjectId
+    layoutState = { ...layoutState, ...layoutValue }
+    renderAgentStatus()
+    renderProjects()
+    if (projectValue.initialSetupPending) {
+      await openProjectManager({ create: true, initial: true })
+    } else if (!layoutValue.configured || layoutValue.setupVisible) {
+      showLayoutEditor(layoutValue)
+    }
+  })
+  .catch(error => {
+    status.textContent = error.message
+  })
+api.globalSettings().then(value => {
+  globalSettings = value
   renderGlobalSettings()
-}).catch(() => {})
-api.browser({ action: 'status' }).then((value) => { browserState = value; render() })
-Promise.all([api.projectState(), api.layoutSettings()]).then(async ([projectValue, layoutValue]) => {
-  projectsState = projectValue
-  editingProjectId = projectValue.activeProjectId
-  layoutState = { ...layoutState, ...layoutValue }
-  renderAgentStatus()
-  renderProjects()
-  if (projectValue.initialSetupPending) {
-    await openProjectManager({ create: true, initial: true })
-  } else if (!layoutValue.configured || layoutValue.setupVisible) {
-    showLayoutEditor(layoutValue)
-  }
-}).catch((error) => { status.textContent = error.message })
-api.globalSettings().then((value) => { globalSettings = value; renderGlobalSettings() })
-api.onGlobalSettings((value) => { globalSettings = value; renderGlobalSettings() })
-api.onScheduledTaskState((value) => {
+})
+api.onGlobalSettings(value => {
+  globalSettings = value
+  renderGlobalSettings()
+})
+api.onScheduledTaskState(value => {
   scheduledTaskState = value
   if (!scheduledTaskOverlay.classList.contains('hidden')) renderScheduledTasks()
 })
@@ -1011,13 +1388,22 @@ api.onScheduledTaskOpen(() => {
   void refreshScheduledTasks()
 })
 
-function receiveWorkspace(value:unknown):void {
- const state=value as {mode?:unknown};const studio=state?.mode==='studio';const library=state?.mode==='library'
- document.body.classList.toggle('video-workspace',studio)
- document.body.classList.toggle('library-workspace',library)
- document.querySelector('#browser-workspace').setAttribute('aria-pressed',String(!studio&&!library))
- document.querySelector('#library-workspace').setAttribute('aria-pressed',String(library))
- document.querySelector('#studio-workspace').setAttribute('aria-pressed',String(studio))
+function receiveWorkspace(value: unknown): void {
+  const state = value as { mode?: unknown }
+  const studio = state?.mode === 'studio'
+  const library = state?.mode === 'library'
+  document.body.classList.toggle('video-workspace', studio)
+  document.body.classList.toggle('library-workspace', library)
+  document.querySelector('#browser-workspace').setAttribute('aria-pressed', String(!studio && !library))
+  document.querySelector('#library-workspace').setAttribute('aria-pressed', String(library))
+  document.querySelector('#studio-workspace').setAttribute('aria-pressed', String(studio))
 }
-for(const [id,mode] of [['browser-workspace','browser'],['library-workspace','library'],['studio-workspace','studio']] as const)document.querySelector('#'+id).addEventListener('click',()=>{void api.setWorkspaceMode(mode).catch(error=>status.textContent=String(error))})
+for (const [id, mode] of [
+  ['browser-workspace', 'browser'],
+  ['library-workspace', 'library'],
+  ['studio-workspace', 'studio']
+] as const)
+  document.querySelector('#' + id).addEventListener('click', () => {
+    void api.setWorkspaceMode(mode).catch(error => (status.textContent = String(error)))
+  })
 api.onWorkspace(receiveWorkspace)

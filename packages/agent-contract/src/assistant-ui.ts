@@ -1,8 +1,14 @@
-import type {WorkspaceMode} from './workspace.js'
+import type { WorkspaceMode } from './workspace.js'
 import { agentIdentifier, agentRecord, agentText } from './conversation.js'
-import type { AgentConversation, AgentDriverDescription, AgentEvent, AgentInteraction, AgentMessage } from './conversation.js'
-import {parseAgentSettingsRequest} from './driver-settings.js'
-import type {AgentSettingsRequest,AssistantSettingsState} from './driver-settings.js'
+import type {
+  AgentConversation,
+  AgentDriverDescription,
+  AgentEvent,
+  AgentInteraction,
+  AgentMessage
+} from './conversation.js'
+import { parseAgentSettingsRequest } from './driver-settings.js'
+import type { AgentSettingsRequest, AssistantSettingsState } from './driver-settings.js'
 export interface AssistantState {
   project: { id: string; name: string }
   driverId: string
@@ -15,9 +21,9 @@ export interface AssistantState {
   activeRunId: string | null
   busy: boolean
   resourcesDisconnected: boolean
-  uncertainInputs?:{runId:string;messageId:string;preview:string;canEnd:boolean}[]
-  cancelledUnknownInputs?:{runId:string;resolvedAt:number}[]
-  settings?:AssistantSettingsState
+  uncertainInputs?: { runId: string; messageId: string; preview: string; canEnd: boolean }[]
+  cancelledUnknownInputs?: { runId: string; resolvedAt: number }[]
+  settings?: AssistantSettingsState
 }
 export type AssistantCommand =
   | { action: 'snapshot' }
@@ -30,17 +36,32 @@ export type AssistantCommand =
   | { action: 'message.cancel'; sessionId: string }
   | { action: 'interaction.respond'; sessionId: string; runId: string; interactionId: string; response: string }
   | { action: 'resources.recover' }
-  | {action:'input.end-cancelled-unknown';sessionId:string;runId:string;acknowledgement:'cancel-without-replay'}
-  | { action:'settings.run';driverId:string;request:AgentSettingsRequest }
-  | { action:'settings.cancel' }
-export interface AssistantStudioTarget {projectId:string;sessionId:string;draftId:string;kind:'film'|'scene'|'object';sceneId?:string;objectKind?:'visual'|'voice'|'captions';layer?:{id:string;kind:'visual'|'audio'};voiceSegmentId?:string;visualSegmentId?:string}
+  | {
+      action: 'input.end-cancelled-unknown'
+      sessionId: string
+      runId: string
+      acknowledgement: 'cancel-without-replay'
+    }
+  | { action: 'settings.run'; driverId: string; request: AgentSettingsRequest }
+  | { action: 'settings.cancel' }
+export interface AssistantStudioTarget {
+  projectId: string
+  sessionId: string
+  draftId: string
+  kind: 'film' | 'scene' | 'object'
+  sceneId?: string
+  objectKind?: 'visual' | 'voice' | 'captions'
+  layer?: { id: string; kind: 'visual' | 'audio' }
+  voiceSegmentId?: string
+  visualSegmentId?: string
+}
 export interface AssistantUiPort {
-  sendStudioPrompt?(value:{text:string;target:AssistantStudioTarget}):Promise<unknown>
+  sendStudioPrompt?(value: { text: string; target: AssistantStudioTarget }): Promise<unknown>
   invoke(command: AssistantCommand): Promise<AssistantState>
   subscribe(listener: (state: AssistantState) => void): () => void
-  setStudioChat?(value:unknown):Promise<unknown>
-  onStudioPresentation?(listener:(value:unknown)=>void):()=>void
-  onComposerPrefill?(listener:(value:unknown)=>void):()=>void
+  setStudioChat?(value: unknown): Promise<unknown>
+  onStudioPresentation?(listener: (value: unknown) => void): () => void
+  onComposerPrefill?(listener: (value: unknown) => void): () => void
   onComposerContext(listener: (value: unknown) => void): () => void
   onOpenSettings(listener: () => void): () => void
   composerContext(): Promise<unknown>
@@ -48,17 +69,60 @@ export interface AssistantUiPort {
 }
 export function parseAssistantCommand(raw: unknown): AssistantCommand {
   const value = agentRecord(raw, 'Assistant command')
-  function fields(keys: string[]): void { if (Object.keys(value).some(key => !['action', ...keys].includes(key))) throw new Error('Unknown Assistant command field') }
+  function fields(keys: string[]): void {
+    if (Object.keys(value).some(key => !['action', ...keys].includes(key)))
+      throw new Error('Unknown Assistant command field')
+  }
   switch (value.action) {
-    case 'snapshot': case 'resources.recover': case 'settings.cancel': fields([]); return { action: value.action }
-    case 'settings.run':fields(['driverId','request']);return {action:value.action,driverId:agentIdentifier(value.driverId),request:parseAgentSettingsRequest(value.request)}
-    case 'driver.select': fields(['driverId']); return { action: value.action, driverId: agentIdentifier(value.driverId) }
-    case 'session.create': fields(['title']); return { action: value.action, ...(value.title === undefined ? {} : { title: agentText(value.title, 200) }) }
-    case 'session.select': case 'session.archive': case 'message.cancel': fields(['sessionId']); return { action: value.action, sessionId: agentIdentifier(value.sessionId) }
-    case 'session.rename': fields(['sessionId', 'title']); return { action: value.action, sessionId: agentIdentifier(value.sessionId), title: agentText(value.title, 200) }
-    case 'message.send': fields(['sessionId', 'text']); return { action: value.action, sessionId: agentIdentifier(value.sessionId), text: agentText(value.text, 65536) }
-    case 'input.end-cancelled-unknown': fields(['sessionId','runId','acknowledgement']);if(value.acknowledgement!=='cancel-without-replay')throw new Error('Explicit cancellation without replay acknowledgement is required');return {action:value.action,sessionId:agentIdentifier(value.sessionId),runId:agentIdentifier(value.runId),acknowledgement:value.acknowledgement}
-    case 'interaction.respond': fields(['sessionId', 'runId', 'interactionId', 'response']); return { action: value.action, sessionId: agentIdentifier(value.sessionId), runId: agentIdentifier(value.runId), interactionId: agentIdentifier(value.interactionId), response: agentText(value.response, 65536) }
-    default: throw new Error('Unknown BMW Assistant command')
+    case 'snapshot':
+    case 'resources.recover':
+    case 'settings.cancel':
+      fields([])
+      return { action: value.action }
+    case 'settings.run':
+      fields(['driverId', 'request'])
+      return {
+        action: value.action,
+        driverId: agentIdentifier(value.driverId),
+        request: parseAgentSettingsRequest(value.request)
+      }
+    case 'driver.select':
+      fields(['driverId'])
+      return { action: value.action, driverId: agentIdentifier(value.driverId) }
+    case 'session.create':
+      fields(['title'])
+      return { action: value.action, ...(value.title === undefined ? {} : { title: agentText(value.title, 200) }) }
+    case 'session.select':
+    case 'session.archive':
+    case 'message.cancel':
+      fields(['sessionId'])
+      return { action: value.action, sessionId: agentIdentifier(value.sessionId) }
+    case 'session.rename':
+      fields(['sessionId', 'title'])
+      return { action: value.action, sessionId: agentIdentifier(value.sessionId), title: agentText(value.title, 200) }
+    case 'message.send':
+      fields(['sessionId', 'text'])
+      return { action: value.action, sessionId: agentIdentifier(value.sessionId), text: agentText(value.text, 65536) }
+    case 'input.end-cancelled-unknown':
+      fields(['sessionId', 'runId', 'acknowledgement'])
+      if (value.acknowledgement !== 'cancel-without-replay')
+        throw new Error('Explicit cancellation without replay acknowledgement is required')
+      return {
+        action: value.action,
+        sessionId: agentIdentifier(value.sessionId),
+        runId: agentIdentifier(value.runId),
+        acknowledgement: value.acknowledgement
+      }
+    case 'interaction.respond':
+      fields(['sessionId', 'runId', 'interactionId', 'response'])
+      return {
+        action: value.action,
+        sessionId: agentIdentifier(value.sessionId),
+        runId: agentIdentifier(value.runId),
+        interactionId: agentIdentifier(value.interactionId),
+        response: agentText(value.response, 65536)
+      }
+    default:
+      throw new Error('Unknown BMW Assistant command')
   }
 }

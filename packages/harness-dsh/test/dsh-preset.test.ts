@@ -8,7 +8,7 @@ import { installManagedDshPreset, prepareProductDshHome } from '../src/dsh-prese
 
 const sourceDirectory = path.resolve('packages/harness-dsh/dsh/preset/base')
 
-test('installs and safely updates only the BMW DSH preset', (context) => {
+test('installs and safely updates only the BMW DSH preset', context => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-preset-'))
   context.after(() => fs.rmSync(root, { recursive: true, force: true }))
   const destination = installManagedDshPreset({ sourceDirectory, dshHome: root })
@@ -23,15 +23,14 @@ test('installs and safely updates only the BMW DSH preset', (context) => {
   assert.equal(installManagedDshPreset({ sourceDirectory, dshHome: root }), destination)
 })
 
-test('does not overwrite a preset directory not owned by BMW', (context) => {
+test('does not overwrite a preset directory not owned by BMW', context => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-preset-'))
   context.after(() => fs.rmSync(root, { recursive: true, force: true }))
   fs.mkdirSync(path.join(root, '.agent-presets', 'bmw'), { recursive: true })
   assert.throws(() => installManagedDshPreset({ sourceDirectory, dshHome: root }), /Refusing to overwrite/)
 })
 
-
-test('isolates product state and privately seeds credentials without shared writable links', (context) => {
+test('isolates product state and privately seeds credentials without shared writable links', context => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-dsh-home-'))
   context.after(() => fs.rmSync(root, { recursive: true, force: true }))
   const sourceHome = path.join(root, 'source')
@@ -39,13 +38,19 @@ test('isolates product state and privately seeds credentials without shared writ
   const workspacePath = path.join(root, 'workspace')
   fs.mkdirSync(sourceHome)
   fs.writeFileSync(path.join(sourceHome, '.credentials.yaml'), 'not-read-by-product')
-  prepareProductDshHome({ productHome, sourceHome, presetSourceDirectory: sourceDirectory, workspacePath, workspaceTitle: 'Active Research' })
+  prepareProductDshHome({
+    productHome,
+    sourceHome,
+    presetSourceDirectory: sourceDirectory,
+    workspacePath,
+    workspaceTitle: 'Active Research'
+  })
   const credentialLink = path.join(productHome, '.credentials.yaml')
   assert.equal(fs.lstatSync(credentialLink).isSymbolicLink(), false)
-  assert.equal(fs.readFileSync(credentialLink,'utf8'), 'not-read-by-product')
-  assert.equal(fs.statSync(credentialLink).mode & 0o777,0o600)
-  fs.writeFileSync(credentialLink,'private login')
-  assert.equal(fs.readFileSync(path.join(sourceHome,'.credentials.yaml'),'utf8'),'not-read-by-product')
+  assert.equal(fs.readFileSync(credentialLink, 'utf8'), 'not-read-by-product')
+  assert.equal(fs.statSync(credentialLink).mode & 0o777, 0o600)
+  fs.writeFileSync(credentialLink, 'private login')
+  assert.equal(fs.readFileSync(path.join(sourceHome, '.credentials.yaml'), 'utf8'), 'not-read-by-product')
   assert.equal(fs.existsSync(path.join(productHome, '.agent-presets', 'bmw', 'agent.cordis.yml')), true)
   assert.match(fs.readFileSync(path.join(productHome, 'settings.yaml'), 'utf8'), /default: bmw/)
   assert.match(fs.readFileSync(path.join(productHome, 'settings.yaml'), 'utf8'), /ui-theme:\n  preference: system/)
@@ -55,12 +60,15 @@ test('isolates product state and privately seeds credentials without shared writ
   assert.equal(workspaceStorage.tables.workspaces[workspaceId].title, 'Active Research')
 })
 
-test('keeps BMW as theme source without overwriting unrelated DSH settings', (context) => {
+test('keeps BMW as theme source without overwriting unrelated DSH settings', context => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-dsh-theme-'))
   context.after(() => fs.rmSync(root, { recursive: true, force: true }))
   const productHome = path.join(root, 'product')
   fs.mkdirSync(productHome, { recursive: true })
-  fs.writeFileSync(path.join(productHome, 'settings.yaml'), 'custom-setting:\n  enabled: true\nui-theme:\n  preference: light\n')
+  fs.writeFileSync(
+    path.join(productHome, 'settings.yaml'),
+    'custom-setting:\n  enabled: true\nui-theme:\n  preference: light\n'
+  )
 
   prepareProductDshHome({
     productHome,

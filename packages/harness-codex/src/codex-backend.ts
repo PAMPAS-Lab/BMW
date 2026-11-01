@@ -1,51 +1,93 @@
-import {CodexContextLedger,compactCodexContext,legacyCodexContextHeavy} from './codex-context.js'
+import { CodexContextLedger, compactCodexContext, legacyCodexContextHeavy } from './codex-context.js'
 import fs from 'node:fs'
 import path from 'node:path'
 import { agentIdentifier, agentRecord, agentText } from '@bmw-agent/agent-contract'
-import type { AgentBackend, AgentDriverDescription, AgentDriverEvent, AgentRunRequest, AgentRunResult, AgentRuntimeObservation, AgentRuntimeFailureCategory } from '@bmw-agent/agent-contract'
-import { CodexCatalogGate, codexThreadParameters,codexToolInstructions,codexInputScope, codexDisabledMcpServers, initializeCodex } from './codex-policy.js'
+import type {
+  AgentBackend,
+  AgentDriverDescription,
+  AgentDriverEvent,
+  AgentRunRequest,
+  AgentRunResult,
+  AgentRuntimeObservation,
+  AgentRuntimeFailureCategory
+} from '@bmw-agent/agent-contract'
+import {
+  CodexCatalogGate,
+  codexThreadParameters,
+  codexToolInstructions,
+  codexInputScope,
+  codexDisabledMcpServers,
+  initializeCodex
+} from './codex-policy.js'
 import type { CodexBrowserDefinition } from './codex-policy.js'
 import { createCodexRpc } from './codex-rpc.js'
 import type { CodexRpc } from './codex-rpc.js'
-import {CodexSettings,codexAccountModels} from './codex-settings.js'
-import {findCodexExecutable,rememberCodexExecutable} from './codex-installation.js'
-import {codexNeedsBrowserCatalog,codexVerifiedProtocolVersions} from './codex-model-catalog.js'
-import type {AgentSettingsRequest,AgentSettingsContext,AgentDriverSettings} from '@bmw-agent/agent-contract'
+import { CodexSettings, codexAccountModels } from './codex-settings.js'
+import { findCodexExecutable, rememberCodexExecutable } from './codex-installation.js'
+import { codexNeedsBrowserCatalog, codexVerifiedProtocolVersions } from './codex-model-catalog.js'
+import type { AgentSettingsRequest, AgentSettingsContext, AgentDriverSettings } from '@bmw-agent/agent-contract'
 
 /** Normalize only official structured codes. Never inspect error messages/details. */
-function retryObservation(raw:unknown):AgentRuntimeObservation {
- const point:AgentRuntimeObservation={phase:'retry'}
- if(!raw||typeof raw!=='object'||Array.isArray(raw))return point
- const info=(raw as Record<string,unknown>).codexErrorInfo
- const categories:Readonly<Record<string,AgentRuntimeFailureCategory>>={contextWindowExceeded:'context-limit',sessionBudgetExceeded:'budget',usageLimitExceeded:'budget',rateLimitExceeded:'rate-limit',flexUnavailable:'capacity',serverOverloaded:'capacity',unauthorized:'authentication',badRequest:'request',internalServerError:'internal',cyberPolicy:'policy',misalignmentPolicyViolation:'policy',tooManyDenials:'policy',other:'other'}
- if(typeof info==='string'){point.failureCategory=Object.hasOwn(categories,info)?categories[info]:'other';return point}
- if(!info||typeof info!=='object'||Array.isArray(info))return point
- const row=info as Record<string,unknown>
- for(const [key,category] of [['httpConnectionFailed','connection'],['responseStreamConnectionFailed','connection'],['responseStreamDisconnected','stream'],['responseTooManyFailedAttempts','connection']] as const){
-  if(!Object.hasOwn(row,key))continue
-  point.failureCategory=category
-  const detail=row[key]
-  if(detail&&typeof detail==='object'&&!Array.isArray(detail)){
-   const status=(detail as Record<string,unknown>).httpStatusCode
-   if(typeof status==='number'&&Number.isInteger(status)&&status>=100&&status<=599)point.httpStatus=status
+function retryObservation(raw: unknown): AgentRuntimeObservation {
+  const point: AgentRuntimeObservation = { phase: 'retry' }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return point
+  const info = (raw as Record<string, unknown>).codexErrorInfo
+  const categories: Readonly<Record<string, AgentRuntimeFailureCategory>> = {
+    contextWindowExceeded: 'context-limit',
+    sessionBudgetExceeded: 'budget',
+    usageLimitExceeded: 'budget',
+    rateLimitExceeded: 'rate-limit',
+    flexUnavailable: 'capacity',
+    serverOverloaded: 'capacity',
+    unauthorized: 'authentication',
+    badRequest: 'request',
+    internalServerError: 'internal',
+    cyberPolicy: 'policy',
+    misalignmentPolicyViolation: 'policy',
+    tooManyDenials: 'policy',
+    other: 'other'
   }
+  if (typeof info === 'string') {
+    point.failureCategory = Object.hasOwn(categories, info) ? categories[info] : 'other'
+    return point
+  }
+  if (!info || typeof info !== 'object' || Array.isArray(info)) return point
+  const row = info as Record<string, unknown>
+  for (const [key, category] of [
+    ['httpConnectionFailed', 'connection'],
+    ['responseStreamConnectionFailed', 'connection'],
+    ['responseStreamDisconnected', 'stream'],
+    ['responseTooManyFailedAttempts', 'connection']
+  ] as const) {
+    if (!Object.hasOwn(row, key)) continue
+    point.failureCategory = category
+    const detail = row[key]
+    if (detail && typeof detail === 'object' && !Array.isArray(detail)) {
+      const status = (detail as Record<string, unknown>).httpStatusCode
+      if (typeof status === 'number' && Number.isInteger(status) && status >= 100 && status <= 599)
+        point.httpStatus = status
+    }
+    return point
+  }
+  point.failureCategory = 'other'
   return point
- }
- point.failureCategory='other';return point
 }
 
 export interface CodexBrowserConnection {
   definition: CodexBrowserDefinition
   /** Host pins the BMW lease; no provider/model Session scope is accepted here. */
-  execute(argumentsValue: Record<string, unknown>, signal: AbortSignal): Promise<{ result: unknown; images?: { type: 'image'; mimeType: 'image/png'; data: string }[] }>
+  execute(
+    argumentsValue: Record<string, unknown>,
+    signal: AbortSignal
+  ): Promise<{ result: unknown; images?: { type: 'image'; mimeType: 'image/png'; data: string }[] }>
 }
 export interface CodexBackendOptions {
   executable?: string
   configDirectory: string
   model?: string
-  getModel?():string|null
-  setModel?(modelId:string):void
-  definition?:CodexBrowserDefinition
+  getModel?(): string | null
+  setModel?(modelId: string): void
+  definition?: CodexBrowserDefinition
   connection(request: AgentRunRequest): Promise<CodexBrowserConnection>
   rpcFactory?: typeof createCodexRpc
   catalogGate?: Pick<CodexCatalogGate, 'verify'>
@@ -56,7 +98,7 @@ interface Run {
   rpc: CodexRpc
   connection: CodexBrowserConnection
   threadId: string
-  contextLedger?:CodexContextLedger
+  contextLedger?: CodexContextLedger
   turnId: string | null
   released: boolean
   accepted: Promise<void>
@@ -79,38 +121,95 @@ interface Run {
 }
 export class CodexBackend implements AgentBackend {
   readonly description: AgentDriverDescription = {
-    id: 'codex', label: 'Codex', baseline: 'App Server '+codexVerifiedProtocolVersions.join(' / ')+' / dynamicTools',
-    capabilities: { streaming: true, images: true, interrupt: true, steer: false, fork: false, approvals: false, nativeOpen: false, browserOnly: false }
+    id: 'codex',
+    label: 'Codex',
+    baseline: 'App Server ' + codexVerifiedProtocolVersions.join(' / ') + ' / dynamicTools',
+    capabilities: {
+      streaming: true,
+      images: true,
+      interrupt: true,
+      steer: false,
+      fork: false,
+      approvals: false,
+      nativeOpen: false,
+      browserOnly: false
+    }
   }
   private readonly runs = new Map<string, Run>()
   private readonly gate: Pick<CodexCatalogGate, 'verify'>
   private closed = false
-  private settingsPort:CodexSettings|undefined
-  private settingsExecutable:string|undefined
+  private settingsPort: CodexSettings | undefined
+  private settingsExecutable: string | undefined
   constructor(private readonly options: CodexBackendOptions) {
-    if (!path.isAbsolute(options.configDirectory) || (options.executable!==undefined&&!path.isAbsolute(options.executable))) throw new Error('Codex requires absolute host-owned executable and profile paths')
-    if(options.model!==undefined)agentIdentifier(options.model, 'Codex model')
+    if (
+      !path.isAbsolute(options.configDirectory) ||
+      (options.executable !== undefined && !path.isAbsolute(options.executable))
+    )
+      throw new Error('Codex requires absolute host-owned executable and profile paths')
+    if (options.model !== undefined) agentIdentifier(options.model, 'Codex model')
     this.gate = options.catalogGate ?? new CodexCatalogGate()
   }
   async prepare(request: AgentRunRequest): Promise<AgentDriverDescription> {
-    if (this.closed || this.runs.size||this.settingsPort?.busy) throw new Error('Codex backend is closed or still owns an active process')
+    if (this.closed || this.runs.size || this.settingsPort?.busy)
+      throw new Error('Codex backend is closed or still owns an active process')
     request.signal.throwIfAborted()
-    const executable=this.options.executable??findCodexExecutable({configDirectory:this.options.configDirectory})
-    if(!executable)throw new Error('未找到 Codex 官方 CLI；请安装 Codex 后打开 Agent 设置')
+    const executable = this.options.executable ?? findCodexExecutable({ configDirectory: this.options.configDirectory })
+    if (!executable) throw new Error('未找到 Codex 官方 CLI；请安装 Codex 后打开 Agent 设置')
     fs.mkdirSync(this.options.configDirectory, { recursive: true, mode: 0o700 })
-    const model=this.options.getModel?.()??this.options.model
-    if(!model)throw new Error('Open Codex settings and select a verified model before sending')
+    const model = this.options.getModel?.() ?? this.options.model
+    if (!model) throw new Error('Open Codex settings and select a verified model before sending')
     const connection = await this.options.connection(request)
-    const modelCatalogPath=await this.gate.verify(executable, this.options.configDirectory, model, connection.definition, request.signal)
-    if(codexNeedsBrowserCatalog(model)&&typeof modelCatalogPath!=='string')throw new Error('Codex GPT-6 browser catalog was not admitted')
+    const modelCatalogPath = await this.gate.verify(
+      executable,
+      this.options.configDirectory,
+      model,
+      connection.definition,
+      request.signal
+    )
+    if (codexNeedsBrowserCatalog(model) && typeof modelCatalogPath !== 'string')
+      throw new Error('Codex GPT-6 browser catalog was not admitted')
     request.signal.throwIfAborted()
-    if(!this.options.executable)rememberCodexExecutable(this.options.configDirectory,executable)
-    const rpc = (this.options.rpcFactory ?? createCodexRpc)(executable, request.project.directory, this.options.configDirectory,{},typeof modelCatalogPath==='string'?modelCatalogPath:undefined)
+    if (!this.options.executable) rememberCodexExecutable(this.options.configDirectory, executable)
+    const rpc = (this.options.rpcFactory ?? createCodexRpc)(
+      executable,
+      request.project.directory,
+      this.options.configDirectory,
+      {},
+      typeof modelCatalogPath === 'string' ? modelCatalogPath : undefined
+    )
     let accept!: () => void, resolve!: Run['resolve'], reject!: Run['reject']
-    const accepted = new Promise<void>(yes => { accept = yes })
-    const done = new Promise<AgentRunResult>((yes, no) => { resolve = yes; reject = no })
+    const accepted = new Promise<void>(yes => {
+      accept = yes
+    })
+    const done = new Promise<AgentRunResult>((yes, no) => {
+      resolve = yes
+      reject = no
+    })
     void done.catch(() => {})
-    const run: Run = { request, rpc, connection, threadId: '', turnId: null, released: false, accepted, accept, emit: null, tail: Promise.resolve(), tools: new Map(), seenTools: new Set(), messages: new Map(), completedMessages: new Set(), done, resolve, reject, stopping: false, interruptSent: false, terminal: false, unsubscribe: () => {}, abort: () => {} }
+    const run: Run = {
+      request,
+      rpc,
+      connection,
+      threadId: '',
+      turnId: null,
+      released: false,
+      accepted,
+      accept,
+      emit: null,
+      tail: Promise.resolve(),
+      tools: new Map(),
+      seenTools: new Set(),
+      messages: new Map(),
+      completedMessages: new Set(),
+      done,
+      resolve,
+      reject,
+      stopping: false,
+      interruptSent: false,
+      terminal: false,
+      unsubscribe: () => {},
+      abort: () => {}
+    }
     this.runs.set(request.runId, run)
     run.unsubscribe = rpc.onNotification((method, params) => {
       if (method === 'turn/started' && run.released) {
@@ -120,25 +219,42 @@ export class CodexBackend implements AgentBackend {
           const turnId = agentIdentifier(agentRecord(value.turn).id)
           if (run.turnId && run.turnId !== turnId) throw new Error('Codex started a different turn')
           run.turnId = turnId
-        } catch (error: unknown) { run.reject(error) }
+        } catch (error: unknown) {
+          run.reject(error)
+        }
       }
       const work = run.tail.then(() => this.notification(run, method, params))
       run.tail = work
       void work.catch(error => run.reject(error))
     })
     rpc.onRequest(async (method, params) => {
-      try { return await this.tool(run, method, params) }
-      catch (error: unknown) { run.reject(error); throw error }
+      try {
+        return await this.tool(run, method, params)
+      } catch (error: unknown) {
+        run.reject(error)
+        throw error
+      }
     })
-    rpc.onFailure(error => { if (!run.terminal) run.reject(error) })
-    run.abort = () => { void this.stop(run).catch(error => run.reject(error)) }
+    rpc.onFailure(error => {
+      if (!run.terminal) run.reject(error)
+    })
+    run.abort = () => {
+      void this.stop(run).catch(error => run.reject(error))
+    }
     request.signal.addEventListener('abort', run.abort, { once: true })
     try {
       await initializeCodex(rpc)
-      const catalog=await codexAccountModels(rpc)
-      if(catalog.authentication.state!=='ready'||!catalog.models.some(row=>row.id===model))throw new Error('Codex model is unavailable for the signed-in account; open Agent settings')
+      const catalog = await codexAccountModels(rpc)
+      if (catalog.authentication.state !== 'ready' || !catalog.models.some(row => row.id === model))
+        throw new Error('Codex model is unavailable for the signed-in account; open Agent settings')
       request.signal.throwIfAborted()
-      const params = codexThreadParameters(request.project.directory, model, connection.definition, agentText(request.context,16384),await codexDisabledMcpServers(rpc))
+      const params = codexThreadParameters(
+        request.project.directory,
+        model,
+        connection.definition,
+        agentText(request.context, 16384),
+        await codexDisabledMcpServers(rpc)
+      )
       let started: Record<string, unknown>
       if (request.externalSessionId) {
         // Dynamic tools persist in official rollout metadata. Resume never adopts
@@ -146,42 +262,109 @@ export class CodexBackend implements AgentBackend {
         delete params.dynamicTools
         // BMW already owns its visible history. Hydrating all official turns
         // would replay accumulated image payloads into one oversized RPC line.
-        started = agentRecord(await rpc.call('thread/resume', { ...params, threadId: request.externalSessionId, excludeTurns: true }))
+        started = agentRecord(
+          await rpc.call('thread/resume', { ...params, threadId: request.externalSessionId, excludeTurns: true })
+        )
       } else started = agentRecord(await rpc.call('thread/start', params))
       run.threadId = agentIdentifier(agentRecord(started.thread).id)
-      if (request.externalSessionId && run.threadId !== request.externalSessionId) throw new Error('Codex resumed a different provider Session')
+      if (request.externalSessionId && run.threadId !== request.externalSessionId)
+        throw new Error('Codex resumed a different provider Session')
       if (started.model !== model) throw new Error('Codex changed the model after catalog verification')
-      const ledger=new CodexContextLedger(this.options.configDirectory,request.project.id,request.sessionId,run.threadId)
-      run.contextLedger=ledger
-      const scope=codexInputScope(agentText(request.context,16384)),guide=codexToolInstructions(connection.definition)
-      if(ledger.needsCompaction(Boolean(request.externalSessionId),legacyCodexContextHeavy(agentRecord(started.thread)))){
+      const ledger = new CodexContextLedger(
+        this.options.configDirectory,
+        request.project.id,
+        request.sessionId,
+        run.threadId
+      )
+      run.contextLedger = ledger
+      const scope = codexInputScope(agentText(request.context, 16384)),
+        guide = codexToolInstructions(connection.definition)
+      if (
+        ledger.needsCompaction(Boolean(request.externalSessionId), legacyCodexContextHeavy(agentRecord(started.thread)))
+      ) {
         ledger.maintenanceStarted()
-        const maintenance=new AbortController()
-        try{await Promise.race([compactCodexContext(rpc,run.threadId,AbortSignal.any([request.signal,maintenance.signal]),phase=>{try{request.observeRuntime?.({phase})}catch{/* Diagnostic only. */}}),run.done.then(()=>{throw new Error('Codex ended during context maintenance')})])}finally{maintenance.abort()}
+        const maintenance = new AbortController()
+        try {
+          await Promise.race([
+            compactCodexContext(rpc, run.threadId, AbortSignal.any([request.signal, maintenance.signal]), phase => {
+              try {
+                request.observeRuntime?.({ phase })
+              } catch {
+                /* Diagnostic only. */
+              }
+            }),
+            run.done.then(() => {
+              throw new Error('Codex ended during context maintenance')
+            })
+          ])
+        } finally {
+          maintenance.abort()
+        }
         ledger.compacted()
         // Official compaction reinstalls the current runtime developer instructions.
-        ledger.acknowledged(scope,guide,0)
-      }else if(!request.externalSessionId){ledger.acknowledged(scope,guide,0)}
-      const instructions=ledger.instructions(scope,guide)
-      if(instructions!==null){
-        await rpc.call('thread/inject_items',{threadId:run.threadId,items:[{type:'message',role:'developer',content:[{type:'input_text',text:instructions}]}]})
-        ledger.acknowledged(scope,guide,Buffer.byteLength(instructions))
+        ledger.acknowledged(scope, guide, 0)
+      } else if (!request.externalSessionId) {
+        ledger.acknowledged(scope, guide, 0)
+      }
+      const instructions = ledger.instructions(scope, guide)
+      if (instructions !== null) {
+        await rpc.call('thread/inject_items', {
+          threadId: run.threadId,
+          items: [{ type: 'message', role: 'developer', content: [{ type: 'input_text', text: instructions }] }]
+        })
+        ledger.acknowledged(scope, guide, Buffer.byteLength(instructions))
       }
       request.signal.throwIfAborted()
       return { ...this.description, capabilities: { ...this.description.capabilities, browserOnly: true } }
-    } catch (error: unknown) { await this.cleanup(run); throw error }
+    } catch (error: unknown) {
+      await this.cleanup(run)
+      throw error
+    }
   }
-  async settings(request:AgentSettingsRequest,context:AgentSettingsContext):Promise<AgentDriverSettings>{
-    if(this.closed||this.runs.size||this.settingsPort?.busy||!this.options.definition||!this.options.setModel)throw new Error('Codex settings are unavailable while native work is active')
-    const executable=this.options.executable??findCodexExecutable({configDirectory:this.options.configDirectory})
-    if(!executable){if(request.action!=='refresh')throw new Error('Codex 官方 CLI 尚未安装');return {authentication:{state:'unknown',label:'未找到 Codex 官方 CLI；安装后点击刷新'},models:[],selectedModel:this.options.getModel?.()??this.options.model??null,loginMethods:[],canLogout:false}}
-    if(!this.settingsPort||this.settingsExecutable!==executable){this.settingsPort=new CodexSettings({executable,configDirectory:this.options.configDirectory,model:()=>this.options.getModel?.()??this.options.model??null,setModel:this.options.setModel,definition:this.options.definition,gate:this.gate,rpcFactory:this.options.rpcFactory});this.settingsExecutable=executable}
-    return this.settingsPort.execute(request,context)
+  async settings(request: AgentSettingsRequest, context: AgentSettingsContext): Promise<AgentDriverSettings> {
+    if (this.closed || this.runs.size || this.settingsPort?.busy || !this.options.definition || !this.options.setModel)
+      throw new Error('Codex settings are unavailable while native work is active')
+    const executable = this.options.executable ?? findCodexExecutable({ configDirectory: this.options.configDirectory })
+    if (!executable) {
+      if (request.action !== 'refresh') throw new Error('Codex 官方 CLI 尚未安装')
+      return {
+        authentication: { state: 'unknown', label: '未找到 Codex 官方 CLI；安装后点击刷新' },
+        models: [],
+        selectedModel: this.options.getModel?.() ?? this.options.model ?? null,
+        loginMethods: [],
+        canLogout: false
+      }
+    }
+    if (!this.settingsPort || this.settingsExecutable !== executable) {
+      this.settingsPort = new CodexSettings({
+        executable,
+        configDirectory: this.options.configDirectory,
+        model: () => this.options.getModel?.() ?? this.options.model ?? null,
+        setModel: this.options.setModel,
+        definition: this.options.definition,
+        gate: this.gate,
+        rpcFactory: this.options.rpcFactory
+      })
+      this.settingsExecutable = executable
+    }
+    return this.settingsPort.execute(request, context)
   }
-  async drainSettings():Promise<void>{await this.settingsPort?.drain()}
+  async drainSettings(): Promise<void> {
+    await this.settingsPort?.drain()
+  }
   private async notification(run: Run, method: string, raw: unknown): Promise<void> {
     if (!run.released || !run.emit) return
-    if (!['item/agentMessage/delta', 'item/started', 'item/completed', 'turn/completed', 'error','thread/tokenUsage/updated'].includes(method)) return
+    if (
+      ![
+        'item/agentMessage/delta',
+        'item/started',
+        'item/completed',
+        'turn/completed',
+        'error',
+        'thread/tokenUsage/updated'
+      ].includes(method)
+    )
+      return
     const value = agentRecord(raw, 'Codex notification')
     if (value.threadId !== run.threadId) throw new Error('Codex notification belongs to another provider Session')
     await run.accepted
@@ -190,47 +373,110 @@ export class CodexBackend implements AgentBackend {
     // turn/started. This handler may be awaiting the current acceptance while
     // that turn starts. Statistics do not authorize work or identify a result.
     if (method === 'thread/tokenUsage/updated' && turnId && turnId !== run.turnId) return
-    if (turnId && turnId !== run.turnId) throw new Error('Codex notification belongs to another turn ('+method+')')
+    if (turnId && turnId !== run.turnId) throw new Error('Codex notification belongs to another turn (' + method + ')')
     if (run.terminal) throw new Error('Codex emitted work after turn completion')
     if (method === 'item/agentMessage/delta') {
-      const id = agentIdentifier(value.itemId), text = agentText(value.delta, 2 * 1024 * 1024)
+      const id = agentIdentifier(value.itemId),
+        text = agentText(value.delta, 2 * 1024 * 1024)
       if (run.completedMessages.has(id)) throw new Error('Codex changed a completed message')
       run.messages.set(id, agentText((run.messages.get(id) ?? '') + text, 2 * 1024 * 1024))
       await run.emit({ type: 'message.delta', messageId: run.request.runId + ':' + id, text })
     } else if (method === 'item/started' || method === 'item/completed') {
       const item = agentRecord(value.item)
-      if(item.type==='contextCompaction'&&method==='item/completed')run.contextLedger?.compacted()
-      if(item.type==='reasoning'||item.type==='contextCompaction'){
-        try{run.request.observeRuntime?.({phase:(item.type==='reasoning'?'reasoning.':'compaction.')+(method==='item/started'?'started':'completed') as 'reasoning.started'|'reasoning.completed'|'compaction.started'|'compaction.completed',messageId:agentIdentifier(item.id)})}catch{/* Observation cannot change official runtime behavior. */}
+      if (item.type === 'contextCompaction' && method === 'item/completed') run.contextLedger?.compacted()
+      if (item.type === 'reasoning' || item.type === 'contextCompaction') {
+        try {
+          run.request.observeRuntime?.({
+            phase: ((item.type === 'reasoning' ? 'reasoning.' : 'compaction.') +
+              (method === 'item/started' ? 'started' : 'completed')) as
+              'reasoning.started' | 'reasoning.completed' | 'compaction.started' | 'compaction.completed',
+            messageId: agentIdentifier(item.id)
+          })
+        } catch {
+          /* Observation cannot change official runtime behavior. */
+        }
       }
-      if (['commandExecution', 'fileChange', 'mcpToolCall', 'webSearch', 'imageGeneration', 'collabAgentToolCall'].includes(String(item.type))) throw new Error('Codex emitted a tool outside BMW browser admission')
-      if (item.type === 'dynamicToolCall' && item.tool !== 'browser') throw new Error('Codex emitted a foreign dynamic tool')
+      if (
+        [
+          'commandExecution',
+          'fileChange',
+          'mcpToolCall',
+          'webSearch',
+          'imageGeneration',
+          'collabAgentToolCall'
+        ].includes(String(item.type))
+      )
+        throw new Error('Codex emitted a tool outside BMW browser admission')
+      if (item.type === 'dynamicToolCall' && item.tool !== 'browser')
+        throw new Error('Codex emitted a foreign dynamic tool')
       if (method === 'item/completed' && item.type === 'agentMessage') {
-        const id = agentIdentifier(item.id), text = agentText(item.text, 2 * 1024 * 1024), previous = run.messages.get(id) ?? ''
-        if (run.completedMessages.has(id) || !text.startsWith(previous)) throw new Error('Codex completion disagrees with its message stream')
+        const id = agentIdentifier(item.id),
+          text = agentText(item.text, 2 * 1024 * 1024),
+          previous = run.messages.get(id) ?? ''
+        if (run.completedMessages.has(id) || !text.startsWith(previous))
+          throw new Error('Codex completion disagrees with its message stream')
         run.completedMessages.add(id)
         await run.emit({ type: 'message.completed', messageId: run.request.runId + ':' + id, text })
       }
-    } else if(method==='thread/tokenUsage/updated'){
-      try{const usage=agentRecord(agentRecord(value.tokenUsage).last),values=[usage.inputTokens,usage.cachedInputTokens,usage.outputTokens,usage.reasoningOutputTokens];if(values.every(n=>typeof n==='number'&&Number.isSafeInteger(n)&&n>=0))run.request.observeRuntime?.({phase:'usage',inputTokens:usage.inputTokens as number,cachedInputTokens:usage.cachedInputTokens as number,outputTokens:usage.outputTokens as number,reasoningTokens:usage.reasoningOutputTokens as number})}catch{/* No usage text or unknown fields enter Host diagnostics. */}
+    } else if (method === 'thread/tokenUsage/updated') {
+      try {
+        const usage = agentRecord(agentRecord(value.tokenUsage).last),
+          values = [usage.inputTokens, usage.cachedInputTokens, usage.outputTokens, usage.reasoningOutputTokens]
+        if (values.every(n => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0))
+          run.request.observeRuntime?.({
+            phase: 'usage',
+            inputTokens: usage.inputTokens as number,
+            cachedInputTokens: usage.cachedInputTokens as number,
+            outputTokens: usage.outputTokens as number,
+            reasoningTokens: usage.reasoningOutputTokens as number
+          })
+      } catch {
+        /* No usage text or unknown fields enter Host diagnostics. */
+      }
     } else if (method === 'error') {
       if (value.willRetry !== true) throw new Error('Codex runtime failed during the Agent turn')
       // The official runtime owns the retry. Observe only its explicit signal;
       // error bodies can contain account metadata and must not enter Host logs.
-      try { run.request.observeRuntime?.(retryObservation(value.error)) } catch { /* Diagnostics never change delivery or retry behavior. */ }
+      try {
+        run.request.observeRuntime?.(retryObservation(value.error))
+      } catch {
+        /* Diagnostics never change delivery or retry behavior. */
+      }
     } else {
-      const turn = agentRecord(value.turn), status = turn.status
-      if (!['completed', 'interrupted', 'failed'].includes(String(status))) throw new Error('Invalid Codex terminal status')
+      const turn = agentRecord(value.turn),
+        status = turn.status
+      if (!['completed', 'interrupted', 'failed'].includes(String(status)))
+        throw new Error('Invalid Codex terminal status')
       await Promise.all([...run.tools.values()])
-      const result: AgentRunResult = { outcome: status === 'completed' ? 'success' : status === 'interrupted' ? 'interrupted' : 'failed', message: status === 'failed' ? 'Codex Agent turn failed' : status === 'interrupted' ? 'Codex stopped' : '' }
+      const result: AgentRunResult = {
+        outcome: status === 'completed' ? 'success' : status === 'interrupted' ? 'interrupted' : 'failed',
+        message: status === 'failed' ? 'Codex Agent turn failed' : status === 'interrupted' ? 'Codex stopped' : ''
+      }
       await run.emit({ type: 'turn.completed', ...result })
-      run.terminal = true; run.resolve(result)
+      run.terminal = true
+      run.resolve(result)
     }
   }
   private async tool(run: Run, method: string, raw: unknown): Promise<unknown> {
-    if (method !== 'item/tool/call' || !run.released || !run.emit || run.stopping || run.terminal || run.request.signal.aborted) throw new Error('Codex request is outside BMW browser admission')
-    const value = agentRecord(raw), id = agentIdentifier(value.callId)
-    if (value.threadId !== run.threadId || value.turnId !== run.turnId || value.tool !== 'browser' || value.namespace != null || run.seenTools.has(id)) throw new Error('Codex browser request has invalid scope or identity')
+    if (
+      method !== 'item/tool/call' ||
+      !run.released ||
+      !run.emit ||
+      run.stopping ||
+      run.terminal ||
+      run.request.signal.aborted
+    )
+      throw new Error('Codex request is outside BMW browser admission')
+    const value = agentRecord(raw),
+      id = agentIdentifier(value.callId)
+    if (
+      value.threadId !== run.threadId ||
+      value.turnId !== run.turnId ||
+      value.tool !== 'browser' ||
+      value.namespace != null ||
+      run.seenTools.has(id)
+    )
+      throw new Error('Codex browser request has invalid scope or identity')
     const argumentsValue = agentRecord(value.arguments)
     if (Object.hasOwn(argumentsValue, '__bmwSession')) throw new Error('BMW Session scope is owned by the host')
     run.seenTools.add(id)
@@ -238,43 +484,72 @@ export class CodexBackend implements AgentBackend {
     const operation = (async () => {
       await run.accepted
       await run.emit!({ type: 'tool.started', callId, name: 'browser', action: agentText(argumentsValue.action, 200) })
-      let success = false, message = ''
+      let success = false,
+        message = ''
       try {
         run.request.signal.throwIfAborted()
         const reply = await run.connection.execute(argumentsValue, run.request.signal)
         run.request.signal.throwIfAborted()
-        const resultText=agentText(JSON.stringify(reply.result), 2 * 1024 * 1024)
-        const contentItems: ({ type: 'inputText'; text: string } | { type: 'inputImage'; imageUrl: string })[] = [{ type: 'inputText', text: resultText }]
+        const resultText = agentText(JSON.stringify(reply.result), 2 * 1024 * 1024)
+        const contentItems: ({ type: 'inputText'; text: string } | { type: 'inputImage'; imageUrl: string })[] = [
+          { type: 'inputText', text: resultText }
+        ]
         for (const image of reply.images ?? []) {
-          if (image.type !== 'image' || image.mimeType !== 'image/png' || image.data.length > 28 * 1024 * 1024 || !/^[a-zA-Z0-9+/]+={0,2}$/u.test(image.data)) throw new Error('Invalid admitted BMW PNG image')
+          if (
+            image.type !== 'image' ||
+            image.mimeType !== 'image/png' ||
+            image.data.length > 28 * 1024 * 1024 ||
+            !/^[a-zA-Z0-9+/]+={0,2}$/u.test(image.data)
+          )
+            throw new Error('Invalid admitted BMW PNG image')
           contentItems.push({ type: 'inputImage', imageUrl: 'data:image/png;base64,' + image.data })
         }
-        if(reply.images?.length)run.contextLedger?.imagesDelivered(reply.images)
-        message = resultText.length<=16384?resultText:JSON.stringify({resultTruncated:true,resultCharacters:resultText.length,preview:resultText.slice(0,2000)})
+        if (reply.images?.length) run.contextLedger?.imagesDelivered(reply.images)
+        message =
+          resultText.length <= 16384
+            ? resultText
+            : JSON.stringify({
+                resultTruncated: true,
+                resultCharacters: resultText.length,
+                preview: resultText.slice(0, 2000)
+              })
         success = true
         return { success, contentItems }
       } catch (error: unknown) {
         message = error instanceof Error ? error.message.slice(0, 16384) : 'BMW browser action failed'
         return { success: false, contentItems: [{ type: 'inputText', text: message }] }
-      } finally { await run.emit!({ type: 'tool.completed', callId, success, message }) }
+      } finally {
+        await run.emit!({ type: 'tool.completed', callId, success, message })
+      }
     })()
     run.tools.set(id, operation)
-    try { return await operation } finally { run.tools.delete(id) }
+    try {
+      return await operation
+    } finally {
+      run.tools.delete(id)
+    }
   }
   async run(request: AgentRunRequest, emit: (event: AgentDriverEvent) => Promise<void>): Promise<AgentRunResult> {
     const run = this.member(request.sessionId, request.runId)
     if (run.released) throw new Error('Codex input was already released')
     await emit({ type: 'session.bound', externalSessionId: run.threadId })
-    run.emit = emit; run.released = true
+    run.emit = emit
+    run.released = true
     try {
-      const started = agentRecord(await run.rpc.call('turn/start', { threadId: run.threadId, input: [{ type: 'text', text: request.text }] }))
+      const started = agentRecord(
+        await run.rpc.call('turn/start', { threadId: run.threadId, input: [{ type: 'text', text: request.text }] })
+      )
       const turnId = agentIdentifier(agentRecord(started.turn).id)
       if (run.turnId && run.turnId !== turnId) throw new Error('Codex input receipt disagrees with the running turn')
       run.turnId = turnId
-      await emit({ type: 'input.accepted', receiptId: turnId }); run.accept()
+      await emit({ type: 'input.accepted', receiptId: turnId })
+      run.accept()
       if (request.signal.aborted) await this.stop(run)
       return await run.done
-    } finally { run.accept(); await this.cleanup(run) }
+    } finally {
+      run.accept()
+      await this.cleanup(run)
+    }
   }
   private member(sessionId: string, runId: string): Run {
     const run = this.runs.get(runId)
@@ -285,31 +560,47 @@ export class CodexBackend implements AgentBackend {
     if (run.terminal) return
     if (!run.stopping) {
       run.stopping = true
-      run.cancelTimer = setTimeout(() => { run.reject(new Error('Codex did not acknowledge cancellation')); void run.rpc.close().catch(() => {}) }, this.options.cancellationTimeoutMs ?? 10000)
+      run.cancelTimer = setTimeout(() => {
+        run.reject(new Error('Codex did not acknowledge cancellation'))
+        void run.rpc.close().catch(() => {})
+      }, this.options.cancellationTimeoutMs ?? 10000)
     }
-    if (run.turnId && !run.interruptSent) { run.interruptSent = true; await run.rpc.call('turn/interrupt', { threadId: run.threadId, turnId: run.turnId }) }
-    else if (!run.released) await run.rpc.close()
+    if (run.turnId && !run.interruptSent) {
+      run.interruptSent = true
+      await run.rpc.call('turn/interrupt', { threadId: run.threadId, turnId: run.turnId })
+    } else if (!run.released) await run.rpc.close()
     // If cancellation races turn/start, run() sends the official interrupt once
     // the receipt identifies the turn. No second input is submitted.
   }
-  async interrupt(sessionId: string, runId: string): Promise<void> { if (this.runs.has(runId)) await this.stop(this.member(sessionId, runId)) }
-  async respond(): Promise<void> { throw new Error('Codex browser-only runtime uses BMW browser permission controls') }
-  async drain(sessionId: string, runId: string): Promise<void> { if(this.runs.has(runId))await this.cleanup(this.member(sessionId,runId),false) }
-  private async cleanup(run: Run, checkEvents=true): Promise<void> {
+  async interrupt(sessionId: string, runId: string): Promise<void> {
+    if (this.runs.has(runId)) await this.stop(this.member(sessionId, runId))
+  }
+  async respond(): Promise<void> {
+    throw new Error('Codex browser-only runtime uses BMW browser permission controls')
+  }
+  async drain(sessionId: string, runId: string): Promise<void> {
+    if (this.runs.has(runId)) await this.cleanup(this.member(sessionId, runId), false)
+  }
+  private async cleanup(run: Run, checkEvents = true): Promise<void> {
     run.request.signal.removeEventListener('abort', run.abort)
     if (run.cancelTimer) clearTimeout(run.cancelTimer)
     run.unsubscribe()
     await run.rpc.close()
     await Promise.allSettled([...run.tools.values()])
-    let eventFailure:unknown
-    await run.tail.catch(error => {eventFailure=error})
+    let eventFailure: unknown
+    await run.tail.catch(error => {
+      eventFailure = error
+    })
     this.runs.delete(run.request.runId)
-    if(checkEvents&&eventFailure)throw eventFailure
+    if (checkEvents && eventFailure) throw eventFailure
   }
   async close(): Promise<void> {
     this.closed = true
     const runs = [...this.runs.values()]
-    for (const run of runs) { run.reject(new Error('Codex backend closed')); run.accept() }
-    await Promise.all([...runs.map(run => this.cleanup(run)),this.drainSettings()])
+    for (const run of runs) {
+      run.reject(new Error('Codex backend closed'))
+      run.accept()
+    }
+    await Promise.all([...runs.map(run => this.cleanup(run)), this.drainSettings()])
   }
 }

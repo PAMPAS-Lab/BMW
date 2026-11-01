@@ -12,7 +12,7 @@ function createStore(t) {
   return new LayoutStore({ filePath: path.join(root, 'layout.json') })
 }
 
-test('layout setup is required once and defaults to the sidebar', (t) => {
+test('layout setup is required once and defaults to the sidebar', t => {
   const store = createStore(t)
   assert.deepEqual(store.snapshot(), {
     version: 1,
@@ -26,7 +26,7 @@ test('layout setup is required once and defaults to the sidebar', (t) => {
   })
 })
 
-test('floating DSH settings persist with bounded size and supported opacity', (t) => {
+test('floating DSH settings persist with bounded size and supported opacity', t => {
   const store = createStore(t)
   store.update({
     configured: true,

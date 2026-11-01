@@ -1,6 +1,6 @@
-import type {FeatureActivation} from './feature-contract.js'
+import type { FeatureActivation } from './feature-contract.js'
 import type { BrowserActionDefinition } from '@bmw-agent/browser-capability'
-import type {WorkspaceMode} from '@bmw-agent/agent-contract'
+import type { WorkspaceMode } from '@bmw-agent/agent-contract'
 
 export type { BrowserActionDefinition } from '@bmw-agent/browser-capability'
 
@@ -39,7 +39,8 @@ export interface ResolvedProductDefinition extends ProductDefinition {
 export function defineProduct(input: ProductDefinition): Readonly<ResolvedProductDefinition> {
   if (!input || typeof input !== 'object') throw new TypeError('Product definition is required.')
   if (!PRODUCT_IDS.includes(input.id)) throw new TypeError(`Unknown BMW product id: ${String(input.id)}`)
-  if (input.name !== PRODUCT_NAMES[input.id]) throw new TypeError(`Product ${input.id} must be named ${PRODUCT_NAMES[input.id]}.`)
+  if (input.name !== PRODUCT_NAMES[input.id])
+    throw new TypeError(`Product ${input.id} must be named ${PRODUCT_NAMES[input.id]}.`)
   if (!input.userDataName || !input.sessionPartition) {
     throw new TypeError('Product name, userDataName, sessionPartition are required.')
   }
@@ -48,11 +49,17 @@ export function defineProduct(input: ProductDefinition): Readonly<ResolvedProduc
   for (const feature of features) {
     if (!feature?.id) throw new TypeError('Every product feature requires an id.')
     if (featureIds.has(feature.id)) throw new TypeError(`Duplicate product feature: ${feature.id}`)
-    if (feature.main && typeof feature.main.activate !== 'function') throw new TypeError(`Feature ${feature.id} requires main.activate.`)
-    if (feature.actionNamespace !== undefined && (typeof feature.actionNamespace !== 'string' || !feature.actionNamespace.trim())) throw new TypeError(`Feature ${feature.id} requires a nonempty action namespace.`)
+    if (feature.main && typeof feature.main.activate !== 'function')
+      throw new TypeError(`Feature ${feature.id} requires main.activate.`)
+    if (
+      feature.actionNamespace !== undefined &&
+      (typeof feature.actionNamespace !== 'string' || !feature.actionNamespace.trim())
+    )
+      throw new TypeError(`Feature ${feature.id} requires a nonempty action namespace.`)
     featureIds.add(feature.id)
     const modelTools = (feature as FeatureModule & { tools?: readonly unknown[] }).tools
-    if (modelTools?.length) throw new TypeError(`Feature ${feature.id} attempted to register a model tool; only browser actions are allowed.`)
+    if (modelTools?.length)
+      throw new TypeError(`Feature ${feature.id} attempted to register a model tool; only browser actions are allowed.`)
   }
   return Object.freeze({ ...input, features, featureIds: Object.freeze([...featureIds]) })
 }

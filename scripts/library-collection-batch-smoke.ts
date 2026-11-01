@@ -3,89 +3,601 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import crypto from 'node:crypto'
-import {performance} from 'node:perf_hooks'
-import {app,BrowserWindow,session,webContents} from 'electron'
-import {bmwProduct} from '../packages/product-bmw/index.js'
-import {BrowserKernel} from '../packages/browser-capability/src/browser-kernel.js'
-import {BrowserCapabilityRegistry} from '../packages/browser-capability/src/browser-capability-registry.js'
-import type {BrowserFeatureHost} from '../packages/browser-capability/src/browser-host.js'
-import {browserCompatibleUserAgent} from '../packages/platform/src/browser-user-agent.js'
-import {ProjectSourceStore} from '../packages/platform/src/project-source-store.js'
-import {LibraryService} from '../packages/feature-library/src/library-service.js'
-import {RollingService,RollingStore} from '../packages/feature-library/src/rolling-service.js'
-import {CollectionBatchService} from '../packages/feature-library/src/collection-batch-service.js'
-import {CollectionBatchStore} from '../packages/feature-library/src/collection-batch-store.js'
-import type {BatchDecision,CollectionBatch} from '../packages/feature-library/src/collection-batch-contract.js'
-import {sourcePreset} from '../packages/feature-library/src/source-presets.js'
-import {SAME_NINE_PRESETS} from './library-collection-batch-benchmark.js'
-process.on('uncaughtException',error=>{console.error(error);app.exit(1)})
-const temporary=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'bmw-batch-dom-')));app.setPath('userData',path.join(temporary,'profile'))
-const validationOutput=(raw:string)=>{const directory=path.resolve(raw);fs.mkdirSync(directory,{recursive:true});return fs.realpathSync(directory)}
-const fixturePublishedAt=new Date(Date.now()-3600000).toISOString(),qualityFingerprints:string[]=[]
-const live=process.env.BMW_LIVE_BATCH==='1',output=process.env.BMW_VALIDATION_DIR?validationOutput(process.env.BMW_VALIDATION_DIR):undefined,results:unknown[]=[]
-if(live&&!output)throw new Error('A fresh BMW_VALIDATION_DIR is required to retain public original evidence.')
-let window:BrowserWindow|undefined,nativeCancellationProof=false,nativeNavigationRecoveryProof=false,nativeDOMReadinessProof=false
-const escape=(s:string)=>s.replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;')
-const detail=(id:string,i:number)=>({'nvidia-ai':`https://blogs.nvidia.com/blog/fixture-${i}/`,'huggingface-blog':`https://huggingface.co/blog/fixture-${i}`,'techcrunch-ai':`https://techcrunch.com/2026/10/21/fixture-${i}/`,'openai-news':`https://openai.com/index/fixture-${i}/`,'qbitai':`https://www.qbitai.com/2026/10/${90000+i}.html`,'x-openai':`https://x.com/OpenAI/status/${1000000+i}`,'youtube-openai':`https://www.youtube.com/watch?v=OpenAIFixture${i}`,'youtube-ai-search':`https://www.youtube.com/watch?v=TopicFixture${i}`}[id]??'https://x.com/explore/tabs/trending')
-const trace=(message:string)=>{if(process.env.BMW_BATCH_TRACE==='1')console.error(new Date().toISOString(),message)}
-let activeNavigations=0,peakNavigations=0,pageTasks=0
-const open=BrowserKernel.prototype.openTab
-BrowserKernel.prototype.openTab=async function(...args:Parameters<BrowserKernel['openTab']>){const counted=args[0]?.source==='agent';if(counted){pageTasks++;activeNavigations++;peakNavigations=Math.max(peakNavigations,activeNavigations)}trace('open '+String(args[0]?.url));try{const result=await open.apply(this,args);trace('opened '+String(args[0]?.url));return result}finally{if(counted)activeNavigations--}}
-if(process.env.BMW_BATCH_TRACE==='1'){
- const collect=BrowserKernel.prototype.collectSource,close=BrowserKernel.prototype.closeDetached
- BrowserKernel.prototype.collectSource=async function(...args:Parameters<BrowserKernel['collectSource']>){trace('collect '+args[0].bodySelector);const result=await collect.apply(this,args);trace('collected '+result.url);return result}
- BrowserKernel.prototype.closeDetached=async function(...args:Parameters<BrowserKernel['closeDetached']>){trace('close lane');await close.apply(this,args);trace('closed lane')}
+import { performance } from 'node:perf_hooks'
+import { app, BrowserWindow, session, webContents } from 'electron'
+import { bmwProduct } from '../packages/product-bmw/index.js'
+import { BrowserKernel } from '../packages/browser-capability/src/browser-kernel.js'
+import { BrowserCapabilityRegistry } from '../packages/browser-capability/src/browser-capability-registry.js'
+import type { BrowserFeatureHost } from '../packages/browser-capability/src/browser-host.js'
+import { browserCompatibleUserAgent } from '../packages/platform/src/browser-user-agent.js'
+import { ProjectSourceStore } from '../packages/platform/src/project-source-store.js'
+import { LibraryService } from '../packages/feature-library/src/library-service.js'
+import { RollingService, RollingStore } from '../packages/feature-library/src/rolling-service.js'
+import { CollectionBatchService } from '../packages/feature-library/src/collection-batch-service.js'
+import { CollectionBatchStore } from '../packages/feature-library/src/collection-batch-store.js'
+import type { BatchDecision, CollectionBatch } from '../packages/feature-library/src/collection-batch-contract.js'
+import { sourcePreset } from '../packages/feature-library/src/source-presets.js'
+import { SAME_NINE_PRESETS } from './library-collection-batch-benchmark.js'
+process.on('uncaughtException', error => {
+  console.error(error)
+  app.exit(1)
+})
+const temporary = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-batch-dom-')))
+app.setPath('userData', path.join(temporary, 'profile'))
+const validationOutput = (raw: string) => {
+  const directory = path.resolve(raw)
+  fs.mkdirSync(directory, { recursive: true })
+  return fs.realpathSync(directory)
 }
-async function run(){const watchdog=setTimeout(()=>app.exit(1),live?12*60*1000:120000);try{
- app.userAgentFallback=browserCompatibleUserAgent(app.userAgentFallback)
- window=new BrowserWindow({show:false,width:1280,height:900,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false}})
- const pageSession=session.fromPartition('batch-dom-'+crypto.randomUUID());pageSession.setUserAgent(app.userAgentFallback);pageSession.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));pageSession.on('will-download',event=>event.preventDefault())
- let inflight=0,peak=0,reads=0
- if(!live)await pageSession.protocol.handle('https',async request=>{inflight++;peak=Math.max(peak,inflight);reads++;try{await new Promise(r=>setTimeout(r,40));const address=new URL(request.url);if(address.pathname==='/fixture-api-fail')return new Response('fixture unavailable',{status:503});if(address.pathname==='/fixture-slow-script'){await new Promise(r=>setTimeout(r,1800));return new Response('window.fixtureDeferred=true',{headers:{'content-type':'application/javascript'}})}if(address.pathname==='/fixture-slow-asset'){await new Promise(r=>setTimeout(r,1800));return new Response('not-an-image')}if(address.pathname==='/fixture-blocked'){return new Response('<!doctype html><title>Just a moment...</title><body>Verify you are human<img src="/fixture-slow-asset"></body>',{status:403,headers:{'content-type':'text/html'}})}const delayed=address.searchParams.get('v')==='DelayedRoot',readiness=delayed?'<script>setTimeout(()=>document.querySelector("ytd-watch-metadata").removeAttribute("hidden"),100)</script>':'',navigation=address.searchParams.get('v')==='NavigationFixture'&&!address.searchParams.has('themeRefresh')?'<script>const target=new URL(location.href);target.searchParams.set("themeRefresh","1");location.replace(target.href)</script>':'',preset=SAME_NINE_PRESETS.map(sourcePreset).find(p=>p.url===request.url),title='Synthetic AI original '+request.url,links=preset?Array.from({length:2},(_,i)=>`<a href="${detail(preset.id,i+1)}">Original ${i+1}</a>`).join(''):address.hostname==='x.com'?`${address.pathname.startsWith('/fixture')?Array.from({length:20},(_,i)=>'<a href="/nav'+i+'">Navigation</a>').join(''):''}<a href="${address.pathname}/status/123456">Synthetic post</a>`:'';return new Response(`<!doctype html><title>${escape(title)}</title>${address.searchParams.get('v')==='NetworkDiagnostics'?'<script>fetch("/fixture-api-fail?secret=fixture-token")</script>':''}${address.searchParams.get('v')==='SlowDefer'?'<script defer src="/fixture-slow-script"></script>':''}${address.searchParams.get('v')==='SlowAsset'?'<img src="/fixture-slow-asset">':''}<main><article><h1>${escape(title)}</h1><a rel="author" data-testid="User-Name">Fixture publisher</a><time datetime="${fixturePublishedAt}">Published today</time><p>Isolated synthetic original body and a visible 120 views snapshot. This fixture is not real news.</p>${links}</article></main><ytd-browse>${links}</ytd-browse><ytd-two-column-search-results-renderer>${links}</ytd-two-column-search-results-renderer><ytd-watch-metadata ${delayed?'hidden':''}><div id="owner"><span id="channel-name">Fixture publisher</span></div><div id="info-strings"><yt-formatted-string>${fixturePublishedAt}</yt-formatted-string></div>Original synthetic YouTube metadata with 120 views</ytd-watch-metadata>${navigation}${readiness}`,{headers:{'content-type':'text/html'}})}finally{inflight--}})
- const registry=new BrowserCapabilityRegistry(bmwProduct)
- for(const ioConcurrency of (live?[3]:[1,2,3]) as (1|2|3)[]){
-  const project={id:'batch-'+ioConcurrency,name:'Disposable nine-source validation',directory:path.join(output??temporary,'project-batch-'+ioConcurrency)};if(fs.existsSync(project.directory))throw new Error('Use a fresh validation directory; existing evidence is never overwritten.');fs.mkdirSync(path.join(project.directory,'artifacts'),{recursive:true});const sources=new ProjectSourceStore(project.directory,project.id),owner={projectId:project.id,sessionId:'fixture-session'},kernel=new BrowserKernel({detached:false,window,session:pageSession,permissionStore:{hasAgentControl:()=>true},sessionContinuity:undefined,projectStore:{active:()=>project,updateTabState:()=>{}},settingsStore:undefined,capabilityRegistry:registry,allowedActions:undefined,artifactsDirectory:path.join(project.directory,'artifacts'),onState:undefined});kernel.projectSources=()=>sources;kernel.recordingController={narrate:async()=>{throw new Error('No media in collection validation')},compose:async()=>{throw new Error('No media in collection validation')},processArtifact:async()=>{throw new Error('No media in collection validation')}}
-  const front=await kernel.openTab({url:'about:blank',foreground:true,source:'user'}),frontChildren=[...window.contentView.children];await kernel.tabs.get(front.id).view.webContents.executeJavaScript('document.body.innerHTML="<input value=keep-unsaved>"')
-  const library=new LibraryService({projects:()=>[project],active:()=>project,sources:()=>sources,guard:()=>{}}),rolling=new RollingStore(project.directory,project.id),service=new RollingService(library),subscriptionIds:string[]=[]
-  for(const presetId of SAME_NINE_PRESETS){const response=await service.execute({operation:'subscribe-preset',projectId:project.id,expectedRevision:rolling.records.state().revision,presetId,status:'following',topicIds:[],directionIds:[]},'user',owner) as {items:{id:string}[]};subscriptionIds.push(response.items[0].id)}
-  const host=kernel as unknown as BrowserFeatureHost,originalPool=host.collectPageBatch!.bind(host)
-  if(ioConcurrency===1)host.collectPageBatch=(options,work,signal)=>originalPool(options,visit=>{let tail=Promise.resolve();return work(request=>{const operation=tail.then(()=>visit(request));tail=operation.then(()=>{},()=>{});return operation})},signal)
-  const batches=new CollectionBatchService(library,host,{binding:()=>({...owner,driverId:'fixture'}),anchor:()=> 'fixture-official-anchor',available:()=>null,recoverable:()=>true,enqueue:()=>({accepted:true,dispatchId:'fixture-dispatch'}),receipt:()=>({state:'success',drained:true}),cancel:async()=>{}}),store=new CollectionBatchStore(project.directory,project.id)
-  kernel.libraryCollectionBatch=(request,actor,binding,signal)=>batches.execute(request,actor,binding,signal)
-  peak=0;reads=0;pageTasks=0;peakNavigations=0;const start=performance.now(),started=await batches.execute({operation:'start',projectId:project.id,expectedRevision:rolling.records.state().revision,subscriptionIds,concurrency:ioConcurrency===3?3:2},'user',owner) as {batch:CollectionBatch},id=started.batch.id
-  trace('batch collect '+ioConcurrency);await kernel.execute({action:'library.collection-batch',collectionBatchRequest:{operation:'collect',projectId:project.id,id}},{actor:'agent',sessionOwner:owner})
-  const collected=store.batch(id),decisions:BatchDecision[]=collected.sources.flatMap(s=>s.originals.map(o=>live?{sourceId:o.sourceId,acquisitionId:o.acquisitionId,decision:'pending' as const}:{sourceId:o.sourceId,acquisitionId:o.acquisitionId,decision:'save' as const,title:o.title.slice(0,160),summary:'Synthetic native DOM fixture only.',missing:'Synthetic fixture, not real news.',quote:o.excerpt,quoteStart:0}))
-  await kernel.execute({action:'library.collection-batch',collectionBatchRequest:{operation:'submit',projectId:project.id,id,decisions}},{actor:'agent',sessionOwner:owner});const completed=store.batch(id)
-  assert.equal(kernel.activeTabId,front.id);assert.deepEqual(window.contentView.children,frontChildren);assert.equal(await kernel.tabs.get(front.id).view.webContents.executeJavaScript('document.querySelector("input").value'),'keep-unsaved');assert.equal(kernel.tabs.size,1);await kernel.recoverCollectionPages()
-  const originals=[];for(const source of completed.sources)for(const original of source.originals){const body=await sources.readBody(original.sourceId,original.acquisitionId);assert.equal(crypto.createHash('sha256').update(body.text).digest('hex'),original.bodySha256);originals.push({...original,textLength:body.text.length,scope:body.acquisition.scope})}
-  const qualityFingerprint=crypto.createHash('sha256').update(JSON.stringify(originals.map(o=>({url:o.url,sha:o.bodySha256,author:o.author,publishedAt:o.publishedAt})).sort((a,b)=>a.url.localeCompare(b.url)))).digest('hex');qualityFingerprints.push(qualityFingerprint)
-  if(!live&&qualityFingerprints.length>1)assert.equal(qualityFingerprint,qualityFingerprints[0],'Every concurrency mode preserves identical original content and metadata')
-  if(!live){assert.equal(originals.length,17);assert.equal(reads,25);assert.equal(peak,ioConcurrency);assert.ok(originals.filter(o=>o.url!==sourcePreset('x-trends').url).every(o=>o.author==='Fixture publisher'&&o.publishedAt));assert.ok(originals.filter(o=>o.url===sourcePreset('x-trends').url).every(o=>o.author===null&&o.publishedAt===null));assert.ok(completed.sources.filter(s=>s.input.platform==='web').every(s=>s.state==='completed'))}
-  results.push({projectDirectory:project.directory,qualityFingerprint,ioConcurrency,elapsedMs:Math.round(performance.now()-start),peakNativeNavigations:peakNavigations,pageTasks,peakNetworkRequests:live?null:peak,pageRequests:live?null:reads,nativeActionCount:2,officialModelCalls:0,articleOriginals:originals.filter(o=>o.url!==sourcePreset('x-trends').url).length,trendObservations:originals.filter(o=>o.url===sourcePreset('x-trends').url).length,foregroundPreserved:true,hiddenPagesDrained:true,status:completed.status,sources:completed.sources.map(s=>({entry:s.input.url,entryEvidence:s.entry,state:s.state,pending:s.pendingUrls.length,note:s.note})),originals})
-  if(!live&&ioConcurrency===3){const quickStarted=performance.now(),quick=await kernel.collectPageBatch({concurrency:2,maxPages:1,guard:()=>{}},visit=>visit({url:'https://www.youtube.com/watch?v=SlowAsset',source:{bodySelector:'main'}}));assert.equal(quick.observation.result,'observed');assert.ok(quick.observation.text.includes('Synthetic AI original'));assert.ok(performance.now()-quickStarted<1500,'Ready DOM must not wait 1.8 seconds for an unrelated image');const deferStarted=performance.now(),deferred=await kernel.collectPageBatch({concurrency:2,maxPages:1,guard:()=>{}},visit=>visit({url:'https://www.youtube.com/watch?v=SlowDefer',source:{bodySelector:'main'}}));assert.equal(deferred.observation.result,'observed');assert.ok(performance.now()-deferStarted<1500,'Parsed original must not wait for unrelated deferred code');const blocked=await kernel.collectPageBatch({concurrency:2,maxPages:1,guard:()=>{}},visit=>visit({url:'https://www.youtube.com/fixture-blocked',source:{bodySelector:'main'}}));assert.equal(blocked.restricted,true);assert.equal(blocked.observation.result,'login-required');assert.ok(blocked.observation.text.includes('Verify you are human'));console.log('PASS DOM-ready navigation drains slow assets without losing originals; HTTP403 challenge observed without waiting for missing main');const refreshed=await kernel.collectPageBatch({concurrency:2,maxPages:1,guard:()=>{}},visit=>visit({url:'https://www.youtube.com/watch?v=NavigationFixture',source:{bodySelector:'ytd-watch-metadata'}}));assert.equal(refreshed.observation.result,'observed');assert.equal(new URL(refreshed.observation.url).searchParams.get('v'),'NavigationFixture');assert.equal(new URL(refreshed.observation.url).searchParams.get('themeRefresh'),'1');nativeNavigationRecoveryProof=true;const delayedRoot=await kernel.collectPageBatch({concurrency:2,maxPages:1,guard:()=>{}},visit=>visit({url:'https://www.youtube.com/watch?v=DelayedRoot',source:{bodySelector:'ytd-watch-metadata'}}));assert.equal(delayedRoot.observation.result,'observed');assert.ok(delayedRoot.observation.text.includes('synthetic YouTube'));nativeDOMReadinessProof=true;const cancel=new AbortController(),pending=kernel.collectPageBatch({concurrency:3,maxPages:6,guard:()=>{}},async visit=>{const jobs=Array.from({length:6},()=>visit({url:sourcePreset('nvidia-ai').url,source:{bodySelector:'main'}}));await new Promise(resolve=>setTimeout(resolve,15));cancel.abort(new Error('fixture native user preemption'));await Promise.allSettled(jobs)},cancel.signal);await assert.rejects(pending,/preemption/);await kernel.recoverCollectionPages();assert.equal(activeNavigations,0);assert.ok(webContents.getAllWebContents().every(contents=>!kernel.ownsCollectionWebContents(contents)));assert.equal(kernel.activeTabId,front.id);assert.deepEqual(window.contentView.children,frontChildren);assert.equal(await kernel.tabs.get(front.id).view.webContents.executeJavaScript('document.querySelector("input").value'),'keep-unsaved');nativeCancellationProof=true}
-  if(!live&&ioConcurrency===3){
-   const ordinaryStart=performance.now(),ordinary=await kernel.openTab({url:'https://example.org/watch?v=SlowAsset',source:'agent',reuse:false});assert.ok(performance.now()-ordinaryStart>=1500,'Ordinary navigation must preserve pending application resources instead of stopping on first visible text');await kernel.closeTab(ordinary.id)
-   const diagnosticPage=await kernel.openTab({url:'https://example.org/watch?v=NetworkDiagnostics&secret=fixture-token',source:'agent',reuse:false});await new Promise(resolve=>setTimeout(resolve,100));const diagnostic=await kernel.execute({action:'page.diagnostics',tabId:diagnosticPage.id},{sessionOwner:owner}) as {diagnostics:{network:{url:string;status?:number;resourceType:string}[]};performance:{documentReadyState:string;bodyTextCharacters:number}}
-   assert.ok(diagnostic.diagnostics.network.some(row=>row.resourceType==='Document'&&row.status===200));assert.ok(diagnostic.diagnostics.network.some(row=>row.url==='https://example.org/fixture-api-fail'&&row.status===503),JSON.stringify(diagnostic.diagnostics.network));assert.ok(diagnostic.diagnostics.network.every(row=>!row.url.includes('?')&&!row.url.includes('fixture-token')));assert.ok(diagnostic.performance.bodyTextCharacters>0);assert.notEqual(diagnostic.performance.documentReadyState,'loading');await kernel.closeTab(diagnosticPage.id)
-   console.log('PASS pre-navigation diagnostics identify failed fetch endpoints and document status without query values, headers or bodies')
-   const urls=[...Array.from({length:57},(_,i)=>'https://x.com/fixture'+i),'https://www.youtube.com/fixture-blocked']
-   const textBatch=await kernel.execute({action:'pages.read',urls},{sessionOwner:owner}) as {batchId:string;revision:number;sha256:string;requested:number;read:number;restricted:number;statuses:{index:number;state:string}[]}
-   assert.ok(JSON.stringify(textBatch).length<=3000);assert.equal(textBatch.statuses.length,58);assert.equal(textBatch.requested,58);assert.equal(textBatch.read,57);assert.equal(textBatch.restricted,1)
-   const receipt={batchId:textBatch.batchId,revision:textBatch.revision,sha256:textBatch.sha256}
-   let rowOffset:number|null=0,seen=0
-   while(rowOffset!==null){const page=await kernel.execute({action:'pages.read-result',...receipt,section:'rows',offset:rowOffset,limit:2},{sessionOwner:owner}) as {items:{index:number;sourceId:string;acquisitionId:string;state:string}[];nextOffset:number|null};assert.ok(JSON.stringify(page).length<=3000)
-    for(const row of page.items){seen++;const original=await sources.readBody(row.sourceId,row.acquisitionId),text=await kernel.execute({action:'pages.read-result',...receipt,section:'text',rowIndex:row.index,offset:0},{sessionOwner:owner}) as {text:string};assert.equal(text.text,original.text.slice(0,text.text.length));assert.ok(JSON.stringify(text).length<=3000);if(row.state==='read'){const links=await kernel.execute({action:'pages.read-result',...receipt,section:'links',rowIndex:row.index,offset:0,limit:2},{sessionOwner:owner}) as {items:{url:string}[]};assert.match(links.items[0]?.url??'',/\/fixture\d+\/status\/123456/)}}
-    rowOffset=page.nextOffset
-   }
-   assert.equal(seen,58)
-   await assert.rejects(kernel.execute({action:'pages.read-result',...receipt,sha256:'0'.repeat(64),section:'rows',offset:0},{sessionOwner:owner}),/fingerprint|INTEGRITY/)
-   assert.equal(kernel.tabs.size,1);assert.equal(kernel.activeTabId,front.id);assert.equal(kernel.busy,false)
-   await assert.rejects(kernel.execute({action:'pages.read',urls:['file:///private']}),/HTTPS|public/)
-   const stop=new AbortController(),cancelBatch=kernel.execute({action:'pages.read',urls:Array.from({length:57},(_,i)=>'https://x.com/cancel'+i)},{signal:stop.signal,sessionOwner:owner});setTimeout(()=>stop.abort(new Error('text batch cancelled')),20);await assert.rejects(cancelBatch,/cancel/);assert.equal(kernel.busy,false);assert.equal(kernel.tabs.size,1)
-   console.log('PASS 57-account text snapshot batch, challenge classification, saved originals, unchanged foreground and cancellation cleanup')
+const fixturePublishedAt = new Date(Date.now() - 3600000).toISOString(),
+  qualityFingerprints: string[] = []
+const live = process.env.BMW_LIVE_BATCH === '1',
+  output = process.env.BMW_VALIDATION_DIR ? validationOutput(process.env.BMW_VALIDATION_DIR) : undefined,
+  results: unknown[] = []
+if (live && !output) throw new Error('A fresh BMW_VALIDATION_DIR is required to retain public original evidence.')
+let window: BrowserWindow | undefined,
+  nativeCancellationProof = false,
+  nativeNavigationRecoveryProof = false,
+  nativeDOMReadinessProof = false
+const escape = (s: string) => s.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;')
+const detail = (id: string, i: number) =>
+  ({
+    'nvidia-ai': `https://blogs.nvidia.com/blog/fixture-${i}/`,
+    'huggingface-blog': `https://huggingface.co/blog/fixture-${i}`,
+    'techcrunch-ai': `https://techcrunch.com/2026/10/21/fixture-${i}/`,
+    'openai-news': `https://openai.com/index/fixture-${i}/`,
+    qbitai: `https://www.qbitai.com/2026/10/${90000 + i}.html`,
+    'x-openai': `https://x.com/OpenAI/status/${1000000 + i}`,
+    'youtube-openai': `https://www.youtube.com/watch?v=OpenAIFixture${i}`,
+    'youtube-ai-search': `https://www.youtube.com/watch?v=TopicFixture${i}`
+  })[id] ?? 'https://x.com/explore/tabs/trending'
+const trace = (message: string) => {
+  if (process.env.BMW_BATCH_TRACE === '1') console.error(new Date().toISOString(), message)
+}
+let activeNavigations = 0,
+  peakNavigations = 0,
+  pageTasks = 0
+const open = BrowserKernel.prototype.openTab
+BrowserKernel.prototype.openTab = async function (...args: Parameters<BrowserKernel['openTab']>) {
+  const counted = args[0]?.source === 'agent'
+  if (counted) {
+    pageTasks++
+    activeNavigations++
+    peakNavigations = Math.max(peakNavigations, activeNavigations)
   }
-  for(const tab of kernel.tabs.values())tab.view.webContents.close({waitForBeforeUnload:false})
- }
- const report={kind:live?'public-unauthed-same-nine-native-batch':'synthetic-native-DOM-same-nine-serial-vs-parallel',realNetwork:live,rewrittenPages:!live,paidModel:false,productionProfile:false,userAgentPolicy:'production-browser-compatible',windowHours:72,nativeCancellationProof,nativeNavigationRecoveryProof,nativeDOMReadinessProof,sourceUrls:SAME_NINE_PRESETS.map(id=>sourcePreset(id).url),results,note:live?'Public signed-out DOM only; pending originals receive no invented editorial decisions. X/YouTube failures are coverage gaps, not no-new. No logged-in or paid-model speed claim.':'Same nine entries, 25 native DOM pages and 17 synthetic originals (16 articles plus one partial trend observation). Serial is the same new service with serialized I/O, not the historical Agent path.'};if(output){fs.mkdirSync(output,{recursive:true});fs.writeFileSync(path.join(output,'native-batch-result.json'),JSON.stringify(report,null,2))}console.log(JSON.stringify(report,null,2))
- }finally{window?.destroy();clearTimeout(watchdog);fs.rmSync(temporary,{recursive:true,force:true})}}
-app.whenReady().then(run).then(()=>app.exit(0)).catch(error=>{console.error(error);if(output){fs.mkdirSync(output,{recursive:true});fs.writeFileSync(path.join(output,'native-batch-failure.json'),JSON.stringify({error:String(error)},null,2))}app.exit(1)})
+  trace('open ' + String(args[0]?.url))
+  try {
+    const result = await open.apply(this, args)
+    trace('opened ' + String(args[0]?.url))
+    return result
+  } finally {
+    if (counted) activeNavigations--
+  }
+}
+if (process.env.BMW_BATCH_TRACE === '1') {
+  const collect = BrowserKernel.prototype.collectSource,
+    close = BrowserKernel.prototype.closeDetached
+  BrowserKernel.prototype.collectSource = async function (...args: Parameters<BrowserKernel['collectSource']>) {
+    trace('collect ' + args[0].bodySelector)
+    const result = await collect.apply(this, args)
+    trace('collected ' + result.url)
+    return result
+  }
+  BrowserKernel.prototype.closeDetached = async function (...args: Parameters<BrowserKernel['closeDetached']>) {
+    trace('close lane')
+    await close.apply(this, args)
+    trace('closed lane')
+  }
+}
+async function run() {
+  const watchdog = setTimeout(() => app.exit(1), live ? 12 * 60 * 1000 : 120000)
+  try {
+    app.userAgentFallback = browserCompatibleUserAgent(app.userAgentFallback)
+    window = new BrowserWindow({
+      show: false,
+      width: 1280,
+      height: 900,
+      webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false }
+    })
+    const pageSession = session.fromPartition('batch-dom-' + crypto.randomUUID())
+    pageSession.setUserAgent(app.userAgentFallback)
+    pageSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false))
+    pageSession.on('will-download', event => event.preventDefault())
+    let inflight = 0,
+      peak = 0,
+      reads = 0
+    if (!live)
+      await pageSession.protocol.handle('https', async request => {
+        inflight++
+        peak = Math.max(peak, inflight)
+        reads++
+        try {
+          await new Promise(r => setTimeout(r, 40))
+          const address = new URL(request.url)
+          if (address.pathname === '/fixture-api-fail') return new Response('fixture unavailable', { status: 503 })
+          if (address.pathname === '/fixture-slow-script') {
+            await new Promise(r => setTimeout(r, 1800))
+            return new Response('window.fixtureDeferred=true', {
+              headers: { 'content-type': 'application/javascript' }
+            })
+          }
+          if (address.pathname === '/fixture-slow-asset') {
+            await new Promise(r => setTimeout(r, 1800))
+            return new Response('not-an-image')
+          }
+          if (address.pathname === '/fixture-blocked') {
+            return new Response(
+              '<!doctype html><title>Just a moment...</title><body>Verify you are human<img src="/fixture-slow-asset"></body>',
+              { status: 403, headers: { 'content-type': 'text/html' } }
+            )
+          }
+          const delayed = address.searchParams.get('v') === 'DelayedRoot',
+            readiness = delayed
+              ? '<script>setTimeout(()=>document.querySelector("ytd-watch-metadata").removeAttribute("hidden"),100)</script>'
+              : '',
+            navigation =
+              address.searchParams.get('v') === 'NavigationFixture' && !address.searchParams.has('themeRefresh')
+                ? '<script>const target=new URL(location.href);target.searchParams.set("themeRefresh","1");location.replace(target.href)</script>'
+                : '',
+            preset = SAME_NINE_PRESETS.map(sourcePreset).find(p => p.url === request.url),
+            title = 'Synthetic AI original ' + request.url,
+            links = preset
+              ? Array.from({ length: 2 }, (_, i) => `<a href="${detail(preset.id, i + 1)}">Original ${i + 1}</a>`).join(
+                  ''
+                )
+              : address.hostname === 'x.com'
+                ? `${address.pathname.startsWith('/fixture') ? Array.from({ length: 20 }, (_, i) => '<a href="/nav' + i + '">Navigation</a>').join('') : ''}<a href="${address.pathname}/status/123456">Synthetic post</a>`
+                : ''
+          return new Response(
+            `<!doctype html><title>${escape(title)}</title>${address.searchParams.get('v') === 'NetworkDiagnostics' ? '<script>fetch("/fixture-api-fail?secret=fixture-token")</script>' : ''}${address.searchParams.get('v') === 'SlowDefer' ? '<script defer src="/fixture-slow-script"></script>' : ''}${address.searchParams.get('v') === 'SlowAsset' ? '<img src="/fixture-slow-asset">' : ''}<main><article><h1>${escape(title)}</h1><a rel="author" data-testid="User-Name">Fixture publisher</a><time datetime="${fixturePublishedAt}">Published today</time><p>Isolated synthetic original body and a visible 120 views snapshot. This fixture is not real news.</p>${links}</article></main><ytd-browse>${links}</ytd-browse><ytd-two-column-search-results-renderer>${links}</ytd-two-column-search-results-renderer><ytd-watch-metadata ${delayed ? 'hidden' : ''}><div id="owner"><span id="channel-name">Fixture publisher</span></div><div id="info-strings"><yt-formatted-string>${fixturePublishedAt}</yt-formatted-string></div>Original synthetic YouTube metadata with 120 views</ytd-watch-metadata>${navigation}${readiness}`,
+            { headers: { 'content-type': 'text/html' } }
+          )
+        } finally {
+          inflight--
+        }
+      })
+    const registry = new BrowserCapabilityRegistry(bmwProduct)
+    for (const ioConcurrency of (live ? [3] : [1, 2, 3]) as (1 | 2 | 3)[]) {
+      const project = {
+        id: 'batch-' + ioConcurrency,
+        name: 'Disposable nine-source validation',
+        directory: path.join(output ?? temporary, 'project-batch-' + ioConcurrency)
+      }
+      if (fs.existsSync(project.directory))
+        throw new Error('Use a fresh validation directory; existing evidence is never overwritten.')
+      fs.mkdirSync(path.join(project.directory, 'artifacts'), { recursive: true })
+      const sources = new ProjectSourceStore(project.directory, project.id),
+        owner = { projectId: project.id, sessionId: 'fixture-session' },
+        kernel = new BrowserKernel({
+          detached: false,
+          window,
+          session: pageSession,
+          permissionStore: { hasAgentControl: () => true },
+          sessionContinuity: undefined,
+          projectStore: { active: () => project, updateTabState: () => {} },
+          settingsStore: undefined,
+          capabilityRegistry: registry,
+          allowedActions: undefined,
+          artifactsDirectory: path.join(project.directory, 'artifacts'),
+          onState: undefined
+        })
+      kernel.projectSources = () => sources
+      kernel.recordingController = {
+        narrate: async () => {
+          throw new Error('No media in collection validation')
+        },
+        compose: async () => {
+          throw new Error('No media in collection validation')
+        },
+        processArtifact: async () => {
+          throw new Error('No media in collection validation')
+        }
+      }
+      const front = await kernel.openTab({ url: 'about:blank', foreground: true, source: 'user' }),
+        frontChildren = [...window.contentView.children]
+      await kernel.tabs
+        .get(front.id)
+        .view.webContents.executeJavaScript('document.body.innerHTML="<input value=keep-unsaved>"')
+      const library = new LibraryService({
+          projects: () => [project],
+          active: () => project,
+          sources: () => sources,
+          guard: () => {}
+        }),
+        rolling = new RollingStore(project.directory, project.id),
+        service = new RollingService(library),
+        subscriptionIds: string[] = []
+      for (const presetId of SAME_NINE_PRESETS) {
+        const response = (await service.execute(
+          {
+            operation: 'subscribe-preset',
+            projectId: project.id,
+            expectedRevision: rolling.records.state().revision,
+            presetId,
+            status: 'following',
+            topicIds: [],
+            directionIds: []
+          },
+          'user',
+          owner
+        )) as { items: { id: string }[] }
+        subscriptionIds.push(response.items[0].id)
+      }
+      const host = kernel as unknown as BrowserFeatureHost,
+        originalPool = host.collectPageBatch!.bind(host)
+      if (ioConcurrency === 1)
+        host.collectPageBatch = (options, work, signal) =>
+          originalPool(
+            options,
+            visit => {
+              let tail = Promise.resolve()
+              return work(request => {
+                const operation = tail.then(() => visit(request))
+                tail = operation.then(
+                  () => {},
+                  () => {}
+                )
+                return operation
+              })
+            },
+            signal
+          )
+      const batches = new CollectionBatchService(library, host, {
+          binding: () => ({ ...owner, driverId: 'fixture' }),
+          anchor: () => 'fixture-official-anchor',
+          available: () => null,
+          recoverable: () => true,
+          enqueue: () => ({ accepted: true, dispatchId: 'fixture-dispatch' }),
+          receipt: () => ({ state: 'success', drained: true }),
+          cancel: async () => {}
+        }),
+        store = new CollectionBatchStore(project.directory, project.id)
+      kernel.libraryCollectionBatch = (request, actor, binding, signal) =>
+        batches.execute(request, actor, binding, signal)
+      peak = 0
+      reads = 0
+      pageTasks = 0
+      peakNavigations = 0
+      const start = performance.now(),
+        started = (await batches.execute(
+          {
+            operation: 'start',
+            projectId: project.id,
+            expectedRevision: rolling.records.state().revision,
+            subscriptionIds,
+            concurrency: ioConcurrency === 3 ? 3 : 2
+          },
+          'user',
+          owner
+        )) as { batch: CollectionBatch },
+        id = started.batch.id
+      trace('batch collect ' + ioConcurrency)
+      await kernel.execute(
+        {
+          action: 'library.collection-batch',
+          collectionBatchRequest: { operation: 'collect', projectId: project.id, id }
+        },
+        { actor: 'agent', sessionOwner: owner }
+      )
+      const collected = store.batch(id),
+        decisions: BatchDecision[] = collected.sources.flatMap(s =>
+          s.originals.map(o =>
+            live
+              ? { sourceId: o.sourceId, acquisitionId: o.acquisitionId, decision: 'pending' as const }
+              : {
+                  sourceId: o.sourceId,
+                  acquisitionId: o.acquisitionId,
+                  decision: 'save' as const,
+                  title: o.title.slice(0, 160),
+                  summary: 'Synthetic native DOM fixture only.',
+                  missing: 'Synthetic fixture, not real news.',
+                  quote: o.excerpt,
+                  quoteStart: 0
+                }
+          )
+        )
+      await kernel.execute(
+        {
+          action: 'library.collection-batch',
+          collectionBatchRequest: { operation: 'submit', projectId: project.id, id, decisions }
+        },
+        { actor: 'agent', sessionOwner: owner }
+      )
+      const completed = store.batch(id)
+      assert.equal(kernel.activeTabId, front.id)
+      assert.deepEqual(window.contentView.children, frontChildren)
+      assert.equal(
+        await kernel.tabs.get(front.id).view.webContents.executeJavaScript('document.querySelector("input").value'),
+        'keep-unsaved'
+      )
+      assert.equal(kernel.tabs.size, 1)
+      await kernel.recoverCollectionPages()
+      const originals = []
+      for (const source of completed.sources)
+        for (const original of source.originals) {
+          const body = await sources.readBody(original.sourceId, original.acquisitionId)
+          assert.equal(crypto.createHash('sha256').update(body.text).digest('hex'), original.bodySha256)
+          originals.push({ ...original, textLength: body.text.length, scope: body.acquisition.scope })
+        }
+      const qualityFingerprint = crypto
+        .createHash('sha256')
+        .update(
+          JSON.stringify(
+            originals
+              .map(o => ({ url: o.url, sha: o.bodySha256, author: o.author, publishedAt: o.publishedAt }))
+              .sort((a, b) => a.url.localeCompare(b.url))
+          )
+        )
+        .digest('hex')
+      qualityFingerprints.push(qualityFingerprint)
+      if (!live && qualityFingerprints.length > 1)
+        assert.equal(
+          qualityFingerprint,
+          qualityFingerprints[0],
+          'Every concurrency mode preserves identical original content and metadata'
+        )
+      if (!live) {
+        assert.equal(originals.length, 17)
+        assert.equal(reads, 25)
+        assert.equal(peak, ioConcurrency)
+        assert.ok(
+          originals
+            .filter(o => o.url !== sourcePreset('x-trends').url)
+            .every(o => o.author === 'Fixture publisher' && o.publishedAt)
+        )
+        assert.ok(
+          originals
+            .filter(o => o.url === sourcePreset('x-trends').url)
+            .every(o => o.author === null && o.publishedAt === null)
+        )
+        assert.ok(completed.sources.filter(s => s.input.platform === 'web').every(s => s.state === 'completed'))
+      }
+      results.push({
+        projectDirectory: project.directory,
+        qualityFingerprint,
+        ioConcurrency,
+        elapsedMs: Math.round(performance.now() - start),
+        peakNativeNavigations: peakNavigations,
+        pageTasks,
+        peakNetworkRequests: live ? null : peak,
+        pageRequests: live ? null : reads,
+        nativeActionCount: 2,
+        officialModelCalls: 0,
+        articleOriginals: originals.filter(o => o.url !== sourcePreset('x-trends').url).length,
+        trendObservations: originals.filter(o => o.url === sourcePreset('x-trends').url).length,
+        foregroundPreserved: true,
+        hiddenPagesDrained: true,
+        status: completed.status,
+        sources: completed.sources.map(s => ({
+          entry: s.input.url,
+          entryEvidence: s.entry,
+          state: s.state,
+          pending: s.pendingUrls.length,
+          note: s.note
+        })),
+        originals
+      })
+      if (!live && ioConcurrency === 3) {
+        const quickStarted = performance.now(),
+          quick = await kernel.collectPageBatch({ concurrency: 2, maxPages: 1, guard: () => {} }, visit =>
+            visit({ url: 'https://www.youtube.com/watch?v=SlowAsset', source: { bodySelector: 'main' } })
+          )
+        assert.equal(quick.observation.result, 'observed')
+        assert.ok(quick.observation.text.includes('Synthetic AI original'))
+        assert.ok(performance.now() - quickStarted < 1500, 'Ready DOM must not wait 1.8 seconds for an unrelated image')
+        const deferStarted = performance.now(),
+          deferred = await kernel.collectPageBatch({ concurrency: 2, maxPages: 1, guard: () => {} }, visit =>
+            visit({ url: 'https://www.youtube.com/watch?v=SlowDefer', source: { bodySelector: 'main' } })
+          )
+        assert.equal(deferred.observation.result, 'observed')
+        assert.ok(performance.now() - deferStarted < 1500, 'Parsed original must not wait for unrelated deferred code')
+        const blocked = await kernel.collectPageBatch({ concurrency: 2, maxPages: 1, guard: () => {} }, visit =>
+          visit({ url: 'https://www.youtube.com/fixture-blocked', source: { bodySelector: 'main' } })
+        )
+        assert.equal(blocked.restricted, true)
+        assert.equal(blocked.observation.result, 'login-required')
+        assert.ok(blocked.observation.text.includes('Verify you are human'))
+        console.log(
+          'PASS DOM-ready navigation drains slow assets without losing originals; HTTP403 challenge observed without waiting for missing main'
+        )
+        const refreshed = await kernel.collectPageBatch({ concurrency: 2, maxPages: 1, guard: () => {} }, visit =>
+          visit({
+            url: 'https://www.youtube.com/watch?v=NavigationFixture',
+            source: { bodySelector: 'ytd-watch-metadata' }
+          })
+        )
+        assert.equal(refreshed.observation.result, 'observed')
+        assert.equal(new URL(refreshed.observation.url).searchParams.get('v'), 'NavigationFixture')
+        assert.equal(new URL(refreshed.observation.url).searchParams.get('themeRefresh'), '1')
+        nativeNavigationRecoveryProof = true
+        const delayedRoot = await kernel.collectPageBatch({ concurrency: 2, maxPages: 1, guard: () => {} }, visit =>
+          visit({ url: 'https://www.youtube.com/watch?v=DelayedRoot', source: { bodySelector: 'ytd-watch-metadata' } })
+        )
+        assert.equal(delayedRoot.observation.result, 'observed')
+        assert.ok(delayedRoot.observation.text.includes('synthetic YouTube'))
+        nativeDOMReadinessProof = true
+        const cancel = new AbortController(),
+          pending = kernel.collectPageBatch(
+            { concurrency: 3, maxPages: 6, guard: () => {} },
+            async visit => {
+              const jobs = Array.from({ length: 6 }, () =>
+                visit({ url: sourcePreset('nvidia-ai').url, source: { bodySelector: 'main' } })
+              )
+              await new Promise(resolve => setTimeout(resolve, 15))
+              cancel.abort(new Error('fixture native user preemption'))
+              await Promise.allSettled(jobs)
+            },
+            cancel.signal
+          )
+        await assert.rejects(pending, /preemption/)
+        await kernel.recoverCollectionPages()
+        assert.equal(activeNavigations, 0)
+        assert.ok(webContents.getAllWebContents().every(contents => !kernel.ownsCollectionWebContents(contents)))
+        assert.equal(kernel.activeTabId, front.id)
+        assert.deepEqual(window.contentView.children, frontChildren)
+        assert.equal(
+          await kernel.tabs.get(front.id).view.webContents.executeJavaScript('document.querySelector("input").value'),
+          'keep-unsaved'
+        )
+        nativeCancellationProof = true
+      }
+      if (!live && ioConcurrency === 3) {
+        const ordinaryStart = performance.now(),
+          ordinary = await kernel.openTab({
+            url: 'https://example.org/watch?v=SlowAsset',
+            source: 'agent',
+            reuse: false
+          })
+        assert.ok(
+          performance.now() - ordinaryStart >= 1500,
+          'Ordinary navigation must preserve pending application resources instead of stopping on first visible text'
+        )
+        await kernel.closeTab(ordinary.id)
+        const diagnosticPage = await kernel.openTab({
+          url: 'https://example.org/watch?v=NetworkDiagnostics&secret=fixture-token',
+          source: 'agent',
+          reuse: false
+        })
+        await new Promise(resolve => setTimeout(resolve, 100))
+        const diagnostic = (await kernel.execute(
+          { action: 'page.diagnostics', tabId: diagnosticPage.id },
+          { sessionOwner: owner }
+        )) as {
+          diagnostics: { network: { url: string; status?: number; resourceType: string }[] }
+          performance: { documentReadyState: string; bodyTextCharacters: number }
+        }
+        assert.ok(diagnostic.diagnostics.network.some(row => row.resourceType === 'Document' && row.status === 200))
+        assert.ok(
+          diagnostic.diagnostics.network.some(
+            row => row.url === 'https://example.org/fixture-api-fail' && row.status === 503
+          ),
+          JSON.stringify(diagnostic.diagnostics.network)
+        )
+        assert.ok(
+          diagnostic.diagnostics.network.every(row => !row.url.includes('?') && !row.url.includes('fixture-token'))
+        )
+        assert.ok(diagnostic.performance.bodyTextCharacters > 0)
+        assert.notEqual(diagnostic.performance.documentReadyState, 'loading')
+        await kernel.closeTab(diagnosticPage.id)
+        console.log(
+          'PASS pre-navigation diagnostics identify failed fetch endpoints and document status without query values, headers or bodies'
+        )
+        const urls = [
+          ...Array.from({ length: 57 }, (_, i) => 'https://x.com/fixture' + i),
+          'https://www.youtube.com/fixture-blocked'
+        ]
+        const textBatch = (await kernel.execute({ action: 'pages.read', urls }, { sessionOwner: owner })) as {
+          batchId: string
+          revision: number
+          sha256: string
+          requested: number
+          read: number
+          restricted: number
+          statuses: { index: number; state: string }[]
+        }
+        assert.ok(JSON.stringify(textBatch).length <= 3000)
+        assert.equal(textBatch.statuses.length, 58)
+        assert.equal(textBatch.requested, 58)
+        assert.equal(textBatch.read, 57)
+        assert.equal(textBatch.restricted, 1)
+        const receipt = { batchId: textBatch.batchId, revision: textBatch.revision, sha256: textBatch.sha256 }
+        let rowOffset: number | null = 0,
+          seen = 0
+        while (rowOffset !== null) {
+          const page = (await kernel.execute(
+            { action: 'pages.read-result', ...receipt, section: 'rows', offset: rowOffset, limit: 2 },
+            { sessionOwner: owner }
+          )) as {
+            items: { index: number; sourceId: string; acquisitionId: string; state: string }[]
+            nextOffset: number | null
+          }
+          assert.ok(JSON.stringify(page).length <= 3000)
+          for (const row of page.items) {
+            seen++
+            const original = await sources.readBody(row.sourceId, row.acquisitionId),
+              text = (await kernel.execute(
+                { action: 'pages.read-result', ...receipt, section: 'text', rowIndex: row.index, offset: 0 },
+                { sessionOwner: owner }
+              )) as { text: string }
+            assert.equal(text.text, original.text.slice(0, text.text.length))
+            assert.ok(JSON.stringify(text).length <= 3000)
+            if (row.state === 'read') {
+              const links = (await kernel.execute(
+                { action: 'pages.read-result', ...receipt, section: 'links', rowIndex: row.index, offset: 0, limit: 2 },
+                { sessionOwner: owner }
+              )) as { items: { url: string }[] }
+              assert.match(links.items[0]?.url ?? '', /\/fixture\d+\/status\/123456/)
+            }
+          }
+          rowOffset = page.nextOffset
+        }
+        assert.equal(seen, 58)
+        await assert.rejects(
+          kernel.execute(
+            { action: 'pages.read-result', ...receipt, sha256: '0'.repeat(64), section: 'rows', offset: 0 },
+            { sessionOwner: owner }
+          ),
+          /fingerprint|INTEGRITY/
+        )
+        assert.equal(kernel.tabs.size, 1)
+        assert.equal(kernel.activeTabId, front.id)
+        assert.equal(kernel.busy, false)
+        await assert.rejects(kernel.execute({ action: 'pages.read', urls: ['file:///private'] }), /HTTPS|public/)
+        const stop = new AbortController(),
+          cancelBatch = kernel.execute(
+            { action: 'pages.read', urls: Array.from({ length: 57 }, (_, i) => 'https://x.com/cancel' + i) },
+            { signal: stop.signal, sessionOwner: owner }
+          )
+        setTimeout(() => stop.abort(new Error('text batch cancelled')), 20)
+        await assert.rejects(cancelBatch, /cancel/)
+        assert.equal(kernel.busy, false)
+        assert.equal(kernel.tabs.size, 1)
+        console.log(
+          'PASS 57-account text snapshot batch, challenge classification, saved originals, unchanged foreground and cancellation cleanup'
+        )
+      }
+      for (const tab of kernel.tabs.values()) tab.view.webContents.close({ waitForBeforeUnload: false })
+    }
+    const report = {
+      kind: live ? 'public-unauthed-same-nine-native-batch' : 'synthetic-native-DOM-same-nine-serial-vs-parallel',
+      realNetwork: live,
+      rewrittenPages: !live,
+      paidModel: false,
+      productionProfile: false,
+      userAgentPolicy: 'production-browser-compatible',
+      windowHours: 72,
+      nativeCancellationProof,
+      nativeNavigationRecoveryProof,
+      nativeDOMReadinessProof,
+      sourceUrls: SAME_NINE_PRESETS.map(id => sourcePreset(id).url),
+      results,
+      note: live
+        ? 'Public signed-out DOM only; pending originals receive no invented editorial decisions. X/YouTube failures are coverage gaps, not no-new. No logged-in or paid-model speed claim.'
+        : 'Same nine entries, 25 native DOM pages and 17 synthetic originals (16 articles plus one partial trend observation). Serial is the same new service with serialized I/O, not the historical Agent path.'
+    }
+    if (output) {
+      fs.mkdirSync(output, { recursive: true })
+      fs.writeFileSync(path.join(output, 'native-batch-result.json'), JSON.stringify(report, null, 2))
+    }
+    console.log(JSON.stringify(report, null, 2))
+  } finally {
+    window?.destroy()
+    clearTimeout(watchdog)
+    fs.rmSync(temporary, { recursive: true, force: true })
+  }
+}
+app
+  .whenReady()
+  .then(run)
+  .then(() => app.exit(0))
+  .catch(error => {
+    console.error(error)
+    if (output) {
+      fs.mkdirSync(output, { recursive: true })
+      fs.writeFileSync(
+        path.join(output, 'native-batch-failure.json'),
+        JSON.stringify({ error: String(error) }, null, 2)
+      )
+    }
+    app.exit(1)
+  })

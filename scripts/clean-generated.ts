@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const root = path.resolve(import.meta.dirname, '..')
-const sourceRoots = ['apps', 'packages', 'scripts'].map((directory) => path.join(root, directory))
+const sourceRoots = ['apps', 'packages', 'scripts'].map(directory => path.join(root, directory))
 
 function generatedPath(filePath: string): string | null {
   if (filePath.endsWith('.d.ts')) return null

@@ -1,4 +1,4 @@
-import {readStateFile,stateRecord} from './state-load.js'
+import { readStateFile, stateRecord } from './state-load.js'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -28,7 +28,7 @@ export interface ScheduledTask {
   prompt: string
   schedule: { kind: 'daily'; time: string; timeZone: string }
   /** Optional trusted-GUI cadence; daily fields remain available when switching back. */
-  intervalMinutes?:60
+  intervalMinutes?: 60
   enabled: boolean
   nextRunAt: string | null
   lastRunAt: string | null
@@ -90,11 +90,15 @@ function cleanTimeZone(value: unknown): string {
 function partsAt(epoch: number, timeZone: string): Record<string, number> {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
     hourCycle: 'h23'
   }).formatToParts(new Date(epoch))
-  return Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, Number(part.value)]))
+  return Object.fromEntries(parts.filter(part => part.type !== 'literal').map(part => [part.type, Number(part.value)]))
 }
 
 function zonedEpoch(year: number, month: number, day: number, hour: number, minute: number, timeZone: string): number {
@@ -117,38 +121,77 @@ export function nextDailyRunAt(time: string, timeZone: string, after = new Date(
   const local = partsAt(after.getTime(), normalizedTimeZone)
   for (let offset = 0; offset < 3; offset += 1) {
     const day = new Date(Date.UTC(local.year, local.month - 1, local.day + offset))
-    const candidate = zonedEpoch(day.getUTCFullYear(), day.getUTCMonth() + 1, day.getUTCDate(), hour, minute, normalizedTimeZone)
+    const candidate = zonedEpoch(
+      day.getUTCFullYear(),
+      day.getUTCMonth() + 1,
+      day.getUTCDate(),
+      hour,
+      minute,
+      normalizedTimeZone
+    )
     if (candidate > after.getTime()) return new Date(candidate).toISOString()
   }
   throw new Error('Could not calculate the next scheduled task occurrence.')
 }
 
-export function parseScheduledTaskState(raw:unknown):ScheduledTaskState {
-      const value = stateRecord(raw)
-      if (value.version !== 2 || !Array.isArray(value.tasks) || !Array.isArray(value.runs)) throw new Error('Unsupported or malformed scheduled task state.')
-      const ids = new Set<string>()
-      for (const rawTask of value.tasks) {
-        const task = stateRecord(rawTask), schedule = stateRecord(task.schedule)
-        if (typeof task.id !== 'string' || !task.id || ids.has(task.id) || typeof task.projectId !== 'string' || !task.projectId || typeof task.enabled !== 'boolean' || schedule.kind !== 'daily') throw new Error('Invalid scheduled task identity or schedule.')
-        cleanText(task.name, 'name', 120); cleanText(task.prompt, 'prompt', 20_000)
-        cleanTime(schedule.time); cleanTimeZone(schedule.timeZone)
-        if(task.intervalMinutes!==undefined&&task.intervalMinutes!==60)throw new Error('Only an hourly interval is supported.')
-        if(task.sessionId!==null&&(typeof task.sessionId!=='string'||!task.sessionId||task.sessionId.length>4096))throw new Error('Invalid scheduled Session binding.')
-        if(task.driverId===undefined)throw new Error('An explicit scheduled driver is required.')
-        if(task.driverId!==null&&(typeof task.driverId!=='string'||!/^[a-z0-9-]{1,64}$/u.test(task.driverId)))throw new Error('Invalid scheduled driver binding.')
-        if(!task.sessionId||!task.driverId){task.enabled=false;task.nextRunAt=null;task.lastError='Select an explicit BMW Session and driver before enabling this task.'}
-        ids.add(task.id)
-      }
-      const runIds = new Set<string>()
-      for (const rawRun of value.runs) {
-        const run = stateRecord(rawRun)
-        if (typeof run.id !== 'string' || !run.id || runIds.has(run.id) || typeof run.taskId !== 'string' || !['queued','running','completed','failed','interrupted'].includes(String(run.status))) throw new Error('Invalid scheduled task run.')
-        const task = value.tasks.find(raw => stateRecord(raw).id === run.taskId)
-        if (typeof run.projectId !== 'string' || (task && stateRecord(task).projectId !== run.projectId)) throw new Error('Scheduled run Project mismatch.')
-        if (!task && ACTIVE_RUN_STATUSES.has(run.status as ScheduledTaskRunStatus)) throw new Error('Active scheduled run has no task.')
-        runIds.add(run.id)
-      }
-      return value as unknown as ScheduledTaskState
+export function parseScheduledTaskState(raw: unknown): ScheduledTaskState {
+  const value = stateRecord(raw)
+  if (value.version !== 2 || !Array.isArray(value.tasks) || !Array.isArray(value.runs))
+    throw new Error('Unsupported or malformed scheduled task state.')
+  const ids = new Set<string>()
+  for (const rawTask of value.tasks) {
+    const task = stateRecord(rawTask),
+      schedule = stateRecord(task.schedule)
+    if (
+      typeof task.id !== 'string' ||
+      !task.id ||
+      ids.has(task.id) ||
+      typeof task.projectId !== 'string' ||
+      !task.projectId ||
+      typeof task.enabled !== 'boolean' ||
+      schedule.kind !== 'daily'
+    )
+      throw new Error('Invalid scheduled task identity or schedule.')
+    cleanText(task.name, 'name', 120)
+    cleanText(task.prompt, 'prompt', 20_000)
+    cleanTime(schedule.time)
+    cleanTimeZone(schedule.timeZone)
+    if (task.intervalMinutes !== undefined && task.intervalMinutes !== 60)
+      throw new Error('Only an hourly interval is supported.')
+    if (
+      task.sessionId !== null &&
+      (typeof task.sessionId !== 'string' || !task.sessionId || task.sessionId.length > 4096)
+    )
+      throw new Error('Invalid scheduled Session binding.')
+    if (task.driverId === undefined) throw new Error('An explicit scheduled driver is required.')
+    if (task.driverId !== null && (typeof task.driverId !== 'string' || !/^[a-z0-9-]{1,64}$/u.test(task.driverId)))
+      throw new Error('Invalid scheduled driver binding.')
+    if (!task.sessionId || !task.driverId) {
+      task.enabled = false
+      task.nextRunAt = null
+      task.lastError = 'Select an explicit BMW Session and driver before enabling this task.'
+    }
+    ids.add(task.id)
+  }
+  const runIds = new Set<string>()
+  for (const rawRun of value.runs) {
+    const run = stateRecord(rawRun)
+    if (
+      typeof run.id !== 'string' ||
+      !run.id ||
+      runIds.has(run.id) ||
+      typeof run.taskId !== 'string' ||
+      !['queued', 'running', 'completed', 'failed', 'interrupted'].includes(String(run.status))
+    )
+      throw new Error('Invalid scheduled task run.')
+    const task = value.tasks.find(raw => stateRecord(raw).id === run.taskId)
+    if (typeof run.projectId !== 'string' || (task && stateRecord(task).projectId !== run.projectId))
+      throw new Error('Scheduled run Project mismatch.')
+    if (!task && ACTIVE_RUN_STATUSES.has(run.status as ScheduledTaskRunStatus))
+      throw new Error('Active scheduled run has no task.')
+    runIds.add(run.id)
+  }
+  return value as unknown as ScheduledTaskState
 }
 
 export class ScheduledTaskStore {
@@ -165,7 +208,7 @@ export class ScheduledTaskStore {
   }
 
   load(): void {
-    const loaded = readStateFile(this.filePath,parseScheduledTaskState)
+    const loaded = readStateFile(this.filePath, parseScheduledTaskState)
     if (loaded) this.state = loaded
   }
 
@@ -180,13 +223,15 @@ export class ScheduledTaskStore {
   }
 
   list(projectId?: string): ScheduledTask[] {
-    return structuredClone(this.state.tasks
-      .filter((task) => !projectId || task.projectId === projectId)
-      .sort((left, right) => left.createdAt.localeCompare(right.createdAt)))
+    return structuredClone(
+      this.state.tasks
+        .filter(task => !projectId || task.projectId === projectId)
+        .sort((left, right) => left.createdAt.localeCompare(right.createdAt))
+    )
   }
 
   get(taskId: string): ScheduledTask {
-    const task = this.state.tasks.find((candidate) => candidate.id === taskId)
+    const task = this.state.tasks.find(candidate => candidate.id === taskId)
     if (!task) throw new Error(`Unknown scheduled task: ${taskId}`)
     return task
   }
@@ -197,13 +242,17 @@ export class ScheduledTaskStore {
     return task
   }
 
-  create(project: { id: string; sessionId?: string | null; driverId: string }, input: Record<string, unknown>): ScheduledTask {
-    if (this.state.tasks.length >= MAX_TASKS) throw new Error(`BMW supports at most ${MAX_TASKS} scheduled tasks per product profile.`)
+  create(
+    project: { id: string; sessionId?: string | null; driverId: string },
+    input: Record<string, unknown>
+  ): ScheduledTask {
+    if (this.state.tasks.length >= MAX_TASKS)
+      throw new Error(`BMW supports at most ${MAX_TASKS} scheduled tasks per product profile.`)
     const now = this.now()
-    if(!project.sessionId)throw new Error('A scheduled task must be pinned to an explicit BMW Session.')
-    const driverId=project.driverId
-    if(!driverId)throw new Error('An explicit scheduled driver is required.')
-    if(!/^[a-z0-9-]{1,64}$/u.test(driverId))throw new Error('Invalid scheduled driver binding.')
+    if (!project.sessionId) throw new Error('A scheduled task must be pinned to an explicit BMW Session.')
+    const driverId = project.driverId
+    if (!driverId) throw new Error('An explicit scheduled driver is required.')
+    if (!/^[a-z0-9-]{1,64}$/u.test(driverId)) throw new Error('Invalid scheduled driver binding.')
     const enabled = input.enabled !== false
     const time = cleanTime(input.time)
     const timeZone = cleanTimeZone(input.timeZone)
@@ -229,31 +278,35 @@ export class ScheduledTaskStore {
   }
 
   update(projectId: string, taskId: string, input: Record<string, unknown>): ScheduledTask {
-    const existing = this.getForProject(projectId, taskId),task=structuredClone(existing)
-    if(input.intervalMinutes!==undefined&&this.activeRun(taskId))throw new Error('Cannot change cadence of a running or queued task.')
-    if(input.enabled===true&&(!task.sessionId||!task.driverId))throw new Error('Select an explicit BMW Session and driver before enabling this task.')
-    if(input.intervalMinutes!==undefined&&input.intervalMinutes!==null&&input.intervalMinutes!==60)throw new Error('Only an hourly interval is supported.')
-    if(input.intervalMinutes===null)delete task.intervalMinutes
-    else if(input.intervalMinutes===60)task.intervalMinutes=60
+    const existing = this.getForProject(projectId, taskId),
+      task = structuredClone(existing)
+    if (input.intervalMinutes !== undefined && this.activeRun(taskId))
+      throw new Error('Cannot change cadence of a running or queued task.')
+    if (input.enabled === true && (!task.sessionId || !task.driverId))
+      throw new Error('Select an explicit BMW Session and driver before enabling this task.')
+    if (input.intervalMinutes !== undefined && input.intervalMinutes !== null && input.intervalMinutes !== 60)
+      throw new Error('Only an hourly interval is supported.')
+    if (input.intervalMinutes === null) delete task.intervalMinutes
+    else if (input.intervalMinutes === 60) task.intervalMinutes = 60
     if (input.name !== undefined) task.name = cleanText(input.name, 'Scheduled task name', 80)
     if (input.prompt !== undefined) task.prompt = cleanText(input.prompt, 'Scheduled task prompt', 8_000)
     if (input.time !== undefined) task.schedule.time = cleanTime(input.time)
     if (input.timeZone !== undefined) task.schedule.timeZone = cleanTimeZone(input.timeZone)
     if (input.enabled !== undefined) task.enabled = input.enabled === true
-    task.nextRunAt = task.enabled ? this.next(task,this.now()) : null
+    task.nextRunAt = task.enabled ? this.next(task, this.now()) : null
     task.updatedAt = this.now().toISOString()
-    this.state.tasks[this.state.tasks.indexOf(existing)]=task
+    this.state.tasks[this.state.tasks.indexOf(existing)] = task
     this.save()
     return structuredClone(task)
   }
 
   bindSession(taskId: string, sessionId: string, driverId?: string): ScheduledTask {
     const task = this.get(taskId)
-    if(this.activeRun(taskId))throw new Error('Cannot change the binding of a running or queued task.')
-    const driver=driverId??task.driverId
-    if(!driver||!/^[a-z0-9-]{1,64}$/u.test(driver))throw new Error('An explicit scheduled driver is required.')
+    if (this.activeRun(taskId)) throw new Error('Cannot change the binding of a running or queued task.')
+    const driver = driverId ?? task.driverId
+    if (!driver || !/^[a-z0-9-]{1,64}$/u.test(driver)) throw new Error('An explicit scheduled driver is required.')
     task.sessionId = cleanText(sessionId, 'Agent Session id', 200)
-    task.driverId=driver
+    task.driverId = driver
     task.updatedAt = this.now().toISOString()
     this.save()
     return structuredClone(task)
@@ -262,20 +315,26 @@ export class ScheduledTaskStore {
   remove(projectId: string, taskId: string): { removed: string } {
     this.getForProject(projectId, taskId)
     if (this.activeRun(taskId)) throw new Error('A running or queued scheduled task cannot be removed.')
-    this.state.tasks = this.state.tasks.filter((task) => task.id !== taskId)
+    this.state.tasks = this.state.tasks.filter(task => task.id !== taskId)
     this.save()
     return { removed: taskId }
   }
 
-  private next(task:ScheduledTask,after:Date):string{return task.intervalMinutes===60?new Date(after.getTime()+60*60000).toISOString():nextDailyRunAt(task.schedule.time,task.schedule.timeZone,after)}
+  private next(task: ScheduledTask, after: Date): string {
+    return task.intervalMinutes === 60
+      ? new Date(after.getTime() + 60 * 60000).toISOString()
+      : nextDailyRunAt(task.schedule.time, task.schedule.timeZone, after)
+  }
 
   due(at = this.now()): ScheduledTask[] {
     const timestamp = at.getTime()
-    return this.list().filter((task) => task.enabled && task.nextRunAt && Date.parse(task.nextRunAt) <= timestamp && !this.activeRun(task.id))
+    return this.list().filter(
+      task => task.enabled && task.nextRunAt && Date.parse(task.nextRunAt) <= timestamp && !this.activeRun(task.id)
+    )
   }
 
   activeRun(taskId: string): ScheduledTaskRun | null {
-    return this.state.runs.find((run) => run.taskId === taskId && ACTIVE_RUN_STATUSES.has(run.status)) || null
+    return this.state.runs.find(run => run.taskId === taskId && ACTIVE_RUN_STATUSES.has(run.status)) || null
   }
 
   enqueue(projectId: string, taskId: string, trigger: ScheduledTaskRunTrigger): ScheduledTaskRun {
@@ -284,22 +343,30 @@ export class ScheduledTaskStore {
     if (active) return structuredClone(active)
     const now = this.now()
     const run: ScheduledTaskRun = {
-      id: crypto.randomUUID(), taskId, projectId, trigger, status: 'queued',
-      queuedAt: now.toISOString(), startedAt: null, finishedAt: null, summary: '', error: ''
+      id: crypto.randomUUID(),
+      taskId,
+      projectId,
+      trigger,
+      status: 'queued',
+      queuedAt: now.toISOString(),
+      startedAt: null,
+      finishedAt: null,
+      summary: '',
+      error: ''
     }
     this.state.runs.push(run)
-    if (trigger === 'scheduled') task.nextRunAt = this.next(task,now)
+    if (trigger === 'scheduled') task.nextRunAt = this.next(task, now)
     task.updatedAt = now.toISOString()
     this.save()
     return structuredClone(run)
   }
 
   pendingRuns(): ScheduledTaskRun[] {
-    return structuredClone(this.state.runs.filter((run) => run.status === 'queued'))
+    return structuredClone(this.state.runs.filter(run => run.status === 'queued'))
   }
 
   markRunning(runId: string): ScheduledTaskRun {
-    const run = this.state.runs.find((candidate) => candidate.id === runId)
+    const run = this.state.runs.find(candidate => candidate.id === runId)
     if (!run || run.status !== 'queued') throw new Error('Scheduled task run is not queued.')
     run.status = 'running'
     run.startedAt = this.now().toISOString()
@@ -307,8 +374,12 @@ export class ScheduledTaskStore {
     return structuredClone(run)
   }
 
-  finish(runId: string, status: 'completed' | 'failed', input: { summary?: unknown; error?: unknown } = {}): ScheduledTaskRun {
-    const run = this.state.runs.find((candidate) => candidate.id === runId)
+  finish(
+    runId: string,
+    status: 'completed' | 'failed',
+    input: { summary?: unknown; error?: unknown } = {}
+  ): ScheduledTaskRun {
+    const run = this.state.runs.find(candidate => candidate.id === runId)
     if (!run || !['queued', 'running'].includes(run.status)) throw new Error('Scheduled task run is not active.')
     const task = this.get(run.taskId)
     const now = this.now().toISOString()
@@ -332,7 +403,7 @@ export class ScheduledTaskStore {
       run.status = 'interrupted'
       run.finishedAt = now
       run.error = 'BMW restarted before this scheduled task completed.'
-      const task = this.state.tasks.find((candidate) => candidate.id === run.taskId)
+      const task = this.state.tasks.find(candidate => candidate.id === run.taskId)
       if (task) {
         task.lastRunAt = now
         task.lastRunStatus = 'interrupted'
@@ -346,10 +417,12 @@ export class ScheduledTaskStore {
   }
 
   runs(projectId: string, taskId?: string, limit = 20): ScheduledTaskRun[] {
-    return structuredClone(this.state.runs
-      .filter((run) => run.projectId === projectId && (!taskId || run.taskId === taskId))
-      .slice(-Math.min(Math.max(limit, 1), 100))
-      .reverse())
+    return structuredClone(
+      this.state.runs
+        .filter(run => run.projectId === projectId && (!taskId || run.taskId === taskId))
+        .slice(-Math.min(Math.max(limit, 1), 100))
+        .reverse()
+    )
   }
 }
 

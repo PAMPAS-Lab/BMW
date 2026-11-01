@@ -1,70 +1,205 @@
-import {cardImageAssets} from './card-details.js'
-import {COMPOSITION_LIMITS} from './composition-limits.js'
-export {COMPOSITION_LIMITS} from './composition-limits.js'
-import {assertCardCues,assertCardCueTargets} from './card-cues.js'
-import {assertCardSpec,assertCardContent,cardSpecSchema} from './card-templates.js'
-import type {CardSpec} from './card-templates.js'
-import {assertVisualEffects,visualEffectsSchema} from './visual-effects.js'
-import type {VisualEffects} from './visual-effects.js'
-export {scenePlaybackClock} from './scene-playback-window.js'
-import {assertScenePlaybackWindow,scenePlaybackWindowSchema} from './scene-playback-window.js'
-import type {ScenePlaybackWindow} from './scene-playback-window.js'
-import {assertNarrationTiming,assertNarrationSegments,narrationWindows,narrationSceneRanges,narrationTimingSchema,narrationSegmentsSchema} from './narration-timing.js'
-import type {NarrationTiming,NarrationSegment} from './narration-timing.js'
-export {assertNarrationReceipt,assertNarrationTiming,assertNarrationSegments,narrationWindow,narrationWindows,narrationSceneTime,narrationSceneRanges,narrationTimingSchema,narrationSegmentsSchema} from './narration-timing.js'
-export type {NarrationTiming,NarrationSegment,NarrationRange} from './narration-timing.js'
-import {assertVisualLayers,assertAudioLayers,assertLayerComposition,layerAssets} from './composition-layers.js'
-import type {LayerContainer} from './composition-layers.js'
-import {assertFocusIntervals} from './focus-contract.js'
-import type {FocusInterval} from './focus-contract.js'
-import {assertVisualSegments,sceneVisuals} from './visual-segments.js'
-import type {VisualSegment} from './visual-segments.js'
-import {assertNarrationOptions} from './narration-contract.js'
-import type {NarrationOptions} from './narration-contract.js'
+import { cardImageAssets } from './card-details.js'
+import { COMPOSITION_LIMITS } from './composition-limits.js'
+export { COMPOSITION_LIMITS } from './composition-limits.js'
+import { assertCardCues, assertCardCueTargets } from './card-cues.js'
+import { assertCardSpec, assertCardContent, cardSpecSchema } from './card-templates.js'
+import type { CardSpec } from './card-templates.js'
+import { assertVisualEffects, visualEffectsSchema } from './visual-effects.js'
+import type { VisualEffects } from './visual-effects.js'
+export { scenePlaybackClock } from './scene-playback-window.js'
+import { assertScenePlaybackWindow, scenePlaybackWindowSchema } from './scene-playback-window.js'
+import type { ScenePlaybackWindow } from './scene-playback-window.js'
+import {
+  assertNarrationTiming,
+  assertNarrationSegments,
+  narrationWindows,
+  narrationSceneRanges,
+  narrationTimingSchema,
+  narrationSegmentsSchema
+} from './narration-timing.js'
+import type { NarrationTiming, NarrationSegment } from './narration-timing.js'
+export {
+  assertNarrationReceipt,
+  assertNarrationTiming,
+  assertNarrationSegments,
+  narrationWindow,
+  narrationWindows,
+  narrationSceneTime,
+  narrationSceneRanges,
+  narrationTimingSchema,
+  narrationSegmentsSchema
+} from './narration-timing.js'
+export type { NarrationTiming, NarrationSegment, NarrationRange } from './narration-timing.js'
+import { assertVisualLayers, assertAudioLayers, assertLayerComposition, layerAssets } from './composition-layers.js'
+import type { LayerContainer } from './composition-layers.js'
+import { assertFocusIntervals } from './focus-contract.js'
+import type { FocusInterval } from './focus-contract.js'
+import { assertVisualSegments, sceneVisuals } from './visual-segments.js'
+import type { VisualSegment } from './visual-segments.js'
+import { assertNarrationOptions } from './narration-contract.js'
+import type { NarrationOptions } from './narration-contract.js'
 import { assertVideoDimensions, assertWatermark, VIDEO_STYLES, templateName } from './video-options.js'
 import type { VideoOptions, VideoWatermark } from './video-options.js'
 import { assertArtifactId, finiteNumber, mediaRecord } from './media-contract.js'
 
 /** Closed, seekable composition: no model HTML, script, network URL or host path. */
 export interface CompositionScene extends LayerContainer {
-  cardCues?:import('./card-cues.js').CardCue[]
-  cardSpec?:CardSpec
-  effects?:VisualEffects
-  presentationWindow?:ScenePlaybackWindow
-  sceneTemplate?:SceneTemplate
-  captionDisplay?:'original'|'translation'|'bilingual'
-  showSceneNumber?:boolean
-  bulletRevealSeconds?:number[]
-  focusIntervals?:FocusInterval[]
-  visualSegments?:VisualSegment[]
-  durationSeconds: number; title: string; label: string; narration: string
-  videoArtifactId?: string; imageArtifactId?: string; audioArtifactId?: string;
-  voiceTiming?:NarrationTiming
-  voiceSegments?:NarrationSegment[]
-  layout?: 'presentation' | 'fullscreen'; voiceVolume?: number; voiceMuted?:boolean; captions?: CaptionCue[]; sourceStartSeconds: number
-  zoom: number; playbackRate: number; crop?: {x:number;y:number;width:number;height:number}; bullets: string[]
-  keepSourceAudio?:boolean; sourceVolume?:number; captionStyle?:CaptionStyle
+  cardCues?: import('./card-cues.js').CardCue[]
+  cardSpec?: CardSpec
+  effects?: VisualEffects
+  presentationWindow?: ScenePlaybackWindow
+  sceneTemplate?: SceneTemplate
+  captionDisplay?: 'original' | 'translation' | 'bilingual'
+  showSceneNumber?: boolean
+  bulletRevealSeconds?: number[]
+  focusIntervals?: FocusInterval[]
+  visualSegments?: VisualSegment[]
+  durationSeconds: number
+  title: string
+  label: string
+  narration: string
+  videoArtifactId?: string
+  imageArtifactId?: string
+  audioArtifactId?: string
+  voiceTiming?: NarrationTiming
+  voiceSegments?: NarrationSegment[]
+  layout?: 'presentation' | 'fullscreen'
+  voiceVolume?: number
+  voiceMuted?: boolean
+  captions?: CaptionCue[]
+  sourceStartSeconds: number
+  zoom: number
+  playbackRate: number
+  crop?: { x: number; y: number; width: number; height: number }
+  bullets: string[]
+  keepSourceAudio?: boolean
+  sourceVolume?: number
+  captionStyle?: CaptionStyle
 }
-export interface CaptionCue {startSeconds:number;endSeconds:number;text:string;translationText?:string;translationOrigin?:'user-edited'|'agent-edited'}
-export interface SceneTemplate {kind:'summary'|'comparison'|'screenshot';accentColor?:string;backgroundColor?:string;textColor?:string;emphasisIndex?:number}
-export const sceneTemplateSchema={type:'object',additionalProperties:false,required:['kind'],properties:{kind:{enum:['summary','comparison','screenshot']},accentColor:{type:'string',pattern:'^#[0-9a-fA-F]{6}$'},backgroundColor:{type:'string',pattern:'^#[0-9a-fA-F]{6}$'},textColor:{type:'string',pattern:'^#[0-9a-fA-F]{6}$'},emphasisIndex:{type:'integer',minimum:0,maximum:2}}}
-export function assertSceneTemplate(raw:unknown):SceneTemplate{const v=mediaRecord(raw);keys(v,['kind','accentColor','backgroundColor','textColor','emphasisIndex']);if(!['summary','comparison','screenshot'].includes(String(v.kind)))throw new TypeError('Unsupported scene template.');const result:SceneTemplate={kind:v.kind as SceneTemplate['kind']};for(const k of ['accentColor','backgroundColor','textColor'] as const)if(v[k]!==undefined){if(typeof v[k]!=='string'||!/^#[0-9a-fA-F]{6}$/.test(v[k]))throw new TypeError('Template colors require opaque hex.');result[k]=v[k]}if(v.emphasisIndex!==undefined)result.emphasisIndex=finiteNumber(v.emphasisIndex,'emphasis index',0,2,true);return result}
-export function captionText(cue:CaptionCue,mode:CompositionScene['captionDisplay']='bilingual'):string{return mode==='original'?cue.text:mode==='translation'?(cue.translationText??''):cue.translationText?cue.text+'\n'+cue.translationText:cue.text}
-export interface CaptionStyle {fontSize:number;color:string;background:'none'|'outline'|'box';position:'top'|'center'|'bottom';align:'left'|'center'|'right';offsetPercent:number}
-export const captionStyleSchema={type:'object',additionalProperties:false,required:['fontSize','color','background','position','align','offsetPercent'],properties:{fontSize:{type:'number',minimum:12,maximum:64},color:{type:'string',pattern:'^#[0-9a-fA-F]{6}$'},background:{type:'string',enum:['none','outline','box']},position:{type:'string',enum:['top','center','bottom']},align:{type:'string',enum:['left','center','right']},offsetPercent:{type:'number',minimum:-30,maximum:30}}}
-export const sourceAudioProperties={cardSpec:cardSpecSchema,effects:visualEffectsSchema,presentationWindow:scenePlaybackWindowSchema,voiceTiming:narrationTimingSchema,voiceSegments:narrationSegmentsSchema,sceneTemplate:sceneTemplateSchema,captionDisplay:{enum:['original','translation','bilingual']},showSceneNumber:{type:'boolean'},voiceMuted:{type:'boolean'},keepSourceAudio:{type:'boolean'},sourceVolume:{type:'number',minimum:0,maximum:2},captionStyle:captionStyleSchema}
-export function assertCaptionStyle(raw:unknown):CaptionStyle {
-  const value=mediaRecord(raw);keys(value,['fontSize','color','background','position','align','offsetPercent'])
-  if(typeof value.color!=='string'||!/^#[0-9a-fA-F]{6}$/.test(value.color)||!['none','outline','box'].includes(String(value.background))||!['top','center','bottom'].includes(String(value.position))||!['left','center','right'].includes(String(value.align)))throw new TypeError('Invalid caption style.')
-  return {fontSize:finiteNumber(value.fontSize,'caption font size',12,64),color:value.color,background:value.background as CaptionStyle['background'],position:value.position as CaptionStyle['position'],align:value.align as CaptionStyle['align'],offsetPercent:finiteNumber(value.offsetPercent,'caption offset',-30,30)}
+export interface CaptionCue {
+  startSeconds: number
+  endSeconds: number
+  text: string
+  translationText?: string
+  translationOrigin?: 'user-edited' | 'agent-edited'
+}
+export interface SceneTemplate {
+  kind: 'summary' | 'comparison' | 'screenshot'
+  accentColor?: string
+  backgroundColor?: string
+  textColor?: string
+  emphasisIndex?: number
+}
+export const sceneTemplateSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['kind'],
+  properties: {
+    kind: { enum: ['summary', 'comparison', 'screenshot'] },
+    accentColor: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
+    backgroundColor: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
+    textColor: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
+    emphasisIndex: { type: 'integer', minimum: 0, maximum: 2 }
+  }
+}
+export function assertSceneTemplate(raw: unknown): SceneTemplate {
+  const v = mediaRecord(raw)
+  keys(v, ['kind', 'accentColor', 'backgroundColor', 'textColor', 'emphasisIndex'])
+  if (!['summary', 'comparison', 'screenshot'].includes(String(v.kind)))
+    throw new TypeError('Unsupported scene template.')
+  const result: SceneTemplate = { kind: v.kind as SceneTemplate['kind'] }
+  for (const k of ['accentColor', 'backgroundColor', 'textColor'] as const)
+    if (v[k] !== undefined) {
+      if (typeof v[k] !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(v[k]))
+        throw new TypeError('Template colors require opaque hex.')
+      result[k] = v[k]
+    }
+  if (v.emphasisIndex !== undefined) result.emphasisIndex = finiteNumber(v.emphasisIndex, 'emphasis index', 0, 2, true)
+  return result
+}
+export function captionText(cue: CaptionCue, mode: CompositionScene['captionDisplay'] = 'bilingual'): string {
+  return mode === 'original'
+    ? cue.text
+    : mode === 'translation'
+      ? (cue.translationText ?? '')
+      : cue.translationText
+        ? cue.text + '\n' + cue.translationText
+        : cue.text
+}
+export interface CaptionStyle {
+  fontSize: number
+  color: string
+  background: 'none' | 'outline' | 'box'
+  position: 'top' | 'center' | 'bottom'
+  align: 'left' | 'center' | 'right'
+  offsetPercent: number
+}
+export const captionStyleSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['fontSize', 'color', 'background', 'position', 'align', 'offsetPercent'],
+  properties: {
+    fontSize: { type: 'number', minimum: 12, maximum: 64 },
+    color: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' },
+    background: { type: 'string', enum: ['none', 'outline', 'box'] },
+    position: { type: 'string', enum: ['top', 'center', 'bottom'] },
+    align: { type: 'string', enum: ['left', 'center', 'right'] },
+    offsetPercent: { type: 'number', minimum: -30, maximum: 30 }
+  }
+}
+export const sourceAudioProperties = {
+  cardSpec: cardSpecSchema,
+  effects: visualEffectsSchema,
+  presentationWindow: scenePlaybackWindowSchema,
+  voiceTiming: narrationTimingSchema,
+  voiceSegments: narrationSegmentsSchema,
+  sceneTemplate: sceneTemplateSchema,
+  captionDisplay: { enum: ['original', 'translation', 'bilingual'] },
+  showSceneNumber: { type: 'boolean' },
+  voiceMuted: { type: 'boolean' },
+  keepSourceAudio: { type: 'boolean' },
+  sourceVolume: { type: 'number', minimum: 0, maximum: 2 },
+  captionStyle: captionStyleSchema
+}
+export function assertCaptionStyle(raw: unknown): CaptionStyle {
+  const value = mediaRecord(raw)
+  keys(value, ['fontSize', 'color', 'background', 'position', 'align', 'offsetPercent'])
+  if (
+    typeof value.color !== 'string' ||
+    !/^#[0-9a-fA-F]{6}$/.test(value.color) ||
+    !['none', 'outline', 'box'].includes(String(value.background)) ||
+    !['top', 'center', 'bottom'].includes(String(value.position)) ||
+    !['left', 'center', 'right'].includes(String(value.align))
+  )
+    throw new TypeError('Invalid caption style.')
+  return {
+    fontSize: finiteNumber(value.fontSize, 'caption font size', 12, 64),
+    color: value.color,
+    background: value.background as CaptionStyle['background'],
+    position: value.position as CaptionStyle['position'],
+    align: value.align as CaptionStyle['align'],
+    offsetPercent: finiteNumber(value.offsetPercent, 'caption offset', -30, 30)
+  }
 }
 export interface MediaComposition extends LayerContainer {
-  cardLayout?:VideoOptions['cardLayout'];narrationPacing?:VideoOptions['narrationPacing']
-  title: string; width: number; height: number; fps: number; music: boolean
-  tts?:NarrationOptions; style?: VideoOptions['style']; watermark?: VideoWatermark; templateName?: string
+  cardLayout?: VideoOptions['cardLayout']
+  narrationPacing?: VideoOptions['narrationPacing']
+  title: string
+  width: number
+  height: number
+  fps: number
+  music: boolean
+  tts?: NarrationOptions
+  style?: VideoOptions['style']
+  watermark?: VideoWatermark
+  templateName?: string
   scenes: CompositionScene[]
 }
-export interface CompositionCommand { token: string; composition: MediaComposition; assets: { artifactId: string; bytes: number }[] }
+export interface CompositionCommand {
+  token: string
+  composition: MediaComposition
+  assets: { artifactId: string; bytes: number }[]
+}
 export interface CompositionBridge {
   onCommand(listener: (value: CompositionCommand) => void): void
   read(token: string, assetIndex: number, offset: number, length: number): Promise<Uint8Array>
@@ -72,7 +207,8 @@ export interface CompositionBridge {
   reply(value: unknown): void
 }
 function text(value: unknown, name: string, maximum: number): string {
-  if (typeof value !== 'string' || value.length > maximum || /[\u0000-\u0008]/.test(value)) throw new TypeError(`Invalid ${name}.`)
+  if (typeof value !== 'string' || value.length > maximum || /[\u0000-\u0008]/.test(value))
+    throw new TypeError(`Invalid ${name}.`)
   return value
 }
 function keys(value: Record<string, unknown>, allowed: string[]): void {
@@ -80,108 +216,338 @@ function keys(value: Record<string, unknown>, allowed: string[]): void {
 }
 export function assertComposition(raw: unknown): MediaComposition {
   const value = mediaRecord(raw)
-  keys(value, ['cardLayout','narrationPacing','title','width','height','fps','music','style','watermark','templateName','tts','scenes','layers','audioTracks'])
-  if (!Array.isArray(value.scenes) || !value.scenes.length || value.scenes.length > COMPOSITION_LIMITS.scenes) throw new TypeError('A composition needs 1 to 96 scenes.')
+  keys(value, [
+    'cardLayout',
+    'narrationPacing',
+    'title',
+    'width',
+    'height',
+    'fps',
+    'music',
+    'style',
+    'watermark',
+    'templateName',
+    'tts',
+    'scenes',
+    'layers',
+    'audioTracks'
+  ])
+  if (!Array.isArray(value.scenes) || !value.scenes.length || value.scenes.length > COMPOSITION_LIMITS.scenes)
+    throw new TypeError('A composition needs 1 to 96 scenes.')
   if (value.music !== undefined && typeof value.music !== 'boolean') throw new TypeError('music must be boolean.')
   const result: MediaComposition = {
-    title: text(value.title, 'title', 80), width: finiteNumber(value.width ?? 1280, 'width', 320, 1920, true),
-    height: finiteNumber(value.height ?? 720, 'height', 180, 1920, true), fps: finiteNumber(value.fps ?? 24, 'fps', 12, 30, true),
-    music: value.music === undefined ? true : value.music as boolean, scenes: value.scenes.map((rawScene: unknown) => {
+    title: text(value.title, 'title', 80),
+    width: finiteNumber(value.width ?? 1280, 'width', 320, 1920, true),
+    height: finiteNumber(value.height ?? 720, 'height', 180, 1920, true),
+    fps: finiteNumber(value.fps ?? 24, 'fps', 12, 30, true),
+    music: value.music === undefined ? true : (value.music as boolean),
+    scenes: value.scenes.map((rawScene: unknown) => {
       const scene = mediaRecord(rawScene)
-      keys(scene,['cardCues','cardSpec','durationSeconds','title','label','narration','videoArtifactId','imageArtifactId','audioArtifactId','effects','layout','voiceVolume','voiceMuted','voiceTiming','voiceSegments','captions','sourceStartSeconds','zoom','playbackRate','crop','bullets','keepSourceAudio','sourceVolume','captionStyle','visualSegments','focusIntervals','bulletRevealSeconds','showSceneNumber','sceneTemplate','captionDisplay','layers','audioTracks','presentationWindow'])
-      if (!Array.isArray(scene.bullets ?? []) || (scene.bullets as unknown[] | undefined)?.length > 3) throw new TypeError('At most three scene bullets.')
+      keys(scene, [
+        'cardCues',
+        'cardSpec',
+        'durationSeconds',
+        'title',
+        'label',
+        'narration',
+        'videoArtifactId',
+        'imageArtifactId',
+        'audioArtifactId',
+        'effects',
+        'layout',
+        'voiceVolume',
+        'voiceMuted',
+        'voiceTiming',
+        'voiceSegments',
+        'captions',
+        'sourceStartSeconds',
+        'zoom',
+        'playbackRate',
+        'crop',
+        'bullets',
+        'keepSourceAudio',
+        'sourceVolume',
+        'captionStyle',
+        'visualSegments',
+        'focusIntervals',
+        'bulletRevealSeconds',
+        'showSceneNumber',
+        'sceneTemplate',
+        'captionDisplay',
+        'layers',
+        'audioTracks',
+        'presentationWindow'
+      ])
+      if (!Array.isArray(scene.bullets ?? []) || (scene.bullets as unknown[] | undefined)?.length > 3)
+        throw new TypeError('At most three scene bullets.')
       const parsed: CompositionScene = {
         durationSeconds: finiteNumber(scene.durationSeconds, 'scene duration', 1, 60),
-        title: text(scene.title, 'scene title', 44), label: text(scene.label ?? '', 'scene label', 44),
-        narration: text(scene.narration ?? '', 'narration', 1000), sourceStartSeconds: finiteNumber(scene.sourceStartSeconds ?? 0, 'source start', 0, 1800),
-        zoom: finiteNumber(scene.zoom ?? 1, 'zoom', 1, 1.5), playbackRate: finiteNumber(scene.playbackRate ?? 1,'playbackRate',.25,2), bullets: ((scene.bullets ?? []) as unknown[]).map(item => text(item, 'bullet', 64))
+        title: text(scene.title, 'scene title', 44),
+        label: text(scene.label ?? '', 'scene label', 44),
+        narration: text(scene.narration ?? '', 'narration', 1000),
+        sourceStartSeconds: finiteNumber(scene.sourceStartSeconds ?? 0, 'source start', 0, 1800),
+        zoom: finiteNumber(scene.zoom ?? 1, 'zoom', 1, 1.5),
+        playbackRate: finiteNumber(scene.playbackRate ?? 1, 'playbackRate', 0.25, 2),
+        bullets: ((scene.bullets ?? []) as unknown[]).map(item => text(item, 'bullet', 64))
       }
-      if(scene.cardCues!==undefined)parsed.cardCues=assertCardCues(scene.cardCues)
-      if(scene.effects!==undefined)parsed.effects=assertVisualEffects(scene.effects)
-      if(scene.presentationWindow!==undefined)parsed.presentationWindow=assertScenePlaybackWindow(scene.presentationWindow,parsed.durationSeconds)
-      if(scene.crop!==undefined){
-        const crop=mediaRecord(scene.crop);keys(crop,['x','y','width','height'])
-        parsed.crop={x:finiteNumber(crop.x,'crop x',0,.8),y:finiteNumber(crop.y,'crop y',0,.8),width:finiteNumber(crop.width,'crop width',.2,1),height:finiteNumber(crop.height,'crop height',.2,1)}
-        if(parsed.crop.x+parsed.crop.width>1 || parsed.crop.y+parsed.crop.height>1)throw new TypeError('Crop must be inside the source frame.')
+      if (scene.cardCues !== undefined) parsed.cardCues = assertCardCues(scene.cardCues)
+      if (scene.effects !== undefined) parsed.effects = assertVisualEffects(scene.effects)
+      if (scene.presentationWindow !== undefined)
+        parsed.presentationWindow = assertScenePlaybackWindow(scene.presentationWindow, parsed.durationSeconds)
+      if (scene.crop !== undefined) {
+        const crop = mediaRecord(scene.crop)
+        keys(crop, ['x', 'y', 'width', 'height'])
+        parsed.crop = {
+          x: finiteNumber(crop.x, 'crop x', 0, 0.8),
+          y: finiteNumber(crop.y, 'crop y', 0, 0.8),
+          width: finiteNumber(crop.width, 'crop width', 0.2, 1),
+          height: finiteNumber(crop.height, 'crop height', 0.2, 1)
+        }
+        if (parsed.crop.x + parsed.crop.width > 1 || parsed.crop.y + parsed.crop.height > 1)
+          throw new TypeError('Crop must be inside the source frame.')
       }
-      if(scene.layout!==undefined){if(!['presentation','fullscreen'].includes(String(scene.layout)))throw new TypeError('Unknown scene layout.');parsed.layout=scene.layout as CompositionScene['layout']}
-      if(scene.sceneTemplate!==undefined)parsed.sceneTemplate=assertSceneTemplate(scene.sceneTemplate)
-      if(scene.captionDisplay!==undefined){if(!['original','translation','bilingual'].includes(String(scene.captionDisplay)))throw new TypeError('Unsupported caption display.');parsed.captionDisplay=scene.captionDisplay as CompositionScene['captionDisplay']}
-      if(scene.showSceneNumber!==undefined){if(typeof scene.showSceneNumber!=='boolean')throw new TypeError('showSceneNumber must be boolean.');parsed.showSceneNumber=scene.showSceneNumber}
-      if(scene.voiceSegments!==undefined){if(!scene.audioArtifactId)throw new TypeError('Narration segments require an audio artifact.');if(scene.voiceTiming!==undefined)throw new TypeError('Choose voice timing or narration segments, not both.');parsed.voiceSegments=assertNarrationSegments(scene.voiceSegments,parsed.durationSeconds)}
-      if(scene.voiceTiming!==undefined){if(!scene.audioArtifactId)throw new TypeError('Voice timing requires an audio artifact.');parsed.voiceTiming=assertNarrationTiming(scene.voiceTiming);if(parsed.voiceTiming.startSeconds+parsed.voiceTiming.durationSeconds>parsed.durationSeconds+.000001)throw new TypeError('Voice playback must fit the scene.')}
-      if(scene.voiceVolume!==undefined)parsed.voiceVolume=finiteNumber(scene.voiceVolume,'voice volume',0,2)
-      if(scene.voiceMuted!==undefined){if(typeof scene.voiceMuted!=='boolean')throw new TypeError('voiceMuted must be boolean.');parsed.voiceMuted=scene.voiceMuted}
-      if(scene.keepSourceAudio!==undefined){if(typeof scene.keepSourceAudio!=='boolean')throw new TypeError('keepSourceAudio must be boolean.');parsed.keepSourceAudio=scene.keepSourceAudio}
-      if(scene.sourceVolume!==undefined)parsed.sourceVolume=finiteNumber(scene.sourceVolume,'source audio volume',0,2)
-      if(scene.focusIntervals!==undefined)parsed.focusIntervals=assertFocusIntervals(scene.focusIntervals)
-      if(scene.captionStyle!==undefined)parsed.captionStyle=assertCaptionStyle(scene.captionStyle)
-      if(scene.captions!==undefined){
-        if(!Array.isArray(scene.captions)||scene.captions.length>100)throw new TypeError('At most one hundred caption cues per scene.')
-        parsed.captions=scene.captions.map(raw=>{const cue=mediaRecord(raw);keys(cue,['startSeconds','endSeconds','text','translationText','translationOrigin']);if(cue.translationOrigin!==undefined&&!['user-edited','agent-edited'].includes(String(cue.translationOrigin)))throw new TypeError('Invalid translation origin.');const startSeconds=finiteNumber(cue.startSeconds,'caption start',0,parsed.durationSeconds),endSeconds=finiteNumber(cue.endSeconds,'caption end',0,parsed.durationSeconds);if(endSeconds<=startSeconds)throw new TypeError('Caption end must follow start.');return {startSeconds,endSeconds,text:text(cue.text,'caption',200),...(cue.translationText===undefined?{}:{translationText:text(cue.translationText,'caption translation',200)}),...(cue.translationOrigin===undefined?{}:{translationOrigin:cue.translationOrigin as 'user-edited'|'agent-edited'})}})
-        if(parsed.captions.some((cue,index)=>index>0&&cue.startSeconds<parsed.captions![index-1].endSeconds))throw new TypeError('Caption cues must be ordered and nonoverlapping.')
+      if (scene.layout !== undefined) {
+        if (!['presentation', 'fullscreen'].includes(String(scene.layout))) throw new TypeError('Unknown scene layout.')
+        parsed.layout = scene.layout as CompositionScene['layout']
       }
-      if(scene.videoArtifactId&&scene.imageArtifactId)throw new TypeError('Choose a video or image, not both.')
-      for (const key of ['videoArtifactId','imageArtifactId','audioArtifactId'] as const) if (scene[key] !== undefined) parsed[key] = assertArtifactId(scene[key])
-      if (parsed.narration && !parsed.audioArtifactId) throw new TypeError('Narrated scenes require an audio artifact; text is never treated as synthesized speech.')
-      if(scene.visualSegments!==undefined){
-        if(parsed.focusIntervals?.length)throw new Error('Segmented scenes keep focus on each visual segment.')
-        if(parsed.videoArtifactId||parsed.imageArtifactId)throw new Error('Choose scene-level footage or visual segments.')
-        parsed.visualSegments=assertVisualSegments(scene.visualSegments,parsed.durationSeconds)
+      if (scene.sceneTemplate !== undefined) parsed.sceneTemplate = assertSceneTemplate(scene.sceneTemplate)
+      if (scene.captionDisplay !== undefined) {
+        if (!['original', 'translation', 'bilingual'].includes(String(scene.captionDisplay)))
+          throw new TypeError('Unsupported caption display.')
+        parsed.captionDisplay = scene.captionDisplay as CompositionScene['captionDisplay']
       }
-      if(parsed.effects&&(parsed.visualSegments||!parsed.imageArtifactId&&!parsed.videoArtifactId))throw new TypeError('Main effects require scene footage or belong on each visual segment.')
-      if(scene.bulletRevealSeconds!==undefined){
-        if(!Array.isArray(scene.bulletRevealSeconds)||scene.bulletRevealSeconds.length!==parsed.bullets.length||sceneVisuals(parsed).length)throw new TypeError('Bullet reveal requires one time per title-card bullet and no footage.')
-        parsed.bulletRevealSeconds=scene.bulletRevealSeconds.map(time=>finiteNumber(time,'bullet reveal',0,(parsed.presentationWindow?.durationSeconds??parsed.durationSeconds)-.001))
+      if (scene.showSceneNumber !== undefined) {
+        if (typeof scene.showSceneNumber !== 'boolean') throw new TypeError('showSceneNumber must be boolean.')
+        parsed.showSceneNumber = scene.showSceneNumber
       }
-      if(scene.layers!==undefined)parsed.layers=assertVisualLayers(scene.layers)
-      if(scene.audioTracks!==undefined)parsed.audioTracks=assertAudioLayers(scene.audioTracks)
-      if(scene.cardSpec!==undefined){parsed.cardSpec=assertCardSpec(scene.cardSpec);assertCardContent(parsed,parsed.cardSpec)}
-      assertCardCueTargets(parsed.cardSpec,parsed.cardCues,parsed.presentationWindow?.durationSeconds??parsed.durationSeconds)
+      if (scene.voiceSegments !== undefined) {
+        if (!scene.audioArtifactId) throw new TypeError('Narration segments require an audio artifact.')
+        if (scene.voiceTiming !== undefined) throw new TypeError('Choose voice timing or narration segments, not both.')
+        parsed.voiceSegments = assertNarrationSegments(scene.voiceSegments, parsed.durationSeconds)
+      }
+      if (scene.voiceTiming !== undefined) {
+        if (!scene.audioArtifactId) throw new TypeError('Voice timing requires an audio artifact.')
+        parsed.voiceTiming = assertNarrationTiming(scene.voiceTiming)
+        if (parsed.voiceTiming.startSeconds + parsed.voiceTiming.durationSeconds > parsed.durationSeconds + 0.000001)
+          throw new TypeError('Voice playback must fit the scene.')
+      }
+      if (scene.voiceVolume !== undefined) parsed.voiceVolume = finiteNumber(scene.voiceVolume, 'voice volume', 0, 2)
+      if (scene.voiceMuted !== undefined) {
+        if (typeof scene.voiceMuted !== 'boolean') throw new TypeError('voiceMuted must be boolean.')
+        parsed.voiceMuted = scene.voiceMuted
+      }
+      if (scene.keepSourceAudio !== undefined) {
+        if (typeof scene.keepSourceAudio !== 'boolean') throw new TypeError('keepSourceAudio must be boolean.')
+        parsed.keepSourceAudio = scene.keepSourceAudio
+      }
+      if (scene.sourceVolume !== undefined)
+        parsed.sourceVolume = finiteNumber(scene.sourceVolume, 'source audio volume', 0, 2)
+      if (scene.focusIntervals !== undefined) parsed.focusIntervals = assertFocusIntervals(scene.focusIntervals)
+      if (scene.captionStyle !== undefined) parsed.captionStyle = assertCaptionStyle(scene.captionStyle)
+      if (scene.captions !== undefined) {
+        if (!Array.isArray(scene.captions) || scene.captions.length > 100)
+          throw new TypeError('At most one hundred caption cues per scene.')
+        parsed.captions = scene.captions.map(raw => {
+          const cue = mediaRecord(raw)
+          keys(cue, ['startSeconds', 'endSeconds', 'text', 'translationText', 'translationOrigin'])
+          if (
+            cue.translationOrigin !== undefined &&
+            !['user-edited', 'agent-edited'].includes(String(cue.translationOrigin))
+          )
+            throw new TypeError('Invalid translation origin.')
+          const startSeconds = finiteNumber(cue.startSeconds, 'caption start', 0, parsed.durationSeconds),
+            endSeconds = finiteNumber(cue.endSeconds, 'caption end', 0, parsed.durationSeconds)
+          if (endSeconds <= startSeconds) throw new TypeError('Caption end must follow start.')
+          return {
+            startSeconds,
+            endSeconds,
+            text: text(cue.text, 'caption', 200),
+            ...(cue.translationText === undefined
+              ? {}
+              : { translationText: text(cue.translationText, 'caption translation', 200) }),
+            ...(cue.translationOrigin === undefined
+              ? {}
+              : { translationOrigin: cue.translationOrigin as 'user-edited' | 'agent-edited' })
+          }
+        })
+        if (
+          parsed.captions.some((cue, index) => index > 0 && cue.startSeconds < parsed.captions![index - 1].endSeconds)
+        )
+          throw new TypeError('Caption cues must be ordered and nonoverlapping.')
+      }
+      if (scene.videoArtifactId && scene.imageArtifactId) throw new TypeError('Choose a video or image, not both.')
+      for (const key of ['videoArtifactId', 'imageArtifactId', 'audioArtifactId'] as const)
+        if (scene[key] !== undefined) parsed[key] = assertArtifactId(scene[key])
+      if (parsed.narration && !parsed.audioArtifactId)
+        throw new TypeError('Narrated scenes require an audio artifact; text is never treated as synthesized speech.')
+      if (scene.visualSegments !== undefined) {
+        if (parsed.focusIntervals?.length) throw new Error('Segmented scenes keep focus on each visual segment.')
+        if (parsed.videoArtifactId || parsed.imageArtifactId)
+          throw new Error('Choose scene-level footage or visual segments.')
+        parsed.visualSegments = assertVisualSegments(scene.visualSegments, parsed.durationSeconds)
+      }
+      if (parsed.effects && (parsed.visualSegments || (!parsed.imageArtifactId && !parsed.videoArtifactId)))
+        throw new TypeError('Main effects require scene footage or belong on each visual segment.')
+      if (scene.bulletRevealSeconds !== undefined) {
+        if (
+          !Array.isArray(scene.bulletRevealSeconds) ||
+          scene.bulletRevealSeconds.length !== parsed.bullets.length ||
+          sceneVisuals(parsed).length
+        )
+          throw new TypeError('Bullet reveal requires one time per title-card bullet and no footage.')
+        parsed.bulletRevealSeconds = scene.bulletRevealSeconds.map(time =>
+          finiteNumber(
+            time,
+            'bullet reveal',
+            0,
+            (parsed.presentationWindow?.durationSeconds ?? parsed.durationSeconds) - 0.001
+          )
+        )
+      }
+      if (scene.layers !== undefined) parsed.layers = assertVisualLayers(scene.layers)
+      if (scene.audioTracks !== undefined) parsed.audioTracks = assertAudioLayers(scene.audioTracks)
+      if (scene.cardSpec !== undefined) {
+        parsed.cardSpec = assertCardSpec(scene.cardSpec)
+        assertCardContent(parsed, parsed.cardSpec)
+      }
+      assertCardCueTargets(
+        parsed.cardSpec,
+        parsed.cardCues,
+        parsed.presentationWindow?.durationSeconds ?? parsed.durationSeconds
+      )
       return parsed
     })
   }
-  if(value.layers!==undefined)result.layers=assertVisualLayers(value.layers)
-  if(value.audioTracks!==undefined)result.audioTracks=assertAudioLayers(value.audioTracks)
+  if (value.layers !== undefined) result.layers = assertVisualLayers(value.layers)
+  if (value.audioTracks !== undefined) result.audioTracks = assertAudioLayers(value.audioTracks)
   assertLayerComposition(result)
-  assertVideoDimensions(result.width,result.height)
-  for(const key of ['cardLayout','narrationPacing'] as const)if(value[key]!==undefined){if(typeof value[key]!=='string'||!(key==='cardLayout'?['standard','news','news-compact']:['standard','compact']).includes(value[key]))throw new TypeError('Unsupported layout or narration pacing.');Object.assign(result,{[key]:value[key]})}
-  if(result.cardLayout==='news-compact'&&(!result.title.trim()||Math.abs(result.width/result.height-9/16)>.01))throw new TypeError('Compact news requires a title and 9:16 output.');
-  if(result.cardLayout==='news'&&(!result.title.trim()||![16/9,9/16].some(ratio=>Math.abs(result.width/result.height-ratio)<.01)))throw new TypeError('News layout requires a title and 16:9 or 9:16 output.')
-  if(value.style!==undefined&&!VIDEO_STYLES.includes(value.style as VideoOptions['style']))throw new TypeError('Invalid video style.')
-  result.style=(value.style??'bmw-dark') as VideoOptions['style']
-  result.tts=assertNarrationOptions(value.tts??{})
-  result.watermark=assertWatermark(value.watermark??{})
-  if(value.templateName!==undefined)result.templateName=templateName(value.templateName)
-  if (compositionDuration(result) > COMPOSITION_LIMITS.seconds) throw new TypeError('Composition exceeds twelve minutes.')
+  assertVideoDimensions(result.width, result.height)
+  for (const key of ['cardLayout', 'narrationPacing'] as const)
+    if (value[key] !== undefined) {
+      if (
+        typeof value[key] !== 'string' ||
+        !(key === 'cardLayout' ? ['standard', 'news', 'news-compact'] : ['standard', 'compact']).includes(value[key])
+      )
+        throw new TypeError('Unsupported layout or narration pacing.')
+      Object.assign(result, { [key]: value[key] })
+    }
+  if (
+    result.cardLayout === 'news-compact' &&
+    (!result.title.trim() || Math.abs(result.width / result.height - 9 / 16) > 0.01)
+  )
+    throw new TypeError('Compact news requires a title and 9:16 output.')
+  if (
+    result.cardLayout === 'news' &&
+    (!result.title.trim() || ![16 / 9, 9 / 16].some(ratio => Math.abs(result.width / result.height - ratio) < 0.01))
+  )
+    throw new TypeError('News layout requires a title and 16:9 or 9:16 output.')
+  if (value.style !== undefined && !VIDEO_STYLES.includes(value.style as VideoOptions['style']))
+    throw new TypeError('Invalid video style.')
+  result.style = (value.style ?? 'bmw-dark') as VideoOptions['style']
+  result.tts = assertNarrationOptions(value.tts ?? {})
+  result.watermark = assertWatermark(value.watermark ?? {})
+  if (value.templateName !== undefined) result.templateName = templateName(value.templateName)
+  if (compositionDuration(result) > COMPOSITION_LIMITS.seconds)
+    throw new TypeError('Composition exceeds twelve minutes.')
   return result
 }
-export function compositionDuration(value: MediaComposition): number { return value.scenes.reduce((total, scene) => total + scene.durationSeconds, 0) }
-export function compositionAssets(value: MediaComposition): string[] { return [...new Set(value.scenes.flatMap(scene => [...sceneVisuals(scene).flatMap(segment=>[segment.videoArtifactId,segment.imageArtifactId]),scene.audioArtifactId,...layerAssets(scene),...cardImageAssets(scene.cardSpec?.version===2?scene.cardSpec:undefined)].filter((id): id is string => Boolean(id))).concat(layerAssets(value)))] }
-export function captionSentences(scene:CompositionScene,width=1280,height=720):string[]{
-  const W=720*width/height,margin=W<600?24:48,size=scene.captionStyle?.fontSize??(W<600?22:28),maximum=Math.max(12,Math.min(48,Math.floor((W-margin*2)/size)*2))
-  return Array.from(scene.narration.match(/[^。！？!?；;，,]+[。！？!?；;，,]?/g)??[]).flatMap(sentence=>Array.from(sentence).reduce<string[]>((chunks,char,i)=>{const part=Math.floor(i/maximum);chunks[part]=(chunks[part]??'')+char;return chunks},[]))
+export function compositionDuration(value: MediaComposition): number {
+  return value.scenes.reduce((total, scene) => total + scene.durationSeconds, 0)
 }
-export function estimatedCaptionCues(scene:CompositionScene,width=1280,height=720,narrationDuration=scene.durationSeconds-1):NonNullable<CompositionScene['captions']>{
-  if(scene.voiceTiming||scene.voiceSegments){
-    const timings=narrationWindows(scene,narrationDuration),base=estimatedCaptionCues({...scene,voiceTiming:undefined,voiceSegments:undefined,durationSeconds:Math.max(scene.durationSeconds,narrationDuration+1)},width,height,narrationDuration)
-    const clock={voiceSegments:timings.map((timing,index)=>({...timing,id:'caption-'+index}))}
-    const cues=base.flatMap(cue=>narrationSceneRanges(clock,cue.startSeconds-.5,cue.endSeconds-.5).map(range=>({...cue,startSeconds:range.start,endSeconds:range.end}))).sort((a,b)=>a.startSeconds-b.startSeconds)
-    if(cues.length>100)throw new Error('旁白片段投影超过一百条字幕；请减少重复播放或明确编辑字幕。')
+export function compositionAssets(value: MediaComposition): string[] {
+  return [
+    ...new Set(
+      value.scenes
+        .flatMap(scene =>
+          [
+            ...sceneVisuals(scene).flatMap(segment => [segment.videoArtifactId, segment.imageArtifactId]),
+            scene.audioArtifactId,
+            ...layerAssets(scene),
+            ...cardImageAssets(scene.cardSpec?.version === 2 ? scene.cardSpec : undefined)
+          ].filter((id): id is string => Boolean(id))
+        )
+        .concat(layerAssets(value))
+    )
+  ]
+}
+export function captionSentences(scene: CompositionScene, width = 1280, height = 720): string[] {
+  const W = (720 * width) / height,
+    margin = W < 600 ? 24 : 48,
+    size = scene.captionStyle?.fontSize ?? (W < 600 ? 22 : 28),
+    maximum = Math.max(12, Math.min(48, Math.floor((W - margin * 2) / size) * 2))
+  return Array.from(scene.narration.match(/[^。！？!?；;，,]+[。！？!?；;，,]?/g) ?? []).flatMap(sentence =>
+    Array.from(sentence).reduce<string[]>((chunks, char, i) => {
+      const part = Math.floor(i / maximum)
+      chunks[part] = (chunks[part] ?? '') + char
+      return chunks
+    }, [])
+  )
+}
+export function estimatedCaptionCues(
+  scene: CompositionScene,
+  width = 1280,
+  height = 720,
+  narrationDuration = scene.durationSeconds - 1
+): NonNullable<CompositionScene['captions']> {
+  if (scene.voiceTiming || scene.voiceSegments) {
+    const timings = narrationWindows(scene, narrationDuration),
+      base = estimatedCaptionCues(
+        {
+          ...scene,
+          voiceTiming: undefined,
+          voiceSegments: undefined,
+          durationSeconds: Math.max(scene.durationSeconds, narrationDuration + 1)
+        },
+        width,
+        height,
+        narrationDuration
+      )
+    const clock = { voiceSegments: timings.map((timing, index) => ({ ...timing, id: 'caption-' + index })) }
+    const cues = base
+      .flatMap(cue =>
+        narrationSceneRanges(clock, cue.startSeconds - 0.5, cue.endSeconds - 0.5).map(range => ({
+          ...cue,
+          startSeconds: range.start,
+          endSeconds: range.end
+        }))
+      )
+      .sort((a, b) => a.startSeconds - b.startSeconds)
+    if (cues.length > 100) throw new Error('旁白片段投影超过一百条字幕；请减少重复播放或明确编辑字幕。')
     return cues
   }
-  const sentences=captionSentences(scene,width,height),length=sentences.reduce((sum,item)=>sum+item.length,0),duration=Math.min(scene.durationSeconds-.5,Math.max(.5,narrationDuration))
-  let offset=.5
-  return sentences.map(text=>{const startSeconds=offset;offset+=duration*text.length/Math.max(1,length);return {startSeconds,endSeconds:Math.min(scene.durationSeconds,offset),text}}).filter(cue=>cue.endSeconds>cue.startSeconds)
+  const sentences = captionSentences(scene, width, height),
+    length = sentences.reduce((sum, item) => sum + item.length, 0),
+    duration = Math.min(scene.durationSeconds - 0.5, Math.max(0.5, narrationDuration))
+  let offset = 0.5
+  return sentences
+    .map(text => {
+      const startSeconds = offset
+      offset += (duration * text.length) / Math.max(1, length)
+      return { startSeconds, endSeconds: Math.min(scene.durationSeconds, offset), text }
+    })
+    .filter(cue => cue.endSeconds > cue.startSeconds)
 }
 /** Time is computed from frame index, never a wall clock; the last source frame is held explicitly. */
-export function sceneAtTime(value: MediaComposition, seconds: number): { index: number; localSeconds: number; startSeconds: number } {
+export function sceneAtTime(
+  value: MediaComposition,
+  seconds: number
+): { index: number; localSeconds: number; startSeconds: number } {
   let startSeconds = 0
   for (let index = 0; index < value.scenes.length; index++) {
-    if (seconds < startSeconds + value.scenes[index].durationSeconds) return { index, localSeconds: Math.max(0, seconds - startSeconds), startSeconds }
+    if (seconds < startSeconds + value.scenes[index].durationSeconds)
+      return { index, localSeconds: Math.max(0, seconds - startSeconds), startSeconds }
     startSeconds += value.scenes[index].durationSeconds
   }
   throw new RangeError('Frame time is outside the composition.')
 }
 
-export function compositionImageIds(value:MediaComposition):Set<string>{return new Set([...value.scenes.flatMap(scene=>[...cardImageAssets(scene.cardSpec?.version===2?scene.cardSpec:undefined),...sceneVisuals(scene).flatMap(segment=>segment.imageArtifactId?[segment.imageArtifactId]:[]),...(scene.layers??[]).flatMap(layer=>layer.kind==='image'?[layer.artifactId!]:[])]),...(value.layers??[]).flatMap(layer=>layer.kind==='image'?[layer.artifactId!]:[])])}
+export function compositionImageIds(value: MediaComposition): Set<string> {
+  return new Set([
+    ...value.scenes.flatMap(scene => [
+      ...cardImageAssets(scene.cardSpec?.version === 2 ? scene.cardSpec : undefined),
+      ...sceneVisuals(scene).flatMap(segment => (segment.imageArtifactId ? [segment.imageArtifactId] : [])),
+      ...(scene.layers ?? []).flatMap(layer => (layer.kind === 'image' ? [layer.artifactId!] : []))
+    ]),
+    ...(value.layers ?? []).flatMap(layer => (layer.kind === 'image' ? [layer.artifactId!] : []))
+  ])
+}

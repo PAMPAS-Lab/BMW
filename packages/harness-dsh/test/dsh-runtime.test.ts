@@ -2,11 +2,11 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { DshRuntime } from '../src/dsh-runtime.js'
-import {bundledDshCli} from '../src/dsh-installation.js'
+import { bundledDshCli } from '../src/dsh-installation.js'
 import fs from 'node:fs'
-import {createRequire} from 'node:module'
+import { createRequire } from 'node:module'
 
-test('DSH calls use the harness RPC envelope and validate the response', async (t) => {
+test('DSH calls use the harness RPC envelope and validate the response', async t => {
   const originalFetch = globalThis.fetch
   t.after(() => {
     globalThis.fetch = originalFetch
@@ -46,8 +46,10 @@ test('DSH project activation creates a project-scoped BMW session', async () => 
   runtime.call = async (method, payload) => {
     calls.push({ method, payload })
     if (method === 'workspace.list') return { items: [] }
-    if (method === 'workspace.create') return { workspace: { workspaceId: 'workspace-1', path: payload.path, title: 'Untitled' } }
-    if (method === 'workspace.rename') return { workspace: { workspaceId: payload.workspaceId, path: '/project', title: payload.title } }
+    if (method === 'workspace.create')
+      return { workspace: { workspaceId: 'workspace-1', path: payload.path, title: 'Untitled' } }
+    if (method === 'workspace.rename')
+      return { workspace: { workspaceId: payload.workspaceId, path: '/project', title: payload.title } }
     if (method === 'session.list') return { items: [] }
     if (method === 'session.create') return { sessionId: 'session-1' }
     throw new Error(`Unexpected method: ${method}`)
@@ -74,30 +76,60 @@ test('DSH project activation reuses its persistent project session', async () =>
   const runtime = new DshRuntime({})
   runtime.call = async (method, payload) => {
     calls.push({ method, payload })
-    if (method === 'workspace.list') return { items: [{ workspaceId: 'workspace-1', path: '/project', title: 'Research', sessionIds: ['session-kept'] }] }
-    if (method === 'session.list') return { items: [{ sessionId: 'session-kept', cwd: '/project', updatedAt: 2, running: false, blank: false }] }
+    if (method === 'workspace.list')
+      return {
+        items: [{ workspaceId: 'workspace-1', path: '/project', title: 'Research', sessionIds: ['session-kept'] }]
+      }
+    if (method === 'session.list')
+      return { items: [{ sessionId: 'session-kept', cwd: '/project', updatedAt: 2, running: false, blank: false }] }
     throw new Error(`Unexpected method: ${method}`)
   }
 
   const result = await runtime.activateWorkspace({
-    id: 'project-1', name: 'Research', directory: '/project', workspaceId: 'workspace-1', sessionId: 'session-kept'
+    id: 'project-1',
+    name: 'Research',
+    directory: '/project',
+    workspaceId: 'workspace-1',
+    sessionId: 'session-kept'
   })
 
   assert.equal(result.sessionId, 'session-kept')
-  assert.equal(calls.some(({ method }) => method === 'session.create'), false)
+  assert.equal(
+    calls.some(({ method }) => method === 'session.create'),
+    false
+  )
 })
 
 test('BMW Session Center lists only active sessions in its Project and searches content', async () => {
   const runtime = new DshRuntime({})
-  runtime.ensureWorkspace = async () => ({ workspaceId: 'workspace-1', path: '/project', title: 'Research', sessionIds: ['session-a', 'session-b', 'session-archived', 'subagent'] })
+  runtime.ensureWorkspace = async () => ({
+    workspaceId: 'workspace-1',
+    path: '/project',
+    title: 'Research',
+    sessionIds: ['session-a', 'session-b', 'session-archived', 'subagent']
+  })
   runtime.call = async (method, payload) => {
-    if (method === 'session.list') return { items: [
-      { sessionId: 'session-a', cwd: '/project', updatedAt: 2, running: true, blank: false, projections: { values: { title: 'Browser audit' } } },
-      { sessionId: 'session-b', cwd: '/project', updatedAt: 1, running: false, blank: true },
-      { sessionId: 'session-archived', cwd: '/project', updatedAt: 1, running: false, blank: false },
-      { sessionId: 'subagent', cwd: '/project', updatedAt: 3, running: true, blank: false, origin: 'subagent' }
-    ] }
-    if (method === 'workspace.list') return { items: [{ workspaceId: 'workspace-1', sessionIds: ['session-a', 'session-b', 'session-archived', 'subagent'] }], archivedSessionIds: ['session-archived'] }
+    if (method === 'session.list')
+      return {
+        items: [
+          {
+            sessionId: 'session-a',
+            cwd: '/project',
+            updatedAt: 2,
+            running: true,
+            blank: false,
+            projections: { values: { title: 'Browser audit' } }
+          },
+          { sessionId: 'session-b', cwd: '/project', updatedAt: 1, running: false, blank: true },
+          { sessionId: 'session-archived', cwd: '/project', updatedAt: 1, running: false, blank: false },
+          { sessionId: 'subagent', cwd: '/project', updatedAt: 3, running: true, blank: false, origin: 'subagent' }
+        ]
+      }
+    if (method === 'workspace.list')
+      return {
+        items: [{ workspaceId: 'workspace-1', sessionIds: ['session-a', 'session-b', 'session-archived', 'subagent'] }],
+        archivedSessionIds: ['session-archived']
+      }
     if (method === 'session.search') {
       assert.deepEqual(payload, { query: 'evidence' })
       return { items: [{ sessionId: 'session-a', snippet: 'browser evidence' }], hasMore: false }
@@ -106,7 +138,10 @@ test('BMW Session Center lists only active sessions in its Project and searches 
   }
   const project = { directory: '/project', workspaceId: 'workspace-1', sessionId: 'session-a' }
   const listed = await runtime.listProjectSessions(project, 'evidence')
-  assert.deepEqual(listed.items.map(({ sessionId }) => sessionId), ['session-a'])
+  assert.deepEqual(
+    listed.items.map(({ sessionId }) => sessionId),
+    ['session-a']
+  )
   assert.equal(listed.items[0].title, 'Browser audit')
   assert.equal(listed.items[0].running, true)
 })
@@ -130,27 +165,55 @@ test('DSH prompt submission preserves exact input and returns every Assistant ou
     promptPayload = payload
     return { rpcId: 'rpc-fixture', value: { accepted: true } }
   }
-  runtime.call = async (method) => {
+  runtime.call = async method => {
     assert.equal(method, 'session.history')
     return {
       events: [
-        { event: { type: 'user/message', data: { source: { rpcId: 'rpc-fixture' }, content: [{ type: 'text', text: 'hello' }] } } },
-        { event: { type: 'assistant/message', data: { message: { content: [{ type: 'text', text: 'First output' }] } } } },
+        {
+          event: {
+            type: 'user/message',
+            data: { source: { rpcId: 'rpc-fixture' }, content: [{ type: 'text', text: 'hello' }] }
+          }
+        },
+        {
+          event: { type: 'assistant/message', data: { message: { content: [{ type: 'text', text: 'First output' }] } } }
+        },
         { event: { type: 'tool/call', data: { name: 'browser' } } },
-        { event: { type: 'assistant/message', data: { message: { content: [{ type: 'text', text: 'Second' }, { type: 'text', text: ' output' }] } } } },
+        {
+          event: {
+            type: 'assistant/message',
+            data: {
+              message: {
+                content: [
+                  { type: 'text', text: 'Second' },
+                  { type: 'text', text: ' output' }
+                ]
+              }
+            }
+          }
+        },
         { event: { type: 'turn/end', data: {} } }
       ]
     }
   }
 
-  const replies = await runtime.waitForPromptReplies('session-1', await runtime.enqueuePrompt('session-1', 'hello'), { timeoutMs: 100 })
+  const replies = await runtime.waitForPromptReplies('session-1', await runtime.enqueuePrompt('session-1', 'hello'), {
+    timeoutMs: 100
+  })
 
   assert.deepEqual(promptPayload.content, [{ type: 'text', text: 'hello' }])
   assert.deepEqual(replies, ['First output', 'Second output'])
-  assert.equal(await runtime.waitForPromptReply('session-1', 'rpc-fixture', { timeoutMs: 100 }), 'First output\n\nSecond output')
+  assert.equal(
+    await runtime.waitForPromptReply('session-1', 'rpc-fixture', { timeoutMs: 100 }),
+    'First output\n\nSecond output'
+  )
 })
 
-test('DSH resolves the lockfile-owned official installation independently of PATH',()=>{
- const cli=bundledDshCli(),requireDsh=createRequire(cli),manifest=requireDsh('@deepseek-ai/dsh/package.json')
- assert.equal(manifest.version,'0.2.1-rc.2');assert.ok(fs.statSync(cli).isFile());assert.ok(cli.includes('node_modules'))
+test('DSH resolves the lockfile-owned official installation independently of PATH', () => {
+  const cli = bundledDshCli(),
+    requireDsh = createRequire(cli),
+    manifest = requireDsh('@deepseek-ai/dsh/package.json')
+  assert.equal(manifest.version, '0.2.1-rc.2')
+  assert.ok(fs.statSync(cli).isFile())
+  assert.ok(cli.includes('node_modules'))
 })

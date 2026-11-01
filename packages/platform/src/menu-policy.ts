@@ -3,9 +3,17 @@ import path from 'node:path'
 export function suggestedPageFilename(title, url) {
   let value = String(title || '').trim()
   if (!value) {
-    try { value = new URL(url).hostname || 'page' } catch { value = 'page' }
+    try {
+      value = new URL(url).hostname || 'page'
+    } catch {
+      value = 'page'
+    }
   }
-  const safe = value.replace(/[<>:"/\\|?*\u0000-\u001f]+/g, '-').replace(/[. ]+$/g, '').slice(0, 100) || 'page'
+  const safe =
+    value
+      .replace(/[<>:"/\\|?*\u0000-\u001f]+/g, '-')
+      .replace(/[. ]+$/g, '')
+      .slice(0, 100) || 'page'
   return `${safe}.html`
 }
 

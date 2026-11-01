@@ -29,7 +29,7 @@ export function workbuddyEnvironment(input: WorkbuddyEnvironmentInput): Record<s
     DISABLE_TELEMETRY: '1',
     DO_NOT_TRACK: '1',
     CODEBUDDY_DISABLE_COMPILE_CACHE: '1',
-    ELECTRON_RUN_AS_NODE: '1',
+    ELECTRON_RUN_AS_NODE: '1'
   }
   for (const key of inheritedKeys) {
     const value = parent[key]
@@ -42,7 +42,16 @@ export function workbuddyEnvironment(input: WorkbuddyEnvironmentInput): Record<s
 
 /** Same fixed configuration for the isolated catalog probe and the live runtime. */
 export function workbuddySpawnArgs(model: string): string[] {
-  return ['--acp', '--setting-sources', '', '--model', model, '--tools', 'NoDefer(mcp__bmw__browser)', '--strict-mcp-config']
+  return [
+    '--acp',
+    '--setting-sources',
+    '',
+    '--model',
+    model,
+    '--tools',
+    'NoDefer(mcp__bmw__browser)',
+    '--strict-mcp-config'
+  ]
 }
 
 export interface WorkbuddyMcpServer {
@@ -52,7 +61,14 @@ export interface WorkbuddyMcpServer {
   env: { name: string; value: string }[]
 }
 
-export function workbuddyMcpServer(input: { node: string; serverPath: string; bridgeUrl: string; bridgeToken: string; binding?: string; catalogOnly?: boolean }): WorkbuddyMcpServer {
+export function workbuddyMcpServer(input: {
+  node: string
+  serverPath: string
+  bridgeUrl: string
+  bridgeToken: string
+  binding?: string
+  catalogOnly?: boolean
+}): WorkbuddyMcpServer {
   if (!path.isAbsolute(input.serverPath)) throw new Error('BMW bridge server requires a host-owned absolute path')
   return {
     name: 'bmw',
@@ -61,9 +77,11 @@ export function workbuddyMcpServer(input: { node: string; serverPath: string; br
     env: [
       { name: 'BMW_BRIDGE_URL', value: input.bridgeUrl },
       { name: 'BMW_BRIDGE_TOKEN', value: input.bridgeToken },
-      ...(input.catalogOnly ? [{ name: 'BMW_CATALOG_ONLY', value: '1' }] : [{ name: 'BMW_SESSION_BINDING', value: input.binding ?? '' }]),
-      { name: 'ELECTRON_RUN_AS_NODE', value: '1' },
-    ],
+      ...(input.catalogOnly
+        ? [{ name: 'BMW_CATALOG_ONLY', value: '1' }]
+        : [{ name: 'BMW_SESSION_BINDING', value: input.binding ?? '' }]),
+      { name: 'ELECTRON_RUN_AS_NODE', value: '1' }
+    ]
   }
 }
 
@@ -71,8 +89,12 @@ export function workbuddyMcpServer(input: { node: string; serverPath: string; br
 export function workbuddyInitializeParams(): Record<string, unknown> {
   return {
     protocolVersion: 1,
-    clientCapabilities: { fs: { readTextFile: false, writeTextFile: false }, terminal: false, auth: { terminal: false } },
-    clientInfo: { name: 'bmw_agent', title: 'BMW Assistant', version: '0.1.0' },
+    clientCapabilities: {
+      fs: { readTextFile: false, writeTextFile: false },
+      terminal: false,
+      auth: { terminal: false }
+    },
+    clientInfo: { name: 'bmw_agent', title: 'BMW Assistant', version: '0.1.0' }
   }
 }
 
@@ -83,7 +105,11 @@ export function workbuddySessionParams(directory: string, server: WorkbuddyMcpSe
 export function workbuddyProtocolVersion(raw: unknown): number {
   const value = agentRecord(raw, 'WorkBuddy initialize result')
   if (typeof value.protocolVersion !== 'number' || !workbuddySupportsProtocolVersion(value.protocolVersion)) {
-    throw new Error('BMW 尚未验证当前 WorkBuddy ACP 协议版本（' + String(value.protocolVersion) + '）；请更新 BMW 适配或指定已固定的官方 CLI。')
+    throw new Error(
+      'BMW 尚未验证当前 WorkBuddy ACP 协议版本（' +
+        String(value.protocolVersion) +
+        '）；请更新 BMW 适配或指定已固定的官方 CLI。'
+    )
   }
   return value.protocolVersion
 }
@@ -93,11 +119,18 @@ export function workbuddyUpdateToolName(update: unknown): string {
   if (!update || typeof update !== 'object' || Array.isArray(update)) return ''
   const value = update as Record<string, unknown>
   const meta = value._meta
-  const name = meta && typeof meta === 'object' && !Array.isArray(meta) ? (meta as Record<string, unknown>)['codebuddy.ai/toolName'] : undefined
+  const name =
+    meta && typeof meta === 'object' && !Array.isArray(meta)
+      ? (meta as Record<string, unknown>)['codebuddy.ai/toolName']
+      : undefined
   return typeof name === 'string' ? name : typeof value.name === 'string' ? value.name : ''
 }
-export function workbuddyIsBridgeTool(name: string): boolean { return name === 'browser' || name === 'mcp__bmw__browser' }
-export function workbuddyAdmitsTool(update: unknown): boolean { return workbuddyIsBridgeTool(workbuddyUpdateToolName(update)) }
+export function workbuddyIsBridgeTool(name: string): boolean {
+  return name === 'browser' || name === 'mcp__bmw__browser'
+}
+export function workbuddyAdmitsTool(update: unknown): boolean {
+  return workbuddyIsBridgeTool(workbuddyUpdateToolName(update))
+}
 
 /** The only agent → client request BMW answers, and only for its own browser tool. */
 export function workbuddyAdmitsClientRequest(method: string, params: unknown): boolean {
@@ -110,10 +143,17 @@ export function workbuddyAdmitsClientRequest(method: string, params: unknown): b
 
 export function workbuddyStopOutcome(raw: unknown): AgentRunResult {
   const value = agentRecord(raw, 'WorkBuddy prompt response')
-  const meta = value._meta && typeof value._meta === 'object' && !Array.isArray(value._meta) ? value._meta as Record<string, unknown> : {}
+  const meta =
+    value._meta && typeof value._meta === 'object' && !Array.isArray(value._meta)
+      ? (value._meta as Record<string, unknown>)
+      : {}
   const rawOutcome = meta['codebuddy.ai/outcome']
   const outcome = typeof rawOutcome === 'string' ? rawOutcome.toLowerCase() : rawOutcome
-  if (typeof outcome === 'string' && outcome !== 'success' && outcome !== 'completed') return { outcome: outcome === 'cancelled' ? 'interrupted' : 'failed', message: 'WorkBuddy 服务未能完成本次任务；请检查 Key、模型权限或服务状态' }
+  if (typeof outcome === 'string' && outcome !== 'success' && outcome !== 'completed')
+    return {
+      outcome: outcome === 'cancelled' ? 'interrupted' : 'failed',
+      message: 'WorkBuddy 服务未能完成本次任务；请检查 Key、模型权限或服务状态'
+    }
   const reason = value.stopReason
   if (reason === 'end_turn') return { outcome: 'success', message: '' }
   if (reason === 'cancelled') return { outcome: 'interrupted', message: 'WorkBuddy stopped' }

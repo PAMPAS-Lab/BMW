@@ -1,27 +1,32 @@
-const {contextBridge,ipcRenderer}=require('electron')
-contextBridge.exposeInMainWorld('bmwStudio',{
-  openLibrary:()=>ipcRenderer.invoke('video-studio-library'),
-  newsStatus:()=>ipcRenderer.invoke('video-studio-news-status'),
-  review:(request:unknown)=>ipcRenderer.invoke('video-studio-review',request),
-  selection:(value:unknown)=>ipcRenderer.invoke('video-studio-selection',value),
-  chat:(value:unknown)=>ipcRenderer.invoke('video-studio-chat',value),
-  geometry:(value:unknown)=>ipcRenderer.invoke('video-studio-geometry',value),
-  onChat:(listener:(value:unknown)=>void)=>ipcRenderer.on('video-studio-chat-view',(_event:unknown,value:unknown)=>listener(value)),
-  view:(value:unknown)=>ipcRenderer.invoke('video-studio-view',value),
-  prefill:(text:string)=>ipcRenderer.invoke('video-studio-prefill',text),
-  prepareRecovery:(value:unknown)=>ipcRenderer.invoke('video-studio-recovery',value),
-  cancelTask:()=>ipcRenderer.invoke('video-studio-task-cancel'),
-  onTask:(listener:(value:unknown)=>void)=>ipcRenderer.on('video-studio-task',(_event:unknown,value:unknown)=>listener(value)),
-  leave:()=>ipcRenderer.invoke('video-studio-leave'),
-  closeNews:()=>ipcRenderer.invoke('video-studio-news-close'),
-  openNewsSource:(topicId:string)=>ipcRenderer.invoke('video-studio-news-source',topicId),
-  recommendNews:()=>ipcRenderer.invoke('video-studio-news'),
-  state:()=>ipcRenderer.invoke('video-studio-state'),
-  command:(projectId:string,request:unknown)=>ipcRenderer.invoke('video-studio-command',projectId,request),
-  read:(projectId:string,artifactId:string,offset:number,length:number)=>ipcRenderer.invoke('video-studio-read',projectId,artifactId,offset,length),
-  importAsset:(projectId:string)=>ipcRenderer.invoke('video-studio-import',projectId),
-  cancel:()=>ipcRenderer.invoke('video-studio-cancel'),
-  assistant:(request?:unknown)=>ipcRenderer.invoke('video-studio-assistant',request),
-  onChange:(listener:(value:unknown)=>void)=>ipcRenderer.on('video-studio-change',(_event:unknown,value:unknown)=>listener(value)),
-  onProgress:(listener:(value:unknown)=>void)=>ipcRenderer.on('video-studio-progress',(_event:unknown,value:unknown)=>listener(value))
+const { contextBridge, ipcRenderer } = require('electron')
+contextBridge.exposeInMainWorld('bmwStudio', {
+  openLibrary: () => ipcRenderer.invoke('video-studio-library'),
+  newsStatus: () => ipcRenderer.invoke('video-studio-news-status'),
+  review: (request: unknown) => ipcRenderer.invoke('video-studio-review', request),
+  selection: (value: unknown) => ipcRenderer.invoke('video-studio-selection', value),
+  chat: (value: unknown) => ipcRenderer.invoke('video-studio-chat', value),
+  geometry: (value: unknown) => ipcRenderer.invoke('video-studio-geometry', value),
+  onChat: (listener: (value: unknown) => void) =>
+    ipcRenderer.on('video-studio-chat-view', (_event: unknown, value: unknown) => listener(value)),
+  view: (value: unknown) => ipcRenderer.invoke('video-studio-view', value),
+  prefill: (text: string) => ipcRenderer.invoke('video-studio-prefill', text),
+  prepareRecovery: (value: unknown) => ipcRenderer.invoke('video-studio-recovery', value),
+  cancelTask: () => ipcRenderer.invoke('video-studio-task-cancel'),
+  onTask: (listener: (value: unknown) => void) =>
+    ipcRenderer.on('video-studio-task', (_event: unknown, value: unknown) => listener(value)),
+  leave: () => ipcRenderer.invoke('video-studio-leave'),
+  closeNews: () => ipcRenderer.invoke('video-studio-news-close'),
+  openNewsSource: (topicId: string) => ipcRenderer.invoke('video-studio-news-source', topicId),
+  recommendNews: () => ipcRenderer.invoke('video-studio-news'),
+  state: () => ipcRenderer.invoke('video-studio-state'),
+  command: (projectId: string, request: unknown) => ipcRenderer.invoke('video-studio-command', projectId, request),
+  read: (projectId: string, artifactId: string, offset: number, length: number) =>
+    ipcRenderer.invoke('video-studio-read', projectId, artifactId, offset, length),
+  importAsset: (projectId: string) => ipcRenderer.invoke('video-studio-import', projectId),
+  cancel: () => ipcRenderer.invoke('video-studio-cancel'),
+  assistant: (request?: unknown) => ipcRenderer.invoke('video-studio-assistant', request),
+  onChange: (listener: (value: unknown) => void) =>
+    ipcRenderer.on('video-studio-change', (_event: unknown, value: unknown) => listener(value)),
+  onProgress: (listener: (value: unknown) => void) =>
+    ipcRenderer.on('video-studio-progress', (_event: unknown, value: unknown) => listener(value))
 })

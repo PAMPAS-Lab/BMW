@@ -1,8 +1,8 @@
-import {readStateFile,stateRecord} from './state-load.js'
+import { readStateFile, stateRecord } from './state-load.js'
 import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
-import {normalizeProjectTabState} from '@bmw-agent/browser-capability/tabs'
+import { normalizeProjectTabState } from '@bmw-agent/browser-capability/tabs'
 
 const DOCUMENTS = Object.freeze({
   instructions: 'AGENTS.md',
@@ -17,7 +17,9 @@ const DOCUMENTS = Object.freeze({
 const MAX_DOCUMENT_BYTES = 256 * 1024
 
 function cleanName(value) {
-  const name = String(value ?? '').trim().replace(/\s+/g, ' ')
+  const name = String(value ?? '')
+    .trim()
+    .replace(/\s+/g, ' ')
   if (!name) throw new Error('Project name is required.')
   if (name.length > 80) throw new Error('Project name must be 80 characters or fewer.')
   return name
@@ -38,13 +40,15 @@ function writeAtomically(filePath, content) {
   fs.renameSync(temporary, filePath)
 }
 
-function validateProjectMetadata(project:Record<string,unknown>):void {
-  const fields=['id','name','directory','homeUrl','tabState','createdAt','updatedAt','archivedAt']
-  if(Object.keys(project).some(key=>!fields.includes(key)))throw new Error('Unknown Project data field; explicit migration is required.')
+function validateProjectMetadata(project: Record<string, unknown>): void {
+  const fields = ['id', 'name', 'directory', 'homeUrl', 'tabState', 'createdAt', 'updatedAt', 'archivedAt']
+  if (Object.keys(project).some(key => !fields.includes(key)))
+    throw new Error('Unknown Project data field; explicit migration is required.')
 }
 
 function documentTemplate(kind, projectName) {
-  if (kind === 'instructions') return `# ${projectName} — Agent Instructions
+  if (kind === 'instructions')
+    return `# ${projectName} — Agent Instructions
 
 ## Purpose
 
@@ -57,11 +61,13 @@ Describe the project outcome and boundaries here.
 - Never claim evidence that was not observed.
 - Ask before irreversible or externally visible actions.
 `
-  if (kind === 'memory') return `# ${projectName} — Project Memory
+  if (kind === 'memory')
+    return `# ${projectName} — Project Memory
 
 Durable, verified facts that should survive across sessions. Keep entries concise and include provenance or a date when useful.
 `
-  if (kind === 'tasks') return `# ${projectName} — Tasks
+  if (kind === 'tasks')
+    return `# ${projectName} — Tasks
 
 ## Active
 
@@ -71,21 +77,31 @@ Durable, verified facts that should survive across sessions. Keep entries concis
   return `# ${projectName} — ${title}\n\n`
 }
 
-export function parseProjectState(raw:unknown) {
-      const value = stateRecord(raw)
-      if (value.version !== 2 || (!Array.isArray(value.projects)||!value.projects.length)) throw new Error('Unsupported or malformed Project state.')
-      const ids = new Set<string>()
-      for (const rawProject of value.projects) {
-        const project = stateRecord(rawProject)
-        if (typeof project.id !== 'string' || !project.id || ids.has(project.id) || typeof project.directory !== 'string' || !path.isAbsolute(project.directory)) throw new Error('Invalid Project identity or directory.')
-        cleanName(project.name); cleanHomeUrl(project.homeUrl)
-        // Validate every migration before any Project documents or state are written.
-        validateProjectMetadata(project)
-        if(project.tabState!==undefined)normalizeProjectTabState(project.tabState)
-        ids.add(project.id)
-      }
-      if (value.activeProjectId !== null && typeof value.activeProjectId !== 'string') throw new Error('Invalid active Project identity.')
-      return { ...value, initialSetupPending: value.initialSetupPending === true }
+export function parseProjectState(raw: unknown) {
+  const value = stateRecord(raw)
+  if (value.version !== 2 || !Array.isArray(value.projects) || !value.projects.length)
+    throw new Error('Unsupported or malformed Project state.')
+  const ids = new Set<string>()
+  for (const rawProject of value.projects) {
+    const project = stateRecord(rawProject)
+    if (
+      typeof project.id !== 'string' ||
+      !project.id ||
+      ids.has(project.id) ||
+      typeof project.directory !== 'string' ||
+      !path.isAbsolute(project.directory)
+    )
+      throw new Error('Invalid Project identity or directory.')
+    cleanName(project.name)
+    cleanHomeUrl(project.homeUrl)
+    // Validate every migration before any Project documents or state are written.
+    validateProjectMetadata(project)
+    if (project.tabState !== undefined) normalizeProjectTabState(project.tabState)
+    ids.add(project.id)
+  }
+  if (value.activeProjectId !== null && typeof value.activeProjectId !== 'string')
+    throw new Error('Invalid active Project identity.')
+  return { ...value, initialSetupPending: value.initialSetupPending === true }
 }
 
 export class ProjectStore {
@@ -102,7 +118,7 @@ export class ProjectStore {
   }
 
   load() {
-    const parsed = readStateFile(this.filePath,parseProjectState)
+    const parsed = readStateFile(this.filePath, parseProjectState)
     if (parsed) this.state = parsed
   }
 
@@ -119,7 +135,7 @@ export class ProjectStore {
         this.ensureProjectFiles(project)
       }
       if (!this.get(this.state.activeProjectId, { includeArchived: false })) {
-        this.state.activeProjectId = this.state.projects.find((project) => !project.archivedAt)?.id || null
+        this.state.activeProjectId = this.state.projects.find(project => !project.archivedAt)?.id || null
         changed = true
       }
       if (changed) this.save()
@@ -165,16 +181,16 @@ export class ProjectStore {
     return {
       activeProjectId: this.state.activeProjectId,
       initialSetupPending: this.state.initialSetupPending === true,
-      projects: structuredClone(this.state.projects.filter((project) => !project.archivedAt))
+      projects: structuredClone(this.state.projects.filter(project => !project.archivedAt))
     }
   }
 
   list({ includeArchived = false } = {}) {
-    return this.state.projects.filter((project) => includeArchived || !project.archivedAt)
+    return this.state.projects.filter(project => includeArchived || !project.archivedAt)
   }
 
   get(id, { includeArchived = true } = {}) {
-    const project = this.state.projects.find((candidate) => candidate.id === id)
+    const project = this.state.projects.find(candidate => candidate.id === id)
     if (!project || (!includeArchived && project.archivedAt)) return null
     return project
   }
@@ -205,7 +221,7 @@ export class ProjectStore {
 
   create({ name, homeUrl }) {
     const normalizedName = cleanName(name)
-    if (this.list().some((project) => project.name.toLowerCase() === normalizedName.toLowerCase())) {
+    if (this.list().some(project => project.name.toLowerCase() === normalizedName.toLowerCase())) {
       throw new Error(`A project named “${normalizedName}” already exists.`)
     }
     const id = crypto.randomUUID()
@@ -233,7 +249,11 @@ export class ProjectStore {
     if (!project) throw new Error(`Unknown or archived project: ${id}`)
     if (name !== undefined) {
       const normalizedName = cleanName(name)
-      if (this.list().some((candidate) => candidate.id !== id && candidate.name.toLowerCase() === normalizedName.toLowerCase())) {
+      if (
+        this.list().some(
+          candidate => candidate.id !== id && candidate.name.toLowerCase() === normalizedName.toLowerCase()
+        )
+      ) {
         throw new Error(`A project named “${normalizedName}” already exists.`)
       }
       project.name = normalizedName
@@ -249,7 +269,8 @@ export class ProjectStore {
     if (!project) throw new Error(`Unknown or archived project: ${id}`)
     if (this.list().length === 1) throw new Error('BMW must keep at least one active project.')
     project.archivedAt = new Date().toISOString()
-    if (this.state.activeProjectId === id) this.state.activeProjectId = this.list().find((candidate) => candidate.id !== id)?.id || null
+    if (this.state.activeProjectId === id)
+      this.state.activeProjectId = this.list().find(candidate => candidate.id !== id)?.id || null
     this.save()
     return this.active()
   }
@@ -268,7 +289,8 @@ export class ProjectStore {
 
   writeDocument(id, kind, content) {
     if (typeof content !== 'string') throw new Error('Project document content must be text.')
-    if (Buffer.byteLength(content, 'utf8') > MAX_DOCUMENT_BYTES) throw new Error('Project document exceeds the 256 KiB limit.')
+    if (Buffer.byteLength(content, 'utf8') > MAX_DOCUMENT_BYTES)
+      throw new Error('Project document exceeds the 256 KiB limit.')
     const filePath = this.documentPath(id, kind)
     writeAtomically(filePath, content.endsWith('\n') ? content : `${content}\n`)
     const project = this.get(id)

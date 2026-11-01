@@ -2,21 +2,86 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import {pathToFileURL} from 'node:url'
-import {app,BrowserWindow,session} from 'electron'
-import {MediaController} from '../packages/media-native/src/media-controller.js'
-import {VideoStudioStore} from '../packages/feature-video/src/studio-store.js'
-import {newStudioScene} from '../packages/feature-video/src/studio-contract.js'
+import { pathToFileURL } from 'node:url'
+import { app, BrowserWindow, session } from 'electron'
+import { MediaController } from '../packages/media-native/src/media-controller.js'
+import { VideoStudioStore } from '../packages/feature-video/src/studio-store.js'
+import { newStudioScene } from '../packages/feature-video/src/studio-contract.js'
 
-const root=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'bmw-audio-window-'))),artifacts=path.join(root,'artifacts');fs.mkdirSync(artifacts);app.setPath('userData',path.join(root,'profile'))
-let window:BrowserWindow|undefined,exitCode=0
-const timer=setTimeout(()=>{console.error('Audio window smoke exceeded three minutes.');app.exit(1)},180000)
-function voiceFixture(){const rate=48000,length=14*rate,result=Buffer.alloc(44+length*4);result.write('RIFF');result.writeUInt32LE(result.length-8,4);result.write('WAVEfmt ',8);result.writeUInt32LE(16,16);result.writeUInt16LE(1,20);result.writeUInt16LE(2,22);result.writeUInt32LE(rate,24);result.writeUInt32LE(rate*4,28);result.writeUInt16LE(4,32);result.writeUInt16LE(16,34);result.write('data',36);result.writeUInt32LE(length*4,40);for(let i=0;i<length;i++)for(let c=0;c<2;c++)result.writeInt16LE(Math.round(Math.sin(i/rate*2*Math.PI*(c?227:333))*18000),44+i*4+c*2);return result}
-async function run(){try{await app.whenReady();const isolated=session.fromPartition('audio-window-'+process.pid);window=new BrowserWindow({show:false,webPreferences:{session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}})
- const media=new MediaController({session:isolated,preloadPath:path.resolve('packages/media-native/src/preload/media-preload.cjs'),pagePath:path.resolve('packages/media-native/src/media/media.html'),artifactsDirectory:artifacts,resolveArtifactsDirectory:()=>artifacts,onStatus:()=>{}})
- const footage=await media.compose({title:'Audio source fixture',width:320,height:180,fps:12,music:true,scenes:[{title:'Encoded source',durationSeconds:7}]})
- const base=pathToFileURL(path.resolve('packages/media-native/src/media')+path.sep).href,mediabunny=pathToFileURL(path.resolve('node_modules/mediabunny/dist/bundles/mediabunny.mjs')).href,fixture=path.join(root,'fixture.html');fs.writeFileSync(fixture,'<!doctype html><base href="'+base+'"><script type="importmap">'+JSON.stringify({imports:{mediabunny}})+'</script><title>Audio window fixture</title>');await window.loadFile(fixture)
- const result=await window.webContents.executeJavaScript(`(async()=>{
+const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-audio-window-'))),
+  artifacts = path.join(root, 'artifacts')
+fs.mkdirSync(artifacts)
+app.setPath('userData', path.join(root, 'profile'))
+let window: BrowserWindow | undefined,
+  exitCode = 0
+const timer = setTimeout(() => {
+  console.error('Audio window smoke exceeded three minutes.')
+  app.exit(1)
+}, 180000)
+function voiceFixture() {
+  const rate = 48000,
+    length = 14 * rate,
+    result = Buffer.alloc(44 + length * 4)
+  result.write('RIFF')
+  result.writeUInt32LE(result.length - 8, 4)
+  result.write('WAVEfmt ', 8)
+  result.writeUInt32LE(16, 16)
+  result.writeUInt16LE(1, 20)
+  result.writeUInt16LE(2, 22)
+  result.writeUInt32LE(rate, 24)
+  result.writeUInt32LE(rate * 4, 28)
+  result.writeUInt16LE(4, 32)
+  result.writeUInt16LE(16, 34)
+  result.write('data', 36)
+  result.writeUInt32LE(length * 4, 40)
+  for (let i = 0; i < length; i++)
+    for (let c = 0; c < 2; c++)
+      result.writeInt16LE(Math.round(Math.sin((i / rate) * 2 * Math.PI * (c ? 227 : 333)) * 18000), 44 + i * 4 + c * 2)
+  return result
+}
+async function run() {
+  try {
+    await app.whenReady()
+    const isolated = session.fromPartition('audio-window-' + process.pid)
+    window = new BrowserWindow({
+      show: false,
+      webPreferences: {
+        session: isolated,
+        sandbox: true,
+        contextIsolation: true,
+        nodeIntegration: false,
+        backgroundThrottling: false
+      }
+    })
+    const media = new MediaController({
+      session: isolated,
+      preloadPath: path.resolve('packages/media-native/src/preload/media-preload.cjs'),
+      pagePath: path.resolve('packages/media-native/src/media/media.html'),
+      artifactsDirectory: artifacts,
+      resolveArtifactsDirectory: () => artifacts,
+      onStatus: () => {}
+    })
+    const footage = await media.compose({
+      title: 'Audio source fixture',
+      width: 320,
+      height: 180,
+      fps: 12,
+      music: true,
+      scenes: [{ title: 'Encoded source', durationSeconds: 7 }]
+    })
+    const base = pathToFileURL(path.resolve('packages/media-native/src/media') + path.sep).href,
+      mediabunny = pathToFileURL(path.resolve('node_modules/mediabunny/dist/bundles/mediabunny.mjs')).href,
+      fixture = path.join(root, 'fixture.html')
+    fs.writeFileSync(
+      fixture,
+      '<!doctype html><base href="' +
+        base +
+        '"><script type="importmap">' +
+        JSON.stringify({ imports: { mediabunny } }) +
+        '</script><title>Audio window fixture</title>'
+    )
+    await window.loadFile(fixture)
+    const result = (await window.webContents.executeJavaScript(`(async()=>{
   const {Input,BufferSource,ALL_FORMATS}=await import('mediabunny'),{mixCompositionAudio,prepareCompositionAudio}=await import('./composition-audio.js'),{assertComposition}=await import('../composition-contract.js');
   const decode=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0)),voice=decode(${JSON.stringify(voiceFixture().toString('base64'))}),av=decode(${JSON.stringify(fs.readFileSync(footage.path).toString('base64'))}),inputs=[voice,av].map(data=>new Input({formats:ALL_FORMATS,source:new BufferSource(data)})),assets=new Map([['voice.wav',{data:voice,input:inputs[0]}],['source.mp4',{data:av,input:inputs[1]}]]),context=new AudioContext({sampleRate:48000});let plan,longPlan;
   const layer={id:'bed',title:'Bed',artifactId:'voice.wav',startSeconds:0,durationSeconds:12.25,sourceStartSeconds:.3,playbackRate:1,volume:1.4,muted:false,locked:false,fadeInSeconds:.15,fadeOutSeconds:.3,ducking:true};
@@ -47,10 +112,37 @@ async function run(){try{await app.whenReady();const isolated=session.fromPartit
    if(maxClockDifference>1e-7||maximumPcmFrames>4*48000||longPlan.frames!==720*48000)throw new Error('Long clock or PCM memory bound failed.');
    return {maxDifference,maxClockDifference,maximumPcmFrames,allocations,frames:longPlan.frames,globalPeak:plan.audioPeak,actualAacFootage:true,firstMiddleSeekAndOverlappingWindows:true,cancelled,audioAuditioned:false};
   }finally{await plan?.close();await longPlan?.close();globalThis.AudioBuffer=NativeAudioBuffer;inputs.forEach(i=>i.dispose());await context.close()}
- })()`) as {maxDifference:number;maxClockDifference:number;maximumPcmFrames:number;frames:number;cancelled:boolean}
- assert.ok(result.maxDifference<=1e-6);assert.ok(result.maxClockDifference<=1e-7);assert.equal(result.maximumPcmFrames,192000);assert.equal(result.frames,34560000);assert.equal(result.cancelled,true);console.log('PASS bounded audio windows '+JSON.stringify(result))
- const draft=new VideoStudioStore(root,'audio-window-fixture').create('Preview windows');draft.width=320;draft.height=180;draft.fps=12;draft.music=false;draft.scenes=[{...newStudioScene('voice-preview','Preview voice'),durationSeconds:18,bullets:['PCM windows'],narration:'Window voice',audioText:'Window voice',audioArtifactId:'voice.wav',audioDurationSeconds:14,audioGeneration:{kind:'imported'}}]
- const preview=await window.webContents.executeJavaScript(`(async()=>{
+ })()`)) as {
+      maxDifference: number
+      maxClockDifference: number
+      maximumPcmFrames: number
+      frames: number
+      cancelled: boolean
+    }
+    assert.ok(result.maxDifference <= 1e-6)
+    assert.ok(result.maxClockDifference <= 1e-7)
+    assert.equal(result.maximumPcmFrames, 192000)
+    assert.equal(result.frames, 34560000)
+    assert.equal(result.cancelled, true)
+    console.log('PASS bounded audio windows ' + JSON.stringify(result))
+    const draft = new VideoStudioStore(root, 'audio-window-fixture').create('Preview windows')
+    draft.width = 320
+    draft.height = 180
+    draft.fps = 12
+    draft.music = false
+    draft.scenes = [
+      {
+        ...newStudioScene('voice-preview', 'Preview voice'),
+        durationSeconds: 18,
+        bullets: ['PCM windows'],
+        narration: 'Window voice',
+        audioText: 'Window voice',
+        audioArtifactId: 'voice.wav',
+        audioDurationSeconds: 14,
+        audioGeneration: { kind: 'imported' }
+      }
+    ]
+    const preview = (await window.webContents.executeJavaScript(`(async()=>{
   const {StudioPreview}=await import('../../../feature-video/src/renderer/studio-preview.js'),{draftComposition}=await import('../../../feature-video/src/studio-contract.js'),{mixCompositionAudio}=await import('./composition-audio.js');
   const draft=${JSON.stringify(draft)},voice=Uint8Array.from(atob(${JSON.stringify(voiceFixture().toString('base64'))}),c=>c.charCodeAt(0)),canvas=document.createElement('canvas');document.body.append(canvas);const context=new AudioContext({sampleRate:48000}),reference=(await mixCompositionAudio(draftComposition(draft),new Map([['voice.wav',{data:voice}]]),context)).mixed;
   const create=AudioContext.prototype.createBufferSource,starts=[];let active=0,maximumActive=0,lastTime=0,maxSeekDifference=0,seekReference;
@@ -60,7 +152,20 @@ async function run(){try{await app.whenReady();const isolated=session.fromPartit
    await player.seek(4.13);seekReference=Math.round(4.13*48000);await player.play();player.pause();if(maxSeekDifference>1e-6)throw new Error('Seek PCM drift: '+maxSeekDifference);
    const preparation=player.prepare(draft);await player.dispose();if(await preparation!==false)throw new Error('Cancelled preview preparation still admitted.');if(active!==0)throw new Error('Preview retained scheduled audio after disposal.');return {crossed,scheduled:starts.length,maximumActive,maxSeekDifference,disposed:true,audioAuditioned:false};
   }finally{await player.dispose();AudioContext.prototype.createBufferSource=create;canvas.remove();await context.close()}
- })()`) as {crossed:number;maximumActive:number;maxSeekDifference:number;disposed:boolean}
- assert.ok(preview.crossed>=8);assert.equal(preview.maximumActive,2);assert.equal(preview.maxSeekDifference,0);assert.equal(preview.disposed,true);console.log('PASS Studio preview audio windows '+JSON.stringify(preview))
- }catch(error){exitCode=1;console.error(error)}finally{clearTimeout(timer);window?.destroy();fs.rmSync(root,{recursive:true,force:true});app.exit(exitCode)}}
+ })()`)) as { crossed: number; maximumActive: number; maxSeekDifference: number; disposed: boolean }
+    assert.ok(preview.crossed >= 8)
+    assert.equal(preview.maximumActive, 2)
+    assert.equal(preview.maxSeekDifference, 0)
+    assert.equal(preview.disposed, true)
+    console.log('PASS Studio preview audio windows ' + JSON.stringify(preview))
+  } catch (error) {
+    exitCode = 1
+    console.error(error)
+  } finally {
+    clearTimeout(timer)
+    window?.destroy()
+    fs.rmSync(root, { recursive: true, force: true })
+    app.exit(exitCode)
+  }
+}
 void run()

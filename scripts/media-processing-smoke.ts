@@ -1,32 +1,58 @@
-import {parsePreservedVtt} from '../packages/media-native/src/hls-subtitles.js'
+import { parsePreservedVtt } from '../packages/media-native/src/hls-subtitles.js'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { app, BrowserWindow, session } from 'electron'
-import {MediaProcessor} from '../packages/media-native/src/media-processor.js'
+import { MediaProcessor } from '../packages/media-native/src/media-processor.js'
 import { MediaController } from '../packages/media-native/src/media-controller.js'
 import { ArtifactJobIO } from '../packages/media-native/src/artifact-job-io.js'
-import {readMediaDerivation} from '../packages/media-native/src/media-derivation.js'
+import { readMediaDerivation } from '../packages/media-native/src/media-derivation.js'
 import { BrowserKernel } from '../packages/browser-capability/src/browser-kernel.js'
 import { BrowserCapabilityRegistry } from '../packages/browser-capability/src/browser-capability-registry.js'
 import { createBridgeServer } from '../packages/browser-capability/src/bridge-server.js'
 import { bmwProduct } from '@bmw-agent/product-bmw'
 import type { MediaInfo } from '../packages/media-native/src/media-contract.js'
-import {mediaRecord} from '../packages/media-native/src/media-contract.js'
-import {createServer} from 'node:http'
+import { mediaRecord } from '../packages/media-native/src/media-contract.js'
+import { createServer } from 'node:http'
 import crypto from 'node:crypto'
-import {Input,BufferSource,MP4,Output,BufferTarget,Mp4OutputFormat,MpegTsOutputFormat,Conversion,EncodedVideoPacketSource,EncodedAudioPacketSource,EncodedPacketSink} from 'mediabunny'
+import {
+  Input,
+  BufferSource,
+  MP4,
+  Output,
+  BufferTarget,
+  Mp4OutputFormat,
+  MpegTsOutputFormat,
+  Conversion,
+  EncodedVideoPacketSource,
+  EncodedAudioPacketSource,
+  EncodedPacketSink
+} from 'mediabunny'
 
 const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-media-processing-')))
-const project = { id: 'media-job-project', name:'Isolated media fixture', directory: path.join(root, 'project') }
+const project = { id: 'media-job-project', name: 'Isolated media fixture', directory: path.join(root, 'project') }
 const artifacts = path.join(project.directory, 'artifacts')
 fs.mkdirSync(artifacts, { recursive: true })
 fs.mkdirSync(path.join(root, 'profile'))
 app.setPath('userData', path.join(root, 'profile'))
-interface Frame { artifactId: string; path: string; timestampSeconds: number; width: number; height: number }
-interface Frames { frames: Frame[] }
-interface Converted { durationSeconds: number; artifactId: string; path: string; bytes: number; tracks: { type: string; codec: string }[] }
+interface Frame {
+  artifactId: string
+  path: string
+  timestampSeconds: number
+  width: number
+  height: number
+}
+interface Frames {
+  frames: Frame[]
+}
+interface Converted {
+  durationSeconds: number
+  artifactId: string
+  path: string
+  bytes: number
+  tracks: { type: string; codec: string }[]
+}
 async function stage<T>(name: string, operation: () => Promise<T>): Promise<T> {
   process.stderr.write(`[BMW media processing] ${name}\n`)
   return operation()
@@ -37,127 +63,352 @@ let cancelOnProgress: AbortController | undefined
 let cancelImage: AbortController | undefined
 let cancelCover: AbortController | undefined
 let cancelDrawing: AbortController | undefined
-let imageInspectActive=false
+let imageInspectActive = false
 let granted = true
 let exitCode = 0
-const timeout = setTimeout(() => { process.stderr.write('Media processing smoke exceeded 150 seconds.\n'); app.exit(1) }, 150_000)
+const timeout = setTimeout(() => {
+  process.stderr.write('Media processing smoke exceeded 150 seconds.\n')
+  app.exit(1)
+}, 150_000)
 
 async function run(): Promise<void> {
-try {
-  let adaptiveRecordingStarted:(()=>void)|undefined
-  await app.whenReady()
-  const browserSession = session.fromPartition(`bmw-media-processing-${process.pid}`)
-  source = new BrowserWindow({ show: false, webPreferences: { session: browserSession, sandbox: true, contextIsolation: true, nodeIntegration: false, backgroundThrottling: false } })
-  fs.writeFileSync(path.join(root,'fixture.html'),'<title>BMW media fixture</title>');await source.loadFile(path.join(root,'fixture.html'))
-  const media = new MediaController({ session: browserSession,
-    preloadPath: path.resolve('packages/media-native/src/preload/media-preload.cjs'),
-    pagePath: path.resolve('packages/media-native/src/media/media.html'), artifactsDirectory: artifacts,
-    resolveArtifactsDirectory: () => artifacts, onStatus: (value: { progress?: number; action?: string; active?: boolean;kind?:string;state?:string }) => { if(value.active&&value.kind==='video-element'&&value.state==='recording')adaptiveRecordingStarted?.();if(value.action==='media.image.inspect')imageInspectActive=Boolean(value.active); if(value.active&&value.action==='video.cover')cancelCover?.abort(new Error('Cover cancellation')); if(value.active&&(value.action==='media.image.draw'||value.action==='media.image.annotate'))cancelDrawing?.abort(new Error('Drawing cancellation')); if(value.active&&value.action==='media.image.inspect')cancelImage?.abort(new Error('Image cancellation')); if ((value.progress ?? 0) > 0) cancelOnProgress?.abort(new Error('E2E cancellation')) } })
-  const registry = new BrowserCapabilityRegistry(bmwProduct)
-  const fixtureCodec = process.env.BMW_MEDIA_FIXTURE_CODEC === 'vp9' ? 'vp9' : 'vp8'
-  const kernel = new BrowserKernel({ window: source, session: browserSession, capabilityRegistry: registry,
-    permissionStore: { hasAgentControl: () => granted }, projectStore: { active: () => project }, artifactsDirectory: artifacts,
-    sessionContinuity: undefined, settingsStore: undefined, allowedActions: undefined, onState: undefined })
-  kernel.setRecordingController(media)
-  bridge = await createBridgeServer(kernel, { toolDefinition: registry.toolDefinition(), resolveProject: (directory) => directory === project.directory ? project : undefined, activeProjectId: () => project.id })
-  const headers = { authorization: `Bearer ${bridge.token}`, 'content-type': 'application/json' }
-  const binding=bridge.registerSession('media-job-session',project.directory)
-  const bridgeCall = async (args: unknown) => {
-    const response = await fetch(`${bridge!.url}/execute`, { method: 'POST', headers, body: JSON.stringify({ binding, arguments: args }) })
-    const result = await response.json() as { result: unknown; images: { mimeType: string; data: string }[]; error?: string }
-    if (!response.ok) throw new Error(result.error)
-    return result
-  }
-  await stage('decode actual PNG/JPEG/WebP; reject corrupt pixels and oversized headers; cancel and recover without writes', async()=>{
-    for(const [extension,type] of [['png','image/png'],['jpg','image/jpeg'],['webp','image/webp']] as const){
-      const base64=await source!.webContents.executeJavaScript(`(()=>{const c=document.createElement('canvas');c.width=320;c.height=180;c.getContext('2d').fillRect(0,0,320,180);return c.toDataURL(${JSON.stringify(type)}).split(',')[1]})()`) as string
-      fs.writeFileSync(path.join(artifacts,'image.'+extension),Buffer.from(base64,'base64'))
-      const before=fs.readdirSync(artifacts).sort(),info=await media.processArtifact({action:'media.image.inspect',artifactId:'image.'+extension}) as {width:number;height:number;pixels:number;canDecode:boolean;contentType:string}
-      assert.equal(info.width,320);assert.equal(info.height,180);assert.equal(info.pixels,57600);assert.equal(info.canDecode,true);assert.equal(info.contentType,type);assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
+  try {
+    let adaptiveRecordingStarted: (() => void) | undefined
+    await app.whenReady()
+    const browserSession = session.fromPartition(`bmw-media-processing-${process.pid}`)
+    source = new BrowserWindow({
+      show: false,
+      webPreferences: {
+        session: browserSession,
+        sandbox: true,
+        contextIsolation: true,
+        nodeIntegration: false,
+        backgroundThrottling: false
+      }
+    })
+    fs.writeFileSync(path.join(root, 'fixture.html'), '<title>BMW media fixture</title>')
+    await source.loadFile(path.join(root, 'fixture.html'))
+    const media = new MediaController({
+      session: browserSession,
+      preloadPath: path.resolve('packages/media-native/src/preload/media-preload.cjs'),
+      pagePath: path.resolve('packages/media-native/src/media/media.html'),
+      artifactsDirectory: artifacts,
+      resolveArtifactsDirectory: () => artifacts,
+      onStatus: (value: { progress?: number; action?: string; active?: boolean; kind?: string; state?: string }) => {
+        if (value.active && value.kind === 'video-element' && value.state === 'recording') adaptiveRecordingStarted?.()
+        if (value.action === 'media.image.inspect') imageInspectActive = Boolean(value.active)
+        if (value.active && value.action === 'video.cover') cancelCover?.abort(new Error('Cover cancellation'))
+        if (value.active && (value.action === 'media.image.draw' || value.action === 'media.image.annotate'))
+          cancelDrawing?.abort(new Error('Drawing cancellation'))
+        if (value.active && value.action === 'media.image.inspect') cancelImage?.abort(new Error('Image cancellation'))
+        if ((value.progress ?? 0) > 0) cancelOnProgress?.abort(new Error('E2E cancellation'))
+      }
+    })
+    const registry = new BrowserCapabilityRegistry(bmwProduct)
+    const fixtureCodec = process.env.BMW_MEDIA_FIXTURE_CODEC === 'vp9' ? 'vp9' : 'vp8'
+    const kernel = new BrowserKernel({
+      window: source,
+      session: browserSession,
+      capabilityRegistry: registry,
+      permissionStore: { hasAgentControl: () => granted },
+      projectStore: { active: () => project },
+      artifactsDirectory: artifacts,
+      sessionContinuity: undefined,
+      settingsStore: undefined,
+      allowedActions: undefined,
+      onState: undefined
+    })
+    kernel.setRecordingController(media)
+    bridge = await createBridgeServer(kernel, {
+      toolDefinition: registry.toolDefinition(),
+      resolveProject: directory => (directory === project.directory ? project : undefined),
+      activeProjectId: () => project.id
+    })
+    const headers = { authorization: `Bearer ${bridge.token}`, 'content-type': 'application/json' }
+    const binding = bridge.registerSession('media-job-session', project.directory)
+    const bridgeCall = async (args: unknown) => {
+      const response = await fetch(`${bridge!.url}/execute`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ binding, arguments: args })
+      })
+      const result = (await response.json()) as {
+        result: unknown
+        images: { mimeType: string; data: string }[]
+        error?: string
+      }
+      if (!response.ok) throw new Error(result.error)
+      return result
     }
-    const png=fs.readFileSync(path.join(artifacts,'image.png')),huge=Buffer.from(png);huge.writeUInt32BE(8192,16);huge.writeUInt32BE(8192,20);fs.writeFileSync(path.join(artifacts,'huge.png'),huge)
-    await assert.rejects(media.processArtifact({action:'media.image.inspect',artifactId:'huge.png'}),/pixel|size|dimension|limit/i)
-    // Valid admitted header with no compressed pixels must fail real decoding.
-    const invalid=Buffer.concat([png.subarray(0,33),png.subarray(png.length-12)]);fs.writeFileSync(path.join(artifacts,'invalid.png'),invalid)
-    await assert.rejects(media.processArtifact({action:'media.image.inspect',artifactId:'invalid.png'}),/decode|source|image/i)
-    const before=fs.readdirSync(artifacts).sort();cancelImage=new AbortController()
-    await assert.rejects(media.processArtifact({action:'media.image.inspect',artifactId:'image.png'},cancelImage.signal),/Image cancellation/);cancelImage=undefined
-    assert.equal(media.isCaptureActive(),false);assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
-    await media.processArtifact({action:'media.image.inspect',artifactId:'image.png'})
-    const encoding=await media.processArtifact({action:'media.encode.check',width:640,height:360,fps:12}) as {kind:string;videoSupported:boolean;audioSupported:boolean}
-    assert.equal(encoding.kind,'encoding');assert.equal(encoding.videoSupported,true);assert.equal(encoding.audioSupported,true);assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
-  })
-  await stage('native image annotation and drawing: all primitives, actual pixels, originals, transparency, errors and cancellation',async()=>{
-    const original=fs.readFileSync(path.join(artifacts,'image.png'))
-    const measured=(await bridgeCall({action:'media.image.inspect',artifactId:'image.png'})).result as {width:number;height:number}
-    assert.equal(measured.width,320);assert.equal(measured.height,180)
-    const shapes=[
-      {type:'rect',x:10,y:10,width:80,height:60,color:'#ff0000',lineWidth:4},
-      {type:'ellipse',x:110,y:10,width:40,height:40,color:'#00ff00',fill:'#00ff00'},
-      {type:'arrow',x1:20,y1:100,x2:100,y2:100,color:'#0000ff',lineWidth:4},
-      {type:'line',x1:200,y1:100,x2:300,y2:100,color:'#ff00ff'},
-      {type:'path',points:[{x:120,y:110},{x:150,y:125},{x:180,y:110}],color:'#ff8800'},
-      {type:'text',x:170,y:15,text:'BMW 标注',fontSize:20,bold:true,maxWidth:140,color:'#000000',background:'#ffffff'},
-      {type:'redact',x:20,y:140,width:100,height:20,color:'#ffffff'}
-    ]
-    const annotated=await bridgeCall({action:'media.image.annotate',artifactId:'image.png',shapes})
-    const receipt=annotated.result as {artifactId:string;path:string;width:number;height:number;shapeCount:number;sourceArtifactId:string}
-    assert.equal(receipt.sourceArtifactId,'image.png');assert.equal(receipt.width,320);assert.equal(receipt.height,180);assert.equal(receipt.shapeCount,7)
-    assert.equal(annotated.images.length,1);assert.equal(annotated.images[0].data,fs.readFileSync(receipt.path).toString('base64'));assert.deepEqual(fs.readFileSync(path.join(artifacts,'image.png')),original)
-    const pixels=await source!.webContents.executeJavaScript(`(async()=>{
-      const i=new Image();i.src=${JSON.stringify('data:image/png;base64,'+annotated.images[0].data)};await i.decode();const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.drawImage(i,0,0);
+    await stage(
+      'decode actual PNG/JPEG/WebP; reject corrupt pixels and oversized headers; cancel and recover without writes',
+      async () => {
+        for (const [extension, type] of [
+          ['png', 'image/png'],
+          ['jpg', 'image/jpeg'],
+          ['webp', 'image/webp']
+        ] as const) {
+          const base64 = (await source!.webContents.executeJavaScript(
+            `(()=>{const c=document.createElement('canvas');c.width=320;c.height=180;c.getContext('2d').fillRect(0,0,320,180);return c.toDataURL(${JSON.stringify(type)}).split(',')[1]})()`
+          )) as string
+          fs.writeFileSync(path.join(artifacts, 'image.' + extension), Buffer.from(base64, 'base64'))
+          const before = fs.readdirSync(artifacts).sort(),
+            info = (await media.processArtifact({
+              action: 'media.image.inspect',
+              artifactId: 'image.' + extension
+            })) as { width: number; height: number; pixels: number; canDecode: boolean; contentType: string }
+          assert.equal(info.width, 320)
+          assert.equal(info.height, 180)
+          assert.equal(info.pixels, 57600)
+          assert.equal(info.canDecode, true)
+          assert.equal(info.contentType, type)
+          assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+        }
+        const png = fs.readFileSync(path.join(artifacts, 'image.png')),
+          huge = Buffer.from(png)
+        huge.writeUInt32BE(8192, 16)
+        huge.writeUInt32BE(8192, 20)
+        fs.writeFileSync(path.join(artifacts, 'huge.png'), huge)
+        await assert.rejects(
+          media.processArtifact({ action: 'media.image.inspect', artifactId: 'huge.png' }),
+          /pixel|size|dimension|limit/i
+        )
+        // Valid admitted header with no compressed pixels must fail real decoding.
+        const invalid = Buffer.concat([png.subarray(0, 33), png.subarray(png.length - 12)])
+        fs.writeFileSync(path.join(artifacts, 'invalid.png'), invalid)
+        await assert.rejects(
+          media.processArtifact({ action: 'media.image.inspect', artifactId: 'invalid.png' }),
+          /decode|source|image/i
+        )
+        const before = fs.readdirSync(artifacts).sort()
+        cancelImage = new AbortController()
+        await assert.rejects(
+          media.processArtifact({ action: 'media.image.inspect', artifactId: 'image.png' }, cancelImage.signal),
+          /Image cancellation/
+        )
+        cancelImage = undefined
+        assert.equal(media.isCaptureActive(), false)
+        assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+        await media.processArtifact({ action: 'media.image.inspect', artifactId: 'image.png' })
+        const encoding = (await media.processArtifact({
+          action: 'media.encode.check',
+          width: 640,
+          height: 360,
+          fps: 12
+        })) as { kind: string; videoSupported: boolean; audioSupported: boolean }
+        assert.equal(encoding.kind, 'encoding')
+        assert.equal(encoding.videoSupported, true)
+        assert.equal(encoding.audioSupported, true)
+        assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+      }
+    )
+    await stage(
+      'native image annotation and drawing: all primitives, actual pixels, originals, transparency, errors and cancellation',
+      async () => {
+        const original = fs.readFileSync(path.join(artifacts, 'image.png'))
+        const measured = (await bridgeCall({ action: 'media.image.inspect', artifactId: 'image.png' })).result as {
+          width: number
+          height: number
+        }
+        assert.equal(measured.width, 320)
+        assert.equal(measured.height, 180)
+        const shapes = [
+          { type: 'rect', x: 10, y: 10, width: 80, height: 60, color: '#ff0000', lineWidth: 4 },
+          { type: 'ellipse', x: 110, y: 10, width: 40, height: 40, color: '#00ff00', fill: '#00ff00' },
+          { type: 'arrow', x1: 20, y1: 100, x2: 100, y2: 100, color: '#0000ff', lineWidth: 4 },
+          { type: 'line', x1: 200, y1: 100, x2: 300, y2: 100, color: '#ff00ff' },
+          {
+            type: 'path',
+            points: [
+              { x: 120, y: 110 },
+              { x: 150, y: 125 },
+              { x: 180, y: 110 }
+            ],
+            color: '#ff8800'
+          },
+          {
+            type: 'text',
+            x: 170,
+            y: 15,
+            text: 'BMW 标注',
+            fontSize: 20,
+            bold: true,
+            maxWidth: 140,
+            color: '#000000',
+            background: '#ffffff'
+          },
+          { type: 'redact', x: 20, y: 140, width: 100, height: 20, color: '#ffffff' }
+        ]
+        const annotated = await bridgeCall({ action: 'media.image.annotate', artifactId: 'image.png', shapes })
+        const receipt = annotated.result as {
+          artifactId: string
+          path: string
+          width: number
+          height: number
+          shapeCount: number
+          sourceArtifactId: string
+        }
+        assert.equal(receipt.sourceArtifactId, 'image.png')
+        assert.equal(receipt.width, 320)
+        assert.equal(receipt.height, 180)
+        assert.equal(receipt.shapeCount, 7)
+        assert.equal(annotated.images.length, 1)
+        assert.equal(annotated.images[0].data, fs.readFileSync(receipt.path).toString('base64'))
+        assert.deepEqual(fs.readFileSync(path.join(artifacts, 'image.png')), original)
+        const pixels = (await source!.webContents.executeJavaScript(`(async()=>{
+      const i=new Image();i.src=${JSON.stringify('data:image/png;base64,' + annotated.images[0].data)};await i.decode();const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.drawImage(i,0,0);
       const points=[[10,30],[130,30],[60,100],[250,100],[150,125],[60,150],[300,170],[50,40]],samples=points.map(p=>[...x.getImageData(...p,1,1).data]);
       const text=x.getImageData(170,15,140,25).data;let ink=0;for(let at=0;at<text.length;at+=4)if(text[at]<80&&text[at+1]<80&&text[at+2]<80)ink++;
       const head=x.getImageData(87,91,13,18).data;let arrowInk=0;for(let at=0;at<head.length;at+=4)if(head[at+2]>200)arrowInk++;
       return {samples,ink,arrowInk}
-    })()`) as {samples:number[][];ink:number;arrowInk:number}
-    const expected=[[255,0,0,255],[0,255,0,255],[0,0,255,255],[255,0,255,255],[255,136,0,255],[255,255,255,255],[0,0,0,255],[0,0,0,255]]
-    assert.deepEqual(pixels.samples,expected);assert.ok(pixels.ink>100);assert.ok(pixels.arrowInk>40)
-    const drawing=await bridgeCall({action:'media.image.draw',width:640,height:360,background:'#f4f7fa',shapes:[
-      {type:'text',x:240,y:25,text:'BMW 绘图',fontSize:28,bold:true,color:'#254b3c'},
-      {type:'rect',x:60,y:110,width:180,height:90,color:'#2865af',fill:'#e8f1ff',lineWidth:3},
-      {type:'text',x:85,y:138,text:'截图 / 图片',fontSize:22,color:'#2865af',maxWidth:140},
-      {type:'arrow',x1:252,y1:155,x2:385,y2:155,color:'#486376',lineWidth:5},
-      {type:'ellipse',x:400,y:110,width:180,height:90,color:'#318255',fill:'#e8f5ed',lineWidth:3},
-      {type:'text',x:430,y:138,text:'标注结果',fontSize:22,color:'#318255',maxWidth:120},
-      {type:'text',x:110,y:260,text:'框选 · 箭头 · 文字 · 路径 · 遮盖',fontSize:22,color:'#486376',maxWidth:440}
-    ]})
-    const proof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/image-drawing-validation';fs.mkdirSync(proof,{recursive:true})
-    fs.writeFileSync(path.join(proof,'native-annotations.png'),fs.readFileSync(receipt.path));fs.writeFileSync(path.join(proof,'native-drawing.png'),Buffer.from(drawing.images[0].data,'base64'))
-    const transparent=await bridgeCall({action:'media.image.draw',width:64,height:64,background:'none',shapes:[{type:'rect',x:10,y:10,width:20,height:20,color:'#00ff00',fill:'#00ff00'}]})
-    const alpha=await source!.webContents.executeJavaScript(`(async()=>{const i=new Image();i.src=${JSON.stringify('data:image/png;base64,'+transparent.images[0].data)};await i.decode();const c=document.createElement('canvas');c.width=64;c.height=64;const x=c.getContext('2d');x.drawImage(i,0,0);return [[...x.getImageData(0,0,1,1).data],[...x.getImageData(20,20,1,1).data]]})()`) as number[][]
-    assert.deepEqual(alpha,[[0,0,0,0],[0,255,0,255]])
-    // Exercise actual JPEG/WebP image inputs, not just PNG headers.
-    for(const id of ['image.jpg','image.webp']){
-      const edited=await bridgeCall({action:'media.image.annotate',artifactId:id,shapes:[shapes[0]]});assert.equal(edited.images.length,1)
-    }
-    const before=fs.readdirSync(artifacts).sort()
-    for(const request of [
-      {action:'media.image.annotate',artifactId:'../image.png',shapes},
-      {action:'media.image.annotate',artifactId:'huge.png',shapes},
-      {action:'media.image.annotate',artifactId:'invalid.png',shapes},
-      {action:'media.image.annotate',artifactId:'image.png',shapes:[{type:'rect',x:319,y:0,width:20,height:20}]},
-      {action:'media.image.draw',width:64,height:64,shapes:[{type:'text',x:0,y:40,text:'too many lines\nsecond line',fontSize:24}]},
-      {action:'media.image.draw',width:64,height:64,shapes:[{type:'text',x:0,y:0,text:'BMW',maxWidth:1}]},
-      {action:'media.image.draw',width:64,height:64,shapes:[{type:'redact',x:1,y:1,width:20,height:20,opacity:.2}]}
-    ])await assert.rejects(bridgeCall(request))
-    fs.symlinkSync(path.join(artifacts,'image.png'),path.join(artifacts,'image-link.png'))
-    await assert.rejects(bridgeCall({action:'media.image.annotate',artifactId:'image-link.png',shapes}),/symbolic/);fs.unlinkSync(path.join(artifacts,'image-link.png'))
-    assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
-    granted=false;await assert.rejects(bridgeCall({action:'media.image.draw',width:64,height:64,shapes:[shapes[0]]}),/agent control/);granted=true
-    cancelDrawing=new AbortController()
-    await assert.rejects(media.processArtifact({action:'media.image.annotate',artifactId:'image.png',shapes},cancelDrawing.signal),/Drawing cancellation/);cancelDrawing=undefined
-    assert.deepEqual(fs.readdirSync(artifacts).sort(),before);assert.equal(media.isCaptureActive(),false)
-    // Cancel AFTER finalized drawing, during independent image verification: remove only the new PNG.
-    cancelImage=new AbortController()
-    await assert.rejects(media.processArtifact({action:'media.image.draw',width:320,height:180,shapes:[shapes[0]]},cancelImage.signal),/Image cancellation/);cancelImage=undefined
-    assert.deepEqual(fs.readdirSync(artifacts).sort(),before);assert.deepEqual(fs.readFileSync(path.join(artifacts,'image.png')),original)
-    assert.equal(media.isCaptureActive(),false)
-    await bridgeCall({action:'media.image.draw',width:320,height:180,shapes:[shapes[0]]})
-    console.log('PASS native Canvas: actual marks/text/arrow pixels, new PNG receipt/model image, unchanged originals, JPEG/WebP, transparency, failed jobs and finalized-output cancellation cleanup')
-  })
-  const artifactId = 'synthetic-av.webm'
-  const bytes = await stage('generate timed red/green/blue WebM with an Opus audio track', () => source!.webContents.executeJavaScript(`(async () => {
+    })()`)) as { samples: number[][]; ink: number; arrowInk: number }
+        const expected = [
+          [255, 0, 0, 255],
+          [0, 255, 0, 255],
+          [0, 0, 255, 255],
+          [255, 0, 255, 255],
+          [255, 136, 0, 255],
+          [255, 255, 255, 255],
+          [0, 0, 0, 255],
+          [0, 0, 0, 255]
+        ]
+        assert.deepEqual(pixels.samples, expected)
+        assert.ok(pixels.ink > 100)
+        assert.ok(pixels.arrowInk > 40)
+        const drawing = await bridgeCall({
+          action: 'media.image.draw',
+          width: 640,
+          height: 360,
+          background: '#f4f7fa',
+          shapes: [
+            { type: 'text', x: 240, y: 25, text: 'BMW 绘图', fontSize: 28, bold: true, color: '#254b3c' },
+            { type: 'rect', x: 60, y: 110, width: 180, height: 90, color: '#2865af', fill: '#e8f1ff', lineWidth: 3 },
+            { type: 'text', x: 85, y: 138, text: '截图 / 图片', fontSize: 22, color: '#2865af', maxWidth: 140 },
+            { type: 'arrow', x1: 252, y1: 155, x2: 385, y2: 155, color: '#486376', lineWidth: 5 },
+            {
+              type: 'ellipse',
+              x: 400,
+              y: 110,
+              width: 180,
+              height: 90,
+              color: '#318255',
+              fill: '#e8f5ed',
+              lineWidth: 3
+            },
+            { type: 'text', x: 430, y: 138, text: '标注结果', fontSize: 22, color: '#318255', maxWidth: 120 },
+            {
+              type: 'text',
+              x: 110,
+              y: 260,
+              text: '框选 · 箭头 · 文字 · 路径 · 遮盖',
+              fontSize: 22,
+              color: '#486376',
+              maxWidth: 440
+            }
+          ]
+        })
+        const proof = process.env.BMW_VALIDATION_DIR ?? '.bmw-runtime/image-drawing-validation'
+        fs.mkdirSync(proof, { recursive: true })
+        fs.writeFileSync(path.join(proof, 'native-annotations.png'), fs.readFileSync(receipt.path))
+        fs.writeFileSync(path.join(proof, 'native-drawing.png'), Buffer.from(drawing.images[0].data, 'base64'))
+        const transparent = await bridgeCall({
+          action: 'media.image.draw',
+          width: 64,
+          height: 64,
+          background: 'none',
+          shapes: [{ type: 'rect', x: 10, y: 10, width: 20, height: 20, color: '#00ff00', fill: '#00ff00' }]
+        })
+        const alpha = (await source!.webContents.executeJavaScript(
+          `(async()=>{const i=new Image();i.src=${JSON.stringify('data:image/png;base64,' + transparent.images[0].data)};await i.decode();const c=document.createElement('canvas');c.width=64;c.height=64;const x=c.getContext('2d');x.drawImage(i,0,0);return [[...x.getImageData(0,0,1,1).data],[...x.getImageData(20,20,1,1).data]]})()`
+        )) as number[][]
+        assert.deepEqual(alpha, [
+          [0, 0, 0, 0],
+          [0, 255, 0, 255]
+        ])
+        // Exercise actual JPEG/WebP image inputs, not just PNG headers.
+        for (const id of ['image.jpg', 'image.webp']) {
+          const edited = await bridgeCall({ action: 'media.image.annotate', artifactId: id, shapes: [shapes[0]] })
+          assert.equal(edited.images.length, 1)
+        }
+        const before = fs.readdirSync(artifacts).sort()
+        for (const request of [
+          { action: 'media.image.annotate', artifactId: '../image.png', shapes },
+          { action: 'media.image.annotate', artifactId: 'huge.png', shapes },
+          { action: 'media.image.annotate', artifactId: 'invalid.png', shapes },
+          {
+            action: 'media.image.annotate',
+            artifactId: 'image.png',
+            shapes: [{ type: 'rect', x: 319, y: 0, width: 20, height: 20 }]
+          },
+          {
+            action: 'media.image.draw',
+            width: 64,
+            height: 64,
+            shapes: [{ type: 'text', x: 0, y: 40, text: 'too many lines\nsecond line', fontSize: 24 }]
+          },
+          {
+            action: 'media.image.draw',
+            width: 64,
+            height: 64,
+            shapes: [{ type: 'text', x: 0, y: 0, text: 'BMW', maxWidth: 1 }]
+          },
+          {
+            action: 'media.image.draw',
+            width: 64,
+            height: 64,
+            shapes: [{ type: 'redact', x: 1, y: 1, width: 20, height: 20, opacity: 0.2 }]
+          }
+        ])
+          await assert.rejects(bridgeCall(request))
+        fs.symlinkSync(path.join(artifacts, 'image.png'), path.join(artifacts, 'image-link.png'))
+        await assert.rejects(
+          bridgeCall({ action: 'media.image.annotate', artifactId: 'image-link.png', shapes }),
+          /symbolic/
+        )
+        fs.unlinkSync(path.join(artifacts, 'image-link.png'))
+        assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+        granted = false
+        await assert.rejects(
+          bridgeCall({ action: 'media.image.draw', width: 64, height: 64, shapes: [shapes[0]] }),
+          /agent control/
+        )
+        granted = true
+        cancelDrawing = new AbortController()
+        await assert.rejects(
+          media.processArtifact(
+            { action: 'media.image.annotate', artifactId: 'image.png', shapes },
+            cancelDrawing.signal
+          ),
+          /Drawing cancellation/
+        )
+        cancelDrawing = undefined
+        assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+        assert.equal(media.isCaptureActive(), false)
+        // Cancel AFTER finalized drawing, during independent image verification: remove only the new PNG.
+        cancelImage = new AbortController()
+        await assert.rejects(
+          media.processArtifact(
+            { action: 'media.image.draw', width: 320, height: 180, shapes: [shapes[0]] },
+            cancelImage.signal
+          ),
+          /Image cancellation/
+        )
+        cancelImage = undefined
+        assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+        assert.deepEqual(fs.readFileSync(path.join(artifacts, 'image.png')), original)
+        assert.equal(media.isCaptureActive(), false)
+        await bridgeCall({ action: 'media.image.draw', width: 320, height: 180, shapes: [shapes[0]] })
+        console.log(
+          'PASS native Canvas: actual marks/text/arrow pixels, new PNG receipt/model image, unchanged originals, JPEG/WebP, transparency, failed jobs and finalized-output cancellation cleanup'
+        )
+      }
+    )
+    const artifactId = 'synthetic-av.webm'
+    const bytes = await stage(
+      'generate timed red/green/blue WebM with an Opus audio track',
+      () =>
+        source!.webContents.executeJavaScript(
+          `(async () => {
     const canvas = document.createElement('canvas'); canvas.width = 320; canvas.height = 180;document.body.append(canvas)
     const ctx = canvas.getContext('2d', { alpha: false }); ctx.fillStyle = 'red'; ctx.fillRect(0,0,320,180)
     const audio = new AudioContext({ sampleRate: 48000 }); await audio.resume()
@@ -172,78 +423,229 @@ try {
     await new Promise(resolve => setTimeout(resolve, 2200)); recorder.stop(); await stopped; clearInterval(render)
     oscillator.stop(); stream.getTracks().forEach(track => track.stop()); await audio.close();canvas.remove();if(!chunks.length)throw new Error('Fixture recorder emitted no encoded AV chunks')
     return [...new Uint8Array(await new Blob(chunks).arrayBuffer())]
-  })()`, true) as Promise<number[]>)
-  fs.writeFileSync(path.join(artifacts, artifactId), Buffer.from(bytes), { mode: 0o600 })
-  const inspection = await stage('inspect through authenticated Bridge with no browser tab', () => bridgeCall({ action: 'media.inspect', artifactId }))
-  const info = inspection.result as MediaInfo
-  assert.ok(info.durationSeconds > 2 && info.durationSeconds < 3)
-  assert.deepEqual(info.tracks.map((track) => track.type).sort(), ['audio', 'video'])
-  assert.equal(info.tracks.find((track) => track.type === 'video')?.width, 320)
-  assert.equal(info.tracks.find((track) => track.type === 'audio')?.codec, 'opus')
-  await stage('all-frame native motion report catches held color frames, pins SHA and excludes semantic certification',async()=>{
-    const before=fs.readdirSync(artifacts).sort(),start=info.tracks.find(t=>t.type==='video')!.startSeconds!,end=Math.min(2.1,info.tracks.find(t=>t.type==='video')!.endSeconds!)
-    const request={action:'media.video.motion',artifactId,startSeconds:start,endSeconds:end,region:{x:.1,y:.1,width:.8,height:.8}}
-    const report=mediaRecord((await bridgeCall(request)).result),windows=(report.windows as unknown[]).map(mediaRecord)
-    assert.equal(report.sourceSha256,crypto.createHash('sha256').update(fs.readFileSync(path.join(artifacts,artifactId))).digest('hex'))
-    assert.equal(report.semanticMotionVerified,false);assert.equal(report.audioAuditioned,false);assert.equal(windows.length,2);assert.ok(Number(windows[0].maximumNearStaticSeconds)>.4);assert.ok(Number(windows[0].changedFramePairs)>=2)
-    assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
-    await assert.rejects(bridgeCall({...request,region:{x:.8,y:0,width:.5,height:1}}));await assert.rejects(bridgeCall({...request,endSeconds:181}))
-    const cancelled=new AbortController();cancelled.abort(new Error('Motion cancellation'));await assert.rejects(media.processArtifact(request,cancelled.signal),/Motion cancellation/);assert.equal(media.isCaptureActive(),false)
-  })
-  const framesResult = await stage('sample timestamped frames and admit actual PNGs through Bridge', () => bridgeCall({ action: 'media.frames.sample', artifactId, timestampsSeconds: [.3, 1, 1.7], maxWidth: 160, maxHeight: 90 }))
-  const frames = (framesResult.result as Frames).frames
-  assert.equal(framesResult.images.length, 3)
-  for (let index = 0; index < frames.length; index++) {
-    const frame = frames[index]
-    assert.equal(frame.width, 160); assert.equal(frame.height, 90)
-    assert.ok(Math.abs(frame.timestampSeconds - [.3,1,1.7][index]) < .12)
-    assert.equal(framesResult.images[index].data, fs.readFileSync(frame.path).toString('base64'))
-    const pixel = await source.webContents.executeJavaScript(`(async () => { const img = new Image(); img.src = ${JSON.stringify('data:image/png;base64,' + framesResult.images[index].data)}; await img.decode(); const c = document.createElement('canvas'); c.width = 160; c.height = 90; const ctx = c.getContext('2d'); ctx.drawImage(img,0,0); return [...ctx.getImageData(80,45,1,1).data] })()` ) as number[]
-    assert.ok(pixel[index] > 180 && pixel[(index + 1) % 3] < 30 && pixel[(index + 2) % 3] < 30, `Unexpected frame color ${pixel}`)
-    const referencePixel = await source.webContents.executeJavaScript(`(async () => {
+  })()`,
+          true
+        ) as Promise<number[]>
+    )
+    fs.writeFileSync(path.join(artifacts, artifactId), Buffer.from(bytes), { mode: 0o600 })
+    const inspection = await stage('inspect through authenticated Bridge with no browser tab', () =>
+      bridgeCall({ action: 'media.inspect', artifactId })
+    )
+    const info = inspection.result as MediaInfo
+    assert.ok(info.durationSeconds > 2 && info.durationSeconds < 3)
+    assert.deepEqual(info.tracks.map(track => track.type).sort(), ['audio', 'video'])
+    assert.equal(info.tracks.find(track => track.type === 'video')?.width, 320)
+    assert.equal(info.tracks.find(track => track.type === 'audio')?.codec, 'opus')
+    await stage(
+      'all-frame native motion report catches held color frames, pins SHA and excludes semantic certification',
+      async () => {
+        const before = fs.readdirSync(artifacts).sort(),
+          start = info.tracks.find(t => t.type === 'video')!.startSeconds!,
+          end = Math.min(2.1, info.tracks.find(t => t.type === 'video')!.endSeconds!)
+        const request = {
+          action: 'media.video.motion',
+          artifactId,
+          startSeconds: start,
+          endSeconds: end,
+          region: { x: 0.1, y: 0.1, width: 0.8, height: 0.8 }
+        }
+        const report = mediaRecord((await bridgeCall(request)).result),
+          windows = (report.windows as unknown[]).map(mediaRecord)
+        assert.equal(
+          report.sourceSha256,
+          crypto
+            .createHash('sha256')
+            .update(fs.readFileSync(path.join(artifacts, artifactId)))
+            .digest('hex')
+        )
+        assert.equal(report.semanticMotionVerified, false)
+        assert.equal(report.audioAuditioned, false)
+        assert.equal(windows.length, 2)
+        assert.ok(Number(windows[0].maximumNearStaticSeconds) > 0.4)
+        assert.ok(Number(windows[0].changedFramePairs) >= 2)
+        assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+        await assert.rejects(bridgeCall({ ...request, region: { x: 0.8, y: 0, width: 0.5, height: 1 } }))
+        await assert.rejects(bridgeCall({ ...request, endSeconds: 181 }))
+        const cancelled = new AbortController()
+        cancelled.abort(new Error('Motion cancellation'))
+        await assert.rejects(media.processArtifact(request, cancelled.signal), /Motion cancellation/)
+        assert.equal(media.isCaptureActive(), false)
+      }
+    )
+    const framesResult = await stage('sample timestamped frames and admit actual PNGs through Bridge', () =>
+      bridgeCall({
+        action: 'media.frames.sample',
+        artifactId,
+        timestampsSeconds: [0.3, 1, 1.7],
+        maxWidth: 160,
+        maxHeight: 90
+      })
+    )
+    const frames = (framesResult.result as Frames).frames
+    assert.equal(framesResult.images.length, 3)
+    for (let index = 0; index < frames.length; index++) {
+      const frame = frames[index]
+      assert.equal(frame.width, 160)
+      assert.equal(frame.height, 90)
+      assert.ok(Math.abs(frame.timestampSeconds - [0.3, 1, 1.7][index]) < 0.12)
+      assert.equal(framesResult.images[index].data, fs.readFileSync(frame.path).toString('base64'))
+      const pixel = (await source.webContents.executeJavaScript(
+        `(async () => { const img = new Image(); img.src = ${JSON.stringify('data:image/png;base64,' + framesResult.images[index].data)}; await img.decode(); const c = document.createElement('canvas'); c.width = 160; c.height = 90; const ctx = c.getContext('2d'); ctx.drawImage(img,0,0); return [...ctx.getImageData(80,45,1,1).data] })()`
+      )) as number[]
+      assert.ok(
+        pixel[index] > 180 && pixel[(index + 1) % 3] < 30 && pixel[(index + 2) % 3] < 30,
+        `Unexpected frame color ${pixel}`
+      )
+      const referencePixel = (await source.webContents.executeJavaScript(`(async () => {
       const video = document.createElement('video'); video.muted=true; document.body.append(video); video.src = ${JSON.stringify('data:video/webm;base64,' + Buffer.from(bytes).toString('base64'))}
       await new Promise((resolve,reject) => { video.onloadeddata = resolve; video.onerror = reject })
       // loadeddata/seeked can precede presentation in a hidden Chromium window.
       // Read the reference only after Chromium has presented the requested frame.
       await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Initial reference frame presentation timed out')),3000);video.requestVideoFrameCallback(()=>{clearTimeout(timer);resolve()});void video.play().catch(reject)})
       video.pause()
-      await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Seek reference frame presentation timed out')),3000);video.requestVideoFrameCallback(()=>{clearTimeout(timer);resolve()});video.currentTime=${frame.timestampSeconds + .001}})
+      await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('Seek reference frame presentation timed out')),3000);video.requestVideoFrameCallback(()=>{clearTimeout(timer);resolve()});video.currentTime=${frame.timestampSeconds + 0.001}})
       const canvas = document.createElement('canvas'); canvas.width = 160; canvas.height = 90
       const context = canvas.getContext('2d'); context.drawImage(video,0,0,160,90)
       const result=[...context.getImageData(80,45,1,1).data];video.remove();return result
-    })()`) as number[]
-    assert.ok(pixel.every((channel, position) => Math.abs(channel - referencePixel[position]) <= 8), `Frame differs from Chromium playback: ${pixel} vs ${referencePixel}`)
-  }
-  await stage('persist whole-video analysis pages, dense intervals and declared review through authenticated Bridge',async()=>{
-    const draft=mediaRecord((await bridgeCall({action:'video.studio',studioRequest:{operation:'create',title:'Source analysis fixture'}})).result),draftId=String(draft.id),draftRevision=Number(draft.revision)
-    const call=(analysisRequest:Record<string,unknown>)=>bridgeCall({action:'video.studio',studioRequest:{operation:'analysis',draftId,expectedRevision:draftRevision,analysisRequest}})
-    let value=mediaRecord((await call({operation:'create',artifactId})).result),job=mediaRecord(value.analysis),analysisId=String(job.id),revision=Number(job.revision)
-    const first=await call({operation:'step',analysisId,expectedRevision:revision});value=mediaRecord(first.result);job=mediaRecord(value.analysis);revision=Number(job.revision);const sampled=(value.frames as unknown[]).map(mediaRecord);assert.equal(sampled.length,Math.ceil((Number(job.endSeconds)-Number(job.startSeconds))*2));assert.equal(first.images.length,sampled.length);assert.equal(mediaRecord(job.coverage).reviewed,0)
-    assert.ok(sampled.every(f=>Array.isArray(f.lumaSignature)&&f.lumaSignature.length===64));assert.ok((job.changeCandidates as unknown[]).length>0,'Color changes must produce candidate regions, not semantic approval')
-    value=mediaRecord((await call({operation:'review',analysisId,expectedRevision:revision,indices:[0],note:'Fixture declaration only; runtime verifies sampled PNG admission, not semantic quality.'})).result);revision=Number(mediaRecord(value.analysis).revision)
-    value=mediaRecord((await call({operation:'densify',analysisId,expectedRevision:revision,intervals:[{startSeconds:.5,endSeconds:1.5,reason:'Fixture colors change'}]})).result);revision=Number(mediaRecord(value.analysis).revision)
-    value=mediaRecord((await call({operation:'step',analysisId,expectedRevision:revision})).result);revision=Number(mediaRecord(value.analysis).revision);assert.equal(mediaRecord(mediaRecord(value.analysis).coverage).reviewed,1)
-    const done=await call({operation:'step',analysisId,expectedRevision:revision});assert.equal(done.images.length,0);assert.equal((mediaRecord(done.result).frames as unknown[]).length,0)
-    const read=await call({operation:'read',analysisId,expectedRevision:revision,offset:0});assert.equal(read.images.length,8)
-    const report=mediaRecord((await call({operation:'export',analysisId,expectedRevision:revision,offset:0})).result);const ledger=JSON.parse(fs.readFileSync(path.join(artifacts,String(report.artifactId)),'utf8'));assert.equal(ledger.coverage.wholeVideo2fpsExtracted,true);assert.equal(ledger.coverage.wholePlanReviewed,false);assert.equal(ledger.coverage.audioAuditioned,false)
-    const cancellationJob=mediaRecord(mediaRecord((await call({operation:'create',artifactId})).result).analysis),cancelId=String(cancellationJob.id),before=fs.readdirSync(artifacts).sort(),cancellation=new AbortController(),nativeProcess=media.processArtifact.bind(media)
-    media.processArtifact=async(request:unknown,signal?:AbortSignal)=>{const result=await nativeProcess(request,signal);if(mediaRecord(request).action==='media.frames.sample')cancellation.abort(new Error('Analysis finalized-output cancellation'));return result}
-    try{await assert.rejects(kernel.execute({action:'video.studio',studioRequest:{operation:'analysis',draftId,expectedRevision:draftRevision,analysisRequest:{operation:'step',analysisId:cancelId,expectedRevision:Number(cancellationJob.revision)}}},{signal:cancellation.signal,sessionOwner:{projectId:project.id,sessionId:'media-job-session'}}),/cancellation/i)}finally{media.processArtifact=nativeProcess}
-    assert.equal(media.isCaptureActive(),false);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);const all=mediaRecord((await call({operation:'list'})).result),retained=(all.analyses as Record<string,unknown>[]).find(j=>j.id===cancelId)!;assert.equal(mediaRecord(retained.coverage).extracted,0);assert.equal(mediaRecord(retained.coverage).failed,0)
-  })
-  await stage('reject permission denial, outside IDs, corrupt files and out-of-range timestamps', async () => {
-    granted = false
-    await assert.rejects(bridgeCall({ action: 'media.inspect', artifactId }), /agent control/)
-    granted = true
-    await assert.rejects(bridgeCall({ action: 'media.inspect', artifactId: '../outside.webm' }), /artifactId/)
-    fs.writeFileSync(path.join(artifacts, 'corrupt.webm'), 'not a video')
-    await assert.rejects(bridgeCall({ action: 'media.inspect', artifactId: 'corrupt.webm' }))
-    const before = fs.readdirSync(artifacts).sort()
-    await assert.rejects(bridgeCall({ action: 'media.frames.sample', artifactId, timestampsSeconds: [100] }), /outside/)
-    assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
-  })
-  await stage('reject genuine transparent WebM without emitting shifted frames or discarding alpha', async () => {
-    const transparentBytes = await source!.webContents.executeJavaScript(`(async () => {
+    })()`)) as number[]
+      assert.ok(
+        pixel.every((channel, position) => Math.abs(channel - referencePixel[position]) <= 8),
+        `Frame differs from Chromium playback: ${pixel} vs ${referencePixel}`
+      )
+    }
+    await stage(
+      'persist whole-video analysis pages, dense intervals and declared review through authenticated Bridge',
+      async () => {
+        const draft = mediaRecord(
+            (
+              await bridgeCall({
+                action: 'video.studio',
+                studioRequest: { operation: 'create', title: 'Source analysis fixture' }
+              })
+            ).result
+          ),
+          draftId = String(draft.id),
+          draftRevision = Number(draft.revision)
+        const call = (analysisRequest: Record<string, unknown>) =>
+          bridgeCall({
+            action: 'video.studio',
+            studioRequest: { operation: 'analysis', draftId, expectedRevision: draftRevision, analysisRequest }
+          })
+        let value = mediaRecord((await call({ operation: 'create', artifactId })).result),
+          job = mediaRecord(value.analysis),
+          analysisId = String(job.id),
+          revision = Number(job.revision)
+        const first = await call({ operation: 'step', analysisId, expectedRevision: revision })
+        value = mediaRecord(first.result)
+        job = mediaRecord(value.analysis)
+        revision = Number(job.revision)
+        const sampled = (value.frames as unknown[]).map(mediaRecord)
+        assert.equal(sampled.length, Math.ceil((Number(job.endSeconds) - Number(job.startSeconds)) * 2))
+        assert.equal(first.images.length, sampled.length)
+        assert.equal(mediaRecord(job.coverage).reviewed, 0)
+        assert.ok(sampled.every(f => Array.isArray(f.lumaSignature) && f.lumaSignature.length === 64))
+        assert.ok(
+          (job.changeCandidates as unknown[]).length > 0,
+          'Color changes must produce candidate regions, not semantic approval'
+        )
+        value = mediaRecord(
+          (
+            await call({
+              operation: 'review',
+              analysisId,
+              expectedRevision: revision,
+              indices: [0],
+              note: 'Fixture declaration only; runtime verifies sampled PNG admission, not semantic quality.'
+            })
+          ).result
+        )
+        revision = Number(mediaRecord(value.analysis).revision)
+        value = mediaRecord(
+          (
+            await call({
+              operation: 'densify',
+              analysisId,
+              expectedRevision: revision,
+              intervals: [{ startSeconds: 0.5, endSeconds: 1.5, reason: 'Fixture colors change' }]
+            })
+          ).result
+        )
+        revision = Number(mediaRecord(value.analysis).revision)
+        value = mediaRecord((await call({ operation: 'step', analysisId, expectedRevision: revision })).result)
+        revision = Number(mediaRecord(value.analysis).revision)
+        assert.equal(mediaRecord(mediaRecord(value.analysis).coverage).reviewed, 1)
+        const done = await call({ operation: 'step', analysisId, expectedRevision: revision })
+        assert.equal(done.images.length, 0)
+        assert.equal((mediaRecord(done.result).frames as unknown[]).length, 0)
+        const read = await call({ operation: 'read', analysisId, expectedRevision: revision, offset: 0 })
+        assert.equal(read.images.length, 8)
+        const report = mediaRecord(
+          (await call({ operation: 'export', analysisId, expectedRevision: revision, offset: 0 })).result
+        )
+        const ledger = JSON.parse(fs.readFileSync(path.join(artifacts, String(report.artifactId)), 'utf8'))
+        assert.equal(ledger.coverage.wholeVideo2fpsExtracted, true)
+        assert.equal(ledger.coverage.wholePlanReviewed, false)
+        assert.equal(ledger.coverage.audioAuditioned, false)
+        const cancellationJob = mediaRecord(
+            mediaRecord((await call({ operation: 'create', artifactId })).result).analysis
+          ),
+          cancelId = String(cancellationJob.id),
+          before = fs.readdirSync(artifacts).sort(),
+          cancellation = new AbortController(),
+          nativeProcess = media.processArtifact.bind(media)
+        media.processArtifact = async (request: unknown, signal?: AbortSignal) => {
+          const result = await nativeProcess(request, signal)
+          if (mediaRecord(request).action === 'media.frames.sample')
+            cancellation.abort(new Error('Analysis finalized-output cancellation'))
+          return result
+        }
+        try {
+          await assert.rejects(
+            kernel.execute(
+              {
+                action: 'video.studio',
+                studioRequest: {
+                  operation: 'analysis',
+                  draftId,
+                  expectedRevision: draftRevision,
+                  analysisRequest: {
+                    operation: 'step',
+                    analysisId: cancelId,
+                    expectedRevision: Number(cancellationJob.revision)
+                  }
+                }
+              },
+              { signal: cancellation.signal, sessionOwner: { projectId: project.id, sessionId: 'media-job-session' } }
+            ),
+            /cancellation/i
+          )
+        } finally {
+          media.processArtifact = nativeProcess
+        }
+        assert.equal(media.isCaptureActive(), false)
+        assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+        const all = mediaRecord((await call({ operation: 'list' })).result),
+          retained = (all.analyses as Record<string, unknown>[]).find(j => j.id === cancelId)!
+        assert.equal(mediaRecord(retained.coverage).extracted, 0)
+        assert.equal(mediaRecord(retained.coverage).failed, 0)
+      }
+    )
+    await stage('reject permission denial, outside IDs, corrupt files and out-of-range timestamps', async () => {
+      granted = false
+      await assert.rejects(bridgeCall({ action: 'media.inspect', artifactId }), /agent control/)
+      granted = true
+      await assert.rejects(bridgeCall({ action: 'media.inspect', artifactId: '../outside.webm' }), /artifactId/)
+      fs.writeFileSync(path.join(artifacts, 'corrupt.webm'), 'not a video')
+      await assert.rejects(bridgeCall({ action: 'media.inspect', artifactId: 'corrupt.webm' }))
+      const before = fs.readdirSync(artifacts).sort()
+      await assert.rejects(
+        bridgeCall({ action: 'media.frames.sample', artifactId, timestampsSeconds: [100] }),
+        /outside/
+      )
+      assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+    })
+    await stage('reject genuine transparent WebM without emitting shifted frames or discarding alpha', async () => {
+      const transparentBytes = (await source!.webContents.executeJavaScript(`(async () => {
       const canvas = document.createElement('canvas'); canvas.width = 64; canvas.height = 64
       const ctx = canvas.getContext('2d'); ctx.fillStyle = 'rgba(255,0,0,.5)'; ctx.fillRect(0,0,64,64)
       const stream = canvas.captureStream(10); const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8' })
@@ -252,353 +654,1442 @@ try {
       const timer = setInterval(() => { ctx.clearRect(0,0,64,64); ctx.fillRect(0,0,64,64) }, 50)
       await new Promise(resolve => setTimeout(resolve,500)); recorder.stop(); await stopped; clearInterval(timer); stream.getTracks().forEach(track => track.stop())
       return [...new Uint8Array(await new Blob(chunks).arrayBuffer())]
-    })()`) as number[]
-    fs.writeFileSync(path.join(artifacts, 'transparent.webm'), Buffer.from(transparentBytes))
-    const transparent = await kernel.execute({ action: 'media.inspect', artifactId: 'transparent.webm' }) as MediaInfo
-    assert.equal(transparent.tracks[0].canBeTransparent, true);assert.equal(transparent.tracks[0].hasAlphaData,true)
-    const before = fs.readdirSync(artifacts).sort()
-    await assert.rejects(kernel.execute({ action: 'media.frames.sample', artifactId: 'transparent.webm', timestampsSeconds: [.1] }), /Transparent/)
-    await assert.rejects(kernel.execute({ action: 'media.convert', artifactId: 'transparent.webm', outputFormat: 'mp4' }), /Transparent/)
-    assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
-  })
-  await stage('real cover PNG: image/portrait/video frame/text, exact pixels and cancellation rollback',async()=>{
-    const original=fs.readFileSync(path.join(artifacts,'image.png')),originalVideo=fs.readFileSync(path.join(artifacts,artifactId))
-    const create=async(options:Record<string,unknown>,width=640,height=360,sourceKind?:'image'|'video')=>media.processArtifact({action:'video.cover',width,height,options,...(sourceKind?{sourceKind}:{})}) as Promise<{artifactId:string;path:string;width:number;height:number;actualTimestampSeconds?:number}>
-    const sample=async(file:string,x:number,y:number)=>source!.webContents.executeJavaScript(`(async()=>{const i=new Image();i.src=${JSON.stringify('data:image/png;base64,'+fs.readFileSync(file).toString('base64'))};await i.decode();const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const ctx=c.getContext('2d');ctx.drawImage(i,0,0);return {width:i.width,height:i.height,pixel:[...ctx.getImageData(${x},${y},1,1).data],ink:[...ctx.getImageData(20,Math.floor(i.height*.72),Math.min(300,i.width-20),Math.floor(i.height*.2)).data].filter((v,n)=>n%4!==3&&v>220).length}})()`) as Promise<{width:number;height:number;pixel:number[];ink:number}>
-    for(const suffix of ['png','jpg','webp']){const image=await create({sourceArtifactId:'image.'+suffix,title:'视频封面',subtitle:'原始截图保留完整',background:'#102030',textColor:'#ffffff'},640,360,'image');const pixels=await sample(image.path,320,80);assert.equal(pixels.width,640);assert.equal(pixels.height,360);assert.deepEqual(pixels.pixel,[0,0,0,255]);assert.ok(pixels.ink>100)}
-    const portrait=await create({sourceArtifactId:'image.png',title:'竖版封面',subtitle:'保留完整画面',position:'top'},720,1280,'image');assert.equal(portrait.width,720);assert.equal(portrait.height,1280)
-    const text=await create({title:'独立文字封面',subtitle:'没有分镜也可以制作',background:'#102030'});assert.deepEqual((await sample(text.path,20,20)).pixel,[16,32,48,255])
-    const frame=await create({sourceArtifactId:artifactId,timestampSeconds:1,title:'视频帧封面'},640,360,'video'),pixels=await sample(frame.path,320,80);assert.ok(pixels.pixel[1]>180&&pixels.pixel[0]<30&&pixels.pixel[2]<30);assert.ok(frame.actualTimestampSeconds!<=1&&frame.actualTimestampSeconds!>.8)
-    const proof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/cover-validation';fs.mkdirSync(proof,{recursive:true});fs.copyFileSync(frame.path,path.join(proof,'video-cover.png'));fs.copyFileSync(portrait.path,path.join(proof,'portrait-cover.png'))
-    const before=fs.readdirSync(artifacts).sort()
-    for(const [id,kind,time] of [['invalid.png','image',0],['huge.png','image',0],[artifactId,'video',100]] as const)await assert.rejects(create({sourceArtifactId:id,timestampSeconds:time,title:'Invalid'},640,360,kind))
-    fs.symlinkSync(path.join(artifacts,'image.png'),path.join(artifacts,'cover-link.png'));await assert.rejects(create({sourceArtifactId:'cover-link.png'},640,360,'image'),/symbolic/);fs.unlinkSync(path.join(artifacts,'cover-link.png'))
-    cancelCover=new AbortController();await assert.rejects(media.processArtifact({action:'video.cover',width:640,height:360,options:{title:'Cancelled'}},cancelCover.signal),/Cover cancellation/);cancelCover=undefined
-    cancelImage=new AbortController();await assert.rejects(media.processArtifact({action:'video.cover',width:640,height:360,options:{title:'Finalized but cancelled'}},cancelImage.signal),/Image cancellation/);cancelImage=undefined
-    assert.deepEqual(fs.readdirSync(artifacts).sort(),before);assert.equal(media.isCaptureActive(),false);assert.deepEqual(fs.readFileSync(path.join(artifacts,'image.png')),original);assert.deepEqual(fs.readFileSync(path.join(artifacts,artifactId)),originalVideo)
-    await create({title:'Recovered'});console.log('PASS cover actual source pixels, multilingual text, image formats, portrait/top layout, video presentation timestamp, errors, symlinks and cancellation after finalization')
-  })
-  const converted = await stage('export precise resized MP4 while preserving audio', () => kernel.execute({ action: 'media.convert', artifactId, outputFormat: 'mp4', trimStartSeconds: .25, trimEndSeconds: 1.75, outputWidth: 160, outputHeight: 90 })) as Converted
-  assert.deepEqual(converted.tracks.map((track) => track.codec).sort(), ['aac','avc'])
-  const exportedInfo = await stage('independently inspect MP4 output tracks and actual duration', () => kernel.execute({ action: 'media.inspect', artifactId: converted.artifactId })) as MediaInfo
-  assert.ok(Math.abs(exportedInfo.durationSeconds - 1.5) < .12)
-  assert.equal(converted.durationSeconds, exportedInfo.durationSeconds)
-  assert.equal(exportedInfo.tracks.find((track) => track.type === 'video')?.width, 160)
-  assert.deepEqual(exportedInfo.tracks.map((track) => track.codec).sort(), ['aac','avc'])
-  await stage('indexed MP4 late-page sampling preserves from-start pixels and presentation timestamps',async()=>{
-    const sample=async(id:string,times:number[])=>{const reply=await bridgeCall({action:'media.frames.sample',artifactId:id,timestampsSeconds:times,maxWidth:160,maxHeight:90});return {frames:(reply.result as Frames).frames,images:reply.images}}
-    for(const id of [artifactId,converted.artifactId]){
-      const times=id===artifactId?[.3,1,1.7]:[0,.7,1.3],sequential=await sample(id,times),tail=await sample(id,[times[2]])
-      assert.equal(tail.frames[0].timestampSeconds,sequential.frames[2].timestampSeconds)
-      assert.equal(tail.images[0].data,sequential.images[2].data,'A separate late page must match decoding from the beginning, including unindexed recordings.')
-    }
-  })
-  const playback = await stage('independently load exported MP4 in Chromium HTMLVideoElement', () => source!.webContents.executeJavaScript(`(async () => {
+    })()`)) as number[]
+      fs.writeFileSync(path.join(artifacts, 'transparent.webm'), Buffer.from(transparentBytes))
+      const transparent = (await kernel.execute({
+        action: 'media.inspect',
+        artifactId: 'transparent.webm'
+      })) as MediaInfo
+      assert.equal(transparent.tracks[0].canBeTransparent, true)
+      assert.equal(transparent.tracks[0].hasAlphaData, true)
+      const before = fs.readdirSync(artifacts).sort()
+      await assert.rejects(
+        kernel.execute({ action: 'media.frames.sample', artifactId: 'transparent.webm', timestampsSeconds: [0.1] }),
+        /Transparent/
+      )
+      await assert.rejects(
+        kernel.execute({ action: 'media.convert', artifactId: 'transparent.webm', outputFormat: 'mp4' }),
+        /Transparent/
+      )
+      assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+    })
+    await stage('real cover PNG: image/portrait/video frame/text, exact pixels and cancellation rollback', async () => {
+      const original = fs.readFileSync(path.join(artifacts, 'image.png')),
+        originalVideo = fs.readFileSync(path.join(artifacts, artifactId))
+      const create = async (
+        options: Record<string, unknown>,
+        width = 640,
+        height = 360,
+        sourceKind?: 'image' | 'video'
+      ) =>
+        media.processArtifact({
+          action: 'video.cover',
+          width,
+          height,
+          options,
+          ...(sourceKind ? { sourceKind } : {})
+        }) as Promise<{
+          artifactId: string
+          path: string
+          width: number
+          height: number
+          actualTimestampSeconds?: number
+        }>
+      const sample = async (file: string, x: number, y: number) =>
+        source!.webContents.executeJavaScript(
+          `(async()=>{const i=new Image();i.src=${JSON.stringify('data:image/png;base64,' + fs.readFileSync(file).toString('base64'))};await i.decode();const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const ctx=c.getContext('2d');ctx.drawImage(i,0,0);return {width:i.width,height:i.height,pixel:[...ctx.getImageData(${x},${y},1,1).data],ink:[...ctx.getImageData(20,Math.floor(i.height*.72),Math.min(300,i.width-20),Math.floor(i.height*.2)).data].filter((v,n)=>n%4!==3&&v>220).length}})()`
+        ) as Promise<{ width: number; height: number; pixel: number[]; ink: number }>
+      for (const suffix of ['png', 'jpg', 'webp']) {
+        const image = await create(
+          {
+            sourceArtifactId: 'image.' + suffix,
+            title: '视频封面',
+            subtitle: '原始截图保留完整',
+            background: '#102030',
+            textColor: '#ffffff'
+          },
+          640,
+          360,
+          'image'
+        )
+        const pixels = await sample(image.path, 320, 80)
+        assert.equal(pixels.width, 640)
+        assert.equal(pixels.height, 360)
+        assert.deepEqual(pixels.pixel, [0, 0, 0, 255])
+        assert.ok(pixels.ink > 100)
+      }
+      const portrait = await create(
+        { sourceArtifactId: 'image.png', title: '竖版封面', subtitle: '保留完整画面', position: 'top' },
+        720,
+        1280,
+        'image'
+      )
+      assert.equal(portrait.width, 720)
+      assert.equal(portrait.height, 1280)
+      const text = await create({ title: '独立文字封面', subtitle: '没有分镜也可以制作', background: '#102030' })
+      assert.deepEqual((await sample(text.path, 20, 20)).pixel, [16, 32, 48, 255])
+      const frame = await create(
+          { sourceArtifactId: artifactId, timestampSeconds: 1, title: '视频帧封面' },
+          640,
+          360,
+          'video'
+        ),
+        pixels = await sample(frame.path, 320, 80)
+      assert.ok(pixels.pixel[1] > 180 && pixels.pixel[0] < 30 && pixels.pixel[2] < 30)
+      assert.ok(frame.actualTimestampSeconds! <= 1 && frame.actualTimestampSeconds! > 0.8)
+      const proof = process.env.BMW_VALIDATION_DIR ?? '.bmw-runtime/cover-validation'
+      fs.mkdirSync(proof, { recursive: true })
+      fs.copyFileSync(frame.path, path.join(proof, 'video-cover.png'))
+      fs.copyFileSync(portrait.path, path.join(proof, 'portrait-cover.png'))
+      const before = fs.readdirSync(artifacts).sort()
+      for (const [id, kind, time] of [
+        ['invalid.png', 'image', 0],
+        ['huge.png', 'image', 0],
+        [artifactId, 'video', 100]
+      ] as const)
+        await assert.rejects(create({ sourceArtifactId: id, timestampSeconds: time, title: 'Invalid' }, 640, 360, kind))
+      fs.symlinkSync(path.join(artifacts, 'image.png'), path.join(artifacts, 'cover-link.png'))
+      await assert.rejects(create({ sourceArtifactId: 'cover-link.png' }, 640, 360, 'image'), /symbolic/)
+      fs.unlinkSync(path.join(artifacts, 'cover-link.png'))
+      cancelCover = new AbortController()
+      await assert.rejects(
+        media.processArtifact(
+          { action: 'video.cover', width: 640, height: 360, options: { title: 'Cancelled' } },
+          cancelCover.signal
+        ),
+        /Cover cancellation/
+      )
+      cancelCover = undefined
+      cancelImage = new AbortController()
+      await assert.rejects(
+        media.processArtifact(
+          { action: 'video.cover', width: 640, height: 360, options: { title: 'Finalized but cancelled' } },
+          cancelImage.signal
+        ),
+        /Image cancellation/
+      )
+      cancelImage = undefined
+      assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+      assert.equal(media.isCaptureActive(), false)
+      assert.deepEqual(fs.readFileSync(path.join(artifacts, 'image.png')), original)
+      assert.deepEqual(fs.readFileSync(path.join(artifacts, artifactId)), originalVideo)
+      await create({ title: 'Recovered' })
+      console.log(
+        'PASS cover actual source pixels, multilingual text, image formats, portrait/top layout, video presentation timestamp, errors, symlinks and cancellation after finalization'
+      )
+    })
+    const converted = (await stage('export precise resized MP4 while preserving audio', () =>
+      kernel.execute({
+        action: 'media.convert',
+        artifactId,
+        outputFormat: 'mp4',
+        trimStartSeconds: 0.25,
+        trimEndSeconds: 1.75,
+        outputWidth: 160,
+        outputHeight: 90
+      })
+    )) as Converted
+    assert.deepEqual(converted.tracks.map(track => track.codec).sort(), ['aac', 'avc'])
+    const exportedInfo = (await stage('independently inspect MP4 output tracks and actual duration', () =>
+      kernel.execute({ action: 'media.inspect', artifactId: converted.artifactId })
+    )) as MediaInfo
+    assert.ok(Math.abs(exportedInfo.durationSeconds - 1.5) < 0.12)
+    assert.equal(converted.durationSeconds, exportedInfo.durationSeconds)
+    assert.equal(exportedInfo.tracks.find(track => track.type === 'video')?.width, 160)
+    assert.deepEqual(exportedInfo.tracks.map(track => track.codec).sort(), ['aac', 'avc'])
+    await stage('indexed MP4 late-page sampling preserves from-start pixels and presentation timestamps', async () => {
+      const sample = async (id: string, times: number[]) => {
+        const reply = await bridgeCall({
+          action: 'media.frames.sample',
+          artifactId: id,
+          timestampsSeconds: times,
+          maxWidth: 160,
+          maxHeight: 90
+        })
+        return { frames: (reply.result as Frames).frames, images: reply.images }
+      }
+      for (const id of [artifactId, converted.artifactId]) {
+        const times = id === artifactId ? [0.3, 1, 1.7] : [0, 0.7, 1.3],
+          sequential = await sample(id, times),
+          tail = await sample(id, [times[2]])
+        assert.equal(tail.frames[0].timestampSeconds, sequential.frames[2].timestampSeconds)
+        assert.equal(
+          tail.images[0].data,
+          sequential.images[2].data,
+          'A separate late page must match decoding from the beginning, including unindexed recordings.'
+        )
+      }
+    })
+    const playback = await stage(
+      'independently load exported MP4 in Chromium HTMLVideoElement',
+      () =>
+        source!.webContents.executeJavaScript(`(async () => {
     const video = document.createElement('video'); video.muted = true; video.src = ${JSON.stringify('data:video/mp4;base64,' + fs.readFileSync(converted.path).toString('base64'))}
     await new Promise((resolve,reject) => { video.onloadeddata = resolve; video.onerror = () => reject(new Error('Exported MP4 is not playable')) })
     await video.play(); await new Promise(resolve => setTimeout(resolve,120)); video.pause(); return { width: video.videoWidth, height: video.videoHeight, duration: video.duration, time: video.currentTime }
-  })()`) as Promise<{ width: number; height: number; duration: number; time: number }>)
-  assert.equal(playback.width, 160); assert.equal(playback.height, 90); assert.ok(playback.time > 0)
-  await stage('Project archive packet-copy segment retains all tracks, source mapping and independently decoded output',async()=>{
-    const sourceHash=crypto.createHash('sha256').update(fs.readFileSync(converted.path)).digest('hex')
-    const result=await media.processArtifact({action:'media.segment',artifactId:converted.artifactId,segmentRange:{startSeconds:.1,endSeconds:1.2}}) as {artifactId:string;sourceSha256:string;sourceTimeOffsetSeconds:number;actualSourceRange:{startSeconds:number;endSeconds:number};reencoded:boolean;proofArtifactId:string;sha256:string;tracks:{type:string}[]}
-    assert.equal(result.reencoded,false);assert.equal(result.sourceSha256,sourceHash);assert.ok(result.actualSourceRange.startSeconds<=.1);assert.ok(result.actualSourceRange.endSeconds>=1.2-.1);assert.deepEqual(result.tracks.map(t=>t.type).sort(),['audio','video'])
-    assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(artifacts,result.artifactId))).digest('hex'),result.sha256)
-    const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{type:string;sampleCount:number}[]};assert.equal(decoded.completeFile,true);assert.ok(decoded.tracks.every(t=>t.sampleCount>0))
-    const lineage=await readMediaDerivation(artifacts,result.artifactId)
-    assert.ok(lineage,'Packet-copy segments must retain the native lineage consumed by selected-news evidence.')
-    assert.equal(lineage.sourceArtifactId,converted.artifactId);assert.equal(lineage.sourceSha256,sourceHash);assert.equal(lineage.sha256,result.sha256);assert.deepEqual(lineage.sourceRange,result.actualSourceRange)
-    const segmentPath=path.join(artifacts,result.artifactId),segmentBytes=fs.readFileSync(segmentPath)
-    try{fs.appendFileSync(segmentPath,'changed');await assert.rejects(readMediaDerivation(artifacts,result.artifactId),/bytes changed/)}finally{fs.writeFileSync(segmentPath,segmentBytes)}
-    const originalBytes=fs.readFileSync(converted.path)
-    try{fs.appendFileSync(converted.path,'changed');await assert.rejects(readMediaDerivation(artifacts,result.artifactId),/bytes changed/)}finally{fs.writeFileSync(converted.path,originalBytes)}
-    const proof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/media-preservation-validation';fs.mkdirSync(proof,{recursive:true});fs.copyFileSync(path.join(artifacts,result.proofArtifactId),path.join(proof,'archive-segment.json'))
-    const before=fs.readdirSync(artifacts).sort(),cancel=new AbortController();cancel.abort(new Error('cancel archive segment'));await assert.rejects(media.processArtifact({action:'media.segment',artifactId:converted.artifactId,segmentRange:{startSeconds:0,endSeconds:1}},cancel.signal),/cancel archive segment/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);assert.equal(media.isCaptureActive(),false)
-  })
-  await stage('archive segment preserves multiple audio renditions and native lineage',async()=>{
-    const original=new Input({formats:[MP4],source:new BufferSource(fs.readFileSync(converted.path))}),target=new BufferTarget(),output=new Output({format:new Mp4OutputFormat(),target})
-    try{
-      const video=(await original.getPrimaryVideoTrack())!,audio=(await original.getPrimaryAudioTrack())!,videoSource=new EncodedVideoPacketSource((await video.getCodec())!),audioSources=Array.from({length:3},()=>new EncodedAudioPacketSource('aac'))
-      output.addVideoTrack(videoSource);for(const source of audioSources)output.addAudioTrack(source)
-      await output.start()
-      const videoConfig=(await video.getDecoderConfig())!,audioConfig=(await audio.getDecoderConfig())!
-      await Promise.all([(async()=>{for await(const packet of new EncodedPacketSink(video).packets())await videoSource.add(packet,{decoderConfig:videoConfig});videoSource.close()})(),...audioSources.map(async source=>{for await(const packet of new EncodedPacketSink(audio).packets())await source.add(packet,{decoderConfig:audioConfig});source.close()})])
-      await output.finalize()
-    }finally{original.dispose()}
-    const sourceId='multi-audio-archive.mp4';fs.writeFileSync(path.join(artifacts,sourceId),Buffer.from(target.buffer!))
-    const result=await media.processArtifact({action:'media.segment',artifactId:sourceId,segmentRange:{startSeconds:.1,endSeconds:1.2}}) as {artifactId:string;sha256:string;actualSourceRange:{startSeconds:number;endSeconds:number};tracks:{type:string}[]}
-    assert.deepEqual(result.tracks.map(t=>t.type).sort(),['audio','audio','audio','video'])
-    const lineage=await readMediaDerivation(artifacts,result.artifactId);assert.equal(lineage?.sha256,result.sha256);assert.deepEqual(lineage?.sourceRange,result.actualSourceRange)
-    const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{type:string;sampleCount:number}[]};assert.equal(decoded.completeFile,true);assert.equal(decoded.tracks.length,4);assert.ok(decoded.tracks.every(t=>t.sampleCount>0))
-    const sample=mediaRecord(await media.processArtifact({action:'media.audio.sample',artifactId:result.artifactId,startSeconds:.1,endSeconds:.5})),evidence=mediaRecord(sample.evidence)
-    assert.equal(evidence.inputAudioTrackCount,3);assert.equal(evidence.audioSelection,'primary-audio-track');assert.ok(Number(evidence.inputAudioTrackId)>0)
-    const processor=new MediaProcessor({session:browserSession,pagePath:path.resolve('packages/media-native/src/media/processing.html'),preloadPath:path.resolve('packages/media-native/src/preload/processing-preload.cjs')}),normalized=mediaRecord(await processor.process({action:'media.speech.normalize',artifactId:result.artifactId},artifacts)),normalization=mediaRecord(normalized.normalization)
-    assert.equal(normalization.inputAudioTrackCount,3);assert.equal(normalization.audioSelection,'primary-audio-track');assert.equal(normalization.inputAudioTrackId,evidence.inputAudioTrackId);assert.ok(Number(normalization.frames)>0)
-  })
-  await stage('preserve observed HLS delivery bytes, remux encoded packets without loss and verify every track/range',async()=>{
-    const input=new Input({formats:[MP4],source:new BufferSource(fs.readFileSync(converted.path))}),target=new BufferTarget(),output=new Output({format:new Mp4OutputFormat({fastStart:'fragmented',minimumFragmentDuration:.4}),target})
-    try{const conversion=await Conversion.init({input,output,tracks:'all',copy:{mode:'forced'}});assert.equal(conversion.discardedTracks.length,0);await conversion.execute()}finally{input.dispose()}
-    const data=Buffer.from(target.buffer!);let offset=0,split=-1
-    while(offset<data.length){const size=data.readUInt32BE(offset),type=data.toString('ascii',offset+4,offset+8);assert.ok(size>=8);if(type==='moof'){split=offset;break}offset+=size}assert.ok(split>0)
-    const init=data.subarray(0,split),segment=data.subarray(split),duration=exportedInfo.durationSeconds
-    const bodies:Record<string,{data:Buffer;type:string}>={
-      '/master.m3u8':{type:'application/vnd.apple.mpegurl',data:Buffer.from('#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=100000\nvideo.m3u8\n')},
-      '/video.m3u8':{type:'application/vnd.apple.mpegurl',data:Buffer.from('#EXTM3U\n#EXT-X-MAP:URI="init.mp4"\n#EXTINF:'+duration+',\nsegment.m4s\n#EXT-X-ENDLIST\n')},
-      '/init.mp4':{type:'video/mp4',data:init},'/segment.m4s':{type:'video/mp4',data:segment}
-    }
-    const server=createServer((request,response)=>{const body=bodies[request.url??''];if(!body){response.writeHead(404).end();return}response.writeHead(200,{'content-type':body.type,'content-length':body.data.length});response.end(body.data)})
-    await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));const address=server.address();assert.ok(address&&typeof address==='object');const url='http://127.0.0.1:'+address.port+'/master.m3u8',id='preserve-fixture'
-    await source!.webContents.executeJavaScript(`(()=>{const s=document.createElement('source');s.id='preserve-source';s.src=${JSON.stringify(url)};document.body.append(s)})()`)
-    kernel.tabs.set(id,{id,title:'HLS preservation fixture',url:source!.webContents.getURL(),projectId:project.id,view:{webContents:source!.webContents}});kernel.activeTabId=id
-    try{
-      await assert.rejects(bridgeCall({action:'media.preserve',url:url.replace('master','unobserved')}),/must be observed/)
-      const result=(await bridgeCall({action:'media.preserve',url})).result as {artifactId:string;sha256:string;tracks:{type:string;packets:number}[];preservation:{reencoded:boolean;completeVod:boolean;uploadedOriginal:string;resources:{artifactId:string;sha256:string}[];resourceCount:number;proofArtifactId:string;proofSha256:string}}
-      assert.equal(result.preservation.reencoded,false);assert.equal(result.preservation.completeVod,true);assert.equal(result.preservation.uploadedOriginal,'unknown');assert.deepEqual(result.tracks.map(t=>t.type).sort(),['audio','video']);assert.ok(result.tracks.every(t=>t.packets>0))
-      const proofBytes=fs.readFileSync(path.join(artifacts,result.preservation.proofArtifactId));assert.equal(crypto.createHash('sha256').update(proofBytes).digest('hex'),result.preservation.proofSha256)
-      const ledger=JSON.parse(proofBytes.toString('utf8')) as {resources:{artifactId:string;url:string;sha256:string}[]}
-      assert.equal(result.preservation.resourceCount,ledger.resources.length);assert.ok(result.preservation.resources.length<=20);assert.ok(result.preservation.resources.every(resource=>!('url' in resource)&&!('path' in resource)))
-      for(const resource of ledger.resources){const expected=bodies[new URL(resource.url).pathname]!.data,actual=fs.readFileSync(path.join(artifacts,resource.artifactId));assert.deepEqual(actual,expected);assert.equal(crypto.createHash('sha256').update(actual).digest('hex'),resource.sha256)}
-      const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{type:string;sampleCount:number}[]};assert.equal(decoded.completeFile,true);assert.deepEqual(decoded.tracks.map(t=>t.type).sort(),['audio','video']);assert.ok(decoded.tracks.every(t=>t.sampleCount>0))
-      const tail=(await bridgeCall({action:'media.frames.sample',artifactId:result.artifactId,timestampsSeconds:[1.2]}));assert.equal(tail.images.length,1)
-      const proof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/media-preservation-validation';fs.mkdirSync(proof,{recursive:true});fs.copyFileSync(path.join(artifacts,result.preservation.proofArtifactId),path.join(proof,'preserved-delivery.json'))
-    }finally{await new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve()));kernel.tabs.delete(id);kernel.activeTabId=null;await source!.webContents.executeJavaScript(`document.querySelector('#preserve-source').remove()`)}
-  })
-  await stage('complete HLS bundle retains every declared audio and subtitle track and rolls back incomplete captions',async()=>{
-    const bodies:Record<string,Uint8Array|string>={},duration=exportedInfo.durationSeconds
-    for(const kind of ['video','audio'] as const){
-      const input=new Input({formats:[MP4],source:new BufferSource(fs.readFileSync(converted.path))}),target=new BufferTarget(),output=new Output({format:new Mp4OutputFormat({fastStart:'fragmented'}),target})
-      try{const conversion=await Conversion.init({input,output,tracks:'all',copy:{mode:'forced'},video:{discard:kind==='audio'},audio:{discard:kind==='video'}});assert.equal(conversion.discardedTracks.length,1);await conversion.execute()}finally{input.dispose()}
-      const bytes=Buffer.from(target.buffer!);let split=0;while(split<bytes.length&&bytes.toString('ascii',split+4,split+8)!=='moof'){const size=bytes.readUInt32BE(split);assert.ok(size>=8);split+=size}assert.ok(split>0&&split<bytes.length)
-      bodies['/'+kind+'-init.mp4']=bytes.subarray(0,split);bodies['/'+kind+'.m4s']=bytes.subarray(split)
-      bodies['/'+kind+'.m3u8']='#EXTM3U\n#EXT-X-MAP:URI="'+kind+'-init.mp4"\n#EXTINF:'+duration+',\n'+kind+'.m4s\n#EXT-X-ENDLIST\n'
-    }
-    bodies['/master.m3u8']='#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="a",NAME="English",LANGUAGE="en",DEFAULT=YES,URI="audio.m3u8"\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="b",NAME="English alternate encoding",LANGUAGE="en",DEFAULT=YES,URI="audio.m3u8"\n#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="s",NAME="English",LANGUAGE="en",DEFAULT=YES,URI="en.m3u8"\n#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="s",NAME="English US",LANGUAGE="en-US",URI="en-US.m3u8"\n#EXT-X-STREAM-INF:BANDWIDTH=10000,AUDIO="a",SUBTITLES="s"\nvideo.m3u8\n'
-    for(const language of ['en','en-US']){
-      bodies['/'+language+'.m3u8']='#EXTM3U\n#EXTINF:0.8,\n'+language+'-1.vtt\n#EXTINF:'+(duration-.8)+',\n'+language+'-2.vtt\n#EXT-X-ENDLIST\n'
-      const cue='a\n00:00.050 --> 00:01.000 align:start\n原声 '+language+'  \n\n',header='WEBVTT\nX-TIMESTAMP-MAP=LOCAL:00:00:00.000,MPEGTS:0\n\n'
-      bodies['/'+language+'-1.vtt']=header+cue;bodies['/'+language+'-2.vtt']=header+cue+'b\n00:01.100 --> 00:01.400\nLater text\n\n'
-    }
-    const videoIdentity={version:1 as const,platform:'page' as const,targetId:'https://fixture.example/subtitles',resourceId:'complete-bundle'}
-    let failure='';const cancel=new AbortController(),request={url:'https://fixture.example/master.m3u8',pageUrl:videoIdentity.targetId,videoIdentity,expectedTransport:'hls' as const,completeProgram:{durationSeconds:duration,requireAudio:true},fetchImpl:async(url:string)=>{
-      const key=new URL(url).pathname;let body=bodies[key]
-      if(key==='/en-US-2.vtt'){
-        if(failure==='missing')return new Response(null,{status:404})
-        if(failure==='utf8')body=Uint8Array.from([255,254])
-        if(failure==='map')body='WEBVTT\nX-TIMESTAMP-MAP=LOCAL:00:00.000,MPEGTS:8589934592\n\n'
-        if(failure==='cancel')cancel.abort(new Error('cancel final subtitle'))
+  })()`) as Promise<{ width: number; height: number; duration: number; time: number }>
+    )
+    assert.equal(playback.width, 160)
+    assert.equal(playback.height, 90)
+    assert.ok(playback.time > 0)
+    await stage(
+      'Project archive packet-copy segment retains all tracks, source mapping and independently decoded output',
+      async () => {
+        const sourceHash = crypto.createHash('sha256').update(fs.readFileSync(converted.path)).digest('hex')
+        const result = (await media.processArtifact({
+          action: 'media.segment',
+          artifactId: converted.artifactId,
+          segmentRange: { startSeconds: 0.1, endSeconds: 1.2 }
+        })) as {
+          artifactId: string
+          sourceSha256: string
+          sourceTimeOffsetSeconds: number
+          actualSourceRange: { startSeconds: number; endSeconds: number }
+          reencoded: boolean
+          proofArtifactId: string
+          sha256: string
+          tracks: { type: string }[]
+        }
+        assert.equal(result.reencoded, false)
+        assert.equal(result.sourceSha256, sourceHash)
+        assert.ok(result.actualSourceRange.startSeconds <= 0.1)
+        assert.ok(result.actualSourceRange.endSeconds >= 1.2 - 0.1)
+        assert.deepEqual(result.tracks.map(t => t.type).sort(), ['audio', 'video'])
+        assert.equal(
+          crypto
+            .createHash('sha256')
+            .update(fs.readFileSync(path.join(artifacts, result.artifactId)))
+            .digest('hex'),
+          result.sha256
+        )
+        const decoded = (await media.processArtifact({
+          action: 'media.decode.check',
+          artifactId: result.artifactId
+        })) as { completeFile: boolean; tracks: { type: string; sampleCount: number }[] }
+        assert.equal(decoded.completeFile, true)
+        assert.ok(decoded.tracks.every(t => t.sampleCount > 0))
+        const lineage = await readMediaDerivation(artifacts, result.artifactId)
+        assert.ok(lineage, 'Packet-copy segments must retain the native lineage consumed by selected-news evidence.')
+        assert.equal(lineage.sourceArtifactId, converted.artifactId)
+        assert.equal(lineage.sourceSha256, sourceHash)
+        assert.equal(lineage.sha256, result.sha256)
+        assert.deepEqual(lineage.sourceRange, result.actualSourceRange)
+        const segmentPath = path.join(artifacts, result.artifactId),
+          segmentBytes = fs.readFileSync(segmentPath)
+        try {
+          fs.appendFileSync(segmentPath, 'changed')
+          await assert.rejects(readMediaDerivation(artifacts, result.artifactId), /bytes changed/)
+        } finally {
+          fs.writeFileSync(segmentPath, segmentBytes)
+        }
+        const originalBytes = fs.readFileSync(converted.path)
+        try {
+          fs.appendFileSync(converted.path, 'changed')
+          await assert.rejects(readMediaDerivation(artifacts, result.artifactId), /bytes changed/)
+        } finally {
+          fs.writeFileSync(converted.path, originalBytes)
+        }
+        const proof = process.env.BMW_VALIDATION_DIR ?? '.bmw-runtime/media-preservation-validation'
+        fs.mkdirSync(proof, { recursive: true })
+        fs.copyFileSync(path.join(artifacts, result.proofArtifactId), path.join(proof, 'archive-segment.json'))
+        const before = fs.readdirSync(artifacts).sort(),
+          cancel = new AbortController()
+        cancel.abort(new Error('cancel archive segment'))
+        await assert.rejects(
+          media.processArtifact(
+            {
+              action: 'media.segment',
+              artifactId: converted.artifactId,
+              segmentRange: { startSeconds: 0, endSeconds: 1 }
+            },
+            cancel.signal
+          ),
+          /cancel archive segment/
+        )
+        assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+        assert.equal(media.isCaptureActive(), false)
       }
-      return new Response(typeof body==='string'?body:body?new Uint8Array(body):null,{status:body?200:404,headers:{'content-type':key.endsWith('.m3u8')?'application/vnd.apple.mpegurl':key.endsWith('.vtt')?'text/vtt':'video/mp4'}})
-    }}
-    const result=await media.preserveMedia(request),p=result.preservation
-    assert.equal('completeSubtitles'in p&&p.completeSubtitles,true);assert.equal('subtitleTracks'in p&&p.subtitleTracks.length,2)
-    const ledger=mediaRecord(JSON.parse(fs.readFileSync(path.join(artifacts,p.proofArtifactId),'utf8'))),subtitleTracks=ledger.subtitleTracks as {artifactId:string;sha256:string;indexArtifactId:string;indexSha256:string;cueCount:number;duplicatesRemoved:number;language:string;delivery:string}[]
-    assert.deepEqual(subtitleTracks.map(t=>t.language),['en','en-US']);assert.ok('tracks'in result);assert.deepEqual(result.tracks.map(t=>t.type).sort(),['audio','audio','video'])
-    assert.equal((ledger.audioRenditions as {outputDefault:boolean}[]).filter(t=>t.outputDefault).length,1)
-    for(const track of subtitleTracks){
-      assert.equal(track.delivery,'external-sidecar');assert.equal(track.cueCount,2);assert.equal(track.duplicatesRemoved,1)
-      for(const [id,hash]of [[track.artifactId,track.sha256],[track.indexArtifactId,track.indexSha256]])assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(artifacts,id!))).digest('hex'),hash)
-      const parsed=parsePreservedVtt(fs.readFileSync(path.join(artifacts,track.artifactId)));assert.equal(parsed.cues[0]!.text,'原声 '+track.language+'  ')
-      const index=JSON.parse(fs.readFileSync(path.join(artifacts,track.indexArtifactId),'utf8')) as {mappings:{artifactId:string}[]};assert.equal(index.mappings.length,2);for(const m of index.mappings)assert.equal(parsePreservedVtt(fs.readFileSync(path.join(artifacts,m.artifactId))).cues.length>0,true)
-    }
-    const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{type:string;sampleCount:number}[]};assert.equal(decoded.completeFile,true);assert.deepEqual(decoded.tracks.map(t=>t.type).sort(),['audio','audio','video']);assert.ok(decoded.tracks.every(t=>t.sampleCount>0))
-    const before=fs.readdirSync(artifacts).sort()
-    for(const mode of ['missing','utf8','map','cancel']){failure=mode;await assert.rejects(media.preserveMedia({...request,signal:cancel.signal}),mode==='cancel'?/cancel final subtitle/:/MEDIA_PRESERVATION_TRACKS_INCOMPLETE/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);assert.equal(media.isCaptureActive(),false)}
-  })
-  await stage('TS HLS retains all encoded NAL/AAC payloads and verifies each packet PTS through independent MP4 demux',async()=>{
-    const input=new Input({formats:[MP4],source:new BufferSource(fs.readFileSync(converted.path))}),target=new BufferTarget(),output=new Output({format:new MpegTsOutputFormat(),target})
-    try{const conversion=await Conversion.init({input,output,tracks:'all',copy:{mode:'forced'}});assert.equal(conversion.discardedTracks.length,0);await conversion.execute()}finally{input.dispose()}
-    const ts=new Uint8Array(target.buffer!),duration=exportedInfo.durationSeconds,videoIdentity={version:1 as const,platform:'page' as const,targetId:'https://fixture.example/program',resourceId:'fixture:program'}
-    const result=await media.preserveMedia({url:'https://fixture.example/program.m3u8',pageUrl:videoIdentity.targetId,videoIdentity,completeProgram:{durationSeconds:duration,requireAudio:true},fetchImpl:async url=>new Response(url.endsWith('.ts')?ts:'#EXTM3U\n#EXTINF:'+duration+',\nprogram.ts\n#EXT-X-ENDLIST\n',{headers:{'content-type':url.endsWith('.ts')?'video/mp2t':'application/vnd.apple.mpegurl'}})})
-    assert.equal(result.preservation.completeVod,true);assert.equal(result.preservation.reencoded,false)
-    const proof=JSON.parse(fs.readFileSync(path.join(artifacts,result.preservation.proofArtifactId),'utf8')) as {remux:{tracks:{type:string;payloadSerialization:string;packetDigestFormat:string;sourcePacketSha256:string}[]}}
-    assert.deepEqual(proof.remux.tracks.map(t=>t.payloadSerialization).sort(),['adts-to-raw','annex-b-to-length4']);assert.ok(proof.remux.tracks.every(t=>t.packetDigestFormat==='sha256:length32be+mp4-packet-payload'&&/^[a-f0-9]{64}$/.test(t.sourcePacketSha256)))
-    const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{type:string;sampleCount:number}[]};assert.equal(decoded.completeFile,true);assert.deepEqual(decoded.tracks.map(t=>t.type).sort(),['audio','video']);assert.ok(decoded.tracks.every(t=>t.sampleCount>0))
-  })
-  await stage('CNN formal browser preservation binds declared original despite an unrelated ad player and rolls back identity drift',async()=>{
-    const page='https://edition.cnn.com/2026/10/28/politics/video/original',id='mecef3e95814a7c3788851d76c807e13bc6cf6e102',url='https://clips-media-aka.warnermediacdn.com/cnn/clips/2026-10/2413539-234abbc2b3454154b092f7651e6ec9ea/mp4/original-2413539-1920x1080_8000k.mp4',bytes=fs.readFileSync(converted.path),tabId='cnn-original-fixture';let cnn:BrowserWindow|undefined,drift=false
-    browserSession.protocol.handle('https',async request=>{const u=new URL(request.url);if(u.hostname==='edition.cnn.com')return new Response(`<style>video{width:320px;height:180px}</style><h1>Original CNN</h1><video src="https://ads.example/ad.mp4"></video><div id="program" data-component-name="video-resource" data-video-id="${id}" data-media-id="${id}" data-canonical-url-path="/2026/10/28/politics/video/original" data-canonical-url="https://www.cnn.com/2026/10/28/politics/video/original" data-headline="Original CNN" data-live="" data-auth-type="" data-content-type="mediasource-clip"><video></video></div><script type="application/ld+json">${JSON.stringify({'@type':'VideoObject',name:'Original CNN',duration:'PT'+exportedInfo.durationSeconds+'S',contentUrl:url,embedUrl:'https://fave.api.cnn.io/v1/fav/?video='+id})}</script>`,{headers:{'content-type':'text/html'}});if(u.href===url){if(drift)await cnn!.webContents.executeJavaScript("document.querySelector('#program').setAttribute('data-auth-type','subscription');true");return new Response(new Uint8Array(bytes),{headers:{'content-type':'video/mp4','content-length':String(bytes.length)}})}return new Response(null,{status:404})})
-    try{cnn=new BrowserWindow({show:false,webPreferences:{session:browserSession,sandbox:true,contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}});await cnn.loadURL(page);kernel.tabs.set(tabId,{id:tabId,title:'CNN original',url:page,projectId:project.id,view:{webContents:cnn.webContents}});kernel.activeTabId=tabId
-      const result=mediaRecord((await bridgeCall({action:'media.preserve',url})).result),identity=mediaRecord(result.videoIdentity),preserved=mediaRecord(result.preservation);assert.equal(identity.resourceId,'cnn:'+id);assert.equal(preserved.completeVod,true);assert.equal(preserved.reencoded,false)
-      const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{type:string}[]};assert.equal(decoded.completeFile,true);assert.deepEqual(decoded.tracks.map(t=>t.type).sort(),['audio','video'])
-      const before=fs.readdirSync(artifacts).sort();drift=true;await assert.rejects(bridgeCall({action:'media.preserve',url}),/VIDEO_IDENTITY/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);assert.equal(media.isCaptureActive(),false)
-    }finally{cnn?.destroy();kernel.tabs.delete(tabId);kernel.activeTabId=null;browserSession.protocol.unhandle('https')}
-  })
-  await stage('bound publisher HTTP program packet-copy verifies original AV duration and rolls back shorter replacements',async()=>{
-    const bytes=fs.readFileSync(converted.path),videoIdentity={version:1 as const,platform:'page' as const,targetId:'https://www.cnbc.com/video/2026/10/07/fixture.html',resourceId:'cnbc:70001'},url='https://pdl-iphone-cnbc-com.akamaized.net/70001/fixture.mp4'
-    const fetchImpl=async()=>new Response(new Uint8Array(bytes),{headers:{'content-type':'video/mp4','content-length':String(bytes.length)}})
-    const request={url,pageUrl:videoIdentity.targetId,videoIdentity,fetchImpl,completeProgram:{durationSeconds:exportedInfo.durationSeconds,requireAudio:true}}
-    const result=await media.preserveMedia(request)
-    assert.equal(result.preservation.completeVod,true);assert.equal(result.preservation.reencoded,false);assert.deepEqual(fs.readFileSync(path.join(artifacts,result.preservation.resources[0]!.artifactId)),bytes)
-    const proof=JSON.parse(fs.readFileSync(path.join(artifacts,result.preservation.proofArtifactId),'utf8')) as {completeProgram:{durationSeconds:number};remux:{tracks:{type:string;packetSha256:string}[]}}
-    assert.equal(proof.completeProgram.durationSeconds,exportedInfo.durationSeconds);assert.deepEqual(proof.remux.tracks.map(t=>t.type).sort(),['audio','video'])
-    const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{sampleCount:number}[]};assert.equal(decoded.completeFile,true);assert.ok(decoded.tracks.every(t=>t.sampleCount>0))
-    const before=fs.readdirSync(artifacts).sort();await assert.rejects(media.preserveMedia({...request,completeProgram:{durationSeconds:15,requireAudio:true}}),/PROGRAM_INCOMPLETE/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);assert.equal(media.isCaptureActive(),false)
-  })
-  await stage('identity-bound YouTube separated delivery merges both complete tracks without reencoding through browser action',async()=>{
-    const files:Record<string,Buffer>={}
-    for(const kind of ['video','audio'] as const){
-      const input=new Input({formats:[MP4],source:new BufferSource(fs.readFileSync(converted.path))}),target=new BufferTarget(),output=new Output({format:new Mp4OutputFormat({fastStart:'fragmented'}),target})
-      try{const conversion=await Conversion.init({input,output,tracks:'all',copy:{mode:'forced'},video:{discard:kind==='audio'},audio:{discard:kind==='video'}});assert.equal(conversion.discardedTracks.length,1);await conversion.execute();files[kind]=Buffer.from(target.buffer!)}finally{input.dispose()}
-    }
-    const duration=exportedInfo.durationSeconds,videoUrl='https://fixture.googlevideo.com/videoplayback?itag=137&source=youtube',audioUrl='https://fixture.googlevideo.com/videoplayback?itag=140&source=youtube'
-    let badAudio=false,wrongTrack=false,changeOnAudio=false,yt:BrowserWindow|undefined
-    browserSession.protocol.handle('https',async request=>{
-      const url=new URL(request.url)
-      if(url.hostname==='www.youtube.com')return new Response(`<style>video{width:320px;height:180px}</style><div id="movie_player"><video></video></div><script>const p=document.querySelector('#movie_player'),v=p.querySelector('video');Object.defineProperty(v,'duration',{value:${duration}});Object.defineProperty(v,'currentSrc',{value:'blob:https://www.youtube.com/player'});p.getVideoData=()=>({video_id:'fixture'});p.getPlayerResponse=()=>({playabilityStatus:{status:'OK'},videoDetails:{videoId:'fixture',lengthSeconds:'${duration}'},streamingData:{adaptiveFormats:[{url:'${videoUrl}',mimeType:'video/mp4',approxDurationMs:'${duration*1000}'},{url:'${audioUrl}',mimeType:'audio/mp4',approxDurationMs:'${duration*1000}',audioTrack:{id:'en',audioIsDefault:true}}]}})</script>`,{headers:{'content-type':'text/html'}})
-      if(url.hostname!=='fixture.googlevideo.com')return new Response(null,{status:404})
-      const audio=url.searchParams.get('itag')==='140'
-      if(audio&&changeOnAudio)await yt!.webContents.executeJavaScript("document.querySelector('#movie_player').classList.add('ad-showing')")
-      const data=files[audio&&!wrongTrack?'audio':'video'];return new Response(new Uint8Array(data),{status:audio&&badAudio?206:200,headers:{'content-type':audio?'audio/mp4':'video/mp4','content-length':String(data.length)}})
+    )
+    await stage('archive segment preserves multiple audio renditions and native lineage', async () => {
+      const original = new Input({ formats: [MP4], source: new BufferSource(fs.readFileSync(converted.path)) }),
+        target = new BufferTarget(),
+        output = new Output({ format: new Mp4OutputFormat(), target })
+      try {
+        const video = (await original.getPrimaryVideoTrack())!,
+          audio = (await original.getPrimaryAudioTrack())!,
+          videoSource = new EncodedVideoPacketSource((await video.getCodec())!),
+          audioSources = Array.from({ length: 3 }, () => new EncodedAudioPacketSource('aac'))
+        output.addVideoTrack(videoSource)
+        for (const source of audioSources) output.addAudioTrack(source)
+        await output.start()
+        const videoConfig = (await video.getDecoderConfig())!,
+          audioConfig = (await audio.getDecoderConfig())!
+        await Promise.all([
+          (async () => {
+            for await (const packet of new EncodedPacketSink(video).packets())
+              await videoSource.add(packet, { decoderConfig: videoConfig })
+            videoSource.close()
+          })(),
+          ...audioSources.map(async source => {
+            for await (const packet of new EncodedPacketSink(audio).packets())
+              await source.add(packet, { decoderConfig: audioConfig })
+            source.close()
+          })
+        ])
+        await output.finalize()
+      } finally {
+        original.dispose()
+      }
+      const sourceId = 'multi-audio-archive.mp4'
+      fs.writeFileSync(path.join(artifacts, sourceId), Buffer.from(target.buffer!))
+      const result = (await media.processArtifact({
+        action: 'media.segment',
+        artifactId: sourceId,
+        segmentRange: { startSeconds: 0.1, endSeconds: 1.2 }
+      })) as {
+        artifactId: string
+        sha256: string
+        actualSourceRange: { startSeconds: number; endSeconds: number }
+        tracks: { type: string }[]
+      }
+      assert.deepEqual(result.tracks.map(t => t.type).sort(), ['audio', 'audio', 'audio', 'video'])
+      const lineage = await readMediaDerivation(artifacts, result.artifactId)
+      assert.equal(lineage?.sha256, result.sha256)
+      assert.deepEqual(lineage?.sourceRange, result.actualSourceRange)
+      const decoded = (await media.processArtifact({
+        action: 'media.decode.check',
+        artifactId: result.artifactId
+      })) as { completeFile: boolean; tracks: { type: string; sampleCount: number }[] }
+      assert.equal(decoded.completeFile, true)
+      assert.equal(decoded.tracks.length, 4)
+      assert.ok(decoded.tracks.every(t => t.sampleCount > 0))
+      const sample = mediaRecord(
+          await media.processArtifact({
+            action: 'media.audio.sample',
+            artifactId: result.artifactId,
+            startSeconds: 0.1,
+            endSeconds: 0.5
+          })
+        ),
+        evidence = mediaRecord(sample.evidence)
+      assert.equal(evidence.inputAudioTrackCount, 3)
+      assert.equal(evidence.audioSelection, 'primary-audio-track')
+      assert.ok(Number(evidence.inputAudioTrackId) > 0)
+      const processor = new MediaProcessor({
+          session: browserSession,
+          pagePath: path.resolve('packages/media-native/src/media/processing.html'),
+          preloadPath: path.resolve('packages/media-native/src/preload/processing-preload.cjs')
+        }),
+        normalized = mediaRecord(
+          await processor.process({ action: 'media.speech.normalize', artifactId: result.artifactId }, artifacts)
+        ),
+        normalization = mediaRecord(normalized.normalization)
+      assert.equal(normalization.inputAudioTrackCount, 3)
+      assert.equal(normalization.audioSelection, 'primary-audio-track')
+      assert.equal(normalization.inputAudioTrackId, evidence.inputAudioTrackId)
+      assert.ok(Number(normalization.frames) > 0)
     })
-    const id='youtube-pair-fixture',url='https://www.youtube.com/watch?v=fixture'
-    try{
-      yt=new BrowserWindow({show:false,webPreferences:{session:browserSession,sandbox:true,contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}});await yt.loadURL(url)
-      kernel.tabs.set(id,{id,title:'YouTube isolated fixture',url,projectId:project.id,view:{webContents:yt.webContents}});kernel.activeTabId=id
-      await assert.rejects(bridgeCall({action:'media.download',url:videoUrl}),/YOUTUBE_SEPARATED_TRACKS/)
-      const result=(await bridgeCall({action:'media.preserve',url:videoUrl})).result as {artifactId:string;videoIdentity:{targetId:string};tracks:{type:string;packets:number;packetSha256:string}[];preservation:{reencoded:boolean;completeSeparatedTracks:boolean;resources:{artifactId:string;track:string;sha256:string}[];proofArtifactId:string}}
-      assert.equal(result.videoIdentity.targetId,'fixture');assert.equal(result.preservation.completeSeparatedTracks,true);assert.equal(result.preservation.reencoded,false);assert.deepEqual(result.tracks.map(t=>t.type).sort(),['audio','video'])
-      for(const resource of result.preservation.resources)assert.deepEqual(fs.readFileSync(path.join(artifacts,resource.artifactId)),files[resource.track])
-      const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean;tracks:{type:string;sampleCount:number}[]};assert.equal(decoded.completeFile,true);assert.ok(decoded.tracks.every(t=>t.sampleCount>0));assert.deepEqual(decoded.tracks.map(t=>t.type).sort(),['audio','video'])
-      const proof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/media-preservation-validation';fs.mkdirSync(proof,{recursive:true});fs.copyFileSync(path.join(artifacts,result.preservation.proofArtifactId),path.join(proof,'youtube-separated-delivery.json'));fs.copyFileSync(path.join(artifacts,result.artifactId),path.join(proof,'youtube-merged.mp4'))
-      const before=fs.readdirSync(artifacts).sort();wrongTrack=true;await assert.rejects(bridgeCall({action:'media.preserve',url:videoUrl}),/declared video or audio track/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);wrongTrack=false;badAudio=true;await assert.rejects(bridgeCall({action:'media.preserve',url:videoUrl}),/full HTTP 200/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);badAudio=false
-      changeOnAudio=true;await assert.rejects(bridgeCall({action:'media.preserve',url:videoUrl}),/VIDEO_IDENTITY/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before);assert.equal(media.isCaptureActive(),false)
-    }finally{yt?.destroy();kernel.tabs.delete(id);kernel.activeTabId=null;browserSession.protocol.unhandle('https')}
-  })
-  await stage('bounded native-rate stereo audition WAV, hashes, PCM metrics, no model-listening claim, no autoplay and failed-range rollback',async()=>{
-    // MediaRecorder's first audio PTS can lag its video track on a busy host.
-    // Select a real one-second interval, rather than asserting samples exist before it.
-    const audioTrack=info.tracks.find(track=>track.type==='audio')!,audioStart=Math.max(.2,audioTrack.startSeconds??0)
-    assert.ok(audioStart+1<=(audioTrack.endSeconds??0),'Fixture must contain a complete one-second audio interval.')
-    const reply=await bridgeCall({action:'media.audio.sample',artifactId,startSeconds:audioStart,endSeconds:audioStart+1}),audio=reply.result as {artifactId:string;path:string;sha256:string;sourceSha256:string;evidence:{sampleRate:number;channels:number;frames:number;peak:number;rms:number;missingFrames:number;listeningStatus:string};perceptualReview:{status:string}}
-    assert.equal(audio.evidence.sampleRate,48000);assert.equal(audio.evidence.channels,2);assert.equal(audio.evidence.frames,48000);assert.ok(audio.evidence.peak>.04&&audio.evidence.peak<.15);assert.ok(audio.evidence.rms>.02&&audio.evidence.rms<.1);assert.equal(audio.evidence.missingFrames,0);assert.equal(audio.evidence.listeningStatus,'not-performed');assert.equal(audio.perceptualReview.status,'not-performed');assert.equal(reply.images.length,0)
-    assert.equal(crypto.createHash('sha256').update(fs.readFileSync(audio.path)).digest('hex'),audio.sha256);assert.equal(crypto.createHash('sha256').update(fs.readFileSync(path.join(artifacts,artifactId))).digest('hex'),audio.sourceSha256)
-    const preview=(await bridgeCall({action:'media.audio.preview',artifactId:audio.artifactId})).result as {autoplay:boolean;listeningStatus:string};assert.equal(preview.autoplay,false);assert.equal(preview.listeningStatus,'not-performed')
-    const viewer=BrowserWindow.getAllWindows().find(w=>w.getTitle().includes('BMW 音频试听'));assert.ok(viewer);assert.equal(await viewer.webContents.executeJavaScript(`document.querySelector('audio').autoplay`),false);viewer.destroy()
-    const before=fs.readdirSync(artifacts).sort();await assert.rejects(bridgeCall({action:'media.audio.sample',artifactId,startSeconds:0,endSeconds:11}),/audio end/);await assert.rejects(bridgeCall({action:'media.audio.sample',artifactId:converted.artifactId,startSeconds:1,endSeconds:2}),/outside/);assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
-  })
-  await stage('actual adaptive canvas stream keeps mapped capture through resolution/aspect changes',async()=>{
-    const id='adaptive-fixture';await source!.webContents.executeJavaScript(`(async()=>{const c=document.createElement('canvas');c.id='adaptive-canvas';c.width=320;c.height=180;document.body.append(c);const v=document.createElement('video');v.id='adaptive-video';v.muted=true;document.body.append(v);v.srcObject=c.captureStream(30);let count=0;globalThis.adaptiveAdmitted=false;globalThis.adaptiveTimer=setInterval(()=>{if(count===10){c.width=640;c.height=360}if(count===25){c.width=320;c.height=320}const x=c.getContext('2d');x.fillStyle=count<20?'red':'blue';x.fillRect(0,0,c.width,c.height);if(globalThis.adaptiveAdmitted)count++},30);await v.play();await new Promise(r=>setTimeout(r,100))})()`)
-    kernel.tabs.set(id,{id,title:'Adaptive fixture',url:source!.webContents.getURL(),projectId:project.id,view:{webContents:source!.webContents}});kernel.activeTabId=id
-    try{
-      adaptiveRecordingStarted=()=>{void source!.webContents.executeJavaScript('globalThis.adaptiveAdmitted=true;true')}
-      const result=(await bridgeCall({action:'media.video.capture',selector:'#adaptive-video',fromStart:false,maxDurationMs:1600})).result as {artifactId:string;complete:boolean;stopReason:string;captureTimeline:{sourceResolutionChanges:{width:number;height:number}[]}}
-      assert.equal(result.complete,false);assert.equal(result.stopReason,'maximum-duration');assert.deepEqual(result.captureTimeline.sourceResolutionChanges.map(r=>[r.width,r.height]),[[320,180],[640,360],[320,320]])
-      const decoded=await media.processArtifact({action:'media.decode.check',artifactId:result.artifactId}) as {completeFile:boolean};assert.equal(decoded.completeFile,true)
-      const index=JSON.parse(fs.readFileSync(path.join(artifacts,result.artifactId+'.source.json'),'utf8'));assert.ok(index.frames.every((f:{sourceWidth?:number;sourceHeight?:number})=>f.sourceWidth&&f.sourceHeight))
-      const last=index.frames.at(-1),sample=(await bridgeCall({action:'media.capture.frames.sample',artifactId:result.artifactId,sourceTimestampsSeconds:[last.sourceTimestampSeconds]})).result as Frames;assert.equal(sample.frames[0]!.width,320);assert.equal(sample.frames[0]!.height,180)
-      const pixels=await source!.webContents.executeJavaScript(`(async()=>{const image=new Image();image.src=${JSON.stringify('data:image/png;base64,'+fs.readFileSync(sample.frames[0]!.path).toString('base64'))};await image.decode();const c=document.createElement('canvas');c.width=320;c.height=180;const x=c.getContext('2d');x.drawImage(image,0,0);return [[...x.getImageData(160,90,1,1).data],[...x.getImageData(10,10,1,1).data]]})()`) as number[][]
-      assert.ok(pixels[0]![2]!>180&&pixels[0]![0]!<30,'Adaptive final frame must retain blue content');assert.ok(pixels[1]!.slice(0,3).every(c=>c<15),'Aspect change must have explicit black letterboxing')
-    }finally{adaptiveRecordingStarted=undefined;kernel.tabs.delete(id);kernel.activeTabId=null;await source!.webContents.executeJavaScript(`clearInterval(globalThis.adaptiveTimer);const v=document.querySelector('#adaptive-video');v.srcObject.getTracks().forEach(t=>t.stop());v.remove();document.querySelector('#adaptive-canvas').remove()`)}
-  })
-  await stage('finite AV capture freezes EOF before page replay, verifies first/last pixels and rejects guessed fields through Bridge',async()=>{
-    source!.showInactive()
-    const before=fs.readdirSync(artifacts).sort()
-    await assert.rejects(bridgeCall({action:'page.read'}),/supportedActions/)
-    const help=(await bridgeCall({action:'help',forAction:'media.video.capture'})).result as {inputSchema:{properties:Record<string,unknown>}}
-    assert.ok(Object.hasOwn(help.inputSchema.properties,'selector'));assert.ok(!Object.hasOwn(help.inputSchema.properties,'sourceEndSeconds'))
-    await assert.rejects(bridgeCall({action:'media.video.capture',selector:'video',sourceEndSeconds:1.5}),/BMW_BROWSER_ARGUMENTS_INVALID/)
-    assert.deepEqual(fs.readdirSync(artifacts).sort(),before)
-    const fixtureUrl='data:video/mp4;base64,'+fs.readFileSync(converted.path).toString('base64')
-    const duration=await source!.webContents.executeJavaScript(`(async()=>{
+    await stage(
+      'preserve observed HLS delivery bytes, remux encoded packets without loss and verify every track/range',
+      async () => {
+        const input = new Input({ formats: [MP4], source: new BufferSource(fs.readFileSync(converted.path)) }),
+          target = new BufferTarget(),
+          output = new Output({
+            format: new Mp4OutputFormat({ fastStart: 'fragmented', minimumFragmentDuration: 0.4 }),
+            target
+          })
+        try {
+          const conversion = await Conversion.init({ input, output, tracks: 'all', copy: { mode: 'forced' } })
+          assert.equal(conversion.discardedTracks.length, 0)
+          await conversion.execute()
+        } finally {
+          input.dispose()
+        }
+        const data = Buffer.from(target.buffer!)
+        let offset = 0,
+          split = -1
+        while (offset < data.length) {
+          const size = data.readUInt32BE(offset),
+            type = data.toString('ascii', offset + 4, offset + 8)
+          assert.ok(size >= 8)
+          if (type === 'moof') {
+            split = offset
+            break
+          }
+          offset += size
+        }
+        assert.ok(split > 0)
+        const init = data.subarray(0, split),
+          segment = data.subarray(split),
+          duration = exportedInfo.durationSeconds
+        const bodies: Record<string, { data: Buffer; type: string }> = {
+          '/master.m3u8': {
+            type: 'application/vnd.apple.mpegurl',
+            data: Buffer.from('#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=100000\nvideo.m3u8\n')
+          },
+          '/video.m3u8': {
+            type: 'application/vnd.apple.mpegurl',
+            data: Buffer.from(
+              '#EXTM3U\n#EXT-X-MAP:URI="init.mp4"\n#EXTINF:' + duration + ',\nsegment.m4s\n#EXT-X-ENDLIST\n'
+            )
+          },
+          '/init.mp4': { type: 'video/mp4', data: init },
+          '/segment.m4s': { type: 'video/mp4', data: segment }
+        }
+        const server = createServer((request, response) => {
+          const body = bodies[request.url ?? '']
+          if (!body) {
+            response.writeHead(404).end()
+            return
+          }
+          response.writeHead(200, { 'content-type': body.type, 'content-length': body.data.length })
+          response.end(body.data)
+        })
+        await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+        const address = server.address()
+        assert.ok(address && typeof address === 'object')
+        const url = 'http://127.0.0.1:' + address.port + '/master.m3u8',
+          id = 'preserve-fixture'
+        await source!.webContents.executeJavaScript(
+          `(()=>{const s=document.createElement('source');s.id='preserve-source';s.src=${JSON.stringify(url)};document.body.append(s)})()`
+        )
+        kernel.tabs.set(id, {
+          id,
+          title: 'HLS preservation fixture',
+          url: source!.webContents.getURL(),
+          projectId: project.id,
+          view: { webContents: source!.webContents }
+        })
+        kernel.activeTabId = id
+        try {
+          await assert.rejects(
+            bridgeCall({ action: 'media.preserve', url: url.replace('master', 'unobserved') }),
+            /must be observed/
+          )
+          const result = (await bridgeCall({ action: 'media.preserve', url })).result as {
+            artifactId: string
+            sha256: string
+            tracks: { type: string; packets: number }[]
+            preservation: {
+              reencoded: boolean
+              completeVod: boolean
+              uploadedOriginal: string
+              resources: { artifactId: string; sha256: string }[]
+              resourceCount: number
+              proofArtifactId: string
+              proofSha256: string
+            }
+          }
+          assert.equal(result.preservation.reencoded, false)
+          assert.equal(result.preservation.completeVod, true)
+          assert.equal(result.preservation.uploadedOriginal, 'unknown')
+          assert.deepEqual(result.tracks.map(t => t.type).sort(), ['audio', 'video'])
+          assert.ok(result.tracks.every(t => t.packets > 0))
+          const proofBytes = fs.readFileSync(path.join(artifacts, result.preservation.proofArtifactId))
+          assert.equal(crypto.createHash('sha256').update(proofBytes).digest('hex'), result.preservation.proofSha256)
+          const ledger = JSON.parse(proofBytes.toString('utf8')) as {
+            resources: { artifactId: string; url: string; sha256: string }[]
+          }
+          assert.equal(result.preservation.resourceCount, ledger.resources.length)
+          assert.ok(result.preservation.resources.length <= 20)
+          assert.ok(result.preservation.resources.every(resource => !('url' in resource) && !('path' in resource)))
+          for (const resource of ledger.resources) {
+            const expected = bodies[new URL(resource.url).pathname]!.data,
+              actual = fs.readFileSync(path.join(artifacts, resource.artifactId))
+            assert.deepEqual(actual, expected)
+            assert.equal(crypto.createHash('sha256').update(actual).digest('hex'), resource.sha256)
+          }
+          const decoded = (await media.processArtifact({
+            action: 'media.decode.check',
+            artifactId: result.artifactId
+          })) as { completeFile: boolean; tracks: { type: string; sampleCount: number }[] }
+          assert.equal(decoded.completeFile, true)
+          assert.deepEqual(decoded.tracks.map(t => t.type).sort(), ['audio', 'video'])
+          assert.ok(decoded.tracks.every(t => t.sampleCount > 0))
+          const tail = await bridgeCall({
+            action: 'media.frames.sample',
+            artifactId: result.artifactId,
+            timestampsSeconds: [1.2]
+          })
+          assert.equal(tail.images.length, 1)
+          const proof = process.env.BMW_VALIDATION_DIR ?? '.bmw-runtime/media-preservation-validation'
+          fs.mkdirSync(proof, { recursive: true })
+          fs.copyFileSync(
+            path.join(artifacts, result.preservation.proofArtifactId),
+            path.join(proof, 'preserved-delivery.json')
+          )
+        } finally {
+          await new Promise<void>((resolve, reject) => server.close(error => (error ? reject(error) : resolve())))
+          kernel.tabs.delete(id)
+          kernel.activeTabId = null
+          await source!.webContents.executeJavaScript(`document.querySelector('#preserve-source').remove()`)
+        }
+      }
+    )
+    await stage(
+      'complete HLS bundle retains every declared audio and subtitle track and rolls back incomplete captions',
+      async () => {
+        const bodies: Record<string, Uint8Array | string> = {},
+          duration = exportedInfo.durationSeconds
+        for (const kind of ['video', 'audio'] as const) {
+          const input = new Input({ formats: [MP4], source: new BufferSource(fs.readFileSync(converted.path)) }),
+            target = new BufferTarget(),
+            output = new Output({ format: new Mp4OutputFormat({ fastStart: 'fragmented' }), target })
+          try {
+            const conversion = await Conversion.init({
+              input,
+              output,
+              tracks: 'all',
+              copy: { mode: 'forced' },
+              video: { discard: kind === 'audio' },
+              audio: { discard: kind === 'video' }
+            })
+            assert.equal(conversion.discardedTracks.length, 1)
+            await conversion.execute()
+          } finally {
+            input.dispose()
+          }
+          const bytes = Buffer.from(target.buffer!)
+          let split = 0
+          while (split < bytes.length && bytes.toString('ascii', split + 4, split + 8) !== 'moof') {
+            const size = bytes.readUInt32BE(split)
+            assert.ok(size >= 8)
+            split += size
+          }
+          assert.ok(split > 0 && split < bytes.length)
+          bodies['/' + kind + '-init.mp4'] = bytes.subarray(0, split)
+          bodies['/' + kind + '.m4s'] = bytes.subarray(split)
+          bodies['/' + kind + '.m3u8'] =
+            '#EXTM3U\n#EXT-X-MAP:URI="' +
+            kind +
+            '-init.mp4"\n#EXTINF:' +
+            duration +
+            ',\n' +
+            kind +
+            '.m4s\n#EXT-X-ENDLIST\n'
+        }
+        bodies['/master.m3u8'] =
+          '#EXTM3U\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="a",NAME="English",LANGUAGE="en",DEFAULT=YES,URI="audio.m3u8"\n#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="b",NAME="English alternate encoding",LANGUAGE="en",DEFAULT=YES,URI="audio.m3u8"\n#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="s",NAME="English",LANGUAGE="en",DEFAULT=YES,URI="en.m3u8"\n#EXT-X-MEDIA:TYPE=SUBTITLES,GROUP-ID="s",NAME="English US",LANGUAGE="en-US",URI="en-US.m3u8"\n#EXT-X-STREAM-INF:BANDWIDTH=10000,AUDIO="a",SUBTITLES="s"\nvideo.m3u8\n'
+        for (const language of ['en', 'en-US']) {
+          bodies['/' + language + '.m3u8'] =
+            '#EXTM3U\n#EXTINF:0.8,\n' +
+            language +
+            '-1.vtt\n#EXTINF:' +
+            (duration - 0.8) +
+            ',\n' +
+            language +
+            '-2.vtt\n#EXT-X-ENDLIST\n'
+          const cue = 'a\n00:00.050 --> 00:01.000 align:start\n原声 ' + language + '  \n\n',
+            header = 'WEBVTT\nX-TIMESTAMP-MAP=LOCAL:00:00:00.000,MPEGTS:0\n\n'
+          bodies['/' + language + '-1.vtt'] = header + cue
+          bodies['/' + language + '-2.vtt'] = header + cue + 'b\n00:01.100 --> 00:01.400\nLater text\n\n'
+        }
+        const videoIdentity = {
+          version: 1 as const,
+          platform: 'page' as const,
+          targetId: 'https://fixture.example/subtitles',
+          resourceId: 'complete-bundle'
+        }
+        let failure = ''
+        const cancel = new AbortController(),
+          request = {
+            url: 'https://fixture.example/master.m3u8',
+            pageUrl: videoIdentity.targetId,
+            videoIdentity,
+            expectedTransport: 'hls' as const,
+            completeProgram: { durationSeconds: duration, requireAudio: true },
+            fetchImpl: async (url: string) => {
+              const key = new URL(url).pathname
+              let body = bodies[key]
+              if (key === '/en-US-2.vtt') {
+                if (failure === 'missing') return new Response(null, { status: 404 })
+                if (failure === 'utf8') body = Uint8Array.from([255, 254])
+                if (failure === 'map') body = 'WEBVTT\nX-TIMESTAMP-MAP=LOCAL:00:00.000,MPEGTS:8589934592\n\n'
+                if (failure === 'cancel') cancel.abort(new Error('cancel final subtitle'))
+              }
+              return new Response(typeof body === 'string' ? body : body ? new Uint8Array(body) : null, {
+                status: body ? 200 : 404,
+                headers: {
+                  'content-type': key.endsWith('.m3u8')
+                    ? 'application/vnd.apple.mpegurl'
+                    : key.endsWith('.vtt')
+                      ? 'text/vtt'
+                      : 'video/mp4'
+                }
+              })
+            }
+          }
+        const result = await media.preserveMedia(request),
+          p = result.preservation
+        assert.equal('completeSubtitles' in p && p.completeSubtitles, true)
+        assert.equal('subtitleTracks' in p && p.subtitleTracks.length, 2)
+        const ledger = mediaRecord(JSON.parse(fs.readFileSync(path.join(artifacts, p.proofArtifactId), 'utf8'))),
+          subtitleTracks = ledger.subtitleTracks as {
+            artifactId: string
+            sha256: string
+            indexArtifactId: string
+            indexSha256: string
+            cueCount: number
+            duplicatesRemoved: number
+            language: string
+            delivery: string
+          }[]
+        assert.deepEqual(
+          subtitleTracks.map(t => t.language),
+          ['en', 'en-US']
+        )
+        assert.ok('tracks' in result)
+        assert.deepEqual(result.tracks.map(t => t.type).sort(), ['audio', 'audio', 'video'])
+        assert.equal((ledger.audioRenditions as { outputDefault: boolean }[]).filter(t => t.outputDefault).length, 1)
+        for (const track of subtitleTracks) {
+          assert.equal(track.delivery, 'external-sidecar')
+          assert.equal(track.cueCount, 2)
+          assert.equal(track.duplicatesRemoved, 1)
+          for (const [id, hash] of [
+            [track.artifactId, track.sha256],
+            [track.indexArtifactId, track.indexSha256]
+          ])
+            assert.equal(
+              crypto
+                .createHash('sha256')
+                .update(fs.readFileSync(path.join(artifacts, id!)))
+                .digest('hex'),
+              hash
+            )
+          const parsed = parsePreservedVtt(fs.readFileSync(path.join(artifacts, track.artifactId)))
+          assert.equal(parsed.cues[0]!.text, '原声 ' + track.language + '  ')
+          const index = JSON.parse(fs.readFileSync(path.join(artifacts, track.indexArtifactId), 'utf8')) as {
+            mappings: { artifactId: string }[]
+          }
+          assert.equal(index.mappings.length, 2)
+          for (const m of index.mappings)
+            assert.equal(parsePreservedVtt(fs.readFileSync(path.join(artifacts, m.artifactId))).cues.length > 0, true)
+        }
+        const decoded = (await media.processArtifact({
+          action: 'media.decode.check',
+          artifactId: result.artifactId
+        })) as { completeFile: boolean; tracks: { type: string; sampleCount: number }[] }
+        assert.equal(decoded.completeFile, true)
+        assert.deepEqual(decoded.tracks.map(t => t.type).sort(), ['audio', 'audio', 'video'])
+        assert.ok(decoded.tracks.every(t => t.sampleCount > 0))
+        const before = fs.readdirSync(artifacts).sort()
+        for (const mode of ['missing', 'utf8', 'map', 'cancel']) {
+          failure = mode
+          await assert.rejects(
+            media.preserveMedia({ ...request, signal: cancel.signal }),
+            mode === 'cancel' ? /cancel final subtitle/ : /MEDIA_PRESERVATION_TRACKS_INCOMPLETE/
+          )
+          assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+          assert.equal(media.isCaptureActive(), false)
+        }
+      }
+    )
+    await stage(
+      'TS HLS retains all encoded NAL/AAC payloads and verifies each packet PTS through independent MP4 demux',
+      async () => {
+        const input = new Input({ formats: [MP4], source: new BufferSource(fs.readFileSync(converted.path)) }),
+          target = new BufferTarget(),
+          output = new Output({ format: new MpegTsOutputFormat(), target })
+        try {
+          const conversion = await Conversion.init({ input, output, tracks: 'all', copy: { mode: 'forced' } })
+          assert.equal(conversion.discardedTracks.length, 0)
+          await conversion.execute()
+        } finally {
+          input.dispose()
+        }
+        const ts = new Uint8Array(target.buffer!),
+          duration = exportedInfo.durationSeconds,
+          videoIdentity = {
+            version: 1 as const,
+            platform: 'page' as const,
+            targetId: 'https://fixture.example/program',
+            resourceId: 'fixture:program'
+          }
+        const result = await media.preserveMedia({
+          url: 'https://fixture.example/program.m3u8',
+          pageUrl: videoIdentity.targetId,
+          videoIdentity,
+          completeProgram: { durationSeconds: duration, requireAudio: true },
+          fetchImpl: async url =>
+            new Response(
+              url.endsWith('.ts') ? ts : '#EXTM3U\n#EXTINF:' + duration + ',\nprogram.ts\n#EXT-X-ENDLIST\n',
+              { headers: { 'content-type': url.endsWith('.ts') ? 'video/mp2t' : 'application/vnd.apple.mpegurl' } }
+            )
+        })
+        assert.equal(result.preservation.completeVod, true)
+        assert.equal(result.preservation.reencoded, false)
+        const proof = JSON.parse(
+          fs.readFileSync(path.join(artifacts, result.preservation.proofArtifactId), 'utf8')
+        ) as {
+          remux: {
+            tracks: {
+              type: string
+              payloadSerialization: string
+              packetDigestFormat: string
+              sourcePacketSha256: string
+            }[]
+          }
+        }
+        assert.deepEqual(proof.remux.tracks.map(t => t.payloadSerialization).sort(), [
+          'adts-to-raw',
+          'annex-b-to-length4'
+        ])
+        assert.ok(
+          proof.remux.tracks.every(
+            t =>
+              t.packetDigestFormat === 'sha256:length32be+mp4-packet-payload' &&
+              /^[a-f0-9]{64}$/.test(t.sourcePacketSha256)
+          )
+        )
+        const decoded = (await media.processArtifact({
+          action: 'media.decode.check',
+          artifactId: result.artifactId
+        })) as { completeFile: boolean; tracks: { type: string; sampleCount: number }[] }
+        assert.equal(decoded.completeFile, true)
+        assert.deepEqual(decoded.tracks.map(t => t.type).sort(), ['audio', 'video'])
+        assert.ok(decoded.tracks.every(t => t.sampleCount > 0))
+      }
+    )
+    await stage(
+      'CNN formal browser preservation binds declared original despite an unrelated ad player and rolls back identity drift',
+      async () => {
+        const page = 'https://edition.cnn.com/2026/10/28/politics/video/original',
+          id = 'mecef3e95814a7c3788851d76c807e13bc6cf6e102',
+          url =
+            'https://clips-media-aka.warnermediacdn.com/cnn/clips/2026-10/2413539-234abbc2b3454154b092f7651e6ec9ea/mp4/original-2413539-1920x1080_8000k.mp4',
+          bytes = fs.readFileSync(converted.path),
+          tabId = 'cnn-original-fixture'
+        let cnn: BrowserWindow | undefined,
+          drift = false
+        browserSession.protocol.handle('https', async request => {
+          const u = new URL(request.url)
+          if (u.hostname === 'edition.cnn.com')
+            return new Response(
+              `<style>video{width:320px;height:180px}</style><h1>Original CNN</h1><video src="https://ads.example/ad.mp4"></video><div id="program" data-component-name="video-resource" data-video-id="${id}" data-media-id="${id}" data-canonical-url-path="/2026/10/28/politics/video/original" data-canonical-url="https://www.cnn.com/2026/10/28/politics/video/original" data-headline="Original CNN" data-live="" data-auth-type="" data-content-type="mediasource-clip"><video></video></div><script type="application/ld+json">${JSON.stringify({ '@type': 'VideoObject', name: 'Original CNN', duration: 'PT' + exportedInfo.durationSeconds + 'S', contentUrl: url, embedUrl: 'https://fave.api.cnn.io/v1/fav/?video=' + id })}</script>`,
+              { headers: { 'content-type': 'text/html' } }
+            )
+          if (u.href === url) {
+            if (drift)
+              await cnn!.webContents.executeJavaScript(
+                "document.querySelector('#program').setAttribute('data-auth-type','subscription');true"
+              )
+            return new Response(new Uint8Array(bytes), {
+              headers: { 'content-type': 'video/mp4', 'content-length': String(bytes.length) }
+            })
+          }
+          return new Response(null, { status: 404 })
+        })
+        try {
+          cnn = new BrowserWindow({
+            show: false,
+            webPreferences: {
+              session: browserSession,
+              sandbox: true,
+              contextIsolation: true,
+              nodeIntegration: false,
+              backgroundThrottling: false
+            }
+          })
+          await cnn.loadURL(page)
+          kernel.tabs.set(tabId, {
+            id: tabId,
+            title: 'CNN original',
+            url: page,
+            projectId: project.id,
+            view: { webContents: cnn.webContents }
+          })
+          kernel.activeTabId = tabId
+          const result = mediaRecord((await bridgeCall({ action: 'media.preserve', url })).result),
+            identity = mediaRecord(result.videoIdentity),
+            preserved = mediaRecord(result.preservation)
+          assert.equal(identity.resourceId, 'cnn:' + id)
+          assert.equal(preserved.completeVod, true)
+          assert.equal(preserved.reencoded, false)
+          const decoded = (await media.processArtifact({
+            action: 'media.decode.check',
+            artifactId: result.artifactId
+          })) as { completeFile: boolean; tracks: { type: string }[] }
+          assert.equal(decoded.completeFile, true)
+          assert.deepEqual(decoded.tracks.map(t => t.type).sort(), ['audio', 'video'])
+          const before = fs.readdirSync(artifacts).sort()
+          drift = true
+          await assert.rejects(bridgeCall({ action: 'media.preserve', url }), /VIDEO_IDENTITY/)
+          assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+          assert.equal(media.isCaptureActive(), false)
+        } finally {
+          cnn?.destroy()
+          kernel.tabs.delete(tabId)
+          kernel.activeTabId = null
+          browserSession.protocol.unhandle('https')
+        }
+      }
+    )
+    await stage(
+      'bound publisher HTTP program packet-copy verifies original AV duration and rolls back shorter replacements',
+      async () => {
+        const bytes = fs.readFileSync(converted.path),
+          videoIdentity = {
+            version: 1 as const,
+            platform: 'page' as const,
+            targetId: 'https://www.cnbc.com/video/2026/10/07/fixture.html',
+            resourceId: 'cnbc:70001'
+          },
+          url = 'https://pdl-iphone-cnbc-com.akamaized.net/70001/fixture.mp4'
+        const fetchImpl = async () =>
+          new Response(new Uint8Array(bytes), {
+            headers: { 'content-type': 'video/mp4', 'content-length': String(bytes.length) }
+          })
+        const request = {
+          url,
+          pageUrl: videoIdentity.targetId,
+          videoIdentity,
+          fetchImpl,
+          completeProgram: { durationSeconds: exportedInfo.durationSeconds, requireAudio: true }
+        }
+        const result = await media.preserveMedia(request)
+        assert.equal(result.preservation.completeVod, true)
+        assert.equal(result.preservation.reencoded, false)
+        assert.deepEqual(fs.readFileSync(path.join(artifacts, result.preservation.resources[0]!.artifactId)), bytes)
+        const proof = JSON.parse(
+          fs.readFileSync(path.join(artifacts, result.preservation.proofArtifactId), 'utf8')
+        ) as {
+          completeProgram: { durationSeconds: number }
+          remux: { tracks: { type: string; packetSha256: string }[] }
+        }
+        assert.equal(proof.completeProgram.durationSeconds, exportedInfo.durationSeconds)
+        assert.deepEqual(proof.remux.tracks.map(t => t.type).sort(), ['audio', 'video'])
+        const decoded = (await media.processArtifact({
+          action: 'media.decode.check',
+          artifactId: result.artifactId
+        })) as { completeFile: boolean; tracks: { sampleCount: number }[] }
+        assert.equal(decoded.completeFile, true)
+        assert.ok(decoded.tracks.every(t => t.sampleCount > 0))
+        const before = fs.readdirSync(artifacts).sort()
+        await assert.rejects(
+          media.preserveMedia({ ...request, completeProgram: { durationSeconds: 15, requireAudio: true } }),
+          /PROGRAM_INCOMPLETE/
+        )
+        assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+        assert.equal(media.isCaptureActive(), false)
+      }
+    )
+    await stage(
+      'identity-bound YouTube separated delivery merges both complete tracks without reencoding through browser action',
+      async () => {
+        const files: Record<string, Buffer> = {}
+        for (const kind of ['video', 'audio'] as const) {
+          const input = new Input({ formats: [MP4], source: new BufferSource(fs.readFileSync(converted.path)) }),
+            target = new BufferTarget(),
+            output = new Output({ format: new Mp4OutputFormat({ fastStart: 'fragmented' }), target })
+          try {
+            const conversion = await Conversion.init({
+              input,
+              output,
+              tracks: 'all',
+              copy: { mode: 'forced' },
+              video: { discard: kind === 'audio' },
+              audio: { discard: kind === 'video' }
+            })
+            assert.equal(conversion.discardedTracks.length, 1)
+            await conversion.execute()
+            files[kind] = Buffer.from(target.buffer!)
+          } finally {
+            input.dispose()
+          }
+        }
+        const duration = exportedInfo.durationSeconds,
+          videoUrl = 'https://fixture.googlevideo.com/videoplayback?itag=137&source=youtube',
+          audioUrl = 'https://fixture.googlevideo.com/videoplayback?itag=140&source=youtube'
+        let badAudio = false,
+          wrongTrack = false,
+          changeOnAudio = false,
+          yt: BrowserWindow | undefined
+        browserSession.protocol.handle('https', async request => {
+          const url = new URL(request.url)
+          if (url.hostname === 'www.youtube.com')
+            return new Response(
+              `<style>video{width:320px;height:180px}</style><div id="movie_player"><video></video></div><script>const p=document.querySelector('#movie_player'),v=p.querySelector('video');Object.defineProperty(v,'duration',{value:${duration}});Object.defineProperty(v,'currentSrc',{value:'blob:https://www.youtube.com/player'});p.getVideoData=()=>({video_id:'fixture'});p.getPlayerResponse=()=>({playabilityStatus:{status:'OK'},videoDetails:{videoId:'fixture',lengthSeconds:'${duration}'},streamingData:{adaptiveFormats:[{url:'${videoUrl}',mimeType:'video/mp4',approxDurationMs:'${duration * 1000}'},{url:'${audioUrl}',mimeType:'audio/mp4',approxDurationMs:'${duration * 1000}',audioTrack:{id:'en',audioIsDefault:true}}]}})</script>`,
+              { headers: { 'content-type': 'text/html' } }
+            )
+          if (url.hostname !== 'fixture.googlevideo.com') return new Response(null, { status: 404 })
+          const audio = url.searchParams.get('itag') === '140'
+          if (audio && changeOnAudio)
+            await yt!.webContents.executeJavaScript(
+              "document.querySelector('#movie_player').classList.add('ad-showing')"
+            )
+          const data = files[audio && !wrongTrack ? 'audio' : 'video']
+          return new Response(new Uint8Array(data), {
+            status: audio && badAudio ? 206 : 200,
+            headers: { 'content-type': audio ? 'audio/mp4' : 'video/mp4', 'content-length': String(data.length) }
+          })
+        })
+        const id = 'youtube-pair-fixture',
+          url = 'https://www.youtube.com/watch?v=fixture'
+        try {
+          yt = new BrowserWindow({
+            show: false,
+            webPreferences: {
+              session: browserSession,
+              sandbox: true,
+              contextIsolation: true,
+              nodeIntegration: false,
+              backgroundThrottling: false
+            }
+          })
+          await yt.loadURL(url)
+          kernel.tabs.set(id, {
+            id,
+            title: 'YouTube isolated fixture',
+            url,
+            projectId: project.id,
+            view: { webContents: yt.webContents }
+          })
+          kernel.activeTabId = id
+          await assert.rejects(bridgeCall({ action: 'media.download', url: videoUrl }), /YOUTUBE_SEPARATED_TRACKS/)
+          const result = (await bridgeCall({ action: 'media.preserve', url: videoUrl })).result as {
+            artifactId: string
+            videoIdentity: { targetId: string }
+            tracks: { type: string; packets: number; packetSha256: string }[]
+            preservation: {
+              reencoded: boolean
+              completeSeparatedTracks: boolean
+              resources: { artifactId: string; track: string; sha256: string }[]
+              proofArtifactId: string
+            }
+          }
+          assert.equal(result.videoIdentity.targetId, 'fixture')
+          assert.equal(result.preservation.completeSeparatedTracks, true)
+          assert.equal(result.preservation.reencoded, false)
+          assert.deepEqual(result.tracks.map(t => t.type).sort(), ['audio', 'video'])
+          for (const resource of result.preservation.resources)
+            assert.deepEqual(fs.readFileSync(path.join(artifacts, resource.artifactId)), files[resource.track])
+          const decoded = (await media.processArtifact({
+            action: 'media.decode.check',
+            artifactId: result.artifactId
+          })) as { completeFile: boolean; tracks: { type: string; sampleCount: number }[] }
+          assert.equal(decoded.completeFile, true)
+          assert.ok(decoded.tracks.every(t => t.sampleCount > 0))
+          assert.deepEqual(decoded.tracks.map(t => t.type).sort(), ['audio', 'video'])
+          const proof = process.env.BMW_VALIDATION_DIR ?? '.bmw-runtime/media-preservation-validation'
+          fs.mkdirSync(proof, { recursive: true })
+          fs.copyFileSync(
+            path.join(artifacts, result.preservation.proofArtifactId),
+            path.join(proof, 'youtube-separated-delivery.json')
+          )
+          fs.copyFileSync(path.join(artifacts, result.artifactId), path.join(proof, 'youtube-merged.mp4'))
+          const before = fs.readdirSync(artifacts).sort()
+          wrongTrack = true
+          await assert.rejects(bridgeCall({ action: 'media.preserve', url: videoUrl }), /declared video or audio track/)
+          assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+          wrongTrack = false
+          badAudio = true
+          await assert.rejects(bridgeCall({ action: 'media.preserve', url: videoUrl }), /full HTTP 200/)
+          assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+          badAudio = false
+          changeOnAudio = true
+          await assert.rejects(bridgeCall({ action: 'media.preserve', url: videoUrl }), /VIDEO_IDENTITY/)
+          assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+          assert.equal(media.isCaptureActive(), false)
+        } finally {
+          yt?.destroy()
+          kernel.tabs.delete(id)
+          kernel.activeTabId = null
+          browserSession.protocol.unhandle('https')
+        }
+      }
+    )
+    await stage(
+      'bounded native-rate stereo audition WAV, hashes, PCM metrics, no model-listening claim, no autoplay and failed-range rollback',
+      async () => {
+        // MediaRecorder's first audio PTS can lag its video track on a busy host.
+        // Select a real one-second interval, rather than asserting samples exist before it.
+        const audioTrack = info.tracks.find(track => track.type === 'audio')!,
+          audioStart = Math.max(0.2, audioTrack.startSeconds ?? 0)
+        assert.ok(
+          audioStart + 1 <= (audioTrack.endSeconds ?? 0),
+          'Fixture must contain a complete one-second audio interval.'
+        )
+        const reply = await bridgeCall({
+            action: 'media.audio.sample',
+            artifactId,
+            startSeconds: audioStart,
+            endSeconds: audioStart + 1
+          }),
+          audio = reply.result as {
+            artifactId: string
+            path: string
+            sha256: string
+            sourceSha256: string
+            evidence: {
+              sampleRate: number
+              channels: number
+              frames: number
+              peak: number
+              rms: number
+              missingFrames: number
+              listeningStatus: string
+            }
+            perceptualReview: { status: string }
+          }
+        assert.equal(audio.evidence.sampleRate, 48000)
+        assert.equal(audio.evidence.channels, 2)
+        assert.equal(audio.evidence.frames, 48000)
+        assert.ok(audio.evidence.peak > 0.04 && audio.evidence.peak < 0.15)
+        assert.ok(audio.evidence.rms > 0.02 && audio.evidence.rms < 0.1)
+        assert.equal(audio.evidence.missingFrames, 0)
+        assert.equal(audio.evidence.listeningStatus, 'not-performed')
+        assert.equal(audio.perceptualReview.status, 'not-performed')
+        assert.equal(reply.images.length, 0)
+        assert.equal(crypto.createHash('sha256').update(fs.readFileSync(audio.path)).digest('hex'), audio.sha256)
+        assert.equal(
+          crypto
+            .createHash('sha256')
+            .update(fs.readFileSync(path.join(artifacts, artifactId)))
+            .digest('hex'),
+          audio.sourceSha256
+        )
+        const preview = (await bridgeCall({ action: 'media.audio.preview', artifactId: audio.artifactId })).result as {
+          autoplay: boolean
+          listeningStatus: string
+        }
+        assert.equal(preview.autoplay, false)
+        assert.equal(preview.listeningStatus, 'not-performed')
+        const viewer = BrowserWindow.getAllWindows().find(w => w.getTitle().includes('BMW 音频试听'))
+        assert.ok(viewer)
+        assert.equal(await viewer.webContents.executeJavaScript(`document.querySelector('audio').autoplay`), false)
+        viewer.destroy()
+        const before = fs.readdirSync(artifacts).sort()
+        await assert.rejects(
+          bridgeCall({ action: 'media.audio.sample', artifactId, startSeconds: 0, endSeconds: 11 }),
+          /audio end/
+        )
+        await assert.rejects(
+          bridgeCall({
+            action: 'media.audio.sample',
+            artifactId: converted.artifactId,
+            startSeconds: 1,
+            endSeconds: 2
+          }),
+          /outside/
+        )
+        assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+      }
+    )
+    await stage('actual adaptive canvas stream keeps mapped capture through resolution/aspect changes', async () => {
+      const id = 'adaptive-fixture'
+      await source!.webContents.executeJavaScript(
+        `(async()=>{const c=document.createElement('canvas');c.id='adaptive-canvas';c.width=320;c.height=180;document.body.append(c);const v=document.createElement('video');v.id='adaptive-video';v.muted=true;document.body.append(v);v.srcObject=c.captureStream(30);let count=0;globalThis.adaptiveAdmitted=false;globalThis.adaptiveTimer=setInterval(()=>{if(count===10){c.width=640;c.height=360}if(count===25){c.width=320;c.height=320}const x=c.getContext('2d');x.fillStyle=count<20?'red':'blue';x.fillRect(0,0,c.width,c.height);if(globalThis.adaptiveAdmitted)count++},30);await v.play();await new Promise(r=>setTimeout(r,100))})()`
+      )
+      kernel.tabs.set(id, {
+        id,
+        title: 'Adaptive fixture',
+        url: source!.webContents.getURL(),
+        projectId: project.id,
+        view: { webContents: source!.webContents }
+      })
+      kernel.activeTabId = id
+      try {
+        adaptiveRecordingStarted = () => {
+          void source!.webContents.executeJavaScript('globalThis.adaptiveAdmitted=true;true')
+        }
+        const result = (
+          await bridgeCall({
+            action: 'media.video.capture',
+            selector: '#adaptive-video',
+            fromStart: false,
+            maxDurationMs: 1600
+          })
+        ).result as {
+          artifactId: string
+          complete: boolean
+          stopReason: string
+          captureTimeline: { sourceResolutionChanges: { width: number; height: number }[] }
+        }
+        assert.equal(result.complete, false)
+        assert.equal(result.stopReason, 'maximum-duration')
+        assert.deepEqual(
+          result.captureTimeline.sourceResolutionChanges.map(r => [r.width, r.height]),
+          [
+            [320, 180],
+            [640, 360],
+            [320, 320]
+          ]
+        )
+        const decoded = (await media.processArtifact({
+          action: 'media.decode.check',
+          artifactId: result.artifactId
+        })) as { completeFile: boolean }
+        assert.equal(decoded.completeFile, true)
+        const index = JSON.parse(fs.readFileSync(path.join(artifacts, result.artifactId + '.source.json'), 'utf8'))
+        assert.ok(
+          index.frames.every((f: { sourceWidth?: number; sourceHeight?: number }) => f.sourceWidth && f.sourceHeight)
+        )
+        const last = index.frames.at(-1),
+          sample = (
+            await bridgeCall({
+              action: 'media.capture.frames.sample',
+              artifactId: result.artifactId,
+              sourceTimestampsSeconds: [last.sourceTimestampSeconds]
+            })
+          ).result as Frames
+        assert.equal(sample.frames[0]!.width, 320)
+        assert.equal(sample.frames[0]!.height, 180)
+        const pixels = (await source!.webContents.executeJavaScript(
+          `(async()=>{const image=new Image();image.src=${JSON.stringify('data:image/png;base64,' + fs.readFileSync(sample.frames[0]!.path).toString('base64'))};await image.decode();const c=document.createElement('canvas');c.width=320;c.height=180;const x=c.getContext('2d');x.drawImage(image,0,0);return [[...x.getImageData(160,90,1,1).data],[...x.getImageData(10,10,1,1).data]]})()`
+        )) as number[][]
+        assert.ok(pixels[0]![2]! > 180 && pixels[0]![0]! < 30, 'Adaptive final frame must retain blue content')
+        assert.ok(
+          pixels[1]!.slice(0, 3).every(c => c < 15),
+          'Aspect change must have explicit black letterboxing'
+        )
+      } finally {
+        adaptiveRecordingStarted = undefined
+        kernel.tabs.delete(id)
+        kernel.activeTabId = null
+        await source!.webContents.executeJavaScript(
+          `clearInterval(globalThis.adaptiveTimer);const v=document.querySelector('#adaptive-video');v.srcObject.getTracks().forEach(t=>t.stop());v.remove();document.querySelector('#adaptive-canvas').remove()`
+        )
+      }
+    })
+    await stage(
+      'finite AV capture freezes EOF before page replay, verifies first/last pixels and rejects guessed fields through Bridge',
+      async () => {
+        source!.showInactive()
+        const before = fs.readdirSync(artifacts).sort()
+        await assert.rejects(bridgeCall({ action: 'page.read' }), /supportedActions/)
+        const help = (await bridgeCall({ action: 'help', forAction: 'media.video.capture' })).result as {
+          inputSchema: { properties: Record<string, unknown> }
+        }
+        assert.ok(Object.hasOwn(help.inputSchema.properties, 'selector'))
+        assert.ok(!Object.hasOwn(help.inputSchema.properties, 'sourceEndSeconds'))
+        await assert.rejects(
+          bridgeCall({ action: 'media.video.capture', selector: 'video', sourceEndSeconds: 1.5 }),
+          /BMW_BROWSER_ARGUMENTS_INVALID/
+        )
+        assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+        const fixtureUrl = 'data:video/mp4;base64,' + fs.readFileSync(converted.path).toString('base64')
+        const duration = (await source!.webContents.executeJavaScript(
+          `(async()=>{
       const v=document.createElement('video');v.id='finite-capture';v.muted=true;v.src=${JSON.stringify(fixtureUrl)};document.body.append(v);
       await new Promise((resolve,reject)=>{v.onloadeddata=resolve;v.onerror=reject});v.currentTime=.2;await new Promise(resolve=>v.onseeked=resolve);
       globalThis.fixtureEnded=0;globalThis.fixtureReplay=e=>{if(e.target===v){globalThis.fixtureEnded++;v.currentTime=0;void v.play()}};window.addEventListener('ended',globalThis.fixtureReplay,true);
       v.loop=true;v.playbackRate=.75;await v.play();return v.duration;
-    })()`,true) as number
-    const id='finite-capture-tab';kernel.tabs.set(id,{id,projectId:project.id,title:'Finite AV fixture',url:source!.webContents.getURL(),source:'agent',view:{webContents:source!.webContents}});kernel.activeTabId=id
-    try{
-      const captured=(await bridgeCall({action:'media.video.capture',tabId:id,selector:'#finite-capture',fromStart:true,maxDurationMs:7000,playbackPlan:[{sourceSeconds:.4,pauseMs:700,rate:.5},{sourceSeconds:1.2,rate:2}]})).result as {artifactId:string;path:string;complete:boolean;stopReason:string;sourceStartSeconds:number;sourceEndSeconds:number}
-      assert.equal(captured.complete,true);assert.equal(captured.stopReason,'ended')
-      // Preserve the actual ready playback clock instead of claiming exact zero
-      // after the first source frame has already been presented.
-      assert.ok(captured.sourceStartSeconds>=0&&captured.sourceStartSeconds<.1);assert.ok(Math.abs(captured.sourceEndSeconds-duration)<.001)
-      const decoded=await media.processArtifact({action:'media.decode.check',artifactId:captured.artifactId}) as {completeFile:boolean;tracks:{type:string;endSeconds:number}[]}
-      assert.equal(decoded.completeFile,true);assert.deepEqual(decoded.tracks.map(track=>track.type).sort(),['audio','video']);assert.ok(decoded.tracks.every(track=>track.endSeconds>duration+.4))
-      const inspected=(await bridgeCall({action:'media.inspect',artifactId:captured.artifactId})).result as MediaInfo&{captureTimeline:{status:string;sourceEndSeconds:number;fileTimestampMapping:string;playbackEvents:{kind:string;sourceSeconds:number;fileSeconds:number;rate:number}[]}}
-      assert.equal(inspected.captureTimeline.status,'indexed');assert.equal(inspected.captureTimeline.fileTimestampMapping,'verified');assert.ok(inspected.durationSeconds-duration>.4,'A playback stall must separate source and file clocks')
-      assert.ok(inspected.captureTimeline.playbackEvents.some(e=>e.kind==='pause'));assert.ok(inspected.captureTimeline.playbackEvents.some(e=>e.kind==='ratechange'&&e.rate===.5));assert.ok(inspected.captureTimeline.playbackEvents.some(e=>e.kind==='ratechange'&&e.rate===2))
-      const sourceTail=await bridgeCall({action:'media.capture.frames.sample',artifactId:captured.artifactId,sourceTimestampsSeconds:[duration-.1,duration-.001]})
-      const nativeFrames=(sourceTail.result as {frames:{path:string;sourceTimestampSeconds:number;sourceDistanceSeconds:number;fileTimestampSeconds:number}[]}).frames
-      assert.equal(sourceTail.images.length,2)
-      const eofProof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/video-capture-eof';fs.mkdirSync(eofProof,{recursive:true});fs.copyFileSync(converted.path,path.join(eofProof,'original-eof.mp4'));fs.copyFileSync(captured.path,path.join(eofProof,'captured-eof.webm'));fs.copyFileSync(path.join(artifacts,captured.artifactId+'.source.json'),path.join(eofProof,'captured-source-index.json'));fs.writeFileSync(path.join(eofProof,'eof-diagnostic.json'),JSON.stringify({duration,exportedInfo,captured,decoded,inspected,nativeFrames},null,2)+'\n')
-      // The source AAC track can outlast its last video frame. Compare visual
-      // recency to the independently demuxed video endpoint, not audio padding.
-      const originalVideoEnd=exportedInfo.tracks.find(track=>track.type==='video')!.endSeconds!
-      for(const frame of nativeFrames){assert.ok(frame.sourceDistanceSeconds>=0&&frame.sourceDistanceSeconds<.2);assert.ok(frame.sourceTimestampSeconds>originalVideoEnd-.25,JSON.stringify({duration,originalVideoEnd,frame,originalTracks:exportedInfo.tracks}));assert.ok(frame.fileTimestampSeconds>frame.sourceTimestampSeconds+.4)
-        const pixel=await source!.webContents.executeJavaScript(`(async()=>{const i=new Image();i.src=${JSON.stringify('data:image/png;base64,'+fs.readFileSync(frame.path).toString('base64'))};await i.decode();const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.drawImage(i,0,0);return [...x.getImageData(40,30,1,1).data]})()`) as number[]
-        assert.ok(pixel[2]>180&&pixel[0]<30,'Source-tail PNG must be the real terminal blue, despite the recording clock stall: '+pixel)
+    })()`,
+          true
+        )) as number
+        const id = 'finite-capture-tab'
+        kernel.tabs.set(id, {
+          id,
+          projectId: project.id,
+          title: 'Finite AV fixture',
+          url: source!.webContents.getURL(),
+          source: 'agent',
+          view: { webContents: source!.webContents }
+        })
+        kernel.activeTabId = id
+        try {
+          const captured = (
+            await bridgeCall({
+              action: 'media.video.capture',
+              tabId: id,
+              selector: '#finite-capture',
+              fromStart: true,
+              maxDurationMs: 7000,
+              playbackPlan: [
+                { sourceSeconds: 0.4, pauseMs: 700, rate: 0.5 },
+                { sourceSeconds: 1.2, rate: 2 }
+              ]
+            })
+          ).result as {
+            artifactId: string
+            path: string
+            complete: boolean
+            stopReason: string
+            sourceStartSeconds: number
+            sourceEndSeconds: number
+          }
+          assert.equal(captured.complete, true)
+          assert.equal(captured.stopReason, 'ended')
+          // Preserve the actual ready playback clock instead of claiming exact zero
+          // after the first source frame has already been presented.
+          assert.ok(captured.sourceStartSeconds >= 0 && captured.sourceStartSeconds < 0.1)
+          assert.ok(Math.abs(captured.sourceEndSeconds - duration) < 0.001)
+          const decoded = (await media.processArtifact({
+            action: 'media.decode.check',
+            artifactId: captured.artifactId
+          })) as { completeFile: boolean; tracks: { type: string; endSeconds: number }[] }
+          assert.equal(decoded.completeFile, true)
+          assert.deepEqual(decoded.tracks.map(track => track.type).sort(), ['audio', 'video'])
+          assert.ok(decoded.tracks.every(track => track.endSeconds > duration + 0.4))
+          const inspected = (await bridgeCall({ action: 'media.inspect', artifactId: captured.artifactId }))
+            .result as MediaInfo & {
+            captureTimeline: {
+              status: string
+              sourceEndSeconds: number
+              fileTimestampMapping: string
+              playbackEvents: { kind: string; sourceSeconds: number; fileSeconds: number; rate: number }[]
+            }
+          }
+          assert.equal(inspected.captureTimeline.status, 'indexed')
+          assert.equal(inspected.captureTimeline.fileTimestampMapping, 'verified')
+          assert.ok(inspected.durationSeconds - duration > 0.4, 'A playback stall must separate source and file clocks')
+          assert.ok(inspected.captureTimeline.playbackEvents.some(e => e.kind === 'pause'))
+          assert.ok(inspected.captureTimeline.playbackEvents.some(e => e.kind === 'ratechange' && e.rate === 0.5))
+          assert.ok(inspected.captureTimeline.playbackEvents.some(e => e.kind === 'ratechange' && e.rate === 2))
+          const sourceTail = await bridgeCall({
+            action: 'media.capture.frames.sample',
+            artifactId: captured.artifactId,
+            sourceTimestampsSeconds: [duration - 0.1, duration - 0.001]
+          })
+          const nativeFrames = (
+            sourceTail.result as {
+              frames: {
+                path: string
+                sourceTimestampSeconds: number
+                sourceDistanceSeconds: number
+                fileTimestampSeconds: number
+              }[]
+            }
+          ).frames
+          assert.equal(sourceTail.images.length, 2)
+          const eofProof = process.env.BMW_VALIDATION_DIR ?? '.bmw-runtime/video-capture-eof'
+          fs.mkdirSync(eofProof, { recursive: true })
+          fs.copyFileSync(converted.path, path.join(eofProof, 'original-eof.mp4'))
+          fs.copyFileSync(captured.path, path.join(eofProof, 'captured-eof.webm'))
+          fs.copyFileSync(
+            path.join(artifacts, captured.artifactId + '.source.json'),
+            path.join(eofProof, 'captured-source-index.json')
+          )
+          fs.writeFileSync(
+            path.join(eofProof, 'eof-diagnostic.json'),
+            JSON.stringify({ duration, exportedInfo, captured, decoded, inspected, nativeFrames }, null, 2) + '\n'
+          )
+          // The source AAC track can outlast its last video frame. Compare visual
+          // recency to the independently demuxed video endpoint, not audio padding.
+          const originalVideoEnd = exportedInfo.tracks.find(track => track.type === 'video')!.endSeconds!
+          for (const frame of nativeFrames) {
+            assert.ok(frame.sourceDistanceSeconds >= 0 && frame.sourceDistanceSeconds < 0.2)
+            assert.ok(
+              frame.sourceTimestampSeconds > originalVideoEnd - 0.25,
+              JSON.stringify({ duration, originalVideoEnd, frame, originalTracks: exportedInfo.tracks })
+            )
+            assert.ok(frame.fileTimestampSeconds > frame.sourceTimestampSeconds + 0.4)
+            const pixel = (await source!.webContents.executeJavaScript(
+              `(async()=>{const i=new Image();i.src=${JSON.stringify('data:image/png;base64,' + fs.readFileSync(frame.path).toString('base64'))};await i.decode();const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.drawImage(i,0,0);return [...x.getImageData(40,30,1,1).data]})()`
+            )) as number[]
+            assert.ok(
+              pixel[2] > 180 && pixel[0] < 30,
+              'Source-tail PNG must be the real terminal blue, despite the recording clock stall: ' + pixel
+            )
+          }
+          const middle = await bridgeCall({
+            action: 'media.capture.frames.sample',
+            artifactId: captured.artifactId,
+            sourceTimestampsSeconds: [duration * 0.35, duration * 0.52, duration * 0.71]
+          })
+          assert.equal(middle.images.length, 3)
+          const middleFrames = (
+            middle.result as {
+              frames: {
+                sourceTimestampSeconds: number
+                fileTimestampSeconds: number
+                sourceDistanceSeconds: number
+                path: string
+              }[]
+            }
+          ).frames
+          assert.ok(
+            middleFrames.every(
+              f =>
+                f.sourceDistanceSeconds >= 0 &&
+                f.sourceDistanceSeconds < 0.12 &&
+                f.fileTimestampSeconds > f.sourceTimestampSeconds + 0.4
+            ),
+            JSON.stringify(middleFrames)
+          )
+          const originals = (
+            await bridgeCall({
+              action: 'media.frames.sample',
+              artifactId: converted.artifactId,
+              timestampsSeconds: middleFrames.map(f => f.sourceTimestampSeconds + 0.000002)
+            })
+          ).result as Frames
+          for (const [i, frame] of middleFrames.entries()) {
+            const pixels = (await source!.webContents.executeJavaScript(
+              `(async()=>{const values=[];for(const data of ${JSON.stringify([fs.readFileSync(frame.path).toString('base64'), fs.readFileSync(originals.frames[i]!.path).toString('base64')])}){const image=new Image();image.src='data:image/png;base64,'+data;await image.decode();const c=document.createElement('canvas');c.width=image.width;c.height=image.height;const x=c.getContext('2d');x.drawImage(image,0,0);values.push([...x.getImageData(40,30,1,1).data])}return values})()`
+            )) as number[][]
+            assert.ok(
+              pixels[0]!.slice(0, 3).every((value, j) => Math.abs(value - pixels[1]![j]!) < 12),
+              'Mapped middle pixels must match the independently decoded original source: ' + JSON.stringify(pixels)
+            )
+          }
+          await assert.rejects(
+            bridgeCall({
+              action: 'media.capture.frames.sample',
+              artifactId: captured.artifactId,
+              sourceTimestampsSeconds: [duration + 0.1]
+            }),
+            /CAPTURE_SOURCE_TIME_UNINDEXED/
+          )
+          const videoTrack = inspected.tracks.find(track => track.type === 'video')!
+          const eofPause = inspected.captureTimeline.playbackEvents.filter(e => e.kind === 'pause').at(-1)!
+          assert.ok(
+            videoTrack.endSeconds! >= eofPause.fileSeconds - 0.002,
+            'The terminal picture must remain through the observed EOF pause, not collapse to a 1ms default duration'
+          )
+          process.stderr.write('Mapped AV tracks ' + JSON.stringify(inspected.tracks) + '\n')
+          const sampled = await bridgeCall({
+            action: 'media.frames.sample',
+            artifactId: captured.artifactId,
+            timestampsSeconds: [videoTrack.startSeconds! + 0.001, videoTrack.endSeconds! - 0.05]
+          })
+          const frameList = (sampled.result as Frames).frames
+          assert.equal(frameList.length, 2)
+          for (const [index, frame] of frameList.entries()) {
+            const pixel = (await source!.webContents.executeJavaScript(
+              `(async()=>{const i=new Image();i.src=${JSON.stringify('data:image/png;base64,' + fs.readFileSync(frame.path).toString('base64'))};await i.decode();const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.drawImage(i,0,0);return [...x.getImageData(40,30,1,1).data]})()`
+            )) as number[]
+            assert.ok(
+              index === 0 ? pixel[0] > 180 && pixel[2] < 30 : pixel[2] > 180 && pixel[0] < 30,
+              'Capture must preserve the actual opening red and terminal blue frames: ' + pixel
+            )
+          }
+          const restored = (await source!.webContents.executeJavaScript(
+            `(()=>{const v=document.querySelector('#finite-capture');return {ended:globalThis.fixtureEnded,loop:v.loop,rate:v.playbackRate,paused:v.paused,globals:Object.keys(globalThis).filter(k=>k.startsWith('__bmwMediaCapture_'))}})()`
+          )) as { ended: number; loop: boolean; rate: number; paused: boolean; globals: string[] }
+          assert.ok(restored.ended >= 1)
+          assert.equal(restored.loop, true)
+          assert.equal(restored.rate, 0.75)
+          assert.equal(restored.paused, true)
+          assert.deepEqual(restored.globals, [])
+          assert.equal(media.isCaptureActive(), false)
+          const proof = process.env.BMW_VALIDATION_DIR ?? '.bmw-runtime/video-capture-eof'
+          fs.mkdirSync(proof, { recursive: true })
+          fs.copyFileSync(captured.path, path.join(proof, 'finite-eof.webm'))
+          fs.writeFileSync(
+            path.join(proof, 'finite-eof.json'),
+            JSON.stringify({ captured, decoded, inspected, restored, nativeFrames, middleFrames }, null, 2) + '\n'
+          )
+          const beforeCancel = fs.readdirSync(artifacts).sort(),
+            cancelCapture = new AbortController()
+          setTimeout(() => cancelCapture.abort(new Error('Mapping capture cancellation during pause')), 500)
+          await assert.rejects(
+            media.captureVideo(
+              {
+                id,
+                title: 'Cancel during pause',
+                url: source!.webContents.getURL(),
+                view: { webContents: source!.webContents }
+              },
+              { selector: '#finite-capture', playbackPlan: [{ sourceSeconds: 0.1, pauseMs: 5000 }] },
+              cancelCapture.signal
+            ),
+            /cancellation/
+          )
+          assert.equal(media.isCaptureActive(), false)
+          assert.deepEqual(fs.readdirSync(artifacts).sort(), beforeCancel)
+          const clean = await source!.webContents.executeJavaScript(
+            `Object.keys(globalThis).filter(k=>k.startsWith('__bmwMediaCapture_'))`
+          )
+          assert.deepEqual(clean, [])
+        } finally {
+          await source!.webContents.executeJavaScript(
+            `window.removeEventListener('ended',globalThis.fixtureReplay,true);document.querySelector('#finite-capture').remove();delete globalThis.fixtureReplay;delete globalThis.fixtureEnded`
+          )
+          kernel.tabs.delete(id)
+          kernel.activeTabId = null
+        }
       }
-      const middle=await bridgeCall({action:'media.capture.frames.sample',artifactId:captured.artifactId,sourceTimestampsSeconds:[duration*.35,duration*.52,duration*.71]});assert.equal(middle.images.length,3)
-      const middleFrames=(middle.result as {frames:{sourceTimestampSeconds:number;fileTimestampSeconds:number;sourceDistanceSeconds:number;path:string}[]}).frames
-      assert.ok(middleFrames.every(f=>f.sourceDistanceSeconds>=0&&f.sourceDistanceSeconds<.12&&f.fileTimestampSeconds>f.sourceTimestampSeconds+.4),JSON.stringify(middleFrames))
-      const originals=(await bridgeCall({action:'media.frames.sample',artifactId:converted.artifactId,timestampsSeconds:middleFrames.map(f=>f.sourceTimestampSeconds+.000002)})).result as Frames
-      for(const [i,frame]of middleFrames.entries()){
-        const pixels=await source!.webContents.executeJavaScript(`(async()=>{const values=[];for(const data of ${JSON.stringify([fs.readFileSync(frame.path).toString('base64'),fs.readFileSync(originals.frames[i]!.path).toString('base64')])}){const image=new Image();image.src='data:image/png;base64,'+data;await image.decode();const c=document.createElement('canvas');c.width=image.width;c.height=image.height;const x=c.getContext('2d');x.drawImage(image,0,0);values.push([...x.getImageData(40,30,1,1).data])}return values})()`) as number[][]
-        assert.ok(pixels[0]!.slice(0,3).every((value,j)=>Math.abs(value-pixels[1]![j]!)<12),'Mapped middle pixels must match the independently decoded original source: '+JSON.stringify(pixels))
+    )
+    const webm = (await stage('export VP9/Opus WebM and verify both tracks', () =>
+      kernel.execute({
+        action: 'media.convert',
+        artifactId,
+        outputFormat: 'webm',
+        trimStartSeconds: 0.25,
+        trimEndSeconds: 1.75
+      })
+    )) as Converted
+    const webmInfo = (await kernel.execute({ action: 'media.inspect', artifactId: webm.artifactId })) as MediaInfo
+    assert.deepEqual(webmInfo.tracks.map(track => track.codec).sort(), ['opus', 'vp9'])
+    await stage('cancel active conversion and verify no partial artifacts or busy state remain', async () => {
+      const before = fs.readdirSync(artifacts).sort()
+      cancelOnProgress = new AbortController()
+      const signal = cancelOnProgress.signal
+      await assert.rejects(
+        kernel.execute(
+          { action: 'media.convert', artifactId, outputFormat: 'mp4', outputWidth: 1920, outputHeight: 1080 },
+          { signal }
+        ),
+        /cancellation/
+      )
+      cancelOnProgress = undefined
+      assert.equal(media.isCaptureActive(), false)
+      assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
+      await kernel.execute({ action: 'media.inspect', artifactId })
+    })
+    await stage('processing cleanup failure retains media admission until explicit media.stop recovery', async () => {
+      const close = ArtifactJobIO.prototype.close
+      let fail = true,
+        attempts = 0
+      ArtifactJobIO.prototype.close = async function (remove = true) {
+        attempts++
+        if (fail) throw new Error('Injected isolated media cleanup failure')
+        await close.call(this, remove)
       }
-      await assert.rejects(bridgeCall({action:'media.capture.frames.sample',artifactId:captured.artifactId,sourceTimestampsSeconds:[duration+.1]}),/CAPTURE_SOURCE_TIME_UNINDEXED/)
-      const videoTrack=inspected.tracks.find(track=>track.type==='video')!
-      const eofPause=inspected.captureTimeline.playbackEvents.filter(e=>e.kind==='pause').at(-1)!
-      assert.ok(videoTrack.endSeconds!>=eofPause.fileSeconds-.002,'The terminal picture must remain through the observed EOF pause, not collapse to a 1ms default duration')
-      process.stderr.write('Mapped AV tracks '+JSON.stringify(inspected.tracks)+'\n');const sampled=await bridgeCall({action:'media.frames.sample',artifactId:captured.artifactId,timestampsSeconds:[videoTrack.startSeconds!+.001,videoTrack.endSeconds!-.05]})
-      const frameList=(sampled.result as Frames).frames;assert.equal(frameList.length,2)
-      for(const [index,frame]of frameList.entries()){
-        const pixel=await source!.webContents.executeJavaScript(`(async()=>{const i=new Image();i.src=${JSON.stringify('data:image/png;base64,'+fs.readFileSync(frame.path).toString('base64'))};await i.decode();const c=document.createElement('canvas');c.width=i.width;c.height=i.height;const x=c.getContext('2d');x.drawImage(i,0,0);return [...x.getImageData(40,30,1,1).data]})()`) as number[]
-        assert.ok(index===0?pixel[0]>180&&pixel[2]<30:pixel[2]>180&&pixel[0]<30,'Capture must preserve the actual opening red and terminal blue frames: '+pixel)
+      try {
+        const inspect = { action: 'media.image.inspect', artifactId: 'image.png' }
+        const first = media.processArtifact(inspect),
+          queued = media.processArtifact(inspect)
+        await Promise.all([assert.rejects(first, /quarantined/), assert.rejects(queued, /not started/)])
+        assert.equal(media.isCaptureActive(), true)
+        assert.equal(imageInspectActive, true)
+        await assert.rejects(media.processArtifact(inspect), /media.stop/)
+        const beforeRecovery = attempts
+        await assert.rejects(media.stop(), /Injected isolated media cleanup failure/)
+        assert.equal(attempts, beforeRecovery + 1)
+        assert.equal(imageInspectActive, true)
+        assert.equal(media.isCaptureActive(), true)
+        fail = false
+        await media.stop()
+        assert.equal(media.isCaptureActive(), false)
+        assert.equal(attempts, beforeRecovery + 2)
+        assert.equal(imageInspectActive, false)
+        const info = (await media.processArtifact(inspect)) as { width: number }
+        assert.equal(info.width, 320)
+      } finally {
+        fail = false
+        ArtifactJobIO.prototype.close = close
+        await media.stop()
       }
-      const restored=await source!.webContents.executeJavaScript(`(()=>{const v=document.querySelector('#finite-capture');return {ended:globalThis.fixtureEnded,loop:v.loop,rate:v.playbackRate,paused:v.paused,globals:Object.keys(globalThis).filter(k=>k.startsWith('__bmwMediaCapture_'))}})()`) as {ended:number;loop:boolean;rate:number;paused:boolean;globals:string[]}
-      assert.ok(restored.ended>=1);assert.equal(restored.loop,true);assert.equal(restored.rate,.75);assert.equal(restored.paused,true);assert.deepEqual(restored.globals,[]);assert.equal(media.isCaptureActive(),false)
-      const proof=process.env.BMW_VALIDATION_DIR??'.bmw-runtime/video-capture-eof';fs.mkdirSync(proof,{recursive:true});fs.copyFileSync(captured.path,path.join(proof,'finite-eof.webm'));fs.writeFileSync(path.join(proof,'finite-eof.json'),JSON.stringify({captured,decoded,inspected,restored,nativeFrames,middleFrames},null,2)+'\n')
-      const beforeCancel=fs.readdirSync(artifacts).sort(),cancelCapture=new AbortController();setTimeout(()=>cancelCapture.abort(new Error('Mapping capture cancellation during pause')),500)
-      await assert.rejects(media.captureVideo({id,title:'Cancel during pause',url:source!.webContents.getURL(),view:{webContents:source!.webContents}},{selector:'#finite-capture',playbackPlan:[{sourceSeconds:.1,pauseMs:5000}]},cancelCapture.signal),/cancellation/)
-      assert.equal(media.isCaptureActive(),false);assert.deepEqual(fs.readdirSync(artifacts).sort(),beforeCancel)
-      const clean=await source!.webContents.executeJavaScript(`Object.keys(globalThis).filter(k=>k.startsWith('__bmwMediaCapture_'))`);assert.deepEqual(clean,[])
-
-    }finally{await source!.webContents.executeJavaScript(`window.removeEventListener('ended',globalThis.fixtureReplay,true);document.querySelector('#finite-capture').remove();delete globalThis.fixtureReplay;delete globalThis.fixtureEnded`);kernel.tabs.delete(id);kernel.activeTabId=null}
-  })
-  const webm = await stage('export VP9/Opus WebM and verify both tracks', () => kernel.execute({ action: 'media.convert', artifactId, outputFormat: 'webm', trimStartSeconds: .25, trimEndSeconds: 1.75 })) as Converted
-  const webmInfo = await kernel.execute({ action: 'media.inspect', artifactId: webm.artifactId }) as MediaInfo
-  assert.deepEqual(webmInfo.tracks.map((track) => track.codec).sort(), ['opus','vp9'])
-  await stage('cancel active conversion and verify no partial artifacts or busy state remain', async () => {
-    const before = fs.readdirSync(artifacts).sort()
-    cancelOnProgress = new AbortController()
-    const signal = cancelOnProgress.signal
-    await assert.rejects(kernel.execute({ action: 'media.convert', artifactId, outputFormat: 'mp4', outputWidth: 1920, outputHeight: 1080 }, { signal }), /cancellation/)
-    cancelOnProgress = undefined
-    assert.equal(media.isCaptureActive(), false)
-    assert.deepEqual(fs.readdirSync(artifacts).sort(), before)
-    await kernel.execute({ action: 'media.inspect', artifactId })
-  })
-  await stage('processing cleanup failure retains media admission until explicit media.stop recovery',async()=>{
-    const close=ArtifactJobIO.prototype.close;let fail=true,attempts=0
-    ArtifactJobIO.prototype.close=async function(remove=true){attempts++;if(fail)throw new Error('Injected isolated media cleanup failure');await close.call(this,remove)}
-    try{
-      const inspect={action:'media.image.inspect',artifactId:'image.png'}
-      const first=media.processArtifact(inspect),queued=media.processArtifact(inspect)
-      await Promise.all([assert.rejects(first,/quarantined/),assert.rejects(queued,/not started/)])
-      assert.equal(media.isCaptureActive(),true)
-      assert.equal(imageInspectActive,true)
-      await assert.rejects(media.processArtifact(inspect),/media.stop/)
-      const beforeRecovery=attempts
-      await assert.rejects(media.stop(),/Injected isolated media cleanup failure/)
-      assert.equal(attempts,beforeRecovery+1);assert.equal(imageInspectActive,true)
-      assert.equal(media.isCaptureActive(),true);fail=false;await media.stop()
-      assert.equal(media.isCaptureActive(),false);assert.equal(attempts,beforeRecovery+2);assert.equal(imageInspectActive,false)
-      const info=await media.processArtifact(inspect) as {width:number};assert.equal(info.width,320)
-    }finally{fail=false;ArtifactJobIO.prototype.close=close;await media.stop()}
-  })
-  process.stdout.write(JSON.stringify({ ok: true, engine: 'mediabunny-1.61.0-webcodecs', inputDuration: info.durationSeconds, tracks: info.tracks.map((track) => track.codec), frames: frames.map((frame) => ({ timestamp: frame.timestampSeconds, width: frame.width, height: frame.height })), mp4: { bytes: converted.bytes, duration: exportedInfo.durationSeconds, codecs: exportedInfo.tracks.map((track) => track.codec), playback }, webm: { bytes: webm.bytes, codecs: webmInfo.tracks.map((track) => track.codec) }, cancellation: 'partial outputs removed' }) + '\n')
-} catch (error) {
-  exitCode = 1
-  process.stderr.write((error instanceof Error ? error.stack : String(error)) + '\n')
-} finally {
-  clearTimeout(timeout)
-  await bridge?.close()
-  source?.destroy()
-  for (const window of BrowserWindow.getAllWindows()) window.destroy()
-  fs.rmSync(root, { recursive: true, force: true })
-  app.exit(exitCode)
-}
-
+    })
+    process.stdout.write(
+      JSON.stringify({
+        ok: true,
+        engine: 'mediabunny-1.61.0-webcodecs',
+        inputDuration: info.durationSeconds,
+        tracks: info.tracks.map(track => track.codec),
+        frames: frames.map(frame => ({ timestamp: frame.timestampSeconds, width: frame.width, height: frame.height })),
+        mp4: {
+          bytes: converted.bytes,
+          duration: exportedInfo.durationSeconds,
+          codecs: exportedInfo.tracks.map(track => track.codec),
+          playback
+        },
+        webm: { bytes: webm.bytes, codecs: webmInfo.tracks.map(track => track.codec) },
+        cancellation: 'partial outputs removed'
+      }) + '\n'
+    )
+  } catch (error) {
+    exitCode = 1
+    process.stderr.write((error instanceof Error ? error.stack : String(error)) + '\n')
+  } finally {
+    clearTimeout(timeout)
+    await bridge?.close()
+    source?.destroy()
+    for (const window of BrowserWindow.getAllWindows()) window.destroy()
+    fs.rmSync(root, { recursive: true, force: true })
+    app.exit(exitCode)
+  }
 }
 void run()

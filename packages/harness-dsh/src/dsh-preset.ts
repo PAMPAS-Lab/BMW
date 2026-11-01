@@ -47,11 +47,19 @@ export function installManagedDshPreset({ sourceDirectory, dshHome = resolveDshH
   const adapterDirectory = path.resolve(import.meta.dirname, '../dsh/plugins/browser-mcp')
   fs.cpSync(adapterDirectory, path.join(destination, 'plugins', 'browser-mcp'), { recursive: true, force: true })
   writeAtomically(marker, 'Managed by BMW. Safe to replace on product updates.\n')
-  const plugins = fs.readFileSync(path.join(destination, 'agent.cordis.yml'), 'utf8')
-    .replace(/(name:\s*)['"]?(\.\/plugins\/[^'"\s]+)['"]?/g,
-      (_, prefix, relative) => `${prefix}${JSON.stringify(path.resolve(destination, relative))}`)
-  writeAtomically(path.join(destination, 'profile.patch.yml'),
-    `- insert:\n    - id: bmw-managed-preset\n      name: '@deepseek-ai/dsh-agent-preset'\n      config:\n        id: ${JSON.stringify(presetId)}\n        name: ${JSON.stringify(presetId)}\n        plugins:\n${plugins.split('\n').map((line) => `          ${line}`).join('\n')}\n`)
+  const plugins = fs
+    .readFileSync(path.join(destination, 'agent.cordis.yml'), 'utf8')
+    .replace(
+      /(name:\s*)['"]?(\.\/plugins\/[^'"\s]+)['"]?/g,
+      (_, prefix, relative) => `${prefix}${JSON.stringify(path.resolve(destination, relative))}`
+    )
+  writeAtomically(
+    path.join(destination, 'profile.patch.yml'),
+    `- insert:\n    - id: bmw-managed-preset\n      name: '@deepseek-ai/dsh-agent-preset'\n      config:\n        id: ${JSON.stringify(presetId)}\n        name: ${JSON.stringify(presetId)}\n        plugins:\n${plugins
+      .split('\n')
+      .map(line => `          ${line}`)
+      .join('\n')}\n`
+  )
   return destination
 }
 
@@ -68,21 +76,28 @@ function ensureProductWorkspace(productHome, workspacePath, workspaceTitle) {
   const workspaceId = randomUUID()
   const now = new Date().toISOString()
   fs.mkdirSync(storageDirectory, { recursive: true, mode: 0o700 })
-  writeAtomically(storagePath, `${JSON.stringify({
-    unit: { name: 'workspace', version: 2 },
-    global: { initialized: true, workspaceIds: [workspaceId], archivedSessionIds: [] },
-    tables: {
-      workspaces: {
-        [workspaceId]: {
-          path: fs.realpathSync(workspacePath),
-          title: workspaceTitle,
-          sessionIds: [],
-          createdAt: now,
-          updatedAt: now
+  writeAtomically(
+    storagePath,
+    `${JSON.stringify(
+      {
+        unit: { name: 'workspace', version: 2 },
+        global: { initialized: true, workspaceIds: [workspaceId], archivedSessionIds: [] },
+        tables: {
+          workspaces: {
+            [workspaceId]: {
+              path: fs.realpathSync(workspacePath),
+              title: workspaceTitle,
+              sessionIds: [],
+              createdAt: now,
+              updatedAt: now
+            }
+          }
         }
-      }
-    }
-  }, null, 2)}\n`)
+      },
+      null,
+      2
+    )}\n`
+  )
 }
 
 function ensureProductSettings(productHome, presetId) {
@@ -100,16 +115,25 @@ function ensureProductSettings(productHome, presetId) {
   writeAtomically(settingsPath, content)
 }
 
-export function prepareProductDshHome({ productHome, sourceHome = resolveDshHome(), presetId = 'bmw', presetSourceDirectory, workspacePath, workspaceTitle = 'BMW Project' }) {
+export function prepareProductDshHome({
+  productHome,
+  sourceHome = resolveDshHome(),
+  presetId = 'bmw',
+  presetSourceDirectory,
+  workspacePath,
+  workspaceTitle = 'BMW Project'
+}) {
   fs.mkdirSync(productHome, { recursive: true, mode: 0o700 })
   const sourceCredentials = path.join(sourceHome, '.credentials.yaml')
   const productCredentials = path.join(productHome, '.credentials.yaml')
-  const existing=fs.lstatSync(productCredentials,{throwIfNoEntry:false})
-  if(existing?.isSymbolicLink())throw new Error('Migrate the linked DSH credentials before using this Profile')
-  if(!existing&&fs.existsSync(sourceCredentials)){
-    const stat=fs.statSync(sourceCredentials)
-    if(!stat.isFile()||stat.size>1024*1024)throw new Error('DSH credential provider file exceeds its copy budget')
-    writeAtomically(productCredentials,fs.readFileSync(sourceCredentials));fs.chmodSync(productCredentials,0o600)
+  const existing = fs.lstatSync(productCredentials, { throwIfNoEntry: false })
+  if (existing?.isSymbolicLink()) throw new Error('Migrate the linked DSH credentials before using this Profile')
+  if (!existing && fs.existsSync(sourceCredentials)) {
+    const stat = fs.statSync(sourceCredentials)
+    if (!stat.isFile() || stat.size > 1024 * 1024)
+      throw new Error('DSH credential provider file exceeds its copy budget')
+    writeAtomically(productCredentials, fs.readFileSync(sourceCredentials))
+    fs.chmodSync(productCredentials, 0o600)
   }
   ensureProductSettings(productHome, presetId)
   installManagedDshPreset({ sourceDirectory: presetSourceDirectory, dshHome: productHome, presetId })

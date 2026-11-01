@@ -1,20 +1,40 @@
-import {cardSourcePins} from './card-details.js'
+import { cardSourcePins } from './card-details.js'
 import crypto from 'node:crypto'
 import fs from 'node:fs/promises'
 import { BrowserWindow, ipcMain } from 'electron'
 import type { Session, IpcMainInvokeEvent } from 'electron'
 import { ArtifactJobIO } from './artifact-job-io.js'
-import { assertNarrationReceipt,assertComposition, compositionAssets, compositionDuration } from './composition-contract.js'
+import {
+  assertNarrationReceipt,
+  assertComposition,
+  compositionAssets,
+  compositionDuration
+} from './composition-contract.js'
 import { finiteNumber, mediaRecord } from './media-contract.js'
-import {assertCompositionQuality,compositionQualityPlan} from './composition-quality.js'
+import { assertCompositionQuality, compositionQualityPlan } from './composition-quality.js'
 
 /** Bounded multi-asset browser job. Renderer receives only pinned Project handles. */
 export class CompositionProcessor {
   private active = false
-  private failedCleanup:(()=>Promise<void>)|undefined
-  async recoverCleanup():Promise<void>{if(this.failedCleanup){await this.failedCleanup();this.failedCleanup=undefined;this.active=false}}
-  constructor(private options: { session: Session; pagePath: string; preloadPath: string; onStatus?: (value: Record<string, unknown>) => void }) {}
-  get busy(): boolean { return this.active }
+  private failedCleanup: (() => Promise<void>) | undefined
+  async recoverCleanup(): Promise<void> {
+    if (this.failedCleanup) {
+      await this.failedCleanup()
+      this.failedCleanup = undefined
+      this.active = false
+    }
+  }
+  constructor(
+    private options: {
+      session: Session
+      pagePath: string
+      preloadPath: string
+      onStatus?: (value: Record<string, unknown>) => void
+    }
+  ) {}
+  get busy(): boolean {
+    return this.active
+  }
   async compose(raw: unknown, directory: string, signal?: AbortSignal) {
     const composition = assertComposition(raw)
     signal?.throwIfAborted()
@@ -28,30 +48,56 @@ export class CompositionProcessor {
     let listener: ((event: IpcMainInvokeEvent, value: unknown) => void) | undefined
     let registered = false
     let ioTail: Promise<unknown> = Promise.resolve()
-    const queued = <T>(operation: () => Promise<T>) => { const result = ioTail.then(operation); ioTail = result.catch(() => {}); return result }
+    const queued = <T>(operation: () => Promise<T>) => {
+      const result = ioTail.then(operation)
+      ioTail = result.catch(() => {})
+      return result
+    }
     let completedPath: string | undefined
     try {
-      for (const artifactId of compositionAssets(composition)) inputs.push(await ArtifactJobIO.open(directory, { action: 'media.inspect', artifactId }))
-      if (inputs.reduce((sum, input) => sum + input.bytes, 0) > 256 * 1024 * 1024) throw new Error('Composition source assets exceed 256 MiB.')
+      for (const artifactId of compositionAssets(composition))
+        inputs.push(await ArtifactJobIO.open(directory, { action: 'media.inspect', artifactId }))
+      if (inputs.reduce((sum, input) => sum + input.bytes, 0) > 256 * 1024 * 1024)
+        throw new Error('Composition source assets exceed 256 MiB.')
       output = await ArtifactJobIO.createOutput(directory)
       const jobOutput = output
       const token = crypto.randomUUID()
-      window = new BrowserWindow({ show: false, webPreferences: { session: this.options.session, preload: this.options.preloadPath, sandbox: true, contextIsolation: true, nodeIntegration: false, backgroundThrottling: false } })
+      window = new BrowserWindow({
+        show: false,
+        webPreferences: {
+          session: this.options.session,
+          preload: this.options.preloadPath,
+          sandbox: true,
+          contextIsolation: true,
+          nodeIntegration: false,
+          backgroundThrottling: false
+        }
+      })
       const jobWindow = window
       const authorize = (event: IpcMainInvokeEvent, raw: unknown) => {
         const value = mediaRecord(raw)
-        if (event.sender !== jobWindow.webContents || event.senderFrame !== jobWindow.webContents.mainFrame || value.token !== token) throw new Error('Composition IPC is outside its owning job.')
+        if (
+          event.sender !== jobWindow.webContents ||
+          event.senderFrame !== jobWindow.webContents.mainFrame ||
+          value.token !== token
+        )
+          throw new Error('Composition IPC is outside its owning job.')
         signal?.throwIfAborted()
         return value
       }
-      ipcMain.handle('bmw-composition-read', (event, raw: unknown) => queued(async () => {
-        const value = authorize(event, raw)
-        const index = finiteNumber(value.assetIndex, 'asset index', 0, inputs.length - 1, true)
-        return inputs[index].read(value.offset, value.length)
-      }))
-      ipcMain.handle('bmw-composition-write', (event, raw: unknown) => queued(async () => {
-        const value = authorize(event, raw); await jobOutput.write(0, value.position, value.data)
-      }))
+      ipcMain.handle('bmw-composition-read', (event, raw: unknown) =>
+        queued(async () => {
+          const value = authorize(event, raw)
+          const index = finiteNumber(value.assetIndex, 'asset index', 0, inputs.length - 1, true)
+          return inputs[index].read(value.offset, value.length)
+        })
+      )
+      ipcMain.handle('bmw-composition-write', (event, raw: unknown) =>
+        queued(async () => {
+          const value = authorize(event, raw)
+          await jobOutput.write(0, value.position, value.data)
+        })
+      )
       registered = true
       jobWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
       jobWindow.webContents.on('will-navigate', event => event.preventDefault())
@@ -62,18 +108,37 @@ export class CompositionProcessor {
         listener = (event, raw: unknown) => {
           try {
             const value = authorize(event, raw)
-            if (value.progress !== undefined) this.options.onStatus?.({ active: true, kind: 'processing', action: 'video.compose', progress: finiteNumber(value.progress, 'progress', 0, 1) })
+            if (value.progress !== undefined)
+              this.options.onStatus?.({
+                active: true,
+                kind: 'processing',
+                action: 'video.compose',
+                progress: finiteNumber(value.progress, 'progress', 0, 1)
+              })
             else if (typeof value.error === 'string') reject(new Error(value.error.slice(0, 2000)))
             else {
               const result = mediaRecord(value.result)
-              if (result.frames !== Math.ceil(compositionDuration(composition) * composition.fps) || result.durationSeconds !== compositionDuration(composition) || result.width !== composition.width || result.height !== composition.height) throw new Error('Composition result does not match its manifest.')
+              if (
+                result.frames !== Math.ceil(compositionDuration(composition) * composition.fps) ||
+                result.durationSeconds !== compositionDuration(composition) ||
+                result.width !== composition.width ||
+                result.height !== composition.height
+              )
+                throw new Error('Composition result does not match its manifest.')
               finiteNumber(result.audioPeak, 'audio peak', 0, 1)
-              assertNarrationReceipt(composition.scenes,result.narrationDurations)
-              const quality=assertCompositionQuality(result.quality),plan=compositionQualityPlan(composition,result.narrationDurations as number[])
-              if(JSON.stringify(quality.samples)!==JSON.stringify(plan.samples)||quality.omittedCandidates!==plan.omittedCandidates)throw new Error('Composition quality coverage does not match its manifest.')
+              assertNarrationReceipt(composition.scenes, result.narrationDurations)
+              const quality = assertCompositionQuality(result.quality),
+                plan = compositionQualityPlan(composition, result.narrationDurations as number[])
+              if (
+                JSON.stringify(quality.samples) !== JSON.stringify(plan.samples) ||
+                quality.omittedCandidates !== plan.omittedCandidates
+              )
+                throw new Error('Composition quality coverage does not match its manifest.')
               resolve(result)
             }
-          } catch (error) { if (event.sender === jobWindow.webContents) reject(error) }
+          } catch (error) {
+            if (event.sender === jobWindow.webContents) reject(error)
+          }
         }
         ipcMain.on('bmw-composition-reply', listener)
         jobWindow.once('closed', () => reject(new Error('Composition window closed.')))
@@ -83,28 +148,80 @@ export class CompositionProcessor {
       this.options.onStatus?.({ active: true, kind: 'processing', action: 'video.compose', progress: 0 })
       await Promise.race([jobWindow.loadFile(this.options.pagePath), pending])
       signal?.throwIfAborted()
-      jobWindow.webContents.send('bmw-composition-process', { token, composition, assets: inputs.map(input => ({ artifactId: 'artifactId' in input.request?input.request.artifactId:(()=>{throw new Error('Composition asset must have an input.')})(), bytes: input.bytes })) })
+      jobWindow.webContents.send('bmw-composition-process', {
+        token,
+        composition,
+        assets: inputs.map(input => ({
+          artifactId:
+            'artifactId' in input.request
+              ? input.request.artifactId
+              : (() => {
+                  throw new Error('Composition asset must have an input.')
+                })(),
+          bytes: input.bytes
+        }))
+      })
       const receipt = await pending
       signal?.throwIfAborted()
-      const pins=composition.scenes.flatMap(scene=>cardSourcePins(scene.cardSpec?.version===2?scene.cardSpec:undefined)),hashes=new Map<string,string>()
-      for(const pin of pins){let actual=hashes.get(pin.artifactId);if(!actual){const input=inputs.find(input=>'artifactId'in input.request&&input.request.artifactId===pin.artifactId);if(!input)throw new Error('CARD_SOURCE_STALE: Missing pinned source.');actual=await input.fingerprint(signal);hashes.set(pin.artifactId,actual)}if(actual!==pin.sha256)throw new Error('CARD_SOURCE_STALE: Source changed during encoding.')}
+      const pins = composition.scenes.flatMap(scene =>
+          cardSourcePins(scene.cardSpec?.version === 2 ? scene.cardSpec : undefined)
+        ),
+        hashes = new Map<string, string>()
+      for (const pin of pins) {
+        let actual = hashes.get(pin.artifactId)
+        if (!actual) {
+          const input = inputs.find(
+            input => 'artifactId' in input.request && input.request.artifactId === pin.artifactId
+          )
+          if (!input) throw new Error('CARD_SOURCE_STALE: Missing pinned source.')
+          actual = await input.fingerprint(signal)
+          hashes.set(pin.artifactId, actual)
+        }
+        if (actual !== pin.sha256) throw new Error('CARD_SOURCE_STALE: Source changed during encoding.')
+      }
       const [artifact] = await jobOutput.finish(1)
       completedPath = artifact.path
-      return { ...artifact, type: 'video', contentType: 'video/mp4', state: 'completed', engine: 'bmw-seekable-canvas-mediabunny', ...receipt, durationSeconds: compositionDuration(composition), composition }
-    } catch (error) { if (completedPath) await fs.rm(completedPath, { force: true }); throw error }
-    finally {
+      return {
+        ...artifact,
+        type: 'video',
+        contentType: 'video/mp4',
+        state: 'completed',
+        engine: 'bmw-seekable-canvas-mediabunny',
+        ...receipt,
+        durationSeconds: compositionDuration(composition),
+        composition
+      }
+    } catch (error) {
+      if (completedPath) await fs.rm(completedPath, { force: true })
+      throw error
+    } finally {
       if (timer) clearTimeout(timer)
       if (abort) signal?.removeEventListener('abort', abort)
       if (listener) ipcMain.removeListener('bmw-composition-reply', listener)
-      if (registered) { ipcMain.removeHandler('bmw-composition-read'); ipcMain.removeHandler('bmw-composition-write') }
-      const cleanup=async()=>{
-        window?.destroy();if(window&&!window.isDestroyed())throw new Error('Composition worker did not stop.')
-        await ioTail
-        const results=await Promise.allSettled([...inputs.map(input=>input.close()),...(output?[output.close()]:[])])
-        if(results.some(r=>r.status==='rejected'))throw new Error('Composition IO cleanup failed.')
+      if (registered) {
+        ipcMain.removeHandler('bmw-composition-read')
+        ipcMain.removeHandler('bmw-composition-write')
       }
-      try{await cleanup();this.active=false}
-      catch{this.failedCleanup=async()=>{await cleanup();if(completedPath)await fs.rm(completedPath,{force:true})};throw new Error('Composition cleanup failed; media remains quarantined until media.record.stop succeeds.')}
+      const cleanup = async () => {
+        window?.destroy()
+        if (window && !window.isDestroyed()) throw new Error('Composition worker did not stop.')
+        await ioTail
+        const results = await Promise.allSettled([
+          ...inputs.map(input => input.close()),
+          ...(output ? [output.close()] : [])
+        ])
+        if (results.some(r => r.status === 'rejected')) throw new Error('Composition IO cleanup failed.')
+      }
+      try {
+        await cleanup()
+        this.active = false
+      } catch {
+        this.failedCleanup = async () => {
+          await cleanup()
+          if (completedPath) await fs.rm(completedPath, { force: true })
+        }
+        throw new Error('Composition cleanup failed; media remains quarantined until media.record.stop succeeds.')
+      }
       this.options.onStatus?.({ active: false, kind: 'processing', action: 'video.compose' })
     }
   }

@@ -1,0 +1,17 @@
+# Prettier formats authored TypeScript only. Generated JS, docs, evidence JSON,
+# HTML/CSS and installed DSH presets keep their existing bytes.
+node_modules/
+.bmw-runtime/
+outputs/
+artifacts/
+Profiles/
+docs/
+**/*.js
+**/*.cjs
+**/*.mjs
+**/*.json
+**/*.md
+**/*.html
+**/*.css
+**/*.yaml
+**/*.yml

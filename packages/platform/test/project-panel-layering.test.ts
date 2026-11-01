@@ -9,5 +9,5 @@ test('an open Project Manager is re-raised after browser tab views change', () =
 
   assert.match(source, /function raiseProjectPanel\(\)/)
   assert.match(source, /if \(children\.at\(-1\) === shellView\) \{[\s\S]*?return/)
-  assert.match(source, /onState: \(state\) => \{[\s\S]*?raiseProjectPanel\(\)[\s\S]*?\}/)
+  assert.match(source, /onState: \(?state\)? => \{[\s\S]*?raiseProjectPanel\(\)[\s\S]*?\}/)
 })

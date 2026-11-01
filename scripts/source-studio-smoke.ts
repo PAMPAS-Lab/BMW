@@ -4,144 +4,1166 @@ import os from 'node:os'
 import path from 'node:path'
 import http from 'node:http'
 import crypto from 'node:crypto'
-import {Input,BufferSource,WEBM,EncodedPacketSink} from 'mediabunny'
-import {app,BrowserWindow,session,ipcMain,webContents} from 'electron'
-import type {WebContents} from 'electron'
-import {assertBrowserFeatureHost} from '@bmw-agent/browser-capability/host'
-import {BrowserKernel} from '@bmw-agent/browser-capability/kernel'
-import {closeNavigationPage} from '../packages/browser-capability/src/page-navigation.js'
-import {BrowserCapabilityRegistry} from '../packages/browser-capability/src/browser-capability-registry.js'
-import {createBridgeServer} from '@bmw-agent/browser-capability/bridge'
-import {MediaController} from '@bmw-agent/media-native'
-import {ProjectSourceStore} from '../packages/platform/src/project-source-store.js'
-import {VideoStudioStore} from '../packages/feature-video/src/studio-store.js'
-import {VideoStudioRuntime} from '../packages/feature-video/src/studio-runtime.js'
-import {newStudioScene} from '../packages/feature-video/src/studio-contract.js'
-import {captureRendererEvidence} from './renderer-evidence.js'
+import { Input, BufferSource, WEBM, EncodedPacketSink } from 'mediabunny'
+import { app, BrowserWindow, session, ipcMain, webContents } from 'electron'
+import type { WebContents } from 'electron'
+import { assertBrowserFeatureHost } from '@bmw-agent/browser-capability/host'
+import { BrowserKernel } from '@bmw-agent/browser-capability/kernel'
+import { closeNavigationPage } from '../packages/browser-capability/src/page-navigation.js'
+import { BrowserCapabilityRegistry } from '../packages/browser-capability/src/browser-capability-registry.js'
+import { createBridgeServer } from '@bmw-agent/browser-capability/bridge'
+import { MediaController } from '@bmw-agent/media-native'
+import { ProjectSourceStore } from '../packages/platform/src/project-source-store.js'
+import { VideoStudioStore } from '../packages/feature-video/src/studio-store.js'
+import { VideoStudioRuntime } from '../packages/feature-video/src/studio-runtime.js'
+import { newStudioScene } from '../packages/feature-video/src/studio-contract.js'
+import { captureRendererEvidence } from './renderer-evidence.js'
 import product from '../apps/bmw/product.js'
-const root=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'bmw-source-runtime-'))),project={id:'source-project',name:'Source fixture',directory:path.join(root,'project')},artifacts=path.join(project.directory,'artifacts')
-fs.mkdirSync(artifacts,{recursive:true});fs.mkdirSync(path.join(root,'profile'));app.setPath('userData',path.join(root,'profile'))
-const proof=process.env.BMW_VALIDATION_DIR??path.resolve('.bmw-runtime/p0-sources');fs.mkdirSync(proof,{recursive:true})
-let host:BrowserWindow,studio:WebContents,media:MediaController,runtime:VideoStudioRuntime,bridge:Awaited<ReturnType<typeof createBridgeServer>>,server:http.Server,exitCode=0,phase='ready',cancelDecode:AbortController|undefined,cancelCapture:AbortController|undefined,captureCancelPhase:'starting'|'recording'='starting',captureStarted:(()=>void)|undefined
-app.on('web-contents-created',(_event,contents)=>{contents.on('console-message',details=>{if(details.level==='error')console.error('SOURCE RENDERER',details.message)})})
-process.on('uncaughtException',error=>{process.stderr.write('SOURCE UNCAUGHT '+phase+' '+String(error.stack??error)+'\n');app.exit(1)})
-process.on('unhandledRejection',reason=>{process.stderr.write('SOURCE UNHANDLED '+phase+' '+String(reason)+'\n');app.exit(1)})
-const timeout=setTimeout(()=>{console.error('Source runtime timed out: '+phase);app.exit(1)},120000)
-async function wait(read:()=>Promise<unknown>,label:string){phase=label;console.log('PHASE '+label);const until=Date.now()+20000;while(Date.now()<until){if(await read())return;await new Promise(resolve=>setTimeout(resolve,50))}throw new Error('Timed out: '+label)}
-async function ui(code:string){return studio.executeJavaScript(code,true)}
-async function run(){try{
- await app.whenReady();const isolated=session.fromPartition('source-fixture-'+process.pid)
- host=new BrowserWindow({show:true,width:1250,height:850,webPreferences:{session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,backgroundThrottling:false}});await host.loadFile(path.resolve('packages/media-native/src/media/media.html'))
- const image=Buffer.from(await host.webContents.executeJavaScript(`(()=>{const c=document.createElement('canvas');c.width=320;c.height=180;const x=c.getContext('2d');x.fillStyle='#147ac2';x.fillRect(0,0,320,180);return c.toDataURL().split(',')[1]})()`,true) as string,'base64')
- const video=Buffer.from(await host.webContents.executeJavaScript(`(async()=>{const {Output,WebMOutputFormat,BufferTarget,CanvasSource,AudioSampleSource,AudioSample}=await import('mediabunny');const c=new OffscreenCanvas(320,180),x=c.getContext('2d',{alpha:false}),target=new BufferTarget(),output=new Output({format:new WebMOutputFormat(),target}),video=new CanvasSource(c,{codec:'vp8',bitrate:500000}),audio=new AudioSampleSource({codec:'opus',bitrate:64000});output.addVideoTrack(video,{frameRate:25});output.addAudioTrack(audio);await output.start();for(let n=0;n<60;n++){x.fillStyle=n%2?'#147ac2':'#18b478';x.fillRect(0,0,320,180);await video.add(n/25,1/25)}video.close();for(let n=0;n<120;n++){const pcm=new Float32Array(960);for(let i=0;i<960;i++)pcm[i]=.1*Math.sin((n*960+i)/48000*440*Math.PI*2);const sample=new AudioSample({data:pcm,format:'f32-planar',numberOfChannels:1,sampleRate:48000,timestamp:n*.02});await audio.add(sample);sample.close()}audio.close();await output.finalize();return [...new Uint8Array(target.buffer)]})()`,true) as number[])
- // Freeze a deterministic 2.4s encoded fixture. A bounded 1s capture must
- // still have enough source remaining after legitimate startup settling.
- fs.writeFileSync(path.join(proof,'source-fixture.webm'),video)
- const fixtureInput=new Input({source:new BufferSource(video),formats:[WEBM]})
- try{const track=await fixtureInput.getPrimaryVideoTrack(),audio=await fixtureInput.getPrimaryAudioTrack();assert.ok(track&&audio,'Fixture must contain independently recorded video and audio')
-  const config=await track.getDecoderConfig();assert.equal(config?.codedWidth,320);assert.equal(config?.codedHeight,180)
-  let frameCount=0;for await(const _packet of new EncodedPacketSink(track).packets(undefined,undefined,{metadataOnly:true}))frameCount++
-  assert.ok(frameCount>=2,'Fixture must encode at least two requested video frames before source loading')
-  fs.writeFileSync(path.join(proof,'source-fixture.json'),JSON.stringify({bytes:video.length,sha256:crypto.createHash('sha256').update(video).digest('hex'),frameCount,videoCodec:await track.getCodec(),audioCodec:await audio.getCodec(),width:config?.codedWidth,height:config?.codedHeight,scope:'Producer metadata only; actual native decode is verified by the source operations below'},null,2)+'\n')
- }finally{fixtureInput.dispose()}
- let base='';server=http.createServer((request,response)=>{const url=request.url??'';if(url==='/frame.png'){response.writeHead(200,{'content-type':'image/png'});response.end(image);return}if(url==='/clip.webm'){
-   const match=/^bytes=(\d+)-(\d*)$/.exec(request.headers.range??''),start=match?Number(match[1]):0,end=match&&match[2]?Math.min(Number(match[2]),video.length-1):video.length-1
-   if(start>end||start>=video.length){response.writeHead(416,{'content-range':'bytes */'+video.length});response.end();return}
-   response.writeHead(match?206:200,{'content-type':'video/webm','accept-ranges':'bytes','content-length':end-start+1,...(match?{'content-range':`bytes ${start}-${end}/${video.length}`}:{})});response.end(video.subarray(start,end+1));return
-  }if(url==='/failed.png'){response.writeHead(503,{'content-type':'text/plain'});response.end('controlled failure');return}
-  response.writeHead(200,{'content-type':'text/html; charset=utf-8'});response.end(`<title>限定来源 ${url}</title><header>导航与推广</header><main><article id="body"><h1>限定正文</h1><p>${url==='/third'?'事实依据：按钮执行后结果不可追溯。😀':'事实依据：按钮执行后结果可追溯。😀'}</p><p>作者观点：这有助于解释产品。</p><input value="PRIVATE INPUT NEVER COLLECT"><div contenteditable="true">PRIVATE EDIT NEVER COLLECT</div><div contenteditable="plaintext-only">PRIVATE PLAIN EDIT NEVER COLLECT<img src="${base}/frame.png?private-edit"></div><img id="body-image" src="${base}${url==='/failure'?'/failed.png':'/frame.png'}"><div class="avatar">头像<img src="${base}/frame.png?avatar"></div><div class="ad">广告与推广<img src="${base}/frame.png?ad"></div></article><div id="author">示例作者</div><div id="published">2026-09-30</div><div id="split-published"><span>2026</span><span>10/18</span><span>22:04:56</span></div><div id="player"><span>试看30秒</span><video src="${base}/clip.webm" preload="auto"></video></div><section class="recommendation">推荐与推广<img src="${base}/frame.png?recommend"></section>${url==='/long'?'<article id="long">'+ '长文'.repeat(30000)+'</article>':''}</main>`)
- });await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));base='http://127.0.0.1:'+(server.address() as import('node:net').AddressInfo).port
- const sources=new ProjectSourceStore(project.directory,project.id),registry=new BrowserCapabilityRegistry(product)
- media=new MediaController({session:isolated,preloadPath:path.resolve('packages/media-native/src/preload/media-preload.cjs'),pagePath:path.resolve('packages/media-native/src/media/media.html'),artifactsDirectory:artifacts,resolveArtifactsDirectory:()=>artifacts,onStatus:(value:{active?:boolean;action?:string})=>{if(value.active&&value.action==='media.decode.check')cancelDecode?.abort(new Error('Source decode cancellation'));if(value.active&&(value as {state?:string;kind?:string}).kind==='video-element'){if((value as {state?:string}).state==='recording')captureStarted?.();if((value as {state?:string}).state===captureCancelPhase)cancelCapture?.abort(new Error('Source capture cancellation'))}}})
- const kernel=new BrowserKernel({window:host,session:isolated,capabilityRegistry:registry,permissionStore:{hasAgentControl:()=>true},projectStore:{active:()=>project,updateTabState:(id:string,state:{urls:string[];activeUrl:string|null})=>{assert.equal(id,project.id);assert.ok(state.urls.every(url=>url.startsWith(base)))}},artifactsDirectory:artifacts,sessionContinuity:undefined,settingsStore:undefined,allowedActions:registry.allowedActions,onState:undefined});kernel.setBounds({x:0,y:0,width:900,height:650});kernel.setRecordingController(media);kernel.projectSources=()=>sources
- bridge=await createBridgeServer(kernel,{toolDefinition:registry.toolDefinition(),resolveProject:directory=>directory===project.directory?project:undefined,activeProjectId:()=>project.id});const headers={authorization:'Bearer '+bridge.token,'content-type':'application/json'},binding=bridge.registerSession('source-session',project.directory)
- const call=async(args:unknown)=>{const response=await fetch(bridge.url+'/execute',{method:'POST',headers,body:JSON.stringify({binding,arguments:args})}),value=await response.json() as {result:unknown;error?:string};if(!response.ok)throw new Error(value.error);return value.result}
- const source=async(request:unknown)=>call({action:'video.studio',studioRequest:{operation:'source',sourceRequest:request}})
- const collect=async(url:string,extra:Record<string,unknown>={})=>{const tab=await call({action:'tabs.open',url,foreground:false,reuse:false}) as {id:string};await wait(()=>kernel.requireTab(tab.id).view.webContents.executeJavaScript("(()=>{const v=document.querySelector('video');if(v?.error)throw new Error('Source fixture media load: '+JSON.stringify({code:v.error.code,message:v.error.message,networkState:v.networkState,readyState:v.readyState}));return v?.readyState>=1&&v.videoWidth===320})()"),'Source fixture media ready');return await source({operation:'collect',expectedRevision:sources.snapshot().revision,tabId:tab.id,bodySelector:'#body',excludeSelectors:['.ad','.avatar'],authorSelector:'#author',publishedSelector:'#published',...extra}) as {sourceId:string;acquisitionId:string}}
- phase='Bounded browser source capture';const a=await collect(base+'/article'),b=await collect(base+'/copy'),c=await collect(base+'/third',{authorSelector:'#absent',publishedSelector:'#absent'}),body=await sources.readBody(a.sourceId,a.acquisitionId)
- assert.ok(body.text.includes('事实依据'));for(const excluded of ['导航','推荐','广告','头像','PRIVATE'])assert.ok(!body.text.includes(excluded));assert.equal(body.acquisition.candidates.length,1);assert.equal(body.acquisition.candidates[0].url,base+'/frame.png');assert.equal(body.acquisition.media.length,0)
- assert.equal(new Set(sources.snapshot().sources.flatMap(source=>source.acquisitions).map(acquisition=>acquisition.originalTextArtifactId)).size,2);assert.equal((await sources.readBody(c.sourceId,c.acquisitionId)).acquisition.publishedAt,null)
- const splitDate=await collect(base+'/article',{publishedSelector:'#split-published'}),splitBody=await sources.readBody(splitDate.sourceId,splitDate.acquisitionId);assert.equal(splitBody.acquisition.publishedAt,'2026-10-18');assert.equal(splitBody.text,body.text);assert.ok(body.text.includes('\n'));assert.ok(!body.text.includes('\\n'))
- phase='Visible metadata body witnesses';const metadataExcludes=['.ad','.avatar','#player','.recommendation'],metadataBase=await collect(base+'/metadata',{bodySelector:'main',excludeSelectors:metadataExcludes,authorSelector:undefined,publishedSelector:undefined}),metadataBody=await sources.readBody(metadataBase.sourceId,metadataBase.acquisitionId),metadataTab=kernel.sourcePages().find(page=>page.url===base+'/metadata')!,witness=(quote:string)=>({startCharacter:metadataBody.text.indexOf(quote),endCharacter:metadataBody.text.indexOf(quote)+quote.length,quote}),metadataRanges={author:witness('示例作者'),publishedAt:witness('2026-09-30')}
- const metadataSaved=await source({operation:'collect',expectedRevision:sources.state().revision,tabId:metadataTab.id,bodySelector:'main',excludeSelectors:metadataExcludes,metadataRanges}) as {sourceId:string;acquisitionId:string},metadataRead=await sources.readBody(metadataSaved.sourceId,metadataSaved.acquisitionId);assert.equal(metadataRead.acquisition.author,'示例作者');assert.equal(metadataRead.acquisition.publishedAt,'2026-09-30');assert.deepEqual(metadataRead.acquisition.metadataRanges,metadataRanges);assert.equal((await sources.readBody(metadataBase.sourceId,metadataBase.acquisitionId)).acquisition.publishedAt,null)
- await kernel.requireTab(metadataTab.id).view.webContents.executeJavaScript("document.querySelector('#published').textContent='2026-09-29'",true)
- const metadataChanged=await source({operation:'collect',expectedRevision:sources.state().revision,tabId:metadataTab.id,bodySelector:'main',excludeSelectors:metadataExcludes,metadataRanges}) as {sourceId:string;acquisitionId:string},metadataFailure=await sources.readBody(metadataChanged.sourceId,metadataChanged.acquisitionId);assert.equal(metadataFailure.acquisition.result,'failed');assert.equal(metadataFailure.acquisition.publishedAt,null);assert.match(metadataFailure.acquisition.error!,/witness differs/);assert.equal((await sources.readBody(metadataSaved.sourceId,metadataSaved.acquisitionId)).text,metadataBody.text)
- fs.writeFileSync(path.join(proof,'metadata-witness.json'),JSON.stringify({actualDom:true,metadataRanges,author:metadataRead.acquisition.author,publishedAt:metadataRead.acquisition.publishedAt,changedTextRejected:metadataFailure.acquisition.result==='failed',olderAcquisitionPreserved:true},null,2)+'\n')
- const candidate=body.acquisition.candidates[0];await source({operation:'confirm',expectedRevision:sources.snapshot().revision,sourceId:a.sourceId,acquisitionId:a.acquisitionId,candidateIds:[candidate.id],eventAt:'2026-09-29'})
- const unknownDate=await source({operation:'read',sourceId:c.sourceId,acquisitionId:c.acquisitionId}) as {publishedAt:null;eventAt:null;eventTimeOrigin:string};assert.equal(unknownDate.publishedAt,null);assert.equal(unknownDate.eventAt,null);assert.equal(unknownDate.eventTimeOrigin,'unknown')
- const declaredDate=await source({operation:'read',sourceId:a.sourceId,acquisitionId:a.acquisitionId}) as {publishedAt:string;eventAt:string;eventTimeOrigin:string};assert.equal(declaredDate.publishedAt,'2026-09-30');assert.equal(declaredDate.eventAt,'2026-09-29');assert.equal(declaredDate.eventTimeOrigin,'user-declared')
- const selectedTab=(kernel.sourcePages().find(page=>page.url===base+'/article'))!.id
- const acquired=await source({operation:'acquire',expectedRevision:sources.snapshot().revision,sourceId:a.sourceId,acquisitionId:a.acquisitionId,candidateId:candidate.id,method:'download',tabId:selectedTab}) as {state:string;artifactId:string};assert.equal(acquired.state,'image-decoded');assert.ok(fs.existsSync(path.join(artifacts,acquired.artifactId)))
- const repeated=await sources.readBody(b.sourceId,b.acquisitionId);await source({operation:'confirm',expectedRevision:sources.snapshot().revision,sourceId:b.sourceId,acquisitionId:b.acquisitionId,candidateIds:[repeated.acquisition.candidates[0].id]})
- const reused=await source({operation:'acquire',expectedRevision:sources.snapshot().revision,sourceId:b.sourceId,acquisitionId:b.acquisitionId,candidateId:repeated.acquisition.candidates[0].id,method:'download',tabId:kernel.sourcePages().find(page=>page.url===base+'/copy')!.id}) as {artifactId:string};assert.equal(reused.artifactId,acquired.artifactId);assert.equal(fs.readdirSync(artifacts).filter(file=>file.endsWith('.png')).length,1)
- const preview=await collect(base+'/article',{mediaSelector:'#player',accessSelector:'#player'}),previewBody=await sources.readBody(preview.sourceId,preview.acquisitionId),videoCandidate=previewBody.acquisition.candidates.find(candidate=>candidate.kind==='video')!;assert.equal(previewBody.acquisition.access,'preview');assert.ok(videoCandidate.durationSeconds!>1)
- await source({operation:'confirm',expectedRevision:sources.snapshot().revision,sourceId:preview.sourceId,acquisitionId:preview.acquisitionId,candidateIds:[videoCandidate.id]})
- const actual=await source({operation:'acquire',expectedRevision:sources.snapshot().revision,sourceId:preview.sourceId,acquisitionId:preview.acquisitionId,candidateId:videoCandidate.id,method:'download',tabId:selectedTab}) as {state:string;verification:{completeFile:boolean;tracks:{type:string;sampleCount:number}[]}};assert.equal(actual.state,'partial-preview',JSON.stringify({state:actual.state,error:(actual as unknown as {error?:string}).error}));assert.equal(actual.verification.completeFile,true);assert.ok(actual.verification.tracks.some(track=>track.type==='video'&&track.sampleCount>10));assert.ok(actual.verification.tracks.some(track=>track.type==='audio'&&track.sampleCount>10));fs.writeFileSync(path.join(proof,'native-source-decode.json'),JSON.stringify(actual,null,2))
- phase='Source byte preservation without player playback';const sourcePlayer=kernel.requireTab(selectedTab).view.webContents;assert.equal(await sourcePlayer.executeJavaScript("document.querySelector('video').paused"),true)
- for(const duplicate of kernel.sourcePages().filter(page=>page.url===sourcePlayer.getURL()&&page.id!==selectedTab))await kernel.closeTab(duplicate.id);
- const unrelated=await kernel.openTab({url:'about:blank',foreground:true,reuse:false}); const preserved=await source({operation:'acquire',expectedRevision:sources.snapshot().revision,sourceId:preview.sourceId,acquisitionId:preview.acquisitionId,candidateId:videoCandidate.id,method:'preserve'}) as {state:string;artifactId:string;verification:{delivery:{proofArtifactId:string;proofSha256:string;reencoded:boolean}};error?:string};assert.equal(preserved.state,'partial-preview',preserved.error);assert.equal(kernel.state().activeTabId,unrelated.id,'Source binding does not move the user page');await kernel.closeTab(unrelated.id);await kernel.showTab(selectedTab);assert.equal(preserved.verification.delivery.reencoded,false);assert.equal(await sourcePlayer.executeJavaScript("document.querySelector('video').paused"),true);assert.ok(fs.existsSync(path.join(artifacts,preserved.verification.delivery.proofArtifactId)));assert.equal((await sources.readBody(preview.sourceId,preview.acquisitionId)).mediaAvailability.at(-1)!.available,true)
- const clipped=await source({operation:'acquire',expectedRevision:sources.snapshot().revision,sourceId:preview.sourceId,acquisitionId:preview.acquisitionId,candidateId:videoCandidate.id,method:'preserve',preview:{startSeconds:.2,endSeconds:.8},tabId:selectedTab}) as {state:string;artifactId:string;error?:string};assert.equal(clipped.state,'partial-preview',clipped.error);const clippedBody=await sources.readBody(preview.sourceId,preview.acquisitionId),clippedMedia=clippedBody.acquisition.media.at(-1)!;assert.equal(clippedMedia.artifactId,clipped.artifactId);assert.deepEqual(clippedMedia.deliveryRange,{kind:'delivery-file-pts',startSeconds:.2,endSeconds:.8,reencoded:true});assert.ok(Math.abs(clippedMedia.endSeconds!-.6)<.1);assert.equal(clippedBody.mediaAvailability.at(-1)!.available,true);assert.equal(await sourcePlayer.executeJavaScript("document.querySelector('video').paused"),true)
- phase='One-call source auto preview falls back after HTTP403 without inheriting delivery offsets'
- const preserveNormally=kernel.preserveSource.bind(kernel)
- kernel.preserveSource=async()=>{throw new Error('HTTP 403 fixture download has drained')}
- try{
-  const fallback=await source({operation:'acquire',expectedRevision:sources.snapshot().revision,sourceId:preview.sourceId,acquisitionId:preview.acquisitionId,candidateId:videoCandidate.id,method:'auto',videoSelector:'#player video',videoIndex:0,preview:{startSeconds:.2,endSeconds:.8},tabId:selectedTab}) as {state:string;error?:string;artifactId:string;previewApplied:boolean;actualCaptureSourceRange:{startSeconds:number;endSeconds:number};verification:{acquisition:{attempts:{reason:string}[]}}}
-  assert.equal(fallback.state,'partial-preview',fallback.error);assert.equal(fallback.previewApplied,false)
-  assert.ok(fallback.actualCaptureSourceRange.endSeconds>fallback.actualCaptureSourceRange.startSeconds)
-  assert.equal(fallback.verification.acquisition.attempts[0]!.reason,'HTTP_403')
-  const receipt=(await sources.readBody(preview.sourceId,preview.acquisitionId)).acquisition.media.at(-1)!
-  assert.equal(receipt.artifactId,fallback.artifactId);assert.equal(receipt.capture?.fromStart,false);assert.equal(receipt.deliveryRange,null)
-  assert.equal(media.isCaptureActive(),false);assert.equal(await sourcePlayer.executeJavaScript("document.querySelector('video').paused"),true)
- }finally{kernel.preserveSource=preserveNormally}
- const preservedFiles=fs.readdirSync(artifacts).sort(),preservedRevision=sources.snapshot().revision;cancelDecode=new AbortController();await assert.rejects(kernel.execute({action:'video.studio',studioRequest:{operation:'source',sourceRequest:{operation:'acquire',expectedRevision:preservedRevision,sourceId:preview.sourceId,acquisitionId:preview.acquisitionId,candidateId:videoCandidate.id,method:'preserve',preview:{startSeconds:.2,endSeconds:.8},tabId:selectedTab}}},{actor:'user',sessionOwner:{projectId:project.id,sessionId:'source-session'},signal:cancelDecode.signal}),/Source decode cancellation/);cancelDecode=undefined;assert.equal(sources.snapshot().revision,preservedRevision);assert.deepEqual(fs.readdirSync(artifacts).sort(),preservedFiles,'Cancelled preservation removes all owned delivery/proof resources')
- phase='Cancelled source decoding';const before=sources.snapshot(),beforeFiles=fs.readdirSync(artifacts).sort();cancelDecode=new AbortController();await assert.rejects(kernel.execute({action:'video.studio',studioRequest:{operation:'source',sourceRequest:{operation:'acquire',expectedRevision:before.revision,sourceId:preview.sourceId,acquisitionId:preview.acquisitionId,candidateId:videoCandidate.id,method:'download',tabId:selectedTab}}},{actor:'user',sessionOwner:{projectId:project.id,sessionId:'source-session'},signal:cancelDecode.signal}),/Source decode cancellation/);cancelDecode=undefined;assert.equal(sources.snapshot().revision,before.revision);assert.deepEqual(fs.readdirSync(artifacts).sort(),beforeFiles);assert.equal(media.isCaptureActive(),false)
- phase='Confirmed player capture and decode';const initialPlayer=await kernel.requireTab(selectedTab).view.webContents.executeJavaScript("(()=>{const video=document.querySelector('#player video');video.currentTime=.35;video.playbackRate=1.25;video.loop=true;return {time:video.currentTime,paused:video.paused,seekable:video.seekable.length,seekableEnd:video.seekable.length?video.seekable.end(0):null,duration:video.duration}})()",true) as {time:number;seekableEnd:number;duration:number};assert.equal(initialPlayer.time,.35,'Fixture must admit the requested nonzero seek before capture');assert.ok(initialPlayer.seekableEnd>.35);const captured=await source({operation:'acquire',expectedRevision:sources.snapshot().revision,sourceId:preview.sourceId,acquisitionId:preview.acquisitionId,candidateId:videoCandidate.id,method:'capture',videoSelector:'#player',maxDurationMs:5000,tabId:selectedTab}) as {state:string;artifactId:string;error?:string};assert.equal(captured.state,'partial-preview',captured.error);const capturedBody=await sources.readBody(preview.sourceId,preview.acquisitionId),captureEvidence=capturedBody.acquisition.media.at(-1)!.capture!;assert.equal(captureEvidence.stopReason,'ended');assert.equal(captureEvidence.pageUrl,base+'/article');assert.equal(captureEvidence.candidateUrl,videoCandidate.url);assert.ok(captureEvidence.sourceEndSeconds>1);assert.equal(capturedBody.mediaAvailability.at(-1)!.available,true);const restoredPlayer=await kernel.requireTab(selectedTab).view.webContents.executeJavaScript("(()=>{const video=document.querySelector('#player video');return {paused:video.paused,time:video.currentTime,rate:video.playbackRate,loop:video.loop}})()") as {paused:boolean;time:number;rate:number;loop:boolean};assert.equal(restoredPlayer.paused,true);assert.ok(Math.abs(restoredPlayer.time-.35)<.05,JSON.stringify({restoredPlayer,captureEvidence}));assert.equal(restoredPlayer.rate,1.25);assert.equal(restoredPlayer.loop,true)
- phase='Confirmed current-time source capture';const middle=await source({operation:'acquire',expectedRevision:sources.snapshot().revision,sourceId:preview.sourceId,acquisitionId:preview.acquisitionId,candidateId:videoCandidate.id,method:'capture',videoSelector:'#player',fromStart:false,maxDurationMs:5000,tabId:selectedTab}) as {state:string;error?:string};assert.equal(middle.state,'partial-preview',middle.error);const middleBody=await sources.readBody(preview.sourceId,preview.acquisitionId),middleProof=middleBody.acquisition.media.at(-1)!.capture!;assert.equal(middleProof.fromStart,false);assert.ok(middleProof.sourceStartSeconds>=.3,JSON.stringify(middleProof));assert.ok(middleProof.sourceEndSeconds>middleProof.sourceStartSeconds);assert.equal(middleBody.mediaAvailability.at(-1)!.available,true);const middleRestored=await kernel.requireTab(selectedTab).view.webContents.executeJavaScript("document.querySelector('#player video').currentTime") as number;assert.ok(Math.abs(middleRestored-.35)<.05)
- phase='Cancel source capture before initialization';const captureBefore=sources.snapshot(),captureFiles=fs.readdirSync(artifacts).sort();cancelCapture=new AbortController();await assert.rejects(kernel.execute({action:'video.studio',studioRequest:{operation:'source',sourceRequest:{operation:'acquire',expectedRevision:captureBefore.revision,sourceId:preview.sourceId,acquisitionId:preview.acquisitionId,candidateId:videoCandidate.id,method:'capture',videoSelector:'#player',maxDurationMs:5000,tabId:selectedTab}}},{actor:'user',sessionOwner:{projectId:project.id,sessionId:'source-session'},signal:cancelCapture.signal}),/Source capture cancellation/);cancelCapture=undefined;assert.equal(sources.snapshot().revision,captureBefore.revision);assert.deepEqual(fs.readdirSync(artifacts).sort(),captureFiles);assert.equal(media.isCaptureActive(),false)
- phase='Cancel source capture during recording';captureCancelPhase='recording';cancelCapture=new AbortController();await assert.rejects(kernel.execute({action:'video.studio',studioRequest:{operation:'source',sourceRequest:{operation:'acquire',expectedRevision:sources.snapshot().revision,sourceId:preview.sourceId,acquisitionId:preview.acquisitionId,candidateId:videoCandidate.id,method:'capture',videoSelector:'#player',maxDurationMs:5000,tabId:selectedTab}}},{actor:'user',sessionOwner:{projectId:project.id,sessionId:'source-session'},signal:cancelCapture.signal}),/Source capture cancellation/);cancelCapture=undefined;captureCancelPhase='starting';assert.equal(sources.snapshot().revision,captureBefore.revision);assert.deepEqual(fs.readdirSync(artifacts).sort(),captureFiles);assert.equal(media.isCaptureActive(),false);assert.equal(await kernel.requireTab(selectedTab).view.webContents.executeJavaScript("document.querySelector('#player video').paused"),true)
- phase='Reject capture outside confirmed media scope';const outWC=kernel.requireTab(selectedTab).view.webContents;await outWC.executeJavaScript(`(()=>{const video=document.createElement('video');video.id='outside-player';video.src=${JSON.stringify(videoCandidate.url)};document.body.append(video)})()`,true);const outside=await source({operation:'acquire',expectedRevision:sources.snapshot().revision,sourceId:preview.sourceId,acquisitionId:preview.acquisitionId,candidateId:videoCandidate.id,method:'capture',videoSelector:'#outside-player',maxDurationMs:5000,tabId:selectedTab}) as {state:string;error:string};assert.equal(outside.state,'failed');assert.match(outside.error,/range or video changed/);assert.deepEqual(fs.readdirSync(artifacts).sort(),captureFiles);assert.equal(media.isCaptureActive(),false)
- const blobTab=await call({action:'tabs.open',url:base+'/blob',foreground:false,reuse:false}) as {id:string};const blobWC=kernel.requireTab(blobTab.id).view.webContents;await blobWC.executeJavaScript(`(async()=>{const video=document.querySelector('#player video');video.src=URL.createObjectURL(await(await fetch(${JSON.stringify(base+'/clip.webm')})).blob());video.load()})()`,true);await wait(()=>blobWC.executeJavaScript("document.querySelector('#player video').readyState>=2"),'Blob source ready')
- const blob=await source({operation:'collect',expectedRevision:sources.snapshot().revision,tabId:blobTab.id,bodySelector:'#body',excludeSelectors:['.ad','.avatar'],mediaSelector:'#player'}) as {sourceId:string;acquisitionId:string};const blobOriginal=await sources.readBody(blob.sourceId,blob.acquisitionId),blobCandidate=blobOriginal.acquisition.candidates.find(candidate=>candidate.kind==='video')!;assert.ok(blobCandidate.url.startsWith('blob:'));await source({operation:'confirm',expectedRevision:sources.snapshot().revision,sourceId:blob.sourceId,acquisitionId:blob.acquisitionId,candidateIds:[blobCandidate.id]})
- const limited=await source({operation:'acquire',expectedRevision:sources.snapshot().revision,sourceId:blob.sourceId,acquisitionId:blob.acquisitionId,candidateId:blobCandidate.id,method:'capture',videoSelector:'#player',fromStart:true,maxDurationMs:1000,tabId:blobTab.id}) as {state:string;error?:string};assert.equal(limited.state,'partial-preview',limited.error);assert.equal((await sources.readBody(blob.sourceId,blob.acquisitionId)).acquisition.media.at(-1)!.capture!.stopReason,'maximum-duration')
- phase='Navigation source capture rollback';const navigationBefore=sources.snapshot(),navigationFiles=fs.readdirSync(artifacts).sort();let started:()=>void;const recordingStarted=new Promise<void>(resolve=>started=resolve);captureStarted=started!;const navigationOperation=source({operation:'acquire',expectedRevision:navigationBefore.revision,sourceId:blob.sourceId,acquisitionId:blob.acquisitionId,candidateId:blobCandidate.id,method:'capture',videoSelector:'#player',maxDurationMs:5000,tabId:blobTab.id});await recordingStarted;captureStarted=undefined;await blobWC.loadURL(base+'/navigated');const navigationResult=await navigationOperation as {state:string;error:string};assert.equal(navigationResult.state,'failed');assert.match(navigationResult.error,/navigated/);assert.deepEqual(fs.readdirSync(artifacts).sort(),navigationFiles);assert.equal(media.isCaptureActive(),false)
- const failure=await collect(base+'/failure'),failedCandidate=(await sources.readBody(failure.sourceId,failure.acquisitionId)).acquisition.candidates[0];await source({operation:'confirm',expectedRevision:sources.snapshot().revision,sourceId:failure.sourceId,acquisitionId:failure.acquisitionId,candidateIds:[failedCandidate.id]});const failed=await source({operation:'acquire',expectedRevision:sources.snapshot().revision,sourceId:failure.sourceId,acquisitionId:failure.acquisitionId,candidateId:failedCandidate.id,method:'download',tabId:kernel.sourcePages().find(page=>page.url===base+'/failure')!.id}) as {state:string;error:string};assert.equal(failed.state,'failed');assert.match(failed.error,/503/)
- const missing=await collect(base+'/missing',{bodySelector:'#absent'});assert.equal((await sources.readBody(missing.sourceId,missing.acquisitionId)).acquisition.result,'missing-range')
- const long=await collect(base+'/long',{bodySelector:'#long'});const truncated=await sources.readBody(long.sourceId,long.acquisitionId);assert.equal(truncated.acquisition.result,'truncated');assert.equal(truncated.text.length,50000)
- const store=new VideoStudioStore(project.directory,'source-session');let draft=store.create('可追溯来源');draft.scenes=[{...newStudioScene('evidence-scene','依据'),layout:'presentation',bullets:['来源一：按钮结果可追溯','来源三：按钮结果不可追溯','相反陈述，冲突待确认'],durationSeconds:6}];draft=store.update(draft.id,draft.revision,draft)
- for(const record of [a,b,c]){const original=await sources.readBody(record.sourceId,record.acquisitionId),quote=record===c?'事实依据：按钮执行后结果不可追溯。😀':'事实依据：按钮执行后结果可追溯。😀',startCharacter=original.text.indexOf(quote);draft.scenes[0].citations??=[];draft.scenes[0].citations.push({sourceId:record.sourceId,acquisitionId:record.acquisitionId,startCharacter,endCharacter:startCharacter+quote.length,quote,kind:'fact',claim:'按钮结果可回溯',conflict:record===b?'pending':'conflicting',eventAt:null})}
- await call({action:'video.studio',studioRequest:{operation:'update',draftId:draft.id,expectedRevision:draft.revision,draft}});draft=store.read(draft.id)
- const list=await call({action:'video.studio',studioRequest:{operation:'export-citations',draftId:draft.id,expectedRevision:draft.revision}}) as {artifactId:string;citationCount:number};assert.equal(list.citationCount,3);const conflictReport=JSON.parse(fs.readFileSync(path.join(artifacts,list.artifactId),'utf8')) as {factChecking:string;citations:{citation:{sourceId:string;conflict:string;quote:string;claim:string};factChecking:string;url:string;originalTextArtifactId:string}[]};assert.equal(conflictReport.factChecking,'pending');assert.deepEqual(conflictReport.citations.map(entry=>entry.citation.conflict),['conflicting','pending','conflicting']);assert.equal(new Set(conflictReport.citations.map(entry=>entry.citation.sourceId)).size,3);assert.ok(conflictReport.citations[0].citation.quote.includes('结果可追溯'));assert.ok(conflictReport.citations[2].citation.quote.includes('结果不可追溯'));assert.ok(conflictReport.citations.every(entry=>entry.citation.claim==='按钮结果可回溯'&&entry.factChecking==='pending'&&Boolean(entry.originalTextArtifactId)&&entry.url.startsWith(base)));fs.copyFileSync(path.join(artifacts,list.artifactId),path.join(proof,'citation-list.json'))
- const renderedConflict=await call({action:'video.studio',studioRequest:{operation:'render',draftId:draft.id,expectedRevision:draft.revision}}) as {draft:typeof draft;export:{artifactId:string;verificationArtifactId:string}};assert.deepEqual(store.read(draft.id).scenes[0].citations,draft.scenes[0].citations);draft=store.read(draft.id);fs.copyFileSync(path.join(artifacts,renderedConflict.export.artifactId),path.join(proof,'unresolved-source-conflict.mp4'));fs.copyFileSync(path.join(artifacts,renderedConflict.export.verificationArtifactId),path.join(proof,'unresolved-source-conflict-video-verification.json'));const afterRenderList=await call({action:'video.studio',studioRequest:{operation:'export-citations',draftId:draft.id,expectedRevision:draft.revision}}) as {artifactId:string;factChecking:string};assert.equal(afterRenderList.factChecking,'pending');assert.equal(JSON.stringify(JSON.parse(fs.readFileSync(path.join(artifacts,afterRenderList.artifactId),'utf8')).citations,(key,value:unknown)=>key==='checkedAt'?undefined:value),JSON.stringify(conflictReport.citations,(key,value:unknown)=>key==='checkedAt'?undefined:value));fs.copyFileSync(path.join(artifacts,afterRenderList.artifactId),path.join(proof,'citation-list-after-render.json'))
- runtime=new VideoStudioRuntime();runtime.configure({browserKernel:assertBrowserFeatureHost(kernel),projectStore:{active:()=>project},getMainWindow:()=>host,getShellWebContents:()=>host.webContents,getTheme:()=> 'light',setWorkspaceMode:()=>{},getCurrentSessionId:()=> 'source-session',isProjectChanging:()=>false,revealAgent:()=>{},enqueueAssistant:async()=>{throw new Error('This fixture cannot submit Assistant input')},synchronizeAgentProject:async()=>({sessionId:'source-session'})});runtime.installIpc(ipcMain);runtime.layout({x:0,y:0,width:1220,height:790},true);await runtime.openPanel('video-studio');studio=webContents.getAllWebContents().find(contents=>contents.getURL().endsWith('/studio.html'))!
- await wait(()=>ui("document.getElementById('draft-title').value==='可追溯来源'"),'Source GUI loaded');await ui("document.getElementById('view-toggle').click();true");await wait(()=>ui("document.body.dataset.view==='advanced'&&!document.getElementById('view-toggle').disabled"),'Source advanced editor settled');await ui(`document.querySelector('[data-stage="0"]').click();document.getElementById('studio-source-section').open=true;true`)
- await wait(()=>ui("!document.getElementById('source-refresh').matches(':disabled')&&document.getElementById('source-refresh').getClientRects().length>0"),'Source controls ready');await ui("document.getElementById('source-refresh').click();true")
- await wait(()=>ui("document.getElementById('source-record').options.length>4"),'GUI source list');await ui(`document.getElementById('source-record').value=${JSON.stringify(a.sourceId+'.'+a.acquisitionId)};document.getElementById('source-record').dispatchEvent(new Event('change',{bubbles:true}))`)
- await wait(()=>ui("document.getElementById('source-original').value.includes('事实依据')&&!document.getElementById('source-original').disabled"),'GUI original body');assert.ok(!String(await ui("document.getElementById('source-original').value")).includes('PRIVATE'))
- await ui("document.querySelector('#source-candidates button:last-child').click()");await wait(()=>ui("document.querySelector('.material-preview-dialog img')?.naturalWidth===320"),'Saved source image preview');await ui("[...document.querySelectorAll('.material-preview-dialog button')].find(button=>button.textContent==='关闭').click()")
- phase='GUI confirmed player capture';const mediaCount=(await sources.readBody(preview.sourceId,preview.acquisitionId)).acquisition.media.length;await ui(`document.getElementById('source-page').value=${JSON.stringify(selectedTab)};document.getElementById('source-record').value=${JSON.stringify(preview.sourceId+'.'+preview.acquisitionId)};document.getElementById('source-record').dispatchEvent(new Event('change',{bubbles:true}))`);await wait(()=>ui("[...document.querySelectorAll('#source-candidates button')].some(button=>button.textContent==='采集此播放器'&&!button.matches(':disabled'))"),'GUI player source ready');await ui("[...document.querySelectorAll('#source-candidates button')].find(button=>button.textContent==='采集此播放器').click()");await wait(async()=>(await sources.readBody(preview.sourceId,preview.acquisitionId)).acquisition.media.length===mediaCount+1,'GUI player recorded');assert.equal((await sources.readBody(preview.sourceId,preview.acquisitionId)).acquisition.media.at(-1)!.capture!.stopReason,'ended');await wait(()=>ui("!document.getElementById('source-refresh').matches(':disabled')"),'GUI capture settled');await ui(`document.getElementById('source-record').value=${JSON.stringify(a.sourceId+'.'+a.acquisitionId)};document.getElementById('source-record').dispatchEvent(new Event('change',{bubbles:true}))`);await wait(()=>ui("document.getElementById('source-original').value.includes('事实依据')&&!document.getElementById('source-refresh').matches(':disabled')&&!document.getElementById('source-candidates').textContent.includes('采集此播放器')"),'GUI original source restored')
- await ui("document.getElementById('source-original').setSelectionRange(0,4);document.getElementById('source-claim').value='原文标题';document.getElementById('source-kind').value='opinion';document.getElementById('source-cite').click()")
- await wait(async()=>store.read(draft.id).scenes[0].citations?.length===4,'GUI exact citation saves');draft=store.read(draft.id);assert.equal(draft.scenes[0].citations!.at(-1)!.quote,'限定正文');assert.equal(draft.scenes[0].citations!.at(-1)!.kind,'opinion')
- phase='Current source evidence availability';const available=await sources.readBody(a.sourceId,a.acquisitionId);assert.equal(available.mediaAvailability[0].available,true);const originalFile=path.join(artifacts,acquired.artifactId),retainedFile=originalFile+'.retained';fs.renameSync(originalFile,retainedFile)
- try{
-  const current=await sources.readBody(a.sourceId,a.acquisitionId);assert.equal(current.mediaAvailability[0].artifactStatus,'missing');assert.equal(current.acquisition.media[0].state,'image-decoded');const currentRevision=store.read(draft.id).revision
-  const staleList=await call({action:'video.studio',studioRequest:{operation:'export-citations',draftId:draft.id,expectedRevision:currentRevision}}) as {artifactId:string};const staleReport=JSON.parse(fs.readFileSync(path.join(artifacts,staleList.artifactId),'utf8'));assert.equal(staleReport.citations[0].mediaAvailability[0].available,false);assert.equal(store.read(draft.id).revision,currentRevision);fs.copyFileSync(path.join(artifacts,staleList.artifactId),path.join(proof,'citation-unavailable-media.json'))
-  await ui("document.getElementById('source-record').dispatchEvent(new Event('change',{bubbles:true}))");await wait(()=>ui("document.getElementById('source-candidates').textContent.includes('missing')"),'GUI current missing source media');assert.equal(await ui("[...document.querySelectorAll('#source-candidates button')].find(button=>button.textContent==='预览已保存素材').disabled"),true)
- }finally{fs.renameSync(retainedFile,originalFile)}
- await ui("document.getElementById('source-record').dispatchEvent(new Event('change',{bubbles:true}))");await wait(()=>ui("[...document.querySelectorAll('#source-candidates button')].some(button=>button.textContent==='预览已保存素材'&&!button.disabled)"),'GUI restored source evidence');assert.equal((await sources.readBody(a.sourceId,a.acquisitionId)).mediaAvailability[0].available,true)
- fs.writeFileSync(path.join(proof,'source-studio.png'),(await captureRendererEvidence(studio)).toPNG());await ui("document.getElementById('source-original').scrollIntoView({block:'center'})");fs.writeFileSync(path.join(proof,'source-detail.png'),(await captureRendererEvidence(studio)).toPNG());fs.writeFileSync(path.join(proof,'source-catalog.json'),JSON.stringify(sources.snapshot(),null,2));fs.writeFileSync(path.join(proof,'verification.json'),JSON.stringify({status:'passed',boundedOriginal:true,recommendationsAndInputsExcluded:true,duplicateTextAndMediaReuse:true,currentMediaAvailability:true,unknownDatePreserved:true,partialPreviewFullFileDecode:true,associatedPlayerCapture:true,blobCapture:true,maximumDurationPartial:true,captureCancellationRollback:true,recordingCancellationRollback:true,outsideScopeRejected:true,guiPlayerCapture:true,captureNavigationRollback:true,decodeCancellationRollback:true,controlledHTTPFailure:true,missingRange:true,truncatedBodyCharacters:50000,threeSourceCitationCount:3,opposingStatementsRetained:true,conflictAutomaticallyResolved:false,factChecking:'pending',guiQuote:draft.scenes[0].citations!.at(-1),profile:'disposable',realDSHModel:false,externalPlatforms:false},null,2))
- const rawProof=path.join(proof,'raw-artifacts');fs.mkdirSync(rawProof,{recursive:true});for(const file of fs.readdirSync(artifacts))if(fs.statSync(path.join(artifacts,file)).isFile())fs.copyFileSync(path.join(artifacts,file),path.join(rawProof,file))
- phase='Destroyed view cleanup recovery'
- const deadTab=await kernel.openTab({url:base+'/article',source:'agent',reuse:false}),deadView=kernel.requireTab(deadTab.id).view,deadContents=deadView.webContents
- await closeNavigationPage(deadContents);assert.equal(deadContents.isDestroyed(),true)
- // Electron can clear the WebContentsView getter after native destruction.
- // Recovery must use the previously owned handle, not dereference it again.
- Object.defineProperty(deadView,'webContents',{configurable:true,get:()=>undefined})
- ;(kernel as unknown as {navigationQuarantine:Set<string>}).navigationQuarantine.add(deadTab.id)
- await kernel.closeTab(deadTab.id);assert.equal(kernel.tabs.has(deadTab.id),false)
- assert.equal((kernel as unknown as {navigationQuarantine:Set<string>}).navigationQuarantine.has(deadTab.id),false)
- const externallyClosed=await kernel.openTab({url:base+'/article',source:'agent',reuse:false}),externalView=kernel.requireTab(externallyClosed.id).view
- await closeNavigationPage(externalView.webContents);Object.defineProperty(externalView,'webContents',{configurable:true,get:()=>undefined})
- assert.throws(()=>kernel.requireTab(externallyClosed.id),/BMW_BROWSER_TAB_CLOSED/);assert.equal(kernel.tabs.has(externallyClosed.id),false)
- console.log('PASS Project bounded sources, decode, capture fallback, GUI citations and destroyed-view cleanup recovery')
-}catch(error){exitCode=1;console.error('Source phase: '+phase,error);if(studio&&!studio.isDestroyed())console.error(await ui("document.getElementById('status').textContent"))}finally{clearTimeout(timeout);await runtime?.stop();await bridge?.close();for(const contents of webContents.getAllWebContents())if(!contents.isDestroyed())contents.close();server?.close();host?.destroy();fs.rmSync(root,{recursive:true,force:true});app.exit(exitCode)}}
+const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-source-runtime-'))),
+  project = { id: 'source-project', name: 'Source fixture', directory: path.join(root, 'project') },
+  artifacts = path.join(project.directory, 'artifacts')
+fs.mkdirSync(artifacts, { recursive: true })
+fs.mkdirSync(path.join(root, 'profile'))
+app.setPath('userData', path.join(root, 'profile'))
+const proof = process.env.BMW_VALIDATION_DIR ?? path.resolve('.bmw-runtime/p0-sources')
+fs.mkdirSync(proof, { recursive: true })
+let host: BrowserWindow,
+  studio: WebContents,
+  media: MediaController,
+  runtime: VideoStudioRuntime,
+  bridge: Awaited<ReturnType<typeof createBridgeServer>>,
+  server: http.Server,
+  exitCode = 0,
+  phase = 'ready',
+  cancelDecode: AbortController | undefined,
+  cancelCapture: AbortController | undefined,
+  captureCancelPhase: 'starting' | 'recording' = 'starting',
+  captureStarted: (() => void) | undefined
+app.on('web-contents-created', (_event, contents) => {
+  contents.on('console-message', details => {
+    if (details.level === 'error') console.error('SOURCE RENDERER', details.message)
+  })
+})
+process.on('uncaughtException', error => {
+  process.stderr.write('SOURCE UNCAUGHT ' + phase + ' ' + String(error.stack ?? error) + '\n')
+  app.exit(1)
+})
+process.on('unhandledRejection', reason => {
+  process.stderr.write('SOURCE UNHANDLED ' + phase + ' ' + String(reason) + '\n')
+  app.exit(1)
+})
+const timeout = setTimeout(() => {
+  console.error('Source runtime timed out: ' + phase)
+  app.exit(1)
+}, 120000)
+async function wait(read: () => Promise<unknown>, label: string) {
+  phase = label
+  console.log('PHASE ' + label)
+  const until = Date.now() + 20000
+  while (Date.now() < until) {
+    if (await read()) return
+    await new Promise(resolve => setTimeout(resolve, 50))
+  }
+  throw new Error('Timed out: ' + label)
+}
+async function ui(code: string) {
+  return studio.executeJavaScript(code, true)
+}
+async function run() {
+  try {
+    await app.whenReady()
+    const isolated = session.fromPartition('source-fixture-' + process.pid)
+    host = new BrowserWindow({
+      show: true,
+      width: 1250,
+      height: 850,
+      webPreferences: {
+        session: isolated,
+        sandbox: true,
+        contextIsolation: true,
+        nodeIntegration: false,
+        backgroundThrottling: false
+      }
+    })
+    await host.loadFile(path.resolve('packages/media-native/src/media/media.html'))
+    const image = Buffer.from(
+      (await host.webContents.executeJavaScript(
+        `(()=>{const c=document.createElement('canvas');c.width=320;c.height=180;const x=c.getContext('2d');x.fillStyle='#147ac2';x.fillRect(0,0,320,180);return c.toDataURL().split(',')[1]})()`,
+        true
+      )) as string,
+      'base64'
+    )
+    const video = Buffer.from(
+      (await host.webContents.executeJavaScript(
+        `(async()=>{const {Output,WebMOutputFormat,BufferTarget,CanvasSource,AudioSampleSource,AudioSample}=await import('mediabunny');const c=new OffscreenCanvas(320,180),x=c.getContext('2d',{alpha:false}),target=new BufferTarget(),output=new Output({format:new WebMOutputFormat(),target}),video=new CanvasSource(c,{codec:'vp8',bitrate:500000}),audio=new AudioSampleSource({codec:'opus',bitrate:64000});output.addVideoTrack(video,{frameRate:25});output.addAudioTrack(audio);await output.start();for(let n=0;n<60;n++){x.fillStyle=n%2?'#147ac2':'#18b478';x.fillRect(0,0,320,180);await video.add(n/25,1/25)}video.close();for(let n=0;n<120;n++){const pcm=new Float32Array(960);for(let i=0;i<960;i++)pcm[i]=.1*Math.sin((n*960+i)/48000*440*Math.PI*2);const sample=new AudioSample({data:pcm,format:'f32-planar',numberOfChannels:1,sampleRate:48000,timestamp:n*.02});await audio.add(sample);sample.close()}audio.close();await output.finalize();return [...new Uint8Array(target.buffer)]})()`,
+        true
+      )) as number[]
+    )
+    // Freeze a deterministic 2.4s encoded fixture. A bounded 1s capture must
+    // still have enough source remaining after legitimate startup settling.
+    fs.writeFileSync(path.join(proof, 'source-fixture.webm'), video)
+    const fixtureInput = new Input({ source: new BufferSource(video), formats: [WEBM] })
+    try {
+      const track = await fixtureInput.getPrimaryVideoTrack(),
+        audio = await fixtureInput.getPrimaryAudioTrack()
+      assert.ok(track && audio, 'Fixture must contain independently recorded video and audio')
+      const config = await track.getDecoderConfig()
+      assert.equal(config?.codedWidth, 320)
+      assert.equal(config?.codedHeight, 180)
+      let frameCount = 0
+      for await (const _packet of new EncodedPacketSink(track).packets(undefined, undefined, { metadataOnly: true }))
+        frameCount++
+      assert.ok(frameCount >= 2, 'Fixture must encode at least two requested video frames before source loading')
+      fs.writeFileSync(
+        path.join(proof, 'source-fixture.json'),
+        JSON.stringify(
+          {
+            bytes: video.length,
+            sha256: crypto.createHash('sha256').update(video).digest('hex'),
+            frameCount,
+            videoCodec: await track.getCodec(),
+            audioCodec: await audio.getCodec(),
+            width: config?.codedWidth,
+            height: config?.codedHeight,
+            scope: 'Producer metadata only; actual native decode is verified by the source operations below'
+          },
+          null,
+          2
+        ) + '\n'
+      )
+    } finally {
+      fixtureInput.dispose()
+    }
+    let base = ''
+    server = http.createServer((request, response) => {
+      const url = request.url ?? ''
+      if (url === '/frame.png') {
+        response.writeHead(200, { 'content-type': 'image/png' })
+        response.end(image)
+        return
+      }
+      if (url === '/clip.webm') {
+        const match = /^bytes=(\d+)-(\d*)$/.exec(request.headers.range ?? ''),
+          start = match ? Number(match[1]) : 0,
+          end = match && match[2] ? Math.min(Number(match[2]), video.length - 1) : video.length - 1
+        if (start > end || start >= video.length) {
+          response.writeHead(416, { 'content-range': 'bytes */' + video.length })
+          response.end()
+          return
+        }
+        response.writeHead(match ? 206 : 200, {
+          'content-type': 'video/webm',
+          'accept-ranges': 'bytes',
+          'content-length': end - start + 1,
+          ...(match ? { 'content-range': `bytes ${start}-${end}/${video.length}` } : {})
+        })
+        response.end(video.subarray(start, end + 1))
+        return
+      }
+      if (url === '/failed.png') {
+        response.writeHead(503, { 'content-type': 'text/plain' })
+        response.end('controlled failure')
+        return
+      }
+      response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' })
+      response.end(
+        `<title>限定来源 ${url}</title><header>导航与推广</header><main><article id="body"><h1>限定正文</h1><p>${url === '/third' ? '事实依据：按钮执行后结果不可追溯。😀' : '事实依据：按钮执行后结果可追溯。😀'}</p><p>作者观点：这有助于解释产品。</p><input value="PRIVATE INPUT NEVER COLLECT"><div contenteditable="true">PRIVATE EDIT NEVER COLLECT</div><div contenteditable="plaintext-only">PRIVATE PLAIN EDIT NEVER COLLECT<img src="${base}/frame.png?private-edit"></div><img id="body-image" src="${base}${url === '/failure' ? '/failed.png' : '/frame.png'}"><div class="avatar">头像<img src="${base}/frame.png?avatar"></div><div class="ad">广告与推广<img src="${base}/frame.png?ad"></div></article><div id="author">示例作者</div><div id="published">2026-09-30</div><div id="split-published"><span>2026</span><span>10/18</span><span>22:04:56</span></div><div id="player"><span>试看30秒</span><video src="${base}/clip.webm" preload="auto"></video></div><section class="recommendation">推荐与推广<img src="${base}/frame.png?recommend"></section>${url === '/long' ? '<article id="long">' + '长文'.repeat(30000) + '</article>' : ''}</main>`
+      )
+    })
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
+    base = 'http://127.0.0.1:' + (server.address() as import('node:net').AddressInfo).port
+    const sources = new ProjectSourceStore(project.directory, project.id),
+      registry = new BrowserCapabilityRegistry(product)
+    media = new MediaController({
+      session: isolated,
+      preloadPath: path.resolve('packages/media-native/src/preload/media-preload.cjs'),
+      pagePath: path.resolve('packages/media-native/src/media/media.html'),
+      artifactsDirectory: artifacts,
+      resolveArtifactsDirectory: () => artifacts,
+      onStatus: (value: { active?: boolean; action?: string }) => {
+        if (value.active && value.action === 'media.decode.check')
+          cancelDecode?.abort(new Error('Source decode cancellation'))
+        if (value.active && (value as { state?: string; kind?: string }).kind === 'video-element') {
+          if ((value as { state?: string }).state === 'recording') captureStarted?.()
+          if ((value as { state?: string }).state === captureCancelPhase)
+            cancelCapture?.abort(new Error('Source capture cancellation'))
+        }
+      }
+    })
+    const kernel = new BrowserKernel({
+      window: host,
+      session: isolated,
+      capabilityRegistry: registry,
+      permissionStore: { hasAgentControl: () => true },
+      projectStore: {
+        active: () => project,
+        updateTabState: (id: string, state: { urls: string[]; activeUrl: string | null }) => {
+          assert.equal(id, project.id)
+          assert.ok(state.urls.every(url => url.startsWith(base)))
+        }
+      },
+      artifactsDirectory: artifacts,
+      sessionContinuity: undefined,
+      settingsStore: undefined,
+      allowedActions: registry.allowedActions,
+      onState: undefined
+    })
+    kernel.setBounds({ x: 0, y: 0, width: 900, height: 650 })
+    kernel.setRecordingController(media)
+    kernel.projectSources = () => sources
+    bridge = await createBridgeServer(kernel, {
+      toolDefinition: registry.toolDefinition(),
+      resolveProject: directory => (directory === project.directory ? project : undefined),
+      activeProjectId: () => project.id
+    })
+    const headers = { authorization: 'Bearer ' + bridge.token, 'content-type': 'application/json' },
+      binding = bridge.registerSession('source-session', project.directory)
+    const call = async (args: unknown) => {
+      const response = await fetch(bridge.url + '/execute', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ binding, arguments: args })
+        }),
+        value = (await response.json()) as { result: unknown; error?: string }
+      if (!response.ok) throw new Error(value.error)
+      return value.result
+    }
+    const source = async (request: unknown) =>
+      call({ action: 'video.studio', studioRequest: { operation: 'source', sourceRequest: request } })
+    const collect = async (url: string, extra: Record<string, unknown> = {}) => {
+      const tab = (await call({ action: 'tabs.open', url, foreground: false, reuse: false })) as { id: string }
+      await wait(
+        () =>
+          kernel
+            .requireTab(tab.id)
+            .view.webContents.executeJavaScript(
+              "(()=>{const v=document.querySelector('video');if(v?.error)throw new Error('Source fixture media load: '+JSON.stringify({code:v.error.code,message:v.error.message,networkState:v.networkState,readyState:v.readyState}));return v?.readyState>=1&&v.videoWidth===320})()"
+            ),
+        'Source fixture media ready'
+      )
+      return (await source({
+        operation: 'collect',
+        expectedRevision: sources.snapshot().revision,
+        tabId: tab.id,
+        bodySelector: '#body',
+        excludeSelectors: ['.ad', '.avatar'],
+        authorSelector: '#author',
+        publishedSelector: '#published',
+        ...extra
+      })) as { sourceId: string; acquisitionId: string }
+    }
+    phase = 'Bounded browser source capture'
+    const a = await collect(base + '/article'),
+      b = await collect(base + '/copy'),
+      c = await collect(base + '/third', { authorSelector: '#absent', publishedSelector: '#absent' }),
+      body = await sources.readBody(a.sourceId, a.acquisitionId)
+    assert.ok(body.text.includes('事实依据'))
+    for (const excluded of ['导航', '推荐', '广告', '头像', 'PRIVATE']) assert.ok(!body.text.includes(excluded))
+    assert.equal(body.acquisition.candidates.length, 1)
+    assert.equal(body.acquisition.candidates[0].url, base + '/frame.png')
+    assert.equal(body.acquisition.media.length, 0)
+    assert.equal(
+      new Set(
+        sources
+          .snapshot()
+          .sources.flatMap(source => source.acquisitions)
+          .map(acquisition => acquisition.originalTextArtifactId)
+      ).size,
+      2
+    )
+    assert.equal((await sources.readBody(c.sourceId, c.acquisitionId)).acquisition.publishedAt, null)
+    const splitDate = await collect(base + '/article', { publishedSelector: '#split-published' }),
+      splitBody = await sources.readBody(splitDate.sourceId, splitDate.acquisitionId)
+    assert.equal(splitBody.acquisition.publishedAt, '2026-10-18')
+    assert.equal(splitBody.text, body.text)
+    assert.ok(body.text.includes('\n'))
+    assert.ok(!body.text.includes('\\n'))
+    phase = 'Visible metadata body witnesses'
+    const metadataExcludes = ['.ad', '.avatar', '#player', '.recommendation'],
+      metadataBase = await collect(base + '/metadata', {
+        bodySelector: 'main',
+        excludeSelectors: metadataExcludes,
+        authorSelector: undefined,
+        publishedSelector: undefined
+      }),
+      metadataBody = await sources.readBody(metadataBase.sourceId, metadataBase.acquisitionId),
+      metadataTab = kernel.sourcePages().find(page => page.url === base + '/metadata')!,
+      witness = (quote: string) => ({
+        startCharacter: metadataBody.text.indexOf(quote),
+        endCharacter: metadataBody.text.indexOf(quote) + quote.length,
+        quote
+      }),
+      metadataRanges = { author: witness('示例作者'), publishedAt: witness('2026-09-30') }
+    const metadataSaved = (await source({
+        operation: 'collect',
+        expectedRevision: sources.state().revision,
+        tabId: metadataTab.id,
+        bodySelector: 'main',
+        excludeSelectors: metadataExcludes,
+        metadataRanges
+      })) as { sourceId: string; acquisitionId: string },
+      metadataRead = await sources.readBody(metadataSaved.sourceId, metadataSaved.acquisitionId)
+    assert.equal(metadataRead.acquisition.author, '示例作者')
+    assert.equal(metadataRead.acquisition.publishedAt, '2026-09-30')
+    assert.deepEqual(metadataRead.acquisition.metadataRanges, metadataRanges)
+    assert.equal(
+      (await sources.readBody(metadataBase.sourceId, metadataBase.acquisitionId)).acquisition.publishedAt,
+      null
+    )
+    await kernel
+      .requireTab(metadataTab.id)
+      .view.webContents.executeJavaScript("document.querySelector('#published').textContent='2026-09-29'", true)
+    const metadataChanged = (await source({
+        operation: 'collect',
+        expectedRevision: sources.state().revision,
+        tabId: metadataTab.id,
+        bodySelector: 'main',
+        excludeSelectors: metadataExcludes,
+        metadataRanges
+      })) as { sourceId: string; acquisitionId: string },
+      metadataFailure = await sources.readBody(metadataChanged.sourceId, metadataChanged.acquisitionId)
+    assert.equal(metadataFailure.acquisition.result, 'failed')
+    assert.equal(metadataFailure.acquisition.publishedAt, null)
+    assert.match(metadataFailure.acquisition.error!, /witness differs/)
+    assert.equal((await sources.readBody(metadataSaved.sourceId, metadataSaved.acquisitionId)).text, metadataBody.text)
+    fs.writeFileSync(
+      path.join(proof, 'metadata-witness.json'),
+      JSON.stringify(
+        {
+          actualDom: true,
+          metadataRanges,
+          author: metadataRead.acquisition.author,
+          publishedAt: metadataRead.acquisition.publishedAt,
+          changedTextRejected: metadataFailure.acquisition.result === 'failed',
+          olderAcquisitionPreserved: true
+        },
+        null,
+        2
+      ) + '\n'
+    )
+    const candidate = body.acquisition.candidates[0]
+    await source({
+      operation: 'confirm',
+      expectedRevision: sources.snapshot().revision,
+      sourceId: a.sourceId,
+      acquisitionId: a.acquisitionId,
+      candidateIds: [candidate.id],
+      eventAt: '2026-09-29'
+    })
+    const unknownDate = (await source({ operation: 'read', sourceId: c.sourceId, acquisitionId: c.acquisitionId })) as {
+      publishedAt: null
+      eventAt: null
+      eventTimeOrigin: string
+    }
+    assert.equal(unknownDate.publishedAt, null)
+    assert.equal(unknownDate.eventAt, null)
+    assert.equal(unknownDate.eventTimeOrigin, 'unknown')
+    const declaredDate = (await source({
+      operation: 'read',
+      sourceId: a.sourceId,
+      acquisitionId: a.acquisitionId
+    })) as { publishedAt: string; eventAt: string; eventTimeOrigin: string }
+    assert.equal(declaredDate.publishedAt, '2026-09-30')
+    assert.equal(declaredDate.eventAt, '2026-09-29')
+    assert.equal(declaredDate.eventTimeOrigin, 'user-declared')
+    const selectedTab = kernel.sourcePages().find(page => page.url === base + '/article')!.id
+    const acquired = (await source({
+      operation: 'acquire',
+      expectedRevision: sources.snapshot().revision,
+      sourceId: a.sourceId,
+      acquisitionId: a.acquisitionId,
+      candidateId: candidate.id,
+      method: 'download',
+      tabId: selectedTab
+    })) as { state: string; artifactId: string }
+    assert.equal(acquired.state, 'image-decoded')
+    assert.ok(fs.existsSync(path.join(artifacts, acquired.artifactId)))
+    const repeated = await sources.readBody(b.sourceId, b.acquisitionId)
+    await source({
+      operation: 'confirm',
+      expectedRevision: sources.snapshot().revision,
+      sourceId: b.sourceId,
+      acquisitionId: b.acquisitionId,
+      candidateIds: [repeated.acquisition.candidates[0].id]
+    })
+    const reused = (await source({
+      operation: 'acquire',
+      expectedRevision: sources.snapshot().revision,
+      sourceId: b.sourceId,
+      acquisitionId: b.acquisitionId,
+      candidateId: repeated.acquisition.candidates[0].id,
+      method: 'download',
+      tabId: kernel.sourcePages().find(page => page.url === base + '/copy')!.id
+    })) as { artifactId: string }
+    assert.equal(reused.artifactId, acquired.artifactId)
+    assert.equal(fs.readdirSync(artifacts).filter(file => file.endsWith('.png')).length, 1)
+    const preview = await collect(base + '/article', { mediaSelector: '#player', accessSelector: '#player' }),
+      previewBody = await sources.readBody(preview.sourceId, preview.acquisitionId),
+      videoCandidate = previewBody.acquisition.candidates.find(candidate => candidate.kind === 'video')!
+    assert.equal(previewBody.acquisition.access, 'preview')
+    assert.ok(videoCandidate.durationSeconds! > 1)
+    await source({
+      operation: 'confirm',
+      expectedRevision: sources.snapshot().revision,
+      sourceId: preview.sourceId,
+      acquisitionId: preview.acquisitionId,
+      candidateIds: [videoCandidate.id]
+    })
+    const actual = (await source({
+      operation: 'acquire',
+      expectedRevision: sources.snapshot().revision,
+      sourceId: preview.sourceId,
+      acquisitionId: preview.acquisitionId,
+      candidateId: videoCandidate.id,
+      method: 'download',
+      tabId: selectedTab
+    })) as { state: string; verification: { completeFile: boolean; tracks: { type: string; sampleCount: number }[] } }
+    assert.equal(
+      actual.state,
+      'partial-preview',
+      JSON.stringify({ state: actual.state, error: (actual as unknown as { error?: string }).error })
+    )
+    assert.equal(actual.verification.completeFile, true)
+    assert.ok(actual.verification.tracks.some(track => track.type === 'video' && track.sampleCount > 10))
+    assert.ok(actual.verification.tracks.some(track => track.type === 'audio' && track.sampleCount > 10))
+    fs.writeFileSync(path.join(proof, 'native-source-decode.json'), JSON.stringify(actual, null, 2))
+    phase = 'Source byte preservation without player playback'
+    const sourcePlayer = kernel.requireTab(selectedTab).view.webContents
+    assert.equal(await sourcePlayer.executeJavaScript("document.querySelector('video').paused"), true)
+    for (const duplicate of kernel
+      .sourcePages()
+      .filter(page => page.url === sourcePlayer.getURL() && page.id !== selectedTab))
+      await kernel.closeTab(duplicate.id)
+    const unrelated = await kernel.openTab({ url: 'about:blank', foreground: true, reuse: false })
+    const preserved = (await source({
+      operation: 'acquire',
+      expectedRevision: sources.snapshot().revision,
+      sourceId: preview.sourceId,
+      acquisitionId: preview.acquisitionId,
+      candidateId: videoCandidate.id,
+      method: 'preserve'
+    })) as {
+      state: string
+      artifactId: string
+      verification: { delivery: { proofArtifactId: string; proofSha256: string; reencoded: boolean } }
+      error?: string
+    }
+    assert.equal(preserved.state, 'partial-preview', preserved.error)
+    assert.equal(kernel.state().activeTabId, unrelated.id, 'Source binding does not move the user page')
+    await kernel.closeTab(unrelated.id)
+    await kernel.showTab(selectedTab)
+    assert.equal(preserved.verification.delivery.reencoded, false)
+    assert.equal(await sourcePlayer.executeJavaScript("document.querySelector('video').paused"), true)
+    assert.ok(fs.existsSync(path.join(artifacts, preserved.verification.delivery.proofArtifactId)))
+    assert.equal(
+      (await sources.readBody(preview.sourceId, preview.acquisitionId)).mediaAvailability.at(-1)!.available,
+      true
+    )
+    const clipped = (await source({
+      operation: 'acquire',
+      expectedRevision: sources.snapshot().revision,
+      sourceId: preview.sourceId,
+      acquisitionId: preview.acquisitionId,
+      candidateId: videoCandidate.id,
+      method: 'preserve',
+      preview: { startSeconds: 0.2, endSeconds: 0.8 },
+      tabId: selectedTab
+    })) as { state: string; artifactId: string; error?: string }
+    assert.equal(clipped.state, 'partial-preview', clipped.error)
+    const clippedBody = await sources.readBody(preview.sourceId, preview.acquisitionId),
+      clippedMedia = clippedBody.acquisition.media.at(-1)!
+    assert.equal(clippedMedia.artifactId, clipped.artifactId)
+    assert.deepEqual(clippedMedia.deliveryRange, {
+      kind: 'delivery-file-pts',
+      startSeconds: 0.2,
+      endSeconds: 0.8,
+      reencoded: true
+    })
+    assert.ok(Math.abs(clippedMedia.endSeconds! - 0.6) < 0.1)
+    assert.equal(clippedBody.mediaAvailability.at(-1)!.available, true)
+    assert.equal(await sourcePlayer.executeJavaScript("document.querySelector('video').paused"), true)
+    phase = 'One-call source auto preview falls back after HTTP403 without inheriting delivery offsets'
+    const preserveNormally = kernel.preserveSource.bind(kernel)
+    kernel.preserveSource = async () => {
+      throw new Error('HTTP 403 fixture download has drained')
+    }
+    try {
+      const fallback = (await source({
+        operation: 'acquire',
+        expectedRevision: sources.snapshot().revision,
+        sourceId: preview.sourceId,
+        acquisitionId: preview.acquisitionId,
+        candidateId: videoCandidate.id,
+        method: 'auto',
+        videoSelector: '#player video',
+        videoIndex: 0,
+        preview: { startSeconds: 0.2, endSeconds: 0.8 },
+        tabId: selectedTab
+      })) as {
+        state: string
+        error?: string
+        artifactId: string
+        previewApplied: boolean
+        actualCaptureSourceRange: { startSeconds: number; endSeconds: number }
+        verification: { acquisition: { attempts: { reason: string }[] } }
+      }
+      assert.equal(fallback.state, 'partial-preview', fallback.error)
+      assert.equal(fallback.previewApplied, false)
+      assert.ok(fallback.actualCaptureSourceRange.endSeconds > fallback.actualCaptureSourceRange.startSeconds)
+      assert.equal(fallback.verification.acquisition.attempts[0]!.reason, 'HTTP_403')
+      const receipt = (await sources.readBody(preview.sourceId, preview.acquisitionId)).acquisition.media.at(-1)!
+      assert.equal(receipt.artifactId, fallback.artifactId)
+      assert.equal(receipt.capture?.fromStart, false)
+      assert.equal(receipt.deliveryRange, null)
+      assert.equal(media.isCaptureActive(), false)
+      assert.equal(await sourcePlayer.executeJavaScript("document.querySelector('video').paused"), true)
+    } finally {
+      kernel.preserveSource = preserveNormally
+    }
+    const preservedFiles = fs.readdirSync(artifacts).sort(),
+      preservedRevision = sources.snapshot().revision
+    cancelDecode = new AbortController()
+    await assert.rejects(
+      kernel.execute(
+        {
+          action: 'video.studio',
+          studioRequest: {
+            operation: 'source',
+            sourceRequest: {
+              operation: 'acquire',
+              expectedRevision: preservedRevision,
+              sourceId: preview.sourceId,
+              acquisitionId: preview.acquisitionId,
+              candidateId: videoCandidate.id,
+              method: 'preserve',
+              preview: { startSeconds: 0.2, endSeconds: 0.8 },
+              tabId: selectedTab
+            }
+          }
+        },
+        {
+          actor: 'user',
+          sessionOwner: { projectId: project.id, sessionId: 'source-session' },
+          signal: cancelDecode.signal
+        }
+      ),
+      /Source decode cancellation/
+    )
+    cancelDecode = undefined
+    assert.equal(sources.snapshot().revision, preservedRevision)
+    assert.deepEqual(
+      fs.readdirSync(artifacts).sort(),
+      preservedFiles,
+      'Cancelled preservation removes all owned delivery/proof resources'
+    )
+    phase = 'Cancelled source decoding'
+    const before = sources.snapshot(),
+      beforeFiles = fs.readdirSync(artifacts).sort()
+    cancelDecode = new AbortController()
+    await assert.rejects(
+      kernel.execute(
+        {
+          action: 'video.studio',
+          studioRequest: {
+            operation: 'source',
+            sourceRequest: {
+              operation: 'acquire',
+              expectedRevision: before.revision,
+              sourceId: preview.sourceId,
+              acquisitionId: preview.acquisitionId,
+              candidateId: videoCandidate.id,
+              method: 'download',
+              tabId: selectedTab
+            }
+          }
+        },
+        {
+          actor: 'user',
+          sessionOwner: { projectId: project.id, sessionId: 'source-session' },
+          signal: cancelDecode.signal
+        }
+      ),
+      /Source decode cancellation/
+    )
+    cancelDecode = undefined
+    assert.equal(sources.snapshot().revision, before.revision)
+    assert.deepEqual(fs.readdirSync(artifacts).sort(), beforeFiles)
+    assert.equal(media.isCaptureActive(), false)
+    phase = 'Confirmed player capture and decode'
+    const initialPlayer = (await kernel
+      .requireTab(selectedTab)
+      .view.webContents.executeJavaScript(
+        "(()=>{const video=document.querySelector('#player video');video.currentTime=.35;video.playbackRate=1.25;video.loop=true;return {time:video.currentTime,paused:video.paused,seekable:video.seekable.length,seekableEnd:video.seekable.length?video.seekable.end(0):null,duration:video.duration}})()",
+        true
+      )) as { time: number; seekableEnd: number; duration: number }
+    assert.equal(initialPlayer.time, 0.35, 'Fixture must admit the requested nonzero seek before capture')
+    assert.ok(initialPlayer.seekableEnd > 0.35)
+    const captured = (await source({
+      operation: 'acquire',
+      expectedRevision: sources.snapshot().revision,
+      sourceId: preview.sourceId,
+      acquisitionId: preview.acquisitionId,
+      candidateId: videoCandidate.id,
+      method: 'capture',
+      videoSelector: '#player',
+      maxDurationMs: 5000,
+      tabId: selectedTab
+    })) as { state: string; artifactId: string; error?: string }
+    assert.equal(captured.state, 'partial-preview', captured.error)
+    const capturedBody = await sources.readBody(preview.sourceId, preview.acquisitionId),
+      captureEvidence = capturedBody.acquisition.media.at(-1)!.capture!
+    assert.equal(captureEvidence.stopReason, 'ended')
+    assert.equal(captureEvidence.pageUrl, base + '/article')
+    assert.equal(captureEvidence.candidateUrl, videoCandidate.url)
+    assert.ok(captureEvidence.sourceEndSeconds > 1)
+    assert.equal(capturedBody.mediaAvailability.at(-1)!.available, true)
+    const restoredPlayer = (await kernel
+      .requireTab(selectedTab)
+      .view.webContents.executeJavaScript(
+        "(()=>{const video=document.querySelector('#player video');return {paused:video.paused,time:video.currentTime,rate:video.playbackRate,loop:video.loop}})()"
+      )) as { paused: boolean; time: number; rate: number; loop: boolean }
+    assert.equal(restoredPlayer.paused, true)
+    assert.ok(Math.abs(restoredPlayer.time - 0.35) < 0.05, JSON.stringify({ restoredPlayer, captureEvidence }))
+    assert.equal(restoredPlayer.rate, 1.25)
+    assert.equal(restoredPlayer.loop, true)
+    phase = 'Confirmed current-time source capture'
+    const middle = (await source({
+      operation: 'acquire',
+      expectedRevision: sources.snapshot().revision,
+      sourceId: preview.sourceId,
+      acquisitionId: preview.acquisitionId,
+      candidateId: videoCandidate.id,
+      method: 'capture',
+      videoSelector: '#player',
+      fromStart: false,
+      maxDurationMs: 5000,
+      tabId: selectedTab
+    })) as { state: string; error?: string }
+    assert.equal(middle.state, 'partial-preview', middle.error)
+    const middleBody = await sources.readBody(preview.sourceId, preview.acquisitionId),
+      middleProof = middleBody.acquisition.media.at(-1)!.capture!
+    assert.equal(middleProof.fromStart, false)
+    assert.ok(middleProof.sourceStartSeconds >= 0.3, JSON.stringify(middleProof))
+    assert.ok(middleProof.sourceEndSeconds > middleProof.sourceStartSeconds)
+    assert.equal(middleBody.mediaAvailability.at(-1)!.available, true)
+    const middleRestored = (await kernel
+      .requireTab(selectedTab)
+      .view.webContents.executeJavaScript("document.querySelector('#player video').currentTime")) as number
+    assert.ok(Math.abs(middleRestored - 0.35) < 0.05)
+    phase = 'Cancel source capture before initialization'
+    const captureBefore = sources.snapshot(),
+      captureFiles = fs.readdirSync(artifacts).sort()
+    cancelCapture = new AbortController()
+    await assert.rejects(
+      kernel.execute(
+        {
+          action: 'video.studio',
+          studioRequest: {
+            operation: 'source',
+            sourceRequest: {
+              operation: 'acquire',
+              expectedRevision: captureBefore.revision,
+              sourceId: preview.sourceId,
+              acquisitionId: preview.acquisitionId,
+              candidateId: videoCandidate.id,
+              method: 'capture',
+              videoSelector: '#player',
+              maxDurationMs: 5000,
+              tabId: selectedTab
+            }
+          }
+        },
+        {
+          actor: 'user',
+          sessionOwner: { projectId: project.id, sessionId: 'source-session' },
+          signal: cancelCapture.signal
+        }
+      ),
+      /Source capture cancellation/
+    )
+    cancelCapture = undefined
+    assert.equal(sources.snapshot().revision, captureBefore.revision)
+    assert.deepEqual(fs.readdirSync(artifacts).sort(), captureFiles)
+    assert.equal(media.isCaptureActive(), false)
+    phase = 'Cancel source capture during recording'
+    captureCancelPhase = 'recording'
+    cancelCapture = new AbortController()
+    await assert.rejects(
+      kernel.execute(
+        {
+          action: 'video.studio',
+          studioRequest: {
+            operation: 'source',
+            sourceRequest: {
+              operation: 'acquire',
+              expectedRevision: sources.snapshot().revision,
+              sourceId: preview.sourceId,
+              acquisitionId: preview.acquisitionId,
+              candidateId: videoCandidate.id,
+              method: 'capture',
+              videoSelector: '#player',
+              maxDurationMs: 5000,
+              tabId: selectedTab
+            }
+          }
+        },
+        {
+          actor: 'user',
+          sessionOwner: { projectId: project.id, sessionId: 'source-session' },
+          signal: cancelCapture.signal
+        }
+      ),
+      /Source capture cancellation/
+    )
+    cancelCapture = undefined
+    captureCancelPhase = 'starting'
+    assert.equal(sources.snapshot().revision, captureBefore.revision)
+    assert.deepEqual(fs.readdirSync(artifacts).sort(), captureFiles)
+    assert.equal(media.isCaptureActive(), false)
+    assert.equal(
+      await kernel
+        .requireTab(selectedTab)
+        .view.webContents.executeJavaScript("document.querySelector('#player video').paused"),
+      true
+    )
+    phase = 'Reject capture outside confirmed media scope'
+    const outWC = kernel.requireTab(selectedTab).view.webContents
+    await outWC.executeJavaScript(
+      `(()=>{const video=document.createElement('video');video.id='outside-player';video.src=${JSON.stringify(videoCandidate.url)};document.body.append(video)})()`,
+      true
+    )
+    const outside = (await source({
+      operation: 'acquire',
+      expectedRevision: sources.snapshot().revision,
+      sourceId: preview.sourceId,
+      acquisitionId: preview.acquisitionId,
+      candidateId: videoCandidate.id,
+      method: 'capture',
+      videoSelector: '#outside-player',
+      maxDurationMs: 5000,
+      tabId: selectedTab
+    })) as { state: string; error: string }
+    assert.equal(outside.state, 'failed')
+    assert.match(outside.error, /range or video changed/)
+    assert.deepEqual(fs.readdirSync(artifacts).sort(), captureFiles)
+    assert.equal(media.isCaptureActive(), false)
+    const blobTab = (await call({ action: 'tabs.open', url: base + '/blob', foreground: false, reuse: false })) as {
+      id: string
+    }
+    const blobWC = kernel.requireTab(blobTab.id).view.webContents
+    await blobWC.executeJavaScript(
+      `(async()=>{const video=document.querySelector('#player video');video.src=URL.createObjectURL(await(await fetch(${JSON.stringify(base + '/clip.webm')})).blob());video.load()})()`,
+      true
+    )
+    await wait(
+      () => blobWC.executeJavaScript("document.querySelector('#player video').readyState>=2"),
+      'Blob source ready'
+    )
+    const blob = (await source({
+      operation: 'collect',
+      expectedRevision: sources.snapshot().revision,
+      tabId: blobTab.id,
+      bodySelector: '#body',
+      excludeSelectors: ['.ad', '.avatar'],
+      mediaSelector: '#player'
+    })) as { sourceId: string; acquisitionId: string }
+    const blobOriginal = await sources.readBody(blob.sourceId, blob.acquisitionId),
+      blobCandidate = blobOriginal.acquisition.candidates.find(candidate => candidate.kind === 'video')!
+    assert.ok(blobCandidate.url.startsWith('blob:'))
+    await source({
+      operation: 'confirm',
+      expectedRevision: sources.snapshot().revision,
+      sourceId: blob.sourceId,
+      acquisitionId: blob.acquisitionId,
+      candidateIds: [blobCandidate.id]
+    })
+    const limited = (await source({
+      operation: 'acquire',
+      expectedRevision: sources.snapshot().revision,
+      sourceId: blob.sourceId,
+      acquisitionId: blob.acquisitionId,
+      candidateId: blobCandidate.id,
+      method: 'capture',
+      videoSelector: '#player',
+      fromStart: true,
+      maxDurationMs: 1000,
+      tabId: blobTab.id
+    })) as { state: string; error?: string }
+    assert.equal(limited.state, 'partial-preview', limited.error)
+    assert.equal(
+      (await sources.readBody(blob.sourceId, blob.acquisitionId)).acquisition.media.at(-1)!.capture!.stopReason,
+      'maximum-duration'
+    )
+    phase = 'Navigation source capture rollback'
+    const navigationBefore = sources.snapshot(),
+      navigationFiles = fs.readdirSync(artifacts).sort()
+    let started: () => void
+    const recordingStarted = new Promise<void>(resolve => (started = resolve))
+    captureStarted = started!
+    const navigationOperation = source({
+      operation: 'acquire',
+      expectedRevision: navigationBefore.revision,
+      sourceId: blob.sourceId,
+      acquisitionId: blob.acquisitionId,
+      candidateId: blobCandidate.id,
+      method: 'capture',
+      videoSelector: '#player',
+      maxDurationMs: 5000,
+      tabId: blobTab.id
+    })
+    await recordingStarted
+    captureStarted = undefined
+    await blobWC.loadURL(base + '/navigated')
+    const navigationResult = (await navigationOperation) as { state: string; error: string }
+    assert.equal(navigationResult.state, 'failed')
+    assert.match(navigationResult.error, /navigated/)
+    assert.deepEqual(fs.readdirSync(artifacts).sort(), navigationFiles)
+    assert.equal(media.isCaptureActive(), false)
+    const failure = await collect(base + '/failure'),
+      failedCandidate = (await sources.readBody(failure.sourceId, failure.acquisitionId)).acquisition.candidates[0]
+    await source({
+      operation: 'confirm',
+      expectedRevision: sources.snapshot().revision,
+      sourceId: failure.sourceId,
+      acquisitionId: failure.acquisitionId,
+      candidateIds: [failedCandidate.id]
+    })
+    const failed = (await source({
+      operation: 'acquire',
+      expectedRevision: sources.snapshot().revision,
+      sourceId: failure.sourceId,
+      acquisitionId: failure.acquisitionId,
+      candidateId: failedCandidate.id,
+      method: 'download',
+      tabId: kernel.sourcePages().find(page => page.url === base + '/failure')!.id
+    })) as { state: string; error: string }
+    assert.equal(failed.state, 'failed')
+    assert.match(failed.error, /503/)
+    const missing = await collect(base + '/missing', { bodySelector: '#absent' })
+    assert.equal((await sources.readBody(missing.sourceId, missing.acquisitionId)).acquisition.result, 'missing-range')
+    const long = await collect(base + '/long', { bodySelector: '#long' })
+    const truncated = await sources.readBody(long.sourceId, long.acquisitionId)
+    assert.equal(truncated.acquisition.result, 'truncated')
+    assert.equal(truncated.text.length, 50000)
+    const store = new VideoStudioStore(project.directory, 'source-session')
+    let draft = store.create('可追溯来源')
+    draft.scenes = [
+      {
+        ...newStudioScene('evidence-scene', '依据'),
+        layout: 'presentation',
+        bullets: ['来源一：按钮结果可追溯', '来源三：按钮结果不可追溯', '相反陈述，冲突待确认'],
+        durationSeconds: 6
+      }
+    ]
+    draft = store.update(draft.id, draft.revision, draft)
+    for (const record of [a, b, c]) {
+      const original = await sources.readBody(record.sourceId, record.acquisitionId),
+        quote = record === c ? '事实依据：按钮执行后结果不可追溯。😀' : '事实依据：按钮执行后结果可追溯。😀',
+        startCharacter = original.text.indexOf(quote)
+      draft.scenes[0].citations ??= []
+      draft.scenes[0].citations.push({
+        sourceId: record.sourceId,
+        acquisitionId: record.acquisitionId,
+        startCharacter,
+        endCharacter: startCharacter + quote.length,
+        quote,
+        kind: 'fact',
+        claim: '按钮结果可回溯',
+        conflict: record === b ? 'pending' : 'conflicting',
+        eventAt: null
+      })
+    }
+    await call({
+      action: 'video.studio',
+      studioRequest: { operation: 'update', draftId: draft.id, expectedRevision: draft.revision, draft }
+    })
+    draft = store.read(draft.id)
+    const list = (await call({
+      action: 'video.studio',
+      studioRequest: { operation: 'export-citations', draftId: draft.id, expectedRevision: draft.revision }
+    })) as { artifactId: string; citationCount: number }
+    assert.equal(list.citationCount, 3)
+    const conflictReport = JSON.parse(fs.readFileSync(path.join(artifacts, list.artifactId), 'utf8')) as {
+      factChecking: string
+      citations: {
+        citation: { sourceId: string; conflict: string; quote: string; claim: string }
+        factChecking: string
+        url: string
+        originalTextArtifactId: string
+      }[]
+    }
+    assert.equal(conflictReport.factChecking, 'pending')
+    assert.deepEqual(
+      conflictReport.citations.map(entry => entry.citation.conflict),
+      ['conflicting', 'pending', 'conflicting']
+    )
+    assert.equal(new Set(conflictReport.citations.map(entry => entry.citation.sourceId)).size, 3)
+    assert.ok(conflictReport.citations[0].citation.quote.includes('结果可追溯'))
+    assert.ok(conflictReport.citations[2].citation.quote.includes('结果不可追溯'))
+    assert.ok(
+      conflictReport.citations.every(
+        entry =>
+          entry.citation.claim === '按钮结果可回溯' &&
+          entry.factChecking === 'pending' &&
+          Boolean(entry.originalTextArtifactId) &&
+          entry.url.startsWith(base)
+      )
+    )
+    fs.copyFileSync(path.join(artifacts, list.artifactId), path.join(proof, 'citation-list.json'))
+    const renderedConflict = (await call({
+      action: 'video.studio',
+      studioRequest: { operation: 'render', draftId: draft.id, expectedRevision: draft.revision }
+    })) as { draft: typeof draft; export: { artifactId: string; verificationArtifactId: string } }
+    assert.deepEqual(store.read(draft.id).scenes[0].citations, draft.scenes[0].citations)
+    draft = store.read(draft.id)
+    fs.copyFileSync(
+      path.join(artifacts, renderedConflict.export.artifactId),
+      path.join(proof, 'unresolved-source-conflict.mp4')
+    )
+    fs.copyFileSync(
+      path.join(artifacts, renderedConflict.export.verificationArtifactId),
+      path.join(proof, 'unresolved-source-conflict-video-verification.json')
+    )
+    const afterRenderList = (await call({
+      action: 'video.studio',
+      studioRequest: { operation: 'export-citations', draftId: draft.id, expectedRevision: draft.revision }
+    })) as { artifactId: string; factChecking: string }
+    assert.equal(afterRenderList.factChecking, 'pending')
+    assert.equal(
+      JSON.stringify(
+        JSON.parse(fs.readFileSync(path.join(artifacts, afterRenderList.artifactId), 'utf8')).citations,
+        (key, value: unknown) => (key === 'checkedAt' ? undefined : value)
+      ),
+      JSON.stringify(conflictReport.citations, (key, value: unknown) => (key === 'checkedAt' ? undefined : value))
+    )
+    fs.copyFileSync(
+      path.join(artifacts, afterRenderList.artifactId),
+      path.join(proof, 'citation-list-after-render.json')
+    )
+    runtime = new VideoStudioRuntime()
+    runtime.configure({
+      browserKernel: assertBrowserFeatureHost(kernel),
+      projectStore: { active: () => project },
+      getMainWindow: () => host,
+      getShellWebContents: () => host.webContents,
+      getTheme: () => 'light',
+      setWorkspaceMode: () => {},
+      getCurrentSessionId: () => 'source-session',
+      isProjectChanging: () => false,
+      revealAgent: () => {},
+      enqueueAssistant: async () => {
+        throw new Error('This fixture cannot submit Assistant input')
+      },
+      synchronizeAgentProject: async () => ({ sessionId: 'source-session' })
+    })
+    runtime.installIpc(ipcMain)
+    runtime.layout({ x: 0, y: 0, width: 1220, height: 790 }, true)
+    await runtime.openPanel('video-studio')
+    studio = webContents.getAllWebContents().find(contents => contents.getURL().endsWith('/studio.html'))!
+    await wait(() => ui("document.getElementById('draft-title').value==='可追溯来源'"), 'Source GUI loaded')
+    await ui("document.getElementById('view-toggle').click();true")
+    await wait(
+      () => ui("document.body.dataset.view==='advanced'&&!document.getElementById('view-toggle').disabled"),
+      'Source advanced editor settled'
+    )
+    await ui(
+      `document.querySelector('[data-stage="0"]').click();document.getElementById('studio-source-section').open=true;true`
+    )
+    await wait(
+      () =>
+        ui(
+          "!document.getElementById('source-refresh').matches(':disabled')&&document.getElementById('source-refresh').getClientRects().length>0"
+        ),
+      'Source controls ready'
+    )
+    await ui("document.getElementById('source-refresh').click();true")
+    await wait(() => ui("document.getElementById('source-record').options.length>4"), 'GUI source list')
+    await ui(
+      `document.getElementById('source-record').value=${JSON.stringify(a.sourceId + '.' + a.acquisitionId)};document.getElementById('source-record').dispatchEvent(new Event('change',{bubbles:true}))`
+    )
+    await wait(
+      () =>
+        ui(
+          "document.getElementById('source-original').value.includes('事实依据')&&!document.getElementById('source-original').disabled"
+        ),
+      'GUI original body'
+    )
+    assert.ok(!String(await ui("document.getElementById('source-original').value")).includes('PRIVATE'))
+    await ui("document.querySelector('#source-candidates button:last-child').click()")
+    await wait(
+      () => ui("document.querySelector('.material-preview-dialog img')?.naturalWidth===320"),
+      'Saved source image preview'
+    )
+    await ui(
+      "[...document.querySelectorAll('.material-preview-dialog button')].find(button=>button.textContent==='关闭').click()"
+    )
+    phase = 'GUI confirmed player capture'
+    const mediaCount = (await sources.readBody(preview.sourceId, preview.acquisitionId)).acquisition.media.length
+    await ui(
+      `document.getElementById('source-page').value=${JSON.stringify(selectedTab)};document.getElementById('source-record').value=${JSON.stringify(preview.sourceId + '.' + preview.acquisitionId)};document.getElementById('source-record').dispatchEvent(new Event('change',{bubbles:true}))`
+    )
+    await wait(
+      () =>
+        ui(
+          "[...document.querySelectorAll('#source-candidates button')].some(button=>button.textContent==='采集此播放器'&&!button.matches(':disabled'))"
+        ),
+      'GUI player source ready'
+    )
+    await ui(
+      "[...document.querySelectorAll('#source-candidates button')].find(button=>button.textContent==='采集此播放器').click()"
+    )
+    await wait(
+      async () =>
+        (await sources.readBody(preview.sourceId, preview.acquisitionId)).acquisition.media.length === mediaCount + 1,
+      'GUI player recorded'
+    )
+    assert.equal(
+      (await sources.readBody(preview.sourceId, preview.acquisitionId)).acquisition.media.at(-1)!.capture!.stopReason,
+      'ended'
+    )
+    await wait(() => ui("!document.getElementById('source-refresh').matches(':disabled')"), 'GUI capture settled')
+    await ui(
+      `document.getElementById('source-record').value=${JSON.stringify(a.sourceId + '.' + a.acquisitionId)};document.getElementById('source-record').dispatchEvent(new Event('change',{bubbles:true}))`
+    )
+    await wait(
+      () =>
+        ui(
+          "document.getElementById('source-original').value.includes('事实依据')&&!document.getElementById('source-refresh').matches(':disabled')&&!document.getElementById('source-candidates').textContent.includes('采集此播放器')"
+        ),
+      'GUI original source restored'
+    )
+    await ui(
+      "document.getElementById('source-original').setSelectionRange(0,4);document.getElementById('source-claim').value='原文标题';document.getElementById('source-kind').value='opinion';document.getElementById('source-cite').click()"
+    )
+    await wait(async () => store.read(draft.id).scenes[0].citations?.length === 4, 'GUI exact citation saves')
+    draft = store.read(draft.id)
+    assert.equal(draft.scenes[0].citations!.at(-1)!.quote, '限定正文')
+    assert.equal(draft.scenes[0].citations!.at(-1)!.kind, 'opinion')
+    phase = 'Current source evidence availability'
+    const available = await sources.readBody(a.sourceId, a.acquisitionId)
+    assert.equal(available.mediaAvailability[0].available, true)
+    const originalFile = path.join(artifacts, acquired.artifactId),
+      retainedFile = originalFile + '.retained'
+    fs.renameSync(originalFile, retainedFile)
+    try {
+      const current = await sources.readBody(a.sourceId, a.acquisitionId)
+      assert.equal(current.mediaAvailability[0].artifactStatus, 'missing')
+      assert.equal(current.acquisition.media[0].state, 'image-decoded')
+      const currentRevision = store.read(draft.id).revision
+      const staleList = (await call({
+        action: 'video.studio',
+        studioRequest: { operation: 'export-citations', draftId: draft.id, expectedRevision: currentRevision }
+      })) as { artifactId: string }
+      const staleReport = JSON.parse(fs.readFileSync(path.join(artifacts, staleList.artifactId), 'utf8'))
+      assert.equal(staleReport.citations[0].mediaAvailability[0].available, false)
+      assert.equal(store.read(draft.id).revision, currentRevision)
+      fs.copyFileSync(path.join(artifacts, staleList.artifactId), path.join(proof, 'citation-unavailable-media.json'))
+      await ui("document.getElementById('source-record').dispatchEvent(new Event('change',{bubbles:true}))")
+      await wait(
+        () => ui("document.getElementById('source-candidates').textContent.includes('missing')"),
+        'GUI current missing source media'
+      )
+      assert.equal(
+        await ui(
+          "[...document.querySelectorAll('#source-candidates button')].find(button=>button.textContent==='预览已保存素材').disabled"
+        ),
+        true
+      )
+    } finally {
+      fs.renameSync(retainedFile, originalFile)
+    }
+    await ui("document.getElementById('source-record').dispatchEvent(new Event('change',{bubbles:true}))")
+    await wait(
+      () =>
+        ui(
+          "[...document.querySelectorAll('#source-candidates button')].some(button=>button.textContent==='预览已保存素材'&&!button.disabled)"
+        ),
+      'GUI restored source evidence'
+    )
+    assert.equal((await sources.readBody(a.sourceId, a.acquisitionId)).mediaAvailability[0].available, true)
+    fs.writeFileSync(path.join(proof, 'source-studio.png'), (await captureRendererEvidence(studio)).toPNG())
+    await ui("document.getElementById('source-original').scrollIntoView({block:'center'})")
+    fs.writeFileSync(path.join(proof, 'source-detail.png'), (await captureRendererEvidence(studio)).toPNG())
+    fs.writeFileSync(path.join(proof, 'source-catalog.json'), JSON.stringify(sources.snapshot(), null, 2))
+    fs.writeFileSync(
+      path.join(proof, 'verification.json'),
+      JSON.stringify(
+        {
+          status: 'passed',
+          boundedOriginal: true,
+          recommendationsAndInputsExcluded: true,
+          duplicateTextAndMediaReuse: true,
+          currentMediaAvailability: true,
+          unknownDatePreserved: true,
+          partialPreviewFullFileDecode: true,
+          associatedPlayerCapture: true,
+          blobCapture: true,
+          maximumDurationPartial: true,
+          captureCancellationRollback: true,
+          recordingCancellationRollback: true,
+          outsideScopeRejected: true,
+          guiPlayerCapture: true,
+          captureNavigationRollback: true,
+          decodeCancellationRollback: true,
+          controlledHTTPFailure: true,
+          missingRange: true,
+          truncatedBodyCharacters: 50000,
+          threeSourceCitationCount: 3,
+          opposingStatementsRetained: true,
+          conflictAutomaticallyResolved: false,
+          factChecking: 'pending',
+          guiQuote: draft.scenes[0].citations!.at(-1),
+          profile: 'disposable',
+          realDSHModel: false,
+          externalPlatforms: false
+        },
+        null,
+        2
+      )
+    )
+    const rawProof = path.join(proof, 'raw-artifacts')
+    fs.mkdirSync(rawProof, { recursive: true })
+    for (const file of fs.readdirSync(artifacts))
+      if (fs.statSync(path.join(artifacts, file)).isFile())
+        fs.copyFileSync(path.join(artifacts, file), path.join(rawProof, file))
+    phase = 'Destroyed view cleanup recovery'
+    const deadTab = await kernel.openTab({ url: base + '/article', source: 'agent', reuse: false }),
+      deadView = kernel.requireTab(deadTab.id).view,
+      deadContents = deadView.webContents
+    await closeNavigationPage(deadContents)
+    assert.equal(deadContents.isDestroyed(), true)
+    // Electron can clear the WebContentsView getter after native destruction.
+    // Recovery must use the previously owned handle, not dereference it again.
+    Object.defineProperty(deadView, 'webContents', { configurable: true, get: () => undefined })
+    ;(kernel as unknown as { navigationQuarantine: Set<string> }).navigationQuarantine.add(deadTab.id)
+    await kernel.closeTab(deadTab.id)
+    assert.equal(kernel.tabs.has(deadTab.id), false)
+    assert.equal(
+      (kernel as unknown as { navigationQuarantine: Set<string> }).navigationQuarantine.has(deadTab.id),
+      false
+    )
+    const externallyClosed = await kernel.openTab({ url: base + '/article', source: 'agent', reuse: false }),
+      externalView = kernel.requireTab(externallyClosed.id).view
+    await closeNavigationPage(externalView.webContents)
+    Object.defineProperty(externalView, 'webContents', { configurable: true, get: () => undefined })
+    assert.throws(() => kernel.requireTab(externallyClosed.id), /BMW_BROWSER_TAB_CLOSED/)
+    assert.equal(kernel.tabs.has(externallyClosed.id), false)
+    console.log(
+      'PASS Project bounded sources, decode, capture fallback, GUI citations and destroyed-view cleanup recovery'
+    )
+  } catch (error) {
+    exitCode = 1
+    console.error('Source phase: ' + phase, error)
+    if (studio && !studio.isDestroyed()) console.error(await ui("document.getElementById('status').textContent"))
+  } finally {
+    clearTimeout(timeout)
+    await runtime?.stop()
+    await bridge?.close()
+    for (const contents of webContents.getAllWebContents()) if (!contents.isDestroyed()) contents.close()
+    server?.close()
+    host?.destroy()
+    fs.rmSync(root, { recursive: true, force: true })
+    app.exit(exitCode)
+  }
+}
 void run()

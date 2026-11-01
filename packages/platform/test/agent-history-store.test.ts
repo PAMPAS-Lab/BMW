@@ -3,98 +3,318 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
-import type {AgentConversation} from '@bmw-agent/agent-contract'
+import type { AgentConversation } from '@bmw-agent/agent-contract'
 import { AgentHistoryStore } from '../src/agent-history-store.js'
 import crypto from 'node:crypto'
-import {historicalCaptureOrigin} from '../src/capture-history-origin.js'
-const owner=(sessionId:string):AgentConversation=>({sessionId,projectId:'project',driverId:'fixture',externalSessionId:null,title:'Session',createdAt:1,updatedAt:1,archivedAt:null,parentSessionId:null,status:'idle'})
-test('Historical native capture identity survives restart only with paired admitted calls and unchanged capture-index bytes',async t=>{
- const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-historical-capture-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));const directory=path.join(root,'artifacts');fs.mkdirSync(directory)
- const artifactId='capture.webm',videoIdentity={version:1,platform:'youtube',targetId:'official-film',resourceId:'official-film'},bytes=Buffer.from('native captured fixture bytes'),sha256=crypto.createHash('sha256').update(bytes).digest('hex');fs.writeFileSync(path.join(directory,artifactId),bytes)
- fs.writeFileSync(path.join(directory,artifactId+'.source.json'),JSON.stringify({version:1,sourceArtifactId:artifactId,videoSha256:sha256,basis:'requestVideoFrameCallback.mediaTime',fileTimestampMapping:'unavailable',status:'unavailable',reason:'legacy fixture',durationAtStartSeconds:10,sourceDurationSeconds:10,sourceStartSeconds:0,sourceEndSeconds:1,frames:[]}))
- const store=new AgentHistoryStore(path.join(root,'history'),owner);store.prepare('session','run','user','capture');store.append({sessionId:'session',runId:'run',sequence:1,createdAt:1,event:{type:'input.accepted',receiptId:'native-run'}})
- store.append({sessionId:'session',runId:'run',sequence:2,createdAt:2,event:{type:'tool.started',callId:'native-capture',name:'browser',action:'media.video.capture'}})
- store.append({sessionId:'session',runId:'run',sequence:3,createdAt:3,event:{type:'tool.completed',callId:'native-capture',success:true,message:JSON.stringify({artifactId,type:'video',contentType:'video/webm',videoIdentity,captureTimeline:{indexArtifactId:artifactId+'.source.json'}})}})
- const binding={projectId:'project',sessionId:'session'},history=new AgentHistoryStore(path.join(root,'history'),owner).snapshot('session')
- assert.equal((await historicalCaptureOrigin(history,binding,directory,artifactId))?.sha256,sha256)
- await assert.rejects(historicalCaptureOrigin(history,{...binding,projectId:'foreign'},directory,artifactId),/Project\/Session/)
- const failed=structuredClone(history);const completed=failed.events[2]!.event;if(completed.type==='tool.completed')completed.success=false;assert.equal(await historicalCaptureOrigin(failed,binding,directory,artifactId),undefined)
- const wrong=structuredClone(history);const started=wrong.events[1]!.event;if(started.type==='tool.started')started.action='observe';assert.equal(await historicalCaptureOrigin(wrong,binding,directory,artifactId),undefined)
- const unpaired=structuredClone(history);const ended=unpaired.events[2]!.event;if(ended.type==='tool.completed')ended.callId='different-call';assert.equal(await historicalCaptureOrigin(unpaired,binding,directory,artifactId),undefined)
- const cancelled=new AbortController();cancelled.abort(new Error('cancelled'));await assert.rejects(historicalCaptureOrigin(history,binding,directory,artifactId,cancelled.signal),/cancelled/)
- fs.appendFileSync(path.join(directory,artifactId),'tampered');await assert.rejects(historicalCaptureOrigin(history,binding,directory,artifactId),/CAPTURE_SOURCE_CHANGED/)
+import { historicalCaptureOrigin } from '../src/capture-history-origin.js'
+const owner = (sessionId: string): AgentConversation => ({
+  sessionId,
+  projectId: 'project',
+  driverId: 'fixture',
+  externalSessionId: null,
+  title: 'Session',
+  createdAt: 1,
+  updatedAt: 1,
+  archivedAt: null,
+  parentSessionId: null,
+  status: 'idle'
+})
+test('Historical native capture identity survives restart only with paired admitted calls and unchanged capture-index bytes', async t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-historical-capture-'))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const directory = path.join(root, 'artifacts')
+  fs.mkdirSync(directory)
+  const artifactId = 'capture.webm',
+    videoIdentity = { version: 1, platform: 'youtube', targetId: 'official-film', resourceId: 'official-film' },
+    bytes = Buffer.from('native captured fixture bytes'),
+    sha256 = crypto.createHash('sha256').update(bytes).digest('hex')
+  fs.writeFileSync(path.join(directory, artifactId), bytes)
+  fs.writeFileSync(
+    path.join(directory, artifactId + '.source.json'),
+    JSON.stringify({
+      version: 1,
+      sourceArtifactId: artifactId,
+      videoSha256: sha256,
+      basis: 'requestVideoFrameCallback.mediaTime',
+      fileTimestampMapping: 'unavailable',
+      status: 'unavailable',
+      reason: 'legacy fixture',
+      durationAtStartSeconds: 10,
+      sourceDurationSeconds: 10,
+      sourceStartSeconds: 0,
+      sourceEndSeconds: 1,
+      frames: []
+    })
+  )
+  const store = new AgentHistoryStore(path.join(root, 'history'), owner)
+  store.prepare('session', 'run', 'user', 'capture')
+  store.append({
+    sessionId: 'session',
+    runId: 'run',
+    sequence: 1,
+    createdAt: 1,
+    event: { type: 'input.accepted', receiptId: 'native-run' }
+  })
+  store.append({
+    sessionId: 'session',
+    runId: 'run',
+    sequence: 2,
+    createdAt: 2,
+    event: { type: 'tool.started', callId: 'native-capture', name: 'browser', action: 'media.video.capture' }
+  })
+  store.append({
+    sessionId: 'session',
+    runId: 'run',
+    sequence: 3,
+    createdAt: 3,
+    event: {
+      type: 'tool.completed',
+      callId: 'native-capture',
+      success: true,
+      message: JSON.stringify({
+        artifactId,
+        type: 'video',
+        contentType: 'video/webm',
+        videoIdentity,
+        captureTimeline: { indexArtifactId: artifactId + '.source.json' }
+      })
+    }
+  })
+  const binding = { projectId: 'project', sessionId: 'session' },
+    history = new AgentHistoryStore(path.join(root, 'history'), owner).snapshot('session')
+  assert.equal((await historicalCaptureOrigin(history, binding, directory, artifactId))?.sha256, sha256)
+  await assert.rejects(
+    historicalCaptureOrigin(history, { ...binding, projectId: 'foreign' }, directory, artifactId),
+    /Project\/Session/
+  )
+  const failed = structuredClone(history)
+  const completed = failed.events[2]!.event
+  if (completed.type === 'tool.completed') completed.success = false
+  assert.equal(await historicalCaptureOrigin(failed, binding, directory, artifactId), undefined)
+  const wrong = structuredClone(history)
+  const started = wrong.events[1]!.event
+  if (started.type === 'tool.started') started.action = 'observe'
+  assert.equal(await historicalCaptureOrigin(wrong, binding, directory, artifactId), undefined)
+  const unpaired = structuredClone(history)
+  const ended = unpaired.events[2]!.event
+  if (ended.type === 'tool.completed') ended.callId = 'different-call'
+  assert.equal(await historicalCaptureOrigin(unpaired, binding, directory, artifactId), undefined)
+  const cancelled = new AbortController()
+  cancelled.abort(new Error('cancelled'))
+  await assert.rejects(historicalCaptureOrigin(history, binding, directory, artifactId, cancelled.signal), /cancelled/)
+  fs.appendFileSync(path.join(directory, artifactId), 'tampered')
+  await assert.rejects(historicalCaptureOrigin(history, binding, directory, artifactId), /CAPTURE_SOURCE_CHANGED/)
 })
 test('display history survives restart, keeps bounded ordered streaming and cannot replace submission receipts', t => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-agent-history-'))
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }))
-  const store = new AgentHistoryStore(directory,owner)
+  const store = new AgentHistoryStore(directory, owner)
   store.prepare('session', 'run', 'user', 'hello')
-  store.append({ sessionId: 'session', runId: 'run', sequence: 1, createdAt: 1, event: { type: 'input.accepted', receiptId: 'provider' } })
-  assert.throws(() => store.append({ sessionId: 'session', runId: 'run', sequence: 2, createdAt: 2, event: { type: 'input.accepted', receiptId: 'replacement' } }), /cannot be replaced/)
-  store.append({ sessionId: 'session', runId: 'run', sequence: 2, createdAt: 2, event: { type: 'message.delta', messageId: 'reply', text: 'Hel' } })
-  store.append({ sessionId: 'session', runId: 'run', sequence: 3, createdAt: 3, event: { type: 'message.completed', messageId: 'reply', text: 'Hello' } })
-  assert.throws(() => store.append({ sessionId: 'session', runId: 'run', sequence: 4, createdAt: 4, event: { type: 'message.delta', messageId: 'reply', text: 'again' } }), /already completed/)
+  store.append({
+    sessionId: 'session',
+    runId: 'run',
+    sequence: 1,
+    createdAt: 1,
+    event: { type: 'input.accepted', receiptId: 'provider' }
+  })
+  assert.throws(
+    () =>
+      store.append({
+        sessionId: 'session',
+        runId: 'run',
+        sequence: 2,
+        createdAt: 2,
+        event: { type: 'input.accepted', receiptId: 'replacement' }
+      }),
+    /cannot be replaced/
+  )
+  store.append({
+    sessionId: 'session',
+    runId: 'run',
+    sequence: 2,
+    createdAt: 2,
+    event: { type: 'message.delta', messageId: 'reply', text: 'Hel' }
+  })
+  store.append({
+    sessionId: 'session',
+    runId: 'run',
+    sequence: 3,
+    createdAt: 3,
+    event: { type: 'message.completed', messageId: 'reply', text: 'Hello' }
+  })
+  assert.throws(
+    () =>
+      store.append({
+        sessionId: 'session',
+        runId: 'run',
+        sequence: 4,
+        createdAt: 4,
+        event: { type: 'message.delta', messageId: 'reply', text: 'again' }
+      }),
+    /already completed/
+  )
   store.markUncertain('session', 'run', 'Native transport disconnected after input acceptance')
-  assert.deepEqual(new AgentHistoryStore(directory,owner).snapshot('session'), store.snapshot('session'))
+  assert.deepEqual(new AgentHistoryStore(directory, owner).snapshot('session'), store.snapshot('session'))
   assert.equal(store.snapshot('session').messages[1].text, 'Hello')
   assert.equal(store.snapshot('session').receipts[0].state, 'unknown')
   assert.equal(store.snapshot('session').receipts[0].outcome, null)
   assert.equal(store.snapshot('session').events.at(-1)?.event.type, 'turn.disconnected')
   assert.throws(() => store.prepare('session', 'run', 'another', 'replay'), /already been used/)
 })
-test('Host timing survives restart, rotates without deletion, excludes content and cannot change receipts on logging failure',t=>{
- const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-timing-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}))
- const directory=path.join(root,'history'),store=new AgentHistoryStore(directory,owner)
- store.prepare('session','run','message','private prompt is not timing metadata')
- const before=store.snapshot('session')
- assert.equal(store.recordTiming('session','run',{phase:'queued',modelId:'fixture-model'}),true)
- assert.equal(store.recordTiming('session','run',{phase:'runtime.usage',inputTokens:200,cachedInputTokens:150,reasoningTokens:10}),true)
- assert.equal(store.recordTiming('session','run',{phase:'runtime.retry',failureCategory:'stream',httpStatus:502}),true)
- assert.equal(store.recordTiming('session','run',{phase:'runtime.retry',httpStatus:999}),false)
- assert.equal(store.recordTiming('session','run',{phase:'runtime.retry',...{failureCategory:'secret'} as unknown as {failureCategory:'stream'}}),false)
- assert.equal(store.recordTiming('session','run',{phase:'runtime.usage',inputTokens:-1}),false)
- const timing=path.join(directory,'timings'),first=path.join(timing,fs.readdirSync(timing)[0]),body=fs.readFileSync(first,'utf8'),row=JSON.parse(body.trim().split('\n')[0])
- assert.equal(row.projectId,'project');assert.equal(row.runId,'run');assert.equal(row.measurement,'host-observed; server-inference-and-queue-unavailable');assert.ok(!body.includes('private prompt'))
- assert.equal(store.recordTiming('session','run',{phase:'runtime.started',...{text:'secret'}}),false,'Unknown body fields must not be logged')
- assert.equal(store.recordTiming('session','foreign',{phase:'queued'}),false)
- assert.equal(fs.readFileSync(first,'utf8'),body)
- fs.truncateSync(first,8*1024*1024)
- assert.equal(store.recordTiming('session','run',{phase:'tool.started',callId:'call',action:'media.inspect'}),true)
- assert.equal(fs.statSync(first).size,8*1024*1024);assert.equal(fs.readdirSync(timing).length,2)
- const restarted=new AgentHistoryStore(directory,owner);assert.equal(restarted.recordTiming('session','run',{phase:'settled',outcome:'failed'}),true);assert.equal(fs.readdirSync(timing).length,3)
- assert.deepEqual(restarted.snapshot('session'),before,'Diagnostics never finish or replay an input')
- const blocked=path.join(root,'blocked'),failing=new AgentHistoryStore(blocked,owner);failing.prepare('session','run','message','retained input');fs.writeFileSync(path.join(blocked,'timings'),'blocked')
- assert.equal(failing.recordTiming('session','run',{phase:'queued'}),false);assert.equal(failing.snapshot('session').receipts[0].state,'prepared')
+test('Host timing survives restart, rotates without deletion, excludes content and cannot change receipts on logging failure', t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-timing-'))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  const directory = path.join(root, 'history'),
+    store = new AgentHistoryStore(directory, owner)
+  store.prepare('session', 'run', 'message', 'private prompt is not timing metadata')
+  const before = store.snapshot('session')
+  assert.equal(store.recordTiming('session', 'run', { phase: 'queued', modelId: 'fixture-model' }), true)
+  assert.equal(
+    store.recordTiming('session', 'run', {
+      phase: 'runtime.usage',
+      inputTokens: 200,
+      cachedInputTokens: 150,
+      reasoningTokens: 10
+    }),
+    true
+  )
+  assert.equal(
+    store.recordTiming('session', 'run', { phase: 'runtime.retry', failureCategory: 'stream', httpStatus: 502 }),
+    true
+  )
+  assert.equal(store.recordTiming('session', 'run', { phase: 'runtime.retry', httpStatus: 999 }), false)
+  assert.equal(
+    store.recordTiming('session', 'run', {
+      phase: 'runtime.retry',
+      ...({ failureCategory: 'secret' } as unknown as { failureCategory: 'stream' })
+    }),
+    false
+  )
+  assert.equal(store.recordTiming('session', 'run', { phase: 'runtime.usage', inputTokens: -1 }), false)
+  const timing = path.join(directory, 'timings'),
+    first = path.join(timing, fs.readdirSync(timing)[0]),
+    body = fs.readFileSync(first, 'utf8'),
+    row = JSON.parse(body.trim().split('\n')[0])
+  assert.equal(row.projectId, 'project')
+  assert.equal(row.runId, 'run')
+  assert.equal(row.measurement, 'host-observed; server-inference-and-queue-unavailable')
+  assert.ok(!body.includes('private prompt'))
+  assert.equal(
+    store.recordTiming('session', 'run', { phase: 'runtime.started', ...{ text: 'secret' } }),
+    false,
+    'Unknown body fields must not be logged'
+  )
+  assert.equal(store.recordTiming('session', 'foreign', { phase: 'queued' }), false)
+  assert.equal(fs.readFileSync(first, 'utf8'), body)
+  fs.truncateSync(first, 8 * 1024 * 1024)
+  assert.equal(
+    store.recordTiming('session', 'run', { phase: 'tool.started', callId: 'call', action: 'media.inspect' }),
+    true
+  )
+  assert.equal(fs.statSync(first).size, 8 * 1024 * 1024)
+  assert.equal(fs.readdirSync(timing).length, 2)
+  const restarted = new AgentHistoryStore(directory, owner)
+  assert.equal(restarted.recordTiming('session', 'run', { phase: 'settled', outcome: 'failed' }), true)
+  assert.equal(fs.readdirSync(timing).length, 3)
+  assert.deepEqual(restarted.snapshot('session'), before, 'Diagnostics never finish or replay an input')
+  const blocked = path.join(root, 'blocked'),
+    failing = new AgentHistoryStore(blocked, owner)
+  failing.prepare('session', 'run', 'message', 'retained input')
+  fs.writeFileSync(path.join(blocked, 'timings'), 'blocked')
+  assert.equal(failing.recordTiming('session', 'run', { phase: 'queued' }), false)
+  assert.equal(failing.snapshot('session').receipts[0].state, 'prepared')
 })
 test('history never admits foreign, out-of-order or terminal-late events and preserves corrupt saved files', t => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-agent-history-'))
   t.after(() => fs.rmSync(directory, { recursive: true, force: true }))
-  const store = new AgentHistoryStore(directory,owner)
+  const store = new AgentHistoryStore(directory, owner)
   store.prepare('../session', 'run', 'user', 'hello')
   assert.equal(fs.readdirSync(directory).filter(name => name.endsWith('.json')).length, 1)
-  assert.throws(() => store.append({ sessionId: 'foreign', runId: 'run', sequence: 1, createdAt: 1, event: { type: 'turn.completed', outcome: 'success', message: '' } }), /inactive submission/)
-  assert.throws(() => store.append({ sessionId: '../session', runId: 'run', sequence: 2, createdAt: 1, event: { type: 'turn.completed', outcome: 'success', message: '' } }), /out of order/)
-  store.append({ sessionId: '../session', runId: 'run', sequence: 1, createdAt: 1, event: { type: 'turn.completed', outcome: 'success', message: '' } })
-  assert.throws(() => store.append({ sessionId: '../session', runId: 'run', sequence: 2, createdAt: 1, event: { type: 'message.completed', messageId: 'late', text: 'late' } }), /inactive submission/)
-  const file = path.join(directory, fs.readdirSync(directory).find(name => name.endsWith('.json'))!)
+  assert.throws(
+    () =>
+      store.append({
+        sessionId: 'foreign',
+        runId: 'run',
+        sequence: 1,
+        createdAt: 1,
+        event: { type: 'turn.completed', outcome: 'success', message: '' }
+      }),
+    /inactive submission/
+  )
+  assert.throws(
+    () =>
+      store.append({
+        sessionId: '../session',
+        runId: 'run',
+        sequence: 2,
+        createdAt: 1,
+        event: { type: 'turn.completed', outcome: 'success', message: '' }
+      }),
+    /out of order/
+  )
+  store.append({
+    sessionId: '../session',
+    runId: 'run',
+    sequence: 1,
+    createdAt: 1,
+    event: { type: 'turn.completed', outcome: 'success', message: '' }
+  })
+  assert.throws(
+    () =>
+      store.append({
+        sessionId: '../session',
+        runId: 'run',
+        sequence: 2,
+        createdAt: 1,
+        event: { type: 'message.completed', messageId: 'late', text: 'late' }
+      }),
+    /inactive submission/
+  )
+  const file = path.join(
+    directory,
+    fs.readdirSync(directory).find(name => name.endsWith('.json'))!
+  )
   fs.writeFileSync(file, '{broken')
-  assert.throws(() => new AgentHistoryStore(directory,owner).snapshot('../session'), /Cannot load/)
+  assert.throws(() => new AgentHistoryStore(directory, owner).snapshot('../session'), /Cannot load/)
   assert.equal(fs.readFileSync(file, 'utf8'), '{broken')
 })
-test('explicitly ending an unknown receipt preserves evidence, active interactions and restart audit without replay', t=>{
-  const directory=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-unknown-resolution-'));t.after(()=>fs.rmSync(directory,{recursive:true,force:true}))
-  const store=new AgentHistoryStore(directory,owner)
-  store.prepare('session','old','old-message','original input');store.markUncertain('session','old','transport lost')
-  store.prepare('session','current','current-message','current input')
-  store.append({sessionId:'session',runId:'current',sequence:2,createdAt:2,event:{type:'input.accepted',receiptId:'current-receipt'}})
-  const before=store.snapshot('session')
-  assert.throws(()=>store.resolveCancelledUnknown('session','current'),/Only an uncertain/)
-  store.resolveCancelledUnknown('session','old')
-  const after=store.snapshot('session')
-  assert.deepEqual(after.events,before.events);assert.deepEqual(after.messages,before.messages);assert.deepEqual(after.interactions,before.interactions)
-  assert.deepEqual(after.receipts[1],before.receipts[1]);assert.equal(after.receipts[0].outcome,'interrupted');assert.equal(after.receipts[0].resolution?.kind,'user-cancelled-unknown')
-  assert.deepEqual(new AgentHistoryStore(directory,owner).snapshot('session'),after)
-  store.resolveCancelledUnknown('session','old');assert.deepEqual(store.snapshot('session').receipts,after.receipts)
-  assert.throws(()=>store.append({sessionId:'session',runId:'old',sequence:3,createdAt:3,event:{type:'input.accepted',receiptId:'late'}}),/inactive submission/)
-  assert.throws(()=>store.prepare('session','old','replay','original input'),/already been used/)
+test('explicitly ending an unknown receipt preserves evidence, active interactions and restart audit without replay', t => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-unknown-resolution-'))
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }))
+  const store = new AgentHistoryStore(directory, owner)
+  store.prepare('session', 'old', 'old-message', 'original input')
+  store.markUncertain('session', 'old', 'transport lost')
+  store.prepare('session', 'current', 'current-message', 'current input')
+  store.append({
+    sessionId: 'session',
+    runId: 'current',
+    sequence: 2,
+    createdAt: 2,
+    event: { type: 'input.accepted', receiptId: 'current-receipt' }
+  })
+  const before = store.snapshot('session')
+  assert.throws(() => store.resolveCancelledUnknown('session', 'current'), /Only an uncertain/)
+  store.resolveCancelledUnknown('session', 'old')
+  const after = store.snapshot('session')
+  assert.deepEqual(after.events, before.events)
+  assert.deepEqual(after.messages, before.messages)
+  assert.deepEqual(after.interactions, before.interactions)
+  assert.deepEqual(after.receipts[1], before.receipts[1])
+  assert.equal(after.receipts[0].outcome, 'interrupted')
+  assert.equal(after.receipts[0].resolution?.kind, 'user-cancelled-unknown')
+  assert.deepEqual(new AgentHistoryStore(directory, owner).snapshot('session'), after)
+  store.resolveCancelledUnknown('session', 'old')
+  assert.deepEqual(store.snapshot('session').receipts, after.receipts)
+  assert.throws(
+    () =>
+      store.append({
+        sessionId: 'session',
+        runId: 'old',
+        sequence: 3,
+        createdAt: 3,
+        event: { type: 'input.accepted', receiptId: 'late' }
+      }),
+    /inactive submission/
+  )
+  assert.throws(() => store.prepare('session', 'old', 'replay', 'original input'), /already been used/)
 })

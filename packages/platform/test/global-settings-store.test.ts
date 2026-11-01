@@ -4,7 +4,12 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
-import { GlobalSettingsStore, globalSettingsInternals, parseGlobalSettingsState,configureNetworkStartup } from '../src/global-settings-store.js'
+import {
+  GlobalSettingsStore,
+  globalSettingsInternals,
+  parseGlobalSettingsState,
+  configureNetworkStartup
+} from '../src/global-settings-store.js'
 
 test('global settings default to system proxy and Google search', () => {
   const settings = globalSettingsInternals.normalize(globalSettingsInternals.DEFAULTS)
@@ -13,19 +18,37 @@ test('global settings default to system proxy and Google search', () => {
   assert.equal(settings.newTabPage, 'search')
   assert.equal(settings.theme, 'dark')
   assert.equal(settings.version, 2)
-  assert.equal(settings.http1Compatibility,false)
-  assert.equal(Object.hasOwn(settings,'agentSidebarVisible'), false)
+  assert.equal(settings.http1Compatibility, false)
+  assert.equal(Object.hasOwn(settings, 'agentSidebarVisible'), false)
 })
 
-test('HTTP compatibility is opt-in, persists across restart and applies before native network creation without rewriting settings',t=>{
- const directory=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-http-compat-'));t.after(()=>fs.rmSync(directory,{recursive:true,force:true}));const file=path.join(directory,'settings.json'),switches:string[]=[]
- assert.equal(configureNetworkStartup(file,name=>switches.push(name)),false);assert.equal(fs.existsSync(file),false)
- const store=new GlobalSettingsStore({filePath:file});store.update({http1Compatibility:true});const before=fs.readFileSync(file,'utf8')
- assert.equal(configureNetworkStartup(file,name=>switches.push(name)),true);assert.deepEqual(switches,['disable-http2','disable-quic']);assert.equal(fs.readFileSync(file,'utf8'),before)
- assert.equal(new GlobalSettingsStore({filePath:file}).snapshot().http1Compatibility,true)
- assert.throws(()=>store.update({http1Compatibility:'true'}),/compatibility setting/);assert.equal(fs.readFileSync(file,'utf8'),before)
- fs.writeFileSync(file,JSON.stringify({...JSON.parse(before),http1Compatibility:'yes'}));const invalid=fs.readFileSync(file,'utf8')
- assert.throws(()=>configureNetworkStartup(file,name=>switches.push(name)),/Invalid saved boolean/);assert.equal(fs.readFileSync(file,'utf8'),invalid);assert.deepEqual(switches,['disable-http2','disable-quic'])
+test('HTTP compatibility is opt-in, persists across restart and applies before native network creation without rewriting settings', t => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-http-compat-'))
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }))
+  const file = path.join(directory, 'settings.json'),
+    switches: string[] = []
+  assert.equal(
+    configureNetworkStartup(file, name => switches.push(name)),
+    false
+  )
+  assert.equal(fs.existsSync(file), false)
+  const store = new GlobalSettingsStore({ filePath: file })
+  store.update({ http1Compatibility: true })
+  const before = fs.readFileSync(file, 'utf8')
+  assert.equal(
+    configureNetworkStartup(file, name => switches.push(name)),
+    true
+  )
+  assert.deepEqual(switches, ['disable-http2', 'disable-quic'])
+  assert.equal(fs.readFileSync(file, 'utf8'), before)
+  assert.equal(new GlobalSettingsStore({ filePath: file }).snapshot().http1Compatibility, true)
+  assert.throws(() => store.update({ http1Compatibility: 'true' }), /compatibility setting/)
+  assert.equal(fs.readFileSync(file, 'utf8'), before)
+  fs.writeFileSync(file, JSON.stringify({ ...JSON.parse(before), http1Compatibility: 'yes' }))
+  const invalid = fs.readFileSync(file, 'utf8')
+  assert.throws(() => configureNetworkStartup(file, name => switches.push(name)), /Invalid saved boolean/)
+  assert.equal(fs.readFileSync(file, 'utf8'), invalid)
+  assert.deepEqual(switches, ['disable-http2', 'disable-quic'])
 })
 
 test('global settings persist manual proxy and generate selected search URLs', () => {
@@ -55,19 +78,29 @@ test('global appearance accepts one shared dark, light or system theme', () => {
 })
 
 test('Current settings reload preserves appearance without a native Agent sidebar setting', () => {
- const root=fs.mkdtempSync(path.join(os.tmpdir(),'bmw-settings-current-'))
- try{
-  const filePath=path.join(root,'settings.json'),store=new GlobalSettingsStore({filePath})
-  store.update({theme:'light',newTabPage:'blank'})
-  const reloaded=new GlobalSettingsStore({filePath})
-  assert.equal(reloaded.snapshot().theme,'light');assert.equal(reloaded.newTabUrl(),'about:blank')
-  assert.equal(Object.hasOwn(reloaded.snapshot(),'agentSidebarVisible'),false)
- }finally{fs.rmSync(root,{recursive:true,force:true})}
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-settings-current-'))
+  try {
+    const filePath = path.join(root, 'settings.json'),
+      store = new GlobalSettingsStore({ filePath })
+    store.update({ theme: 'light', newTabPage: 'blank' })
+    const reloaded = new GlobalSettingsStore({ filePath })
+    assert.equal(reloaded.snapshot().theme, 'light')
+    assert.equal(reloaded.newTabUrl(), 'about:blank')
+    assert.equal(Object.hasOwn(reloaded.snapshot(), 'agentSidebarVisible'), false)
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true })
+  }
 })
 
 test('custom search templates require HTTP(S) and a query placeholder', () => {
-  assert.throws(() => globalSettingsInternals.normalize({ searchEngine: 'custom', customSearchUrl: 'https://example.com/search' }), /\{query\}/)
-  assert.throws(() => globalSettingsInternals.normalize({ searchEngine: 'custom', customSearchUrl: 'file:///tmp/{query}' }), /HTTP/)
+  assert.throws(
+    () => globalSettingsInternals.normalize({ searchEngine: 'custom', customSearchUrl: 'https://example.com/search' }),
+    /\{query\}/
+  )
+  assert.throws(
+    () => globalSettingsInternals.normalize({ searchEngine: 'custom', customSearchUrl: 'file:///tmp/{query}' }),
+    /HTTP/
+  )
 })
 
 test('proxy settings apply to the persistent BMW browser session', async () => {
@@ -75,7 +108,7 @@ test('proxy settings apply to the persistent BMW browser session', async () => {
   const store = new GlobalSettingsStore({ filePath: path.join(os.tmpdir(), `bmw-settings-${Date.now()}.json`) })
   store.update({ proxyMode: 'manual', proxyRules: 'socks5://127.0.0.1:1080', proxyBypassRules: '<local>' })
   await store.applyProxy({
-    setProxy: async (config) => calls.push(['setProxy', config]),
+    setProxy: async config => calls.push(['setProxy', config]),
     closeAllConnections: async () => calls.push(['closeAllConnections'])
   })
   assert.deepEqual(calls, [
@@ -84,17 +117,16 @@ test('proxy settings apply to the persistent BMW browser session', async () => {
   ])
 })
 
-
 test('online narration defaults enabled and retains explicit boolean opt-out', () => {
   assert.equal(globalSettingsInternals.normalize({}).edgeNarrationEnabled, true)
-  assert.equal(globalSettingsInternals.normalize({edgeNarrationEnabled: 'true'}).edgeNarrationEnabled, false)
-  assert.equal(globalSettingsInternals.normalize({edgeNarrationEnabled: true}).edgeNarrationEnabled, true)
-  assert.equal(globalSettingsInternals.normalize({edgeNarrationEnabled: false}).edgeNarrationEnabled, false)
+  assert.equal(globalSettingsInternals.normalize({ edgeNarrationEnabled: 'true' }).edgeNarrationEnabled, false)
+  assert.equal(globalSettingsInternals.normalize({ edgeNarrationEnabled: true }).edgeNarrationEnabled, true)
+  assert.equal(globalSettingsInternals.normalize({ edgeNarrationEnabled: false }).edgeNarrationEnabled, false)
 })
 
-test('Qwen online narration is opt-in and validates saved consent',()=>{
-  assert.equal(globalSettingsInternals.normalize({}).qwenNarrationEnabled,false)
-  assert.equal(globalSettingsInternals.normalize({qwenNarrationEnabled:true}).qwenNarrationEnabled,true)
-  assert.equal(globalSettingsInternals.normalize({qwenNarrationEnabled:'true'}).qwenNarrationEnabled,false)
-  assert.throws(()=>parseGlobalSettingsState({version:2,qwenNarrationEnabled:'true'}),/boolean/)
+test('Qwen online narration is opt-in and validates saved consent', () => {
+  assert.equal(globalSettingsInternals.normalize({}).qwenNarrationEnabled, false)
+  assert.equal(globalSettingsInternals.normalize({ qwenNarrationEnabled: true }).qwenNarrationEnabled, true)
+  assert.equal(globalSettingsInternals.normalize({ qwenNarrationEnabled: 'true' }).qwenNarrationEnabled, false)
+  assert.throws(() => parseGlobalSettingsState({ version: 2, qwenNarrationEnabled: 'true' }), /boolean/)
 })

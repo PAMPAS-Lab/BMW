@@ -14,14 +14,16 @@ const timeout = setTimeout(() => {
 }, 15_000)
 
 socket.addEventListener('open', () => {
-  socket.send(JSON.stringify({
-    id: 1,
-    method: 'Runtime.evaluate',
-    params: { expression, awaitPromise: true, returnByValue: true }
-  }))
+  socket.send(
+    JSON.stringify({
+      id: 1,
+      method: 'Runtime.evaluate',
+      params: { expression, awaitPromise: true, returnByValue: true }
+    })
+  )
 })
 
-socket.addEventListener('message', (event) => {
+socket.addEventListener('message', event => {
   const message = JSON.parse(event.data)
   if (message.id !== 1) return
   clearTimeout(timeout)

@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import {readStateFile, readStateBytes, stateRecord, StateLoadError} from './state-load.js'
+import { readStateFile, readStateBytes, stateRecord, StateLoadError } from './state-load.js'
 
 const SNAPSHOT_VERSION = 1
 const KEEPALIVE_INTERVAL_MS = 5 * 60 * 1000
@@ -13,7 +13,9 @@ function normalizedOrigin(value) {
 }
 
 function cookieDomain(cookie) {
-  return String(cookie.domain || '').replace(/^\./, '').toLowerCase()
+  return String(cookie.domain || '')
+    .replace(/^\./, '')
+    .toLowerCase()
 }
 
 function cookieMatchesOrigin(cookie, origin) {
@@ -54,31 +56,49 @@ function savedOrigin(value: unknown): string {
   if (typeof value !== 'string' || normalizedOrigin(value) !== value) throw new Error('Invalid saved login origin.')
   return value
 }
-function validateConfig(raw: unknown): {sites: Record<string, Record<string, unknown>>} {
-  const value = stateRecord(raw), sites = stateRecord(value.sites)
+function validateConfig(raw: unknown): { sites: Record<string, Record<string, unknown>> } {
+  const value = stateRecord(raw),
+    sites = stateRecord(value.sites)
   if (value.version !== undefined && value.version !== 1) throw new Error('Unsupported login configuration version.')
   for (const [origin, rawSite] of Object.entries(sites)) {
     savedOrigin(origin)
     const site = stateRecord(rawSite)
-    if (site.keepalive !== undefined && typeof site.keepalive !== 'boolean') throw new Error('Invalid saved keepalive setting.')
-    for (const key of ['enabledAt','lastKeepaliveAt','lastKeepaliveMethod']) if (site[key] !== undefined && site[key] !== null && typeof site[key] !== 'string') throw new Error('Invalid saved login metadata.')
-    for (const key of ['nextKeepaliveAt','failures']) if (site[key] !== undefined && (typeof site[key] !== 'number' || !Number.isFinite(site[key]) || site[key] < 0)) throw new Error('Invalid saved keepalive number.')
+    if (site.keepalive !== undefined && typeof site.keepalive !== 'boolean')
+      throw new Error('Invalid saved keepalive setting.')
+    for (const key of ['enabledAt', 'lastKeepaliveAt', 'lastKeepaliveMethod'])
+      if (site[key] !== undefined && site[key] !== null && typeof site[key] !== 'string')
+        throw new Error('Invalid saved login metadata.')
+    for (const key of ['nextKeepaliveAt', 'failures'])
+      if (site[key] !== undefined && (typeof site[key] !== 'number' || !Number.isFinite(site[key]) || site[key] < 0))
+        throw new Error('Invalid saved keepalive number.')
   }
-  return {sites: sites as Record<string, Record<string, unknown>>}
+  return { sites: sites as Record<string, Record<string, unknown>> }
 }
-function validateSnapshot(raw: unknown): {version: number; cookies: Record<string, unknown>[]} {
+function validateSnapshot(raw: unknown): { version: number; cookies: Record<string, unknown>[] } {
   const value = stateRecord(raw)
-  if (value.version !== SNAPSHOT_VERSION || !Array.isArray(value.cookies)) throw new Error('Unsupported encrypted login snapshot.')
+  if (value.version !== SNAPSHOT_VERSION || !Array.isArray(value.cookies))
+    throw new Error('Unsupported encrypted login snapshot.')
   for (const rawCookie of value.cookies) {
     const cookie = stateRecord(rawCookie)
     savedOrigin(cookie.origin)
-    for (const key of ['name','value','domain','path']) if (typeof cookie[key] !== 'string') throw new Error('Invalid saved cookie field: '+key)
-    if (!cookie.name || !cookie.domain || !String(cookie.path).startsWith('/')) throw new Error('Invalid saved cookie identity.')
-    for (const key of ['hostOnly','secure','httpOnly','session']) if (cookie[key] !== undefined && typeof cookie[key] !== 'boolean') throw new Error('Invalid saved cookie flag.')
-    if (cookie.expirationDate !== undefined && (typeof cookie.expirationDate !== 'number' || !Number.isFinite(cookie.expirationDate))) throw new Error('Invalid saved cookie expiration.')
-    if (cookie.sameSite !== undefined && !['unspecified','no_restriction','lax','strict'].includes(String(cookie.sameSite))) throw new Error('Invalid saved cookie SameSite.')
+    for (const key of ['name', 'value', 'domain', 'path'])
+      if (typeof cookie[key] !== 'string') throw new Error('Invalid saved cookie field: ' + key)
+    if (!cookie.name || !cookie.domain || !String(cookie.path).startsWith('/'))
+      throw new Error('Invalid saved cookie identity.')
+    for (const key of ['hostOnly', 'secure', 'httpOnly', 'session'])
+      if (cookie[key] !== undefined && typeof cookie[key] !== 'boolean') throw new Error('Invalid saved cookie flag.')
+    if (
+      cookie.expirationDate !== undefined &&
+      (typeof cookie.expirationDate !== 'number' || !Number.isFinite(cookie.expirationDate))
+    )
+      throw new Error('Invalid saved cookie expiration.')
+    if (
+      cookie.sameSite !== undefined &&
+      !['unspecified', 'no_restriction', 'lax', 'strict'].includes(String(cookie.sameSite))
+    )
+      throw new Error('Invalid saved cookie SameSite.')
   }
-  return {version: SNAPSHOT_VERSION, cookies: value.cookies}
+  return { version: SNAPSHOT_VERSION, cookies: value.cookies }
 }
 
 export class SessionContinuityManager {
@@ -107,7 +127,10 @@ export class SessionContinuityManager {
     this.assertLoaded()
     await this.restoreCookies()
     this.session.cookies.on('changed', this.cookieListener)
-    this.keepaliveTimer = setInterval(() => void this.runKeepalives().catch(error => console.error('Failed to maintain saved login state', error)), 60_000)
+    this.keepaliveTimer = setInterval(
+      () => void this.runKeepalives().catch(error => console.error('Failed to maintain saved login state', error)),
+      60_000
+    )
     this.keepaliveTimer.unref?.()
     this.emitState()
   }
@@ -115,8 +138,14 @@ export class SessionContinuityManager {
   /** Startup preflight is synchronous and installs no timers or cookie listeners. */
   load(): void {
     this.loaded = false
-    try {this.loadConfig();this.loadSnapshot();this.loaded = true;this.loadFailure = undefined}
-    catch (error) {throw error}
+    try {
+      this.loadConfig()
+      this.loadSnapshot()
+      this.loaded = true
+      this.loadFailure = undefined
+    } catch (error) {
+      throw error
+    }
   }
   private assertLoaded(): void {
     if (this.loadFailure) throw this.loadFailure
@@ -124,8 +153,12 @@ export class SessionContinuityManager {
     if (!this.snapshotLoaded && this.safeStorage.isEncryptionAvailable()) this.loadSnapshot()
   }
   loadConfig(): void {
-    try {this.config = readStateFile(this.configPath, validateConfig) ?? {sites: {}}}
-    catch (error) {this.loadFailure = error;throw error}
+    try {
+      this.config = readStateFile(this.configPath, validateConfig) ?? { sites: {} }
+    } catch (error) {
+      this.loadFailure = error
+      throw error
+    }
   }
   loadSnapshot(): void {
     this.snapshotLoaded = false
@@ -133,11 +166,15 @@ export class SessionContinuityManager {
     if (!this.safeStorage.isEncryptionAvailable()) return
     try {
       const encrypted = readStateBytes(this.snapshotPath)
-      this.snapshot = encrypted === undefined ? {version: SNAPSHOT_VERSION, cookies: []} : validateSnapshot(JSON.parse(this.safeStorage.decryptString(encrypted)))
+      this.snapshot =
+        encrypted === undefined
+          ? { version: SNAPSHOT_VERSION, cookies: [] }
+          : validateSnapshot(JSON.parse(this.safeStorage.decryptString(encrypted)))
       this.snapshotLoaded = true
     } catch (error) {
       const failure = error instanceof StateLoadError ? error : new StateLoadError(this.snapshotPath, error)
-      this.loadFailure = failure;throw failure
+      this.loadFailure = failure
+      throw failure
     }
   }
 
@@ -152,7 +189,8 @@ export class SessionContinuityManager {
   saveSnapshot() {
     this.assertLoaded()
     if (!this.snapshotLoaded) this.loadSnapshot()
-    if (!this.safeStorage.isEncryptionAvailable()) throw new Error('OS-protected encryption is unavailable; BMW will not persist session cookies.')
+    if (!this.safeStorage.isEncryptionAvailable())
+      throw new Error('OS-protected encryption is unavailable; BMW will not persist session cookies.')
     fs.mkdirSync(path.dirname(this.snapshotPath), { recursive: true })
     const encrypted = this.safeStorage.encryptString(JSON.stringify(this.snapshot))
     const temporary = `${this.snapshotPath}.tmp`
@@ -219,7 +257,7 @@ export class SessionContinuityManager {
       }
     } else {
       delete this.config.sites[origin]
-      this.snapshot.cookies = this.snapshot.cookies.filter((cookie) => cookie.origin !== origin)
+      this.snapshot.cookies = this.snapshot.cookies.filter(cookie => cookie.origin !== origin)
     }
     this.saveConfig()
     await this.captureSnapshot()
@@ -230,15 +268,20 @@ export class SessionContinuityManager {
   scheduleSnapshot() {
     if (!this.safeStorage.isEncryptionAvailable()) return
     clearTimeout(this.snapshotTimer)
-    this.snapshotTimer = setTimeout(() => void this.captureSnapshot().catch((error) => {
-      console.error('Failed to update encrypted session snapshot', error)
-    }), 250)
+    this.snapshotTimer = setTimeout(
+      () =>
+        void this.captureSnapshot().catch(error => {
+          console.error('Failed to update encrypted session snapshot', error)
+        }),
+      250
+    )
     this.snapshotTimer.unref?.()
   }
 
   async captureSnapshot() {
     this.assertLoaded()
-    if (!this.safeStorage.isEncryptionAvailable()) throw new Error('OS-protected encryption is unavailable; BMW will not persist session cookies.')
+    if (!this.safeStorage.isEncryptionAvailable())
+      throw new Error('OS-protected encryption is unavailable; BMW will not persist session cookies.')
     if (!this.snapshotLoaded) this.loadSnapshot()
     if (!this.snapshotRestored) await this.restoreCookies()
     const origins = Object.keys(this.config.sites)
@@ -291,15 +334,18 @@ export class SessionContinuityManager {
           site.lastKeepaliveStatus = response.status
           site.lastKeepaliveMethod = method
           site.lastKeepaliveAt = new Date(this.now()).toISOString()
-          site.nextKeepaliveAt = this.now() + (succeeded
-            ? KEEPALIVE_INTERVAL_MS
-            : Math.min(KEEPALIVE_INTERVAL_MS * (2 ** site.failures), MAX_KEEPALIVE_BACKOFF_MS))
+          site.nextKeepaliveAt =
+            this.now() +
+            (succeeded
+              ? KEEPALIVE_INTERVAL_MS
+              : Math.min(KEEPALIVE_INTERVAL_MS * 2 ** site.failures, MAX_KEEPALIVE_BACKOFF_MS))
         } catch {
           site.failures = Math.min((site.failures || 0) + 1, 6)
           site.lastKeepaliveStatus = 'network-error'
           site.lastKeepaliveMethod = null
           site.lastKeepaliveAt = new Date(this.now()).toISOString()
-          site.nextKeepaliveAt = this.now() + Math.min(KEEPALIVE_INTERVAL_MS * (2 ** site.failures), MAX_KEEPALIVE_BACKOFF_MS)
+          site.nextKeepaliveAt =
+            this.now() + Math.min(KEEPALIVE_INTERVAL_MS * 2 ** site.failures, MAX_KEEPALIVE_BACKOFF_MS)
         }
       }
       this.saveConfig()

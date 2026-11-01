@@ -11,7 +11,8 @@ export function base64PayloadFromDataUrl(value: unknown): string {
 }
 
 export function safeCaptureFilename(value: unknown): string {
-  const requested = path.basename(String(value || '').normalize('NFKC'))
+  const requested = path
+    .basename(String(value || '').normalize('NFKC'))
     .replace(/[\\/:*?"<>|\u0000-\u001f]+/g, '-')
     .replace(/\s+/g, ' ')
     .replace(/^\.+|\.+$/g, '')
@@ -29,6 +30,14 @@ export const mediaCapturePolicyInternals = {
 }
 
 /** Capture IPC belongs to the current private window's main frame, never a guest or old renderer. */
-export function isOwnedCaptureMessage(event:{sender:unknown;senderFrame:unknown}, window?:{isDestroyed():boolean;webContents:{mainFrame:unknown}}|null):boolean {
-  return Boolean(window&&!window.isDestroyed()&&event.sender===window.webContents&&event.senderFrame===window.webContents.mainFrame)
+export function isOwnedCaptureMessage(
+  event: { sender: unknown; senderFrame: unknown },
+  window?: { isDestroyed(): boolean; webContents: { mainFrame: unknown } } | null
+): boolean {
+  return Boolean(
+    window &&
+    !window.isDestroyed() &&
+    event.sender === window.webContents &&
+    event.senderFrame === window.webContents.mainFrame
+  )
 }

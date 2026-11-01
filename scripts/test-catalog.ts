@@ -1,209 +1,1641 @@
-import type {ModuleId} from './module-catalog.js'
+import type { ModuleId } from './module-catalog.js'
 export type TestLayer = 'unit' | 'contract' | 'boundary' | 'integration' | 'desktop' | 'media' | 'external' | 'type'
 export interface TestDefinition {
-  id: string; file: string; layer: TestLayer; modules: readonly ModuleId[]
+  id: string
+  file: string
+  layer: TestLayer
+  modules: readonly ModuleId[]
   runner: 'node-test' | 'node' | 'electron' | 'desktop' | 'type'
   watch?: readonly string[]
   group?: 'workspace' | 'projects' | 'settings' | 'native'
-  env?: Readonly<Record<string,string>>
+  env?: Readonly<Record<string, string>>
   optIn?: string
 }
-function node(id:string,file:string,layer:TestLayer,module:ModuleId,watch?:readonly string[]):TestDefinition {
-  return {id,file,layer,modules:[module],runner:'node-test',watch}
+function node(id: string, file: string, layer: TestLayer, module: ModuleId, watch?: readonly string[]): TestDefinition {
+  return { id, file, layer, modules: [module], runner: 'node-test', watch }
 }
-const p='packages/'
+const p = 'packages/'
 export const tests: readonly TestDefinition[] = [
-  node('browser.youtube-worktabs',p+'browser-capability/test/youtube-worktabs.test.ts','contract','browser-capability'),
-  {id:'browser.youtube-worktab-runtime',file:'scripts/youtube-worktab-smoke.ts',layer:'integration',modules:['browser-capability','media-native'],runner:'electron',watch:['packages/browser-capability/src/youtube-worktabs.ts','packages/browser-capability/src/youtube-switch.ts','packages/browser-capability/src/browser-kernel.ts','packages/browser-capability/src/tab-policy.ts']},
-  {id:'browser.video-acquisition-runtime',file:'scripts/video-acquisition-smoke.ts',layer:'integration',modules:['browser-capability','media-native'],runner:'electron',watch:['packages/browser-capability/src/video-acquisition.ts','packages/browser-capability/src/video-capture-ready.ts','packages/browser-capability/src/browser-kernel.ts']},
-  node('browser.capture-ready',p+'browser-capability/test/video-capture-ready.test.ts','contract','browser-capability'),
-  node('browser.video-acquisition',p+'browser-capability/test/video-acquisition.test.ts','contract','browser-capability',['packages/browser-capability/src/video-acquisition.ts','packages/browser-capability/src/browser-kernel.ts','packages/feature-library/src/library-sources.ts']),
-  node('library.source-preservation-basis',p+'feature-library/test/source-preservation-basis.test.ts','contract','feature-library'),
-  node('browser.preservation-result',p+'browser-capability/test/preservation-result.test.ts','contract','browser-capability'),
-  node('platform.assistant-tasks',p+'platform/test/assistant-tasks.test.ts','contract','platform'),
-  node('video.review-packet',p+'feature-video/test/video-review-packet.test.ts','contract','feature-video'),
-  node('video.news-delivery',p+'feature-video/test/news-delivery.test.ts','contract','feature-video'),
-  node('video.review',p+'feature-video/test/video-review.test.ts','contract','feature-video'),
-  {id:'external.social-download.live',file:'scripts/social-download-live-validation.ts',layer:'external',modules:['browser-capability','media-native','agent-contract'],runner:'electron',optIn:'BMW_LIVE_SOCIAL=1; public videos in disposable signed-out Profile only'},
-  {id:'external.library.live-sources',file:'scripts/ai-news-live-validation.ts',layer:'external',modules:['feature-library','platform','browser-capability','media-native'],runner:'electron',optIn:'BMW_LIVE_NEWS=1; public-network read-only validation in disposable Profile only'},
-  {id:'browser.tab-lifecycle',file:'scripts/browser-tab-lifecycle-smoke.ts',layer:'integration',modules:['browser-capability','platform'],runner:'electron',watch:['packages/browser-capability/src/page-text-find.ts','packages/browser-capability/src/page-playback.ts','packages/browser-capability/src/tab-policy.ts','packages/browser-capability/src/browser-kernel.ts','packages/browser-capability/src/page-navigation.ts','packages/platform/src/project-store.ts','packages/platform/src/main.ts']},
-  {id:'browser.account-lifecycle',file:'scripts/account-lifecycle-smoke.ts',layer:'integration',modules:['browser-capability','platform','media-native','product-bmw'],runner:'electron',watch:['packages/browser-capability/src/browser-kernel.ts','packages/browser-capability/src/collect-page-source.ts','packages/browser-capability/src/page-navigation.ts','packages/browser-capability/src/text-read-pages.ts','packages/media-native/src/text-read-contract.ts','packages/platform/src/text-read-batch-store.ts']},
-  node('video.news',p+'feature-video/test/news.test.ts','contract','feature-video'),
-  node('browser.navigation',p+'browser-capability/test/page-navigation.test.ts','contract','browser-capability'),
-  {id:'studio.news-source-screenshot',file:'scripts/news-source-screenshot-smoke.ts',layer:'integration',modules:['feature-video','browser-capability','platform','media-native'],runner:'electron',watch:['packages/browser-capability/src/source-screenshot.ts','packages/browser-capability/src/page-navigation.ts','packages/browser-capability/src/browser-kernel.ts','packages/platform/src/project-source-store.ts','packages/media-native/src/source-contract.ts']},
-  {id:'studio.scene-reference-endpoints',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['feature-video','media-native','browser-capability'],runner:'electron',env:{BMW_STUDIO_SCENE_REFERENCE_CASE:'1'},watch:['packages/feature-video/src/studio-export-review.ts','packages/feature-video/src/scene-reference-preparation.ts','packages/feature-video/src/reference-coverage.ts','packages/feature-video/src/studio-reference','packages/feature-video/src/news-preparation']},
-  {id:'studio.shot-batch',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['feature-video','media-native','browser-capability'],runner:'electron',env:{BMW_STUDIO_SHOT_BATCH_CASE:'1'},watch:['packages/feature-video/src/shot-','packages/feature-video/src/news-preparation','packages/feature-video/src/material-index-service.ts','packages/feature-video/src/production-diagnostics.ts']},
-  {id:'studio.news',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['feature-video','media-native','browser-capability'],runner:'electron',env:{BMW_STUDIO_NEWS_CASE:'1'},watch:['packages/feature-video/src/news-','packages/feature-video/src/renderer/studio-news.ts','scripts/studio-news-fixture.ts']},
-  node('platform.qwen-credentials',p+'platform/test/qwen-credentials-store.test.ts','unit','platform'),
-  node('browser.media-session-fetch',p+'browser-capability/test/media-session-fetch.test.ts','contract','browser-capability'),
-  {id:'browser.media-download-runtime',file:'scripts/media-download-smoke.ts',layer:'integration',modules:['browser-capability','media-native'],runner:'electron',watch:['packages/browser-capability/src/media-session-fetch.ts','packages/browser-capability/src/media-artifact.ts','packages/browser-capability/src/browser-kernel.ts']},
-  node('video.production-assessment',p+'feature-video/test/production-assessment.test.ts','contract','feature-video'),
-  node('video.source-transcript',p+'feature-video/test/source-transcript.test.ts','contract','feature-video'),
-  node('video.scene-reference-preparation',p+'feature-video/test/scene-reference-preparation.test.ts','contract','feature-video'),
-  {id:'studio.native-diagram',file:'scripts/native-diagram-smoke.ts',layer:'media',modules:['feature-video','media-native'],runner:'electron',watch:['packages/feature-video/src/diagram-preparation.ts','packages/feature-video/src/news-preparation','packages/media-native/src/diagram-preview.ts']},
-  node('video.news-preparation',p+'feature-video/test/news-preparation.test.ts','contract','feature-video'),
-  node('video.preparation-fingerprint',p+'feature-video/test/preparation-fingerprint.test.ts','contract','feature-video'),
-  node('video.production',p+'feature-video/test/production.test.ts','contract','feature-video'),
-  {id:'external.production.qoder-deepseek-flash',file:'scripts/qoder-production-case.ts',layer:'external',modules:['harness-qoder','platform','feature-video','media-native'],runner:'electron',optIn:'BMW_QODER_TASK_FILE + BMW_QODER_AUTH_DIRECTORY explicitly authorized; optional BMW_QODER_INPUT_INDEX'},
-  {id:'media.research-video',file:'scripts/research-video-smoke.ts',layer:'media',modules:['media-native','feature-video'],runner:'electron',watch:['packages/media-native/src/research-diagrams.ts','packages/media-native/src/precomposition.ts','packages/media-native/src/media/research-diagram-paint.ts']},
-  node('media.precomposition',p+'media-native/test/precomposition.test.ts','contract','media-native'),
-  node('media.research-diagrams',p+'media-native/test/research-diagrams.test.ts','contract','media-native'),
-  node('media.science-spec',p+'media-native/test/science-spec.test.ts','contract','media-native'),
-  node('media.video-capture',p+'media-native/test/video-element-capture.test.ts','contract','media-native'),
-  node('media.capture-source-index',p+'media-native/test/capture-source-index.test.ts','contract','media-native'),
-  node('agent.video-identity',p+'agent-contract/test/video-identity.test.ts','contract','agent-contract'),
-  {id:'browser.video-identity',file:'scripts/video-identity-smoke.ts',layer:'integration',modules:['browser-capability','media-native'],runner:'electron'},
-  node('browser.publisher-video',p+'browser-capability/test/publisher-video.test.ts','contract','browser-capability',['packages/browser-capability/src/publisher-video.ts','packages/browser-capability/src/video-target.ts']),
-  node('media.hls-subtitles',p+'media-native/test/hls-subtitles.test.ts','contract','media-native',['packages/media-native/src/hls-subtitles.ts']),
-  node('media.preservation',p+'media-native/test/media-preservation.test.ts','contract','media-native'),
-  node('media.youtube-sabr',p+'media-native/test/youtube-sabr.test.ts','contract','media-native',['packages/media-native/src/youtube-sabr','packages/media-native/src/media-preservation.ts','packages/agent-contract/src/video-identity.ts']),
-  node('browser.youtube-sabr',p+'browser-capability/test/youtube-sabr-observation.test.ts','contract','browser-capability',['packages/browser-capability/src/youtube-sabr-observation.ts','packages/agent-contract/src/video-identity.ts']),
-  {id:'external.youtube-navigation',file:'scripts/youtube-navigation-case.ts',layer:'external',modules:['browser-capability','media-native','platform'],runner:'electron',optIn:'BMW_YOUTUBE_NAVIGATION_CASE=1; optional BMW_YOUTUBE_HTTP1=1; public signed-out disposable Profile'},
-  {id:'external.youtube-worktab',file:'scripts/youtube-worktab-case.ts',layer:'external',modules:['browser-capability','media-native','platform'],runner:'electron',optIn:'BMW_YOUTUBE_WORKTAB_CASE=1 BMW_YOUTUBE_WORKTAB_MODE=cold|resident; optional BMW_YOUTUBE_HTTP1=1; same three public videos; disposable signed-out Profile'},
-  node('browser.bridge-http',p+'browser-capability/test/bridge-http.test.ts','contract','browser-capability',['packages/browser-capability/src/bridge-http.ts','packages/browser-capability/src/browser-mcp-server.ts']),
-  node('video.material-index',p+'feature-video/test/material-index.test.ts','contract','feature-video'),
-  node('video.source-analysis',p+'feature-video/test/source-analysis.test.ts','contract','feature-video'),
-  {id:'media.source-analysis-case',file:'scripts/source-analysis-case.ts',layer:'media',modules:['feature-video','media-native','browser-capability'],runner:'electron',optIn:'BMW_ANALYSIS_SOURCE_INDEX=<explicit local copied-source fixture list>'},
-  {id:'media.frame-sampling-case',file:'scripts/frame-sampling-case.ts',layer:'media',modules:['media-native'],runner:'electron',optIn:'BMW_FRAME_SAMPLING_SOURCE=<explicit local MP4 fixture>'},
-  {id:'media.long-composition-case',file:'scripts/long-composition-case.ts',layer:'media',modules:['media-native','feature-video','browser-capability'],runner:'electron',optIn:'BMW_LONG_SOURCE_INDEX=<explicit local public-source fixture list>'},
-  {id:'studio.production',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['feature-video','media-native','browser-capability'],runner:'electron',env:{BMW_STUDIO_PRODUCTION_CASE:'1'},watch:['packages/feature-video/src/production-contract.ts','packages/feature-video/src/production-types.ts','packages/feature-video/src/renderer/studio-production-editor.ts','packages/feature-video/src/renderer/studio-type-review-editor.ts']},
-  {id:'studio.science',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['media-native','feature-video','browser-capability'],runner:'electron',env:{BMW_STUDIO_SCIENCE_CASE:'1'},watch:['packages/media-native/src/science-spec.ts','packages/feature-video/src/renderer/science-layer-editor.ts','packages/feature-video/src/renderer/research-diagram-editor.ts','packages/feature-video/src/renderer/studio-layer-editor.ts']},
-  {id:'studio.layer-packaging',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['media-native','feature-video','browser-capability'],runner:'electron',env:{BMW_STUDIO_PACKAGING_CASE:'1'},watch:['packages/media-native/src/layer-packaging.ts','packages/feature-video/src/renderer/studio-layer-editor.ts','packages/feature-video/src/studio-layer-edits.ts']},
-  {id:'studio.text-treatment',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['media-native','feature-video','browser-capability'],runner:'electron',env:{BMW_STUDIO_TEXT_CASE:'1'},watch:['packages/media-native/src/layer-text-treatment.ts','packages/feature-video/src/renderer/studio-layer-editor.ts','packages/feature-video/src/video-document.ts']},
-  {id:'video.qbit-playback',file:'scripts/qbit-playback-audit.ts',layer:'media',modules:['media-native'],runner:'electron',optIn:'Explicit local sample playback review'},
-  {id:'video.qbit-stage4-samples',file:'scripts/qbit-stage4-samples.ts',layer:'media',modules:['media-native','feature-video','browser-capability'],runner:'electron',optIn:'BMW_QBIT_SOURCE_INDEX=<explicit authorized local public-video index>'},
-  {id:'video.qbit-stage3-samples',file:'scripts/qbit-stage3-samples.ts',layer:'media',modules:['media-native','feature-video','browser-capability'],runner:'electron',optIn:'BMW_QBIT_SOURCE_INDEX=<explicit authorized local public-video index>'},
-  {id:'media.science-diagrams',file:'scripts/science-diagram-smoke.ts',layer:'media',modules:['media-native','feature-video'],runner:'electron',watch:['packages/media-native/src/science-spec.ts','packages/media-native/src/media/science-paint.ts','packages/media-native/src/composition-layers.ts']},
-  {id:'media.layer-packaging',file:'scripts/layer-packaging-smoke.ts',layer:'media',modules:['media-native','feature-video'],runner:'electron',watch:['packages/media-native/src/layer-packaging.ts','packages/media-native/src/media/layer-packaging-paint.ts','packages/media-native/src/media/composition-layers-paint.ts']},
-  {id:'media.text-treatment',file:'scripts/text-treatment-smoke.ts',layer:'media',modules:['media-native','feature-video'],runner:'electron',watch:['packages/media-native/src/layer-text-treatment.ts','packages/media-native/src/media/composition-layers-paint.ts','packages/feature-video/src/studio-layer-edits.ts']},
-  {id:'media.audio-windows',file:'scripts/audio-window-smoke.ts',layer:'media',modules:['media-native','feature-video'],runner:'electron',watch:['packages/media-native/src/source-audio.ts','packages/media-native/src/media/composition-audio.ts','packages/feature-video/src/renderer/studio-preview.ts']},
-  {id:'studio.export-review',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['feature-video','media-native','browser-capability'],runner:'electron',env:{BMW_STUDIO_EXPORT_REVIEW_CASE:'1'},watch:['packages/feature-video/src/','packages/media-native/src/composition-quality.ts','packages/media-native/src/card-cues.ts','packages/media-native/src/media/composition.ts','packages/media-native/src/media/canvas-text-trace.ts','packages/media-native/src/media/card-details-paint.ts','packages/browser-capability/src/bridge-server.ts']},
-  node('agent.context',p+'agent-contract/test/context-sync.test.ts','contract','agent-contract'),
-  node('agent.conversation',p+'agent-contract/test/conversation.test.ts','contract','agent-contract'),
-  {id:'bmw.agent-assembly',file:'scripts/agent-assembly.test.ts',layer:'contract',modules:['application','agent-ui','harness-dsh','harness-codex','harness-qoder','harness-workbuddy'],runner:'node-test'},
-  {id:'agent.data-migration',file:'scripts/agent-data-migration.test.ts',layer:'contract',modules:['validation','platform','harness-dsh'],runner:'node-test'},
-  node('dsh.project-bindings',p+'harness-dsh/test/project-bindings.test.ts','contract','harness-dsh'),
-  node('dsh.migration-history',p+'harness-dsh/test/dsh-migration.test.ts','contract','harness-dsh'),
-  node('agent.studio-composer',p+'agent-ui/test/studio-composer-scope.test.ts','contract','agent-ui'),
-  node('agent.assistant-ui',p+'agent-contract/test/assistant-ui.test.ts','contract','agent-contract'),
-  node('agent.driver-settings',p+'agent-contract/test/driver-settings.test.ts','contract','agent-contract'),
-  node('platform.agent-settings',p+'platform/test/agent-settings-controller.test.ts','contract','platform'),
-  node('codex.settings',p+'harness-codex/test/codex-settings.test.ts','contract','harness-codex'),
-  node('codex.installation',p+'harness-codex/test/codex-installation.test.ts','contract','harness-codex'),
-  node('qoder.settings',p+'harness-qoder/test/qoder-settings.test.ts','contract','harness-qoder'),
-  node('dsh.settings',p+'harness-dsh/test/dsh-settings.test.ts','contract','harness-dsh'),
-  node('platform.assistant-controller',p+'platform/test/assistant-controller.test.ts','contract','platform'),
-  node('platform.conversation-store',p+'platform/test/conversation-store.test.ts','contract','platform'),
-  node('platform.agent-history',p+'platform/test/agent-history-store.test.ts','contract','platform'),
-  node('platform.agent-host',p+'platform/test/agent-host.test.ts','contract','platform'),
-  node('browser.session-leases',p+'browser-capability/test/session-leases.test.ts','contract','browser-capability'),
-  node('codex.policy',p+'harness-codex/test/codex-policy.test.ts','contract','harness-codex'),
-  node('codex.backend',p+'harness-codex/test/codex-backend.test.ts','contract','harness-codex'),
-  node('dsh.events',p+'harness-dsh/test/dsh-events.test.ts','contract','harness-dsh'),
-  node('dsh.backend',p+'harness-dsh/test/dsh-backend.test.ts','contract','harness-dsh'),
-  node('qoder.events',p+'harness-qoder/test/qoder-events.test.ts','contract','harness-qoder'),
-  node('qoder.backend',p+'harness-qoder/test/qoder-backend.test.ts','contract','harness-qoder'),
-  {id:'harness.official-runtime',file:'scripts/harness-official-runtime.test.ts',layer:'integration',modules:['harness-codex','harness-qoder','browser-capability','application'],runner:'node-test'},
-  {id:'workbuddy.runtime',file:'scripts/workbuddy-runtime.test.ts',layer:'integration',modules:['harness-workbuddy','browser-capability','application'],runner:'node-test'},
-  node('workbuddy.catalog',p+'harness-workbuddy/test/workbuddy-catalog.test.ts','contract','harness-workbuddy'),
-  node('workbuddy.settings',p+'harness-workbuddy/test/workbuddy-settings.test.ts','contract','harness-workbuddy'),
-  node('workbuddy.acp',p+'harness-workbuddy/test/workbuddy-acp.test.ts','contract','harness-workbuddy'),
-  node('workbuddy.policy',p+'harness-workbuddy/test/workbuddy-policy.test.ts','contract','harness-workbuddy'),
-  node('workbuddy.backend',p+'harness-workbuddy/test/workbuddy-backend.test.ts','contract','harness-workbuddy'),
-  ...(['browser-schema','mcp-tool-catalog','session-operations','bridge-shutdown','browser-deadline','screenshot-read','renderer-read','media-artifact','tab-policy'] as const).map((name,index)=>node(['browser.schema','browser.catalog','browser.operations','browser.shutdown','browser.deadline','browser.screenshot','browser.renderer-read','browser.download','browser.tab-policy'][index],p+'browser-capability/test/'+name+'.test.ts',index<5?'contract':'unit','browser-capability')),
-  node('browser.sources',p+'browser-capability/test/collect-page-source.test.ts','contract','browser-capability'),
-  node('platform.background-collection',p+'platform/test/background-collection.test.ts','contract','platform',['packages/platform/src/background-collection.ts']),
-  node('platform.background-admission',p+'platform/test/background-admission.test.ts','contract','platform'),
-  node('platform.sources',p+'platform/test/project-source-store.test.ts','contract','platform'),
-  node('video.sources',p+'feature-video/test/studio-sources.test.ts','contract','feature-video'),
-  node('browser.collection-page-pool',p+'browser-capability/test/collection-page-pool.test.ts','contract','browser-capability',['packages/browser-capability/src/collection-page-pool.ts','packages/browser-capability/src/collection-page-ready.ts','packages/browser-capability/src/browser-kernel.ts']),
-  node('browser.host-contract',p+'browser-capability/test/browser-host.test.ts','contract','browser-capability'),
-  ...(['dsh-runtime','dsh-transport','dsh-preset','browser-failure-guard','workspace-context','video-case-log'] as const).map(name=>node('dsh.'+name,p+'harness-dsh/test/'+name+'.test.ts',name==='browser-failure-guard'||name==='video-case-log'?'unit':'contract','harness-dsh')),
-  ...(['media-controller','media-processing','video-production','video-options'] as const).map((name,index)=>node(['media.controller','media.processing','media.production','media.options'][index],p+'media-native/test/'+name+'.test.ts',index===3?'unit':'contract','media-native')),
-  node('media.compact-news',p+'media-native/test/compact-news.test.ts','contract','media-native'),
-  {id:'media.scene-clock',file:'scripts/scene-clock-smoke.ts',layer:'media',modules:['media-native','feature-video'],runner:'electron',watch:['packages/media-native/src/scene-playback-window.ts','packages/media-native/src/narration-timing.ts','packages/media-native/src/media/composition-paint.ts','packages/media-native/src/media/composition-audio.ts','packages/media-native/src/composition-contract.ts']},
-  node('media.speech',p+'media-native/test/speech.test.ts','contract','media-native'),
-  node('media.port-contract',p+'media-native/test/media-port.test.ts','contract','media-native'),
-  ...(['project-store','global-settings-store','scheduled-task-store','state-load','layout-store','layout-docking','permission-policy','menu-policy','restart-policy','session-continuity','browser-user-agent','project-panel-layering','driver-boundary','bmw-catalog','product-boundaries','remote-control-boundary'] as const).map((name,index)=>node(['platform.projects','platform.settings','platform.schedules','platform.state','platform.layout','platform.docking','platform.permissions','platform.menu','platform.restart','platform.continuity','platform.user-agent','platform.project-panel','platform.driver-binding','platform.catalog','platform.boundaries','platform.remote-boundary'][index],p+'platform/test/'+name+'.test.ts',index>=13?'boundary':index===12||index===3||index===9?'contract':'unit','platform',name==='project-panel-layering'?['packages/platform/src/main.ts','packages/platform/src/renderer/']:undefined)),
-  node('platform.shell-ipc',p+'platform/test/shell-ipc.test.ts','contract','platform'),
-  node('platform.permission-store',p+'platform/test/permission-store.test.ts','contract','platform'),
-  node('platform.continuity-state',p+'platform/test/continuity-state.test.ts','contract','platform'),
-  {id:'library.schedules-desktop',file:'scripts/library-schedule-smoke.ts',layer:'desktop',modules:['feature-library','platform','browser-capability'],runner:'electron',watch:['packages/feature-library/','packages/platform/src/agent-host.ts','packages/platform/src/feature-contract.ts']},
-  {id:'library.recommendations-desktop',file:'scripts/library-recommendation-smoke.ts',layer:'desktop',modules:['feature-library','feature-video','platform','media-native'],runner:'electron',watch:['packages/feature-library/','packages/feature-video/src/news-','packages/platform/src/project-record-store.ts']},
-  {id:'library.rolling-desktop',file:'scripts/library-rolling-smoke.ts',layer:'desktop',modules:['feature-library','platform','browser-capability'],runner:'electron',watch:['packages/feature-library/','packages/platform/src/project-record-store.ts']},
-  {id:'library.source-presets-desktop',file:'scripts/library-source-presets-smoke.ts',layer:'desktop',modules:['feature-library','platform','browser-capability'],runner:'electron',watch:['packages/feature-library/src/source-presets.ts','packages/feature-library/src/renderer/collection-panel.ts','packages/feature-library/src/rolling-']},
-  {id:'library.background',file:'scripts/library-background-smoke.ts',layer:'desktop',modules:['feature-library','platform','browser-capability'],runner:'electron',watch:['packages/feature-library/','packages/platform/src/background-collection.ts','packages/platform/src/assistant-service.ts','packages/platform/src/agent-host.ts','packages/platform/src/main.ts','packages/browser-capability/src/bridge-server.ts','packages/browser-capability/src/browser-kernel.ts']},
-  {id:'library.news-desktop',file:'scripts/library-news-smoke.ts',layer:'desktop',modules:['feature-library','feature-video','platform','media-native'],runner:'electron',watch:['packages/feature-library/','packages/feature-video/src/news-','packages/platform/src/workspace-runtime.ts']},
-  node('library.materials',p+'feature-library/test/library.test.ts','contract','feature-library',['packages/feature-library/src/library-contract.ts','packages/feature-library/src/library-service.ts','packages/feature-library/src/library-transfer.ts','packages/feature-library/src/library-storage.ts']),
-  node('library.source-presets',p+'feature-library/test/source-presets.test.ts','contract','feature-library',['packages/feature-library/src/source-presets.ts','packages/feature-library/src/rolling-']),
-  node('library.collection-batch',p+'feature-library/test/collection-batch.test.ts','contract','feature-library',['packages/feature-library/src/collection-batch','packages/platform/src/library-sources.ts','packages/platform/src/project-source-store.ts','packages/platform/src/background-collection.ts']),
-  {id:'library.collection-batch-desktop',file:'scripts/library-collection-batch-smoke.ts',layer:'desktop',modules:['feature-library','platform','browser-capability'],runner:'electron',watch:['packages/feature-library/','packages/browser-capability/src/collection-page-pool.ts','packages/browser-capability/src/browser-kernel.ts','packages/platform/src/library-sources.ts']},
-  node('library.schedules',p+'feature-library/test/collection-scheduler.test.ts','contract','feature-library',['packages/feature-library/src/collection-schedul','packages/platform/src/agent-host.ts','packages/platform/src/feature-contract.ts']),
-  node('library.recommendations',p+'feature-library/test/recommendations.test.ts','contract','feature-library',['packages/feature-library/src/recommendation-','packages/feature-library/src/news-','packages/feature-video/src/news-service.ts','packages/platform/src/project-record-store.ts']),
-  node('library.rolling',p+'feature-library/test/rolling.test.ts','contract','feature-library',['packages/feature-library/src/rolling-','packages/platform/src/project-record-store.ts']),
-  node('library.video-watch',p+'feature-library/test/video-watch.test.ts','contract','feature-library',['packages/feature-library/src/video-watch','packages/feature-library/src/rolling-']),
-  {id:'library.video-watch-desktop',file:'scripts/library-video-watch-smoke.ts',layer:'desktop',modules:['feature-library','platform','browser-capability','media-native'],runner:'electron',watch:['packages/feature-library/','packages/platform/src/background-collection.ts','packages/platform/src/library-sources.ts']},
-  node('library.streams',p+'feature-library/test/streams.test.ts','contract','feature-library',['packages/feature-library/src/event-store.ts','packages/feature-library/src/stream-service.ts','packages/feature-library/src/news-research-service.ts','packages/platform/src/project-record-store.ts','packages/platform/src/source-archive.ts']),
-  node('platform.record-capacity',p+'platform/test/record-capacity.test.ts','contract','platform',['packages/platform/src/project-record-store.ts','packages/platform/src/project-source-store.ts','packages/platform/src/source-archive.ts','packages/media-native/src/source-contract.ts']),
-  node('library.exports',p+'feature-library/test/exports.test.ts','contract','feature-library',['packages/feature-library/src/export-','packages/feature-video/src/studio-service.ts','packages/feature-video/src/studio-store.ts','packages/feature-video/index.ts']),
-  node('library.research',p+'feature-library/test/research.test.ts','contract','feature-library',['packages/feature-library/src/research-','packages/feature-library/src/material-purpose.ts','packages/feature-library/src/library-service.ts','packages/feature-library/index.ts']),
-  node('platform.library-sources',p+'platform/test/library-sources.test.ts','contract','platform'),
-  node('platform.workspaces',p+'platform/test/workspace-runtime.test.ts','contract','platform'),
-  node('platform.feature-contract',p+'platform/test/feature-contract.test.ts','contract','platform'),
-  {id:'video.schema-publication',file:'scripts/video-schema-document.ts',layer:'contract',modules:['feature-video','validation'],runner:'node',watch:['packages/feature-video/src/','docs/schemas/']},
-  node('video.schema',p+'feature-video/test/video-document.test.ts','contract','feature-video',['packages/feature-video/src/','packages/feature-video/index.ts','docs/schemas/','scripts/video-schema-document.ts']),
-  ...(['studio-materials','video-studio','video-settings','video-boundary'] as const).map((name,index)=>node(['video.materials','video.studio','video.settings','video.boundary'][index],p+'feature-video/test/'+name+'.test.ts',index===3?'boundary':index===0?'unit':'contract','feature-video')),
-  node('architecture.boundaries','scripts/test/module-boundary.test.ts','boundary','validation'),
-  node('validation.selection','scripts/test/test-selection.test.ts','unit','validation',['scripts/module-catalog.ts','scripts/test-catalog.ts','scripts/source-graph.ts','scripts/test-selection.ts','scripts/test-runner.ts']),
-  {id:'api.types',file:'scripts/test/public-interfaces.type-test.ts',layer:'type',modules:['validation','platform','agent-contract','browser-capability','media-native','feature-video'],runner:'type',watch:['packages/agent-contract/index.ts','packages/browser-capability/src/browser-host.ts','packages/browser-capability/src/browser-schema.ts','packages/platform/src/feature-contract.ts','packages/platform/src/product-definition.ts','packages/media-native/src/media-port.ts']},
-  {id:'sources',file:'scripts/source-studio-smoke.ts',layer:'media',modules:['platform','browser-capability','media-native','feature-video'],runner:'electron',watch:['packages/platform/src/project-source-store.ts','packages/browser-capability/src/collect-page-source.ts','packages/browser-capability/src/page-scope.ts','packages/browser-capability/src/browser-kernel.ts','packages/browser-capability/src/browser-host.ts','packages/media-native/src/source-contract.ts','packages/media-native/src/media-contract.ts','packages/media-native/src/media-processor.ts','packages/media-native/src/media/processing.ts','packages/feature-video/src/studio-sources.ts','packages/feature-video/src/studio-service.ts','packages/feature-video/src/renderer/studio-source-editor.ts','packages/feature-video/src/renderer/studio.css','packages/feature-video/src/renderer/studio.ts','packages/feature-video/src/renderer/studio.html']},
-  {id:'assistant.default',file:'scripts/assistant-default-suite.ts',layer:'integration',modules:['application','platform','agent-contract','agent-ui','harness-dsh','harness-codex','harness-qoder','harness-workbuddy','browser-capability','feature-video'],runner:'node',watch:['scripts/product-entry.ts','scripts/assistant-default-case.ts','apps/bmw/agent-assembly.ts','packages/platform/src/main.ts','packages/platform/src/assistant-service.ts','packages/platform/src/assistant-controller.ts','packages/platform/src/scheduled-task-manager.ts','packages/agent-ui/']},
-  {id:'assistant.application',file:'scripts/assistant-application-smoke.ts',layer:'integration',modules:['platform','agent-contract','agent-ui','browser-capability','feature-video'],runner:'electron',watch:['packages/platform/src/main.ts','packages/platform/src/assistant-service.ts','packages/platform/src/assistant-controller.ts','packages/platform/src/agent-host.ts','packages/agent-ui/']},
-  {id:'assistant.schedules',file:'scripts/assistant-application-smoke.ts',layer:'integration',modules:['platform','agent-contract','agent-ui','browser-capability','feature-video'],runner:'electron',env:{BMW_ASSISTANT_SCHEDULE_CASE:'1'},watch:['packages/platform/src/main.ts','packages/platform/src/assistant-service.ts','packages/platform/src/session-service.ts','packages/platform/src/scheduled-task-manager.ts','packages/platform/src/scheduled-task-store.ts','packages/feature-video/src/studio-service.ts']},
-  ...(['conversations','preferences','history'] as const).flatMap(kind=>(['retry','exit'] as const).map(scenario=>({id:'assistant.startup.'+kind+'.'+scenario,file:'scripts/assistant-application-smoke.ts',layer:'integration' as const,modules:['platform','agent-contract','agent-ui'] as const,runner:'electron' as const,env:{BMW_ASSISTANT_STARTUP_KIND:kind,BMW_ASSISTANT_STARTUP_SCENARIO:scenario},watch:['packages/platform/src/main.ts','packages/platform/src/assistant-service.ts','packages/platform/src/conversation-store.ts','packages/platform/src/agent-history-store.ts','packages/platform/src/agent-preference-store.ts']}))),
-  {id:'driver',file:'scripts/agent-driver-smoke.ts',layer:'integration',modules:['platform','agent-contract','browser-capability'],runner:'electron',watch:['packages/platform/src/shell-ipc.ts','packages/platform/src/preload/shell-preload.cts','packages/platform/src/permission-store.ts','packages/platform/src/main.ts','packages/platform/src/project-store.ts','packages/platform/src/feature-contract.ts','packages/agent-contract/','packages/browser-capability/src/bridge-server.ts','packages/browser-capability/src/browser-mcp-server.ts','scripts/fixture-browser-client.ts','packages/browser-capability/src/browser-schema.ts','packages/browser-capability/src/tool-catalog.ts','packages/browser-capability/src/browser-host.ts','packages/browser-capability/src/browser-kernel.ts']},
-  {id:'startup-recovery',file:'scripts/state-load-smoke.ts',layer:'integration',modules:['platform'],runner:'electron',env:{BMW_STATE_STARTUP_SCENARIO:'retry'},watch:['packages/platform/src/layout-store.ts','packages/platform/src/permission-store.ts','packages/platform/src/session-continuity.ts','packages/platform/src/main.ts','packages/platform/src/state-load.ts','packages/platform/src/project-store.ts','packages/platform/src/global-settings-store.ts','packages/platform/src/scheduled-task-store.ts']},
-  {id:'startup-exit',file:'scripts/state-load-smoke.ts',layer:'integration',modules:['platform'],runner:'electron',env:{BMW_STATE_STARTUP_SCENARIO:'exit'},watch:['packages/platform/src/layout-store.ts','packages/platform/src/permission-store.ts','packages/platform/src/session-continuity.ts','packages/platform/src/main.ts','packages/platform/src/state-load.ts','packages/platform/src/project-store.ts','packages/platform/src/global-settings-store.ts','packages/platform/src/scheduled-task-store.ts']},
-  ...(['permissions','layout','continuity-config','continuity-snapshot'] as const).flatMap(kind=>(['retry','exit'] as const).map(scenario=>({id:'startup.'+kind+'.'+scenario,file:'scripts/state-load-smoke.ts',layer:'integration' as const,modules:['platform'] as const,runner:'electron' as const,env:{BMW_STATE_STARTUP_KIND:kind,BMW_STATE_STARTUP_SCENARIO:scenario},watch:['packages/platform/src/main.ts','packages/platform/src/state-load.ts','packages/platform/src/project-store.ts','packages/platform/src/global-settings-store.ts','packages/platform/src/scheduled-task-store.ts','packages/platform/src/layout-store.ts','packages/platform/src/permission-store.ts','packages/platform/src/session-continuity.ts']}))),
-  {id:'dsh',file:'scripts/dsh-compatibility-smoke.ts',layer:'integration',modules:['harness-dsh','agent-contract'],runner:'node'},
-  ...(['workspace','projects','settings','native'] as const).map(group=>({id:'desktop.'+group,file:'scripts/desktop-smoke.ts',layer:'desktop' as const,runner:'desktop' as const,group,modules:['platform','harness-dsh','browser-capability','feature-video',...(group==='workspace'?['feature-library' as const]:[])] as const,watch:[
-    'scripts/desktop-suite.ts','packages/platform/src/main.ts','packages/platform/src/preload/','packages/platform/src/renderer/shell.html','packages/platform/src/renderer/shell.css',
-    ...(group==='workspace'?['packages/feature-library/','packages/platform/src/workspace-runtime.ts','packages/platform/src/feature-contract.ts','packages/feature-video/src/studio-runtime.ts','packages/feature-video/src/renderer/studio.html','packages/browser-capability/src/browser-host.ts']:[]),
-    ...(group==='projects'?['packages/platform/src/project-store.ts','packages/agent-contract/','packages/platform/src/session-service.ts','packages/agent-ui/','packages/browser-capability/src/browser-kernel.ts','packages/browser-capability/src/tab-policy.ts']:[]),
-    ...(group==='settings'?['packages/platform/src/global-settings-store.ts','packages/platform/src/layout-store.ts','packages/media-native/src/video-options','packages/feature-video/src/video-settings.ts']:[]),
-    ...(group==='native'?['packages/platform/src/layout','packages/platform/src/menu-policy.ts','packages/platform/src/project-store.ts','packages/agent-ui/src/preload/']:[]),
-    'packages/platform/src/renderer/shell.ts'
-  ]})),
-  {id:'studio.next',file:'scripts/studio-next-smoke.ts',layer:'integration',modules:['feature-video','media-native'],runner:'electron',watch:['packages/feature-video/','packages/media-native/src/speech-','packages/media-native/src/composition-contract.ts','packages/media-native/src/narration-timing.ts','packages/media-native/src/caption-export.ts','packages/media-native/src/media/composition','packages/media-native/src/visual-segments.ts','packages/media-native/src/focus-contract.ts']},
-  {id:'studio.schema',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native','browser-capability'],runner:'electron',env:{BMW_STUDIO_SCHEMA_CASE:'1'},watch:['packages/feature-video/','scripts/video-schema-document.ts','docs/schemas/']},
-  {id:'studio.long-film',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native'],runner:'electron',env:{BMW_STUDIO_LONG_CASE:'1'},watch:['packages/feature-video/','packages/media-native/src/composition-limits.ts','packages/media-native/src/media/composition-audio.ts','packages/media-native/src/composition-contract.ts']},
-  {id:'studio.workflow-entry',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native'],runner:'electron',env:{BMW_STUDIO_WORKFLOW_ENTRY_CASE:'1'},watch:['packages/feature-video/src/renderer/','packages/feature-video/src/studio-runtime.ts']},
-  {id:'studio.materials-entry',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','browser-capability'],runner:'electron',env:{BMW_STUDIO_MATERIALS_ENTRY_CASE:'1'},watch:['packages/feature-video/src/studio-assistant.ts','packages/feature-video/src/studio-runtime.ts','packages/feature-video/src/renderer/']},
-  {id:'studio.visual-effects',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native'],runner:'electron',env:{BMW_STUDIO_VISUAL_EFFECTS_CASE:'1'},watch:['packages/feature-video/src/renderer/','packages/media-native/src/visual-effects.ts','packages/media-native/src/composition-contract.ts','packages/media-native/src/visual-segments.ts','packages/media-native/src/composition-layers.ts','packages/media-native/src/media/composition-paint.ts','packages/media-native/src/media/composition-layers-paint.ts','packages/feature-video/src/studio-main-edits.ts','packages/feature-video/src/studio-layer-edits.ts','packages/feature-video/src/studio-store.ts']},
-  {id:'studio.main-mute',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native'],runner:'electron',env:{BMW_STUDIO_MAIN_MUTE_CASE:'1'},watch:['packages/feature-video/src/renderer/','packages/media-native/src/narration-timing.ts','packages/media-native/src/composition-contract.ts','packages/media-native/src/media/composition-audio.ts','packages/media-native/src/source-audio.ts','packages/feature-video/src/studio-main-edits.ts','packages/feature-video/src/studio-contract.ts','packages/feature-video/src/studio-store.ts']},
-  {id:'studio.track-menu',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native'],runner:'electron',env:{BMW_STUDIO_TRACK_MENU_CASE:'1'},watch:['packages/feature-video/src/renderer/','packages/feature-video/src/studio-layer-edits.ts','packages/feature-video/src/studio-store.ts','packages/media-native/src/composition-layers.ts','packages/media-native/src/media/composition-audio.ts','packages/media-native/src/media/composition-layers-paint.ts']},
-  {id:'studio.card-text',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['feature-video','media-native'],runner:'electron',env:{BMW_STUDIO_CARD_TEXT_CASE:'1'},watch:['packages/feature-video/src/renderer/studio-card-text.ts','packages/feature-video/src/renderer/studio-cards.ts','packages/feature-video/src/renderer/studio-preview.ts','packages/feature-video/src/renderer/studio.ts','packages/feature-video/src/renderer/studio.css','packages/media-native/src/media/composition-paint.ts']},
-  {id:'studio.news-options',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['feature-video','media-native'],runner:'electron',env:{BMW_STUDIO_NEWS_OPTIONS_CASE:'1'},watch:['packages/feature-video/src/renderer/studio-preview.ts','packages/feature-video/src/renderer/studio-card-text.ts','packages/feature-video/src/renderer/studio.ts','packages/feature-video/src/studio-contract.ts','packages/feature-video/src/studio-service.ts','packages/media-native/src/video-options-form.ts','packages/media-native/src/media/composition-paint.ts']},
-  {id:'studio.card-pair',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native'],runner:'electron',env:{BMW_STUDIO_CARD_PAIR_CASE:'1'},watch:['packages/feature-video/src/renderer/studio-cards.ts','packages/feature-video/src/renderer/studio.css','packages/feature-video/src/renderer/studio.ts','packages/feature-video/src/renderer/studio-workflow.ts','packages/feature-video/src/studio-runtime.ts','packages/feature-video/src/studio-store.ts']},
-  {id:'studio.reference-analysis',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native','browser-capability'],runner:'electron',env:{BMW_STUDIO_REFERENCE_CASE:'1'},watch:['packages/feature-video/src/','packages/feature-video/index.ts','packages/browser-capability/src/bridge-server.ts']},
-  {id:'studio.review-adoption',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native','browser-capability'],runner:'electron',env:{BMW_STUDIO_REVIEW_CASE:'1'},watch:['packages/feature-video/src/','packages/feature-video/index.ts']},
-  {id:'studio.production-recovery',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native','browser-capability'],runner:'electron',env:{BMW_STUDIO_PRODUCTION_RECOVERY_CASE:'1'},watch:['packages/feature-video/src/renderer/studio.ts','packages/feature-video/src/studio-service.ts','packages/feature-video/src/studio-runtime.ts','packages/feature-video/src/studio-store.ts','packages/media-native/src/media-controller.ts']},
-  {id:'studio.bound-scene-split',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native'],runner:'electron',env:{BMW_STUDIO_BOUND_SCENE_CASE:'1'},watch:['packages/feature-video/src/studio-scene-split.ts','packages/feature-video/src/studio-speech-origin.ts','packages/feature-video/src/studio-speech-contract.ts','packages/feature-video/src/studio-source-speech-contract.ts','packages/feature-video/src/studio-store.ts','packages/feature-video/src/studio-service.ts','packages/feature-video/src/studio-schema.ts','packages/feature-video/src/renderer/studio-main-editor.ts']},
-  {id:'studio.whole-scene-split',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native'],runner:'electron',env:{BMW_STUDIO_WHOLE_SCENE_CASE:'1'},watch:['packages/feature-video/src/studio-scene-split.ts','packages/feature-video/src/studio-layer-edits.ts','packages/feature-video/src/studio-store.ts','packages/feature-video/src/studio-service.ts','packages/feature-video/src/renderer/studio-main-editor.ts','packages/feature-video/src/renderer/studio.ts','packages/media-native/src/scene-playback-window.ts','packages/media-native/src/media/composition-audio.ts']},
-  {id:'studio.approved-history',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native'],runner:'electron',env:{BMW_STUDIO_SNAPSHOT_CASE:'1'},watch:['packages/feature-video/src/studio-runtime.ts','packages/feature-video/src/studio-snapshot-proof.ts','packages/feature-video/src/studio-store.ts','packages/feature-video/src/studio-service.ts','packages/feature-video/src/studio-contract.ts','packages/feature-video/src/renderer/studio.ts']},
-  {id:'studio.source-caption-rebind',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native'],runner:'electron',env:{BMW_STUDIO_SOURCE_REBIND_CASE:'1'},watch:['packages/feature-video/src/studio-source-speech-contract.ts','packages/feature-video/src/studio-source-speech.ts','packages/feature-video/src/studio-store.ts','packages/feature-video/src/studio-main-edits.ts','packages/feature-video/src/renderer/studio-main-editor.ts']},
-  {id:'studio.layer-fade-continuity',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native'],runner:'electron',env:{BMW_STUDIO_LAYER_FADE_CASE:'1'},watch:['packages/feature-video/src/studio-layer-edits.ts','packages/feature-video/src/renderer/studio-layer-editor.ts','packages/media-native/src/composition-layers.ts','packages/media-native/src/media/composition-audio.ts']},
-  {id:'studio.workspace-resume',file:'scripts/video-studio-smoke.ts',layer:'desktop',modules:['platform','feature-video','media-native'],runner:'electron',env:{BMW_STUDIO_RESUME_CASE:'1'},watch:['packages/feature-video/src/studio-runtime.ts','packages/feature-video/src/renderer/studio.ts']},
-  {id:'studio',file:'scripts/video-studio-smoke.ts',layer:'integration',modules:['feature-video','media-native'],runner:'electron',watch:['packages/media-native/src/image-contract.ts','packages/media-native/src/media/image-decoder.ts','packages/media-native/src/visual-segments.ts','packages/media-native/src/focus-contract.ts','packages/media-native/src/caption-export.ts','packages/media-native/src/text-export.ts','packages/media-native/src/media-contract.ts','packages/media-native/src/media/processing.ts','packages/media-native/src/media-processor.ts','packages/media-native/src/media-controller.ts','packages/feature-video/','packages/browser-capability/src/browser-host.ts','packages/platform/src/feature-contract.ts','packages/media-native/src/media-port.ts','packages/media-native/src/video-options','packages/media-native/src/composition-contract.ts','packages/media-native/src/narration-timing.ts','packages/media-native/src/media/composition-paint.ts','packages/media-native/src/media/composition-audio.ts','packages/media-native/src/composition-layers.ts','packages/media-native/src/media/composition-layers-paint.ts','packages/media-native/src/source-audio.ts','packages/media-native/src/media/linear-frames.ts']},
-  {id:'browser.background',file:'scripts/browser-background-smoke.ts',layer:'integration',modules:['browser-capability'],runner:'electron',watch:['packages/browser-capability/src/browser-kernel.ts','packages/browser-capability/src/renderer-read.ts','packages/browser-capability/src/screenshot-read.ts','packages/browser-capability/src/media-artifact.ts','packages/browser-capability/src/bridge-server.ts']},
-  {id:'media.capture',file:'scripts/media-capture-smoke.ts',layer:'media',modules:['media-native','browser-capability'],runner:'electron',watch:['packages/media-native/src/media-controller.ts','packages/media-native/src/capture-policy.ts','packages/browser-capability/src/page-recording-events.ts','packages/media-native/src/recording-contract.ts','packages/media-native/src/media/media.','packages/media-native/src/preload/media-preload.cts','packages/browser-capability/src/browser-kernel.ts']},
-  {id:'media.processing-runtime',file:'scripts/media-processing-smoke.ts',layer:'media',modules:['media-native'],runner:'electron',watch:['packages/media-native/src/hls-subtitles.ts','packages/media-native/src/media-preservation.ts','packages/media-native/src/preservation-packets.ts','packages/browser-capability/src/publisher-video.ts','packages/browser-capability/src/browser-schema.ts','packages/browser-capability/src/browser-capability-registry.ts','packages/browser-capability/src/browser-kernel.ts','packages/browser-capability/src/bridge-server.ts','packages/media-native/src/video-element-capture.ts','packages/media-native/src/capture-source-index.ts','packages/media-native/src/capture-timeline.ts','packages/media-native/src/capture-mux.ts','packages/media-native/src/image-drawing-contract.ts','packages/media-native/src/media/image-drawing.ts','packages/media-native/src/image-contract.ts','packages/media-native/src/media/image-decoder.ts','packages/media-native/src/media-processor.ts','packages/media-native/src/media-controller.ts','packages/media-native/src/media-contract.ts','packages/media-native/src/audio-evidence-contract.ts','packages/media-native/src/media/audio-evidence.ts','packages/media-native/src/artifact-job-io.ts','packages/media-native/src/media/processing.','packages/media-native/src/media/linear-frames.ts','packages/media-native/src/preload/processing-preload.cts']},
-  {id:'video',file:'scripts/video-production-smoke.ts',layer:'media',modules:['media-native','feature-video'],runner:'electron',watch:['packages/media-native/src/image-contract.ts','packages/media-native/src/media/image-decoder.ts','packages/media-native/src/visual-segments.ts','packages/media-native/src/focus-contract.ts','packages/media-native/src/text-export.ts','packages/media-native/src/media-contract.ts','packages/media-native/src/composition','packages/media-native/src/media/composition','packages/media-native/src/source-audio.ts','packages/media-native/src/artifact-job-io.ts','packages/media-native/src/video-options.ts','packages/media-native/src/media-port.ts','packages/media-native/src/media-controller.ts','packages/media-native/src/preload/composition-preload.cts','packages/feature-video/index.ts','packages/feature-video/src/video-settings.ts']},
-  {id:'speech.decode-clock',file:'scripts/speech-decode-repro.ts',layer:'media',modules:['media-native'],runner:'electron',watch:['packages/media-native/src/media/speech-normalize.ts','packages/media-native/src/speech-contract.ts']},
-  {id:'speech',file:'scripts/speech-alignment-smoke.ts',layer:'media',modules:['media-native'],runner:'electron',watch:['packages/media-native/src/speech-','packages/media-native/src/local-asr-assets.ts','packages/media-native/src/media/speech-','packages/media-native/src/media-controller.ts','packages/media-native/src/media-contract.ts','packages/media-native/src/media-processor.ts','packages/media-native/src/artifact-job-io.ts','packages/media-native/src/media/processing.ts']},
-  {id:'qwenNarration',file:'scripts/narration-smoke.ts',env:{BMW_TTS_TEST_PROVIDER:'qwen-fixture'},layer:'media',modules:['media-native','feature-video'],runner:'electron',watch:['packages/media-native/src/qwen-narration.ts','packages/media-native/src/narration','packages/media-native/src/media-controller.ts','packages/feature-video/src/video-settings.ts']},
-  {id:'localNarration',file:'scripts/narration-smoke.ts',env:{BMW_TTS_TEST_PROVIDER:'local-matcha'},layer:'media',modules:['media-native'],runner:'electron',watch:['packages/media-native/src/image-contract.ts','packages/media-native/src/media-contract.ts','packages/media-native/src/narration','packages/media-native/src/local-tts-assets.ts','packages/media-native/src/media/narration','packages/media-native/src/media-controller.ts','packages/media-native/src/media-port.ts','packages/media-native/src/preload/narration-preload.cts','scripts/install-local-tts.ts']},
-  ...(['qoder-cn','codex','dsh'] as const).map(driverId=>({id:'external.assistant.'+driverId,file:'scripts/native-assistant-case.ts',layer:'external' as const,modules:['agent-ui','platform','browser-capability','feature-video','harness-qoder','harness-codex','harness-dsh'] as const,runner:'electron' as const,env:{BMW_NATIVE_DRIVER:driverId},optIn:'BMW_NATIVE_DRIVER='+driverId})),
-  {id:'external.vision',file:'scripts/vision-model-smoke.ts',layer:'external',modules:['browser-capability','harness-dsh'],runner:'electron',optIn:'BMW_VISION_TEST=1'},
-  {id:'external.edge',file:'scripts/narration-smoke.ts',layer:'external',modules:['media-native'],runner:'electron',env:{BMW_TTS_TEST_PROVIDER:'edge'},optIn:'BMW_TTS_TEST_PROVIDER=edge'}
+  node(
+    'browser.youtube-worktabs',
+    p + 'browser-capability/test/youtube-worktabs.test.ts',
+    'contract',
+    'browser-capability'
+  ),
+  {
+    id: 'browser.youtube-worktab-runtime',
+    file: 'scripts/youtube-worktab-smoke.ts',
+    layer: 'integration',
+    modules: ['browser-capability', 'media-native'],
+    runner: 'electron',
+    watch: [
+      'packages/browser-capability/src/youtube-worktabs.ts',
+      'packages/browser-capability/src/youtube-switch.ts',
+      'packages/browser-capability/src/browser-kernel.ts',
+      'packages/browser-capability/src/tab-policy.ts'
+    ]
+  },
+  {
+    id: 'browser.video-acquisition-runtime',
+    file: 'scripts/video-acquisition-smoke.ts',
+    layer: 'integration',
+    modules: ['browser-capability', 'media-native'],
+    runner: 'electron',
+    watch: [
+      'packages/browser-capability/src/video-acquisition.ts',
+      'packages/browser-capability/src/video-capture-ready.ts',
+      'packages/browser-capability/src/browser-kernel.ts'
+    ]
+  },
+  node(
+    'browser.capture-ready',
+    p + 'browser-capability/test/video-capture-ready.test.ts',
+    'contract',
+    'browser-capability'
+  ),
+  node(
+    'browser.video-acquisition',
+    p + 'browser-capability/test/video-acquisition.test.ts',
+    'contract',
+    'browser-capability',
+    [
+      'packages/browser-capability/src/video-acquisition.ts',
+      'packages/browser-capability/src/browser-kernel.ts',
+      'packages/feature-library/src/library-sources.ts'
+    ]
+  ),
+  node(
+    'library.source-preservation-basis',
+    p + 'feature-library/test/source-preservation-basis.test.ts',
+    'contract',
+    'feature-library'
+  ),
+  node(
+    'browser.preservation-result',
+    p + 'browser-capability/test/preservation-result.test.ts',
+    'contract',
+    'browser-capability'
+  ),
+  node('platform.assistant-tasks', p + 'platform/test/assistant-tasks.test.ts', 'contract', 'platform'),
+  node('video.review-packet', p + 'feature-video/test/video-review-packet.test.ts', 'contract', 'feature-video'),
+  node('video.news-delivery', p + 'feature-video/test/news-delivery.test.ts', 'contract', 'feature-video'),
+  node('video.review', p + 'feature-video/test/video-review.test.ts', 'contract', 'feature-video'),
+  {
+    id: 'external.social-download.live',
+    file: 'scripts/social-download-live-validation.ts',
+    layer: 'external',
+    modules: ['browser-capability', 'media-native', 'agent-contract'],
+    runner: 'electron',
+    optIn: 'BMW_LIVE_SOCIAL=1; public videos in disposable signed-out Profile only'
+  },
+  {
+    id: 'external.library.live-sources',
+    file: 'scripts/ai-news-live-validation.ts',
+    layer: 'external',
+    modules: ['feature-library', 'platform', 'browser-capability', 'media-native'],
+    runner: 'electron',
+    optIn: 'BMW_LIVE_NEWS=1; public-network read-only validation in disposable Profile only'
+  },
+  {
+    id: 'browser.tab-lifecycle',
+    file: 'scripts/browser-tab-lifecycle-smoke.ts',
+    layer: 'integration',
+    modules: ['browser-capability', 'platform'],
+    runner: 'electron',
+    watch: [
+      'packages/browser-capability/src/page-text-find.ts',
+      'packages/browser-capability/src/page-playback.ts',
+      'packages/browser-capability/src/tab-policy.ts',
+      'packages/browser-capability/src/browser-kernel.ts',
+      'packages/browser-capability/src/page-navigation.ts',
+      'packages/platform/src/project-store.ts',
+      'packages/platform/src/main.ts'
+    ]
+  },
+  {
+    id: 'browser.account-lifecycle',
+    file: 'scripts/account-lifecycle-smoke.ts',
+    layer: 'integration',
+    modules: ['browser-capability', 'platform', 'media-native', 'product-bmw'],
+    runner: 'electron',
+    watch: [
+      'packages/browser-capability/src/browser-kernel.ts',
+      'packages/browser-capability/src/collect-page-source.ts',
+      'packages/browser-capability/src/page-navigation.ts',
+      'packages/browser-capability/src/text-read-pages.ts',
+      'packages/media-native/src/text-read-contract.ts',
+      'packages/platform/src/text-read-batch-store.ts'
+    ]
+  },
+  node('video.news', p + 'feature-video/test/news.test.ts', 'contract', 'feature-video'),
+  node('browser.navigation', p + 'browser-capability/test/page-navigation.test.ts', 'contract', 'browser-capability'),
+  {
+    id: 'studio.news-source-screenshot',
+    file: 'scripts/news-source-screenshot-smoke.ts',
+    layer: 'integration',
+    modules: ['feature-video', 'browser-capability', 'platform', 'media-native'],
+    runner: 'electron',
+    watch: [
+      'packages/browser-capability/src/source-screenshot.ts',
+      'packages/browser-capability/src/page-navigation.ts',
+      'packages/browser-capability/src/browser-kernel.ts',
+      'packages/platform/src/project-source-store.ts',
+      'packages/media-native/src/source-contract.ts'
+    ]
+  },
+  {
+    id: 'studio.scene-reference-endpoints',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['feature-video', 'media-native', 'browser-capability'],
+    runner: 'electron',
+    env: { BMW_STUDIO_SCENE_REFERENCE_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/studio-export-review.ts',
+      'packages/feature-video/src/scene-reference-preparation.ts',
+      'packages/feature-video/src/reference-coverage.ts',
+      'packages/feature-video/src/studio-reference',
+      'packages/feature-video/src/news-preparation'
+    ]
+  },
+  {
+    id: 'studio.shot-batch',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['feature-video', 'media-native', 'browser-capability'],
+    runner: 'electron',
+    env: { BMW_STUDIO_SHOT_BATCH_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/shot-',
+      'packages/feature-video/src/news-preparation',
+      'packages/feature-video/src/material-index-service.ts',
+      'packages/feature-video/src/production-diagnostics.ts'
+    ]
+  },
+  {
+    id: 'studio.news',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['feature-video', 'media-native', 'browser-capability'],
+    runner: 'electron',
+    env: { BMW_STUDIO_NEWS_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/news-',
+      'packages/feature-video/src/renderer/studio-news.ts',
+      'scripts/studio-news-fixture.ts'
+    ]
+  },
+  node('platform.qwen-credentials', p + 'platform/test/qwen-credentials-store.test.ts', 'unit', 'platform'),
+  node(
+    'browser.media-session-fetch',
+    p + 'browser-capability/test/media-session-fetch.test.ts',
+    'contract',
+    'browser-capability'
+  ),
+  {
+    id: 'browser.media-download-runtime',
+    file: 'scripts/media-download-smoke.ts',
+    layer: 'integration',
+    modules: ['browser-capability', 'media-native'],
+    runner: 'electron',
+    watch: [
+      'packages/browser-capability/src/media-session-fetch.ts',
+      'packages/browser-capability/src/media-artifact.ts',
+      'packages/browser-capability/src/browser-kernel.ts'
+    ]
+  },
+  node(
+    'video.production-assessment',
+    p + 'feature-video/test/production-assessment.test.ts',
+    'contract',
+    'feature-video'
+  ),
+  node('video.source-transcript', p + 'feature-video/test/source-transcript.test.ts', 'contract', 'feature-video'),
+  node(
+    'video.scene-reference-preparation',
+    p + 'feature-video/test/scene-reference-preparation.test.ts',
+    'contract',
+    'feature-video'
+  ),
+  {
+    id: 'studio.native-diagram',
+    file: 'scripts/native-diagram-smoke.ts',
+    layer: 'media',
+    modules: ['feature-video', 'media-native'],
+    runner: 'electron',
+    watch: [
+      'packages/feature-video/src/diagram-preparation.ts',
+      'packages/feature-video/src/news-preparation',
+      'packages/media-native/src/diagram-preview.ts'
+    ]
+  },
+  node('video.news-preparation', p + 'feature-video/test/news-preparation.test.ts', 'contract', 'feature-video'),
+  node(
+    'video.preparation-fingerprint',
+    p + 'feature-video/test/preparation-fingerprint.test.ts',
+    'contract',
+    'feature-video'
+  ),
+  node('video.production', p + 'feature-video/test/production.test.ts', 'contract', 'feature-video'),
+  {
+    id: 'external.production.qoder-deepseek-flash',
+    file: 'scripts/qoder-production-case.ts',
+    layer: 'external',
+    modules: ['harness-qoder', 'platform', 'feature-video', 'media-native'],
+    runner: 'electron',
+    optIn: 'BMW_QODER_TASK_FILE + BMW_QODER_AUTH_DIRECTORY explicitly authorized; optional BMW_QODER_INPUT_INDEX'
+  },
+  {
+    id: 'media.research-video',
+    file: 'scripts/research-video-smoke.ts',
+    layer: 'media',
+    modules: ['media-native', 'feature-video'],
+    runner: 'electron',
+    watch: [
+      'packages/media-native/src/research-diagrams.ts',
+      'packages/media-native/src/precomposition.ts',
+      'packages/media-native/src/media/research-diagram-paint.ts'
+    ]
+  },
+  node('media.precomposition', p + 'media-native/test/precomposition.test.ts', 'contract', 'media-native'),
+  node('media.research-diagrams', p + 'media-native/test/research-diagrams.test.ts', 'contract', 'media-native'),
+  node('media.science-spec', p + 'media-native/test/science-spec.test.ts', 'contract', 'media-native'),
+  node('media.video-capture', p + 'media-native/test/video-element-capture.test.ts', 'contract', 'media-native'),
+  node('media.capture-source-index', p + 'media-native/test/capture-source-index.test.ts', 'contract', 'media-native'),
+  node('agent.video-identity', p + 'agent-contract/test/video-identity.test.ts', 'contract', 'agent-contract'),
+  {
+    id: 'browser.video-identity',
+    file: 'scripts/video-identity-smoke.ts',
+    layer: 'integration',
+    modules: ['browser-capability', 'media-native'],
+    runner: 'electron'
+  },
+  node(
+    'browser.publisher-video',
+    p + 'browser-capability/test/publisher-video.test.ts',
+    'contract',
+    'browser-capability',
+    ['packages/browser-capability/src/publisher-video.ts', 'packages/browser-capability/src/video-target.ts']
+  ),
+  node('media.hls-subtitles', p + 'media-native/test/hls-subtitles.test.ts', 'contract', 'media-native', [
+    'packages/media-native/src/hls-subtitles.ts'
+  ]),
+  node('media.preservation', p + 'media-native/test/media-preservation.test.ts', 'contract', 'media-native'),
+  node('media.youtube-sabr', p + 'media-native/test/youtube-sabr.test.ts', 'contract', 'media-native', [
+    'packages/media-native/src/youtube-sabr',
+    'packages/media-native/src/media-preservation.ts',
+    'packages/agent-contract/src/video-identity.ts'
+  ]),
+  node(
+    'browser.youtube-sabr',
+    p + 'browser-capability/test/youtube-sabr-observation.test.ts',
+    'contract',
+    'browser-capability',
+    ['packages/browser-capability/src/youtube-sabr-observation.ts', 'packages/agent-contract/src/video-identity.ts']
+  ),
+  {
+    id: 'external.youtube-navigation',
+    file: 'scripts/youtube-navigation-case.ts',
+    layer: 'external',
+    modules: ['browser-capability', 'media-native', 'platform'],
+    runner: 'electron',
+    optIn: 'BMW_YOUTUBE_NAVIGATION_CASE=1; optional BMW_YOUTUBE_HTTP1=1; public signed-out disposable Profile'
+  },
+  {
+    id: 'external.youtube-worktab',
+    file: 'scripts/youtube-worktab-case.ts',
+    layer: 'external',
+    modules: ['browser-capability', 'media-native', 'platform'],
+    runner: 'electron',
+    optIn:
+      'BMW_YOUTUBE_WORKTAB_CASE=1 BMW_YOUTUBE_WORKTAB_MODE=cold|resident; optional BMW_YOUTUBE_HTTP1=1; same three public videos; disposable signed-out Profile'
+  },
+  node('browser.bridge-http', p + 'browser-capability/test/bridge-http.test.ts', 'contract', 'browser-capability', [
+    'packages/browser-capability/src/bridge-http.ts',
+    'packages/browser-capability/src/browser-mcp-server.ts'
+  ]),
+  node('video.material-index', p + 'feature-video/test/material-index.test.ts', 'contract', 'feature-video'),
+  node('video.source-analysis', p + 'feature-video/test/source-analysis.test.ts', 'contract', 'feature-video'),
+  {
+    id: 'media.source-analysis-case',
+    file: 'scripts/source-analysis-case.ts',
+    layer: 'media',
+    modules: ['feature-video', 'media-native', 'browser-capability'],
+    runner: 'electron',
+    optIn: 'BMW_ANALYSIS_SOURCE_INDEX=<explicit local copied-source fixture list>'
+  },
+  {
+    id: 'media.frame-sampling-case',
+    file: 'scripts/frame-sampling-case.ts',
+    layer: 'media',
+    modules: ['media-native'],
+    runner: 'electron',
+    optIn: 'BMW_FRAME_SAMPLING_SOURCE=<explicit local MP4 fixture>'
+  },
+  {
+    id: 'media.long-composition-case',
+    file: 'scripts/long-composition-case.ts',
+    layer: 'media',
+    modules: ['media-native', 'feature-video', 'browser-capability'],
+    runner: 'electron',
+    optIn: 'BMW_LONG_SOURCE_INDEX=<explicit local public-source fixture list>'
+  },
+  {
+    id: 'studio.production',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['feature-video', 'media-native', 'browser-capability'],
+    runner: 'electron',
+    env: { BMW_STUDIO_PRODUCTION_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/production-contract.ts',
+      'packages/feature-video/src/production-types.ts',
+      'packages/feature-video/src/renderer/studio-production-editor.ts',
+      'packages/feature-video/src/renderer/studio-type-review-editor.ts'
+    ]
+  },
+  {
+    id: 'studio.science',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['media-native', 'feature-video', 'browser-capability'],
+    runner: 'electron',
+    env: { BMW_STUDIO_SCIENCE_CASE: '1' },
+    watch: [
+      'packages/media-native/src/science-spec.ts',
+      'packages/feature-video/src/renderer/science-layer-editor.ts',
+      'packages/feature-video/src/renderer/research-diagram-editor.ts',
+      'packages/feature-video/src/renderer/studio-layer-editor.ts'
+    ]
+  },
+  {
+    id: 'studio.layer-packaging',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['media-native', 'feature-video', 'browser-capability'],
+    runner: 'electron',
+    env: { BMW_STUDIO_PACKAGING_CASE: '1' },
+    watch: [
+      'packages/media-native/src/layer-packaging.ts',
+      'packages/feature-video/src/renderer/studio-layer-editor.ts',
+      'packages/feature-video/src/studio-layer-edits.ts'
+    ]
+  },
+  {
+    id: 'studio.text-treatment',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['media-native', 'feature-video', 'browser-capability'],
+    runner: 'electron',
+    env: { BMW_STUDIO_TEXT_CASE: '1' },
+    watch: [
+      'packages/media-native/src/layer-text-treatment.ts',
+      'packages/feature-video/src/renderer/studio-layer-editor.ts',
+      'packages/feature-video/src/video-document.ts'
+    ]
+  },
+  {
+    id: 'video.qbit-playback',
+    file: 'scripts/qbit-playback-audit.ts',
+    layer: 'media',
+    modules: ['media-native'],
+    runner: 'electron',
+    optIn: 'Explicit local sample playback review'
+  },
+  {
+    id: 'video.qbit-stage4-samples',
+    file: 'scripts/qbit-stage4-samples.ts',
+    layer: 'media',
+    modules: ['media-native', 'feature-video', 'browser-capability'],
+    runner: 'electron',
+    optIn: 'BMW_QBIT_SOURCE_INDEX=<explicit authorized local public-video index>'
+  },
+  {
+    id: 'video.qbit-stage3-samples',
+    file: 'scripts/qbit-stage3-samples.ts',
+    layer: 'media',
+    modules: ['media-native', 'feature-video', 'browser-capability'],
+    runner: 'electron',
+    optIn: 'BMW_QBIT_SOURCE_INDEX=<explicit authorized local public-video index>'
+  },
+  {
+    id: 'media.science-diagrams',
+    file: 'scripts/science-diagram-smoke.ts',
+    layer: 'media',
+    modules: ['media-native', 'feature-video'],
+    runner: 'electron',
+    watch: [
+      'packages/media-native/src/science-spec.ts',
+      'packages/media-native/src/media/science-paint.ts',
+      'packages/media-native/src/composition-layers.ts'
+    ]
+  },
+  {
+    id: 'media.layer-packaging',
+    file: 'scripts/layer-packaging-smoke.ts',
+    layer: 'media',
+    modules: ['media-native', 'feature-video'],
+    runner: 'electron',
+    watch: [
+      'packages/media-native/src/layer-packaging.ts',
+      'packages/media-native/src/media/layer-packaging-paint.ts',
+      'packages/media-native/src/media/composition-layers-paint.ts'
+    ]
+  },
+  {
+    id: 'media.text-treatment',
+    file: 'scripts/text-treatment-smoke.ts',
+    layer: 'media',
+    modules: ['media-native', 'feature-video'],
+    runner: 'electron',
+    watch: [
+      'packages/media-native/src/layer-text-treatment.ts',
+      'packages/media-native/src/media/composition-layers-paint.ts',
+      'packages/feature-video/src/studio-layer-edits.ts'
+    ]
+  },
+  {
+    id: 'media.audio-windows',
+    file: 'scripts/audio-window-smoke.ts',
+    layer: 'media',
+    modules: ['media-native', 'feature-video'],
+    runner: 'electron',
+    watch: [
+      'packages/media-native/src/source-audio.ts',
+      'packages/media-native/src/media/composition-audio.ts',
+      'packages/feature-video/src/renderer/studio-preview.ts'
+    ]
+  },
+  {
+    id: 'studio.export-review',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['feature-video', 'media-native', 'browser-capability'],
+    runner: 'electron',
+    env: { BMW_STUDIO_EXPORT_REVIEW_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/',
+      'packages/media-native/src/composition-quality.ts',
+      'packages/media-native/src/card-cues.ts',
+      'packages/media-native/src/media/composition.ts',
+      'packages/media-native/src/media/canvas-text-trace.ts',
+      'packages/media-native/src/media/card-details-paint.ts',
+      'packages/browser-capability/src/bridge-server.ts'
+    ]
+  },
+  node('agent.context', p + 'agent-contract/test/context-sync.test.ts', 'contract', 'agent-contract'),
+  node('agent.conversation', p + 'agent-contract/test/conversation.test.ts', 'contract', 'agent-contract'),
+  {
+    id: 'bmw.agent-assembly',
+    file: 'scripts/agent-assembly.test.ts',
+    layer: 'contract',
+    modules: ['application', 'agent-ui', 'harness-dsh', 'harness-codex', 'harness-qoder', 'harness-workbuddy'],
+    runner: 'node-test'
+  },
+  {
+    id: 'agent.data-migration',
+    file: 'scripts/agent-data-migration.test.ts',
+    layer: 'contract',
+    modules: ['validation', 'platform', 'harness-dsh'],
+    runner: 'node-test'
+  },
+  node('dsh.project-bindings', p + 'harness-dsh/test/project-bindings.test.ts', 'contract', 'harness-dsh'),
+  node('dsh.migration-history', p + 'harness-dsh/test/dsh-migration.test.ts', 'contract', 'harness-dsh'),
+  node('agent.studio-composer', p + 'agent-ui/test/studio-composer-scope.test.ts', 'contract', 'agent-ui'),
+  node('agent.assistant-ui', p + 'agent-contract/test/assistant-ui.test.ts', 'contract', 'agent-contract'),
+  node('agent.driver-settings', p + 'agent-contract/test/driver-settings.test.ts', 'contract', 'agent-contract'),
+  node('platform.agent-settings', p + 'platform/test/agent-settings-controller.test.ts', 'contract', 'platform'),
+  node('codex.settings', p + 'harness-codex/test/codex-settings.test.ts', 'contract', 'harness-codex'),
+  node('codex.installation', p + 'harness-codex/test/codex-installation.test.ts', 'contract', 'harness-codex'),
+  node('qoder.settings', p + 'harness-qoder/test/qoder-settings.test.ts', 'contract', 'harness-qoder'),
+  node('dsh.settings', p + 'harness-dsh/test/dsh-settings.test.ts', 'contract', 'harness-dsh'),
+  node('platform.assistant-controller', p + 'platform/test/assistant-controller.test.ts', 'contract', 'platform'),
+  node('platform.conversation-store', p + 'platform/test/conversation-store.test.ts', 'contract', 'platform'),
+  node('platform.agent-history', p + 'platform/test/agent-history-store.test.ts', 'contract', 'platform'),
+  node('platform.agent-host', p + 'platform/test/agent-host.test.ts', 'contract', 'platform'),
+  node(
+    'browser.session-leases',
+    p + 'browser-capability/test/session-leases.test.ts',
+    'contract',
+    'browser-capability'
+  ),
+  node('codex.policy', p + 'harness-codex/test/codex-policy.test.ts', 'contract', 'harness-codex'),
+  node('codex.backend', p + 'harness-codex/test/codex-backend.test.ts', 'contract', 'harness-codex'),
+  node('dsh.events', p + 'harness-dsh/test/dsh-events.test.ts', 'contract', 'harness-dsh'),
+  node('dsh.backend', p + 'harness-dsh/test/dsh-backend.test.ts', 'contract', 'harness-dsh'),
+  node('qoder.events', p + 'harness-qoder/test/qoder-events.test.ts', 'contract', 'harness-qoder'),
+  node('qoder.backend', p + 'harness-qoder/test/qoder-backend.test.ts', 'contract', 'harness-qoder'),
+  {
+    id: 'harness.official-runtime',
+    file: 'scripts/harness-official-runtime.test.ts',
+    layer: 'integration',
+    modules: ['harness-codex', 'harness-qoder', 'browser-capability', 'application'],
+    runner: 'node-test'
+  },
+  {
+    id: 'workbuddy.runtime',
+    file: 'scripts/workbuddy-runtime.test.ts',
+    layer: 'integration',
+    modules: ['harness-workbuddy', 'browser-capability', 'application'],
+    runner: 'node-test'
+  },
+  node('workbuddy.catalog', p + 'harness-workbuddy/test/workbuddy-catalog.test.ts', 'contract', 'harness-workbuddy'),
+  node('workbuddy.settings', p + 'harness-workbuddy/test/workbuddy-settings.test.ts', 'contract', 'harness-workbuddy'),
+  node('workbuddy.acp', p + 'harness-workbuddy/test/workbuddy-acp.test.ts', 'contract', 'harness-workbuddy'),
+  node('workbuddy.policy', p + 'harness-workbuddy/test/workbuddy-policy.test.ts', 'contract', 'harness-workbuddy'),
+  node('workbuddy.backend', p + 'harness-workbuddy/test/workbuddy-backend.test.ts', 'contract', 'harness-workbuddy'),
+  ...(
+    [
+      'browser-schema',
+      'mcp-tool-catalog',
+      'session-operations',
+      'bridge-shutdown',
+      'browser-deadline',
+      'screenshot-read',
+      'renderer-read',
+      'media-artifact',
+      'tab-policy'
+    ] as const
+  ).map((name, index) =>
+    node(
+      [
+        'browser.schema',
+        'browser.catalog',
+        'browser.operations',
+        'browser.shutdown',
+        'browser.deadline',
+        'browser.screenshot',
+        'browser.renderer-read',
+        'browser.download',
+        'browser.tab-policy'
+      ][index],
+      p + 'browser-capability/test/' + name + '.test.ts',
+      index < 5 ? 'contract' : 'unit',
+      'browser-capability'
+    )
+  ),
+  node('browser.sources', p + 'browser-capability/test/collect-page-source.test.ts', 'contract', 'browser-capability'),
+  node('platform.background-collection', p + 'platform/test/background-collection.test.ts', 'contract', 'platform', [
+    'packages/platform/src/background-collection.ts'
+  ]),
+  node('platform.background-admission', p + 'platform/test/background-admission.test.ts', 'contract', 'platform'),
+  node('platform.sources', p + 'platform/test/project-source-store.test.ts', 'contract', 'platform'),
+  node('video.sources', p + 'feature-video/test/studio-sources.test.ts', 'contract', 'feature-video'),
+  node(
+    'browser.collection-page-pool',
+    p + 'browser-capability/test/collection-page-pool.test.ts',
+    'contract',
+    'browser-capability',
+    [
+      'packages/browser-capability/src/collection-page-pool.ts',
+      'packages/browser-capability/src/collection-page-ready.ts',
+      'packages/browser-capability/src/browser-kernel.ts'
+    ]
+  ),
+  node('browser.host-contract', p + 'browser-capability/test/browser-host.test.ts', 'contract', 'browser-capability'),
+  ...(
+    [
+      'dsh-runtime',
+      'dsh-transport',
+      'dsh-preset',
+      'browser-failure-guard',
+      'workspace-context',
+      'video-case-log'
+    ] as const
+  ).map(name =>
+    node(
+      'dsh.' + name,
+      p + 'harness-dsh/test/' + name + '.test.ts',
+      name === 'browser-failure-guard' || name === 'video-case-log' ? 'unit' : 'contract',
+      'harness-dsh'
+    )
+  ),
+  ...(['media-controller', 'media-processing', 'video-production', 'video-options'] as const).map((name, index) =>
+    node(
+      ['media.controller', 'media.processing', 'media.production', 'media.options'][index],
+      p + 'media-native/test/' + name + '.test.ts',
+      index === 3 ? 'unit' : 'contract',
+      'media-native'
+    )
+  ),
+  node('media.compact-news', p + 'media-native/test/compact-news.test.ts', 'contract', 'media-native'),
+  {
+    id: 'media.scene-clock',
+    file: 'scripts/scene-clock-smoke.ts',
+    layer: 'media',
+    modules: ['media-native', 'feature-video'],
+    runner: 'electron',
+    watch: [
+      'packages/media-native/src/scene-playback-window.ts',
+      'packages/media-native/src/narration-timing.ts',
+      'packages/media-native/src/media/composition-paint.ts',
+      'packages/media-native/src/media/composition-audio.ts',
+      'packages/media-native/src/composition-contract.ts'
+    ]
+  },
+  node('media.speech', p + 'media-native/test/speech.test.ts', 'contract', 'media-native'),
+  node('media.port-contract', p + 'media-native/test/media-port.test.ts', 'contract', 'media-native'),
+  ...(
+    [
+      'project-store',
+      'global-settings-store',
+      'scheduled-task-store',
+      'state-load',
+      'layout-store',
+      'layout-docking',
+      'permission-policy',
+      'menu-policy',
+      'restart-policy',
+      'session-continuity',
+      'browser-user-agent',
+      'project-panel-layering',
+      'driver-boundary',
+      'bmw-catalog',
+      'product-boundaries',
+      'remote-control-boundary'
+    ] as const
+  ).map((name, index) =>
+    node(
+      [
+        'platform.projects',
+        'platform.settings',
+        'platform.schedules',
+        'platform.state',
+        'platform.layout',
+        'platform.docking',
+        'platform.permissions',
+        'platform.menu',
+        'platform.restart',
+        'platform.continuity',
+        'platform.user-agent',
+        'platform.project-panel',
+        'platform.driver-binding',
+        'platform.catalog',
+        'platform.boundaries',
+        'platform.remote-boundary'
+      ][index],
+      p + 'platform/test/' + name + '.test.ts',
+      index >= 13 ? 'boundary' : index === 12 || index === 3 || index === 9 ? 'contract' : 'unit',
+      'platform',
+      name === 'project-panel-layering'
+        ? ['packages/platform/src/main.ts', 'packages/platform/src/renderer/']
+        : undefined
+    )
+  ),
+  node('platform.shell-ipc', p + 'platform/test/shell-ipc.test.ts', 'contract', 'platform'),
+  node('platform.permission-store', p + 'platform/test/permission-store.test.ts', 'contract', 'platform'),
+  node('platform.continuity-state', p + 'platform/test/continuity-state.test.ts', 'contract', 'platform'),
+  {
+    id: 'library.schedules-desktop',
+    file: 'scripts/library-schedule-smoke.ts',
+    layer: 'desktop',
+    modules: ['feature-library', 'platform', 'browser-capability'],
+    runner: 'electron',
+    watch: [
+      'packages/feature-library/',
+      'packages/platform/src/agent-host.ts',
+      'packages/platform/src/feature-contract.ts'
+    ]
+  },
+  {
+    id: 'library.recommendations-desktop',
+    file: 'scripts/library-recommendation-smoke.ts',
+    layer: 'desktop',
+    modules: ['feature-library', 'feature-video', 'platform', 'media-native'],
+    runner: 'electron',
+    watch: [
+      'packages/feature-library/',
+      'packages/feature-video/src/news-',
+      'packages/platform/src/project-record-store.ts'
+    ]
+  },
+  {
+    id: 'library.rolling-desktop',
+    file: 'scripts/library-rolling-smoke.ts',
+    layer: 'desktop',
+    modules: ['feature-library', 'platform', 'browser-capability'],
+    runner: 'electron',
+    watch: ['packages/feature-library/', 'packages/platform/src/project-record-store.ts']
+  },
+  {
+    id: 'library.source-presets-desktop',
+    file: 'scripts/library-source-presets-smoke.ts',
+    layer: 'desktop',
+    modules: ['feature-library', 'platform', 'browser-capability'],
+    runner: 'electron',
+    watch: [
+      'packages/feature-library/src/source-presets.ts',
+      'packages/feature-library/src/renderer/collection-panel.ts',
+      'packages/feature-library/src/rolling-'
+    ]
+  },
+  {
+    id: 'library.background',
+    file: 'scripts/library-background-smoke.ts',
+    layer: 'desktop',
+    modules: ['feature-library', 'platform', 'browser-capability'],
+    runner: 'electron',
+    watch: [
+      'packages/feature-library/',
+      'packages/platform/src/background-collection.ts',
+      'packages/platform/src/assistant-service.ts',
+      'packages/platform/src/agent-host.ts',
+      'packages/platform/src/main.ts',
+      'packages/browser-capability/src/bridge-server.ts',
+      'packages/browser-capability/src/browser-kernel.ts'
+    ]
+  },
+  {
+    id: 'library.news-desktop',
+    file: 'scripts/library-news-smoke.ts',
+    layer: 'desktop',
+    modules: ['feature-library', 'feature-video', 'platform', 'media-native'],
+    runner: 'electron',
+    watch: [
+      'packages/feature-library/',
+      'packages/feature-video/src/news-',
+      'packages/platform/src/workspace-runtime.ts'
+    ]
+  },
+  node('library.materials', p + 'feature-library/test/library.test.ts', 'contract', 'feature-library', [
+    'packages/feature-library/src/library-contract.ts',
+    'packages/feature-library/src/library-service.ts',
+    'packages/feature-library/src/library-transfer.ts',
+    'packages/feature-library/src/library-storage.ts'
+  ]),
+  node('library.source-presets', p + 'feature-library/test/source-presets.test.ts', 'contract', 'feature-library', [
+    'packages/feature-library/src/source-presets.ts',
+    'packages/feature-library/src/rolling-'
+  ]),
+  node('library.collection-batch', p + 'feature-library/test/collection-batch.test.ts', 'contract', 'feature-library', [
+    'packages/feature-library/src/collection-batch',
+    'packages/platform/src/library-sources.ts',
+    'packages/platform/src/project-source-store.ts',
+    'packages/platform/src/background-collection.ts'
+  ]),
+  {
+    id: 'library.collection-batch-desktop',
+    file: 'scripts/library-collection-batch-smoke.ts',
+    layer: 'desktop',
+    modules: ['feature-library', 'platform', 'browser-capability'],
+    runner: 'electron',
+    watch: [
+      'packages/feature-library/',
+      'packages/browser-capability/src/collection-page-pool.ts',
+      'packages/browser-capability/src/browser-kernel.ts',
+      'packages/platform/src/library-sources.ts'
+    ]
+  },
+  node('library.schedules', p + 'feature-library/test/collection-scheduler.test.ts', 'contract', 'feature-library', [
+    'packages/feature-library/src/collection-schedul',
+    'packages/platform/src/agent-host.ts',
+    'packages/platform/src/feature-contract.ts'
+  ]),
+  node('library.recommendations', p + 'feature-library/test/recommendations.test.ts', 'contract', 'feature-library', [
+    'packages/feature-library/src/recommendation-',
+    'packages/feature-library/src/news-',
+    'packages/feature-video/src/news-service.ts',
+    'packages/platform/src/project-record-store.ts'
+  ]),
+  node('library.rolling', p + 'feature-library/test/rolling.test.ts', 'contract', 'feature-library', [
+    'packages/feature-library/src/rolling-',
+    'packages/platform/src/project-record-store.ts'
+  ]),
+  node('library.video-watch', p + 'feature-library/test/video-watch.test.ts', 'contract', 'feature-library', [
+    'packages/feature-library/src/video-watch',
+    'packages/feature-library/src/rolling-'
+  ]),
+  {
+    id: 'library.video-watch-desktop',
+    file: 'scripts/library-video-watch-smoke.ts',
+    layer: 'desktop',
+    modules: ['feature-library', 'platform', 'browser-capability', 'media-native'],
+    runner: 'electron',
+    watch: [
+      'packages/feature-library/',
+      'packages/platform/src/background-collection.ts',
+      'packages/platform/src/library-sources.ts'
+    ]
+  },
+  node('library.streams', p + 'feature-library/test/streams.test.ts', 'contract', 'feature-library', [
+    'packages/feature-library/src/event-store.ts',
+    'packages/feature-library/src/stream-service.ts',
+    'packages/feature-library/src/news-research-service.ts',
+    'packages/platform/src/project-record-store.ts',
+    'packages/platform/src/source-archive.ts'
+  ]),
+  node('platform.record-capacity', p + 'platform/test/record-capacity.test.ts', 'contract', 'platform', [
+    'packages/platform/src/project-record-store.ts',
+    'packages/platform/src/project-source-store.ts',
+    'packages/platform/src/source-archive.ts',
+    'packages/media-native/src/source-contract.ts'
+  ]),
+  node('library.exports', p + 'feature-library/test/exports.test.ts', 'contract', 'feature-library', [
+    'packages/feature-library/src/export-',
+    'packages/feature-video/src/studio-service.ts',
+    'packages/feature-video/src/studio-store.ts',
+    'packages/feature-video/index.ts'
+  ]),
+  node('library.research', p + 'feature-library/test/research.test.ts', 'contract', 'feature-library', [
+    'packages/feature-library/src/research-',
+    'packages/feature-library/src/material-purpose.ts',
+    'packages/feature-library/src/library-service.ts',
+    'packages/feature-library/index.ts'
+  ]),
+  node('platform.library-sources', p + 'platform/test/library-sources.test.ts', 'contract', 'platform'),
+  node('platform.workspaces', p + 'platform/test/workspace-runtime.test.ts', 'contract', 'platform'),
+  node('platform.feature-contract', p + 'platform/test/feature-contract.test.ts', 'contract', 'platform'),
+  {
+    id: 'video.schema-publication',
+    file: 'scripts/video-schema-document.ts',
+    layer: 'contract',
+    modules: ['feature-video', 'validation'],
+    runner: 'node',
+    watch: ['packages/feature-video/src/', 'docs/schemas/']
+  },
+  node('video.schema', p + 'feature-video/test/video-document.test.ts', 'contract', 'feature-video', [
+    'packages/feature-video/src/',
+    'packages/feature-video/index.ts',
+    'docs/schemas/',
+    'scripts/video-schema-document.ts'
+  ]),
+  ...(['studio-materials', 'video-studio', 'video-settings', 'video-boundary'] as const).map((name, index) =>
+    node(
+      ['video.materials', 'video.studio', 'video.settings', 'video.boundary'][index],
+      p + 'feature-video/test/' + name + '.test.ts',
+      index === 3 ? 'boundary' : index === 0 ? 'unit' : 'contract',
+      'feature-video'
+    )
+  ),
+  node('architecture.boundaries', 'scripts/test/module-boundary.test.ts', 'boundary', 'validation'),
+  node('validation.selection', 'scripts/test/test-selection.test.ts', 'unit', 'validation', [
+    'scripts/module-catalog.ts',
+    'scripts/test-catalog.ts',
+    'scripts/source-graph.ts',
+    'scripts/test-selection.ts',
+    'scripts/test-runner.ts'
+  ]),
+  {
+    id: 'api.types',
+    file: 'scripts/test/public-interfaces.type-test.ts',
+    layer: 'type',
+    modules: ['validation', 'platform', 'agent-contract', 'browser-capability', 'media-native', 'feature-video'],
+    runner: 'type',
+    watch: [
+      'packages/agent-contract/index.ts',
+      'packages/browser-capability/src/browser-host.ts',
+      'packages/browser-capability/src/browser-schema.ts',
+      'packages/platform/src/feature-contract.ts',
+      'packages/platform/src/product-definition.ts',
+      'packages/media-native/src/media-port.ts'
+    ]
+  },
+  {
+    id: 'sources',
+    file: 'scripts/source-studio-smoke.ts',
+    layer: 'media',
+    modules: ['platform', 'browser-capability', 'media-native', 'feature-video'],
+    runner: 'electron',
+    watch: [
+      'packages/platform/src/project-source-store.ts',
+      'packages/browser-capability/src/collect-page-source.ts',
+      'packages/browser-capability/src/page-scope.ts',
+      'packages/browser-capability/src/browser-kernel.ts',
+      'packages/browser-capability/src/browser-host.ts',
+      'packages/media-native/src/source-contract.ts',
+      'packages/media-native/src/media-contract.ts',
+      'packages/media-native/src/media-processor.ts',
+      'packages/media-native/src/media/processing.ts',
+      'packages/feature-video/src/studio-sources.ts',
+      'packages/feature-video/src/studio-service.ts',
+      'packages/feature-video/src/renderer/studio-source-editor.ts',
+      'packages/feature-video/src/renderer/studio.css',
+      'packages/feature-video/src/renderer/studio.ts',
+      'packages/feature-video/src/renderer/studio.html'
+    ]
+  },
+  {
+    id: 'assistant.default',
+    file: 'scripts/assistant-default-suite.ts',
+    layer: 'integration',
+    modules: [
+      'application',
+      'platform',
+      'agent-contract',
+      'agent-ui',
+      'harness-dsh',
+      'harness-codex',
+      'harness-qoder',
+      'harness-workbuddy',
+      'browser-capability',
+      'feature-video'
+    ],
+    runner: 'node',
+    watch: [
+      'scripts/product-entry.ts',
+      'scripts/assistant-default-case.ts',
+      'apps/bmw/agent-assembly.ts',
+      'packages/platform/src/main.ts',
+      'packages/platform/src/assistant-service.ts',
+      'packages/platform/src/assistant-controller.ts',
+      'packages/platform/src/scheduled-task-manager.ts',
+      'packages/agent-ui/'
+    ]
+  },
+  {
+    id: 'assistant.application',
+    file: 'scripts/assistant-application-smoke.ts',
+    layer: 'integration',
+    modules: ['platform', 'agent-contract', 'agent-ui', 'browser-capability', 'feature-video'],
+    runner: 'electron',
+    watch: [
+      'packages/platform/src/main.ts',
+      'packages/platform/src/assistant-service.ts',
+      'packages/platform/src/assistant-controller.ts',
+      'packages/platform/src/agent-host.ts',
+      'packages/agent-ui/'
+    ]
+  },
+  {
+    id: 'assistant.schedules',
+    file: 'scripts/assistant-application-smoke.ts',
+    layer: 'integration',
+    modules: ['platform', 'agent-contract', 'agent-ui', 'browser-capability', 'feature-video'],
+    runner: 'electron',
+    env: { BMW_ASSISTANT_SCHEDULE_CASE: '1' },
+    watch: [
+      'packages/platform/src/main.ts',
+      'packages/platform/src/assistant-service.ts',
+      'packages/platform/src/session-service.ts',
+      'packages/platform/src/scheduled-task-manager.ts',
+      'packages/platform/src/scheduled-task-store.ts',
+      'packages/feature-video/src/studio-service.ts'
+    ]
+  },
+  ...(['conversations', 'preferences', 'history'] as const).flatMap(kind =>
+    (['retry', 'exit'] as const).map(scenario => ({
+      id: 'assistant.startup.' + kind + '.' + scenario,
+      file: 'scripts/assistant-application-smoke.ts',
+      layer: 'integration' as const,
+      modules: ['platform', 'agent-contract', 'agent-ui'] as const,
+      runner: 'electron' as const,
+      env: { BMW_ASSISTANT_STARTUP_KIND: kind, BMW_ASSISTANT_STARTUP_SCENARIO: scenario },
+      watch: [
+        'packages/platform/src/main.ts',
+        'packages/platform/src/assistant-service.ts',
+        'packages/platform/src/conversation-store.ts',
+        'packages/platform/src/agent-history-store.ts',
+        'packages/platform/src/agent-preference-store.ts'
+      ]
+    }))
+  ),
+  {
+    id: 'driver',
+    file: 'scripts/agent-driver-smoke.ts',
+    layer: 'integration',
+    modules: ['platform', 'agent-contract', 'browser-capability'],
+    runner: 'electron',
+    watch: [
+      'packages/platform/src/shell-ipc.ts',
+      'packages/platform/src/preload/shell-preload.cts',
+      'packages/platform/src/permission-store.ts',
+      'packages/platform/src/main.ts',
+      'packages/platform/src/project-store.ts',
+      'packages/platform/src/feature-contract.ts',
+      'packages/agent-contract/',
+      'packages/browser-capability/src/bridge-server.ts',
+      'packages/browser-capability/src/browser-mcp-server.ts',
+      'scripts/fixture-browser-client.ts',
+      'packages/browser-capability/src/browser-schema.ts',
+      'packages/browser-capability/src/tool-catalog.ts',
+      'packages/browser-capability/src/browser-host.ts',
+      'packages/browser-capability/src/browser-kernel.ts'
+    ]
+  },
+  {
+    id: 'startup-recovery',
+    file: 'scripts/state-load-smoke.ts',
+    layer: 'integration',
+    modules: ['platform'],
+    runner: 'electron',
+    env: { BMW_STATE_STARTUP_SCENARIO: 'retry' },
+    watch: [
+      'packages/platform/src/layout-store.ts',
+      'packages/platform/src/permission-store.ts',
+      'packages/platform/src/session-continuity.ts',
+      'packages/platform/src/main.ts',
+      'packages/platform/src/state-load.ts',
+      'packages/platform/src/project-store.ts',
+      'packages/platform/src/global-settings-store.ts',
+      'packages/platform/src/scheduled-task-store.ts'
+    ]
+  },
+  {
+    id: 'startup-exit',
+    file: 'scripts/state-load-smoke.ts',
+    layer: 'integration',
+    modules: ['platform'],
+    runner: 'electron',
+    env: { BMW_STATE_STARTUP_SCENARIO: 'exit' },
+    watch: [
+      'packages/platform/src/layout-store.ts',
+      'packages/platform/src/permission-store.ts',
+      'packages/platform/src/session-continuity.ts',
+      'packages/platform/src/main.ts',
+      'packages/platform/src/state-load.ts',
+      'packages/platform/src/project-store.ts',
+      'packages/platform/src/global-settings-store.ts',
+      'packages/platform/src/scheduled-task-store.ts'
+    ]
+  },
+  ...(['permissions', 'layout', 'continuity-config', 'continuity-snapshot'] as const).flatMap(kind =>
+    (['retry', 'exit'] as const).map(scenario => ({
+      id: 'startup.' + kind + '.' + scenario,
+      file: 'scripts/state-load-smoke.ts',
+      layer: 'integration' as const,
+      modules: ['platform'] as const,
+      runner: 'electron' as const,
+      env: { BMW_STATE_STARTUP_KIND: kind, BMW_STATE_STARTUP_SCENARIO: scenario },
+      watch: [
+        'packages/platform/src/main.ts',
+        'packages/platform/src/state-load.ts',
+        'packages/platform/src/project-store.ts',
+        'packages/platform/src/global-settings-store.ts',
+        'packages/platform/src/scheduled-task-store.ts',
+        'packages/platform/src/layout-store.ts',
+        'packages/platform/src/permission-store.ts',
+        'packages/platform/src/session-continuity.ts'
+      ]
+    }))
+  ),
+  {
+    id: 'dsh',
+    file: 'scripts/dsh-compatibility-smoke.ts',
+    layer: 'integration',
+    modules: ['harness-dsh', 'agent-contract'],
+    runner: 'node'
+  },
+  ...(['workspace', 'projects', 'settings', 'native'] as const).map(group => ({
+    id: 'desktop.' + group,
+    file: 'scripts/desktop-smoke.ts',
+    layer: 'desktop' as const,
+    runner: 'desktop' as const,
+    group,
+    modules: [
+      'platform',
+      'harness-dsh',
+      'browser-capability',
+      'feature-video',
+      ...(group === 'workspace' ? ['feature-library' as const] : [])
+    ] as const,
+    watch: [
+      'scripts/desktop-suite.ts',
+      'packages/platform/src/main.ts',
+      'packages/platform/src/preload/',
+      'packages/platform/src/renderer/shell.html',
+      'packages/platform/src/renderer/shell.css',
+      ...(group === 'workspace'
+        ? [
+            'packages/feature-library/',
+            'packages/platform/src/workspace-runtime.ts',
+            'packages/platform/src/feature-contract.ts',
+            'packages/feature-video/src/studio-runtime.ts',
+            'packages/feature-video/src/renderer/studio.html',
+            'packages/browser-capability/src/browser-host.ts'
+          ]
+        : []),
+      ...(group === 'projects'
+        ? [
+            'packages/platform/src/project-store.ts',
+            'packages/agent-contract/',
+            'packages/platform/src/session-service.ts',
+            'packages/agent-ui/',
+            'packages/browser-capability/src/browser-kernel.ts',
+            'packages/browser-capability/src/tab-policy.ts'
+          ]
+        : []),
+      ...(group === 'settings'
+        ? [
+            'packages/platform/src/global-settings-store.ts',
+            'packages/platform/src/layout-store.ts',
+            'packages/media-native/src/video-options',
+            'packages/feature-video/src/video-settings.ts'
+          ]
+        : []),
+      ...(group === 'native'
+        ? [
+            'packages/platform/src/layout',
+            'packages/platform/src/menu-policy.ts',
+            'packages/platform/src/project-store.ts',
+            'packages/agent-ui/src/preload/'
+          ]
+        : []),
+      'packages/platform/src/renderer/shell.ts'
+    ]
+  })),
+  {
+    id: 'studio.next',
+    file: 'scripts/studio-next-smoke.ts',
+    layer: 'integration',
+    modules: ['feature-video', 'media-native'],
+    runner: 'electron',
+    watch: [
+      'packages/feature-video/',
+      'packages/media-native/src/speech-',
+      'packages/media-native/src/composition-contract.ts',
+      'packages/media-native/src/narration-timing.ts',
+      'packages/media-native/src/caption-export.ts',
+      'packages/media-native/src/media/composition',
+      'packages/media-native/src/visual-segments.ts',
+      'packages/media-native/src/focus-contract.ts'
+    ]
+  },
+  {
+    id: 'studio.schema',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native', 'browser-capability'],
+    runner: 'electron',
+    env: { BMW_STUDIO_SCHEMA_CASE: '1' },
+    watch: ['packages/feature-video/', 'scripts/video-schema-document.ts', 'docs/schemas/']
+  },
+  {
+    id: 'studio.long-film',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native'],
+    runner: 'electron',
+    env: { BMW_STUDIO_LONG_CASE: '1' },
+    watch: [
+      'packages/feature-video/',
+      'packages/media-native/src/composition-limits.ts',
+      'packages/media-native/src/media/composition-audio.ts',
+      'packages/media-native/src/composition-contract.ts'
+    ]
+  },
+  {
+    id: 'studio.workflow-entry',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native'],
+    runner: 'electron',
+    env: { BMW_STUDIO_WORKFLOW_ENTRY_CASE: '1' },
+    watch: ['packages/feature-video/src/renderer/', 'packages/feature-video/src/studio-runtime.ts']
+  },
+  {
+    id: 'studio.materials-entry',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'browser-capability'],
+    runner: 'electron',
+    env: { BMW_STUDIO_MATERIALS_ENTRY_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/studio-assistant.ts',
+      'packages/feature-video/src/studio-runtime.ts',
+      'packages/feature-video/src/renderer/'
+    ]
+  },
+  {
+    id: 'studio.visual-effects',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native'],
+    runner: 'electron',
+    env: { BMW_STUDIO_VISUAL_EFFECTS_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/renderer/',
+      'packages/media-native/src/visual-effects.ts',
+      'packages/media-native/src/composition-contract.ts',
+      'packages/media-native/src/visual-segments.ts',
+      'packages/media-native/src/composition-layers.ts',
+      'packages/media-native/src/media/composition-paint.ts',
+      'packages/media-native/src/media/composition-layers-paint.ts',
+      'packages/feature-video/src/studio-main-edits.ts',
+      'packages/feature-video/src/studio-layer-edits.ts',
+      'packages/feature-video/src/studio-store.ts'
+    ]
+  },
+  {
+    id: 'studio.main-mute',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native'],
+    runner: 'electron',
+    env: { BMW_STUDIO_MAIN_MUTE_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/renderer/',
+      'packages/media-native/src/narration-timing.ts',
+      'packages/media-native/src/composition-contract.ts',
+      'packages/media-native/src/media/composition-audio.ts',
+      'packages/media-native/src/source-audio.ts',
+      'packages/feature-video/src/studio-main-edits.ts',
+      'packages/feature-video/src/studio-contract.ts',
+      'packages/feature-video/src/studio-store.ts'
+    ]
+  },
+  {
+    id: 'studio.track-menu',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native'],
+    runner: 'electron',
+    env: { BMW_STUDIO_TRACK_MENU_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/renderer/',
+      'packages/feature-video/src/studio-layer-edits.ts',
+      'packages/feature-video/src/studio-store.ts',
+      'packages/media-native/src/composition-layers.ts',
+      'packages/media-native/src/media/composition-audio.ts',
+      'packages/media-native/src/media/composition-layers-paint.ts'
+    ]
+  },
+  {
+    id: 'studio.card-text',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['feature-video', 'media-native'],
+    runner: 'electron',
+    env: { BMW_STUDIO_CARD_TEXT_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/renderer/studio-card-text.ts',
+      'packages/feature-video/src/renderer/studio-cards.ts',
+      'packages/feature-video/src/renderer/studio-preview.ts',
+      'packages/feature-video/src/renderer/studio.ts',
+      'packages/feature-video/src/renderer/studio.css',
+      'packages/media-native/src/media/composition-paint.ts'
+    ]
+  },
+  {
+    id: 'studio.news-options',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['feature-video', 'media-native'],
+    runner: 'electron',
+    env: { BMW_STUDIO_NEWS_OPTIONS_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/renderer/studio-preview.ts',
+      'packages/feature-video/src/renderer/studio-card-text.ts',
+      'packages/feature-video/src/renderer/studio.ts',
+      'packages/feature-video/src/studio-contract.ts',
+      'packages/feature-video/src/studio-service.ts',
+      'packages/media-native/src/video-options-form.ts',
+      'packages/media-native/src/media/composition-paint.ts'
+    ]
+  },
+  {
+    id: 'studio.card-pair',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native'],
+    runner: 'electron',
+    env: { BMW_STUDIO_CARD_PAIR_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/renderer/studio-cards.ts',
+      'packages/feature-video/src/renderer/studio.css',
+      'packages/feature-video/src/renderer/studio.ts',
+      'packages/feature-video/src/renderer/studio-workflow.ts',
+      'packages/feature-video/src/studio-runtime.ts',
+      'packages/feature-video/src/studio-store.ts'
+    ]
+  },
+  {
+    id: 'studio.reference-analysis',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native', 'browser-capability'],
+    runner: 'electron',
+    env: { BMW_STUDIO_REFERENCE_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/',
+      'packages/feature-video/index.ts',
+      'packages/browser-capability/src/bridge-server.ts'
+    ]
+  },
+  {
+    id: 'studio.review-adoption',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native', 'browser-capability'],
+    runner: 'electron',
+    env: { BMW_STUDIO_REVIEW_CASE: '1' },
+    watch: ['packages/feature-video/src/', 'packages/feature-video/index.ts']
+  },
+  {
+    id: 'studio.production-recovery',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native', 'browser-capability'],
+    runner: 'electron',
+    env: { BMW_STUDIO_PRODUCTION_RECOVERY_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/renderer/studio.ts',
+      'packages/feature-video/src/studio-service.ts',
+      'packages/feature-video/src/studio-runtime.ts',
+      'packages/feature-video/src/studio-store.ts',
+      'packages/media-native/src/media-controller.ts'
+    ]
+  },
+  {
+    id: 'studio.bound-scene-split',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native'],
+    runner: 'electron',
+    env: { BMW_STUDIO_BOUND_SCENE_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/studio-scene-split.ts',
+      'packages/feature-video/src/studio-speech-origin.ts',
+      'packages/feature-video/src/studio-speech-contract.ts',
+      'packages/feature-video/src/studio-source-speech-contract.ts',
+      'packages/feature-video/src/studio-store.ts',
+      'packages/feature-video/src/studio-service.ts',
+      'packages/feature-video/src/studio-schema.ts',
+      'packages/feature-video/src/renderer/studio-main-editor.ts'
+    ]
+  },
+  {
+    id: 'studio.whole-scene-split',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native'],
+    runner: 'electron',
+    env: { BMW_STUDIO_WHOLE_SCENE_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/studio-scene-split.ts',
+      'packages/feature-video/src/studio-layer-edits.ts',
+      'packages/feature-video/src/studio-store.ts',
+      'packages/feature-video/src/studio-service.ts',
+      'packages/feature-video/src/renderer/studio-main-editor.ts',
+      'packages/feature-video/src/renderer/studio.ts',
+      'packages/media-native/src/scene-playback-window.ts',
+      'packages/media-native/src/media/composition-audio.ts'
+    ]
+  },
+  {
+    id: 'studio.approved-history',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native'],
+    runner: 'electron',
+    env: { BMW_STUDIO_SNAPSHOT_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/studio-runtime.ts',
+      'packages/feature-video/src/studio-snapshot-proof.ts',
+      'packages/feature-video/src/studio-store.ts',
+      'packages/feature-video/src/studio-service.ts',
+      'packages/feature-video/src/studio-contract.ts',
+      'packages/feature-video/src/renderer/studio.ts'
+    ]
+  },
+  {
+    id: 'studio.source-caption-rebind',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native'],
+    runner: 'electron',
+    env: { BMW_STUDIO_SOURCE_REBIND_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/studio-source-speech-contract.ts',
+      'packages/feature-video/src/studio-source-speech.ts',
+      'packages/feature-video/src/studio-store.ts',
+      'packages/feature-video/src/studio-main-edits.ts',
+      'packages/feature-video/src/renderer/studio-main-editor.ts'
+    ]
+  },
+  {
+    id: 'studio.layer-fade-continuity',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native'],
+    runner: 'electron',
+    env: { BMW_STUDIO_LAYER_FADE_CASE: '1' },
+    watch: [
+      'packages/feature-video/src/studio-layer-edits.ts',
+      'packages/feature-video/src/renderer/studio-layer-editor.ts',
+      'packages/media-native/src/composition-layers.ts',
+      'packages/media-native/src/media/composition-audio.ts'
+    ]
+  },
+  {
+    id: 'studio.workspace-resume',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'desktop',
+    modules: ['platform', 'feature-video', 'media-native'],
+    runner: 'electron',
+    env: { BMW_STUDIO_RESUME_CASE: '1' },
+    watch: ['packages/feature-video/src/studio-runtime.ts', 'packages/feature-video/src/renderer/studio.ts']
+  },
+  {
+    id: 'studio',
+    file: 'scripts/video-studio-smoke.ts',
+    layer: 'integration',
+    modules: ['feature-video', 'media-native'],
+    runner: 'electron',
+    watch: [
+      'packages/media-native/src/image-contract.ts',
+      'packages/media-native/src/media/image-decoder.ts',
+      'packages/media-native/src/visual-segments.ts',
+      'packages/media-native/src/focus-contract.ts',
+      'packages/media-native/src/caption-export.ts',
+      'packages/media-native/src/text-export.ts',
+      'packages/media-native/src/media-contract.ts',
+      'packages/media-native/src/media/processing.ts',
+      'packages/media-native/src/media-processor.ts',
+      'packages/media-native/src/media-controller.ts',
+      'packages/feature-video/',
+      'packages/browser-capability/src/browser-host.ts',
+      'packages/platform/src/feature-contract.ts',
+      'packages/media-native/src/media-port.ts',
+      'packages/media-native/src/video-options',
+      'packages/media-native/src/composition-contract.ts',
+      'packages/media-native/src/narration-timing.ts',
+      'packages/media-native/src/media/composition-paint.ts',
+      'packages/media-native/src/media/composition-audio.ts',
+      'packages/media-native/src/composition-layers.ts',
+      'packages/media-native/src/media/composition-layers-paint.ts',
+      'packages/media-native/src/source-audio.ts',
+      'packages/media-native/src/media/linear-frames.ts'
+    ]
+  },
+  {
+    id: 'browser.background',
+    file: 'scripts/browser-background-smoke.ts',
+    layer: 'integration',
+    modules: ['browser-capability'],
+    runner: 'electron',
+    watch: [
+      'packages/browser-capability/src/browser-kernel.ts',
+      'packages/browser-capability/src/renderer-read.ts',
+      'packages/browser-capability/src/screenshot-read.ts',
+      'packages/browser-capability/src/media-artifact.ts',
+      'packages/browser-capability/src/bridge-server.ts'
+    ]
+  },
+  {
+    id: 'media.capture',
+    file: 'scripts/media-capture-smoke.ts',
+    layer: 'media',
+    modules: ['media-native', 'browser-capability'],
+    runner: 'electron',
+    watch: [
+      'packages/media-native/src/media-controller.ts',
+      'packages/media-native/src/capture-policy.ts',
+      'packages/browser-capability/src/page-recording-events.ts',
+      'packages/media-native/src/recording-contract.ts',
+      'packages/media-native/src/media/media.',
+      'packages/media-native/src/preload/media-preload.cts',
+      'packages/browser-capability/src/browser-kernel.ts'
+    ]
+  },
+  {
+    id: 'media.processing-runtime',
+    file: 'scripts/media-processing-smoke.ts',
+    layer: 'media',
+    modules: ['media-native'],
+    runner: 'electron',
+    watch: [
+      'packages/media-native/src/hls-subtitles.ts',
+      'packages/media-native/src/media-preservation.ts',
+      'packages/media-native/src/preservation-packets.ts',
+      'packages/browser-capability/src/publisher-video.ts',
+      'packages/browser-capability/src/browser-schema.ts',
+      'packages/browser-capability/src/browser-capability-registry.ts',
+      'packages/browser-capability/src/browser-kernel.ts',
+      'packages/browser-capability/src/bridge-server.ts',
+      'packages/media-native/src/video-element-capture.ts',
+      'packages/media-native/src/capture-source-index.ts',
+      'packages/media-native/src/capture-timeline.ts',
+      'packages/media-native/src/capture-mux.ts',
+      'packages/media-native/src/image-drawing-contract.ts',
+      'packages/media-native/src/media/image-drawing.ts',
+      'packages/media-native/src/image-contract.ts',
+      'packages/media-native/src/media/image-decoder.ts',
+      'packages/media-native/src/media-processor.ts',
+      'packages/media-native/src/media-controller.ts',
+      'packages/media-native/src/media-contract.ts',
+      'packages/media-native/src/audio-evidence-contract.ts',
+      'packages/media-native/src/media/audio-evidence.ts',
+      'packages/media-native/src/artifact-job-io.ts',
+      'packages/media-native/src/media/processing.',
+      'packages/media-native/src/media/linear-frames.ts',
+      'packages/media-native/src/preload/processing-preload.cts'
+    ]
+  },
+  {
+    id: 'video',
+    file: 'scripts/video-production-smoke.ts',
+    layer: 'media',
+    modules: ['media-native', 'feature-video'],
+    runner: 'electron',
+    watch: [
+      'packages/media-native/src/image-contract.ts',
+      'packages/media-native/src/media/image-decoder.ts',
+      'packages/media-native/src/visual-segments.ts',
+      'packages/media-native/src/focus-contract.ts',
+      'packages/media-native/src/text-export.ts',
+      'packages/media-native/src/media-contract.ts',
+      'packages/media-native/src/composition',
+      'packages/media-native/src/media/composition',
+      'packages/media-native/src/source-audio.ts',
+      'packages/media-native/src/artifact-job-io.ts',
+      'packages/media-native/src/video-options.ts',
+      'packages/media-native/src/media-port.ts',
+      'packages/media-native/src/media-controller.ts',
+      'packages/media-native/src/preload/composition-preload.cts',
+      'packages/feature-video/index.ts',
+      'packages/feature-video/src/video-settings.ts'
+    ]
+  },
+  {
+    id: 'speech.decode-clock',
+    file: 'scripts/speech-decode-repro.ts',
+    layer: 'media',
+    modules: ['media-native'],
+    runner: 'electron',
+    watch: ['packages/media-native/src/media/speech-normalize.ts', 'packages/media-native/src/speech-contract.ts']
+  },
+  {
+    id: 'speech',
+    file: 'scripts/speech-alignment-smoke.ts',
+    layer: 'media',
+    modules: ['media-native'],
+    runner: 'electron',
+    watch: [
+      'packages/media-native/src/speech-',
+      'packages/media-native/src/local-asr-assets.ts',
+      'packages/media-native/src/media/speech-',
+      'packages/media-native/src/media-controller.ts',
+      'packages/media-native/src/media-contract.ts',
+      'packages/media-native/src/media-processor.ts',
+      'packages/media-native/src/artifact-job-io.ts',
+      'packages/media-native/src/media/processing.ts'
+    ]
+  },
+  {
+    id: 'qwenNarration',
+    file: 'scripts/narration-smoke.ts',
+    env: { BMW_TTS_TEST_PROVIDER: 'qwen-fixture' },
+    layer: 'media',
+    modules: ['media-native', 'feature-video'],
+    runner: 'electron',
+    watch: [
+      'packages/media-native/src/qwen-narration.ts',
+      'packages/media-native/src/narration',
+      'packages/media-native/src/media-controller.ts',
+      'packages/feature-video/src/video-settings.ts'
+    ]
+  },
+  {
+    id: 'localNarration',
+    file: 'scripts/narration-smoke.ts',
+    env: { BMW_TTS_TEST_PROVIDER: 'local-matcha' },
+    layer: 'media',
+    modules: ['media-native'],
+    runner: 'electron',
+    watch: [
+      'packages/media-native/src/image-contract.ts',
+      'packages/media-native/src/media-contract.ts',
+      'packages/media-native/src/narration',
+      'packages/media-native/src/local-tts-assets.ts',
+      'packages/media-native/src/media/narration',
+      'packages/media-native/src/media-controller.ts',
+      'packages/media-native/src/media-port.ts',
+      'packages/media-native/src/preload/narration-preload.cts',
+      'scripts/install-local-tts.ts'
+    ]
+  },
+  ...(['qoder-cn', 'codex', 'dsh'] as const).map(driverId => ({
+    id: 'external.assistant.' + driverId,
+    file: 'scripts/native-assistant-case.ts',
+    layer: 'external' as const,
+    modules: [
+      'agent-ui',
+      'platform',
+      'browser-capability',
+      'feature-video',
+      'harness-qoder',
+      'harness-codex',
+      'harness-dsh'
+    ] as const,
+    runner: 'electron' as const,
+    env: { BMW_NATIVE_DRIVER: driverId },
+    optIn: 'BMW_NATIVE_DRIVER=' + driverId
+  })),
+  {
+    id: 'external.vision',
+    file: 'scripts/vision-model-smoke.ts',
+    layer: 'external',
+    modules: ['browser-capability', 'harness-dsh'],
+    runner: 'electron',
+    optIn: 'BMW_VISION_TEST=1'
+  },
+  {
+    id: 'external.edge',
+    file: 'scripts/narration-smoke.ts',
+    layer: 'external',
+    modules: ['media-native'],
+    runner: 'electron',
+    env: { BMW_TTS_TEST_PROVIDER: 'edge' },
+    optIn: 'BMW_TTS_TEST_PROVIDER=edge'
+  }
 ]

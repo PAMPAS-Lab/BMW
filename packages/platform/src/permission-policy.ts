@@ -9,10 +9,7 @@ const PROMPT_ONCE = new Set([
   'hid'
 ])
 
-const ALLOW_WITHOUT_PROMPT = new Set([
-  'fullscreen',
-  'clipboard-sanitized-write'
-])
+const ALLOW_WITHOUT_PROMPT = new Set(['fullscreen', 'clipboard-sanitized-write'])
 
 /**
  * Browser pages do not get to turn ordinary browsing into a stream of native

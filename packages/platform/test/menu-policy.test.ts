@@ -1,9 +1,17 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { isApplicationMenuShortcut, isSavePageShortcut, pageSaveType, suggestedPageFilename } from '../src/menu-policy.js'
+import {
+  isApplicationMenuShortcut,
+  isSavePageShortcut,
+  pageSaveType,
+  suggestedPageFilename
+} from '../src/menu-policy.js'
 
 test('builds safe webpage filenames and selects complete or single-file saves', () => {
-  assert.equal(suggestedPageFilename('Three.js: Scene / Study?', 'https://example.com'), 'Three.js- Scene - Study-.html')
+  assert.equal(
+    suggestedPageFilename('Three.js: Scene / Study?', 'https://example.com'),
+    'Three.js- Scene - Study-.html'
+  )
   assert.equal(suggestedPageFilename('', 'https://example.com/path'), 'example.com.html')
   assert.equal(pageSaveType('/tmp/research.mhtml'), 'MHTML')
   assert.equal(pageSaveType('/tmp/research.html'), 'HTMLComplete')

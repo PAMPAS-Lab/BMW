@@ -4,227 +4,1401 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import crypto from 'node:crypto'
-import {Ajv2020 as Ajv} from 'ajv/dist/2020.js'
-import {ProjectSourceStore} from '../../platform/src/project-source-store.js'
-import {NewsService,requireNewsSelection} from '../src/news-service.js'
-import {NewsJournal,newsFingerprint} from '../src/news-store.js'
-import {assertNewsCandidates,newsCandidateSchema,newsFresh,newsPublication,NEWS_WINDOW_MS} from '../src/news-contract.js'
-import type {NewsTopicCandidate} from '../src/news-contract.js'
-import {VideoStudioService} from '../src/studio-service.js'
-import type {StudioKernel} from '../src/studio-service.js'
-import {VideoStudioStore} from '../src/studio-store.js'
-import {NewsPreparationService} from '../src/news-preparation.js'
-import {newStudioScene,assertStudioRequest} from '../src/studio-contract.js'
-import {EventEmitter} from 'node:events'
-import type {WebContents} from 'electron'
-import {prepareSourceScreenshot} from '../../browser-capability/src/source-screenshot.js'
-import {selectedVideoVisual} from '../src/news-visual-source.js'
-test('Author configures all news output parameters and title in one revision; identical configuration preserves revision and stale writes fail',async()=>{
- const f=fixture();try{
-  const candidate=await f.add();await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:[candidate]},'agent')
-  const board=f.news.journal.read();await f.news.execute({operation:'select-news-topic',expectedTopicRevision:board.revision,topicId:candidate.id,baseFingerprint:newsFingerprint(board.topics)},'user')
-  const store=new VideoStudioStore(f.root,f.owner.sessionId),draft=store.read(f.news.journal.read().selection!.draftId),studio=new VideoStudioService(f.kernel)
-  assert.equal(draft.tts.provider,'edge-readaloud','Topic choice must not impose a second narration preset')
-  const request={operation:'configure',draftId:draft.id,expectedRevision:draft.revision,title:'原声\n新闻',options:{aspectRatio:'9:16',resolution:'720p',fps:24,tts:{provider:'qwen-tts',voice:'longanlang_v3.1',ratePercent:0}}}
-  await studio.execute(request,undefined,f.owner)
-  const configured=store.read(draft.id);assert.equal(configured.revision,draft.revision+1);assert.equal(configured.title,'原声\n新闻');assert.deepEqual([configured.width,configured.height,configured.fps],[720,1280,24]);assert.deepEqual(configured.tts,{provider:'qwen-tts',voice:'longanlang_v3.1',ratePercent:0})
-  assert.deepEqual(configured.preparation,draft.preparation);assert.equal(f.nativeCalls,0)
-  await studio.execute({...request,expectedRevision:configured.revision},undefined,f.owner);assert.equal(store.read(draft.id).revision,configured.revision)
-  await assert.rejects(studio.execute(request,undefined,f.owner),/STUDIO_CONFLICT/)
-  await assert.rejects(studio.execute({...request,expectedRevision:configured.revision,options:{fps:99}},undefined,f.owner),/fps|frame/i)
-  assert.equal(store.read(draft.id).revision,configured.revision)
- }finally{f.close()}
-})
-import {mediaArtifactHash,saveMediaDerivation,saveNativeVideoOrigin,readNativeVideoOrigin} from '@bmw-agent/media-native/derivation'
-test('Live broadcast publication labels retain original day precision and never turn relative or future dates into fresh news',()=>{
- const now=Date.parse('2026-10-18T09:00:00Z')
- for(const value of ['直播开始日期：2026年10月17日','Streamed live on Oct 17, 2026','Premiered on October 17, 2026','首播日期：2026年10月17日']){assert.equal(newsPublication(value,now).publishedAt,'2026-10-17');assert.equal(newsPublication(value,now).precision,'day');assert.equal(newsFresh(value,now),true)}
- for(const value of ['直播开始日期：2天前','Streamed live on Oct 20, 2026','直播开始日期：2026年10月17日、2026年10月18日','Streamed live on Oct 10, 2026'])assert.equal(newsFresh(value,now),false)
-})
-test('Localized post clocks never invent a timezone and retain conservative publication-day boundaries',()=>{
- const now=Date.parse('2026-10-18T05:00:00Z')
- for(const label of ['1:42 · 2026年10月18日','00:00 · 2026年10月18日','23:59:59 · 2026年10月18日']){
-  const date=newsPublication(label,now);assert.equal(date.publishedAt,'2026-10-18');assert.equal(date.precision,'day');assert.equal(date.earliest,Date.parse('2026-10-17T10:00:00Z'));assert.equal(date.latest,now);assert.equal(newsFresh(label,now),true)
- }
- for(const label of ['25:42 · 2026年10月18日','1:60 · 2026年10月18日','1:42 · 2026年2月30日','Updated 1:42 · 2026年10月18日','录制 1:42 · 2026年10月18日','1:42 · 2026年10月17日 / 2026年10月18日','1:42 · 今天','1:42 · 2026年10月20日'])assert.equal(newsFresh(label,now),false,label)
- const boundary=Date.parse('2026-10-17T10:00:00Z');assert.equal(newsFresh('1:42 · 2026年10月15日',boundary),true);assert.equal(newsFresh('1:42 · 2026年10月15日',boundary+1),false)
-})
-test('Date-only publishers retain precision and qualify only when the entire conservative timezone range is within 72 hours',()=>{const now=Date.parse('2026-10-18T02:00:00Z');for(const day of ['2026-10-17','2026年10月17日','Oct 17, 2026','17 October 2026','Press release issued: 17 October 2026','发布时间：2026年10月17日','2026-10-17 19:53 来源：新华社']){assert.equal(newsFresh(day,now),true);const p=newsPublication(day,now);assert.equal(p.publishedAt,'2026-10-17');assert.equal(p.precision,'day');assert.equal(p.earliest,Date.parse('2026-10-16T10:00:00Z'));assert.equal(p.latest,now)}assert.equal(newsFresh('2026-10-15',now),false);assert.equal(newsFresh('2026-10-20',now),false);assert.equal(newsFresh('2026-02-30',now),false);assert.throws(()=>newsPublication('10/11/2026',now));assert.equal(newsFresh('2026-10-15T02:00:00Z',now),true)})
-test('Publisher day labels tolerate weekdays, month dots, ordinals, clocks and zones while keeping day precision',()=>{
- const now=Date.parse('2026-10-18T02:00:00Z'),boundary=Date.parse('2026-10-16T10:00:00Z')
- for(const day of ['Oct. 17, 2026','Saturday, October 17, 2026','Sat, Oct 17, 2026','October 17th, 2026','Oct 17, 2026 5:00 AM','Oct 17, 2026 · 5:00 AM','Oct 17, 2026 at 5:00 AM','Oct 17 2026 05:00 EDT','Published Mon, Oct 17 2026 3:12 PM EDT','17 Oct 2026 05:00 GMT+8','2026-10-17 19:53 EDT','2026-10-17T19:53','3:04 PM · Oct 17, 2026','2026年10月17日 星期六']){
-  const p=newsPublication(day,now);assert.equal(p.publishedAt,'2026-10-17',day);assert.equal(p.precision,'day',day);assert.equal(p.earliest,boundary,day);assert.equal(p.latest,now,day);assert.equal(newsFresh(day,now),true,day)
- }
- // An update or recording stamp, an ambiguous separator or an unsupported locale still never becomes a publication day.
- for(const bad of ['Updated Oct 17, 2026','Last updated October 17, 2026','Recorded Oct 17, 2026','Modified Oct 17, 2026','Oct 17, 2026 / Oct 18, 2026','Oct 17, 2026, Oct 18, 2026','2026-10-17 2026-10-18','10/17/2026','Oct 17 26','17.10.2026'])assert.throws(()=>newsPublication(bad,now),/NEWS_DATE/,bad)
-})
-test('Leaving news research is user-only and preserves the board while releasing the Session research restriction',async()=>{const f=fixture();try{const c=await f.add();await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:[c]},'agent');await assert.rejects(f.news.execute({operation:'propose-news-topics',expectedTopicRevision:1,newsCandidates:[],closeNewsTask:true},'agent'),/USER_SELECTION/);await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:1,newsCandidates:[],closeNewsTask:true},'user');assert.equal(f.news.journal.read().topics.length,1);assert.doesNotThrow(()=>requireNewsSelection(f.kernel,f.owner,'agent'));assert.equal(f.news.journal.read().closed,true);await assert.rejects(f.news.execute({operation:'propose-news-topics',expectedTopicRevision:2,newsCandidates:[]},'agent'),/NEWS_CLOSED/)}finally{f.close()}})
-function fixture(){const root=fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(),'bmw-news-unit-'))),owner={projectId:'project',sessionId:'owner'};fs.mkdirSync(path.join(root,'artifacts'));const sources=new ProjectSourceStore(root,'project');let now=Date.now(),nativeCalls=0;const inspection={kind:'image',contentType:'image/png',width:1,height:1,pixels:1,bytes:68,canDecode:true},kernel:StudioKernel={projectStore:{active:()=>({id:'project',name:'News fixture',directory:root})},projectSources:()=>sources,execute:async()=>({}),recordingController:{processArtifact:async()=>inspection,compose:async()=>{nativeCalls++;return {}},narrate:async()=>{nativeCalls++;return {}}}},news=new NewsService(kernel,owner,()=>now)
- const add=async(publishedAt:string|null=new Date(now-1000).toISOString(),n=1)=>{const text='New AI research has a concrete result '+n+'.',scope={selector:'article',index:0,excludeSelectors:[],characterUnit:'utf16' as const,extraction:'visible-text-nodes' as const,truncated:false,status:'observed' as const},result=await sources.collect({url:'https://example.org/news/'+n,title:'Original AI news '+n,author:'Original publisher',publishedAt,scope,text,mediaScope:scope,mediaTruncated:false,candidates:[{kind:'image',url:'https://example.org/'+n+'.png',durationSeconds:null,role:'body'}],access:'unknown',accessText:'',result:'observed',error:null},sources.snapshot().revision),a=sources.snapshot().sources.find(s=>s.id===result.sourceId)!.acquisitions.find(a=>a.id===result.acquisitionId)!,cid=a.candidates[0].id;let catalog=sources.confirm({operation:'confirm',sourceId:result.sourceId,acquisitionId:result.acquisitionId,expectedRevision:sources.snapshot().revision,candidateIds:[cid]});const artifactId='preview-'+n+'.png',bytes=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=','base64');fs.writeFileSync(path.join(root,'artifacts',artifactId),bytes);catalog=await sources.recordMedia(result.sourceId,result.acquisitionId,cid,{state:'image-decoded',artifactId,contentId:crypto.createHash('sha256').update(bytes).digest('hex'),proof:inspection},catalog.revision);const media=catalog.sources.find(s=>s.id===result.sourceId)!.acquisitions.find(a=>a.id===result.acquisitionId)!.media.at(-1)!,candidate:NewsTopicCandidate={id:'topic-'+n,eventKey:'event-'+n,subject:'跨领域重要机构 '+n,subjectKind:'organization',category:'academic',region:n%2?'CN':'US',title:'AI新闻 '+n,news:'一个新的AI结果',reason:'有具体结果和原始证据',angle:'比较新的变化与条件',format:'graphic',novelty:'new-event',recordedAt:null,missing:'',sourceId:result.sourceId,acquisitionId:result.acquisitionId,quote:text,quoteStart:0,previewArtifactId:media.artifactId!,mode:'image'};return candidate}
- return {root,owner,sources,kernel,news,add,get now(){return now},set now(v:number){now=v},get nativeCalls(){return nativeCalls},close:()=>fs.rmSync(root,{recursive:true,force:true})}}
-test('Ten verified news events survive restart and selecting the tenth keeps one draft, explicit voice and no preselection media work',async()=>{
- const f=fixture();try{
-  const candidates:NewsTopicCandidate[]=[];for(let n=1;n<=10;n++)candidates.push(await f.add(new Date(f.now-1000).toISOString(),n))
-  assert.equal(assertStudioRequest({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:candidates}).newsCandidates?.length,10)
-  assert.throws(()=>assertStudioRequest({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:[...candidates,{...candidates[0],id:'eleven'}]}),/NEWS_BUDGET/)
-  await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:candidates},'agent')
-  const b=new NewsJournal(f.root,f.owner).read();assert.deepEqual(b.topics.map(t=>t.candidate.id),candidates.map(c=>c.id));assert.equal(b.selection,undefined);assert.equal(new VideoStudioStore(f.root,'owner').list().length,0);assert.equal(f.nativeCalls,0)
-  const choice={operation:'select-news-topic' as const,expectedTopicRevision:b.revision,topicId:candidates[9].id,baseFingerprint:newsFingerprint(b.topics),options:{tts:{provider:'qwen-tts' as const,voice:'longanlang_v3.1' as const,ratePercent:0}}}
-  await assert.rejects(f.news.execute(choice,'agent'),/USER_SELECTION/)
-  await f.news.execute(choice,'user');await f.news.execute({...choice,expectedTopicRevision:f.news.journal.read().revision},'user')
-  const selected=new NewsJournal(f.root,f.owner).read().selection!,store=new VideoStudioStore(f.root,'owner');assert.equal(store.list().length,1);assert.equal(store.read(selected.draftId).tts.voice,'longanlang_v3.1');assert.equal(f.nativeCalls,0)
- }finally{f.close()}
-})
-test('News candidates accept broad subjects and recording days while rejecting unknown fields, duplicate events and ambiguous dates',()=>{const f=fixture();return(async()=>{try{const c=await f.add();for(const [subjectKind,category,region]of [['person','non-ai-public-figure','US'],['organization','public-institution','CN'],['person','technology','other'],['organization','academic','CN']]){const raw={...c,subjectKind,category,region};assert.equal(new Ajv({strict:false}).compile(newsCandidateSchema)(raw),true);assert.equal(assertNewsCandidates([raw])[0].region,region)}for(const format of ['interview','speech'])assert.throws(()=>assertNewsCandidates([{...c,format}]),/NEWS_FORMAT/);assert.throws(()=>assertNewsCandidates([{...c,approved:true}]));assert.throws(()=>assertNewsCandidates([c,{...c,id:'other'}]),/DUPLICATE/);assert.equal(assertNewsCandidates([{...c,recordedAt:'2026-10-17'}])[0].recordedAt,'2026-10-17');assert.throws(()=>assertNewsCandidates([{...c,recordedAt:'10/11/2026'}]),/NEWS_DATE/);assert.throws(()=>assertStudioRequest({operation:'select-news-topic',expectedTopicRevision:1,topicId:c.id,baseFingerprint:'0'.repeat(64),actor:'user'}));assert.equal(newsFresh(new Date(f.now-NEWS_WINDOW_MS).toISOString(),f.now),true);assert.equal(newsFresh(new Date(f.now-NEWS_WINDOW_MS-1).toISOString(),f.now),false);assert.equal(newsFresh(new Date(f.now+1).toISOString(),f.now),false)}finally{f.close()}})()})
-test('News proposals require original dates, exact quotes and source-owned verified previews; empty results remain pending',async()=>{const f=fixture();try{const c=await f.add();await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:[]},'user');await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:1,newsCandidates:[c]},'agent');let b=f.news.journal.read();assert.equal(b.topics.length,1);assert.equal(b.selection,undefined);assert.equal(f.nativeCalls,0);for(const patch of [{quote:'made up'},{previewArtifactId:'foreign.png'},{quoteStart:1}])await assert.rejects(f.news.execute({operation:'propose-news-topics',expectedTopicRevision:b.revision,newsCandidates:[{...c,...patch}]},'agent'),/NEWS_/);const undated=await f.add(null,2);await assert.rejects(f.news.execute({operation:'propose-news-topics',expectedTopicRevision:b.revision,newsCandidates:[undated]},'agent'),/NEWS_SOURCE/);const future=await f.add(new Date(f.now+1000).toISOString(),3);await assert.rejects(f.news.execute({operation:'propose-news-topics',expectedTopicRevision:b.revision,newsCandidates:[future]},'agent'),/NEWS_EXPIRED/);f.now+=NEWS_WINDOW_MS;await assert.rejects(f.news.execute({operation:'propose-news-topics',expectedTopicRevision:b.revision,newsCandidates:[c]},'agent'),/NEWS_EXPIRED/)}finally{f.close()}})
-test('Only a current trusted selection creates one draft and durable dispatch never replays after uncertainty or restart',async()=>{const f=fixture();try{const c=await f.add();await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:[c]},'agent');let b=f.news.journal.read();const request={operation:'select-news-topic' as const,expectedTopicRevision:b.revision,topicId:c.id,baseFingerprint:newsFingerprint(b.topics)};await assert.rejects(f.news.execute(request,'agent'),/USER_SELECTION/);assert.equal(new VideoStudioStore(f.root,'owner').list().length,0);await assert.rejects(f.news.execute({...request,baseFingerprint:'0'.repeat(64)},'user'),/NEWS_STALE/);await f.news.execute(request,'user');b=f.news.journal.read();const id=b.selection!.draftId;assert.equal(new VideoStudioStore(f.root,'owner').list().length,1);assert.equal(new VideoStudioStore(f.root,'owner').read(id).tts.voice,'zh-CN-YunxiNeural');assert.match(new VideoStudioStore(f.root,'owner').read(id).preparation.notes,/原始来源：/);assert.equal(new VideoStudioStore(f.root,'owner').read(id).preparation.notes.startsWith('{'),false);await f.news.execute({...request,expectedTopicRevision:b.revision},'user');assert.equal(new VideoStudioStore(f.root,'owner').list().length,1);assert.equal(f.news.journal.dispatch(id,'uncertain'),true);const restarted=new NewsJournal(f.root,f.owner);assert.equal(restarted.read().selection!.dispatch,'uncertain');assert.equal(restarted.dispatch(id,'uncertain'),false);restarted.dispatch(id,'sent','official-run');assert.equal(restarted.dispatch(id,'uncertain'),false);assert.equal(f.nativeCalls,0);assert.throws(()=>new NewsJournal(f.root,{...f.owner,projectId:'foreign'}).read(),/Foreign/);await assert.rejects(f.news.execute({operation:'propose-news-topics',expectedTopicRevision:restarted.read().revision,newsCandidates:[]},'agent'),/NEWS_SELECTED/)}finally{f.close()}})
-test('News research allows material reads and preview indexing without granting metadata edits, drafting or synthesis',async()=>{
- const f=fixture();try{
-  const c=await f.add(),studio=new VideoStudioService(f.kernel);await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:[c]},'agent')
-  const run=(materialRequest:unknown)=>studio.execute({operation:'materials',materialRequest},undefined,f.owner)
-  await run({operation:'list'});await run({operation:'search',query:'preview'})
-  await run({operation:'index',artifactId:c.previewArtifactId,expectedRevision:0,maxChunks:0})
-  await run({operation:'search',query:'preview'})
-  await assert.rejects(run({operation:'set-metadata',artifactId:c.previewArtifactId,expectedRevision:1,title:'rewrite',description:'',tags:[]}),/USER_SELECTION/)
-  fs.writeFileSync(path.join(f.root,'artifacts','long.wav'),'Controlled long source');let inspections=0
-  f.kernel.recordingController.processArtifact=async()=>{assert.equal(++inspections,1,'Long research source must stop before ASR');return {durationSeconds:400,tracks:[{id:1,type:'audio',codec:'pcm-s16',canDecode:true,startSeconds:0,endSeconds:400}]}}
-  await assert.rejects(run({operation:'index',artifactId:'long.wav',expectedRevision:1,maxChunks:1}),/NEWS_RESEARCH_PREVIEW_ONLY/);assert.equal(inspections,1)
-  await assert.rejects(studio.execute({operation:'create',title:'bypass'},undefined,f.owner),/USER_SELECTION/);assert.equal(f.nativeCalls,0);assert.equal(new VideoStudioStore(f.root,'owner').list().length,0);assert.equal(f.news.journal.read().selection,undefined)
- }finally{f.close()}
-})
-test('Preselection blocks drafting and native narration, and late source changes reject selection or further selected rendering',async()=>{const f=fixture();try{const c=await f.add(),studio=new VideoStudioService(f.kernel);await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:[c]},'agent');assert.throws(()=>requireNewsSelection(f.kernel,f.owner,'agent'),/USER_SELECTION/);await assert.rejects(studio.execute({operation:'create',title:'bypass'},undefined,f.owner),/USER_SELECTION/);for(const request of [{operation:'adopt-review',draftId:'existing',expectedRevision:1,reviewId:'review'},{operation:'configure',draftId:'existing',expectedRevision:1,options:{music:false}},{operation:'delete',draftId:'existing',expectedRevision:1},{operation:'detach-source-captions',draftId:'existing',expectedRevision:1,sceneId:'opening'}])await assert.rejects(studio.execute(request,undefined,f.owner),/USER_SELECTION/);const before=f.news.journal.read();f.now+=NEWS_WINDOW_MS;await assert.rejects(f.news.execute({operation:'select-news-topic',expectedTopicRevision:before.revision,topicId:c.id,baseFingerprint:newsFingerprint(before.topics)},'user'),/EXPIRED/);f.now-=NEWS_WINDOW_MS;await f.news.execute({operation:'select-news-topic',expectedTopicRevision:before.revision,topicId:c.id,baseFingerprint:newsFingerprint(before.topics)},'user');const b=f.news.journal.read(),id=b.selection!.draftId;fs.appendFileSync(path.join(f.root,'artifacts',c.previewArtifactId),'changed');await assert.rejects(f.news.guardDraft(id),/SOURCE_STALE/);assert.equal(f.nativeCalls,0);const controller=new AbortController();controller.abort(new Error('cancelled'));await assert.rejects(f.news.execute({operation:'propose-news-topics',expectedTopicRevision:b.revision,newsCandidates:[c]},'user',controller.signal),/cancelled/);assert.equal(f.news.journal.read().revision,b.revision)}finally{f.close()}})
-test('News journals preserve corrupt files, reject symlinks and archive previous selected tasks without deleting their drafts',async()=>{const f=fixture();try{const c=await f.add();await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:[c]},'agent');let b=f.news.journal.read();await f.news.execute({operation:'select-news-topic',expectedTopicRevision:b.revision,topicId:c.id,baseFingerprint:newsFingerprint(b.topics)},'user');b=f.news.journal.read();await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:b.revision,newsCandidates:[]},'user');assert.ok(new VideoStudioStore(f.root,'owner').read(b.selection!.draftId));const directory=path.join(f.root,'video-studio','news');assert.ok(fs.readdirSync(directory).some(n=>n.includes(b.id)));const file=path.join(directory,'owner.json');fs.writeFileSync(file,'broken');assert.throws(()=>f.news.journal.read());assert.equal(fs.readFileSync(file,'utf8'),'broken');fs.rmSync(file);fs.symlinkSync(path.join(directory,fs.readdirSync(directory)[0]),file);assert.throws(()=>f.news.journal.read(),/Invalid/)}finally{f.close()}})
-test('Native page screenshots bind exact source URL and text, preserve CAS and reject changed pages or files before a news proposal',async()=>{
- const f=fixture();try{const c=await f.add(),body=await f.sources.readBody(c.sourceId,c.acquisitionId),binding={sourceId:c.sourceId,acquisitionId:c.acquisitionId,expectedRevision:f.sources.snapshot().revision};let text=body.text,url=body.source.url
-  const events=new EventEmitter(),wc=Object.assign(events,{isDestroyed:()=>false,getURL:()=>url,executeJavaScript:async()=>({text,range:body.acquisition.scope})}) as unknown as WebContents
-  await assert.rejects(prepareSourceScreenshot(f.sources,wc,{...binding,bodyContentId:'forged'},'article',0),/Unsupported source/)
-  await assert.rejects(prepareSourceScreenshot(f.sources,wc,binding,'header',0),/SCOPE/);url='https://wrong.example/';await assert.rejects(prepareSourceScreenshot(f.sources,wc,binding,'article',0),/STALE/);url=body.source.url
-  const bytes=fs.readFileSync(path.join(f.root,'artifacts',c.previewArtifactId)),artifactId='original-page.png';fs.writeFileSync(path.join(f.root,'artifacts',artifactId),bytes)
-  const abandoned=await prepareSourceScreenshot(f.sources,wc,binding,'article',0);events.emit('did-start-navigation',{},'https://wrong.example/',false,true);await assert.rejects(abandoned!.record(artifactId,bytes,{width:1,height:1}),/NAVIGATED/);abandoned!.dispose()
-  const capture=await prepareSourceScreenshot(f.sources,wc,binding,'article',0)
-  text+='changed';await assert.rejects(capture!.record(artifactId,bytes,{width:1,height:1}),/STALE/);assert.equal(f.sources.snapshot().revision,binding.expectedRevision);text=body.text
-  const recorded=await capture!.record(artifactId,bytes,{width:1,height:1});assert.equal(recorded.sourceRevision,binding.expectedRevision+1);assert.equal('catalog'in recorded,false);const source=await f.sources.readBody(c.sourceId,c.acquisitionId);assert.equal(source.mediaAvailability.find(m=>m.mediaId===recorded.mediaId)?.available,true)
-  await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:[{...c,previewArtifactId:artifactId}]},'agent');assert.equal(f.nativeCalls,0)
-  await assert.rejects(capture!.record(artifactId,bytes,{width:1,height:1}),/CONFLICT/);capture!.dispose();fs.appendFileSync(path.join(f.root,'artifacts',artifactId),'changed');const status=await f.news.topics();assert.equal(status.topics[0].eligible,false);assert.equal(events.eventNames().length,0)
- }finally{f.close()}
-})
-
-test('News guide recognizes rendered title cards and sentence captions, but reports stale or explicitly disabled captions',async()=>{
- const f=fixture();try{
-  const c=await f.add();await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:[c]},'agent');const b=f.news.journal.read();await f.news.execute({operation:'select-news-topic',expectedTopicRevision:b.revision,topicId:c.id,baseFingerprint:newsFingerprint(b.topics)},'user');
-  const store=new VideoStudioStore(f.root,'owner'),id=f.news.journal.read().selection!.draftId;let d=store.read(id);const script='第一句。',scene={id:'one',title:'发布',label:'',narration:script,audioText:script,audioArtifactId:'voice.wav',audioDurationSeconds:2,durationSeconds:3,sourceStartSeconds:0,zoom:1,playbackRate:1,bullets:[],cardSpec:{version:2 as const,templateId:'title/emphasis' as const,motion:'wipe' as const},speechCaptions:true,speechAnchors:{scriptText:script,scriptSha256:crypto.createHash('sha256').update(script).digest('hex'),audioArtifactId:'voice.wav',audioSha256:'b'.repeat(64),durationSeconds:2,createdAt:new Date().toISOString(),capturedRevision:1,timeDomain:'audio-file-seconds' as const,origin:'agent-edited' as const,anchors:[{id:'first',scriptStart:0,scriptEnd:script.length,startSeconds:0,endSeconds:2}],timingProvenance:{basis:'editorial-estimate' as const}}};
-  d=store.update(id,d.revision,{...d,scenes:[scene]},true,true);d=store.setSpeech(id,d.revision,scene.id,'anchors',scene.speechAnchors);
-  const guide=async()=>await f.news.execute({operation:'news-guide',draftId:id,expectedRevision:d.revision},'agent') as {stages:{id:string;ready:boolean}[];scenes:{captionCount:number;captionIssue?:string;hasVisual:boolean}[]};
-  let g=await guide();assert.equal(g.stages.find(s=>s.id==='visual')!.ready,true);assert.equal(g.stages.find(s=>s.id==='audio')!.ready,true);assert.equal(g.scenes[0].captionCount,1);assert.equal(g.scenes[0].hasVisual,true);
-  d=store.update(id,d.revision,{...d,scenes:[{...d.scenes[0],narration:'第二句。'}]},true,true);g=await guide();assert.equal(g.stages.find(s=>s.id==='audio')!.ready,false);assert.match(g.scenes[0].captionIssue!,/STALE/);
-  d=store.update(id,d.revision,{...d,scenes:[{...scene,captions:[]}]},true,true);g=await guide();assert.equal(g.scenes[0].captionCount,0);assert.equal(g.stages.find(s=>s.id==='audio')!.ready,false);
- }finally{f.close()}
-})
-
-test('News guide accepts captioned original-speech scenes without TTS and rejects muted or short source coverage',async()=>{
- const f=fixture();try{
-  const c=await f.add();await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:[c]},'agent');const board=f.news.journal.read()
-  await f.news.execute({operation:'select-news-topic',expectedTopicRevision:board.revision,topicId:c.id,baseFingerprint:newsFingerprint(board.topics)},'user')
-  const store=new VideoStudioStore(f.root,'owner'),id=f.news.journal.read().selection!.draftId
-  let draft=store.read(id);draft.scenes=[{id:'original-quote',title:'本人解释',label:'原声节选',narration:'',visualBrief:'原片与字幕',sources:[],durationSeconds:5,videoArtifactId:'quote.webm',sourceStartSeconds:0,sourceDurationSeconds:6,keepSourceAudio:true,sourceVolume:1,zoom:1,playbackRate:1,bullets:[],endPolicy:'hold',captions:[{startSeconds:0,endSeconds:5,text:'这是一段原声引述'}]}];draft=store.update(id,draft.revision,draft)
-  type Guide={stages:{id:string;ready:boolean}[];scenes:{audioMode:string;audioReady:boolean}[]}
-  const guide=async()=>await f.news.execute({operation:'news-guide',draftId:id,expectedRevision:draft.revision},'agent') as Guide
-  let g=await guide();assert.equal(g.stages.find(s=>s.id==='script')?.ready,true);assert.equal(g.stages.find(s=>s.id==='audio')?.ready,true);assert.equal(g.scenes[0].audioMode,'source');assert.equal(f.nativeCalls,0)
-  draft.scenes[0].sourceVolume=0;draft=store.update(id,draft.revision,draft);g=await guide();assert.equal(g.stages.find(s=>s.id==='audio')?.ready,false)
-  draft.scenes[0].sourceVolume=1;draft.scenes[0].sourceDurationSeconds=2;draft=store.update(id,draft.revision,draft);g=await guide();assert.equal(g.scenes[0].audioReady,false)
- }finally{f.close()}
-})
-
-test('Selected video evidence accepts native same-film HD trims across restart, never same-site different films or unproven names',async()=>{
- const f=fixture();try{
-  const directory=path.join(f.root,'artifacts'),identity={version:1 as const,platform:'youtube' as const,targetId:'same-film',resourceId:'same-film'}
-  fs.writeFileSync(path.join(directory,'high-definition.webm'),'native captured HD bytes')
-  await saveNativeVideoOrigin(directory,'high-definition.webm',identity)
-  fs.writeFileSync(path.join(directory,'interview.mp4'),'native trimmed interview')
-  await saveMediaDerivation(directory,{version:1,kind:'native-media-conversion',artifactId:'interview.mp4',sha256:await mediaArtifactHash(directory,'interview.mp4'),sourceArtifactId:'high-definition.webm',sourceSha256:await mediaArtifactHash(directory,'high-definition.webm'),sourceRange:{startSeconds:0,endSeconds:19}})
-  assert.equal(await selectedVideoVisual(f.sources,directory,'interview.mp4',identity),true)
-  assert.equal(await selectedVideoVisual(new ProjectSourceStore(f.root,'project'),directory,'interview.mp4',identity),true,'durable receipt survives service restart')
-  assert.equal(await selectedVideoVisual(f.sources,directory,'interview.mp4',{...identity,targetId:'other-film',resourceId:'other-film'}),false)
-  fs.writeFileSync(path.join(directory,'same-official-title.mp4'),'unproven copy')
-  assert.equal(await selectedVideoVisual(f.sources,directory,'same-official-title.mp4',identity),false)
-  assert.equal(await selectedVideoVisual(f.sources,directory,'same-official-title.mp4',identity,undefined,async id=>({version:1,kind:'native-video-origin',artifactId:id,sha256:await mediaArtifactHash(directory,id),videoIdentity:identity})),true,'Host verified historical capture can establish the same original without new sidecars')
-  await assert.rejects(selectedVideoVisual(f.sources,directory,'same-official-title.mp4',identity,undefined,async id=>({version:1,kind:'native-video-origin',artifactId:id,sha256:'0'.repeat(64),videoIdentity:identity})),/Historical capture bytes changed/)
-  fs.appendFileSync(path.join(directory,'interview.mp4'),'changed')
-  await assert.rejects(selectedVideoVisual(f.sources,directory,'interview.mp4',identity),/bytes changed/)
-  assert.equal((await readNativeVideoOrigin(directory,'high-definition.webm'))?.videoIdentity.targetId,'same-film')
-  fs.appendFileSync(path.join(directory,'high-definition.webm'),'changed')
-  await assert.rejects(readNativeVideoOrigin(directory,'high-definition.webm'),/bytes changed/)
- }finally{f.close()}
-})
-
-test('Native lineage rejects missing parents, linked receipts, cycles, foreign paths and cancelled verification',async()=>{
- const f=fixture();try{
-  const directory=path.join(f.root,'artifacts'),identity={version:1 as const,platform:'youtube' as const,targetId:'film',resourceId:'film'}
-  fs.writeFileSync(path.join(directory,'a.mp4'),'a');fs.writeFileSync(path.join(directory,'b.mp4'),'b')
-  for(const [child,parent] of [['a.mp4','b.mp4'],['b.mp4','a.mp4']])await saveMediaDerivation(directory,{version:1,kind:'native-media-conversion',artifactId:child,sha256:await mediaArtifactHash(directory,child),sourceArtifactId:parent,sourceSha256:await mediaArtifactHash(directory,parent),sourceRange:{startSeconds:0,endSeconds:1}})
-  await assert.rejects(selectedVideoVisual(f.sources,directory,'a.mp4',identity),/Cyclic/)
-  const controller=new AbortController();controller.abort(new Error('cancelled'))
-  await assert.rejects(selectedVideoVisual(f.sources,directory,'a.mp4',identity,controller.signal),/cancelled/)
-  await assert.rejects(selectedVideoVisual(f.sources,directory,'../outside.mp4',identity),/artifact/i)
-  fs.unlinkSync(path.join(directory,'a.mp4.derivation.json'));fs.symlinkSync(path.join(directory,'b.mp4.derivation.json'),path.join(directory,'a.mp4.derivation.json'))
-  await assert.rejects(selectedVideoVisual(f.sources,directory,'a.mp4',identity),/symbolic|outside/)
-  fs.unlinkSync(path.join(directory,'b.mp4'))
-  await assert.rejects(selectedVideoVisual(f.sources,directory,'b.mp4',identity),/ENOENT/)
- }finally{f.close()}
-})
-
-test('Selected news render guard permits same-original HD footage without burning its low-resolution preview, retaining stale-source rejection',async()=>{
- const f=fixture();try{
-  const directory=path.join(f.root,'artifacts'),identity={version:1 as const,platform:'youtube' as const,targetId:'abcdefghijk',resourceId:'abcdefghijk'},text='Official new interview.',scope={selector:'main',index:0,excludeSelectors:[],characterUnit:'utf16' as const,extraction:'visible-text-nodes' as const,truncated:false,status:'observed' as const}
-  const saved=await f.sources.collect({url:'https://www.youtube.com/watch?v=abcdefghijk',title:'Official interview',author:'Official publisher',publishedAt:new Date(f.now-1000).toISOString(),scope,text,mediaScope:scope,mediaTruncated:false,candidates:[{kind:'video',url:'https://media.example/original.mp4',durationSeconds:25,role:'video',videoIdentity:identity}],access:'unknown',accessText:'',result:'observed',error:null},0)
-  const body=await f.sources.readBody(saved.sourceId,saved.acquisitionId),cid=body.acquisition.candidates[0].id
-  f.sources.confirm({operation:'confirm',sourceId:saved.sourceId,acquisitionId:saved.acquisitionId,expectedRevision:f.sources.snapshot().revision,candidateIds:[cid]})
-  fs.writeFileSync(path.join(directory,'low-preview.mp4'),'low preview')
-  await f.sources.recordMedia(saved.sourceId,saved.acquisitionId,cid,{state:'decoded-file',artifactId:'low-preview.mp4',contentId:await mediaArtifactHash(directory,'low-preview.mp4'),startSeconds:0,endSeconds:25,proof:{kind:'decoding',completeFile:true,container:'mp4',contentType:'video/mp4',durationSeconds:25,firstTimestampSeconds:0,tracks:[{id:1,type:'video',codec:'avc',sampleCount:25,startSeconds:0,endSeconds:25},{id:2,type:'audio',codec:'aac',sampleCount:25,startSeconds:0,endSeconds:25}]}},f.sources.snapshot().revision)
-  f.kernel.recordingController.processArtifact=async()=>({durationSeconds:25,tracks:[{type:'video',canDecode:true,width:256,height:144},{type:'audio',canDecode:true}]})
-  const candidate:NewsTopicCandidate={id:'hd-topic',eventKey:'hd-event',subject:'Official publisher',subjectKind:'organization',category:'technology',region:'US',title:'New interview',news:'New public demonstration',reason:'Original public statement',angle:'Explain the demonstration',format:'interview',novelty:'new-event',recordedAt:null,missing:'',sourceId:saved.sourceId,acquisitionId:saved.acquisitionId,quote:text,quoteStart:0,previewArtifactId:'low-preview.mp4',mode:'video'}
-  await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:[candidate]},'agent');const board=f.news.journal.read()
-  await f.news.execute({operation:'select-news-topic',expectedTopicRevision:board.revision,topicId:candidate.id,baseFingerprint:newsFingerprint(board.topics)},'user')
-  const store=new VideoStudioStore(f.root,'owner'),id=f.news.journal.read().selection!.draftId;let draft=store.read(id)
-  fs.writeFileSync(path.join(directory,'hd.mp4'),'native high definition');await saveNativeVideoOrigin(directory,'hd.mp4',identity)
-  draft=store.update(id,draft.revision,{...draft,scenes:[{id:'interview',title:'Original interview',narration:'',durationSeconds:20,videoArtifactId:'hd.mp4',sourceStartSeconds:0,zoom:1,playbackRate:1,bullets:[]}]})
-  await f.news.guardDraft(id,undefined,true)
-  assert.equal(store.read(id).scenes[0].videoArtifactId,'hd.mp4');assert.equal(f.news.journal.read().topics[0].candidate.previewArtifactId,'low-preview.mp4')
-  fs.writeFileSync(path.join(directory,'unproven.mp4'),'same-title different footage');draft=store.update(id,draft.revision,{...draft,scenes:[{...draft.scenes[0],videoArtifactId:'unproven.mp4'}]})
-  await assert.rejects(f.news.guardDraft(id,undefined,true),/NEWS_EVIDENCE_MISSING/)
-  fs.appendFileSync(path.join(directory,'low-preview.mp4'),'tampered original evidence')
-  await assert.rejects(f.news.guardDraft(id,undefined,true),/NEWS_SOURCE_STALE/)
- }finally{f.close()}
-})
-
-
-for(const selection of ['image','page-announcement','page-interview','youtube-announcement'] as const)test('Selected article facts retain exact citations and current preparation with independent video: '+selection,async()=>{
- const f=fixture();try{
-  let candidate=await f.add();
-  if(selection!=='image'){
-   const directory=path.join(f.root,'artifacts'),isYoutube=selection==='youtube-announcement',url=isYoutube?'https://www.youtube.com/watch?v=abcdefghijk':'https://announcement.example/release',identity={version:1 as const,platform:isYoutube?'youtube' as const:'page' as const,targetId:isYoutube?'abcdefghijk':url,resourceId:isYoutube?'abcdefghijk':'https://media.example/announcement.mp4'},scope={selector:'main',index:0,excludeSelectors:[],characterUnit:'utf16' as const,extraction:'visible-text-nodes' as const,truncated:false,status:'observed' as const},text='Official announcement of a new world model.'
-   const saved=await f.sources.collect({url,title:'Official release',author:'Official publisher',publishedAt:new Date(f.now-1000).toISOString(),scope,text,mediaScope:scope,mediaTruncated:false,candidates:[{kind:'video',url:'https://media.example/announcement.mp4',durationSeconds:10,role:'video',videoIdentity:identity}],access:'unknown',accessText:'',result:'observed',error:null},f.sources.snapshot().revision),body=await f.sources.readBody(saved.sourceId,saved.acquisitionId),cid=body.acquisition.candidates[0].id
-   f.sources.confirm({operation:'confirm',sourceId:saved.sourceId,acquisitionId:saved.acquisitionId,expectedRevision:f.sources.snapshot().revision,candidateIds:[cid]});fs.writeFileSync(path.join(directory,'selected-preview.mp4'),'selected native preview')
-   await f.sources.recordMedia(saved.sourceId,saved.acquisitionId,cid,{state:'decoded-file',artifactId:'selected-preview.mp4',contentId:await mediaArtifactHash(directory,'selected-preview.mp4'),startSeconds:0,endSeconds:10,proof:{kind:'decoding',completeFile:true,container:'mp4',contentType:'video/mp4',durationSeconds:10,firstTimestampSeconds:0,tracks:[{id:1,type:'video',codec:'avc',sampleCount:10,startSeconds:0,endSeconds:10},{id:2,type:'audio',codec:'aac',sampleCount:10,startSeconds:0,endSeconds:10}]}},f.sources.snapshot().revision)
-   f.kernel.recordingController.processArtifact=async()=>({durationSeconds:10,tracks:[{type:'video',canDecode:true,width:640,height:360},{type:'audio',canDecode:true}]})
-   candidate={...candidate,format:selection==='page-interview'?'interview':'announcement',sourceId:saved.sourceId,acquisitionId:saved.acquisitionId,quote:text,quoteStart:0,previewArtifactId:'selected-preview.mp4',mode:'video'}
+import { Ajv2020 as Ajv } from 'ajv/dist/2020.js'
+import { ProjectSourceStore } from '../../platform/src/project-source-store.js'
+import { NewsService, requireNewsSelection } from '../src/news-service.js'
+import { NewsJournal, newsFingerprint } from '../src/news-store.js'
+import {
+  assertNewsCandidates,
+  newsCandidateSchema,
+  newsFresh,
+  newsPublication,
+  NEWS_WINDOW_MS
+} from '../src/news-contract.js'
+import type { NewsTopicCandidate } from '../src/news-contract.js'
+import { VideoStudioService } from '../src/studio-service.js'
+import type { StudioKernel } from '../src/studio-service.js'
+import { VideoStudioStore } from '../src/studio-store.js'
+import { NewsPreparationService } from '../src/news-preparation.js'
+import { newStudioScene, assertStudioRequest } from '../src/studio-contract.js'
+import { EventEmitter } from 'node:events'
+import type { WebContents } from 'electron'
+import { prepareSourceScreenshot } from '../../browser-capability/src/source-screenshot.js'
+import { selectedVideoVisual } from '../src/news-visual-source.js'
+test('Author configures all news output parameters and title in one revision; identical configuration preserves revision and stale writes fail', async () => {
+  const f = fixture()
+  try {
+    const candidate = await f.add()
+    await f.news.execute(
+      { operation: 'propose-news-topics', expectedTopicRevision: 0, newsCandidates: [candidate] },
+      'agent'
+    )
+    const board = f.news.journal.read()
+    await f.news.execute(
+      {
+        operation: 'select-news-topic',
+        expectedTopicRevision: board.revision,
+        topicId: candidate.id,
+        baseFingerprint: newsFingerprint(board.topics)
+      },
+      'user'
+    )
+    const store = new VideoStudioStore(f.root, f.owner.sessionId),
+      draft = store.read(f.news.journal.read().selection!.draftId),
+      studio = new VideoStudioService(f.kernel)
+    assert.equal(draft.tts.provider, 'edge-readaloud', 'Topic choice must not impose a second narration preset')
+    const request = {
+      operation: 'configure',
+      draftId: draft.id,
+      expectedRevision: draft.revision,
+      title: '原声\n新闻',
+      options: {
+        aspectRatio: '9:16',
+        resolution: '720p',
+        fps: 24,
+        tts: { provider: 'qwen-tts', voice: 'longanlang_v3.1', ratePercent: 0 }
+      }
+    }
+    await studio.execute(request, undefined, f.owner)
+    const configured = store.read(draft.id)
+    assert.equal(configured.revision, draft.revision + 1)
+    assert.equal(configured.title, '原声\n新闻')
+    assert.deepEqual([configured.width, configured.height, configured.fps], [720, 1280, 24])
+    assert.deepEqual(configured.tts, { provider: 'qwen-tts', voice: 'longanlang_v3.1', ratePercent: 0 })
+    assert.deepEqual(configured.preparation, draft.preparation)
+    assert.equal(f.nativeCalls, 0)
+    await studio.execute({ ...request, expectedRevision: configured.revision }, undefined, f.owner)
+    assert.equal(store.read(draft.id).revision, configured.revision)
+    await assert.rejects(studio.execute(request, undefined, f.owner), /STUDIO_CONFLICT/)
+    await assert.rejects(
+      studio.execute({ ...request, expectedRevision: configured.revision, options: { fps: 99 } }, undefined, f.owner),
+      /fps|frame/i
+    )
+    assert.equal(store.read(draft.id).revision, configured.revision)
+  } finally {
+    f.close()
   }
-  await f.news.execute({operation:'propose-news-topics',expectedTopicRevision:0,newsCandidates:[candidate]},'agent');const b=f.news.journal.read()
-  await f.news.execute({operation:'select-news-topic',expectedTopicRevision:b.revision,topicId:candidate.id,baseFingerprint:newsFingerprint(b.topics)},'user')
-  const store=new VideoStudioStore(f.root,f.owner.sessionId),id=f.news.journal.read().selection!.draftId,directory=path.join(f.root,'artifacts'),hash=(text:string)=>crypto.createHash('sha256').update(text).digest('hex')
-  fs.writeFileSync(path.join(directory,'separate.mp4'),'separate native video');await saveNativeVideoOrigin(directory,'separate.mp4',{version:1,platform:'page',targetId:'https://video.example/interview',resourceId:'https://video.example/interview.mp4'})
-  const frames=[0,1.5,2.9].map((seconds,i)=>{const artifactId='separate-frame-'+i+'.png',bytes='different observed frame '+i;fs.writeFileSync(path.join(directory,artifactId),bytes);return {artifactId,sha256:hash(bytes),width:640,height:360,requestedSeconds:seconds,seconds}})
-  let draft=store.read(id);draft.scenes=[{...newStudioScene('evidence'),durationSeconds:3,label:'CNBC节目片段｜节目日期2026-10-26',narration:'Selected fact.',videoArtifactId:'separate.mp4',sourceStartSeconds:0,sourceDurationSeconds:3,keepSourceAudio:false,citations:[{sourceId:candidate.sourceId,acquisitionId:candidate.acquisitionId,startCharacter:0,endCharacter:candidate.quote.length,quote:candidate.quote,kind:'fact',claim:'Selected fact',conflict:'pending',eventAt:null}]}];draft=store.update(id,draft.revision,draft)
-  draft=store.recordReference(id,draft.revision,[{id:'separate-ref',sourceArtifactId:'separate.mp4',sourceSha256:hash('separate native video'),sourceBytes:21,kind:'video',width:640,height:360,durationSeconds:3,createdAt:new Date().toISOString(),revision:1,videoRange:{startSeconds:0,endSeconds:3},frames,analysis:{summary:'Controlled distinct frames.',observations:frames.map((_,frameIndex)=>({frameIndex,description:'Observed source frame.',adaptation:'Related interview for the selected fact.'}))},analysisOrigin:'agent'}])
-  const inspect=f.kernel.recordingController.processArtifact;f.kernel.recordingController.processArtifact=async(raw,signal)=>{const request=raw as {action:string;artifactId?:string};if(request.action!=='media.inspect')return inspect(raw,signal);const duration=request.artifactId==='selected-preview.mp4'?10:3;return {durationSeconds:duration,tracks:[{id:1,type:'video',canDecode:true,startSeconds:0,endSeconds:duration,width:640,height:360},{id:2,type:'audio',canDecode:true,startSeconds:0,endSeconds:duration}]}}
-  const prepare=()=>new NewsPreparationService(f.kernel,store,f.owner,store.read(id))
-  if(selection==='page-interview'||selection==='youtube-announcement'){
-   await assert.rejects(f.news.guardDraft(id,undefined,true),/NEWS_EVIDENCE_MISSING/,'interviews and video-platform announcements retain same-original requirements');return
-  }
-  await assert.rejects(f.news.guardDraft(id,undefined,true),/NEWS_PREPARATION_REQUIRED/,'proven video alone cannot replace author observations')
-  const report=await prepare().preflight();await prepare().execute({operation:'record-scenes',expectedChecklistRevision:report.checklistRevision,scenes:[{sceneId:'evidence',fingerprint:report.scenes[0].fingerprint,intent:'Report the selected article with related interview.',dateLabel:draft.scenes[0].label!,materials:[{artifactId:'separate.mp4',referenceId:'separate-ref',kind:'external-video',observation:'Actual controlled moving interview frames.',relation:'Supports the selected news.'}],originalSpeech:{mode:'not-used',quote:'',translation:'',reason:'Chinese narration.'}}]},'agent')
-  await f.news.guardDraft(id,undefined,true);assert.equal(store.read(id).scenes[0].imageArtifactId,undefined,'no article screenshot is burned into the film')
-  const valid=store.read(id);draft=store.update(id,valid.revision,{...valid,scenes:[{...valid.scenes[0],citations:[]}]});await assert.rejects(f.news.guardDraft(id,undefined,true),/NEWS_EVIDENCE_MISSING/,'independent video does not replace the selected fact citation')
-  draft=store.update(id,draft.revision,{...valid,revision:draft.revision});fs.appendFileSync(path.join(directory,'separate.mp4'),'tamper');await assert.rejects(f.news.guardDraft(id,undefined,true),/NEWS_|hash|SHA|changed/i)
- }finally{f.close()}
 })
+import {
+  mediaArtifactHash,
+  saveMediaDerivation,
+  saveNativeVideoOrigin,
+  readNativeVideoOrigin
+} from '@bmw-agent/media-native/derivation'
+test('Live broadcast publication labels retain original day precision and never turn relative or future dates into fresh news', () => {
+  const now = Date.parse('2026-10-18T09:00:00Z')
+  for (const value of [
+    '直播开始日期：2026年10月17日',
+    'Streamed live on Oct 17, 2026',
+    'Premiered on October 17, 2026',
+    '首播日期：2026年10月17日'
+  ]) {
+    assert.equal(newsPublication(value, now).publishedAt, '2026-10-17')
+    assert.equal(newsPublication(value, now).precision, 'day')
+    assert.equal(newsFresh(value, now), true)
+  }
+  for (const value of [
+    '直播开始日期：2天前',
+    'Streamed live on Oct 20, 2026',
+    '直播开始日期：2026年10月17日、2026年10月18日',
+    'Streamed live on Oct 10, 2026'
+  ])
+    assert.equal(newsFresh(value, now), false)
+})
+test('Localized post clocks never invent a timezone and retain conservative publication-day boundaries', () => {
+  const now = Date.parse('2026-10-18T05:00:00Z')
+  for (const label of ['1:42 · 2026年10月18日', '00:00 · 2026年10月18日', '23:59:59 · 2026年10月18日']) {
+    const date = newsPublication(label, now)
+    assert.equal(date.publishedAt, '2026-10-18')
+    assert.equal(date.precision, 'day')
+    assert.equal(date.earliest, Date.parse('2026-10-17T10:00:00Z'))
+    assert.equal(date.latest, now)
+    assert.equal(newsFresh(label, now), true)
+  }
+  for (const label of [
+    '25:42 · 2026年10月18日',
+    '1:60 · 2026年10月18日',
+    '1:42 · 2026年2月30日',
+    'Updated 1:42 · 2026年10月18日',
+    '录制 1:42 · 2026年10月18日',
+    '1:42 · 2026年10月17日 / 2026年10月18日',
+    '1:42 · 今天',
+    '1:42 · 2026年10月20日'
+  ])
+    assert.equal(newsFresh(label, now), false, label)
+  const boundary = Date.parse('2026-10-17T10:00:00Z')
+  assert.equal(newsFresh('1:42 · 2026年10月15日', boundary), true)
+  assert.equal(newsFresh('1:42 · 2026年10月15日', boundary + 1), false)
+})
+test('Date-only publishers retain precision and qualify only when the entire conservative timezone range is within 72 hours', () => {
+  const now = Date.parse('2026-10-18T02:00:00Z')
+  for (const day of [
+    '2026-10-17',
+    '2026年10月17日',
+    'Oct 17, 2026',
+    '17 October 2026',
+    'Press release issued: 17 October 2026',
+    '发布时间：2026年10月17日',
+    '2026-10-17 19:53 来源：新华社'
+  ]) {
+    assert.equal(newsFresh(day, now), true)
+    const p = newsPublication(day, now)
+    assert.equal(p.publishedAt, '2026-10-17')
+    assert.equal(p.precision, 'day')
+    assert.equal(p.earliest, Date.parse('2026-10-16T10:00:00Z'))
+    assert.equal(p.latest, now)
+  }
+  assert.equal(newsFresh('2026-10-15', now), false)
+  assert.equal(newsFresh('2026-10-20', now), false)
+  assert.equal(newsFresh('2026-02-30', now), false)
+  assert.throws(() => newsPublication('10/11/2026', now))
+  assert.equal(newsFresh('2026-10-15T02:00:00Z', now), true)
+})
+test('Publisher day labels tolerate weekdays, month dots, ordinals, clocks and zones while keeping day precision', () => {
+  const now = Date.parse('2026-10-18T02:00:00Z'),
+    boundary = Date.parse('2026-10-16T10:00:00Z')
+  for (const day of [
+    'Oct. 17, 2026',
+    'Saturday, October 17, 2026',
+    'Sat, Oct 17, 2026',
+    'October 17th, 2026',
+    'Oct 17, 2026 5:00 AM',
+    'Oct 17, 2026 · 5:00 AM',
+    'Oct 17, 2026 at 5:00 AM',
+    'Oct 17 2026 05:00 EDT',
+    'Published Mon, Oct 17 2026 3:12 PM EDT',
+    '17 Oct 2026 05:00 GMT+8',
+    '2026-10-17 19:53 EDT',
+    '2026-10-17T19:53',
+    '3:04 PM · Oct 17, 2026',
+    '2026年10月17日 星期六'
+  ]) {
+    const p = newsPublication(day, now)
+    assert.equal(p.publishedAt, '2026-10-17', day)
+    assert.equal(p.precision, 'day', day)
+    assert.equal(p.earliest, boundary, day)
+    assert.equal(p.latest, now, day)
+    assert.equal(newsFresh(day, now), true, day)
+  }
+  // An update or recording stamp, an ambiguous separator or an unsupported locale still never becomes a publication day.
+  for (const bad of [
+    'Updated Oct 17, 2026',
+    'Last updated October 17, 2026',
+    'Recorded Oct 17, 2026',
+    'Modified Oct 17, 2026',
+    'Oct 17, 2026 / Oct 18, 2026',
+    'Oct 17, 2026, Oct 18, 2026',
+    '2026-10-17 2026-10-18',
+    '10/17/2026',
+    'Oct 17 26',
+    '17.10.2026'
+  ])
+    assert.throws(() => newsPublication(bad, now), /NEWS_DATE/, bad)
+})
+test('Leaving news research is user-only and preserves the board while releasing the Session research restriction', async () => {
+  const f = fixture()
+  try {
+    const c = await f.add()
+    await f.news.execute({ operation: 'propose-news-topics', expectedTopicRevision: 0, newsCandidates: [c] }, 'agent')
+    await assert.rejects(
+      f.news.execute(
+        { operation: 'propose-news-topics', expectedTopicRevision: 1, newsCandidates: [], closeNewsTask: true },
+        'agent'
+      ),
+      /USER_SELECTION/
+    )
+    await f.news.execute(
+      { operation: 'propose-news-topics', expectedTopicRevision: 1, newsCandidates: [], closeNewsTask: true },
+      'user'
+    )
+    assert.equal(f.news.journal.read().topics.length, 1)
+    assert.doesNotThrow(() => requireNewsSelection(f.kernel, f.owner, 'agent'))
+    assert.equal(f.news.journal.read().closed, true)
+    await assert.rejects(
+      f.news.execute({ operation: 'propose-news-topics', expectedTopicRevision: 2, newsCandidates: [] }, 'agent'),
+      /NEWS_CLOSED/
+    )
+  } finally {
+    f.close()
+  }
+})
+function fixture() {
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-news-unit-'))),
+    owner = { projectId: 'project', sessionId: 'owner' }
+  fs.mkdirSync(path.join(root, 'artifacts'))
+  const sources = new ProjectSourceStore(root, 'project')
+  let now = Date.now(),
+    nativeCalls = 0
+  const inspection = {
+      kind: 'image',
+      contentType: 'image/png',
+      width: 1,
+      height: 1,
+      pixels: 1,
+      bytes: 68,
+      canDecode: true
+    },
+    kernel: StudioKernel = {
+      projectStore: { active: () => ({ id: 'project', name: 'News fixture', directory: root }) },
+      projectSources: () => sources,
+      execute: async () => ({}),
+      recordingController: {
+        processArtifact: async () => inspection,
+        compose: async () => {
+          nativeCalls++
+          return {}
+        },
+        narrate: async () => {
+          nativeCalls++
+          return {}
+        }
+      }
+    },
+    news = new NewsService(kernel, owner, () => now)
+  const add = async (publishedAt: string | null = new Date(now - 1000).toISOString(), n = 1) => {
+    const text = 'New AI research has a concrete result ' + n + '.',
+      scope = {
+        selector: 'article',
+        index: 0,
+        excludeSelectors: [],
+        characterUnit: 'utf16' as const,
+        extraction: 'visible-text-nodes' as const,
+        truncated: false,
+        status: 'observed' as const
+      },
+      result = await sources.collect(
+        {
+          url: 'https://example.org/news/' + n,
+          title: 'Original AI news ' + n,
+          author: 'Original publisher',
+          publishedAt,
+          scope,
+          text,
+          mediaScope: scope,
+          mediaTruncated: false,
+          candidates: [
+            { kind: 'image', url: 'https://example.org/' + n + '.png', durationSeconds: null, role: 'body' }
+          ],
+          access: 'unknown',
+          accessText: '',
+          result: 'observed',
+          error: null
+        },
+        sources.snapshot().revision
+      ),
+      a = sources
+        .snapshot()
+        .sources.find(s => s.id === result.sourceId)!
+        .acquisitions.find(a => a.id === result.acquisitionId)!,
+      cid = a.candidates[0].id
+    let catalog = sources.confirm({
+      operation: 'confirm',
+      sourceId: result.sourceId,
+      acquisitionId: result.acquisitionId,
+      expectedRevision: sources.snapshot().revision,
+      candidateIds: [cid]
+    })
+    const artifactId = 'preview-' + n + '.png',
+      bytes = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+        'base64'
+      )
+    fs.writeFileSync(path.join(root, 'artifacts', artifactId), bytes)
+    catalog = await sources.recordMedia(
+      result.sourceId,
+      result.acquisitionId,
+      cid,
+      {
+        state: 'image-decoded',
+        artifactId,
+        contentId: crypto.createHash('sha256').update(bytes).digest('hex'),
+        proof: inspection
+      },
+      catalog.revision
+    )
+    const media = catalog.sources
+        .find(s => s.id === result.sourceId)!
+        .acquisitions.find(a => a.id === result.acquisitionId)!
+        .media.at(-1)!,
+      candidate: NewsTopicCandidate = {
+        id: 'topic-' + n,
+        eventKey: 'event-' + n,
+        subject: '跨领域重要机构 ' + n,
+        subjectKind: 'organization',
+        category: 'academic',
+        region: n % 2 ? 'CN' : 'US',
+        title: 'AI新闻 ' + n,
+        news: '一个新的AI结果',
+        reason: '有具体结果和原始证据',
+        angle: '比较新的变化与条件',
+        format: 'graphic',
+        novelty: 'new-event',
+        recordedAt: null,
+        missing: '',
+        sourceId: result.sourceId,
+        acquisitionId: result.acquisitionId,
+        quote: text,
+        quoteStart: 0,
+        previewArtifactId: media.artifactId!,
+        mode: 'image'
+      }
+    return candidate
+  }
+  return {
+    root,
+    owner,
+    sources,
+    kernel,
+    news,
+    add,
+    get now() {
+      return now
+    },
+    set now(v: number) {
+      now = v
+    },
+    get nativeCalls() {
+      return nativeCalls
+    },
+    close: () => fs.rmSync(root, { recursive: true, force: true })
+  }
+}
+test('Ten verified news events survive restart and selecting the tenth keeps one draft, explicit voice and no preselection media work', async () => {
+  const f = fixture()
+  try {
+    const candidates: NewsTopicCandidate[] = []
+    for (let n = 1; n <= 10; n++) candidates.push(await f.add(new Date(f.now - 1000).toISOString(), n))
+    assert.equal(
+      assertStudioRequest({ operation: 'propose-news-topics', expectedTopicRevision: 0, newsCandidates: candidates })
+        .newsCandidates?.length,
+      10
+    )
+    assert.throws(
+      () =>
+        assertStudioRequest({
+          operation: 'propose-news-topics',
+          expectedTopicRevision: 0,
+          newsCandidates: [...candidates, { ...candidates[0], id: 'eleven' }]
+        }),
+      /NEWS_BUDGET/
+    )
+    await f.news.execute(
+      { operation: 'propose-news-topics', expectedTopicRevision: 0, newsCandidates: candidates },
+      'agent'
+    )
+    const b = new NewsJournal(f.root, f.owner).read()
+    assert.deepEqual(
+      b.topics.map(t => t.candidate.id),
+      candidates.map(c => c.id)
+    )
+    assert.equal(b.selection, undefined)
+    assert.equal(new VideoStudioStore(f.root, 'owner').list().length, 0)
+    assert.equal(f.nativeCalls, 0)
+    const choice = {
+      operation: 'select-news-topic' as const,
+      expectedTopicRevision: b.revision,
+      topicId: candidates[9].id,
+      baseFingerprint: newsFingerprint(b.topics),
+      options: { tts: { provider: 'qwen-tts' as const, voice: 'longanlang_v3.1' as const, ratePercent: 0 } }
+    }
+    await assert.rejects(f.news.execute(choice, 'agent'), /USER_SELECTION/)
+    await f.news.execute(choice, 'user')
+    await f.news.execute({ ...choice, expectedTopicRevision: f.news.journal.read().revision }, 'user')
+    const selected = new NewsJournal(f.root, f.owner).read().selection!,
+      store = new VideoStudioStore(f.root, 'owner')
+    assert.equal(store.list().length, 1)
+    assert.equal(store.read(selected.draftId).tts.voice, 'longanlang_v3.1')
+    assert.equal(f.nativeCalls, 0)
+  } finally {
+    f.close()
+  }
+})
+test('News candidates accept broad subjects and recording days while rejecting unknown fields, duplicate events and ambiguous dates', () => {
+  const f = fixture()
+  return (async () => {
+    try {
+      const c = await f.add()
+      for (const [subjectKind, category, region] of [
+        ['person', 'non-ai-public-figure', 'US'],
+        ['organization', 'public-institution', 'CN'],
+        ['person', 'technology', 'other'],
+        ['organization', 'academic', 'CN']
+      ]) {
+        const raw = { ...c, subjectKind, category, region }
+        assert.equal(new Ajv({ strict: false }).compile(newsCandidateSchema)(raw), true)
+        assert.equal(assertNewsCandidates([raw])[0].region, region)
+      }
+      for (const format of ['interview', 'speech'])
+        assert.throws(() => assertNewsCandidates([{ ...c, format }]), /NEWS_FORMAT/)
+      assert.throws(() => assertNewsCandidates([{ ...c, approved: true }]))
+      assert.throws(() => assertNewsCandidates([c, { ...c, id: 'other' }]), /DUPLICATE/)
+      assert.equal(assertNewsCandidates([{ ...c, recordedAt: '2026-10-17' }])[0].recordedAt, '2026-10-17')
+      assert.throws(() => assertNewsCandidates([{ ...c, recordedAt: '10/11/2026' }]), /NEWS_DATE/)
+      assert.throws(() =>
+        assertStudioRequest({
+          operation: 'select-news-topic',
+          expectedTopicRevision: 1,
+          topicId: c.id,
+          baseFingerprint: '0'.repeat(64),
+          actor: 'user'
+        })
+      )
+      assert.equal(newsFresh(new Date(f.now - NEWS_WINDOW_MS).toISOString(), f.now), true)
+      assert.equal(newsFresh(new Date(f.now - NEWS_WINDOW_MS - 1).toISOString(), f.now), false)
+      assert.equal(newsFresh(new Date(f.now + 1).toISOString(), f.now), false)
+    } finally {
+      f.close()
+    }
+  })()
+})
+test('News proposals require original dates, exact quotes and source-owned verified previews; empty results remain pending', async () => {
+  const f = fixture()
+  try {
+    const c = await f.add()
+    await f.news.execute({ operation: 'propose-news-topics', expectedTopicRevision: 0, newsCandidates: [] }, 'user')
+    await f.news.execute({ operation: 'propose-news-topics', expectedTopicRevision: 1, newsCandidates: [c] }, 'agent')
+    let b = f.news.journal.read()
+    assert.equal(b.topics.length, 1)
+    assert.equal(b.selection, undefined)
+    assert.equal(f.nativeCalls, 0)
+    for (const patch of [{ quote: 'made up' }, { previewArtifactId: 'foreign.png' }, { quoteStart: 1 }])
+      await assert.rejects(
+        f.news.execute(
+          { operation: 'propose-news-topics', expectedTopicRevision: b.revision, newsCandidates: [{ ...c, ...patch }] },
+          'agent'
+        ),
+        /NEWS_/
+      )
+    const undated = await f.add(null, 2)
+    await assert.rejects(
+      f.news.execute(
+        { operation: 'propose-news-topics', expectedTopicRevision: b.revision, newsCandidates: [undated] },
+        'agent'
+      ),
+      /NEWS_SOURCE/
+    )
+    const future = await f.add(new Date(f.now + 1000).toISOString(), 3)
+    await assert.rejects(
+      f.news.execute(
+        { operation: 'propose-news-topics', expectedTopicRevision: b.revision, newsCandidates: [future] },
+        'agent'
+      ),
+      /NEWS_EXPIRED/
+    )
+    f.now += NEWS_WINDOW_MS
+    await assert.rejects(
+      f.news.execute(
+        { operation: 'propose-news-topics', expectedTopicRevision: b.revision, newsCandidates: [c] },
+        'agent'
+      ),
+      /NEWS_EXPIRED/
+    )
+  } finally {
+    f.close()
+  }
+})
+test('Only a current trusted selection creates one draft and durable dispatch never replays after uncertainty or restart', async () => {
+  const f = fixture()
+  try {
+    const c = await f.add()
+    await f.news.execute({ operation: 'propose-news-topics', expectedTopicRevision: 0, newsCandidates: [c] }, 'agent')
+    let b = f.news.journal.read()
+    const request = {
+      operation: 'select-news-topic' as const,
+      expectedTopicRevision: b.revision,
+      topicId: c.id,
+      baseFingerprint: newsFingerprint(b.topics)
+    }
+    await assert.rejects(f.news.execute(request, 'agent'), /USER_SELECTION/)
+    assert.equal(new VideoStudioStore(f.root, 'owner').list().length, 0)
+    await assert.rejects(f.news.execute({ ...request, baseFingerprint: '0'.repeat(64) }, 'user'), /NEWS_STALE/)
+    await f.news.execute(request, 'user')
+    b = f.news.journal.read()
+    const id = b.selection!.draftId
+    assert.equal(new VideoStudioStore(f.root, 'owner').list().length, 1)
+    assert.equal(new VideoStudioStore(f.root, 'owner').read(id).tts.voice, 'zh-CN-YunxiNeural')
+    assert.match(new VideoStudioStore(f.root, 'owner').read(id).preparation.notes, /原始来源：/)
+    assert.equal(new VideoStudioStore(f.root, 'owner').read(id).preparation.notes.startsWith('{'), false)
+    await f.news.execute({ ...request, expectedTopicRevision: b.revision }, 'user')
+    assert.equal(new VideoStudioStore(f.root, 'owner').list().length, 1)
+    assert.equal(f.news.journal.dispatch(id, 'uncertain'), true)
+    const restarted = new NewsJournal(f.root, f.owner)
+    assert.equal(restarted.read().selection!.dispatch, 'uncertain')
+    assert.equal(restarted.dispatch(id, 'uncertain'), false)
+    restarted.dispatch(id, 'sent', 'official-run')
+    assert.equal(restarted.dispatch(id, 'uncertain'), false)
+    assert.equal(f.nativeCalls, 0)
+    assert.throws(() => new NewsJournal(f.root, { ...f.owner, projectId: 'foreign' }).read(), /Foreign/)
+    await assert.rejects(
+      f.news.execute(
+        { operation: 'propose-news-topics', expectedTopicRevision: restarted.read().revision, newsCandidates: [] },
+        'agent'
+      ),
+      /NEWS_SELECTED/
+    )
+  } finally {
+    f.close()
+  }
+})
+test('News research allows material reads and preview indexing without granting metadata edits, drafting or synthesis', async () => {
+  const f = fixture()
+  try {
+    const c = await f.add(),
+      studio = new VideoStudioService(f.kernel)
+    await f.news.execute({ operation: 'propose-news-topics', expectedTopicRevision: 0, newsCandidates: [c] }, 'agent')
+    const run = (materialRequest: unknown) =>
+      studio.execute({ operation: 'materials', materialRequest }, undefined, f.owner)
+    await run({ operation: 'list' })
+    await run({ operation: 'search', query: 'preview' })
+    await run({ operation: 'index', artifactId: c.previewArtifactId, expectedRevision: 0, maxChunks: 0 })
+    await run({ operation: 'search', query: 'preview' })
+    await assert.rejects(
+      run({
+        operation: 'set-metadata',
+        artifactId: c.previewArtifactId,
+        expectedRevision: 1,
+        title: 'rewrite',
+        description: '',
+        tags: []
+      }),
+      /USER_SELECTION/
+    )
+    fs.writeFileSync(path.join(f.root, 'artifacts', 'long.wav'), 'Controlled long source')
+    let inspections = 0
+    f.kernel.recordingController.processArtifact = async () => {
+      assert.equal(++inspections, 1, 'Long research source must stop before ASR')
+      return {
+        durationSeconds: 400,
+        tracks: [{ id: 1, type: 'audio', codec: 'pcm-s16', canDecode: true, startSeconds: 0, endSeconds: 400 }]
+      }
+    }
+    await assert.rejects(
+      run({ operation: 'index', artifactId: 'long.wav', expectedRevision: 1, maxChunks: 1 }),
+      /NEWS_RESEARCH_PREVIEW_ONLY/
+    )
+    assert.equal(inspections, 1)
+    await assert.rejects(studio.execute({ operation: 'create', title: 'bypass' }, undefined, f.owner), /USER_SELECTION/)
+    assert.equal(f.nativeCalls, 0)
+    assert.equal(new VideoStudioStore(f.root, 'owner').list().length, 0)
+    assert.equal(f.news.journal.read().selection, undefined)
+  } finally {
+    f.close()
+  }
+})
+test('Preselection blocks drafting and native narration, and late source changes reject selection or further selected rendering', async () => {
+  const f = fixture()
+  try {
+    const c = await f.add(),
+      studio = new VideoStudioService(f.kernel)
+    await f.news.execute({ operation: 'propose-news-topics', expectedTopicRevision: 0, newsCandidates: [c] }, 'agent')
+    assert.throws(() => requireNewsSelection(f.kernel, f.owner, 'agent'), /USER_SELECTION/)
+    await assert.rejects(studio.execute({ operation: 'create', title: 'bypass' }, undefined, f.owner), /USER_SELECTION/)
+    for (const request of [
+      { operation: 'adopt-review', draftId: 'existing', expectedRevision: 1, reviewId: 'review' },
+      { operation: 'configure', draftId: 'existing', expectedRevision: 1, options: { music: false } },
+      { operation: 'delete', draftId: 'existing', expectedRevision: 1 },
+      { operation: 'detach-source-captions', draftId: 'existing', expectedRevision: 1, sceneId: 'opening' }
+    ])
+      await assert.rejects(studio.execute(request, undefined, f.owner), /USER_SELECTION/)
+    const before = f.news.journal.read()
+    f.now += NEWS_WINDOW_MS
+    await assert.rejects(
+      f.news.execute(
+        {
+          operation: 'select-news-topic',
+          expectedTopicRevision: before.revision,
+          topicId: c.id,
+          baseFingerprint: newsFingerprint(before.topics)
+        },
+        'user'
+      ),
+      /EXPIRED/
+    )
+    f.now -= NEWS_WINDOW_MS
+    await f.news.execute(
+      {
+        operation: 'select-news-topic',
+        expectedTopicRevision: before.revision,
+        topicId: c.id,
+        baseFingerprint: newsFingerprint(before.topics)
+      },
+      'user'
+    )
+    const b = f.news.journal.read(),
+      id = b.selection!.draftId
+    fs.appendFileSync(path.join(f.root, 'artifacts', c.previewArtifactId), 'changed')
+    await assert.rejects(f.news.guardDraft(id), /SOURCE_STALE/)
+    assert.equal(f.nativeCalls, 0)
+    const controller = new AbortController()
+    controller.abort(new Error('cancelled'))
+    await assert.rejects(
+      f.news.execute(
+        { operation: 'propose-news-topics', expectedTopicRevision: b.revision, newsCandidates: [c] },
+        'user',
+        controller.signal
+      ),
+      /cancelled/
+    )
+    assert.equal(f.news.journal.read().revision, b.revision)
+  } finally {
+    f.close()
+  }
+})
+test('News journals preserve corrupt files, reject symlinks and archive previous selected tasks without deleting their drafts', async () => {
+  const f = fixture()
+  try {
+    const c = await f.add()
+    await f.news.execute({ operation: 'propose-news-topics', expectedTopicRevision: 0, newsCandidates: [c] }, 'agent')
+    let b = f.news.journal.read()
+    await f.news.execute(
+      {
+        operation: 'select-news-topic',
+        expectedTopicRevision: b.revision,
+        topicId: c.id,
+        baseFingerprint: newsFingerprint(b.topics)
+      },
+      'user'
+    )
+    b = f.news.journal.read()
+    await f.news.execute(
+      { operation: 'propose-news-topics', expectedTopicRevision: b.revision, newsCandidates: [] },
+      'user'
+    )
+    assert.ok(new VideoStudioStore(f.root, 'owner').read(b.selection!.draftId))
+    const directory = path.join(f.root, 'video-studio', 'news')
+    assert.ok(fs.readdirSync(directory).some(n => n.includes(b.id)))
+    const file = path.join(directory, 'owner.json')
+    fs.writeFileSync(file, 'broken')
+    assert.throws(() => f.news.journal.read())
+    assert.equal(fs.readFileSync(file, 'utf8'), 'broken')
+    fs.rmSync(file)
+    fs.symlinkSync(path.join(directory, fs.readdirSync(directory)[0]), file)
+    assert.throws(() => f.news.journal.read(), /Invalid/)
+  } finally {
+    f.close()
+  }
+})
+test('Native page screenshots bind exact source URL and text, preserve CAS and reject changed pages or files before a news proposal', async () => {
+  const f = fixture()
+  try {
+    const c = await f.add(),
+      body = await f.sources.readBody(c.sourceId, c.acquisitionId),
+      binding = {
+        sourceId: c.sourceId,
+        acquisitionId: c.acquisitionId,
+        expectedRevision: f.sources.snapshot().revision
+      }
+    let text = body.text,
+      url = body.source.url
+    const events = new EventEmitter(),
+      wc = Object.assign(events, {
+        isDestroyed: () => false,
+        getURL: () => url,
+        executeJavaScript: async () => ({ text, range: body.acquisition.scope })
+      }) as unknown as WebContents
+    await assert.rejects(
+      prepareSourceScreenshot(f.sources, wc, { ...binding, bodyContentId: 'forged' }, 'article', 0),
+      /Unsupported source/
+    )
+    await assert.rejects(prepareSourceScreenshot(f.sources, wc, binding, 'header', 0), /SCOPE/)
+    url = 'https://wrong.example/'
+    await assert.rejects(prepareSourceScreenshot(f.sources, wc, binding, 'article', 0), /STALE/)
+    url = body.source.url
+    const bytes = fs.readFileSync(path.join(f.root, 'artifacts', c.previewArtifactId)),
+      artifactId = 'original-page.png'
+    fs.writeFileSync(path.join(f.root, 'artifacts', artifactId), bytes)
+    const abandoned = await prepareSourceScreenshot(f.sources, wc, binding, 'article', 0)
+    events.emit('did-start-navigation', {}, 'https://wrong.example/', false, true)
+    await assert.rejects(abandoned!.record(artifactId, bytes, { width: 1, height: 1 }), /NAVIGATED/)
+    abandoned!.dispose()
+    const capture = await prepareSourceScreenshot(f.sources, wc, binding, 'article', 0)
+    text += 'changed'
+    await assert.rejects(capture!.record(artifactId, bytes, { width: 1, height: 1 }), /STALE/)
+    assert.equal(f.sources.snapshot().revision, binding.expectedRevision)
+    text = body.text
+    const recorded = await capture!.record(artifactId, bytes, { width: 1, height: 1 })
+    assert.equal(recorded.sourceRevision, binding.expectedRevision + 1)
+    assert.equal('catalog' in recorded, false)
+    const source = await f.sources.readBody(c.sourceId, c.acquisitionId)
+    assert.equal(source.mediaAvailability.find(m => m.mediaId === recorded.mediaId)?.available, true)
+    await f.news.execute(
+      {
+        operation: 'propose-news-topics',
+        expectedTopicRevision: 0,
+        newsCandidates: [{ ...c, previewArtifactId: artifactId }]
+      },
+      'agent'
+    )
+    assert.equal(f.nativeCalls, 0)
+    await assert.rejects(capture!.record(artifactId, bytes, { width: 1, height: 1 }), /CONFLICT/)
+    capture!.dispose()
+    fs.appendFileSync(path.join(f.root, 'artifacts', artifactId), 'changed')
+    const status = await f.news.topics()
+    assert.equal(status.topics[0].eligible, false)
+    assert.equal(events.eventNames().length, 0)
+  } finally {
+    f.close()
+  }
+})
+
+test('News guide recognizes rendered title cards and sentence captions, but reports stale or explicitly disabled captions', async () => {
+  const f = fixture()
+  try {
+    const c = await f.add()
+    await f.news.execute({ operation: 'propose-news-topics', expectedTopicRevision: 0, newsCandidates: [c] }, 'agent')
+    const b = f.news.journal.read()
+    await f.news.execute(
+      {
+        operation: 'select-news-topic',
+        expectedTopicRevision: b.revision,
+        topicId: c.id,
+        baseFingerprint: newsFingerprint(b.topics)
+      },
+      'user'
+    )
+    const store = new VideoStudioStore(f.root, 'owner'),
+      id = f.news.journal.read().selection!.draftId
+    let d = store.read(id)
+    const script = '第一句。',
+      scene = {
+        id: 'one',
+        title: '发布',
+        label: '',
+        narration: script,
+        audioText: script,
+        audioArtifactId: 'voice.wav',
+        audioDurationSeconds: 2,
+        durationSeconds: 3,
+        sourceStartSeconds: 0,
+        zoom: 1,
+        playbackRate: 1,
+        bullets: [],
+        cardSpec: { version: 2 as const, templateId: 'title/emphasis' as const, motion: 'wipe' as const },
+        speechCaptions: true,
+        speechAnchors: {
+          scriptText: script,
+          scriptSha256: crypto.createHash('sha256').update(script).digest('hex'),
+          audioArtifactId: 'voice.wav',
+          audioSha256: 'b'.repeat(64),
+          durationSeconds: 2,
+          createdAt: new Date().toISOString(),
+          capturedRevision: 1,
+          timeDomain: 'audio-file-seconds' as const,
+          origin: 'agent-edited' as const,
+          anchors: [{ id: 'first', scriptStart: 0, scriptEnd: script.length, startSeconds: 0, endSeconds: 2 }],
+          timingProvenance: { basis: 'editorial-estimate' as const }
+        }
+      }
+    d = store.update(id, d.revision, { ...d, scenes: [scene] }, true, true)
+    d = store.setSpeech(id, d.revision, scene.id, 'anchors', scene.speechAnchors)
+    const guide = async () =>
+      (await f.news.execute({ operation: 'news-guide', draftId: id, expectedRevision: d.revision }, 'agent')) as {
+        stages: { id: string; ready: boolean }[]
+        scenes: { captionCount: number; captionIssue?: string; hasVisual: boolean }[]
+      }
+    let g = await guide()
+    assert.equal(g.stages.find(s => s.id === 'visual')!.ready, true)
+    assert.equal(g.stages.find(s => s.id === 'audio')!.ready, true)
+    assert.equal(g.scenes[0].captionCount, 1)
+    assert.equal(g.scenes[0].hasVisual, true)
+    d = store.update(id, d.revision, { ...d, scenes: [{ ...d.scenes[0], narration: '第二句。' }] }, true, true)
+    g = await guide()
+    assert.equal(g.stages.find(s => s.id === 'audio')!.ready, false)
+    assert.match(g.scenes[0].captionIssue!, /STALE/)
+    d = store.update(id, d.revision, { ...d, scenes: [{ ...scene, captions: [] }] }, true, true)
+    g = await guide()
+    assert.equal(g.scenes[0].captionCount, 0)
+    assert.equal(g.stages.find(s => s.id === 'audio')!.ready, false)
+  } finally {
+    f.close()
+  }
+})
+
+test('News guide accepts captioned original-speech scenes without TTS and rejects muted or short source coverage', async () => {
+  const f = fixture()
+  try {
+    const c = await f.add()
+    await f.news.execute({ operation: 'propose-news-topics', expectedTopicRevision: 0, newsCandidates: [c] }, 'agent')
+    const board = f.news.journal.read()
+    await f.news.execute(
+      {
+        operation: 'select-news-topic',
+        expectedTopicRevision: board.revision,
+        topicId: c.id,
+        baseFingerprint: newsFingerprint(board.topics)
+      },
+      'user'
+    )
+    const store = new VideoStudioStore(f.root, 'owner'),
+      id = f.news.journal.read().selection!.draftId
+    let draft = store.read(id)
+    draft.scenes = [
+      {
+        id: 'original-quote',
+        title: '本人解释',
+        label: '原声节选',
+        narration: '',
+        visualBrief: '原片与字幕',
+        sources: [],
+        durationSeconds: 5,
+        videoArtifactId: 'quote.webm',
+        sourceStartSeconds: 0,
+        sourceDurationSeconds: 6,
+        keepSourceAudio: true,
+        sourceVolume: 1,
+        zoom: 1,
+        playbackRate: 1,
+        bullets: [],
+        endPolicy: 'hold',
+        captions: [{ startSeconds: 0, endSeconds: 5, text: '这是一段原声引述' }]
+      }
+    ]
+    draft = store.update(id, draft.revision, draft)
+    type Guide = { stages: { id: string; ready: boolean }[]; scenes: { audioMode: string; audioReady: boolean }[] }
+    const guide = async () =>
+      (await f.news.execute(
+        { operation: 'news-guide', draftId: id, expectedRevision: draft.revision },
+        'agent'
+      )) as Guide
+    let g = await guide()
+    assert.equal(g.stages.find(s => s.id === 'script')?.ready, true)
+    assert.equal(g.stages.find(s => s.id === 'audio')?.ready, true)
+    assert.equal(g.scenes[0].audioMode, 'source')
+    assert.equal(f.nativeCalls, 0)
+    draft.scenes[0].sourceVolume = 0
+    draft = store.update(id, draft.revision, draft)
+    g = await guide()
+    assert.equal(g.stages.find(s => s.id === 'audio')?.ready, false)
+    draft.scenes[0].sourceVolume = 1
+    draft.scenes[0].sourceDurationSeconds = 2
+    draft = store.update(id, draft.revision, draft)
+    g = await guide()
+    assert.equal(g.scenes[0].audioReady, false)
+  } finally {
+    f.close()
+  }
+})
+
+test('Selected video evidence accepts native same-film HD trims across restart, never same-site different films or unproven names', async () => {
+  const f = fixture()
+  try {
+    const directory = path.join(f.root, 'artifacts'),
+      identity = { version: 1 as const, platform: 'youtube' as const, targetId: 'same-film', resourceId: 'same-film' }
+    fs.writeFileSync(path.join(directory, 'high-definition.webm'), 'native captured HD bytes')
+    await saveNativeVideoOrigin(directory, 'high-definition.webm', identity)
+    fs.writeFileSync(path.join(directory, 'interview.mp4'), 'native trimmed interview')
+    await saveMediaDerivation(directory, {
+      version: 1,
+      kind: 'native-media-conversion',
+      artifactId: 'interview.mp4',
+      sha256: await mediaArtifactHash(directory, 'interview.mp4'),
+      sourceArtifactId: 'high-definition.webm',
+      sourceSha256: await mediaArtifactHash(directory, 'high-definition.webm'),
+      sourceRange: { startSeconds: 0, endSeconds: 19 }
+    })
+    assert.equal(await selectedVideoVisual(f.sources, directory, 'interview.mp4', identity), true)
+    assert.equal(
+      await selectedVideoVisual(new ProjectSourceStore(f.root, 'project'), directory, 'interview.mp4', identity),
+      true,
+      'durable receipt survives service restart'
+    )
+    assert.equal(
+      await selectedVideoVisual(f.sources, directory, 'interview.mp4', {
+        ...identity,
+        targetId: 'other-film',
+        resourceId: 'other-film'
+      }),
+      false
+    )
+    fs.writeFileSync(path.join(directory, 'same-official-title.mp4'), 'unproven copy')
+    assert.equal(await selectedVideoVisual(f.sources, directory, 'same-official-title.mp4', identity), false)
+    assert.equal(
+      await selectedVideoVisual(f.sources, directory, 'same-official-title.mp4', identity, undefined, async id => ({
+        version: 1,
+        kind: 'native-video-origin',
+        artifactId: id,
+        sha256: await mediaArtifactHash(directory, id),
+        videoIdentity: identity
+      })),
+      true,
+      'Host verified historical capture can establish the same original without new sidecars'
+    )
+    await assert.rejects(
+      selectedVideoVisual(f.sources, directory, 'same-official-title.mp4', identity, undefined, async id => ({
+        version: 1,
+        kind: 'native-video-origin',
+        artifactId: id,
+        sha256: '0'.repeat(64),
+        videoIdentity: identity
+      })),
+      /Historical capture bytes changed/
+    )
+    fs.appendFileSync(path.join(directory, 'interview.mp4'), 'changed')
+    await assert.rejects(selectedVideoVisual(f.sources, directory, 'interview.mp4', identity), /bytes changed/)
+    assert.equal((await readNativeVideoOrigin(directory, 'high-definition.webm'))?.videoIdentity.targetId, 'same-film')
+    fs.appendFileSync(path.join(directory, 'high-definition.webm'), 'changed')
+    await assert.rejects(readNativeVideoOrigin(directory, 'high-definition.webm'), /bytes changed/)
+  } finally {
+    f.close()
+  }
+})
+
+test('Native lineage rejects missing parents, linked receipts, cycles, foreign paths and cancelled verification', async () => {
+  const f = fixture()
+  try {
+    const directory = path.join(f.root, 'artifacts'),
+      identity = { version: 1 as const, platform: 'youtube' as const, targetId: 'film', resourceId: 'film' }
+    fs.writeFileSync(path.join(directory, 'a.mp4'), 'a')
+    fs.writeFileSync(path.join(directory, 'b.mp4'), 'b')
+    for (const [child, parent] of [
+      ['a.mp4', 'b.mp4'],
+      ['b.mp4', 'a.mp4']
+    ])
+      await saveMediaDerivation(directory, {
+        version: 1,
+        kind: 'native-media-conversion',
+        artifactId: child,
+        sha256: await mediaArtifactHash(directory, child),
+        sourceArtifactId: parent,
+        sourceSha256: await mediaArtifactHash(directory, parent),
+        sourceRange: { startSeconds: 0, endSeconds: 1 }
+      })
+    await assert.rejects(selectedVideoVisual(f.sources, directory, 'a.mp4', identity), /Cyclic/)
+    const controller = new AbortController()
+    controller.abort(new Error('cancelled'))
+    await assert.rejects(selectedVideoVisual(f.sources, directory, 'a.mp4', identity, controller.signal), /cancelled/)
+    await assert.rejects(selectedVideoVisual(f.sources, directory, '../outside.mp4', identity), /artifact/i)
+    fs.unlinkSync(path.join(directory, 'a.mp4.derivation.json'))
+    fs.symlinkSync(path.join(directory, 'b.mp4.derivation.json'), path.join(directory, 'a.mp4.derivation.json'))
+    await assert.rejects(selectedVideoVisual(f.sources, directory, 'a.mp4', identity), /symbolic|outside/)
+    fs.unlinkSync(path.join(directory, 'b.mp4'))
+    await assert.rejects(selectedVideoVisual(f.sources, directory, 'b.mp4', identity), /ENOENT/)
+  } finally {
+    f.close()
+  }
+})
+
+test('Selected news render guard permits same-original HD footage without burning its low-resolution preview, retaining stale-source rejection', async () => {
+  const f = fixture()
+  try {
+    const directory = path.join(f.root, 'artifacts'),
+      identity = {
+        version: 1 as const,
+        platform: 'youtube' as const,
+        targetId: 'abcdefghijk',
+        resourceId: 'abcdefghijk'
+      },
+      text = 'Official new interview.',
+      scope = {
+        selector: 'main',
+        index: 0,
+        excludeSelectors: [],
+        characterUnit: 'utf16' as const,
+        extraction: 'visible-text-nodes' as const,
+        truncated: false,
+        status: 'observed' as const
+      }
+    const saved = await f.sources.collect(
+      {
+        url: 'https://www.youtube.com/watch?v=abcdefghijk',
+        title: 'Official interview',
+        author: 'Official publisher',
+        publishedAt: new Date(f.now - 1000).toISOString(),
+        scope,
+        text,
+        mediaScope: scope,
+        mediaTruncated: false,
+        candidates: [
+          {
+            kind: 'video',
+            url: 'https://media.example/original.mp4',
+            durationSeconds: 25,
+            role: 'video',
+            videoIdentity: identity
+          }
+        ],
+        access: 'unknown',
+        accessText: '',
+        result: 'observed',
+        error: null
+      },
+      0
+    )
+    const body = await f.sources.readBody(saved.sourceId, saved.acquisitionId),
+      cid = body.acquisition.candidates[0].id
+    f.sources.confirm({
+      operation: 'confirm',
+      sourceId: saved.sourceId,
+      acquisitionId: saved.acquisitionId,
+      expectedRevision: f.sources.snapshot().revision,
+      candidateIds: [cid]
+    })
+    fs.writeFileSync(path.join(directory, 'low-preview.mp4'), 'low preview')
+    await f.sources.recordMedia(
+      saved.sourceId,
+      saved.acquisitionId,
+      cid,
+      {
+        state: 'decoded-file',
+        artifactId: 'low-preview.mp4',
+        contentId: await mediaArtifactHash(directory, 'low-preview.mp4'),
+        startSeconds: 0,
+        endSeconds: 25,
+        proof: {
+          kind: 'decoding',
+          completeFile: true,
+          container: 'mp4',
+          contentType: 'video/mp4',
+          durationSeconds: 25,
+          firstTimestampSeconds: 0,
+          tracks: [
+            { id: 1, type: 'video', codec: 'avc', sampleCount: 25, startSeconds: 0, endSeconds: 25 },
+            { id: 2, type: 'audio', codec: 'aac', sampleCount: 25, startSeconds: 0, endSeconds: 25 }
+          ]
+        }
+      },
+      f.sources.snapshot().revision
+    )
+    f.kernel.recordingController.processArtifact = async () => ({
+      durationSeconds: 25,
+      tracks: [
+        { type: 'video', canDecode: true, width: 256, height: 144 },
+        { type: 'audio', canDecode: true }
+      ]
+    })
+    const candidate: NewsTopicCandidate = {
+      id: 'hd-topic',
+      eventKey: 'hd-event',
+      subject: 'Official publisher',
+      subjectKind: 'organization',
+      category: 'technology',
+      region: 'US',
+      title: 'New interview',
+      news: 'New public demonstration',
+      reason: 'Original public statement',
+      angle: 'Explain the demonstration',
+      format: 'interview',
+      novelty: 'new-event',
+      recordedAt: null,
+      missing: '',
+      sourceId: saved.sourceId,
+      acquisitionId: saved.acquisitionId,
+      quote: text,
+      quoteStart: 0,
+      previewArtifactId: 'low-preview.mp4',
+      mode: 'video'
+    }
+    await f.news.execute(
+      { operation: 'propose-news-topics', expectedTopicRevision: 0, newsCandidates: [candidate] },
+      'agent'
+    )
+    const board = f.news.journal.read()
+    await f.news.execute(
+      {
+        operation: 'select-news-topic',
+        expectedTopicRevision: board.revision,
+        topicId: candidate.id,
+        baseFingerprint: newsFingerprint(board.topics)
+      },
+      'user'
+    )
+    const store = new VideoStudioStore(f.root, 'owner'),
+      id = f.news.journal.read().selection!.draftId
+    let draft = store.read(id)
+    fs.writeFileSync(path.join(directory, 'hd.mp4'), 'native high definition')
+    await saveNativeVideoOrigin(directory, 'hd.mp4', identity)
+    draft = store.update(id, draft.revision, {
+      ...draft,
+      scenes: [
+        {
+          id: 'interview',
+          title: 'Original interview',
+          narration: '',
+          durationSeconds: 20,
+          videoArtifactId: 'hd.mp4',
+          sourceStartSeconds: 0,
+          zoom: 1,
+          playbackRate: 1,
+          bullets: []
+        }
+      ]
+    })
+    await f.news.guardDraft(id, undefined, true)
+    assert.equal(store.read(id).scenes[0].videoArtifactId, 'hd.mp4')
+    assert.equal(f.news.journal.read().topics[0].candidate.previewArtifactId, 'low-preview.mp4')
+    fs.writeFileSync(path.join(directory, 'unproven.mp4'), 'same-title different footage')
+    draft = store.update(id, draft.revision, {
+      ...draft,
+      scenes: [{ ...draft.scenes[0], videoArtifactId: 'unproven.mp4' }]
+    })
+    await assert.rejects(f.news.guardDraft(id, undefined, true), /NEWS_EVIDENCE_MISSING/)
+    fs.appendFileSync(path.join(directory, 'low-preview.mp4'), 'tampered original evidence')
+    await assert.rejects(f.news.guardDraft(id, undefined, true), /NEWS_SOURCE_STALE/)
+  } finally {
+    f.close()
+  }
+})
+
+for (const selection of ['image', 'page-announcement', 'page-interview', 'youtube-announcement'] as const)
+  test(
+    'Selected article facts retain exact citations and current preparation with independent video: ' + selection,
+    async () => {
+      const f = fixture()
+      try {
+        let candidate = await f.add()
+        if (selection !== 'image') {
+          const directory = path.join(f.root, 'artifacts'),
+            isYoutube = selection === 'youtube-announcement',
+            url = isYoutube ? 'https://www.youtube.com/watch?v=abcdefghijk' : 'https://announcement.example/release',
+            identity = {
+              version: 1 as const,
+              platform: isYoutube ? ('youtube' as const) : ('page' as const),
+              targetId: isYoutube ? 'abcdefghijk' : url,
+              resourceId: isYoutube ? 'abcdefghijk' : 'https://media.example/announcement.mp4'
+            },
+            scope = {
+              selector: 'main',
+              index: 0,
+              excludeSelectors: [],
+              characterUnit: 'utf16' as const,
+              extraction: 'visible-text-nodes' as const,
+              truncated: false,
+              status: 'observed' as const
+            },
+            text = 'Official announcement of a new world model.'
+          const saved = await f.sources.collect(
+              {
+                url,
+                title: 'Official release',
+                author: 'Official publisher',
+                publishedAt: new Date(f.now - 1000).toISOString(),
+                scope,
+                text,
+                mediaScope: scope,
+                mediaTruncated: false,
+                candidates: [
+                  {
+                    kind: 'video',
+                    url: 'https://media.example/announcement.mp4',
+                    durationSeconds: 10,
+                    role: 'video',
+                    videoIdentity: identity
+                  }
+                ],
+                access: 'unknown',
+                accessText: '',
+                result: 'observed',
+                error: null
+              },
+              f.sources.snapshot().revision
+            ),
+            body = await f.sources.readBody(saved.sourceId, saved.acquisitionId),
+            cid = body.acquisition.candidates[0].id
+          f.sources.confirm({
+            operation: 'confirm',
+            sourceId: saved.sourceId,
+            acquisitionId: saved.acquisitionId,
+            expectedRevision: f.sources.snapshot().revision,
+            candidateIds: [cid]
+          })
+          fs.writeFileSync(path.join(directory, 'selected-preview.mp4'), 'selected native preview')
+          await f.sources.recordMedia(
+            saved.sourceId,
+            saved.acquisitionId,
+            cid,
+            {
+              state: 'decoded-file',
+              artifactId: 'selected-preview.mp4',
+              contentId: await mediaArtifactHash(directory, 'selected-preview.mp4'),
+              startSeconds: 0,
+              endSeconds: 10,
+              proof: {
+                kind: 'decoding',
+                completeFile: true,
+                container: 'mp4',
+                contentType: 'video/mp4',
+                durationSeconds: 10,
+                firstTimestampSeconds: 0,
+                tracks: [
+                  { id: 1, type: 'video', codec: 'avc', sampleCount: 10, startSeconds: 0, endSeconds: 10 },
+                  { id: 2, type: 'audio', codec: 'aac', sampleCount: 10, startSeconds: 0, endSeconds: 10 }
+                ]
+              }
+            },
+            f.sources.snapshot().revision
+          )
+          f.kernel.recordingController.processArtifact = async () => ({
+            durationSeconds: 10,
+            tracks: [
+              { type: 'video', canDecode: true, width: 640, height: 360 },
+              { type: 'audio', canDecode: true }
+            ]
+          })
+          candidate = {
+            ...candidate,
+            format: selection === 'page-interview' ? 'interview' : 'announcement',
+            sourceId: saved.sourceId,
+            acquisitionId: saved.acquisitionId,
+            quote: text,
+            quoteStart: 0,
+            previewArtifactId: 'selected-preview.mp4',
+            mode: 'video'
+          }
+        }
+        await f.news.execute(
+          { operation: 'propose-news-topics', expectedTopicRevision: 0, newsCandidates: [candidate] },
+          'agent'
+        )
+        const b = f.news.journal.read()
+        await f.news.execute(
+          {
+            operation: 'select-news-topic',
+            expectedTopicRevision: b.revision,
+            topicId: candidate.id,
+            baseFingerprint: newsFingerprint(b.topics)
+          },
+          'user'
+        )
+        const store = new VideoStudioStore(f.root, f.owner.sessionId),
+          id = f.news.journal.read().selection!.draftId,
+          directory = path.join(f.root, 'artifacts'),
+          hash = (text: string) => crypto.createHash('sha256').update(text).digest('hex')
+        fs.writeFileSync(path.join(directory, 'separate.mp4'), 'separate native video')
+        await saveNativeVideoOrigin(directory, 'separate.mp4', {
+          version: 1,
+          platform: 'page',
+          targetId: 'https://video.example/interview',
+          resourceId: 'https://video.example/interview.mp4'
+        })
+        const frames = [0, 1.5, 2.9].map((seconds, i) => {
+          const artifactId = 'separate-frame-' + i + '.png',
+            bytes = 'different observed frame ' + i
+          fs.writeFileSync(path.join(directory, artifactId), bytes)
+          return { artifactId, sha256: hash(bytes), width: 640, height: 360, requestedSeconds: seconds, seconds }
+        })
+        let draft = store.read(id)
+        draft.scenes = [
+          {
+            ...newStudioScene('evidence'),
+            durationSeconds: 3,
+            label: 'CNBC节目片段｜节目日期2026-10-26',
+            narration: 'Selected fact.',
+            videoArtifactId: 'separate.mp4',
+            sourceStartSeconds: 0,
+            sourceDurationSeconds: 3,
+            keepSourceAudio: false,
+            citations: [
+              {
+                sourceId: candidate.sourceId,
+                acquisitionId: candidate.acquisitionId,
+                startCharacter: 0,
+                endCharacter: candidate.quote.length,
+                quote: candidate.quote,
+                kind: 'fact',
+                claim: 'Selected fact',
+                conflict: 'pending',
+                eventAt: null
+              }
+            ]
+          }
+        ]
+        draft = store.update(id, draft.revision, draft)
+        draft = store.recordReference(id, draft.revision, [
+          {
+            id: 'separate-ref',
+            sourceArtifactId: 'separate.mp4',
+            sourceSha256: hash('separate native video'),
+            sourceBytes: 21,
+            kind: 'video',
+            width: 640,
+            height: 360,
+            durationSeconds: 3,
+            createdAt: new Date().toISOString(),
+            revision: 1,
+            videoRange: { startSeconds: 0, endSeconds: 3 },
+            frames,
+            analysis: {
+              summary: 'Controlled distinct frames.',
+              observations: frames.map((_, frameIndex) => ({
+                frameIndex,
+                description: 'Observed source frame.',
+                adaptation: 'Related interview for the selected fact.'
+              }))
+            },
+            analysisOrigin: 'agent'
+          }
+        ])
+        const inspect = f.kernel.recordingController.processArtifact
+        f.kernel.recordingController.processArtifact = async (raw, signal) => {
+          const request = raw as { action: string; artifactId?: string }
+          if (request.action !== 'media.inspect') return inspect(raw, signal)
+          const duration = request.artifactId === 'selected-preview.mp4' ? 10 : 3
+          return {
+            durationSeconds: duration,
+            tracks: [
+              { id: 1, type: 'video', canDecode: true, startSeconds: 0, endSeconds: duration, width: 640, height: 360 },
+              { id: 2, type: 'audio', canDecode: true, startSeconds: 0, endSeconds: duration }
+            ]
+          }
+        }
+        const prepare = () => new NewsPreparationService(f.kernel, store, f.owner, store.read(id))
+        if (selection === 'page-interview' || selection === 'youtube-announcement') {
+          await assert.rejects(
+            f.news.guardDraft(id, undefined, true),
+            /NEWS_EVIDENCE_MISSING/,
+            'interviews and video-platform announcements retain same-original requirements'
+          )
+          return
+        }
+        await assert.rejects(
+          f.news.guardDraft(id, undefined, true),
+          /NEWS_PREPARATION_REQUIRED/,
+          'proven video alone cannot replace author observations'
+        )
+        const report = await prepare().preflight()
+        await prepare().execute(
+          {
+            operation: 'record-scenes',
+            expectedChecklistRevision: report.checklistRevision,
+            scenes: [
+              {
+                sceneId: 'evidence',
+                fingerprint: report.scenes[0].fingerprint,
+                intent: 'Report the selected article with related interview.',
+                dateLabel: draft.scenes[0].label!,
+                materials: [
+                  {
+                    artifactId: 'separate.mp4',
+                    referenceId: 'separate-ref',
+                    kind: 'external-video',
+                    observation: 'Actual controlled moving interview frames.',
+                    relation: 'Supports the selected news.'
+                  }
+                ],
+                originalSpeech: { mode: 'not-used', quote: '', translation: '', reason: 'Chinese narration.' }
+              }
+            ]
+          },
+          'agent'
+        )
+        await f.news.guardDraft(id, undefined, true)
+        assert.equal(
+          store.read(id).scenes[0].imageArtifactId,
+          undefined,
+          'no article screenshot is burned into the film'
+        )
+        const valid = store.read(id)
+        draft = store.update(id, valid.revision, { ...valid, scenes: [{ ...valid.scenes[0], citations: [] }] })
+        await assert.rejects(
+          f.news.guardDraft(id, undefined, true),
+          /NEWS_EVIDENCE_MISSING/,
+          'independent video does not replace the selected fact citation'
+        )
+        draft = store.update(id, draft.revision, { ...valid, revision: draft.revision })
+        fs.appendFileSync(path.join(directory, 'separate.mp4'), 'tamper')
+        await assert.rejects(f.news.guardDraft(id, undefined, true), /NEWS_|hash|SHA|changed/i)
+      } finally {
+        f.close()
+      }
+    }
+  )

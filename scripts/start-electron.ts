@@ -8,7 +8,7 @@ const child = spawn(String(electronPath).trim(), ['.'], {
   stdio: 'inherit',
   env: { ...process.env, BMW_PRODUCT_ID: productId }
 })
-child.once('error', (error) => {
+child.once('error', error => {
   console.error('Failed to launch Electron:', error.message)
   process.exitCode = 1
 })

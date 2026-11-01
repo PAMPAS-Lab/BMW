@@ -16,7 +16,8 @@ export function restartBlockReason(activity: RestartActivity): RestartBlock | nu
   if (activity.mediaCaptureActive) {
     return {
       code: 'media-capture-active',
-      message: 'A screen recording, media capture or media processing job is still active. Stop it before restarting BMW.'
+      message:
+        'A screen recording, media capture or media processing job is still active. Stop it before restarting BMW.'
     }
   }
   if (activity.scheduledTaskActive) {

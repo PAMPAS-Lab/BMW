@@ -1,6 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import {readStateFile, stateRecord, StateLoadError} from './state-load.js'
+import { readStateFile, stateRecord, StateLoadError } from './state-load.js'
 
 const DEFAULTS = Object.freeze({
   version: 1,
@@ -49,13 +49,21 @@ export type LayoutState = ReturnType<typeof normalize>
 function validate(raw: unknown): LayoutState {
   const value = stateRecord(raw)
   if (value.version !== undefined && value.version !== 1) throw new Error('Unsupported layout state version.')
-  if (typeof value.configured !== 'boolean' || !['sidebar','overlay'].includes(String(value.mode))) throw new Error('Invalid saved layout identity.')
-  for (const key of ['configured','visible','overlayFullscreen']) if (value[key] !== undefined && typeof value[key] !== 'boolean') throw new Error('Invalid saved layout flag: '+key)
-  if (value.mode !== undefined && !['sidebar','overlay'].includes(String(value.mode))) throw new Error('Invalid saved layout mode.')
-  for (const key of ['sidebarWidth','opacity']) if (value[key] !== undefined && (typeof value[key] !== 'number' || !Number.isFinite(value[key]))) throw new Error('Invalid saved layout number: '+key)
+  if (typeof value.configured !== 'boolean' || !['sidebar', 'overlay'].includes(String(value.mode)))
+    throw new Error('Invalid saved layout identity.')
+  for (const key of ['configured', 'visible', 'overlayFullscreen'])
+    if (value[key] !== undefined && typeof value[key] !== 'boolean')
+      throw new Error('Invalid saved layout flag: ' + key)
+  if (value.mode !== undefined && !['sidebar', 'overlay'].includes(String(value.mode)))
+    throw new Error('Invalid saved layout mode.')
+  for (const key of ['sidebarWidth', 'opacity'])
+    if (value[key] !== undefined && (typeof value[key] !== 'number' || !Number.isFinite(value[key])))
+      throw new Error('Invalid saved layout number: ' + key)
   if (value.overlayBounds !== undefined) {
     const bounds = stateRecord(value.overlayBounds)
-    for (const key of ['x','y','width','height']) if (bounds[key] !== undefined && (typeof bounds[key] !== 'number' || !Number.isFinite(bounds[key]))) throw new Error('Invalid saved layout bounds.')
+    for (const key of ['x', 'y', 'width', 'height'])
+      if (bounds[key] !== undefined && (typeof bounds[key] !== 'number' || !Number.isFinite(bounds[key])))
+        throw new Error('Invalid saved layout bounds.')
   }
   return normalize(value)
 }
@@ -64,19 +72,35 @@ export class LayoutStore {
   readonly onState?: (state: LayoutState) => void
   private state: LayoutState = normalize()
   private loadFailure?: StateLoadError
-  constructor({filePath, onState}: {filePath: string; onState?: (state: LayoutState) => void}) {
-    this.filePath = filePath;this.onState = onState;this.load()
+  constructor({ filePath, onState }: { filePath: string; onState?: (state: LayoutState) => void }) {
+    this.filePath = filePath
+    this.onState = onState
+    this.load()
   }
   load(): void {
-    try {this.state = readStateFile(this.filePath, validate) ?? normalize();this.loadFailure = undefined}
-    catch (error) {this.loadFailure = error;throw error}
+    try {
+      this.state = readStateFile(this.filePath, validate) ?? normalize()
+      this.loadFailure = undefined
+    } catch (error) {
+      this.loadFailure = error
+      throw error
+    }
   }
-  snapshot(): LayoutState {return structuredClone(this.state)}
+  snapshot(): LayoutState {
+    return structuredClone(this.state)
+  }
   update(input: Record<string, unknown> = {}): LayoutState {
     if (this.loadFailure) throw this.loadFailure
-    const next = normalize({...this.state, ...input, overlayBounds: input.overlayBounds ? {...this.state.overlayBounds, ...stateRecord(input.overlayBounds)} : this.state.overlayBounds})
+    const next = normalize({
+      ...this.state,
+      ...input,
+      overlayBounds: input.overlayBounds
+        ? { ...this.state.overlayBounds, ...stateRecord(input.overlayBounds) }
+        : this.state.overlayBounds
+    })
     writeAtomically(this.filePath, next)
-    this.state = next;this.onState?.(this.snapshot())
+    this.state = next
+    this.onState?.(this.snapshot())
     return this.snapshot()
   }
 }
