@@ -55,7 +55,6 @@ import { SessionContinuityManager } from './session-continuity.js'
 import { ScheduledTaskManager } from './scheduled-task-manager.js'
 import { ScheduledTaskStore } from './scheduled-task-store.js'
 import { BrowserCapabilityRegistry } from '@bmw-agent/browser-capability/registry'
-import { browserCompatibleUserAgent } from './browser-user-agent.js'
 import { restartBlockReason } from './restart-policy.js'
 
 const sourceDirectory = path.dirname(fileURLToPath(import.meta.url))
@@ -1317,7 +1316,6 @@ async function createApp() {
   const browserCapabilities = new BrowserCapabilityRegistry(productDefinition)
   installApplicationMenu()
   const persistentSession = session.fromPartition(productDefinition.sessionPartition)
-  persistentSession.setUserAgent(app.userAgentFallback)
   bmwSession = persistentSession
   const stores = await loadStartupStores()
   if (!stores || appQuitting) return
@@ -1904,7 +1902,8 @@ export function createBmwApplication(definition: ResolvedProductDefinition, asse
   configureNetworkStartup(path.join(app.getPath('userData'), 'global-settings.json'), name =>
     app.commandLine.appendSwitch(name)
   )
-  app.userAgentFallback = browserCompatibleUserAgent(app.userAgentFallback)
+  // Keep Electron's native application/runtime identity for the whole partition.
+  // A Chrome-shaped override can fail Google's identifier-stage browser check.
   app
     .whenReady()
     .then(createApp)

@@ -5,7 +5,17 @@ import fs from 'node:fs'
 import http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
-import { app, BrowserWindow, WebContentsView, webContents, ipcMain, Menu, safeStorage, nativeImage } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  WebContentsView,
+  webContents,
+  ipcMain,
+  Menu,
+  safeStorage,
+  nativeImage,
+  session
+} from 'electron'
 import type { WebContents } from 'electron'
 import bmw, { createBmwAgentAssembly } from '../apps/bmw/product.js'
 import { createBmwApplication } from '../packages/platform/src/main.js'
@@ -59,8 +69,13 @@ app.on('web-contents-created', (_event, contents) => {
       errors.push(details.message)
   })
 })
-const fixture = http.createServer((_request, response) => {
-  response.writeHead(200, { 'content-type': 'text/html; charset=utf-8' })
+let firstPageUserAgent: string | undefined
+const fixture = http.createServer((request, response) => {
+  if (request.url === '/first') firstPageUserAgent = request.headers['user-agent']
+  response.writeHead(200, {
+    'content-type': 'text/html; charset=utf-8',
+    'set-cookie': 'bmw-login-continuity=fixture-only; Path=/; Max-Age=3600; SameSite=Lax'
+  })
   response.end('<!doctype html><title>BMW popup fixture</title><p>Temporary local fixture.</p>')
 })
 let qwenFixtureMode: 'success' | 'hold' | 'failure' = 'success',
@@ -186,6 +201,13 @@ async function run(): Promise<void> {
     markStage('Desktop smoke: BMW Session and context ready; creating Project')
     if (group === 'restore') {
       stage = 'projects/restart'
+      const retained = await session
+        .fromPartition('persist:bmw')
+        .cookies.get({ url: 'http://127.0.0.1', name: 'bmw-login-continuity' })
+      assert.ok(
+        retained.some(cookie => cookie.value === 'fixture-only'),
+        'Existing browser login state survives application restart in the same partition'
+      )
       const expected = JSON.parse(fs.readFileSync(path.join(temporary, 'restart.json'), 'utf8'))
       const actual = await shell.executeJavaScript('window.bmw.projectState()')
       assert.equal(actual.activeProjectId, expected.activeProjectId)
@@ -233,6 +255,26 @@ async function run(): Promise<void> {
     await shell.executeJavaScript('window.bmw.setAgentControl(true)')
     const firstTab = await shell.executeJavaScript(
       `window.bmw.browser({action:'tabs.open',url:${JSON.stringify(origin + '/first')},foreground:true,reuse:false})`
+    )
+    const identityPage = webContents.getAllWebContents().find(contents => contents.getURL() === origin + '/first')!
+    const identity = (await identityPage.executeJavaScript(
+      '({userAgent:navigator.userAgent,webdriver:navigator.webdriver,nodeGlobals:["process","require","module"].filter(key=>key in globalThis)})'
+    )) as { userAgent: string; webdriver: boolean; nodeGlobals: string[] }
+    assert.equal(identityPage.session, session.fromPartition('persist:bmw'))
+    assert.equal(
+      identity.userAgent,
+      firstPageUserAgent,
+      'Page and outgoing HTTP request use the same native browser identity'
+    )
+    assert.equal(identity.userAgent, app.userAgentFallback)
+    assert.match(identity.userAgent, /\sBMW\/[^\s]+/)
+    assert.ok(identity.userAgent.includes(' Electron/' + process.versions.electron + ' '))
+    assert.ok(identity.userAgent.includes(' Chrome/' + process.versions.chrome + ' '))
+    assert.equal(identity.webdriver, false)
+    assert.deepEqual(identity.nodeGlobals, [])
+    await identityPage.session.cookies.flushStore()
+    console.log(
+      'PASS native browser identity: actual BMW partition, HTTP and navigator agree on BMW/Electron/Chromium versions, no webdriver or Node globals'
     )
     const otherFirstTab = await shell.executeJavaScript(
       `window.bmw.browser({action:'tabs.open',url:${JSON.stringify(origin + '/other-first')},foreground:true,reuse:false})`

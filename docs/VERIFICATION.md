@@ -1,5 +1,7 @@
 # BMW 验证说明
 
+Google 登录的隔离对照见 [浏览器身份验证记录](verification/GOOGLE_LOGIN_BROWSER_IDENTITY.json)（2026-10-31）；当前 main 的独立回归见 [浏览器身份合入验证](verification/BROWSER_IDENTITY_MAIN_REGRESSION.json)（2026-11-02）。历史网络对照在同机、同代理、一次性 Profile 中，删除 BMW／Electron 标记的 UA 在提交不存在的测试邮箱后进入 `/v3/signin/rejected`；原生 UA 则进入账号查询并返回找不到账号，保留 BMW 调试接入和媒体策略时同样通过该阶段。产品现沿用原生身份，本次隔离桌面回归核对请求头与页面身份一致、既有 `persist:bmw` 分区和测试 Cookie 跨重启保留；218个选定测试全部通过，连同构建等门禁共223项检查通过、0失败，12项显式外部测试未运行。本次未重跑 Google 网络表单对照，不以历史测试覆盖当前源码。隔离测试未打开或清理生产 Profile，未使用真实 Google 账号、密码或二次验证码。邮箱查询准入不代表完整登录、YouTube 登录态或长期刷新已经验收；这些仍需用户手动确认。
+
 新闻网站完整分轨包的独立记录见 [NEWS_HLS_SUBTITLES_DOWNLOADS](verification/NEWS_HLS_SUBTITLES_DOWNLOADS.json)。同一 Fox／Yahoo Finance 公开视频通过正式 `page.media.list`／`media.preserve`：全部声明音轨完整解码，全部原始字幕分片、时间映射与交付 WebVTT 逐cue一致。build/check、分类138 passed／0 failed、原生16/16及DSH兼容检查通过；分类层另有103项未在该命令运行，原生覆盖单列，不与历史全套计数合并。均使用一次性Profile／Project，没有付费模型或正式Profile覆盖。原生默认VP8夹具首次未输出包及Yahoo整数毫秒修复前的失败/零残留记录保留于该报告；最终代码与隔离受测输入一致。人工听审不计入技术完整性验证。
 
 核对日期：2026-10-25。当前功能以 [FUNCTIONAL_SPEC.md](FUNCTIONAL_SPEC.md) 为准，分类与运行配置见 [ARCHITECTURE.md](ARCHITECTURE.md)。通过结果须绑定当时源码，不能按文档日期推断完整覆盖。

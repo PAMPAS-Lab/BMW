@@ -1,0 +1,991 @@
+{
+  "date": "2026-10-31",
+  "timezone": "Asia/Shanghai",
+  "recordedAt": "2026-10-31T14:08:56.716Z",
+  "problem": "Google rejects the BMW embedded browser immediately after submitting the email identifier, before a password is requested.",
+  "baselineGitHead": "0de284dd6ba27b6189dfe8634208710d4f36c71f",
+  "sourceSha256": {
+    "packages/platform/src/main.ts": "d973cbf13d9af1e3dc70366b6081582126abf312a3cadcc125819883a3d36aae",
+    "scripts/desktop-smoke.ts": "f4c61af835c7e2704708ee4683bc7e3412286b57b119b53c8e88ad8ab52c0110",
+    "scripts/library-collection-batch-smoke.ts": "0249636e4a7baa3c5ccab1212d55320a5630d744c875233d94989718872dc88c",
+    "scripts/social-download-live-validation.ts": "87a23d58ceb220656f085a1a02fc5e2dcbeef0f8c6b7f1dae8477b0961f1c14a",
+    "scripts/test-catalog.ts": "be4b496a2d69d3a72e1251696c6069ac9f4a47285caf1c87bd3421b453b81427",
+    "scripts/youtube-navigation-case.ts": "d8569c60967e641386b0c140fa64b23089e9450244c063ecf556bb2d91ca89ef",
+    "scripts/youtube-worktab-case.ts": "2e1128fb105ac55bb2c330aea7dafe12dc57a5a0f12e3ec2d6244a870363b824"
+  },
+  "reproduction": {
+    "environment": "Electron 44.5.1 / Chromium 152.0.7977.130 on macOS. Disposable userData and independent in-memory partitions. Same environment proxy for all three arms. No production profile or account accessed.",
+    "entry": "https://accounts.google.com/ServiceLogin?service=youtube&continue=https%3A%2F%2Fwww.youtube.com%2F",
+    "identifier": "One random nonexistent @example.com identifier per comparison run; no real account, passwords or verification codes.",
+    "method": "Load the genuine Google form, focus the identifier field, insert the test identifier and click the form’s Next control. Observe only bounded public DOM state and URL class, not headers/bodies/cookies containing authentication data.",
+    "controls": {
+      "runtime": {
+        "electron": "44.5.1",
+        "chrome": "152.0.7977.130"
+      },
+      "identifierType": "random nonexistent @example.com, no credentials",
+      "results": [
+        {
+          "mode": "cleaned",
+          "debuggerAttached": false,
+          "state": {
+            "path": "https://accounts.google.com/v3/signin/rejected",
+            "emailField": true,
+            "passwordField": false,
+            "rejected": true,
+            "unknownAccount": false,
+            "captcha": false,
+            "textCharacters": 96,
+            "readyState": "complete"
+          }
+        },
+        {
+          "mode": "native",
+          "debuggerAttached": false,
+          "state": {
+            "path": "https://accounts.google.com/v3/signin/identifier",
+            "emailField": true,
+            "passwordField": false,
+            "rejected": false,
+            "unknownAccount": true,
+            "captcha": false,
+            "textCharacters": 867,
+            "readyState": "complete"
+          }
+        },
+        {
+          "mode": "native-kernel",
+          "debuggerAttached": true,
+          "state": {
+            "path": "https://accounts.google.com/v3/signin/identifier",
+            "emailField": true,
+            "passwordField": false,
+            "rejected": false,
+            "unknownAccount": true,
+            "captcha": false,
+            "textCharacters": 867,
+            "readyState": "complete"
+          }
+        }
+      ]
+    },
+    "localEnvironment": {
+      "runtime": {
+        "electron": "44.5.1",
+        "chrome": "152.0.7977.130"
+      },
+      "original": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) BMW/44.5.1 Chrome/152.0.7977.130 Electron/44.5.1 Safari/537.36",
+      "compatible": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.7977.130 Safari/537.36",
+      "results": [
+        {
+          "mode": "native",
+          "debuggerAttached": false,
+          "sessionUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) BMW/44.5.1 Chrome/152.0.7977.130 Electron/44.5.1 Safari/537.36",
+          "webContentsUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) BMW/44.5.1 Chrome/152.0.7977.130 Electron/44.5.1 Safari/537.36",
+          "headers": {
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) BMW/44.5.1 Chrome/152.0.7977.130 Electron/44.5.1 Safari/537.36",
+            "accept-language": "zh-CN"
+          },
+          "renderer": {
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) BMW/44.5.1 Chrome/152.0.7977.130 Electron/44.5.1 Safari/537.36",
+            "platform": "MacIntel",
+            "languages": [
+              "zh-CN",
+              "zh-Hans-CN"
+            ],
+            "webdriver": false,
+            "cookieEnabled": true,
+            "isSecureContext": true,
+            "userAgentData": {
+              "architecture": "arm",
+              "bitness": "64",
+              "brands": [
+                {
+                  "brand": "Not?A_Brand",
+                  "version": "24"
+                },
+                {
+                  "brand": "Chromium",
+                  "version": "152"
+                }
+              ],
+              "fullVersionList": [
+                {
+                  "brand": "Not?A_Brand",
+                  "version": "24.0.0.0"
+                },
+                {
+                  "brand": "Chromium",
+                  "version": "152.0.7977.130"
+                }
+              ],
+              "mobile": false,
+              "platform": "macOS",
+              "platformVersion": "26.6.2",
+              "uaFullVersion": "152.0.7977.130"
+            },
+            "nodeGlobals": [],
+            "bmwGlobals": []
+          }
+        },
+        {
+          "mode": "compatible",
+          "debuggerAttached": false,
+          "sessionUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.7977.130 Safari/537.36",
+          "webContentsUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.7977.130 Safari/537.36",
+          "headers": {
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.7977.130 Safari/537.36",
+            "accept-language": "zh-CN"
+          },
+          "renderer": {
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.7977.130 Safari/537.36",
+            "platform": "MacIntel",
+            "languages": [
+              "zh-CN",
+              "zh-Hans-CN"
+            ],
+            "webdriver": false,
+            "cookieEnabled": true,
+            "isSecureContext": true,
+            "userAgentData": {
+              "architecture": "arm",
+              "bitness": "64",
+              "brands": [
+                {
+                  "brand": "Not?A_Brand",
+                  "version": "24"
+                },
+                {
+                  "brand": "Chromium",
+                  "version": "152"
+                }
+              ],
+              "fullVersionList": [
+                {
+                  "brand": "Not?A_Brand",
+                  "version": "24.0.0.0"
+                },
+                {
+                  "brand": "Chromium",
+                  "version": "152.0.7977.130"
+                }
+              ],
+              "mobile": false,
+              "platform": "macOS",
+              "platformVersion": "26.6.2",
+              "uaFullVersion": "152.0.7977.130"
+            },
+            "nodeGlobals": [],
+            "bmwGlobals": []
+          }
+        },
+        {
+          "mode": "kernel-control-off",
+          "debuggerAttached": true,
+          "sessionUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.7977.130 Safari/537.36",
+          "webContentsUserAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.7977.130 Safari/537.36",
+          "headers": {
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.7977.130 Safari/537.36",
+            "accept-language": "zh-CN"
+          },
+          "renderer": {
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.7977.130 Safari/537.36",
+            "platform": "MacIntel",
+            "languages": [
+              "zh-CN",
+              "zh-Hans-CN"
+            ],
+            "webdriver": false,
+            "cookieEnabled": true,
+            "isSecureContext": true,
+            "userAgentData": {
+              "architecture": "arm",
+              "bitness": "64",
+              "brands": [
+                {
+                  "brand": "Not?A_Brand",
+                  "version": "24"
+                },
+                {
+                  "brand": "Chromium",
+                  "version": "152"
+                }
+              ],
+              "fullVersionList": [
+                {
+                  "brand": "Not?A_Brand",
+                  "version": "24.0.0.0"
+                },
+                {
+                  "brand": "Chromium",
+                  "version": "152.0.7977.130"
+                }
+              ],
+              "mobile": false,
+              "platform": "macOS",
+              "platformVersion": "26.6.2",
+              "uaFullVersion": "152.0.7977.130"
+            },
+            "nodeGlobals": [],
+            "bmwGlobals": [
+              "__bmwPlaybackPolicy"
+            ]
+          }
+        }
+      ]
+    },
+    "inference": "Removing BMW/Electron tokens from the native UA is sufficient to reproduce the identifier-stage rejection here. Native UA reaches account lookup both without CDP and with BMW BrowserKernel theme/network/playback behavior. CDP attachment alone does not explain this controlled failure.",
+    "limits": "A nonexistent identifier reaching the account-not-found result establishes account lookup admission only. It does not establish a successful real-account password, 2FA, consent, YouTube signed-in session or long-term session refresh."
+  },
+  "implementation": {
+    "behavior": "Remove application-wide UA cleaning and redundant session UA assignment. Retain the native application/runtime identity consistently for the partition; validation entry points use the same native behavior.",
+    "storage": "BMW profile and persist:bmw partition remain the same; no cookie deletion, browser-data migration or production-profile write was performed by diagnostics.",
+    "regression": "Actual application startup checks HTTP UA equals navigator UA with the BMW and current Electron/Chromium tokens, webdriver=false and no Node globals. Disposable persistent fixture cookies survive actual application restart alongside Project/Session/page/Studio state.",
+    "limitations": "Changing UA may make individual providers revalidate existing sessions; retaining browser data does not guarantee server-side session acceptance. No external Chrome, header-only spoof, Firefox identity, client-hints forgery, TLS bypass or authentication-specific CDP changes were introduced."
+  },
+  "verification": {
+    "build": "passed: npm run build",
+    "check": "passed: npm run check",
+    "docsFeatures": "passed: npm run docs:features",
+    "docsArchitecture": "passed: npm run docs:architecture",
+    "classified": {
+      "command": "node scripts/test-runner.js --layer unit,contract,boundary,type",
+      "commandExitCode": 1,
+      "counts": {
+        "not-run": 103,
+        "passed": 137,
+        "failed": 1
+      },
+      "selectedTests": 133,
+      "allSelectedTestsPassed": true,
+      "integrityReconciliation": {
+        "changedDuringOriginalRun": [
+          "docs/VERIFICATION.md"
+        ],
+        "allOtherHashedInputsUnchanged": true,
+        "selectedTests": 133,
+        "selectedPassed": true,
+        "initialFailures": [
+          {
+            "id": "source-integrity",
+            "layer": "gate",
+            "status": "failed",
+            "reason": "Sources changed during verification: docs/VERIFICATION.md"
+          }
+        ]
+      },
+      "finalDocumentationCheck": {
+        "command": "node scripts/test-runner.js --files docs/VERIFICATION.md",
+        "exitCode": 0,
+        "checks": [
+          {
+            "id": "build",
+            "layer": "gate",
+            "status": "passed",
+            "reason": "Fresh compiler receipt verified against every authored source and emitted output"
+          },
+          {
+            "id": "architecture",
+            "layer": "gate",
+            "status": "passed",
+            "reason": "Public module dependencies, interface guarantors and test classification checked"
+          },
+          {
+            "id": "source-policy",
+            "layer": "gate",
+            "status": "passed",
+            "exitCode": 0,
+            "durationMs": 162,
+            "log": ".bmw-runtime/google-login-investigation/final-doc-check/source-policy.log"
+          },
+          {
+            "id": "feature-inventory",
+            "layer": "gate",
+            "status": "passed",
+            "exitCode": 0,
+            "durationMs": 181,
+            "log": ".bmw-runtime/google-login-investigation/final-doc-check/feature-inventory.log"
+          }
+        ],
+        "interpretation": "The original command failed only its end-of-run integrity gate because docs/VERIFICATION.md was edited during the run. Every other hashed input matches, all selected tests passed, and a subsequent run over the final documentation passed its build-receipt, architecture, source-policy, feature-inventory and end-of-run integrity checks. Original failure retained; no test result rewritten."
+      },
+      "passed": [
+        {
+          "id": "build",
+          "layer": "gate"
+        },
+        {
+          "id": "architecture",
+          "layer": "gate"
+        },
+        {
+          "id": "source-policy",
+          "layer": "gate"
+        },
+        {
+          "id": "feature-inventory",
+          "layer": "gate"
+        },
+        {
+          "id": "browser.youtube-worktabs",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.capture-ready",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.video-acquisition",
+          "layer": "contract"
+        },
+        {
+          "id": "library.source-preservation-basis",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.preservation-result",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.assistant-tasks",
+          "layer": "contract"
+        },
+        {
+          "id": "video.review-packet",
+          "layer": "contract"
+        },
+        {
+          "id": "video.news-delivery",
+          "layer": "contract"
+        },
+        {
+          "id": "video.review",
+          "layer": "contract"
+        },
+        {
+          "id": "video.news",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.navigation",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.qwen-credentials",
+          "layer": "unit"
+        },
+        {
+          "id": "browser.media-session-fetch",
+          "layer": "contract"
+        },
+        {
+          "id": "video.production-assessment",
+          "layer": "contract"
+        },
+        {
+          "id": "video.source-transcript",
+          "layer": "contract"
+        },
+        {
+          "id": "video.scene-reference-preparation",
+          "layer": "contract"
+        },
+        {
+          "id": "video.news-preparation",
+          "layer": "contract"
+        },
+        {
+          "id": "video.preparation-fingerprint",
+          "layer": "contract"
+        },
+        {
+          "id": "video.production",
+          "layer": "contract"
+        },
+        {
+          "id": "media.precomposition",
+          "layer": "contract"
+        },
+        {
+          "id": "media.research-diagrams",
+          "layer": "contract"
+        },
+        {
+          "id": "media.science-spec",
+          "layer": "contract"
+        },
+        {
+          "id": "media.video-capture",
+          "layer": "contract"
+        },
+        {
+          "id": "media.capture-source-index",
+          "layer": "contract"
+        },
+        {
+          "id": "agent.video-identity",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.publisher-video",
+          "layer": "contract"
+        },
+        {
+          "id": "media.hls-subtitles",
+          "layer": "contract"
+        },
+        {
+          "id": "media.preservation",
+          "layer": "contract"
+        },
+        {
+          "id": "media.youtube-sabr",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.youtube-sabr",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.bridge-http",
+          "layer": "contract"
+        },
+        {
+          "id": "video.material-index",
+          "layer": "contract"
+        },
+        {
+          "id": "video.source-analysis",
+          "layer": "contract"
+        },
+        {
+          "id": "agent.context",
+          "layer": "contract"
+        },
+        {
+          "id": "agent.conversation",
+          "layer": "contract"
+        },
+        {
+          "id": "bmw.agent-assembly",
+          "layer": "contract"
+        },
+        {
+          "id": "agent.data-migration",
+          "layer": "contract"
+        },
+        {
+          "id": "dsh.project-bindings",
+          "layer": "contract"
+        },
+        {
+          "id": "dsh.migration-history",
+          "layer": "contract"
+        },
+        {
+          "id": "agent.studio-composer",
+          "layer": "contract"
+        },
+        {
+          "id": "agent.assistant-ui",
+          "layer": "contract"
+        },
+        {
+          "id": "agent.driver-settings",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.agent-settings",
+          "layer": "contract"
+        },
+        {
+          "id": "codex.settings",
+          "layer": "contract"
+        },
+        {
+          "id": "codex.installation",
+          "layer": "contract"
+        },
+        {
+          "id": "qoder.settings",
+          "layer": "contract"
+        },
+        {
+          "id": "dsh.settings",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.assistant-controller",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.conversation-store",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.agent-history",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.agent-host",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.session-leases",
+          "layer": "contract"
+        },
+        {
+          "id": "codex.policy",
+          "layer": "contract"
+        },
+        {
+          "id": "codex.backend",
+          "layer": "contract"
+        },
+        {
+          "id": "dsh.events",
+          "layer": "contract"
+        },
+        {
+          "id": "dsh.backend",
+          "layer": "contract"
+        },
+        {
+          "id": "qoder.events",
+          "layer": "contract"
+        },
+        {
+          "id": "qoder.backend",
+          "layer": "contract"
+        },
+        {
+          "id": "workbuddy.catalog",
+          "layer": "contract"
+        },
+        {
+          "id": "workbuddy.settings",
+          "layer": "contract"
+        },
+        {
+          "id": "workbuddy.acp",
+          "layer": "contract"
+        },
+        {
+          "id": "workbuddy.policy",
+          "layer": "contract"
+        },
+        {
+          "id": "workbuddy.backend",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.schema",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.catalog",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.operations",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.shutdown",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.deadline",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.screenshot",
+          "layer": "unit"
+        },
+        {
+          "id": "browser.renderer-read",
+          "layer": "unit"
+        },
+        {
+          "id": "browser.download",
+          "layer": "unit"
+        },
+        {
+          "id": "browser.tab-policy",
+          "layer": "unit"
+        },
+        {
+          "id": "browser.sources",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.background-collection",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.background-admission",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.sources",
+          "layer": "contract"
+        },
+        {
+          "id": "video.sources",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.collection-page-pool",
+          "layer": "contract"
+        },
+        {
+          "id": "browser.host-contract",
+          "layer": "contract"
+        },
+        {
+          "id": "dsh.dsh-runtime",
+          "layer": "contract"
+        },
+        {
+          "id": "dsh.dsh-transport",
+          "layer": "contract"
+        },
+        {
+          "id": "dsh.dsh-preset",
+          "layer": "contract"
+        },
+        {
+          "id": "dsh.browser-failure-guard",
+          "layer": "unit"
+        },
+        {
+          "id": "dsh.workspace-context",
+          "layer": "contract"
+        },
+        {
+          "id": "dsh.video-case-log",
+          "layer": "unit"
+        },
+        {
+          "id": "media.controller",
+          "layer": "contract"
+        },
+        {
+          "id": "media.processing",
+          "layer": "contract"
+        },
+        {
+          "id": "media.production",
+          "layer": "contract"
+        },
+        {
+          "id": "media.options",
+          "layer": "unit"
+        },
+        {
+          "id": "media.compact-news",
+          "layer": "contract"
+        },
+        {
+          "id": "media.speech",
+          "layer": "contract"
+        },
+        {
+          "id": "media.port-contract",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.projects",
+          "layer": "unit"
+        },
+        {
+          "id": "platform.settings",
+          "layer": "unit"
+        },
+        {
+          "id": "platform.schedules",
+          "layer": "unit"
+        },
+        {
+          "id": "platform.state",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.layout",
+          "layer": "unit"
+        },
+        {
+          "id": "platform.docking",
+          "layer": "unit"
+        },
+        {
+          "id": "platform.permissions",
+          "layer": "unit"
+        },
+        {
+          "id": "platform.menu",
+          "layer": "unit"
+        },
+        {
+          "id": "platform.restart",
+          "layer": "unit"
+        },
+        {
+          "id": "platform.continuity",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.project-panel",
+          "layer": "unit"
+        },
+        {
+          "id": "platform.driver-binding",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.catalog",
+          "layer": "boundary"
+        },
+        {
+          "id": "platform.boundaries",
+          "layer": "boundary"
+        },
+        {
+          "id": "platform.remote-boundary",
+          "layer": "boundary"
+        },
+        {
+          "id": "platform.shell-ipc",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.permission-store",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.continuity-state",
+          "layer": "contract"
+        },
+        {
+          "id": "library.materials",
+          "layer": "contract"
+        },
+        {
+          "id": "library.source-presets",
+          "layer": "contract"
+        },
+        {
+          "id": "library.collection-batch",
+          "layer": "contract"
+        },
+        {
+          "id": "library.schedules",
+          "layer": "contract"
+        },
+        {
+          "id": "library.recommendations",
+          "layer": "contract"
+        },
+        {
+          "id": "library.rolling",
+          "layer": "contract"
+        },
+        {
+          "id": "library.video-watch",
+          "layer": "contract"
+        },
+        {
+          "id": "library.streams",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.record-capacity",
+          "layer": "contract"
+        },
+        {
+          "id": "library.exports",
+          "layer": "contract"
+        },
+        {
+          "id": "library.research",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.library-sources",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.workspaces",
+          "layer": "contract"
+        },
+        {
+          "id": "platform.feature-contract",
+          "layer": "contract"
+        },
+        {
+          "id": "video.schema-publication",
+          "layer": "contract"
+        },
+        {
+          "id": "video.schema",
+          "layer": "contract"
+        },
+        {
+          "id": "video.materials",
+          "layer": "unit"
+        },
+        {
+          "id": "video.studio",
+          "layer": "contract"
+        },
+        {
+          "id": "video.settings",
+          "layer": "contract"
+        },
+        {
+          "id": "video.boundary",
+          "layer": "boundary"
+        },
+        {
+          "id": "architecture.boundaries",
+          "layer": "boundary"
+        },
+        {
+          "id": "validation.selection",
+          "layer": "unit"
+        },
+        {
+          "id": "api.types",
+          "layer": "type"
+        }
+      ],
+      "notRunMeaning": "Outside selected layers or explicitly opt-in; not claimed as tested."
+    },
+    "desktop": [
+      {
+        "group": "workspace",
+        "status": "passed",
+        "exitCode": 0,
+        "log": ".bmw-runtime/google-login-investigation/desktop/workspace/run.log"
+      },
+      {
+        "group": "projects",
+        "status": "passed",
+        "exitCode": 0,
+        "log": ".bmw-runtime/google-login-investigation/desktop/projects/run.log"
+      },
+      {
+        "group": "projects/restart",
+        "status": "passed",
+        "exitCode": 0,
+        "log": ".bmw-runtime/google-login-investigation/desktop/restore/run.log"
+      },
+      {
+        "group": "settings",
+        "status": "passed",
+        "exitCode": 0,
+        "log": ".bmw-runtime/google-login-investigation/desktop/settings/run.log"
+      },
+      {
+        "group": "native",
+        "status": "passed",
+        "exitCode": 0,
+        "log": ".bmw-runtime/google-login-investigation/desktop/native/run.log"
+      }
+    ],
+    "runtime": [
+      {
+        "id": "dsh",
+        "exitCode": 0,
+        "timedOut": false,
+        "durationMs": 17167
+      },
+      {
+        "id": "driver",
+        "exitCode": 0,
+        "timedOut": false,
+        "durationMs": 4197
+      },
+      {
+        "id": "browser-lifecycle",
+        "exitCode": 0,
+        "timedOut": false,
+        "durationMs": 41201
+      },
+      {
+        "id": "browser-background",
+        "exitCode": 0,
+        "timedOut": false,
+        "durationMs": 3257
+      },
+      {
+        "id": "library-collection-batch",
+        "exitCode": 0,
+        "timedOut": false,
+        "durationMs": 52155
+      },
+      {
+        "id": "studio",
+        "exitCode": 0,
+        "timedOut": false,
+        "durationMs": 77567
+      },
+      {
+        "id": "media-capture",
+        "exitCode": 0,
+        "timedOut": false,
+        "durationMs": 48984
+      },
+      {
+        "id": "media-processing",
+        "exitCode": 0,
+        "timedOut": false,
+        "durationMs": 37680
+      },
+      {
+        "id": "video",
+        "exitCode": 0,
+        "timedOut": false,
+        "durationMs": 56294
+      },
+      {
+        "id": "narration-fixture",
+        "exitCode": 0,
+        "timedOut": false,
+        "durationMs": 2629
+      }
+    ]
+  },
+  "humanAcceptance": {
+    "status": "pending",
+    "steps": [
+      "Fully quit BMW and start the updated source with npm start, retaining the existing main profile.",
+      "Open a fresh YouTube sign-in flow and manually enter the real account identifier.",
+      "Complete password and any 2FA yourself, then verify YouTube is signed in and remains signed in after restart."
+    ],
+    "excluded": [
+      "Production profile/keychain tests",
+      "Real Google account credentials and 2FA",
+      "Paid-model inference",
+      "Long-term Google session durability"
+    ]
+  },
+  "references": [
+    {
+      "url": "https://www.electronjs.org/docs/latest/api/app#appuseragentfallback",
+      "role": "Native fallback UA semantics."
+    },
+    {
+      "url": "https://www.electronjs.org/docs/latest/api/session#sessetuseragentuseragent-acceptlanguages",
+      "role": "Session override semantics."
+    },
+    {
+      "url": "https://support.google.com/accounts/answer/7675428",
+      "role": "Google login environment restrictions; does not reveal the exact server-side rule."
+    },
+    {
+      "url": "https://github.com/stablyai/orca/issues/11518",
+      "role": "Primary upstream reproduction that motivated the native-UA control. BMW outcomes above were measured independently."
+    }
+  ]
+}

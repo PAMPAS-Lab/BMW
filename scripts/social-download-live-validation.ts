@@ -7,7 +7,6 @@ import { BrowserKernel } from '../packages/browser-capability/src/browser-kernel
 import { BrowserCapabilityRegistry } from '../packages/browser-capability/src/browser-capability-registry.js'
 import { readVideoTargets, prepareVideoTransfer } from '../packages/browser-capability/src/video-target.js'
 import { MediaController } from '../packages/media-native/src/media-controller.js'
-import { browserCompatibleUserAgent } from '../packages/platform/src/browser-user-agent.js'
 import { bmwProduct } from '../packages/product-bmw/index.js'
 import { mediaRecord } from '../packages/media-native/src/media-contract.js'
 import type { PageVideoTargets } from '../packages/agent-contract/src/video-identity.js'
@@ -21,7 +20,6 @@ if (fs.existsSync(project.directory))
   throw new Error('Use a new evidence directory; previous media is never overwritten.')
 fs.mkdirSync(artifacts, { recursive: true })
 app.setPath('userData', path.join(temporary, 'profile'))
-app.userAgentFallback = browserCompatibleUserAgent(app.userAgentFallback)
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
 const samples = [
   { id: 'microduck', platform: 'youtube', url: 'https://www.youtube.com/watch?v=zHBrUVyQJWc' },
@@ -97,7 +95,6 @@ async function run() {
   try {
     await app.whenReady()
     const pages = session.fromPartition('social-live-' + crypto.randomUUID())
-    pages.setUserAgent(app.userAgentFallback)
     pages.webRequest.onCompleted({ urls: ['https://*/*'] }, d => {
       const mime = String(d.responseHeaders?.['content-type'] ?? d.responseHeaders?.['Content-Type'] ?? '')
       if (!/video|audio|mpegurl|yt-ump/i.test(mime) && !/googlevideo|video.twimg/.test(d.url)) return

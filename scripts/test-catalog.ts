@@ -605,7 +605,6 @@ export const tests: readonly TestDefinition[] = [
       'menu-policy',
       'restart-policy',
       'session-continuity',
-      'browser-user-agent',
       'project-panel-layering',
       'driver-boundary',
       'bmw-catalog',
@@ -625,7 +624,6 @@ export const tests: readonly TestDefinition[] = [
         'platform.menu',
         'platform.restart',
         'platform.continuity',
-        'platform.user-agent',
         'platform.project-panel',
         'platform.driver-binding',
         'platform.catalog',
@@ -633,7 +631,7 @@ export const tests: readonly TestDefinition[] = [
         'platform.remote-boundary'
       ][index],
       p + 'platform/test/' + name + '.test.ts',
-      index >= 13 ? 'boundary' : index === 12 || index === 3 || index === 9 ? 'contract' : 'unit',
+      index >= 12 ? 'boundary' : index === 11 || index === 3 || index === 9 ? 'contract' : 'unit',
       'platform',
       name === 'project-panel-layering'
         ? ['packages/platform/src/main.ts', 'packages/platform/src/renderer/']

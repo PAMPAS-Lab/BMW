@@ -9,7 +9,6 @@ import { bmwProduct } from '../packages/product-bmw/index.js'
 import { BrowserKernel } from '../packages/browser-capability/src/browser-kernel.js'
 import { BrowserCapabilityRegistry } from '../packages/browser-capability/src/browser-capability-registry.js'
 import type { BrowserFeatureHost } from '../packages/browser-capability/src/browser-host.js'
-import { browserCompatibleUserAgent } from '../packages/platform/src/browser-user-agent.js'
 import { ProjectSourceStore } from '../packages/platform/src/project-source-store.js'
 import { LibraryService } from '../packages/feature-library/src/library-service.js'
 import { RollingService, RollingStore } from '../packages/feature-library/src/rolling-service.js'
@@ -92,7 +91,6 @@ if (process.env.BMW_BATCH_TRACE === '1') {
 async function run() {
   const watchdog = setTimeout(() => app.exit(1), live ? 12 * 60 * 1000 : 120000)
   try {
-    app.userAgentFallback = browserCompatibleUserAgent(app.userAgentFallback)
     window = new BrowserWindow({
       show: false,
       width: 1280,
@@ -100,7 +98,6 @@ async function run() {
       webPreferences: { sandbox: true, contextIsolation: true, nodeIntegration: false }
     })
     const pageSession = session.fromPartition('batch-dom-' + crypto.randomUUID())
-    pageSession.setUserAgent(app.userAgentFallback)
     pageSession.setPermissionRequestHandler((_wc, _permission, callback) => callback(false))
     pageSession.on('will-download', event => event.preventDefault())
     let inflight = 0,

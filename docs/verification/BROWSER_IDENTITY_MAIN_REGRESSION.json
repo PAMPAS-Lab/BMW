@@ -1,0 +1,142 @@
+{
+  "recordedAt": "2026-11-02T09:28:21.872Z",
+  "baselineGitHead": "1a64f483d6df4324b6510c2ee182da04c00c03e1",
+  "scope": "Review and publish the remaining native browser identity change on current main. Historical Google identifier comparison remains separately dated 2026-10-31.",
+  "sourceSha256": {
+    "packages/platform/src/main.ts": "6ab547fa20695105c117e1dbc2e1df0de8947f2d0f503e1bb43d6427a3357a95",
+    "scripts/desktop-smoke.ts": "8c9693eb37c6edada82d30c6c3fc8c00759da3d3ea246e906795d098a89f832f",
+    "scripts/library-collection-batch-smoke.ts": "5f04dccb16c67bb503b518dd46cd36c7033455d890e7718bcbb6edf6899a886f",
+    "scripts/social-download-live-validation.ts": "3a41c313a7590631d83f0046c7d265a05de4f395177f28a47a9690cdfb69c8ee",
+    "scripts/test-catalog.ts": "d898275910e3253ba09c2fa6e1d769b838caefd3930e13908d2fcb882ef5a577",
+    "scripts/youtube-navigation-case.ts": "4588f57f5ec6376b74faa299f090818ba32ad3e1e7492e62ba86c411373ac188",
+    "scripts/youtube-worktab-case.ts": "50b08f5ab7a412db52b118feda13aaa53ad9cc02ccb9c5553a55cf43181d9878"
+  },
+  "deletedFiles": [
+    "packages/platform/src/browser-user-agent.ts",
+    "packages/platform/test/browser-user-agent.test.ts"
+  ],
+  "commands": {
+    "format": "passed: npm run format",
+    "build": "passed: npm run build",
+    "features": "passed: npm run docs:features",
+    "architecture": "passed: npm run docs:architecture",
+    "check": "passed: npm run check",
+    "classified": {
+      "command": "GOMEMLIMIT=32MiB GOGC=1 GOMAXPROCS=1 BMW_VALIDATION_DIR=.bmw-runtime/browser-identity-main-20261102/classified node scripts/test-runner.js --base HEAD",
+      "exitCode": 0,
+      "selectedTests": 218,
+      "selectedPassed": 218,
+      "checks": {
+        "not-run": 12,
+        "passed": 223
+      },
+      "layers": {
+        "gate": 5,
+        "contract": 107,
+        "integration": 33,
+        "desktop": 39,
+        "unit": 18,
+        "media": 15,
+        "boundary": 5,
+        "type": 1
+      },
+      "sourceIntegrity": "All end-of-run source hashes checked unchanged; no source-integrity failure.",
+      "rawReport": ".bmw-runtime/browser-identity-main-20261102/classified/result.json",
+      "rawReportSha256": "96087b6a48e89bd9a5cb8411ba5d7ad5fc75f0e5c58216626a74d8bcca14335a"
+    }
+  },
+  "desktop": [
+    {
+      "group": "workspace",
+      "status": "passed",
+      "exitCode": 0,
+      "log": ".bmw-runtime/browser-identity-main-20261102/classified/desktop-suite/workspace/run.log"
+    },
+    {
+      "group": "projects",
+      "status": "passed",
+      "exitCode": 0,
+      "log": ".bmw-runtime/browser-identity-main-20261102/classified/desktop-suite/projects/run.log"
+    },
+    {
+      "group": "projects/restart",
+      "status": "passed",
+      "exitCode": 0,
+      "log": ".bmw-runtime/browser-identity-main-20261102/classified/desktop-suite/restore/run.log"
+    },
+    {
+      "group": "settings",
+      "status": "passed",
+      "exitCode": 0,
+      "log": ".bmw-runtime/browser-identity-main-20261102/classified/desktop-suite/settings/run.log"
+    },
+    {
+      "group": "native",
+      "status": "passed",
+      "exitCode": 0,
+      "log": ".bmw-runtime/browser-identity-main-20261102/classified/desktop-suite/native/run.log"
+    }
+  ],
+  "identityAssertions": [
+    "Actual WebContents uses the existing persist:bmw Session.",
+    "Outgoing HTTP request UA equals navigator.userAgent and the native app fallback, including BMW and the current Electron/Chromium versions.",
+    "webdriver is false and process/require/module globals are absent.",
+    "Persistent local fixture Cookie survives actual application restart in the same disposable Profile."
+  ],
+  "isolation": "Electron checks use disposable userData/Home/Workspace and the test launcher mock Keychain. No production Profile is used as a test fixture.",
+  "notRun": [
+    {
+      "id": "external.social-download.live",
+      "reason": "Explicit external opt-in required: BMW_LIVE_SOCIAL=1; public videos in disposable signed-out Profile only"
+    },
+    {
+      "id": "external.library.live-sources",
+      "reason": "Explicit external opt-in required: BMW_LIVE_NEWS=1; public-network read-only validation in disposable Profile only"
+    },
+    {
+      "id": "external.youtube-navigation",
+      "reason": "Explicit external opt-in required: BMW_YOUTUBE_NAVIGATION_CASE=1; optional BMW_YOUTUBE_HTTP1=1; public signed-out disposable Profile"
+    },
+    {
+      "id": "external.youtube-worktab",
+      "reason": "Explicit external opt-in required: BMW_YOUTUBE_WORKTAB_CASE=1 BMW_YOUTUBE_WORKTAB_MODE=cold|resident; optional BMW_YOUTUBE_HTTP1=1; same three public videos; disposable signed-out Profile"
+    },
+    {
+      "id": "media.source-analysis-case",
+      "reason": "Explicit external opt-in required: BMW_ANALYSIS_SOURCE_INDEX=<explicit local copied-source fixture list>"
+    },
+    {
+      "id": "media.frame-sampling-case",
+      "reason": "Explicit external opt-in required: BMW_FRAME_SAMPLING_SOURCE=<explicit local MP4 fixture>"
+    },
+    {
+      "id": "media.long-composition-case",
+      "reason": "Explicit external opt-in required: BMW_LONG_SOURCE_INDEX=<explicit local public-source fixture list>"
+    },
+    {
+      "id": "external.assistant.qoder-cn",
+      "reason": "Explicit external opt-in required: BMW_NATIVE_DRIVER=qoder-cn"
+    },
+    {
+      "id": "external.assistant.codex",
+      "reason": "Explicit external opt-in required: BMW_NATIVE_DRIVER=codex"
+    },
+    {
+      "id": "external.assistant.dsh",
+      "reason": "Explicit external opt-in required: BMW_NATIVE_DRIVER=dsh"
+    },
+    {
+      "id": "external.vision",
+      "reason": "Explicit external opt-in required: BMW_VISION_TEST=1"
+    },
+    {
+      "id": "external.edge",
+      "reason": "Explicit external opt-in required: BMW_TTS_TEST_PROVIDER=edge"
+    }
+  ],
+  "limitations": [
+    "No fresh public Google form comparison in this regression; the separate 2026-10-31 proof is retained unchanged.",
+    "No real Google account/password/2FA, YouTube authenticated session or long-term session durability acceptance.",
+    "No paid-model or production-Profile coverage is inferred from isolated tests."
+  ]
+}

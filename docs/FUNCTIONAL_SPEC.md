@@ -261,6 +261,7 @@ activate在同Project整批打开，跨Project只复制用户所选一题的完�
 - Shell 渲染器关闭后台节流，使被原生工作区遮挡时仍更新布局与窗口尺寸；设置、会话及计划任务弹窗在重新打开和短窗口下保留可见操作区。此项不新增模型权限。
 - 顶栏以导航、Project、录制和 Assistant 为主；主题、网络、搜索、布局、登录和模型设置进入 Settings。Shell 对话框使用一致字体、主题和控件。
 - Profile `BMW`、Chromium 分区 `persist:bmw`。Project 包含 ID、目录、主页、页面状态、文档、媒体与草稿；核心不存储原生 Workspace/Session 映射。
+- 页面沿用 Electron 原生的 BMW／Chromium／Electron User-Agent，整个分区身份一致；不再删除产品标记伪装为标准 Chrome，也不按 Google 登录域名切换身份或改写 Client Hints。使用既有主 Profile 和分区，不清理 Cookie 或迁移浏览数据。隔离网络对照可验证邮箱提交阶段是否被拒绝，不能代替真实账号、二次验证及登录持久性的人工验收。
 - 每个 Project 可有多个 BMW 会话，各自固定 driver 与原生恢复锚点，共享 Project 页面和媒体。BMW Project 切换恢复所选 driver 的 BMW 会话；Assistant 只能选择当前 Project 的会话，跨 Project 选择拒绝。原生 Workspace 只由需要它的 harness 维护，不参与 Shell 或 Feature 的选择逻辑。忙碌期间禁止 Project/Session 切换。
 - Project 管理支持创建、选择、改名、主页、文档编辑和 archive；archive 保留文件且至少保留一个活动 Project。无永久删除 Project 的 UI。
 - 文档包括 AGENTS、MEMORY、TASKS 和结构化 memory 文件；单文档 256 KiB 上限。Agent 只能追加指定记忆文档。
@@ -2053,11 +2054,6 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 #### `packages/platform/test/bmw-catalog.test.ts`
 
 - `BMW exposes research/media actions and the Video extension boundary`
-
-#### `packages/platform/test/browser-user-agent.test.ts`
-
-- `page user agent exposes Chromium without Electron or BMW shell tokens`
-- `page user agent strips every BMW product brand and preserves standard Chrome`
 
 #### `packages/platform/test/continuity-state.test.ts`
 

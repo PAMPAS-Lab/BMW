@@ -9,7 +9,6 @@ import { readVideoTargets } from '../packages/browser-capability/src/video-targe
 import { MediaController } from '@bmw-agent/media-native'
 import { mediaRecord } from '@bmw-agent/media-native/contract'
 import { GlobalSettingsStore, configureNetworkStartup } from '../packages/platform/src/global-settings-store.js'
-import { browserCompatibleUserAgent } from '../packages/platform/src/browser-user-agent.js'
 import { bmwProduct } from '../packages/product-bmw/index.js'
 
 if (process.env.BMW_YOUTUBE_WORKTAB_CASE !== '1')
@@ -30,7 +29,6 @@ const settingsFile = path.join(root, 'settings.json'),
   settings = new GlobalSettingsStore({ filePath: settingsFile, onState: undefined })
 settings.update({ http1Compatibility: process.env.BMW_YOUTUBE_HTTP1 === '1' })
 const http1Compatibility = configureNetworkStartup(settingsFile, name => app.commandLine.appendSwitch(name))
-app.userAgentFallback = browserCompatibleUserAgent(app.userAgentFallback)
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required')
 const transferBudgetMs = Number(process.env.BMW_YOUTUBE_TRANSFER_BUDGET_MS ?? 600000)
 if (!Number.isSafeInteger(transferBudgetMs) || transferBudgetMs < 60000 || transferBudgetMs > 2700000)
@@ -131,7 +129,6 @@ async function run() {
   await phase('app-ready', () => app.whenReady())
   const pages = session.fromPartition('youtube-navigation-' + crypto.randomUUID())
   log('session-created')
-  pages.setUserAgent(app.userAgentFallback)
   pages.setPermissionRequestHandler((_wc, _p, done) => done(false))
   pages.on('will-download', event => event.preventDefault())
   await phase('proxy-config', async () => {

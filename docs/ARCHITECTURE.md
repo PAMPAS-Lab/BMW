@@ -280,7 +280,6 @@ Studio 共享时间线、renderer 外壳和文档编解码改动保留长片、�
 | platform.menu | unit | platform | packages/platform/test/menu-policy.test.ts | 默认 |
 | platform.restart | unit | platform | packages/platform/test/restart-policy.test.ts | 默认 |
 | platform.continuity | contract | platform | packages/platform/test/session-continuity.test.ts | 默认 |
-| platform.user-agent | unit | platform | packages/platform/test/browser-user-agent.test.ts | 默认 |
 | platform.project-panel | unit | platform | packages/platform/test/project-panel-layering.test.ts | 默认 |
 | platform.driver-binding | contract | platform | packages/platform/test/driver-boundary.test.ts | 默认 |
 | platform.catalog | boundary | platform | packages/platform/test/bmw-catalog.test.ts | 默认 |
