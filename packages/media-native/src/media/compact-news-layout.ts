@@ -174,6 +174,17 @@ export function compactSceneIssues(
     issues.push(
       '紧凑新闻需要实际横屏主视频，或符合原生图解约束的末镜。图解所有可见对象/关键帧须在720×1280画布x40–680、y332–692区域内，至少一个diagram覆盖20%画布；字幕/来源区不可叠层。'
     )
+  if (scene.audioArtifactId && !scene.voiceMuted && (scene.voiceVolume ?? 1) > 0 && narrationDuration > 0) {
+    const voiceEnd = scene.voiceSegments?.length
+      ? Math.max(...scene.voiceSegments.map(s => s.startSeconds + s.durationSeconds))
+      : scene.voiceTiming
+        ? scene.voiceTiming.startSeconds + scene.voiceTiming.durationSeconds
+        : narrationDuration + 0.5
+    if (scene.durationSeconds > voiceEnd + 1)
+      issues.push(
+        `镜头时长（${scene.durationSeconds.toFixed(2)}s）超出旁白结束（${voiceEnd.toFixed(2)}s）过多，会产生明显静音空白；请收紧 durationSeconds（若缩短了字幕请先缩短 captions 再改 scene.durationSeconds，若触发 reference-coverage 则用 prepare-scene-references 刷新参考帧）。`
+      )
+  }
   for (const [index, cue] of (scene.captions ?? estimatedCaptionCues(scene, 720, 1280, narrationDuration)).entries()) {
     const blocks = compactCue(context, cue, scene.captionDisplay),
       hasForeign =

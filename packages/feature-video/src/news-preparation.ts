@@ -268,7 +268,7 @@ export class NewsPreparationService {
     for (const scene of declarations) {
       this.guard(signal)
       const row = report.scenes.find(s => s.sceneId === scene.sceneId)
-      if (!row || row.fingerprint !== scene.fingerprint)
+      if (!row || !row.fingerprint || row.fingerprint !== scene.fingerprint)
         throw this.blocked(
           'NEWS_PREPARATION_STALE',
           'Use the current scene fingerprint from preflight; do not retry the unchanged declaration.',
@@ -924,6 +924,24 @@ export class NewsPreparationService {
       )
         issues.push(
           'NEWS_BILINGUAL_CAPTIONS_REQUIRED: Foreign-language original speech scenes must display bilingual subtitles (both Chinese translation and original foreign text in every caption cue with captionDisplay="bilingual").'
+        )
+    }
+    if (
+      this.draft.cardLayout === 'news-compact' &&
+      this.draft.narrationPacing === 'compact' &&
+      actual.audioArtifactId &&
+      !actual.voiceMuted &&
+      (actual.voiceVolume ?? 1) > 0 &&
+      actual.audioDurationSeconds
+    ) {
+      const voiceEnd = actual.voiceSegments?.length
+        ? Math.max(...actual.voiceSegments.map(s => s.startSeconds + s.durationSeconds))
+        : actual.voiceTiming
+          ? actual.voiceTiming.startSeconds + actual.voiceTiming.durationSeconds
+          : actual.audioDurationSeconds + 0.5
+      if (actual.durationSeconds > voiceEnd + 1)
+        issues.push(
+          `NEWS_COMPACT_SILENCE: Narrated compact-news scene duration (${actual.durationSeconds.toFixed(2)}s) exceeds narration end (${voiceEnd.toFixed(2)}s) by more than 1.0s, leaving dead silence. Tighten scene.durationSeconds (and captions) to match the voice window and run prepare-scene-references if reference coverage is needed; never stretch scene duration to pad silence.`
         )
     }
     return issues

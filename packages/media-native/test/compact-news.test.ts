@@ -126,4 +126,13 @@ test('Compact preflight rejects layout overrides/long cues and shared native pai
   const hiddenEnglish = structuredClone(composition)
   hiddenEnglish.scenes[0].captionDisplay = 'translation'
   assert.throws(() => assertCompositionText(c, hiddenEnglish), /外文原声/)
+  const paddedSilence = structuredClone(composition)
+  paddedSilence.scenes[0].audioArtifactId = 'voice.wav'
+  paddedSilence.scenes[0].voiceTiming = {
+    startSeconds: 0.08,
+    sourceStartSeconds: 0,
+    durationSeconds: 1.92,
+    playbackRate: 1
+  }
+  assert.throws(() => assertCompositionText(c, paddedSilence, [1.92]), /静音空白/)
 })
