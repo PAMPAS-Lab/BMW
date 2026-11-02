@@ -14,6 +14,7 @@ import type {
 import { QoderEvents, qoderBrowserCatalog } from './qoder-events.js'
 import { qoderBmwGuidance } from './bmw-guidance.js'
 import { QoderSettings } from './qoder-settings.js'
+import { qoderBrowserRuntimeOptions } from './qoder-runtime.js'
 import type { AgentSettingsRequest, AgentSettingsContext, AgentDriverSettings } from '@bmw-agent/agent-contract'
 
 interface Deferred<T> {
@@ -109,13 +110,8 @@ export class QoderBackend implements AgentBackend {
         ...(this.options.getModel?.() ? { model: this.options.getModel()! } : {}),
         ...(request.externalSessionId ? { resume: request.externalSessionId } : { sessionId: crypto.randomUUID() }),
         abortController: controller,
-        tools: [],
+        ...qoderBrowserRuntimeOptions(),
         allowedTools: ['browser'],
-        skills: [],
-        plugins: [],
-        settingSources: [],
-        settings: { skills: { enabled: false } },
-        strictMcpConfig: true,
         // Leave a minute beyond BMW's largest per-action transport deadline; the
         // official runtime also uses this bound for otherwise silent stdio calls.
         mcpServers: {

@@ -11,6 +11,7 @@ import { createBridgeServer } from '../packages/browser-capability/src/bridge-se
 import { CodexCatalogGate } from '../packages/harness-codex/src/codex-policy.js'
 import { bundledCodexExecutable } from '../packages/harness-codex/src/codex-installation.js'
 import { qoderBrowserCatalog } from '../packages/harness-qoder/src/qoder-events.js'
+import { qoderBrowserRuntimeOptions } from '../packages/harness-qoder/src/qoder-runtime.js'
 import { agentRecord } from '../packages/agent-contract/index.js'
 
 test(
@@ -74,12 +75,8 @@ test(
         auth: qodercliAuth(),
         env: { QODERCN_CONFIG_DIR: path.join(root, 'profile'), ELECTRON_RUN_AS_NODE: '1' },
         abortController: controller,
-        tools: [],
+        ...qoderBrowserRuntimeOptions(),
         allowedTools: ['browser'],
-        skills: [],
-        plugins: [],
-        settingSources: [],
-        strictMcpConfig: true,
         persistSession: false,
         includePartialMessages: false,
         controlRequestTimeoutMs: 15000,

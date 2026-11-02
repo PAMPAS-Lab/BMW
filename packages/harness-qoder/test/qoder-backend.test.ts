@@ -36,7 +36,9 @@ test('Qoder releases UUID-stamped user input only after the effective catalog an
       resumed = input.options.resume
       assert.deepEqual(input.options.tools, [])
       assert.deepEqual(input.options.settingSources, [])
-      assert.deepEqual(input.options.settings, { skills: { enabled: false } })
+      assert.deepEqual(input.options.settings, {
+        skills: { enabled: false, loadFromAgentsDirectory: false, disableShellExecution: true }
+      })
       assert.equal(input.options.strictMcpConfig, true)
       const server = input.options.mcpServers?.bmw
       assert.ok(server && 'timeout' in server)
@@ -130,6 +132,52 @@ test('Qoder preflight failure closes its worker without consuming input or falli
   await assert.rejects(backend.prepare(request(root)), /exactly BMW browser/)
   assert.equal(inputs, 0)
   assert.ok(closed > 0)
+})
+test('Qoder rejects discovered skills and plugins before releasing input and drains each rejected worker', async t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-qoder-extensions-'))
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }))
+  for (const extensions of [
+    { skills: ['imagegen'], plugins: [] },
+    { skills: [], plugins: [{ name: 'extra' }] }
+  ]) {
+    let consumed = 0,
+      closed = 0
+    const backend = new QoderBackend({
+      configDirectory: root,
+      connection: async () => ({
+        bridgeUrl: 'http://127.0.0.1:1',
+        bridgeToken: 'fixture',
+        binding: 'a'.repeat(64),
+        nodeExecutable: process.execPath,
+        mcpServerPath: '/disposable/mcp.js'
+      }),
+      queryFactory: input => ({
+        interrupt: async () => {},
+        close: async () => {
+          closed++
+        },
+        async *[Symbol.asyncIterator]() {
+          yield {
+            type: 'system',
+            subtype: 'init',
+            session_id: 'provider',
+            qodercli_version: '1.1.78',
+            tools: ['browser'],
+            mcp_servers: [{ name: 'bmw', status: 'connected' }],
+            ...extensions
+          }
+          for await (const _message of input.prompt) consumed++
+        }
+      })
+    })
+    try {
+      await assert.rejects(backend.prepare(request(root)), /inherited (skills|plugins).*count=1/)
+      assert.equal(consumed, 0)
+      assert.ok(closed > 0)
+    } finally {
+      await backend.close()
+    }
+  }
 })
 test(
   'Qoder cancellation retains failed native cleanup ownership and recovery never resubmits input',

@@ -1,0 +1,132 @@
+{
+  "at": "2026-11-02T03:55:38.555Z",
+  "fix": "Disable Qoder skill discovery before initialization; retain exact browser-only catalog admission and bounded field-specific extension rejection",
+  "runtime": {
+    "sdk": "1.0.56",
+    "worker": "1.1.78"
+  },
+  "catalogBefore": {
+    "disabled": false,
+    "version": "1.1.78",
+    "tools": [
+      "browser"
+    ],
+    "mcp_servers": [
+      {
+        "name": "bmw",
+        "status": "connected"
+      }
+    ],
+    "skills": [
+      "imagegen",
+      "sites:sites-build-agent-app",
+      "sites:sites-building",
+      "sites:sites-hosting",
+      "sites:sites-management"
+    ],
+    "plugins": [],
+    "executions": 0
+  },
+  "catalogAfter": {
+    "disabled": true,
+    "version": "1.1.78",
+    "tools": [
+      "browser"
+    ],
+    "mcp_servers": [
+      {
+        "name": "bmw",
+        "status": "connected"
+      }
+    ],
+    "skills": [],
+    "plugins": [],
+    "executions": 0
+  },
+  "authenticatedAcceptance": {
+    "file": "authenticated-result.json",
+    "passed": true,
+    "temporaryNativeProfileRemoved": true,
+    "coverage": [
+      "actual authenticated cold settings",
+      "real browser PNG recognition",
+      "canonical Studio owner",
+      "official native context resume with unchanged anchor"
+    ],
+    "priorAttempts": [
+      "authenticated-smoke-approved.log: duplicate-init counting assertion failed after successful resume",
+      "authenticated-smoke-final.log: screenshot nonce typography differed; no resume coverage in this attempt"
+    ],
+    "model": "dfmodel",
+    "effectiveExecutionCatalogs": [
+      {
+        "tools": [
+          "browser"
+        ],
+        "skills": [],
+        "plugins": []
+      },
+      {
+        "tools": [
+          "browser"
+        ],
+        "skills": [],
+        "plugins": []
+      },
+      {
+        "tools": [
+          "browser"
+        ],
+        "skills": [],
+        "plugins": []
+      },
+      {
+        "tools": [
+          "browser"
+        ],
+        "skills": [],
+        "plugins": []
+      }
+    ],
+    "screenshotImagesDelivered": 6
+  },
+  "buildAndCheck": {
+    "passed": true,
+    "log": "final-check.log"
+  },
+  "initialFullRun": {
+    "report": ".bmw-runtime/classified-tests/2026-11-02T03-31-55-010Z/result.json",
+    "status": "failed",
+    "qualification": "138 groups passed; Electron launches were terminated in sandbox; external smoke source correction caused source-integrity failure. Retained as unsuccessful, not combined into a passing full run."
+  },
+  "approvedRegression": {
+    "report": ".bmw-runtime/classified-tests/2026-11-02T03-40-14-245Z/result.json",
+    "passed": 101,
+    "failed": [
+      "sources",
+      "studio.card-pair"
+    ],
+    "qualification": "Original aggregate remains 101 passed / 2 failed. Both failed groups reran individually without code or assertion changes and passed; retained separate logs, not relabeled as a passing aggregate."
+  },
+  "codeHashes": {
+    "packages/harness-qoder/src/qoder-runtime.ts": "39978c4e74017af415b2717d0d73c076e2d5a38cf5b730f35927f6e0c73bc4a8",
+    "packages/harness-qoder/src/qoder-backend.ts": "d1c0a2d7ba468b144e6b0ab784cc9d5b546c6d05498328bd71375cf44d091f0c",
+    "packages/harness-qoder/src/qoder-settings.ts": "b36694de4b7658951ed0218097339ea1e85e28d11befa8417e531af2b0057434",
+    "packages/harness-qoder/src/qoder-events.ts": "cd72fcef344ca92dfead64d8a11772611a6e62b7d42345804a89627c1cb0c64a",
+    "scripts/native-assistant-case.ts": "56a482b506f82166029a22dc48b5488d8ead76f9fa08e47f32d86da7b5f431f9"
+  },
+  "standaloneRechecks": {
+    "sources": {
+      "passed": true,
+      "log": "sources-standalone.log"
+    },
+    "studioCardPair": {
+      "passed": true,
+      "log": "card-pair-standalone.log"
+    }
+  },
+  "completedAt": "2026-11-02T03:56:55.077Z",
+  "evidenceDirectory": ".bmw-runtime/qoder-cn-repair-20261102",
+  "productionProfileUsedForTesting": false,
+  "productionUse": "Only after isolated validation, normal BMW UI selected Qoder CN / DeepSeek-Flash and accepted a new explicitly authorized RTX Spark production input. Production is separate from test coverage."
+}

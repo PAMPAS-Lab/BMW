@@ -13,6 +13,7 @@ import type {
   AgentModelChoice
 } from '@bmw-agent/agent-contract'
 import { qoderBrowserCatalog } from './qoder-events.js'
+import { qoderBrowserRuntimeOptions } from './qoder-runtime.js'
 
 // Maintained official Worker 1.1.78 model IDs; new catalog entries need development admission.
 const supportedModels = new Set([
@@ -105,12 +106,7 @@ export class QoderSettings {
         env: { QODERCN_CONFIG_DIR: this.options.configDirectory, ELECTRON_RUN_AS_NODE: '1' },
         abortController: controller,
         ...(model ? { model } : {}),
-        tools: [],
-        skills: [],
-        plugins: [],
-        settingSources: [],
-        settings: { skills: { enabled: false } },
-        strictMcpConfig: true,
+        ...qoderBrowserRuntimeOptions(),
         persistSession: false,
         includePartialMessages: false,
         controlRequestTimeoutMs: 15000,

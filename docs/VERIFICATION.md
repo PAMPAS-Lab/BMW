@@ -340,3 +340,11 @@ VERIFY-01已按上述范围完成并[归档](history/2026-10-17-alignment/README
 ## 本机记录补收验证（2026-10-17）
 
 [补收审计](research/LOCAL_RECORDS_AUDIT.md)仅改变文档、规划及证据索引。npm run build、npm run check、单元／契约／边界 89 项全部通过，75 项不在本次选择范围；[可移植回执](history/local-deliveries/verification.json)保存结果和源码身份，本机完整报告为 `.bmw-runtime/classified-tests/2026-10-17T02-36-42-643Z/result.json`。430 份源文件与此前完整隔离基线一致；不把本次 89 项称为重新执行完整 154 项。链接无新增缺失、21 个既有规范锚点通过；两份历史驱动日志缺失保持原标注。未新增或移动测试，不需改写测试生成清单。
+
+## Qoder CN 技能隔离与真实验收
+
+固定 SDK 1.0.56／Worker 1.1.78 的隔离对照确认：原空 skills allowlist 下，工具虽只有 browser，init 仍发现 imagegen 与四个 Sites 技能；设置与执行统一关闭运行时技能发现后，实际 init 为唯一 browser、唯一 connected BMW MCP、skills/plugins 均为空数组。严格目录门禁保留，扩展拒绝分别报告字段、数量及有界名称，不输出路径。15 个 Qoder 单测覆盖额外扩展不释放输入、拒绝后的实际清理及缺失目录诊断。
+
+build/check、类型／源码边界及功能／架构清单通过。一次性 BMW Profile／Home／Workspace 的真实 dfmodel 调用验证官方冷设置、PNG 校验码／颜色识别、canonical Studio owner，以及同一原生锚点两轮续聊；只临时复制授权的官方 CLI 登录，退出已清理，不使用生产 Profile 做测试。真实验收保留重复 init 计数断言失败及一次校验码连字符排版差异的失败记录，最终固定脚本重试通过；不外推所有模型或推理稳定性。
+
+相关原生回归原报告为 101 passed／2 failed；来源捕获等待新帧超时和 Studio 拖动失焦超时均在无代码／断言改动的单独复核中通过，原聚合失败报告不改写为全通过。首轮受限 Electron 启动终止及验收脚本修正导致的 source-integrity 失败另存，不合并成一次成功全量验收。范围、代码 SHA、对照目录及各轮日志索引见 [Qoder CN 隔离证据](verification/QODER_CN_RUNTIME_ISOLATION.json)。生产新闻制作及人工试听另行记录。

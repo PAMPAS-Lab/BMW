@@ -26,6 +26,18 @@ if (!['gpt-5.5', 'gpt-6.1-sol', 'gpt-6-astra', 'gpt-6-sol', 'gpt-6-luna'].includ
   throw new Error('Unverified native Codex acceptance model')
 const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-native-assistant-'))),
   profile = path.join(root, 'profile')
+const qoderConfig = path.join(root, 'qoder-cn')
+let qoderModel = 'dfmodel'
+if (driverId === 'qoder-cn') {
+  const source = process.env.BMW_QODER_AUTH_DIRECTORY
+  if (!source || !path.isAbsolute(source)) throw new Error('Explicit BMW_QODER_AUTH_DIRECTORY is required')
+  fs.mkdirSync(qoderConfig, { mode: 0o700 })
+  // Only opaque, authorized official CLI login enters this disposable profile.
+  // Never run acceptance against the source Profile or copy its extensions/history.
+  fs.cpSync(path.join(source, '.auth'), path.join(qoderConfig, '.auth'), { recursive: true, dereference: false })
+  process.env.HOME = root
+  process.env.USERPROFILE = root
+}
 process.env.BMW_USER_DATA_DIR = profile
 requireCurrentAgentData(process.env.BMW_USER_DATA_DIR)
 const projects = new ProjectStore({
@@ -77,6 +89,7 @@ const evidence: Record<string, unknown> = {
   paidInference: true,
   nativeDesktopProfileUsed: false
 }
+const qoderCatalogs: { tools: unknown; skills: unknown; plugins: unknown }[] = []
 createBmwApplication(bmwProduct, {
   pagePath: assistantPagePath,
   preloadPath: assistantPreloadPath,
@@ -166,14 +179,20 @@ createBmwApplication(bmwProduct, {
     return driverId === 'qoder-cn'
       ? [
           new QoderBackend({
-            configDirectory: '/private/tmp/bmw-agent-trigger-20261005/qoder-cli-profile',
+            configDirectory: qoderConfig,
             connection,
+            getModel: () => qoderModel,
+            setModel: value => {
+              qoderModel = value
+            },
+            settingsConnection: { ...config.controlConnection, nodeExecutable: config.nodeExecutable },
             queryFactory(input) {
               const use = input.options.canUseTool
               const native = query({
                 ...input,
                 options: {
                   ...input.options,
+                  env: { ...input.options.env, HOME: root, USERPROFILE: root },
                   canUseTool: async (name, value, context) => {
                     if (
                       name === 'browser' &&
@@ -197,6 +216,12 @@ createBmwApplication(bmwProduct, {
                   try {
                     for await (const raw of native) {
                       const event = agentRecord(raw)
+                      if (event.type === 'system' && event.subtype === 'init') {
+                        assert.deepEqual(event.tools, ['browser'])
+                        assert.deepEqual(event.skills, [])
+                        assert.deepEqual(event.plugins, [])
+                        qoderCatalogs.push({ tools: event.tools, skills: event.skills, plugins: event.plugins })
+                      }
                       if (event.type === 'assistant' || event.type === 'user') {
                         const content = agentRecord(event.message).content
                         if (Array.isArray(content))
@@ -256,10 +281,13 @@ async function waitFor<T>(read: () => Promise<T | null>, label: string): Promise
   }
   throw new Error('Native Assistant deadline: ' + label)
 }
-const watchdog = setTimeout(() => {
-  console.error('Native Assistant watchdog expired')
-  app.exit(1)
-}, 180000)
+const watchdog = setTimeout(
+  () => {
+    console.error('Native Assistant watchdog expired')
+    app.exit(1)
+  },
+  driverId === 'qoder-cn' ? 300000 : 180000
+)
 let exitCode = 0
 async function run(): Promise<void> {
   await app.whenReady()
@@ -286,6 +314,19 @@ async function run(): Promise<void> {
       return state.selectedSessionId ? state : null
     }, 'visible blank Session')
     assert.equal(initial.sessions[0].externalSessionId, null)
+    if (driverId === 'qoder-cn') {
+      await assistant.executeJavaScript(
+        'window.bmwAssistant.invoke({action:"settings.run",driverId:"qoder-cn",request:{action:"refresh"}})'
+      )
+      const settings = await waitFor(async () => {
+        const state = await snapshot()
+        return state.settings && state.settings.phase !== 'working' ? state.settings : null
+      }, 'Qoder authenticated cold settings')
+      assert.equal(settings.phase, 'idle', settings.message)
+      assert.equal(settings.value?.authentication.state, 'ready')
+      assert.ok(settings.value.models.some(model => model.id === qoderModel))
+      evidence.authenticatedSettings = true
+    }
     await shell.executeJavaScript('window.bmw.setAgentControl(true)')
     const prompt =
       '这是隔离 BMW 验收。只用 browser：先 tabs.open 打开 ' +
@@ -336,6 +377,7 @@ async function run(): Promise<void> {
     const external = complete.sessions[0].externalSessionId,
       before = complete.events.filter(row => row.event.type === 'turn.completed').length
     const callsBeforeResume = calls.length
+    const catalogsBeforeResume = qoderCatalogs.length
     await assistant.executeJavaScript(
       'window.bmwAssistant.invoke(' +
         JSON.stringify({
@@ -364,9 +406,16 @@ async function run(): Promise<void> {
     )
     assert.equal(calls.length, callsBeforeResume, 'Resume must recover native context without a memory tool')
     evidence.resumed = resumed
-    evidence.passed = true
     evidence.calls = calls
     evidence.images = images
+    if (driverId === 'qoder-cn') {
+      assert.ok(
+        catalogsBeforeResume > 0 && qoderCatalogs.length > catalogsBeforeResume,
+        'Fresh and resumed execution must each prove an empty extension catalog; repeated init is allowed'
+      )
+      evidence.catalogs = qoderCatalogs
+      evidence.model = qoderModel
+    }
     evidence.draftOwner = draftOwner
     await waitFor(
       async () =>
@@ -375,6 +424,7 @@ async function run(): Promise<void> {
     )
     const screenshot = await assistant.capturePage()
     fs.writeFileSync(path.join(root, 'assistant.png'), screenshot.toPNG())
+    evidence.passed = true
     console.log(
       JSON.stringify({
         stage: 'verified',
@@ -397,8 +447,14 @@ async function run(): Promise<void> {
     fixture.closeAllConnections()
     if (fixture.listening) await new Promise<void>(resolve => fixture.close(() => resolve()))
     console.log(JSON.stringify({ evidence: path.join(root, 'result.json') }))
-    if (exitCode) app.exit(exitCode)
+    if (driverId === 'qoder-cn') app.quit()
+    else if (exitCode) app.exit(exitCode)
     else app.quit()
   }
 }
 void run()
+if (driverId === 'qoder-cn')
+  app.once('will-quit', () => {
+    fs.rmSync(qoderConfig, { recursive: true, force: true })
+    app.exit(exitCode)
+  })

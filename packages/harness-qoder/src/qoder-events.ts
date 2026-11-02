@@ -12,9 +12,25 @@ export function qoderBrowserCatalog(raw: unknown): { sessionId: string; runtimeV
     throw new Error('Qoder must connect only the BMW MCP server')
   const server = agentRecord(value.mcp_servers[0])
   if (server.name !== 'bmw' || server.status !== 'connected') throw new Error('Qoder BMW browser MCP did not connect')
-  for (const field of ['skills', 'plugins'])
-    if (!Array.isArray(value[field]) || (value[field] as unknown[]).length)
-      throw new Error('Qoder inherited skills/plugins cannot enter the BMW browser runtime')
+  for (const field of ['skills', 'plugins']) {
+    const entries: unknown = value[field]
+    if (!Array.isArray(entries)) throw new Error(`Qoder ${field} catalog is missing or invalid`)
+    if (entries.length) {
+      // Report bounded identifiers only, never provider paths or arbitrary payloads.
+      const names = entries.slice(0, 8).map((entry: unknown) => {
+        const name =
+          field === 'skills'
+            ? entry
+            : entry && typeof entry === 'object' && !Array.isArray(entry)
+              ? (entry as Record<string, unknown>).name
+              : undefined
+        return typeof name === 'string' && /^[A-Za-z0-9_.:-]{1,100}$/.test(name) ? name : '<invalid-name>'
+      })
+      throw new Error(
+        `Qoder inherited ${field} cannot enter the BMW browser runtime (count=${entries.length}; names=${names.join(',')})`
+      )
+    }
+  }
   return { sessionId: agentIdentifier(value.session_id), runtimeVersion: value.qodercli_version }
 }
 /** SDK wire messages are provider-owned; BMW persists only normalized display events. */

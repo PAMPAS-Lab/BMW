@@ -25,6 +25,27 @@ test('Qoder effective initialization rejects builtins, foreign MCP, inherited pl
   ])
     assert.throws(() => qoderBrowserCatalog({ ...init, ...patch }))
 })
+test('Qoder extension rejection distinguishes missing catalogs and reports bounded names without paths', () => {
+  for (const field of ['skills', 'plugins']) {
+    for (const value of [undefined, null, {}])
+      assert.throws(() => qoderBrowserCatalog({ ...init, [field]: value }), new RegExp(`${field} catalog is missing`))
+  }
+  assert.throws(
+    () => qoderBrowserCatalog({ ...init, skills: ['imagegen', 'sites:sites-building'] }),
+    /inherited skills.*count=2; names=imagegen,sites:sites-building/
+  )
+  assert.throws(
+    () => qoderBrowserCatalog({ ...init, plugins: [{ name: 'extra', path: '/private/profile' }] }),
+    error =>
+      error instanceof Error &&
+      /inherited plugins.*names=extra/.test(error.message) &&
+      !error.message.includes('/private')
+  )
+  assert.throws(
+    () => qoderBrowserCatalog({ ...init, skills: Array.from({ length: 100 }, () => '/private/profile\nsecret') }),
+    error => error instanceof Error && error.message.length < 250 && !error.message.includes('secret')
+  )
+})
 test('Qoder content blocks sharing a model message ID retain distinct tool/text identities and stream one reply', async () => {
   const decoder = new QoderEvents('run', 'submission'),
     events: AgentDriverEvent[] = []
