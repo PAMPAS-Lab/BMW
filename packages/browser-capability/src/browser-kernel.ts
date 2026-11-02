@@ -1130,16 +1130,15 @@ export class BrowserKernel {
         if (typeof id === 'string' && id.length <= 128) mainFrameId = id
         await wc.debugger.sendCommand('Network.enable').catch(() => {})
       }
+      const isHttpDocument = /^https?:/i.test(wc.getURL())
       await wc.debugger.sendCommand('Emulation.setEmulatedMedia', {
         media: '',
         features: nativeTheme ? [] : [{ name: 'prefers-color-scheme', value: this.pageTheme }]
       })
       await wc.debugger.sendCommand('Emulation.setDefaultBackgroundColorOverride', {
-        color: dark ? { r: 10, g: 13, b: 18, a: 1 } : { r: 255, g: 255, b: 255, a: 1 }
+        color: dark && !isHttpDocument ? { r: 10, g: 13, b: 18, a: 1 } : { r: 255, g: 255, b: 255, a: 1 }
       })
-      await wc.debugger
-        .sendCommand('Emulation.setAutoDarkModeOverride', { enabled: dark && !nativeTheme })
-        .catch(() => {})
+      await wc.debugger.sendCommand('Emulation.setAutoDarkModeOverride', { enabled: false }).catch(() => {})
     } catch (error) {
       console.error(`Failed to apply BMW page theme to ${tab.url || 'new tab'}`, error)
     }

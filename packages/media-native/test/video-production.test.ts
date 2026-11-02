@@ -486,6 +486,10 @@ test('Shared caption wrapping avoids automatic single-Han tails without changing
   assert.deepEqual(wrapText(measure, 'ABCDE1', 5), ['ABCDE', '1'])
   assert.deepEqual(wrapText(measure, '他的原话是：苹果绝对会用上 AI，', 16), ['他的原话是：苹果绝对会用上', 'AI，'])
   assert.deepEqual(wrapText(measure, '更强的 Siri 直到今年夏天才上线，', 18), ['更强的 Siri 直到今年夏天', '才上线，'])
+  assert.deepEqual(wrapText(measure, '资料画面 2026-10-21｜苹果新CEO定调', 17), [
+    '资料画面 2026-10-21｜',
+    '苹果新CEO定调'
+  ])
 })
 test('English connector wrapping retains speech words and explicit breaks without an automatic on orphan', () => {
   const measure = {

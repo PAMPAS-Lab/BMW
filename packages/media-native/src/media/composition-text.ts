@@ -76,8 +76,12 @@ export function wrapText(context: TextMeasure, text: string, width: number): str
       continue
     }
     if (context.measureText(line + c).width > width && line) {
+      const divider = line.lastIndexOf('｜')
       const latinTail = /[a-zA-Z]/.test(c) ? line.match(/[a-zA-Z]+$/)?.[0] : undefined
-      if (latinTail && latinTail.length < line.length) {
+      if (divider > 0 && divider < line.length - 1 && context.measureText(line.slice(divider + 1) + c).width <= width) {
+        result.push(line.slice(0, divider + 1))
+        line = line.slice(divider + 1)
+      } else if (latinTail && latinTail.length < line.length) {
         const prefix = line.slice(0, -latinTail.length)
         result.push(prefix.endsWith(' ') ? prefix.slice(0, -1) : prefix)
         line = latinTail
