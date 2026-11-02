@@ -114,6 +114,7 @@ export class QoderBackend implements AgentBackend {
         skills: [],
         plugins: [],
         settingSources: [],
+        settings: { skills: { enabled: false } },
         strictMcpConfig: true,
         // Leave a minute beyond BMW's largest per-action transport deadline; the
         // official runtime also uses this bound for otherwise silent stdio calls.

@@ -36,6 +36,7 @@ test('Qoder releases UUID-stamped user input only after the effective catalog an
       resumed = input.options.resume
       assert.deepEqual(input.options.tools, [])
       assert.deepEqual(input.options.settingSources, [])
+      assert.deepEqual(input.options.settings, { skills: { enabled: false } })
       assert.equal(input.options.strictMcpConfig, true)
       const server = input.options.mcpServers?.bmw
       assert.ok(server && 'timeout' in server)

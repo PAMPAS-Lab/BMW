@@ -99,6 +99,7 @@ test('Qoder settings discover the official models with no persistent session or 
   assert.equal(f.options()?.persistSession, false)
   assert.deepEqual(f.options()?.tools, [])
   assert.deepEqual(f.options()?.settingSources, [])
+  assert.deepEqual(f.options()?.settings, { skills: { enabled: false } })
   assert.equal(f.modelChanges(), 0)
   assert.ok(f.closed() > 0)
   assert.equal(f.port.busy, false)

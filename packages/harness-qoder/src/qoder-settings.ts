@@ -17,6 +17,7 @@ import { qoderBrowserCatalog } from './qoder-events.js'
 // Maintained official Worker 1.1.78 model IDs; new catalog entries need development admission.
 const supportedModels = new Set([
   'auto',
+  'fast',
   'qmodel_38max',
   'qfmodel',
   'qmodel_latest',
@@ -108,6 +109,7 @@ export class QoderSettings {
         skills: [],
         plugins: [],
         settingSources: [],
+        settings: { skills: { enabled: false } },
         strictMcpConfig: true,
         persistSession: false,
         includePartialMessages: false,

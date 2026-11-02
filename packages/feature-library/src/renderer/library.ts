@@ -40,7 +40,7 @@ type State = {
   project: { id: string; name: string }
   sessionId: string | null
   projects: { id: string; name: string; archived: boolean }[]
-  activity?: { status: string }
+  activity?: { status: string; runId?: string | null; message?: string }
   theme: string
 }
 const api = window.bmwLibrary,
@@ -176,6 +176,7 @@ function run(operation: () => Promise<unknown>): void {
 }
 let newsCollecting = false,
   sawActiveNewsAssistant = false,
+  activeNewsRunId: string | undefined,
   stoppedNewsMessage: string | undefined,
   refreshing = false,
   refreshQueued = false,
@@ -189,11 +190,21 @@ function updateBusy(): void {
     '[data-bulk-action],#bulk-toggle,[data-category]'
   ) as HTMLButtonElement[])
     control.disabled = pending
-  const busy = isAssistantBusy()
+  const busy = isAssistantBusy(),
+    terminalNewsRun =
+      Boolean(activeNewsRunId && state?.activity?.runId === activeNewsRunId) &&
+      ['completed', 'failed', 'cancelled', 'interrupted', 'disconnected'].includes(state?.activity?.status ?? '')
   if (busy) sawActiveNewsAssistant = true
-  else if (sawActiveNewsAssistant) {
+  else if (sawActiveNewsAssistant || terminalNewsRun) {
+    if (
+      ['failed', 'disconnected'].includes(state?.activity?.status ?? '') &&
+      state?.activity?.message &&
+      (sawActiveNewsAssistant || terminalNewsRun)
+    )
+      say(`采选异常中断：${state.activity.message}`)
     newsCollecting = false
     sawActiveNewsAssistant = false
+    activeNewsRunId = undefined
   }
   const collecting = newsCollecting || busy,
     startBtn = node<HTMLButtonElement>('news-start')
@@ -256,6 +267,7 @@ async function refresh(forceStream = false): Promise<void> {
       newsRenderKey = ''
       newsCollecting = false
       sawActiveNewsAssistant = false
+      activeNewsRunId = undefined
       stoppedNewsMessage = undefined
     }
     updateBusy()
@@ -280,6 +292,13 @@ async function refresh(forceStream = false): Promise<void> {
             !['subscriptions', 'leads', 'video-pool', 'rolling-events', 'collection-runs'].includes(category))))
     )
       await loadCategory(forceStream)
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : String(error)
+    if (msg.includes('Library context changing') || msg.includes('Library context is changing or stopping')) {
+      refreshQueued = true
+      return
+    }
+    throw error
   } finally {
     refreshing = false
     if (refreshQueued && !hidden) {
@@ -672,8 +691,13 @@ function renderNews(): void {
     heading.textContent = view.recommendation
       ? '来自冻结推荐 · ' + view.recommendation.windowHours + '小时窗口 · 原始来源与真实预览 · 先选题后制作'
       : '近72小时 · 最多十题 · 原始来源与真实预览 · 先收集，选定后制作'
+  const activityFailure =
+    ['failed', 'disconnected'].includes(state?.activity?.status ?? '') && state?.activity?.message
+      ? `采选异常中断：${state.activity.message}（当前已保留 ${view.topics.length} 个候选）`
+      : undefined
   node('news-status').textContent =
     stoppedNewsMessage ??
+    activityFailure ??
     `${view.topics.length} 个候选 · ${view.closed ? '研究已结束' : view.selection ? '已有制作记录，可查看草稿或继续选择其他题目' : '先核对预览，再选择题目制作'}${view.recommendation ? ' · 冻结快照 · ' + view.recommendation.windowHours + '小时窗口' + (view.recommendation.acceptedShortage ? ' · 用户接受不足十题' : '') : ''}${view.asOf ? ' · 核验截至 ' + new Date(view.asOf).toLocaleString() : ''}`
   const key = JSON.stringify({
     origin: newsOrigin,
@@ -884,6 +908,7 @@ node('cancel').onclick = () => {
   const wasCollecting = newsCollecting || isAssistantBusy()
   newsCollecting = false
   sawActiveNewsAssistant = false
+  activeNewsRunId = undefined
   void api
     .cancel()
     .then(async () => {
@@ -904,6 +929,7 @@ node('news-start').onclick = () =>
       const result = mediaRecord(await api.news({ operation: 'stop' }))
       newsCollecting = false
       sawActiveNewsAssistant = false
+      activeNewsRunId = undefined
       await loadNews()
       const count = typeof result.retainedCount === 'number' ? result.retainedCount : (newsView?.topics.length ?? 0)
       stoppedNewsMessage = `已由用户停止采选，已保留当前已发现的 ${count} 条线索`
@@ -914,22 +940,28 @@ node('news-start').onclick = () =>
     stoppedNewsMessage = undefined
     newsCollecting = true
     sawActiveNewsAssistant = false
+    activeNewsRunId = undefined
     updateBusy()
     try {
-      await api.news({ operation: 'start', instructions: node<HTMLTextAreaElement>('news-instructions').value })
+      const startRes = mediaRecord(
+        await api.news({ operation: 'start', instructions: node<HTMLTextAreaElement>('news-instructions').value })
+      )
+      activeNewsRunId = typeof startRes.runId === 'string' ? startRes.runId : undefined
     } catch (error) {
       newsCollecting = false
       sawActiveNewsAssistant = false
+      activeNewsRunId = undefined
       throw error
     }
     say('已开始收集近72小时新闻，合格资料会逐批保存。')
-    await loadNews()
+    await refresh()
   })
 node('news-refresh').onclick = () => run(loadNews)
 node('news-close').onclick = () =>
   run(async () => {
     newsCollecting = false
     sawActiveNewsAssistant = false
+    activeNewsRunId = undefined
     stoppedNewsMessage = undefined
     await api.news({ operation: 'close' })
     await loadNews()
