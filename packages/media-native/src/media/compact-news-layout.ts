@@ -100,10 +100,14 @@ export function compactCue(
   cue: NonNullable<CompositionScene['captions']>[number],
   display: CompositionScene['captionDisplay']
 ) {
-  const translated = Boolean(cue.translationText?.trim()),
-    chinese =
-      display === 'original' ? cue.text : translated ? cue.translationText! : display === 'translation' ? '' : cue.text,
-    english = translated && display !== 'translation' && display !== 'original' ? cue.text : ''
+  const text = cue.text,
+    translation = cue.translationText ?? '',
+    translated = Boolean(translation.trim()),
+    swapped = translated && /\p{Script=Han}/u.test(text) && !/\p{Script=Han}/u.test(translation),
+    primary = swapped ? text : translation,
+    secondary = swapped ? translation : text,
+    chinese = display === 'original' ? text : translated ? primary : display === 'translation' ? '' : text,
+    english = translated && display !== 'translation' && display !== 'original' ? secondary : ''
   return { chinese: compactText(context, chinese, 42, 2), english: compactText(context, english, 30, 2) }
 }
 /** Native diagrams occupy only the same picture slot; no caption/title overlays. */
@@ -171,7 +175,20 @@ export function compactSceneIssues(
       '紧凑新闻需要实际横屏主视频，或符合原生图解约束的末镜。图解所有可见对象/关键帧须在720×1280画布x40–680、y332–692区域内，至少一个diagram覆盖20%画布；字幕/来源区不可叠层。'
     )
   for (const [index, cue] of (scene.captions ?? estimatedCaptionCues(scene, 720, 1280, narrationDuration)).entries()) {
-    const blocks = compactCue(context, cue, scene.captionDisplay)
+    const blocks = compactCue(context, cue, scene.captionDisplay),
+      hasForeign =
+        /[A-Za-z\u00C0-\u024F\u0400-\u04FF\u3040-\u30FF\uAC00-\uD7AF]{3,}/u.test(cue.text) &&
+        !/\p{Script=Han}/u.test(cue.text)
+    if (
+      (hasForeign &&
+        (!cue.translationText?.trim() ||
+          scene.captionDisplay === 'original' ||
+          scene.captionDisplay === 'translation')) ||
+      (cue.translationText?.trim() && (scene.captionDisplay === 'original' || scene.captionDisplay === 'translation'))
+    )
+      issues.push(
+        `字幕${index + 1}为外文原声，须同时显示中文译文（42px）与原始外文（30px）：请提供 cue.text 与 cue.translationText 并保持 captionDisplay="bilingual"。`
+      )
     if (blocks.chinese.overflow || blocks.english.overflow)
       issues.push(
         `字幕${index + 1}需按语义和真实句界拆cue：中文42px最多2行，英文30px最多2行，宽640px；保留完整文字，不缩字或隐藏。`

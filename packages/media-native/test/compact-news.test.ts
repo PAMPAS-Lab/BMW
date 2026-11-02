@@ -45,6 +45,16 @@ test('Compact text keeps content and Latin words, balances a Chinese orphan, and
   assert.equal(cue.chinese.overflow, false)
   assert.equal(cue.english.overflow, false)
   assert.equal(cue.english.lines.join(' ').replace(/\s+/g, ' '), 'But an old oath had bound him to a distant war.')
+  const swappedCue = compactCue(
+    c,
+    { startSeconds: 0, endSeconds: 5, text: input, translationText: 'But an old oath had bound him to a distant war.' },
+    'bilingual'
+  )
+  assert.equal(swappedCue.chinese.lines.join(''), input)
+  assert.equal(
+    swappedCue.english.lines.join(' ').replace(/\s+/g, ' '),
+    'But an old oath had bound him to a distant war.'
+  )
   const saved = compactText(c, input, 42, 2)
   saved.lines[0] = 'mutated caller'
   assert.equal(compactText(c, input, 42, 2).lines.join(''), input)
@@ -110,4 +120,10 @@ test('Compact preflight rejects layout overrides/long cues and shared native pai
   const noVideo = structuredClone(composition)
   delete noVideo.scenes[0].videoArtifactId
   assert.throws(() => assertCompositionText(c, noVideo), /实际横屏主视频/)
+  const missingTranslation = structuredClone(composition)
+  delete missingTranslation.scenes[0].captions![0].translationText
+  assert.throws(() => assertCompositionText(c, missingTranslation), /外文原声/)
+  const hiddenEnglish = structuredClone(composition)
+  hiddenEnglish.scenes[0].captionDisplay = 'translation'
+  assert.throws(() => assertCompositionText(c, hiddenEnglish), /外文原声/)
 })

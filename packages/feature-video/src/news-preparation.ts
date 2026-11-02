@@ -892,6 +892,40 @@ export class NewsPreparationService {
       issues.push(
         'Original speech is declared but no enabled decodable source audio covers the actual primary footage interval.'
       )
+    const foreignOriginal =
+      scene.originalSpeech.mode === 'source' &&
+      /[A-Za-z\u00C0-\u024F\u0400-\u04FF\u3040-\u30FF\uAC00-\uD7AF]{2,}/u.test(scene.originalSpeech.quote) &&
+      !/\p{Script=Han}/u.test(scene.originalSpeech.quote)
+    if (
+      foreignOriginal &&
+      (!actual.narration.trim() ||
+        Boolean(actual.captions?.length) ||
+        actual.captionDisplay === 'original' ||
+        actual.captionDisplay === 'translation')
+    ) {
+      const cues = actual.captions ?? []
+      if (
+        actual.captionDisplay === 'original' ||
+        actual.captionDisplay === 'translation' ||
+        !cues.length ||
+        cues.some(c => {
+          const a = c.text.trim(),
+            b = c.translationText?.trim() ?? ''
+          return (
+            !a ||
+            !b ||
+            !(/\p{Script=Han}/u.test(a) || /\p{Script=Han}/u.test(b)) ||
+            !(
+              /[A-Za-z\u00C0-\u024F\u0400-\u04FF\u3040-\u30FF\uAC00-\uD7AF]{2,}/u.test(a) ||
+              /[A-Za-z\u00C0-\u024F\u0400-\u04FF\u3040-\u30FF\uAC00-\uD7AF]{2,}/u.test(b)
+            )
+          )
+        })
+      )
+        issues.push(
+          'NEWS_BILINGUAL_CAPTIONS_REQUIRED: Foreign-language original speech scenes must display bilingual subtitles (both Chinese translation and original foreign text in every caption cue with captionDisplay="bilingual").'
+        )
+    }
     return issues
   }
 }
@@ -938,6 +972,7 @@ export function preparationSceneContent(scene: StudioScene) {
     sceneTemplate: s.sceneTemplate,
     endPolicy: s.endPolicy,
     showSceneNumber: s.showSceneNumber,
+    ...(s.captionDisplay && s.captionDisplay !== 'bilingual' ? { captionDisplay: s.captionDisplay } : {}),
     captionText: preparationCaptionText(s),
     voiceTiming: s.voiceTiming,
     voiceSegments: s.voiceSegments,

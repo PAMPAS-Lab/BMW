@@ -1326,6 +1326,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Native diagram preparation pins three frames in a private journal, preserves opening video and rejects changed proof`
 - `Diagram capability rejects static, text-only, out-of-window, media-backed and non-final scenes`
 - `Long scene citations retain exact bindings and round-trip every UTF16 quote part without output-budget dead ends`
+- `Foreign-language original speech scenes require bilingual captions (both Chinese and original foreign text)`
 
 #### `packages/feature-video/test/news.test.ts`
 

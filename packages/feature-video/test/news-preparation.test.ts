@@ -1607,3 +1607,27 @@ test('Long scene citations retain exact bindings and round-trip every UTF16 quot
     f.close()
   }
 })
+test('Foreign-language original speech scenes require bilingual captions (both Chinese and original foreign text)', async () => {
+  const f = await fixture()
+  try {
+    let draft = f.store.read(f.draft.id)
+    draft.scenes[0].narration = ''
+    draft.scenes[0].captions = [{ startSeconds: 0, endSeconds: 3, text: '已核对的原话。' }]
+    f.store.update(draft.id, draft.revision, draft)
+    await assert.rejects(f.record(), /NEWS_BILINGUAL_CAPTIONS_REQUIRED/)
+    draft = f.store.read(f.draft.id)
+    draft.scenes[0].captions = [
+      { startSeconds: 0, endSeconds: 3, text: 'A verified primary claim.', translationText: '已核对的原话。' }
+    ]
+    draft.scenes[0].captionDisplay = 'translation'
+    f.store.update(draft.id, draft.revision, draft)
+    await assert.rejects(f.record(), /NEWS_BILINGUAL_CAPTIONS_REQUIRED/)
+    draft = f.store.read(f.draft.id)
+    draft.scenes[0].captionDisplay = 'bilingual'
+    f.store.update(draft.id, draft.revision, draft)
+    await f.record()
+    assert.equal((await f.service().preflight()).ready, true)
+  } finally {
+    f.close()
+  }
+})

@@ -18,6 +18,7 @@ interface MixRange {
   frames: number
   voices: VoiceMeasurement[]
   decodeVoice: (id: string) => Promise<AudioBuffer>
+  measureSourcePeak: (key: string, track: InputAudioTrack, start: number, end: number) => Promise<number>
   readSource: (
     key: string,
     track: InputAudioTrack,
@@ -28,6 +29,25 @@ interface MixRange {
     consume: (chunk: WrappedAudioBuffer) => void
   ) => Promise<void>
   check: () => void
+}
+async function measureSourceTrackPeak(
+  track: InputAudioTrack,
+  start: number,
+  end: number,
+  check?: () => void
+): Promise<number> {
+  let peak = 0.001
+  for await (const chunk of new AudioBufferSink(track).buffers(start, end)) {
+    check?.()
+    const sr = chunk.buffer.sampleRate,
+      fromIndex = Math.max(0, Math.floor((start - chunk.timestamp) * sr)),
+      toIndex = Math.min(chunk.buffer.length, Math.ceil((end - chunk.timestamp) * sr))
+    for (let c = 0; c < chunk.buffer.numberOfChannels; c++) {
+      const data = chunk.buffer.getChannelData(c)
+      for (let i = fromIndex; i < toIndex; i++) peak = Math.max(peak, Math.abs(data[i]))
+    }
+  }
+  return peak
 }
 /** Keep codec state across PCM windows. Restarting AAC at every window would
  * repeat decoder priming and produce a different waveform at each boundary. */
@@ -98,7 +118,12 @@ async function mixAudioRange(
     rangeEnd = (startFrame + frameCount) / 48000
   const mixed = new AudioBuffer({ numberOfChannels: 2, length: frameCount, sampleRate: 48000 })
   const narrationDurations: number[] = []
-  const footage: { segment: ReturnType<typeof sceneVisuals>[number]; start: number; duration: number }[] = []
+  const footage: {
+    segment: ReturnType<typeof sceneVisuals>[number]
+    start: number
+    duration: number
+    primarySpeech: boolean
+  }[] = []
   let start = 0
   for (const [sceneIndex, scene] of composition.scenes.entries()) {
     range?.check()
@@ -174,10 +199,11 @@ async function mixAudioRange(
       }
     }
     let visualStart = 0
-    const visuals = sceneVisuals(scene)
+    const visuals = sceneVisuals(scene),
+      primarySpeech = !voiceDuration || Boolean(scene.voiceMuted) || (scene.voiceVolume ?? 1) === 0
     for (const segment of visuals) {
       if (segment.videoArtifactId && segment.keepSourceAudio)
-        footage.push({ segment, start: start + visualStart, duration: segment.durationSeconds })
+        footage.push({ segment, start: start + visualStart, duration: segment.durationSeconds, primarySpeech })
       visualStart += segment.durationSeconds
     }
     start += scene.durationSeconds
@@ -193,6 +219,7 @@ async function mixAudioRange(
         a = last.segment,
         b = next.segment
       if (
+        last.primarySpeech !== next.primarySpeech ||
         a.videoArtifactId !== b.videoArtifactId ||
         a.playbackRate !== b.playbackRate ||
         (a.sourceVolume ?? 1) !== (b.sourceVolume ?? 1) ||
@@ -214,6 +241,12 @@ async function mixAudioRange(
       const from = segment.sourceStartSeconds + Math.max(0, rangeStart - first.start) * segment.playbackRate,
         to = Math.min(sourceEnd, segment.sourceStartSeconds + (rangeEnd - first.start) * segment.playbackRate)
       if (to > from) {
+        const sourcePeak = first.primarySpeech
+            ? range
+              ? await range.measureSourcePeak('footage-' + index, track, segment.sourceStartSeconds, sourceEnd)
+              : await measureSourceTrackPeak(track, segment.sourceStartSeconds, sourceEnd)
+            : 0.78,
+          footageGain = (segment.sourceVolume ?? 1) * (first.primarySpeech ? Math.min(4.8, 0.78 / sourcePeak) : 1)
         const consume = (chunk: WrappedAudioBuffer) => {
           range?.check()
           mixSourceAudioChunk(
@@ -224,7 +257,7 @@ async function mixAudioRange(
             span,
             segment.sourceStartSeconds,
             segment.playbackRate,
-            segment.sourceVolume ?? 1,
+            footageGain,
             undefined,
             startFrame
           )
@@ -406,6 +439,7 @@ export async function prepareCompositionAudio(
     return cached.buffer
   }
   const measurements = new Map<string, VoiceMeasurement>(),
+    footagePeaks = new Map<string, number>(),
     voices: VoiceMeasurement[] = []
   try {
     for (const scene of value.scenes) {
@@ -434,6 +468,14 @@ export async function prepareCompositionAudio(
           voices,
           decodeVoice,
           check: guard,
+          measureSourcePeak: async (key, track, start, end) => {
+            let measured = footagePeaks.get(key)
+            if (measured === undefined) {
+              measured = await measureSourceTrackPeak(track, start, end, guard)
+              footagePeaks.set(key, measured)
+            }
+            return measured
+          },
           readSource: async (key, track, start, end, from, to, consume) => {
             active.add(key)
             let reader = readers.get(key)
