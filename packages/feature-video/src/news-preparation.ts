@@ -181,7 +181,16 @@ export class NewsPreparationService {
       }
     if (request.operation === 'enable') {
       this.guard(signal)
-      return this.journal.save(request.expectedChecklistRevision, {
+      const effectiveExpected =
+        request.expectedChecklistRevision === 0 &&
+        state.revision === 1 &&
+        state.enabled &&
+        state.scenes.length === 0 &&
+        !state.aiFilmApproval &&
+        !state.diagrams?.length
+          ? state.revision
+          : request.expectedChecklistRevision
+      return this.journal.save(effectiveExpected, {
         ...state,
         enabled: true,
         originalSpeechRequired: state.originalSpeechRequired || request.originalSpeechRequired

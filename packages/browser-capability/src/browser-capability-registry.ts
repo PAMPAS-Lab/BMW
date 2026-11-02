@@ -97,8 +97,46 @@ export class BrowserCapabilityRegistry {
           })
         )
       if (definition.help) return definition.help(query)
-      if (query.forOperation !== undefined || query.forSubOperation !== undefined)
-        throw new TypeError('This action has no nested operation; use its closed input schema.')
+      if (query.forOperation !== undefined || query.forSubOperation !== undefined) {
+        const requestEntry =
+          query.forSubOperation === undefined
+            ? Object.entries(definition.inputSchema.properties).find(([, prop]) => {
+                const ops = prop && typeof prop === 'object' ? (prop as Record<string, unknown>).properties : undefined
+                const opSchema = ops && typeof ops === 'object' ? (ops as Record<string, unknown>).operation : undefined
+                return Boolean(
+                  opSchema && typeof opSchema === 'object' && Array.isArray((opSchema as Record<string, unknown>).enum)
+                )
+              })
+            : undefined
+        if (!requestEntry) throw new TypeError('This action has no nested operation; use its closed input schema.')
+        const [requestKey, requestProp] = requestEntry as [string, Record<string, unknown>],
+          requestProps = requestProp.properties as Record<string, Record<string, unknown>>,
+          operations = requestProps.operation.enum as string[]
+        if (!operations.includes(query.forOperation!))
+          throw new TypeError(
+            `Unknown ${definition.action} operation "${query.forOperation}". Supported operations: ${operations.join(', ')}.`
+          )
+        return {
+          action: definition.action,
+          operation: query.forOperation,
+          description: definition.description,
+          inputSchema: {
+            ...definition.inputSchema,
+            properties: {
+              action: { const: definition.action },
+              ...definition.inputSchema.properties,
+              [requestKey]: {
+                ...requestProp,
+                properties: {
+                  ...requestProps,
+                  operation: { const: query.forOperation }
+                }
+              }
+            },
+            required: ['action', ...definition.inputSchema.required]
+          }
+        }
+      }
       return {
         action: definition.action,
         description: definition.description,

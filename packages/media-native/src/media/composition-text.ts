@@ -38,7 +38,7 @@ export function wrapText(context: TextMeasure, text: string, width: number): str
   let line = '',
     paragraphStart = 0
   const finish = () => {
-    if (/^\p{Script=Han}$/u.test(line) && result.length > paragraphStart) {
+    if (/^\p{Script=Han}[。，、！？；：,.!?;:%％）)\]】》」』”’]*$/u.test(line) && result.length > paragraphStart) {
       const previous = Array.from(result.at(-1)!)
       for (const count of [2, 1]) {
         const tail = previous.slice(-count).join(''),
@@ -76,13 +76,15 @@ export function wrapText(context: TextMeasure, text: string, width: number): str
       continue
     }
     if (context.measureText(line + c).width > width && line) {
-      const at = line.lastIndexOf(' ')
-      if (at > 0 && /[a-zA-Z]/.test(c) && /[a-zA-Z]$/.test(line)) {
-        result.push(line.slice(0, at))
-        line = line.slice(at + 1)
-      } else if (/[。，、！？；：,.!?;:%％）)\]】》」』]/.test(c) && line.length > 1) {
-        const tail = line.match(/[(（]?[0-9]+(?:[.,][0-9]+)?[%％]?$/)?.[0] ?? line.slice(-1),
-          prefix = line.slice(0, -tail.length)
+      const latinTail = /[a-zA-Z]/.test(c) ? line.match(/[a-zA-Z]+$/)?.[0] : undefined
+      if (latinTail && latinTail.length < line.length) {
+        const prefix = line.slice(0, -latinTail.length)
+        result.push(prefix.endsWith(' ') ? prefix.slice(0, -1) : prefix)
+        line = latinTail
+      } else if (/[。，、！？；：,.!?;:%％）)\]】》」』”’]/.test(c) && line.length > 1) {
+        const tail = line.match(/[(（]?[0-9]+(?:[.,][0-9]+)?[%％]?$|[A-Za-z0-9]+$/)?.[0] ?? line.slice(-1),
+          rawPrefix = line.slice(0, -tail.length),
+          prefix = rawPrefix.endsWith(' ') ? rawPrefix.slice(0, -1) : rawPrefix
         if (prefix) result.push(prefix)
         line = tail
       } else {

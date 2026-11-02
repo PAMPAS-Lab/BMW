@@ -28,7 +28,10 @@ export function assertNewsResearchRequest(raw: unknown): NewsResearchRequest {
     if (Object.keys(v).length !== 1) throw new TypeError('Unexpected news read property.')
     return { operation: v.operation }
   }
-  if (v.operation !== 'propose-news-topics') throw new TypeError('Unknown news research operation.')
+  if (v.operation !== 'propose-news-topics')
+    throw new TypeError(
+      'Unknown news research operation. Pass newsRequest.operation="news-topics" or "propose-news-topics".'
+    )
   if (v.closeNewsTask !== undefined && typeof v.closeNewsTask !== 'boolean')
     throw new TypeError('Invalid news close request.')
   return {

@@ -1909,6 +1909,17 @@ export class VideoStudioService {
       if (request.assetKind !== 'audio') {
         delete scene.visualSegments
         delete scene.focusIntervals
+        if (
+          scene.cardSpec &&
+          (!cardContentContract(scene.cardSpec.templateId, scene.cardSpec.version).visuals.kinds.includes(
+            request.assetKind
+          ) ||
+            (request.assetKind === 'video' && scene.cardSpec.motion === 'slow-push'))
+        ) {
+          delete scene.cardSpec
+          delete scene.cardCues
+          if (scene.speechLinks?.cards?.length) scene.speechLinks.cards = []
+        }
       }
       signal?.throwIfAborted()
       return store.update(id, draft.revision, draft, true)
