@@ -57,6 +57,12 @@ export interface CardPerson {
   role: string
   layout: 'right' | 'corner'
 }
+export interface DossierTile {
+  metric: string
+  title: string
+  subtitle?: string
+  accentColor?: string
+}
 export interface DiagramNode {
   label: string
   imageArtifactId?: string
@@ -87,6 +93,13 @@ export type DetailedCardSpec =
       motion?: 'none'
       quote: QuoteDetails
       person: CardPerson
+    } & EvidenceDetails)
+  | ({
+      version: 2
+      templateId: 'evidence/dossier'
+      motion?: 'none' | 'fade-in' | 'reveal-items'
+      tiles: DossierTile[]
+      footnote?: string
     } & EvidenceDetails)
   | {
       version: 2
@@ -180,6 +193,12 @@ const quoteSchema = object(['excerpt', 'translation', 'attribution', 'display'],
   attribution: string(240),
   display: { enum: ['simultaneous', 'staged'] }
 })
+const dossierTileSchema = object(['metric', 'title'], {
+  metric: { ...string(16), minLength: 1 },
+  title: { ...string(24), minLength: 1 },
+  subtitle: string(36),
+  accentColor: { type: 'string', pattern: '^#[0-9a-fA-F]{6}$' }
+})
 const nodeSchema = object(['label'], {
   label: string(32),
   imageArtifactId: { type: 'string', minLength: 1, maxLength: 180 }
@@ -226,6 +245,12 @@ export const detailedCardSchemas = [
       layout: { enum: ['right', 'corner'] }
     })
   }),
+  detailed(
+    'evidence/dossier',
+    ['tiles'],
+    { ...evidence(3), tiles: list(dossierTileSchema, 1, 3), footnote: string(100) },
+    ['none', 'fade-in', 'reveal-items']
+  ),
   detailed(
     'metric/backdrop',
     ['value', 'decimals', 'unit', 'phase', 'holdSeconds'],
@@ -338,6 +363,24 @@ function quote(raw: unknown): QuoteDetails {
     display: choice(v.display, ['simultaneous', 'staged'] as const)
   }
 }
+function dossierTile(raw: unknown): DossierTile {
+  const v = closed(raw, ['metric', 'title', 'subtitle', 'accentColor']),
+    metric = text(v.metric, 16),
+    title = text(v.title, 24)
+  if (!metric.trim() || !title.trim()) throw new TypeError('CARD_DETAILS: 档案卡指标与标题不能为空。')
+  let accentColor: string | undefined
+  if (v.accentColor !== undefined) {
+    if (typeof v.accentColor !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(v.accentColor))
+      throw new TypeError('CARD_DETAILS: 颜色需为六位十六进制。')
+    accentColor = v.accentColor
+  }
+  return {
+    metric,
+    title,
+    ...(v.subtitle === undefined ? {} : { subtitle: text(v.subtitle, 36) }),
+    ...(accentColor === undefined ? {} : { accentColor })
+  }
+}
 function node(raw: unknown): DiagramNode {
   const v = closed(raw, ['label', 'imageArtifactId'])
   return {
@@ -390,6 +433,7 @@ export function assertDetailedCard(raw: unknown): DetailedCardSpec {
       'evidence/highlight',
       'evidence/translation',
       'evidence/person-quote',
+      'evidence/dossier',
       'diagram/image'
     ].includes(String(v.templateId))
   ) {
@@ -418,6 +462,13 @@ export function assertDetailedCard(raw: unknown): DetailedCardSpec {
     }
     if (v.templateId === 'evidence/translation')
       return { ...base, templateId: v.templateId, quote: quote(v.quote) } as DetailedCardSpec
+    if (v.templateId === 'evidence/dossier')
+      return {
+        ...base,
+        templateId: v.templateId,
+        tiles: array(v.tiles, 1, 3, dossierTile),
+        ...(v.footnote === undefined ? {} : { footnote: text(v.footnote, 100) })
+      } as DetailedCardSpec
     return { ...base, templateId: v.templateId } as DetailedCardSpec
   }
   if (v.templateId === 'metric/backdrop') {
@@ -483,6 +534,11 @@ export function assertDetailedReady(spec: DetailedCardSpec): void {
   if ('quote' in spec && (!spec.quote.excerpt.trim() || !spec.quote.attribution.trim()))
     fail('请填写可核对的原句与引述来源。')
   if ('person' in spec && (!spec.person.artifactId || !spec.person.name.trim())) fail('请填写人物图与姓名。')
+  if (
+    spec.templateId === 'evidence/dossier' &&
+    (!spec.tiles.length || spec.tiles.some(t => !t.metric.trim() || !t.title.trim()))
+  )
+    fail('请填写档案卡指标与标题。')
   if (spec.templateId === 'diagram/to-target' && [...spec.objects, spec.target].some(n => !n.label.trim()))
     fail('请填写所有对象与目标的标签。')
   if (spec.templateId === 'diagram/sequence' && (spec.nodes.some(n => !n.label.trim()) || !spec.footnote.trim()))

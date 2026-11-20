@@ -2,6 +2,7 @@ import type { CardHighlight, CardReading, SourceRect, DetailedCardSpec } from '.
 import { fitText, COMPOSITION_FONT, captionBacking } from './composition-text.js'
 import { withCanvasPaintRole } from './canvas-paint-role.js'
 import type { CardCue } from '../card-cues.js'
+import { drawGlowCard, drawLaserConnector, spring } from './kinetic-primitives.js'
 export interface CardArea {
   x: number
   y: number
@@ -147,6 +148,10 @@ export function detailedVisualArea(spec: DetailedCardSpec | undefined, area: Car
     }
   if (spec.templateId === 'evidence/person-quote')
     return { ...area, width: spec.person.layout === 'right' ? area.width * 0.62 : area.width, height: 150 }
+  if (spec.templateId === 'evidence/dossier')
+    return area.width < 500
+      ? { ...area, height: Math.min(196, Math.round(area.height * 0.44)) }
+      : { ...area, width: Math.round(area.width * 0.54), height: Math.min(area.height, 436) }
   return area
 }
 export interface DetailedTextBox {
@@ -156,6 +161,9 @@ export interface DetailedTextBox {
     | 'attribution'
     | 'person-name'
     | 'person-role'
+    | 'dossier-metric'
+    | 'dossier-title'
+    | 'dossier-subtitle'
     | 'diagram-node'
     | 'diagram-relation'
     | 'range-axis'
@@ -195,6 +203,18 @@ export function detailedTextFits(
       add(spec.person.name, w, 50, W < 600 ? 18 : 24, 2)
       add(spec.person.role, w, 70, W < 600 ? 14 : 18, 3)
     }
+  }
+  if (spec.templateId === 'evidence/dossier') {
+    const colW = W < 600 ? width : width - Math.round(width * 0.57),
+      compact = W < 600,
+      metricW = compact ? colW * 0.34 : colW - 32,
+      titleW = compact ? colW * 0.58 - 14 : colW - 32
+    for (const tile of spec.tiles) {
+      add(tile.metric, metricW, 46, compact ? 22 : 34, 1)
+      add(tile.title, titleW, compact ? (tile.subtitle?.trim() ? 38 : 54) : 46, compact ? 15 : 20, 2)
+      if (tile.subtitle?.trim()) add(tile.subtitle, titleW, 24, compact ? 13 : 15, 1)
+    }
+    if (spec.footnote?.trim()) add(spec.footnote, width, 45, 16, 2)
   }
   if (spec.templateId === 'diagram/to-target') {
     const w = W < 600 ? width * 0.43 : width / (spec.objects.length + 1.2)
@@ -335,6 +355,113 @@ export function paintDetailedCard(
       )
     }
   }
+  if (spec.templateId === 'evidence/dossier') {
+    const compact = W < 600,
+      colX = compact ? margin : margin + Math.round(width * 0.57),
+      colW = compact ? width : width - Math.round(width * 0.57),
+      colY = compact ? 326 : 122,
+      colH = compact ? (spec.footnote?.trim() ? 228 : 254) : 428,
+      gap = 12,
+      tileH = (colH - gap * (spec.tiles.length - 1)) / spec.tiles.length,
+      diagramCues = cues?.filter(c => c.kind === 'diagram') ?? [],
+      hasCues = diagramCues.length > 0
+    spec.tiles.forEach((tile, i) => {
+      const cue = diagramCues.find(c => c.index === i),
+        startAt = cue ? cue.startSeconds : spec.motion === 'reveal-items' ? i * Math.min(1.0, duration / 4) : 0,
+        entrance = spec.motion === 'none' || !spec.motion ? 1 : spring(time, startAt)
+      if (spec.motion === 'reveal-items' && time < startAt) return
+      const tileAccent = tile.accentColor ?? palette.accent,
+        selected = cue ? time >= cue.startSeconds && time < cue.endSeconds : !hasCues && i === 0,
+        y = colY + i * (tileH + gap) + (1 - Math.min(1, entrance)) * 12
+      context.save()
+      if (spec.motion === 'fade-in') context.globalAlpha *= Math.min(1, entrance)
+      drawGlowCard(context, colX, y, colW, tileH, {
+        radius: 12,
+        fill: palette.panel,
+        border: selected ? tileAccent : palette.connection + '88',
+        borderWidth: selected ? 2.5 : 1.5,
+        accentLeft: tileAccent
+      })
+      if (compact) {
+        draw(
+          tile.metric,
+          { x: colX + 14, y: y + 10, width: colW * 0.34, height: 46 },
+          22,
+          'dossier-metric',
+          i,
+          1,
+          tileAccent
+        )
+        draw(
+          tile.title,
+          {
+            x: colX + 14 + colW * 0.36,
+            y: y + 8,
+            width: colW * 0.58 - 14,
+            height: tile.subtitle?.trim() ? 38 : 54
+          },
+          15,
+          'dossier-title',
+          i,
+          2,
+          palette.ink
+        )
+        if (tile.subtitle?.trim())
+          withCanvasPaintRole(context, 'footnote', () =>
+            draw(
+              tile.subtitle!,
+              { x: colX + 14 + colW * 0.36, y: y + 46, width: colW * 0.58 - 14, height: 22 },
+              13,
+              'dossier-subtitle',
+              i,
+              1,
+              palette.muted
+            )
+          )
+      } else {
+        draw(
+          tile.metric,
+          { x: colX + 18, y: y + 10, width: colW - 32, height: 46 },
+          34,
+          'dossier-metric',
+          i,
+          1,
+          tileAccent
+        )
+        draw(
+          tile.title,
+          {
+            x: colX + 18,
+            y: y + 58,
+            width: colW - 32,
+            height: Math.min(60, tileH - (tile.subtitle?.trim() ? 88 : 66))
+          },
+          20,
+          'dossier-title',
+          i,
+          2,
+          palette.ink
+        )
+        if (tile.subtitle?.trim())
+          withCanvasPaintRole(context, 'footnote', () =>
+            draw(
+              tile.subtitle!,
+              { x: colX + 18, y: y + tileH - 28, width: colW - 32, height: 24 },
+              15,
+              'dossier-subtitle',
+              i,
+              1,
+              palette.muted
+            )
+          )
+      }
+      context.restore()
+    })
+    if (spec.footnote?.trim())
+      withCanvasPaintRole(context, 'footnote', () =>
+        draw(spec.footnote!, { x: margin, y: 568, width, height: 45 }, 16, 'diagram-relation', 0, 2, palette.muted)
+      )
+  }
   if (spec.templateId === 'diagram/to-target') {
     const vertical = W < 600,
       nodeWidth = vertical ? width * 0.43 : width / (spec.objects.length + 1.2),
@@ -344,11 +471,14 @@ export function paintDetailedCard(
         width: nodeWidth,
         height: 110
       }
-    const node = (n: typeof spec.target, area: CardArea, index: number) => {
-      context.fillStyle = palette.panel
-      context.beginPath()
-      context.roundRect(area.x, area.y, area.width, area.height, 12)
-      context.fill()
+    const node = (n: typeof spec.target, area: CardArea, index: number, accentLeft?: string) => {
+      drawGlowCard(context, area.x, area.y, area.width, area.height, {
+        radius: 12,
+        fill: palette.panel,
+        border: palette.connection + '66',
+        borderWidth: 1.5,
+        accentLeft: accentLeft ?? palette.connection
+      })
       const image = n.imageArtifactId ? assets?.get(n.imageArtifactId)?.image : undefined
       if (image) {
         const scale = Math.min((area.width - 12) / image.width, (area.height - 40) / image.height)
@@ -391,22 +521,10 @@ export function paintDetailedCard(
         y1 = vertical ? area.y + area.height / 2 : area.y + area.height,
         x2 = vertical ? targetArea.x : targetArea.x + targetArea.width / 2,
         y2 = vertical ? targetArea.y + targetArea.height / 2 : targetArea.y
-      context.strokeStyle = palette.connection
-      context.lineWidth = 2
-      context.beginPath()
-      context.moveTo(x1, y1)
-      context.lineTo(x2, y2)
-      context.stroke()
-      const angle = Math.atan2(y2 - y1, x2 - x1)
-      context.beginPath()
-      context.moveTo(x2, y2)
-      context.lineTo(x2 - 10 * Math.cos(angle - 0.4), y2 - 10 * Math.sin(angle - 0.4))
-      context.moveTo(x2, y2)
-      context.lineTo(x2 - 10 * Math.cos(angle + 0.4), y2 - 10 * Math.sin(angle + 0.4))
-      context.stroke()
+      drawLaserConnector(context, x1, y1, x2, y2, palette.connection, time)
     })
     const targetCue = cues?.find(c => c.kind === 'diagram' && c.index === spec.objects.length)
-    if (!targetCue || time >= targetCue.startSeconds) node(spec.target, targetArea, spec.objects.length)
+    if (!targetCue || time >= targetCue.startSeconds) node(spec.target, targetArea, spec.objects.length, palette.accent)
     draw(spec.relation, { x: margin, y: 580, width, height: 38 }, 20, 'diagram-relation', 0, 1, palette.accent)
   }
   if (spec.templateId === 'diagram/sequence') {
@@ -426,13 +544,13 @@ export function paintDetailedCard(
         y = top + i * (nodeHeight + gap),
         selected = i === active
       context.save()
-      context.fillStyle = selected ? palette.accent : palette.panel
-      context.beginPath()
-      context.roundRect(x, y, w, nodeHeight, 12)
-      context.fill()
-      context.strokeStyle = selected ? palette.accent : palette.connection
-      context.lineWidth = selected ? 3 : 1
-      context.stroke()
+      drawGlowCard(context, x, y, w, nodeHeight, {
+        radius: 12,
+        fill: selected ? palette.accent : palette.panel,
+        border: selected ? palette.accent : palette.connection,
+        borderWidth: selected ? 3 : 1.5,
+        accentLeft: selected ? undefined : palette.accent
+      })
       const activeInk = captionBacking(palette.accent).box.startsWith('#ffffff') ? '#ffffff' : '#172536'
       draw(
         n.label,
@@ -446,15 +564,7 @@ export function paintDetailedCard(
       context.restore()
       if (i < spec.nodes.length - 1) {
         const cy = y + nodeHeight + 3
-        context.strokeStyle = palette.connection
-        context.lineWidth = 2
-        context.beginPath()
-        context.moveTo(W / 2, cy)
-        context.lineTo(W / 2, cy + gap - 6)
-        context.lineTo(W / 2 - 4, cy + gap - 10)
-        context.moveTo(W / 2, cy + gap - 6)
-        context.lineTo(W / 2 + 4, cy + gap - 10)
-        context.stroke()
+        drawLaserConnector(context, W / 2, cy, W / 2, cy + gap - 6, palette.connection, time)
       }
     })
     withCanvasPaintRole(context, 'footnote', () =>

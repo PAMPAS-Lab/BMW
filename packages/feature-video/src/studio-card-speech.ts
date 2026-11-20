@@ -85,6 +85,10 @@ export function cardSpeechTargets(scene: StudioScene): CardSpeechTarget[] {
     spec.nodes.forEach((n, i) =>
       add('diagram', i, { ...n, shape: spec.shape, footnote: spec.footnote }, '步骤 ' + (i + 1) + ' · ' + n.label)
     )
+  if (spec.templateId === 'evidence/dossier')
+    spec.tiles.forEach((t, i) =>
+      add('diagram', i, { ...t, footnote: spec.footnote }, '档案 ' + (i + 1) + ' · ' + t.metric + ' ' + t.title)
+    )
   if (spec.templateId === 'metric/backdrop')
     add(
       'metric',

@@ -170,6 +170,16 @@ export const CARD_TEMPLATES: readonly CardTemplateDefinition[] = [
     example: ['人物引述']
   },
   {
+    id: 'evidence/dossier',
+    version: 2,
+    category: 'evidence',
+    name: '高对比图文档案',
+    purpose: '左图右数同屏核对实拍或截图证据与核心指标',
+    slots: ['visual', 'tiles', 'footnote?', 'sources'],
+    motions: ['none', 'fade-in', 'reveal-items'],
+    example: ['高对比图文档案', '核心指标与实拍同屏']
+  },
+  {
     id: 'metric/backdrop',
     version: 2,
     category: 'metric',
@@ -322,6 +332,7 @@ export function cardContentContract(templateId: CardTemplateId, version: 1 | 2):
         'evidence/highlight',
         'evidence/translation',
         'evidence/person-quote',
+        'evidence/dossier',
         'diagram/image'
       ].includes(templateId)
     ) {
@@ -346,6 +357,7 @@ export function cardContentContract(templateId: CardTemplateId, version: 1 | 2):
     }
     if (['metric/backdrop', 'title/emphasis'].includes(templateId))
       contract.visuals = { minimum: 0, maximum: 1, kinds: ['image'] }
+    if (templateId === 'evidence/dossier') contract.bullets.maximum = 0
     if (templateId === 'title/emphasis') contract.titleMaximum = 20
     if (['diagram/to-target', 'diagram/sequence', 'diagram/range'].includes(templateId)) {
       noVisual()
@@ -499,6 +511,7 @@ export function assertCardContent(scene: CompositionScene, spec: CardSpec): void
         'evidence/highlight',
         'evidence/translation',
         'evidence/person-quote',
+        'evidence/dossier',
         'diagram/image'
       ].includes(id) &&
       (!visuals.length || visuals.some(v => !v.imageArtifactId))
@@ -517,6 +530,7 @@ export function assertCardContent(scene: CompositionScene, spec: CardSpec): void
     }
     if (['diagram/to-target', 'diagram/sequence', 'diagram/range'].includes(id) && (visuals.length || count))
       fail('结构化图解使用专用节点/范围槽，不叠加画面或要点。')
+    if (id === 'evidence/dossier' && count) fail('图文档案使用专用数据牌槽，不叠加要点。')
     if (count > 1) fail('此变体最多一条短说明。')
     if ('reading' in spec && spec.reading && visuals.some(v => v.focusIntervals?.length || v.zoom !== 1))
       fail('阅读配方不能覆盖已有手工聚焦或缩放，请先确认移除。')
@@ -587,7 +601,13 @@ export function cardPaintScene(scene: CompositionScene): CompositionScene {
     label: '',
     ...(kind ? { sceneTemplate: { kind: kind as 'summary' | 'comparison' | 'screenshot' } } : {}),
     ...(['title/basic', 'title/emphasis'].includes(card.templateId) ? { title: '', bullets: [] } : {}),
-    ...(['metric/hero', 'metric/backdrop', 'evidence/translation', 'evidence/person-quote'].includes(card.templateId)
+    ...([
+      'metric/hero',
+      'metric/backdrop',
+      'evidence/translation',
+      'evidence/person-quote',
+      'evidence/dossier'
+    ].includes(card.templateId)
       ? { bullets: [] }
       : {}),
     ...(card.motion === 'reveal-items'

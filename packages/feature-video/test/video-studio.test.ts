@@ -8565,3 +8565,72 @@ test('Unknown edit discovery returns supported commands and footage replacement 
     f.close()
   }
 })
+
+test('Compact narration retimes matching scene captions to measured TTS duration and source speech alignment preserves bilingual translations', async () => {
+  const { alignCaptionsToSourceSpeech } = await import('../src/studio-source-speech.js')
+  const { applyNarrationPacing } = await import('../src/studio-contract.js')
+  const f = sourceFixture()
+  try {
+    const compactScene = {
+      ...newStudioScene('s1-hook'),
+      durationSeconds: 10,
+      narration: '英伟达市值单日蒸发6000亿美元，黄仁勋首度回应！',
+      captions: [
+        { startSeconds: 0, endSeconds: 5, text: '英伟达市值单日蒸发6000亿美元，' },
+        { startSeconds: 5, endSeconds: 10, text: '黄仁勋首度回应！' }
+      ]
+    }
+    const timing = applyNarrationPacing(compactScene, 6.4, 24, 'compact')
+    assert.ok(timing)
+    assert.equal(compactScene.captions![0].startSeconds, 0.083)
+    assert.equal(compactScene.captions![1].endSeconds, 6.483)
+    assert.ok(compactScene.captions![0].endSeconds > 3.2, 'Clause with 6000 digits receives higher acoustic weight')
+
+    const quoteScene = {
+      ...newStudioScene('s2-quote'),
+      videoArtifactId: 'voice.wav',
+      durationSeconds: 6,
+      sourceStartSeconds: 2,
+      playbackRate: 1,
+      keepSourceAudio: true,
+      captions: [
+        { startSeconds: 0, endSeconds: 3, text: 'First spoken sentence.', translationText: '第一句原话。' },
+        { startSeconds: 3, endSeconds: 6, text: 'Second spoken sentence.', translationText: '第二句原话。' }
+      ]
+    }
+    const aligned = alignCaptionsToSourceSpeech(
+      quoteScene,
+      0,
+      [
+        {
+          id: 'seg-1',
+          startSeconds: 2.3,
+          endSeconds: 4.8,
+          text: 'First spoken sentence.',
+          tokenMeanProbability: 0.92,
+          usable: true,
+          warnings: []
+        },
+        {
+          id: 'seg-2',
+          startSeconds: 4.8,
+          endSeconds: 7.7,
+          text: 'Second spoken sentence.',
+          tokenMeanProbability: 0.94,
+          usable: true,
+          warnings: []
+        }
+      ],
+      { startSeconds: 2, endSeconds: 8 }
+    )
+    assert.ok(aligned)
+    assert.equal(aligned.sceneCaptions[0].startSeconds, 0.3)
+    assert.equal(aligned.sceneCaptions[0].endSeconds, 2.8)
+    assert.equal(aligned.sceneCaptions[0].translationText, '第一句原话。')
+    assert.equal(aligned.sceneCaptions[1].startSeconds, 2.8)
+    assert.equal(aligned.sceneCaptions[1].endSeconds, 5.7)
+    assert.equal(aligned.sceneCaptions[1].translationText, '第二句原话。')
+  } finally {
+    f.close()
+  }
+})

@@ -291,7 +291,7 @@ export function assertProductionBrief(raw: unknown): ProductionBrief {
     profileId: productionType(v.profileId),
     profileVersion: 1,
     audience: text(v.audience, 500),
-    question: text(v.question, 500),
+    question: text(v.question, 600),
     targetDurationSeconds: finiteNumber(v.targetDurationSeconds, 'duration intent', 1, 720),
     sections,
     works,
@@ -316,7 +316,7 @@ export const productionBriefSchema = obj({
   profileId: { enum: PRODUCTION_TYPES },
   profileVersion: { const: 1 },
   audience: str(500),
-  question: str(500),
+  question: str(600),
   targetDurationSeconds: { type: 'number', minimum: 1, maximum: 720 },
   sections: arr(
     obj({

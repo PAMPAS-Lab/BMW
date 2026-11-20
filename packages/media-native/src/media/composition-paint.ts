@@ -10,6 +10,7 @@ import { DEFAULT_VIDEO_OPTIONS } from '../video-options.js'
 import { captionText, estimatedCaptionCues } from '../composition-contract.js'
 import { captionBacking, captionLayout } from './composition-text.js'
 import { withCanvasPaintRole } from './canvas-paint-role.js'
+import { drawSwissGridBackground, drawGlowCard, drawHighlightWipe } from './kinetic-primitives.js'
 export interface CompositionCanvasFrame {
   canvas: HTMLCanvasElement | OffscreenCanvas
 }
@@ -160,6 +161,7 @@ export function paintScene(
   if (scene.sceneTemplate?.backgroundColor) context.fillStyle = scene.sceneTemplate.backgroundColor
   if (news) context.fillStyle = light ? '#f8fafc' : '#232323'
   context.fillRect(0, 0, W, H)
+  if (!minimal && !news) drawSwissGridBackground(context, 0, 0, W, H, { light, accentColor: accent })
   if (news) {
     context.fillStyle = ink
     const headline = fitText(context, output?.title ?? '', W - margin * 2, 3, W < 600 ? 28 : 40, 108)
@@ -431,13 +433,16 @@ export function paintScene(
       if (fit.overflow) throw new Error('STUDIO_TEXT_LAYOUT: 模板文字放不下。')
       context.save()
       if (card?.motion === 'fade-in') context.globalAlpha = ease
-      context.fillStyle = light ? '#e7edf5' : '#232b39'
-      context.beginPath()
-      context.roundRect(box.x, box.y, box.width, box.height, 10)
-      context.fill()
-      context.fillStyle = accent
-      context.fillRect(box.x, box.y, 4, box.height)
-      context.fillStyle = scene.sceneTemplate.emphasisIndex === index ? accent : ink
+      const emphasized = scene.sceneTemplate.emphasisIndex === index,
+        comparisonRight = scene.sceneTemplate.kind === 'comparison' && index === 1
+      drawGlowCard(context, box.x, box.y, box.width, box.height, {
+        radius: 10,
+        fill: light ? '#e7edf5' : '#232b39',
+        border: emphasized ? accent : light ? '#2369db44' : '#8ebaff44',
+        borderWidth: emphasized ? 2.5 : 1,
+        accentLeft: comparisonRight ? (light ? '#e11d48' : '#fb7185') : accent
+      })
+      context.fillStyle = emphasized ? accent : ink
       context.font = `600 ${fit.size}px ${font}`
       fit.lines.forEach((line, row) => {
         const y = box.y + 12 + fit.size + row * fit.size * 1.3
@@ -490,6 +495,15 @@ export function paintScene(
         context.fillStyle = ink
       }
       draw(cardMetricText(card, Math.max(0, cardTime)), news ? 380 : 365, W < 600 ? 68 : 110, null, 1)
+      drawHighlightWipe(
+        context,
+        W / 2 - 90,
+        (news ? 380 : 365) + 28,
+        180,
+        6,
+        accent,
+        Math.min(1, Math.max(0.15, cardTime / 0.8))
+      )
       if (originalScene.bullets[0]) draw(originalScene.bullets[0], news ? 550 : 520, W < 600 ? 24 : 34, 'bullet')
     }
     context.restore()

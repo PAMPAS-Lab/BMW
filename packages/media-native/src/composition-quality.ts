@@ -214,7 +214,9 @@ export function compositionQualityPlan(composition: MediaComposition, durations?
         }
       }
     const quota = Math.min(
-      QUALITY_LIMITS.sceneSamples,
+      composition.cardLayout === 'news-compact' || composition.narrationPacing === 'compact'
+        ? 6
+        : QUALITY_LIMITS.sceneSamples,
       Math.floor(QUALITY_LIMITS.samples / Math.max(1, composition.scenes.length))
     )
     const chosen = [...candidates]

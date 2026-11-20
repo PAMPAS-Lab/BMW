@@ -82,3 +82,22 @@ export async function selectedVideoVisual(
   }
   return visit(artifactId, 0)
 }
+
+/** Verify whether an artifact derives from a specific verified ancestor artifact via native MediaDerivation receipts. */
+export async function derivedFromArtifact(
+  directory: string,
+  artifactId: string,
+  ancestorId: string,
+  signal?: AbortSignal
+): Promise<boolean> {
+  const seen = new Set<string>()
+  async function visit(id: string, depth: number): Promise<boolean> {
+    signal?.throwIfAborted()
+    if (depth > 8 || seen.has(id)) throw new Error('NEWS_MEDIA_LINEAGE: Cyclic or excessive conversion lineage.')
+    seen.add(id)
+    if (id === ancestorId) return true
+    const derivation = await readMediaDerivation(directory, id, signal)
+    return derivation ? visit(derivation.sourceArtifactId, depth + 1) : false
+  }
+  return visit(artifactId, 0)
+}

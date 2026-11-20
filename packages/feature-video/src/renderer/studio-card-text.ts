@@ -916,6 +916,7 @@ export class StudioCardTextEditor {
             'evidence/highlight',
             'evidence/translation',
             'evidence/person-quote',
+            'evidence/dossier',
             'diagram/image'
           ].includes(current.templateId)
         )

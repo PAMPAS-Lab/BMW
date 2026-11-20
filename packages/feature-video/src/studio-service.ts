@@ -43,7 +43,7 @@ import type { StudioReviewItem } from './studio-review.js'
 import { StudioSnapshotProof } from './studio-snapshot-proof.js'
 import { layerAssets } from '../../media-native/src/composition-layers.js'
 import type { LayerContainer } from '../../media-native/src/composition-layers.js'
-import { sourceSpeechOperation } from './studio-source-speech.js'
+import { sourceSpeechOperation, autoAlignSourceSceneCaptions } from './studio-source-speech.js'
 import { studioSpeechOperation, verifyStudioSpeech } from './studio-speech.js'
 import { speechScene, usesSpeechCaptions, usesStudioSpeech } from './studio-speech-contract.js'
 import { StudioSources } from './studio-sources.js'
@@ -70,6 +70,7 @@ import { VideoStudioStore, STUDIO_EXPORT_RENDERER_VERSION } from './studio-store
 import { captureWorkExport, WorkExportStore } from '@bmw-agent/feature-library/exports'
 import { mediaArtifactHash } from '../../media-native/src/media-derivation.js'
 import type { CapturedExport } from '@bmw-agent/feature-library/exports'
+import { gcProjectArtifacts } from './artifact-gc.js'
 import {
   assertStudioRequest,
   assertVideoDraft,
@@ -541,7 +542,58 @@ export class VideoStudioService {
         await input.close()
       }
       for (const scene of next.scenes)
-        for (const citation of scene.citations ?? []) await sources.citation(citation, signal)
+        for (const citation of scene.citations ?? []) {
+          try {
+            const body = await sources.port().readBody(citation.sourceId, citation.acquisitionId, signal)
+            if (body.text.slice(citation.startCharacter, citation.endCharacter) !== citation.quote) {
+              const trimmed = citation.quote.trim()
+              let foundStart = -1,
+                foundEnd = -1
+              if (trimmed.length >= 4) {
+                let searchFrom = 0
+                while (searchFrom <= body.text.length) {
+                  const idx = body.text.indexOf(trimmed, searchFrom)
+                  if (idx === -1) break
+                  if (
+                    foundStart === -1 ||
+                    Math.abs(idx - citation.startCharacter) < Math.abs(foundStart - citation.startCharacter)
+                  ) {
+                    foundStart = idx
+                    foundEnd = idx + trimmed.length
+                  }
+                  searchFrom = idx + 1
+                }
+                if (foundStart === -1) {
+                  const escaped = trimmed
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .map(tok => tok.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+                  if (escaped.length >= 2 && escaped.length <= 120) {
+                    const re = new RegExp(escaped.join('\\s+'), 'g')
+                    let m: RegExpExecArray | null
+                    while ((m = re.exec(body.text)) !== null) {
+                      if (
+                        foundStart === -1 ||
+                        Math.abs(m.index - citation.startCharacter) < Math.abs(foundStart - citation.startCharacter)
+                      ) {
+                        foundStart = m.index
+                        foundEnd = m.index + m[0].length
+                      }
+                    }
+                  }
+                }
+              }
+              if (foundStart >= 0 && foundEnd > foundStart && foundEnd <= 50000) {
+                citation.startCharacter = foundStart
+                citation.endCharacter = foundEnd
+                citation.quote = body.text.slice(foundStart, foundEnd)
+              }
+            }
+          } catch {
+            // Fall through to sources.citation validation below
+          }
+          await sources.citation(citation, signal)
+        }
       for (const artifactId of next.preparation.artifactIds.filter(
         value => !current.preparation.artifactIds.includes(value)
       )) {
@@ -1277,6 +1329,42 @@ export class VideoStudioService {
           publish('scene-completed', sceneId)
         }
         failedSceneId = undefined
+        for (const s of [...current.scenes]) {
+          if (s.narration.trim() || !s.captions?.length) continue
+          if (!sceneVisuals(s).some(v => v.keepSourceAudio && v.videoArtifactId)) continue
+          signal?.throwIfAborted()
+          try {
+            const prePrep = new NewsPreparationService(this.kernel, store, owner, current)
+            const preFp = prePrep.required()
+              ? (prePrep.journal.read().scenes.find(entry => entry.sceneId === s.id)?.fingerprint ?? '')
+              : ''
+            const alignedDraft = await autoAlignSourceSceneCaptions(
+              this.kernel,
+              store,
+              current,
+              s,
+              path.join(project.directory, 'artifacts'),
+              () => {
+                if (this.kernel.projectStore.active().id !== owner.projectId)
+                  throw new Error('Studio Project changed during source speech.')
+                this.assertRevision(store, current)
+              },
+              actor,
+              signal
+            )
+            if (alignedDraft) {
+              current = alignedDraft
+              if (preFp)
+                await new NewsPreparationService(this.kernel, store, owner, current).refreshNarratedScene(
+                  s.id,
+                  preFp,
+                  signal
+                )
+            }
+          } catch {
+            // Best-effort ASR auto-alignment during narrate-pending; preserve existing captions if ASR is unavailable.
+          }
+        }
         signal?.throwIfAborted()
         this.assertRevision(store, current)
         publish('completed')
@@ -1411,6 +1499,9 @@ export class VideoStudioService {
           } catch (error) {
             libraryWarning = '成品已保存，采用账本提交待核对：' + String(error)
           }
+        try {
+          gcProjectArtifacts(project.directory)
+        } catch {}
         return { draft: updated, export: { ...result, sha256 }, ...(libraryWarning ? { libraryWarning } : {}) }
       } finally {
         if (!committed) {
@@ -1768,7 +1859,11 @@ export class VideoStudioService {
         if (local) scene.narrationOptions = tts
         else if (scene.narrationOptions) scene.narrationOptions = tts
         else draft.tts = tts
-        const duration = finiteNumber(result.durationSeconds, 'audio duration', 0.01, 180),
+        const prePrep = new NewsPreparationService(this.kernel, store, owner, draft),
+          preFingerprint = prePrep.required()
+            ? (prePrep.journal.read().scenes.find(s => s.sceneId === scene.id)?.fingerprint ?? '')
+            : '',
+          duration = finiteNumber(result.durationSeconds, 'audio duration', 0.01, 180),
           autoTiming = applyNarrationPacing(scene, duration, draft.fps, draft.narrationPacing)
         scene.audioGeneration = { kind: 'tts', options: tts, ...(autoTiming ? { autoTiming } : {}) }
         scene.audioArtifactId = String(result.artifactId)
@@ -1777,6 +1872,12 @@ export class VideoStudioService {
         if (scene.visualSegments) fitVisualSegments(scene.visualSegments, scene.durationSeconds)
         const updated = store.update(id, draft.revision, draft, true)
         committed = true
+        if (preFingerprint)
+          await new NewsPreparationService(this.kernel, store, owner, updated).refreshNarratedScene(
+            scene.id,
+            preFingerprint,
+            signal
+          )
         return { draft: updated, audio: result }
       } finally {
         if (!committed && output && !before.has(result.artifactId)) {
@@ -2008,8 +2109,17 @@ export class VideoStudioService {
           kind: 'video' as const,
           setDuration: (duration: number | undefined, first?: number) => {
             segment.sourceDurationSeconds = duration
-            if (first !== undefined && segment.sourceStartSeconds < first - 0.000001)
-              throw new Error('源区间起点早于实测视频首帧：' + segment.sourceStartSeconds + ' < ' + first)
+            if (first !== undefined && segment.sourceStartSeconds < first - 0.000001) {
+              if (
+                first - segment.sourceStartSeconds <= 0.08 &&
+                first + segment.durationSeconds * segment.playbackRate <= (duration ?? 0) + 0.001
+              ) {
+                segment.sourceStartSeconds = first
+                if (!scene.visualSegments && scene.sourceStartSeconds < first) scene.sourceStartSeconds = first
+              } else {
+                throw new Error('源区间起点早于实测视频首帧：' + segment.sourceStartSeconds + ' < ' + first)
+              }
+            }
           }
         },
         { id: segment.imageArtifactId, kind: 'image' as const, setDuration: () => {} }

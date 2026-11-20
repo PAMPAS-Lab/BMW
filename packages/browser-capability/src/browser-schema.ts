@@ -469,7 +469,7 @@ export const BROWSER_CORE_ACTION_DEFINITIONS: readonly BrowserActionDefinition[]
   ),
   action(
     'media.video.motion',
-    'Decode EVERY primary-video-track frame in a bounded Project artifact interval (max180s/6000 frames), measuring a specified normalized picture region at64x64 RGB. Returns SHA-bound complete range and first3s coverage, maximum frame hold/decode gap and near-static runs at mean absolute RGB difference<=0.5 (first32 intervals; maxima cover all decoded frames). Choose the REAL FOOTAGE region excluding titles, subtitles, borders and animated overlays. Low-change runs require visual review; changing pixels do not prove authentic or semantic motion, audio listening or absence of all perceptual defects. No automatic editorial pass.',
+    'Decode EVERY primary-video-track frame in a bounded Project artifact interval (max180s/6000 frames), measuring a specified normalized picture region at64x64 RGB. Returns SHA-bound complete range and first3s coverage, maximum frame hold/decode gap, near-static runs at mean absolute RGB difference<=0.5 (first32 intervals; maxima cover all decoded frames), and hard shot-cut timestamps sceneCutsSeconds (diff>=22). Choose the REAL FOOTAGE region excluding titles, subtitles, borders and animated overlays. Low-change runs require visual review; changing pixels do not prove authentic or semantic motion, audio listening or absence of all perceptual defects. No automatic editorial pass.',
     {
       artifactId: {
         type: 'string',

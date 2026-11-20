@@ -44,7 +44,9 @@ function missingColdLogin(value: Record<string, unknown>): boolean {
     value.total_cost_usd === 0 &&
     Array.isArray(value.errors) &&
     value.errors.length === 1 &&
-    value.errors[0] === 'No qodercli login found. Run "qodercli login" first.'
+    (value.errors[0] === 'No qodercli login found. Run "qodercli login" first.' ||
+      value.errors[0] === 'Local login has expired. Run "qodercli login" to refresh.' ||
+      value.errors[0] === 'Saved qodercli login is damaged. Run "qodercli login" to replace it.')
   )
 }
 export interface QoderSettingsOptions {

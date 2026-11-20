@@ -42,10 +42,12 @@ export function assertCardCueTargets(spec: CardSpec | undefined, cues: CardCue[]
             ? spec.objects.length + 1
             : cue.kind === 'diagram' && spec.templateId === 'diagram/sequence'
               ? spec.nodes.length
-              : (cue.kind === 'metric' && spec.templateId === 'metric/backdrop') ||
-                  (cue.kind === 'keyword' && spec.templateId === 'title/emphasis')
-                ? 1
-                : 0
+              : cue.kind === 'diagram' && spec.templateId === 'evidence/dossier'
+                ? spec.tiles.length
+                : (cue.kind === 'metric' && spec.templateId === 'metric/backdrop') ||
+                    (cue.kind === 'keyword' && spec.templateId === 'title/emphasis')
+                  ? 1
+                  : 0
     if (cue.index >= count || cue.endSeconds > duration)
       throw new TypeError('Card cue does not match its target or original presentation clock.')
   }

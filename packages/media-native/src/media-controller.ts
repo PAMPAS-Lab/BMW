@@ -467,9 +467,17 @@ export class MediaController implements NativeMediaPort {
     this.preserving = true
     try {
       const directory = this.resolveArtifactsDirectory?.() || this.artifactsDirectory,
-        result = await preserveMedia({ ...request, directory })
-      if (request.videoIdentity)
-        await saveNativeVideoOrigin(directory, result.artifactId, request.videoIdentity, request.signal)
+        result = await preserveMedia({ ...request, directory }),
+        videoIdentity: VideoIdentity | undefined =
+          request.videoIdentity ??
+          (result.type === 'video' &&
+          typeof request.pageUrl === 'string' &&
+          /^https?:\/\//i.test(request.pageUrl) &&
+          typeof request.url === 'string' &&
+          /^https?:\/\//i.test(request.url)
+            ? { version: 1, platform: 'page', targetId: request.pageUrl, resourceId: request.url }
+            : undefined)
+      if (videoIdentity) await saveNativeVideoOrigin(directory, result.artifactId, videoIdentity, request.signal)
       return result
     } catch (error) {
       if (error instanceof PreservationCleanupError) this.failedPreservation = error
@@ -477,6 +485,15 @@ export class MediaController implements NativeMediaPort {
     } finally {
       this.preserving = false
     }
+  }
+
+  async saveNativeVideoOrigin(
+    directory: string,
+    artifactId: string,
+    identity: VideoIdentity,
+    signal?: AbortSignal
+  ): Promise<void> {
+    await saveNativeVideoOrigin(directory, artifactId, identity, signal)
   }
 
   projectArtifactPath(filename) {

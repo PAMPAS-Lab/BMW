@@ -357,7 +357,7 @@ test('Immutable reference history and source-group budgets are shared, backward 
     assert.equal(assertReferenceRecords(records).length, 32)
     assert.throws(() => assertReferenceCapacity(records, [], 1), /STUDIO_REFERENCE_BUDGET/)
     assert.throws(() => assertReferenceRecords([...records, { ...f.old[0], id: 'overflow' }]), /32/)
-    const sources = Array.from({ length: 9 }, (_, i) => ({
+    const sources = Array.from({ length: REFERENCE_LIMITS.sources + 1 }, (_, i) => ({
       ...f.old[0],
       id: 'source-' + i,
       sourceArtifactId: 'source-' + i + '.mp4'

@@ -2,14 +2,123 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import crypto from 'node:crypto'
 import { ArtifactJobIO } from '../../media-native/src/artifact-job-io.js'
+import { captionAcousticWeight } from '../../media-native/src/composition-contract.js'
+import type { CaptionCue } from '../../media-native/src/composition-contract.js'
 import { assertSpeechEvidence, speechSourceSegments } from '../../media-native/src/speech-contract.js'
 import { exportProjectText } from '../../media-native/src/text-export.js'
 import { sceneVisuals, visualPlaybackGroup } from '../../media-native/src/visual-segments.js'
-import { assertSourceCues, projectSourceCues, sourceCaptionClock } from './studio-source-speech-contract.js'
+import {
+  assertSourceCues,
+  projectSourceCues,
+  sourceCaptionClock,
+  sourceCaptionsStale
+} from './studio-source-speech-contract.js'
 import { studioAudioHash } from './studio-speech.js'
 import type { StudioKernel } from './studio-service.js'
 import type { VideoStudioStore } from './studio-store.js'
 import type { VideoDraft, StudioScene, StudioRequest } from './studio-contract.js'
+
+export function preserveCaptionTranslations(previous: CaptionCue[] | undefined, projected: CaptionCue[]): CaptionCue[] {
+  if (!previous?.length || !previous.some(c => c.translationText !== undefined)) return projected
+  return projected.map((cue, idx) => {
+    const match =
+      previous.find(p => p.text.trim() === cue.text.trim() && p.translationText !== undefined) ??
+      (previous.length === projected.length && previous[idx]?.translationText !== undefined ? previous[idx] : undefined)
+    if (!match || match.translationText === undefined) return cue
+    return {
+      ...cue,
+      translationText: match.translationText,
+      ...(match.translationOrigin ? { translationOrigin: match.translationOrigin } : {})
+    }
+  })
+}
+
+export function alignCaptionsToSourceSpeech(
+  scene: StudioScene,
+  segmentIndex: number,
+  segments: ReturnType<typeof speechSourceSegments>,
+  range: { startSeconds: number; endSeconds: number }
+): { sourceCues: CaptionCue[]; sceneCaptions: CaptionCue[] } | undefined {
+  const group = visualPlaybackGroup(scene, segmentIndex)
+  const groupSourceEnd = group.sourceStartSeconds + group.durationSeconds * group.playbackRate
+  const winStart = Math.max(range.startSeconds, group.sourceStartSeconds)
+  const winEnd = Math.min(range.endSeconds, groupSourceEnd)
+  if (winEnd <= winStart + 0.1) return undefined
+  const active = segments.filter(
+    seg => seg.endSeconds > winStart + 0.04 && seg.startSeconds < winEnd - 0.04 && seg.text.trim().length > 0
+  )
+  const existing = scene.captions ?? []
+  if (!existing.length) {
+    if (!active.length) return undefined
+    const rawCues: CaptionCue[] = []
+    let prevEnd = winStart
+    for (const seg of active) {
+      const s = Math.max(prevEnd, Math.max(winStart, Math.round(seg.startSeconds * 1000) / 1000))
+      const e = Math.min(winEnd, Math.round(seg.endSeconds * 1000) / 1000)
+      if (e > s + 0.05) {
+        rawCues.push({ startSeconds: s, endSeconds: e, text: seg.text.trim() })
+        prevEnd = e
+      }
+    }
+    if (!rawCues.length) return undefined
+    return { sourceCues: rawCues, sceneCaptions: projectSourceCues(scene, group.index, rawCues) }
+  }
+  const speechStart = active.length
+    ? Math.max(winStart, Math.min(winStart + 1.2, Math.round(active[0].startSeconds * 1000) / 1000))
+    : winStart
+  const speechEnd = active.length
+    ? Math.min(winEnd, Math.max(winEnd - 1.2, Math.round(active[active.length - 1].endSeconds * 1000) / 1000))
+    : winEnd
+  const span = Math.max(0.2, speechEnd - speechStart)
+  const weights = existing.map((c, idx) => captionAcousticWeight(c.text, idx === existing.length - 1))
+  const totalWeight = weights.reduce((sum, w) => sum + w, 0)
+  const segBoundaries = active
+    .flatMap(seg => [seg.startSeconds, seg.endSeconds])
+    .filter(t => t > speechStart + 0.25 && t < speechEnd - 0.25)
+  const sourceCues: CaptionCue[] = []
+  let cursor = speechStart
+  for (let i = 0; i < existing.length; i++) {
+    const cue = existing[i]
+    const startSeconds = cursor
+    let targetEnd =
+      i === existing.length - 1
+        ? speechEnd
+        : Math.round((cursor + (span * weights[i]) / Math.max(1, totalWeight)) * 1000) / 1000
+    if (i < existing.length - 1 && segBoundaries.length) {
+      let nearest = targetEnd
+      let bestDist = 0.65
+      for (const b of segBoundaries) {
+        const dist = Math.abs(b - targetEnd)
+        if (dist < bestDist && b > startSeconds + 0.35 && b < speechEnd - 0.35 * (existing.length - 1 - i)) {
+          bestDist = dist
+          nearest = Math.round(b * 1000) / 1000
+        }
+      }
+      targetEnd = nearest
+    }
+    const minRemaining = 0.25 * (existing.length - 1 - i)
+    const endSeconds =
+      i === existing.length - 1
+        ? Math.max(startSeconds + 0.08, speechEnd)
+        : Math.max(startSeconds + 0.15, Math.min(speechEnd - minRemaining, targetEnd))
+    cursor = endSeconds
+    sourceCues.push({
+      startSeconds,
+      endSeconds,
+      text: cue.text,
+      ...(cue.translationText !== undefined ? { translationText: cue.translationText } : {}),
+      ...(cue.translationOrigin !== undefined ? { translationOrigin: cue.translationOrigin } : {})
+    })
+  }
+  const projected = preserveCaptionTranslations(existing, projectSourceCues(scene, group.index, sourceCues)).map(
+    cue => ({
+      ...cue,
+      startSeconds: Math.round(cue.startSeconds * 1000) / 1000,
+      endSeconds: Math.round(cue.endSeconds * 1000) / 1000
+    })
+  )
+  return { sourceCues, sceneCaptions: projected }
+}
 export async function sourceSpeechOperation(
   kernel: StudioKernel,
   store: VideoStudioStore,
@@ -204,7 +313,9 @@ export async function sourceSpeechOperation(
   check()
   return {
     draft: store.setSourceSpeech(draft.id, draft.revision, scene.id, s => {
-      s.captions = cues
+      const mergedCues = preserveCaptionTranslations(s.captions, cues)
+      const mergedReviewed = preserveCaptionTranslations(s.captions, reviewed)
+      s.captions = mergedCues
       s.captionDisplay = 'bilingual'
       s.sourceCaptionBinding = {
         sourceArtifactId: candidate.sourceArtifactId,
@@ -213,11 +324,80 @@ export async function sourceSpeechOperation(
         ...(boundVisual?.id ? { visualSegmentId: boundVisual.id } : {}),
         clock,
         origin: actor === 'user' ? 'user-edited' : 'agent-edited',
-        sourceCues: reviewed,
+        sourceCues: mergedReviewed,
         sourceRange: range
       }
     }),
     cueCount: cues.length,
     automaticTimingApproved: false
   }
+}
+
+export async function autoAlignSourceSceneCaptions(
+  kernel: StudioKernel,
+  store: VideoStudioStore,
+  draft: VideoDraft,
+  scene: StudioScene,
+  directory: string,
+  guard: () => void,
+  actor: 'user' | 'agent',
+  signal?: AbortSignal
+): Promise<VideoDraft | undefined> {
+  if (scene.narration.trim() || !scene.captions?.length) return undefined
+  if (scene.sourceCaptionBinding && !sourceCaptionsStale(scene)) return undefined
+  const visuals = sceneVisuals(scene)
+  const segmentIndex = visuals.findIndex(v => v.keepSourceAudio && v.videoArtifactId)
+  if (segmentIndex < 0) return undefined
+  const group = visualPlaybackGroup(scene, segmentIndex)
+  const groupSourceEnd = group.sourceStartSeconds + group.durationSeconds * group.playbackRate
+  const rangeDuration = groupSourceEnd - group.sourceStartSeconds
+  if (rangeDuration <= 0.1 || rangeDuration > 180) return undefined
+  const sourceRange = {
+    startSeconds: Math.max(0, Math.round(group.sourceStartSeconds * 1000) / 1000),
+    endSeconds: Math.round(groupSourceEnd * 1000) / 1000
+  }
+  const recognized = (await sourceSpeechOperation(
+    kernel,
+    store,
+    draft,
+    scene,
+    {
+      operation: 'recognize-source',
+      draftId: draft.id,
+      expectedRevision: draft.revision,
+      sceneId: scene.id,
+      segmentIndex: group.index,
+      speechModel: 'base',
+      speechLanguage: 'auto',
+      sourceRange
+    },
+    directory,
+    guard,
+    actor,
+    signal
+  )) as {
+    draft: VideoDraft
+    candidate: NonNullable<StudioScene['sourceSpeech']>
+    segments: ReturnType<typeof speechSourceSegments>
+  }
+  const updatedScene = recognized.draft.scenes.find(s => s.id === scene.id)
+  if (!updatedScene) return recognized.draft
+  const aligned = alignCaptionsToSourceSpeech(updatedScene, group.index, recognized.segments, sourceRange)
+  if (!aligned || !aligned.sceneCaptions.length) return recognized.draft
+  const clock = sourceCaptionClock(updatedScene, group.index)
+  const boundVisual = updatedScene.visualSegments?.[group.index]
+  return store.setSourceSpeech(recognized.draft.id, recognized.draft.revision, scene.id, s => {
+    s.captions = aligned.sceneCaptions
+    if (aligned.sceneCaptions.some(c => c.translationText)) s.captionDisplay = 'bilingual'
+    s.sourceCaptionBinding = {
+      sourceArtifactId: recognized.candidate.sourceArtifactId,
+      sourceSha256: recognized.candidate.sourceSha256,
+      segmentIndex: group.index,
+      ...(boundVisual?.id ? { visualSegmentId: boundVisual.id } : {}),
+      clock,
+      origin: actor === 'user' ? 'user-edited' : 'agent-edited',
+      sourceCues: aligned.sourceCues,
+      sourceRange
+    }
+  })
 }

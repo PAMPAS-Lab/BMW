@@ -40,6 +40,12 @@ export function initialCardSpec(scene: StudioScene, id: CardTemplateId): CardSpe
   if (id === 'evidence/translation') return { version: 2, templateId: id, quote }
   if (id === 'evidence/person-quote')
     return { version: 2, templateId: id, quote, person: { name: '', role: '', layout: 'right' } }
+  if (id === 'evidence/dossier')
+    return {
+      version: 2,
+      templateId: id,
+      tiles: [{ metric: '0', title: (scene.bullets[0] ?? '').slice(0, 24) || '核心指标' }]
+    }
   if (id === 'diagram/to-target')
     return {
       version: 2,
@@ -92,11 +98,14 @@ export function planCardTemplate(scene: StudioScene, choice: CardTemplateChoice,
     next.cardSpec = assertCardSpec(spec ?? initialCardSpec(scene, id))
     if (scene.cardSpec?.version === 2 && scene.cardSpec.templateId !== id)
       notices.push('当前变体的阅读重点、译文、人物或结构槽将不显示；原文件保留，可撤销。')
-    if (['diagram/to-target', 'diagram/sequence', 'diagram/range'].includes(id) && next.bullets.length) {
+    if (
+      ['diagram/to-target', 'diagram/sequence', 'diagram/range', 'evidence/dossier'].includes(id) &&
+      next.bullets.length
+    ) {
       if (id === 'diagram/range') throw new Error('范围关系使用专用槽；请先保留原说明再确认移除要点。')
       next.bullets = []
       delete next.bulletRevealSeconds
-      notices.push('现有要点转为对象标签；请填写共同目标。')
+      notices.push('现有要点转为专用卡片槽位。')
     }
     if (next.sceneTemplate) {
       delete next.sceneTemplate
@@ -143,14 +152,19 @@ export function cardTemplateScene(scene: StudioScene, choice: CardTemplateChoice
 }
 export function cardShowsBullets(scene: StudioScene): boolean {
   return scene.cardSpec
-    ? !['demo/recording', 'media/sequence', 'diagram/to-target', 'diagram/sequence', 'diagram/range'].includes(
-        scene.cardSpec.templateId
-      )
+    ? ![
+        'demo/recording',
+        'media/sequence',
+        'diagram/to-target',
+        'diagram/sequence',
+        'diagram/range',
+        'evidence/dossier'
+      ].includes(scene.cardSpec.templateId)
     : !sceneVisuals(scene).length || Boolean(scene.sceneTemplate)
 }
 export function cardBulletLimit(scene: StudioScene): number {
   return scene.cardSpec?.version === 2
-    ? ['diagram/to-target', 'diagram/sequence', 'diagram/range'].includes(scene.cardSpec.templateId)
+    ? ['diagram/to-target', 'diagram/sequence', 'diagram/range', 'evidence/dossier'].includes(scene.cardSpec.templateId)
       ? 0
       : 1
     : scene.cardSpec

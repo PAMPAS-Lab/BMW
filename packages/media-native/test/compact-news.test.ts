@@ -1,6 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { compactText, compactGeometry, compactCue, paintCompactNews } from '../src/media/compact-news-layout.js'
+import {
+  compactText,
+  compactGeometry,
+  compactCue,
+  formatCompactSourceFooter,
+  paintCompactNews
+} from '../src/media/compact-news-layout.js'
 import { assertComposition } from '../src/composition-contract.js'
 import { assertCompositionText } from '../src/media/composition-text.js'
 import { assertVideoOptions } from '../src/video-options.js'
@@ -116,6 +122,9 @@ test('Compact preflight rejects layout overrides/long cues and shared native pai
     cn = texts.find(t => t.text.includes('昔日'))!
   assert.equal(cn.y - bottom, 24)
   assert.equal(texts.filter(t => t.text.includes('AI生成')).length, 1)
+  assert.equal(texts.filter(t => t.text === '素材来源：发布2026-10-25').length, 1)
+  assert.equal(formatCompactSourceFooter(['新华社', '2026-11-06']), '素材来源：新华社 · 2026-11-06')
+  assert.equal(formatCompactSourceFooter(['素材来源：新华社', '2026-11-06']), '素材来源：新华社 · 2026-11-06')
   assert.equal(images.length, 1)
   const noVideo = structuredClone(composition)
   delete noVideo.scenes[0].videoArtifactId
@@ -135,4 +144,9 @@ test('Compact preflight rejects layout overrides/long cues and shared native pai
     playbackRate: 1
   }
   assert.throws(() => assertCompositionText(c, paddedSilence, [1.92]), /静音空白/)
+
+  const cjkLatinTitle = compactText(c, 'Anthropic路演暗战CUDA与黄仁勋', 48, 2)
+  assert.equal(cjkLatinTitle.overflow, false)
+  assert.deepEqual(cjkLatinTitle.lines, ['Anthropic路演暗战', 'CUDA与黄仁勋'])
+  assert.equal(compactGeometry(16 / 9).media.y, 396)
 })

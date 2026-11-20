@@ -2368,3 +2368,248 @@ test('Portrait heading painting uses shared paragraph wrapping and avoids an aut
     'Automatic title wrapping must not strand享 alone'
   )
 })
+
+test('High-contrast dossier cards and kinetic primitives validate schemas, pin sources and paint without text overlap', async () => {
+  const ajv = new Ajv({ strict: false }),
+    specValid = ajv.compile(cardSpecSchema),
+    sceneValid = ajv.compile({ type: 'object', allOf: cardSceneConditionalSchemas }),
+    source = { artifactId: 'proof.png', sha256: 'a'.repeat(64) },
+    dossierSpec = {
+      version: 2 as const,
+      templateId: 'evidence/dossier' as const,
+      motion: 'reveal-items' as const,
+      tiles: [
+        { metric: '42%', title: '家庭端算力占比', subtitle: 'Local NPU + Mac mini', accentColor: '#38bdf8' },
+        { metric: '1.8x', title: '实拍延迟降低', subtitle: '端侧闭环实测', accentColor: '#22c55e' },
+        { metric: '0 次', title: '云端外发次数' }
+      ],
+      footnote: '来源：官方实测数据，仅作同口径对比'
+    }
+
+  assert.equal(specValid(dossierSpec), true, JSON.stringify(specValid.errors))
+  const validated = assertCardSpec(dossierSpec)
+  assert.equal(validated.templateId, 'evidence/dossier')
+  if (validated.templateId !== 'evidence/dossier') throw new Error('Expected dossier')
+  assertDetailedReady(validated)
+  assert.equal(cardContentContract('evidence/dossier', 2).bullets.maximum, 0)
+  assert.equal(cardContentContract('evidence/dossier', 2).visuals.minimum, 1)
+
+  const cues = assertCardCues([
+    { kind: 'diagram', index: 0, startSeconds: 0, endSeconds: 2 },
+    { kind: 'diagram', index: 2, startSeconds: 2, endSeconds: 4 }
+  ])
+  assert.doesNotThrow(() => assertCardCueTargets(validated, cues, 5))
+  assert.throws(() =>
+    assertCardCueTargets(validated, [{ kind: 'diagram', index: 3, startSeconds: 0, endSeconds: 1 }], 5)
+  )
+
+  for (const badSpec of [
+    { ...dossierSpec, tiles: [] },
+    { ...dossierSpec, tiles: [...dossierSpec.tiles, { metric: '4', title: 'extra' }] },
+    { ...dossierSpec, tiles: [{ metric: '   ', title: 'missing' }] },
+    { ...dossierSpec, tiles: [{ metric: '10%', title: 'bad color', accentColor: 'red' }] },
+    { ...dossierSpec, extra: true }
+  ]) {
+    assert.throws(() => assertCardSpec(badSpec))
+  }
+
+  const validScene = {
+    title: '端侧实拍与核心指标',
+    durationSeconds: 5,
+    bullets: [],
+    imageArtifactId: 'proof.png',
+    cardSpec: {
+      ...dossierSpec,
+      reading: {
+        mode: 'whole-to-detail' as const,
+        targets: [{ source, rect: { x: 0.1, y: 0.2, width: 0.3, height: 0.1 }, name: '关键区' }],
+        returnToWhole: true
+      }
+    },
+    cardCues: cues
+  }
+  assert.equal(sceneValid(validScene), true, JSON.stringify(sceneValid.errors))
+  assert.doesNotThrow(() => assertComposition({ title: 'Dossier', scenes: [validScene] }))
+  assert.throws(() =>
+    assertComposition({
+      title: 'NoImage',
+      scenes: [{ title: 'x', durationSeconds: 5, bullets: [], cardSpec: dossierSpec }]
+    })
+  )
+  assert.throws(() => assertComposition({ title: 'WithBullets', scenes: [{ ...validScene, bullets: ['多余要点'] }] }))
+
+  const makeMockContext = () => {
+    const stack: { a: number; b: number; c: number; d: number; e: number; f: number }[] = []
+    let m = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }
+    const surface = {
+      font: '16px sans-serif',
+      globalAlpha: 1,
+      fillStyle: '',
+      strokeStyle: '',
+      lineWidth: 1,
+      save() {
+        stack.push({ ...m })
+      },
+      restore() {
+        m = stack.pop() ?? { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }
+      },
+      scale(sx: number, sy: number) {
+        m = { ...m, a: m.a * sx, d: m.d * sy }
+      },
+      translate(dx: number, dy: number) {
+        m = { ...m, e: m.e + m.a * dx, f: m.f + m.d * dy }
+      },
+      getTransform() {
+        return { ...m }
+      },
+      measureText(text: string) {
+        const size = Number(this.font.match(/([\d.]+)px/)?.[1] ?? 16),
+          width = Array.from(text).reduce((n, ch) => n + size * (/\p{Script=Han}/u.test(ch) ? 0.95 : 0.56), 0)
+        return {
+          width,
+          actualBoundingBoxLeft: 0,
+          actualBoundingBoxRight: width,
+          actualBoundingBoxAscent: size * 0.85,
+          actualBoundingBoxDescent: size * 0.2
+        }
+      },
+      createLinearGradient() {
+        return { addColorStop() {} }
+      }
+    }
+    return new Proxy(surface, {
+      get(target, key) {
+        return Reflect.get(target, key) ?? (() => {})
+      }
+    }) as unknown as CanvasRenderingContext2D
+  }
+
+  const testScenes = [
+    {
+      width: 1280,
+      height: 720,
+      scene: {
+        title: '高对比图文档案',
+        durationSeconds: 5,
+        imageArtifactId: 'proof.png',
+        bullets: [],
+        captions: [],
+        cardSpec: dossierSpec
+      },
+      frame: { canvas: { width: 1280, height: 720 } as HTMLCanvasElement }
+    },
+    {
+      width: 720,
+      height: 1280,
+      scene: {
+        title: '竖屏图文档案',
+        durationSeconds: 5,
+        imageArtifactId: 'proof.png',
+        bullets: [],
+        captions: [],
+        showSceneNumber: false,
+        cardSpec: dossierSpec
+      },
+      frame: { canvas: { width: 1280, height: 720 } as HTMLCanvasElement }
+    },
+    {
+      width: 1280,
+      height: 720,
+      scene: {
+        title: '两条路线对比',
+        durationSeconds: 4,
+        bullets: ['苹果：自内而外收敛生态', '特斯拉：自外而内打通终端'],
+        captions: [],
+        cardSpec: { version: 1 as const, templateId: 'comparison/two' as const }
+      },
+      frame: null
+    },
+    {
+      width: 1280,
+      height: 720,
+      scene: {
+        title: '关键突破指标',
+        durationSeconds: 4,
+        bullets: ['较上一代翻倍'],
+        captions: [],
+        cardSpec: {
+          version: 1 as const,
+          templateId: 'metric/hero' as const,
+          motion: 'count-up' as const,
+          value: 42,
+          decimals: 0 as const,
+          unit: '%'
+        }
+      },
+      frame: null
+    },
+    {
+      width: 1280,
+      height: 720,
+      scene: {
+        title: '协同架构',
+        durationSeconds: 4,
+        bullets: [],
+        captions: [],
+        cardSpec: {
+          version: 2 as const,
+          templateId: 'diagram/to-target' as const,
+          objects: [{ label: '感知端' }, { label: '决策端' }],
+          target: { label: '家庭中枢' },
+          relation: '本地低延迟协同'
+        }
+      },
+      frame: null
+    },
+    {
+      width: 1280,
+      height: 720,
+      scene: {
+        title: '演化路径',
+        durationSeconds: 4,
+        bullets: [],
+        captions: [],
+        cardSpec: {
+          version: 2 as const,
+          templateId: 'diagram/sequence' as const,
+          shape: 'steps' as const,
+          nodes: [{ label: '第一步' }, { label: '第二步' }, { label: '第三步' }],
+          footnote: '流程口径说明',
+          motion: 'reveal-items' as const
+        }
+      },
+      frame: null
+    }
+  ]
+
+  for (const item of testScenes) {
+    const comp = assertComposition({
+      title: 'KineticCheck',
+      width: item.width,
+      height: item.height,
+      music: false,
+      watermark: { enabled: false },
+      scenes: [item.scene]
+    })
+    for (const t of [0.2, 1.8]) {
+      const ctx = makeMockContext(),
+        traced = await traceCanvasText(ctx, async () => {
+          paintScene(ctx, comp.scenes[0], item.frame, t, item.scene.durationSeconds, 0, 1, 0, comp)
+        }),
+        issues = paintedTextIssues(traced.texts, item.width, item.height, {
+          sceneIndex: 0,
+          seconds: t,
+          localSeconds: t,
+          reasons: ['scene-start']
+        })
+      assert.equal(
+        issues.filter(i => i.code === 'text-outside-frame' || i.code === 'painted-text-overlap').length,
+        0,
+        `${item.width}x${item.height} ${item.scene.title} at ${t}s: ${JSON.stringify(issues)}`
+      )
+      if (item.width === 720) {
+        assert.equal(issues.length, 0, `Portrait dossier at ${t}s: ${JSON.stringify(issues)}`)
+      }
+    }
+  }
+})

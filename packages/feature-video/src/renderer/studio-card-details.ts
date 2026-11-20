@@ -280,6 +280,36 @@ export function cardDetailsForm(spec: DetailedCardSpec, options: DetailsOptions)
       })
     }
   }
+  if (next.templateId === 'evidence/dossier') {
+    next.tiles.forEach((tile, i) => {
+      field('指标值 ' + (i + 1), tile.metric, 16, v => {
+        tile.metric = v
+      })
+      field('指标标题 ' + (i + 1), tile.title, 24, v => {
+        tile.title = v
+      })
+      field('指标附注 ' + (i + 1), tile.subtitle ?? '', 36, v => {
+        if (v) tile.subtitle = v
+        else delete tile.subtitle
+      })
+    })
+    field('档案脚注', next.footnote ?? '', 100, v => {
+      if (v) next.footnote = v
+      else delete next.footnote
+    })
+    if (next.tiles.length < 3)
+      button('＋ 指标牌', () => {
+        next.tiles.push({ metric: '0', title: '新指标' })
+        options.change(next)
+        options.save()
+      })
+    if (next.tiles.length > 1)
+      button('删除最后指标牌', () => {
+        next.tiles.pop()
+        options.change(next)
+        options.save()
+      })
+  }
   const motions = cardTemplate(next.templateId).motions.filter(m => next.templateId !== 'diagram/image' || m === 'none')
   if (motions.length > 1)
     select(
@@ -307,6 +337,7 @@ export function cardDetailsForm(spec: DetailedCardSpec, options: DetailsOptions)
       'evidence/highlight',
       'evidence/translation',
       'evidence/person-quote',
+      'evidence/dossier',
       'diagram/image'
     ].includes(next.templateId)
   ) {

@@ -1902,6 +1902,8 @@ export function createBmwApplication(definition: ResolvedProductDefinition, asse
   configureNetworkStartup(path.join(app.getPath('userData'), 'global-settings.json'), name =>
     app.commandLine.appendSwitch(name)
   )
+  app.commandLine.appendSwitch('disk-cache-size', String(256 * 1024 * 1024))
+  app.commandLine.appendSwitch('media-cache-size', String(128 * 1024 * 1024))
   // Keep Electron's native application/runtime identity for the whole partition.
   // A Chrome-shaped override can fail Google's identifier-stage browser check.
   app

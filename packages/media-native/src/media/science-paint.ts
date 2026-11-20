@@ -2,6 +2,7 @@ import { paintResearchDiagram } from './research-diagram-paint.js'
 import { scienceNumber, scienceState } from '../science-spec.js'
 import type { ScienceSpec, SciencePoint } from '../science-spec.js'
 import { COMPOSITION_FONT, fitText } from './composition-text.js'
+import { drawSwissGridBackground } from './kinetic-primitives.js'
 
 interface Rect {
   x: number
@@ -79,6 +80,13 @@ export function paintScience(
     context.stroke()
   }
   const dot = (p: SciencePoint, color: string, radius = font * 0.18) => {
+    context.save()
+    context.globalAlpha = (context.globalAlpha ?? 1) * 0.22
+    context.beginPath()
+    context.arc(p.x, p.y, radius * 2.1, 0, Math.PI * 2)
+    context.fillStyle = color
+    context.fill()
+    context.restore()
     context.beginPath()
     context.arc(p.x, p.y, radius, 0, Math.PI * 2)
     context.fillStyle = color
@@ -91,6 +99,10 @@ export function paintScience(
     context.clip()
     context.fillStyle = background
     context.fillRect(box.x, box.y, box.width, box.height)
+    drawSwissGridBackground(context, box.x, box.y, box.width, box.height, {
+      light: spec.theme !== 'dark',
+      accentColor: 'color' in spec ? spec.color : undefined
+    })
     const left = box.x + pad,
       width = box.width - 2 * pad
     context.fillStyle = ink

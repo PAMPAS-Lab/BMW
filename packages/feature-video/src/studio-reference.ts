@@ -232,7 +232,7 @@ export async function referenceOperation(
           throw new Error('Reference sample times must be distinct and within the source.')
         const native = mediaRecord(
           await kernel.recordingController.processArtifact(
-            { action: 'media.frames.sample', artifactId: id, timestampsSeconds: times, maxWidth: 640, maxHeight: 360 },
+            { action: 'media.frames.sample', artifactId: id, timestampsSeconds: times, maxWidth: 480, maxHeight: 270 },
             signal
           )
         )

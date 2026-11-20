@@ -158,62 +158,66 @@ test('Qoder preference commit waits for actual cleanup and a failed close retain
 test('Qoder cold zero-turn login failure exposes login controls; execution results are still rejected', async t => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bmw-qoder-no-login-'))
   t.after(() => fs.rmSync(root, { recursive: true, force: true }))
-  for (const numTurns of [0, 1]) {
-    let inputs = 0,
-      closed = 0
-    const port = new QoderSettings({
-      configDirectory: root,
-      connection: {
-        bridgeUrl: 'http://127.0.0.1:1',
-        bridgeToken: 'fixture-token',
-        mcpServerPath: path.join(root, 'mcp.js'),
-        nodeExecutable: process.execPath
-      },
-      model: () => null,
-      setModel: () => assert.fail('No model preference'),
-      queryFactory(input) {
-        let release!: () => void
-        const stopped = new Promise<void>(resolve => {
-            release = resolve
-          }),
-          reader = (async () => {
-            for await (const _message of input.prompt) inputs++
-          })()
-        return {
-          async *[Symbol.asyncIterator]() {
-            yield {
-              type: 'result',
-              subtype: 'error_during_execution',
-              num_turns: numTurns,
-              total_cost_usd: 0,
-              errors: ['No qodercli login found. Run "qodercli login" first.']
+  for (const errorMessage of [
+    'No qodercli login found. Run "qodercli login" first.',
+    'Local login has expired. Run "qodercli login" to refresh.'
+  ])
+    for (const numTurns of [0, 1]) {
+      let inputs = 0,
+        closed = 0
+      const port = new QoderSettings({
+        configDirectory: root,
+        connection: {
+          bridgeUrl: 'http://127.0.0.1:1',
+          bridgeToken: 'fixture-token',
+          mcpServerPath: path.join(root, 'mcp.js'),
+          nodeExecutable: process.execPath
+        },
+        model: () => null,
+        setModel: () => assert.fail('No model preference'),
+        queryFactory(input) {
+          let release!: () => void
+          const stopped = new Promise<void>(resolve => {
+              release = resolve
+            }),
+            reader = (async () => {
+              for await (const _message of input.prompt) inputs++
+            })()
+          return {
+            async *[Symbol.asyncIterator]() {
+              yield {
+                type: 'result',
+                subtype: 'error_during_execution',
+                num_turns: numTurns,
+                total_cost_usd: 0,
+                errors: [errorMessage]
+              }
+              await stopped
+            },
+            accountInfo: async () => assert.fail('No account control before init'),
+            getAvailableModels: async () => assert.fail('No catalog before init'),
+            setModel: async () => assert.fail('No selection before init'),
+            async close() {
+              closed++
+              release()
+              await reader
             }
-            await stopped
-          },
-          accountInfo: async () => assert.fail('No account control before init'),
-          getAvailableModels: async () => assert.fail('No catalog before init'),
-          setModel: async () => assert.fail('No selection before init'),
-          async close() {
-            closed++
-            release()
-            await reader
           }
         }
-      }
-    })
-    const operation = port.execute(
-      { action: 'refresh' },
-      { signal: new AbortController().signal, openExternal: async () => assert.fail('No login launched') }
-    )
-    if (numTurns === 0) {
-      const result = await operation
-      assert.equal(result.authentication.state, 'required')
-      assert.deepEqual(result.models, [])
-      assert.equal(result.loginMethods[0].id, 'qoder-cli')
-    } else await assert.rejects(operation, /unexpected model work/)
-    await port.drain()
-    assert.equal(port.busy, false)
-    assert.ok(closed > 0)
-    assert.equal(inputs, 0)
-  }
+      })
+      const operation = port.execute(
+        { action: 'refresh' },
+        { signal: new AbortController().signal, openExternal: async () => assert.fail('No login launched') }
+      )
+      if (numTurns === 0) {
+        const result = await operation
+        assert.equal(result.authentication.state, 'required')
+        assert.deepEqual(result.models, [])
+        assert.equal(result.loginMethods[0].id, 'qoder-cli')
+      } else await assert.rejects(operation, /unexpected model work/)
+      await port.drain()
+      assert.equal(port.busy, false)
+      assert.ok(closed > 0)
+      assert.equal(inputs, 0)
+    }
 })

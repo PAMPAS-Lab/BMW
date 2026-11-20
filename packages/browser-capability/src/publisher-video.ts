@@ -430,7 +430,14 @@ export function inspectPublisherParent(scope: VideoTargetScope = {}): ParentWitn
       return ''
     }
   }
-  const normalize = (s: unknown) => (typeof s === 'string' ? s.replace(/\s+/g, ' ').trim() : '')
+  const normalize = (s: unknown) =>
+    typeof s === 'string'
+      ? s
+          .replace(/[\u2018\u2019]/g, "'")
+          .replace(/[\u201C\u201D]/g, '"')
+          .replace(/\s+/g, ' ')
+          .trim()
+      : ''
   const duration = (v: unknown) => {
     if (typeof v !== 'string') return 0
     const m = /^PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?$/.exec(v)
@@ -442,13 +449,30 @@ export function inspectPublisherParent(scope: VideoTargetScope = {}): ParentWitn
   if (!root) return unavailable()
   const excluded = ['[hidden]', '[aria-hidden="true"]', ...(scope.excludeSelectors ?? [])],
     allowed = (e: Element) => root.contains(e) && visible(e) && !excluded.some(s => e.closest(s))
+  const cnbcMeta = (() => {
+    const direct = rec(win.__CNBC_META_DATA),
+      layouts = rec(rec(rec(win.__s_data).page).page).layout,
+      clips = Array.isArray(layouts)
+        ? layouts
+            .slice(0, 16)
+            .flatMap(l => (Array.isArray(rec(l).columns) ? (rec(l).columns as unknown[]) : []))
+            .slice(0, 32)
+            .flatMap(c => (Array.isArray(rec(c).modules) ? (rec(c).modules as unknown[]) : []))
+            .slice(0, 64)
+            .map(rec)
+            .filter(m => m.name === 'clipPlayer' && rec(m.data).type === 'cnbcvideo')
+            .map(m => rec(m.data))
+        : []
+    return { ...(clips.length === 1 ? clips[0]! : {}), ...direct }
+  })()
   // CNBC may put a section H1 (e.g. TechCheck) before the program H1.
   // Match one visible heading to public canonical metadata, never the first H1
   // or an arbitrary page title. Scoped player, ID, ad and SDK checks remain below.
-  let heading = normalize(document.querySelector('h1')?.textContent)
+  let heading = normalize(document.querySelector('h1')?.textContent),
+    cnbcHeading: Element | null = null
   if (['www.cnbc.com', 'cnbc.com'].includes(page.hostname)) {
     phase = 'CNBC unique visible program heading'
-    const declaredTitle = normalize(rec(win.__CNBC_META_DATA).title),
+    const declaredTitle = normalize(cnbcMeta.title),
       headings = [...document.querySelectorAll('h1')]
     if (!declaredTitle || headings.length > 64) return unavailable()
     const matches = headings.filter(
@@ -458,7 +482,8 @@ export function inspectPublisherParent(scope: VideoTargetScope = {}): ParentWitn
         normalize(node.textContent) === declaredTitle
     )
     if (matches.length !== 1) return unavailable()
-    heading = normalize(matches[0]!.textContent)
+    cnbcHeading = matches[0]!
+    heading = normalize(cnbcHeading.textContent)
   }
   if (!heading) return unavailable()
   const objects: Record<string, unknown>[] = []
@@ -582,7 +607,7 @@ export function inspectPublisherParent(scope: VideoTargetScope = {}): ParentWitn
   }
   if (['www.cnbc.com', 'cnbc.com'].includes(page.hostname)) {
     phase = 'CNBC canonical metadata/title'
-    const meta = rec(win.__CNBC_META_DATA),
+    const meta = cnbcMeta,
       id = String(meta.vcpsId ?? ''),
       canonical = url(meta.url)
     if (
@@ -594,6 +619,75 @@ export function inspectPublisherParent(scope: VideoTargetScope = {}): ParentWitn
       return unavailable()
     phase = 'CNBC visible scoped JW player'
     const players = vids.filter(v => allowed(v) && !!v.closest('.jwplayer'))
+    if (players.length === 0) {
+      phase = 'CNBC scoped canonical original declaration'
+      const scoped =
+        cnbcHeading &&
+        (allowed(cnbcHeading) ||
+          (root instanceof Element && !!cnbcHeading.closest('.ClipPlayer-clipPlayer')?.contains(root) && allowed(root)))
+      if (!scoped || objects.length !== 1) return unavailable()
+      const data = objects[0]!,
+        declaredSeconds = duration(data.duration),
+        metaSeconds = Number(meta.duration),
+        seconds = declaredSeconds || metaSeconds
+      if (
+        !Number.isFinite(seconds) ||
+        seconds <= 0 ||
+        seconds > 86400 ||
+        (declaredSeconds > 0 &&
+          Number.isFinite(metaSeconds) &&
+          metaSeconds > 0 &&
+          Math.abs(declaredSeconds - metaSeconds) > Math.max(1, seconds * 0.01))
+      )
+        return unavailable()
+      const encodings = Array.isArray(meta.encodings) ? meta.encodings.map(rec) : [],
+        mp4Candidates = [
+          url(data.contentUrl),
+          ...encodings.filter(e => /^mpeg4_\d+_Download$/.test(String(e.formatName ?? ''))).map(e => url(e.url))
+        ].filter(u => {
+          try {
+            const parsed = new URL(u)
+            return (
+              parsed.protocol === 'https:' &&
+              parsed.hostname === 'pdl-iphone-cnbc-com.akamaized.net' &&
+              parsed.pathname.startsWith('/' + id + '/') &&
+              parsed.pathname.endsWith('.mp4')
+            )
+          } catch {
+            return false
+          }
+        }),
+        hlsCandidates = [url(meta.playbackURL), ...encodings.map(e => url(e.url))].filter(u => {
+          try {
+            const parsed = new URL(u)
+            return (
+              parsed.protocol === 'https:' &&
+              parsed.hostname === 'cnbcawsmpvod.akamaized.net' &&
+              parsed.pathname.startsWith('/out/v1/') &&
+              parsed.pathname.endsWith('.m3u8')
+            )
+          } catch {
+            return false
+          }
+        }),
+        mp4 = mp4Candidates[0] ?? '',
+        hls = hlsCandidates[0] ?? '',
+        playerUrl = mp4 || hls
+      if (!playerUrl) return unavailable()
+      return {
+        pageUrl: page.href,
+        publisher: 'cnbc',
+        contentId: id,
+        title: heading,
+        durationSeconds: seconds,
+        playerUrl,
+        videoIndex: -1,
+        mp4,
+        hls,
+        frameUrl: '',
+        assetKey: ''
+      }
+    }
     if (players.length !== 1) return unavailable()
     const v = players[0]!,
       container = v.closest('.jwplayer') as HTMLElement

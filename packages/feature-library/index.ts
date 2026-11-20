@@ -70,10 +70,27 @@ const sources: BrowserActionDefinition = {
     type: 'object',
     additionalProperties: false,
     required: ['sourceRequest'],
-    properties: { sourceRequest: sourceRequestSchema, librarySourcePage: librarySourcePageSchema }
+    properties: {
+      sourceRequest: sourceRequestSchema,
+      librarySourcePage: librarySourcePageSchema,
+      sourceSection: { enum: ['text', 'candidates', 'media'] },
+      pageOffset: { type: 'integer', minimum: 0, maximum: 1000000 },
+      pageLimit: { type: 'integer', minimum: 1, maximum: 5000 }
+    }
   },
   async execute(context, input) {
-    const page = assertLibrarySourcePage(input.librarySourcePage),
+    const rawPage =
+      input.librarySourcePage ??
+      (input.sourceSection !== undefined || input.pageOffset !== undefined || input.pageLimit !== undefined
+        ? {
+            ...(input.sourceSection !== undefined ? { section: input.sourceSection } : {}),
+            ...(input.pageOffset !== undefined ? { offset: input.pageOffset } : {}),
+            ...(typeof input.pageLimit === 'number'
+              ? { limit: Math.min(20, Math.max(1, Math.trunc(input.pageLimit))) }
+              : {})
+          }
+        : undefined)
+    const page = assertLibrarySourcePage(rawPage),
       result = await new LibrarySources(context.browserKernel).execute(input.sourceRequest, context.signal)
     if (context.actor === 'user') return result
     const value = mediaRecord(result)

@@ -475,13 +475,34 @@ export function captionSentences(scene: CompositionScene, width = 1280, height =
     margin = W < 600 ? 24 : 48,
     size = scene.captionStyle?.fontSize ?? (W < 600 ? 22 : 28),
     maximum = Math.max(12, Math.min(48, Math.floor((W - margin * 2) / size) * 2))
-  return Array.from(scene.narration.match(/[^。！？!?；;，,]+[。！？!?；;，,]?/g) ?? []).flatMap(sentence =>
+  return Array.from(scene.narration.match(/[^。！？!?；;，,：]+[。！？!?；;，,：]?/g) ?? []).flatMap(sentence =>
     Array.from(sentence).reduce<string[]>((chunks, char, i) => {
       const part = Math.floor(i / maximum)
       chunks[part] = (chunks[part] ?? '') + char
       return chunks
     }, [])
   )
+}
+export function captionAcousticWeight(text: string, isFinalClause = false): number {
+  const cjk = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g) ?? []).length
+  const digits = (text.match(/\d/g) ?? []).length * 1.45 + (text.match(/[.٫%％]/g) ?? []).length * 1.15
+  const words = Array.from(text.match(/[A-Za-z]+/g) ?? []).reduce<number>(
+    (sum, word) => sum + (/^[A-Z]{2,6}$/.test(word) ? word.length * 1.15 : Math.max(1.1, word.length * 0.42)),
+    0
+  )
+  const internalPauses =
+    (text.slice(0, -1).match(/[，,、]/g) ?? []).length * 0.65 +
+    (text.slice(0, -1).match(/[；;：:—]/g) ?? []).length * 0.9
+  const trailingPause = isFinalClause
+    ? 0.25
+    : /[。！？!?]$/.test(text)
+      ? 1.85
+      : /[；;：:]$/.test(text)
+        ? 1.35
+        : /[，,、]$/.test(text)
+          ? 0.95
+          : 0.35
+  return Math.max(1, cjk + digits + words + internalPauses + trailingPause)
 }
 export function estimatedCaptionCues(
   scene: CompositionScene,
@@ -516,14 +537,22 @@ export function estimatedCaptionCues(
     return cues
   }
   const sentences = captionSentences(scene, width, height),
-    length = sentences.reduce((sum, item) => sum + item.length, 0),
+    weights = sentences.map((item, idx) => captionAcousticWeight(item, idx === sentences.length - 1)),
+    totalWeight = weights.reduce((sum, w) => sum + w, 0),
     duration = Math.min(scene.durationSeconds - 0.5, Math.max(0.5, narrationDuration))
   let offset = 0.5
   return sentences
-    .map(text => {
+    .map((text, idx) => {
       const startSeconds = offset
-      offset += (duration * text.length) / Math.max(1, length)
-      return { startSeconds, endSeconds: Math.min(scene.durationSeconds, offset), text }
+      offset += (duration * weights[idx]) / Math.max(1, totalWeight)
+      return {
+        startSeconds,
+        endSeconds:
+          idx === sentences.length - 1
+            ? Math.min(scene.durationSeconds, 0.5 + duration)
+            : Math.min(scene.durationSeconds, offset),
+        text
+      }
     })
     .filter(cue => cue.endSeconds > cue.startSeconds)
 }

@@ -167,7 +167,7 @@ export function parsePreservationPlaylist(text: string, url: string): HlsPlaylis
   return result
 }
 interface OriginalResource {
-  artifactId: string
+  artifactId?: string
   url: string
   sha256: string
   bytes: number
@@ -461,6 +461,7 @@ export async function preserveMedia(input: PreservationInput) {
     playlistDurations: { track: string; artifactId: string; durationSeconds: number }[] = []
   const verifyOriginals = async () => {
     for (const resource of resources) {
+      if (!resource.artifactId) continue
       await guard()
       const io = await ArtifactJobIO.openArchive(root, resource.artifactId)
       try {
@@ -470,6 +471,18 @@ export async function preserveMedia(input: PreservationInput) {
         await io.close()
       }
     }
+  }
+  const removeIntermediateSources = async (ids: readonly string[], deliveryArtifactId: string) => {
+    for (const id of ids) {
+      const p = path.join(root, id)
+      await fs.rm(p, { force: true })
+      const idx = created.indexOf(p)
+      if (idx !== -1) created.splice(idx, 1)
+      for (const r of resources) {
+        if (r.artifactId === id) delete r.artifactId
+      }
+    }
+    return deliveryArtifactId
   }
   try {
     if (input.youtubeSabr) {
@@ -543,6 +556,11 @@ export async function preserveMedia(input: PreservationInput) {
       if (Math.abs(remux.tracks[0]!.endSeconds - remux.tracks[1]!.endSeconds) > 0.35)
         throw new Error('YouTube SABR audio/video coverage differs.')
       await verifyOriginals()
+      await removeIntermediateSources(
+        files.map(f => f.artifactId),
+        remux.artifactId
+      )
+      for (const t of remux.tracks) t.sourceArtifactId = remux.artifactId
       const proof = {
           version: 1,
           basis: 'YouTube-SABR-encoded-tracks',
@@ -625,6 +643,8 @@ export async function preserveMedia(input: PreservationInput) {
       )
         throw new Error('Separated audio/video coverage differs; no incomplete delivery published.')
       await verifyOriginals()
+      await removeIntermediateSources([video.artifactId, audioFile.artifactId], remux.artifactId)
+      for (const t of remux.tracks) t.sourceArtifactId = remux.artifactId
       const proof = {
           version: 1,
           basis: 'HTTP-delivery-bytes',
@@ -683,8 +703,13 @@ export async function preserveMedia(input: PreservationInput) {
         if (p.variants.length) throw new Error('Nested HLS masters are unsupported.')
       }
       if (playlist.variants.length) {
-        const master = playlist
-        selectedVariant = [...master.variants].sort((a, b) => b.bandwidth - a.bandwidth)[0]!
+        const master = playlist,
+          boundedVariants = master.variants.filter(v => v.bandwidth <= 3_000_000)
+        selectedVariant = (
+          boundedVariants.length
+            ? [...boundedVariants].sort((a, b) => b.bandwidth - a.bandwidth)
+            : [...master.variants].sort((a, b) => a.bandwidth - b.bandwidth)
+        )[0]!
         if (selectedVariant.captionsGroup && selectedVariant.captionsGroup !== 'NONE')
           throw new Error('Unverified in-band caption declaration; no track silently discarded.')
         const primary = master.audio.filter(a => a.group === selectedVariant!.audioGroup),
@@ -780,10 +805,10 @@ export async function preserveMedia(input: PreservationInput) {
             guard,
             error => controller.abort(error)
           )) {
-            const saved = await save(r.data, item.duration === undefined ? 'init.bin' : 'segment.bin')
             resources.push({
-              ...saved,
               url: r.url,
+              sha256: sha(r.data),
+              bytes: r.data.length,
               role: item.duration === undefined ? 'initialization' : 'segment',
               track,
               ...(item.duration === undefined ? {} : { durationSeconds: item.duration })
@@ -873,6 +898,9 @@ export async function preserveMedia(input: PreservationInput) {
         })
       }
       await verifyOriginals()
+      await removeIntermediateSources(sources, remux.artifactId)
+      for (const t of remux.tracks) t.sourceArtifactId = remux.artifactId
+      for (const d of playlistDurations) d.artifactId = remux.artifactId
       for (const track of subtitleTracks)
         for (const [id, hash] of [
           [track.artifactId, track.sha256],
@@ -887,7 +915,7 @@ export async function preserveMedia(input: PreservationInput) {
           }
         }
       const audioRenditions = audioInputs.map(a => ({
-        artifactId: a.artifactId,
+        artifactId: remux.artifactId,
         group: a.rendition.group,
         name: a.rendition.name,
         language: a.rendition.language,
@@ -903,12 +931,11 @@ export async function preserveMedia(input: PreservationInput) {
         requestedUrl: input.url,
         selectedVariant,
         selectionPolicy:
-          'highest-bandwidth-video/all-declared-audio-and-subtitles/default-from-selected-audio-group-or-first',
+          'bounded-720p-bandwidth-video/all-declared-audio-and-subtitles/default-from-selected-audio-group-or-first',
         audioRenditions,
         subtitleTracks,
         completeSubtitles: true,
         resources,
-        assembledTrackArtifactIds: sources,
         playlistDurations,
         ...(input.completeProgram ? { completeProgram: input.completeProgram } : {}),
         remux: { ...remux, kind: 'packet-copy', reencoded: false },
@@ -933,7 +960,6 @@ export async function preserveMedia(input: PreservationInput) {
           audioRenditions,
           selectionPolicy: proof.selectionPolicy,
           resources,
-          assembledTrackArtifactIds: sources,
           selectedVariant,
           playlistDurations,
           proofArtifactId: evidence.artifactId,
@@ -950,6 +976,8 @@ export async function preserveMedia(input: PreservationInput) {
       const remux = await remuxPreserved(root, [first.artifactId], prefix + '-delivery.mp4', guard, created)
       assertPreservedProgram(input.completeProgram, remux.tracks)
       await verifyOriginals()
+      await removeIntermediateSources([first.artifactId], remux.artifactId)
+      for (const t of remux.tracks) t.sourceArtifactId = remux.artifactId
       const proof = {
           version: 1,
           basis: 'HTTP-delivery-bytes',

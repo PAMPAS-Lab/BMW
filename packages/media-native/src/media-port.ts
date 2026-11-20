@@ -1,3 +1,4 @@
+import type { VideoIdentity } from '@bmw-agent/agent-contract/video-identity'
 import { assertArtifactId, finiteNumber, mediaRecord } from './media-contract.js'
 import { COMPOSITION_LIMITS } from './composition-limits.js'
 import { ARCHIVE_LIMITS } from './archive-limits.js'
@@ -23,6 +24,12 @@ export interface NativeMediaPort {
   narrate(request: unknown, signal?: AbortSignal): Promise<unknown>
   compose(request: unknown, signal?: AbortSignal): Promise<unknown>
   processArtifact(request: unknown, signal?: AbortSignal): Promise<unknown>
+  saveNativeVideoOrigin?(
+    directory: string,
+    artifactId: string,
+    identity: VideoIdentity,
+    signal?: AbortSignal
+  ): Promise<void>
 }
 export interface MediaArtifactReceipt extends Record<string, unknown> {
   artifactId: string

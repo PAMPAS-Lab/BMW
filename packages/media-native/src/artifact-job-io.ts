@@ -7,6 +7,8 @@ import { assertArtifactId, finiteNumber, MEDIA_LIMITS } from './media-contract.j
 import type { MediaProcessRequest } from './media-contract.js'
 import { ARCHIVE_LIMITS } from './archive-limits.js'
 
+const fingerprintCache = new Map<string, string>()
+
 /** A job owns one already-open input and a fixed set of exclusively-created Project outputs. */
 export class ArtifactJobIO {
   private outputs = new Map<number, { handle: FileHandle; artifactId: string; path: string; bytes: number }>()
@@ -76,37 +78,52 @@ export class ArtifactJobIO {
   }
   async fingerprint(signal?: AbortSignal): Promise<string> {
     if (this.closed || !this.input) throw new Error('Media job has no live input.')
+    signal?.throwIfAborted()
     const file = path.join(this.root, 'artifactId' in this.request ? this.request.artifactId : '')
-    const before = await this.input.stat(),
+    const before = await this.input.stat({ bigint: true }),
       directory = await fs.lstat(this.root),
-      current = await fs.lstat(file)
+      current = await fs.lstat(file, { bigint: true })
     if (
       directory.isSymbolicLink() ||
-      (this.rootIdentity && (directory.dev !== this.rootIdentity.dev || directory.ino !== this.rootIdentity.ino)) ||
+      (this.rootIdentity &&
+        (BigInt(directory.dev) !== BigInt(this.rootIdentity.dev) ||
+          BigInt(directory.ino) !== BigInt(this.rootIdentity.ino))) ||
       current.isSymbolicLink() ||
       current.dev !== before.dev ||
       current.ino !== before.ino ||
       (await fs.realpath(file)) !== file
     )
       throw new Error('Media source identity or Project directory changed.')
-    const hash = crypto.createHash('sha256')
-    for (let offset = 0; offset < this.bytes; offset += MEDIA_LIMITS.chunkBytes) {
-      signal?.throwIfAborted()
-      hash.update(await this.read(offset, Math.min(MEDIA_LIMITS.chunkBytes, this.bytes - offset)))
+    const cacheKey = `${file}:${before.dev}:${before.ino}:${before.size}:${before.mtimeNs}:${before.ctimeNs}`
+    let digest = fingerprintCache.get(cacheKey)
+    if (!digest) {
+      const hash = crypto.createHash('sha256')
+      for (let offset = 0; offset < this.bytes; offset += MEDIA_LIMITS.chunkBytes) {
+        signal?.throwIfAborted()
+        hash.update(await this.read(offset, Math.min(MEDIA_LIMITS.chunkBytes, this.bytes - offset)))
+      }
+      digest = hash.digest('hex')
     }
-    const stat = await this.input.stat(),
-      after = await fs.lstat(file)
+    const stat = await this.input.stat({ bigint: true }),
+      after = await fs.lstat(file, { bigint: true })
     if (
       !stat.isFile() ||
-      stat.size !== this.bytes ||
-      before.mtimeMs !== stat.mtimeMs ||
-      before.ctimeMs !== stat.ctimeMs ||
+      Number(stat.size) !== this.bytes ||
+      before.mtimeNs !== stat.mtimeNs ||
+      before.ctimeNs !== stat.ctimeNs ||
       after.dev !== stat.dev ||
       after.ino !== stat.ino ||
       after.isSymbolicLink()
     )
       throw new Error('Media input changed during hashing.')
-    return hash.digest('hex')
+    if (!fingerprintCache.has(cacheKey)) {
+      if (fingerprintCache.size >= 512) {
+        const oldest = fingerprintCache.keys().next().value
+        if (oldest !== undefined) fingerprintCache.delete(oldest)
+      }
+      fingerprintCache.set(cacheKey, digest)
+    }
+    return digest
   }
   async write(indexValue: unknown, positionValue: unknown, value: unknown): Promise<void> {
     if (this.closed || this.request.action === 'media.inspect' || this.request.action === 'media.image.inspect')

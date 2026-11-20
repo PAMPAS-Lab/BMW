@@ -220,11 +220,12 @@ async function processMedia(command: MediaProcessingCommand): Promise<void> {
       assertProcessableVideoTracks(metadata.tracks)
       const track = await input.getPrimaryVideoTrack()
       if (!track || !(await track.canDecode())) throw new Error('No decodable motion video.')
-      if (
-        request.startSeconds < (await track.getFirstTimestamp()) ||
-        request.endSeconds > (await track.computeDuration())
-      )
-        throw new Error('Motion interval is outside video.')
+      const firstTimestamp = await track.getFirstTimestamp(),
+        trackDuration = await track.computeDuration()
+      if (request.startSeconds < firstTimestamp || request.endSeconds > trackDuration)
+        throw new Error(
+          `Motion interval is outside video (valid video track range: ${firstTimestamp}..${trackDuration}s).`
+        )
       const all = new MotionAccumulator(request.startSeconds, request.endSeconds),
         opening = new MotionAccumulator(request.startSeconds, Math.min(request.endSeconds, request.startSeconds + 3)),
         r = request.region

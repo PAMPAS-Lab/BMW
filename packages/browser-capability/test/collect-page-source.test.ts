@@ -90,7 +90,8 @@ test('Publication metadata extracts one complete publisher date line beside byli
     ['Original Issue Date: October 16, 2026', 'October 16, 2026'],
     ['October 16, 2026 5:00 AM', 'October 16, 2026 5:00 AM'],
     ['Monday, October 16, 2026', 'Monday, October 16, 2026'],
-    ['Published Mon, Oct 16 2026 3:12 PM EDT', 'Mon, Oct 16 2026 3:12 PM EDT']
+    ['Published Mon, Oct 16 2026 3:12 PM EDT', 'Mon, Oct 16 2026 3:12 PM EDT'],
+    ['Thu, Nov 5 2026\n10:10 AM EST', 'Thu, Nov 5 2026 10:10 AM EST']
   ]) {
     const r = await collect(text)
     assert.equal(r.publishedAt, date)

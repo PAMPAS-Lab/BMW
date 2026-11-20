@@ -30,9 +30,15 @@ export async function prepareSceneReferences(
     identity = await fs.lstat(root),
     diagnostics = new ProductionDiagnostics({ ...owner, draftId: draft.id }, 'prepare-scene-references'),
     ranges: SelectedReferenceInterval[] = [],
+    imageRanges: SelectedReferenceInterval[] = [],
     records = draft.referenceRecords ?? [],
     fresh: StudioReferenceRecord[] = [],
-    selected: { reference?: StudioReferenceRecord; intervals: SelectedReferenceInterval[]; reused: boolean }[] = [],
+    selected: {
+      reference?: StudioReferenceRecord
+      intervals: SelectedReferenceInterval[]
+      reused: boolean
+      kind?: 'video' | 'image'
+    }[] = [],
     owned = new Map<string, { dev: number; ino: number }>()
   let committed = false,
     bytes = 0
@@ -65,24 +71,38 @@ export async function prepareSceneReferences(
     const scene = draft.scenes.find(s => s.id === sceneId)
     if (!scene) throw fail('SCENE_REFERENCE_PLAN', 'Unknown selected scene: ' + sceneId)
     const visuals = sceneVisuals(scene)
-    if (!visuals.length || visuals.some(v => !v.videoArtifactId))
+    if (!visuals.length || visuals.some(v => !v.videoArtifactId && !v.imageArtifactId))
       throw fail('SCENE_REFERENCE_PLAN', 'Selected scene requires explicit primary video intervals: ' + sceneId)
     for (const [visualIndex, v] of visuals.entries())
-      ranges.push({
-        sceneId,
-        visualIndex,
-        artifactId: v.videoArtifactId!,
-        startSeconds: v.sourceStartSeconds,
-        endExclusive: v.sourceStartSeconds + v.durationSeconds * v.playbackRate
-      })
+      if (v.videoArtifactId)
+        ranges.push({
+          sceneId,
+          visualIndex,
+          artifactId: v.videoArtifactId,
+          startSeconds: v.sourceStartSeconds,
+          endExclusive: v.sourceStartSeconds + v.durationSeconds * v.playbackRate
+        })
+      else if (v.imageArtifactId)
+        imageRanges.push({
+          sceneId,
+          visualIndex,
+          artifactId: v.imageArtifactId,
+          startSeconds: 0,
+          endExclusive: 0
+        })
   }
-  if (!ranges.length || ranges.length > 8)
+  if (!ranges.length && !imageRanges.length)
+    throw fail('SCENE_REFERENCE_BUDGET', 'Selected scenes contain no videoArtifactId or imageArtifactId intervals.')
+  if (ranges.length + imageRanges.length > 8)
     throw fail(
       'SCENE_REFERENCE_BUDGET',
       'Select at most eight actual primary video intervals; narrow sceneIds explicitly.'
     )
-  const groups = new Map<string, SelectedReferenceInterval[]>()
+  const groups = new Map<string, SelectedReferenceInterval[]>(),
+    imageGroups = new Map<string, SelectedReferenceInterval[]>()
   for (const range of ranges) groups.set(range.artifactId, [...(groups.get(range.artifactId) ?? []), range])
+  for (const range of imageRanges)
+    imageGroups.set(range.artifactId, [...(imageGroups.get(range.artifactId) ?? []), range])
   try {
     await diagnostics.stage('plan-and-reuse', async () => {
       for (const [artifactId, intervals] of groups) {
@@ -121,7 +141,7 @@ export async function prepareSceneReferences(
           for (const frame of reuse.frames)
             if ((await hash(frame.artifactId)) !== frame.sha256)
               throw fail('STUDIO_REFERENCE_STALE', 'Reusable reference frame changed: ' + frame.artifactId)
-          selected.push({ reference: reuse, intervals, reused: true })
+          selected.push({ reference: reuse, intervals, reused: true, kind: 'video' })
         } else {
           const plan = referenceCandidatePlan(intervals)
           if (plan.boundaryCandidates.length > 8)
@@ -132,7 +152,38 @@ export async function prepareSceneReferences(
               message:
                 'Source requires more than eight distinct boundary candidates. Select fewer intervals, or explicitly split an authored scene into smaller scenes before preparing them separately; no endpoints were dropped.'
             })
-          selected.push({ intervals, reused: false })
+          selected.push({ intervals, reused: false, kind: 'video' })
+        }
+      }
+      for (const [artifactId, intervals] of imageGroups) {
+        guard()
+        const io = await ArtifactJobIO.open(directory, { action: 'media.inspect', artifactId })
+        let sha: string
+        try {
+          bytes += io.bytes
+          if (bytes > 256 * 1024 * 1024)
+            throw fail(
+              'SCENE_REFERENCE_BUDGET',
+              'Selected source files exceed the unchanged 256 MiB native reference budget.'
+            )
+          sha = await io.fingerprint(signal)
+        } finally {
+          await io.close()
+        }
+        pins.set(artifactId, sha)
+        const reuse = [...records]
+          .reverse()
+          .find(
+            r =>
+              r.sourceArtifactId === artifactId && r.sourceSha256 === sha && r.kind === 'image' && r.frames.length >= 1
+          )
+        if (reuse) {
+          for (const frame of reuse.frames)
+            if ((await hash(frame.artifactId)) !== frame.sha256)
+              throw fail('STUDIO_REFERENCE_STALE', 'Reusable reference frame changed: ' + frame.artifactId)
+          selected.push({ reference: reuse, intervals, reused: true, kind: 'image' })
+        } else {
+          selected.push({ intervals, reused: false, kind: 'image' })
         }
       }
       assertReferenceCapacity(
@@ -144,8 +195,41 @@ export async function prepareSceneReferences(
     for (const row of selected) {
       guard()
       if (row.reused) continue
-      const artifactId = row.intervals[0].artifactId,
-        times = referenceCandidatePlan(row.intervals).timestampsSeconds
+      const artifactId = row.intervals[0].artifactId
+      if (row.kind === 'image') {
+        const result = mediaRecord(
+            await diagnostics.stage(
+              'reference-frames',
+              () =>
+                referenceOperation(
+                  kernel,
+                  store,
+                  { ...draft, referenceRecords: [...records, ...fresh] },
+                  { operation: 'prepare-reference', artifactId, assetKind: 'image' },
+                  directory,
+                  guard,
+                  actor,
+                  signal,
+                  false
+                ),
+              row.intervals[0].sceneId
+            )
+          ),
+          reference = assertReferenceRecords([result.reference])[0]
+        for (const frame of reference.frames) {
+          const file = path.join(root, frame.artifactId),
+            stat = await fs.lstat(file)
+          if (!stat.isFile() || stat.isSymbolicLink())
+            throw fail('SCENE_REFERENCE_OUTPUT', 'Native frame identity unavailable.')
+          owned.set(file, { dev: stat.dev, ino: stat.ino })
+        }
+        fresh.push(reference)
+        row.reference = reference
+        if (reference.sourceSha256 !== pins.get(artifactId))
+          throw fail('STUDIO_REFERENCE_STALE', 'Source changed during native preparation.')
+        continue
+      }
+      const times = referenceCandidatePlan(row.intervals).timestampsSeconds
       const result = mediaRecord(
           await diagnostics.stage(
             'reference-frames',
@@ -226,7 +310,7 @@ export async function prepareSceneReferences(
         sha256: s.reference.sourceSha256,
         reused: s.reused,
         intervals: s.intervals,
-        ...(!s.reused ? { sampling: referenceCandidatePlan(s.intervals) } : {}),
+        ...(!s.reused && s.kind !== 'image' ? { sampling: referenceCandidatePlan(s.intervals) } : {}),
         actualFrameSeconds: s.reference.frames.map(f => f.seconds),
         analysis: s.reference.analysis ? 'existing-author-supplied' : 'pending'
       })),

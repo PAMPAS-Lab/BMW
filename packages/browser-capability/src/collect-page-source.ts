@@ -40,7 +40,7 @@ function publicationLine(value: { text: string; scope: SourceScope }): string | 
   // Publishers may label the day with a weekday, a local clock and a timezone
   // abbreviation; the element still proves only that civil day.
   const weekday = '(?:(?:Mon|Tue|Tues|Wed|Thu|Thur|Thurs|Fri|Sat|Sun)(?:day|sday|nesday|rsday|urday)?\\.?,?\\s+)?',
-    clock = '\\d{1,2}:\\d{2}(?::\\d{2})?\\s*(?:[ap]\\.?m\\.?)?(?:\\s*[A-Z]{2,5})?'
+    clock = '\\d{1,2}[:.]\\d{2}(?::\\d{2})?\\s*(?:[ap]\\.?m\\.?)?(?:\\s*[A-Z]{2,5})?'
   const chineseWeekday = '(?:\\s*(?:周|星期)[一二三四五六日天])?'
   const exact = new RegExp(
     '^(?:' +
@@ -54,12 +54,23 @@ function publicationLine(value: { text: string; scope: SourceScope }): string | 
       '|\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d(?::\\d\\d(?:\\.\\d+)?)?(?:Z|[+-]\\d\\d:\\d\\d))$',
     'i'
   )
-  const lines = value.text.split(/\r?\n/).map(line => line.trim().replace(label, '')),
-    matches = lines.flatMap(line => {
-      if (exact.test(line)) return [line]
-      const release = line.match(new RegExp('(?:^|\\s)Release\\s*[:：]?\\s*(' + date + ')$', 'i'))
-      return release ? [release[1]] : []
-    })
+  const rawLines = value.text.split(/\r?\n/).map(line => line.trim().replace(label, '')),
+    dateOnly = new RegExp('^' + weekday + '(?:' + date + ')$', 'i'),
+    clockOnly = /^(?:[01]?\d|2[0-3])[:.][0-5]\d(?::[0-5]\d)?\s*(?:[ap]\.?m\.?)?(?:\s*[A-Z]{2,5})?$/i,
+    lines: string[] = []
+  for (let i = 0; i < rawLines.length; i++) {
+    if (dateOnly.test(rawLines[i]!) && i + 1 < rawLines.length && clockOnly.test(rawLines[i + 1]!)) {
+      lines.push(rawLines[i]! + ' ' + rawLines[i + 1]!)
+      i++
+    } else {
+      lines.push(rawLines[i]!)
+    }
+  }
+  const matches = lines.flatMap(line => {
+    if (exact.test(line)) return [line]
+    const release = line.match(new RegExp('(?:^|\\s)Release\\s*[:：]?\\s*(' + date + ')$', 'i'))
+    return release ? [release[1]] : []
+  })
   return matches.length === 1 && matches[0].length <= 80 ? matches[0] : null
 }
 /** One bounded page transaction, with navigation invalidation across all phases. */
@@ -140,7 +151,7 @@ export async function collectPageSource(
       'body',
       async () =>
         (await wc.mainFrame.executeJavaScript(
-          `(()=>{const {text,range}=${pageRangeExpression(input)};const el=${selector === request.publishedSelector || selector === request.authorSelector ? `document.querySelectorAll(${JSON.stringify(input.selector)})[${input.index}]` : 'null'};let publisherAlt=null;if(${selector === request.authorSelector}&&el?.tagName==='IMG'&&el.getClientRects().length){let visible=true,depth=0;for(let ancestor=el;ancestor;ancestor=ancestor.parentElement){const style=getComputedStyle(ancestor);if(++depth>100||style.display==='none'||style.visibility==='hidden'||style.visibility==='collapse'||Number(style.opacity)===0||style.contentVisibility==='hidden'){visible=false;break}}if(visible)publisherAlt=(el.getAttribute('alt')??'').slice(0,281)}return {text,range,publisherAlt,dateTime:el?.tagName==='TIME'?(el.getAttribute('datetime')??'').slice(0,80):null}})()`,
+          `(()=>{const {text,range}=${pageRangeExpression(input)};const el=${selector === request.publishedSelector || selector === request.authorSelector ? `document.querySelectorAll(${JSON.stringify(input.selector)})[${input.index}]` : 'null'};let publisherAlt=null;if(${selector === request.authorSelector}&&el?.tagName==='IMG'&&el.getClientRects().length){let visible=true,depth=0;for(let ancestor=el;ancestor;ancestor=ancestor.parentElement){const style=getComputedStyle(ancestor);if(++depth>100||style.display==='none'||style.visibility==='hidden'||style.visibility==='collapse'||Number(style.opacity)===0||style.contentVisibility==='hidden'){visible=false;break}}if(visible)publisherAlt=(el.getAttribute('alt')??'').slice(0,281)}let dateTime=el?.tagName==='TIME'?(el.getAttribute('datetime')??'').slice(0,80):null;if(!dateTime&&(${selector === request.publishedSelector}&&el||${selector === body.selector && !!request.metadataRanges?.publishedAt})){const direct=el?.getAttribute?.('datetime')||el?.getAttribute?.('content')||el?.querySelector?.('time[datetime]')?.getAttribute('datetime')||'';if(direct)dateTime=direct.slice(0,80);else if(!el||el.getClientRects().length){const metas=[...document.querySelectorAll('meta[property="article:published_time"],meta[itemprop="datePublished"],meta[itemprop="dateCreated"],meta[name="parsely-pub-date"]')].map(m=>(m.getAttribute('content')??'').trim()).filter(Boolean),instants=new Set(metas.map(v=>Date.parse(v.replace(/([+-]\\d{2})(\\d{2})$/,'$1:$2'))));if(metas.length&&instants.size===1&&![...instants].some(Number.isNaN))dateTime=metas[0].slice(0,80)}}return {text,range,publisherAlt,dateTime}})()`,
           true
         )) as RangeReply,
       controller.signal
@@ -218,7 +229,11 @@ export async function collectPageSource(
           )
       }
       result.author = bound.author
-      result.publishedAt = bound.publishedAt
+      result.publishedAt = ranges.publishedAt
+        ? (observed.dateTime ??
+          publicationLine({ text: ranges.publishedAt.quote, scope: result.scope }) ??
+          bound.publishedAt)
+        : bound.publishedAt
       result.metadataRanges = ranges
     }
     if (request.accessSelector) {
@@ -252,7 +267,14 @@ export async function collectPageSource(
           if (address.href.length > 4096) continue
           const kind = item.kind as SourceCandidate['kind'],
             key = kind + ':' + address.href
-          if (identities.has(key)) continue
+          if (identities.has(key)) {
+            if (item.videoIdentity !== undefined) {
+              const existing = candidates.find(c => c.kind === kind && c.url === address.href)
+              if (existing && existing.videoIdentity === undefined)
+                existing.videoIdentity = assertVideoIdentity(item.videoIdentity)
+            }
+            continue
+          }
           identities.add(key)
           const duration =
             typeof item.duration === 'number' &&

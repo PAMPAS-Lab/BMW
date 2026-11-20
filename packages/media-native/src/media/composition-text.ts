@@ -1,4 +1,4 @@
-import { compactSceneIssues, compactText } from './compact-news-layout.js'
+import { compactSceneIssues, compactText, effectiveCompactTitle } from './compact-news-layout.js'
 import { detailedTextFits } from './card-details-paint.js'
 import { captionText, estimatedCaptionCues } from '../composition-contract.js'
 import type { CompositionScene, MediaComposition } from '../composition-contract.js'
@@ -330,11 +330,18 @@ export function reviewSceneText(
 }
 export function assertCompositionText(context: TextMeasure, composition: MediaComposition, durations?: number[]): void {
   if (composition.cardLayout === 'news-compact') {
+    const titleOverflows = composition.scenes.length
+      ? composition.scenes.some(
+          s => compactText(context, effectiveCompactTitle(context, composition.title, s.title), 48, 2).overflow
+        )
+      : compactText(context, composition.title, 48, 2).overflow
     if (
-      compactText(context, composition.title, 48, 2).overflow ||
+      titleOverflows ||
       (composition.watermark?.enabled && compactText(context, composition.watermark.text, 30, 1).overflow)
     )
-      throw new Error('STUDIO_TEXT_LAYOUT: 紧凑标题或品牌文字超出固定区域。')
+      throw new Error(
+        'STUDIO_TEXT_LAYOUT: 紧凑标题或品牌文字超出固定区域（请在 configure 中将顶层 title 缩短为≤22字中文标题）。'
+      )
     if (composition.layers?.some(l => !l.hidden && l.opacity > 0))
       throw new Error('STUDIO_TEXT_LAYOUT: 紧凑模板不接收全片可见叠层，避免覆盖固定区域。')
   }

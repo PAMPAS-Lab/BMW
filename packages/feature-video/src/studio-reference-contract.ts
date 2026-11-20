@@ -36,7 +36,7 @@ export interface StudioReferenceRecord {
   analysis?: StudioReferenceAnalysis
   analysisOrigin?: 'user' | 'agent'
 }
-export const REFERENCE_LIMITS = { records: 32, sources: 8, frames: 8 } as const
+export const REFERENCE_LIMITS = { records: 32, sources: 24, frames: 8 } as const
 export const referenceSourceCount = (
   records: readonly Pick<StudioReferenceRecord, 'sourceArtifactId' | 'sourceSha256'>[]
 ) => new Set(records.map(r => r.sourceArtifactId + '\0' + r.sourceSha256)).size
@@ -49,7 +49,7 @@ export function assertReferenceCapacity(
     throw new Error('STUDIO_REFERENCE_BUDGET: At most 32 immutable reference records; existing history is preserved.')
   if (referenceSourceCount([...records, ...sources]) > REFERENCE_LIMITS.sources)
     throw new Error(
-      'STUDIO_REFERENCE_SOURCE_BUDGET: At most eight artifact/SHA source groups; existing history is preserved.'
+      'STUDIO_REFERENCE_SOURCE_BUDGET: At most 24 artifact/SHA source groups; existing history is preserved.'
     )
 }
 function closed(v: Record<string, unknown>, keys: readonly string[]): void {

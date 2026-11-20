@@ -160,7 +160,7 @@ export async function prepareShots(
       referenceSourceCount(draft.referenceRecords ?? []) + shots.length > REFERENCE_LIMITS.sources
     )
       throw new Error(
-        'SHOT_PLAN_CONFLICT: Use new scene IDs and remain within 32 reference records / eight source groups.'
+        'SHOT_PLAN_CONFLICT: Use new scene IDs and remain within 32 reference records / 24 source groups.'
       )
     const pins = new Map<string, string>(),
       urls = new Map<string, string[]>()

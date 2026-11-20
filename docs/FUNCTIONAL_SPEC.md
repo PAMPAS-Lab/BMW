@@ -54,7 +54,7 @@ DSH 预设装配官方 `compaction-basic` 与 `compaction-tool-result-pruner`，
 
 `update-video` 的候选必须为同事件、同Project保存来源对应的3–30秒视频，复用新闻原生来源、文件SHA和实际解码核验；不能用图片替代。contentKind显式记录live/cg/animation/ai-generated，身份/日期/属性及语义关联仍属Agent编辑核实，不伪称Host认证事实或真实运动。普通他方CG、动画和AI影片可引用并如实标注；助手新生成视频仍需用户批准。后台只增开page.media.list、来源confirm与带3–30秒preview的preserve，每输入最多10次预览，保留原生预算与清理，不开放capture、通用媒体处理或制作。核验通过升级池内视频待选；不自动修改选题板或制作稿。用户点击“加入新闻选题板”后重新核对原文/视频SHA与原始事件72小时时效，再通过原有新闻准入提交；不覆盖已有选定制作。超窗记录保留为过期资料，晚到视频上传日期不刷新事件时效；需要编辑重新判断，不能自动冒充新事件。正式选题、配音、导出与独立审片门禁保持。
 
-横屏来源视频可配置 `cardLayout:news-compact`（9:16输出），为已确认的紧凑新闻模板。原生 `compact-news-layout` 统一文字预检、Studio预览和MP4绘制：720×1280参考坐标，标题48px/2行，原片等比适配至640宽、480高以内且不画填空外框；中文字幕42px/2行位于实际视频下沿24px，原文30px/2行另占固定区域，底部安全区128px。label按`｜`分隔素材属性与来源日期；品牌文字来自watermark。固定字体、行数和词边界测量先于导出；超长内容要求作者按语义/实测句界拆cue，不缩小或截掉文字。可见全片/镜头叠层与手工卡片拒绝进入该固定模板，避免覆盖保留区域；旧标准/news布局和已有作品保持读取。竖屏原片不静默拉伸成横屏，实际解码纵横比不合适时明确拒绝。
+横屏来源视频可配置 `cardLayout:news-compact`（9:16输出），为已确认的紧凑新闻模板。原生 `compact-news-layout` 统一文字预检、Studio预览和MP4绘制：720×1280参考坐标，标题48px/2行，原片等比适配至640宽、480高以内且不画填空外框；中文字幕42px/2行位于实际视频下沿24px，原文30px/2行另占固定区域，底部安全区128px。label按`｜`分隔素材属性与素材来源及日期（底部统一渲染为`素材来源：...`以消除发布机构歧义）；品牌文字来自watermark。固定字体、行数和词边界测量先于导出；超长内容要求作者按语义/实测句界拆cue，不缩小或截掉文字。可见全片/镜头叠层与手工卡片拒绝进入该固定模板，避免覆盖保留区域；旧标准/news布局和已有作品保持读取。竖屏原片不静默拉伸成横屏，实际解码纵横比不合适时明确拒绝。
 
 准备材料类型支持`real-footage / ai-film / cg-video / external-video / still / diagram`。外部实拍、CG/动画、第三方AI影片均可满足来源视频要求，但视频必须有原生获取记录/身份与当前SHA匹配，或可逐级核验的原生转换派生链；hash改变、循环/过深派生、仅有文件或作者声明均拒绝。准备资产返回externalVideo事实，静帧和区间/引用门禁保留；CG和AI分别要求可见生成属性标识，合成对白不冒充真人。未经用户同意的本地文字/图片生成视频没有外部来源资格；旧user-only逐稿SHA授权保留用于明确批准的生成视频，模型不能自行授权。独立审片policy7承认外部CG/AI视频并保留当前全部关键态、实际输出原声/运动和独立整片判断；确定性行数/位置预检结果用于复用，真实输出异常仍核验。
 
@@ -1097,6 +1097,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Yahoo original HLS pins UUID, canonical, embed and CDN declaration independently of ad playback`
 - `Ars original declaration pins canonical page and finite publisher asset`
 - `MIT Brightcove original requires attached publisher frame and matching asset`
+- `CNBC declarative original binds vcpsId, Akamai MP4 and HLS when JW player is not mounted`
 
 #### `packages/browser-capability/test/renderer-read.test.ts`
 
@@ -1611,6 +1612,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Complete reference analysis groups commit once and preserve source bytes, scenes and user corrections`
 - `Reference analysis groups reject partial, foreign, stale, cancelled, changed-file and open requests without partial writes`
 - `Unknown edit discovery returns supported commands and footage replacement route without executing work`
+- `Compact narration retimes matching scene captions to measured TTS duration and source speech alignment preserves bilingual translations`
 
 #### `packages/harness-codex/test/codex-backend.test.ts`
 
@@ -1739,6 +1741,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Qoder content blocks sharing a model message ID retain distinct tool/text identities and stream one reply`
 - `Qoder unexpected tools, unfinished calls and mismatched streaming prefixes fail closed`
 - `Qoder split MCP image result stays in the native context and cannot complete a foreign call twice`
+- `Qoder unparsed browser tool input emits invalid-input without aborting the turn before SDK error tool_result`
 
 #### `packages/harness-qoder/test/qoder-settings.test.ts`
 
@@ -1964,6 +1967,7 @@ FocusInterval 可选 mode zoom/loupe；loupeCorner 是四角之一且仅供 loup
 - `Qwen cancellation cancels an in-flight audio body and does not retry synthesis`
 - `Portrait fullscreen footage clears animated headings and every bottom-caption block without moving at cue changes`
 - `Portrait heading painting uses shared paragraph wrapping and avoids an automatic isolated Han character`
+- `High-contrast dossier cards and kinetic primitives validate schemas, pin sources and paint without text overlap`
 
 #### `packages/media-native/test/youtube-sabr.test.ts`
 

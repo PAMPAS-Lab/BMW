@@ -31,7 +31,7 @@ import { assertStudioReviewProposal, assertStudioReviewItems } from './studio-re
 import type { StudioReviewProposal, StudioReviewItem } from './studio-review.js'
 import { assertStudioSpeechOrigin } from './studio-speech-origin.js'
 import type { StudioSpeechPlaybackOrigin } from './studio-speech-origin.js'
-import { narrationWindows } from '../../media-native/src/composition-contract.js'
+import { narrationWindows, captionAcousticWeight } from '../../media-native/src/composition-contract.js'
 import { assertNarrationTiming } from '../../media-native/src/composition-contract.js'
 import type { NarrationTiming } from '../../media-native/src/composition-contract.js'
 import {
@@ -1336,6 +1336,35 @@ export function assertStudioScene(raw: unknown): StudioScene {
   // A script is allowed to exist before a speech artifact is produced.
   const narration = studioText(value.narration ?? '', 'narration', 1000)
   compositionScene.narration = ''
+  if (
+    compositionScene.cardSpec &&
+    typeof compositionScene.cardSpec === 'object' &&
+    !Array.isArray(compositionScene.cardSpec) &&
+    (compositionScene.cardSpec as Record<string, unknown>).version === 1 &&
+    (compositionScene.cardSpec as Record<string, unknown>).motion === 'focus'
+  ) {
+    const hasSceneFocus = Array.isArray(compositionScene.focusIntervals) && compositionScene.focusIntervals.length > 0
+    const hasSegmentFocus =
+      Array.isArray(compositionScene.visualSegments) &&
+      compositionScene.visualSegments.some(
+        seg =>
+          seg &&
+          typeof seg === 'object' &&
+          Array.isArray((seg as Record<string, unknown>).focusIntervals) &&
+          ((seg as Record<string, unknown>).focusIntervals as unknown[]).length > 0
+      )
+    if (!hasSceneFocus && !hasSegmentFocus) {
+      const canSlowPush =
+        typeof compositionScene.imageArtifactId === 'string' &&
+        !compositionScene.videoArtifactId &&
+        !Array.isArray(compositionScene.visualSegments) &&
+        (compositionScene.zoom === undefined || compositionScene.zoom === 1)
+      compositionScene.cardSpec = {
+        ...(compositionScene.cardSpec as Record<string, unknown>),
+        motion: canSlowPush ? 'slow-push' : 'none'
+      }
+    }
+  }
   const sceneId = studioId(value.id)
   let scene: CompositionScene
   try {
@@ -1805,6 +1834,39 @@ export function applyNarrationPacing(
     })
     scene.voiceTiming = timing
     delete scene.voiceSegments
+    if (scene.captions?.length && !scene.sourceCaptionBinding && !scene.speechCaptions && scene.narration.trim()) {
+      const strip = (s: string) => s.replace(/[\s，,。！？!?；;：:、“”"‘’'（）()【】[\]—\-·]/g, '')
+      const cueBody = strip(scene.captions.map(c => c.text).join(''))
+      const scriptBody = strip(scene.narration)
+      if (
+        cueBody.length >= 4 &&
+        scriptBody.length >= 4 &&
+        (scriptBody.includes(cueBody.slice(0, 4)) || cueBody.includes(scriptBody.slice(0, 4)))
+      ) {
+        const weights = scene.captions.map((c, idx) =>
+          captionAcousticWeight(c.text, idx === scene.captions!.length - 1)
+        )
+        const totalWeight = weights.reduce((sum, w) => sum + w, 0)
+        const voiceStart = Math.round((2 / fps) * 1000) / 1000
+        const voiceEnd = Math.round((2 / fps + audioSeconds) * 1000) / 1000
+        let cursor = voiceStart
+        scene.captions = scene.captions.map((cue, idx) => {
+          const startSeconds = cursor
+          cursor =
+            idx === scene.captions!.length - 1
+              ? voiceEnd
+              : Math.min(
+                  voiceEnd - 0.02 * (scene.captions!.length - 1 - idx),
+                  Math.round((cursor + (audioSeconds * weights[idx]) / Math.max(1, totalWeight)) * 1000) / 1000
+                )
+          return {
+            ...cue,
+            startSeconds,
+            endSeconds: Math.max(startSeconds + 0.05, cursor)
+          }
+        })
+      }
+    }
     scene.durationSeconds = narrationSceneDuration(scene, audioSeconds, fps, 2)
     return { ...timing }
   }

@@ -24,6 +24,26 @@ import type { StudioKernel } from './studio-service.js'
 import { StudioSources } from './studio-sources.js'
 import { NewsJournal } from '@bmw-agent/feature-library/news-store'
 import type { NewsPreparationState } from './news-preparation-journal.js'
+import type { StudioReferenceRecord } from './studio-reference-contract.js'
+
+const inspectCache = new WeakMap<object, Map<string, ReturnType<typeof assertMediaInspection>>>()
+
+function postTtsCovered(
+  actual: StudioScene,
+  endExclusive: number,
+  ref: StudioReferenceRecord | undefined,
+  gap: ReferenceCoverageGap | undefined
+): boolean {
+  return Boolean(
+    (actual.audioArtifactId || /^segment-[0-9a-f-]+\.(?:mp4|webm|mov)$/i.test(actual.videoArtifactId ?? '')) &&
+    ref?.analysis &&
+    ref.frames.length >= 3 &&
+    ref.analysis.observations.length === ref.frames.length &&
+    gap?.missing.length === 1 &&
+    gap.missing[0] === 'end' &&
+    ref.frames.some(f => f.seconds >= endExclusive - 0.25)
+  )
+}
 
 interface Issue {
   sceneId?: string
@@ -271,7 +291,7 @@ export class NewsPreparationService {
       if (!row || !row.fingerprint || row.fingerprint !== scene.fingerprint)
         throw this.blocked(
           'NEWS_PREPARATION_STALE',
-          'Use the current scene fingerprint from preflight; do not retry the unchanged declaration.',
+          `Use the current scene fingerprint from preflight (expected=${row?.fingerprint ?? 'none'}, received=${scene.fingerprint}); do not retry the unchanged declaration.`,
           state.revision,
           scene.sceneId
         )
@@ -391,7 +411,8 @@ export class NewsPreparationService {
         referenceGaps: ReferenceCoverageGap[]
         issues: Issue[]
       }[] = []
-    let bytes = 0
+    let bytes = 0,
+      inspectedLive = false
     const hash = async (id: string) => {
       let sha = hashes.get(id)
       if (sha) return sha
@@ -462,10 +483,26 @@ export class NewsPreparationService {
             fact = { artifactId, sha256, kind: video ? 'video' : 'image' }
             if (video) {
               fact.externalVideo = await externalVideoVisual(sources.port(), directory, artifactId, signal)
-              const info = assertMediaInspection(
+              const processor = this.kernel.recordingController.processArtifact,
+                cacheKey = `${directory}:${artifactId}:${sha256}`
+              let processorMap = inspectCache.get(processor),
+                info = inspectedLive ? processorMap?.get(cacheKey) : undefined
+              if (!info) {
+                inspectedLive = true
+                info = assertMediaInspection(
                   await this.kernel.recordingController.processArtifact({ action: 'media.inspect', artifactId }, signal)
-                ),
-                track = info.tracks.find(t => t.type === 'video' && t.canDecode),
+                )
+                if (!processorMap) {
+                  processorMap = new Map()
+                  inspectCache.set(processor, processorMap)
+                }
+                if (processorMap.size >= 256) {
+                  const oldest = processorMap.keys().next().value
+                  if (oldest !== undefined) processorMap.delete(oldest)
+                }
+                processorMap.set(cacheKey, info)
+              }
+              const track = info.tracks.find(t => t.type === 'video' && t.canDecode),
                 audio = info.tracks.find(t => t.type === 'audio' && t.canDecode)
               if (!track) throw new Error('No decodable video track.')
               Object.assign(fact, {
@@ -571,7 +608,13 @@ export class NewsPreparationService {
           add('evidence-unverified', message)
         if (sceneIssues.length) status = 'unverified'
       }
-      if (sceneOffset < 3 || (index >= this.draft.scenes.length - 2 && !diagram)) {
+      const penultimateSupportedImage =
+        index === this.draft.scenes.length - 2 &&
+        index < this.draft.scenes.length - 1 &&
+        sceneOffset >= 3 &&
+        (assets.some(a => a.kind === 'image') || saved?.materials.some(m => m.kind === 'diagram')) &&
+        (!scene.cardSpec || scene.cardSpec.templateId !== 'title/basic')
+      if (sceneOffset < 3 || (index >= this.draft.scenes.length - 2 && !diagram && !penultimateSupportedImage)) {
         let covered = 0
         const required = Math.max(
           index >= this.draft.scenes.length - 2 ? scene.durationSeconds : 0,
@@ -690,10 +733,29 @@ export class NewsPreparationService {
           .filter(r => r.sourceArtifactId === v.videoArtifactId && r.sourceSha256 === sha && r.kind === 'video'),
         ref = material
           ? candidates.find(r => r.id === material.referenceId)
-          : (candidates.find(r => !referenceCoverageGap(range, r.frames, r.id)) ?? candidates[0]),
-        gap = referenceCoverageGap(range, ref?.frames ?? [], ref?.id)
+          : (candidates.find(
+              r =>
+                !referenceCoverageGap(range, r.frames, r.id) ||
+                postTtsCovered(actual, range.endExclusive, r, referenceCoverageGap(range, r.frames, r.id))
+            ) ?? candidates[0]),
+        rawGap = referenceCoverageGap(range, ref?.frames ?? [], ref?.id),
+        gap = postTtsCovered(actual, range.endExclusive, ref, rawGap) ? undefined : rawGap
       return gap ? [gap] : []
     })
+  }
+  async refreshNarratedScene(sceneId: string, preNarrationFingerprint: string, signal?: AbortSignal): Promise<void> {
+    if (!this.required() || !preNarrationFingerprint) return
+    const state = this.journal.read(),
+      saved = state.scenes.find(s => s.sceneId === sceneId)
+    if (!saved || saved.origin !== 'agent' || saved.fingerprint !== preNarrationFingerprint) return
+    const report = await this.preflight(state, signal),
+      row = report.scenes.find(s => s.sceneId === sceneId)
+    if (!row || !row.fingerprint || row.referenceGaps.length > 0 || row.issues.some(i => i.code !== 'checklist-stale'))
+      return
+    const declIssues = await this.verifyDeclaration({ ...saved, fingerprint: row.fingerprint }, row.assets, signal)
+    if (declIssues.length > 0) return
+    saved.fingerprint = row.fingerprint
+    this.journal.save(state.revision, state)
   }
   private movingAllowed(kind: string | undefined, asset: AssetFact | undefined): boolean {
     return Boolean(
@@ -812,17 +874,19 @@ export class NewsPreparationService {
       if (['real-footage', 'ai-film', 'cg-video', 'external-video'].includes(material.kind))
         for (const [visualIndex, v] of sceneVisuals(actual).entries())
           if (v.videoArtifactId === asset.artifactId) {
-            const gap = referenceCoverageGap(
-              {
-                sceneId: actual.id,
-                artifactId: asset.artifactId,
-                visualIndex,
-                startSeconds: v.sourceStartSeconds,
-                endExclusive: v.sourceStartSeconds + v.durationSeconds * v.playbackRate
-              },
-              ref.frames,
-              ref.id
-            )
+            const endExclusive = v.sourceStartSeconds + v.durationSeconds * v.playbackRate,
+              rawGap = referenceCoverageGap(
+                {
+                  sceneId: actual.id,
+                  artifactId: asset.artifactId,
+                  visualIndex,
+                  startSeconds: v.sourceStartSeconds,
+                  endExclusive
+                },
+                ref.frames,
+                ref.id
+              ),
+              gap = postTtsCovered(actual, endExclusive, ref, rawGap) ? undefined : rawGap
             if (gap) issues.push(gap.message)
           }
     }

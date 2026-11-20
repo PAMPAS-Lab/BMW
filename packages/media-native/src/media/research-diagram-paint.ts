@@ -1,6 +1,7 @@
 import { eventState, measurementFraction } from '../research-diagrams.js'
 import type { ResearchDiagram, EventElement } from '../research-diagrams.js'
 import { COMPOSITION_FONT, fitText } from './composition-text.js'
+import { drawSwissGridBackground } from './kinetic-primitives.js'
 interface Rect {
   x: number
   y: number
@@ -60,6 +61,7 @@ export function paintResearchDiagram(
     ctx.clip()
     ctx.fillStyle = bg
     ctx.fillRect(box.x, box.y, box.width, box.height)
+    drawSwissGridBackground(ctx, box.x, box.y, box.width, box.height, { light: spec.theme !== 'dark' })
     ctx.fillStyle = ink
     label(spec.title, box.x + font, box.y + font, box.width - 2 * font, 2 * font, font * 1.15)
     const body = { x: box.x + font, y: box.y + font * 3, width: box.width - font * 2, height: box.height - font * 6 }

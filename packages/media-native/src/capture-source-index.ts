@@ -254,8 +254,8 @@ export async function sampleCaptureSourceFrames(
           action: 'media.frames.sample',
           artifactId,
           timestampsSeconds: selected.map(f => f.fileTimestampSeconds),
-          maxWidth: 1280,
-          maxHeight: 720
+          maxWidth: 480,
+          maxHeight: 270
         },
         signal
       )

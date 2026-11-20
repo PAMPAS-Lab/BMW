@@ -17,6 +17,7 @@ export interface MotionStats {
   maximumNearStaticSeconds: number
   changedFramePairs: number
   nearStaticRuns: { startSeconds: number; endSeconds: number }[]
+  sceneCutsSeconds?: number[]
 }
 export interface MotionReport {
   method: 'all-decoded-frames/64x64-RGB-mean-absolute-difference'
@@ -85,6 +86,11 @@ export function assertMotionReport(raw: unknown, request: MotionRequest): Motion
         a = finiteNumber(s.startSeconds, 'static start', start, end)
       finiteNumber(s.endSeconds, 'static end', a, end)
     }
+    if (w.sceneCutsSeconds !== undefined) {
+      if (!Array.isArray(w.sceneCutsSeconds) || w.sceneCutsSeconds.length > 64)
+        throw new TypeError('Invalid motion scene cuts.')
+      for (const cut of w.sceneCutsSeconds) finiteNumber(cut, 'scene cut', start, end)
+    }
   }
   return raw as MotionReport
 }
@@ -106,7 +112,8 @@ export class MotionAccumulator {
       maximumDecodeGapSeconds: 0,
       maximumNearStaticSeconds: 0,
       changedFramePairs: 0,
-      nearStaticRuns: []
+      nearStaticRuns: [],
+      sceneCutsSeconds: []
     }
   }
   private finishRun() {
@@ -133,10 +140,16 @@ export class MotionAccumulator {
           Math.abs(pixels[i] - this.previous[i]) +
           Math.abs(pixels[i + 1] - this.previous[i + 1]) +
           Math.abs(pixels[i + 2] - this.previous[i + 2])
-      if (sum / ((pixels.length / 4) * 3) > 0.5) {
+      const diff = sum / ((pixels.length / 4) * 3)
+      if (diff > 0.5) {
         s.changedFramePairs++
         this.finishRun()
         this.runStart = a
+      }
+      if (diff >= 22 && s.sceneCutsSeconds && s.sceneCutsSeconds.length < 64) {
+        const cutAt = Math.round(a * 1000) / 1000
+        if (!s.sceneCutsSeconds.length || cutAt - s.sceneCutsSeconds[s.sceneCutsSeconds.length - 1] >= 0.25)
+          s.sceneCutsSeconds.push(cutAt)
       }
     } else this.runStart = a
     this.runEnd = b

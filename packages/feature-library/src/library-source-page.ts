@@ -51,6 +51,31 @@ export function librarySourceSummary(catalog: SourceCatalog, offset = 0, limit =
     nextOffset: offset + limit < catalog.sources.length ? offset + limit : null
   }
 }
+function textQuoteSpans(text: string, baseOffset: number) {
+  const spans = [{ startCharacter: baseOffset, endCharacter: baseOffset + text.length, text }]
+  if (!text.includes('\n')) return spans
+  let pos = 0
+  for (const line of text.split('\n')) {
+    const trimmed = line.trim()
+    if (trimmed.length >= 20 && spans.length < 48) {
+      const lead = line.indexOf(trimmed)
+      const start = baseOffset + pos + lead
+      spans.push({ startCharacter: start, endCharacter: start + trimmed.length, text: trimmed })
+    }
+    pos += line.length + 1
+  }
+  if (spans.length < 16) {
+    const sentenceRegex = /[^\s][\s\S]{24,360}?[.!?。！？](?=\s|$)/g
+    let match: RegExpExecArray | null
+    while ((match = sentenceRegex.exec(text)) !== null && spans.length < 48) {
+      const start = baseOffset + match.index,
+        end = start + match[0].length
+      if (!spans.some(s => s.startCharacter === start && s.endCharacter === end))
+        spans.push({ startCharacter: start, endCharacter: end, text: match[0] })
+    }
+  }
+  return spans
+}
 export function librarySourceRead(raw: unknown, page: LibrarySourcePage) {
   const v = mediaRecord(raw),
     source = mediaRecord(v.source),
@@ -76,7 +101,7 @@ export function librarySourceRead(raw: unknown, page: LibrarySourcePage) {
       ? {}
       : {
           text,
-          quoteSpans: [{ startCharacter: page.offset, endCharacter: page.offset + text.length, text }],
+          quoteSpans: textQuoteSpans(text, page.offset),
           characterUnit: 'utf16'
         }),
     ...(section === 'candidates'

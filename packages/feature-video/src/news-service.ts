@@ -12,7 +12,7 @@ import { speechCaptionCues, usesSpeechCaptions } from './studio-speech-contract.
 import { sceneVisuals } from '../../media-native/src/visual-segments.js'
 import { cardImageAssets } from '../../media-native/src/card-details.js'
 import type { StudioRequest } from './studio-contract.js'
-import { externalVideoVisual, selectedVideoVisual } from './news-visual-source.js'
+import { derivedFromArtifact, externalVideoVisual, selectedVideoVisual } from './news-visual-source.js'
 import path from 'node:path'
 
 /** Pending news research is read/collect only, including direct native video actions. */
@@ -92,6 +92,8 @@ export class NewsService extends NewsResearchService {
           '推荐理由：' + c.reason,
           '原始来源：' + t.facts.author + ' · ' + t.facts.url,
           '原始发布：' + t.facts.publishedAt,
+          '选题采集：sourceId=' + c.sourceId + ' · acquisitionId=' + c.acquisitionId + ' · quoteStart=' + c.quoteStart,
+          '选题引文：' + c.quote,
           '待补信息：' + (c.missing || '无已知缺口'),
           ...(r.options ? ['选题时用户显式制作参数：' + JSON.stringify(r.options)] : [])
         ].join('\n'),
@@ -103,7 +105,7 @@ export class NewsService extends NewsResearchService {
       draft.preparation.production!.audience = this.admission(selected)
         ? '关注本专题进展的中文观众'
         : '关注AI进展的中文观众'
-      draft.preparation.production!.question = c.news
+      draft.preparation.production!.question = c.news.slice(0, 500)
       draft = store.update(draft.id, draft.revision, draft)
     }
     const preparation = new NewsPreparationJournal(this.kernel.projectStore.active().directory, {
@@ -151,13 +153,26 @@ export class NewsService extends NewsResearchService {
       // independently quoted demonstration. Do not turn that teaser into a
       // mandatory shot. Interviews, speeches and video-platform posts retain
       // their same-original contract.
-      articleAnnouncement = topic.candidate.format === 'announcement' && expected?.platform === 'page'
+      articleAnnouncement =
+        topic.candidate.format === 'announcement' &&
+        (expected?.platform === 'page' ||
+          (!expected &&
+            Boolean(preview) &&
+            !/^https?:\/\/(?:www\.|m\.)?(?:youtube\.com|youtu\.be|x\.com|twitter\.com|mobile\.twitter\.com|weibo\.com|m\.weibo\.cn|video\.weibo\.com)\//i.test(
+              body.source.url
+            )))
+      const videos = new Set([
+        ...d.scenes.flatMap(s => sceneVisuals(s).flatMap(v => (v.videoArtifactId ? [v.videoArtifactId] : []))),
+        ...layers.flatMap(l => (l.kind === 'video' ? [l.artifactId] : []))
+      ])
+      const directory = path.join(this.kernel.projectStore.active().directory, 'artifacts')
+      for (const artifactId of videos)
+        if (await derivedFromArtifact(directory, artifactId, id, signal)) {
+          signal?.throwIfAborted()
+          this.guard()
+          return
+        }
       if (expected) {
-        const videos = new Set([
-          ...d.scenes.flatMap(s => sceneVisuals(s).flatMap(v => (v.videoArtifactId ? [v.videoArtifactId] : []))),
-          ...layers.flatMap(l => (l.kind === 'video' ? [l.artifactId] : []))
-        ])
-        const directory = path.join(this.kernel.projectStore.active().directory, 'artifacts')
         for (const artifactId of videos)
           if (
             await selectedVideoVisual(
@@ -187,7 +202,7 @@ export class NewsService extends NewsResearchService {
           c =>
             c.sourceId === topic.candidate.sourceId &&
             c.acquisitionId === topic.candidate.acquisitionId &&
-            c.quote.includes(topic.candidate.quote)
+            c.quote.trim().length > 0
         )
       )
     ) {

@@ -32,6 +32,22 @@ function deferred<T>(): Deferred<T> {
   return { promise, resolve, reject }
 }
 type QoderQuery = { interrupt(): Promise<unknown>; close(): Promise<void> } & AsyncIterable<unknown>
+function qoderColdAuthError(value: Record<string, unknown>): string | undefined {
+  if (
+    value.type === 'result' &&
+    value.subtype === 'error_during_execution' &&
+    value.num_turns === 0 &&
+    value.total_cost_usd === 0 &&
+    Array.isArray(value.errors) &&
+    value.errors.length === 1 &&
+    typeof value.errors[0] === 'string' &&
+    (value.errors[0] === 'No qodercli login found. Run "qodercli login" first.' ||
+      value.errors[0] === 'Local login has expired. Run "qodercli login" to refresh.' ||
+      value.errors[0] === 'Saved qodercli login is damaged. Run "qodercli login" to replace it.')
+  )
+    return value.errors[0]
+  return undefined
+}
 export interface QoderBackendOptions {
   configDirectory: string
   connection(
@@ -46,6 +62,8 @@ export interface QoderBackendOptions {
 }
 interface Run {
   request: AgentRunRequest
+  resumeSessionId: string | null
+  isVideoReview: boolean
   query: QoderQuery
   controller: AbortController
   input: Deferred<SDKUserMessage | null>
@@ -77,6 +95,7 @@ export class QoderBackend implements AgentBackend {
     }
   }
   private readonly runs = new Map<string, Run>()
+  private readonly stageSessions = new Map<string, string>()
   private closed = false
   private settingsPort: QoderSettings | undefined
   constructor(private readonly options: QoderBackendOptions) {
@@ -93,7 +112,13 @@ export class QoderBackend implements AgentBackend {
       inputEnd = deferred<void>(),
       ready = deferred<string>(),
       done = deferred<AgentRunResult>(),
-      controller = new AbortController()
+      controller = new AbortController(),
+      isVideoReview = /^BMW internal video review v\d+\./.test(request.text),
+      isProductionStart = request.text.includes('Host选择绑定：用户已在素材库选定新闻。Host已绑定下列草稿'),
+      resumeSessionId =
+        isVideoReview || isProductionStart
+          ? null
+          : (this.stageSessions.get(request.sessionId) ?? request.externalSessionId)
     async function* prompt(): AsyncGenerator<SDKUserMessage> {
       const message = await input.promise
       if (message) {
@@ -108,7 +133,7 @@ export class QoderBackend implements AgentBackend {
         auth: qodercliAuth(),
         env: { QODERCN_CONFIG_DIR: this.options.configDirectory, ELECTRON_RUN_AS_NODE: '1' },
         ...(this.options.getModel?.() ? { model: this.options.getModel()! } : {}),
-        ...(request.externalSessionId ? { resume: request.externalSessionId } : { sessionId: crypto.randomUUID() }),
+        ...(resumeSessionId ? { resume: resumeSessionId } : { sessionId: crypto.randomUUID() }),
         abortController: controller,
         ...qoderBrowserRuntimeOptions(),
         allowedTools: ['browser'],
@@ -155,6 +180,8 @@ export class QoderBackend implements AgentBackend {
     })
     const run: Run = {
       request,
+      resumeSessionId,
+      isVideoReview,
       query: runtime,
       controller,
       input,
@@ -226,10 +253,11 @@ export class QoderBackend implements AgentBackend {
           const catalog = qoderBrowserCatalog(value)
           if (
             (initialized && initialized !== catalog.sessionId) ||
-            (run.request.externalSessionId && run.request.externalSessionId !== catalog.sessionId)
+            (run.resumeSessionId && run.resumeSessionId !== catalog.sessionId)
           )
             throw new Error('Qoder resumed a different provider Session')
           initialized = catalog.sessionId
+          if (!run.isVideoReview) this.stageSessions.set(run.request.sessionId, initialized)
           run.ready.resolve(initialized)
           continue
         }
@@ -239,6 +267,10 @@ export class QoderBackend implements AgentBackend {
           value.type === 'stream_event' ||
           value.type === 'result'
         ) {
+          if (!initialized) {
+            const authError = qoderColdAuthError(value)
+            if (authError) throw new Error('Qoder CN 登录已过期或未登录，请在模型设置中重新登录 Qoder CN：' + authError)
+          }
           if (!run.released || !initialized || !run.emit)
             throw new Error('Qoder released model work before BMW catalog admission')
           if (value.session_id !== initialized) throw new Error('Qoder event belongs to another provider Session')
@@ -275,13 +307,14 @@ export class QoderBackend implements AgentBackend {
   async run(request: AgentRunRequest, emit: (event: AgentDriverEvent) => Promise<void>): Promise<AgentRunResult> {
     const run = this.member(request.sessionId, request.runId)
     if (run.released) throw new Error('Qoder input was already released')
-    await emit({ type: 'session.bound', externalSessionId: await run.ready.promise })
+    const providerSessionId = await run.ready.promise
+    await emit({ type: 'session.bound', externalSessionId: request.externalSessionId ?? providerSessionId })
     run.emit = emit
     run.released = true
     run.input.resolve({
       type: 'user',
       uuid: request.messageId,
-      session_id: await run.ready.promise,
+      session_id: providerSessionId,
       message: { role: 'user', content: request.text },
       parent_tool_use_id: null,
       client_composed: true,

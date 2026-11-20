@@ -678,8 +678,9 @@ export function assertSourceCitation(raw: unknown): SourceCitation {
     'eventAt'
   ])
   const startCharacter = finiteNumber(v.startCharacter, 'quote start', 0, 50000, true),
-    endCharacter = finiteNumber(v.endCharacter, 'quote end', startCharacter + 1, 50000, true),
-    quote = sourceText(v.quote, 'quote', 4000)
+    rawEndCharacter = finiteNumber(v.endCharacter, 'quote end', startCharacter + 1, 50000, true),
+    quote = sourceText(v.quote, 'quote', 4000),
+    endCharacter = quote && startCharacter + quote.length <= 50000 ? startCharacter + quote.length : rawEndCharacter
   if (!quote || quote.length !== endCharacter - startCharacter)
     throw new TypeError('Quote does not match its UTF16 range.')
   return {

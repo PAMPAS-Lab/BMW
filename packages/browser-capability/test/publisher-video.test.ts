@@ -247,3 +247,32 @@ test('MIT Brightcove original requires attached publisher frame and matching ass
     /UNAVAILABLE/
   )
 })
+
+test('CNBC declarative original binds vcpsId, Akamai MP4 and HLS when JW player is not mounted', () => {
+  const page = 'https://www.cnbc.com/video/2026/11/05/watch-cnbcs-full-interview-with-arm-ceo-rene-haas.html',
+    id = '7000430042',
+    mp4 =
+      'https://pdl-iphone-cnbc-com.akamaized.net/7000430042/c5cb2f30-d929-11f1-85ed-432ccc01a9cd/1793890872-49453173198-hd_L.mp4',
+    hls =
+      'https://cnbcawsmpvod.akamaized.net/out/v1/6d6713aaf45e441ca88da8ed963f2812/54fbf64382f04b94bb69340d5528ff8b/26cdcccd8cb84f5398bc0124836d47ee/master.m3u8'
+  const witness = {
+    pageUrl: page,
+    publisher: 'cnbc',
+    contentId: id,
+    title: "Watch CNBC's full interview with Arm CEO Rene Haas",
+    durationSeconds: 398,
+    playerUrl: mp4,
+    videoIndex: -1,
+    mp4,
+    hls,
+    frameUrl: '',
+    assetKey: ''
+  }
+  const target = publisherTarget(page, witness)
+  assert.equal(target.identity.resourceId, 'cnbc:7000430042')
+  assert.equal(target.videoIndex, -1)
+  assert.deepEqual(
+    target.resources.map(r => r.role),
+    ['muxed', 'hls']
+  )
+})

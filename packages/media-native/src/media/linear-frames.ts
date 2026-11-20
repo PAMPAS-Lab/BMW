@@ -28,6 +28,8 @@ export async function normalizeBrowserVideoColor(track: InputVideoTrack): Promis
  * Only two decoded canvases are retained; never cache a whole recording.
  */
 export class LinearFrameReader {
+  private readonly sink: CanvasSink
+  private readonly indexed: boolean
   private iterator: AsyncGenerator<WrappedCanvas, void, unknown>
   private current: WrappedCanvas | undefined
   private next: WrappedCanvas | undefined
@@ -37,7 +39,9 @@ export class LinearFrameReader {
   // CanvasSink includes the presentation frame held at that time, decoding from
   // its preceding key packet. Unindexed recordings keep the from-start path.
   constructor(track: InputVideoTrack, options: CanvasSinkOptions = {}, startTimestamp?: number) {
-    this.iterator = new CanvasSink(track, { ...options, poolSize: 2 }).canvases(startTimestamp)
+    this.sink = new CanvasSink(track, { ...options, poolSize: 2 })
+    this.indexed = startTimestamp !== undefined
+    this.iterator = this.sink.canvases(startTimestamp)
   }
   async get(timestamp: number): Promise<WrappedCanvas | null> {
     if (timestamp < this.lastTime) throw new Error('Linear frame reader requires monotonic timestamps.')
@@ -45,6 +49,11 @@ export class LinearFrameReader {
     if (!this.initialized) {
       this.next = (await this.iterator.next()).value || undefined
       this.initialized = true
+    } else if (this.indexed && this.next && timestamp - this.next.timestamp > 5) {
+      await this.iterator.return()
+      this.current = undefined
+      this.iterator = this.sink.canvases(timestamp)
+      this.next = (await this.iterator.next()).value || undefined
     }
     while (this.next && this.next.timestamp <= timestamp) {
       this.current = this.next

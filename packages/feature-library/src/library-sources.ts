@@ -306,25 +306,59 @@ export class LibrarySources {
           originalSha256: raw.sha256
         }
       }
-      const deliveryRange =
+      let deliveryRange =
         request.preview && method === 'preserve'
           ? assertSourceDeliveryRange({ ...request.preview, kind: 'delivery-file-pts', reencoded: true })
           : undefined
       if (deliveryRange) {
         stage = 'preview-conversion'
         await guard()
-        const converted = mediaRecord(
-          await this.kernel.recordingController.processArtifact(
-            {
-              action: 'media.convert',
-              artifactId: created,
-              outputFormat: 'mp4',
-              trimStartSeconds: deliveryRange.startSeconds,
-              trimEndSeconds: deliveryRange.endSeconds
-            },
-            signal
+        let converted: Record<string, unknown>
+        try {
+          converted = mediaRecord(
+            await this.kernel.recordingController.processArtifact(
+              {
+                action: 'media.convert',
+                artifactId: created,
+                outputFormat: 'mp4',
+                trimStartSeconds: deliveryRange.startSeconds,
+                trimEndSeconds: deliveryRange.endSeconds
+              },
+              signal
+            )
           )
-        )
+        } catch (err) {
+          if (err instanceof Error && err.message.includes('Trim range is outside the media file')) {
+            const info = mediaRecord(
+                await this.kernel.recordingController.processArtifact(
+                  { action: 'media.inspect', artifactId: created },
+                  signal
+                )
+              ),
+              actualDuration = typeof info.durationSeconds === 'number' ? info.durationSeconds : 0,
+              clampedEnd = Math.floor(Math.min(deliveryRange.endSeconds, actualDuration) * 1000) / 1000
+            if (clampedEnd > deliveryRange.startSeconds + 0.25) {
+              deliveryRange = assertSourceDeliveryRange({
+                startSeconds: deliveryRange.startSeconds,
+                endSeconds: clampedEnd,
+                kind: 'delivery-file-pts',
+                reencoded: true
+              })
+              converted = mediaRecord(
+                await this.kernel.recordingController.processArtifact(
+                  {
+                    action: 'media.convert',
+                    artifactId: created,
+                    outputFormat: 'mp4',
+                    trimStartSeconds: deliveryRange.startSeconds,
+                    trimEndSeconds: deliveryRange.endSeconds
+                  },
+                  signal
+                )
+              )
+            } else throw err
+          } else throw err
+        }
         related.push(created)
         created = assertArtifactId(converted.artifactId)
         related.push(assertArtifactId(created + '.derivation.json'))
@@ -503,6 +537,52 @@ export class LibrarySources {
   async citation(citation: SourceCitation, signal?: AbortSignal) {
     const body = await this.port().readBody(citation.sourceId, citation.acquisitionId, signal)
     signal?.throwIfAborted()
+    if (body.text.slice(citation.startCharacter, citation.endCharacter) !== citation.quote) {
+      const normTypo = (s: string) =>
+        s
+          .replace(/[\u2018\u2019\u201A\u201B\u02BC\u2032`]/g, "'")
+          .replace(/[\u201C\u201D\u201E\u201F\u2033]/g, '"')
+          .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]/g, '-')
+          .replace(/\u00A0/g, ' ')
+      const directSlice = body.text.slice(citation.startCharacter, citation.endCharacter)
+      if (directSlice.length > 0 && normTypo(directSlice) === normTypo(citation.quote)) {
+        citation.quote = directSlice
+      } else {
+        const trimmed = citation.quote.trim()
+        let foundStart = -1,
+          foundEnd = -1
+        if (trimmed.length >= 4) {
+          const tokens = normTypo(trimmed)
+            .split(/\s+/)
+            .filter(Boolean)
+            .map(tok =>
+              tok
+                .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                .replace(/'/g, "['\\u2018\\u2019\\u201A\\u201B\\u02BC\\u2032`]")
+                .replace(/"/g, '["\\u201C\\u201D\\u201E\\u201F\\u2033]')
+                .replace(/-/g, '[-\\u2010-\\u2015\\u2212]')
+            )
+          if (tokens.length >= 1 && tokens.length <= 160) {
+            const re = new RegExp(tokens.join('\\s+'), 'g')
+            let m: RegExpExecArray | null
+            while ((m = re.exec(body.text)) !== null) {
+              if (
+                foundStart === -1 ||
+                Math.abs(m.index - citation.startCharacter) < Math.abs(foundStart - citation.startCharacter)
+              ) {
+                foundStart = m.index
+                foundEnd = m.index + m[0].length
+              }
+            }
+          }
+        }
+        if (foundStart >= 0 && foundEnd > foundStart && foundEnd <= 50000) {
+          citation.startCharacter = foundStart
+          citation.endCharacter = foundEnd
+          citation.quote = body.text.slice(foundStart, foundEnd)
+        }
+      }
+    }
     if (body.text.slice(citation.startCharacter, citation.endCharacter) !== citation.quote)
       throw new Error('Citation does not match the stored original text range.')
     return {

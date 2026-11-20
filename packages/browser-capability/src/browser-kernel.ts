@@ -113,6 +113,28 @@ function safeFilename(value) {
   return value.replace(/[^a-zA-Z0-9._-]+/g, '-').slice(0, 80)
 }
 
+function isTrackingPixelUrl(rawUrl: unknown): boolean {
+  if (typeof rawUrl !== 'string' || !rawUrl) return false
+  try {
+    const parsed = new URL(rawUrl, 'https://localhost')
+    const host = parsed.hostname.toLowerCase()
+    const pathname = parsed.pathname.toLowerCase()
+    if (
+      /(?:^|\.)(?:doubleclick\.net|googleadservices\.com|googlesyndication\.com|google-analytics\.com|googletagmanager\.com|adsafeprotected\.com|eloqua\.com|analytics\.yahoo\.com|ads\.linkedin\.com|outbrain\.com|dianomi\.com|abtasty\.com)$/.test(
+        host
+      )
+    )
+      return true
+    if ((host === 'google.com' || host.endsWith('.google.com')) && /^\/(?:pagead|gmp)\//.test(pathname)) return true
+    if ((host === 'facebook.com' || host.endsWith('.facebook.com')) && pathname.startsWith('/tr')) return true
+    if (host === 'capi.elements.video' && pathname.startsWith('/tr/')) return true
+    if (host.endsWith('.jwpltx.com') && pathname.endsWith('/ping.gif')) return true
+    return false
+  } catch {
+    return false
+  }
+}
+
 export class BrowserKernel {
   [key: string]: any
   readonly detached: boolean
@@ -1108,14 +1130,16 @@ export class BrowserKernel {
           if (method === 'Network.responseReceived') {
             const resourceType = String(params?.type || '')
             const mimeType = String(params?.response?.mimeType || '')
+            const responseUrl = String(params?.response?.url || '')
             if (
-              ['Image', 'Media'].includes(resourceType) ||
-              /^(?:image|video|audio)\//i.test(mimeType) ||
-              /mpegurl/i.test(mimeType) ||
-              /\.m3u8(?:\?|$)/i.test(String(params?.response?.url ?? ''))
+              !isTrackingPixelUrl(responseUrl) &&
+              (['Image', 'Media'].includes(resourceType) ||
+                /^(?:image|video|audio)\//i.test(mimeType) ||
+                /mpegurl/i.test(mimeType) ||
+                /\.m3u8(?:\?|$)/i.test(responseUrl))
             ) {
               this.#addDiagnostic(tab.id, 'media', {
-                url: params?.response?.url || '',
+                url: responseUrl,
                 mimeType,
                 resourceType,
                 status: params?.response?.status || 0,
@@ -1611,6 +1635,10 @@ export class BrowserKernel {
       if (request.action === 'schedule.run') return this.scheduledTaskManager.runNow(project.id, taskId)
     }
     if (request.action === 'tabs.open') {
+      if (actor !== 'user' && sessionOwner && this.videoReviewRun?.(sessionOwner))
+        throw new Error(
+          'VIDEO_AUDIT_READ_ONLY: 内部审片仅读取本地已存来源（library.sources / video.studio），不打开实时网页或外网重抓；若历史资料无 publishedAt，直接以本地 capturedAt 及画面标注为准。'
+        )
       return this.openTabInTask(
         {
           url: request.url,
@@ -1621,8 +1649,13 @@ export class BrowserKernel {
         signal
       )
     }
-    if (request.action === 'pages.read' || request.action === 'pages.discover')
+    if (request.action === 'pages.read' || request.action === 'pages.discover') {
+      if (actor !== 'user' && sessionOwner && this.videoReviewRun?.(sessionOwner))
+        throw new Error(
+          'VIDEO_AUDIT_READ_ONLY: 内部审片仅读取本地已存来源（library.sources / video.studio），不调用 pages.read / pages.discover 重抓外网。'
+        )
       return this.readTextPages(request.urls as string[], signal, request.action === 'pages.discover')
+    }
     if (request.action === 'pages.read-result') return this.readTextPageResult(request, signal, sessionOwner)
     if (request.action === 'tabs.show') return this.showTab(targetTabId(request), signal)
     if (request.action === 'tabs.close' && Array.isArray(request.tabIds)) {
@@ -1787,18 +1820,16 @@ export class BrowserKernel {
       const ariaStates = ${JSON.stringify(SEMANTIC_ARIA_STATES)}
       const interactive = [...(root?.querySelectorAll('a,button,input,textarea,select,[role="button"],[contenteditable="true"]')??[])]
         .filter(isVisible)
-        .slice(0, 160)
+        .slice(0, 48)
         .map((element, index) => ({
           index,
           tag: element.tagName.toLowerCase(),
           type: element.getAttribute('type'),
-          text: (element.innerText || element.value || element.getAttribute('aria-label') || element.getAttribute('placeholder') || '').trim().slice(0, 240),
+          text: (element.innerText || element.value || element.getAttribute('aria-label') || element.getAttribute('placeholder') || '').trim().slice(0, 120),
           ariaLabel: element.getAttribute('aria-label'),
-          href: element.href || null
+          href: element.href && element.href.length <= 360 ? element.href : null
         }))
       const semantic = [...(root?.querySelectorAll([
-        'li',
-        'tr',
         '[role]',
         '[aria-checked]',
         '[aria-selected]',
@@ -1811,7 +1842,7 @@ export class BrowserKernel {
         ...classStates.map((state) => '.' + state)
       ].join(','))??[])]
         .filter(isVisible)
-        .slice(0, 240)
+        .slice(0, 24)
         .map((element, index) => {
           const states = classStates.filter((state) => element.classList.contains(state))
           for (const property of ['checked', 'disabled', 'selected']) {
@@ -1830,7 +1861,7 @@ export class BrowserKernel {
             text: (element.innerText || element.getAttribute('aria-label') || '')
               .trim()
               .replace(/\\s+/g, ' ')
-              .slice(0, 500),
+              .slice(0, 160),
             states
           }
         })
@@ -3029,7 +3060,13 @@ export class BrowserKernel {
       if (!root) return { ok: false, reason: 'element-not-found', matches: roots.length }
       const absolute = (value) => {
         if (!value || /^blob:|^data:/i.test(value)) return value || ''
-        try { return new URL(value, location.href).toString() } catch { return value }
+        try {
+          const u = new URL(value, location.href)
+          u.hash = ''
+          return u.toString()
+        } catch {
+          return value
+        }
       }
       const excluded=${JSON.stringify('script,style,template,noscript,input,textarea,select,[contenteditable]:not([contenteditable="false"]),[hidden],[aria-hidden="true"]')}+${JSON.stringify(excludeSelectors.length ? ',' + excludeSelectors.join(',') : '')}
       document.querySelector(excluded)
@@ -3130,9 +3167,12 @@ export class BrowserKernel {
         .map(r => ({ kind: 'source', url: r.url, duration: r.durationSeconds, videoIdentity: target.identity }))
     )
     const unique = new Map()
+    const seenUrls = new Set<string>()
     for (const item of [...result.items, ...observed, ...targetResources]) {
       const url = String(item.url || '')
       const poster = String(item.poster || '')
+      if (isTrackingPixelUrl(url)) continue
+      if (item.kind === 'image' && item.alt === 'dot image pixel' && !item.width && !item.height) continue
       const target = identities.targets.find(target => resourceBelongsToTarget(target, url))
       const video =
         ['video', 'source'].includes(String(item.kind)) ||
@@ -3143,7 +3183,14 @@ export class BrowserKernel {
         target?.identity.platform === 'youtube' && target.resources.some(r => r.url === url && r.role === 'audio')
       const kind = target && video && item.kind === 'network' ? 'source' : item.kind
       const sabr = target?.resources.some(resource => resource.url === url && resource.role === 'sabr')
-      if (url && !audioOnly && (!video || (!identities.blocked && (!requireBound || target))))
+      const nonVideoDiagnosticDuplicate = (kind === 'resource' || (kind === 'network' && !video)) && seenUrls.has(url)
+      if (
+        url &&
+        !nonVideoDiagnosticDuplicate &&
+        !audioOnly &&
+        (!video || (!identities.blocked && (!requireBound || target)))
+      ) {
+        seenUrls.add(url)
         unique.set(`${kind}:${url}`, {
           ...item,
           kind,
@@ -3157,8 +3204,11 @@ export class BrowserKernel {
               }
             : {})
         })
-      if (poster)
+      }
+      if (poster && !isTrackingPixelUrl(poster)) {
+        seenUrls.add(poster)
         unique.set(`poster:${poster}`, { kind: 'poster', url: poster, downloadable: /^https?:/i.test(poster) })
+      }
     }
     return {
       tab: this.serializeTab(tab),
@@ -3253,6 +3303,14 @@ export class BrowserKernel {
       guard,
       referrer: tab.url
     })
+    if (!request.sourceGuard && admission.videoIdentity && artifact.type === 'video') {
+      await this.recordingController?.saveNativeVideoOrigin?.(
+        path.join(project.directory, 'artifacts'),
+        artifact.artifactId,
+        admission.videoIdentity,
+        signal
+      )
+    }
     return { ...artifact, videoIdentity: admission.videoIdentity, tab: this.serializeTab(tab) }
   }
 

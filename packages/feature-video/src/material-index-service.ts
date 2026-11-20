@@ -28,14 +28,14 @@ export function pendingMaterialRanges(record: MaterialIndexRecord): { startSecon
   const result: { startSeconds: number; endSeconds: number }[] = []
   let start = 0
   for (const part of [...record.parts].sort((a, b) => a.sourceRange.startSeconds - b.sourceRange.startSeconds)) {
-    while (start < part.sourceRange.startSeconds - 0.000001) {
+    while (start < part.sourceRange.startSeconds - 0.01) {
       const end = Math.min(part.sourceRange.startSeconds, start + 180)
       result.push({ startSeconds: start, endSeconds: end })
       start = end
     }
     start = Math.max(start, part.sourceRange.endSeconds)
   }
-  while (start < (record.audioEndSeconds ?? record.durationSeconds) - 0.000001) {
+  while (start < (record.audioEndSeconds ?? record.durationSeconds) - 0.01) {
     const end = Math.min(record.audioEndSeconds ?? record.durationSeconds, start + 180)
     result.push({ startSeconds: start, endSeconds: end })
     start = end

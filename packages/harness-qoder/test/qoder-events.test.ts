@@ -259,3 +259,56 @@ test('Qoder split MCP image result stays in the native context and cannot comple
   )
   assert.equal((await decoder.receive({ type: 'result', subtype: 'success' }, emit))?.outcome, 'success')
 })
+test('Qoder unparsed browser tool input emits invalid-input without aborting the turn before SDK error tool_result', async () => {
+  const decoder = new QoderEvents('run', 'submission'),
+    events: AgentDriverEvent[] = []
+  const emit = async (event: AgentDriverEvent) => {
+    events.push(event)
+  }
+  await decoder.receive(
+    {
+      type: 'assistant',
+      uuid: 'bad-tool',
+      message: {
+        content: [
+          {
+            type: 'tool_use',
+            id: 'unparsed',
+            name: 'browser',
+            input: { __qoder_unparsed_tool_input: { reason: 'json_parse', raw: '{"action":"video.studio"' } }
+          }
+        ]
+      }
+    },
+    emit
+  )
+  await decoder.receive(
+    {
+      type: 'user',
+      message: {
+        content: [
+          {
+            type: 'tool_result',
+            tool_use_id: 'unparsed',
+            is_error: true,
+            content: 'Error: JSON_PARSE: Tool arguments are not valid JSON. Submit a complete JSON object.'
+          }
+        ]
+      }
+    },
+    emit
+  )
+  assert.deepEqual(
+    events.filter(row => row.type === 'tool.started' || row.type === 'tool.completed'),
+    [
+      { type: 'tool.started', callId: 'run:unparsed', name: 'browser', action: 'invalid-input' },
+      {
+        type: 'tool.completed',
+        callId: 'run:unparsed',
+        success: false,
+        message: 'Error: JSON_PARSE: Tool arguments are not valid JSON. Submit a complete JSON object.'
+      }
+    ]
+  )
+  assert.equal((await decoder.receive({ type: 'result', subtype: 'success' }, emit))?.outcome, 'success')
+})

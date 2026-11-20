@@ -1030,7 +1030,7 @@
                 },
                 "question": {
                   "type": "string",
-                  "maxLength": 500
+                  "maxLength": 600
                 },
                 "targetDurationSeconds": {
                   "type": "number",
@@ -3636,6 +3636,457 @@
                                 ]
                               }
                             }
+                          }
+                        }
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "version",
+                          "templateId",
+                          "tiles"
+                        ],
+                        "properties": {
+                          "version": {
+                            "const": 2
+                          },
+                          "templateId": {
+                            "const": "evidence/dossier"
+                          },
+                          "motion": {
+                            "enum": [
+                              "none",
+                              "fade-in",
+                              "reveal-items"
+                            ]
+                          },
+                          "reading": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "mode",
+                                  "targets",
+                                  "returnToWhole"
+                                ],
+                                "properties": {
+                                  "mode": {
+                                    "const": "whole-to-detail"
+                                  },
+                                  "targets": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "additionalProperties": false,
+                                      "required": [
+                                        "source",
+                                        "rect",
+                                        "name"
+                                      ],
+                                      "properties": {
+                                        "source": {
+                                          "type": "object",
+                                          "additionalProperties": false,
+                                          "required": [
+                                            "artifactId",
+                                            "sha256"
+                                          ],
+                                          "properties": {
+                                            "artifactId": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 180
+                                            },
+                                            "sha256": {
+                                              "type": "string",
+                                              "pattern": "^[a-f0-9]{64}$"
+                                            }
+                                          }
+                                        },
+                                        "rect": {
+                                          "type": "object",
+                                          "additionalProperties": false,
+                                          "required": [
+                                            "x",
+                                            "y",
+                                            "width",
+                                            "height"
+                                          ],
+                                          "properties": {
+                                            "x": {
+                                              "type": "number",
+                                              "minimum": 0,
+                                              "maximum": 1
+                                            },
+                                            "y": {
+                                              "type": "number",
+                                              "minimum": 0,
+                                              "maximum": 1
+                                            },
+                                            "width": {
+                                              "type": "number",
+                                              "minimum": 0.005,
+                                              "maximum": 1
+                                            },
+                                            "height": {
+                                              "type": "number",
+                                              "minimum": 0.005,
+                                              "maximum": 1
+                                            }
+                                          }
+                                        },
+                                        "name": {
+                                          "type": "string",
+                                          "maxLength": 32,
+                                          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f]*$"
+                                        },
+                                        "lineCount": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 8,
+                                          "description": "Author-counted text lines in this exact source rectangle. Whole-to-detail enables context, box and stationary close-up; sequence enables phone pan. Source-line count is not OCR or a readability guarantee."
+                                        }
+                                      }
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 1
+                                  },
+                                  "returnToWhole": {
+                                    "type": "boolean"
+                                  }
+                                }
+                              },
+                              {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "mode",
+                                  "targets",
+                                  "returnToWhole"
+                                ],
+                                "properties": {
+                                  "mode": {
+                                    "const": "detail-to-whole"
+                                  },
+                                  "targets": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "additionalProperties": false,
+                                      "required": [
+                                        "source",
+                                        "rect",
+                                        "name"
+                                      ],
+                                      "properties": {
+                                        "source": {
+                                          "type": "object",
+                                          "additionalProperties": false,
+                                          "required": [
+                                            "artifactId",
+                                            "sha256"
+                                          ],
+                                          "properties": {
+                                            "artifactId": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 180
+                                            },
+                                            "sha256": {
+                                              "type": "string",
+                                              "pattern": "^[a-f0-9]{64}$"
+                                            }
+                                          }
+                                        },
+                                        "rect": {
+                                          "type": "object",
+                                          "additionalProperties": false,
+                                          "required": [
+                                            "x",
+                                            "y",
+                                            "width",
+                                            "height"
+                                          ],
+                                          "properties": {
+                                            "x": {
+                                              "type": "number",
+                                              "minimum": 0,
+                                              "maximum": 1
+                                            },
+                                            "y": {
+                                              "type": "number",
+                                              "minimum": 0,
+                                              "maximum": 1
+                                            },
+                                            "width": {
+                                              "type": "number",
+                                              "minimum": 0.005,
+                                              "maximum": 1
+                                            },
+                                            "height": {
+                                              "type": "number",
+                                              "minimum": 0.005,
+                                              "maximum": 1
+                                            }
+                                          }
+                                        },
+                                        "name": {
+                                          "type": "string",
+                                          "maxLength": 32,
+                                          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f]*$"
+                                        },
+                                        "lineCount": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 8,
+                                          "description": "Author-counted text lines in this exact source rectangle. Whole-to-detail enables context, box and stationary close-up; sequence enables phone pan. Source-line count is not OCR or a readability guarantee."
+                                        }
+                                      }
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 1
+                                  },
+                                  "returnToWhole": {
+                                    "type": "boolean"
+                                  }
+                                }
+                              },
+                              {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                  "mode",
+                                  "targets",
+                                  "returnToWhole"
+                                ],
+                                "properties": {
+                                  "mode": {
+                                    "const": "sequence"
+                                  },
+                                  "targets": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "additionalProperties": false,
+                                      "required": [
+                                        "source",
+                                        "rect",
+                                        "name"
+                                      ],
+                                      "properties": {
+                                        "source": {
+                                          "type": "object",
+                                          "additionalProperties": false,
+                                          "required": [
+                                            "artifactId",
+                                            "sha256"
+                                          ],
+                                          "properties": {
+                                            "artifactId": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 180
+                                            },
+                                            "sha256": {
+                                              "type": "string",
+                                              "pattern": "^[a-f0-9]{64}$"
+                                            }
+                                          }
+                                        },
+                                        "rect": {
+                                          "type": "object",
+                                          "additionalProperties": false,
+                                          "required": [
+                                            "x",
+                                            "y",
+                                            "width",
+                                            "height"
+                                          ],
+                                          "properties": {
+                                            "x": {
+                                              "type": "number",
+                                              "minimum": 0,
+                                              "maximum": 1
+                                            },
+                                            "y": {
+                                              "type": "number",
+                                              "minimum": 0,
+                                              "maximum": 1
+                                            },
+                                            "width": {
+                                              "type": "number",
+                                              "minimum": 0.005,
+                                              "maximum": 1
+                                            },
+                                            "height": {
+                                              "type": "number",
+                                              "minimum": 0.005,
+                                              "maximum": 1
+                                            }
+                                          }
+                                        },
+                                        "name": {
+                                          "type": "string",
+                                          "maxLength": 32,
+                                          "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f]*$"
+                                        },
+                                        "lineCount": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 8,
+                                          "description": "Author-counted text lines in this exact source rectangle. Whole-to-detail enables context, box and stationary close-up; sequence enables phone pan. Source-line count is not OCR or a readability guarantee."
+                                        }
+                                      }
+                                    },
+                                    "minItems": 1,
+                                    "maxItems": 3
+                                  },
+                                  "returnToWhole": {
+                                    "type": "boolean"
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          "highlights": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": [
+                                "source",
+                                "name",
+                                "rects",
+                                "style",
+                                "startSeconds",
+                                "endSeconds"
+                              ],
+                              "properties": {
+                                "source": {
+                                  "type": "object",
+                                  "additionalProperties": false,
+                                  "required": [
+                                    "artifactId",
+                                    "sha256"
+                                  ],
+                                  "properties": {
+                                    "artifactId": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 180
+                                    },
+                                    "sha256": {
+                                      "type": "string",
+                                      "pattern": "^[a-f0-9]{64}$"
+                                    }
+                                  }
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 32,
+                                  "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f]*$"
+                                },
+                                "rects": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "additionalProperties": false,
+                                    "required": [
+                                      "x",
+                                      "y",
+                                      "width",
+                                      "height"
+                                    ],
+                                    "properties": {
+                                      "x": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 1
+                                      },
+                                      "y": {
+                                        "type": "number",
+                                        "minimum": 0,
+                                        "maximum": 1
+                                      },
+                                      "width": {
+                                        "type": "number",
+                                        "minimum": 0.005,
+                                        "maximum": 1
+                                      },
+                                      "height": {
+                                        "type": "number",
+                                        "minimum": 0.005,
+                                        "maximum": 1
+                                      }
+                                    }
+                                  },
+                                  "minItems": 1,
+                                  "maxItems": 3
+                                },
+                                "style": {
+                                  "enum": [
+                                    "outline",
+                                    "fill",
+                                    "invert"
+                                  ]
+                                },
+                                "startSeconds": {
+                                  "type": "number",
+                                  "minimum": 0,
+                                  "maximum": 60
+                                },
+                                "endSeconds": {
+                                  "type": "number",
+                                  "minimum": 0.1,
+                                  "maximum": 60
+                                }
+                              }
+                            },
+                            "minItems": 0,
+                            "maxItems": 3
+                          },
+                          "tiles": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "required": [
+                                "metric",
+                                "title"
+                              ],
+                              "properties": {
+                                "metric": {
+                                  "type": "string",
+                                  "maxLength": 16,
+                                  "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f]*$",
+                                  "minLength": 1
+                                },
+                                "title": {
+                                  "type": "string",
+                                  "maxLength": 24,
+                                  "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f]*$",
+                                  "minLength": 1
+                                },
+                                "subtitle": {
+                                  "type": "string",
+                                  "maxLength": 36,
+                                  "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f]*$"
+                                },
+                                "accentColor": {
+                                  "type": "string",
+                                  "pattern": "^#[0-9a-fA-F]{6}$"
+                                }
+                              }
+                            },
+                            "minItems": 1,
+                            "maxItems": 3
+                          },
+                          "footnote": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "pattern": "^[^\\u0000-\\u0008\\u000b\\u000c\\u000e-\\u001f]*$"
                           }
                         }
                       },

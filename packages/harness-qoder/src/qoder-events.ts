@@ -116,10 +116,12 @@ export class QoderEvents {
         if (block.type === 'tool_use') {
           if (block.name !== 'browser') throw new Error('Qoder requested an execution tool outside BMW browser')
           const callId = this.identity(block.id),
-            input = agentRecord(block.input)
+            input = agentRecord(block.input),
+            action =
+              typeof input.action === 'string' && input.action.trim() ? agentText(input.action, 200) : 'invalid-input'
           if (this.tools.has(callId)) throw new Error('Duplicate Qoder browser call')
           this.tools.add(callId)
-          await emit({ type: 'tool.started', callId, name: 'browser', action: agentText(input.action, 200) })
+          await emit({ type: 'tool.started', callId, name: 'browser', action })
         }
       }
       this.completed.add(id)
