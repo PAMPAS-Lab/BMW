@@ -18,6 +18,7 @@
 | 当前源码的逐项离线回归 | [可移植验证摘要](verification/CURRENT.json) | 完整范围、逐项结果、未运行项及源码 SHA |
 | AI 新闻固定来源与滚动素材流 | [设计](plans/LIBRARY_STREAMS.md)、[真实来源验证](research/AI_NEWS_REAL_SOURCES.md)、[批量采集设计](plans/COLLECTION_BATCH_OPTIMIZATION.md)、[批量验证](research/COLLECTION_BATCH_VALIDATION.md) | 可选固定订阅、X/YouTube 观察类型、近 72 小时原文/事件/快照 |
 | 日常新闻速递手册 | [NEWS_DAILY.md](NEWS_DAILY.md) | 选题确认、原声核验、局部改稿及收工恢复 |
+| 存储分层与资产归档 | [STORAGE_AND_ARCHIVE.md](STORAGE_AND_ARCHIVE.md) | 三层存储模型、单期 6 件套归档规范、常青素材库与跨机迁移策略 |
 
 ## 当前专题规范
 
